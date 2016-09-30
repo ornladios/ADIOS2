@@ -12,19 +12,21 @@
 #include <mpi.h>
 #include <memory> // unique_ptr
 
-
+#include "include/SMetadata.h"
 
 namespace adios
 {
 /**
- * Parent abstract class CADIOS, Children must implement this class virtual functions.
+ * Class CADIOS, interface between user call and ADIOS library
  */
 class CADIOS
 {
 
-public:
+public: // can be accessed by anyone
 
-	std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
+    std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
+    bool m_IsUsingMPI = false; ///< bool flag false: sequential, true: parallel MPI, to be checked instead of communicator
+	MPI_Comm* m_MPIComm = nullptr; ///< only used as reference to MPI communicator passed from parallel constructor, using pointer instead of reference as null is a possible value
 
 	CADIOS( ); ///< empty constructor, to be defined. Since we have an empty constructor we can't have const variables not defined by this constructor
 
@@ -37,20 +39,22 @@ public:
 	/**
 	 * Parallel constructor for XML config file and MPI
 	 * @param xmlConfigFile passed to m_XMLConfigFile
-	 * @param mpiCommunicator MPI communicator ...const to be discussed
+	 * @param mpiComm MPI communicator ...const to be discussed
 	 */
 	CADIOS( const std::string xmlConfigFile, const MPI_Comm& mpiComm );
 
-	virtual ~CADIOS( ); ///< virtual destructor overriden by children's own destructor
+	~CADIOS( ); ///< virtual destructor overriden by children's own destructors
 
-	void Init( ); ///< calls to read XML file
+	void Init( ); ///< calls to read XML file among other initialization tasks
 
+private:
 
-protected: // only children can access this
+	SMetadata m_Metadata; ///< contains all metadata information from XML Config File
 
-	std::unique_ptr<MPI_Comm> m_MPIComm; ///< reference to MPI communicator passed from MPI constructor
+	void InitSerial( ); ///< called from Init, initialize Serial
+	void InitMPI( ); ///< called from Init, initialize parallel MPI
 
-	void ReadXMLConfigFile( ); ///< Must be implemented in CADIOS.cpp common to all classes
+	void ReadXMLConfigFile( ); ///< populates SMetadata by reading the XML Config File
 
 
 };
