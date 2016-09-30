@@ -1,0 +1,29 @@
+CodingGuidelines
+ Created on: Sep 30, 2016
+     Author: wfg
+
+Introduce coding guidelines that all developers must follow as standard practice.     
+
+Objectives:
+
+1) Improve collaboration:
+	1.a. Reduce new code development and integration times for developers and users, by making code easy to understand
+	1.b. Allocate more time for discussion and pathfinding rather than understanding developers code
+	1.c. Expand developers and users base
+	
+2) Execute new ideas faster  
+
+3) Allocate more time to research and publication from new ideas
+
+
+
+C++ coding guidelines
+
+Text
+1) Use meaningful English words or well-known acronyms.
+
+Classes / Structs
+1) Classes will be initialized with a upper case "C" following by an upper, example: ( CADIOS, CNETCDF, CPHDF, C )
+2) Structs will be initialized with a upper case "S" and prefereed for plain old data, example: ( SVariables, S )
+
+ 
