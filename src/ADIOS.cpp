@@ -1,5 +1,5 @@
 /*
- * CADIOS.cpp
+ * ADIOS.cpp
  *
  *  Created on: Sep 29, 2016
  *      Author: William F Godoy
@@ -7,56 +7,70 @@
  */
 
 #include <fstream>
+#include <iostream>
 
-#include "include/CADIOS.h"
+#include "ADIOS.h"
 
 
 namespace adios
 {
 
 //here assign default values of non-primitives
-CADIOS::CADIOS( )
+ADIOS::ADIOS( )
 { }
 
 
-CADIOS::CADIOS( const std::string xmlConfigFile ):
-    m_XMLConfigFile( xmlConfigFile )
+ADIOS::ADIOS( const std::string xmlConfigFile ):
+    m_XMLConfigFile{ xmlConfigFile }
 { }
 
 
-CADIOS::CADIOS( const std::string xmlConfigFile, const MPI_Comm& mpiComm  ):
-    m_XMLConfigFile( xmlConfigFile ),
-    m_IsUsingMPI( true ),
-	m_MPIComm( mpiComm )
+//#ifdef USE_MPI
+ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm& mpiComm  ):
+    m_XMLConfigFile{ xmlConfigFile },
+    m_IsUsingMPI{ true },
+	m_MPIComm{ mpiComm }
 { }
+//#endif
 
 
-void CADIOS::Init( )
+void ADIOS::Init( )
 {
-    if( m_IsUsingMPI == false )
+    if( m_IsUsingMPI == false && m_XMLConfigFile.empty() == false )
     {
-        InitSerial( );
+        InitNoMPI( );
     }
     else
     {
+        //#ifdef USE_MPI
         InitMPI( );
+        //#endif
     }
 }
 
 
-void CADIOS::InitSerial( )
+void ADIOS::InitNoMPI( )
 {
     ReadXMLConfigFile( );
 }
 
-
-void CADIOS::InitMPI( )
+//#ifdef USE_MPI
+void ADIOS::InitMPI( )
 {
+    //here just say hello from MPI processes
 
+    int size;
+    MPI_Comm_size( *m_MPIComm, &size );
+
+    int rank;
+    MPI_Comm_rank( *m_MPIComm, &rank );
+
+    std::cout << " Hello World from processor " << rank << "/" << size << "\n";
 }
+//#endif
 
 
-void CADIOS::ReadXMLConfigFile( )
+void ADIOS::ReadXMLConfigFile( )
 {
     std::ifstream xmlConfigStream( m_XMLConfigFile );
 
@@ -66,21 +80,16 @@ void CADIOS::ReadXMLConfigFile( )
                                         "Check permissions or file existence\n");
         throw std::ios_base::failure( errorMessage );
     }
+    //here fill SMetadata...
 
 
 
 
+    xmlConfigStream.close();
 }
 
 
-
-
-
-
-
-
-
-}
+} //end namespace
 
 
 
