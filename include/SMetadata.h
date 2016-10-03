@@ -16,6 +16,8 @@ namespace adios
 struct SMetadata
 {
     std::string hostLanguage; ///< Supported: C, C++, Fortran
+    ///add more Metadata?
+
 
 
 
@@ -23,6 +25,6 @@ struct SMetadata
 };
 
 
-}
+} //end namespace
 
 #endif /* SMETADATA_H_ */

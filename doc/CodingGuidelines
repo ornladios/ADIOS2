@@ -10,10 +10,10 @@ Many items from this list are taken from Stroustrup, Sutter, and Meyers books.
 Objectives:
 
 1) Improve collaboration:
-	1.a. Reduce new code development and integration times for developers and users, by making code easy to understand
-	1.b. Allocate more time for discussion and pathfinding rather than understanding developers' coding
-	1.c. Expand developers and users base
-	
+    1.a. Reduce new code development and integration times for developers and users, by making code easy to understand
+    1.b. Allocate more time for discussion and pathfinding rather than understanding developers' coding
+    1.c. Expand developers and users base
+
 2) Execute new ideas faster
 
 3) Allocate more time to research and publication from new ideas
@@ -47,23 +47,23 @@ Text style for readability (Coding format setup in Eclipse with Window > Prefere
 
     
 5) Brackets: use an extra space for brackets
-	Do: 
-	if( number < 1 )
-	{
-	    number = 4;
-	    ...
-	} 
-	
-	Don't:
-	if( number < 1 ){
-	number = 4;	.....
+    Do: 
+    if( number < 1 )
+    {
+        number = 4;
+        ...
+    } 
+    
+    Don't:
+    if( number < 1 ){
+    number = 4;    .....
                      .....}
 
-	
+    
 6) Prefer the keyword "using" over "typedef". Only rename complex types, do not rename standard types (int, double, std::vector) 
    Don't: typedef std::vector<std::vector<double>> Vector2D;
    Do:    using std::vector<std::vector<double>> = Vector2D;
-	
+    
 
 Documentation/Comments
 1) Use Doxygen as the official API documentation tool. Eclipse has a template autocomplete option for function declarations.
