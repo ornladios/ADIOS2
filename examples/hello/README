@@ -1,0 +1,4 @@
+Test if ADIOS MPI and noMPI code can be separated at compilation stage
+
+make -> for MPI code
+make hello_nompi -> for noMPI code

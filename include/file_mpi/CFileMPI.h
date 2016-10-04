@@ -16,21 +16,23 @@
 namespace adios
 {
 
+
 class CFileMPI : public CFile
 {
 
 public:
 
-    MPI_Comm* m_MPIComm;
+    MPI_Comm m_MPIComm; ///< passed from the application communicator through ADIOS m_MPIComm
 
-    CFileMPI( const std::string fileName, const std::string fileType, const SMetadata& metadata, const MPI_Comm& mpiComm ):
+    CFileMPI( const std::string fileName, const std::string fileType, const SMetadata& metadata, MPI_Comm mpiComm ):
         CFile( fileName, fileType, metadata, true ),
-        m_MPIComm{ mpiComm }
+        m_MPIComm( mpiComm )
     { }
 
-    virtual ~CFileMPI( ) { };
+    virtual ~CFileMPI( )
+    { };
 
-    virtual void Open( const std::string fileName, const std::string groupName, const std::string accessMode );
+    virtual void Open( const std::string fileName, const std::string groupName, const std::string accessMode ) = 0;
 
     virtual unsigned long int GroupSize( const std::string fileName, const std::string groupName ) const = 0;
 

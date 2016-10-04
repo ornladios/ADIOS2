@@ -22,8 +22,8 @@ public:
 
     const std::string m_FileName; ///< serial: file name, MPI: prefix for file name
     const std::string m_FileType; ///< netCDF, PHDF5, POSIX
-    const bool m_IsUsingMPI; ///< true: Communicator is passed, false: serial process (might include threads)
     const SMetadata& m_Metadata; ///< reference to metadata info
+    const bool m_IsUsingMPI; ///< true: Communicator is passed, false: serial process (might include threads)
 
     CFile( const std::string fileName, const std::string fileType, const SMetadata& metadata, const bool isUsingMPI ):
         m_FileName{ fileName },
@@ -32,7 +32,8 @@ public:
         m_IsUsingMPI{ isUsingMPI }
     { }
 
-    virtual ~CFile( ) { };
+    virtual ~CFile( )
+    { };
 
     virtual void Open( const std::string fileName, const std::string groupName, const std::string accessMode ) = 0;
 

@@ -11,6 +11,9 @@
 
 #include "ADIOS.h"
 
+#ifdef HAVE_MPI
+#include "file_mpi/CPOSIXMPI.h"
+#endif
 
 namespace adios
 {
@@ -25,13 +28,16 @@ ADIOS::ADIOS( const std::string xmlConfigFile ):
 { }
 
 
-//#ifdef USE_MPI
-ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm& mpiComm  ):
+#ifdef HAVE_MPI
+ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm  ):
     m_XMLConfigFile{ xmlConfigFile },
     m_IsUsingMPI{ true },
 	m_MPIComm{ mpiComm }
 { }
-//#endif
+#endif
+
+ADIOS::~ADIOS( )
+{ }
 
 
 void ADIOS::Init( )
@@ -42,9 +48,9 @@ void ADIOS::Init( )
     }
     else
     {
-        //#ifdef USE_MPI
+        #ifdef HAVE_MPI
         InitMPI( );
-        //#endif
+        #endif
     }
 }
 
@@ -54,36 +60,29 @@ void ADIOS::InitNoMPI( )
     ReadXMLConfigFile( );
 }
 
-//#ifdef USE_MPI
+#ifdef MPI_VERSION
 void ADIOS::InitMPI( )
 {
-    //here just say hello from MPI processes
-
-    int size;
-    MPI_Comm_size( *m_MPIComm, &size );
-
-    int rank;
-    MPI_Comm_rank( *m_MPIComm, &rank );
-
-    std::cout << " Hello World from processor " << rank << "/" << size << "\n";
+    //Use POSIXMPI for now for testing purposes
+    m_File = std::unique_ptr<CPOSIXMPI> ( new CPOSIXMPI( "HelloFile", m_Metadata, m_MPIComm ) );
+    m_File->Open( "HelloFile", "MyGroup", "a" );
 }
-//#endif
+#endif
 
 
 void ADIOS::ReadXMLConfigFile( )
 {
+    std::cout << "Reading XML Config File " << m_XMLConfigFile << "\n";
     std::ifstream xmlConfigStream( m_XMLConfigFile );
 
     if( xmlConfigStream.good() == false ) //check file
     {
-        const std::string errorMessage( "XML Config file " + m_XMLConfigFile + " could not be opened. "
+        xmlConfigStream.close();
+        const std::string errorMessage( "ERROR: XML Config file " + m_XMLConfigFile + " could not be opened. "
                                         "Check permissions or file existence\n");
         throw std::ios_base::failure( errorMessage );
     }
     //here fill SMetadata...
-
-
-
 
     xmlConfigStream.close();
 }

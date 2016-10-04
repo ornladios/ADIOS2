@@ -11,11 +11,12 @@
 #include <string>
 #include <memory>
 
-//#ifdef USE_MPI
+#ifdef HAVE_MPI
 #include <mpi.h>
-//#endif
+#endif
 
 #include "SMetadata.h"
+#include "CFile.h"
 
 
 namespace adios
@@ -31,6 +32,7 @@ public: // can be accessed by anyone
     std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
     bool m_IsUsingMPI = false; ///< bool flag false: sequential, true: parallel MPI, to be checked instead of communicator
     std::unique_ptr<CFile> m_File;
+    SMetadata m_Metadata; ///< contains all metadata information from XML Config File
 
     ADIOS( ); ///< empty constructor, to be defined. Since we have an empty constructor we can't have const variables not defined by this constructor
 
@@ -40,40 +42,35 @@ public: // can be accessed by anyone
      */
     ADIOS( const std::string xmlConfigFile );
 
-    //#ifdef USE_MPI //MPI only section
-    MPI_Comm* m_MPIComm = nullptr; ///< only used as reference to MPI communicator passed from parallel constructor, using pointer instead of reference as null is a possible value
+    #ifdef HAVE_MPI //START OF THE MPI only section
+    MPI_Comm m_MPIComm = nullptr; ///< only used as reference to MPI communicator passed from parallel constructor, using pointer instead of reference as null is a possible value
     /**
      * Parallel constructor for XML config file and MPI
      * @param xmlConfigFile passed to m_XMLConfigFile
      * @param mpiComm MPI communicator ...const to be discussed
      */
-    ADIOS( const std::string xmlConfigFile, const MPI_Comm& mpiComm );
+    ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm );
 
     /**
      * Parallel MPI communicator without XML config
      * @param mpiComm MPI communicator passed to m_MPIComm ...const to be discussed
      */
-    ADIOS( const MPI_Comm& mpiComm );
-    //#endif  //MPI only section
+    //ADIOS( const MPI_Comm mpiComm );
+    #endif  //END OF THE MPI ONLY SECTION
 
-    virtual ~ADIOS( ); ///< virtual destructor overriden by children's own destructors
+    ~ADIOS( ); ///< virtual destructor overriden by children's own destructors
 
-    virtual void Init( ) = 0; ///< calls to read XML file among other initialization tasks
+    void Init( ); ///< calls to read XML file among other initialization tasks
 
 private:
 
-    SMetadata m_Metadata; ///< contains all metadata information from XML Config File
-    bool m_IsUsingMPI = false; ///< bool flag false: sequential, true: parallel MPI, to be checked instead of communicator
-
     void InitNoMPI( ); ///< called from Init, initialize Serial
 
-    //#ifdef USE_MPI
+    #ifdef HAVE_MPI
     void InitMPI( ); ///< called from Init, initialize parallel MPI
-    //#endif
+    #endif
 
     void ReadXMLConfigFile( ); ///< populates SMetadata by reading the XML Config File
-
-
 };
 
 

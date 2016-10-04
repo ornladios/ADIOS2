@@ -21,7 +21,7 @@ class CFileNoMPI : public CFile
 public:
 
     CFileNoMPI( const std::string fileName, const std::string fileType, const SMetadata& metadata ):
-        CFile( fileName, fileName, metadata, false )
+        CFile( fileName, fileType, metadata, false )
     { };
 
     virtual ~CFileNoMPI( ){ };
