@@ -24,8 +24,8 @@ public:
 
     MPI_Comm m_MPIComm; ///< passed from the application communicator through ADIOS m_MPIComm
 
-    CFileMPI( const std::string fileName, const std::string fileType, const SMetadata& metadata, MPI_Comm mpiComm ):
-        CFile( fileName, fileType, metadata, true ),
+    CFileMPI( const std::string fileName, const std::string fileType, MPI_Comm mpiComm ):
+        CFile( fileName, fileType, true ),
         m_MPIComm( mpiComm )
     { }
 
