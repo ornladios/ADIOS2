@@ -15,20 +15,20 @@ ADIOS_LIB=$(ADIOS_DIR)/lib/libadios.a
 ADIOS_NOMPI_LIB=$(ADIOS_DIR)/lib/libadios_nompi.a
 
 ADIOS_INCLUDE=-I$(ADIOS_DIR)/include
-ADIOS_MPI_HFiles=$(shell find $(ADIOS_DIR)/include/file_mpi/ -type f -name "*MPI.h")
-ADIOS_NoMPI_HFiles=$(shell find $(ADIOS_DIR)/include/file_nompi/ -type f -name "*NoMPI.h")
+ADIOS_MPI_HFiles=$(shell find $(ADIOS_DIR)/include/mpi/ -type f -name "*MPI.h")
+ADIOS_NoMPI_HFiles=$(shell find $(ADIOS_DIR)/include/nompi/ -type f -name "*NoMPI.h")
 ADIOS_HFiles=$(MPI_HFiles) $(NoMPI_HFiles)
 
 
 #FLAGS
 CFLAGS=-Wall -O0 -g -Wpedantic -std=c++11
 
-all: hello
+all: mpi
 
-hello: $(ADIOS_LIB) $(ADIOS_HFiles)
+mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
 	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI helloADIOS.cpp -o helloADIOS $(ADIOS_LIB)
 	
-hello_nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
+nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
 	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) helloADIOS_nompi.cpp -o helloADIOS_nompi $(ADIOS_NOMPI_LIB)
 
 clean:

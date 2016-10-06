@@ -21,7 +21,7 @@ int main( int argc, char* argv [] )
         MPI_Init( &argc, &argv );
 
         //testing with CPOSIXMPI
-        adios::ADIOS adiosFile( "XMLConfig.xml", MPI_COMM_WORLD );
+        adios::ADIOS adiosFile( "writer.xml", MPI_COMM_WORLD );
         adiosFile.Init( );
         MPI_Barrier( MPI_COMM_WORLD );
 

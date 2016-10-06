@@ -15,7 +15,7 @@
   #include <mpi.h>
 #endif
 
-#include "CFile.h"
+#include "SGroup.h"
 
 
 namespace adios
@@ -26,10 +26,10 @@ namespace adios
 class ADIOS
 {
 
-public: // can be accessed by anyone
+public: // PUBLIC Constructors and Functions define the User Interface with ADIOS
 
     /**
-     * ADIOS empty constructor. Used for non XML calls.
+     * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
     ADIOS( );
 
@@ -51,23 +51,41 @@ public: // can be accessed by anyone
     ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm );
 
     /**
-     * Parallel MPI communicator without XML config
+     * @brief Parallel MPI communicator without XML config file
      * @param mpiComm MPI communicator passed to m_MPIComm
      */
     ADIOS( const MPI_Comm mpiComm );
   #endif
   // *END****************************************************************************** /
 
-
-
-    void Open( const std::string fileName, const std::string groupName, const std::string accessMode );
-
-
-
     ~ADIOS( ); ///< virtual destructor overriden by children's own destructors
 
     void Init( ); ///< calls to read XML file among other initialization tasks
+    /**
+     * @brief Open or Append to an output file
+     * @param groupName should match an existing group from XML file or created through CreateGroup
+     * @param fileName associated file
+     * @param accessMode "w": write, "a": append, need more info on this
+     */
+    void Open( const std::string groupName, const std::string fileName, const std::string accessMode = "w" );
 
+    /**
+     * @brief Get the total sum of payload and overhead, which includes name, data type, dimensions and other metadata
+     * @param groupName
+     * @return group size in
+     */
+    unsigned long int GroupSize( const std::string groupName ) const;
+
+
+    /**
+     * Submits a data element values for writing and associates it with the given variableName
+     * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
+     * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
+     */
+    template<class T>
+    void Write( const std::string groupName, const std::string variableName, const T* values );
+
+    void Close( ); // dumps to file?
 
 
 private:
@@ -78,7 +96,7 @@ private:
     MPI_Comm m_MPIComm = nullptr; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself
   #endif
 
-    std::string HostLanguage; ///< Supported languages: C, C++, Fortran
+    std::string m_HostLanguage; ///< Supported languages: C, C++, Fortran
 
     /**
      * @brief List of groups defined for ADIOS configuration (XML).
@@ -87,14 +105,15 @@ private:
      * \t Value: SGroup struct in SGroup.h
      * </pre>
      */
-    std::map< std::string, SGroup > Groups;
+    std::map< std::string, SGroup > m_Groups;
 
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file
      * Note, that if there are two ADIOS outputs going on at the same time,
      * ADIOS will allocate two separate buffers each with the specified maximum limit.
+     * Default = 0 means there is no limit
      */
-    unsigned int MaxBufferSizeInMB;
+    unsigned int MaxBufferSizeInMB = 0;
 
     void InitNoMPI( ); ///< called from Init, initialize Serial
 
@@ -102,7 +121,18 @@ private:
     void InitMPI( ); ///< called from Init, initialize parallel MPI
   #endif
 
-    void ReadXMLConfigFile( ); ///< populates SMetadata by reading the XML Config File
+    /**
+     * Dumps the entire XML file to a string
+     * @param xmlFileContent all xml content file will be put here
+     */
+    void DumpXMLConfigFile( std::string& xmlFileContent ) const;
+
+
+    /**
+     * Set Groups from string containing entire XML file
+     * @param xmlFileContent
+     */
+    void SetGroupsFromXML( const std::string xmlFileContent );
 
 };
 

@@ -16,7 +16,7 @@ int main( int argc, char* argv [] )
 {
     try
     {
-        adios::ADIOS adiosFile( "XMLConfigFile.xml" ); //testing with CPOSIXNoMPI
+        adios::ADIOS adiosFile( "writer.xml" ); //testing with CPOSIXNoMPI
         adiosFile.Init( );
     }
     catch( std::exception& e )

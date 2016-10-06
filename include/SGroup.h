@@ -10,8 +10,12 @@
 
 #include <map>
 #include <string>
+#include <memory> //for std::unique_ptr
+#include <vector>
 
-#include "SVariable.h"
+#include "CVariable.h"
+#include "SAttribute.h"
+#include "CTransport.h"
 
 namespace adios
 {
@@ -25,16 +29,18 @@ struct SGroup
      * @brief Contains all group variables (from XML Config file).
      * <pre>
      * \t Key: std::string unique variable name
-     * \t Value: SVariable struct defined in SVariable.h
+     * \t Value: Children of SVariable struct defined in SVariable.h, using unique_ptr for polymorphism
      * </pre>
      */
-    std::map< std::string, SVariable > Variables;
+    std::map< std::string, std::unique_ptr<CVariable> > Variables;
 
-    std::vector<SAttribute> Attributes; ///< Contains all group attributes
+    std::vector< SAttribute > Attributes; ///< Contains all group attributes from SAttribute.h
+
     std::vector< unsigned long int > GlobalDimensions; ///< from global-bounds in XML File, data in global space
+
     std::vector< unsigned long int > GlobalOffsets; ///< from global-bounds in XML File, data in global space
 
-
+    std::unique_ptr< CTransport > Transport; ///< transport method defined in XML File
 
 };
 
