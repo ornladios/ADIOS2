@@ -16,6 +16,7 @@
 #endif
 
 #include "SGroup.h"
+#include "SSupport.h"
 
 
 namespace adios
@@ -101,8 +102,8 @@ private:
     /**
      * @brief List of groups defined for ADIOS configuration (XML).
      * <pre>
-     * \t Key: std::string unique group name
-     * \t Value: SGroup struct in SGroup.h
+     *     Key: std::string unique group name
+     *     Value: SGroup struct in SGroup.h
      * </pre>
      */
     std::map< std::string, SGroup > m_Groups;
@@ -120,13 +121,6 @@ private:
   #ifdef HAVE_MPI
     void InitMPI( ); ///< called from Init, initialize parallel MPI
   #endif
-
-    /**
-     * Dumps the entire XML file to a string
-     * @param xmlFileContent all xml content file will be put here
-     */
-    void DumpXMLConfigFile( std::string& xmlFileContent ) const;
-
 
     /**
      * Set Groups from string containing entire XML file

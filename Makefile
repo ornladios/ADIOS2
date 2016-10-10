@@ -6,6 +6,8 @@
 TOOL_DIR=/usr/bin
 
 CC=$(TOOL_DIR)/g++ # Compiling with mpicc for now
+#CC=$(TOOL_DIR)/clang # Compiling with mpicc for now
+
 MPICC=$(TOOL_DIR)/mpic++
 
 AR=$(TOOL_DIR)/ar
@@ -35,15 +37,15 @@ ObjFiles=$(MPI_ObjFiles) $(NoMPI_ObjFiles)
 
 
 #Build all MPI and noMPI
-all: $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o
+all: $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o
 	@echo "ADIOS MPI headers" $(MPI_HFiles);
 	@echo "ADIOS No MPI headers" $(NoMPI_HFiles);
-	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o  
+	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o  
 
 #MPI build    
 mpi: $(MPI_ObjFiles) ./bin/ADIOS.o
 	@echo "ADIOS MPI headers" $(MPI_HFiles);
-	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) ./bin/ADIOS.o
+	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o
 	
 ./bin/%.o: ./src/mpi/transport/%.cpp $(MPI_HFiles)
 	$(MPICC) $(CFLAGS) -DHAVE_MPI $(INCLUDE) -o $@ $< 
@@ -53,17 +55,19 @@ mpi: $(MPI_ObjFiles) ./bin/ADIOS.o
 
     
 #NoMPI build    
-nompi: $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o
+nompi: $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o
 	@echo "ADIOS No MPI headers" $(NoMPI_HFiles);
-	$(AR) rcs ./lib/libadios_nompi.a $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o
+	$(AR) rcs ./lib/libadios_nompi.a $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o
 	
 ./bin/%.o: ./src/nompi/transport/%.cpp $(NoMPI_HFiles)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
 	
 ./bin/ADIOS_nompi.o: ./src/ADIOS.cpp
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
-	
 
+./bin/ADIOSFunctions.o: ./src/ADIOSFunctions.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
+    
 clean:
 	rm ./bin/*.o ./lib/libadios.a ./lib/libadios_nompi.a
 	

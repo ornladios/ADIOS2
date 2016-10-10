@@ -21,7 +21,7 @@ class CTransport
 
 public:
 
-    const std::string m_Method;
+    const std::string m_Method;  ///< method name, must be defined in SSupport.h TransportMethods
     const unsigned int m_Priority;
     const unsigned int m_Iteration;
     const bool m_IsUsingMPI;

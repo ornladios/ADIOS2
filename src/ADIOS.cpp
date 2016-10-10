@@ -9,8 +9,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <utility>
 
 #include "ADIOS.h"
+#include "ADIOSFunctions.h"
 
 
 namespace adios
@@ -58,7 +60,7 @@ void ADIOS::Init( )
 void ADIOS::InitNoMPI( )
 {
     std::string xmlFileContent;
-    DumpXMLConfigFile( xmlFileContent );
+    DumpFileToStream( m_XMLConfigFile, xmlFileContent ); //in ADIOSFunctions.h
     SetGroupsFromXML( xmlFileContent );
 
 }
@@ -81,121 +83,79 @@ void ADIOS::Open( const std::string groupName, const std::string fileName, const
 template<class T> void ADIOS::Write( const std::string groupName, const std::string variableName, const T* values )
 {
     std::cout << "Just testing the Write function\n";
-
-
-
 }
 
-
-
-void ADIOS::DumpXMLConfigFile( std::string& xmlFileContent ) const
-{
-    std::cout << "Reading XML Config File " << m_XMLConfigFile << "\n";
-    std::ifstream xmlConfigStream( m_XMLConfigFile );
-
-    if( xmlConfigStream.good() == false ) //check file
-    {
-        xmlConfigStream.close();
-        const std::string errorMessage( "ERROR: XML Config file " + m_XMLConfigFile +
-                                        " could not be opened. "
-                                        "Check permissions or file existence\n");
-        throw std::ios_base::failure( errorMessage );
-    }
-
-    std::ostringstream xmlStream;
-    xmlStream << xmlConfigStream.rdbuf();
-    xmlConfigStream.close();
-
-    xmlFileContent = xmlStream.str(); //convert to string
-
-    if( xmlFileContent.empty() )
-    {
-        throw std::invalid_argument( "ERROR: XML Config File " + m_XMLConfigFile + " is empty\n" );
-    }
-}
-//<?xml version="1.0"?>
-//<adios-config host-language="Fortran">
-//  <adios-group name="writer2D">
-//
-//    <var name="nproc" path="/info" type="integer"/>
-//    <attribute name="description" path="/info/nproc" value="Number of writers"/>
-//    <var name="npx"   path="/info" type="integer"/>
-//    <attribute name="description" path="/info/npx" value="Number of processors in x dimension"/>
-//    <var name="npy"   path="/info" type="integer"/>
-//    <attribute name="description" path="/info/npy" value="Number of processors in y dimension"/>
 
 void ADIOS::SetGroupsFromXML( const std::string xmlFileContent )
 {
-    //Start with lambda functions
-    auto lfGetValue = []( const char quote, const std::string::size_type& quotePosition,
-                          std::string& currentTag, std::string& value )
+    //lambda function that populates ADIOS members
+    auto lf_Populate= [&]( std::string& currentGroup,
+                           const std::string tagName,
+                           std::vector< std::pair<const std::string, const std::string> >& pairs )
     {
-        currentTag = currentTag.substr( quotePosition + 1 );
-        auto nextQuotePosition = currentTag.find( quote );
-        if( nextQuotePosition == currentTag.npos )
+        if( tagName == "adios-config" ) //get Host Language
         {
-            throw std::invalid_argument( "ERROR: Invalid attribute in..." + currentTag + "...check XML file\n");
-        }
-        value = currentTag.substr( 0, nextQuotePosition );
-        currentTag = currentTag.substr( nextQuotePosition+1 );
-    };
-
-    //Get attributes field1="value1" field2="value2" for a single XML tag and
-    //puts it in pairs containers first=field
-    auto lfGetPairs = [&]( const std::string tag, std::vector< std::pair<const std::string, const std::string> >& pairs )
-    {
-        std::string currentTag( tag.substr( tag.find_first_of(" \t\n") ) ); //initialize current tag
-        //currentTag = currentTag.substr( currentTag.find_first_not_of(" \t\n") ); //first field
-
-        while( currentTag.find('=') != currentTag.npos ) //equalPosition
-        {
-            currentTag = currentTag.substr( currentTag.find_first_not_of(" \t\n") );
-            auto equalPosition = currentTag.find('=');
-            const std::string field( currentTag.substr( 0, equalPosition) );  //get field
-            std::string value;
-
-            //if( currentTag.size() < equalPosition+1 ) throw std::invalid_argument( "ERROR: Invalid tag..." + tag + "...check XML file for =\" syntax\n");
-
-            const char quote = currentTag[equalPosition+1];
-            if( quote == '\'' || quote == '"') //single quotes
+            if( pairs[0].first == "host-language" )
             {
-                //quote position?
-                lfGetValue( quote, equalPosition+1, currentTag, value );
+                if( HostLanguages.count( pairs[0].second ) == 0 )
+                    throw std::invalid_argument( "ERROR: language in adios-config not supported " + pairs[0].second + "\n" );
+                else
+                    m_HostLanguage = pairs[0].second;
+            }
+        }
+        else if( tagName == "adios-group" ) //create a new Group
+        {
+            if( pairs[0].first == "name" )
+            {
+                m_Groups[ pairs[0].second ] = SGroup( );
+                currentGroup = pairs[0].second;
+            }
+        }
+        else if( tagName == "var" ) //assign a Group variable
+        {
+            auto itGroup = m_Groups.find( currentGroup );
+            if( itGroup == m_Groups.end() ) throw std::invalid_argument( "ERROR: variable " + pairs[0].second + " is outside of Group scope\n" );
+
+            std::string name, type, dimensionsCSV;
+
+            for( auto& pair : pairs ) //lopp through all pairs
+            {
+                     if( pair.first == "name"       ) name = pair.second;
+                else if( pair.first == "type"       ) type = pair.second;
+                else if( pair.first == "dimensions" ) dimensionsCSV = pair.second;
             }
 
-            pairs.push_back( std::pair<const std::string, const std::string>( field, value ) );
+            auto Variables = itGroup->second.Variables;
+            auto itVariable = Variables.find( name );
+            if( itVariable == Variables.end() )
+            {
+                //might move to make_unique for C++14
+                if( type == "integer")
+                    Variables[name] = std::unique_ptr<CVariable>( new CVariableTemplate<int>( dimensionsCSV ) );
+                if( type == "unsigned integer")
+                    Variables[name] = std::unique_ptr<CVariable>( new CVariableTemplate<unsigned int>( dimensionsCSV ) );
+                else if( type == "real")
+                    Variables[name] = std::unique_ptr<CVariable>( new CVariableTemplate<float>( dimensionsCSV ) );
+                else if( type == "double")
+                    Variables[name] = std::unique_ptr<CVariable>( new CVariableTemplate<double>( dimensionsCSV ) );
+            }
+            else
+            {
+                throw std::out_of_range( "ERROR: var " + name + " is defined twice in Group " + itGroup->first + "\n" );
+            }
         }
-    };
-
-    auto lfGetPairsFromTag = [&]( const std::string tag, std::vector< std::pair<const std::string, const std::string> >& pairs )
-    {
-        if( tag.back() == '/' ) //last char is / --> "XML empty tag"
+        else if( tagName == "attribute" )
         {
-            lfGetPairs( tag, pairs );
+            std::cout << "Found an attribute\n";
         }
-        else if( tag[0] == '/' ) // closing tag
-        { }
-        else // opening tag
-        {
-            //check for closing tagName
-            const std::string tagName = tag.substr( 0, tag.find_first_of(" \t\n\r") );
-            const std::string closingTagName( "</" + tagName + ">" );
+    }; //end lambda function
 
-            if( xmlFileContent.find( closingTagName ) == xmlFileContent.npos )
-                throw std::invalid_argument( "ERROR: closing tag " + closingTagName + " missing, check XML file\n");
-
-            lfGetPairs( tag, pairs );
-        }
-    };
-
-    // ****************************************************************************** ////
-    // Body of function STARTS ****************************************************** ////
-    // ****************************************************************************** ////
     std::string::size_type currentPosition = xmlFileContent.find( '<' );
 
     std::string currentGroup; // stores current Group name to populate m_Groups map key
     std::string currentNonEmptyTag;
 
+    //loop through xmlFileContent string contents
     while( currentPosition < xmlFileContent.size() )
     {
         auto begin = xmlFileContent.find( '<', currentPosition );
@@ -210,11 +170,13 @@ void ADIOS::SetGroupsFromXML( const std::string xmlFileContent )
             continue;
         }
 
-        //get and check current tag
         auto end = xmlFileContent.find( '>', currentPosition );
         if( end == xmlFileContent.npos ) break;
+
+        //get and check current tag
         const std::string tag( xmlFileContent.substr( begin+1, end-begin-1 ) ); //without < >
         if( tag.empty() || tag[0] == ' ' ) throw std::invalid_argument( "ERROR: Empty tag, check XML file\n");
+
         //skip header
         if( tag.find("?xml") == 0 )
         {
@@ -224,7 +186,10 @@ void ADIOS::SetGroupsFromXML( const std::string xmlFileContent )
 
         //get pairs of tag fields and values
         std::vector< std::pair<const std::string, const std::string> > pairs;
-        lfGetPairsFromTag( tag, pairs );
+        GetPairsFromTag( xmlFileContent, tag, pairs ); // from ADIOSFunctions.h
+
+        const std::string tagName = tag.substr( 0, tag.find_first_of(" \t\n\r") );
+        lf_Populate( currentGroup, tagName, pairs );
 
         std::cout << tag << "\n";
 

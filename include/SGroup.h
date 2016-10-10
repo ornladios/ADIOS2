@@ -28,11 +28,11 @@ struct SGroup
     /**
      * @brief Contains all group variables (from XML Config file).
      * <pre>
-     * \t Key: std::string unique variable name
-     * \t Value: Children of SVariable struct defined in SVariable.h, using unique_ptr for polymorphism
+     *     Key: std::string unique variable name
+     *     Value: Children of SVariable struct defined in SVariable.h, using unique_ptr for polymorphism
      * </pre>
      */
-    std::map< std::string, std::unique_ptr<CVariable> > Variables;
+    std::map< std::string, std::shared_ptr<CVariable> > Variables;
 
     std::vector< SAttribute > Attributes; ///< Contains all group attributes from SAttribute.h
 
@@ -40,7 +40,7 @@ struct SGroup
 
     std::vector< unsigned long int > GlobalOffsets; ///< from global-bounds in XML File, data in global space
 
-    std::unique_ptr< CTransport > Transport; ///< transport method defined in XML File
+    std::shared_ptr< CTransport > TransportMethod; ///< transport method defined in XML File
 
 };
 

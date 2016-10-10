@@ -21,11 +21,9 @@ class CVariable
 
 public:
 
-    const std::string Type = "NONE"; ///< mandatory, double, float, unsigned integer, integer, etc.
-
-    CVariable( const std::string type, const std::vector<unsigned int> dimensions ):
+    CVariable( const std::string type, const std::string dimensionsCSV = "" ):
         Type( type ),
-        Dimensions( std::move( dimensions ) )
+        DimensionsCSV( dimensionsCSV )
     { }
 
     virtual ~CVariable()
@@ -37,16 +35,21 @@ public:
 
 protected:
 
-    const std::vector<unsigned int> Dimensions = {1}; ///< if empty variable is a scalar, else N-dimensional variable
+    std::string Type = "NONE"; ///< mandatory, double, float, unsigned integer, integer, etc.
+    std::string DimensionsCSV; ///< single string containing comma separated value (CSV) for the variable dimensions, from XML config file
+    std::vector<unsigned int> Dimensions = {1}; ///< if empty variable is a scalar, else N-dimensional variable
     //To do/understand gwrite, gread, read
 };
 
 
 template<class T>
-struct CVariableTemplate : public CVariable
+class CVariableTemplate : public CVariable
 {
-    CVariableTemplate( const std::vector<unsigned int> dimensions ):
-        CVariable( typeid(T).name(), dimensions )
+
+public:
+
+    CVariableTemplate( const std::string dimensionsCSV ):
+        CVariable( typeid(T).name(), dimensionsCSV )
     { }
 
     const T& Get() const { return Value; }
