@@ -29,6 +29,7 @@ class ADIOS
 
 public: // PUBLIC Constructors and Functions define the User Interface with ADIOS
 
+    std::map< std::string, SGroup > m_Groups;
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
@@ -38,7 +39,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @brief Serial constructor for XML config file
      * @param xmlConfigFile passed to m_XMLConfigFile
      */
-    ADIOS( const std::string xmlConfigFile );
+    ADIOS( const std::string xmlConfigFile);
 
   // ******************************************************************************* /
   // START OF THE MPI only members section ******************************************/
@@ -106,7 +107,7 @@ private:
      *     Value: SGroup struct in SGroup.h
      * </pre>
      */
-    std::map< std::string, SGroup > m_Groups;
+
 
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file
@@ -121,13 +122,6 @@ private:
   #ifdef HAVE_MPI
     void InitMPI( ); ///< called from Init, initialize parallel MPI
   #endif
-
-    /**
-     * Set Groups from string containing entire XML file
-     * @param xmlFileContent
-     */
-    void SetGroupsFromXML( const std::string xmlFileContent );
-
 };
 
 

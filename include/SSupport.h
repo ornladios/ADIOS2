@@ -15,8 +15,6 @@
 namespace adios
 {
 
-
-
 const std::string Version{"2.00"};
 
 const std::set<std::string> HostLanguages {

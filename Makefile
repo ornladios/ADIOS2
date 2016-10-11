@@ -24,7 +24,8 @@ INCLUDE=$(ADIOS_INC)
 #Build Header Dependencies, if one changes it will rebuild
 MPI_HFiles=$(shell find ./include/mpi/ -type f -name "*MPI.h")
 NoMPI_HFiles=$(shell find ./include/nompi/ -type f -name "*NoMPI.h")
-HFiles=$(MPI_HFiles) $(NoMPI_HFiles)
+Local_HFiles=$(shell find ./include/ -type f -name "*.h")
+HFiles=$(MPI_HFiles) $(NoMPI_HFiles) $(Local_HFiles)
 
 #Source *.cpp Files and Object Files
 MPI_CPPFiles=$(shell find ./src/mpi/ -type f -name "*MPI.cpp")
@@ -37,17 +38,17 @@ ObjFiles=$(MPI_ObjFiles) $(NoMPI_ObjFiles)
 
 
 #Build all MPI and noMPI
-all: $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o
+all: $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o $(HFiles)
 	@echo "ADIOS MPI headers" $(MPI_HFiles);
 	@echo "ADIOS No MPI headers" $(NoMPI_HFiles);
 	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o  
 
 #MPI build    
-mpi: $(MPI_ObjFiles) ./bin/ADIOS.o
-	@echo "ADIOS MPI headers" $(MPI_HFiles);
+mpi: $(MPI_ObjFiles) ./bin/ADIOS.o $(MPI_HFiles) $(Local_HFiles)
+	@echo "ADIOS MPI headers" $(MPI_HFiles) $(Local_HFiles);
 	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o
 	
-./bin/%.o: ./src/mpi/transport/%.cpp $(MPI_HFiles)
+./bin/%.o: ./src/mpi/transport/%.cpp
 	$(MPICC) $(CFLAGS) -DHAVE_MPI $(INCLUDE) -o $@ $< 
 
 ./bin/ADIOS.o: ./src/ADIOS.cpp
@@ -55,17 +56,17 @@ mpi: $(MPI_ObjFiles) ./bin/ADIOS.o
 
     
 #NoMPI build    
-nompi: $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o
-	@echo "ADIOS No MPI headers" $(NoMPI_HFiles);
+nompi: $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o $(NoMPI_HFiles) $(Local_HFiles)
+	@echo "ADIOS No MPI headers" $(NoMPI_HFiles) $(Local_HFiles);
 	$(AR) rcs ./lib/libadios_nompi.a $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o
 	
-./bin/%.o: ./src/nompi/transport/%.cpp $(NoMPI_HFiles)
+./bin/%.o: ./src/nompi/transport/%.cpp $(NoMPI_HFiles) $(Local_HFiles)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
 	
-./bin/ADIOS_nompi.o: ./src/ADIOS.cpp
+./bin/ADIOS_nompi.o: ./src/ADIOS.cpp $(NoMPI_HFiles) $(Local_HFiles)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
 
-./bin/ADIOSFunctions.o: ./src/ADIOSFunctions.cpp
+./bin/ADIOSFunctions.o: ./src/ADIOSFunctions.cpp $(NoMPI_HFiles) $(Local_HFiles)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
     
 clean:

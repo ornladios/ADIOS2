@@ -10,6 +10,9 @@
 
 #include <string>
 #include <vector>
+#include <map>
+
+#include "SGroup.h"
 
 
 namespace adios
@@ -34,7 +37,7 @@ void GetQuotedValue( const char quote, const std::string::size_type& quotePositi
 
 /**
  * Get attributes field1="value1" field2="value2" by looping through a single XML tag
- * @param tag field0="value0" field1="value1"
+ * @param tag field0="value0" field1="value1" in a single string
  * @param pairs pairs[0].first=field0 pairs[0].second=value0 pairs[1].first=field1 pairs[1].second=value1
  */
 void GetPairs( const std::string tag, std::vector< std::pair<const std::string, const std::string> >& pairs ) noexcept;
@@ -43,11 +46,50 @@ void GetPairs( const std::string tag, std::vector< std::pair<const std::string, 
 /**
  * Determine tag type and call GetPairs to populate pairs
  * @param fileContent file Content in a single string
- * @param tag field0="value0" field1="value1"
+ * @param tag field0="value0" field1="value1" in a single string
  * @param pairs pairs[0].first=field0 pairs[0].second=value0 pairs[1].first=field1 pairs[1].second=value1
  */
 void GetPairsFromTag( const std::string& fileContent, const std::string tag,
                       std::vector< std::pair<const std::string, const std::string> >& pairs );
+
+
+/**
+ * Sets a member of ADIOS class hostLanguage or groups based based on a single tagName, called in while loop of SetMembersFromXMLConfigFile
+ * @param tagName field0="value0" field1="value1" in a single string
+ * @param pairs pairs[0].first=field0 pairs[0].second=value0 pairs[1].first=field1 pairs[1].second=value1
+ * @param currentGroup current group to be populated
+ * @param hostLanguage to be populated if tagName="adios-config"
+ * @param groups to be populated based on currentGroup and tagName adios-group, var, attribute
+ */
+void SetMemberFromTag( const std::string tagName, const std::vector< std::pair<const std::string, const std::string> >& pairs,
+                       std::string& currentGroup, std::string& hostLanguage, std::map< std::string, SGroup >& groups );
+
+
+/**
+ * Loops through fileContent for tags and sets group and hostLanguage members in class ADIOS calling SetMemberFromTag
+ * @param fileContent XML file Content in a single string
+ * @param hostLanguage to be set
+ * @param groups to be set
+ */
+void SetMembersFromXMLConfigFile( const std::string& fileContent, std::string& hostLanguage, std::map< std::string, SGroup >& groups );
+
+
+
+
+
+
+
+/**
+ * Set members
+ * @param fileContent
+ * @param hostLanguage
+ * @param groups
+ */
+void SetMembers( const std::string& fileContent, std::string& hostLanguage, std::map< std::string, SGroup >& groups );
+
+
+
+
 
 }
 

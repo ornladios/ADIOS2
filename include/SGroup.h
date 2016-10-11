@@ -40,7 +40,7 @@ struct SGroup
 
     std::vector< unsigned long int > GlobalOffsets; ///< from global-bounds in XML File, data in global space
 
-    std::shared_ptr< CTransport > TransportMethod; ///< transport method defined in XML File
+    std::shared_ptr< CTransport > TransportMethod; ///< transport method defined in XML File, using shared pointer as SGroup can be uninitialized
 
 };
 
