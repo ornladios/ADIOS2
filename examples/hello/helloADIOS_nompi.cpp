@@ -16,19 +16,10 @@ int main( int argc, char* argv [] )
 {
     try
     {
-        adios::ADIOS adiosFile( "writer.xml" ); //testing with CPOSIXNoMPI
+        adios::ADIOS adiosFile( "writer2Groups.xml" ); //testing with CPOSIXNoMPI
         adiosFile.Init( );
-
-        for( auto& groupPair : adiosFile.m_Groups )
-        {
-            std::cout << "Group " << groupPair.first << "\n";
-
-            for( auto& variablePair : groupPair.second.Variables )
-            {
-                std::cout << "\t Variable " << variablePair.first << "\tDimensions: " << variablePair.second->DimensionsCSV << "\n";
-            }
-        }
-
+        adiosFile.MonitorGroups( );
+        std::cout << "Finished initializing ADIOS\n";
     }
     catch( std::exception& e )
     {

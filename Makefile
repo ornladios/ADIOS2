@@ -41,12 +41,11 @@ ObjFiles=$(MPI_ObjFiles) $(NoMPI_ObjFiles)
 all: $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o $(HFiles)
 	@echo "ADIOS MPI headers" $(MPI_HFiles);
 	@echo "ADIOS No MPI headers" $(NoMPI_HFiles);
-	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o  
+	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) $(NoMPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o ./bin/CGroup.o
 
 #MPI build    
 mpi: $(MPI_ObjFiles) ./bin/ADIOS.o $(MPI_HFiles) $(Local_HFiles)
-	@echo "ADIOS MPI headers" $(MPI_HFiles) $(Local_HFiles);
-	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o
+	$(AR) rcs ./lib/libadios.a $(MPI_ObjFiles) ./bin/ADIOS.o ./bin/ADIOSFunctions.o ./bin/CGroup.o
 	
 ./bin/%.o: ./src/mpi/transport/%.cpp
 	$(MPICC) $(CFLAGS) -DHAVE_MPI $(INCLUDE) -o $@ $< 
@@ -56,9 +55,8 @@ mpi: $(MPI_ObjFiles) ./bin/ADIOS.o $(MPI_HFiles) $(Local_HFiles)
 
     
 #NoMPI build    
-nompi: $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o $(NoMPI_HFiles) $(Local_HFiles)
-	@echo "ADIOS No MPI headers" $(NoMPI_HFiles) $(Local_HFiles);
-	$(AR) rcs ./lib/libadios_nompi.a $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o
+nompi: $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o ./bin/CGroup.o $(NoMPI_HFiles) $(Local_HFiles)
+	$(AR) rcs ./lib/libadios_nompi.a $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o ./bin/CGroup.o
 	
 ./bin/%.o: ./src/nompi/transport/%.cpp $(NoMPI_HFiles) $(Local_HFiles)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
@@ -66,7 +64,12 @@ nompi: $(NoMPI_ObjFiles) ./bin/ADIOS_nompi.o ./bin/ADIOSFunctions.o $(NoMPI_HFil
 ./bin/ADIOS_nompi.o: ./src/ADIOS.cpp $(NoMPI_HFiles) $(Local_HFiles)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
 
+
+#Local common files
 ./bin/ADIOSFunctions.o: ./src/ADIOSFunctions.cpp $(NoMPI_HFiles) $(Local_HFiles)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
+	
+./bin/CGroup.o: ./src/CGroup.cpp $(NoMPI_HFiles) $(Local_HFiles)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $<
     
 clean:

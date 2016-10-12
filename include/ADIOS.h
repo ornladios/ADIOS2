@@ -15,7 +15,7 @@
   #include <mpi.h>
 #endif
 
-#include "SGroup.h"
+#include "CGroup.h"
 #include "SSupport.h"
 
 
@@ -29,7 +29,7 @@ class ADIOS
 
 public: // PUBLIC Constructors and Functions define the User Interface with ADIOS
 
-    std::map< std::string, SGroup > m_Groups;
+    std::map< std::string, CGroup > m_Groups;
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
@@ -86,6 +86,8 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     template<class T>
     void Write( const std::string groupName, const std::string variableName, const T* values );
+
+    void MonitorGroups( );
 
     void Close( ); // dumps to file?
 

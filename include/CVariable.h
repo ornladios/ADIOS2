@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <typeinfo> // for typeid
+#include <sstream>
 
 
 namespace adios
@@ -21,10 +22,24 @@ class CVariable
 
 public:
 
-    CVariable( const std::string type, const std::string dimensionsCSV = "1" ):
-        Type( type ),
-        DimensionsCSV( dimensionsCSV )
-    { }
+    CVariable( const bool isGlobal, const std::string type, const std::string dimensionsCSV = "1", const std::string transform = ""  ):
+        m_IsGlobal( isGlobal ),
+        m_Type( type ),
+        m_Transform( transform )
+    {
+        if( dimensionsCSV == "1" )
+        {
+            m_Dimensions.push_back( "1" );
+            return;
+        }
+
+        std::istringstream dimensionsCSVSS( dimensionsCSV );
+        std::string dimension;
+        while( std::getline( dimensionsCSVSS, dimension, ',' ) )
+        {
+            m_Dimensions.push_back( dimension );
+        }
+    }
 
     virtual ~CVariable()
     { }
@@ -34,10 +49,11 @@ public:
 
 
 //protected:
-
-    std::string Type = "NONE"; ///< mandatory, double, float, unsigned integer, integer, etc.
-    std::string DimensionsCSV = "1"; ///< single string containing comma separated value (CSV) for the variable dimensions, from XML config file
-    std::vector<unsigned int> Dimensions = {1}; ///< if empty variable is a scalar, else N-dimensional variable
+    bool m_IsGlobal = false;
+    std::string m_Type = "NONE"; ///< mandatory, double, float, unsigned integer, integer, etc.
+    std::vector<std::string> m_Dimensions = {"1"}; ///< if empty variable is a scalar, else N-dimensional variable
+    std::string m_Transform; ///< data transform: zlib, bzip2, szip
+    unsigned int m_CompressionLevel = 0; ///< taken from m_Transform, 1 to 9, if zero the default library value is taken
     //To do/understand gwrite, gread, read
 };
 
@@ -48,15 +64,21 @@ class CVariableTemplate : public CVariable
 
 public:
 
-    CVariableTemplate( const std::string dimensionsCSV = "1" ):
-        CVariable( typeid(T).name(), dimensionsCSV )
+    /**
+     * Template constructor class required for putting CVariable objects as value in a STL map container
+     * @param isGlobal
+     * @param dimensionsCSV
+     * @param transform
+     */
+    CVariableTemplate( const bool isGlobal, const std::string type, const std::string dimensionsCSV = "1", const std::string transform = "" ):
+        CVariable( isGlobal, type, dimensionsCSV, transform )
     { }
 
     ~CVariableTemplate( )
     { }
 
-    const T& Get() const { return Value; }
-    T Value;
+    const T& Get() const { return m_Value; }
+    T m_Value;
 
 };
 

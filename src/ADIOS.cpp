@@ -88,6 +88,14 @@ template<class T> void ADIOS::Write( const std::string groupName, const std::str
 }
 
 
+void ADIOS::MonitorGroups( )
+{
+    for( auto& groupPair : m_Groups )
+    {
+        std::cout << "Group:..." << groupPair.first << "\n";
+        groupPair.second.MonitorGroup();
+    }
+}
 
 
 
