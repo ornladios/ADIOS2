@@ -26,7 +26,7 @@ public:
     virtual ~CTransportNoMPI( )
     { }
 
-    virtual void Write( CVariable& variable ) = 0;
+    virtual void Write( const CVariable& variable ) = 0;
 };
 
 

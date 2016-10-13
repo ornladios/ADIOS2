@@ -10,6 +10,7 @@
 
 #include <string>
 #include <memory>
+#include <ostream>
 
 #ifdef HAVE_MPI
   #include <mpi.h>
@@ -78,16 +79,21 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     unsigned long int GroupSize( const std::string groupName ) const;
 
-
     /**
      * Submits a data element values for writing and associates it with the given variableName
+     * @param groupName name of group that owns the variable
      * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
      * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
      */
     template<class T>
     void Write( const std::string groupName, const std::string variableName, const T* values );
 
-    void MonitorGroups( );
+    /**
+     * @brief Dumps groups information to a file stream or standard output.
+     * Note that either the user closes this fileStream or it's closed at the end.
+     * @param logStream either std::cout standard output, or a std::ofstream file
+     */
+    void MonitorGroups( std::ostream& logStream ) const;
 
     void Close( ); // dumps to file?
 
@@ -124,6 +130,12 @@ private:
   #ifdef HAVE_MPI
     void InitMPI( ); ///< called from Init, initialize parallel MPI
   #endif
+
+    /**
+     * Checks for group existence in m_Groups
+     * @param groupName to be checked
+     */
+    void CheckGroup( const std::string groupName );
 };
 
 

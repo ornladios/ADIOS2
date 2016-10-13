@@ -48,7 +48,7 @@ public:
     template<class T, class U> void Set(const U& rhs);
 
 
-//protected:
+//protected: turned off for testing
     bool m_IsGlobal = false;
     std::string m_Type = "NONE"; ///< mandatory, double, float, unsigned integer, integer, etc.
     std::vector<std::string> m_Dimensions = {"1"}; ///< if empty variable is a scalar, else N-dimensional variable
@@ -67,6 +67,7 @@ public:
     /**
      * Template constructor class required for putting CVariable objects as value in a STL map container
      * @param isGlobal
+     * @param type
      * @param dimensionsCSV
      * @param transform
      */
@@ -77,8 +78,10 @@ public:
     ~CVariableTemplate( )
     { }
 
+    T* m_Value; // pointer or no pointer?
+
     const T& Get() const { return m_Value; }
-    T m_Value;
+
 
 };
 

@@ -25,6 +25,8 @@ public:
     const unsigned int m_Priority;
     const unsigned int m_Iteration;
     const bool m_IsUsingMPI;
+    std::string m_FileName;
+    std::string m_AccessMode;
 
     CTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
                 bool isUsingMPI ):
@@ -37,7 +39,14 @@ public:
     virtual ~CTransport( )
     { }
 
-    virtual void Write( CVariable& variable ) = 0;
+
+    void Open( const std::string fileName, const std::string accessMode = "w" )
+    {
+        m_FileName = fileName;
+        m_AccessMode = accessMode;
+    }
+
+    virtual void Write( const CVariable& variable ) = 0;
 };
 
 

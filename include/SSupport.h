@@ -15,9 +15,10 @@
 namespace adios
 {
 
-const std::string Version{"2.00"};
+const std::string c_Version{"2.00"};
 
-const std::set<std::string> HostLanguages {
+
+const std::set<std::string> c_HostLanguages {
     "C",
     "C++",
     "Fortran",
@@ -25,7 +26,7 @@ const std::set<std::string> HostLanguages {
     "Java"
 };
 
-const std::set<std::string> TransportMethods {
+const std::set<std::string> c_Transports {
     "NULL",
     "POSIX",
     "MPI",
@@ -39,14 +40,14 @@ const std::set<std::string> TransportMethods {
     "ICEE"
 };
 
-const std::set<std::string> Tranformations {
+const std::set<std::string> c_Transformations {
     "none",
     "identity",
     "bzip2",
     "isobar"
 };
 
-const std::map<std::string, std::string> DataTypes {
+const std::map<std::string, std::string> c_DataTypes {
     { "unsigned integer", "unsigned int" },
     { "integer", "int" },
     { "real" , "float" },
@@ -55,17 +56,7 @@ const std::map<std::string, std::string> DataTypes {
 };
 
 
-
-
-
-
-
-
-
-
-
-
-}
+} //end namespace
 
 
 #endif /* SSUPPORT_H_ */

@@ -32,7 +32,7 @@ public:
     virtual ~CTransportMPI( )
     { }
 
-    virtual void Write( CVariable& variable ) = 0;
+    virtual void Write( const CVariable& variable ) = 0;
 };
 
 

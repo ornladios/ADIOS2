@@ -12,6 +12,11 @@
 #include <string>
 #include <memory> //for shared_pointer
 #include <vector>
+#include <ostream>
+
+#ifdef HAVE_MPI
+#include <mpi.h> //for MPI_Comm in overloaded SetTransform
+#endif
 
 #include "CVariable.h"
 #include "SAttribute.h"
@@ -38,6 +43,23 @@ public:
     ~CGroup( ); ///< Using STL containers
 
     /**
+     * Opens group and passes fileName and accessMode to m_Transport
+     * @param fileName
+     * @param accessMode
+     */
+    void Open( const std::string fileName, const std::string accessMode = "w" );
+
+
+    /**
+     * Passes variableName and values to m_Transport
+     * @param variableName
+     * @param values
+     */
+    template<class T>
+    void Write( const std::string variableName, const T* values );
+
+
+    /**
      * @brief Sets a variable in current Group, name must be unique
      * @param name
      * @param isGlobal
@@ -46,7 +68,7 @@ public:
      * @param transform method, format = lib or lib:level, where lib = zlib, bzip2, szip, and level=1:9 . If no level is defined then library default is taken
      */
     void SetVariable( const std::string name, const bool isGlobal, const std::string type,
-                      const std::string dimensionsCSV = {1}, const std::string transform = "" );
+                      const std::string dimensionsCSV = "1", const std::string transform = "" );
 
     /**
      * @brief Sets a variable in current Group
@@ -66,16 +88,34 @@ public:
      */
     void SetGlobalBounds( const std::string dimensionsCSV, const std::string offsetsCSV = "" );
 
+
     /**
-     * Set a transport method for this group
-     * @param transport supported values in SSupport.h TransportMethods
+     * @brief Set a transport method for this group, if existing it will replace current transport method
+     * @param method supported values in SSupport.h TransportMethods
      * @param priority numeric priority for the I/O to schedule this write with others that might be pending
      * @param iteration iterations between writes of a group to gauge how quickly this data should be evacuated from the compute node
-     * @param verbose level
      */
-    void SetTransportMethod( const std::string transport, unsigned int priority = 1, unsigned int iteration=1, unsigned int verbose = 0 );
+    void SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration );
 
-    void MonitorGroup( ); ///< Dumps information about Group variables
+    #ifdef HAVE_MPI
+    /**
+     * @brief MPI version of SetTransport, includes the communicator
+     * @param method supported values in SSupport.h TransportMethods
+     * @param priority numeric priority for the I/O to schedule this write with others that might be pending
+     * @param iteration iterations between writes of a group to gauge how quickly this data should be evacuated from the compute node
+     * @param mpiComm MPI communicator from User->ADIOS->Group
+     */
+    void SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
+                       const MPI_Comm mpiComm );
+    #endif
+
+
+    /**
+     * @brief Dumps groups information to a file stream or standard output.
+     * Note that either the user closes this fileStream or it's closed at the end.
+     * @param logStream either std::cout standard output, or a std::ofstream file
+     */
+    void Monitor( std::ostream& logStream ) const; ///< Dumps information about Group variables
 
 
 private:
@@ -93,9 +133,12 @@ private:
     std::vector< std::string > m_GlobalDimensions; ///< from global-bounds in XML File, data in global space
     std::vector< std::string > m_GlobalOffsets; ///< from global-bounds in XML File, data in global space
 
-    std::shared_ptr< CTransport > m_TransportMethod; ///< transport method defined in XML File, using shared pointer as SGroup can be uninitialized
-    std::string m_ActiveMethod;
+    std::shared_ptr< CTransport > m_Transport; ///< transport method defined in XML File, using shared pointer as SGroup can be uninitialized
+    std::string m_ActiveTransport;
 
+    bool m_IsOpen = false; ///< checks if group was opened for operations;
+    std::string m_FileName; ///< associated fileName is the Group is opened.
+    std::string m_AcessMode; ///< file access mode
 
     /**
      * Called from XML constructor
@@ -103,6 +146,12 @@ private:
      * @param groupName returns the groupName from <adios-group name=" "
      */
     void ParseXMLGroup( const std::string& xmlGroup, std::string& groupName );
+
+    /**
+     * Function that checks if transport method is valid, called from overloaded SetTransform functions
+     * @param method transport method to be checked from SSupport
+     */
+    void CheckTransport( const std::string method );
 };
 
 

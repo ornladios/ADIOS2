@@ -27,7 +27,7 @@ public:
 
     ~CPOSIXNoMPI( );
 
-    void Write( CVariable& variable );
+    void Write( const CVariable& variable );
 
 };
 

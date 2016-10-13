@@ -12,6 +12,10 @@
 #include <vector>
 #include <map>
 
+#ifdef HAVE_MPI
+#include <mpi.h> //Just for MPI_Comm argument in SetMembersMPI
+#endif
+
 #include "CGroup.h"
 
 
@@ -71,6 +75,17 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
  */
 void SetMembers( const std::string& fileContent, std::string& hostLanguage, std::map< std::string, CGroup >& groups );
 
+
+#ifdef HAVE_MPI
+/**
+ * Set members m_Groups and m_HostLanguage from XML file content, called within Init functions
+ * @param fileContent file Content in a single string
+ * @param hostLanguage return the host language from fileContent
+ * @param groups passed returns the map of groups defined in fileContent
+ */
+void SetMembers( const std::string& fileContent, std::string& hostLanguage, std::map< std::string, CGroup >& groups,
+                 const MPI_Comm mpiComm );
+#endif
 
 } //end namespace
 

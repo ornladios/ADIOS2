@@ -9,6 +9,14 @@
 
 #include "CGroup.h"
 #include "ADIOSFunctions.h"
+#include "SSupport.h"
+
+//MPI transport methods
+#ifdef HAVE_MPI
+#include "mpi/transport/CPOSIXMPI.h"
+#endif
+
+#include "nompi/transport/CPOSIXNoMPI.h"
 
 
 namespace adios
@@ -24,6 +32,12 @@ CGroup::CGroup( const std::string& xmlGroup, std::string& groupName )
 
 CGroup::~CGroup( )
 { }
+
+void CGroup::Open( const std::string fileName, const std::string accessMode )
+{
+    m_IsOpen = true;
+    m_Transport->Open( fileName, accessMode );
+}
 
 
 void CGroup::SetVariable( const std::string name, const bool isGlobal, const std::string type, const std::string dimensionsCSV,
@@ -73,16 +87,35 @@ void CGroup::SetGlobalBounds( const std::string dimensionsCSV, const std::string
     }
 }
 
-void CGroup::MonitorGroup( )
+void CGroup::SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration )
+{
+    CheckTransport( method );
+    if( m_ActiveTransport == "POSIX" ) m_Transport = std::make_shared<CPOSIXNoMPI>( method, priority, iteration );
+}
+
+#ifdef HAVE_MPI
+void CGroup::SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
+                           const MPI_Comm mpiComm )
+{
+    CheckTransport( method );
+    if( m_ActiveTransport == "POSIX" ) m_Transport = std::make_shared<CPOSIXMPI>( method, priority, iteration, mpiComm );
+}
+#endif
+
+
+//PRIVATE FUNCTIONS BELOW
+
+void CGroup::Monitor( std::ostream& logStream ) const
 {
     for( auto& variablePair : m_Variables )
     {
-        std::cout << "VarName:..." << variablePair.first << "  Type:..." << variablePair.second->m_Type << "\n";
+        logStream << "VarName:..." << variablePair.first << "  Type:..." << variablePair.second->m_Type << "\n";
     }
 
-    std::cout << "Transport Method Unique?: " << m_TransportMethod.unique() << "\n";
-
+    logStream << "Transport Method " << m_ActiveTransport << "\n";
+    logStream << std::ostream::boolalpha << "Transport Method Unique?: " << m_Transport.unique() << "\n";
 }
+
 
 void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::string& groupName )
 {
@@ -153,6 +186,16 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::string& groupName 
 }
 
 
+void CGroup::CheckTransport( const std::string method )
+{
+    if( c_Transports.count( method ) == 0 )
+        throw std::invalid_argument( "ERROR: transport method " + method + " not supported. Check spelling or case sensitivity.\n" );
+
+    if( m_ActiveTransport.empty() == false ) //there is an existing transport method
+        m_Transport.reset();
+
+    m_ActiveTransport = method;
+}
 
 
 } //end namespace

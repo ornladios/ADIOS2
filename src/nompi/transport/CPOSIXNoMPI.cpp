@@ -24,7 +24,7 @@ CPOSIXNoMPI::~CPOSIXNoMPI( )
 { }
 
 
-void Write( CVariable& variable )
+void CPOSIXNoMPI::Write( const CVariable& variable )
 {
     std::cout << "Just saying Hello from CPOSIXNoMPI Write\n";
 }

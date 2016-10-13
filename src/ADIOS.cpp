@@ -62,39 +62,67 @@ void ADIOS::InitNoMPI( )
     std::string xmlFileContent;
     DumpFileToStream( m_XMLConfigFile, xmlFileContent ); //in ADIOSFunctions.h dumps all XML Config File to xmlFileContent
     SetMembers( xmlFileContent, m_HostLanguage,  m_Groups );
-
-    //SetMembersFromXMLConfigFile( xmlFileContent, m_HostLanguage,  m_Groups ); //in ADIOSFunctions.h sets m_HostLanguage and m_Groups
-    //std::cout << "Finishing Initialization";
 }
 
-#ifdef MPI_VERSION
+
+#ifdef HAVE_MPI
 void ADIOS::InitMPI( )
 {
-    std::cout << "Just testing the InitMPI Function\n";
+    int rank;
+    MPI_Comm_rank( m_MPIComm, &rank );
+
+    int xmlFileContentSize; // common
+    std::string xmlFileContent;
+
+    if( rank == 0 )
+    {
+        std::string xmlFileContent;
+        DumpFileToStream( m_XMLConfigFile, xmlFileContent ); //in ADIOSFunctions.h dumps all XML Config File to xmlFileContent
+        xmlFileContentSize = m_XMLConfigFile.size( ) + 1; // add one for the null character
+
+        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, m_MPIComm  ); //broadcast size
+        MPI_Bcast( (char*)xmlFileContent.c_str(), xmlFileContentSize, MPI_CHAR, 0, m_MPIComm );
+
+        SetMembers( xmlFileContent, m_HostLanguage,  m_Groups );
+    }
+    else
+    {
+        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, m_MPIComm  ); //broadcast size
+        char* xmlFileContentMPI = new char[ xmlFileContentSize ]; //allocate C char
+        MPI_Bcast( xmlFileContentMPI, xmlFileContentSize, MPI_CHAR, 0, m_MPIComm ); //receive from rank=0
+
+        xmlFileContent.assign( xmlFileContentMPI );
+        SetMembers( xmlFileContent, m_HostLanguage,  m_Groups );
+    }
 }
 #endif
 
 
 void ADIOS::Open( const std::string groupName, const std::string fileName, const std::string accessMode )
 {
-    //retrieve a group name from m_Groups
-    std::cout << "Just testing the Open function\n";
+    m_Groups.at( groupName ).Open( fileName, accessMode );
 }
 
 
 template<class T> void ADIOS::Write( const std::string groupName, const std::string variableName, const T* values )
 {
-    std::cout << "Just testing the Write function\n";
+    m_Groups.at( groupName ).Write( variableName, values );
 }
 
 
-void ADIOS::MonitorGroups( )
+void ADIOS::MonitorGroups( std::ostream& logStream ) const
 {
     for( auto& groupPair : m_Groups )
     {
-        std::cout << "Group:..." << groupPair.first << "\n";
-        groupPair.second.MonitorGroup();
+        logStream << "Group:..." << groupPair.first << "\n";
+        groupPair.second.Monitor( logStream );
     }
+}
+
+void ADIOS::CheckGroup( const std::string groupName )
+{
+    auto it = m_Groups.find( groupName );
+    if( it == m_Groups.end() ) throw std::invalid_argument( "ERROR: group " + groupName + " not found\n" );
 }
 
 

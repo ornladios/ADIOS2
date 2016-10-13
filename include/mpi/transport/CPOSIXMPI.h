@@ -29,7 +29,7 @@ public:
 
     ~CPOSIXMPI( );
 
-    void Write( CVariable& variable );
+    void Write( const CVariable& variable );
 
 };
 

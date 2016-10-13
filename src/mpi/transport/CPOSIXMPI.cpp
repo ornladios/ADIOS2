@@ -25,7 +25,7 @@ CPOSIXMPI::~CPOSIXMPI( )
 { }
 
 
-void CPOSIXMPI::Write( CVariable& variable )
+void CPOSIXMPI::Write( const CVariable& variable )
 {
     int rank;
     MPI_Comm_rank( m_MPIComm, &rank );

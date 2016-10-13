@@ -136,13 +136,14 @@ void SetMembers( const std::string& fileContent, std::string& hostLanguage, std:
         startComment = currentContent.find( "<!--" );
     }
 
+    std::string tag; //use for < > tags
+    std::vector< std::pair<const std::string, const std::string> > pairs; // pairs in tag
+
     //Tag <adios-config
-    std::string configTag;
     currentPosition = 0;
-    GetSubString( "<", ">", currentContent, configTag, currentPosition );
-    configTag = configTag.substr( 1, configTag.size() - 2 ); //eliminate < >
-    std::vector< std::pair<const std::string, const std::string> > pairs;
-    GetPairsFromTag( currentContent, configTag, pairs );
+    GetSubString( "<", ">", currentContent, tag, currentPosition );
+    tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
+    GetPairsFromTag( currentContent, tag, pairs );
 
     for( auto& pair : pairs )
     {
@@ -150,7 +151,7 @@ void SetMembers( const std::string& fileContent, std::string& hostLanguage, std:
     }
 
     //adios-group
-    std::string xmlGroup( "Used for groups" );
+    std::string xmlGroup;
     while( currentPosition != std::string::npos )
     {
         GetSubString("<adios-group ", "</adios-group>", currentContent, xmlGroup, currentPosition );
@@ -159,43 +160,147 @@ void SetMembers( const std::string& fileContent, std::string& hostLanguage, std:
         std::string groupName;
         CGroup group( xmlGroup, groupName );
         groups[ groupName ] = group; //copy as it's a small object
+
+        currentContent.erase( currentContent.find( xmlGroup ), xmlGroup.size() );
+        currentPosition = 0;
     }
 
+    //transport
+    currentPosition = 0;
+    while( currentPosition != std::string::npos )
+    {
+        GetSubString( "<transport ", ">", currentContent, tag, currentPosition );
+        if( tag.empty() ) break;
+        tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
+        pairs.clear();
+        GetPairsFromTag( currentContent, tag, pairs );
 
+        std::string groupName, method, priorityStr, iterationStr;
+        for( auto& pair : pairs )
+        {
+            if( pair.first == "group" )  groupName = pair.second;
+            else if( pair.first == "method" ) method = pair.second;
+            else if( pair.first == "priority" ) priorityStr = pair.second;
+            else if( pair.first == "iteration" ) iterationStr = pair.second;
+        }
 
+        auto itGroup = groups.find( groupName );
+        if( itGroup == groups.end() ) //not found
+        {
+            continue;
+        }
 
-    //transports tag
-//    std::map< std::string, std::map<std::string,std::string> > groupsTransport;
-//    std::string::size_type startTransport = currentContent.find("<transport ");
-//
-//    while( startTransport != currentContent.npos )
-//    {
-//        std::string::size_type endTransport( currentContent.find( "</transport>") );
-//        std::string::size_type endTag( currentContent.find('>', startTransport ) );
-//
-//        const std::string transportTag( currentContent.substr( startTransport+1, endTag-startTransport-1 ) );
-//        std::vector< std::pair<const std::string, const std::string> > transportPairs;
-//        std::cout << "Transport tag..." << transportTag << "...\n";
-//        GetPairsFromTag( currentContent, transportTag, transportPairs );
-//
-//        for( auto& pair : pairs )
-//        {
-//            if( pair.first == "group" )
-//            {
-//
-//            }
-//        }
-//        const std::string transportContents( currentContent.substr( startTransport, endTransport-startTransport)  );
-//        std::cout << "Transport contents..." << transportContents << "...\n";
-//
-//        currentContent.erase( startTransport, endTransport-startComment + 12 );
-//        std::cout << "Current content..." << currentContent << "...\n";
-//
-//        startTransport = currentContent.find( "<transport " );
-//    }
+        //lambda function to check priority and iteration
+        auto lf_UIntCheck = []( const std::string method, const std::string fieldStr, const std::string fieldName, int& field )
+        {
+            field = 0;
+            if( fieldStr.empty() == false )
+            {
+                field = std::stoi( fieldStr ); //throws invalid_argument
+                if( field < 0 ) throw std::invalid_argument("ERROR: " + fieldName + " in transport " + method + " can't be negative\n" );
+            }
+        };
+
+        int priority, iteration;
+        lf_UIntCheck( method, priorityStr, "priority", priority );
+        lf_UIntCheck( method, iterationStr, "iteration", iteration );
+
+        itGroup->second.SetTransport( method, (unsigned int)priority, (unsigned int)iteration );
+    }
 }
 
+#ifdef HAVE_MPI
+void SetMembers( const std::string& fileContent, std::string& hostLanguage, std::map< std::string, CGroup >& groups,
+                 const MPI_Comm mpiComm )
+{
+    //adios-config
+    std::string currentContent;
+    std::string::size_type currentPosition( 0 );
+    GetSubString( "<adios-config ", "</adios-config>", fileContent, currentContent, currentPosition );
 
+    //remove comment sections
+    std::string::size_type startComment ( currentContent.find( "<!--" ) );
+
+    while( startComment != currentContent.npos )
+    {
+        std::string::size_type endComment( currentContent.find( "-->") );
+        currentContent.erase( startComment, endComment-startComment+3 );
+        startComment = currentContent.find( "<!--" );
+    }
+
+    std::string tag; //use for < > tags
+    std::vector< std::pair<const std::string, const std::string> > pairs; // pairs in tag
+
+    //Tag <adios-config
+    currentPosition = 0;
+    GetSubString( "<", ">", currentContent, tag, currentPosition );
+    tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
+    GetPairsFromTag( currentContent, tag, pairs );
+
+    for( auto& pair : pairs )
+    {
+        if( pair.first == "host-language" ) hostLanguage = pair.second;
+    }
+
+    //adios-group
+    std::string xmlGroup;
+    while( currentPosition != std::string::npos )
+    {
+        GetSubString("<adios-group ", "</adios-group>", currentContent, xmlGroup, currentPosition );
+        if( xmlGroup.empty() ) break;
+
+        std::string groupName;
+        CGroup group( xmlGroup, groupName );
+        groups[ groupName ] = group; //copy as it's a small object
+
+        currentContent.erase( currentContent.find( xmlGroup ), xmlGroup.size() );
+        currentPosition = 0;
+    }
+
+    //transport
+    currentPosition = 0;
+    while( currentPosition != std::string::npos )
+    {
+        GetSubString( "<transport ", ">", currentContent, tag, currentPosition );
+        if( tag.empty() ) break;
+        tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
+        pairs.clear();
+        GetPairsFromTag( currentContent, tag, pairs );
+
+        std::string groupName, method, priorityStr, iterationStr;
+        for( auto& pair : pairs )
+        {
+            if( pair.first == "group" )  groupName = pair.second;
+            else if( pair.first == "method" ) method = pair.second;
+            else if( pair.first == "priority" ) priorityStr = pair.second;
+            else if( pair.first == "iteration" ) iterationStr = pair.second;
+        }
+
+        auto itGroup = groups.find( groupName );
+        if( itGroup == groups.end() ) //not found
+        {
+            continue;
+        }
+
+        //lambda function to check priority and iteration
+        auto lf_UIntCheck = []( const std::string method, const std::string fieldStr, const std::string fieldName, int& field )
+        {
+            field = 0;
+            if( fieldStr.empty() == false )
+            {
+                field = std::stoi( fieldStr ); //throws invalid_argument
+                if( field < 0 ) throw std::invalid_argument("ERROR: " + fieldName + " in transport " + method + " can't be negative\n" );
+            }
+        };
+
+        int priority, iteration;
+        lf_UIntCheck( method, priorityStr, "priority", priority );
+        lf_UIntCheck( method, iterationStr, "iteration", iteration );
+
+        itGroup->second.SetTransport( method, (unsigned int)priority, (unsigned int)iteration, mpiComm );
+    }
+}
+#endif
 
 
 

@@ -434,7 +434,7 @@ EXTRACT_PACKAGE = NO
 # included in the documentation.
 # The default value is: NO.
 
-EXTRACT_STATIC = YES
+EXTRACT_STATIC = NO
 
 # If the EXTRACT_LOCAL_CLASSES tag is set to YES, classes (and structs) defined
 # locally in source files will be included in the documentation. If set to NO,
@@ -771,7 +771,7 @@ WARN_LOGFILE =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT = /home/wfg/workspace/ADIOSPP/include /home/wfg/workspace/ADIOSPP/include/mpi/transport /home/wfg/workspace/ADIOSPP/include/nompi/transport
+INPUT = /home/wfg/workspace/ADIOSPP/include /home/wfg/workspace/ADIOSPP/include/mpi/transport /home/wfg/workspace/ADIOSPP/include/nompi/transport /home/wfg/workspace/ADIOSPP/src /home/wfg/workspace/ADIOSPP/src/mpi/transport /home/wfg/workspace/ADIOSPP/src/nompi/transport 
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -2218,7 +2218,7 @@ GROUP_GRAPHS = YES
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-UML_LOOK = NO
+UML_LOOK = YES
 
 # If the UML_LOOK tag is enabled, the fields and methods are shown inside the
 # class node. If there are many fields or methods and many nodes the graph may
@@ -2239,7 +2239,7 @@ UML_LIMIT_NUM_FIELDS = 10
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-TEMPLATE_RELATIONS = NO
+TEMPLATE_RELATIONS = YES
 
 # If the INCLUDE_GRAPH, ENABLE_PREPROCESSING and SEARCH_INCLUDES tags are set to
 # YES then doxygen will generate a graph for each documented file showing the
@@ -2281,7 +2281,7 @@ CALL_GRAPH = YES
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-CALLER_GRAPH = NO
+CALLER_GRAPH = YES
 
 # If the GRAPHICAL_HIERARCHY tag is set to YES then doxygen will graphical
 # hierarchy of all classes instead of a textual one.
@@ -2339,7 +2339,7 @@ DOT_PATH =
 # command).
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOTFILE_DIRS = 
+DOTFILE_DIRS = /home/wfg/workspace/ADIOSPP/include /home/wfg/workspace/ADIOSPP/include/mpi/transport /home/wfg/workspace/ADIOSPP/include/nompi/transport 
 
 # The MSCFILE_DIRS tag can be used to specify one or more directories that
 # contain msc files that are included in the documentation (see the \mscfile
@@ -2388,7 +2388,7 @@ DOT_GRAPH_MAX_NODES = 50
 # Minimum value: 0, maximum value: 1000, default value: 0.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-MAX_DOT_GRAPH_DEPTH = 0
+MAX_DOT_GRAPH_DEPTH = 3
 
 # Set the DOT_TRANSPARENT tag to YES to generate images with a transparent
 # background. This is disabled by default, because dot on Windows does not seem
