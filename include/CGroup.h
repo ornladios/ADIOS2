@@ -8,11 +8,13 @@
 #ifndef CGROUP_H_
 #define CGROUP_H_
 
+/// \cond
 #include <map>
 #include <string>
 #include <memory> //for shared_pointer
 #include <vector>
 #include <ostream>
+/// \endcond
 
 #ifdef HAVE_MPI
 #include <mpi.h> //for MPI_Comm in overloaded SetTransform

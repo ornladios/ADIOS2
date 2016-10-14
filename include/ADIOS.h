@@ -8,9 +8,11 @@
 #ifndef ADIOS_H_
 #define ADIOS_H_
 
+/// \cond
 #include <string>
 #include <memory>
 #include <ostream>
+/// \endcond ///
 
 #ifdef HAVE_MPI
   #include <mpi.h>

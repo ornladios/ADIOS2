@@ -8,9 +8,12 @@
 #ifndef ADIOSFUNCTIONS_H_
 #define ADIOSFUNCTIONS_H_
 
+/// \cond
 #include <string>
 #include <vector>
 #include <map>
+/// \endcond
+
 
 #ifdef HAVE_MPI
 #include <mpi.h> //Just for MPI_Comm argument in SetMembersMPI

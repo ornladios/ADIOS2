@@ -107,13 +107,21 @@ void CGroup::SetTransport( const std::string method, const unsigned int priority
 
 void CGroup::Monitor( std::ostream& logStream ) const
 {
+    logStream << "\tVariable \t Type\n";
     for( auto& variablePair : m_Variables )
     {
-        logStream << "VarName:..." << variablePair.first << "  Type:..." << variablePair.second->m_Type << "\n";
+        logStream << "\t" << variablePair.first << " \t " << variablePair.second->m_Type << "\n";
     }
 
-    logStream << "Transport Method " << m_ActiveTransport << "\n";
-    logStream << std::ostream::boolalpha << "Transport Method Unique?: " << m_Transport.unique() << "\n";
+    logStream << "\tAttribute \t Type \t Value \n";
+    for( auto& attribute : m_Attributes )
+    {
+        logStream << "\t" << attribute.Name << " \t " << attribute.Type << " \t " << attribute.Value << "\n";
+    }
+
+
+    logStream << "\tTransport Method " << m_ActiveTransport << "\n";
+    logStream << "\tIs Transport Method Unique?: " << std::boolalpha << m_Transport.unique() << "\n";
 }
 
 

@@ -18,7 +18,7 @@
 namespace adios
 {
 
-//here assign default values of non-primitives
+
 ADIOS::ADIOS( )
 { }
 
@@ -36,14 +36,13 @@ ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm  ):
 { }
 #endif
 
+
 ADIOS::~ADIOS( )
 { }
 
 
 void ADIOS::Init( )
 {
-    std::cout << "Just testing the Init Function\n";
-
     if( m_IsUsingMPI == false && m_XMLConfigFile.empty() == false )
     {
         InitNoMPI( );
@@ -68,8 +67,9 @@ void ADIOS::InitNoMPI( )
 #ifdef HAVE_MPI
 void ADIOS::InitMPI( )
 {
-    int rank;
+    int rank, size;
     MPI_Comm_rank( m_MPIComm, &rank );
+    MPI_Comm_size( m_MPIComm, &size );
 
     int xmlFileContentSize; // common
     std::string xmlFileContent;
@@ -78,9 +78,9 @@ void ADIOS::InitMPI( )
     {
         std::string xmlFileContent;
         DumpFileToStream( m_XMLConfigFile, xmlFileContent ); //in ADIOSFunctions.h dumps all XML Config File to xmlFileContent
-        xmlFileContentSize = m_XMLConfigFile.size( ) + 1; // add one for the null character
+        xmlFileContentSize = xmlFileContent.size( ) + 1; // add one for the null character
 
-        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, m_MPIComm  ); //broadcast size
+        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, m_MPIComm  ); //broadcast size for allocation
         MPI_Bcast( (char*)xmlFileContent.c_str(), xmlFileContentSize, MPI_CHAR, 0, m_MPIComm );
 
         SetMembers( xmlFileContent, m_HostLanguage,  m_Groups );
@@ -119,6 +119,7 @@ void ADIOS::MonitorGroups( std::ostream& logStream ) const
     }
 }
 
+
 void ADIOS::CheckGroup( const std::string groupName )
 {
     auto it = m_Groups.find( groupName );
@@ -126,8 +127,4 @@ void ADIOS::CheckGroup( const std::string groupName )
 }
 
 
-
 } //end namespace
-
-
-

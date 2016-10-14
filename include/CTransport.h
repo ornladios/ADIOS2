@@ -8,7 +8,9 @@
 #ifndef CTRANSPORT_H_
 #define CTRANSPORT_H_
 
+///cond
 #include <string>
+///endcond
 
 #include "CVariable.h"
 

@@ -5,10 +5,12 @@
  *      Author: wfg
  */
 
+///cond
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
+///endcond
 
 #include "ADIOSFunctions.h"
 #include "SSupport.h"
