@@ -8,10 +8,16 @@
 #ifndef SATTRIBUTE_H_
 #define SATTRIBUTE_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+/// \endcond
 
 namespace adios
 {
 
+/**
+ * Plain-old data struct that defines an attribute in an ADIOS group in CGroup.h
+ */
 struct SAttribute
 {
     std::string Name; ///< Attribute name
@@ -28,7 +34,8 @@ struct SAttribute
      * @param value passed to Value
      * @param type passed to Type
      */
-    SAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path, const std::string value ):
+    SAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path,
+                const std::string value ):
         Name( name ),
         IsGlobal( isGlobal ),
         Type( type ),

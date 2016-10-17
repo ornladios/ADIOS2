@@ -8,16 +8,20 @@
 #ifndef SSUPPORT_H_
 #define SSUPPORT_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <set>
 #include <string>
 #include <map>
+/// \endcond
 
 namespace adios
 {
 
-const std::string c_Version{"2.00"};
+const std::string c_Version{"2.00"}; ///< current version
 
-
+/**
+ * Supported host languages
+ */
 const std::set<std::string> c_HostLanguages {
     "C",
     "C++",
@@ -26,6 +30,9 @@ const std::set<std::string> c_HostLanguages {
     "Java"
 };
 
+/**
+ * Available transport methods
+ */
 const std::set<std::string> c_Transports {
     "NULL",
     "POSIX",
@@ -40,6 +47,9 @@ const std::set<std::string> c_Transports {
     "ICEE"
 };
 
+/**
+ * Available transformations
+ */
 const std::set<std::string> c_Transformations {
     "none",
     "identity",
@@ -47,10 +57,14 @@ const std::set<std::string> c_Transformations {
     "isobar"
 };
 
+/**
+ * Supported data types
+ */
 const std::map<std::string, std::string> c_DataTypes {
     { "unsigned integer", "unsigned int" },
     { "integer", "int" },
     { "real" , "float" },
+    { "float" , "float" },
     { "real*8" , "double" },
     { "double" , "double" },
 };

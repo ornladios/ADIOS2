@@ -8,9 +8,9 @@
 #ifndef CTRANSPORT_H_
 #define CTRANSPORT_H_
 
-///cond
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
-///endcond
+/// \endcond
 
 #include "CVariable.h"
 

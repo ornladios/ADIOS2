@@ -8,11 +8,11 @@
 #ifndef ADIOS_H_
 #define ADIOS_H_
 
-/// \cond
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 #include <memory>
 #include <ostream>
-/// \endcond ///
+/// \endcond
 
 #ifdef HAVE_MPI
   #include <mpi.h>
@@ -97,7 +97,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     void MonitorGroups( std::ostream& logStream ) const;
 
-    void Close( ); // dumps to file?
+    void Close( const std::string groupName ); // dumps to file?
 
 
 private:

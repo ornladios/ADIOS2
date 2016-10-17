@@ -23,7 +23,7 @@ class CPOSIXNoMPI : public CTransportNoMPI
 
 public:
 
-    CPOSIXNoMPI( const std::string method, const unsigned int priority, const unsigned int iteration );
+    CPOSIXNoMPI( const unsigned int priority, const unsigned int iteration );
 
     ~CPOSIXNoMPI( );
 

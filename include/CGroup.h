@@ -8,7 +8,7 @@
 #ifndef CGROUP_H_
 #define CGROUP_H_
 
-/// \cond
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
 #include <string>
 #include <memory> //for shared_pointer
@@ -118,6 +118,9 @@ public:
      * @param logStream either std::cout standard output, or a std::ofstream file
      */
     void Monitor( std::ostream& logStream ) const; ///< Dumps information about Group variables
+
+
+    void Close( );
 
 
 private:

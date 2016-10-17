@@ -8,12 +8,12 @@
 #ifndef CVARIABLE_H_
 #define CVARIABLE_H_
 
-///cond
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 #include <vector>
 #include <typeinfo> // for typeid
 #include <sstream>
-///endcond
+/// \endcond
 
 namespace adios
 {

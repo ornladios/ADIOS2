@@ -22,13 +22,13 @@ ADIOS_INC=-I./include
 INCLUDE=$(ADIOS_INC)
 
 #Build Header Dependencies, if one changes it will rebuild
-MPI_HFiles=$(shell find ./include/mpi -type f -name "*MPI.h")
+MPI_HFiles=$(shell find ./include/mpi -type f -name "*.h")
 NoMPI_HFiles=$(shell find ./include/nompi -type f -name "*NoMPI.h")
 Local_HFiles=$(shell find ./include -type f -name "*.h")
 HFiles=$(MPI_HFiles) $(NoMPI_HFiles) $(Local_HFiles)
 
 #Source *.cpp Files and Object Files
-MPI_CPPFiles=$(shell find ./src/mpi -type f -name "*MPI.cpp")
+MPI_CPPFiles=$(shell find ./src/mpi -type f -name "*.cpp")
 MPI_ObjFiles=$(patsubst ./src/mpi/transport/%.cpp, ./bin/%.o, $(MPI_CPPFiles))
 
 NoMPI_CPPFiles=$(shell find ./src/nompi -type f -name "*NoMPI.cpp")

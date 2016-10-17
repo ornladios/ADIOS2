@@ -5,15 +5,17 @@
  *      Author: wfg
  */
 
+/// \cond EXCLUDED_FROM_DOXYGEN
 #include <iostream>
-
+/// \endcond
+///
 #include "CGroup.h"
 #include "ADIOSFunctions.h"
 #include "SSupport.h"
 
 //MPI transport methods
 #ifdef HAVE_MPI
-#include "mpi/transport/CPOSIXMPI.h"
+#include "mpi/transport/CPOSIX.h"
 #endif
 
 #include "nompi/transport/CPOSIXNoMPI.h"
@@ -98,13 +100,13 @@ void CGroup::SetTransport( const std::string method, const unsigned int priority
                            const MPI_Comm mpiComm )
 {
     CheckTransport( method );
-    if( m_ActiveTransport == "POSIX" ) m_Transport = std::make_shared<CPOSIXMPI>( method, priority, iteration, mpiComm );
+    if( m_ActiveTransport == "POSIX" ) m_Transport = std::make_shared<CPOSIX>( method, priority, iteration, mpiComm );
 }
 #endif
 
 
-//PRIVATE FUNCTIONS BELOW
 
+//PRIVATE FUNCTIONS BELOW
 void CGroup::Monitor( std::ostream& logStream ) const
 {
     logStream << "\tVariable \t Type\n";
@@ -192,6 +194,12 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::string& groupName 
         }
     } //end while loop
 }
+
+void CGroup::Close( )
+{
+    //Need to implement
+}
+
 
 
 void CGroup::CheckTransport( const std::string method )

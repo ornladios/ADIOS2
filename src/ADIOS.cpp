@@ -6,10 +6,12 @@
  *
  */
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <utility>
+/// \endcond
 
 #include "ADIOS.h"
 #include "ADIOSFunctions.h"
@@ -109,6 +111,10 @@ template<class T> void ADIOS::Write( const std::string groupName, const std::str
     m_Groups.at( groupName ).Write( variableName, values );
 }
 
+void ADIOS::Close( const std::string groupName )
+{
+    m_Groups.at( groupName ).Close();
+}
 
 void ADIOS::MonitorGroups( std::ostream& logStream ) const
 {
@@ -119,12 +125,12 @@ void ADIOS::MonitorGroups( std::ostream& logStream ) const
     }
 }
 
-
 void ADIOS::CheckGroup( const std::string groupName )
 {
     auto it = m_Groups.find( groupName );
     if( it == m_Groups.end() ) throw std::invalid_argument( "ERROR: group " + groupName + " not found\n" );
 }
+
 
 
 } //end namespace

@@ -5,12 +5,12 @@
  *      Author: wfg
  */
 
-///cond
+/// \cond EXCLUDED_FROM_DOXYGEN
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
-///endcond
+/// \endcond
 
 #include "ADIOSFunctions.h"
 #include "SSupport.h"

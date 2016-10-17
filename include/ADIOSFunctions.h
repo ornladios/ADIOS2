@@ -8,7 +8,7 @@
 #ifndef ADIOSFUNCTIONS_H_
 #define ADIOSFUNCTIONS_H_
 
-/// \cond
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 #include <vector>
 #include <map>
@@ -85,6 +85,7 @@ void SetMembers( const std::string& fileContent, std::string& hostLanguage, std:
  * @param fileContent file Content in a single string
  * @param hostLanguage return the host language from fileContent
  * @param groups passed returns the map of groups defined in fileContent
+ * @param mpiComm MPI Communicator passed from application
  */
 void SetMembers( const std::string& fileContent, std::string& hostLanguage, std::map< std::string, CGroup >& groups,
                  const MPI_Comm mpiComm );

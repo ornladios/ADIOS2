@@ -5,27 +5,26 @@
  *      Author: wfg
  */
 
+#include <iostream>
 
-
-
-#include "mpi/transport/CPOSIXMPI.h"
+#include "include/mpi/transport/CPOSIX.h"
 
 
 namespace adios
 {
 
 
-CPOSIXMPI::CPOSIXMPI( const std::string method, const unsigned int priority, const unsigned int iteration,
-                      MPI_Comm mpiComm ):
-    CTransportMPI( method, priority, iteration, mpiComm )
+CPOSIX::CPOSIX( const unsigned int priority, const unsigned int iteration,
+                MPI_Comm mpiComm ):
+    CTransportMPI( "POSIX", priority, iteration, mpiComm )
 { }
 
 
-CPOSIXMPI::~CPOSIXMPI( )
+CPOSIX::~CPOSIX( )
 { }
 
 
-void CPOSIXMPI::Write( const CVariable& variable )
+void CPOSIX::Write( const CVariable& variable )
 {
     int rank;
     MPI_Comm_rank( m_MPIComm, &rank );

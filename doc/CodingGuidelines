@@ -5,7 +5,8 @@ CodingGuidelines
 
 This document introduces coding guidelines that all developers must follow as standard practice.
 This list is open as corrections and new ideas/suggestions come in place. Take them as mandatory to improve ADIOS.
-Many items from this list are taken from Stroustrup, Sutter, and Meyers books.      
+Many items from this list are taken from Stroustrup,
+ Sutter, and Meyers books.      
 
 Objectives:
 
