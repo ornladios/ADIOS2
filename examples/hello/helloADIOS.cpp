@@ -13,7 +13,7 @@
 #include <fstream>
 #include <string>
 
-#include "ADIOS.h"
+#include "public/ADIOS.h"
 
 
 int main( int argc, char* argv [] )

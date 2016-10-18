@@ -17,6 +17,10 @@ AR=$(TOOL_DIR)/ar
 #FLAGS
 CFLAGS=-c -Wall -O0 -g -Wpedantic -std=c++11
 
+ifeq($(NETCDF),"yes")
+
+
+
 #INCLUDE FILES
 ADIOS_INC=-I./include
 INCLUDE=$(ADIOS_INC)

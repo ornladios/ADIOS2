@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <iostream>
 
-#include "ADIOS.h"
+#include "public/ADIOS.h"
 
 
 int main( int argc, char* argv [] )
