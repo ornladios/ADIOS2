@@ -40,13 +40,9 @@ public:
 
     virtual ~CTransform( );
 
-    virtual void WriteTransform( ) = 0;
+    virtual void Compress( ) const = 0; ///< Compress m_Variable data m_Value
 
-    virtual void ReadTransform( ) = 0;
-
-    virtual void GetCompressedLength( ) const = 0;
-
-    virtual void GetExpandedLength( ) const = 0;
+    virtual void Decompress( ) const = 0; ///< Ext m_Variable data m_Value
 
 };
 

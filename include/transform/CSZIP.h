@@ -25,20 +25,17 @@ class CSZIP : public CTransform
 public:
 
     /**
-     * Initialize parent method
+     * CSZIP constructor
+     * @param compressionLevel
      * @param variable
      */
     CSZIP( const unsigned int compressionLevel, CVariable& variable );
 
     ~CSZIP( );
 
-    void WriteTransform( );
+    void Compress( ) const;
 
-    void ReadTransform( );
-
-    void GetCompressedLength( ) const;
-
-    void GetExpandedLength( ) const;
+    void Decompress( ) const;
 
 };
 

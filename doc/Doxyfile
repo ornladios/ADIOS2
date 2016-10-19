@@ -32,13 +32,13 @@ DOXYFILE_ENCODING = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME = "ADIOSPP"
+PROJECT_NAME = ADIOS
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER = 2.0
+PROJECT_NUMBER = 2.00
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -58,7 +58,7 @@ PROJECT_LOGO =
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY = .
+OUTPUT_DIRECTORY = 
 
 # If the CREATE_SUBDIRS tag is set to YES then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
@@ -422,7 +422,7 @@ EXTRACT_ALL = YES
 # be included in the documentation.
 # The default value is: NO.
 
-EXTRACT_PRIVATE = YES
+EXTRACT_PRIVATE = NO
 
 # If the EXTRACT_PACKAGE tag is set to YES, all members with package or internal
 # scope will be included in the documentation.
@@ -771,7 +771,7 @@ WARN_LOGFILE =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT = /home/wfg/workspace/ADIOSPP/include /home/wfg/workspace/ADIOSPP/include/mpi/transport /home/wfg/workspace/ADIOSPP/include/nompi/transport /home/wfg/workspace/ADIOSPP/include/transform /home/wfg/workspace/ADIOSPP/src /home/wfg/workspace/ADIOSPP/src/mpi/transport /home/wfg/workspace/ADIOSPP/src/nompi/transport 
+INPUT = /home/wfg/workspace/ADIOSPP/src /home/wfg/workspace/ADIOSPP/include 
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -802,7 +802,7 @@ FILE_PATTERNS =
 # be searched for input files as well.
 # The default value is: NO.
 
-RECURSIVE = NO
+RECURSIVE = YES
 
 # The EXCLUDE tag can be used to specify files and/or directories that should be
 # excluded from the INPUT source files. This way you can easily exclude a
@@ -1988,7 +1988,7 @@ PERLMOD_MAKEVAR_PREFIX =
 # C-preprocessor directives found in the sources and include files.
 # The default value is: YES.
 
-ENABLE_PREPROCESSING = NO
+ENABLE_PREPROCESSING = YES
 
 # If the MACRO_EXPANSION tag is set to YES, doxygen will expand all macro names
 # in the source code. If set to NO, only conditional compilation will be
@@ -2339,7 +2339,7 @@ DOT_PATH =
 # command).
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOTFILE_DIRS = /home/wfg/workspace/ADIOSPP/include /home/wfg/workspace/ADIOSPP/include/mpi/transport /home/wfg/workspace/ADIOSPP/include/nompi/transport
+DOTFILE_DIRS = 
 
 # The MSCFILE_DIRS tag can be used to specify one or more directories that
 # contain msc files that are included in the documentation (see the \mscfile
@@ -2388,7 +2388,7 @@ DOT_GRAPH_MAX_NODES = 50
 # Minimum value: 0, maximum value: 1000, default value: 0.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-MAX_DOT_GRAPH_DEPTH = 3
+MAX_DOT_GRAPH_DEPTH = 0
 
 # Set the DOT_TRANSPARENT tag to YES to generate images with a transparent
 # background. This is disabled by default, because dot on Windows does not seem

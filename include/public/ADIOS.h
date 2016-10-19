@@ -20,8 +20,8 @@
   #include "public/mpidummy.h"
 #endif
 
-
 #include "core/CGroup.h"
+#include "core/CTransport.h"
 #include "public/SSupport.h"
 
 
@@ -73,9 +73,9 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     /**
      * @brief Get the total sum of payload and overhead, which includes name, data type, dimensions and other metadata
      * @param groupName
-     * @return group size in
+     * @return group size in MB
      */
-    unsigned long int GroupSize( const std::string groupName ) const;
+    unsigned long int GetGroupSize( const std::string groupName ) const;
 
     /**
      * Submits a data element values for writing and associates it with the given variableName
@@ -93,7 +93,11 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     void MonitorGroups( std::ostream& logStream ) const;
 
-    void Close( const std::string groupName ); // dumps to file?
+    /**
+     * Close a particular group
+     * @param groupName
+     */
+    void Close( const std::string groupName );
 
 
 
@@ -112,6 +116,7 @@ private:
      */
     std::map< std::string, CGroup > m_Groups;
 
+    std::map< std::string, CTransform > m_Transforms;
 
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file

@@ -5,9 +5,8 @@
  *      Author: wfg
  */
 
-/// \cond EXCLUDED_FROM_DOXYGEN
+
 #include <iostream>
-/// \endcond
 
 
 #include "core/CGroup.h"

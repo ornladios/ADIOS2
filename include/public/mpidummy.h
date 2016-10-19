@@ -11,11 +11,14 @@
 /*
    A dummy MPI 'implementation' for the BP READ API, to have an MPI-free version of the API
 */
+
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
+/// \endcond
 
 #ifdef __cplusplus
 extern "C" {

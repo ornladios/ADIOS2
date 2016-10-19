@@ -23,6 +23,7 @@
 #endif
 
 
+
 #include "core/CVariable.h"
 #include "core/SAttribute.h"
 #include "core/CTransport.h"
@@ -31,6 +32,9 @@
 namespace adios
 {
 
+/**
+ * Class that defines each ADIOS Group composed of Variables, Attributes and a Transport method
+ */
 class CGroup
 {
 
@@ -111,7 +115,7 @@ public:
      */
     void Monitor( std::ostream& logStream ) const;
 
-    void Close( );
+    void Close( ); ///< Close Group
 
 
 private:

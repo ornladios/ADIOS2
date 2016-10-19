@@ -8,7 +8,7 @@
 /*
    A dummy MPI implementation for the BP READ API, to have an MPI-free version of the API
 */
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
+/// \endcond
 
 #include "public/mpidummy.h"
 

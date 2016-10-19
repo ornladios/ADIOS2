@@ -34,8 +34,8 @@ public:
     const unsigned int m_Iteration;
     MPI_Comm m_MPIComm;
 
-    std::string m_FileName;
-    std::string m_AccessMode;
+    std::string m_FileName; ///< file name associated with a group that owns the transport
+    std::string m_AccessMode; ///< read, write, append
 
     CTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
                 MPI_Comm mpiComm ):

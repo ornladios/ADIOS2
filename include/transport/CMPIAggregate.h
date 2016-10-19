@@ -17,7 +17,7 @@ namespace adios
 {
 
 
-class CMPIAggregate : public CTransportMPI
+class CMPIAggregate : public CTransport
 {
 
 public:

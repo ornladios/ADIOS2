@@ -33,13 +33,9 @@ public:
 
     ~CBZIP2( );
 
-    void WriteTransform( );
+    void Compress( ) const;
 
-    void ReadTransform( );
-
-    void GetCompressedLength( ) const;
-
-    void GetExpandedLength( ) const;
+    void Decompress( ) const;
 
 };
 

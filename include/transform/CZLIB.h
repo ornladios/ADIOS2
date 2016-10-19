@@ -24,20 +24,18 @@ class CZLIB : public CTransform
 public:
 
     /**
-     * Initialize parent method
+     * CZLIB Constructor
+     * @param compressionLevel
      * @param variable
      */
     CZLIB( const unsigned int compressionLevel, CVariable& variable );
 
     ~CZLIB( );
 
-    void WriteTransform( );
 
-    void ReadTransform( );
+    void Compress( ) const;
 
-    void GetCompressedLength( ) const;
-
-    void GetExpandedLength( ) const;
+    void Decompress( ) const;
 
 };
 
