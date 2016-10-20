@@ -30,30 +30,77 @@ void DumpFileToStream( const std::string fileName, std::string& fileContent )
     std::ostringstream fileSS;
     fileSS << fileStream.rdbuf();
     fileStream.close();
-
     fileContent = fileSS.str(); //convert to string and check
-    if( fileContent.empty() ) throw std::invalid_argument( "ERROR: file " + fileName + " is empty\n" );
+
+    if( fileContent.empty()  )
+        throw std::invalid_argument( "ERROR: file " + fileName + " is empty\n" );
 }
 
 
-void GetSubString ( const std::string initialTag, const std::string finalTag, const std::string content, std::string& subString,
-                    std::string::size_type& currentPosition )
+void GetSubString ( const std::string initialTag, const std::string finalTag, const std::string content,
+                    std::string& subString, std::string::size_type& currentPosition )
 {
-    std::string::size_type start( content.find(initialTag, currentPosition ) );
-    if( start == content.npos )
+    auto lf_Wipe =[]( std::string& subString, std::string::size_type& currentPosition )
     {
         subString.clear();
         currentPosition = std::string::npos;
+    };
+
+    std::string::size_type start( content.find(initialTag, currentPosition ) );
+    if( start == content.npos )
+    {
+        lf_Wipe( subString, currentPosition );
         return;
     }
     currentPosition = start;
 
-    std::string::size_type end( content.find(finalTag, currentPosition ) );
+    std::string::size_type end( content.find( finalTag, currentPosition ) );
     if( end == content.npos )
     {
-        subString.clear();
-        currentPosition = std::string::npos;
+        lf_Wipe( subString, currentPosition );
         return;
+    }
+
+    //here make sure the finalTag is not a value surrounded by " " or ' ', if so find next
+    bool isValue = true;
+
+    while( isValue == true )
+    {
+        std::string::size_type quotePosition = content.find( '\'', currentPosition );
+        std::string::size_type doubleQuotePosition = content.find( '\"', currentPosition );
+
+        if( ( quotePosition == content.npos && doubleQuotePosition == content.npos ) ||
+            ( quotePosition == content.npos && end < doubleQuotePosition  ) ||
+            ( doubleQuotePosition == content.npos && end < quotePosition  ) ||
+            ( end < quotePosition && end < doubleQuotePosition )
+          ) break;
+
+        //first case
+        std::string::size_type closingPosition;
+        if( quotePosition < doubleQuotePosition ) //find the closing "
+        {
+            currentPosition = quotePosition;
+            closingPosition = content.find( '\'', currentPosition+1 );
+        }
+        else //find the closing '
+        {
+            currentPosition = doubleQuotePosition;
+            closingPosition = content.find( '\"', currentPosition+1 );
+        }
+
+        if( closingPosition == content.npos ) //if can't find closing it's open until the end
+        {
+            lf_Wipe( subString, currentPosition );
+            return;
+        }
+        if( closingPosition < end )
+        {
+            currentPosition = closingPosition+1;
+            continue;
+        }
+
+        //if this point is reached it means it's a value inside " " or ' ', move to the next end
+        end = content.find( finalTag, currentPosition );
     }
 
     subString = content.substr( start, end-start+finalTag.size() );
@@ -66,10 +113,10 @@ void GetQuotedValue( const char quote, const std::string::size_type& quotePositi
 {
     currentTag = currentTag.substr( quotePosition + 1 );
     auto nextQuotePosition = currentTag.find( quote );
+
     if( nextQuotePosition == currentTag.npos )
-    {
         throw std::invalid_argument( "ERROR: Invalid attribute in..." + currentTag + "...check XML file\n");
-    }
+
     value = currentTag.substr( 0, nextQuotePosition );
     currentTag = currentTag.substr( nextQuotePosition+1 );
 }
@@ -89,7 +136,6 @@ void GetPairs( const std::string tag, std::vector< std::pair<const std::string, 
         const char quote = currentTag[equalPosition+1];
         if( quote == '\'' || quote == '"') //single quotes
         {
-            //quote position?
             GetQuotedValue( quote, equalPosition+1, currentTag, value );
         }
 
@@ -120,8 +166,8 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
     }
 }
 
-void SetMembers( const std::string& fileContent, std::string& hostLanguage, std::map< std::string, CGroup >& groups,
-                 const MPI_Comm mpiComm )
+void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
+                 std::string& hostLanguage, std::map< std::string, CGroup >& groups )
 {
     //adios-config
     std::string currentContent;
@@ -211,6 +257,38 @@ void SetMembers( const std::string& fileContent, std::string& hostLanguage, std:
     }
 }
 
+
+void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm,
+              std::string& hostLanguage, std::map< std::string, CGroup >& groups )
+{
+    int xmlFileContentSize;
+    std::string xmlFileContent;
+
+    int rank;
+    MPI_Comm_rank( mpiComm, &rank );
+
+    if( rank == 0 ) //serial part
+    {
+        std::string xmlFileContent;
+        DumpFileToStream( xmlConfigFile, xmlFileContent ); //in ADIOSFunctions.h dumps all XML Config File to xmlFileContent
+        xmlFileContentSize = xmlFileContent.size( ) + 1; // add one for the null character
+
+        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, mpiComm ); //broadcast size for allocation
+        MPI_Bcast( (char*)xmlFileContent.c_str(), xmlFileContentSize, MPI_CHAR, 0, mpiComm ); //broadcast contents
+    }
+    else
+    {
+        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, mpiComm  ); //receive size
+
+        char* xmlFileContentMPI = new char[ xmlFileContentSize ]; //allocate xml C-char
+        MPI_Bcast( xmlFileContentMPI, xmlFileContentSize, MPI_CHAR, 0, mpiComm ); //receive xml C-char
+        xmlFileContent.assign( xmlFileContentMPI ); //copy to a string
+
+        delete []( xmlFileContentMPI ); //delete char* needed for MPI, might add size is moving to C++14 for optimization, avoid memory leak
+    }
+
+    SetMembers( xmlFileContent,  mpiComm, hostLanguage,  groups );
+}
 
 
 

@@ -5,19 +5,18 @@
  *      Author: wfg
  */
 
-#include "transport/CPOSIX.h"
 
 #include <iostream>
 
+#include "transport/CPOSIX.h"
 
 
 namespace adios
 {
 
 
-CPOSIX::CPOSIX( const unsigned int priority, const unsigned int iteration,
-                MPI_Comm mpiComm ):
-    CTransportMPI( "POSIX", priority, iteration, mpiComm )
+CPOSIX::CPOSIX( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm ):
+    CTransport( "POSIX", priority, iteration, mpiComm )
 { }
 
 
@@ -27,14 +26,11 @@ CPOSIX::~CPOSIX( )
 
 void CPOSIX::Write( const CVariable& variable )
 {
-    int rank;
+    int rank, size;
     MPI_Comm_rank( m_MPIComm, &rank );
-
-    int size;
     MPI_Comm_size( m_MPIComm, &size );
 
     std::cout << "Just saying Hello from CPOSIX Write from process " << rank << "/" << size  << "\n";
-
 }
 
 

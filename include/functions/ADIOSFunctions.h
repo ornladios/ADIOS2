@@ -68,6 +68,7 @@ void GetPairs( const std::string tag, std::vector< std::pair<const std::string, 
  * @param fileContent file Content in a single string
  * @param tag field0="value0" field1="value1" in a single string
  * @param pairs pairs[0].first=field0 pairs[0].second=value0 pairs[1].first=field1 pairs[1].second=value1
+ * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
  */
 void GetPairsFromTag( const std::string& fileContent, const std::string tag,
                       std::vector< std::pair<const std::string, const std::string> >& pairs );
@@ -75,12 +76,24 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
 /**
  * Set members m_Groups and m_HostLanguage from XML file content, called within Init functions
  * @param fileContent file Content in a single string
+ * @param mpiComm MPI Communicator passed from application passed to Transport method if required
  * @param hostLanguage return the host language from fileContent
  * @param groups passed returns the map of groups defined in fileContent
- * @param mpiComm MPI Communicator passed from application
+ * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
  */
-void SetMembers( const std::string& fileContent, std::string& hostLanguage, std::map< std::string, CGroup >& groups,
-                 const MPI_Comm mpiComm );
+void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::string& hostLanguage,
+                 std::map< std::string, CGroup >& groups );
+
+/**
+ * Called inside the ADIOS XML constructors to get contents from file, broadcast and set hostLanguage and groups from ADIOS class
+ * @param xmlConfigFile xml config file name
+ * @param mpiComm communicator used from broadcasting
+ * @param hostLanguage set from host-language in xml file
+ * @param groups passed returns the map of groups defined in fileContent
+ * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
+ */
+void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, std::string& hostLanguage,
+              std::map< std::string, CGroup >& groups );
 
 } //end namespace
 

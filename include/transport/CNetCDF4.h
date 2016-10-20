@@ -8,6 +8,7 @@
 #ifndef CNETCDF4_H_
 #define CNETCDF4_H_
 
+#include <netcdf.h>
 
 #include "core/CTransport.h"
 

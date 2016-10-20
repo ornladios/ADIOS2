@@ -8,6 +8,7 @@
 #ifndef CPHDF5_H_
 #define CPHDF5_H_
 
+#include <hdf5.h>
 
 #include "core/CTransport.h"
 

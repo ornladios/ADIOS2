@@ -1,10 +1,11 @@
 # Makefile for testing purposes, will build libadios.a 
 # Created on: Oct 4, 2016
 #     Author: wfg
-
      
+#SYSTEM DIRECTORIES, USER MUST MODIFY THESE VALUES
 SYS_BIN:=/usr/bin
-UTIL_LIB:=/usr/local/lib
+SYS_LIB:=/usr/lib/x86_64-linux-gnu
+LOCAL_LIB:=/usr/local/lib
 
 #COMPILERS
 CC:=$(SYS_BIN)/g++
@@ -14,25 +15,60 @@ AR:=$(SYS_BIN)/ar
 #FLAGS
 CFLAGS:=-c -Wall -O0 -g -Wpedantic -std=c++11
 
-
-#ADIOS FLAGS
+#ALL FILES
 HFiles:=$(shell find ./include -type f -name "*.h")
 CPPFiles:=$(shell find ./src -type f -name "*.cpp")
 
+#EXTERNAL LIBRARY PATHS
 
-#EXTERNAL DEPENDENCIES
-LIBS := -L$(UTIL_LIB)
+LIBS := -L$(SYS_LIB) -L$(LOCAL_LIB)
+
+#TRANSPORT WITH EXTERNAL DEPENDENCIES
+TRANSPORT_INC:=./include/transport
+TRANSPORT_SRC:=./src/transport
 
 ifeq ($(HAVE_NETCDF),yes)
-    CFLAGS += -DHAVE_NETCDF
-    LIBS += -netcdf
+    LIBS += -lnetcdf
 else
-    HFiles:=$(filter-out ./include/transport/CNetCDF4.h,$(HFiles))
-    CPPFiles:=$(filter-out ./src/transport/CNetCDF4.cpp,$(CPPFiles))     
+    HFiles:=$(filter-out $(TRANSPORT_INC)/CNetCDF4.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/CNetCDF4.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_PHDF5),yes)
+    LIBS += -lhdf5
+else
+    HFiles:=$(filter-out $(TRANSPORT_INC)/CPHDF5.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/CPHDF5.cpp,$(CPPFiles))     
 endif
 
 
-#MPI_CPPFiles=$(shell find ./src/mpi -type f -name "*.cpp")
+#TRANSFORM WITH EXTERNAL DEPENDENCIES
+TRANSFORM_INC:=./include/transform
+TRANSFORM_SRC:=./src/transform
+
+ifeq ($(HAVE_BZIP2),yes)
+    LIBS += -lbz2
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/CSZIP.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CSZIP.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_SZIP),yes)
+    LIBS += -lsz
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/CSZIP.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CSZIP.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_ZLIB),yes)
+    LIBS += -lz
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/CZLIB.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CZLIB.cpp,$(CPPFiles))     
+endif
+
+
+
 
 OBJFiles:=$(patsubst %.cpp, ./bin/%.o, $(notdir $(CPPFiles)) )
 

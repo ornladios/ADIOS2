@@ -38,34 +38,33 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
-    ADIOS( );
+    ADIOS( const bool debugMode = false );
 
     /**
      * @brief Serial constructor for XML config file
      * @param xmlConfigFile passed to m_XMLConfigFile
      */
-    ADIOS( const std::string xmlConfigFile);
+    ADIOS( const std::string xmlConfigFile, const bool debugMode = false );
 
     /**
      * @brief Parallel constructor for XML config file and MPI
      * @param xmlConfigFile passed to m_XMLConfigFile
      * @param mpiComm MPI communicator ...const to be discussed
      */
-    ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm );
+    ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode = false );
 
     /**
      * @brief Parallel MPI communicator without XML config file
      * @param mpiComm MPI communicator passed to m_MPIComm
      */
-    ADIOS( const MPI_Comm mpiComm );
+    ADIOS( const MPI_Comm mpiComm, const bool debugMode = false );
 
     ~ADIOS( ); ///< virtual destructor overriden by children's own destructors
 
-    void Init( ); ///< calls to read XML file among other initialization tasks
     /**
      * @brief Open or Append to an output file
      * @param groupName should match an existing group from XML file or created through CreateGroup
-     * @param fileName associated file
+     * @param fileName associated file or stream
      * @param accessMode "w": write, "a": append, need more info on this
      */
     void Open( const std::string groupName, const std::string fileName, const std::string accessMode = "w" );
@@ -106,6 +105,7 @@ private:
     std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
     MPI_Comm m_MPIComm = nullptr; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself
     std::string m_HostLanguage; ///< Supported languages: C, C++, Fortran
+    const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
     /**
      * @brief List of groups defined from either ADIOS XML configuration file or the CreateGroup function.

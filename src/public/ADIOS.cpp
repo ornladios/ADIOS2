@@ -21,53 +21,30 @@ namespace adios
 {
 
 
-ADIOS::ADIOS( )
+ADIOS::ADIOS( const bool debugMode ):
+    m_DebugMode{ debugMode }
 { }
 
 
-ADIOS::ADIOS( const std::string xmlConfigFile ):
-    m_XMLConfigFile{ xmlConfigFile }
-{ }
-
-
-ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm  ):
+ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
     m_XMLConfigFile{ xmlConfigFile },
-	m_MPIComm{ mpiComm }
-{ }
+    m_DebugMode{ debugMode }
+{
+    InitXML( m_XMLConfigFile, m_MPIComm, m_HostLanguage, m_Groups );
+}
+
+
+ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode  ):
+    m_XMLConfigFile{ xmlConfigFile },
+	m_MPIComm{ mpiComm },
+	m_DebugMode{ debugMode }
+{
+    InitXML( m_XMLConfigFile, m_MPIComm, m_HostLanguage, m_Groups );
+}
 
 
 ADIOS::~ADIOS( )
 { }
-
-
-void ADIOS::Init( )
-{
-    int xmlFileContentSize;
-    std::string xmlFileContent;
-
-    int rank;
-    MPI_Comm_rank( m_MPIComm, &rank );
-
-    if( rank == 0 ) //serial part
-    {
-        std::string xmlFileContent;
-        DumpFileToStream( m_XMLConfigFile, xmlFileContent ); //in ADIOSFunctions.h dumps all XML Config File to xmlFileContent
-        xmlFileContentSize = xmlFileContent.size( ) + 1; // add one for the null character
-
-        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, m_MPIComm  ); //broadcast size for allocation
-        MPI_Bcast( (char*)xmlFileContent.c_str(), xmlFileContentSize, MPI_CHAR, 0, m_MPIComm );
-        SetMembers( xmlFileContent, m_HostLanguage,  m_Groups, m_MPIComm );
-    }
-    else
-    {
-        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, m_MPIComm  ); //broadcast size
-        char* xmlFileContentMPI = new char[ xmlFileContentSize ]; //allocate C char
-        MPI_Bcast( xmlFileContentMPI, xmlFileContentSize, MPI_CHAR, 0, m_MPIComm ); //receive from rank=0
-
-        xmlFileContent.assign( xmlFileContentMPI );
-        SetMembers( xmlFileContent, m_HostLanguage,  m_Groups, m_MPIComm );
-    }
-}
 
 
 void ADIOS::Open( const std::string groupName, const std::string fileName, const std::string accessMode )

@@ -20,11 +20,13 @@ namespace adios
 {
 
 
-CGroup::CGroup( )
+CGroup::CGroup( const bool debugMode ):
+    m_DebugMode{ debugMode }
 { }
 
 
-CGroup::CGroup( const std::string& xmlGroup, std::string& groupName )
+CGroup::CGroup( const std::string& xmlGroup, std::string& groupName, const bool debugMode ):
+    m_DebugMode{ debugMode }
 {
     ParseXMLGroup( xmlGroup, groupName );
 }
@@ -44,10 +46,11 @@ void CGroup::Open( const std::string fileName, const std::string accessMode )
 void CGroup::SetVariable( const std::string name, const bool isGlobal, const std::string type, const std::string dimensionsCSV,
                           const std::string transform )
 {
-    auto itVariable = m_Variables.find( name );
-    if( itVariable == m_Variables.end() ) //name is not found
+    auto lf_SetVariable = [&] ( const std::string name, const bool isGlobal, const std::string type,
+                                const std::string dimensionsCSV,
+                                const std::string transform )
     {
-        if( type == "integer") //use copy constructor as it's a small struct
+        if( type == "integer") //using copy constructor as it's a small class, only metadata
             m_Variables[name] = std::make_shared< CVariableTemplate<int> >( isGlobal, type, dimensionsCSV, transform );
         else if( type == "unsigned integer")
             m_Variables[name] = std::make_shared< CVariableTemplate<unsigned int> >( isGlobal, type, dimensionsCSV, transform );
@@ -55,11 +58,22 @@ void CGroup::SetVariable( const std::string name, const bool isGlobal, const std
             m_Variables[name] = std::make_shared< CVariableTemplate<float> >( isGlobal, type, dimensionsCSV, transform );
         else if( type == "double")
             m_Variables[name] = std::make_shared< CVariableTemplate<double> >( isGlobal, type, dimensionsCSV, transform );
-    }
-    else //name is found
+    };
+
+    //Function body start  here
+    if( m_DebugMode == true )
     {
-        throw std::invalid_argument( "ERROR: variable " + name + " is defined twice\n" );
+        if( m_Variables.count( name ) == 1 ) //variable exists
+            lf_SetVariable( name, isGlobal, type, dimensionsCSV, transform );
+        else //name is found
+            std::cout << "WARNING: variable " << name << " exists, NOT setting a new variable\n";
     }
+    else
+    {
+        lf_SetVariable( name, isGlobal, type, dimensionsCSV, transform );
+    }
+
+
 }
 
 
@@ -113,7 +127,6 @@ void CGroup::Monitor( std::ostream& logStream ) const
     {
         logStream << "\t" << attribute.Name << " \t " << attribute.Type << " \t " << attribute.Value << "\n";
     }
-
 
     logStream << "\tTransport Method " << m_ActiveTransport << "\n";
     logStream << "\tIs Transport Method Unique?: " << std::boolalpha << m_Transport.unique() << "\n";

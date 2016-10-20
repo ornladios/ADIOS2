@@ -26,7 +26,6 @@ int main( int argc, char* argv [] )
     {
         //testing with CPOSIXMPI
         adios::ADIOS adiosFile( "writer.xml", MPI_COMM_WORLD );
-        adiosFile.Init( );
 
         //Get Monitor info
         std::ofstream logStream( "info_" + std::to_string(rank) + ".log" );

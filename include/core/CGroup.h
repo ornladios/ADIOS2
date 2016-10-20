@@ -23,7 +23,6 @@
 #endif
 
 
-
 #include "core/CVariable.h"
 #include "core/SAttribute.h"
 #include "core/CTransport.h"
@@ -44,12 +43,13 @@ public:
      * @brief Constructor for XML config file
      * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file
      * @param groupName returns the groupName from <adios-group name=" "
+     * @param debugMode
      */
-    CGroup( const std::string& xmlGroup, std::string& groupName );
+    CGroup( const std::string& xmlGroup, std::string& groupName, const bool debugMode = false );
 
-    CGroup( ); ///Non-XML empty constructor
+    CGroup( const bool debugMode = false ); ///Non-XML empty constructor
 
-    ~CGroup( ); ///< Using STL containers
+    ~CGroup( ); ///< Using STL containers, no deallocation
 
     /**
      * Opens group and passes fileName and accessMode to m_Transport
@@ -128,13 +128,14 @@ private:
      * </pre>
      */
     std::map< std::string, std::shared_ptr<CVariable> > m_Variables;
-    std::vector< SAttribute > m_Attributes; ///< Contains all group attributes from SAttribute.h
+    std::vector< SAttribute > m_Attributes; ///< Contains all group attributes from SAttribute.h, should be moved to a map
 
     std::vector< std::string > m_GlobalDimensions; ///< from global-bounds in XML File, data in global space
     std::vector< std::string > m_GlobalOffsets; ///< from global-bounds in XML File, data in global space
 
     std::shared_ptr< CTransport > m_Transport; ///< transport method defined in XML File, using shared pointer as SGroup can be uninitialized
     std::string m_ActiveTransport;
+    const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
     bool m_IsOpen = false; ///< checks if group was opened for operations;
     std::string m_FileName; ///< associated fileName is the Group is opened.
