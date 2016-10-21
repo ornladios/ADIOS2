@@ -16,8 +16,8 @@ int main( int argc, char* argv [] )
 {
     try
     {
-        adios::ADIOS adiosFile( "writer2Groups.xml" ); //testing with CPOSIXNoMPI
-        adiosFile.MonitorGroups( std::cout );
+        adios::ADIOS adios( "writer2Groups.xml" ); //testing with CPOSIXNoMPI
+        adios.MonitorGroups( std::cout );
         std::cout << "Finished initializing ADIOS\n";
     }
     catch( std::exception& e )

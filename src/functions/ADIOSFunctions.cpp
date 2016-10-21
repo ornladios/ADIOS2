@@ -269,7 +269,6 @@ void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm,
 
     if( rank == 0 ) //serial part
     {
-        std::string xmlFileContent;
         DumpFileToStream( xmlConfigFile, xmlFileContent ); //in ADIOSFunctions.h dumps all XML Config File to xmlFileContent
         xmlFileContentSize = xmlFileContent.size( ) + 1; // add one for the null character
 

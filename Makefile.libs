@@ -1,0 +1,48 @@
+#TRANSPORTS WITH EXTERNAL DEPENDENCIES
+TRANSPORT_INC:=./include/transport
+TRANSPORT_SRC:=./src/transport
+
+ifeq ($(HAVE_NETCDF),yes)
+    LIBS += -lnetcdf
+    CFLAGS += -DHAVE_NETCDF
+else
+    HFiles:=$(filter-out $(TRANSPORT_INC)/CNetCDF4.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/CNetCDF4.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_PHDF5),yes)
+    LIBS += -lhdf5
+    CFLAGS += -DHAVE_PHDF5
+else
+    HFiles:=$(filter-out $(TRANSPORT_INC)/CPHDF5.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/CPHDF5.cpp,$(CPPFiles))     
+endif
+
+
+#TRANSFORMS WITH EXTERNAL DEPENDENCIES
+TRANSFORM_INC:=./include/transform
+TRANSFORM_SRC:=./src/transform
+
+ifeq ($(HAVE_BZIP2),yes)
+    LIBS += -lbz2
+    CFLAGS += -DHAVE_BZIP2
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/CBZIP2.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CBZIP2.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_SZIP),yes)
+    LIBS += -lsz
+    CFLAGS += -DHAVE_SZIP
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/CSZIP.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CSZIP.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_ZLIB),yes)
+    LIBS += -lz
+    CFLAGS += -DHAVE_ZLIB
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/CZLIB.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CZLIB.cpp,$(CPPFiles))     
+endif

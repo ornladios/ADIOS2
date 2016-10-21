@@ -32,7 +32,7 @@ CVariable::CVariable( const bool isGlobal, const std::string type, const std::st
     }
 }
 
-virtual CVariable::~CVariable()
+CVariable::~CVariable()
 { }
 
 

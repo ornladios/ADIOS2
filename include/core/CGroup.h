@@ -135,7 +135,7 @@ private:
 
     std::shared_ptr< CTransport > m_Transport; ///< transport method defined in XML File, using shared pointer as SGroup can be uninitialized
     std::string m_ActiveTransport;
-    const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
+    bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
     bool m_IsOpen = false; ///< checks if group was opened for operations;
     std::string m_FileName; ///< associated fileName is the Group is opened.

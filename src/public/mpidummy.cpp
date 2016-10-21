@@ -54,7 +54,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) { *newcomm = comm; return MPI_SUCCESS; }
 int MPI_Comm_rank(MPI_Comm comm, int *rank) { *rank = 0; return MPI_SUCCESS; }
 int MPI_Comm_size(MPI_Comm comm, int *size) { *size = 1; return MPI_SUCCESS; }
-int MPI_Comm_free(MPI_Comm *comm) { *comm = 0; return MPI_SUCCESS; };
+int MPI_Comm_free(MPI_Comm *comm) { *comm = 0; return MPI_SUCCESS; }
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm) { return comm; }
 
 int MPI_Gather(void *sendbuf, int sendcnt, MPI_Datatype sendtype, 

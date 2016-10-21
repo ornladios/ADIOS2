@@ -21,8 +21,7 @@ namespace adios
 {
 
 
-ADIOS::ADIOS( const bool debugMode ):
-    m_DebugMode{ debugMode }
+ADIOS::ADIOS( )
 { }
 
 

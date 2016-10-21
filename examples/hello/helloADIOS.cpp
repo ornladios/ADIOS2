@@ -25,11 +25,11 @@ int main( int argc, char* argv [] )
     try
     {
         //testing with CPOSIXMPI
-        adios::ADIOS adiosFile( "writer.xml", MPI_COMM_WORLD );
+        adios::ADIOS adios( "writer.xml", MPI_COMM_WORLD );
 
         //Get Monitor info
         std::ofstream logStream( "info_" + std::to_string(rank) + ".log" );
-        adiosFile.MonitorGroups( logStream );
+        adios.MonitorGroups( logStream );
 
         MPI_Barrier( MPI_COMM_WORLD );
     }

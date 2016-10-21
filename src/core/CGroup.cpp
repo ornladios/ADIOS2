@@ -11,6 +11,8 @@
 
 #include "core/CGroup.h"
 #include "public/SSupport.h"
+#include "functions/ADIOSFunctions.h"
+#include "core/CVariableTemplate.h"
 
 //transports
 #include "transport/CPOSIX.h"
@@ -72,14 +74,12 @@ void CGroup::SetVariable( const std::string name, const bool isGlobal, const std
     {
         lf_SetVariable( name, isGlobal, type, dimensionsCSV, transform );
     }
-
-
 }
 
 
 void CGroup::SetAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path, const std::string value )
 {
-    m_Attributes.push_back( SAttribute( name, isGlobal, type, path, value ) );
+    m_Attributes.push_back( SAttribute{ name, isGlobal, type, path, value } );
 }
 
 
@@ -109,7 +109,7 @@ void CGroup::SetTransport( const std::string method, const unsigned int priority
                            const MPI_Comm mpiComm )
 {
     CheckTransport( method );
-    if( m_ActiveTransport == "POSIX" ) m_Transport = std::make_shared<CPOSIX>( method, priority, iteration, mpiComm );
+    if( m_ActiveTransport == "POSIX" ) m_Transport = std::make_shared<CPOSIX>( priority, iteration, mpiComm );
 }
 
 

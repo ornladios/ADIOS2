@@ -17,7 +17,7 @@
 #ifdef HAVE_MPI
   #include <mpi.h>
 #else
-  #include "mpidummy.h"
+  #include "public/mpidummy.h"
 #endif
 
 

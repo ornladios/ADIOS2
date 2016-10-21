@@ -10,7 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
-#include <memory>
+#include <memory> //shared_ptr and unique_ptr
 #include <ostream>
 /// \endcond
 
@@ -22,6 +22,7 @@
 
 #include "core/CGroup.h"
 #include "core/CTransport.h"
+#include "core/CTransform.h"
 #include "public/SSupport.h"
 
 
@@ -38,7 +39,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
-    ADIOS( const bool debugMode = false );
+    ADIOS( );
 
     /**
      * @brief Serial constructor for XML config file
@@ -103,9 +104,15 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 private:
 
     std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
+
+    #ifdef HAVE_MPI
     MPI_Comm m_MPIComm = nullptr; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself
+    #else
+    MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself
+    #endif
+
     std::string m_HostLanguage; ///< Supported languages: C, C++, Fortran
-    const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
+    bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
     /**
      * @brief List of groups defined from either ADIOS XML configuration file or the CreateGroup function.
@@ -116,7 +123,7 @@ private:
      */
     std::map< std::string, CGroup > m_Groups;
 
-    std::map< std::string, CTransform > m_Transforms;
+    std::map< std::string, std::unique_ptr<CTransform> > m_Transforms;
 
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file
