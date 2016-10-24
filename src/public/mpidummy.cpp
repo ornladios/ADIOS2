@@ -26,6 +26,10 @@
 #    define open64  open
 #endif
 
+
+namespace adios
+{
+
 static char mpierrmsg[MPI_MAX_ERROR_STRING];
 
 int MPI_Init(int *argc, char ***argv) 
@@ -231,3 +235,4 @@ int MPI_Get_processor_name (char *name, int *resultlen)
     return 0;
 }
 
+}//end namespace

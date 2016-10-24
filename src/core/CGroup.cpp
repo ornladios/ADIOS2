@@ -16,6 +16,7 @@
 
 //transports
 #include "transport/CPOSIX.h"
+#include "transport/CFStream.h"
 
 
 namespace adios
@@ -110,6 +111,30 @@ void CGroup::SetTransport( const std::string method, const unsigned int priority
 {
     CheckTransport( method );
     if( m_ActiveTransport == "POSIX" ) m_Transport = std::make_shared<CPOSIX>( priority, iteration, mpiComm );
+    else if( m_ActiveTransport == "FStream" ) m_Transport = std::make_shared<CFStream>( priority, iteration, mpiComm );
+}
+
+
+void CGroup::Write( const std::string variableName, const void* values )
+{
+    auto itVariable = m_Variables.find( variableName );
+
+    if( m_DebugMode == true )
+    {
+        if( itVariable == m_Variables.end() )
+            throw std::invalid_argument( "ERROR: variable " + variableName + " is undefined.\n" );
+        //here implemented dynamic_cast checks
+    }
+
+    const std::string type = itVariable->second->m_Type;
+    auto& variable = itVariable->second;
+
+    if( type == "double" ) variable->Set<double>( values );
+    else if( type == "integer" ) variable->Set<int>( values );
+//    else if( type == "unsigned integer" ) variable->Set<unsigned int>( values );
+//    else if( type == "float" ) variable->Set<float>( values );
+
+    m_Transport->Write( *variable ); //Using shared_ptr for Variable, must dereference
 }
 
 

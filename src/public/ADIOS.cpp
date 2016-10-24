@@ -52,7 +52,7 @@ void ADIOS::Open( const std::string groupName, const std::string fileName, const
 }
 
 
-template<class T> void ADIOS::Write( const std::string groupName, const std::string variableName, const T* values )
+void ADIOS::Write( const std::string groupName, const std::string variableName, const void* values )
 {
     m_Groups.at( groupName ).Write( variableName, values );
 }

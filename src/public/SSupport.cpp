@@ -19,7 +19,7 @@ const std::set<std::string> SSupport::HostLanguages{
 };
 
 const std::set<std::string> SSupport::Transports{
-    { "NULL", "POSIX", "MPI", "MPI_LUSTRE", "MPI_AGGREGATE", "DATASPACES", "DIMES", "FLEXPATH", "PHDF5", "NC4", "ICEE" }
+    { "NULL", "POSIX", "FStream", "MPI", "MPI_LUSTRE", "MPI_AGGREGATE", "DATASPACES", "DIMES", "FLEXPATH", "PHDF5", "NC4", "ICEE" }
 };
 
 const std::set<std::string> SSupport::Transforms{

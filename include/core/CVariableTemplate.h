@@ -8,6 +8,7 @@
 #ifndef CVARIABLETEMPLATE_H_
 #define CVARIABLETEMPLATE_H_
 
+
 #include "core/CVariable.h"
 
 
@@ -35,11 +36,19 @@ public:
     ~CVariableTemplate( )
     { }
 
-    T m_Value; // pointer or no pointer?
+    const T* m_Value = nullptr; // pointer or no pointer?
 
-    const T& Get() const { return m_Value; }
+    //const T& Get() const { return m_Value; }
+
+    void Set( const void* values ){ m_Value = static_cast<T const*> (values); }
 
 };
+
+
+template<class T> void CVariable::Set( const void* values )
+{
+    return dynamic_cast< CVariableTemplate<T>& >( *this ).Set( values );
+}
 
 
 } //end namespace

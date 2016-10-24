@@ -64,8 +64,7 @@ public:
      * @param variableName
      * @param values
      */
-    template<class T>
-    void Write( const std::string variableName, const T* values );
+    void Write( const std::string variableName, const void* values );
 
 
     /**
@@ -81,7 +80,7 @@ public:
 
     /**
      * @brief Sets a variable in current Group
-     * @param name
+     * @param name passed to Name
      * @param isGlobal
      * @param type
      * @param path

@@ -44,6 +44,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     /**
      * @brief Serial constructor for XML config file
      * @param xmlConfigFile passed to m_XMLConfigFile
+     * @param debugMode true: on, false: off (faster, but unsafe)
      */
     ADIOS( const std::string xmlConfigFile, const bool debugMode = false );
 
@@ -51,12 +52,15 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @brief Parallel constructor for XML config file and MPI
      * @param xmlConfigFile passed to m_XMLConfigFile
      * @param mpiComm MPI communicator ...const to be discussed
+     * @param debugMode true: on, false: off (faster, but unsafe)
      */
     ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode = false );
 
+
     /**
      * @brief Parallel MPI communicator without XML config file
-     * @param mpiComm MPI communicator passed to m_MPIComm
+     * @param mpiComm MPI communicator passed to m_MPIComm*
+     * @param debugMode true: on, false: off (faster)
      */
     ADIOS( const MPI_Comm mpiComm, const bool debugMode = false );
 
@@ -71,20 +75,12 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     void Open( const std::string groupName, const std::string fileName, const std::string accessMode = "w" );
 
     /**
-     * @brief Get the total sum of payload and overhead, which includes name, data type, dimensions and other metadata
-     * @param groupName
-     * @return group size in MB
-     */
-    unsigned long int GetGroupSize( const std::string groupName ) const;
-
-    /**
      * Submits a data element values for writing and associates it with the given variableName
      * @param groupName name of group that owns the variable
      * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
      * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
      */
-    template<class T>
-    void Write( const std::string groupName, const std::string variableName, const T* values );
+    void Write( const std::string groupName, const std::string variableName, const void* values );
 
     /**
      * @brief Dumps groups information to a file stream or standard output.

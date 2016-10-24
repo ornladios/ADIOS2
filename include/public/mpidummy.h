@@ -24,6 +24,10 @@
 extern "C" {
 #endif
 
+namespace adios
+{
+
+
 typedef int MPI_Comm;
 typedef uint64_t MPI_Status;
 typedef int MPI_File;
@@ -97,6 +101,8 @@ int MPI_Comm_split ( MPI_Comm comm, int color, int key, MPI_Comm *comm_out );
 int MPI_Get_processor_name (char *name, int *resultlen);
 
 double MPI_Wtime();
+
+} //end namespace
 
 #ifdef __cplusplus
 }

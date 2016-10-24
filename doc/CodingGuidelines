@@ -4,9 +4,10 @@ CodingGuidelines
      Author: William F Godoy, godoywf@ornl.gov
 
 This document introduces coding guidelines that all developers must follow as standard practice.
-This list is open as corrections and new ideas/suggestions come in place. Take them as mandatory to improve ADIOS.
-Many items from this list are taken from Stroustrup,
- Sutter, and Meyers books.      
+This list is open as corrections and new ideas/suggestions come in place. 
+Take them as mandatory to improve ADIOS development and collaboration.
+Many items from this list are taken from Stroustrup, Sutter, and Meyers books.
+       
 
 Objectives:
 
@@ -67,8 +68,10 @@ Text style for readability (Coding format setup in Eclipse with Window > Prefere
     
 
 Documentation/Comments
-1) Use Doxygen as the official API documentation tool. Eclipse has a template autocomplete option for function declarations.
-2) Only use Doxygen in header declaration (.h) files, never in source definition (.cpp)
+1) Use Doxygen as the official API documentation tool. 
+   Eclipse has a template autocomplete option for function declarations.
+2) Only use Doxygen function documentation in header declaration (.h) files, 
+   never in source definition (.cpp). Use informative // comments in the latter, see next.
 3) Use meaningful comments that are not redundant in the definition. Add context instead.
    Example: Don't: int size; // define the size of the MPI processes
                Do: int size; // global size for tracking purposes at close() 
@@ -78,29 +81,39 @@ Variable scope and Namespaces
 1) Local scope variables and function arguments passed by value: first letter must be lower case ( int rank, int size ).
 2) Functions: start with an upper case letter ( e.g. void Transform ( ), double Fourier( ), etc.  )
 3) Lambda functions: use hungarian notation with prefix lf_ in the function name. ( e.g. auto lf_Fourier = []( const double argument ) )   
-4) Avoid the "using namespace foo" clause, instead use the namespace explicitly. (e.g. std::cout not cout, adios::CHDF5 not CHDF5 ) 
+4) Avoid the "using namespace foo" clause, instead use the namespace explicitly. 
+   (e.g. std::cout not cout, adios::CHDF5 not CHDF5 ) 
    This prevents name conflict and allows identifying the function/variable source.   
 5) Declare variables right before they are needed, not at the beginning (Fortran style). 
    e.g. Don't ---> int rank; ...Many Lines of code...  ; rank = SomeFunction( );
         Do---> ...Many Lines of code...  ; int rank = SomeFunction( );
 6) Always pass by value primitives ( const int, double, const std::string ) if only a copy if needed.
-   For bigger objects and STL containers pass by reference always ( CNETCDF& netcdf, std::vector<std::string>& names ) 
-7) Use auto keyword only when it doesn't interfere with the logic understanding. Don't use it to replace primitives (int, unsigned int, double)  
+   The latter allows compiler optimization hints.
+   For bigger objects and STL containers pass by reference always 
+   ( CNETCDF& netcdf, std::vector<std::string>& names ) 
+7) Use auto keyword only when it doesn't interfere with understanding the logic of the code (don't abuse its use). 
+   Don't use it to replace primitives (int, unsigned int, double) or well-known types (std::vector). 
+   Use it for iterators, when the container is well-known and comes from a STL member function.
+   e.g. auto itMap = myMap.find("William");   (we know it is an iterator from find in map)  
     
     
 Classes / Structs
-1) Classes will be initialized with a upper case "C" following by an upper, example: ( CADIOS, CNETCDF, CPHDF, CTransform, etc. )
-2) Structs will be initialized with a upper case "S". Reserve for plain old data, example: ( SVariables )
+1) Classes will be initialized with a upper case "C" following by an upper, 
+   example: ( CADIOS, CNETCDF, CPHDF, CTransform, etc. )
+2) Structs will be initialized with a upper case "S". Reserve for plain old data, example: ( SAttribute )
 3) Class/Struct member variables (not functions) will use hungarian notation ("m_" prefix) 
    followed by an upper case letter ( m_XMLConfig, m_GlobalSize )
-4) Only one file pair per class (class CADIOS in CADIOS.h and CADIOS.cpp), do not define several classes in the same file  
+4) Only one file pair per class (class CADIOS in CADIOS.h and CADIOS.cpp), 
+   do not define several classes in the same file  
  
  
-Pointers and References
-1) Avoid bare pointers (*p) at all cost for memory management (new/delete). Prefer smart pointers unique_ptr, shared_ptr. 
-   Also, use smart pointers for polymorphism as objects are a dynamic (runtime) concept.
+Memory Management: Pointers, Smart Pointers, References and STL Containers
+1) Avoid bare pointers (*p) at all cost for memory management (new/delete). Prefer smart pointers 
+   unique_ptr, shared_ptr. Also, use smart pointers for polymorphism as objects are a dynamic (runtime) concept.
+   ONE Exception: MPI Data_TYPE that require pointers 
 2) Prefer references (&) over pointers in passing by reference or for members of a class. 
-   ONE Exception: Use a bare pointer only if a reference to an object can be null (NEVER use it for memory management).
+   ONE Exception: Use a bare pointer only if a reference to an object can be nullptr 
+   (NEVER use it for memory management).
 3) Prefer the STL for memory management to minimize new structs/object (new/delete) creation 
    (e.g. std::vector<double> instead of double* )
 4) Avoid storing bare pointers in STL containers, they must be deallocated manually if so. 
@@ -111,7 +124,8 @@ Pointers and References
    Do: double* numbers , Don't: double * numbers 
    Do: std::vector<double>& vector, Don't: std::vector<double> &vector
 6) Use RAII: resource allocation is initialization. 
-   A good design should allocate memory resources at the constructor stage, or as soon as it is available.
+   A good design should allocate memory resources at the constructor stage, 
+   or as soon as the required information is available.
    Fine tuning memory should be used only if it causes a big impact.    
  
  
@@ -120,12 +134,14 @@ const / constexpr  correctness, macro, and include statements
 2) Do not use pre-processor macros (#define) unless it's a must (e.g. #ifdef __cplusplus or #pragma )
 3) Use const in functions that don't change the state of an Object or its members
 4) Use const in function arguments (value or references) if the state of the argument is not changed.
-5) Always use header (*.h) include guards, Eclipse does it automatically, using the file name only. 
+5) Always use include guards in headers (*.h), Eclipse does it automatically at file creation 
+   using the file name. 
    (e.g. in CADIOS.h start with #ifndef CADIOS_H_ 
                                 #define CADIOS_H_ )
 6) Only include header files at the beginning of the file (#include <cmath>). Make each *.h file self-contained.
    Don't include the same header file in *.cpp already defined in an included *.h file. 
-   Example: if cmath is included in CADIOS.h, which is included by CADIOS.cpp, then don't include cmath in CADIOS.cpp     
+   Example: if cmath is included in CADIOS.h, which is included by CADIOS.cpp,
+   then don't include cmath in CADIOS.cpp     
 
 
 Avoid mixing C-like equivalents
@@ -134,13 +150,14 @@ Avoid mixing C-like equivalents
    a. If there is no C++ equivalent (e.g. unistd.h )
    b. When C++ libraries are deprecated or not fully supported ( MPI, CUDA_C, PETSc )
    c. When interoperability is required with another language, C++ --> C ---> Fortran, or C++ --> C ---> JNI ---> Java  
-2) Do not use C functions if there is a C++ equivalent ( use std::cout instead of printf )
+2) Do not use C functions if there is a C++ equivalent ( use std::cout instead of printf, new instead of malloc )
 
 
 C++ Exceptions
-1) Use C++ standard exceptions for error handling, do not throw integers. This is helpful as it allows handling of different exception types in different ways.
+1) Throw C++ standard exceptions for error handling, do not throw integers. 
+   This is helpful as it allows handling of different exception types in different ways.
    In rare cases a custom exception must be defined/declared.
 2) Use informative messages for exception handling to complement the nature of the exception. 
    Help the user fix the error/warning.
 3) Error exceptions (program stops) must start with "ERROR: ", 
-   warnings (program doesn't stop) must start with "WARNING: ".   
+   warnings (program doesn't stop) must start with "WARNING: " in the log or standard output.   

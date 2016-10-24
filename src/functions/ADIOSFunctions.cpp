@@ -19,6 +19,7 @@ namespace adios
 {
 
 
+
 void DumpFileToStream( const std::string fileName, std::string& fileContent )
 {
     std::ifstream fileStream( fileName );
@@ -37,8 +38,8 @@ void DumpFileToStream( const std::string fileName, std::string& fileContent )
 }
 
 
-void GetSubString ( const std::string initialTag, const std::string finalTag, const std::string content,
-                    std::string& subString, std::string::size_type& currentPosition )
+void GetSubString( const std::string initialTag, const std::string finalTag, const std::string content,
+                   std::string& subString, std::string::size_type& currentPosition )
 {
     auto lf_Wipe =[]( std::string& subString, std::string::size_type& currentPosition )
     {
@@ -235,6 +236,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
         auto itGroup = groups.find( groupName );
         if( itGroup == groups.end() ) //not found
         {
+            std::cout << "WARNING: group " << groupName << " in transport line not found \n";
             continue;
         }
 

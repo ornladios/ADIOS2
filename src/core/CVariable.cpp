@@ -7,6 +7,7 @@
 
 
 #include "core/CVariable.h"
+#include "core/CVariableTemplate.h" //for dynamic_cast
 
 
 namespace adios
@@ -32,8 +33,10 @@ CVariable::CVariable( const bool isGlobal, const std::string type, const std::st
     }
 }
 
+
 CVariable::~CVariable()
 { }
+
 
 
 } //end namespace
