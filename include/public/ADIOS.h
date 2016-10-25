@@ -121,6 +121,8 @@ private:
 
     std::map< std::string, std::unique_ptr<CTransform> > m_Transforms;
 
+
+
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file
      * Note, that if there are two ADIOS outputs going on at the same time,

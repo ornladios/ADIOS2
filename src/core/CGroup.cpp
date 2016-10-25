@@ -61,6 +61,10 @@ void CGroup::SetVariable( const std::string name, const bool isGlobal, const std
             m_Variables[name] = std::make_shared< CVariableTemplate<float> >( isGlobal, type, dimensionsCSV, transform );
         else if( type == "double")
             m_Variables[name] = std::make_shared< CVariableTemplate<double> >( isGlobal, type, dimensionsCSV, transform );
+        else if( type == "Vinteger")
+            m_Variables[name] = std::make_shared< CVariableTemplate< std::vector<int> > >( isGlobal, type, dimensionsCSV, transform );
+        else
+            throw std::invalid_argument( "ERROR: type " + type + " for variable " + name + "not supported\n" );
     };
 
     //Function body start  here
@@ -131,6 +135,8 @@ void CGroup::Write( const std::string variableName, const void* values )
 
     if( type == "double" ) variable->Set<double>( values );
     else if( type == "integer" ) variable->Set<int>( values );
+    else if( type == "Vinteger" ) variable->Set<std::vector<int>>( values );
+
 //    else if( type == "unsigned integer" ) variable->Set<unsigned int>( values );
 //    else if( type == "float" ) variable->Set<float>( values );
 

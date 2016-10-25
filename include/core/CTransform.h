@@ -36,9 +36,13 @@ public:
      * @param method zlib, bzip2, szip
      * @param variable
      */
-    CTransform( const std::string method, const unsigned int compressionLevel, CVariable& variable );
+    CTransform( const std::string method, const unsigned int compressionLevel, CVariable& variable ):
+        m_Method( method ),
+        m_CompressionLevel( compressionLevel ),
+        m_Variable( variable )
+    { }
 
-    virtual ~CTransform( );
+    virtual ~CTransform( ){ };
 
     virtual void Compress( ) const = 0; ///< Compress m_Variable data m_Value
 

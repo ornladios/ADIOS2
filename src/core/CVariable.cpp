@@ -7,8 +7,7 @@
 
 
 #include "core/CVariable.h"
-#include "core/CVariableTemplate.h" //for dynamic_cast
-
+#include "core/CVariableTemplate.h"
 
 namespace adios
 {

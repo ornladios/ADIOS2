@@ -2,7 +2,7 @@
 <adios-config host-language="C++">
   <adios-group name="Vector">
 
-    <var name="Numbers" type="integer"/>
+    <var name="Numbers" type="Vinteger"/>
     <attribute name="description" value="1 to 10"/>
 
   </adios-group>

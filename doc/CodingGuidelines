@@ -48,7 +48,7 @@ Text style for readability (Coding format setup in Eclipse with Window > Prefere
    }
 
     
-5) Brackets: use an extra space for brackets
+5) Brackets: use an extra space for brackets. Only one line conditionals can skip having brackets.
     Do: 
     if( number < 1 )
     {
@@ -61,10 +61,13 @@ Text style for readability (Coding format setup in Eclipse with Window > Prefere
     number = 4;    .....
                      .....}
 
+   It's ok to omit brackets in one line conditionals:
+   if( itMap == map.end() ) throw std::invalid_argument( "ERROR: not found in map\n" );
     
-6) Prefer the keyword "using" over "typedef". Only rename complex types, do not rename standard types (int, double, std::vector) 
-   Don't: typedef std::vector<std::vector<double>> Vector2D;
-   Do:    using std::vector<std::vector<double>> = Vector2D;
+6) Prefer the keyword "using" over "typedef". Only rename very complex custom types, 
+   do not rename standard types (int, double, std::vector) 
+   Don't: typedef std::vector<std::vector< std::map<std::string,double> >> MapIn2DVector;
+   Do:    using std::vector<std::vector< std::map<std::string,double> >> = MapIn2DVector;
     
 
 Documentation/Comments

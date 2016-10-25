@@ -8,6 +8,8 @@
 #include <iostream>
 
 #include "transport/CFStream.h"
+#include "core/CVariableTemplate.h"
+#include "core/CVariable.h"
 
 
 namespace adios
@@ -31,6 +33,17 @@ void CFStream::Write( const CVariable& variable )
 
     std::cout << "Just saying Hello from CFStream Write from process " << rank << "/" << size  << "\n";
     std::cout << "My variable type is " << variable.m_Type << "\n";
+
+    auto var = variable.Get< std::vector<int> >();
+
+//    std::cout << "Var is empty: " << std::boolalpha << var.empty() << "\n";
+
+    std::cout << "var " << var->at(0) << "\n";
+
+    //pointer to vector
+//    for( unsigned int i = 0; i < 10; ++i )
+//        std::cout << "var[" << i << "] = " << var->at(i) << "\n";
+
 }
 
 

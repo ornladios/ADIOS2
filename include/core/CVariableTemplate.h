@@ -38,18 +38,21 @@ public:
 
     const T* m_Value = nullptr; // pointer or no pointer?
 
-    //const T& Get() const { return m_Value; }
+    const T* Get() const { return m_Value; }
 
-    void Set( const void* values ){ m_Value = static_cast<T const*> (values); }
-
+    void Set( const void* values ){ m_Value = static_cast<const T*> (values); }
 };
 
+
+template<class T> const T* CVariable::Get( ) const
+{
+    return dynamic_cast<CVariableTemplate<T>const &  >(*this).Get( );
+}
 
 template<class T> void CVariable::Set( const void* values )
 {
     return dynamic_cast< CVariableTemplate<T>& >( *this ).Set( values );
 }
-
 
 } //end namespace
 

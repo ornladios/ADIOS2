@@ -28,9 +28,8 @@ public:
 
     virtual ~CVariable( );
 
-    //template<class T> const T& Get( ) const;
+    template<class T> const T* Get( ) const;
     template<class T> void Set( const void* values );
-
 
 //protected: turned off for testing
     bool m_IsGlobal = false;
