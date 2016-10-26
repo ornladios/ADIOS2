@@ -48,19 +48,37 @@ ADIOS::~ADIOS( )
 
 void ADIOS::Open( const std::string groupName, const std::string fileName, const std::string accessMode )
 {
-    m_Groups.at( groupName ).Open( fileName, accessMode );
+    auto itGroup = m_Groups.find( groupName );
+
+    if( m_DebugMode == true )
+    {
+        if( itGroup == m_Groups.end() )
+            throw std::invalid_argument( "ERROR: group " + groupName + " not defined. Use CreateGroup function or XML Config file.\n" );
+    }
+
+    itGroup->second.Open( fileName, accessMode );
 }
 
 
 void ADIOS::Write( const std::string groupName, const std::string variableName, const void* values )
 {
-    m_Groups.at( groupName ).Write( variableName, values );
+    auto itGroup = m_Groups.find( groupName );
+
+    if( m_DebugMode == true )
+    {
+        if( itGroup == m_Groups.end() )
+            throw std::invalid_argument( "ERROR: group " + groupName + " not defined. Use CreateGroup or XML Config file.\n" );
+    }
+
+    itGroup->second.Write( variableName, values );
 }
+
 
 void ADIOS::Close( const std::string groupName )
 {
     m_Groups.at( groupName ).Close();
 }
+
 
 void ADIOS::MonitorGroups( std::ostream& logStream ) const
 {
@@ -70,6 +88,7 @@ void ADIOS::MonitorGroups( std::ostream& logStream ) const
         groupPair.second.Monitor( logStream );
     }
 }
+
 
 void ADIOS::CheckGroup( const std::string groupName )
 {

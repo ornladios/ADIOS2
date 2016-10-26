@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <adios-config host-language="C++">
-  <adios-group name="Vector">
-
+  <adios-group name="Types">
     <var name="Numbers" type="Vinteger"/>
     <attribute name="description" value="1 to 10"/>
 

@@ -29,21 +29,23 @@ void CFStream::Write( const CVariable& variable )
 {
     int rank, size;
     MPI_Comm_rank( m_MPIComm, &rank );
-    MPI_Comm_size( m_MPIComm, &size );
+    MPI_Comm_size( m_MPIComm, &size ); //would write to file
 
-    std::cout << "Just saying Hello from CFStream Write from process " << rank << "/" << size  << "\n";
+    const std::string type( variable.m_Type );
     std::cout << "My variable type is " << variable.m_Type << "\n";
 
-    auto var = variable.Get< std::vector<int> >();
-
-//    std::cout << "Var is empty: " << std::boolalpha << var.empty() << "\n";
-
-    std::cout << "var " << var->at(0) << "\n";
-
-    //pointer to vector
-//    for( unsigned int i = 0; i < 10; ++i )
-//        std::cout << "var[" << i << "] = " << var->at(i) << "\n";
-
+    if( type[0] == 'V' ) //meaning it's a vector
+    {
+        //pointer to vector
+        auto values = variable.Get< std::vector<int> >();
+        std::cout << "Vector of size " <<  values->size() << "\n";
+        unsigned int i = 0;
+        for( auto element : *values )
+        {
+            std::cout << "var[" << i << "] = " << element << "\n";
+            ++i;
+        }
+    }
 }
 
 

@@ -41,13 +41,19 @@ public:
 
     /**
      * @brief Constructor for XML config file
+     * @param hostLanguage reference from ADIOS class
      * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file
      * @param groupName returns the groupName from <adios-group name=" "
      * @param debugMode
      */
-    CGroup( const std::string& xmlGroup, std::string& groupName, const bool debugMode = false );
+    CGroup( const std::string& hostLanguage, const std::string& xmlGroup, std::string& groupName, const bool debugMode = false );
 
-    CGroup( const bool debugMode = false ); ///Non-XML empty constructor
+    /**
+     * Non-XML empty constructor
+     * @param hostLanguage reference from ADIOS class
+     * @param debugMode
+     */
+    CGroup( const std::string& hostLanguage, const bool debugMode = false );
 
     ~CGroup( ); ///< Using STL containers, no deallocation
 
@@ -69,7 +75,7 @@ public:
 
     /**
      * @brief Sets a variable in current Group, name must be unique
-     * @param name
+     * @param name variable name
      * @param isGlobal
      * @param type supported type
      * @param dimensionsCSV comma separated dimensions, default 1D = {1}
@@ -119,15 +125,24 @@ public:
 
 private:
 
+    const std::string& m_HostLanguage; ///< reference to class ADIOS m_HostLanguage
     /**
      * @brief Contains all group variables (from XML Config file).
      * <pre>
      *     Key: std::string unique variable name
-     *     Value: Children of SVariable struct defined in SVariable.h, using unique_ptr for polymorphism
+     *     Value: Polymorphic value is always unique child defined in SVariableTemplate.h, allow different variable types
      * </pre>
      */
     std::map< std::string, std::shared_ptr<CVariable> > m_Variables;
-    std::vector< SAttribute > m_Attributes; ///< Contains all group attributes from SAttribute.h, should be moved to a map
+
+    /**
+     * @brief Contains all group attributes from SAttribute.h
+     * <pre>
+     *     Key: std::string unique attribute name
+     *     Value: SAttribute, plain-old-data struct
+     * </pre>
+     */
+    std::map< std::string, SAttribute > m_Attributes;
 
     std::vector< std::string > m_GlobalDimensions; ///< from global-bounds in XML File, data in global space
     std::vector< std::string > m_GlobalOffsets; ///< from global-bounds in XML File, data in global space
@@ -142,6 +157,7 @@ private:
 
     /**
      * Called from XML constructor
+     * @param hostLanguage from ADIOS class, used to determine allowed variable types (Fortran -> real, C++-> std::vector )
      * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file
      * @param groupName returns the groupName from <adios-group name=" "
      */
@@ -156,8 +172,6 @@ private:
 
 
 } //end namespace
-
-
 
 
 #endif /* CGROUP_H_ */

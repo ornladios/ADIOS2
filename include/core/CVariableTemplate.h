@@ -40,19 +40,20 @@ public:
 
     const T* Get() const { return m_Value; }
 
-    void Set( const void* values ){ m_Value = static_cast<const T*> (values); }
+    void Set( const void* values ){ m_Value = static_cast<const T*>( values ); }
 };
 
 
 template<class T> const T* CVariable::Get( ) const
 {
-    return dynamic_cast<CVariableTemplate<T>const &  >(*this).Get( );
+    return dynamic_cast< const CVariableTemplate<T>&  >(*this).Get( );
 }
 
 template<class T> void CVariable::Set( const void* values )
 {
     return dynamic_cast< CVariableTemplate<T>& >( *this ).Set( values );
 }
+
 
 } //end namespace
 

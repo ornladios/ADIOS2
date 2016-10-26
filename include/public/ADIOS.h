@@ -83,18 +83,17 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     void Write( const std::string groupName, const std::string variableName, const void* values );
 
     /**
+     * Close a particular group, group will be out of scope and destroyed
+     * @param groupName group to be closed
+     */
+    void Close( const std::string groupName );
+
+    /**
      * @brief Dumps groups information to a file stream or standard output.
      * Note that either the user closes this fileStream or it's closed at the end.
      * @param logStream either std::cout standard output, or a std::ofstream file
      */
     void MonitorGroups( std::ostream& logStream ) const;
-
-    /**
-     * Close a particular group
-     * @param groupName
-     */
-    void Close( const std::string groupName );
-
 
 
 private:
@@ -107,7 +106,7 @@ private:
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself
     #endif
 
-    std::string m_HostLanguage; ///< Supported languages: C, C++, Fortran
+    std::string m_HostLanguage = "C++"; ///< Supported languages: C, C++, Fortran, Python, etc.
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
     /**

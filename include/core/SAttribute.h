@@ -20,10 +20,8 @@ namespace adios
  */
 struct SAttribute
 {
-    std::string Name; ///< Attribute name
     bool IsGlobal; ///< true: static, defined in XML Config file, false: dynamic, defined in non-XML API
     std::string Type; ///< string or numeric type
-    std::string Path; ///< Attribute name
     std::string Value; ///< information about the attribute
 };
 

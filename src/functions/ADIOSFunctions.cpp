@@ -13,6 +13,7 @@
 /// \endcond
 
 #include "functions/ADIOSFunctions.h"
+#include "public/SSupport.h"
 
 
 namespace adios
@@ -199,6 +200,9 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
         if( pair.first == "host-language" ) hostLanguage = pair.second;
     }
 
+    if( SSupport::HostLanguages.count( hostLanguage ) == 0 )
+        throw std::invalid_argument("ERROR: host language " + hostLanguage + " not supported.\n" );
+
     //adios-group
     std::string xmlGroup;
     while( currentPosition != std::string::npos )
@@ -206,9 +210,14 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
         GetSubString("<adios-group ", "</adios-group>", currentContent, xmlGroup, currentPosition );
         if( xmlGroup.empty() ) break;
 
+
         std::string groupName;
-        CGroup group( xmlGroup, groupName );
-        groups[ groupName ] = group; //copy as it's a small object
+        CGroup group( hostLanguage, xmlGroup, groupName );
+
+        if( groups.count( groupName ) == 1 ) //group exists
+            throw std::invalid_argument("ERROR: group " + groupName + " defined twice.\n" );
+
+        groups.insert( std::make_pair( groupName, std::move( group ) ) ); //move rvalue as it has const members
 
         currentContent.erase( currentContent.find( xmlGroup ), xmlGroup.size() );
         currentPosition = 0;
