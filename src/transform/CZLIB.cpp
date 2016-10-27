@@ -14,7 +14,7 @@
 namespace adios
 {
 
-CZLIB::CZLIB( const unsigned int compressionLevel, CVariable& variable ):
+CZLIB::CZLIB( const unsigned int compressionLevel, CVariableBase& variable ):
     CTransform( "szip", compressionLevel, variable )
 { }
 

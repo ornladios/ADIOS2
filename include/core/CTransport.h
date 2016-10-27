@@ -10,15 +10,16 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
+/// \endcond
 
 #ifdef HAVE_MPI
     #include <mpi.h>
 #else
     #include "public/mpidummy.h"
 #endif
-/// \endcond
 
-#include "core/CVariable.h"
+
+#include "core/CVariableBase.h"
 
 
 namespace adios
@@ -55,8 +56,7 @@ public:
         m_AccessMode = accessMode;
     }
 
-
-    virtual void Write( const CVariable& variable ) = 0;
+    virtual void Write( const CVariableBase& variable ) = 0;
 };
 
 

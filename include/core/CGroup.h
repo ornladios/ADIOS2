@@ -23,7 +23,7 @@
 #endif
 
 
-#include "core/CVariable.h"
+#include "core/CVariableBase.h"
 #include "core/SAttribute.h"
 #include "core/CTransport.h"
 
@@ -72,6 +72,11 @@ public:
      */
     void Write( const std::string variableName, const void* values );
 
+    /**
+     * Must think what to do with Capsule and Transport
+     */
+    void Close( );
+
 
     /**
      * @brief Sets a variable in current Group, name must be unique
@@ -103,7 +108,7 @@ public:
     void SetGlobalBounds( const std::string dimensionsCSV, const std::string offsetsCSV = "" );
 
     /**
-     * @brief MPI version of SetTransport, includes the communicator
+     * @brief Sets m_Transport with available supported method
      * @param method supported values in SSupport.h TransportMethods
      * @param priority numeric priority for the I/O to schedule this write with others that might be pending
      * @param iteration iterations between writes of a group to gauge how quickly this data should be evacuated from the compute node
@@ -120,12 +125,10 @@ public:
      */
     void Monitor( std::ostream& logStream ) const;
 
-    void Close( ); ///< Close Group
-
 
 private:
 
-    const std::string& m_HostLanguage; ///< reference to class ADIOS m_HostLanguage
+    const std::string& m_HostLanguage; ///< reference to class ADIOS m_HostLanguage, this erases the copy constructor
     /**
      * @brief Contains all group variables (from XML Config file).
      * <pre>
@@ -133,7 +136,7 @@ private:
      *     Value: Polymorphic value is always unique child defined in SVariableTemplate.h, allow different variable types
      * </pre>
      */
-    std::map< std::string, std::shared_ptr<CVariable> > m_Variables;
+    std::map< std::string, std::unique_ptr<CVariableBase> > m_Variables;
 
     /**
      * @brief Contains all group attributes from SAttribute.h
@@ -144,21 +147,21 @@ private:
      */
     std::map< std::string, SAttribute > m_Attributes;
 
-    std::vector< std::string > m_GlobalDimensions; ///< from global-bounds in XML File, data in global space
-    std::vector< std::string > m_GlobalOffsets; ///< from global-bounds in XML File, data in global space
+    std::vector<std::string> m_GlobalDimensions; ///< from global-bounds in XML File, data in global space
+    std::vector<std::string> m_GlobalOffsets; ///< from global-bounds in XML File, data in global space
 
-    std::shared_ptr< CTransport > m_Transport; ///< transport method defined in XML File, using shared pointer as SGroup can be uninitialized
+    std::unique_ptr<CTransport> m_Transport; ///< transport method defined in XML File, using unique_ptr as copy constructor is removed
     std::string m_ActiveTransport;
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
     bool m_IsOpen = false; ///< checks if group was opened for operations;
     std::string m_FileName; ///< associated fileName is the Group is opened.
-    std::string m_AcessMode; ///< file access mode
+    std::string m_AcessMode; ///< file access mode "r"->read, "w"->write, "a"->append
 
     /**
      * Called from XML constructor
      * @param hostLanguage from ADIOS class, used to determine allowed variable types (Fortran -> real, C++-> std::vector )
-     * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file
+     * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file passing by reference as it could be big
      * @param groupName returns the groupName from <adios-group name=" "
      */
     void ParseXMLGroup( const std::string& xmlGroup, std::string& groupName );

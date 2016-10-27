@@ -120,8 +120,6 @@ private:
 
     std::map< std::string, std::unique_ptr<CTransform> > m_Transforms;
 
-
-
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file
      * Note, that if there are two ADIOS outputs going on at the same time,
@@ -131,10 +129,11 @@ private:
     unsigned int MaxBufferSizeInMB = 0;
 
     /**
-     * Checks for group existence in m_Groups
+     * Checks for group existence in m_Groups, if failed throws std::invalid_argument exception
      * @param groupName to be checked
+     * @param hint adds information to thrown exception
      */
-    void CheckGroup( const std::string groupName );
+    void CheckGroup( const std::string groupName, const std::string hint );
 };
 
 

@@ -10,13 +10,9 @@
 
 
 #include "core/CGroup.h"
+#include "functions/GroupFunctions.h" //for CreateVariableLanguage
 #include "public/SSupport.h"
-#include "functions/ADIOSFunctions.h"
-#include "core/CVariableTemplate.h"
-
-//transports
-#include "transport/CPOSIX.h"
-#include "transport/CFStream.h"
+#include "functions/ADIOSFunctions.h" //for XML Parsing GetTag
 
 
 namespace adios
@@ -51,83 +47,74 @@ void CGroup::Open( const std::string fileName, const std::string accessMode )
 void CGroup::SetVariable( const std::string name, const bool isGlobal, const std::string type, const std::string dimensionsCSV,
                           const std::string transform )
 {
-    auto lf_SetVariable = [&] ( const std::string name, const bool isGlobal, const std::string type,
-                                const std::string dimensionsCSV,
-                                const std::string transform )
-    {
-        if( type == "int") //using copy constructor as it's a small class, only metadata
-            m_Variables[name] = std::make_shared< CVariableTemplate<int> >( isGlobal, type, dimensionsCSV, transform );
-        else if( type == "unsigned int" )
-            m_Variables[name] = std::make_shared< CVariableTemplate<unsigned int> >( isGlobal, type, dimensionsCSV, transform );
-        else if( type == "real" )
-            m_Variables[name] = std::make_shared< CVariableTemplate<float> >( isGlobal, type, dimensionsCSV, transform );
-        else if( type == "double")
-            m_Variables[name] = std::make_shared< CVariableTemplate<double> >( isGlobal, type, dimensionsCSV, transform );
-        else if( type == "std::vector<int>" )
-            m_Variables[name] = std::make_shared< CVariableTemplate< std::vector<int> > >( isGlobal, type, dimensionsCSV, transform );
-        else
-            throw std::invalid_argument( "ERROR: type " + type + " for variable " + name + "not supported\n" );
-    };
-
-    //Function body start  here
     if( m_DebugMode == true )
     {
         if( m_Variables.count( name ) == 0 ) //variable doesn't exists
-            lf_SetVariable( name, isGlobal, type, dimensionsCSV, transform );
+            CreateVariableLanguage( m_HostLanguage, name, isGlobal, type, dimensionsCSV, transform, m_Variables );
         else //name is found
             throw std::invalid_argument( "ERROR: variable " + name + " exists more than once.\n" );
     }
     else
     {
-        lf_SetVariable( name, isGlobal, type, dimensionsCSV, transform );
+        CreateVariableLanguage( m_HostLanguage, name, isGlobal, type, dimensionsCSV, transform, m_Variables );
     }
 }
 
 
-void CGroup::SetAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path, const std::string value )
+void CGroup::SetAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path,
+                           const std::string value )
 {
     if( m_DebugMode == true )
     {
         if( m_Attributes.count( name ) == 0 ) //variable doesn't exists
-            m_Attributes[name] = SAttribute{ isGlobal, type, value }; //copy, it's small
+            m_Attributes.emplace( name, SAttribute{ isGlobal, type, value } );
         else //name is found
             throw std::invalid_argument( "ERROR: attribute " + name + " exists, NOT setting a new variable\n" );
     }
     else
     {
-        m_Attributes[name] = SAttribute{ isGlobal, type, value }; //copy, it's small
+        m_Attributes.emplace( name, SAttribute{ isGlobal, type, value } );
     }
 }
 
 
 void CGroup::SetGlobalBounds( const std::string dimensionsCSV, const std::string offsetsCSV )
 {
-    if( dimensionsCSV.empty() ) return;
-
-    std::istringstream dimensionsCSVSS( dimensionsCSV );
-    std::string dimension;
-    while( std::getline( dimensionsCSVSS, dimension, ',' ) )     //might have to check for "comma" existence
+    auto lf_SetGlobalMember = []( const std::string inputCSV, std::vector<std::string>& output )
     {
-        m_GlobalDimensions.push_back( dimension );
+        if( inputCSV.empty() ) return;
+        std::istringstream inputSS( inputCSV );
+        std::string element;
+
+        while( std::getline( inputSS, element, ',' ) )  //might have to check for "comma" existence
+            output.push_back( element );
+    };
+
+    if( m_DebugMode == true )
+    {
+        if( m_GlobalDimensions.empty() == false ) throw std::invalid_argument("ERROR: global dimensions already set\n" );
+        if( m_GlobalOffsets.empty() == false ) throw std::invalid_argument("ERROR: global offsets already set\n" );
     }
 
-    if( offsetsCSV.empty() ) return;
-
-    std::istringstream offsetsCSVSS( offsetsCSV );
-    std::string offset;
-    while( std::getline( offsetsCSVSS, offset, ',' ) )     //might have to check for "comma" existence
-    {
-        m_GlobalOffsets.push_back( offset );
-    }
+    lf_SetGlobalMember( dimensionsCSV, m_GlobalDimensions );
+    lf_SetGlobalMember( offsetsCSV, m_GlobalOffsets );
 }
 
 
 void CGroup::SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
                            const MPI_Comm mpiComm )
 {
-    CheckTransport( method );
-    if( m_ActiveTransport == "POSIX" ) m_Transport = std::make_shared<CPOSIX>( priority, iteration, mpiComm );
-    else if( m_ActiveTransport == "FStream" ) m_Transport = std::make_shared<CFStream>( priority, iteration, mpiComm );
+    if( m_DebugMode == true )
+    {
+        if( SSupport::Transports.count( method ) == 0 )
+            throw std::invalid_argument( "ERROR: transport method " + method + " not supported. Check spelling or case sensitivity.\n" );
+    }
+
+    if( m_ActiveTransport.empty() == false ) //there is an existing transport method
+        m_Transport.reset();
+
+    CreateTransport( method, priority, iteration, mpiComm, m_Transport );
+    m_ActiveTransport = method;
 }
 
 
@@ -139,8 +126,8 @@ void CGroup::Write( const std::string variableName, const void* values )
     {
         if( itVariable == m_Variables.end() )
             throw std::invalid_argument( "ERROR: variable " + variableName + " is undefined.\n" );
-        //here implemented dynamic_cast checks
     }
+    // must move this to GroupFunctions.h
 
     const std::string type = itVariable->second->m_Type;
     auto& variable = itVariable->second;
@@ -157,6 +144,11 @@ void CGroup::Write( const std::string variableName, const void* values )
     m_Transport->Write( *variable ); //Using shared_ptr for Variable, must dereference
 }
 
+
+void CGroup::Close( )
+{
+    //here must think what to do with Capsule and close Transport
+}
 
 //PRIVATE FUNCTIONS BELOW
 void CGroup::Monitor( std::ostream& logStream ) const
@@ -176,7 +168,6 @@ void CGroup::Monitor( std::ostream& logStream ) const
     std::cout << "\n";
 
     logStream << "\tTransport Method " << m_ActiveTransport << "\n";
-    logStream << "\tIs Transport Method Unique?: " << std::boolalpha << m_Transport.unique() << "\n";
     std::cout << "\n";
 }
 
@@ -250,21 +241,9 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::string& groupName 
 }
 
 
-void CGroup::Close( )
-{
-    //Need to implement
-}
-
-
 void CGroup::CheckTransport( const std::string method )
 {
-    if( SSupport::Transports.count( method ) == 0 )
-        throw std::invalid_argument( "ERROR: transport method " + method + " not supported. Check spelling or case sensitivity.\n" );
 
-    if( m_ActiveTransport.empty() == false ) //there is an existing transport method
-        m_Transport.reset();
-
-    m_ActiveTransport = method;
 }
 
 

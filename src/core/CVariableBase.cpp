@@ -6,14 +6,13 @@
  */
 
 
-#include "core/CVariable.h"
-#include "core/CVariableTemplate.h"
+#include "core/CVariableBase.h"
 
 namespace adios
 {
 
 
-CVariable::CVariable( const bool isGlobal, const std::string type, const std::string dimensionsCSV, const std::string transform ):
+CVariableBase::CVariableBase( const bool isGlobal, const std::string type, const std::string dimensionsCSV, const std::string transform ):
     m_IsGlobal( isGlobal ),
     m_Type( type ),
     m_Transform( transform )
@@ -33,7 +32,7 @@ CVariable::CVariable( const bool isGlobal, const std::string type, const std::st
 }
 
 
-CVariable::~CVariable()
+CVariableBase::~CVariableBase()
 { }
 
 

@@ -212,7 +212,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
 
 
         std::string groupName;
-        CGroup group( hostLanguage, xmlGroup, groupName );
+        CGroup group( hostLanguage, xmlGroup, groupName ); //need to change formulation to be able to emplace
 
         if( groups.count( groupName ) == 1 ) //group exists
             throw std::invalid_argument("ERROR: group " + groupName + " defined twice.\n" );

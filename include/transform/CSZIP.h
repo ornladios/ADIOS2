@@ -29,7 +29,7 @@ public:
      * @param compressionLevel
      * @param variable
      */
-    CSZIP( const unsigned int compressionLevel, CVariable& variable );
+    CSZIP( const unsigned int compressionLevel, CVariableBase& variable );
 
     ~CSZIP( );
 

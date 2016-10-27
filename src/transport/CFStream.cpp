@@ -5,11 +5,11 @@
  *      Author: wfg
  */
 
+
 #include <iostream>
 
 #include "transport/CFStream.h"
-#include "core/CVariableTemplate.h"
-#include "core/CVariable.h"
+#include "core/CVariable.h" // implements CVariableBase Get function
 
 
 namespace adios
@@ -25,7 +25,7 @@ CFStream::~CFStream( )
 { }
 
 
-void CFStream::Write( const CVariable& variable )
+void CFStream::Write( const CVariableBase& variable )
 {
     int rank, size;
     MPI_Comm_rank( m_MPIComm, &rank );

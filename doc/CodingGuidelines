@@ -31,6 +31,7 @@ Text style for readability (Coding format setup in Eclipse with Window > Prefere
 1) Use meaningful English words (time not t, rank not r or rk), well-known acronyms (MPI, XML, CFD, GMRES, etc.) 
    or well-known short names (Config, Comm, 2D, 3D).
    Examples: timeInitial instead of tIni, or work instead of wrk
+   One Exception: when redefining long types with the keyword "using" some mnemonics and short names is allowed, document scope of using
 2) Avoid "_" in names, adds unnecessary length (specially when mixed with STL containers) to the variable name and could conflict with name mangling. 
    Reserve it for prefix of special cases (see class members and lambda functions).
    Use upper case letter instead:
@@ -64,10 +65,13 @@ Text style for readability (Coding format setup in Eclipse with Window > Prefere
    It's ok to omit brackets in one line conditionals:
    if( itMap == map.end() ) throw std::invalid_argument( "ERROR: not found in map\n" );
     
-6) Prefer the keyword "using" over "typedef". Only rename very complex custom types, 
+6) Prefer the keyword "using" over "typedef". Only rename very long complex or custom types, 
    do not rename standard types (int, double, std::vector) 
    Don't: typedef std::vector<std::vector< std::map<std::string,double> >> MapIn2DVector;
    Do:    using std::vector<std::vector< std::map<std::string,double> >> = MapIn2DVector;
+   
+   See 1) for Exception: when redefining long types with the keyword "using" 
+   some mnemonics and short names are allowed, document scope of using (local, class, file, etc.), though
     
 
 Documentation/Comments

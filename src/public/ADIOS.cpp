@@ -48,35 +48,29 @@ ADIOS::~ADIOS( )
 
 void ADIOS::Open( const std::string groupName, const std::string fileName, const std::string accessMode )
 {
-    auto itGroup = m_Groups.find( groupName );
-
     if( m_DebugMode == true )
-    {
-        if( itGroup == m_Groups.end() )
-            throw std::invalid_argument( "ERROR: group " + groupName + " not defined. Use CreateGroup function or XML Config file.\n" );
-    }
+        CheckGroup( groupName, " from call to Open with file " + fileName );
 
-    itGroup->second.Open( fileName, accessMode );
+    m_Groups.at( groupName ).Open( fileName, accessMode );
 }
 
 
 void ADIOS::Write( const std::string groupName, const std::string variableName, const void* values )
 {
-    auto itGroup = m_Groups.find( groupName );
-
     if( m_DebugMode == true )
-    {
-        if( itGroup == m_Groups.end() )
-            throw std::invalid_argument( "ERROR: group " + groupName + " not defined. Use CreateGroup or XML Config file.\n" );
-    }
+        CheckGroup( groupName, " from call to Write with variable " + variableName );
 
-    itGroup->second.Write( variableName, values );
+    m_Groups.at( groupName ).Write( variableName, values );
 }
 
 
 void ADIOS::Close( const std::string groupName )
 {
-    m_Groups.at( groupName ).Close();
+    if( m_DebugMode == true )
+        CheckGroup( groupName, " from call to Close." );
+
+    m_Groups.at( groupName ).Close( ); //here must manage closing Capsule and Transport
+    m_Groups.erase( groupName ); //make group unavailable
 }
 
 
@@ -90,12 +84,11 @@ void ADIOS::MonitorGroups( std::ostream& logStream ) const
 }
 
 
-void ADIOS::CheckGroup( const std::string groupName )
+void ADIOS::CheckGroup( const std::string groupName, const std::string hint )
 {
-    auto it = m_Groups.find( groupName );
-    if( it == m_Groups.end() ) throw std::invalid_argument( "ERROR: group " + groupName + " not found\n" );
+    if( m_Groups.count( groupName ) == 0 )
+        throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
 }
-
 
 
 } //end namespace

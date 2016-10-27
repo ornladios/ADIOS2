@@ -13,7 +13,7 @@
 #include <string>
 /// \endcond
 
-#include "core/CVariable.h"
+#include "core/CVariableBase.h"
 
 
 namespace adios
@@ -29,14 +29,14 @@ public:
 
     const std::string m_Method; ///< name of the transformation method
     const unsigned int m_CompressionLevel; ///< depends on library implementation
-    CVariable& m_Variable; ///< variable to be transformed
+    CVariableBase& m_Variable; ///< variable to be transformed
 
     /**
      * Initialize parent method
      * @param method zlib, bzip2, szip
      * @param variable
      */
-    CTransform( const std::string method, const unsigned int compressionLevel, CVariable& variable ):
+    CTransform( const std::string method, const unsigned int compressionLevel, CVariableBase& variable ):
         m_Method( method ),
         m_CompressionLevel( compressionLevel ),
         m_Variable( variable )

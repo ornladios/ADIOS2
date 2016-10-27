@@ -27,7 +27,7 @@ public:
 
     ~CFStream( );
 
-    void Write( const CVariable& variable );
+    void Write( const CVariableBase& variable );
 };
 
 

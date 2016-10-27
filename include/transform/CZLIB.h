@@ -28,7 +28,7 @@ public:
      * @param compressionLevel
      * @param variable
      */
-    CZLIB( const unsigned int compressionLevel, CVariable& variable );
+    CZLIB( const unsigned int compressionLevel, CVariableBase& variable );
 
     ~CZLIB( );
 

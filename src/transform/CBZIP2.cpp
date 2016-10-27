@@ -15,7 +15,7 @@ namespace adios
 {
 
 
-CBZIP2::CBZIP2( const unsigned int compressionLevel, CVariable& variable ):
+CBZIP2::CBZIP2( const unsigned int compressionLevel, CVariableBase& variable ):
     CTransform( "bzip2", compressionLevel, variable )
 { }
 

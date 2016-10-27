@@ -29,7 +29,7 @@ public:
      * @param compressionLevel
      * @param variable
      */
-    CBZIP2( const unsigned int compressionLevel, CVariable& variable );
+    CBZIP2( const unsigned int compressionLevel, CVariableBase& variable );
 
     ~CBZIP2( );
 
