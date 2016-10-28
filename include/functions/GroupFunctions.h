@@ -21,6 +21,7 @@
 #endif
 
 #include "core/CVariableBase.h"
+#include "core/CTransport.h"
 
 namespace adios
 {
@@ -37,7 +38,7 @@ namespace adios
  */
 void CreateVariableLanguage( const std::string hostLanguage, const std::string name, const bool isGlobal,
                              const std::string type, const std::string dimensionsCSV, const std::string transform,
-                             std::map<std::string, std::unique_ptr<CVariableBase> >& variables ) noexcept;
+                             std::map<std::string, std::shared_ptr<CVariableBase> >& variables ) noexcept;
 
 /**
  * Create a C++ supported variable, including STL vector types
@@ -50,7 +51,7 @@ void CreateVariableLanguage( const std::string hostLanguage, const std::string n
  */
 void CreateVariableCpp( const std::string name, const bool isGlobal,
                         const std::string type, const std::string dimensionsCSV, const std::string transform,
-                        std::map< std::string, std::unique_ptr<CVariableBase> >& variables ) noexcept;
+                        std::map< std::string, std::shared_ptr<CVariableBase> >& variables ) noexcept;
 
 /**
  * Create a C supported variable, including STL vector types
@@ -63,7 +64,7 @@ void CreateVariableCpp( const std::string name, const bool isGlobal,
  */
 void CreateVariableC( const std::string name, const bool isGlobal,
                       const std::string type, const std::string dimensionsCSV, const std::string transform,
-                      std::map< std::string, std::unique_ptr<CVariableBase> >& variables ) noexcept;
+                      std::map< std::string, std::shared_ptr<CVariableBase> >& variables ) noexcept;
 
 /**
  * Create a Fortran supported variable, including STL vector types
@@ -76,7 +77,17 @@ void CreateVariableC( const std::string name, const bool isGlobal,
  */
 void CreateVariableFortran( const std::string name, const bool isGlobal,
                             const std::string type, const std::string dimensionsCSV, const std::string transform,
-                            std::map< std::string, std::unique_ptr<CVariableBase> >& variables ) noexcept;
+                            std::map< std::string, std::shared_ptr<CVariableBase> >& variables ) noexcept;
+
+
+/**
+ * Looks up the variable type and cast the appropriate values type to m_Value in CVariable
+ * Maybe it produces exceptions? Must double-check
+ * @param variables always a derived CVariable object from CVariableBase
+ * @param values to be casted to the right type
+ */
+void SetVariableValues( CVariableBase& variable, const void* values ) noexcept;
+
 
 
 /**
@@ -88,7 +99,7 @@ void CreateVariableFortran( const std::string name, const bool isGlobal,
  * @param transport passed from CGroup m_Transport member
  */
 void CreateTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
-                      const MPI_Comm mpiComm, std::unique_ptr<CTransport>& transport ) noexcept;
+                      const MPI_Comm mpiComm, std::shared_ptr<CTransport>& transport ) noexcept;
 
 
 

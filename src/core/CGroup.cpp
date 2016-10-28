@@ -12,7 +12,8 @@
 #include "core/CGroup.h"
 #include "functions/GroupFunctions.h" //for CreateVariableLanguage
 #include "public/SSupport.h"
-#include "functions/ADIOSFunctions.h" //for XML Parsing GetTag
+#include "functions/ADIOSFunctions.h" //for XML Parsing functions (e.g. GetTag)
+#include "core/CVariable.h" //for cast implementation of CVariableBase::Set that calls CVariable::Set
 
 
 namespace adios
@@ -25,11 +26,11 @@ CGroup::CGroup( const std::string& hostLanguage, const bool debugMode ):
 { }
 
 
-CGroup::CGroup( const std::string& hostLanguage, const std::string& xmlGroup, std::string& groupName, const bool debugMode ):
+CGroup::CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode ):
     m_HostLanguage{ hostLanguage },
     m_DebugMode{ debugMode }
 {
-    ParseXMLGroup( xmlGroup, groupName );
+    ParseXMLGroup( xmlGroup );
 }
 
 
@@ -49,6 +50,9 @@ void CGroup::SetVariable( const std::string name, const bool isGlobal, const std
 {
     if( m_DebugMode == true )
     {
+        if( SSupport::Datatypes.at( m_HostLanguage ).count( type ) == 0 )
+            throw std::invalid_argument( "ERROR: type " + type + " for variable " + name + " is not supported.\n" );
+
         if( m_Variables.count( name ) == 0 ) //variable doesn't exists
             CreateVariableLanguage( m_HostLanguage, name, isGlobal, type, dimensionsCSV, transform, m_Variables );
         else //name is found
@@ -110,7 +114,7 @@ void CGroup::SetTransport( const std::string method, const unsigned int priority
             throw std::invalid_argument( "ERROR: transport method " + method + " not supported. Check spelling or case sensitivity.\n" );
     }
 
-    if( m_ActiveTransport.empty() == false ) //there is an existing transport method
+    if( m_ActiveTransport.empty() == false ) //there is an existing transport method, so reset
         m_Transport.reset();
 
     CreateTransport( method, priority, iteration, mpiComm, m_Transport );
@@ -127,27 +131,16 @@ void CGroup::Write( const std::string variableName, const void* values )
         if( itVariable == m_Variables.end() )
             throw std::invalid_argument( "ERROR: variable " + variableName + " is undefined.\n" );
     }
-    // must move this to GroupFunctions.h
 
-    const std::string type = itVariable->second->m_Type;
-    auto& variable = itVariable->second;
-
-    //Set variable values
-    if( type == "double" ) variable->Set<double>( values );
-    else if( type == "integer" ) variable->Set<int>( values );
-    else if( type == "std::vector<int>" || type == "vector<int>"  ) variable->Set<std::vector<int>>( values );
-
-//    else if( type == "unsigned integer" ) variable->Set<unsigned int>( values );
-//    else if( type == "float" ) variable->Set<float>( values );
-
-    std::cout << "Hello from " << type << " variable " << variableName << "\n";
-    m_Transport->Write( *variable ); //Using shared_ptr for Variable, must dereference
+    SetVariableValues( *itVariable->second, values ); //will check type and cast to appropriate template<type>
+    //here must do something with Capsule
 }
 
 
 void CGroup::Close( )
 {
     //here must think what to do with Capsule and close Transport
+    m_Transport->Close( );
 }
 
 //PRIVATE FUNCTIONS BELOW
@@ -172,33 +165,31 @@ void CGroup::Monitor( std::ostream& logStream ) const
 }
 
 
-void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::string& groupName )
+void CGroup::ParseXMLGroup( const std::string& xmlGroup )
 {
-    //get name
-    std::string tag;
     std::string::size_type currentPosition( 0 );
-    GetSubString( "<adios-group ", ">", xmlGroup, tag, currentPosition );
-    tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
-
-    std::vector< std::pair<const std::string, const std::string> > pairs;
-    GetPairsFromTag( xmlGroup, tag, pairs );
-
-    for( auto& pair : pairs )
-    {
-        if( pair.first == "name") groupName = pair.second;
-    }
-
     bool isGlobal = false;
 
     while( currentPosition != std::string::npos )
     {
+        //Get tag
+        std::string tag;
         GetSubString( "<", ">", xmlGroup, tag, currentPosition );
         if( tag == "</adios-group>" ) break;
         if( tag == "</global-bounds>" ) isGlobal = false;
 
-        tag = tag.substr( 1, tag.size() - 2 ); //eliminate < > needs an exception?
+        if( m_DebugMode == true )
+        {
+            if( tag.size() < 2 )
+                throw std::invalid_argument( "ERROR: wrong tag " + tag + " when reading group \n" ); //check < or <=)
+        }
+        tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
+
+        //Get pairs from tag
+        std::vector< std::pair<const std::string, const std::string> > pairs;
         GetPairsFromTag( xmlGroup, tag, pairs );
 
+        //Check based on tagName
         const std::string tagName( tag.substr( 0, tag.find_first_of(" \t\n\r") ) );
 
         if( tagName == "var" ) //assign a Group variable
@@ -238,12 +229,6 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::string& groupName 
             SetGlobalBounds( dimensionsCSV, offsetsCSV );
         }
     } //end while loop
-}
-
-
-void CGroup::CheckTransport( const std::string method )
-{
-
 }
 
 

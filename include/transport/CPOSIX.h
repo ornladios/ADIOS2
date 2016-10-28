@@ -25,7 +25,9 @@ public:
 
     ~CPOSIX( );
 
-    void Write( const CVariableBase& variable );
+    void Open( const std::string fileName, const std::string accessMode );
+
+    void Close( );
 
 };
 

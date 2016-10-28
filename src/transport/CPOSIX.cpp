@@ -24,14 +24,16 @@ CPOSIX::~CPOSIX( )
 { }
 
 
-void CPOSIX::Write( const CVariableBase& variable )
+void CPOSIX::Open( const std::string fileName, const std::string accessMode )
 {
-    int rank, size;
-    MPI_Comm_rank( m_MPIComm, &rank );
-    MPI_Comm_size( m_MPIComm, &size );
 
-    std::cout << "Just saying Hello from CPOSIX Write from process " << rank << "/" << size  << "\n";
+}
+
+void CPOSIX::Close( )
+{
+
 }
 
 
-} //end namespace
+
+}//end namespace

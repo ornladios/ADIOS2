@@ -8,6 +8,7 @@
 #ifndef CFSTREAM_H_
 #define CFSTREAM_H_
 
+#include <fstream>
 
 #include "core/CTransport.h"
 
@@ -27,7 +28,14 @@ public:
 
     ~CFStream( );
 
-    void Write( const CVariableBase& variable );
+    void Open( const std::string fileName, const std::string accessMode );
+
+    void Close( );
+
+private:
+
+    std::fstream m_FStream; ///< file stream corresponding to this transport
+
 };
 
 

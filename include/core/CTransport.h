@@ -19,9 +19,6 @@
 #endif
 
 
-#include "core/CVariableBase.h"
-
-
 namespace adios
 {
 
@@ -36,7 +33,6 @@ public:
     MPI_Comm m_MPIComm;
 
     std::string m_FileName; ///< file name associated with a group that owns the transport
-    std::string m_AccessMode; ///< read, write, append
 
     CTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
                 MPI_Comm mpiComm ):
@@ -50,13 +46,14 @@ public:
     { }
 
 
-    void Open( const std::string fileName, const std::string accessMode = "w" )
-    {
-        m_FileName = fileName;
-        m_AccessMode = accessMode;
-    }
+    /**
+     * Open Output file accesing a mode
+     * @param fileName name of file
+     * @param accessMode r or read, w or write, a or append
+     */
+    virtual void Open( const std::string fileName, const std::string accessMode ) = 0;
 
-    virtual void Write( const CVariableBase& variable ) = 0;
+    virtual void Close( ) = 0; //here think what needs to be passed
 };
 
 

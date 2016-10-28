@@ -42,13 +42,22 @@ void DumpFileToStream( const std::string fileName, std::string& fileContent )
 void GetSubString( const std::string initialTag, const std::string finalTag, const std::string content,
                    std::string& subString, std::string::size_type& currentPosition )
 {
-    auto lf_Wipe =[]( std::string& subString, std::string::size_type& currentPosition )
+    auto lf_Wipe = []( std::string& subString, std::string::size_type& currentPosition )
     {
         subString.clear();
         currentPosition = std::string::npos;
     };
 
-    std::string::size_type start( content.find(initialTag, currentPosition ) );
+    auto lf_SetPositions = []( const char quote, const std::string::size_type quotePosition, const std::string& content,
+                               std::string::size_type& currentPosition, std::string::size_type& closingQuotePosition )
+    {
+        currentPosition = quotePosition;
+        closingQuotePosition = content.find( quote, currentPosition+1 );
+    };
+
+
+    //BODY OF FUNCTION STARTS HERE
+    std::string::size_type start( content.find( initialTag, currentPosition ) );
     if( start == content.npos )
     {
         lf_Wipe( subString, currentPosition );
@@ -68,38 +77,40 @@ void GetSubString( const std::string initialTag, const std::string finalTag, con
 
     while( isValue == true )
     {
-        std::string::size_type quotePosition = content.find( '\'', currentPosition );
+        std::string::size_type singleQuotePosition = content.find( '\'', currentPosition );
         std::string::size_type doubleQuotePosition = content.find( '\"', currentPosition );
 
-        if( ( quotePosition == content.npos && doubleQuotePosition == content.npos ) ||
-            ( quotePosition == content.npos && end < doubleQuotePosition  ) ||
-            ( doubleQuotePosition == content.npos && end < quotePosition  ) ||
-            ( end < quotePosition && end < doubleQuotePosition )
+        if( ( singleQuotePosition == content.npos && doubleQuotePosition == content.npos ) ||
+            ( singleQuotePosition == content.npos && end < doubleQuotePosition  ) ||
+            ( doubleQuotePosition == content.npos && end < singleQuotePosition  ) ||
+            ( end < singleQuotePosition && end < doubleQuotePosition )
           ) break;
 
-        //first case
-        std::string::size_type closingPosition;
-        if( quotePosition < doubleQuotePosition ) //find the closing "
+        //find the closing corresponding quote
+        std::string::size_type closingQuotePosition;
+
+        if( singleQuotePosition == content.npos ) //no ' anywhere
+            lf_SetPositions( '\"', doubleQuotePosition, content, currentPosition, closingQuotePosition );
+        else if( doubleQuotePosition == content.npos ) //no " anywhere
+            lf_SetPositions( '\'', singleQuotePosition, content, currentPosition, closingQuotePosition );
+        else
         {
-            currentPosition = quotePosition;
-            closingPosition = content.find( '\'', currentPosition+1 );
-        }
-        else //find the closing '
-        {
-            currentPosition = doubleQuotePosition;
-            closingPosition = content.find( '\"', currentPosition+1 );
+            if( singleQuotePosition < doubleQuotePosition )
+                lf_SetPositions( '\'', singleQuotePosition, content, currentPosition, closingQuotePosition );
+            else //find the closing "
+                lf_SetPositions( '\"', doubleQuotePosition, content, currentPosition, closingQuotePosition );
         }
 
-        if( closingPosition == content.npos ) //if can't find closing it's open until the end
+        if( closingQuotePosition == content.npos ) //if can't find closing it's open until the end
         {
             lf_Wipe( subString, currentPosition );
             return;
         }
-        if( closingPosition < end )
-        {
-            currentPosition = closingPosition+1;
+
+        currentPosition = closingQuotePosition+1;
+
+        if( closingQuotePosition < end )
             continue;
-        }
 
         //if this point is reached it means it's a value inside " " or ' ', move to the next end
         end = content.find( finalTag, currentPosition );
@@ -157,9 +168,8 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
     { }
     else // opening tag
     {
-        //check for closing tagName
         const std::string tagName( tag.substr( 0, tag.find_first_of(" \t\n\r") ) );
-        const std::string closingTagName( "</" + tagName + ">" );
+        const std::string closingTagName( "</" + tagName + ">" ); //check for closing tagName
 
         if( fileContent.find( closingTagName ) == fileContent.npos )
             throw std::invalid_argument( "ERROR: closing tag " + closingTagName + " missing, check XML file\n");
@@ -168,7 +178,8 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
     }
 }
 
-void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
+
+void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const bool debugMode,
                  std::string& hostLanguage, std::map< std::string, CGroup >& groups )
 {
     //adios-config
@@ -186,44 +197,92 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
         startComment = currentContent.find( "<!--" );
     }
 
-    std::string tag; //use for < > tags
-    std::vector< std::pair<const std::string, const std::string> > pairs; // pairs in tag
-
     //Tag <adios-config
     currentPosition = 0;
-    GetSubString( "<", ">", currentContent, tag, currentPosition );
+
+    std::string tag; //use for < > tags
+    GetSubString( "<adios-config", ">", currentContent, tag, currentPosition );
     tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
+
+    std::vector< std::pair<const std::string, const std::string> > pairs; // pairs in tag
     GetPairsFromTag( currentContent, tag, pairs );
 
     for( auto& pair : pairs )
+        if( pair.first == "host-language" )
+            hostLanguage = pair.second;
+
+    if( debugMode == true )
     {
-        if( pair.first == "host-language" ) hostLanguage = pair.second;
+        if( SSupport::HostLanguages.count( hostLanguage ) == 0 )
+            throw std::invalid_argument("ERROR: host language " + hostLanguage + " not supported.\n" );
+
+        if( hostLanguage.empty() == true )
+            throw std::invalid_argument("ERROR: host language is empty.\n" );
     }
 
-    if( SSupport::HostLanguages.count( hostLanguage ) == 0 )
-        throw std::invalid_argument("ERROR: host language " + hostLanguage + " not supported.\n" );
-
     //adios-group
-    std::string xmlGroup;
+    currentPosition = 0;
+
     while( currentPosition != std::string::npos )
     {
-        GetSubString("<adios-group ", "</adios-group>", currentContent, xmlGroup, currentPosition );
-        if( xmlGroup.empty() ) break;
+        std::string xmlGroup;
+        GetSubString("<adios-group ", "</adios-group>", currentContent, xmlGroup, currentPosition ); //Get all group contents
 
+        if( xmlGroup.empty() ) //no more groups to find
+            break;
 
+        //get group name
+        std::string::size_type groupPosition( 0 );
+        GetSubString( "<adios-group ", ">", xmlGroup, tag, groupPosition );
+        if( debugMode == true )
+        {
+            if( tag.size() < 2 )
+                throw std::invalid_argument( "ERROR: wrong tag " + tag + " in adios-group\n" ); //check < or <=
+        }
+
+        tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
+        GetPairsFromTag( xmlGroup, tag, pairs );
         std::string groupName;
-        CGroup group( hostLanguage, xmlGroup, groupName ); //need to change formulation to be able to emplace
 
-        if( groups.count( groupName ) == 1 ) //group exists
-            throw std::invalid_argument("ERROR: group " + groupName + " defined twice.\n" );
+        for( auto& pair : pairs )
+        {
+            if( pair.first == "name")
+                groupName = pair.second;
+        }
 
-        groups.insert( std::make_pair( groupName, std::move( group ) ) ); //move rvalue as it has const members
+        if( debugMode == true )
+        {
+            if( groupName.empty() )
+                throw std::invalid_argument( "ERROR: group name not found. \n" );
+
+            if( groups.count( groupName ) == 1 ) //group exists
+                throw std::invalid_argument( "ERROR: group " + groupName + " defined twice.\n" );
+        }
+
+        groups.emplace( groupName, CGroup( hostLanguage, xmlGroup, debugMode ) );
 
         currentContent.erase( currentContent.find( xmlGroup ), xmlGroup.size() );
         currentPosition = 0;
     }
 
     //transport
+    //lambda function to check priority and iteration casting to unsigned int
+    auto lf_UIntCheck = []( const std::string method, const std::string fieldStr, const std::string fieldName,
+                            const bool debugMode, int& field )
+    {
+        field = 0;
+        if( fieldStr.empty() == false )
+        {
+            field = std::stoi( fieldStr ); //throws invalid_argument
+
+            if( debugMode == true )
+            {
+                if( field < 0 )
+                    throw std::invalid_argument("ERROR: " + fieldName + " in transport " + method + " can't be negative\n" );
+            }
+        }
+    };
+
     currentPosition = 0;
     while( currentPosition != std::string::npos )
     {
@@ -243,33 +302,22 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
         }
 
         auto itGroup = groups.find( groupName );
-        if( itGroup == groups.end() ) //not found
+        if( debugMode == true )
         {
-            std::cout << "WARNING: group " << groupName << " in transport line not found \n";
-            continue;
+            if( itGroup == groups.end() ) //not found
+                throw std::invalid_argument( "ERROR: in transport " + method + " group " + groupName + " not found.\n" );
         }
 
-        //lambda function to check priority and iteration
-        auto lf_UIntCheck = []( const std::string method, const std::string fieldStr, const std::string fieldName, int& field )
-        {
-            field = 0;
-            if( fieldStr.empty() == false )
-            {
-                field = std::stoi( fieldStr ); //throws invalid_argument
-                if( field < 0 ) throw std::invalid_argument("ERROR: " + fieldName + " in transport " + method + " can't be negative\n" );
-            }
-        };
-
         int priority, iteration;
-        lf_UIntCheck( method, priorityStr, "priority", priority );
-        lf_UIntCheck( method, iterationStr, "iteration", iteration );
+        lf_UIntCheck( method, priorityStr, "priority", debugMode, priority );
+        lf_UIntCheck( method, iterationStr, "iteration", debugMode, iteration );
 
         itGroup->second.SetTransport( method, (unsigned int)priority, (unsigned int)iteration, mpiComm );
     }
 }
 
 
-void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm,
+void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode,
               std::string& hostLanguage, std::map< std::string, CGroup >& groups )
 {
     int xmlFileContentSize;
@@ -297,7 +345,7 @@ void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm,
         delete []( xmlFileContentMPI ); //delete char* needed for MPI, might add size is moving to C++14 for optimization, avoid memory leak
     }
 
-    SetMembers( xmlFileContent,  mpiComm, hostLanguage,  groups );
+    SetMembers( xmlFileContent,  mpiComm, debugMode, hostLanguage,  groups );
 }
 
 

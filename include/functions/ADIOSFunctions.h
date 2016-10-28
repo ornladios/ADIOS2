@@ -88,11 +88,12 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::st
  * Called inside the ADIOS XML constructors to get contents from file, broadcast and set hostLanguage and groups from ADIOS class
  * @param xmlConfigFile xml config file name
  * @param mpiComm communicator used from broadcasting
+ * @param debugMode from ADIOS m_DebugMode passed to CGroup in groups
  * @param hostLanguage set from host-language in xml file
  * @param groups passed returns the map of groups defined in fileContent
  * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
  */
-void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, std::string& hostLanguage,
+void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode, std::string& hostLanguage,
               std::map< std::string, CGroup >& groups );
 
 } //end namespace

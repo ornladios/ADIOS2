@@ -42,11 +42,11 @@ public:
     /**
      * @brief Constructor for XML config file
      * @param hostLanguage reference from ADIOS class
-     * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file
+     * @param xmlGroup contains <adios-group (tag excluded)....</adios-group> single group definition from XML config file
      * @param groupName returns the groupName from <adios-group name=" "
-     * @param debugMode
+     * @param debugMode from ADIOS
      */
-    CGroup( const std::string& hostLanguage, const std::string& xmlGroup, std::string& groupName, const bool debugMode = false );
+    CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode = false );
 
     /**
      * Non-XML empty constructor
@@ -128,7 +128,10 @@ public:
 
 private:
 
-    const std::string& m_HostLanguage; ///< reference to class ADIOS m_HostLanguage, this erases the copy constructor
+    const std::string& m_HostLanguage; ///< reference to class ADIOS m_HostLanguage, this erases the copy constructor. Might be moved later to non-reference const
+    const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
+
+    bool m_IsOpen = false; ///< checks if group was opened for operations;
     /**
      * @brief Contains all group variables (from XML Config file).
      * <pre>
@@ -136,7 +139,7 @@ private:
      *     Value: Polymorphic value is always unique child defined in SVariableTemplate.h, allow different variable types
      * </pre>
      */
-    std::map< std::string, std::unique_ptr<CVariableBase> > m_Variables;
+    std::map< std::string, std::shared_ptr<CVariableBase> > m_Variables;
 
     /**
      * @brief Contains all group attributes from SAttribute.h
@@ -150,21 +153,17 @@ private:
     std::vector<std::string> m_GlobalDimensions; ///< from global-bounds in XML File, data in global space
     std::vector<std::string> m_GlobalOffsets; ///< from global-bounds in XML File, data in global space
 
-    std::unique_ptr<CTransport> m_Transport; ///< transport method defined in XML File, using unique_ptr as copy constructor is removed
+    std::shared_ptr<CTransport> m_Transport; ///< transport method defined in XML File, using shared_ptr as CGroup is put in a map copy constructor deleted
     std::string m_ActiveTransport;
-    bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
-    bool m_IsOpen = false; ///< checks if group was opened for operations;
     std::string m_FileName; ///< associated fileName is the Group is opened.
     std::string m_AcessMode; ///< file access mode "r"->read, "w"->write, "a"->append
 
     /**
      * Called from XML constructor
-     * @param hostLanguage from ADIOS class, used to determine allowed variable types (Fortran -> real, C++-> std::vector )
      * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file passing by reference as it could be big
-     * @param groupName returns the groupName from <adios-group name=" "
      */
-    void ParseXMLGroup( const std::string& xmlGroup, std::string& groupName );
+    void ParseXMLGroup( const std::string& xmlGroup );
 
     /**
      * Function that checks if transport method is valid, called from overloaded SetTransform functions

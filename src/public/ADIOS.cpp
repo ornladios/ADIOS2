@@ -29,7 +29,7 @@ ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
     m_XMLConfigFile{ xmlConfigFile },
     m_DebugMode{ debugMode }
 {
-    InitXML( m_XMLConfigFile, m_MPIComm, m_HostLanguage, m_Groups );
+    InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Groups );
 }
 
 
@@ -38,7 +38,7 @@ ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
 	m_MPIComm{ mpiComm },
 	m_DebugMode{ debugMode }
 {
-    InitXML( m_XMLConfigFile, m_MPIComm, m_HostLanguage, m_Groups );
+    InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Groups );
 }
 
 
