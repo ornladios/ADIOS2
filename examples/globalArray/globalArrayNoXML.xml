@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<adios-config>
+
+  <method group="arrays" method="MPI">ts_buffersize=32000;verbose=4</method>
+  <!--
+  <method group="arrays" method="MPI_AGGREGATE">num_aggregators=1;num_ost=1</method>
+  -->
+
+  <buffer max-size-MB="1"/>
+
+</adios-config>
+
