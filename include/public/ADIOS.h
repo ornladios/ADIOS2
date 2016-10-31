@@ -36,6 +36,12 @@ class ADIOS
 
 public: // PUBLIC Constructors and Functions define the User Interface with ADIOS
 
+    #ifdef HAVE_MPI
+    MPI_Comm m_MPIComm; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
+    #else
+    MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
+    #endif
+
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
@@ -100,11 +106,7 @@ private:
 
     std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
 
-    #ifdef HAVE_MPI
-    MPI_Comm m_MPIComm = nullptr; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself
-    #else
-    MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself
-    #endif
+
 
     std::string m_HostLanguage = "C++"; ///< Supported languages: C, C++, Fortran, Python, etc.
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code

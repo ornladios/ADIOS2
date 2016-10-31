@@ -22,10 +22,12 @@ int main( int argc, char* argv [] )
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
 
+    adios::ADIOS adios;
+
     try
     {
         //testing with CPOSIXMPI
-        adios::ADIOS adios( "writer.xml", MPI_COMM_WORLD );
+        adios = adios::ADIOS( "writer.xml", MPI_COMM_WORLD );
 
         //Get Monitor info
         std::ofstream logStream( "info_" + std::to_string(rank) + ".log" );
@@ -40,6 +42,7 @@ int main( int argc, char* argv [] )
             std::cout << e.what() << "\n";
         }
     }
+
 
     MPI_Finalize( );
 

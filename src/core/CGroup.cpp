@@ -5,9 +5,7 @@
  *      Author: wfg
  */
 
-
 #include <iostream>
-
 
 #include "core/CGroup.h"
 #include "functions/GroupFunctions.h" //for CreateVariableLanguage

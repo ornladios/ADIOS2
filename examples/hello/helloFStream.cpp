@@ -29,6 +29,12 @@ int main( int argc, char* argv [] )
         adios::ADIOS adios( "fstream.xml", true );
         adios.MonitorGroups( std::cout ); //Get Monitor info
         adios.Write( group, numbersVariable, &myVector );  //Write
+        adios.Close( group1 );
+
+        adios.Write( group2, numbersVariable, &myVector );  //Write
+
+
+        adios.CloseAll( );
 
     }
     catch( std::bad_alloc& e )

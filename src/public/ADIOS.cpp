@@ -21,11 +21,13 @@ namespace adios
 {
 
 
-ADIOS::ADIOS( )
+ADIOS::ADIOS( ):
+    m_MPIComm{ nullptr }
 { }
 
 
 ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
+    m_MPIComm{ nullptr },
     m_XMLConfigFile{ xmlConfigFile },
     m_DebugMode{ debugMode }
 {
@@ -34,8 +36,8 @@ ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
 
 
 ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode  ):
+    m_MPIComm{ mpiComm },
     m_XMLConfigFile{ xmlConfigFile },
-	m_MPIComm{ mpiComm },
 	m_DebugMode{ debugMode }
 {
     InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Groups );

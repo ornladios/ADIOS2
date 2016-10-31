@@ -37,7 +37,7 @@ void CreateVariableCpp( const std::string name, const bool isGlobal,
                         const std::string type, const std::string dimensionsCSV, const std::string transform,
                         std::map< std::string, std::shared_ptr<CVariableBase> >& variables ) noexcept
 {
-    using PVar = std::unique_ptr<CVariableBase>; //might be modified in C++17 if std::make_unique is available, local scope
+    using PVar = std::shared_ptr<CVariableBase>; //might be modified in C++17 if std::make_shared is available, local scope
     //using emplace to create object in-place, can't use copy constructors with unique_ptr
     //Primitive types
     if( type == "char")
@@ -45,7 +45,7 @@ void CreateVariableCpp( const std::string name, const bool isGlobal,
     else if( type == "unsigned char")
         variables.emplace( name, PVar( new CVariable<unsigned char>( isGlobal, type, dimensionsCSV, transform ) ) );
 
-    else if( type == "int")
+    else if( type == "int" || type == "integer" )
         variables.emplace( name, PVar( new CVariable<int>( isGlobal, type, dimensionsCSV, transform ) ) );
 
     else if( type == "unsigned int" )
@@ -138,11 +138,14 @@ void SetVariableValues( CVariableBase& variable, const void* values ) noexcept
     if( type == "double" )
         variable.Set<double>( values );
 
-    else if( type == "integer" )
+    else if( type == "int" || type == "integer" )
         variable.Set<int>( values );
 
     else if( type == "std::vector<int>" || type == "vector<int>"  )
         variable.Set<std::vector<int>>( values );
+
+    else if( type == "std::vector<double>" || type == "vector<double>"  )
+            variable.Set<std::vector<double>>( values );
 
 }
 

@@ -35,20 +35,20 @@ const std::map<std::string, std::set<std::string> > SSupport::Datatypes
 {
     { "C++",
         {
-            "char", "std::string", "string"
+            "char", "std::string", "string",
             "unsigned char",
             "short", "std::vector<short>", "vector<short>",
             "unsigned short", "std::vector<unsigned short>", "vector<unsigned short>",
-            "int", "std::vector<int>", "vector<int>",
+            "int", "std::vector<int>", "vector<int>", "integer",
             "unsigned int", "std::vector<unsigned int>", "vector<unsigned int>",
             "long int", "long",
             "unsigned long int", "std::vector<unsigned long int>", "vector<unsigned long int>", "unsigned long", "std::vector<unsigned long>", "vector<unsigned long>",
-            "long long int", "long long"
+            "long long int", "long long",
             "unsigned long long int", "std::vector<unsigned long long int>", "vector<unsigned long long int>", "unsigned long long", "std::vector<unsigned long long>", "vector<unsigned long long>",
             "float", "std::vector<float>", "vector<float>",
-            "float complex", "std::complex<float>", "complex<float>"
+            "float complex", "std::complex<float>", "complex<float>",
             "double", "std::vector<double>", "vector<double>",
-            "long double", "std::vector<long double>", "vector<long double>"
+            "long double", "std::vector<long double>", "vector<long double>",
             "double complex", "std::complex<double>", "complex<double>"
         }
     },

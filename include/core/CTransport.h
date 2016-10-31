@@ -18,6 +18,8 @@
     #include "public/mpidummy.h"
 #endif
 
+#include "core/CVariableBase.h"
+
 
 namespace adios
 {
@@ -53,7 +55,11 @@ public:
      */
     virtual void Open( const std::string fileName, const std::string accessMode ) = 0;
 
+    virtual void Write( const CVariableBase& variable ){ };
+
     virtual void Close( ) = 0; //here think what needs to be passed
+
+    virtual void Finalize( );
 };
 
 

@@ -48,12 +48,14 @@ public:
      */
     CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode = false );
 
+
     /**
      * Non-XML empty constructor
      * @param hostLanguage reference from ADIOS class
      * @param debugMode
      */
     CGroup( const std::string& hostLanguage, const bool debugMode = false );
+
 
     ~CGroup( ); ///< Using STL containers, no deallocation
 
@@ -170,6 +172,7 @@ private:
      * @param method transport method to be checked from SSupport
      */
     void CheckTransport( const std::string method );
+
 };
 
 
