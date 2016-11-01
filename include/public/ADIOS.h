@@ -10,7 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
-#include <memory> //shared_ptr and unique_ptr
+#include <memory> //shared_ptr
 #include <ostream>
 /// \endcond
 
@@ -37,7 +37,7 @@ class ADIOS
 public: // PUBLIC Constructors and Functions define the User Interface with ADIOS
 
     #ifdef HAVE_MPI
-    MPI_Comm m_MPIComm; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
+    MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #else
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
@@ -106,8 +106,6 @@ private:
 
     std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
 
-
-
     std::string m_HostLanguage = "C++"; ///< Supported languages: C, C++, Fortran, Python, etc.
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
@@ -120,7 +118,7 @@ private:
      */
     std::map< std::string, CGroup > m_Groups;
 
-    std::map< std::string, std::unique_ptr<CTransform> > m_Transforms;
+    std::map< std::string, std::shared_ptr<CTransform> > m_Transforms;
 
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file
@@ -132,10 +130,11 @@ private:
 
     /**
      * Checks for group existence in m_Groups, if failed throws std::invalid_argument exception
-     * @param groupName to be checked
+     * @param itGroup group iterator, usually from find function
+     * @param groupName passed for thrown exception only
      * @param hint adds information to thrown exception
      */
-    void CheckGroup( const std::string groupName, const std::string hint );
+    void CheckGroup( std::map< std::string, CGroup >::const_iterator itGroup, const std::string groupName, const std::string hint );
 };
 
 

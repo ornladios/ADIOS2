@@ -15,8 +15,8 @@ namespace adios
 {
 
 
-CPOSIX::CPOSIX( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm ):
-    CTransport( "POSIX", priority, iteration, mpiComm )
+CPOSIX::CPOSIX( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm, const bool debugMode ):
+    CTransport( "POSIX", priority, iteration, mpiComm, debugMode )
 { }
 
 

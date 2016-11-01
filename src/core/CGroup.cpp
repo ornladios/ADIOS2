@@ -115,7 +115,7 @@ void CGroup::SetTransport( const std::string method, const unsigned int priority
     if( m_ActiveTransport.empty() == false ) //there is an existing transport method, so reset
         m_Transport.reset();
 
-    CreateTransport( method, priority, iteration, mpiComm, m_Transport );
+    CreateTransport( method, priority, iteration, mpiComm, m_DebugMode, m_Transport );
     m_ActiveTransport = method;
 }
 
@@ -131,7 +131,8 @@ void CGroup::Write( const std::string variableName, const void* values )
     }
 
     SetVariableValues( *itVariable->second, values ); //will check type and cast to appropriate template<type>
-    //here must do something with Capsule
+    //here must do something with Capsule or transport
+    m_Transport->Write( *itVariable->second ); //transport will write?
 }
 
 

@@ -12,6 +12,8 @@
   #include <mpi.h>
 #else
   #include "public/mpidummy.h"
+  using adios::MPI_Comm_rank;
+  using adios::MPI_Comm;
 #endif
 
 

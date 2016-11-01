@@ -86,7 +86,8 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype, void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
 int MPI_Scatterv(void *sendbuf, int *sendcnts, int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
 
-
+int MPI_Recv( void *recvbuffer, int count, MPI_Datatype type, int source, int tag, MPI_Comm comm, MPI_Status* status );
+int MPI_Send( void *sendbuffer, int count, MPI_Datatype type, int destination, int tag, MPI_Comm comm );
 
 int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh);
 int MPI_File_close(MPI_File *fh);

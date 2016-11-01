@@ -39,6 +39,8 @@ class CGroup
 
 public:
 
+    bool m_IsOpen = false; ///< checks if group was opened for operations;
+
     /**
      * @brief Constructor for XML config file
      * @param hostLanguage reference from ADIOS class
@@ -133,7 +135,6 @@ private:
     const std::string& m_HostLanguage; ///< reference to class ADIOS m_HostLanguage, this erases the copy constructor. Might be moved later to non-reference const
     const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
-    bool m_IsOpen = false; ///< checks if group was opened for operations;
     /**
      * @brief Contains all group variables (from XML Config file).
      * <pre>

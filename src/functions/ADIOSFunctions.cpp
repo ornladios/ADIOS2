@@ -20,7 +20,6 @@ namespace adios
 {
 
 
-
 void DumpFileToStream( const std::string fileName, std::string& fileContent )
 {
     std::ifstream fileStream( fileName );

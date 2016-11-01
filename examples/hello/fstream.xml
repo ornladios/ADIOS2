@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <adios-config host-language="C++">
   <adios-group name="Types">
-    <var name="Numbers" type="std::vector<float>"/>
+    <var name="Numbers" type="std::vector<int>"/>
     <attribute name="description" value="1 to 10"/>
 
   </adios-group>

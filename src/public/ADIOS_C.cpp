@@ -7,6 +7,8 @@
 
 #include <string>
 #include <fstream>
+#include <iostream>
+#include <cstring>
 
 #include "public/ADIOS_C.h"
 #include "public/ADIOS.h"

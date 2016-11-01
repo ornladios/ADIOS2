@@ -21,7 +21,7 @@ class CPOSIX : public CTransport
 
 public:
 
-    CPOSIX( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm );
+    CPOSIX( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm, const bool debugMode  );
 
     ~CPOSIX( );
 

@@ -5,20 +5,24 @@
  *      Author: wfg
  */
 
-
+/// \cond EXCLUDED_FROM_DOXYGEN
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <stdexcept>
+#include <cstring>
+/// \endcond
 
 #include "transport/CFStream.h"
+#include "core/CVariable.h"
 
 
 namespace adios
 {
 
 
-CFStream::CFStream( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm ):
-    CTransport( "CFStream", priority, iteration, mpiComm )
+CFStream::CFStream( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm, const bool debugMode ):
+    CTransport( "CFStream", priority, iteration, mpiComm, debugMode )
 { }
 
 
@@ -28,37 +32,31 @@ CFStream::~CFStream( )
 
 void CFStream::Open( const std::string fileName, const std::string accessMode )
 {
-    if( accessMode == "w" || accessMode == "write" )
-    {
-        int rank, size;
-        MPI_Comm_rank( m_MPIComm, &rank );
-        MPI_Comm_size( m_MPIComm, &size ); //would write to file
+    m_StreamName = fileName;
 
-        if( rank == 0 )
-        {
+    if( m_RankMPI == 0 )
+    {
+        if( accessMode == "w" || accessMode == "write" )
             m_FStream.open( fileName, std::fstream::out );
-            MPI_Barrier( m_MPIComm );
-        }
-        else
-        {
-            MPI_Barrier( m_MPIComm );
+
+        else if( accessMode == "a" || accessMode == "append" )
             m_FStream.open( fileName, std::fstream::out | std::fstream::app );
+
+        else if( accessMode == "r" || accessMode == "read" )
+            m_FStream.open( fileName, std::fstream::in );
+
+        if( m_DebugMode == true )
+        {
+            if( m_FStream.good() == false )
+                throw std::ios_base::failure( "ERROR: couldn't open file " + fileName + " in Open function\n" );
         }
     }
-    else if( accessMode == "a" || accessMode == "append" )
-        m_FStream.open( fileName, std::fstream::out | std::fstream::app );
-
-    else if( accessMode == "r" || accessMode == "read" )
-        m_FStream.open( fileName, std::fstream::in );
+    MPI_Barrier( m_MPIComm ); //all of them must wait until the file is opened
 }
+
 
 void CFStream::Write( const CVariableBase& variable )
 {
-    //This part should go to a capsule ??
-    int rank, size;
-    MPI_Comm_rank( m_MPIComm, &rank );
-    MPI_Comm_size( m_MPIComm, &size ); //would write to file
-
     //local buffer, to be send over MPI
     std::vector<char> buffer;
 
@@ -70,34 +68,48 @@ void CFStream::Write( const CVariableBase& variable )
         for( auto element : *values )
             sizeSum += (int) std::log10( (double) std::abs( element ) ) + 1;
 
-        buffer.reserve( sizeSum );
+        buffer.reserve( 2*sizeSum );
 
         for( auto element : *values )
         {
             const char* elementChar = std::to_string( element ).c_str();
-            buffer.insert( buffer.end(), elementChar, elementChar + sizeof( elementChar ) + 1 );
+            buffer.insert( buffer.end(), elementChar, elementChar + strlen( elementChar ) );
+            buffer.push_back(' ');
         }
 
-        if( rank == 0 )
+        if( m_RankMPI == 0 )
         {
+            std::cout << "Writing to file " << m_StreamName << "\n";
+
+            m_FStream << "Hello from rank " << m_RankMPI << " : ";
             m_FStream.write( &buffer[0], buffer.size() );
+            m_FStream << "\n";
+
             MPI_Status* status = NULL;
 
-            for( int r = 1; r < size; ++r )
+            for( int r = 1; r < m_SizeMPI; ++r )
             {
                 int bufferSize;
-                MPI_Recv( &bufferSize, 1, MPI_INT, r, 0, m_MPIComm, status );
+                MPI_Recv( &bufferSize, 1, MPI_INT, r, 0, m_MPIComm, status ); //receive from r the buffer size
+                std::cout << "Getting from rank: " << r << " buffer size "<< bufferSize << "\n";
 
                 buffer.resize( bufferSize );
-                MPI_Recv( &buffer[0], 1, MPI_CHAR, r, 1, m_MPIComm, status );
-                m_FStream.write( &buffer[0], buffer.size() );
+                MPI_Recv( &buffer[0], bufferSize, MPI_CHAR, r, 1, m_MPIComm, status ); //receive from r the buffer
+
+                m_FStream << "Hello from rank " << r << " : ";
+                m_FStream.write( &buffer[0], bufferSize );
+                m_FStream << "\n";
             }
         }
         else
         {
-            int bufferSize = buffer.size();
-            MPI_Send( &bufferSize, 1, MPI_INT, rank, 0, m_MPIComm );
-            MPI_Send( &buffer[0], buffer.size(), MPI_CHAR, rank, 1, m_MPIComm );
+            int bufferSize = (int)buffer.size();
+            MPI_Send( &bufferSize, 1, MPI_INT, 0, 0, m_MPIComm ); //send to rank=0 the buffer size
+
+            std::cout << "Hello from rank: " << m_RankMPI << "\n";
+            std::cout << "Buffer size: " << bufferSize << "\n";
+
+            MPI_Send( &buffer[0], bufferSize, MPI_CHAR, 0, 1, m_MPIComm ); //send to rank=0 the buffer
         }
 
         MPI_Barrier( m_MPIComm );
@@ -106,7 +118,9 @@ void CFStream::Write( const CVariableBase& variable )
 
 void CFStream::Close(  )
 {
-   m_FStream.close();
+   if( m_RankMPI == 0 )
+       m_FStream.close();
+
 }
 
 

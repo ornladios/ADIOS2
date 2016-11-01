@@ -21,13 +21,11 @@ namespace adios
 {
 
 
-ADIOS::ADIOS( ):
-    m_MPIComm{ nullptr }
+ADIOS::ADIOS( )
 { }
 
 
 ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
-    m_MPIComm{ nullptr },
     m_XMLConfigFile{ xmlConfigFile },
     m_DebugMode{ debugMode }
 {
@@ -50,29 +48,42 @@ ADIOS::~ADIOS( )
 
 void ADIOS::Open( const std::string groupName, const std::string fileName, const std::string accessMode )
 {
+    auto itGroup = m_Groups.find( groupName );
     if( m_DebugMode == true )
-        CheckGroup( groupName, " from call to Open with file " + fileName );
+        CheckGroup( itGroup, groupName, " from call to Open with file " + fileName );
 
-    m_Groups.at( groupName ).Open( fileName, accessMode );
+    itGroup->second.Open( fileName, accessMode );
 }
 
 
 void ADIOS::Write( const std::string groupName, const std::string variableName, const void* values )
 {
+    auto itGroup = m_Groups.find( groupName );
     if( m_DebugMode == true )
-        CheckGroup( groupName, " from call to Write with variable " + variableName );
+    {
+        CheckGroup( itGroup, groupName, " from call to Write with variable " + variableName );
 
-    m_Groups.at( groupName ).Write( variableName, values );
+        if( itGroup->second.m_IsOpen == false )
+            throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
+    }
+
+    itGroup->second.Write( variableName, values );
 }
 
 
 void ADIOS::Close( const std::string groupName )
 {
+    auto itGroup = m_Groups.find( groupName );
     if( m_DebugMode == true )
-        CheckGroup( groupName, " from call to Close." );
+    {
+        CheckGroup( itGroup, groupName, " from call to Close \n" );
 
-    m_Groups.at( groupName ).Close( ); //here must manage closing Capsule and Transport
-    m_Groups.erase( groupName ); //make group unavailable
+        if( itGroup->second.m_IsOpen == false )
+            throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
+    }
+
+    itGroup->second.Close( ); //calling capsule and transport
+    //m_Groups.erase( groupName ); //make group unavailable ?
 }
 
 
@@ -86,9 +97,9 @@ void ADIOS::MonitorGroups( std::ostream& logStream ) const
 }
 
 
-void ADIOS::CheckGroup( const std::string groupName, const std::string hint )
+void ADIOS::CheckGroup( std::map< std::string, CGroup >::const_iterator itGroup, const std::string groupName, const std::string hint )
 {
-    if( m_Groups.count( groupName ) == 0 )
+    if( itGroup == m_Groups.end() )
         throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
 }
 

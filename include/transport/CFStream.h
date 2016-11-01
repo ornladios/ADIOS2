@@ -24,7 +24,7 @@ class CFStream : public CTransport
 
 public:
 
-    CFStream( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm );
+    CFStream( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm, const bool debugMode );
 
     ~CFStream( );
 
