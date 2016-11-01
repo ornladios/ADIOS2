@@ -27,7 +27,7 @@ public:
 
     void Open( const std::string fileName, const std::string accessMode );
 
-    void Write( CVariableBase& variable );
+    void Write( const CVariableBase& variable );
 
     void Close( );
 

@@ -30,7 +30,7 @@ void CPOSIX::Open( const std::string fileName, const std::string accessMode )
 }
 
 
-void CPOSIX::Write( CVariableBase& variable )
+void CPOSIX::Write( const CVariableBase& variable )
 {
 
 }
