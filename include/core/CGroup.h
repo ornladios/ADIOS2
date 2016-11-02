@@ -90,8 +90,12 @@ public:
      * @param dimensionsCSV comma separated dimensions, default 1D = {1}
      * @param transform method, format = lib or lib:level, where lib = zlib, bzip2, szip, and level=1:9 . If no level is defined then library default is taken
      */
-    void SetVariable( const std::string name, const bool isGlobal, const std::string type,
-                      const std::string dimensionsCSV = "1", const std::string transform = "" );
+    void CreateLocalVariable( const std::string name, const std::string type,
+                              const std::string dimensionsCSV, const std::string transform );
+
+    void CreateGlobalVariable( const std::string name, const std::string type,
+                               const std::string dimensionsCSV, const std::string transform,
+                               const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
 
     /**
      * @brief Sets a variable in current Group
@@ -101,15 +105,8 @@ public:
      * @param path
      * @param value
      */
-    void SetAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path, const std::string value );
+    void CreateAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path, const std::string value );
 
-
-    /**
-     * @brief Sets global dimensions and offsets
-     * @param dimensionsCSV global dimensions in comma-separated-value format "gdx,gdy"
-     * @param offsetsCSV global offsets in comma-separated-value format "gdx,gdy"
-     */
-    void SetGlobalBounds( const std::string dimensionsCSV, const std::string offsetsCSV = "" );
 
     /**
      * @brief Sets m_Transport with available supported method
@@ -118,8 +115,8 @@ public:
      * @param iteration iterations between writes of a group to gauge how quickly this data should be evacuated from the compute node
      * @param mpiComm MPI communicator from User->ADIOS->Group
      */
-    void SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
-                       const MPI_Comm mpiComm );
+    void CreateTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
+                          const MPI_Comm mpiComm );
 
 
     /**

@@ -26,20 +26,27 @@ class CVariableBase
 
 public:
 
-    CVariableBase( const bool isGlobal, const std::string type, const std::string dimensionsCSV = "1", const std::string transform = "" );
+    CVariableBase( const std::string type, const std::string dimensionsCSV, const std::string transform );
+
+    CVariableBase( const std::string type, const std::string dimensionsCSV, const std::string transform,
+                   const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
+
 
     virtual ~CVariableBase( );
 
     template<class T> const T* Get( ) const;
     template<class T> void Set( const void* values );
 
-//protected: turned off for testing
-    bool m_IsGlobal = false;
-    std::string m_Type = "NONE"; ///< mandatory, double, float, unsigned integer, integer, etc.
-    std::vector<std::string> m_Dimensions = {"1"}; ///< if empty variable is a scalar, else N-dimensional variable
-    std::string m_Transform; ///< data transform: zlib, bzip2, szip
-    unsigned int m_CompressionLevel = 0; ///< taken from m_Transform, 1 to 9, if zero the default library value is taken
-    //To do/understand gwrite, gread, read
+
+protected:
+
+    const std::string m_Type; ///< mandatory, double, float, unsigned integer, integer, etc.
+    const std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
+    const std::string m_Transform; ///< data transform: zlib:1, bzip2:4, szip:9 which level of compression
+    const std::string m_GlobalDimensionsCSV; ///< comma separated list for variables to search for global dimensions
+    const std::string m_GlobalOffsetsCSV; ///< comma separated list for variables to search for global offsets
+    const bool m_IsGlobal = false; ///< boolean flag that identifies is a variable is global or not
+
 };
 
 

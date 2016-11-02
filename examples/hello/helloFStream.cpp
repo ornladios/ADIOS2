@@ -40,6 +40,7 @@ int main( int argc, char* argv [] )
         adios = adios::ADIOS( "fstream.xml", MPI_COMM_WORLD, true ); //debug mode is on
         adios.MonitorGroups( std::cout ); //Dump group info
         adios.Open( group, "helloVector.txt", "w" );
+        adios.Open( group, "helloVector1.txt", "w" );
         adios.Write( group, numbersVariable, &myVector );  //Write to helloVector.txt
         adios.Close( group );
     }

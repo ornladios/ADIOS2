@@ -12,24 +12,22 @@ namespace adios
 {
 
 
-CVariableBase::CVariableBase( const bool isGlobal, const std::string type, const std::string dimensionsCSV, const std::string transform ):
-    m_IsGlobal( isGlobal ),
-    m_Type( type ),
-    m_Transform( transform )
-{
-    if( dimensionsCSV == "1" )
-    {
-        m_Dimensions.push_back( "1" );
-        return;
-    }
+CVariableBase::CVariableBase( const std::string type, const std::string dimensionsCSV, const std::string transform ):
+    m_Type{ type },
+    m_DimensionsCSV{ dimensionsCSV },
+    m_Transform{ transform },
+    m_IsGlobal{ false }
+{ }
 
-    std::istringstream dimensionsCSVSS( dimensionsCSV );
-    std::string dimension;
-    while( std::getline( dimensionsCSVSS, dimension, ',' ) )
-    {
-        m_Dimensions.push_back( dimension );
-    }
-}
+CVariableBase::CVariableBase( const std::string type, const std::string dimensionsCSV, const std::string transform,
+                              const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ):
+    m_Type{ type },
+    m_DimensionsCSV{ dimensionsCSV },
+    m_Transform{ transform },
+    m_GlobalDimensionsCSV{ globalDimensionsCSV },
+    m_GlobalOffsetsCSV{ globalOffsetsCSV },
+    m_IsGlobal{ true }
+{ }
 
 
 CVariableBase::~CVariableBase()

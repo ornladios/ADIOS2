@@ -31,8 +31,13 @@ public:
      * @param dimensionsCSV
      * @param transform
      */
-    CVariable( const bool isGlobal, const std::string type, const std::string dimensionsCSV = "1", const std::string transform = "" ):
-        CVariableBase( isGlobal, type, dimensionsCSV, transform )
+    CVariable( const std::string type, const std::string dimensionsCSV, const std::string transform ):
+        CVariableBase( type, dimensionsCSV, transform )
+    { }
+
+    CVariable( const std::string type, const std::string dimensionsCSV, const std::string transform,
+               const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ):
+        CVariableBase( type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV )
     { }
 
     ~CVariable( )
