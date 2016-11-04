@@ -1,67 +1,55 @@
 /*
- * CVariableType.h
+ * CVariable.h
  *
- *  Created on: Oct 18, 2016
+ *  Created on: Oct 6, 2016
  *      Author: wfg
  */
 
 #ifndef CVARIABLE_H_
 #define CVARIABLE_H_
 
-
-#include "core/CVariableBase.h"
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+#include <vector>
+#include <typeinfo> // for typeid
+#include <sstream>
+/// \endcond
 
 
 namespace adios
 {
-
 /**
- * Derived template class of CVariableBase. Will hold a pointer of the right type to the void* passed from user app in ADIOS.
+ * @param Base (parent) class for template derived (child) class CVariable. Required to put CVariable objects in STL containers.
  */
-template<class T>
-class CVariable : public CVariableBase
+class CVariable
 {
 
 public:
 
     /**
-     * Template constructor class required for putting CVariable objects as value in a STL map container
-     * @param isGlobal
-     * @param type
-     * @param dimensionsCSV
-     * @param transform
+     * Unique constructor for local and global variables
+     * @param type variable type, must be in SSupport::Datatypes[hostLanguage] in public/SSupport.h
+     * @param dimensionsCSV comma separated variable local dimensions (e.g. "Nx,Ny,Nz")
+     * @param transformIndex
+     * @param globalIndex
      */
-    CVariable( const std::string type, const std::string dimensionsCSV, const std::string transform ):
-        CVariableBase( type, dimensionsCSV, transform )
-    { }
+    CVariable( const std::string type, const std::string dimensionsCSV,
+               const int globalIndex, const int transformIndex );
 
-    CVariable( const std::string type, const std::string dimensionsCSV, const std::string transform,
-               const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ):
-        CVariableBase( type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV )
-    { }
+    virtual ~CVariable( );
 
-    ~CVariable( )
-    { }
+    void* m_Values;
 
-    const T* m_Value = nullptr; // pointer or no pointer?
 
-    const T* Get() const { return m_Value; }
+protected:
 
-    void Set( const void* values ){ m_Value = static_cast<const T*>( values ); }
+    const std::string m_Type; ///< mandatory, double, float, unsigned integer, integer, etc.
+    const std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
 };
 
 
-template<class T> const T* CVariableBase::Get( ) const
-{
-    return dynamic_cast< const CVariable<T>&  >(*this).Get( );
-}
-
-template<class T> void CVariableBase::Set( const void* values )
-{
-    return dynamic_cast< CVariable<T>& >( *this ).Set( values );
-}
-
-
 } //end namespace
+
+
 
 #endif /* CVARIABLE_H_ */

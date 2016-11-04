@@ -12,6 +12,7 @@
 #include <set>
 #include <string>
 #include <map>
+#include <array>
 /// \endcond
 
 namespace adios
@@ -24,6 +25,7 @@ struct SSupport
     static const std::set<std::string> Transports; ///< supported transport methods
     static const std::set<std::string> Transforms; ///< supported data transform methods
     static const std::map<std::string, std::set<std::string> > Datatypes; ///< supported data types
+
 };
 
 

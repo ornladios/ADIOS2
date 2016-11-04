@@ -18,7 +18,7 @@
     #include "public/mpidummy.h"
 #endif
 
-#include "core/CVariableBase.h"
+#include <core/CVariable.h>
 
 
 namespace adios

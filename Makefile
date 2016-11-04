@@ -13,7 +13,7 @@ AR:=$(SYS_BIN)/ar
 MPICC:=$(SYS_BIN)/mpic++
 LIBS:= -L$(SYS_LIB) -L$(LOCAL_LIB)
 
-CFLAGS:=-c -Wall -O0 -g -Wpedantic -Woverloaded-virtual -std=c++11
+CFLAGS:=-c -Wall -O0 -g -Wpedantic -Woverloaded-virtual -std=c++14
 ARFLAGS:=rcs
 
 #ADIOS 

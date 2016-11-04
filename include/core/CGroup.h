@@ -23,7 +23,7 @@
 #endif
 
 
-#include "core/CVariableBase.h"
+#include "core/CVariable.h"
 #include "core/SAttribute.h"
 #include "core/CTransport.h"
 
@@ -83,29 +83,26 @@ public:
 
 
     /**
-     * @brief Sets a variable in current Group, name must be unique
-     * @param name variable name
-     * @param isGlobal
-     * @param type supported type
-     * @param dimensionsCSV comma separated dimensions, default 1D = {1}
-     * @param transform method, format = lib or lib:level, where lib = zlib, bzip2, szip, and level=1:9 . If no level is defined then library default is taken
+     * Sets a new variable in the group object
+     * @param name variable name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
+     * @param type variable type, must be in SSupport::Datatypes[hostLanguage] in public/SSupport.h
+     * @param dimensionsCSV comma separated variable local dimensions (e.g. "Nx,Ny,Nz")
+     * @param transform method, format = lib or lib:level, where lib = zlib, bzip2, szip, and level=1:9
+     * @param globalDimensionsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
+     * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      */
-    void CreateLocalVariable( const std::string name, const std::string type,
-                              const std::string dimensionsCSV, const std::string transform );
-
-    void CreateGlobalVariable( const std::string name, const std::string type,
-                               const std::string dimensionsCSV, const std::string transform,
-                               const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
+    void SetVariable( const std::string name, const std::string type,
+                      const std::string dimensionsCSV, const std::string transform,
+                      const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
 
     /**
-     * @brief Sets a variable in current Group
-     * @param name passed to Name
+     * @brief Sets a new attribute in current Group
+     * @param name  attribute name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
      * @param isGlobal
      * @param type
-     * @param path
      * @param value
      */
-    void CreateAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path, const std::string value );
+    void SetAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string value );
 
 
     /**
@@ -115,8 +112,8 @@ public:
      * @param iteration iterations between writes of a group to gauge how quickly this data should be evacuated from the compute node
      * @param mpiComm MPI communicator from User->ADIOS->Group
      */
-    void CreateTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
-                          const MPI_Comm mpiComm );
+    void SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
+                       const MPI_Comm mpiComm );
 
 
     /**
@@ -139,7 +136,9 @@ private:
      *     Value: Polymorphic value is always unique child defined in SVariableTemplate.h, allow different variable types
      * </pre>
      */
-    std::map< std::string, std::shared_ptr<CVariableBase> > m_Variables;
+    std::map< std::string, CVariable > m_Variables;
+    std::vector< std::string > m_VariableTransforms; ///< if a variable has a transform it fills this container, the variable hold an index
+
 
     /**
      * @brief Contains all group attributes from SAttribute.h
@@ -150,14 +149,12 @@ private:
      */
     std::map< std::string, SAttribute > m_Attributes;
 
-    std::vector<std::string> m_GlobalDimensions; ///< from global-bounds in XML File, data in global space
-    std::vector<std::string> m_GlobalOffsets; ///< from global-bounds in XML File, data in global space
+    std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
 
-    std::shared_ptr<CTransport> m_Transport; ///< transport method defined in XML File, using shared_ptr as CGroup is put in a map copy constructor deleted
-    std::string m_ActiveTransport;
+    std::string m_CurrentTransport; ///< current transport method associated with this group
+    std::string m_OutputName; ///< associated output (file, stream, buffer, etc.) if the Group is opened.
 
-    std::string m_FileName; ///< associated fileName is the Group is opened.
-    std::string m_AcessMode; ///< file access mode "r"->read, "w"->write, "a"->append
+    unsigned long int m_SerialSize; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
     /**
      * Called from XML constructor

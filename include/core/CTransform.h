@@ -10,10 +10,10 @@
 
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <core/CVariable.h>
 #include <string>
 /// \endcond
 
-#include "core/CVariableBase.h"
 
 
 namespace adios

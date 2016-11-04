@@ -31,6 +31,8 @@ const std::set<std::string> SSupport::Transforms{
 };
 
 
+
+
 const std::map<std::string, std::set<std::string> > SSupport::Datatypes
 {
     { "C++",
@@ -58,12 +60,12 @@ const std::map<std::string, std::set<std::string> > SSupport::Datatypes
             "unsigned char",
             "short",
             "unsigned short",
-            "int",
-            "unsigned int",
-            "long int", "long",
-            "unsigned long int", "unsigned long",
-            "long long int", "long long"
-            "unsigned long long int", "unsigned long long",
+            "int", "integer"
+            "unsigned int", "unsigned integer",
+            "long int", "long", "long integer",
+            "unsigned long int", "unsigned long", "unsigned long integer",
+            "long long int", "long long", "long long integer",
+            "unsigned long long int", "unsigned long long", "unsigned long long integer",
             "float",
             "float complex"
             "double",
@@ -74,10 +76,11 @@ const std::map<std::string, std::set<std::string> > SSupport::Datatypes
     { "Fortran",
         {
             "character",
+            "integer*2",
             "integer",
-            "real",
+            "real", "real*4",
+            "double precision", "real*8",
             "complex",
-            "double precision",
             "double complex"
         }
     }

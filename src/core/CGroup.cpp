@@ -20,13 +20,15 @@ namespace adios
 
 CGroup::CGroup( const std::string& hostLanguage, const bool debugMode ):
     m_HostLanguage{ hostLanguage },
-    m_DebugMode{ debugMode }
+    m_DebugMode{ debugMode },
+    m_SerialSize{ 0 }
 { }
 
 
 CGroup::CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode ):
     m_HostLanguage{ hostLanguage },
-    m_DebugMode{ debugMode }
+    m_DebugMode{ debugMode },
+    m_SerialSize{ 0 }
 {
     ParseXMLGroup( xmlGroup );
 }
@@ -39,12 +41,12 @@ CGroup::~CGroup( )
 void CGroup::Open( const std::string fileName, const std::string accessMode )
 {
     m_IsOpen = true;
-    m_Transport->Open( fileName, accessMode );
 }
 
 
-void CGroup::SetVariable( const std::string name, const bool isGlobal, const std::string type, const std::string dimensionsCSV,
-                          const std::string transform )
+void CGroup::SetVariable( const std::string name, const std::string type,
+                          const std::string dimensionsCSV, const std::string transform,
+                          const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
 {
     if( m_DebugMode == true )
     {
@@ -52,18 +54,18 @@ void CGroup::SetVariable( const std::string name, const bool isGlobal, const std
             throw std::invalid_argument( "ERROR: type " + type + " for variable " + name + " is not supported.\n" );
 
         if( m_Variables.count( name ) == 0 ) //variable doesn't exists
-            CreateVariableLanguage( m_HostLanguage, name, isGlobal, type, dimensionsCSV, transform, m_Variables );
+            CreateVariableLanguage( name, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV, m_Variables );
         else //name is found
             throw std::invalid_argument( "ERROR: variable " + name + " exists more than once.\n" );
     }
     else
     {
-        CreateVariableLanguage( m_HostLanguage, name, isGlobal, type, dimensionsCSV, transform, m_Variables );
+        CreateVariableLanguage( name, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV, m_Variables );
     }
 }
 
 
-void CGroup::SetAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string path,
+void CGroup::SetAttribute( const std::string name, const bool isGlobal, const std::string type,
                            const std::string value )
 {
     if( m_DebugMode == true )
@@ -77,29 +79,6 @@ void CGroup::SetAttribute( const std::string name, const bool isGlobal, const st
     {
         m_Attributes.emplace( name, SAttribute{ isGlobal, type, value } );
     }
-}
-
-
-void CGroup::SetGlobalBounds( const std::string dimensionsCSV, const std::string offsetsCSV )
-{
-    auto lf_SetGlobalMember = []( const std::string inputCSV, std::vector<std::string>& output )
-    {
-        if( inputCSV.empty() ) return;
-        std::istringstream inputSS( inputCSV );
-        std::string element;
-
-        while( std::getline( inputSS, element, ',' ) )  //might have to check for "comma" existence
-            output.push_back( element );
-    };
-
-    if( m_DebugMode == true )
-    {
-        if( m_GlobalDimensions.empty() == false ) throw std::invalid_argument("ERROR: global dimensions already set\n" );
-        if( m_GlobalOffsets.empty() == false ) throw std::invalid_argument("ERROR: global offsets already set\n" );
-    }
-
-    lf_SetGlobalMember( dimensionsCSV, m_GlobalDimensions );
-    lf_SetGlobalMember( offsetsCSV, m_GlobalOffsets );
 }
 
 
@@ -167,15 +146,23 @@ void CGroup::Monitor( std::ostream& logStream ) const
 void CGroup::ParseXMLGroup( const std::string& xmlGroup )
 {
     std::string::size_type currentPosition( 0 );
-    bool isGlobal = false;
+    bool isGlobal = false; //used to set attributes
+    std::string globalDimensionsCSV; //used to set variables
+    std::string globalOffsetsCSV; //used to set variables
 
     while( currentPosition != std::string::npos )
     {
         //Get tag
         std::string tag;
         GetSubString( "<", ">", xmlGroup, tag, currentPosition );
-        if( tag == "</adios-group>" ) break;
-        if( tag == "</global-bounds>" ) isGlobal = false;
+        if( tag == "</adios-group>" ) break; //end of current group
+
+        if( tag == "</global-bounds>" )
+        {
+            isGlobal = false; //used for attributes
+            globalDimensionsCSV.clear(); //used for variables
+            globalOffsetsCSV.clear(); //used for variables
+        }
 
         if( m_DebugMode == true )
         {
@@ -202,7 +189,7 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup )
                 else if( pair.first == "dimensions" ) dimensionsCSV = pair.second;
                 else if( pair.first == "transform"  ) transform = pair.second;
             }
-            SetVariable( name, isGlobal, type, dimensionsCSV, transform );
+            SetVariable( name, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV );
         }
         else if( tagName == "attribute" )
         {
@@ -210,22 +197,31 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup )
             for( auto& pair : pairs ) //loop through all pairs
             {
                 if( pair.first == "name"       ) name = pair.second;
-                else if( pair.first == "path"  )  path = pair.second;
                 else if( pair.first == "value" ) value = pair.second;
                 else if( pair.first == "type"  ) type = pair.second;
             }
-            SetAttribute( name, isGlobal, type, path, value );
+            SetAttribute( name, isGlobal, type, value );
         }
         else if( tagName == "global-bounds" )
         {
-            isGlobal = true;
-            std::string dimensionsCSV, offsetsCSV;
             for( auto& pair : pairs ) //loop through all pairs
             {
-                if( pair.first == "dimensions" ) dimensionsCSV = pair.second;
-                else if( pair.first == "offsets" ) offsetsCSV = pair.second;
+                if( pair.first == "dimensions" )
+                    globalDimensionsCSV = pair.second;
+                else if( pair.first == "offsets" )
+                    globalOffsetsCSV = pair.second;
             }
-            SetGlobalBounds( dimensionsCSV, offsetsCSV );
+
+            if( m_DebugMode == true )
+            {
+                if( globalDimensionsCSV.empty() )
+                    throw std::invalid_argument( "ERROR: dimensions missing in global-bounds tag\n");
+
+                if( globalDimensionsCSV.empty() )
+                    throw std::invalid_argument( "ERROR: offsets missing in global-bounds tag\n");
+            }
+
+            isGlobal = true;
         }
     } //end while loop
 }
