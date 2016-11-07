@@ -26,8 +26,6 @@ public:
 
     ~CNetCDF4( );
 
-    void Write( const CVariable& variable );
-
 };
 
 

@@ -26,7 +26,6 @@ public:
 
     ~CMPIAggregate( );
 
-    void Write( const CVariable& variable );
 };
 
 

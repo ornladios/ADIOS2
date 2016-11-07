@@ -53,21 +53,7 @@ void ADIOS::Open( const std::string groupName, const std::string fileName, const
         CheckGroup( itGroup, groupName, " from call to Open with file " + fileName );
 
     itGroup->second.Open( fileName, accessMode );
-}
 
-
-void ADIOS::Write( const std::string groupName, const std::string variableName, const void* values )
-{
-    auto itGroup = m_Groups.find( groupName );
-    if( m_DebugMode == true )
-    {
-        CheckGroup( itGroup, groupName, " from call to Write with variable " + variableName );
-
-        if( itGroup->second.m_IsOpen == false )
-            throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
-    }
-
-    itGroup->second.Write( variableName, values );
 }
 
 
@@ -82,8 +68,9 @@ void ADIOS::Close( const std::string groupName )
             throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
     }
 
-    itGroup->second.Close( ); //calling capsule and transport
-    //m_Groups.erase( groupName ); //make group unavailable ?
+    m_Capsule.CloseGroupBuffer( itGroup->second );
+
+    itGroup->second.Close( );
 }
 
 

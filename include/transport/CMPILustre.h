@@ -25,7 +25,6 @@ public:
 
     ~CMPILustre( );
 
-    void Write( const CVariable& variable );
 };
 
 

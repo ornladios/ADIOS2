@@ -24,7 +24,6 @@ public:
 
     ~CFlexpath( );
 
-    void Write( const CVariable& variable );
 };
 
 

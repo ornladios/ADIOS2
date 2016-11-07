@@ -26,7 +26,6 @@ public:
 
     ~CMPI( );
 
-    void Write( const CVariable& variable );
 };
 
 

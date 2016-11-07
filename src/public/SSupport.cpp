@@ -31,8 +31,6 @@ const std::set<std::string> SSupport::Transforms{
 };
 
 
-
-
 const std::map<std::string, std::set<std::string> > SSupport::Datatypes
 {
     { "C++",

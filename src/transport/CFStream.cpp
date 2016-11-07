@@ -6,7 +6,8 @@
  */
 
 /// \cond EXCLUDED_FROM_DOXYGEN
-#include <core/CVariable.h>
+#include <core/SVariable.h>
+#include <core/SVariable.h>
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -15,7 +16,6 @@
 /// \endcond
 
 #include "transport/CFStream.h"
-#include "core/CVariable.h"
 #include "functions/GroupFunctions.h"
 #include "functions/Templates.h"
 

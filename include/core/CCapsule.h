@@ -1,0 +1,70 @@
+/*
+ * CCapsule.h
+ *
+ *  Created on: Nov 7, 2016
+ *      Author: wfg
+ */
+
+#ifndef CCAPSULE_H_
+#define CCAPSULE_H_
+
+#include <vector>
+
+#ifdef HAVE_MPI
+  #include <mpi.h>
+#else
+  #include "public/mpidummy.h"
+#endif
+
+#include "core/CGroup.h"
+#include "core/SVariable.h"
+#include "core/CTransform.h"
+#include "core/CTransport.h"
+
+
+namespace adios
+{
+
+class CCapsule
+{
+
+public:
+
+    #ifdef HAVE_MPI
+    MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
+    #else
+    MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
+    #endif
+
+
+    std::vector<char> m_Buffer; ///< buffer to be managed, just one type for now
+    std::map< std::string, std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run
+    std::map< std::string, std::shared_ptr<CTransport> > m_Transports; ///< transports associated with ADIOS run
+
+
+    CCapsule( ); ///< default empty constructor
+
+    ~CCapsule( );
+
+    /**
+     * This will add to the m_Transports and m_Transforms map
+     * @param group
+     */
+    void OpenGroupBuffer( const CGroup& group );
+
+
+    template< class T>
+    void WriteVariableToBuffer( const CGroup& group, const SVariable<T>& variable );
+
+    /**
+     * Closes the buffer and moves it into the
+     * @param group
+     */
+    void CloseGroupBuffer( const CGroup& group );
+
+};
+
+
+} //end namespace
+
+#endif /* CCAPSULE_H_ */

@@ -26,7 +26,6 @@ public:
 
     ~CPHDF5( );
 
-    void Write( const CVariable& variable );
 };
 
 

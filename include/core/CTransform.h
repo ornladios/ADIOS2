@@ -10,7 +10,7 @@
 
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <core/CVariable.h>
+#include <core/SVariable.h>
 #include <string>
 /// \endcond
 
@@ -29,17 +29,14 @@ public:
 
     const std::string m_Method; ///< name of the transformation method
     const unsigned int m_CompressionLevel; ///< depends on library implementation
-    CVariableBase& m_Variable; ///< variable to be transformed
 
     /**
      * Initialize parent method
      * @param method zlib, bzip2, szip
      * @param variable
      */
-    CTransform( const std::string method, const unsigned int compressionLevel, CVariableBase& variable ):
-        m_Method( method ),
-        m_CompressionLevel( compressionLevel ),
-        m_Variable( variable )
+    CTransform( const unsigned int compressionLevel ):
+        m_CompressionLevel( compressionLevel )
     { }
 
     virtual ~CTransform( ){ };

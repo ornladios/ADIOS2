@@ -30,8 +30,6 @@ public:
 
     void Open( const std::string fileName, const std::string accessMode );
 
-    void Write( const CVariableBase& variable );
-
     void Close( );
 
 private:

@@ -26,7 +26,6 @@ public:
 
     ~CDIMES( );
 
-    void Write( const CVariable& variable );
 };
 
 

@@ -23,7 +23,7 @@
 #endif
 
 
-#include "core/CVariable.h"
+#include <core/SVariable.h>
 #include "core/SAttribute.h"
 #include "core/CTransport.h"
 
@@ -62,28 +62,15 @@ public:
     ~CGroup( ); ///< Using STL containers, no deallocation
 
     /**
-     * Opens group and passes fileName and accessMode to m_Transport
-     * @param fileName
-     * @param accessMode
+     * Called from ADIOS open, sets group as active and passes associated bufferName and accessMode
+     * @param bufferName associated buffer for this group
+     * @param accessMode associated access mode (read, write, append) for bufferName
      */
-    void Open( const std::string fileName, const std::string accessMode = "w" );
+    void Open( const std::string bufferName, const std::string accessMode );
 
 
     /**
-     * Passes variableName and values to m_Transport
-     * @param variableName
-     * @param values
-     */
-    void Write( const std::string variableName, const void* values );
-
-    /**
-     * Must think what to do with Capsule and Transport
-     */
-    void Close( );
-
-
-    /**
-     * Sets a new variable in the group object
+     * Creates a new variable in the group object
      * @param name variable name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
      * @param type variable type, must be in SSupport::Datatypes[hostLanguage] in public/SSupport.h
      * @param dimensionsCSV comma separated variable local dimensions (e.g. "Nx,Ny,Nz")
@@ -91,29 +78,23 @@ public:
      * @param globalDimensionsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      */
-    void SetVariable( const std::string name, const std::string type,
-                      const std::string dimensionsCSV, const std::string transform,
-                      const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
+    void CreateVariable( const std::string name, const std::string type,
+                         const std::string dimensionsCSV, const std::string transform,
+                         const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
 
     /**
-     * @brief Sets a new attribute in current Group
-     * @param name  attribute name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
-     * @param isGlobal
-     * @param type
-     * @param value
+     *
+     * @param name attribute name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
+     * @param type attribute type string or numeric type
+     * @param value information about the attribute
+     * @param globalDimensionsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
+     * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      */
-    void SetAttribute( const std::string name, const bool isGlobal, const std::string type, const std::string value );
+    void CreateAttribute( const std::string name, const std::string type, const std::string value,
+                          const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
 
 
-    /**
-     * @brief Sets m_Transport with available supported method
-     * @param method supported values in SSupport.h TransportMethods
-     * @param priority numeric priority for the I/O to schedule this write with others that might be pending
-     * @param iteration iterations between writes of a group to gauge how quickly this data should be evacuated from the compute node
-     * @param mpiComm MPI communicator from User->ADIOS->Group
-     */
-    void SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
-                       const MPI_Comm mpiComm );
+    void Close( ); ///< set m_IsOpen to false and sets m_BufferName and m_AccessMode to empty
 
 
     /**
@@ -127,18 +108,27 @@ public:
 private:
 
     const std::string& m_HostLanguage; ///< reference to class ADIOS m_HostLanguage, this erases the copy constructor. Might be moved later to non-reference const
-    const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
+    const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code, known at compile time
 
-    /**
-     * @brief Contains all group variables (from XML Config file).
-     * <pre>
-     *     Key: std::string unique variable name
-     *     Value: Polymorphic value is always unique child defined in SVariableTemplate.h, allow different variable types
-     * </pre>
-     */
-    std::map< std::string, CVariable > m_Variables;
-    std::vector< std::string > m_VariableTransforms; ///< if a variable has a transform it fills this container, the variable hold an index
+    std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of CVariable
 
+    std::vector< SVariable<char> > m_Char; ///< Key: variable name, Value: variable of type char
+    std::vector< SVariable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
+    std::vector< SVariable<short> > m_Short; ///< Key: variable name, Value: variable of type short
+    std::vector< SVariable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
+    std::vector< SVariable<int> > m_Int; ///< Key: variable name, Value: variable of type int
+    std::vector< SVariable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
+    std::vector< SVariable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
+    std::vector< SVariable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
+    std::vector< SVariable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
+    std::vector< SVariable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
+    std::vector< SVariable<float> > m_Float; ///< Key: variable name, Value: variable of type float
+    std::vector< SVariable<double> > m_Double; ///< Key: variable name, Value: variable of type double
+    std::vector< SVariable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
+
+    std::set<std::string> m_SetVariables; ///< set of variables whose T* values have been set (no nullptr)
+
+    std::vector< std::string > m_Transforms; ///< if a variable has a transform it fills this container, the variable holds an index
 
     /**
      * @brief Contains all group attributes from SAttribute.h
@@ -151,8 +141,9 @@ private:
 
     std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
 
-    std::string m_CurrentTransport; ///< current transport method associated with this group
-    std::string m_OutputName; ///< associated output (file, stream, buffer, etc.) if the Group is opened.
+    std::string m_Transport; ///< current transport method associated with this group
+    std::string m_BufferName; ///< associated buffer (file, stream, vector, etc.) if the Group is opened.
+    std::string m_AccessMode; /// associated access mode for associated buffer from m_BufferName
 
     unsigned long int m_SerialSize; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
@@ -162,11 +153,23 @@ private:
      */
     void ParseXMLGroup( const std::string& xmlGroup );
 
+
+    const unsigned int CurrentTypeIndex( const std::string type ) const noexcept;
+
     /**
-     * Function that checks if transport method is valid, called from overloaded SetTransform functions
-     * @param method transport method to be checked from SSupport
+     * Used by SetVariable and SetAttribute to check if global bounds exist in m_GlobalBounds
+     * @param globalDimensionsCSV comma separated variables defining global dimensions (e.g. "Nx,NY,Nz")
+     * @param globalOffsetsCSV comma separated variables defining global offsets (e.g. "oNx,oNY,oNz")
+     * @return -1 if not global -> both inputs are empty, otherwise index in m_GlobalBounds if exist or create a new element in m_GlobalBounds;
      */
-    void CheckTransport( const std::string method );
+    const int SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept;
+
+    /**
+     * Used by SetVariable to check if transform exists in m_Transform
+     * @param transform variable transformation method (e.g. bzip2, szip, zlib )
+     * @return -1 variable is not associated with a transform, otherwise index in m_Transforms
+     */
+    const int SetTransforms( const std::string transform ) noexcept;
 
 };
 

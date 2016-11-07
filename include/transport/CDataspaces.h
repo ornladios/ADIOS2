@@ -25,7 +25,6 @@ public:
 
     ~CDataspaces( );
 
-    void Write( const CVariable& variable );
 };
 
 

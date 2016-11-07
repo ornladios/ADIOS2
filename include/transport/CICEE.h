@@ -24,8 +24,6 @@ public:
 
     ~CICEE( );
 
-    void Write( const CVariable& variable );
-
 };
 
 

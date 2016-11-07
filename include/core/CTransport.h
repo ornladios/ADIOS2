@@ -18,7 +18,6 @@
     #include "public/mpidummy.h"
 #endif
 
-#include <core/CVariable.h>
 
 
 namespace adios
@@ -29,7 +28,6 @@ class CTransport
 
 public:
 
-    const std::string m_Method;  ///< method name, must be defined in SSupport.h TransportMethods
     const unsigned int m_Priority; ///< writing priority for this transport
     const unsigned int m_Iteration; ///< iteration number for this transport
     MPI_Comm m_MPIComm; ///< passed MPI communicator
@@ -50,7 +48,6 @@ public:
      */
     CTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
                 MPI_Comm mpiComm, const bool debugMode ):
-        m_Method( method ),
         m_Priority( priority ),
         m_Iteration( iteration ),
         m_MPIComm( mpiComm ),
@@ -70,9 +67,6 @@ public:
      * @param accessMode r or read, w or write, a or append
      */
     virtual void Open( const std::string outputName, const std::string accessMode ) = 0;
-
-    virtual void Write( const CVariableBase& variable )
-    { };
 
     virtual void Close( ) = 0; //here think what needs to be passed
 

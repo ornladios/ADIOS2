@@ -21,9 +21,9 @@
 #endif
 
 #include "core/CGroup.h"
-#include "core/CTransport.h"
-#include "core/CTransform.h"
+#include "core/CCapsule.h"
 #include "public/SSupport.h"
+#include "functions/ADIOSTemplates.h"
 
 
 namespace adios
@@ -70,6 +70,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     ADIOS( const MPI_Comm mpiComm, const bool debugMode = false );
 
+
     ~ADIOS( ); ///< virtual destructor overriden by children's own destructors
 
     /**
@@ -86,7 +87,19 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
      * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
      */
-    void Write( const std::string groupName, const std::string variableName, const void* values );
+    template< class T>
+    void Write( const std::string groupName, const std::string variableName, T* values )
+    {
+        auto itGroup = m_Groups.find( groupName );
+        if( m_DebugMode == true )
+        {
+            CheckGroup( itGroup, groupName, " from call to Write with variable " + variableName );
+
+            if( itGroup->second.m_IsOpen == false )
+                throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
+        }
+        WriteVariable( variableName, values, itGroup->second, m_Capsule );
+    }
 
     /**
      * Close a particular group, group will be out of scope and destroyed
@@ -118,7 +131,7 @@ private:
      */
     std::map< std::string, CGroup > m_Groups;
 
-    std::map< std::string, std::shared_ptr<CTransform> > m_Transforms;
+    CCapsule m_Capsule; ///< manager of data transports, transforms and movement operations
 
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file

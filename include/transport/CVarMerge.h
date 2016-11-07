@@ -25,8 +25,6 @@ public:
 
     ~CVarMerge( );
 
-    void Write( const CVariable& variable );
-
 };
 
 

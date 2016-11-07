@@ -5,13 +5,14 @@
  *      Author: wfg
  */
 
+
 #include <iostream>
+#include <algorithm> // find
 
 #include "core/CGroup.h"
-#include "functions/GroupFunctions.h" //for CreateVariableLanguage
+#include "core/SVariable.h" //for cast implementation of CVariableBase::Set that calls CVariable::Set
 #include "public/SSupport.h"
 #include "functions/ADIOSFunctions.h" //for XML Parsing functions (e.g. GetTag)
-#include "core/CVariable.h" //for cast implementation of CVariableBase::Set that calls CVariable::Set
 
 
 namespace adios
@@ -38,87 +39,99 @@ CGroup::~CGroup( )
 { }
 
 
-void CGroup::Open( const std::string fileName, const std::string accessMode )
+void CGroup::Open( const std::string bufferName, const std::string accessMode )
 {
     m_IsOpen = true;
+    m_BufferName = bufferName;
+    m_AccessMode = accessMode;
 }
 
 
-void CGroup::SetVariable( const std::string name, const std::string type,
-                          const std::string dimensionsCSV, const std::string transform,
-                          const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
+void CGroup::CreateVariable( const std::string name, const std::string type,
+                             const std::string dimensionsCSV, const std::string transform,
+                             const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
 {
     if( m_DebugMode == true )
     {
         if( SSupport::Datatypes.at( m_HostLanguage ).count( type ) == 0 )
             throw std::invalid_argument( "ERROR: type " + type + " for variable " + name + " is not supported.\n" );
-
         if( m_Variables.count( name ) == 0 ) //variable doesn't exists
-            CreateVariableLanguage( name, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV, m_Variables );
+            m_Variables[name] = std::make_pair( type, CurrentTypeIndex( type ) );
         else //name is found
             throw std::invalid_argument( "ERROR: variable " + name + " exists more than once.\n" );
     }
     else
     {
-        CreateVariableLanguage( name, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV, m_Variables );
+        m_Variables[name] = std::make_pair( type, CurrentTypeIndex( type ) );
     }
+
+    int transformIndex = SetTransforms( transform );
+    int globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
+
+    if( type == "char" || type == "character" )
+       m_Char.push_back( SVariable<char>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "unsigned char" )
+        m_UChar.push_back( SVariable<unsigned char>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "short" || type == "integer*2" )
+        m_Short.push_back( SVariable<short>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "unsigned short" )
+        m_UShort.push_back( SVariable<unsigned short>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "int" || type == "integer" )
+        m_Int.push_back( SVariable<int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "unsigned int" || type == "unsigned integer" )
+        m_UInt.push_back( SVariable<unsigned int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "long int" || type == "long" || type == "long integer" )
+        m_LInt.push_back( SVariable<long int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "long long int" || type == "long long" || type == "long long integer" )
+        m_LLInt.push_back( SVariable<long long int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "unsigned long long int" || type == "unsigned long long" || type == "unsigned long long integer" )
+        m_ULLInt.push_back( SVariable<unsigned long long int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "float" || type == "real" || type == "real*4" )
+        m_Float.push_back( SVariable<float>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "double" || type == "double precision" || type == "real*8" )
+        m_Double.push_back( SVariable<double>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    else if( type == "long double" || type == "real*16" )
+        m_LDouble.push_back( SVariable<long double>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
 }
 
 
-void CGroup::SetAttribute( const std::string name, const bool isGlobal, const std::string type,
-                           const std::string value )
+void CGroup::CreateAttribute( const std::string name, const std::string type, const std::string value,
+                              const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
 {
+    auto lf_EmplaceVariable = [&]( const std::string name, const std::string type, const std::string value,
+                                   const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
+    {
+        const int globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
+        m_Attributes.emplace( name, SAttribute{ type, value, globalBoundsIndex } );
+    };
+
     if( m_DebugMode == true )
     {
         if( m_Attributes.count( name ) == 0 ) //variable doesn't exists
-            m_Attributes.emplace( name, SAttribute{ isGlobal, type, value } );
+            lf_EmplaceVariable( name, type, value, globalDimensionsCSV, globalOffsetsCSV );
         else //name is found
             throw std::invalid_argument( "ERROR: attribute " + name + " exists, NOT setting a new variable\n" );
     }
     else
-    {
-        m_Attributes.emplace( name, SAttribute{ isGlobal, type, value } );
-    }
+        lf_EmplaceVariable( name, type, value, globalDimensionsCSV, globalOffsetsCSV );
 }
-
-
-void CGroup::SetTransport( const std::string method, const unsigned int priority, const unsigned int iteration,
-                           const MPI_Comm mpiComm )
-{
-    if( m_DebugMode == true )
-    {
-        if( SSupport::Transports.count( method ) == 0 )
-            throw std::invalid_argument( "ERROR: transport method " + method + " not supported. Check spelling or case sensitivity.\n" );
-    }
-
-    if( m_ActiveTransport.empty() == false ) //there is an existing transport method, so reset
-        m_Transport.reset();
-
-    CreateTransport( method, priority, iteration, mpiComm, m_DebugMode, m_Transport );
-    m_ActiveTransport = method;
-}
-
-
-void CGroup::Write( const std::string variableName, const void* values )
-{
-    auto itVariable = m_Variables.find( variableName );
-
-    if( m_DebugMode == true )
-    {
-        if( itVariable == m_Variables.end() )
-            throw std::invalid_argument( "ERROR: variable " + variableName + " is undefined.\n" );
-    }
-
-    SetVariableValues( *itVariable->second, values ); //will check type and cast to appropriate template<type>
-    //here must do something with Capsule or transport
-    m_Transport->Write( *itVariable->second ); //transport will write?
-}
-
 
 void CGroup::Close( )
 {
-    //here must think what to do with Capsule and close Transport
-    m_Transport->Close( );
+    m_IsOpen = false;
+    m_BufferName.clear();
+    m_AccessMode.clear();
 }
 
 //PRIVATE FUNCTIONS BELOW
@@ -127,7 +140,7 @@ void CGroup::Monitor( std::ostream& logStream ) const
     logStream << "\tVariable \t Type\n";
     for( auto& variablePair : m_Variables )
     {
-        logStream << "\t" << variablePair.first << " \t " << variablePair.second->m_Type << "\n";
+        logStream << "\t" << variablePair.first << " \t " << variablePair.second.first << "\n";
     }
     std::cout << "\n";
 
@@ -138,7 +151,7 @@ void CGroup::Monitor( std::ostream& logStream ) const
     }
     std::cout << "\n";
 
-    logStream << "\tTransport Method " << m_ActiveTransport << "\n";
+    logStream << "\tTransport Method " << m_Transport << "\n";
     std::cout << "\n";
 }
 
@@ -146,7 +159,6 @@ void CGroup::Monitor( std::ostream& logStream ) const
 void CGroup::ParseXMLGroup( const std::string& xmlGroup )
 {
     std::string::size_type currentPosition( 0 );
-    bool isGlobal = false; //used to set attributes
     std::string globalDimensionsCSV; //used to set variables
     std::string globalOffsetsCSV; //used to set variables
 
@@ -159,7 +171,6 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup )
 
         if( tag == "</global-bounds>" )
         {
-            isGlobal = false; //used for attributes
             globalDimensionsCSV.clear(); //used for variables
             globalOffsetsCSV.clear(); //used for variables
         }
@@ -189,7 +200,7 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup )
                 else if( pair.first == "dimensions" ) dimensionsCSV = pair.second;
                 else if( pair.first == "transform"  ) transform = pair.second;
             }
-            SetVariable( name, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV );
+            CreateVariable( name, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV );
         }
         else if( tagName == "attribute" )
         {
@@ -200,7 +211,7 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup )
                 else if( pair.first == "value" ) value = pair.second;
                 else if( pair.first == "type"  ) type = pair.second;
             }
-            SetAttribute( name, isGlobal, type, value );
+            CreateAttribute( name, type, value, globalDimensionsCSV, globalOffsetsCSV );
         }
         else if( tagName == "global-bounds" )
         {
@@ -217,13 +228,102 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup )
                 if( globalDimensionsCSV.empty() )
                     throw std::invalid_argument( "ERROR: dimensions missing in global-bounds tag\n");
 
-                if( globalDimensionsCSV.empty() )
+                if( globalOffsetsCSV.empty() )
                     throw std::invalid_argument( "ERROR: offsets missing in global-bounds tag\n");
             }
-
-            isGlobal = true;
         }
     } //end while loop
+}
+
+
+const unsigned int CGroup::CurrentTypeIndex( const std::string type ) const noexcept
+{
+    unsigned int index;
+
+    if( type == "char" || type == "character" )
+        index = m_Char.size();
+
+    else if( type == "unsigned char" )
+        index = m_UChar.size();
+
+    else if( type == "short" || type == "integer*2" )
+        index = m_Short.size();
+
+    else if( type == "unsigned short" )
+        index = m_UShort.size();
+
+    else if( type == "int" || type == "integer" )
+        index = m_Int.size();
+
+    else if( type == "unsigned int" || type == "unsigned integer" )
+        index = m_UInt.size();
+
+    else if( type == "long int" || type == "long" || type == "long integer" )
+        index = m_LInt.size();
+
+    else if( type == "unsigned long int" || type == "unsigned long" || type == "unsigned long integer" )
+        index = m_ULInt.size();
+
+    else if( type == "long long int" || type == "long long" || type == "long long integer" )
+        index = m_LLInt.size();
+
+    else if( type == "unsigned long long int" || type == "unsigned long long" || type == "unsigned long long integer" )
+        index = m_ULLInt.size();
+
+    else if( type == "float" || type == "real" || type == "real*4" )
+        index = m_Float.size();
+
+    else if( type == "double" || type == "double precision" || type == "real*8" )
+        index = m_Double.size();
+
+    else if( type == "long double" || type == "real*16" )
+        index = m_LDouble.size();
+
+    return index;
+}
+
+
+const int CGroup::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
+{
+    if( globalDimensionsCSV.empty() || globalOffsetsCSV.empty() )
+        return -1;
+
+    int globalBoundsIndex = -1;
+    const auto globalBounds = std::make_pair( globalDimensionsCSV, globalOffsetsCSV );
+    auto itGlobalBounds = std::find( m_GlobalBounds.begin(), m_GlobalBounds.end(), globalBounds );
+
+    if( itGlobalBounds != m_GlobalBounds.end() )
+    {
+        globalBoundsIndex = std::distance( m_GlobalBounds.begin(), itGlobalBounds );
+    }
+    else
+    {
+        m_GlobalBounds.push_back( globalBounds );
+        globalBoundsIndex = m_GlobalBounds.size();
+    }
+
+    return globalBoundsIndex;
+}
+
+
+const int CGroup::SetTransforms( const std::string transform ) noexcept
+{
+    if( transform.empty() )
+        return -1;
+
+    int transformIndex = -1;
+    auto itTransform = std::find( m_Transforms.begin(), m_Transforms.end(), transform );
+    if( itTransform != m_Transforms.end() )
+    {
+        transformIndex = std::distance( m_Transforms.begin(), itTransform );
+    }
+    else
+    {
+        m_Transforms.push_back( transform );
+        transformIndex = m_Transforms.size();
+    }
+
+    return transformIndex;
 }
 
 
