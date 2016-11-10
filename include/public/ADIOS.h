@@ -87,7 +87,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
      * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
      */
-    template< class T>
     void Write( const std::string groupName, const std::string variableName, T* values )
     {
         auto itGroup = m_Groups.find( groupName );
@@ -131,7 +130,7 @@ private:
      */
     std::map< std::string, CGroup > m_Groups;
 
-    CCapsule m_Capsule; ///< manager of data transports, transforms and movement operations
+    std::shared_ptr<CCapsule> m_Capsule; ///< manager of data transports, transforms and movement operations
 
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file
