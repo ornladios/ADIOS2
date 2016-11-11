@@ -42,7 +42,17 @@ public:
 
 
     template< class T>
-    void WriteVariableToBuffer( const CGroup& group, const SVariable<T>& variable );
+    void WriteVariableToBuffer( const CGroup& group, const SVariable<T>& variable )
+    {
+//        while
+//            {
+//
+//            send
+//            receive status
+//            if( status )
+//              switch Transport
+//            }
+    }
 
     /**
      * Closes the buffer and moves it into the

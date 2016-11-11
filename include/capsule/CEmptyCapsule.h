@@ -8,6 +8,9 @@
 #ifndef CEMPTYCAPSULE_H_
 #define CEMPTYCAPSULE_H_
 
+#include "core/CCapsule.h"
+
+
 namespace adios
 {
 
@@ -29,9 +32,6 @@ public:
      */
     void OpenGroupBuffer( const CGroup& group );
 
-
-
-    void WriteVariableToBuffer( const CGroup& group, const SVariable<T>& variable );
 
     /**
      * Closes the buffer and moves it into the

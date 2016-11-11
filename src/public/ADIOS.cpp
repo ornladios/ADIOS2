@@ -46,14 +46,27 @@ ADIOS::~ADIOS( )
 { }
 
 
+void ADIOS::CreateGroup( const std::string groupName, const std::string transport )
+{
+    if( m_DebugMode == true )
+    {
+        if( m_Groups.find( groupName ) != m_Groups.end() )
+            throw std::invalid_argument( "ERROR: group " + groupName + " already exist, from call to CreateGroup\n" );
+    }
+
+    m_Groups.emplace( groupName, CGroup( m_HostLanguage, m_DebugMode ) );
+}
+
+
+
 void ADIOS::Open( const std::string groupName, const std::string fileName, const std::string accessMode )
 {
     auto itGroup = m_Groups.find( groupName );
+
     if( m_DebugMode == true )
         CheckGroup( itGroup, groupName, " from call to Open with file " + fileName );
 
     itGroup->second.Open( fileName, accessMode );
-
 }
 
 
@@ -68,11 +81,26 @@ void ADIOS::Close( const std::string groupName )
             throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
     }
 
-    m_Capsule.CloseGroupBuffer( itGroup->second );
-
+    m_Capsule->CloseGroupBuffer( itGroup->second );
     itGroup->second.Close( );
 }
 
+
+void ADIOS::CreateVariable( const std::string groupName, const std::string variableName, const std::string type,
+                            const std::string dimensionsCSV, const std::string transform,
+                            const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
+{
+    auto itGroup = m_Groups.find( groupName );
+    if( m_DebugMode == true )
+    {
+        CheckGroup( itGroup, groupName, " from call to CreateVariable \n" );
+    }
+
+    itGroup->second.CreateVariable( variableName, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV );
+
+
+
+}
 
 void ADIOS::MonitorGroups( std::ostream& logStream ) const
 {

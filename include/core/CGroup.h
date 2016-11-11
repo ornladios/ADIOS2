@@ -143,7 +143,7 @@ private:
 
     std::string m_Transport; ///< current transport method associated with this group
     std::string m_BufferName; ///< associated buffer (file, stream, vector, etc.) if the Group is opened.
-    std::string m_AccessMode; /// associated access mode for associated buffer from m_BufferName
+    std::string m_AccessMode; ///< associated access mode for associated buffer from m_BufferName
 
     unsigned long int m_SerialSize; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
@@ -160,7 +160,7 @@ private:
      * Used by SetVariable and SetAttribute to check if global bounds exist in m_GlobalBounds
      * @param globalDimensionsCSV comma separated variables defining global dimensions (e.g. "Nx,NY,Nz")
      * @param globalOffsetsCSV comma separated variables defining global offsets (e.g. "oNx,oNY,oNz")
-     * @return -1 if not global -> both inputs are empty, otherwise index in m_GlobalBounds if exist or create a new element in m_GlobalBounds;
+     * @return -1 if not global --> both inputs are empty, otherwise index in m_GlobalBounds if exist or create a new element in m_GlobalBounds;
      */
     const int SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept;
 

@@ -42,10 +42,12 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
 
+
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
     ADIOS( );
+
 
     /**
      * @brief Serial constructor for XML config file
@@ -53,6 +55,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param debugMode true: on, false: off (faster, but unsafe)
      */
     ADIOS( const std::string xmlConfigFile, const bool debugMode = false );
+
 
     /**
      * @brief Parallel constructor for XML config file and MPI
@@ -73,6 +76,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
     ~ADIOS( ); ///< virtual destructor overriden by children's own destructors
 
+
     /**
      * @brief Open or Append to an output file
      * @param groupName should match an existing group from XML file or created through CreateGroup
@@ -81,13 +85,15 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     void Open( const std::string groupName, const std::string fileName, const std::string accessMode = "w" );
 
+
     /**
      * Submits a data element values for writing and associates it with the given variableName
      * @param groupName name of group that owns the variable
      * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
      * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
      */
-    void Write( const std::string groupName, const std::string variableName, T* values )
+    template< class T>
+    void Write( const std::string groupName, const std::string variableName, const T* values )
     {
         auto itGroup = m_Groups.find( groupName );
         if( m_DebugMode == true )
@@ -100,11 +106,13 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         WriteVariable( variableName, values, itGroup->second, m_Capsule );
     }
 
+
     /**
      * Close a particular group, group will be out of scope and destroyed
      * @param groupName group to be closed
      */
     void Close( const std::string groupName );
+
 
     /**
      * @brief Dumps groups information to a file stream or standard output.
@@ -114,10 +122,27 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     void MonitorGroups( std::ostream& logStream ) const;
 
 
+    /**
+     * @brief Create a new group or replace an existing one
+     * @param groupName unique name
+     * @param transport transport method
+     * @param streamFile
+     */
+    void CreateGroup( const std::string groupName, const std::string transport = "" );
+
+
+    void CreateVariable( const std::string groupName, const std::string variableName, const std::string type,
+                         const std::string dimensionsCSV = "", const std::string transform = "",
+                         const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = ""  );
+
+    void CreateAttribute( const std::string groupName, const std::string attributeName,
+                          const std::string type, const std::string value,
+                          const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "" );
+
+
 private:
 
     std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
-
     std::string m_HostLanguage = "C++"; ///< Supported languages: C, C++, Fortran, Python, etc.
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
@@ -138,10 +163,10 @@ private:
      * ADIOS will allocate two separate buffers each with the specified maximum limit.
      * Default = 0 means there is no limit
      */
-    unsigned int MaxBufferSizeInMB = 0;
+    unsigned long int MaxBufferSizeInMB = 0;
 
     /**
-     * Checks for group existence in m_Groups, if failed throws std::invalid_argument exception
+     * @brief Checks for group existence in m_Groups, if failed throws std::invalid_argument exception
      * @param itGroup group iterator, usually from find function
      * @param groupName passed for thrown exception only
      * @param hint adds information to thrown exception

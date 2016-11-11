@@ -39,21 +39,22 @@ public:
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
 
-    unsigned long int m_BufferSize; ///< buffer size
-    std::vector<char> m_Buffer; ///< buffer to be managed, just one type for now
+    std::map< std::string, std::vector<char> > m_Buffer; ///< buffer to be managed, just one type for now
     std::map< std::string, std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run
     std::map< std::string, std::shared_ptr<CTransport> > m_Transports; ///< transports associated with ADIOS run
 
     /**
      * Unique constructor
      * @param mpiComm communicator passed from ADIOS
+     * @param bufferSize passed by the user
      */
-    CCapsule( const MPI_Comm mpiComm, const unsigned long int bufferSize ):
-        m_MPIComm{ mpiComm },
-        m_BufferSize{ bufferSize }
-    { }
+    CCapsule( const MPI_Comm mpiComm, const unsigned long int bufferSize );
 
-    virtual ~CCapsule( ){ };
+    virtual ~CCapsule( );
+
+    void CreateTransform( const std::string transform );
+
+    void CreateTransport( const std::string transport );
 
     /**
      * This will add to the m_Transports and m_Transforms map
@@ -61,10 +62,19 @@ public:
      */
     void OpenGroupBuffer( const CGroup& group ) = 0;
 
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned int>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<char>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned char>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<short>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned short>& variable );
     virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<int>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned int>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<long int>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned long int>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<long long int>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned long long int>& variable );
     virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<float>& variable );
     virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<double>& variable );
+    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<long double>& variable );
 
     /**
      * Closes the buffer and moves it into the
