@@ -15,11 +15,8 @@
 #include <sstream>
 /// \endcond
 
-#include "core/CGroup.h" //friend class (manager)
-
 namespace adios
 {
-
 /**
  * @param Base (parent) class for template derived (child) class CVariable. Required to put CVariable objects in STL containers.
  */

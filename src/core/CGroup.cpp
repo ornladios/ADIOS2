@@ -21,30 +21,26 @@ namespace adios
 
 CGroup::CGroup( const std::string& hostLanguage, const bool debugMode ):
     m_HostLanguage{ hostLanguage },
-    m_DebugMode{ debugMode },
-    m_SerialSize{ 0 }
+    m_DebugMode{ debugMode }
 { }
 
 
 CGroup::CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode ):
     m_HostLanguage{ hostLanguage },
-    m_DebugMode{ debugMode },
-    m_SerialSize{ 0 }
+    m_DebugMode{ debugMode }
 {
     ParseXMLGroup( xmlGroup );
 }
 
-
-CGroup::~CGroup( )
+CGroup::CGroup( const std::string& hostLanguage, const std::string transport,
+                const unsigned int priority, const unsigned int iterations, const bool debugMode ):
+    m_HostLanguage{ hostLanguage },
+    m_DebugMode{ debugMode }
 { }
 
 
-void CGroup::Open( const std::string bufferName, const std::string accessMode )
-{
-    m_IsOpen = true;
-    m_BufferName = bufferName;
-    m_AccessMode = accessMode;
-}
+CGroup::~CGroup( )
+{ }
 
 
 void CGroup::CreateVariable( const std::string name, const std::string type,
@@ -103,6 +99,8 @@ void CGroup::CreateVariable( const std::string name, const std::string type,
 
     else if( type == "long double" || type == "real*16" )
         m_LDouble.push_back( SVariable<long double>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+
+    m_SerialSize += name.size() + type.size() + dimensionsCSV.size() + transform.size() + 5 * sizeof(char); //5, adding one more for globalBoundsIndex
 }
 
 
@@ -124,15 +122,25 @@ void CGroup::CreateAttribute( const std::string name, const std::string type, co
             throw std::invalid_argument( "ERROR: attribute " + name + " exists, NOT setting a new variable\n" );
     }
     else
+    {
         lf_EmplaceVariable( name, type, value, globalDimensionsCSV, globalOffsetsCSV );
+    }
+
+    m_SerialSize += name.size() + type.size() + value.size() + 4; //adding one more for globalBoundsIndex
 }
 
-void CGroup::Close( )
+
+void CGroup::Open( const std::string streamName )
 {
-    m_IsOpen = false;
-    m_BufferName.clear();
-    m_AccessMode.clear();
+    m_StreamName = streamName;
 }
+
+
+void CGroup::SetTransport( const std::string transport )
+{
+    m_Transport = transport;
+}
+
 
 //PRIVATE FUNCTIONS BELOW
 void CGroup::Monitor( std::ostream& logStream ) const
@@ -149,9 +157,6 @@ void CGroup::Monitor( std::ostream& logStream ) const
     {
         logStream << "\t" << attributePair.first << " \t " << attributePair.second.Type << " \t " << attributePair.second.Value << "\n";
     }
-    std::cout << "\n";
-
-    logStream << "\tTransport Method " << m_Transport << "\n";
     std::cout << "\n";
 }
 

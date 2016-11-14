@@ -1,3 +1,14 @@
+#Language API
+LANGUAGE_INC:=./include/public
+LANGUAGE_SRC:=./src/public
+
+ifeq ($(C_API),yes)
+else
+    HFiles:=$(filter-out $(LANGUAGE_INC)/ADIOS_C.h,$(HFiles))
+    CPPFiles:=$(filter-out $(LANGUAGE_SRC)/ADIOS_C.cpp,$(CPPFiles))     
+endif
+
+
 #TRANSPORTS WITH EXTERNAL DEPENDENCIES
 TRANSPORT_INC:=./include/transport
 TRANSPORT_SRC:=./src/transport

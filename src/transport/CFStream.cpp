@@ -6,8 +6,6 @@
  */
 
 /// \cond EXCLUDED_FROM_DOXYGEN
-#include <core/SVariable.h>
-#include <core/SVariable.h>
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -16,15 +14,13 @@
 /// \endcond
 
 #include "transport/CFStream.h"
-#include "functions/GroupFunctions.h"
-#include "functions/Templates.h"
 
 namespace adios
 {
 
 
-CFStream::CFStream( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm, const bool debugMode ):
-    CTransport( "CFStream", priority, iteration, mpiComm, debugMode )
+CFStream::CFStream( MPI_Comm mpiComm, const bool debugMode ):
+    CTransport( mpiComm, debugMode )
 { }
 
 
@@ -32,37 +28,41 @@ CFStream::~CFStream( )
 { }
 
 
-void CFStream::Open( const std::string fileName, const std::string accessMode )
+void CFStream::Open( const std::string streamName, const std::string accessMode )
 {
-    m_StreamName = fileName;
-
     if( m_RankMPI == 0 )
     {
         if( accessMode == "w" || accessMode == "write" )
-            m_FStream.open( fileName, std::fstream::out );
+            m_FStream.open( streamName, std::fstream::out );
 
         else if( accessMode == "a" || accessMode == "append" )
-            m_FStream.open( fileName, std::fstream::out | std::fstream::app );
+            m_FStream.open( streamName, std::fstream::out | std::fstream::app );
 
         else if( accessMode == "r" || accessMode == "read" )
-            m_FStream.open( fileName, std::fstream::in );
+            m_FStream.open( streamName, std::fstream::in );
 
         if( m_DebugMode == true )
         {
             if( m_FStream.good() == false )
-                throw std::ios_base::failure( "ERROR: couldn't open file " + fileName + " in Open function\n" );
+                throw std::ios_base::failure( "ERROR: couldn't open file " + streamName + " in Open function\n" );
         }
     }
     MPI_Barrier( m_MPIComm ); //all of them must wait until the file is opened
 }
 
 
-void CFStream::Write( const CVariable& variable )
+void CFStream::SetBuffer( std::vector<char>& buffer )
 {
-    //local buffer, to be send over MPI
-    std::vector<char> buffer;
-    const std::string type( variable.m_Type );
-    auto var = GetVariableValues( variable );
+    m_FStream.rdbuf()->pubsetbuf( &buffer[0], buffer.size() );
+}
+
+
+//void CFStream::Write( const CVariable& variable )
+//{
+//    //local buffer, to be send over MPI
+//    std::vector<char> buffer;
+//    const std::string type( variable.m_Type );
+//    auto var = GetVariableValues( variable );
 
 //    if( type.find( "vector" )  ) //is a vector
 //    {
@@ -120,7 +120,7 @@ void CFStream::Write( const CVariable& variable )
 //
 //        MPI_Barrier( m_MPIComm );
 //    }
-}
+//}
 
 void CFStream::Close(  )
 {

@@ -14,6 +14,7 @@
 #include <memory> //for shared_pointer
 #include <vector>
 #include <ostream>
+#include <set>
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -23,7 +24,7 @@
 #endif
 
 
-#include <core/SVariable.h>
+#include "core/SVariable.h"
 #include "core/SAttribute.h"
 #include "core/CTransport.h"
 
@@ -48,7 +49,7 @@ public:
      * @param groupName returns the groupName from <adios-group name=" "
      * @param debugMode from ADIOS
      */
-    CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode = false );
+    CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode );
 
 
     /**
@@ -56,18 +57,22 @@ public:
      * @param hostLanguage reference from ADIOS class
      * @param debugMode
      */
-    CGroup( const std::string& hostLanguage, const bool debugMode = false );
+    CGroup( const std::string& hostLanguage, const bool debugMode );
+
+    /**
+     * Create a Group object associated with a transport, can be modified later
+     * @param hostLanguage reference from ADIOS class
+     * @param transport transport method
+     * @param priority  transport priority
+     * @param iterations iterations for transport
+     * @param debugMode reference from ADIOS class
+     */
+    CGroup( const std::string& hostLanguage, const std::string transport, const unsigned int priority, const unsigned int iterations,
+            const bool debugMode );
+
 
 
     ~CGroup( ); ///< Using STL containers, no deallocation
-
-    /**
-     * Called from ADIOS open, sets group as active and passes associated bufferName and accessMode
-     * @param bufferName associated buffer for this group
-     * @param accessMode associated access mode (read, write, append) for bufferName
-     */
-    void Open( const std::string bufferName, const std::string accessMode );
-
 
     /**
      * Creates a new variable in the group object
@@ -94,7 +99,21 @@ public:
                           const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
 
 
-    void Close( ); ///< set m_IsOpen to false and sets m_BufferName and m_AccessMode to empty
+    /**
+     * Sets transport method super-seeding the existing one
+     * @param transport method name
+     */
+    void SetTransport( const std::string transport );
+
+    /**
+     * Called from ADIOS open, sets group as active and passes associated bufferName and accessMode
+     * @param streamName associated buffer for this group
+     */
+    void Open( const std::string streamName );
+
+
+
+    void Close( ); ///< sets m_IsOpen to false, and m_BufferName and m_AccessMode to empty
 
 
     /**
@@ -141,11 +160,10 @@ private:
 
     std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
 
-    std::string m_Transport; ///< current transport method associated with this group
-    std::string m_BufferName; ///< associated buffer (file, stream, vector, etc.) if the Group is opened.
-    std::string m_AccessMode; ///< associated access mode for associated buffer from m_BufferName
+    unsigned long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
-    unsigned long int m_SerialSize; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
+    std::string m_Transport; ///< associated transport method for this group
+    std::string m_StreamName; ///< associated transport method for this group
 
     /**
      * Called from XML constructor
@@ -170,7 +188,6 @@ private:
      * @return -1 variable is not associated with a transform, otherwise index in m_Transforms
      */
     const int SetTransforms( const std::string transform ) noexcept;
-
 };
 
 

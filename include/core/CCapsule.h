@@ -8,7 +8,13 @@
 #ifndef CCAPSULE_H_
 #define CCAPSULE_H_
 
+
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
+#include <string>
+#include <memory>
+#include <map>
+/// \endcond
 
 #ifdef HAVE_MPI
   #include <mpi.h>
@@ -16,7 +22,6 @@
   #include "public/mpidummy.h"
 #endif
 
-#include "core/CGroup.h"
 #include "core/SVariable.h"
 #include "core/CTransform.h"
 #include "core/CTransport.h"
@@ -39,58 +44,81 @@ public:
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
 
-    std::map< std::string, std::vector<char> > m_Buffer; ///< buffer to be managed, just one type for now
+    int m_RankMPI = 0; ///< current MPI rank process
+    int m_SizeMPI = 1; ///< current MPI processes size
+
+    const bool m_DebugMode = false;
+
+    std::map< std::string, std::vector<char> > m_Buffer; ///< buffer to be managed, key is the fileName just one type for now
+    std::map< std::string, std::shared_ptr<CTransport> > m_Transports; ///< transport associated with ADIOS run
+
     std::map< std::string, std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run
-    std::map< std::string, std::shared_ptr<CTransport> > m_Transports; ///< transports associated with ADIOS run
+
+    ///Maybe add a communication class object
+
+    /**
+     * Empty constructor
+     */
+    CCapsule( );
+
+    /**
+     * Debug mode
+     * @param debugMode
+     */
+    CCapsule( const bool debugMode );
 
     /**
      * Unique constructor
      * @param mpiComm communicator passed from ADIOS
-     * @param bufferSize passed by the user
      */
-    CCapsule( const MPI_Comm mpiComm, const unsigned long int bufferSize );
+    CCapsule( MPI_Comm mpiComm, const bool debugMode );
 
-    virtual ~CCapsule( );
+    ~CCapsule( );
 
-    void CreateTransform( const std::string transform );
+    void SetTransform( const std::string transform );
 
-    void CreateTransport( const std::string transport );
+    void SetTransport( const std::string streamName, const std::string transport, const bool debugMode );
+
+    void SetBuffer( const std::string streamName, const unsigned int long maxBufferSize );
+
 
     /**
-     * This will add to the m_Transports and m_Transforms map
-     * @param group
+     * Open a certain stream based on transport method
+     * @param streamName associated file or stream
+     * @param accessMode "w": write, "a": append, need more info on this
+     * @param bufferSize
      */
-    void OpenGroupBuffer( const CGroup& group ) = 0;
+    void Open( const std::string streamName, const std::string accessMode );
 
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<char>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned char>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<short>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned short>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<int>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned int>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<long int>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned long int>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<long long int>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<unsigned long long int>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<float>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<double>& variable );
-    virtual void WriteVariableToBuffer( const CGroup& group, const SVariable<long double>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<char>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned char>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<short>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned short>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<int>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned int>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<long int>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned long int>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<long long int>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned long long int>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<float>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<double>& variable );
+    void WriteVariableToBuffer( const std::string streamName, const SVariable<long double>& variable );
 
     /**
-     * Closes the buffer and moves it into the
-     * @param group
+     * Closes the buffer
+     * @param streamName associated streamName to this buffer
      */
-    void CloseGroupBuffer( const CGroup& group ) = 0;
+    void CloseBuffer( const std::string streamName );
 
 
-protected:
-
-    virtual void SpatialAggregation( const CGroup& group, const SVariable<unsigned int>& variable );
-    virtual void SpatialAggregation( const CGroup& group, const SVariable<int>& variable );
-    virtual void SpatialAggregation( const CGroup& group, const SVariable<float>& variable );
-    virtual void SpatialAggregation( const CGroup& group, const SVariable<double>& variable );
-
-    virtual void TimeAggregation( const CGroup& group, const SVariable<unsigned int>& variable );
+//protected:
+//
+//    virtual void SpatialAggregation( const CGroup& group, const SVariable<unsigned int>& variable );
+//    virtual void SpatialAggregation( const CGroup& group, const SVariable<int>& variable );
+//    virtual void SpatialAggregation( const CGroup& group, const SVariable<float>& variable );
+//    virtual void SpatialAggregation( const CGroup& group, const SVariable<double>& variable );
+//
+//    virtual void TimeAggregation( const CGroup& group, const SVariable<unsigned int>& variable );
 
 };
 

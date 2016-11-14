@@ -82,8 +82,9 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param groupName should match an existing group from XML file or created through CreateGroup
      * @param fileName associated file or stream
      * @param accessMode "w": write, "a": append, need more info on this
+     * @param maxBufferSize used for transport
      */
-    void Open( const std::string groupName, const std::string fileName, const std::string accessMode = "w" );
+    void Open( const std::string groupName, const std::string streamName, const std::string accessMode = "w", unsigned long int maxBufferSize );
 
 
     /**
@@ -106,7 +107,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         WriteVariable( variableName, values, itGroup->second, m_Capsule );
     }
 
-
     /**
      * Close a particular group, group will be out of scope and destroyed
      * @param groupName group to be closed
@@ -121,23 +121,45 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     void MonitorGroups( std::ostream& logStream ) const;
 
-
     /**
      * @brief Create a new group or replace an existing one
      * @param groupName unique name
-     * @param transport transport method
-     * @param streamFile
      */
-    void CreateGroup( const std::string groupName, const std::string transport = "" );
+    void CreateGroup( const std::string groupName );
 
-
+    /**
+     * Creates a new Variable, if debugMode = true, program will throw an exception, else it will overwrite current variable with the same name
+     * @param groupName corresponding variable group
+     * @param variableName corresponding variable name
+     * @param type variable type
+     * @param dimensionsCSV comma separated (no space) dimensions "Nx,Ny,Nz" defined by other variables
+     * @param transform transformation method applied to current variable
+     * @param globalDimensionsCSV comma separated (no space) global dimensions "gNx,gNy,gNz" defined by other variables
+     * @param globalOffsetsCSV comma separated (no space) global offsets "oNx,oNy,oNz" defined by other variables
+     */
     void CreateVariable( const std::string groupName, const std::string variableName, const std::string type,
                          const std::string dimensionsCSV = "", const std::string transform = "",
                          const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = ""  );
 
+    /**
+     * Creates a new Variable, if debugMode = true, program will throw an exception, else it will overwirte current variable with the same name
+     * @param groupName corresponding variable group
+     * @param attributeName corresponding attribute name
+     * @param type string or number
+     * @param value string contents of the attribute (e.g. "Communication value" )
+     * @param globalDimensionsCSV comma separated (no space) global dimensions "gNx,gNy,gNz" defined by other variables
+     * @param globalOffsetsCSV comma separated (no space) global offsets "oNx,oNy,oNz" defined by other variables
+     */
     void CreateAttribute( const std::string groupName, const std::string attributeName,
                           const std::string type, const std::string value,
                           const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "" );
+
+    /**
+     * Sets a transport method to be associated with a group
+     * @param groupName unique name
+     * @param transport transport method
+     */
+    void SetTransport( const std::string groupName, const std::string transport );
 
 
 private:
@@ -155,7 +177,7 @@ private:
      */
     std::map< std::string, CGroup > m_Groups;
 
-    std::shared_ptr<CCapsule> m_Capsule; ///< manager of data transports, transforms and movement operations
+    CCapsule m_Capsule; ///< manager of data transports, transforms and movement operations
 
     /**
      * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file

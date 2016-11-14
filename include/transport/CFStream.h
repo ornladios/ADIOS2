@@ -24,11 +24,13 @@ class CFStream : public CTransport
 
 public:
 
-    CFStream( const unsigned int priority, const unsigned int iteration, MPI_Comm mpiComm, const bool debugMode );
+    CFStream( MPI_Comm mpiComm, const bool debugMode );
 
     ~CFStream( );
 
-    void Open( const std::string fileName, const std::string accessMode );
+    void Open( const std::string streamName, const std::string accessMode );
+
+    void SetBuffer( std::vector<char>& buffer );
 
     void Close( );
 
