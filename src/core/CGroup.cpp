@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <algorithm> // find
+#include <sstream> //istringstream
 
 #include "core/CGroup.h"
 #include "core/SVariable.h" //for cast implementation of CVariableBase::Set that calls CVariable::Set
@@ -130,15 +131,68 @@ void CGroup::CreateAttribute( const std::string name, const std::string type, co
 }
 
 
-void CGroup::Open( const std::string streamName )
+const unsigned long long int CGroup::GetIntVariableValue( const std::string variableName ) const
 {
-    m_StreamName = streamName;
+    if( m_DebugMode == true )
+    {
+        if( m_SetVariables.count( variableName ) == 0 )
+            throw std::invalid_argument( "ERROR: variable value for " + variableName + " was not set with Write function\n" );
+    }
+
+    const std::string type( m_Variables.at( variableName ).first );
+    const unsigned int index = m_Variables.at( variableName ).second;
+    const unsigned long long int value = 0;
+
+    if( type == "short" )
+        value = *( m_Short[index].m_Values );
+
+    else if( type == "unsigned short" )
+        value = *( m_UShort[index].m_Values );
+
+    else if( type == "int" )
+        value = *( m_Int[index].m_Values );
+
+    else if( type == "unsigned int" )
+        value = *( m_UInt[index].m_Values );
+
+    else if( type == "long int" )
+        value = *( m_LInt[index].m_Values );
+
+    else if( type == "unsigned long int" )
+        value = *( m_ULInt[index].m_Values );
+
+    else if( type == "long long int" )
+        value = *( m_LLInt[index].m_Values );
+
+    else if( type == "unsigned long long int" )
+        value = *( m_ULLInt[index].m_Values );
+
+    else
+        throw std::invalid_argument( "ERROR: variable " + variableName + " must be of short, int or associated type (long int, unsigned long int, etc.)\n" );
+
+    return value;
 }
 
 
-void CGroup::SetTransport( const std::string transport )
+std::vector<unsigned long long int> CGroup::GetDimensions( const std::string dimensionsCSV ) const
 {
-    m_Transport = transport;
+    std::vector<unsigned long long int> dimensions;
+
+    if( dimensionsCSV.find(',') == dimensionsCSV.npos ) //check if 1D
+    {
+        const std::string dimension( dimensionsCSV );
+        dimensions.push_back( GetIntVariableValue( dimension ) );
+        return dimensions;
+    }
+
+    std::istringstream dimensionsSS( dimensionsCSV );
+    std::string dimension;
+    while( std::getline( dimensionsSS, dimension, ',' ) )
+    {
+        dimensions.push_back( GetIntVariableValue( dimension ) );
+    }
+
+    return dimensions;
 }
 
 

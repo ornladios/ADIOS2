@@ -25,7 +25,7 @@ namespace adios
  * @param capsule
  */
 template< class T >
-void WriteVariable( const std::string variableName, const T* values, CGroup& group, CCapsule& capsule )
+void WriteVariableValues( CGroup& group, const std::string variableName, const T* values )
 {
     const bool debugMode( group.m_DebugMode );
     const std::string streamName( group.m_StreamName );
@@ -38,81 +38,49 @@ void WriteVariable( const std::string variableName, const T* values, CGroup& gro
     }
 
     const unsigned int index( itVariable->second.second ); //index is second in the pair Value of the m_Variables map
-    group.m_SetVariables.insert( variableName );
 
     if( std::is_same<T,char>::value ) //maybe use type?
-    {
-        SVariable<char>& variable = group.m_Char[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_Char[index].m_Values = values;
+
     else if( std::is_same<T,unsigned char>::value )
-    {
-        SVariable<unsigned char>& variable = group.m_UChar[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_UChar[index].m_Values = values;
+
     else if( std::is_same<T,short>::value )
-    {
-        SVariable<short>& variable = group.m_Short[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_Short[index].m_Values = values;
+
     else if( std::is_same<T,unsigned short>::value )
-    {
-        SVariable<unsigned short>& variable = group.m_UShort[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_UShort[index].m_Values = values;
+
     else if( std::is_same<T,int>::value )
-    {
-        SVariable<int>& variable = group.m_Int[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_Int[index].m_Values = values;
+
     else if( std::is_same<T,unsigned int>::value )
-    {
-        SVariable<unsigned int>& variable = group.m_Int[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_UInt[index].m_Values = values;
+
     else if( std::is_same<T,long int>::value )
-    {
-        SVariable<long int>& variable = group.m_LInt[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_LInt[index].m_Values = values;
+
+    else if( std::is_same<T,unsigned long int>::value )
+        group.m_ULInt[index].m_Values = values;
+
     else if( std::is_same<T,long long int>::value )
-    {
-        SVariable<long int>& variable = group.m_LLInt[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_LLInt[index].m_Values = values;
+
     else if( std::is_same<T,unsigned long long int>::value )
-    {
-        SVariable<unsigned long long int>& variable = group.m_ULLInt[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_ULLInt[index].m_Values = values;
+
     else if( std::is_same<T,float>::value )
-    {
-        SVariable<float>& variable = group.m_Float[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_Float[index].m_Values = values;
+
     else if( std::is_same<T,double>::value )
-    {
-        SVariable<double>& variable = group.m_Double[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_Double[index].m_Values = values;
+
     else if( std::is_same<T,long double>::value )
-    {
-        SVariable<double>& variable = group.m_LDouble[index];
-        variable.m_Values = values;
-        capsule.WriteVariableToBuffer( streamName, variable );
-    }
+        group.m_LDouble[index].m_Values = values;
+
+    group.m_SetVariables.insert( variableName );
 }
+
 
 
 

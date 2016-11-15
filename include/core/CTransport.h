@@ -44,8 +44,6 @@ public:
     /**
      * Base constructor that all derived classes pass
      * @param mpiComm passed to m_MPIComm
-     * @param priority passed to m_Priority
-     * @param iteration passed to m_Iteration
      * @param debugMode passed to m_DebugMode
      */
     CTransport( MPI_Comm mpiComm, const bool debugMode ):
@@ -67,7 +65,14 @@ public:
      */
     virtual void Open( const std::string streamName, const std::string accessMode ) = 0;
 
-    virtual void SetBuffer( std::vector<char>& buffer )
+    /**
+     * Sets the buffer and bufferSize for certain transport methods
+     * @param buffer to be set to transport
+     */
+    virtual void SetBuffer( const std::vector<char>& buffer )
+    { };
+
+    virtual void Write( std::vector<char>& buffer )
     { };
 
     virtual void Close( ) = 0; //here think what needs to be passed

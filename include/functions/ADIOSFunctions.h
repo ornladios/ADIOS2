@@ -68,7 +68,6 @@ void GetPairs( const std::string tag, std::vector< std::pair<const std::string, 
  * @param fileContent file Content in a single string
  * @param tag field0="value0" field1="value1" in a single string
  * @param pairs pairs[0].first=field0 pairs[0].second=value0 pairs[1].first=field1 pairs[1].second=value1
- * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
  */
 void GetPairsFromTag( const std::string& fileContent, const std::string tag,
                       std::vector< std::pair<const std::string, const std::string> >& pairs );
@@ -79,7 +78,6 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
  * @param mpiComm MPI Communicator passed from application passed to Transport method if required
  * @param hostLanguage return the host language from fileContent
  * @param groups passed returns the map of groups defined in fileContent
- * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
  */
 void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::string& hostLanguage,
                  std::map< std::string, CGroup >& groups );
@@ -95,6 +93,9 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::st
  */
 void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode, std::string& hostLanguage,
               std::map< std::string, CGroup >& groups );
+
+
+
 
 } //end namespace
 

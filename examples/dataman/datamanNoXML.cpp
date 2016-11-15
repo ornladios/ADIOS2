@@ -1,16 +1,12 @@
 /*
- * helloFStream.cpp
+ * dataman.cpp: Example for DataMan Transport usage
  *
- *  Created on: Oct 24, 2016
+ *  Created on: Nov 15, 2016
  *      Author: wfg
  */
 
 
-#include <stdexcept>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <numeric>
+
 
 #ifdef HAVE_MPI
     #include <mpi.h>
@@ -26,20 +22,27 @@ int main( int argc, char* argv [] )
     MPI_Init( &argc, &argv );
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    adios::ADIOS adios;
 
     try //need to think carefully how to handle C++ exceptions with MPI to avoid deadlocking
     {
-        const std::string group( "Types" );
-        const std::string numbersVariable( "Numbers" );
+        const unsigned int myCharsSize = 10;
+        std::vector<char> myChars( myCharsSize, '1' ); // 10 chars with value '1'
 
-        std::vector<int> myVector( 10 );
-        std::iota( myVector.begin(), myVector.end(), 1 );
+        //Equivalent to adios_init debug mode is on, MPI_COMM_WORLD is dummy nothing to worry about
+        adios::ADIOS adios( MPI_COMM_WORLD, true );
 
-        adios = adios::ADIOS( "fstream.xml", MPI_COMM_WORLD, true ); //debug mode is on
-        adios.MonitorGroups( std::cout ); //Dump group info
-        adios.Open( group, "helloVector.txt", "w" );
-        adios.Write( group, numbersVariable, &myVector );  //Write to helloVector.txt
+        //Create group TCP and set up, this can be done from XML config file
+        const std::string group( "TCP" );
+        adios.CreateGroup( group );
+        adios.CreateVariable( group, "myCharsSize", "unsigned int" ); //scalar : group, name, type
+        adios.CreateVariable( group, "myChars",     "char",         "myCharsSize" ); //group, name, type, integer variable defining size
+        //here we tell group to be associate with a DataMan transport
+        //we can add more parameters if you require
+        adios.SetTransport( group, "DataMan" );
+
+        adios.Open( group, "TCPStream", "write" ); //here open a stream called TCPStream for writing (w or write)
+        adios.Write( group, "myCharsSize", &myCharsSize ); //calls your transport
+        adios.Write( group, "myChars"    , &myChars[0] ); //calls your transport
         adios.Close( group );
     }
     catch( std::bad_alloc& e )
@@ -76,7 +79,8 @@ int main( int argc, char* argv [] )
     }
 
 
-    MPI_Finalize( );
-
     return 0;
 }
+
+
+

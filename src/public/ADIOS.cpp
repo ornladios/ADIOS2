@@ -72,9 +72,14 @@ void ADIOS::Open( const std::string groupName, const std::string streamName, con
     auto itGroup = m_Groups.find( groupName );
 
     if( m_DebugMode == true )
-        CheckGroup( itGroup, groupName, " from call to Open with file " + streamName );
+        CheckGroup( itGroup, groupName, " from call to Open with stream " + streamName +
+                                        ", access mode " + accessMode );
 
-    itGroup->second.Open( streamName );
+    //Set Group
+    CGroup& group = itGroup->second;
+    group.m_IsOpen = true;
+    group.m_StreamName = streamName;
+
     m_Capsule.SetTransport( streamName, itGroup->second.m_Transport, m_DebugMode ); //Set Transport
     m_Capsule.SetBuffer( streamName, maxBufferSize );
     m_Capsule.Open( streamName, accessMode );
@@ -92,8 +97,12 @@ void ADIOS::Close( const std::string groupName )
             throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
     }
 
-    //m_Capsule->CloseGroupBuffer( itGroup->second );
-    itGroup->second.Close( );
+    CGroup& group = itGroup->second;
+
+    //m_Capsule->CloseGroupBuffer( itGroup->second ); //need to think about it
+    group.m_StreamName.clear();
+    group.m_Transport.clear();
+    group.m_IsOpen = false;
 }
 
 
@@ -127,7 +136,7 @@ void ADIOS::SetTransport( const std::string groupName, const std::string transpo
     if( m_DebugMode == true )
         CheckGroup( itGroup, groupName, " from call to SetTransport \n" );
 
-    itGroup->second.SetTransport( transport );
+    itGroup->second.m_Transport = transport;
 }
 
 

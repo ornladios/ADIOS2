@@ -22,6 +22,7 @@
   #include "public/mpidummy.h"
 #endif
 
+#include "core/CGroup.h"
 #include "core/SVariable.h"
 #include "core/CTransform.h"
 #include "core/CTransport.h"
@@ -70,6 +71,7 @@ public:
     /**
      * Unique constructor
      * @param mpiComm communicator passed from ADIOS
+     * @param debugMode true: on throws exceptions and do additional checks, false: off (faster, but unsafe)
      */
     CCapsule( MPI_Comm mpiComm, const bool debugMode );
 
@@ -81,29 +83,18 @@ public:
 
     void SetBuffer( const std::string streamName, const unsigned int long maxBufferSize );
 
-
     /**
      * Open a certain stream based on transport method
      * @param streamName associated file or stream
      * @param accessMode "w": write, "a": append, need more info on this
-     * @param bufferSize
      */
     void Open( const std::string streamName, const std::string accessMode );
 
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<char>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned char>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<short>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned short>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<int>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned int>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<long int>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned long int>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<long long int>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<unsigned long long int>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<float>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<double>& variable );
-    void WriteVariableToBuffer( const std::string streamName, const SVariable<long double>& variable );
+    void WriteToBuffer( const void* data, size_t dataSize, const std::vector<unsigned long long int>& localDimensions,
+                        const std::vector<unsigned long long int>& globalDimensions,
+                        const std::vector<unsigned long long int>& globalOffsets  );
 
+    void WriteVariableToBuffer( const CGroup& group, const std::string variableName );
     /**
      * Closes the buffer
      * @param streamName associated streamName to this buffer

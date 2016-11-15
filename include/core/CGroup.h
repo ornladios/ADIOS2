@@ -46,7 +46,6 @@ public:
      * @brief Constructor for XML config file
      * @param hostLanguage reference from ADIOS class
      * @param xmlGroup contains <adios-group (tag excluded)....</adios-group> single group definition from XML config file
-     * @param groupName returns the groupName from <adios-group name=" "
      * @param debugMode from ADIOS
      */
     CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode );
@@ -98,30 +97,14 @@ public:
     void CreateAttribute( const std::string name, const std::string type, const std::string value,
                           const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
 
-
-    /**
-     * Sets transport method super-seeding the existing one
-     * @param transport method name
-     */
-    void SetTransport( const std::string transport );
-
-    /**
-     * Called from ADIOS open, sets group as active and passes associated bufferName and accessMode
-     * @param streamName associated buffer for this group
-     */
-    void Open( const std::string streamName );
-
-
-
-    void Close( ); ///< sets m_IsOpen to false, and m_BufferName and m_AccessMode to empty
-
-
     /**
      * @brief Dumps groups information to a file stream or standard output.
      * Note that either the user closes this fileStream or it's closed at the end.
      * @param logStream either std::cout standard output, or a std::ofstream file
      */
     void Monitor( std::ostream& logStream ) const;
+
+    std::vector<unsigned long long int> CGroup::GetDimensions( const std::string dimensionsCSV ) const;
 
 
 private:
@@ -188,6 +171,9 @@ private:
      * @return -1 variable is not associated with a transform, otherwise index in m_Transforms
      */
     const int SetTransforms( const std::string transform ) noexcept;
+
+
+    const unsigned long long int GetIntVariableValue( const std::string variableName ) const;
 };
 
 

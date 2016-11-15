@@ -52,7 +52,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     /**
      * @brief Serial constructor for XML config file
      * @param xmlConfigFile passed to m_XMLConfigFile
-     * @param debugMode true: on, false: off (faster, but unsafe)
+     * @param debugMode true: on throws exceptions and do additional checks, false: off (faster, but unsafe)
      */
     ADIOS( const std::string xmlConfigFile, const bool debugMode = false );
 
@@ -78,13 +78,14 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
     /**
-     * @brief Open or Append to an output file
+     * @brief Open to Write, Read or Append to a stream
      * @param groupName should match an existing group from XML file or created through CreateGroup
-     * @param fileName associated file or stream
+     * @param streamName associated file or stream
      * @param accessMode "w": write, "a": append, need more info on this
      * @param maxBufferSize used for transport
      */
-    void Open( const std::string groupName, const std::string streamName, const std::string accessMode = "w", unsigned long int maxBufferSize );
+    void Open( const std::string groupName, const std::string streamName, const std::string accessMode = "w",
+               unsigned long long int maxBufferSize );
 
 
     /**
@@ -104,7 +105,8 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
             if( itGroup->second.m_IsOpen == false )
                 throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
         }
-        WriteVariable( variableName, values, itGroup->second, m_Capsule );
+        WriteVariableValues( itGroup->second, variableName, values );
+        m_Capsule.WriteVariableToBuffer( itGroup->second, variableName );
     }
 
     /**
@@ -155,7 +157,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
                           const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "" );
 
     /**
-     * Sets a transport method to be associated with a group
+     * Sets a transport method to be associated with a group. Need to think variadic function for other methods
      * @param groupName unique name
      * @param transport transport method
      */
