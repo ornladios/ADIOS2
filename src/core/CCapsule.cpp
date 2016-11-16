@@ -78,95 +78,30 @@ void CCapsule::SetTransport( const std::string streamName, const std::string tra
 }
 
 
-void CCapsule::SetBuffer( const std::string streamName, const unsigned int long maxBufferSize )
+void CCapsule::SetBuffer( const std::string streamName, const unsigned long long int maxBufferSize )
 {
-    auto itBuffer = m_Buffer.find( streamName );
+    auto itBuffer = m_Buffers.find( streamName );
 
     if( m_DebugMode == true )
     {
-        if( itBuffer == m_Buffer.end() )
+        if( itBuffer == m_Buffers.end() )
             throw std::invalid_argument( "ERROR: buffer for stream " + streamName + " not found, not setting size\n" );
     }
 
-    itBuffer->second.resize( maxBufferSize * 1000000 ); //use resize not reserve
+    itBuffer->second.resize( maxBufferSize ); //use resize not reserve
 }
 
 
 void CCapsule::Open( const std::string streamName, const std::string accessMode )
 {
     m_Transports[streamName]->Open( streamName, accessMode );
-    m_Transports[streamName]->SetBuffer( m_Buffer[streamName] );
+    m_Transports[streamName]->SetBuffer( m_Buffers[streamName] );
 }
 
 
-void CCapsule::WriteVariableToBuffer( const CGroup& group, const std::string variableName )
+void CCapsule::CloseStream( const std::string streamName )
 {
-    const std::string streamName( group.m_StreamName );
-    std::vector<unsigned long long int> dimensions = group.GetDimensions( variableName );
-    const auto itVariable = group.m_Variables.find( variableName );
-    const std::string type( itVariable->second.first );
-    const unsigned int index( itVariable->second.second );
-
-    if( type == "char" || type == "character" )
-        group.m_Char[index];
-
-    else if( type == "unsigned char" )
-        group.m_UChar[index];
-
-    else if( type == "short" || type == "integer*2" )
-        group.m_Short[index];
-
-    else if( type == "unsigned short" )
-        group.m_UShort[index];
-
-    else if( type == "int" || type == "integer" )
-        group.m_Int[index];
-
-    else if( type == "unsigned int" || type == "unsigned integer" )
-        group.m_UInt[index];
-
-    else if( type == "long int" || type == "long" || type == "long integer" )
-        group.m_LInt[index];
-
-    else if( type == "long long int" || type == "long long" || type == "long long integer" )
-        group.m_LLInt[index];
-
-    else if( type == "unsigned long long int" || type == "unsigned long long" || type == "unsigned long long integer" )
-        group.m_ULLInt[index];
-
-    else if( type == "float" || type == "real" || type == "real*4" )
-        group.m_Float[index];
-
-    else if( type == "double" || type == "double precision" || type == "real*8" )
-        group.m_Double[index];
-
-
-    else if( type == "long double" || type == "real*16" )
-        m_LDouble.push_back( SVariable<long double>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
-
-
-
-
-
-
-
-    if( group.m_Transport == "DataMan" ) // send a single buffer to DataMan with the entire data
-    {
-
-
-    }
-
-
-
-
-
-
-}
-
-
-void CCapsule::CloseBuffer( const std::string streamName )
-{
-    m_Transports[streamName]->Close( );
+    m_Transports[streamName]->Close( ); //should release resources
 }
 
 

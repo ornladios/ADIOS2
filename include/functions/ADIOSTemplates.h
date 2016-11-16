@@ -25,7 +25,7 @@ namespace adios
  * @param capsule
  */
 template< class T >
-void WriteVariableValues( CGroup& group, const std::string variableName, const T* values )
+void WriteVariableValues( CGroup& group, const std::string variableName, const T* values, CCapsule& capsule )
 {
     const bool debugMode( group.m_DebugMode );
     const std::string streamName( group.m_StreamName );
@@ -40,8 +40,22 @@ void WriteVariableValues( CGroup& group, const std::string variableName, const T
     const unsigned int index( itVariable->second.second ); //index is second in the pair Value of the m_Variables map
 
     if( std::is_same<T,char>::value ) //maybe use type?
-        group.m_Char[index].m_Values = values;
+    {
+        auto& variable = group.m_Char[index];
+        variable.m_Values = values;
+        auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
 
+        if( variable.m_GlobalBoundsIndex > -1 ) //global variable
+        {
+            auto globalDimensions = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].first );
+            auto globalOffsets = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].second );
+            capsule.WriteDataToBuffer( variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
+        }
+        else
+        {
+            capsule.WriteDataToBuffer( streamName, variable.m_Values, sizeof(char), localDimensions );
+        }
+    }
     else if( std::is_same<T,unsigned char>::value )
         group.m_UChar[index].m_Values = values;
 

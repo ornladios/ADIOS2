@@ -67,7 +67,8 @@ void ADIOS::CreateGroup( const std::string groupName )
 }
 
 
-void ADIOS::Open( const std::string groupName, const std::string streamName, const std::string accessMode, unsigned long int maxBufferSize )
+void ADIOS::Open( const std::string groupName, const std::string streamName, const std::string accessMode,
+                  unsigned long long int maxBufferSize )
 {
     auto itGroup = m_Groups.find( groupName );
 
@@ -99,7 +100,7 @@ void ADIOS::Close( const std::string groupName )
 
     CGroup& group = itGroup->second;
 
-    //m_Capsule->CloseGroupBuffer( itGroup->second ); //need to think about it
+    m_Capsule.CloseStream( group.m_StreamName ); // first close any stream associated with group
     group.m_StreamName.clear();
     group.m_Transport.clear();
     group.m_IsOpen = false;

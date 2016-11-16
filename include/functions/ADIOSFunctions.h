@@ -95,6 +95,7 @@ void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
               std::map< std::string, CGroup >& groups );
 
 
+void WriteChar( CGroup& group, SVariable<char>& variable, const char* values, CCapsule& capsule );
 
 
 } //end namespace

@@ -311,7 +311,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
         lf_UIntCheck( method, priorityStr, "priority", debugMode, priority );
         lf_UIntCheck( method, iterationStr, "iteration", debugMode, iteration );
 
-        itGroup->second.SetTransport( method, (unsigned int)priority, (unsigned int)iteration, mpiComm );
+        itGroup->second.m_Transport = method;
     }
 }
 
@@ -347,6 +347,25 @@ void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
     SetMembers( xmlFileContent,  mpiComm, debugMode, hostLanguage,  groups );
 }
 
+
+
+//Write helper functions
+void WriteChar( CGroup& group, SVariable<char>& variable, const char* values, CCapsule& capsule )
+{
+    variable.m_Values = values;
+    auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
+
+    if( variable.m_GlobalBoundsIndex > -1 ) //global variable
+    {
+        auto globalDimensions = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].first );
+        auto globalOffsets = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].second );
+        capsule.WriteDataToBuffer( variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
+    }
+    else
+    {
+        capsule.WriteDataToBuffer( group.m_StreamName, variable.m_Values, sizeof(char), localDimensions );
+    }
+}
 
 
 } //end namespace

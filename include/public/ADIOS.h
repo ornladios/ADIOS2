@@ -94,7 +94,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
      * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
      */
-    template< class T>
+    template<class T>
     void Write( const std::string groupName, const std::string variableName, const T* values )
     {
         auto itGroup = m_Groups.find( groupName );
@@ -105,8 +105,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
             if( itGroup->second.m_IsOpen == false )
                 throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
         }
-        WriteVariableValues( itGroup->second, variableName, values );
-        m_Capsule.WriteVariableToBuffer( itGroup->second, variableName );
+        WriteVariableValues( itGroup->second, variableName, values, m_Capsule );
     }
 
     /**
