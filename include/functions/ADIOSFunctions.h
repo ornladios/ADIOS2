@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cstring> //std::size_t
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -94,8 +95,38 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::st
 void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode, std::string& hostLanguage,
               std::map< std::string, CGroup >& groups );
 
+/**
+ * Loops through a vector containing dimensions and returns the product of all elements
+ * @param dimensions input containing size on each dimension {Nx, Ny, Nz}
+ * @return product of all dimensions Nx * Ny * Nz
+ */
+unsigned long long int GetTotalSize( const std::vector<unsigned long long int>& dimensions );
 
-void WriteChar( CGroup& group, SVariable<char>& variable, const char* values, CCapsule& capsule );
+
+/**
+ * Threaded version of memcpy
+ * @param destination
+ * @param source
+ * @param count
+ * @param cores
+ */
+void MemcpyThreads( void* destination, const void* source, std::size_t count, unsigned int cores );
+
+
+/**
+ * Identifies a char* variable, assigns a reference to the proper variable, and sends data to capsule so it can write to buffer
+ * @param group
+ * @param variableName
+ * @param values
+ * @param capsule
+ */
+void WriteChar( CGroup& group, const std::string variableName, const char* values, CCapsule& capsule );
+
+
+
+
+
+
 
 
 } //end namespace

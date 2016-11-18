@@ -10,6 +10,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
+#include <thread>  //std::thread
+#include <cstring> //std::memcpy
 /// \endcond
 
 #include "functions/ADIOSFunctions.h"
@@ -312,6 +314,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
         lf_UIntCheck( method, iterationStr, "iteration", debugMode, iteration );
 
         itGroup->second.m_Transport = method;
+        //here do something with the capsule
     }
 }
 
@@ -348,10 +351,54 @@ void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
 }
 
 
+unsigned long long int GetTotalSize( const std::vector<unsigned long long int>& dimensions )
+{
+    unsigned long long int product = 1;
+
+    for( const auto dimension : dimensions )
+        product *= dimension;
+
+    return product;
+}
+
+
+void MemcpyThreads( void* destination, const void* source, std::size_t count, const unsigned int cores )
+{
+
+    const size_t stride = (size_t) std::floor( count/cores );
+    const size_t remainder =  (size_t) count % cores;
+    std::vector<std::thread> memcpyThreads;
+    memcpyThreads.reserve( cores );
+
+    for( unsigned int core = 0; core < cores; ++core )
+    {
+        const unsigned int initial = stride * core;
+
+        if( core == cores-1 )
+            memcpyThreads.push_back( std::thread( std::memcpy( &destination[initial], &source[initial], remainder ) ) );
+        else
+            memcpyThreads.push_back( std::thread( std::memcpy( &destination[initial], &source[initial], stride ) ) );
+    }
+
+    //Now join the threads
+    std::for_each( memcpyThreads.begin(), memcpyThreads.end(), []( std::thread& thread ){ thread.join(); }  );
+
+}
+
+
 
 //Write helper functions
-void WriteChar( CGroup& group, SVariable<char>& variable, const char* values, CCapsule& capsule )
+void WriteChar( CGroup& group, const std::string variableName, const char* values, CCapsule& capsule, const unsigned int cores )
 {
+    if( group.m_DebugMode == true )
+    {
+        const std::string type( group.m_Variables.at( variableName ).first );
+        if( type != "char" )
+            throw std::invalid_argument( "ERROR: variable " + variableName + " is not char\n" );
+    }
+
+    const unsigned int index = group.m_Variables.at( variableName ).second;
+    SVariable<char>& variable = group.m_Char[index];
     variable.m_Values = values;
     auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
 
@@ -359,11 +406,13 @@ void WriteChar( CGroup& group, SVariable<char>& variable, const char* values, CC
     {
         auto globalDimensions = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].first );
         auto globalOffsets = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].second );
-        capsule.WriteDataToBuffer( variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
+
+        //capsule.Write( group.m_StreamName, variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
     }
-    else
+    else //write local variable
     {
-        capsule.WriteDataToBuffer( group.m_StreamName, variable.m_Values, sizeof(char), localDimensions );
+        const unsigned long long int size = GetTotalSize( localDimensions );
+        capsule.Write( group.m_StreamName, variable.m_Values, size, cores );
     }
 }
 

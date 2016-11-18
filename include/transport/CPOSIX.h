@@ -22,7 +22,7 @@ class CPOSIX : public CTransport
 
 public:
 
-    CPOSIX(  MPI_Comm mpiComm, const bool debugMode  );
+    CPOSIX( MPI_Comm mpiComm, const bool debugMode  );
 
     ~CPOSIX( );
 

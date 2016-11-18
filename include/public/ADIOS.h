@@ -95,7 +95,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
      */
     template<class T>
-    void Write( const std::string groupName, const std::string variableName, const T* values )
+    void Write( const std::string groupName, const std::string variableName, const T* values, const unsigned int cores = 1 )
     {
         auto itGroup = m_Groups.find( groupName );
         if( m_DebugMode == true )

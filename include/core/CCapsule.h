@@ -50,10 +50,11 @@ public:
 
     const bool m_DebugMode = false;
 
-    std::map< std::string, std::vector<char> > m_Buffers; ///< buffer to be managed, key is the streamName
-    std::map< std::string, std::shared_ptr<CTransport> > m_Transports; ///< transport associated with ADIOS run
+    std::map< std::string, std::vector<unsigned char> > m_Buffers; ///< buffer to be managed, key is the streamName
+    std::map< std::string, size_t > m_MaxBufferSize; ///< key is the streamName, value is the maximum buffer size
+    std::map< std::string, std::shared_ptr<CTransport> > m_Transports; ///< transport associated with ADIOS run, key is streamName
 
-    std::map< std::string, std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run
+    std::map< std::string, std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run, key is transform name
 
     ///Maybe add a communication class object
 
@@ -77,47 +78,54 @@ public:
 
     ~CCapsule( );
 
-    void SetTransform( const std::string transform );
-
-    void SetTransport( const std::string streamName, const std::string transport, const bool debugMode );
-
-    void SetBuffer( const std::string streamName, const unsigned long long int maxBufferSize );
-
     /**
-     * Open a certain stream based on transport method
-     * @param streamName associated file or stream
-     * @param accessMode "w": write, "a": append, need more info on this
+     * Open streamName by assigning a buffer, maxBufferSize and a transport mode
+     * @param streamName
+     * @param accessMode
+     * @param maxBufferSize
+     * @param transport
      */
-    void Open( const std::string streamName, const std::string accessMode );
+    void Open( const std::string streamName, const std::string accessMode,
+               const size_t maxBufferSize, const std::string transport );
 
     /**
-     * Writes raw data to m_Buffer, call for local variables
+     * Writes raw data to m_Buffer
      * @param streamName key to get the corresponding buffer from m_Buffers
      * @param data pointer containing the data
-     * @param dataSize sizeof each element of data
-     * @param localDimensions if scalar it will have one number, if multidimensional it will start with the slowest moving dimension
+     * @param size of data to be written
      */
-    void WriteDataToBuffer( const std::string streamName, const void* data, const size_t dataSize,
-                            const std::vector<unsigned long long int>& localDimensions );
+    template<class T>
+    void Write( const std::string streamName, const T* data, const size_t size, const unsigned int cores )
+    {
+        auto itBuffer = m_Buffers.find( streamName );
+        auto itTransport = m_Transports.find( streamName );
 
-    /**
-     * Writes raw data to m_Buffer, call for global variables
-     * @param data pointer containing the data
-     * @param dataSize sizeof each element of data
-     * @param localDimensions if scalar it will have one number, if multidimensional it will start with the slowest moving dimension
-     * @param globalDimensions global dimensions, if multidimensional it will start with the slowest moving dimension
-     * @param globalOffsets global offsets, if multidimensional it will start with the slowest moving dimension offset
-     */
-    void WriteDataToBuffer( const void* data, const size_t dataSize,
-                            const std::vector<unsigned long long int>& localDimensions,
-                            const std::vector<unsigned long long int>& globalDimensions,
-                            const std::vector<unsigned long long int>& globalOffsets  );
+        if( m_DebugMode == true )
+        {
+            if( itBuffer == m_Buffers.end() )
+                throw std::invalid_argument( "ERROR: stream (file name ) " + streamName + " has not been declared" );
+        }
+
+        if( itTransport->second->m_Method == "DataMan" ) //CDataMan needs entire data in buffer
+            itBuffer->second.resize( size * sizeof(T) ); //resize buffer to fit all data
+
+        //WriteToBuffer( data, size, itBuffer->second,  );
+    }
 
     /**
      * Closes a certain stream at the transport level
      * @param streamName passed to corresponding transport so it can be closed.
      */
-    void CloseStream( const std::string streamName );
+    void Close( const std::string streamName );
+
+
+private:
+
+    void CreateTransport( const std::string streamName, const std::string transport );
+
+    void CreateBuffer( const std::string streamName, const size_t maxBufferSize );
+
+    void CreateTransform( const std::string transform );
 
 };
 

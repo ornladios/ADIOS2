@@ -15,7 +15,7 @@ namespace adios
 
 
 CPOSIX::CPOSIX( MPI_Comm mpiComm, const bool debugMode ):
-    CTransport( mpiComm, debugMode ),
+    CTransport( "POSIX", mpiComm, debugMode ),
     m_File( NULL )
 { }
 

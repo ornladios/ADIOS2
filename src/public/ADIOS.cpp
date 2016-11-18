@@ -80,14 +80,12 @@ void ADIOS::Open( const std::string groupName, const std::string streamName, con
     CGroup& group = itGroup->second;
     group.m_IsOpen = true;
     group.m_StreamName = streamName;
-
-    m_Capsule.SetTransport( streamName, itGroup->second.m_Transport, m_DebugMode ); //Set Transport
-    m_Capsule.SetBuffer( streamName, maxBufferSize );
-    m_Capsule.Open( streamName, accessMode );
+    //Open Stream/Buffer/Transport in capsule
+    m_Capsule.Open( streamName, accessMode, maxBufferSize, itGroup->second.m_Transport );
 }
 
 
-void ADIOS::Close( const std::string groupName )
+void ADIOS::Close( const std::string groupName ) //need to think if it's a group or stream
 {
     auto itGroup = m_Groups.find( groupName );
     if( m_DebugMode == true )
@@ -100,7 +98,7 @@ void ADIOS::Close( const std::string groupName )
 
     CGroup& group = itGroup->second;
 
-    m_Capsule.CloseStream( group.m_StreamName ); // first close any stream associated with group
+    m_Capsule.Close( group.m_StreamName ); // first close any stream associated with group
     group.m_StreamName.clear();
     group.m_Transport.clear();
     group.m_IsOpen = false;

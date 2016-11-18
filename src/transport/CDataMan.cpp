@@ -13,9 +13,11 @@
 namespace adios
 {
 
+
 CDataMan::CDataMan(  MPI_Comm mpiComm, const bool debugMode ):
-    CTransport( mpiComm, debugMode )
+    CTransport( "DataMan", mpiComm, debugMode )
 { }
+
 
 CDataMan::~CDataMan( )
 { }

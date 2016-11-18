@@ -5,12 +5,15 @@
  *      Author: wfg
  */
 
+
+#include <stdexcept> //std::invalid_argument
+#include <cstring>
+
 #include "core/CCapsule.h"
 
 #ifdef HAVE_BZIP2
 #include "transform/CBZIP2.h"
 #endif
-
 
 //transports
 #include "transport/CPOSIX.h"
@@ -42,7 +45,43 @@ CCapsule::~CCapsule( )
 { }
 
 
-void CCapsule::SetTransform( const std::string transform )
+void CCapsule::Open( const std::string streamName, const std::string accessMode, const size_t maxBufferSize, const std::string transport )
+{
+    CreateTransport( streamName, transport );
+    m_Transports[streamName]->Open( streamName, accessMode );
+
+    CreateBuffer( streamName, maxBufferSize );
+    m_Transports[streamName]->SetBuffer( m_Buffers[streamName] );
+}
+
+
+void CCapsule::Close( const std::string streamName )
+{
+    m_Transports[streamName]->Close( ); //should release resources
+}
+
+//PRIVATE FUNCTIONS
+void CCapsule::CreateTransport( const std::string streamName, const std::string transport )
+{
+    if( transport == "POSIX" )
+        m_Transports[streamName] = std::make_shared<CPOSIX>( m_MPIComm, m_DebugMode );
+
+    else if( transport == "FStream" )
+        m_Transports[streamName] = std::make_shared<CFStream>( m_MPIComm, m_DebugMode );
+
+    else if( transport == "DataMan" )
+        m_Transports[streamName] = std::make_shared<CDataMan>( m_MPIComm, m_DebugMode );
+}
+
+
+void CCapsule::CreateBuffer( const std::string streamName, const size_t maxBufferSize )
+{
+    m_Buffers[streamName] = std::vector<unsigned char>( 1 ); // vector of size 1
+    m_MaxBufferSize[streamName] = maxBufferSize;
+}
+
+
+void CCapsule::CreateTransform( const std::string transform )
 {
     std::string method( transform );
     auto colonPosition = transform.find(":");
@@ -63,46 +102,6 @@ void CCapsule::SetTransform( const std::string transform )
     }
 }
 
-
-void CCapsule::SetTransport( const std::string streamName, const std::string transport, const bool debugMode )
-{
-    if( transport == "POSIX" )
-        m_Transports[streamName] = std::make_shared<CPOSIX>( m_MPIComm, debugMode );
-
-    else if( transport == "FStream" )
-        m_Transports[streamName] = std::make_shared<CFStream>( m_MPIComm, debugMode );
-
-    else if( transport == "DataMan" )
-        m_Transports[streamName] = std::make_shared<CDataMan>( m_MPIComm, debugMode );
-
-}
-
-
-void CCapsule::SetBuffer( const std::string streamName, const unsigned long long int maxBufferSize )
-{
-    auto itBuffer = m_Buffers.find( streamName );
-
-    if( m_DebugMode == true )
-    {
-        if( itBuffer == m_Buffers.end() )
-            throw std::invalid_argument( "ERROR: buffer for stream " + streamName + " not found, not setting size\n" );
-    }
-
-    itBuffer->second.resize( maxBufferSize ); //use resize not reserve
-}
-
-
-void CCapsule::Open( const std::string streamName, const std::string accessMode )
-{
-    m_Transports[streamName]->Open( streamName, accessMode );
-    m_Transports[streamName]->SetBuffer( m_Buffers[streamName] );
-}
-
-
-void CCapsule::CloseStream( const std::string streamName )
-{
-    m_Transports[streamName]->Close( ); //should release resources
-}
 
 
 

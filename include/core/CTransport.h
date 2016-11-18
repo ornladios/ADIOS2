@@ -28,6 +28,7 @@ class CTransport
 
 public:
 
+    const std::string m_Method; ///< transport method name
     #ifdef HAVE_MPI
     MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #else
@@ -46,7 +47,8 @@ public:
      * @param mpiComm passed to m_MPIComm
      * @param debugMode passed to m_DebugMode
      */
-    CTransport( MPI_Comm mpiComm, const bool debugMode ):
+    CTransport( const std::string method, MPI_Comm mpiComm, const bool debugMode ):
+        m_Method{ method },
         m_MPIComm{ mpiComm },
         m_DebugMode{ debugMode }
     {
@@ -69,10 +71,10 @@ public:
      * Sets the buffer and bufferSize for certain transport methods
      * @param buffer to be set to transport
      */
-    virtual void SetBuffer( const std::vector<char>& buffer )
+    virtual void SetBuffer( const std::vector<unsigned char>& buffer )
     { };
 
-    virtual void Write( std::vector<char>& buffer )
+    virtual void Write( std::vector<unsigned char>& buffer )
     { };
 
     virtual void Close( ) = 0; //here think what needs to be passed

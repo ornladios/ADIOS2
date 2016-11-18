@@ -20,7 +20,7 @@ namespace adios
 
 
 CFStream::CFStream( MPI_Comm mpiComm, const bool debugMode ):
-    CTransport( mpiComm, debugMode )
+    CTransport( "FStream", mpiComm, debugMode )
 { }
 
 
