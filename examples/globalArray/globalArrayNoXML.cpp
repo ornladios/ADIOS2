@@ -34,38 +34,36 @@ int main( int argc, char* argv [] )
         // set a maximum buffersize that ADIOS can use (for one group).
         // multiple groups may use each such buffersize if they are overlapped or
         // use time-aggregation or use zero-copy staging
-        adios.SetMaxBuffersize (100000000);
 
         // Define Group and its variables
         // The group's transport can be defined at runtime in the input XML file
-        adios.CreateGroup ("arrays", adios_stat_default);
+        adios.CreateGroup ("arrays");
 
         // Set the maximum buffersize for this group. This must happen before
         // defining a zero copy variable, which will cause the group's internal buffer
         // allocated (during the variable definition call)
-        adios.SetMaxBuffersize ("arrays", 10000000);
+        //adios.SetMaxBuffersize ("arrays", 10000000);
 
-        adios.DefineVariable ("arrays", "NX", "int"); // scalar variable
-        adios.DefineVariable ("arrays", "size", "int");
-        adios.DefineVariable ("arrays", "size", "rank");
+        adios.CreateVariable ("arrays", "NX", "int"); // scalar variable
+        adios.CreateVariable ("arrays", "size", "int");
+        adios.CreateVariable ("arrays", "size", "rank");
 
         // define a 2D array with 1D decomposition
-        adios.DefineVariable ("arrays", "temperature", "double",
-                              "1,NX", "size,NX", "rank,0");
-        // set a variable-level transformation for this variable
-        adios.SetVariableTransform ("arrays", "temperature", "none");
+        adios.CreateVariable ("arrays", "temperature", "double", "1,NX", "NONE", "size,NX", "rank,0");
 
-        adios.DefineVariable ("arrays", "pressure",    "std::vector<double>",
-                              "1,NX", "size,NX", "rank,0");
+//        // set a variable-level transformation for this variable
+//        adios.SetVariableTransform ("arrays", "temperature", "none");
 
-        // set a group-level transformation
-        adios.SetGroupTransform ("arrays", "time-aggregate", ""); // no options passed here
+        adios.CreateVariable ("arrays", "pressure", "std::vector<double>", "1,NX", "size,NX", "rank,0" );
 
-
+        // set a group-level transport
+        adios.SetTransport ( "arrays", "time-aggregate" ); // no options passed here
 
         //Get Monitor info
         std::ofstream logStream( "info_" + std::to_string(rank) + ".log" );
         adios.MonitorGroups( logStream );
+
+        adios.Open("arrays", "globalArray.bp", "w", 100000000 );
 
         for (int it = 1; it <= 13; it++)
         {
@@ -76,10 +74,10 @@ int main( int argc, char* argv [] )
                 p[i] = it*1000.0 + rank*NX + i;
             }
 
-            if (it==1)
-                adios.Open("arrays", "globalArray.bp", "w");
-            else
-                adios.Open("arrays", "globalArray.bp", "a");
+//            if (it==1)
+//
+//            else
+//                adios.Open("arrays", "globalArray.bp", "a", 100000000 );
 
             //uint64_t    adios_groupsize, adios_totalsize;
             // adios_groupsize = 4 + 4 + 4 + 2*NX*sizeof(double);
@@ -91,10 +89,12 @@ int main( int argc, char* argv [] )
             adios.Write ("arrays", "temperature", t);
             adios.Write ("arrays", "pressure", &p);
 
-            adios.Close ("arrays");
             MPI_Barrier (comm);
             if (rank==0) printf("Timestep %d written\n", it);
         }
+
+        adios.Close ("arrays");
+
         MPI_Barrier (comm);
         // need barrier before we destroy the ADIOS object here automatically
         if (rank==0) printf("Finalize adios\n");

@@ -32,6 +32,8 @@ public:
 
     void SetBuffer( std::vector<char>& buffer );
 
+    void CFStream::Write( std::vector<char>& buffer );
+
     void Close( );
 
 private:

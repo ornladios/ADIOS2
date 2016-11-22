@@ -40,8 +40,6 @@ class CGroup
 
 public:
 
-    bool m_IsOpen = false; ///< checks if group was opened for operations;
-
     /**
      * @brief Constructor for XML config file
      * @param hostLanguage reference from ADIOS class
@@ -83,7 +81,7 @@ public:
      * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      */
     void CreateVariable( const std::string name, const std::string type,
-                         const std::string dimensionsCSV, const std::string transform,
+                         const std::string dimensionsCSV, const short transformIndex,
                          const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
 
     /**
@@ -103,6 +101,7 @@ public:
      * @param logStream either std::cout standard output, or a std::ofstream file
      */
     void Monitor( std::ostream& logStream ) const;
+
 
     std::vector<unsigned long long int> CGroup::GetDimensions( const std::string dimensionsCSV ) const;
 
@@ -144,9 +143,6 @@ private:
     std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
 
     unsigned long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
-
-    std::string m_Transport; ///< associated transport method for this group
-    std::string m_StreamName; ///< associated transport method for this group
 
     /**
      * Called from XML constructor

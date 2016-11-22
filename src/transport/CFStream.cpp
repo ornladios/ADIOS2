@@ -30,23 +30,30 @@ CFStream::~CFStream( )
 
 void CFStream::Open( const std::string streamName, const std::string accessMode )
 {
-    if( m_RankMPI == 0 )
+    const std::string directory( streamName + ".dir" ); //data.bp.dir
+
+    if( m_MPIRank == 0 )
+        CreateDirectory( directory );
+
+    MPI_Barrier( m_MPIComm ); //all processor wait until directory is created
+
+    const std::string streamNameRank( directory + "/" + streamName + "." + std::to_string( m_MPIRank ) ); //data.bp.dir./data.bp.Rank
+
+    if( accessMode == "w" || accessMode == "write" )
+        m_FStream.open( streamNameRank, std::fstream::out );
+
+    else if( accessMode == "a" || accessMode == "append" )
+        m_FStream.open( streamNameRank, std::fstream::out | std::fstream::app );
+
+    else if( accessMode == "r" || accessMode == "read" )
+        m_FStream.open( streamNameRank, std::fstream::in );
+
+    if( m_DebugMode == true )
     {
-        if( accessMode == "w" || accessMode == "write" )
-            m_FStream.open( streamName, std::fstream::out );
-
-        else if( accessMode == "a" || accessMode == "append" )
-            m_FStream.open( streamName, std::fstream::out | std::fstream::app );
-
-        else if( accessMode == "r" || accessMode == "read" )
-            m_FStream.open( streamName, std::fstream::in );
-
-        if( m_DebugMode == true )
-        {
-            if( m_FStream.good() == false )
-                throw std::ios_base::failure( "ERROR: couldn't open file " + streamName + " in Open function\n" );
-        }
+        if( !m_FStream )
+            throw std::ios_base::failure( "ERROR: couldn't open file " + streamName + " in Open function of FStream transport\n" );
     }
+
     MPI_Barrier( m_MPIComm ); //all of them must wait until the file is opened
 }
 
@@ -56,8 +63,18 @@ void CFStream::SetBuffer( std::vector<char>& buffer )
     m_FStream.rdbuf()->pubsetbuf( &buffer[0], buffer.size() );
 }
 
+void CFStream::Write( std::vector<char>& buffer )
+{
+    m_FStream.write( &buffer[0], buffer.size() );
+}
 
-//void CFStream::Write( const CVariable& variable )
+
+void CFStream::Close(  )
+{
+    m_FStream.close();
+}
+
+//void CFStream::Write( const CVariable& variable ) ///this is aggregation
 //{
 //    //local buffer, to be send over MPI
 //    std::vector<char> buffer;
@@ -122,12 +139,7 @@ void CFStream::SetBuffer( std::vector<char>& buffer )
 //    }
 //}
 
-void CFStream::Close(  )
-{
-   if( m_RankMPI == 0 )
-       m_FStream.close();
 
-}
 
 
 

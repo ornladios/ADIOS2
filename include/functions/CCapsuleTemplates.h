@@ -10,6 +10,10 @@
 
 
 #include <cstring> //std::memcpy
+#include <vector>
+#include <thread>
+
+#include "core/SStream.h"
 
 namespace adios
 {
@@ -47,7 +51,6 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
         else
             memcpyThreads.push_back( std::thread( std::memcpy, &destination[initialDestination], &source[initialSource], stride ) );
     }
-
     //Now join the threads
     for( auto& thread : memcpyThreads )
         thread.join( );
@@ -63,10 +66,11 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
  * @param cores
  */
 template<class T>
-void WriteToBuffer( const T* data, const size_t size, std::vector<unsigned char>& buffer,
-                    const size_t maxBufferSize, CTransport& transport, const unsigned int cores )
+void WriteToBuffer( const T* data, const size_t size, SStream& stream, const unsigned int cores )
 {
     const size_t dataBytes = size * sizeof( T );
+
+    auto& buffer = stream.Buffer;
 
     //if buffer size is enough send all at once to transport and return
     if( dataBytes <= buffer.size() )
@@ -74,6 +78,8 @@ void WriteToBuffer( const T* data, const size_t size, std::vector<unsigned char>
         MemcpyThreads( &buffer[0], data, dataBytes, cores ); //copy memory in threaded fashion, need to test with size
         return;
     }
+
+    auto maxBufferSize = stream.MaxBufferSize;
 
     if( dataBytes > buffer.size() ) //dataBytes > buffer.size()
     {
@@ -93,7 +99,6 @@ void WriteToBuffer( const T* data, const size_t size, std::vector<unsigned char>
     const size_t buckets =  dataBytes / maxBufferSize + 1;
     const size_t remainder = dataBytes % maxBufferSize;
 
-
     for( unsigned int bucket = 0; buckets < buckets; ++bucket )
     {
         const size_t dataOffset = bucket * maxBufferSize / sizeof( T );
@@ -103,12 +108,9 @@ void WriteToBuffer( const T* data, const size_t size, std::vector<unsigned char>
         else
             MemcpyThreads( &buffer[0], data[dataOffset], maxBufferSize, cores );
 
-        transport.Write( buffer );
+        stream.Transport->Write( buffer );
     }
 }
-
-
-
 
 
 

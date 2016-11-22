@@ -42,6 +42,8 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
 
+    int m_RankMPI = 0; ///< current MPI rank process
+    int m_SizeMPI = 1; ///< current MPI processes size
 
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
@@ -79,13 +81,23 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
     /**
      * @brief Open to Write, Read or Append to a stream
-     * @param groupName should match an existing group from XML file or created through CreateGroup
      * @param streamName associated file or stream
      * @param accessMode "w": write, "a": append, need more info on this
      * @param maxBufferSize used for transport
      */
-    void Open( const std::string groupName, const std::string streamName, const std::string accessMode = "w",
-               unsigned long long int maxBufferSize );
+
+    template< class... Args >
+    void Open( const std::string streamName, const std::string accessMode, Args... args )
+    {
+        if( m_DebugMode == true )
+        {
+            if( m_Capsules.count( streamName ) == 1 ) //it exists
+                throw std::invalid_argument( "ERROR: trying to open existing stream (or file) " + streamName + ".\n" );
+        }
+
+        std::vector<std::string> arguments = { args... };
+        m_Capsules.emplace( streamName, CCapsule( streamName, accessMode, m_MPIComm, m_DebugMode, arguments ) );
+    }
 
 
     /**
@@ -95,7 +107,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
      */
     template<class T>
-    void Write( const std::string groupName, const std::string variableName, const T* values, const unsigned int cores = 1 )
+    void Write( const std::string streamName, const std::string variableName, const T* values, const unsigned int cores = 1 )
     {
         auto itGroup = m_Groups.find( groupName );
         if( m_DebugMode == true )
@@ -105,14 +117,28 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
             if( itGroup->second.m_IsOpen == false )
                 throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
         }
-        WriteVariableValues( itGroup->second, variableName, values, m_Capsule );
+        WriteHelper( itGroup->second, variableName, values, m_Capsules );
+    }
+
+    template<class T>
+    void Write( const std::string streamName, const std::string groupName, const std::string variableName, const T* values, const unsigned int cores = 1 )
+    {
+        auto itGroup = m_Groups.find( groupName );
+        if( m_DebugMode == true )
+        {
+            CheckGroup( itGroup, groupName, " from call to Write with variable " + variableName );
+
+            if( itGroup->second.m_IsOpen == false )
+                throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
+        }
+        WriteHelper( itGroup->second, variableName, values, m_Capsules );
     }
 
     /**
      * Close a particular group, group will be out of scope and destroyed
-     * @param groupName group to be closed
+     * @param streamName stream to be closed with all corresponding transports
      */
-    void Close( const std::string groupName );
+    void Close( const std::string streamName );
 
 
     /**
@@ -139,8 +165,11 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param globalOffsetsCSV comma separated (no space) global offsets "oNx,oNy,oNz" defined by other variables
      */
     void CreateVariable( const std::string groupName, const std::string variableName, const std::string type,
-                         const std::string dimensionsCSV = "", const std::string transform = "",
-                         const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = ""  );
+                         const std::string dimensionsCSV = "", const std::string globalDimensionsCSV = "",
+                         const std::string globalOffsetsCSV = ""  );
+
+    void SetVariableTransform( const std::string groupName, const std::string variableName, const std::string transform );
+
 
     /**
      * Creates a new Variable, if debugMode = true, program will throw an exception, else it will overwirte current variable with the same name
@@ -178,15 +207,16 @@ private:
      */
     std::map< std::string, CGroup > m_Groups;
 
-    CCapsule m_Capsule; ///< manager of data transports, transforms and movement operations
-
     /**
-     * @brief Maximum buffer size in ADIOS write() operation. From buffer max - size - MB in XML file
-     * Note, that if there are two ADIOS outputs going on at the same time,
-     * ADIOS will allocate two separate buffers each with the specified maximum limit.
-     * Default = 0 means there is no limit
+     * @brief List of Capsules defined from either ADIOS XML configuration file or the CreateGroup function.
+     * <pre>
+     *     Key: std::string unique capsule name given by ADIOS Open
+     *     Value: CCapsule object
+     * </pre>
      */
-    unsigned long int MaxBufferSizeInMB = 0;
+    std::map< std::string, CCapsule > m_Capsules; ///< contains all capsules created with ADIOS Open
+
+    std::vector< std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run
 
     /**
      * @brief Checks for group existence in m_Groups, if failed throws std::invalid_argument exception

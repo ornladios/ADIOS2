@@ -23,6 +23,26 @@
 namespace adios
 {
 
+template<class T>
+void WriteHelperToCapsule( CGroup& group, SVariable<T>& variable, const T* values, CCapsule& capsule, const unsigned int cores ) noexcept
+{
+    variable.m_Values = values;
+    auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
+
+    if( variable.m_GlobalBoundsIndex > -1 ) //global variable
+    {
+        auto globalDimensions = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].first );
+        auto globalOffsets = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].second );
+        //capsule.Write( group.m_StreamName, variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
+    }
+    else //write local variable
+    {
+        capsule.Write( group.m_StreamName, variable.m_Values, GetTotalSize( localDimensions ), cores );
+    }
+}
+
+
+
 /**
  * Helper function called from ADIOS Write template function. Checks variable type, adds to group.m_SetVariables,
  * and calls corresponding Capsule virtual function.
@@ -32,11 +52,14 @@ namespace adios
  * @param capsule
  */
 template<class T>
-void WriteVariableValues( CGroup& group, const std::string variableName, const T* values, CCapsule& capsule, const unsigned int cores )
+void WriteHelper( CGroup& group, const std::string variableName, const T* values, CCapsule& capsule, const unsigned int cores )
 {
     const bool debugMode( group.m_DebugMode );
     const std::string streamName( group.m_StreamName );
+
     const auto itVariable = group.m_Variables.find( variableName );
+    const std::string type( group.m_Variables.at( variableName ).first );
+    unsigned int index = group.m_Variables.at( variableName ).second;
 
     if( debugMode == true )
     {
@@ -44,8 +67,17 @@ void WriteVariableValues( CGroup& group, const std::string variableName, const T
             throw std::invalid_argument( "ERROR: from Write function, variable " + variableName + " doesn't exist\n" );
     }
 
-    if( std::is_same<T,char>::value ) //maybe use type with debugMode?
-        WriteChar( group, variableName, values, capsule, cores );
+    group.m_SetVariables.insert( variableName );
+
+    if( std::is_same<T,char>::value ) //maybe use type with debugMode?4
+    {
+        if( group.m_DebugMode == true )
+        {
+            if( type != "char" )
+                throw std::invalid_argument( "ERROR: variable " + variableName + " is not char\n" );
+        }
+        WriteHelperToCapsule( group, group.m_Char[index], values, capsule, cores );
+    }
 
 //    else if( std::is_same<T,unsigned char>::value )
 //        group.m_UChar[index].m_Values = values;
@@ -83,7 +115,7 @@ void WriteVariableValues( CGroup& group, const std::string variableName, const T
 //    else if( std::is_same<T,long double>::value )
 //        group.m_LDouble[index].m_Values = values;
 
-    group.m_SetVariables.insert( variableName );
+
 }
 
 

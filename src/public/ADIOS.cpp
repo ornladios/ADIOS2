@@ -22,13 +22,15 @@ namespace adios
 
 
 ADIOS::ADIOS( )
-{ }
+{
+    MPI_Comm_rank( m_MPIComm, &m_RankMPI );
+    MPI_Comm_size( m_MPIComm, &m_SizeMPI );
+}
 
 
 ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
     m_XMLConfigFile{ xmlConfigFile },
-    m_DebugMode{ debugMode },
-    m_Capsule{ CCapsule( debugMode ) }
+    m_DebugMode{ debugMode }
 {
     InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Groups );
 }
@@ -37,18 +39,21 @@ ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
 ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode  ):
     m_MPIComm{ mpiComm },
     m_XMLConfigFile{ xmlConfigFile },
-	m_DebugMode{ debugMode },
-	m_Capsule{ CCapsule( mpiComm, debugMode ) }
+	m_DebugMode{ debugMode }
 {
+    MPI_Comm_rank( m_MPIComm, &m_RankMPI );
+    MPI_Comm_size( m_MPIComm, &m_SizeMPI );
     InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Groups );
 }
 
 
 ADIOS::ADIOS( const MPI_Comm mpiComm, const bool debugMode ):
     m_MPIComm{ mpiComm },
-    m_DebugMode{ debugMode },
-    m_Capsule{ CCapsule( mpiComm, debugMode ) }
-{ }
+    m_DebugMode{ debugMode }
+{
+    MPI_Comm_rank( m_MPIComm, &m_RankMPI );
+    MPI_Comm_size( m_MPIComm, &m_SizeMPI );
+}
 
 
 ADIOS::~ADIOS( )
@@ -67,33 +72,12 @@ void ADIOS::CreateGroup( const std::string groupName )
 }
 
 
-void ADIOS::Open( const std::string groupName, const std::string streamName, const std::string accessMode,
-                  unsigned long long int maxBufferSize )
-{
-    auto itGroup = m_Groups.find( groupName );
-
-    if( m_DebugMode == true )
-        CheckGroup( itGroup, groupName, " from call to Open with stream " + streamName +
-                                        ", access mode " + accessMode );
-
-    //Set Group
-    CGroup& group = itGroup->second;
-    group.m_IsOpen = true;
-    group.m_StreamName = streamName;
-    //Open Stream/Buffer/Transport in capsule
-    m_Capsule.Open( streamName, accessMode, maxBufferSize, itGroup->second.m_Transport );
-}
-
-
-void ADIOS::Close( const std::string groupName ) //need to think if it's a group or stream
+void ADIOS::Close( const std::string streamName ) //need to think if it's a group or stream
 {
     auto itGroup = m_Groups.find( groupName );
     if( m_DebugMode == true )
     {
         CheckGroup( itGroup, groupName, " from call to Close \n" );
-
-        if( itGroup->second.m_IsOpen == false )
-            throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
     }
 
     CGroup& group = itGroup->second;
@@ -127,17 +111,6 @@ void ADIOS::CreateAttribute( const std::string groupName, const std::string attr
 
     itGroup->second.CreateAttribute( attributeName, type, value, globalDimensionsCSV, globalOffsetsCSV );
 }
-
-
-void ADIOS::SetTransport( const std::string groupName, const std::string transport )
-{
-    auto itGroup = m_Groups.find( groupName );
-    if( m_DebugMode == true )
-        CheckGroup( itGroup, groupName, " from call to SetTransport \n" );
-
-    itGroup->second.m_Transport = transport;
-}
-
 
 
 void ADIOS::MonitorGroups( std::ostream& logStream ) const

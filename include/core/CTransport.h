@@ -38,8 +38,8 @@ public:
     //const unsigned int m_Iterations; ///< iteration number for this transport
     const bool m_DebugMode; ///< if true: additional checks and exceptions
 
-    int m_RankMPI = 0; ///< current MPI rank process
-    int m_SizeMPI = 1; ///< current MPI processes size
+    int m_MPIRank = 0; ///< current MPI rank process
+    int m_MPISize = 1; ///< current MPI processes size
 
 
     /**
@@ -52,8 +52,8 @@ public:
         m_MPIComm{ mpiComm },
         m_DebugMode{ debugMode }
     {
-        MPI_Comm_rank( m_MPIComm, &m_RankMPI );
-        MPI_Comm_size( m_MPIComm, &m_SizeMPI );
+        MPI_Comm_rank( m_MPIComm, &m_MPIRank );
+        MPI_Comm_size( m_MPIComm, &m_MPISize );
     }
 
 
@@ -71,10 +71,10 @@ public:
      * Sets the buffer and bufferSize for certain transport methods
      * @param buffer to be set to transport
      */
-    virtual void SetBuffer( const std::vector<unsigned char>& buffer )
+    virtual void SetBuffer( const std::vector<char>& buffer )
     { };
 
-    virtual void Write( std::vector<unsigned char>& buffer )
+    virtual void Write( std::vector<char>& buffer )
     { };
 
     virtual void Close( ) = 0; //here think what needs to be passed

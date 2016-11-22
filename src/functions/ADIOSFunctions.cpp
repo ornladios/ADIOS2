@@ -362,27 +362,37 @@ unsigned long long int GetTotalSize( const std::vector<unsigned long long int>& 
 }
 
 
-void MemcpyThreads( void* destination, const void* source, std::size_t count, const unsigned int cores )
+void CreateDirectory( const std::string fullPath ) noexcept
 {
-
-    const size_t stride = (size_t) std::floor( count/cores );
-    const size_t remainder =  (size_t) count % cores;
-    std::vector<std::thread> memcpyThreads;
-    memcpyThreads.reserve( cores );
-
-    for( unsigned int core = 0; core < cores; ++core )
+    auto lf_Mkdir = []( const std::string directory, struct stat& st )
     {
-        const unsigned int initial = stride * core;
+        if ( stat( directory.c_str(), &st) == -1 )
+        {
+            mkdir( directory.c_str(), 0777 );
+        }
+    };
 
-        if( core == cores-1 )
-            memcpyThreads.push_back( std::thread( std::memcpy( &destination[initial], &source[initial], remainder ) ) );
-        else
-            memcpyThreads.push_back( std::thread( std::memcpy( &destination[initial], &source[initial], stride ) ) );
+    auto directoryPosition = fullPath.find( "/" );
+
+    if( fullPath[0] == '/' || fullPath[0] == '.' ) //find the second '/'
+        directoryPosition = fullPath.find( "/", directoryPosition+1 );
+
+    struct stat st = {0};
+    if( directoryPosition == fullPath.npos ) //no subdirectories
+    {
+        lf_Mkdir( fullPath.c_str(), st );
+        return;
     }
 
-    //Now join the threads
-    std::for_each( memcpyThreads.begin(), memcpyThreads.end(), []( std::thread& thread ){ thread.join(); }  );
+    std::string directory( fullPath.substr( 0, directoryPosition ) );
+    lf_Mkdir( directory.c_str(), st );
 
+    while( directoryPosition != fullPath.npos )
+    {
+        directoryPosition = fullPath.find( "/", directoryPosition+1 );
+        directory = fullPath.substr( 0, directoryPosition );
+        lf_Mkdir( directory.c_str(), st );
+    }
 }
 
 
@@ -406,13 +416,38 @@ void WriteChar( CGroup& group, const std::string variableName, const char* value
     {
         auto globalDimensions = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].first );
         auto globalOffsets = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].second );
-
         //capsule.Write( group.m_StreamName, variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
     }
     else //write local variable
     {
-        const unsigned long long int size = GetTotalSize( localDimensions );
-        capsule.Write( group.m_StreamName, variable.m_Values, size, cores );
+        capsule.Write( group.m_StreamName, variable.m_Values, GetTotalSize( localDimensions ), cores );
+    }
+}
+
+
+void WriteUChar( CGroup& group, const std::string variableName, const char* values, CCapsule& capsule, const unsigned int cores )
+{
+    if( group.m_DebugMode == true )
+    {
+        const std::string type( group.m_Variables.at( variableName ).first );
+        if( type != "unsigned char" )
+            throw std::invalid_argument( "ERROR: variable " + variableName + " is not char\n" );
+    }
+
+    const unsigned int index = group.m_Variables.at( variableName ).second;
+    SVariable<unsigned char>& variable = group.m_UChar[index];
+    variable.m_Values = values;
+    auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
+
+    if( variable.m_GlobalBoundsIndex > -1 ) //global variable
+    {
+        auto globalDimensions = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].first );
+        auto globalOffsets = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].second );
+        //capsule.Write( group.m_StreamName, variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
+    }
+    else //write local variable
+    {
+        capsule.Write( group.m_StreamName, variable.m_Values, GetTotalSize( localDimensions ), cores );
     }
 }
 

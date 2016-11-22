@@ -26,6 +26,8 @@
 #include "core/SVariable.h"
 #include "core/CTransform.h"
 #include "core/CTransport.h"
+#include "core/SStream.h"
+#include "functions/CCapsuleTemplates.h"
 
 
 namespace adios
@@ -48,20 +50,33 @@ public:
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
-    const bool m_DebugMode = false;
-
-    std::map< std::string, std::vector<unsigned char> > m_Buffers; ///< buffer to be managed, key is the streamName
-    std::map< std::string, size_t > m_MaxBufferSize; ///< key is the streamName, value is the maximum buffer size
-    std::map< std::string, std::shared_ptr<CTransport> > m_Transports; ///< transport associated with ADIOS run, key is streamName
-
-    std::map< std::string, std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run, key is transform name
-
-    ///Maybe add a communication class object
-
     /**
-     * Empty constructor
+     *
+     * @param streamName
+     * @param accessMode
+     * @param mpiComm
+     * @param debugMode
+     * @param arguments
      */
-    CCapsule( );
+    CCapsule( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
+              const bool debugMode, const std::vector<std::string>& arguments );
+
+
+
+    CCapsule( const std::string transport, const size_t maxBufferSize, const MPI_Comm mpiComm, const bool debugMode ):
+        MaxBufferSize{ maxBufferSize }
+    {
+        if( transport == "POSIX" )
+            Transport = std::make_shared<CPOSIX>( mpiComm, debugMode );
+
+        else if( transport == "FStream" )
+            Transport = std::make_shared<CFStream>( mpiComm, debugMode );
+
+        else if( transport == "DataMan" )
+            Transport = std::make_shared<CDataMan>( mpiComm, debugMode );
+    }
+
+    CCapsule( ); ///< Default Empty constructor with ADIOS class
 
     /**
      * Debug mode
@@ -76,6 +91,7 @@ public:
      */
     CCapsule( MPI_Comm mpiComm, const bool debugMode );
 
+
     ~CCapsule( );
 
     /**
@@ -85,8 +101,10 @@ public:
      * @param maxBufferSize
      * @param transport
      */
-    void Open( const std::string streamName, const std::string accessMode,
-               const size_t maxBufferSize, const std::string transport );
+
+
+
+    void SetStreamGroup( const std::string streamName, const std::string group );
 
     /**
      * Writes raw data to m_Buffer
@@ -95,21 +113,12 @@ public:
      * @param size of data to be written
      */
     template<class T>
-    void Write( const std::string streamName, const T* data, const size_t size, const unsigned int cores )
+    void Write( const T* data, const size_t size, const unsigned int cores = 1 )
     {
-        auto itBuffer = m_Buffers.find( streamName );
-        auto itTransport = m_Transports.find( streamName );
+        if( stream.Transport->m_Method == "DataMan" ) //CDataMan needs entire data in buffer
+            stream.Buffer.resize( size * sizeof(T) ); //resize buffer to fit all data
 
-        if( m_DebugMode == true )
-        {
-            if( itBuffer == m_Buffers.end() )
-                throw std::invalid_argument( "ERROR: stream (file name ) " + streamName + " has not been declared" );
-        }
-
-        if( itTransport->second->m_Method == "DataMan" ) //CDataMan needs entire data in buffer
-            itBuffer->second.resize( size * sizeof(T) ); //resize buffer to fit all data
-
-        //WriteToBuffer( data, size, itBuffer->second,  );
+        WriteToBuffer( data, size, stream, cores );
     }
 
     /**
@@ -121,11 +130,10 @@ public:
 
 private:
 
-    void CreateTransport( const std::string streamName, const std::string transport );
-
-    void CreateBuffer( const std::string streamName, const size_t maxBufferSize );
-
-    void CreateTransform( const std::string transform );
+    std::map< std::string, std::shared_ptr<CTransport> > m_Transport;
+    std::vector<char> Buffer;
+    size_t m_MaxBufferSize = 0;
+    std::string GroupName; ///< associated group to look for variable information
 
 };
 

@@ -21,7 +21,7 @@ class CDataMan : public CTransport
 
 public:
 
-    CDataMan(  MPI_Comm mpiComm, const bool debugMode );
+    CDataMan( MPI_Comm mpiComm, const bool debugMode );
 
     ~CDataMan( );
 

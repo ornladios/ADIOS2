@@ -30,6 +30,8 @@ public:
 
     void SetBuffer( std::vector<char>& buffer );
 
+    void Write( std::vector<char>& buffer );
+
     void Close( );
 
 

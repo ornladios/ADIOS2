@@ -25,8 +25,8 @@ struct SVariable
 {
     const std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
     const T* m_Values;
-    const int m_TransformIndex; ///< if global > 0, index corresponds to , if local then = -1
-    const int m_GlobalBoundsIndex; ///< if global > 0, index corresponds to global-bounds in m_GlobalBounds in CGroup, if local then = -1
+    const short m_TransformIndex; ///< if global > 0, index corresponds to , if local then = -1
+    const short m_GlobalBoundsIndex; ///< if global > 0, index corresponds to global-bounds in m_GlobalBounds in CGroup, if local then = -1
 };
 
 

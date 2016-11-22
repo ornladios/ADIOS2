@@ -104,13 +104,12 @@ unsigned long long int GetTotalSize( const std::vector<unsigned long long int>& 
 
 
 /**
- * Threaded version of memcpy
- * @param destination
- * @param source
- * @param count
- * @param cores
+ * Might need to add exceptions for debug mode
+ * Creates a chain of directories using POSIX systems calls (stat, mkdir),
+ * Verifies if directory exists before creating a new one. Permissions are 777 for now
+ * @param fullPath /full/path/for/directory
  */
-void MemcpyThreads( void* destination, const void* source, std::size_t count, unsigned int cores );
+void CreateDirectory( const std::string fullPath ) noexcept;
 
 
 /**
