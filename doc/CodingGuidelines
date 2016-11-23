@@ -163,8 +163,7 @@ Avoid mixing C-like equivalents
 C++ Exceptions
 1) Throw C++ standard exceptions for error handling, do not throw integers. 
    This is helpful as it allows handling of different exception types in different ways.
-   In rare cases a custom exception must be defined/declared.
+   In rare cases a custom exceptions must be defined/declared.
 2) Use informative messages for exception handling to complement the nature of the exception. 
    Help the user fix the error/warning.
-3) Error exceptions (program stops) must start with "ERROR: ", 
-   warnings (program doesn't stop) must start with "WARNING: " in the log or standard output.   
+3) Error exceptions that are caught at main (program stops) must start with "ERROR: "  

@@ -129,5 +129,11 @@ void ADIOS::CheckGroup( std::map< std::string, CGroup >::const_iterator itGroup,
         throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
 }
 
+void ADIOS::CheckCapsule( std::map< std::string, CCapsule >::const_iterator itCapsule, const std::string streamName, const std::string hint )
+{
+    if( itCapsule == m_Groups.end() )
+        throw std::invalid_argument( "ERROR: stream (or file) " + streamName + " not created with Open , " + hint + "\n" );
+}
+
 
 } //end namespace

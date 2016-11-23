@@ -85,7 +85,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param accessMode "w": write, "a": append, need more info on this
      * @param maxBufferSize used for transport
      */
-
     template< class... Args >
     void Open( const std::string streamName, const std::string accessMode, Args... args )
     {
@@ -101,36 +100,58 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
     /**
-     * Submits a data element values for writing and associates it with the given variableName
-     * @param groupName name of group that owns the variable
-     * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
-     * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
+     * Sets a transport method to be associated with a group.
+     * @param streamName unique name
+     * @param transport method to be associated
      */
+    void SetTransport( const std::string streamName, const std::string transport );
+
+
+    /**
+     * Sets a default group to be associated with a stream before writing variables with Write function.
+     * @param streamName unique name
+     * @param groupName default group from which variables will be used
+     */
+    void SetGroup( const std::string streamName, const std::string groupName );
+
+
     template<class T>
-    void Write( const std::string streamName, const std::string variableName, const T* values, const unsigned int cores = 1 )
+    void Write( const std::string streamName, const std::string groupName, const std::string variableName, const T* values )
     {
+        auto itCapsule = m_Capsules.find( streamName );
         auto itGroup = m_Groups.find( groupName );
+
         if( m_DebugMode == true )
         {
-            CheckGroup( itGroup, groupName, " from call to Write with variable " + variableName );
-
-            if( itGroup->second.m_IsOpen == false )
-                throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
+            CheckCapsule( itCapsule, streamName, " from call to Write variable " + variableName );
+            CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
         }
+
         WriteHelper( itGroup->second, variableName, values, m_Capsules );
     }
 
+    /**
+     * Write version using default group, set with Function SetGroup.
+     * Submits a data element values for writing and associates it with the given variableName
+     * @param streamName stream or file to be written to
+     * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
+     * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
+     * @param cores optional parameter for threaded version
+     */
     template<class T>
-    void Write( const std::string streamName, const std::string groupName, const std::string variableName, const T* values, const unsigned int cores = 1 )
+    void Write( const std::string streamName, const std::string variableName, const T* values )
     {
-        auto itGroup = m_Groups.find( groupName );
-        if( m_DebugMode == true )
-        {
-            CheckGroup( itGroup, groupName, " from call to Write with variable " + variableName );
+        auto itCapsule = m_Capsules.find( streamName );
 
-            if( itGroup->second.m_IsOpen == false )
-                throw std::invalid_argument( "ERROR: group " + groupName + " is not open in Write function.\n" );
-        }
+        if( m_DebugMode == true )
+            CheckCapsule( itCapsule, streamName, " from call to Write variable " + variableName );
+
+        const std::string groupName( itCapsule->second.m_GroupName );
+        auto itGroup = m_Groups.find( groupName );
+
+        if( m_DebugMode == true )
+            CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
+
         WriteHelper( itGroup->second, variableName, values, m_Capsules );
     }
 
@@ -148,11 +169,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     void MonitorGroups( std::ostream& logStream ) const;
 
-    /**
-     * @brief Create a new group or replace an existing one
-     * @param groupName unique name
-     */
-    void CreateGroup( const std::string groupName );
 
     /**
      * Creates a new Variable, if debugMode = true, program will throw an exception, else it will overwrite current variable with the same name
@@ -168,7 +184,13 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
                          const std::string dimensionsCSV = "", const std::string globalDimensionsCSV = "",
                          const std::string globalOffsetsCSV = ""  );
 
-    void SetVariableTransform( const std::string groupName, const std::string variableName, const std::string transform );
+    /**
+     * Sets a transform method to a variable, to be applied when writing
+     * @param groupName corresponding variable group
+     * @param variableName corresponding variable name
+     * @param transform method to be applied for this variable
+     */
+    void SetTransform( const std::string groupName, const std::string variableName, const std::string transform );
 
 
     /**
@@ -177,19 +199,9 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param attributeName corresponding attribute name
      * @param type string or number
      * @param value string contents of the attribute (e.g. "Communication value" )
-     * @param globalDimensionsCSV comma separated (no space) global dimensions "gNx,gNy,gNz" defined by other variables
-     * @param globalOffsetsCSV comma separated (no space) global offsets "oNx,oNy,oNz" defined by other variables
      */
     void CreateAttribute( const std::string groupName, const std::string attributeName,
-                          const std::string type, const std::string value,
-                          const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "" );
-
-    /**
-     * Sets a transport method to be associated with a group. Need to think variadic function for other methods
-     * @param groupName unique name
-     * @param transport transport method
-     */
-    void SetTransport( const std::string groupName, const std::string transport );
+                          const std::string type, const std::string value );
 
 
 private:
@@ -208,23 +220,34 @@ private:
     std::map< std::string, CGroup > m_Groups;
 
     /**
-     * @brief List of Capsules defined from either ADIOS XML configuration file or the CreateGroup function.
+     * @brief List of Capsules, each defined from the Open function.
      * <pre>
-     *     Key: std::string unique capsule name given by ADIOS Open
+     *     Key: std::string unique stream/file/capsule name given by ADIOS Open
      *     Value: CCapsule object
      * </pre>
      */
-    std::map< std::string, CCapsule > m_Capsules; ///< contains all capsules created with ADIOS Open
+    std::map< std::string, CCapsule > m_Capsules;
+
 
     std::vector< std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run
 
     /**
      * @brief Checks for group existence in m_Groups, if failed throws std::invalid_argument exception
-     * @param itGroup group iterator, usually from find function
-     * @param groupName passed for thrown exception only
+     * @param itGroup m_Group iterator, usually from find function
+     * @param groupName unique name, passed for thrown exception only
      * @param hint adds information to thrown exception
      */
-    void CheckGroup( std::map< std::string, CGroup >::const_iterator itGroup, const std::string groupName, const std::string hint );
+    void CheckGroup( std::map< std::string, CGroup >::const_iterator itGroup,
+                     const std::string groupName, const std::string hint ) const;
+
+    /**
+     * @brief Checks for capsule existence in m_Groups, if failed throws std::invalid_argument exception
+     * @param itCapsule m_Capsule iterator, usually from find function
+     * @param streamName unique name, passed for thrown exception only
+     * @param hint adds information to thrown exception
+     */
+    void CheckCapsule( std::map< std::string, CCapsule >::const_iterator itCapsule,
+                       const std::string streamName, const std::string hint ) const;
 };
 
 

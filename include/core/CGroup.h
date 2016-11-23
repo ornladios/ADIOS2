@@ -170,6 +170,7 @@ private:
 
 
     const unsigned long long int GetIntVariableValue( const std::string variableName ) const;
+
 };
 
 

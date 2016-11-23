@@ -50,6 +50,11 @@ public:
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
+    std::map< std::string, std::shared_ptr<CTransport> > m_Transport;
+    std::vector<char> Buffer;
+    size_t m_MaxBufferSize = 0;
+    std::string m_GroupName; ///< associated group to look for variable information
+
     /**
      *
      * @param streamName
@@ -126,14 +131,6 @@ public:
      * @param streamName passed to corresponding transport so it can be closed.
      */
     void Close( const std::string streamName );
-
-
-private:
-
-    std::map< std::string, std::shared_ptr<CTransport> > m_Transport;
-    std::vector<char> Buffer;
-    size_t m_MaxBufferSize = 0;
-    std::string GroupName; ///< associated group to look for variable information
 
 };
 
