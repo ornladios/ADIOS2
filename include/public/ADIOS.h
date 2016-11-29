@@ -76,17 +76,16 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     ADIOS( const MPI_Comm mpiComm, const bool debugMode = false );
 
 
-    ~ADIOS( ); ///< virtual destructor overriden by children's own destructors
+    ~ADIOS( ); ///< empty, using STL containers for memory management
 
 
     /**
      * @brief Open to Write, Read or Append to a stream
      * @param streamName associated file or stream
      * @param accessMode "w": write, "a": append, need more info on this
-     * @param maxBufferSize used for transport
      */
     template< class... Args >
-    void Open( const std::string streamName, const std::string accessMode, Args... args )
+    void Open( const std::string streamName, const std::string accessMode, const std::string transport, Args... args )
     {
         if( m_DebugMode == true )
         {
@@ -95,28 +94,45 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         }
 
         std::vector<std::string> arguments = { args... };
-        m_Capsules.emplace( streamName, CCapsule( streamName, accessMode, m_MPIComm, m_DebugMode, arguments ) );
+        m_Capsules.emplace( streamName, CCapsule( m_MPIComm, m_DebugMode, streamName, accessMode, transport, arguments ) );
     }
 
+    /**
+     * Sets a new transport method to be associated with a current stream.
+     * @param streamName must be created with Open
+     * @param transport
+     * @return
+     */
+    template< class... Args >
+    int AddTransport( const std::string streamName, const std::string accessMode, const std::string transport, Args... args )
+    {
+        if( m_DebugMode == true )
+        {
+            if( m_Capsules.count( streamName ) == 0 ) //it exists
+                throw std::invalid_argument( "ERROR: stream (or file) " + streamName + " does not exist in call to AddTransport.\n" );
+        }
+        std::vector<std::string> arguments = { args... };
+        return m_Capsules[streamName].AddTransport( streamName, accessMode, false, transport, arguments );
+    }
 
     /**
-     * Sets a transport method to be associated with a group.
-     * @param streamName unique name
-     * @param transport method to be associated
+     * Sets the maximum buffer size of a stream
+     * @param streamName
+     * @param maxBufferSize
      */
-    void SetTransport( const std::string streamName, const std::string transport );
-
+    void SetMaxBufferSize( const std::string streamName, const size_t maxBufferSize );
 
     /**
      * Sets a default group to be associated with a stream before writing variables with Write function.
      * @param streamName unique name
      * @param groupName default group from which variables will be used
      */
-    void SetGroup( const std::string streamName, const std::string groupName );
+    void SetCurrentGroup( const std::string streamName, const std::string groupName );
 
 
     template<class T>
-    void Write( const std::string streamName, const std::string groupName, const std::string variableName, const T* values )
+    void Write( const std::string streamName, const std::string groupName, const std::string variableName, const T* values,
+                const int transportIndex )
     {
         auto itCapsule = m_Capsules.find( streamName );
         auto itGroup = m_Groups.find( groupName );
@@ -127,8 +143,9 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
             CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
         }
 
-        WriteHelper( itGroup->second, variableName, values, m_Capsules );
+        WriteHelper( itCapsule->second, itGroup->second, variableName, values, m_DebugMode );
     }
+
 
     /**
      * Write version using default group, set with Function SetGroup.
@@ -139,28 +156,27 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param cores optional parameter for threaded version
      */
     template<class T>
-    void Write( const std::string streamName, const std::string variableName, const T* values )
+    void Write( const std::string streamName, const std::string variableName, const T* values,
+                const int transportIndex )
     {
         auto itCapsule = m_Capsules.find( streamName );
-
         if( m_DebugMode == true )
             CheckCapsule( itCapsule, streamName, " from call to Write variable " + variableName );
 
-        const std::string groupName( itCapsule->second.m_GroupName );
+        const std::string groupName( itCapsule->second.m_CurrentGroup );
         auto itGroup = m_Groups.find( groupName );
-
         if( m_DebugMode == true )
             CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
 
-        WriteHelper( itGroup->second, variableName, values, m_Capsules );
+        WriteHelper( itCapsule->second, itGroup->second, variableName, values, m_DebugMode );
     }
 
     /**
-     * Close a particular group, group will be out of scope and destroyed
+     * Close a particular stream and the corresponding transport
      * @param streamName stream to be closed with all corresponding transports
+     * @param transportIndex identifier to a particular transport, if == -1 Closes all transports
      */
-    void Close( const std::string streamName );
-
+    void Close( const std::string streamName, const int transportIndex = -1 );
 
     /**
      * @brief Dumps groups information to a file stream or standard output.
@@ -169,6 +185,11 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     void MonitorGroups( std::ostream& logStream ) const;
 
+    /**
+     * Creates an empty group
+     * @param groupName
+     */
+    void DeclareGroup( const std::string groupName );
 
     /**
      * Creates a new Variable, if debugMode = true, program will throw an exception, else it will overwrite current variable with the same name
@@ -180,7 +201,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param globalDimensionsCSV comma separated (no space) global dimensions "gNx,gNy,gNz" defined by other variables
      * @param globalOffsetsCSV comma separated (no space) global offsets "oNx,oNy,oNz" defined by other variables
      */
-    void CreateVariable( const std::string groupName, const std::string variableName, const std::string type,
+    void DefineVariable( const std::string groupName, const std::string variableName, const std::string type,
                          const std::string dimensionsCSV = "", const std::string globalDimensionsCSV = "",
                          const std::string globalOffsetsCSV = ""  );
 
@@ -200,7 +221,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param type string or number
      * @param value string contents of the attribute (e.g. "Communication value" )
      */
-    void CreateAttribute( const std::string groupName, const std::string attributeName,
+    void DefineAttribute( const std::string groupName, const std::string attributeName,
                           const std::string type, const std::string value );
 
 

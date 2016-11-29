@@ -24,7 +24,8 @@ namespace adios
 {
 
 template<class T>
-void WriteHelperToCapsule( CGroup& group, SVariable<T>& variable, const T* values, CCapsule& capsule, const unsigned int cores ) noexcept
+void WriteHelperToCapsule( CCapsule& capsule, CGroup& group, SVariable<T>& variable, const T* values,
+                           const unsigned int cores ) noexcept
 {
     variable.m_Values = values;
     auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
@@ -37,7 +38,7 @@ void WriteHelperToCapsule( CGroup& group, SVariable<T>& variable, const T* value
     }
     else //write local variable
     {
-        capsule.Write( group.m_StreamName, variable.m_Values, GetTotalSize( localDimensions ), cores );
+        capsule.Write( variable.m_Values, GetTotalSize( localDimensions ), cores );
     }
 }
 
@@ -52,31 +53,29 @@ void WriteHelperToCapsule( CGroup& group, SVariable<T>& variable, const T* value
  * @param capsule
  */
 template<class T>
-void WriteHelper( CGroup& group, const std::string variableName, const T* values, CCapsule& capsule, const unsigned int cores )
+void WriteHelper( CCapsule& capsule, CGroup& group, const std::string variableName, const T* values, const bool debugMode,
+                  const unsigned int cores )
 {
-    const bool debugMode( group.m_DebugMode );
-    const std::string streamName( group.m_StreamName );
-
+    //variable
     const auto itVariable = group.m_Variables.find( variableName );
-    const std::string type( group.m_Variables.at( variableName ).first );
-    unsigned int index = group.m_Variables.at( variableName ).second;
 
     if( debugMode == true )
     {
         if( itVariable == group.m_Variables.end() )
             throw std::invalid_argument( "ERROR: from Write function, variable " + variableName + " doesn't exist\n" );
     }
+    const std::string type( itVariable->first );
+    const unsigned int index = itVariable->second;
+    group.m_SetVariables.insert( variableName ); //should be done before writing to buffer, in case there is a crash?
 
-    group.m_SetVariables.insert( variableName );
-
-    if( std::is_same<T,char>::value ) //maybe use type with debugMode?4
+    if( std::is_same<T,char>::value )
     {
-        if( group.m_DebugMode == true )
+        if( debugMode == true )
         {
             if( type != "char" )
                 throw std::invalid_argument( "ERROR: variable " + variableName + " is not char\n" );
         }
-        WriteHelperToCapsule( group, group.m_Char[index], values, capsule, cores );
+        WriteHelperToCapsule( capsule, group, group.m_Char[index], values, cores );
     }
 
 //    else if( std::is_same<T,unsigned char>::value )

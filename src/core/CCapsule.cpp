@@ -11,6 +11,7 @@
 /// \endcond
 
 #include "core/CCapsule.h"
+#include "public/SSupport.h"
 
 #ifdef HAVE_BZIP2
 #include "transform/CBZIP2.h"
@@ -24,17 +25,12 @@ CCapsule::CCapsule( )
 { }
 
 
-CCapsule::CCapsule( const bool debugMode ):
-    m_DebugMode{ debugMode }
-{ }
-
-
-CCapsule::CCapsule( MPI_Comm mpiComm, const bool debugMode ):
+CCapsule::CCapsule( const MPI_Comm mpiComm, const bool debugMode, const std::string streamName,
+                    const std::string accessMode, const std::string transport, const std::vector<std::string>& arguments ):
     m_MPIComm{ mpiComm },
     m_DebugMode{ debugMode }
 {
-    MPI_Comm_rank( m_MPIComm, &m_RankMPI );
-    MPI_Comm_size( m_MPIComm, &m_SizeMPI );
+   int transportIndex = AddTransport( streamName, accessMode, true, transport, arguments );
 }
 
 
@@ -42,46 +38,95 @@ CCapsule::~CCapsule( )
 { }
 
 
-
-void CCapsule::Close( const std::string streamName )
+int CCapsule::AddTransport( const std::string streamName, const std::string accessMode, const bool isDefault,
+                            const std::string transport, const std::vector<std::string>& arguments )
 {
-    m_Streams[streamName].Transport->Close( ); //should release resources
+
+    std::string name( streamName ); //default name to transport
+    if( isDefault == false ) //adding more than default
+    {
+        name = GetName( arguments );
+        if( m_DebugMode == true )
+        {
+            if( name == streamName )
+                throw std::invalid_argument( "ERROR: name= argument can't be the same as stream (or file ) from Open, in call to AddTransport\n" );
+        }
+    }
+
+    if( transport == "POSIX" )
+        m_Transports.push_back( std::make_shared<CPOSIX>( m_MPIComm, m_DebugMode, arguments ) ); //need to add arguments
+
+    else if( transport == "FStream" )
+        m_Transports.push_back( std::make_shared<CFStream>( m_MPIComm, m_DebugMode, arguments ) );
+
+    else if( transport == "DataMan" )
+        m_Transports.push_back( std::make_shared<CDataMan>( m_MPIComm, m_DebugMode, arguments ) );
+
 }
+
+
+void CCapsule::Close( int transportIndex )
+{
+    if( transportIndex == -1 ) //close all transports
+    {
+        for( auto& transport : m_Transports )
+            transport->Close( );
+    }
+    else
+    {
+        m_Transports[transportIndex]->Close( );
+    }
+}
+
 
 //PRIVATE FUNCTIONS
-void CCapsule::CreateTransport( const std::string streamName, const std::string transport )
+std::string CCapsule::GetName( const std::vector<std::string>& arguments ) const
 {
+    bool isNameFound = false;
+    std::string name;
 
-}
-
-
-void CCapsule::CreateBuffer( const std::string streamName, const size_t maxBufferSize )
-{
-    m_Buffers[streamName] = std::vector<char>( 1 ); // vector of size 1
-    m_MaxBufferSize[streamName] = maxBufferSize;
-}
-
-
-void CCapsule::CreateTransform( const std::string transform )
-{
-    std::string method( transform );
-    auto colonPosition = transform.find(":");
-
-    if( colonPosition != transform.npos )
+    for( const auto argument : arguments )
     {
-        method = transform.substr( 0, colonPosition );
+        auto namePosition = argument.find( "name=" );
+        if( namePosition != argument.npos )
+        {
+            isNameFound = true;
+            name = argument.substr( namePosition + 5 );
+            break;
+        }
     }
 
-    if( m_Transforms.find( method ) != m_Transforms.end() ) //transform method already exists, do nothing
-        return;
-
-    if( method == "bzip2" ) //here must add debug mode exception
+    if( m_DebugMode == true )
     {
-        #ifdef HAVE_BZIP2
-        m_Transforms["bzip2"] = std::make_shared<CBZIP2>( );
-        #endif
+        if( name.empty() || isNameFound == false )
+            std::invalid_argument("ERROR: argument to name= is empty in call to AddTransport" );
     }
+
+    return name;
 }
+
+
+
+//void CCapsule::CreateTransform( const std::string transform )
+//{
+//    std::string method( transform );
+//    auto colonPosition = transform.find(":");
+//
+//    if( colonPosition != transform.npos )
+//    {
+//        method = transform.substr( 0, colonPosition );
+//    }
+//
+//    if( m_Transforms.find( method ) != m_Transforms.end() ) //transform method already exists, do nothing
+//        return;
+//
+//    if( method == "bzip2" ) //here must add debug mode exception
+//    {
+//        #ifdef HAVE_BZIP2
+//        m_Transforms["bzip2"] = std::make_shared<CBZIP2>( );
+//        #endif
+//    }
+//}
 
 
 

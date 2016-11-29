@@ -56,44 +56,27 @@ public:
      */
     CGroup( const std::string& hostLanguage, const bool debugMode );
 
-    /**
-     * Create a Group object associated with a transport, can be modified later
-     * @param hostLanguage reference from ADIOS class
-     * @param transport transport method
-     * @param priority  transport priority
-     * @param iterations iterations for transport
-     * @param debugMode reference from ADIOS class
-     */
-    CGroup( const std::string& hostLanguage, const std::string transport, const unsigned int priority, const unsigned int iterations,
-            const bool debugMode );
-
-
 
     ~CGroup( ); ///< Using STL containers, no deallocation
 
     /**
      * Creates a new variable in the group object
-     * @param name variable name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
+     * @param name variable name, must be unique in the group. If name exists it removes the current variable. In debug mode program will exit.
      * @param type variable type, must be in SSupport::Datatypes[hostLanguage] in public/SSupport.h
      * @param dimensionsCSV comma separated variable local dimensions (e.g. "Nx,Ny,Nz")
-     * @param transform method, format = lib or lib:level, where lib = zlib, bzip2, szip, and level=1:9
      * @param globalDimensionsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      */
-    void CreateVariable( const std::string name, const std::string type,
-                         const std::string dimensionsCSV, const short transformIndex,
+    void DefineVariable( const std::string name, const std::string type,
+                         const std::string dimensionsCSV,
                          const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
-
     /**
      *
      * @param name attribute name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
      * @param type attribute type string or numeric type
      * @param value information about the attribute
-     * @param globalDimensionsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
-     * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      */
-    void CreateAttribute( const std::string name, const std::string type, const std::string value,
-                          const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
+    void DefineAttribute( const std::string name, const std::string type, const std::string value );
 
     /**
      * @brief Dumps groups information to a file stream or standard output.
@@ -104,6 +87,8 @@ public:
 
 
     std::vector<unsigned long long int> CGroup::GetDimensions( const std::string dimensionsCSV ) const;
+
+    unsigned long long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
 
 private:
@@ -129,8 +114,6 @@ private:
 
     std::set<std::string> m_SetVariables; ///< set of variables whose T* values have been set (no nullptr)
 
-    std::vector< std::string > m_Transforms; ///< if a variable has a transform it fills this container, the variable holds an index
-
     /**
      * @brief Contains all group attributes from SAttribute.h
      * <pre>
@@ -141,8 +124,6 @@ private:
     std::map< std::string, SAttribute > m_Attributes;
 
     std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
-
-    unsigned long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
     /**
      * Called from XML constructor
@@ -167,7 +148,6 @@ private:
      * @return -1 variable is not associated with a transform, otherwise index in m_Transforms
      */
     const int SetTransforms( const std::string transform ) noexcept;
-
 
     const unsigned long long int GetIntVariableValue( const std::string variableName ) const;
 

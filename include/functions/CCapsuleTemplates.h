@@ -13,7 +13,8 @@
 #include <vector>
 #include <thread>
 
-#include "core/SStream.h"
+#include "core/CTransport.h"
+
 
 namespace adios
 {
@@ -58,44 +59,67 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
 
 
 /**
- * Write data to buffer checking that size of data is no more than maxBufferSize
+ *
  * @param data
  * @param size
- * @param buffer
+ * @param transportIndex
+ * @param transports
  * @param maxBufferSize
- * @param cores
+ * @param buffer
  */
 template<class T>
-void WriteToBuffer( const T* data, const size_t size, SStream& stream, const unsigned int cores )
+void WriteToBuffer( const T* data, const size_t size, const int transportIndex,
+                    std::vector< std::shared_ptr<CTransport> >& transports,
+                    const size_t maxBufferSize, std::vector<char>& buffer )
 {
-    const size_t dataBytes = size * sizeof( T );
-
-    auto& buffer = stream.Buffer;
-
-    //if buffer size is enough send all at once to transport and return
-    if( dataBytes <= buffer.size() )
+    auto lf_TransportsWrite = []( const int transportIndex, std::vector< std::shared_ptr<CTransport> >& transports,
+                                  std::vector<char>& buffer )
     {
-        MemcpyThreads( &buffer[0], data, dataBytes, cores ); //copy memory in threaded fashion, need to test with size
+        if( transportIndex == -1 ) // all transports
+        {
+            for( auto& transport : transports )
+                transport->Write( buffer );
+        }
+        else
+            transports[ transportIndex ]->Write( buffer );
+    };
+
+    //FUNCTION starts here
+    const size_t dataBytes = size * sizeof( T ); //size of data in bytes
+
+    //check for DataMan transport
+    if( transportIndex == -1 ) // all transports
+    {
+        for( auto& transport : transports )
+        {
+            if( transport->m_Method == "DataMan" ) //DataMan needs all the information
+                buffer.resize( dataBytes ); //resize buffer to fit all data
+        }
+    }
+    else //just one transport
+    {
+        if( transports[transportIndex]->m_Method == "DataMan" )
+            buffer.resize( dataBytes ); //resize buffer to fit all data
+    }
+
+    if( dataBytes <= buffer.size() ) // dataBytes < buffer.size()
+    {
+        buffer.resize( dataBytes ); //this resize shouldn't change capacity or call realloc
+        MemcpyThreads( &buffer[0], data, dataBytes, 1 ); //copy memory in threaded fashion, need to test with size, serial for now
+        lf_TransportsWrite( transportIndex, transports, buffer );
         return;
     }
 
-    auto maxBufferSize = stream.MaxBufferSize;
-
-    if( dataBytes > buffer.size() ) //dataBytes > buffer.size()
+    if( buffer.size() < dataBytes && dataBytes <= maxBufferSize ) //  buffer.size() < dataBytes <  maxBufferSize
     {
-        if( dataBytes <= maxBufferSize ) // maxBufferSize > dataBytes > buffer.size()
-        {
-            buffer.resize( dataBytes );
-            MemcpyThreads( &buffer[0], data, dataBytes, cores ); //copy memory in threaded fashion, need to test with size
-            return;
-        }
-        else
-        {
-            buffer.resize( maxBufferSize ); //resize to maxBufferSize
-        }
+        buffer.resize( dataBytes );
+        MemcpyThreads( &buffer[0], data, dataBytes, 1 ); //copy memory in threaded fashion, need to test with size, serial for now
+        lf_TransportsWrite( transportIndex, transports, buffer );
+        return;
     }
 
     // dataBytes > maxBufferSize == buffer.size() split the variable in buffer buckets
+    buffer.resize( maxBufferSize ); //resize to maxBufferSize, this might call realloc
     const size_t buckets =  dataBytes / maxBufferSize + 1;
     const size_t remainder = dataBytes % maxBufferSize;
 
@@ -104,11 +128,11 @@ void WriteToBuffer( const T* data, const size_t size, SStream& stream, const uns
         const size_t dataOffset = bucket * maxBufferSize / sizeof( T );
 
         if( bucket == buckets-1 )
-            MemcpyThreads( &buffer[0], data[dataOffset], remainder, cores );
+            MemcpyThreads( &buffer[0], data[dataOffset], remainder, 1 );
         else
-            MemcpyThreads( &buffer[0], data[dataOffset], maxBufferSize, cores );
+            MemcpyThreads( &buffer[0], data[dataOffset], maxBufferSize, 1 );
 
-        stream.Transport->Write( buffer );
+        lf_TransportsWrite( transportIndex, transports, buffer );
     }
 }
 

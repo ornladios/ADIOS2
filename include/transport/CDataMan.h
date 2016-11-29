@@ -21,7 +21,7 @@ class CDataMan : public CTransport
 
 public:
 
-    CDataMan( MPI_Comm mpiComm, const bool debugMode );
+    CDataMan( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments );
 
     ~CDataMan( );
 
@@ -57,7 +57,9 @@ public:
 
 //protected:
 
-//private:
+private:
+
+    void Init( const std::vector<std::string>& arguments );
 
 
 };

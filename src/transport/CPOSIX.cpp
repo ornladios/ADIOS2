@@ -15,7 +15,7 @@ namespace adios
 {
 
 
-CPOSIX::CPOSIX( MPI_Comm mpiComm, const bool debugMode ):
+CPOSIX::CPOSIX( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
     CTransport( "POSIX", mpiComm, debugMode ),
     m_File( NULL )
 { }
@@ -77,6 +77,12 @@ void CPOSIX::Write( std::vector<char>& buffer )
 void CPOSIX::Close( )
 {
     fclose( m_File );
+}
+
+//PRIVATE FUNCTIONS
+void CPOSIX::Init( const std::vector<std::string>& arguments )
+{
+
 }
 
 

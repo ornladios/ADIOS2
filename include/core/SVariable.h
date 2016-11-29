@@ -24,9 +24,9 @@ template< class T >
 struct SVariable
 {
     const std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
-    const T* m_Values;
-    const short m_TransformIndex; ///< if global > 0, index corresponds to , if local then = -1
+    const T* m_Values; ///< pointer to values passed from ADIOS Write
     const short m_GlobalBoundsIndex; ///< if global > 0, index corresponds to global-bounds in m_GlobalBounds in CGroup, if local then = -1
+    short m_TransformIndex; ///< if global > 0, index corresponds to , if local then = -1
 };
 
 

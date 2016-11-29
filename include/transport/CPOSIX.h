@@ -22,7 +22,7 @@ class CPOSIX : public CTransport
 
 public:
 
-    CPOSIX( MPI_Comm mpiComm, const bool debugMode  );
+    CPOSIX( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments  );
 
     ~CPOSIX( );
 
@@ -38,6 +38,8 @@ public:
 private:
 
     FILE* m_File;
+
+    void Init( const std::vector<std::string>& arguments );
 
 };
 

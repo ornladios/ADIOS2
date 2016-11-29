@@ -10,6 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
+#include <vector>
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -79,8 +80,15 @@ public:
 
     virtual void Close( ) = 0; //here think what needs to be passed
 
+
     virtual void Finalize( )
     { };
+
+protected:
+
+    virtual void Init( const std::vector<std::string>& arguments )
+    { };
+
 
 };
 

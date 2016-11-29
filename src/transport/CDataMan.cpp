@@ -14,9 +14,11 @@ namespace adios
 {
 
 
-CDataMan::CDataMan(  MPI_Comm mpiComm, const bool debugMode ):
+CDataMan::CDataMan(  MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
     CTransport( "DataMan", mpiComm, debugMode )
-{ }
+{
+    Init( arguments );
+}
 
 
 CDataMan::~CDataMan( )
@@ -40,7 +42,7 @@ void CDataMan::SetBuffer( const std::vector<char>& buffer )
 
 void CDataMan::Write( std::vector<char>& buffer )
 {
-    //here comes your magic, expect buffer to contain the raw data (using memcpy or insert) from the ADIOS.Write variable
+    //here comes your magic, expect buffer to contain the raw data from the ADIOS.Write variable using memcpy
     //for now it's a reference, if later it goes out of scope we can move buffer here
 }
 
@@ -48,6 +50,12 @@ void CDataMan::Write( std::vector<char>& buffer )
 void CDataMan::Close( )
 {
     //close any hanging resources from your transport
+}
+
+//PRIVATE FUNCTIONS
+void CDataMan::Init( const std::vector<std::string>& arguments )
+{
+
 }
 
 

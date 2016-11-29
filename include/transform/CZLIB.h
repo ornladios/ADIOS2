@@ -11,7 +11,7 @@
 
 #include <zlib.h>
 
-#include "../core/CTransform.h"
+#include "core/CTransform.h"
 
 
 namespace adios
@@ -23,12 +23,7 @@ class CZLIB : public CTransform
 
 public:
 
-    /**
-     * CZLIB Constructor
-     * @param compressionLevel
-     * @param variable
-     */
-    CZLIB( const unsigned int compressionLevel, CVariableBase& variable );
+    CZLIB( );
 
     ~CZLIB( );
 

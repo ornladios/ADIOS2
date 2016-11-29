@@ -33,19 +33,13 @@ CGroup::CGroup( const std::string& hostLanguage, const std::string& xmlGroup, co
     ParseXMLGroup( xmlGroup );
 }
 
-CGroup::CGroup( const std::string& hostLanguage, const std::string transport,
-                const unsigned int priority, const unsigned int iterations, const bool debugMode ):
-    m_HostLanguage{ hostLanguage },
-    m_DebugMode{ debugMode }
-{ }
-
 
 CGroup::~CGroup( )
 { }
 
 
-void CGroup::CreateVariable( const std::string name, const std::string type,
-                             const std::string dimensionsCSV, const std::string transform,
+void CGroup::DefineVariable( const std::string name, const std::string type,
+                             const std::string dimensionsCSV,
                              const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
 {
     if( m_DebugMode == true )
@@ -105,29 +99,21 @@ void CGroup::CreateVariable( const std::string name, const std::string type,
 }
 
 
-void CGroup::CreateAttribute( const std::string name, const std::string type, const std::string value,
-                              const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
+void CGroup::CreateAttribute( const std::string name, const std::string type, const std::string value )
 {
-    auto lf_EmplaceVariable = [&]( const std::string name, const std::string type, const std::string value,
-                                   const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
-    {
-        const int globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
-        m_Attributes.emplace( name, SAttribute{ type, value, globalBoundsIndex } );
-    };
-
     if( m_DebugMode == true )
     {
         if( m_Attributes.count( name ) == 0 ) //variable doesn't exists
-            lf_EmplaceVariable( name, type, value, globalDimensionsCSV, globalOffsetsCSV );
+            m_Attributes.emplace( name, SAttribute{ type, value } );
         else //name is found
             throw std::invalid_argument( "ERROR: attribute " + name + " exists, NOT setting a new variable\n" );
     }
     else
     {
-        lf_EmplaceVariable( name, type, value, globalDimensionsCSV, globalOffsetsCSV );
+        m_Attributes.emplace( name, SAttribute{ type, value } );
     }
 
-    m_SerialSize += name.size() + type.size() + value.size() + 4; //adding one more for globalBoundsIndex
+    m_SerialSize += name.size() + type.size() + value.size() + 3; //3 is one byte storing the size as a char
 }
 
 

@@ -24,7 +24,7 @@ class CFStream : public CTransport
 
 public:
 
-    CFStream( MPI_Comm mpiComm, const bool debugMode );
+    CFStream( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments );
 
     ~CFStream( );
 
@@ -32,13 +32,15 @@ public:
 
     void SetBuffer( std::vector<char>& buffer );
 
-    void CFStream::Write( std::vector<char>& buffer );
+    void Write( std::vector<char>& buffer );
 
     void Close( );
 
 private:
 
     std::fstream m_FStream; ///< file stream corresponding to this transport
+
+    void Init( const std::vector<std::string>& arguments );
 
 };
 

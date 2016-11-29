@@ -26,7 +26,6 @@
 #include "core/SVariable.h"
 #include "core/CTransform.h"
 #include "core/CTransport.h"
-#include "core/SStream.h"
 #include "functions/CCapsuleTemplates.h"
 
 
@@ -50,88 +49,63 @@ public:
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
-    std::map< std::string, std::shared_ptr<CTransport> > m_Transport;
-    std::vector<char> Buffer;
-    size_t m_MaxBufferSize = 0;
-    std::string m_GroupName; ///< associated group to look for variable information
+    std::string m_CurrentGroup; ///< associated group to look for variable information
+
+    CCapsule( ); ///< Default Empty constructor used with ADIOS class empty constructor
+
+    /**
+     * Multiple argument constructor
+     * @param accessMode
+     * @param mpiComm
+     * @param debugMode
+     */
+
+    CCapsule( const MPI_Comm mpiComm, const bool debugMode, const std::string streamName, const std::string accessMode,
+              const std::string transport, const std::vector<std::string>& arguments );
+
+    ~CCapsule( );
 
     /**
      *
      * @param streamName
      * @param accessMode
-     * @param mpiComm
-     * @param debugMode
-     * @param arguments
-     */
-    CCapsule( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
-              const bool debugMode, const std::vector<std::string>& arguments );
-
-
-
-    CCapsule( const std::string transport, const size_t maxBufferSize, const MPI_Comm mpiComm, const bool debugMode ):
-        MaxBufferSize{ maxBufferSize }
-    {
-        if( transport == "POSIX" )
-            Transport = std::make_shared<CPOSIX>( mpiComm, debugMode );
-
-        else if( transport == "FStream" )
-            Transport = std::make_shared<CFStream>( mpiComm, debugMode );
-
-        else if( transport == "DataMan" )
-            Transport = std::make_shared<CDataMan>( mpiComm, debugMode );
-    }
-
-    CCapsule( ); ///< Default Empty constructor with ADIOS class
-
-    /**
-     * Debug mode
-     * @param debugMode
-     */
-    CCapsule( const bool debugMode );
-
-    /**
-     * Unique constructor
-     * @param mpiComm communicator passed from ADIOS
-     * @param debugMode true: on throws exceptions and do additional checks, false: off (faster, but unsafe)
-     */
-    CCapsule( MPI_Comm mpiComm, const bool debugMode );
-
-
-    ~CCapsule( );
-
-    /**
-     * Open streamName by assigning a buffer, maxBufferSize and a transport mode
-     * @param streamName
-     * @param accessMode
-     * @param maxBufferSize
+     * @param isDefault
      * @param transport
+     * @param arguments
+     * @return transport index
      */
-
-
-
-    void SetStreamGroup( const std::string streamName, const std::string group );
+    int AddTransport( const std::string streamName, const std::string accessMode, const bool isDefault,
+                      const std::string transport, const std::vector<std::string>& arguments );
 
     /**
      * Writes raw data to m_Buffer
-     * @param streamName key to get the corresponding buffer from m_Buffers
      * @param data pointer containing the data
      * @param size of data to be written
+     * @param transportIndex calls the Write function to this transport only, if -1 (default), call all transports
      */
     template<class T>
-    void Write( const T* data, const size_t size, const unsigned int cores = 1 )
+    void Write( const T* data, const size_t size, int transportIndex )
     {
-        if( stream.Transport->m_Method == "DataMan" ) //CDataMan needs entire data in buffer
-            stream.Buffer.resize( size * sizeof(T) ); //resize buffer to fit all data
-
-        WriteToBuffer( data, size, stream, cores );
+        if( m_DebugMode == true )
+        {
+            if( transportIndex >= m_Transports.size() )
+                throw std::invalid_argument( "ERROR: transport index " + std::to_string( transportIndex ) +
+                                              " does not point to a transport method in call to Write\n" );
+        }
+        WriteToBuffer( data, size, transportIndex, m_Transports, m_MaxBufferSize, m_Buffer );
     }
 
-    /**
-     * Closes a certain stream at the transport level
-     * @param streamName passed to corresponding transport so it can be closed.
-     */
-    void Close( const std::string streamName );
+    void Close( int transportIndex ); ///< Closes current Transport
 
+
+private:
+
+    std::vector< std::shared_ptr<CTransport> > m_Transports;
+    std::string m_AccessMode;
+    std::vector<char> m_Buffer;
+    size_t m_MaxBufferSize = 0;
+    const bool m_DebugMode = false;
+    std::string GetName( const std::vector<std::string>& arguments ) const;
 };
 
 
