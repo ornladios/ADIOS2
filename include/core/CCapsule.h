@@ -66,7 +66,7 @@ public:
     ~CCapsule( );
 
     /**
-     *
+     * Add a transport to a stream
      * @param streamName
      * @param accessMode
      * @param isDefault

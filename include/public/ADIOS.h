@@ -197,7 +197,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param variableName corresponding variable name
      * @param type variable type
      * @param dimensionsCSV comma separated (no space) dimensions "Nx,Ny,Nz" defined by other variables
-     * @param transform transformation method applied to current variable
      * @param globalDimensionsCSV comma separated (no space) global dimensions "gNx,gNy,gNz" defined by other variables
      * @param globalOffsetsCSV comma separated (no space) global offsets "oNx,oNy,oNz" defined by other variables
      */

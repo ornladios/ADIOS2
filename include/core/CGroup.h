@@ -60,23 +60,33 @@ public:
     ~CGroup( ); ///< Using STL containers, no deallocation
 
     /**
-     * Creates a new variable in the group object
+     * Define a new variable in the group object
      * @param name variable name, must be unique in the group. If name exists it removes the current variable. In debug mode program will exit.
      * @param type variable type, must be in SSupport::Datatypes[hostLanguage] in public/SSupport.h
      * @param dimensionsCSV comma separated variable local dimensions (e.g. "Nx,Ny,Nz")
      * @param globalDimensionsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      */
-    void DefineVariable( const std::string name, const std::string type,
+    void DefineVariable( const std::string variableName, const std::string type,
                          const std::string dimensionsCSV,
                          const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
+
     /**
-     *
-     * @param name attribute name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
+     * Sets a variable transform contained in ADIOS.m_Transforms (single container for all groups and variables)
+     * @param variableName variable to be assigned a transformation
+     * @param transformIndex index in
+     * @param compressionLevel from 0 to 9
+     */
+    void SetTransform( const std::string variableName, const unsigned int transformIndex, const unsigned int compressionLevel );
+
+
+    /**
+     * Define a new attribute
+     * @param attributeName attribute name, must be unique. If name exists it removes the current variable. In debug mode program will exit.
      * @param type attribute type string or numeric type
      * @param value information about the attribute
      */
-    void DefineAttribute( const std::string name, const std::string type, const std::string value );
+    void DefineAttribute( const std::string attributeName, const std::string type, const std::string value );
 
     /**
      * @brief Dumps groups information to a file stream or standard output.

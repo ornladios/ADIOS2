@@ -117,8 +117,31 @@ void ADIOS::DefineVariable( const std::string groupName, const std::string varia
 void ADIOS::SetTransform( const std::string groupName, const std::string variableName, const std::string transform )
 {
     auto itGroup = m_Groups.find( groupName );
-    if( m_DebugMode == true )
+    if( m_DebugMode == true ) //check group and transform
+    {
         CheckGroup( itGroup, groupName, " from call to SetTransform \n" );
+
+        if( SSupport::Transforms.count( transform ) == 0 )
+            throw std::invalid_argument( "ERROR: transform method " + transform + " not supported, in call to SetTransform\n" );
+    }
+
+    //get method:compressionLevel from transform
+    std::string method( transform );
+    int compressionLevel = 0;
+
+    auto colonPosition = transform.find( ":" );
+
+    if( colonPosition != transform.npos )
+    {
+        if( m_DebugMode == true )
+        {
+            if( colonPosition == transform.size() - 1 )
+                throw std::invalid_argument( "ERROR: wrong format for transform " + transform + ", in call to SetTransform\n" );
+        }
+
+        method = transform.substr( 0, colonPosition );
+        compressionLevel = std::stoi( transform.substr( colonPosition+1 ) );
+    }
 
     int transformIndex = -1;
     for( unsigned int i = 0; i < m_Transforms.size(); ++i )
@@ -129,7 +152,16 @@ void ADIOS::SetTransform( const std::string groupName, const std::string variabl
             break;
         }
     }
-    //itGroup->second.SetTransform( variableName, transform );
+
+    if( transformIndex == -1 ) //not found, then create a new transform
+    {
+        if( transform == "bzip2" )
+        {
+            m_Transforms.push_back( std::make_shared<CBZIP2>( ) );
+        }
+    }
+
+    itGroup->second.SetTransform( variableName, transformIndex, compressionLevel );
 }
 
 

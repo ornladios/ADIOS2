@@ -62,6 +62,11 @@ int CCapsule::AddTransport( const std::string streamName, const std::string acce
     else if( transport == "DataMan" )
         m_Transports.push_back( std::make_shared<CDataMan>( m_MPIComm, m_DebugMode, arguments ) );
 
+
+    int transportIndex = static_cast<int>( m_Transports.size() - 1 );
+    m_Transports[ transportIndex ]->Open( name, accessMode );
+
+    return transportIndex;
 }
 
 
@@ -99,36 +104,11 @@ std::string CCapsule::GetName( const std::vector<std::string>& arguments ) const
     if( m_DebugMode == true )
     {
         if( name.empty() || isNameFound == false )
-            std::invalid_argument("ERROR: argument to name= is empty in call to AddTransport" );
+            std::invalid_argument( "ERROR: argument to name= is empty or not found in call to AddTransport" );
     }
 
     return name;
 }
-
-
-
-//void CCapsule::CreateTransform( const std::string transform )
-//{
-//    std::string method( transform );
-//    auto colonPosition = transform.find(":");
-//
-//    if( colonPosition != transform.npos )
-//    {
-//        method = transform.substr( 0, colonPosition );
-//    }
-//
-//    if( m_Transforms.find( method ) != m_Transforms.end() ) //transform method already exists, do nothing
-//        return;
-//
-//    if( method == "bzip2" ) //here must add debug mode exception
-//    {
-//        #ifdef HAVE_BZIP2
-//        m_Transforms["bzip2"] = std::make_shared<CBZIP2>( );
-//        #endif
-//    }
-//}
-
-
 
 
 } //end namespace

@@ -38,82 +38,165 @@ CGroup::~CGroup( )
 { }
 
 
-void CGroup::DefineVariable( const std::string name, const std::string type,
+void CGroup::DefineVariable( const std::string variableName, const std::string type,
                              const std::string dimensionsCSV,
                              const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
 {
     if( m_DebugMode == true )
     {
         if( SSupport::Datatypes.at( m_HostLanguage ).count( type ) == 0 )
-            throw std::invalid_argument( "ERROR: type " + type + " for variable " + name + " is not supported.\n" );
-        if( m_Variables.count( name ) == 0 ) //variable doesn't exists
-            m_Variables[name] = std::make_pair( type, CurrentTypeIndex( type ) );
+            throw std::invalid_argument( "ERROR: type " + type + " for variable " + variableName + " is not supported.\n" );
+        if( m_Variables.count( variableName ) == 0 ) //variable doesn't exists
+            m_Variables[variableName] = std::make_pair( type, CurrentTypeIndex( type ) );
         else //name is found
-            throw std::invalid_argument( "ERROR: variable " + name + " exists more than once.\n" );
+            throw std::invalid_argument( "ERROR: variable " + variableName + " exists more than once.\n" );
     }
     else
     {
-        m_Variables[name] = std::make_pair( type, CurrentTypeIndex( type ) );
+        m_Variables[variableName] = std::make_pair( type, CurrentTypeIndex( type ) );
     }
 
-    int transformIndex = SetTransforms( transform );
     int globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
 
     if( type == "char" || type == "character" )
-       m_Char.push_back( SVariable<char>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_Char.push_back( SVariable<char>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "unsigned char" )
-        m_UChar.push_back( SVariable<unsigned char>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_UChar.push_back( SVariable<unsigned char>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "short" || type == "integer*2" )
-        m_Short.push_back( SVariable<short>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_Short.push_back( SVariable<short>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "unsigned short" )
-        m_UShort.push_back( SVariable<unsigned short>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_UShort.push_back( SVariable<unsigned short>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "int" || type == "integer" )
-        m_Int.push_back( SVariable<int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_Int.push_back( SVariable<int>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "unsigned int" || type == "unsigned integer" )
-        m_UInt.push_back( SVariable<unsigned int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_UInt.push_back( SVariable<unsigned int>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "long int" || type == "long" || type == "long integer" )
-        m_LInt.push_back( SVariable<long int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_LInt.push_back( SVariable<long int>{ dimensionsCSV, nullptr, globalBoundsIndex } );
+
+    else if( type == "unsigned long int" || type == "unsigned long" || type == "unsigned long integer" )
+        m_ULInt.push_back( SVariable<unsigned long int>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "long long int" || type == "long long" || type == "long long integer" )
-        m_LLInt.push_back( SVariable<long long int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_LLInt.push_back( SVariable<long long int>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "unsigned long long int" || type == "unsigned long long" || type == "unsigned long long integer" )
-        m_ULLInt.push_back( SVariable<unsigned long long int>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_ULLInt.push_back( SVariable<unsigned long long int>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "float" || type == "real" || type == "real*4" )
-        m_Float.push_back( SVariable<float>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_Float.push_back( SVariable<float>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "double" || type == "double precision" || type == "real*8" )
-        m_Double.push_back( SVariable<double>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_Double.push_back( SVariable<double>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
     else if( type == "long double" || type == "real*16" )
-        m_LDouble.push_back( SVariable<long double>{ dimensionsCSV, nullptr, transformIndex, globalBoundsIndex } );
+        m_LDouble.push_back( SVariable<long double>{ dimensionsCSV, nullptr, globalBoundsIndex } );
 
-    m_SerialSize += name.size() + type.size() + dimensionsCSV.size() + transform.size() + 5 * sizeof(char); //5, adding one more for globalBoundsIndex
+    m_SerialSize += variableName.size() + type.size() + dimensionsCSV.size() + 4 * sizeof( char ); //4, adding one more for globalBoundsIndex
 }
 
 
-void CGroup::CreateAttribute( const std::string name, const std::string type, const std::string value )
+void CGroup::SetTransform( const std::string variableName, const unsigned int transformIndex, const unsigned int compressionLevel )
+{
+    auto itVariable = m_Variables.find( variableName );
+
+    if( m_DebugMode == true )
+    {
+        if( itVariable == m_Variables.end() ) //variable doesn't exists
+            throw std::invalid_argument( "ERROR: variable " + variableName + " doesn't exist, in call to SetTransform.\n" );
+    }
+
+    const std::string type( itVariable->second.first );
+    const unsigned int index = itVariable->second.second;
+
+    if( type == "char" || type == "character" )
+    {
+        m_Char[index].TransformIndex = transformIndex;
+        m_Char[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "unsigned char" )
+    {
+        m_UChar[index].TransformIndex = transformIndex;
+        m_UChar[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "short" || type == "integer*2" )
+    {
+        m_Short[index].TransformIndex = transformIndex;
+        m_Short[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "unsigned short" )
+    {
+        m_UShort[index].TransformIndex = transformIndex;
+        m_UShort[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "int" || type == "integer" )
+    {
+        m_Int[index].TransformIndex = transformIndex;
+        m_Int[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "unsigned int" || type == "unsigned integer" )
+    {
+        m_UInt[index].TransformIndex = transformIndex;
+        m_UInt[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "long int" || type == "long" || type == "long integer" )
+    {
+        m_LInt[index].TransformIndex = transformIndex;
+        m_LInt[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "unsigned long int" || type == "unsigned long" || type == "unsigned long integer" )
+    {
+        m_ULInt[index].TransformIndex = transformIndex;
+        m_ULInt[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "long long int" || type == "long long" || type == "long long integer" )
+    {
+        m_ULInt[index].TransformIndex = transformIndex;
+        m_ULInt[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "unsigned long long int" || type == "unsigned long long" || type == "unsigned long long integer" )
+    {
+        m_ULLInt[index].TransformIndex = transformIndex;
+        m_ULLInt[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "float" || type == "real" || type == "real*4" )
+    {
+        m_Float[index].TransformIndex = transformIndex;
+        m_Float[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "double" || type == "double precision" || type == "real*8" )
+    {
+        m_Double[index].TransformIndex = transformIndex;
+        m_Double[index].CompressionLevel = compressionLevel;
+    }
+    else if( type == "long double" || type == "real*16" )
+    {
+        m_LDouble[index].TransformIndex = transformIndex;
+        m_LDouble[index].CompressionLevel = compressionLevel;
+    }
+}
+
+
+void CGroup::DefineAttribute( const std::string attributeName, const std::string type, const std::string value )
 {
     if( m_DebugMode == true )
     {
-        if( m_Attributes.count( name ) == 0 ) //variable doesn't exists
-            m_Attributes.emplace( name, SAttribute{ type, value } );
+        if( m_Attributes.count( attributeName ) == 0 ) //attribute doesn't exists
+            m_Attributes.emplace( attributeName, SAttribute{ type, value } );
         else //name is found
-            throw std::invalid_argument( "ERROR: attribute " + name + " exists, NOT setting a new variable\n" );
+            throw std::invalid_argument( "ERROR: attribute " + attributeName + " exists, NOT setting a new variable\n" );
     }
     else
     {
-        m_Attributes.emplace( name, SAttribute{ type, value } );
+        m_Attributes.emplace( attributeName, SAttribute{ type, value } );
     }
 
-    m_SerialSize += name.size() + type.size() + value.size() + 3; //3 is one byte storing the size as a char
+    m_SerialSize += attributeName.size() + type.size() + value.size() + 3 * sizeof( char ); //3 is one byte storing the size as a char
 }
 
 
@@ -130,28 +213,28 @@ const unsigned long long int CGroup::GetIntVariableValue( const std::string vari
     const unsigned long long int value = 0;
 
     if( type == "short" )
-        value = *( m_Short[index].m_Values );
+        value = *( m_Short[index].Values );
 
     else if( type == "unsigned short" )
-        value = *( m_UShort[index].m_Values );
+        value = *( m_UShort[index].Values );
 
     else if( type == "int" )
-        value = *( m_Int[index].m_Values );
+        value = *( m_Int[index].Values );
 
     else if( type == "unsigned int" )
-        value = *( m_UInt[index].m_Values );
+        value = *( m_UInt[index].Values );
 
     else if( type == "long int" )
-        value = *( m_LInt[index].m_Values );
+        value = *( m_LInt[index].Values );
 
     else if( type == "unsigned long int" )
-        value = *( m_ULInt[index].m_Values );
+        value = *( m_ULInt[index].Values );
 
     else if( type == "long long int" )
-        value = *( m_LLInt[index].m_Values );
+        value = *( m_LLInt[index].Values );
 
     else if( type == "unsigned long long int" )
-        value = *( m_ULLInt[index].m_Values );
+        value = *( m_ULLInt[index].Values );
 
     else
         throw std::invalid_argument( "ERROR: variable " + variableName + " must be of short, int or associated type (long int, unsigned long int, etc.)\n" );
@@ -245,18 +328,18 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup )
                 else if( pair.first == "dimensions" ) dimensionsCSV = pair.second;
                 else if( pair.first == "transform"  ) transform = pair.second;
             }
-            CreateVariable( name, type, dimensionsCSV, transform, globalDimensionsCSV, globalOffsetsCSV );
+            DefineVariable( name, type, dimensionsCSV, globalDimensionsCSV, globalOffsetsCSV );
         }
         else if( tagName == "attribute" )
         {
-            std::string name, path, value, type;
+            std::string name, value, type;
             for( auto& pair : pairs ) //loop through all pairs
             {
                 if( pair.first == "name"       ) name = pair.second;
                 else if( pair.first == "value" ) value = pair.second;
                 else if( pair.first == "type"  ) type = pair.second;
             }
-            CreateAttribute( name, type, value, globalDimensionsCSV, globalOffsetsCSV );
+            DefineAttribute( name, type, value );
         }
         else if( tagName == "global-bounds" )
         {
@@ -350,26 +433,6 @@ const int CGroup::SetGlobalBounds( const std::string globalDimensionsCSV, const 
     return globalBoundsIndex;
 }
 
-
-const int CGroup::SetTransforms( const std::string transform ) noexcept
-{
-    if( transform.empty() )
-        return -1;
-
-    int transformIndex = -1;
-    auto itTransform = std::find( m_Transforms.begin(), m_Transforms.end(), transform );
-    if( itTransform != m_Transforms.end() )
-    {
-        transformIndex = std::distance( m_Transforms.begin(), itTransform );
-    }
-    else
-    {
-        m_Transforms.push_back( transform );
-        transformIndex = m_Transforms.size();
-    }
-
-    return transformIndex;
-}
 
 
 } //end namespace

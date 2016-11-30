@@ -27,7 +27,7 @@ const std::set<std::string> SSupport::Transports{
 
 
 const std::set<std::string> SSupport::Transforms{
-    { "none", "identity", "bzip2", "isobar" }
+    { "none", "identity", "bzip2", "isobar", "szip" , "zlib" }
 };
 
 

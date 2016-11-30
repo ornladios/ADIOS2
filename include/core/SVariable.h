@@ -23,10 +23,11 @@ namespace adios
 template< class T >
 struct SVariable
 {
-    const std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
-    const T* m_Values; ///< pointer to values passed from ADIOS Write
-    const short m_GlobalBoundsIndex; ///< if global > 0, index corresponds to global-bounds in m_GlobalBounds in CGroup, if local then = -1
-    short m_TransformIndex; ///< if global > 0, index corresponds to , if local then = -1
+    const std::string DimensionsCSV; ///< comma separated list for variables to search for local dimensions
+    const T* Values; ///< pointer to values passed from ADIOS Write
+    const short GlobalBoundsIndex; ///< if global > 0, index corresponds to global-bounds in m_GlobalBounds in CGroup, if local then = -1
+    short TransformIndex = -1; ///< if no transformation then = -1, otherwise index to m_Transforms container in ADIOS
+    unsigned short CompressionLevel = 0; ///< if 0, then use default, values from 1 to 9 indicate compression level
 };
 
 
