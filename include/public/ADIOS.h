@@ -101,7 +101,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * Sets a new transport method to be associated with a current stream.
      * @param streamName must be created with Open
      * @param transport
-     * @return
+     * @return transport index
      */
     template< class... Args >
     int AddTransport( const std::string streamName, const std::string accessMode, const std::string transport, Args... args )
@@ -132,7 +132,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
     template<class T>
     void Write( const std::string streamName, const std::string groupName, const std::string variableName, const T* values,
-                const int transportIndex )
+                const int transportIndex = -1 )
     {
         auto itCapsule = m_Capsules.find( streamName );
         auto itGroup = m_Groups.find( groupName );
@@ -141,9 +141,12 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         {
             CheckCapsule( itCapsule, streamName, " from call to Write variable " + variableName );
             CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
+            if( transportIndex < -1 )
+                throw std::invalid_argument( "ERROR: transport index " + std::to_string( transportIndex ) +
+                                             " must be >= -1, in call to Write\n" );
         }
 
-        WriteHelper( itCapsule->second, itGroup->second, variableName, values, m_DebugMode );
+        WriteHelper( itCapsule->second, itGroup->second, variableName, values, transportIndex, m_DebugMode );
     }
 
 
@@ -157,7 +160,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     template<class T>
     void Write( const std::string streamName, const std::string variableName, const T* values,
-                const int transportIndex )
+                const int transportIndex = -1 )
     {
         auto itCapsule = m_Capsules.find( streamName );
         if( m_DebugMode == true )
@@ -168,7 +171,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         if( m_DebugMode == true )
             CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
 
-        WriteHelper( itCapsule->second, itGroup->second, variableName, values, m_DebugMode );
+        WriteHelper( itCapsule->second, itGroup->second, variableName, values, transportIndex, m_DebugMode );
     }
 
     /**

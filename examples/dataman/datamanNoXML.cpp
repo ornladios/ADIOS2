@@ -1,17 +1,16 @@
 /*
- * dataman.cpp: Example for DataMan Transport usage
+ * datamanNoXML.cpp: Example for DataMan Transport usage also using POSIX as additional transport
  *
  *  Created on: Nov 15, 2016
  *      Author: wfg
  */
 
-
-
-
 #ifdef HAVE_MPI
     #include <mpi.h>
 #else
     #include "public/mpidummy.h"
+    using adios::MPI_Init;
+    using adios::MPI_Comm_rank;
 #endif
 
 #include "public/ADIOS.h"
@@ -25,46 +24,30 @@ int main( int argc, char* argv [] )
 
     try //need to think carefully how to handle C++ exceptions with MPI to avoid deadlocking
     {
+        //APP variables
         const unsigned int myCharsSize = 10;
         std::vector<char> myChars( myCharsSize, '1' ); // 10 chars with value '1'
 
-        //Equivalent to adios_init debug mode is on, MPI_COMM_WORLD is dummy nothing to worry about
+        //ADIOS init here, non-XML, debug mode is ON
         adios::ADIOS adios( MPI_COMM_WORLD, true );
 
-        //Create group TCP and set up, this can be done from XML config file
-        const std::string group1( "TCP" );
-        const std::string group2( "TCP" );
+        //Create group TCP and define variables
+        const std::string groupTCP( "TCP" );
+        adios.DeclareGroup( groupTCP );
+        adios.DefineVariable( groupTCP, "myCharsSize", "unsigned int" ); //scalar : group, name, type
+        adios.DefineVariable( groupTCP, "myChars",     "char",  "myCharsSize" ); //group, name, type, integer variables defining dimensions
 
+        //Open stream using two transports, DataMan is default, POSIX is an additional one
+        const std::string streamTCP( "TCP" );
+        adios.Open( streamTCP, "write", "DataMan" ); //here open a stream called TCPStream for writing (w or write), name is the same as stream
+        adios.AddTransport( streamTCP, "write", "POSIX", "name=TCP.bp" ); //add POSIX transport with .bp name
 
-        adios.CreateGroup( group );
-        adios.CreateVariable( group, "myCharsSize", "unsigned int" ); //scalar : group, name, type
-        adios.CreateVariable( group, "myChars",     "char",  "myCharsSize,Ny,Nz", "gNx,gNy,gNz", "oNx,oNy,oNz" ); //group, name, type, integer variable defining size
-        //adios.SetVariableTransform( group, "myCharsSize", transform );
-        //here we tell group to be associate with a DataMan transport
-        //we can add more parameters if you require
-        //adios.SetTransport( group, "DataMan" );
-
-        const std::string streamName( "TCPStream" );
-        adios.Open( streamName, "write", "DataMan" ); //here open a stream called TCPStream for writing (w or write)
-        adios.AddTransport( streamName, "POSIX"  );
-
-        adios.Write( streamName1, "myChars" );
-
-        //adios.Open( streamName, "read", "DataMan" ); //here open a stream called TCPStream for writing (w or write)
-        //adios.Write( "TCPStream", group, "myCharsSize", &myCharsSize ); //calls your transport
-        capsule.SetGroup( group );
-
-
-        adios.Write( streamName2, group1, "myChars"    , &myChars[0], transport1, transport2, transport3 ); //calls your transport
-        adios.Write( "TCPStream", group2, "myChars"    , &myChars[0] ); //calls current transport
-        adios.Close( streamName );
-
-        adios.Write( streamName, group1, "myChars"    , &myChars[0] ); //calls your transport
-
-        adios.Open( group, "G", "write" ); //here open a stream called TCPStream for writing (w or write)
-        adios.Write( group, "myCharsSize", &myCharsSize ); //calls your transport
-        adios.Write( group, "myChars"    , &myChars[0] ); //calls your transport
-        adios.Close( "TCPStream" );
+        //Writing
+        adios.SetCurrentGroup( streamTCP, groupTCP ); //no need to add group field in Write
+        adios.Write( streamTCP, "myCharsSize", &myCharsSize );
+        adios.Write( streamTCP, "myChars", &myChars );
+        //Close
+        adios.Close( streamTCP ); // Flush to all transports, DataMan and POSIX
     }
     catch( std::bad_alloc& e )
     {
@@ -99,6 +82,7 @@ int main( int argc, char* argv [] )
         }
     }
 
+    MPI_Finalize( );
 
     return 0;
 }

@@ -95,7 +95,7 @@ public:
         WriteToBuffer( data, size, transportIndex, m_Transports, m_MaxBufferSize, m_Buffer );
     }
 
-    void Close( int transportIndex ); ///< Closes current Transport
+    void Close( int transportIndex ); ///< Closes a particular transport
 
 
 private:

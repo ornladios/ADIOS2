@@ -27,13 +27,13 @@
 #include "core/SVariable.h"
 #include "core/SAttribute.h"
 #include "core/CTransport.h"
+#include "core/CTransform.h"
 
 
 namespace adios
 {
-
 /**
- * Class that defines each ADIOS Group composed of Variables, Attributes and a Transport method
+ * Class that defines each ADIOS Group composed of Variables, Attributes and GlobalBounds (if global variables exist)
  */
 class CGroup
 {
@@ -44,17 +44,18 @@ public:
      * @brief Constructor for XML config file
      * @param hostLanguage reference from ADIOS class
      * @param xmlGroup contains <adios-group (tag excluded)....</adios-group> single group definition from XML config file
+     * @param transforms passed from ADIOS.m_Transforms
      * @param debugMode from ADIOS
      */
-    CGroup( const std::string& hostLanguage, const std::string& xmlGroup, const bool debugMode );
-
+    CGroup( const std::string hostLanguage, const std::string& xmlGroup,
+            std::vector< std::shared_ptr<CTransform> >& transforms, const bool debugMode );
 
     /**
      * Non-XML empty constructor
      * @param hostLanguage reference from ADIOS class
      * @param debugMode
      */
-    CGroup( const std::string& hostLanguage, const bool debugMode );
+    CGroup( const std::string hostLanguage, const bool debugMode );
 
 
     ~CGroup( ); ///< Using STL containers, no deallocation
@@ -69,7 +70,8 @@ public:
      */
     void DefineVariable( const std::string variableName, const std::string type,
                          const std::string dimensionsCSV,
-                         const std::string globalDimensionsCSV, const std::string globalOffsetsCSV );
+                         const std::string globalDimensionsCSV, const std::string globalOffsetsCSV,
+                         const int transformIndex = -1, const int compressionLevel = 0 );
 
     /**
      * Sets a variable transform contained in ADIOS.m_Transforms (single container for all groups and variables)
@@ -95,15 +97,20 @@ public:
      */
     void Monitor( std::ostream& logStream ) const;
 
+    /**
+     * Looks for variables defining a variable dimensions and return their actual values in a vector
+     * @param dimensionsCSV comma separated dimensions "Nx,Ny,Nz"
+     * @return actual vector values = { Nx, Ny, Nz }
+     */
+    std::vector<unsigned long long int> GetDimensions( const std::string dimensionsCSV ) const;
 
-    std::vector<unsigned long long int> CGroup::GetDimensions( const std::string dimensionsCSV ) const;
 
     unsigned long long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
 
 private:
 
-    const std::string& m_HostLanguage; ///< reference to class ADIOS m_HostLanguage, this erases the copy constructor. Might be moved later to non-reference const
+    const std::string m_HostLanguage; ///< copy of ADIOS m_HostLanguage
     const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code, known at compile time
 
     std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of CVariable
@@ -139,10 +146,7 @@ private:
      * Called from XML constructor
      * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file passing by reference as it could be big
      */
-    void ParseXMLGroup( const std::string& xmlGroup );
-
-
-    const unsigned int CurrentTypeIndex( const std::string type ) const noexcept;
+    void ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared_ptr<CTransform> >& transforms );
 
     /**
      * Used by SetVariable and SetAttribute to check if global bounds exist in m_GlobalBounds
@@ -159,6 +163,13 @@ private:
      */
     const int SetTransforms( const std::string transform ) noexcept;
 
+    /**
+     * Retrieves the value of a variable representing another's variable dimensions. Set with Write
+     * Must of integer type (from short to unsigned long long int) and positive.
+     * used by function GetDimensions
+     * @param variableName  variable to be searched in m_SetVariables
+     * @return variable value
+     */
     const unsigned long long int GetIntVariableValue( const std::string variableName ) const;
 
 };

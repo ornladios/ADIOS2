@@ -85,6 +85,23 @@ const std::map<std::string, std::set<std::string> > SSupport::Datatypes
 };
 
 
+const std::map<std::string, std::set<std::string> > SSupport::DatatypesAliases
+{
+    { "char",           { "char", "character" }  },
+    { "unsigned char",  { "unsigned char", "unsigned character" }  },
+    { "short",          { "short", "integer*2" } },
+    { "unsigned short", { "unsigned short" }  },
+    { "int",                    { "int", "integer" } },
+    { "unsigned int",           { "unsigned int", "unsigned integer" } },
+    { "long int",               { "long int", "long", "long integer" } },
+    { "unsigned long int",      { "unsigned long int", "unsigned long", "unsigned long integer" } },
+    { "long long int",          { "long long int", "long long", "long long integer" } },
+    { "unsigned long long int", { "unsigned long long int", "unsigned long long", "unsigned long long integer" } },
+    { "float", { "float", "real", "real*4" } },
+    { "double", { "double", "double precision", "real*8" } },
+    { "long double", { "long double", "long double precision", "real*16" } }
+};
+
 
 } //end namespace
 

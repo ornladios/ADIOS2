@@ -41,9 +41,9 @@ public:
 
     virtual ~CTransform( ){ };
 
-    void Compress( const std::vector<char>& bufferIn, std::vector<char>& bufferOut );
+    virtual void Compress( const std::vector<char>& bufferIn, std::vector<char>& bufferOut ) = 0;
 
-    void DeCompress( const std::vector<char>& bufferIn, std::vector<char>& bufferOut );
+    virtual void Decompress( const std::vector<char>& bufferIn, std::vector<char>& bufferOut ) = 0;
 
 };
 

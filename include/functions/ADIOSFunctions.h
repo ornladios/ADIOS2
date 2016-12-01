@@ -46,6 +46,7 @@ void DumpFileToStream( const std::string fileName, std::string& fileContents );
  */
 void GetSubString ( const std::string initialTag, const std::string finalTag, const std::string content, std::string& subString,
                     std::string::size_type& currentPosition );
+
 /**
  * Extracts the value inside quotes in a string currentTag ( Example: currentTag --> field1="value1" field2="value2" )
  * @param quote double " or single '
@@ -55,6 +56,7 @@ void GetSubString ( const std::string initialTag, const std::string finalTag, co
  */
 void GetQuotedValue( const char quote, const std::string::size_type& quotePosition,
                      std::string& currentTag, std::string& value );
+
 
 /**
  * Get attributes field1="value1" field2="value2" by looping through a single XML tag
@@ -73,6 +75,7 @@ void GetPairs( const std::string tag, std::vector< std::pair<const std::string, 
 void GetPairsFromTag( const std::string& fileContent, const std::string tag,
                       std::vector< std::pair<const std::string, const std::string> >& pairs );
 
+
 /**
  * Set members m_Groups and m_HostLanguage from XML file content, called within Init functions
  * @param fileContent file Content in a single string
@@ -83,6 +86,7 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
 void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::string& hostLanguage,
                  std::map< std::string, CGroup >& groups );
 
+
 /**
  * Called inside the ADIOS XML constructors to get contents from file, broadcast and set hostLanguage and groups from ADIOS class
  * @param xmlConfigFile xml config file name
@@ -92,8 +96,9 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::st
  * @param groups passed returns the map of groups defined in fileContent
  * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
  */
-void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode, std::string& hostLanguage,
-              std::map< std::string, CGroup >& groups );
+void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode,
+              std::string& hostLanguage, std::map< std::string, CGroup >& groups );
+
 
 /**
  * Loops through a vector containing dimensions and returns the product of all elements
@@ -113,17 +118,19 @@ void CreateDirectory( const std::string fullPath ) noexcept;
 
 
 /**
- * Identifies a char* variable, assigns a reference to the proper variable, and sends data to capsule so it can write to buffer
- * @param group
- * @param variableName
- * @param values
- * @param capsule
+ * Identifies, verifies the corresponding transform method and adds it the transforms container if neccesary.
+ * This functions must be updated as new transform methods are supported.
+ * @param transform method to be added to transforms with format "method:compressionLevel", or  "method" with compressionLevel=0 (default)
+ * @param transforms container of existing transform methods, owned by ADIOS class
+ * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
+ * @param transformIndex returns the corresponding transformIndex in transforms for this transport method
+ * @param compressionLevel returns the corresponding compression level from transport = "method:compressionLevel"
  */
-void WriteChar( CGroup& group, const std::string variableName, const char* values, CCapsule& capsule );
+void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<CTransform> >& transforms,
+                         const bool debugMode, int& transformIndex, int& compressionLevel );
 
 
-
-
+bool IsTypeAlias( const std::string type, const std::set<std::string>& types );
 
 
 

@@ -284,6 +284,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
         }
     };
 
+    //this section will have to change, doing nothing for now
     currentPosition = 0;
     while( currentPosition != std::string::npos )
     {
@@ -312,8 +313,6 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
         int priority, iteration;
         lf_UIntCheck( method, priorityStr, "priority", debugMode, priority );
         lf_UIntCheck( method, iterationStr, "iteration", debugMode, iteration );
-
-        itGroup->second.m_Transport = method;
         //here do something with the capsule
     }
 }
@@ -396,59 +395,54 @@ void CreateDirectory( const std::string fullPath ) noexcept
 }
 
 
-
-//Write helper functions
-void WriteChar( CGroup& group, const std::string variableName, const char* values, CCapsule& capsule, const unsigned int cores )
+void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<CTransform> >& transforms,
+                         const bool debugMode, int& transformIndex, int& compressionLevel )
 {
-    if( group.m_DebugMode == true )
+    //get method:compressionLevel from transform
+    std::string method( transform ); //default
+    compressionLevel = 0; //default
+
+    auto colonPosition = transform.find( ":" );
+
+    if( colonPosition != transform.npos )
     {
-        const std::string type( group.m_Variables.at( variableName ).first );
-        if( type != "char" )
-            throw std::invalid_argument( "ERROR: variable " + variableName + " is not char\n" );
+        if( debugMode == true )
+        {
+            if( colonPosition == transform.size() - 1 )
+                throw std::invalid_argument( "ERROR: wrong format for transform " + transform + ", in call to SetTransform\n" );
+        }
+
+        method = transform.substr( 0, colonPosition );
+        compressionLevel = std::stoi( transform.substr( colonPosition+1 ) ); //need to test
     }
 
-    const unsigned int index = group.m_Variables.at( variableName ).second;
-    SVariable<char>& variable = group.m_Char[index];
-    variable.m_Values = values;
-    auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
+    transformIndex = -1;
+    for( unsigned int i = 0; i < transforms.size(); ++i )
+    {
+        if( transforms[i]->m_Method == transform )
+        {
+            transformIndex = i;
+            break;
+        }
+    }
 
-    if( variable.m_GlobalBoundsIndex > -1 ) //global variable
+    if( transformIndex == -1 ) //not found, then create a new transform
     {
-        auto globalDimensions = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].first );
-        auto globalOffsets = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].second );
-        //capsule.Write( group.m_StreamName, variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
+        if( transform == "bzip2" )
+            transforms.push_back( std::make_shared<CBZIP2>( ) );
     }
-    else //write local variable
-    {
-        capsule.Write( group.m_StreamName, variable.m_Values, GetTotalSize( localDimensions ), cores );
-    }
+
+    transformIndex = static_cast<int>( transforms.size() - 1 );
 }
 
 
-void WriteUChar( CGroup& group, const std::string variableName, const char* values, CCapsule& capsule, const unsigned int cores )
+bool IsTypeAlias( const std::string type, const std::set<std::string>& types )
 {
-    if( group.m_DebugMode == true )
-    {
-        const std::string type( group.m_Variables.at( variableName ).first );
-        if( type != "unsigned char" )
-            throw std::invalid_argument( "ERROR: variable " + variableName + " is not char\n" );
-    }
+    bool isAlias = false;
+    if( types.count( type ) == 1 )
+        isAlias = true;
 
-    const unsigned int index = group.m_Variables.at( variableName ).second;
-    SVariable<unsigned char>& variable = group.m_UChar[index];
-    variable.m_Values = values;
-    auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
-
-    if( variable.m_GlobalBoundsIndex > -1 ) //global variable
-    {
-        auto globalDimensions = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].first );
-        auto globalOffsets = group.GetDimensions( group.m_GlobalBounds[ variable.m_GlobalBoundsIndex ].second );
-        //capsule.Write( group.m_StreamName, variable.m_Values, sizeof(char), localDimensions, globalDimensions, globalOffsets );
-    }
-    else //write local variable
-    {
-        capsule.Write( group.m_StreamName, variable.m_Values, GetTotalSize( localDimensions ), cores );
-    }
+    return isAlias;
 }
 
 
