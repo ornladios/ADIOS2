@@ -1,5 +1,6 @@
 /*
  * datamanNoXML.cpp: Example for DataMan Transport usage also using POSIX as additional transport
+ * Writes a single char array (myChars) and its size (myCharsSize)
  *
  *  Created on: Nov 15, 2016
  *      Author: wfg
@@ -26,7 +27,7 @@ int main( int argc, char* argv [] )
     {
         //APP variables
         const unsigned int myCharsSize = 10;
-        std::vector<char> myChars( myCharsSize, '1' ); // 10 chars with value '1'
+        std::vector<char> myChars( myCharsSize, '1' ); // 10 chars each with value '1'
 
         //ADIOS init here, non-XML, debug mode is ON
         adios::ADIOS adios( MPI_COMM_WORLD, true );
@@ -41,11 +42,13 @@ int main( int argc, char* argv [] )
         const std::string streamTCP( "TCP" );
         adios.Open( streamTCP, "write", "DataMan" ); //here open a stream called TCPStream for writing (w or write), name is the same as stream
         adios.AddTransport( streamTCP, "write", "POSIX", "name=TCP.bp" ); //add POSIX transport with .bp name
+        adios.SetMaxBufferSize( streamTCP, 1000000000 ); // Setting max Buffer size to 1Gb
 
         //Writing
         adios.SetCurrentGroup( streamTCP, groupTCP ); //no need to add group field in Write
         adios.Write( streamTCP, "myCharsSize", &myCharsSize );
-        adios.Write( streamTCP, "myChars", &myChars );
+        adios.Write( streamTCP, "myChars", &myChars[0] ); //getting the underlying char*
+
         //Close
         adios.Close( streamTCP ); // Flush to all transports, DataMan and POSIX
     }
