@@ -1,16 +1,15 @@
 /*
- * helloFStream.cpp
+/*
+ * helloFStreamNoXML.cpp
  *
- *  Created on: Oct 24, 2016
+ *  Created on: Dec 2, 2016
  *      Author: wfg
  */
-
 
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <numeric>
 
 #ifdef HAVE_MPI
     #include <mpi.h>
@@ -32,12 +31,20 @@ int main( int argc, char* argv [] )
         unsigned int size = 10;
         std::vector<int> numbers( size, 1 );
 
-        adios::ADIOS adios( "numbers.xml", MPI_COMM_WORLD, true ); //xml file, MPI Comm, debug mode
-        adios.Open( "numbers.bp", "write", "FStream" );// open a file stream transport for writing to file numbers.bp
-        adios.SetCurrentGroup( "numbers.bp", "Vector" );// Write will look for variables in the Vector group defined in numbers.xml
-        adios.Write( "numbers.bp", "size", &size ); //writes size
-        adios.Write( "numbers.bp", "numbers", &numbers[0] ); //writes vector numbers
-        adios.Close( "numbers.bp" ); //flush and closes numbers.bp now containing size and numbers
+        adios::ADIOS adios( MPI_COMM_WORLD, true ); //MPI Comm, debug mode
+
+        const std::string group( "Vector" );
+        adios.DeclareGroup( group );
+        adios.DefineVariable( group, "size", "unsigned int" );
+        adios.DefineVariable( group, "numbers", "int", "size" );
+        adios.DefineAttribute( group, "description", "string", "1 to 10" );
+
+        const std::string file( "numbers.bp" );
+        adios.Open( file, "write", "FStream" );// open a file stream transport for writing to file numbers.bp
+        adios.SetCurrentGroup( file, group );// Write will look for variables in the Vector group defined in numbers.xml
+        adios.Write( file, "size", &size ); //writes size
+        adios.Write( file, "numbers", &numbers[0] ); //writes vector numbers
+        adios.Close( file ); //flush and closes numbers.bp now containing size and numbers
     }
     catch( std::bad_alloc& e )
     {
@@ -77,3 +84,12 @@ int main( int argc, char* argv [] )
 
     return 0;
 }
+ * helloFStreamNoXML.cpp
+ *
+ *  Created on: Dec 2, 2016
+ *      Author: wfg
+ */
+
+
+
+

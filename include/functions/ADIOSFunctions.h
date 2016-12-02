@@ -33,7 +33,7 @@ namespace adios
  * @param fileName file to be opened
  * @param fileContents output contains the entire file
  */
-void DumpFileToStream( const std::string fileName, std::string& fileContents );
+void DumpFileToString( const std::string fileName, std::string& fileContents );
 
 
 /**

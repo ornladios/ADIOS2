@@ -30,7 +30,7 @@ namespace adios
 {
 
 
-void DumpFileToStream( const std::string fileName, std::string& fileContent )
+void DumpFileToString( const std::string fileName, std::string& fileContent )
 {
     std::ifstream fileStream( fileName );
 
@@ -339,7 +339,7 @@ void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
 
     if( rank == 0 ) //serial part
     {
-        DumpFileToStream( xmlConfigFile, xmlFileContent ); //in ADIOSFunctions.h dumps all XML Config File to xmlFileContent
+        DumpFileToString( xmlConfigFile, xmlFileContent ); //in ADIOSFunctions.h dumps all XML Config File to xmlFileContent
         xmlFileContentSize = xmlFileContent.size( ) + 1; // add one for the null character
 
         MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, mpiComm ); //broadcast size for allocation

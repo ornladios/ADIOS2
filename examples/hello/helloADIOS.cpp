@@ -27,13 +27,11 @@ int main( int argc, char* argv [] )
     try
     {
         //testing with CPOSIXMPI
-        adios = adios::ADIOS( "writer.xml", MPI_COMM_WORLD );
+        adios = adios::ADIOS( "writer.xml", MPI_COMM_WORLD, true ); //debug mode
 
         //Get Monitor info
         std::ofstream logStream( "info_" + std::to_string(rank) + ".log" );
         adios.MonitorGroups( logStream );
-
-        MPI_Barrier( MPI_COMM_WORLD );
     }
     catch( std::exception& e ) //need to think carefully how to handle C++ exceptions with MPI to avoid deadlocking
     {
@@ -43,7 +41,7 @@ int main( int argc, char* argv [] )
         }
     }
 
-
+    MPI_Barrier( MPI_COMM_WORLD );
     MPI_Finalize( );
 
 

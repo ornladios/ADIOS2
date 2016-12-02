@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <adios-config host-language="C++">
-  <adios-group name="Types">
-    <var name="Numbers" type="std::vector<int>"/>
+  <adios-group name="Vector">
+    <var name="size" type="unsigned int"/>
+    <var name="numbers" type="int" dimension="size"/>
     <attribute name="description" value="1 to 10"/>
-
   </adios-group>
   
   <transport group="Types" method="FStream">verbose=3</transport>
