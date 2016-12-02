@@ -14,14 +14,17 @@
 /// \endcond
 
 #include "transport/CFStream.h"
+#include "functions/ADIOSFunctions.h" //CreateDirectory
 
 namespace adios
 {
 
 
-CFStream::CFStream( MPI_Comm mpiComm, const bool debugMode ):
+CFStream::CFStream( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
     CTransport( "FStream", mpiComm, debugMode )
-{ }
+{
+    //here do something with arguments
+}
 
 
 CFStream::~CFStream( )

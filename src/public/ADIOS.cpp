@@ -32,7 +32,7 @@ ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
     m_XMLConfigFile{ xmlConfigFile },
     m_DebugMode{ debugMode }
 {
-    InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Groups );
+    InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Transforms, m_Groups );
 }
 
 
@@ -43,7 +43,7 @@ ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
 {
     MPI_Comm_rank( m_MPIComm, &m_RankMPI );
     MPI_Comm_size( m_MPIComm, &m_SizeMPI );
-    InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Groups );
+    InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Transforms, m_Groups );
 }
 
 
@@ -169,7 +169,7 @@ void ADIOS::CheckGroup( std::map< std::string, CGroup >::const_iterator itGroup,
 void ADIOS::CheckCapsule( std::map< std::string, CCapsule >::const_iterator itCapsule,
                           const std::string streamName, const std::string hint ) const
 {
-    if( itCapsule == m_Groups.end() )
+    if( itCapsule == m_Capsules.end() )
         throw std::invalid_argument( "ERROR: stream (or file) " + streamName + " not created with Open , " + hint + "\n" );
 }
 

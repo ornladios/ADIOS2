@@ -55,7 +55,8 @@ template<class T>
 void WriteHelper( CCapsule& capsule, CGroup& group, const std::string variableName, const T* values,
                   const int transportIndex, const bool debugMode )
 {
-    auto lf_DebugType = []( const bool debugMode, const std::string type, const std::set<std::string>& typeAliases )
+    auto lf_DebugType = []( const bool debugMode, const std::string type, const std::set<std::string>& typeAliases,
+                            const std::string variableName )
     {
         if( debugMode == true )
         {
@@ -80,67 +81,67 @@ void WriteHelper( CCapsule& capsule, CGroup& group, const std::string variableNa
     //will need to add a lambda function later and put types in a set
     if( std::is_same<T,char>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("char") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("char"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_Char[index], values, transportIndex );
     }
     else if( std::is_same<T,unsigned char>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned char") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned char"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_UChar[index], values, transportIndex );
     }
     else if( std::is_same<T,short>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("short") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("short"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_Short[index], values, transportIndex );
     }
     else if( std::is_same<T,unsigned short>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned short") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned short"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_UShort[index], values, transportIndex );
     }
     else if( std::is_same<T,int>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("int") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("int"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_Int[index], values, transportIndex );
     }
     else if( std::is_same<T,unsigned int>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned int") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned int"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_UInt[index], values, transportIndex );
     }
     else if( std::is_same<T,long int>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("long int") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("long int"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_LInt[index], values, transportIndex );
     }
     else if( std::is_same<T,unsigned long int>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned long int") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned long int"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_ULInt[index], values, transportIndex );
     }
     else if( std::is_same<T,long long int>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("long long int") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("long long int"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_LLInt[index], values, transportIndex );
     }
     else if( std::is_same<T,unsigned long long int>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned long long int") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("unsigned long long int"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_ULLInt[index], values, transportIndex );
     }
     else if( std::is_same<T,float>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("float") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("float"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_Float[index], values, transportIndex );
     }
     else if( std::is_same<T,double>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("double") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("double"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_Double[index], values, transportIndex );
     }
     else if( std::is_same<T,long double>::value )
     {
-        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("long double") );
+        lf_DebugType( debugMode, type, SSupport::DatatypesAliases.at("long double"), variableName );
         WriteHelperToCapsule( capsule, group, group.m_LDouble[index], values, transportIndex );
     }
 }

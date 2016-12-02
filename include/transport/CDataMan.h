@@ -36,7 +36,7 @@ public:
      * You might not need this one since Buffer has all data, we might turn it on for future reference
      * @param buffer
      */
-    void SetBuffer( const std::vector<char>& buffer );
+    void SetBuffer( std::vector<char>& buffer );
 
     /**
      * Here you will receive a reference (not a copy) to the variable being written as raw data ready to be sent.

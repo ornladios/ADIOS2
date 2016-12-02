@@ -50,6 +50,7 @@ public:
     int m_SizeMPI = 1; ///< current MPI processes size
 
     std::string m_CurrentGroup; ///< associated group to look for variable information
+    size_t m_MaxBufferSize = 0;
 
     CCapsule( ); ///< Default Empty constructor used with ADIOS class empty constructor
 
@@ -103,7 +104,6 @@ private:
     std::vector< std::shared_ptr<CTransport> > m_Transports;
     std::string m_AccessMode;
     std::vector<char> m_Buffer;
-    size_t m_MaxBufferSize = 0;
     const bool m_DebugMode = false;
     std::string GetName( const std::vector<std::string>& arguments ) const;
 };

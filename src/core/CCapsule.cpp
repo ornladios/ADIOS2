@@ -17,9 +17,14 @@
 #include "transform/CBZIP2.h"
 #endif
 
+#include "transport/CPOSIX.h"
+#include "transport/CFStream.h"
+#include "transport/CDataMan.h"
+
 
 namespace adios
 {
+
 
 CCapsule::CCapsule( )
 { }
@@ -30,7 +35,7 @@ CCapsule::CCapsule( const MPI_Comm mpiComm, const bool debugMode, const std::str
     m_MPIComm{ mpiComm },
     m_DebugMode{ debugMode }
 {
-   int transportIndex = AddTransport( streamName, accessMode, true, transport, arguments );
+   AddTransport( streamName, accessMode, true, transport, arguments );
 }
 
 
@@ -54,7 +59,7 @@ int CCapsule::AddTransport( const std::string streamName, const std::string acce
     }
 
     if( transport == "POSIX" )
-        m_Transports.push_back( std::make_shared<CPOSIX>( m_MPIComm, m_DebugMode, arguments ) ); //need to add arguments
+        m_Transports.push_back( std::make_shared<CPOSIX>( m_MPIComm, m_DebugMode, arguments ) );
 
     else if( transport == "FStream" )
         m_Transports.push_back( std::make_shared<CFStream>( m_MPIComm, m_DebugMode, arguments ) );

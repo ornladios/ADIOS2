@@ -71,7 +71,7 @@ public:
     void DefineVariable( const std::string variableName, const std::string type,
                          const std::string dimensionsCSV,
                          const std::string globalDimensionsCSV, const std::string globalOffsetsCSV,
-                         const int transformIndex = -1, const int compressionLevel = 0 );
+                         const short transformIndex = -1, const unsigned short int compressionLevel = 0 );
 
     /**
      * Sets a variable transform contained in ADIOS.m_Transforms (single container for all groups and variables)
@@ -154,7 +154,7 @@ private:
      * @param globalOffsetsCSV comma separated variables defining global offsets (e.g. "oNx,oNY,oNz")
      * @return -1 if not global --> both inputs are empty, otherwise index in m_GlobalBounds if exist or create a new element in m_GlobalBounds;
      */
-    const int SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept;
+    const short SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept;
 
     /**
      * Used by SetVariable to check if transform exists in m_Transform

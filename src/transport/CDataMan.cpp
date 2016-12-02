@@ -34,7 +34,7 @@ void CDataMan::Open( const std::string streamName, const std::string accessMode 
 }
 
 
-void CDataMan::SetBuffer( const std::vector<char>& buffer )
+void CDataMan::SetBuffer( std::vector<char>& buffer )
 {
     //empty for now
 }

@@ -81,9 +81,11 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
  * @param fileContent file Content in a single string
  * @param mpiComm MPI Communicator passed from application passed to Transport method if required
  * @param hostLanguage return the host language from fileContent
+ * @param transforms return the modified transforms vector if there are variables with transformations
  * @param groups passed returns the map of groups defined in fileContent
  */
-void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::string& hostLanguage,
+void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
+                 std::string& hostLanguage, std::vector< std::shared_ptr<CTransform> >& transforms,
                  std::map< std::string, CGroup >& groups );
 
 
@@ -93,11 +95,12 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, std::st
  * @param mpiComm communicator used from broadcasting
  * @param debugMode from ADIOS m_DebugMode passed to CGroup in groups
  * @param hostLanguage set from host-language in xml file
+ * @param transforms return the modified transforms vector if there are variables with transformations
  * @param groups passed returns the map of groups defined in fileContent
- * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
  */
 void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode,
-              std::string& hostLanguage, std::map< std::string, CGroup >& groups );
+              std::string& hostLanguage, std::vector< std::shared_ptr<CTransform> >& transforms,
+              std::map< std::string, CGroup >& groups );
 
 
 /**

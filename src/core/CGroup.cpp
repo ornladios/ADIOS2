@@ -42,7 +42,7 @@ CGroup::~CGroup( )
 void CGroup::DefineVariable( const std::string variableName, const std::string type,
                              const std::string dimensionsCSV,
                              const std::string globalDimensionsCSV, const std::string globalOffsetsCSV,
-                             const int transformIndex, const int compressionLevel )
+                             const short transformIndex, const unsigned short int compressionLevel )
 {
     if( m_DebugMode == true )
     {
@@ -54,7 +54,7 @@ void CGroup::DefineVariable( const std::string variableName, const std::string t
             throw std::invalid_argument( "ERROR: variable " + variableName + " already exists, in call to DefineVariable\n" );
     }
 
-    int globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
+    short globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
 
     if( IsTypeAlias( type, SSupport::DatatypesAliases.at("char") ) == true )
     {
@@ -230,7 +230,7 @@ const unsigned long long int CGroup::GetIntVariableValue( const std::string vari
 
     const std::string type( m_Variables.at( variableName ).first );
     const unsigned int index = m_Variables.at( variableName ).second;
-    const long long int value = -1;
+    long long int value = -1;
 
     if( IsTypeAlias( type, SSupport::DatatypesAliases.at("short") ) == true )
         value = *( m_Short[index].Values );
@@ -397,7 +397,7 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::share
 }
 
 
-const int CGroup::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
+const short CGroup::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
 {
     if( globalDimensionsCSV.empty() || globalOffsetsCSV.empty() )
         return -1;

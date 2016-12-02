@@ -12,10 +12,18 @@
 #include <iostream>
 #include <thread>  //std::thread
 #include <cstring> //std::memcpy
+
+#include <sys/types.h> //CreateDirectory
+#include <sys/stat.h> //stat
+#include <unistd.h> //CreateDirectory
 /// \endcond
 
 #include "functions/ADIOSFunctions.h"
 #include "public/SSupport.h"
+
+#ifdef HAVE_BZIP2
+#include "transform/CBZIP2.h"
+#endif
 
 
 namespace adios
@@ -181,7 +189,8 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
 
 
 void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const bool debugMode,
-                 std::string& hostLanguage, std::map< std::string, CGroup >& groups )
+                 std::string& hostLanguage, std::vector< std::shared_ptr<CTransform> >& transforms,
+                 std::map< std::string, CGroup >& groups )
 {
     //adios-config
     std::string currentContent;
@@ -260,7 +269,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
                 throw std::invalid_argument( "ERROR: group " + groupName + " defined twice.\n" );
         }
 
-        groups.emplace( groupName, CGroup( hostLanguage, xmlGroup, debugMode ) );
+        groups.emplace( groupName, CGroup( hostLanguage, xmlGroup, transforms, debugMode ) );
 
         currentContent.erase( currentContent.find( xmlGroup ), xmlGroup.size() );
         currentPosition = 0;
@@ -319,7 +328,8 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
 
 
 void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode,
-              std::string& hostLanguage, std::map< std::string, CGroup >& groups )
+              std::string& hostLanguage, std::vector< std::shared_ptr<CTransform> >& transforms,
+              std::map< std::string, CGroup >& groups )
 {
     int xmlFileContentSize;
     std::string xmlFileContent;
@@ -346,7 +356,7 @@ void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
         delete []( xmlFileContentMPI ); //delete char* needed for MPI, might add size is moving to C++14 for optimization, avoid memory leak
     }
 
-    SetMembers( xmlFileContent,  mpiComm, debugMode, hostLanguage,  groups );
+    SetMembers( xmlFileContent,  mpiComm, debugMode, hostLanguage, transforms, groups );
 }
 
 
@@ -365,7 +375,7 @@ void CreateDirectory( const std::string fullPath ) noexcept
 {
     auto lf_Mkdir = []( const std::string directory, struct stat& st )
     {
-        if ( stat( directory.c_str(), &st) == -1 )
+        if ( stat( directory.c_str(), &st ) == -1 )
         {
             mkdir( directory.c_str(), 0777 );
         }
@@ -429,7 +439,12 @@ void SetTransformHelper( const std::string transform, std::vector< std::shared_p
     if( transformIndex == -1 ) //not found, then create a new transform
     {
         if( transform == "bzip2" )
+        {
+            #ifdef HAVE_BZIP2
             transforms.push_back( std::make_shared<CBZIP2>( ) );
+            #endif
+        }
+
     }
 
     transformIndex = static_cast<int>( transforms.size() - 1 );

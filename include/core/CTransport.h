@@ -72,7 +72,7 @@ public:
      * Sets the buffer and bufferSize for certain transport methods
      * @param buffer to be set to transport
      */
-    virtual void SetBuffer( const std::vector<char>& buffer )
+    virtual void SetBuffer( std::vector<char>& buffer )
     { };
 
     virtual void Write( std::vector<char>& buffer )
@@ -88,7 +88,6 @@ protected:
 
     virtual void Init( const std::vector<std::string>& arguments )
     { };
-
 
 };
 

@@ -35,8 +35,8 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
         return;
     }
 
-    const unsigned long long int stride = (unsigned long long int)std::floor( (unsigned long long int)count/cores );
-    const unsigned long long int remainder =  (unsigned long int) count % cores;
+    const unsigned long long int stride =  count/cores;
+    const unsigned long long int remainder = count % cores;
     const unsigned long long int last = stride + remainder;
 
     std::vector<std::thread> memcpyThreads;
