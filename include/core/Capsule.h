@@ -1,12 +1,12 @@
 /*
- * CCapsule.h
+ * Capsule.h
  *
  *  Created on: Nov 7, 2016
  *      Author: wfg
  */
 
-#ifndef CCAPSULE_H_
-#define CCAPSULE_H_
+#ifndef CAPSULE_H_
+#define CAPSULE_H_
 
 
 /// \cond EXCLUDE_FROM_DOXYGEN
@@ -22,11 +22,11 @@
   #include "public/mpidummy.h"
 #endif
 
-#include "core/CGroup.h"
-#include "core/SVariable.h"
-#include "core/CTransform.h"
-#include "core/CTransport.h"
-#include "functions/CCapsuleTemplates.h"
+#include "core/Group.h"
+#include "core/Variable.h"
+#include "core/Transform.h"
+#include "core/Transport.h"
+#include "functions/capsuleTemplates.h"
 
 
 namespace adios
@@ -35,7 +35,7 @@ namespace adios
 /**
  * Base class for Capsule operations managing shared-memory, and buffer and variables transform and transport operations
  */
-class CCapsule
+class Capsule
 {
 
 public:
@@ -52,7 +52,7 @@ public:
     std::string m_CurrentGroup; ///< associated group to look for variable information
     size_t m_MaxBufferSize = 0;
 
-    CCapsule( ); ///< Default Empty constructor used with ADIOS class empty constructor
+    Capsule( ); ///< Default Empty constructor used with ADIOS class empty constructor
 
     /**
      * Multiple argument constructor
@@ -61,10 +61,10 @@ public:
      * @param debugMode
      */
 
-    CCapsule( const MPI_Comm mpiComm, const bool debugMode, const std::string streamName, const std::string accessMode,
-              const std::string transport, const std::vector<std::string>& arguments );
+    Capsule( const MPI_Comm mpiComm, const bool debugMode, const std::string streamName, const std::string accessMode,
+             const std::string transport, const std::vector<std::string>& arguments );
 
-    ~CCapsule( );
+    ~Capsule( );
 
     /**
      * Add a transport to a stream
@@ -91,7 +91,7 @@ public:
         {
             if( transportIndex >= m_Transports.size() )
                 throw std::invalid_argument( "ERROR: transport index " + std::to_string( transportIndex ) +
-                                              " does not point to a transport method in call to Write\n" );
+                                             " does not point to a transport method in call to Write\n" );
         }
         WriteToBuffer( data, size, transportIndex, m_Transports, m_MaxBufferSize, m_Buffer );
     }
@@ -101,7 +101,7 @@ public:
 
 private:
 
-    std::vector< std::shared_ptr<CTransport> > m_Transports;
+    std::vector< std::shared_ptr<Transport> > m_Transports;
     std::string m_AccessMode;
     std::vector<char> m_Buffer;
     const bool m_DebugMode = false;
@@ -111,4 +111,4 @@ private:
 
 } //end namespace
 
-#endif /* CCAPSULE_H_ */
+#endif /* CAPSULE_H_ */

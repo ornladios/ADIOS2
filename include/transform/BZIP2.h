@@ -1,22 +1,22 @@
 /*
- * CBZIP2.h
+ * BZIP2.h
  *
  *  Created on: Oct 17, 2016
  *      Author: wfg
  */
 
-#ifndef CBZIP2_H_
-#define CBZIP2_H_
+#ifndef BZIP2_H_
+#define BZIP2_H_
 
 
-#include "core/CTransform.h"
+#include "core/Transform.h"
 
 
 namespace adios
 {
 
 
-class CBZIP2 : public CTransform
+class BZIP2 : public Transform
 {
 
 public:
@@ -26,9 +26,9 @@ public:
      * @param compressionLevel
      * @param variable
      */
-    CBZIP2( );
+    BZIP2( );
 
-    ~CBZIP2( );
+    ~BZIP2( );
 
     void Compress( const std::vector<char>& bufferIn, std::vector<char>& bufferOut );
 
@@ -40,4 +40,4 @@ public:
 
 
 
-#endif /* CBZIP2_H_ */
+#endif /* BZIP2_H_ */

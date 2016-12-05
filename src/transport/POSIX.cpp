@@ -1,31 +1,32 @@
 /*
- * CPOSIXMPI.cpp
+ * POSIXMPI.cpp
  *
  *  Created on: Oct 6, 2016
  *      Author: wfg
  */
 
+
 #include <stdio.h>
 
-#include "transport/CPOSIX.h"
-#include "functions/ADIOSFunctions.h" // CreateDirectory
+#include "transport/POSIX.h"
+#include "functions/adiosFunctions.h" // CreateDirectory
 
 
 namespace adios
 {
 
 
-CPOSIX::CPOSIX( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
-    CTransport( "POSIX", mpiComm, debugMode ),
+POSIX::POSIX( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
+    Transport( "POSIX", mpiComm, debugMode ),
     m_File( NULL )
 { }
 
 
-CPOSIX::~CPOSIX( )
+POSIX::~POSIX( )
 { }
 
 
-void CPOSIX::Open( const std::string streamName, const std::string accessMode )
+void POSIX::Open( const std::string streamName, const std::string accessMode )
 {
     const std::string directory( streamName + ".dir" );
 
@@ -56,7 +57,7 @@ void CPOSIX::Open( const std::string streamName, const std::string accessMode )
 }
 
 
-void CPOSIX::SetBuffer( std::vector<char>& buffer )
+void POSIX::SetBuffer( std::vector<char>& buffer )
 {
     int status = setvbuf( m_File, &buffer[0], _IOFBF, buffer.size() );
 
@@ -68,19 +69,20 @@ void CPOSIX::SetBuffer( std::vector<char>& buffer )
 }
 
 
-void CPOSIX::Write( std::vector<char>& buffer )
+void POSIX::Write( std::vector<char>& buffer )
 {
     fwrite( &buffer[0], sizeof(char), buffer.size(), m_File );
 }
 
 
-void CPOSIX::Close( )
+void POSIX::Close( )
 {
     fclose( m_File );
 }
 
+
 //PRIVATE FUNCTIONS
-void CPOSIX::Init( const std::vector<std::string>& arguments )
+void POSIX::Init( const std::vector<std::string>& arguments )
 {
 
 }

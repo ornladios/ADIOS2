@@ -105,13 +105,14 @@ Variable scope and Namespaces
     
     
 Classes / Structs
-1) Classes will be initialized with a upper case "C" following by an upper, 
-   example: ( CADIOS, CNETCDF, CPHDF, CTransform, etc. )
-2) Structs will be initialized with a upper case "S". Reserve for plain old data, example: ( SAttribute )
-3) Class/Struct member variables (not functions) will use hungarian notation ("m_" prefix) 
-   followed by an upper case letter ( m_XMLConfig, m_GlobalSize )
-4) Only one file pair per class (class CADIOS in CADIOS.h and CADIOS.cpp), 
-   do not define several classes in the same file  
+1) Classes will be initialized with an upper case letter, example: ( ADIOS, NETCDF, PHDF5, Transform, Group, etc. )
+2) Class member variables will use hungarian notation "m_" prefix followed an upper case letter: m_XMLConfig, m_GlobalSize. While member functions will have the same rules as regular functions (e.g. start with an upper case letter).
+3) Reserve structs for public member variables only, Structs should not have member functions, inheritance or private members. Structs will be initialized with an upper case letter and member variables won't use hungarian notation as classes.
+   
+   
+4) Only allow one header and one source file per class ( e.g. class Transport in Transport.h and Transport.cpp), do not define several classes in the same file. 
+   Structs are always define in one header file, ( e.g. Attribute in Attribute.h )
+   One EXCEPTION: structs with static member variables, which must be defined in a source (*.cpp) file   
  
  
 Memory Management: Pointers, Smart Pointers, References and STL Containers
@@ -161,9 +162,6 @@ Avoid mixing C-like equivalents
 
 
 C++ Exceptions
-1) Throw C++ standard exceptions for error handling, do not throw integers. 
-   This is helpful as it allows handling of different exception types in different ways.
-   In rare cases a custom exceptions must be defined/declared.
-2) Use informative messages for exception handling to complement the nature of the exception. 
-   Help the user fix the error/warning.
-3) Error exceptions that are caught at main (program stops) must start with "ERROR: "  
+1) Throw C++ standard exceptions for error handling, do not throw integers. This is helpful as it allows handling of different exception types in different ways. In rare cases a custom exceptions must be defined/declared.
+2) All error exceptions must be caught at main (program stops) and must start with "ERROR: ". Use informative messages for exception handling to complement the nature of the exception. Help the user fix the error/warning.
+3) Exceptions thrown by the code (no by STL functions) must be inside a debug mode condition set in the ADIOS class constructor.

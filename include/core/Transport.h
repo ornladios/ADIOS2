@@ -1,12 +1,12 @@
 /*
- * CTransport.h
+ * Transport.h
  *
  *  Created on: Oct 6, 2016
  *      Author: wfg
  */
 
-#ifndef CTRANSPORT_H_
-#define CTRANSPORT_H_
+#ifndef TRANSPORT_H_
+#define TRANSPORT_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -20,11 +20,10 @@
 #endif
 
 
-
 namespace adios
 {
 
-class CTransport
+class Transport
 {
 
 public:
@@ -42,24 +41,15 @@ public:
     int m_MPIRank = 0; ///< current MPI rank process
     int m_MPISize = 1; ///< current MPI processes size
 
-
     /**
      * Base constructor that all derived classes pass
      * @param mpiComm passed to m_MPIComm
      * @param debugMode passed to m_DebugMode
      */
-    CTransport( const std::string method, MPI_Comm mpiComm, const bool debugMode ):
-        m_Method{ method },
-        m_MPIComm{ mpiComm },
-        m_DebugMode{ debugMode }
-    {
-        MPI_Comm_rank( m_MPIComm, &m_MPIRank );
-        MPI_Comm_size( m_MPIComm, &m_MPISize );
-    }
+    Transport( const std::string method, MPI_Comm mpiComm, const bool debugMode );
 
 
-    virtual ~CTransport( )
-    { }
+    virtual ~Transport( ); ///< empty destructor, using STL for memory management
 
     /**
      * Open Output file accesing a mode
@@ -72,22 +62,25 @@ public:
      * Sets the buffer and bufferSize for certain transport methods
      * @param buffer to be set to transport
      */
-    virtual void SetBuffer( std::vector<char>& buffer )
-    { };
+    virtual void SetBuffer( std::vector<char>& buffer );
 
-    virtual void Write( std::vector<char>& buffer )
-    { };
+    /**
+     * Write function for a transport, only called if required
+     * @param buffer
+     */
+    virtual void Write( std::vector<char>& buffer );
 
-    virtual void Close( ) = 0; //here think what needs to be passed
 
+    virtual void Close( ) = 0; ///< closes current transport and flushes everything, can't be reachable after this call
 
-    virtual void Finalize( )
-    { };
 
 protected:
 
-    virtual void Init( const std::vector<std::string>& arguments )
-    { };
+    /**
+     * Initialize particular derived transport class members
+     * @param arguments particular transport arguments from ADIOS Open variadic function
+     */
+    virtual void Init( const std::vector<std::string>& arguments );
 
 };
 
@@ -97,4 +90,4 @@ protected:
 
 
 
-#endif /* CTRANSPORT_H_ */
+#endif /* TRANSPORT_H_ */

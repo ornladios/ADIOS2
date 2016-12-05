@@ -5,12 +5,13 @@
  *      Author: wfg
  */
 
-#ifndef CFSTREAM_H_
-#define CFSTREAM_H_
+#ifndef FSTREAM_H_
+#define FSTREAM_H_
+
 
 #include <fstream>
 
-#include "core/CTransport.h"
+#include "core/Transport.h"
 
 
 namespace adios
@@ -19,14 +20,14 @@ namespace adios
 /**
  * Class that defines a transport method using C++ file streams
  */
-class CFStream : public CTransport
+class FStream : public Transport
 {
 
 public:
 
-    CFStream( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments );
+    FStream( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments );
 
-    ~CFStream( );
+    ~FStream( );
 
     void Open( const std::string streamName, const std::string accessMode );
 
@@ -49,4 +50,4 @@ private:
 
 
 
-#endif /* CFSTREAM_H_ */
+#endif /* FSTREAM_H_ */

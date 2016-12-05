@@ -1,19 +1,22 @@
 /*
- * CCapsuleTemplates.h
+ * capsuleTemplates.h
  *
  *  Created on: Nov 18, 2016
  *      Author: wfg
  */
 
-#ifndef CCAPSULETEMPLATES_H_
-#define CCAPSULETEMPLATES_H_
+#ifndef CAPSULETEMPLATES_H_
+#define CAPSULETEMPLATES_H_
 
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstring> //std::memcpy
 #include <vector>
 #include <thread>
+/// \endcond
 
-#include "core/CTransport.h"
+
+#include "core/Transport.h"
 
 
 namespace adios
@@ -69,10 +72,10 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
  */
 template<class T>
 void WriteToBuffer( const T* data, const size_t size, const int transportIndex,
-                    std::vector< std::shared_ptr<CTransport> >& transports,
+                    std::vector< std::shared_ptr<Transport> >& transports,
                     const size_t maxBufferSize, std::vector<char>& buffer )
 {
-    auto lf_TransportsWrite = []( const int transportIndex, std::vector< std::shared_ptr<CTransport> >& transports,
+    auto lf_TransportsWrite = []( const int transportIndex, std::vector< std::shared_ptr<Transport> >& transports,
                                   std::vector<char>& buffer )
     {
         if( transportIndex == -1 ) // all transports
@@ -142,4 +145,4 @@ void WriteToBuffer( const T* data, const size_t size, const int transportIndex,
 
 
 
-#endif /* CCAPSULETEMPLATES_H_ */
+#endif /* CAPSULETEMPLATES_H_ */

@@ -1,12 +1,12 @@
 /*
- * CGroup.h
+ * Group.h
  *
  *  Created on: Oct 12, 2016
  *      Author: wfg
  */
 
-#ifndef CGROUP_H_
-#define CGROUP_H_
+#ifndef GROUP_H_
+#define GROUP_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
@@ -24,10 +24,10 @@
 #endif
 
 
-#include "core/SVariable.h"
-#include "core/SAttribute.h"
-#include "core/CTransport.h"
-#include "core/CTransform.h"
+#include "core/Variable.h"
+#include "core/Attribute.h"
+#include "core/Transport.h"
+#include "core/Transform.h"
 
 
 namespace adios
@@ -35,7 +35,7 @@ namespace adios
 /**
  * Class that defines each ADIOS Group composed of Variables, Attributes and GlobalBounds (if global variables exist)
  */
-class CGroup
+class Group
 {
 
 public:
@@ -44,21 +44,21 @@ public:
      * @brief Constructor for XML config file
      * @param hostLanguage reference from ADIOS class
      * @param xmlGroup contains <adios-group (tag excluded)....</adios-group> single group definition from XML config file
-     * @param transforms passed from ADIOS.m_Transforms
+     * @param transforms passed from ADIOS.m_Transforms, single look up table for all transforms
      * @param debugMode from ADIOS
      */
-    CGroup( const std::string hostLanguage, const std::string& xmlGroup,
-            std::vector< std::shared_ptr<CTransform> >& transforms, const bool debugMode );
+    Group( const std::string hostLanguage, const std::string& xmlGroup,
+           std::vector< std::shared_ptr<Transform> >& transforms, const bool debugMode );
 
     /**
      * Non-XML empty constructor
      * @param hostLanguage reference from ADIOS class
      * @param debugMode
      */
-    CGroup( const std::string hostLanguage, const bool debugMode );
+    Group( const std::string hostLanguage, const bool debugMode );
 
 
-    ~CGroup( ); ///< Using STL containers, no deallocation
+    ~Group( ); ///< Using STL containers, no deallocation
 
     /**
      * Define a new variable in the group object
@@ -115,19 +115,19 @@ private:
 
     std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of CVariable
 
-    std::vector< SVariable<char> > m_Char; ///< Key: variable name, Value: variable of type char
-    std::vector< SVariable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
-    std::vector< SVariable<short> > m_Short; ///< Key: variable name, Value: variable of type short
-    std::vector< SVariable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
-    std::vector< SVariable<int> > m_Int; ///< Key: variable name, Value: variable of type int
-    std::vector< SVariable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
-    std::vector< SVariable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
-    std::vector< SVariable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
-    std::vector< SVariable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
-    std::vector< SVariable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
-    std::vector< SVariable<float> > m_Float; ///< Key: variable name, Value: variable of type float
-    std::vector< SVariable<double> > m_Double; ///< Key: variable name, Value: variable of type double
-    std::vector< SVariable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
+    std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
+    std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
+    std::vector< Variable<short> > m_Short; ///< Key: variable name, Value: variable of type short
+    std::vector< Variable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
+    std::vector< Variable<int> > m_Int; ///< Key: variable name, Value: variable of type int
+    std::vector< Variable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
+    std::vector< Variable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
+    std::vector< Variable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
+    std::vector< Variable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
+    std::vector< Variable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
+    std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
+    std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
+    std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
 
     std::set<std::string> m_SetVariables; ///< set of variables whose T* values have been set (no nullptr)
 
@@ -138,7 +138,7 @@ private:
      *     Value: SAttribute, plain-old-data struct
      * </pre>
      */
-    std::map< std::string, SAttribute > m_Attributes;
+    std::map< std::string, Attribute > m_Attributes;
 
     std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
 
@@ -146,7 +146,7 @@ private:
      * Called from XML constructor
      * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file passing by reference as it could be big
      */
-    void ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared_ptr<CTransform> >& transforms );
+    void ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms );
 
     /**
      * Used by SetVariable and SetAttribute to check if global bounds exist in m_GlobalBounds
@@ -178,4 +178,4 @@ private:
 } //end namespace
 
 
-#endif /* CGROUP_H_ */
+#endif /* GROUP_H_ */

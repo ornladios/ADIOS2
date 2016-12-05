@@ -1,30 +1,32 @@
 /*
- * CPOSIXMPI.h
+ * POSIXMPI.h
  *
  *  Created on: Oct 6, 2016
  *      Author: wfg
  */
 
-#ifndef CPOSIX_H_
-#define CPOSIX_H_
+#ifndef POSIX_H_
+#define POSIX_H_
+
 
 #include <stdio.h> //FILE*
 
-#include "core/CTransport.h"
+
+#include "core/Transport.h"
 
 
 namespace adios
 {
 
 
-class CPOSIX : public CTransport
+class POSIX : public Transport
 {
 
 public:
 
-    CPOSIX( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments  );
+    POSIX( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments  );
 
-    ~CPOSIX( );
+    ~POSIX( );
 
     void Open( const std::string streamName, const std::string accessMode );
 
@@ -37,7 +39,7 @@ public:
 
 private:
 
-    FILE* m_File;
+    FILE* m_File; ///< POSIX C file pointer
 
     void Init( const std::vector<std::string>& arguments );
 
@@ -47,4 +49,4 @@ private:
 } //end namespace
 
 
-#endif /* CPOSIX_H_ */
+#endif /* POSIX_H_ */

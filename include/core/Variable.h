@@ -1,12 +1,12 @@
 /*
- * CVariable.h
+ * Variable.h
  *
  *  Created on: Oct 6, 2016
  *      Author: wfg
  */
 
-#ifndef SVARIABLE_H_
-#define SVARIABLE_H_
+#ifndef VARIABLE_H_
+#define VARIABLE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -21,7 +21,7 @@ namespace adios
  * @param Base (parent) class for template derived (child) class CVariable. Required to put CVariable objects in STL containers.
  */
 template< class T >
-struct SVariable
+struct Variable
 {
     const std::string DimensionsCSV; ///< comma separated list for variables to search for local dimensions
     const T* Values; ///< pointer to values passed from ADIOS Write
@@ -35,4 +35,4 @@ struct SVariable
 
 
 
-#endif /* SVARIABLE_H_ */
+#endif /* VARIABLE_H_ */

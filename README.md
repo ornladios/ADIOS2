@@ -1,7 +1,7 @@
 # ADIOSPP
 
 Next generation ADIOS in C++ for exascale computations 
-Read ./doc/CodingGuidelines first
+Read ./doc/CodingGuidelines first if you are a developer
 
 Create ./lib and ./bin libraries before compiling 
 make      -> build ./lib/libadios.a with truly MPI code (from mpi.h)

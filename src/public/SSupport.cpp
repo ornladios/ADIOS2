@@ -6,32 +6,32 @@
  */
 
 
-#include "public/SSupport.h"
+#include "public/Support.h"
 
 
 namespace adios
 {
 
 
-const std::string SSupport::Version{ "2.00" };
+const std::string Support::Version{ "2.00" };
 
 
-const std::set<std::string> SSupport::HostLanguages{
+const std::set<std::string> Support::HostLanguages{
     { "C", "C++", "Fortran", "Python", "Java" }
 };
 
 
-const std::set<std::string> SSupport::Transports{
+const std::set<std::string> Support::Transports{
     { "NULL", "POSIX", "FStream", "MPI", "MPI_LUSTRE", "MPI_AGGREGATE", "DATASPACES", "DIMES", "FLEXPATH", "PHDF5", "NC4", "ICEE" }
 };
 
 
-const std::set<std::string> SSupport::Transforms{
+const std::set<std::string> Support::Transforms{
     { "none", "identity", "bzip2", "isobar", "szip" , "zlib" }
 };
 
 
-const std::map<std::string, std::set<std::string> > SSupport::Datatypes
+const std::map<std::string, std::set<std::string> > Support::Datatypes
 {
     { "C++",
         {
@@ -85,7 +85,7 @@ const std::map<std::string, std::set<std::string> > SSupport::Datatypes
 };
 
 
-const std::map<std::string, std::set<std::string> > SSupport::DatatypesAliases
+const std::map<std::string, std::set<std::string> > Support::DatatypesAliases
 {
     { "char",           { "char", "character" }  },
     { "unsigned char",  { "unsigned char", "unsigned character" }  },

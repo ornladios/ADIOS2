@@ -14,7 +14,7 @@
 /// \endcond
 
 #include "public/ADIOS.h"
-#include "functions/ADIOSFunctions.h"
+#include "functions/adiosFunctions.h"
 
 
 namespace adios
@@ -98,7 +98,7 @@ void ADIOS::DeclareGroup( const std::string groupName )
             throw std::invalid_argument( "ERROR: group " + groupName + " already exist, from call to CreateGroup\n" );
     }
 
-    m_Groups.emplace( groupName, CGroup( m_HostLanguage, m_DebugMode ) );
+    m_Groups.emplace( groupName, Group( m_HostLanguage, m_DebugMode ) );
 }
 
 
@@ -121,7 +121,7 @@ void ADIOS::SetTransform( const std::string groupName, const std::string variabl
     {
         CheckGroup( itGroup, groupName, " from call to SetTransform \n" );
 
-        if( SSupport::Transforms.count( transform ) == 0 )
+        if( Support::Transforms.count( transform ) == 0 )
             throw std::invalid_argument( "ERROR: transform method " + transform +
                                          " not supported, in call to SetTransform\n" );
     }
@@ -157,16 +157,15 @@ void ADIOS::MonitorGroups( std::ostream& logStream ) const
 
 
 
-
 //PRIVATE FUNCTIONS BELOW
-void ADIOS::CheckGroup( std::map< std::string, CGroup >::const_iterator itGroup,
+void ADIOS::CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
                         const std::string groupName, const std::string hint ) const
 {
     if( itGroup == m_Groups.end() )
         throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
 }
 
-void ADIOS::CheckCapsule( std::map< std::string, CCapsule >::const_iterator itCapsule,
+void ADIOS::CheckCapsule( std::map< std::string, Capsule >::const_iterator itCapsule,
                           const std::string streamName, const std::string hint ) const
 {
     if( itCapsule == m_Capsules.end() )

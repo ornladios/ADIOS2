@@ -1,12 +1,12 @@
 /*
- * SAttribute.h
+ * Attribute.h
  *
  *  Created on: Oct 5, 2016
  *      Author: wfg
  */
 
-#ifndef SATTRIBUTE_H_
-#define SATTRIBUTE_H_
+#ifndef ATTRIBUTE_H_
+#define ATTRIBUTE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -16,11 +16,11 @@ namespace adios
 {
 
 /**
- * Plain-old data struct that defines an attribute in an ADIOS group in CGroup.h
+ * Plain-old data struct that defines an attribute in an ADIOS group in Group.h
  */
-struct SAttribute
+struct Attribute
 {
-    const std::string Type; ///< string or numeric type
+    const char TypeID; ///< '0': string, '1': numeric
     const std::string Value; ///< information about the attribute
 };
 
@@ -29,4 +29,4 @@ struct SAttribute
 
 
 
-#endif /* SATTRIBUTE_H_ */
+#endif /* ATTRIBUTE_H_ */

@@ -20,10 +20,10 @@
   #include "public/mpidummy.h"
 #endif
 
-#include "core/CGroup.h"
-#include "core/CCapsule.h"
-#include "public/SSupport.h"
-#include "functions/ADIOSTemplates.h"
+#include "core/Group.h"
+#include "core/Capsule.h"
+#include "public/Support.h"
+#include "functions/adiosTemplates.h"
 
 
 namespace adios
@@ -94,7 +94,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         }
 
         std::vector<std::string> arguments = { args... };
-        m_Capsules.emplace( streamName, CCapsule( m_MPIComm, m_DebugMode, streamName, accessMode, transport, arguments ) );
+        m_Capsules.emplace( streamName, Capsule( m_MPIComm, m_DebugMode, streamName, accessMode, transport, arguments ) );
     }
 
     /**
@@ -240,7 +240,7 @@ private:
      *     Value: SGroup struct in SGroup.h
      * </pre>
      */
-    std::map< std::string, CGroup > m_Groups;
+    std::map< std::string, Group > m_Groups;
 
     /**
      * @brief List of Capsules, each defined from the Open function.
@@ -249,10 +249,10 @@ private:
      *     Value: CCapsule object
      * </pre>
      */
-    std::map< std::string, CCapsule > m_Capsules;
+    std::map< std::string, Capsule > m_Capsules;
 
 
-    std::vector< std::shared_ptr<CTransform> > m_Transforms; ///< transforms associated with ADIOS run
+    std::vector< std::shared_ptr<Transform> > m_Transforms; ///< transforms associated with ADIOS run
 
     /**
      * @brief Checks for group existence in m_Groups, if failed throws std::invalid_argument exception
@@ -260,7 +260,7 @@ private:
      * @param groupName unique name, passed for thrown exception only
      * @param hint adds information to thrown exception
      */
-    void CheckGroup( std::map< std::string, CGroup >::const_iterator itGroup,
+    void CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
                      const std::string groupName, const std::string hint ) const;
 
     /**
@@ -269,7 +269,7 @@ private:
      * @param streamName unique name, passed for thrown exception only
      * @param hint adds information to thrown exception
      */
-    void CheckCapsule( std::map< std::string, CCapsule >::const_iterator itCapsule,
+    void CheckCapsule( std::map< std::string, Capsule >::const_iterator itCapsule,
                        const std::string streamName, const std::string hint ) const;
 };
 

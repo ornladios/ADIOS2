@@ -1,33 +1,34 @@
 /*
- * CGroup.cpp
+ * Group.cpp
  *
  *  Created on: Oct 12, 2016
  *      Author: wfg
  */
 
+/// \cond EXCLUDED_FROM_DOXYGEN
+#include <algorithm> // std::find
+#include <sstream> // std::istringstream
+/// \endcond
 
-#include <iostream>
-#include <algorithm> // find
-#include <sstream> //istringstream
 
-#include "core/CGroup.h"
-#include "core/SVariable.h" //for cast implementation of CVariableBase::Set that calls CVariable::Set
-#include "public/SSupport.h"
-#include "functions/ADIOSFunctions.h" //for XML Parsing functions (e.g. GetTag)
+#include "core/Group.h"
+#include "core/Variable.h"
+#include "functions/adiosFunctions.h"
+#include "public/Support.h"
 
 
 namespace adios
 {
 
 
-CGroup::CGroup( const std::string hostLanguage, const bool debugMode ):
+Group::Group( const std::string hostLanguage, const bool debugMode ):
     m_HostLanguage{ hostLanguage },
     m_DebugMode{ debugMode }
 { }
 
 
-CGroup::CGroup( const std::string hostLanguage, const std::string& xmlGroup,
-                std::vector< std::shared_ptr<CTransform> >& transforms, const bool debugMode ):
+Group::Group( const std::string hostLanguage, const std::string& xmlGroup,
+                std::vector< std::shared_ptr<Transform> >& transforms, const bool debugMode ):
     m_HostLanguage{ hostLanguage },
     m_DebugMode{ debugMode }
 {
@@ -35,18 +36,18 @@ CGroup::CGroup( const std::string hostLanguage, const std::string& xmlGroup,
 }
 
 
-CGroup::~CGroup( )
+Group::~Group( )
 { }
 
 
-void CGroup::DefineVariable( const std::string variableName, const std::string type,
+void Group::DefineVariable( const std::string variableName, const std::string type,
                              const std::string dimensionsCSV,
                              const std::string globalDimensionsCSV, const std::string globalOffsetsCSV,
                              const short transformIndex, const unsigned short int compressionLevel )
 {
     if( m_DebugMode == true )
     {
-        if( SSupport::Datatypes.at( m_HostLanguage ).count( type ) == 0 )
+        if( Support::Datatypes.at( m_HostLanguage ).count( type ) == 0 )
             throw std::invalid_argument( "ERROR: type " + type + " for variable " + variableName +
                                          " is not supported, in call to DefineVariable\n" );
 
@@ -56,69 +57,69 @@ void CGroup::DefineVariable( const std::string variableName, const std::string t
 
     short globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
 
-    if( IsTypeAlias( type, SSupport::DatatypesAliases.at("char") ) == true )
+    if( IsTypeAlias( type, Support::DatatypesAliases.at("char") ) == true )
     {
-        m_Char.push_back( SVariable<char>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_Char.push_back( Variable<char>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_Char.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned char") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned char") ) == true )
     {
-        m_UChar.push_back( SVariable<unsigned char>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_UChar.push_back( Variable<unsigned char>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_UChar.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("short") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("short") ) == true )
     {
-        m_Short.push_back( SVariable<short>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_Short.push_back( Variable<short>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_Short.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned short") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned short") ) == true )
     {
-        m_UShort.push_back( SVariable<unsigned short>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_UShort.push_back( Variable<unsigned short>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_UShort.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("int") ) == true )
     {
-        m_Int.push_back( SVariable<int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_Int.push_back( Variable<int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_Int.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned int") ) == true )
     {
-        m_UInt.push_back( SVariable<unsigned int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_UInt.push_back( Variable<unsigned int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_UInt.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("long int") ) == true )
     {
-        m_LInt.push_back( SVariable<long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_LInt.push_back( Variable<long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_LInt.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long int") ) == true )
     {
-        m_ULInt.push_back( SVariable<unsigned long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_ULInt.push_back( Variable<unsigned long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_ULInt.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("long long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("long long int") ) == true )
     {
-        m_LLInt.push_back( SVariable<long long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_LLInt.push_back( Variable<long long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_LLInt.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned long long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long long int") ) == true )
     {
-        m_ULLInt.push_back( SVariable<unsigned long long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_ULLInt.push_back( Variable<unsigned long long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_ULLInt.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("float") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("float") ) == true )
     {
-        m_Float.push_back( SVariable<float>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_Float.push_back( Variable<float>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_Float.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("double") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("double") ) == true )
     {
-        m_Double.push_back( SVariable<double>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_Double.push_back( Variable<double>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_Double.size()-1 );
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("long double") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("long double") ) == true )
     {
-        m_LDouble.push_back( SVariable<long double>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
+        m_LDouble.push_back( Variable<long double>{ dimensionsCSV, nullptr, globalBoundsIndex, transformIndex, compressionLevel } );
         m_Variables[variableName] = std::make_pair( type, m_LDouble.size()-1 );
     }
 
@@ -126,7 +127,7 @@ void CGroup::DefineVariable( const std::string variableName, const std::string t
 }
 
 
-void CGroup::SetTransform( const std::string variableName, const unsigned int transformIndex, const unsigned int compressionLevel )
+void Group::SetTransform( const std::string variableName, const unsigned int transformIndex, const unsigned int compressionLevel )
 {
     auto itVariable = m_Variables.find( variableName );
 
@@ -139,62 +140,62 @@ void CGroup::SetTransform( const std::string variableName, const unsigned int tr
     const std::string type( itVariable->second.first );
     const unsigned int index = itVariable->second.second;
 
-    if( IsTypeAlias( type, SSupport::DatatypesAliases.at("char") ) == true )
+    if( IsTypeAlias( type, Support::DatatypesAliases.at("char") ) == true )
     {
         m_Char[index].TransformIndex = transformIndex;
         m_Char[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned char") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned char") ) == true )
     {
         m_UChar[index].TransformIndex = transformIndex;
         m_UChar[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("short") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("short") ) == true )
     {
         m_Short[index].TransformIndex = transformIndex;
         m_Short[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned short") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned short") ) == true )
     {
         m_UShort[index].TransformIndex = transformIndex;
         m_UShort[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("int") ) == true )
     {
         m_Int[index].TransformIndex = transformIndex;
         m_Int[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned int") ) == true )
     {
         m_UInt[index].TransformIndex = transformIndex;
         m_UInt[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("long int") ) == true )
     {
         m_LInt[index].TransformIndex = transformIndex;
         m_LInt[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long int") ) == true )
     {
         m_ULInt[index].TransformIndex = transformIndex;
         m_ULInt[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned long long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long long int") ) == true )
     {
         m_ULLInt[index].TransformIndex = transformIndex;
         m_ULLInt[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("float") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("float") ) == true )
     {
         m_Float[index].TransformIndex = transformIndex;
         m_Float[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("double") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("double") ) == true )
     {
         m_Double[index].TransformIndex = transformIndex;
         m_Double[index].CompressionLevel = compressionLevel;
     }
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("long double") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("long double") ) == true )
     {
         m_LDouble[index].TransformIndex = transformIndex;
         m_LDouble[index].CompressionLevel = compressionLevel;
@@ -202,25 +203,42 @@ void CGroup::SetTransform( const std::string variableName, const unsigned int tr
 }
 
 
-void CGroup::DefineAttribute( const std::string attributeName, const std::string type, const std::string value )
+void Group::DefineAttribute( const std::string attributeName, const std::string type, const std::string value )
 {
+    auto lf_GetTypeID = []( const std::string type, const bool debugMode ) -> const char
+    {
+        char typeID;
+        if( type == "string" )
+            typeID = '0';
+        else if( type == "numeric" )
+            typeID = '1';
+        else
+        {
+            if( debugMode == true )
+                throw std::invalid_argument( "ERROR: type " + type + " must be string or numeric, in call to DefineAttribute\n" );
+        }
+
+        return typeID;
+    };
+
+
     if( m_DebugMode == true )
     {
         if( m_Attributes.count( attributeName ) == 0 ) //attribute doesn't exists
-            m_Attributes.emplace( attributeName, SAttribute{ type, value } );
+            m_Attributes.emplace( attributeName, Attribute{ lf_GetTypeID( type, m_DebugMode ), value } );
         else //name is found
             throw std::invalid_argument( "ERROR: attribute " + attributeName + " exists, NOT setting a new variable\n" );
     }
     else
     {
-        m_Attributes.emplace( attributeName, SAttribute{ type, value } );
+        m_Attributes.emplace( attributeName, Attribute{ lf_GetTypeID( type, m_DebugMode ), value } );
     }
 
-    m_SerialSize += attributeName.size() + type.size() + value.size() + 3 * sizeof( char ); //3 is one byte storing the size as a char
+    m_SerialSize += attributeName.size() + 1 + value.size() + 3 * sizeof( char ); //3 is one byte storing the size as a char
 }
 
 
-const unsigned long long int CGroup::GetIntVariableValue( const std::string variableName ) const
+const unsigned long long int Group::GetIntVariableValue( const std::string variableName ) const
 {
     if( m_DebugMode == true )
     {
@@ -232,28 +250,28 @@ const unsigned long long int CGroup::GetIntVariableValue( const std::string vari
     const unsigned int index = m_Variables.at( variableName ).second;
     long long int value = -1;
 
-    if( IsTypeAlias( type, SSupport::DatatypesAliases.at("short") ) == true )
+    if( IsTypeAlias( type, Support::DatatypesAliases.at("short") ) == true )
         value = *( m_Short[index].Values );
 
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned short") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned short") ) == true )
         value = *( m_UShort[index].Values );
 
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("int") ) == true )
         value = *( m_Int[index].Values );
 
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned int") ) == true )
         value = *( m_UInt[index].Values );
 
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("long int") ) == true )
         value = *( m_LInt[index].Values );
 
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long int") ) == true )
         value = *( m_ULInt[index].Values );
 
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("long long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("long long int") ) == true )
         value = *( m_LLInt[index].Values );
 
-    else if( IsTypeAlias( type, SSupport::DatatypesAliases.at("unsigned long long int") ) == true )
+    else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long long int") ) == true )
         value = *( m_ULLInt[index].Values );
 
     else
@@ -269,7 +287,7 @@ const unsigned long long int CGroup::GetIntVariableValue( const std::string vari
 }
 
 
-std::vector<unsigned long long int> CGroup::GetDimensions( const std::string dimensionsCSV ) const
+std::vector<unsigned long long int> Group::GetDimensions( const std::string dimensionsCSV ) const
 {
     std::vector<unsigned long long int> dimensions;
 
@@ -292,25 +310,25 @@ std::vector<unsigned long long int> CGroup::GetDimensions( const std::string dim
 
 
 //PRIVATE FUNCTIONS BELOW
-void CGroup::Monitor( std::ostream& logStream ) const
+void Group::Monitor( std::ostream& logStream ) const
 {
     logStream << "\tVariable \t Type\n";
     for( auto& variablePair : m_Variables )
     {
         logStream << "\t" << variablePair.first << " \t " << variablePair.second.first << "\n";
     }
-    std::cout << "\n";
+    logStream << "\n";
 
     logStream << "\tAttribute \t Type \t Value \n";
     for( auto& attributePair : m_Attributes )
     {
-        logStream << "\t" << attributePair.first << " \t " << attributePair.second.Type << " \t " << attributePair.second.Value << "\n";
+        logStream << "\t" << attributePair.first << " \t " << attributePair.second.TypeID << " \t " << attributePair.second.Value << "\n";
     }
-    std::cout << "\n";
+    logStream << "\n";
 }
 
 
-void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared_ptr<CTransform> >& transforms )
+void Group::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms )
 {
     std::string::size_type currentPosition( 0 );
     std::string globalDimensionsCSV; //used to set variables
@@ -397,7 +415,7 @@ void CGroup::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::share
 }
 
 
-const short CGroup::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
+const short Group::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
 {
     if( globalDimensionsCSV.empty() || globalOffsetsCSV.empty() )
         return -1;

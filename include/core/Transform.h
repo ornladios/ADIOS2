@@ -1,19 +1,19 @@
 /*
- * CTransform.h
+ * Transform.h
  *
  *  Created on: Oct 17, 2016
  *      Author: wfg
  */
 
-#ifndef CTRANSFORM_H_
-#define CTRANSFORM_H_
+#ifndef TRANSFORM_H_
+#define TRANSFORM_H_
 
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 /// \endcond
 
-#include "core/SVariable.h"
+#include "core/Variable.h"
 
 
 namespace adios
@@ -22,7 +22,7 @@ namespace adios
 /**
  * Parent class that defines data variable transformations. Used as a member of CVariable
  */
-class CTransform
+class Transform
 {
 
 public:
@@ -35,11 +35,9 @@ public:
      * @param method zlib, bzip2, szip
      * @param variable
      */
-    CTransform( const std::string method ):
-        m_Method{ method }
-    { }
+    Transform( const std::string method );
 
-    virtual ~CTransform( ){ };
+    virtual ~Transform( );
 
     virtual void Compress( const std::vector<char>& bufferIn, std::vector<char>& bufferOut ) = 0;
 
@@ -49,4 +47,4 @@ public:
 
 
 } //end namespace
-#endif /* CTRANSFORM_H_ */
+#endif /* TRANSFORM_H_ */

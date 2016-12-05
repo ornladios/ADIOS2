@@ -1,5 +1,5 @@
 /*
- * ADIOSFunctions.h Long helper functions used by ADIOS class
+ * adiosFunctions.h Long helper functions used by ADIOS class
  *
  *  Created on: Oct 10, 2016
  *      Author: wfg
@@ -22,7 +22,7 @@
 #endif
 
 
-#include "core/CGroup.h"
+#include "core/Group.h"
 
 
 namespace adios
@@ -85,8 +85,8 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
  * @param groups passed returns the map of groups defined in fileContent
  */
 void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
-                 std::string& hostLanguage, std::vector< std::shared_ptr<CTransform> >& transforms,
-                 std::map< std::string, CGroup >& groups );
+                 std::string& hostLanguage, std::vector< std::shared_ptr<Transform> >& transforms,
+                 std::map< std::string, Group >& groups );
 
 
 /**
@@ -99,8 +99,8 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
  * @param groups passed returns the map of groups defined in fileContent
  */
 void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode,
-              std::string& hostLanguage, std::vector< std::shared_ptr<CTransform> >& transforms,
-              std::map< std::string, CGroup >& groups );
+              std::string& hostLanguage, std::vector< std::shared_ptr<Transform> >& transforms,
+              std::map< std::string, Group >& groups );
 
 
 /**
@@ -129,10 +129,15 @@ void CreateDirectory( const std::string fullPath ) noexcept;
  * @param transformIndex returns the corresponding transformIndex in transforms for this transport method
  * @param compressionLevel returns the corresponding compression level from transport = "method:compressionLevel"
  */
-void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<CTransform> >& transforms,
+void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<Transform> >& transforms,
                          const bool debugMode, int& transformIndex, int& compressionLevel );
 
-
+/**
+ * Check in types set if "type" is one of the aliases for a certain type, (e.g. if type = integer is an accepted alias for "int", returning true)
+ * @param type input to be compared with an alias
+ * @param types set containing aliases to a certain type, from Support.h
+ * @return true: is an alias, false: is not
+ */
 bool IsTypeAlias( const std::string type, const std::set<std::string>& types );
 
 

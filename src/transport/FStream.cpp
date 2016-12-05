@@ -13,25 +13,26 @@
 #include <cstring>
 /// \endcond
 
-#include "transport/CFStream.h"
-#include "functions/ADIOSFunctions.h" //CreateDirectory
+#include "functions/adiosFunctions.h" //CreateDirectory
+#include "transport/FStream.h"
+
 
 namespace adios
 {
 
 
-CFStream::CFStream( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
-    CTransport( "FStream", mpiComm, debugMode )
+FStream::FStream( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
+    Transport( "FStream", mpiComm, debugMode )
 {
     //here do something with arguments
 }
 
 
-CFStream::~CFStream( )
+FStream::~FStream( )
 { }
 
 
-void CFStream::Open( const std::string streamName, const std::string accessMode )
+void FStream::Open( const std::string streamName, const std::string accessMode )
 {
     const std::string directory( streamName + ".dir" ); //data.bp.dir
 
@@ -61,18 +62,18 @@ void CFStream::Open( const std::string streamName, const std::string accessMode 
 }
 
 
-void CFStream::SetBuffer( std::vector<char>& buffer )
+void FStream::SetBuffer( std::vector<char>& buffer )
 {
     m_FStream.rdbuf()->pubsetbuf( &buffer[0], buffer.size() );
 }
 
-void CFStream::Write( std::vector<char>& buffer )
+void FStream::Write( std::vector<char>& buffer )
 {
     m_FStream.write( &buffer[0], buffer.size() );
 }
 
 
-void CFStream::Close(  )
+void FStream::Close(  )
 {
     m_FStream.close();
 }
@@ -141,9 +142,6 @@ void CFStream::Close(  )
 //        MPI_Barrier( m_MPIComm );
 //    }
 //}
-
-
-
 
 
 } //end namespace

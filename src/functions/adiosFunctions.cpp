@@ -1,5 +1,5 @@
 /*
- * ADIOSFunctions.cpp
+ * adiosFunctions.cpp
  *
  *  Created on: Oct 10, 2016
  *      Author: wfg
@@ -18,8 +18,8 @@
 #include <unistd.h> //CreateDirectory
 /// \endcond
 
-#include "functions/ADIOSFunctions.h"
-#include "public/SSupport.h"
+#include "functions/adiosFunctions.h"
+#include "public/Support.h"
 
 #ifdef HAVE_BZIP2
 #include "transform/CBZIP2.h"
@@ -189,8 +189,8 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
 
 
 void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const bool debugMode,
-                 std::string& hostLanguage, std::vector< std::shared_ptr<CTransform> >& transforms,
-                 std::map< std::string, CGroup >& groups )
+                 std::string& hostLanguage, std::vector< std::shared_ptr<Transform> >& transforms,
+                 std::map< std::string, Group >& groups )
 {
     //adios-config
     std::string currentContent;
@@ -223,7 +223,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
 
     if( debugMode == true )
     {
-        if( SSupport::HostLanguages.count( hostLanguage ) == 0 )
+        if( Support::HostLanguages.count( hostLanguage ) == 0 )
             throw std::invalid_argument("ERROR: host language " + hostLanguage + " not supported.\n" );
 
         if( hostLanguage.empty() == true )
@@ -269,7 +269,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
                 throw std::invalid_argument( "ERROR: group " + groupName + " defined twice.\n" );
         }
 
-        groups.emplace( groupName, CGroup( hostLanguage, xmlGroup, transforms, debugMode ) );
+        groups.emplace( groupName, Group( hostLanguage, xmlGroup, transforms, debugMode ) );
 
         currentContent.erase( currentContent.find( xmlGroup ), xmlGroup.size() );
         currentPosition = 0;
@@ -328,8 +328,8 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
 
 
 void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode,
-              std::string& hostLanguage, std::vector< std::shared_ptr<CTransform> >& transforms,
-              std::map< std::string, CGroup >& groups )
+              std::string& hostLanguage, std::vector< std::shared_ptr<Transform> >& transforms,
+              std::map< std::string, Group >& groups )
 {
     int xmlFileContentSize;
     std::string xmlFileContent;
@@ -405,7 +405,7 @@ void CreateDirectory( const std::string fullPath ) noexcept
 }
 
 
-void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<CTransform> >& transforms,
+void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<Transform> >& transforms,
                          const bool debugMode, int& transformIndex, int& compressionLevel )
 {
     //get method:compressionLevel from transform

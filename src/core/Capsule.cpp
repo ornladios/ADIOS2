@@ -1,5 +1,5 @@
 /*
- * CCapsule.cpp
+ * Capsule.cpp
  *
  *  Created on: Nov 11, 2016
  *      Author: wfg
@@ -10,27 +10,28 @@
 #include <cstring> //memcpy
 /// \endcond
 
-#include "core/CCapsule.h"
-#include "public/SSupport.h"
 
 #ifdef HAVE_BZIP2
 #include "transform/CBZIP2.h"
 #endif
 
-#include "transport/CPOSIX.h"
-#include "transport/CFStream.h"
-#include "transport/CDataMan.h"
+#include "core/Capsule.h"
+#include "public/Support.h"
+
+//transport below
+#include "transport/POSIX.h"
+#include "transport/FStream.h"
 
 
 namespace adios
 {
 
 
-CCapsule::CCapsule( )
+Capsule::Capsule( )
 { }
 
 
-CCapsule::CCapsule( const MPI_Comm mpiComm, const bool debugMode, const std::string streamName,
+Capsule::Capsule( const MPI_Comm mpiComm, const bool debugMode, const std::string streamName,
                     const std::string accessMode, const std::string transport, const std::vector<std::string>& arguments ):
     m_MPIComm{ mpiComm },
     m_DebugMode{ debugMode }
@@ -39,11 +40,11 @@ CCapsule::CCapsule( const MPI_Comm mpiComm, const bool debugMode, const std::str
 }
 
 
-CCapsule::~CCapsule( )
+Capsule::~Capsule( )
 { }
 
 
-int CCapsule::AddTransport( const std::string streamName, const std::string accessMode, const bool isDefault,
+int Capsule::AddTransport( const std::string streamName, const std::string accessMode, const bool isDefault,
                             const std::string transport, const std::vector<std::string>& arguments )
 {
 
@@ -59,14 +60,10 @@ int CCapsule::AddTransport( const std::string streamName, const std::string acce
     }
 
     if( transport == "POSIX" )
-        m_Transports.push_back( std::make_shared<CPOSIX>( m_MPIComm, m_DebugMode, arguments ) );
+        m_Transports.push_back( std::make_shared<POSIX>( m_MPIComm, m_DebugMode, arguments ) );
 
     else if( transport == "FStream" )
-        m_Transports.push_back( std::make_shared<CFStream>( m_MPIComm, m_DebugMode, arguments ) );
-
-    else if( transport == "DataMan" )
-        m_Transports.push_back( std::make_shared<CDataMan>( m_MPIComm, m_DebugMode, arguments ) );
-
+        m_Transports.push_back( std::make_shared<FStream>( m_MPIComm, m_DebugMode, arguments ) );
 
     int transportIndex = static_cast<int>( m_Transports.size() - 1 );
     m_Transports[ transportIndex ]->Open( name, accessMode );
@@ -75,7 +72,7 @@ int CCapsule::AddTransport( const std::string streamName, const std::string acce
 }
 
 
-void CCapsule::Close( int transportIndex )
+void Capsule::Close( int transportIndex )
 {
     if( transportIndex == -1 ) //close all transports
     {
@@ -90,7 +87,7 @@ void CCapsule::Close( int transportIndex )
 
 
 //PRIVATE FUNCTIONS
-std::string CCapsule::GetName( const std::vector<std::string>& arguments ) const
+std::string Capsule::GetName( const std::vector<std::string>& arguments ) const
 {
     bool isNameFound = false;
     std::string name;
