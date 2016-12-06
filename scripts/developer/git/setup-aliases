@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+if ! which clang-format 2>1 1>/dev/null
+then
+  echo "ADIOS development requires clang-format to be available in your path."
+  exit 1
+fi
+
+echo "Adding 'git clang-format' alias"
+if ! git config alias.clang-format "!bash scripts/git/git-clang-format"
+then
+  echo "Error adding clang-format alias"
+  exit 2
+fi
+
+exit 0
