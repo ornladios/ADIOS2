@@ -1,5 +1,5 @@
 /*
- * SSupport.cpp
+ * Support.cpp
  *
  *  Created on: Oct 18, 2016
  *      Author: wfg

@@ -36,6 +36,7 @@ OBJNoMPI:=$(patsubst %.cpp, ./bin/nompi/%.o, $(notdir $(CPPFiles)) )
 all: mpi nompi
 
 mpi: $(HFiles) $(OBJMPI)
+	@( mkdir -p ./lib );
 	$(AR) $(ARFLAGS) ./lib/libadios.a $(OBJMPI)
 	@echo "Finished building MPI library lib/libadios.a";
 	@echo
@@ -45,6 +46,7 @@ mpi: $(HFiles) $(OBJMPI)
 	$(MPICC) $(CFLAGS) -DHAVE_MPI $(INC) -o $@ $<
 
 nompi: $(HFiles) $(OBJNoMPI)
+	@( mkdir -p ./lib );
 	$(AR) $(ARFLAGS) ./lib/libadios_nompi.a $(OBJNoMPI)
 	@echo "Finished building noMPI library lib/libadios_nompi.a";
 	@echo
