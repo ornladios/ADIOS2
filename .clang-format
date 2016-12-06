@@ -1,0 +1,4 @@
+Language:          Cpp
+BasedOnStyle:      LLVM
+BreakBeforeBraces: Allman
+IndentCaseLabels:  true
