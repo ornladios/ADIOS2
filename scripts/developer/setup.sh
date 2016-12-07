@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-test_cmd {
+function test_cmd {
   if ! $1 ;
   then
     echo "Error: $2";
@@ -8,11 +8,11 @@ test_cmd {
   fi
 }
 
-cd "${BASH_SOURCE%/*}"
+cd "${BASH_SOURCE%/*}/../.."
 
-test_cmd scripts/git/setup-alias \
+test_cmd scripts/developer/git/setup-aliases \
   "Failed to setup git aliases" 2
 
-test_cmd scripts/git/setup-hooks \
+test_cmd scripts/developer/git/setup-hooks \
   "Failed to setup git hooks" 1
 git config hooks.clang-format true
