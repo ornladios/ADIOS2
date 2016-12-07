@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Run clang-format to verify prior to committing
+if [ "$(git config --bool hooks.clang-format)" == "true" ]
+then
+  DIFF="$(git clang-format --diff)"
+  if [ "${DIFF}" != "no modified files to format" ]
+  then
+    echo "pre-commit error: clang-format"
+    echo "  Code format checks failed."
+    echo "  Please run clang-format (or git clang-format) on your changes"
+    echo "  before committing."
+    if [ -n "${GIT_CLANG_FORMAT_SHOW_DIFF}" ]
+    then
+      if [ ${GIT_CLANG_FORMAT_SHOW_DIFF} -eq 1 ]
+      then
+        git_clang_format_show_diff=1
+      else
+        git_clang_format_show_diff=0
+      fi
+    elif [ "$(git config --bool hooks.clang-format.show-diff)" == "true" ]
+    then
+      git_clang_format_show_diff=1
+    else
+      git_clang_format_show_diff=0
+    fi
+    if [ ${git_clang_format_show_diff} -eq 1 ]
+    then
+      echo "  The following changes are suggested:"
+      echo "${DIFF}"
+    fi
+    exit 1
+  fi
+fi
+
+exit 0
