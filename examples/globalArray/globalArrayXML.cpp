@@ -31,6 +31,11 @@ int main( int argc, char* argv [] )
         // ADIOS manager object creation. MPI must be initialized
         adios::ADIOS adios( "globalArrayXML.xml", comm, true );
 
+        adios::ADIOS_OUTPUT &ckptfile = adios.Open( "globalArray.bp", comm, "a", "POSIX");
+
+        adios::ADIOS_OUTPUT ckptfile( "globalArray.bp", subcomm, "a", "POSIX");
+        //adios::ADIOS_OUTPUT *ckptfile = adios.Open( "globalArray.bp", "POSIX");
+
         //Get Monitor info
         std::ofstream logStream( "info_" + std::to_string(rank) + ".log" );
         adios.MonitorGroups( logStream );
@@ -44,26 +49,30 @@ int main( int argc, char* argv [] )
                 p[i] = it*1000.0 + rank*NX + i;
             }
 
-            if (it==1)
-                adios.Open("arrays", "globalArray.bp", "w");
-            else
-                adios.Open("arrays", "globalArray.bp", "a");
+//            if (it==1)
+//                adios.Open("arrays", "globalArray.bp", "w");
+//            else
+//                adios.Open("arrays", "globalArray.bp", "a");
 
             //uint64_t    adios_groupsize, adios_totalsize;
             // adios_groupsize = 4 + 4 + 4 + 2*NX*sizeof(double);
             // adios_totalsize = adios.GroupSize("arrays", adios_groupsize);
 
-            adios.Write ("arrays", "NX", &NX);
-            adios.Write ("arrays", "size", &size);
-            adios.Write ("arrays", "rank", &rank);
-            adios.Write ("arrays", "temperature", t);
-            adios.Write ("arrays", "pressure", &p);
+            ckptfile.Write ("NX", &NX);
+            ckptfile.Write ("pressure", &p);
+            //adios.Write ("arrays", "NX", &NX);
+            //adios.Write ("arrays", "size", &size);
+            //adios.Write ("arrays", "rank", &rank);
+            //adios.Write ("arrays", "temperature", t);
+            //adios.Write ("arrays", "pressure", &p);
 
-            adios.Close ("arrays");
+            //adios.Close ("arrays");
+            ckptfile.PerformIO();
             MPI_Barrier (comm);
             if (rank==0) printf("Timestep %d written\n", it);
         }
         MPI_Barrier (comm);
+        ckptfile.Close();
         // need barrier before we destroy the ADIOS object here automatically
         if (rank==0) printf("Finalize adios\n");
     }
