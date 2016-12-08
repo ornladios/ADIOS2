@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.7)
-project(ADIOS VERSION 2.0.a)
+project(ADIOS VERSION 2.0.0)
 
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
@@ -51,10 +51,23 @@ if(ADIOS_ENABLE_PIC)
 endif()
 
 #------------------------------------------------------------------------------#
+# Third party libraries
+#------------------------------------------------------------------------------#
+include(CTest)
+add_subdirectory(thirdparty)
+
+#------------------------------------------------------------------------------#
 # Main library source
 #------------------------------------------------------------------------------#
 add_subdirectory(source)
 
+#------------------------------------------------------------------------------#
+# Installation
+#------------------------------------------------------------------------------#
+install(DIRECTORY include/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES_MATCHING PATTERN "*.h"
+)
 #------------------------------------------------------------------------------#
 # Examples
 #------------------------------------------------------------------------------#
@@ -66,20 +79,8 @@ endif()
 #------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
-include(CTest)
-option(ADIOS_ENABLE_TESTING "Enable ADIOS Testing" ON)
-set(ENABLE_TESTING ${ADIOS_ENABLE_TESTING} CACHE INTERNAL "" FORCE)
-mark_as_advanced(ENABLE_TESTING)
-if(ADIOS_ENABLE_TESTING)
+# We have to wait until after the library is defined to enable testing
+if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(testing)
 endif()
-
-#------------------------------------------------------------------------------#
-# Installation
-#------------------------------------------------------------------------------#
-install(DIRECTORY include/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  FILES_MATCHING PATTERN "*.h"
-)
-
