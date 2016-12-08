@@ -14,8 +14,8 @@ install:
   - tar -xf cmake-3.7.1-Linux-x86_64.tar.gz
   - export PATH="${PWD}/cmake-3.7.1-Linux-x86_64/bin:${PATH}"
   - pip install --user flake8
+env:
+  - BUILD_MATRIX_ENTRY=format
 script:
-  - cd ${TRAVIS_BUILD_DIR}
-  - scripts/travis/run-clang-format.sh
-  - ~/.local/bin/flake8 --config=flake8.cfg .
+  - ${TRAVIS_BUILD_DIR}/scripts/travis/run.sh
  
