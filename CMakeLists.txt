@@ -4,6 +4,14 @@
 #------------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.7)
+
+# Fail immediately if not using an out-of-source build
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+  message(FATAL_ERROR
+    "In-source builds are not supported.  Please create a build directory "
+    "separate from the source directory")
+endif()
+
 project(ADIOS VERSION 2.0.0)
 
 #------------------------------------------------------------------------------#
