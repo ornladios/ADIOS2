@@ -42,7 +42,7 @@ void write_ckpt (struct MYDATA &solid, struct MYDATA &fluid, adios::ADIOS_OUTPUT
 {
     try {
         // Open an output for a Group
-        // a transport or a processor should be associated with the group
+        // a transport or an engine should be associated with the group
         ckptfile.Open("ckpt.bp");
 
         ckptfile.ScheduleWrite ("solid/NX", &solid.NX);
@@ -136,8 +136,8 @@ int main( int argc, char* argv [] )
         solidfile.Open("solid.bp");
 
 
-        // Open a file with a Method that has selected a group and a processor in the XML
-        // The transport method(s) are (must be) associated with the processor
+        // Open a file with a Method that has selected a group and an engine in the XML
+        // The transport method(s) are (must be) associated with the engines
         // "a" will append to an already existing file, "w" would create a new file
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?

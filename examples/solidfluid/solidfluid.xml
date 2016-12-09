@@ -3,31 +3,15 @@
 
   <!--  Changes to ADIOS-1 XML
         Accommodate for the following extensions and flexiblity:
-        - Multiple managers (execution engines) e.g. SIRIUS can have it's own
+        - Multiple engines e.g. SIRIUS can have it's own
         - Do not bind one transport to a group, i.e. we can reuse a group in multiple I/O 
           with different transports 
         - Do not bind one group to each output file, i.e., we can write variables from
           different groups into a single file at the same step
    -->
 
-  <!--  Data processor
-        Managers: default-manager, sirius, dataman, hdf5
+  <!--  Execution Engines: default-engine, sirius, dataman, hdf5
    -->
-  <data-processor name="myprocessor" manager="sirius" >
-      <level transport="SHMEM">options to SHMEM transport</level>
-      <level target="ssd" target-path="/ssd/pnorbert/" transport="POSIX"/>
-      <level target="wan" transport="ICEE" />
-  </data-processor>
-
-  <!--  It is unnecessary to create processor for default processing but possible.
-        If an adios open does not name a processor but a group without a processor assigned, 
-        it will use the default processor. 
-  -->
-  <data-processor name="mydefaultprocessor" manager="default-manager" >
-      <level transport="POSIX">options to POSIX transport</level>
-      <level transport="MPI">options to MPI transport</level>
-      <!--  FIXME: how do we specify two output file names? -->
-  </data-processor>
 
 
   <adios-group name="solid">
@@ -75,24 +59,29 @@
 
   <!--  Method is with what we create an Output. It specifies either 
         1. a group + a transport
-        2. a group + a data processor
+        2. a group + a data manager
         3. a transport only 
-        4. a data processor only
+        4. a data manager only
         
-        1 & 3. default processor is used
-        2 & 4. processor must have transports defined
+        1 & 3. default manager is used
+        2 & 4. manager must have transports defined
         3 & 4. each write needs explicit group + variable as argument
    -->
 
   <!--  Associate a single transport with a group. 
-        The processor will be the default processor when opening an output with this group
+        The manager will be the default manager when opening an output with this group
         The name of the method will be the same as the group ("checkpoint") 
         This ensures full backward-compatibility for ADIOS-1 XML files
   -->
   <method group="solid" transport="POSIX">options to POSIX transport</method>
-  <!--  the statement below would have the same effect as the one above
-      <method group="solid" processor="mydefaultprocessor">verbose=3</method>
-  -->
+ 
+  <!--  the statement below would have the same effect as the one above plus
+         it assigns two transports to the group (so I/O is duplicated)  -->
+  <method group="solid" <!-- engine="default-engine" --> >
+      <transport="POSIX">options to POSIX transport</transport>
+      <transport="MPI">options to MPI transport</transport>
+      <!--  FIXME: how do we specify two output file names? -->
+  </method>
 
   <!--  Same as above but we can name the method separately from group name.
         Hence multiple methods can be declared for one group 
@@ -100,10 +89,14 @@
   <method name="viz1" group="viz" transport="STAGING"></method>
   <method name="viz2" group="viz" transport="MPI"></method>
   
-  <!--  Associate a processor with a group.
-        The processor will define the transport(s) used in an output 
+  <!--  Associate an engine with a group and parameterize it here
+        The manager will define the transport(s) used in an output 
   -->  
-  <method group="fluid" processor="myprocessor"></method>
+  <method name="fluid" group="fluid" engine="sirius">
+      <level transport="SHMEM">options to SHMEM transport</level>
+      <level target="ssd" target-path="/ssd/pnorbert/" transport="POSIX"/>
+      <level target="wan" transport="ICEE" />
+  </method>
 
   <method group="checkpoint" transport="MPI_AGGREGATE">
         num_aggregators=1;num_ost=1
@@ -114,7 +107,7 @@
   -->
   <method group="grouptobe" transport="POSIX">options to transport</method>
 
-  <!--  We can set a transport/processor without any group
+  <!--  We can set a transport/engine without any group
         All variables at writing should come from some existing group.
         Each write call needs to add an extra argument to identify the variable's group 
   -->
