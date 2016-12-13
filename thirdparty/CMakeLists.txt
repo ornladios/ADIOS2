@@ -14,14 +14,22 @@ set(EP_ARGS
 
 # Use Google Test for a unit testing framework
 cmake_dependent_option(ADIOS_USE_SYSTEM_GOOGLETEST
-  "Use a system-supplied Google Test framework" OFF
+  "Use a system-supplied Google Test framework" ON
   "BUILD_TESTING" OFF)
 if(BUILD_TESTING)
+  if(ADIOS_USE_SYSTEM_GOOGLETEST)
+    find_package(GTest REQUIRED)
+    if(NOT GTEST_FOUND)
+      message(WARNING
+        "Unable to find Google Test framework.  "
+        "Using an internal version")
+      set(ADIOS_USE_SYSTEM_GOOGLETEST OFF
+        CACHE BOOL "Use a system-supplied Google Test framework" FORCE)
+    endif()
+  endif()
   if(NOT ADIOS_USE_SYSTEM_GOOGLETEST)
     add_subdirectory(googletest)
-  endif()
-  find_package(GTest REQUIRED)
-  if(NOT ADIOS_USE_SYSTEM_GOOGLETEST)
+    find_package(GTest REQUIRED)
     add_dependencies(GTest::GTest googletest)
     add_dependencies(GTest::Main googletest)
   endif()

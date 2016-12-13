@@ -4,6 +4,14 @@
 #------------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.7)
+
+# Fail immediately if not using an out-of-source build
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+  message(FATAL_ERROR
+    "In-source builds are not supported.  Please create a build directory "
+    "separate from the source directory")
+endif()
+
 project(ADIOS VERSION 2.0.0)
 
 #------------------------------------------------------------------------------#
@@ -48,6 +56,16 @@ if(SHARED_LIBS_SUPPORTED)
 endif()
 if(ADIOS_ENABLE_PIC)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
+# MPI
+option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" ON)
+if(ADIOS_USE_MPI)
+  find_package(MPI COMPONENTS C)
+  if(NOT MPI_FOUND)
+    message(WARNING "Unable to find MPI.  Disabling ADIOS_USE_MPI")
+    set(ADIOS_USE_MPI OFF CACHE BOOL "Enable the MPI version of ADIOS" FORCE)
+  endif()
 endif()
 
 #------------------------------------------------------------------------------#
