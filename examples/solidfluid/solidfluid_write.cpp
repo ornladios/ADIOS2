@@ -129,11 +129,11 @@ int main( int argc, char* argv [] )
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?
 
-        adios::ADIOS_OUTPUT solidfile( comm, "a", "solid"); // "solid" is a method but incidentally also a group
+        int solidfile = adios.Open("solid", "solid.bp", "a", comm); // "solid" is a method but incidentally also a group
         // Constructor only creates an object and what is needed there but does not open a stream/file
         // It can be used to initialize a staging connection if not declared before
         // FIXME: which argument can be post-poned into Open() instead of constructor?
-        solidfile.Open("solid.bp");
+        //solidfile.Open("solid.bp");
 
 
         // Open a file with a Method that has selected a group and an engine in the XML
@@ -141,10 +141,10 @@ int main( int argc, char* argv [] )
         // "a" will append to an already existing file, "w" would create a new file
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?
-        adios::ADIOS_OUTPUT fluidfile( comm, "a", "fluid");
-        fluidfile.Open("fluid.bp");
+        int fluidfile = adios.Open("fluid.bp", "fluid", 
+                                   adios::ACCESS_MODE::APPEND, comm);
 
-        adios::ADIOS_OUTPUT ckptfile( comm, "w", "checkpoint");
+        int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "w", comm);
         // we do not open this here, but every time when needed in a function
 
         // Another output not associated with a single group, so that we can mix variables to it

@@ -77,9 +77,12 @@
  
   <!--  the statement below would have the same effect as the one above plus
          it assigns two transports to the group (so I/O is duplicated)  -->
-  <method group="solid" <!-- engine="default-engine" --> >
+  <method name="solid" >
       <transport="POSIX">options to POSIX transport</transport>
-      <transport="MPI">options to MPI transport</transport>
+  </method>
+  <method group="solid" <!-- engine="default-engine" --> >
+      <transport="POSIX" fname="out_p.bp">options to POSIX transport</transport>
+      <transport="MPI" fname="outsingle.bp">options to MPI transport</transport>
       <!--  FIXME: how do we specify two output file names? -->
   </method>
 
@@ -92,7 +95,7 @@
   <!--  Associate an engine with a group and parameterize it here
         The manager will define the transport(s) used in an output 
   -->  
-  <method name="fluid" group="fluid" engine="sirius">
+  <method name="fluid" group="fluid" engine="sirius" fname="x.bp">
       <level transport="SHMEM">options to SHMEM transport</level>
       <level target="ssd" target-path="/ssd/pnorbert/" transport="POSIX"/>
       <level target="wan" transport="ICEE" />
