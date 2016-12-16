@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<adios-config>
+
+  <!--  Changes to ADIOS-1 XML
+        Accommodate for the following extensions and flexiblity:
+        - Multiple engines e.g. SIRIUS can have it's own
+        - Do not bind one transport to a group, i.e. we can reuse a group in multiple I/O 
+          with different transports 
+        - Do not bind one group to each output file, i.e., we can write variables from
+          different groups into a single file at the same step
+   -->
+
+  <!--  Execution Engines: default-engine, sirius, dataman, hdf5
+   -->
+
+
+  <adios-group name="solid">
+    <var name="NX" type="integer"/>
+    <var name="size" type="integer"/>
+    <var name="rank" type="integer"/>
+
+    <global-bounds dimensions="size,NX" offsets="rank,0">
+       <var name="temperature" gwrite="solid.t" type="double"              dimensions="1,NX"/>
+       <var name="pressure"    gwrite="solid.p" type="std::vector<double>" dimensions="1,NX"/>
+    </global-bounds>
+
+    <attribute name="temperature/description" 
+        value="Global array written from 'size' processes over several timesteps" 
+        type="string"/>
+  </adios-group>
+
+
+  <adios-group name="fluid">
+    <var name="NX" type="integer"/>
+    <var name="size" type="integer"/>
+    <var name="rank" type="integer"/>
+
+    <global-bounds dimensions="size,NX" offsets="rank,0">
+       <var name="temperature" gwrite="fluid.t" type="double"              dimensions="1,NX"/>
+       <var name="pressure"    gwrite="fluid.p" type="std::vector<double>" dimensions="1,NX"/>
+    </global-bounds>
+
+    <attribute name="temperature/description" 
+        value="Global array written from 'size' processes over several timesteps" 
+        type="string"/>
+  </adios-group>
+
+  
+  <adios-group name="checkpoint">
+    <!-- Add all variables from group 'solid' with a path-prefix 'solid/...'
+         In adios write then one must refer to NX as "solid/NX", "solid/temperature", etc 
+         If prefix is not defined, the variables are simply merged in with their path, but
+         then there should be no name collisions  
+    -->
+    <add-group name="solid" prefix="solid"   />
+    <add-group name="fluid" prefix="fluid/"  />
+  </adios-group>
+
+
+  <!--  Method is with what we create an Output. It specifies either 
+        1. a group + a transport
+        2. a group + a data manager
+        3. a transport only 
+        4. a data manager only
+        
+        1 & 3. default manager is used
+        2 & 4. manager must have transports defined
+        3 & 4. each write needs explicit group + variable as argument
+   -->
+
+  <!--  Associate a single transport with a group. 
+        The manager will be the default manager when opening an output with this group
+        The name of the method will be the same as the group ("checkpoint") 
+        This ensures full backward-compatibility for ADIOS-1 XML files
+  -->
+  <method group="solid" transport="POSIX">options to POSIX transport</method>
+ 
+  <!--  the statement below is equivalent to the one above plus -->
+  <method group="solid" >
+      <transport="POSIX">options to POSIX transport</transport>
+  </method>
+
+  <method group="solid" <!-- engine="default-engine" --> >
+      <transport="POSIX" fname="out_p.bp">options to POSIX transport</transport>
+      <transport="MPI" fname="outsingle.bp">options to MPI transport</transport>
+      <!--  filenames overwrite the value provided in Open() call -->
+  </method>
+
+  <!--  Same as above but we can name the method separately from group name.
+        Hence multiple methods can be declared for one group 
+  -->
+  <method name="viz1" group="viz" transport="STAGING"></method>
+  <method name="viz2" group="viz" transport="MPI"></method>
+  
+  <!--  Associate an engine with a group and parameterize it here
+        The manager will define the transport(s) used in an output 
+  -->  
+  <method name="fluid" group="fluid" engine="sirius" fname="x.bp">
+      <level transport="SHMEM">options to SHMEM transport</level>
+      <level target="ssd" target-path="/ssd/pnorbert/" transport="POSIX"/>
+      <level target="wan" transport="ICEE" />
+  </method>
+
+  <method group="checkpoint" transport="MPI_AGGREGATE">
+        num_aggregators=1;num_ost=1
+  </method>
+  
+  <!--  We can set a transport to a group which is not defined yet.
+        The group can/should be defined in the source code before use.
+  -->
+  <method group="grouptobe" transport="POSIX">options to transport</method>
+
+  <!--  We can set a transport/engine without any group
+        All variables at writing should come from some existing group.
+        Each write call needs to add an extra argument to identify the variable's group 
+  -->
+  <method name="groupless" transport="POSIX">options to transport</method>
+  <method name="groupless" >
+      <transport="POSIX">options to POSIX transport</transport>
+  </method>
+
+  <!--  Global options for ADIOS that are not tied to a specific method -->
+  <options>verbose=2</options>
+
+  <buffer max-size-MB="1"/>
+
+</adios-config>
+
