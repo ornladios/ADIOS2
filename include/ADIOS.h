@@ -12,17 +12,19 @@
 #include <string>
 #include <memory> //shared_ptr
 #include <ostream>
+#include <unordered_map>
 /// \endcond
 
 #ifdef HAVE_MPI
   #include <mpi.h>
 #else
-  #include "public/mpidummy.h"
+  #include "mpidummy.h"
 #endif
 
 #include "core/Group.h"
-#include "core/Capsule.h"
-#include "public/Support.h"
+#include "core/Method.h"
+#include "core/Engine.h"
+#include "core/Support.h"
 #include "functions/adiosTemplates.h"
 
 
@@ -80,40 +82,24 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
     /**
-     * @brief Open to Write, Read or Append to a stream
-     * @param streamName associated file or stream
-     * @param accessMode "w": write, "a": append, need more info on this
+     * @brief Open to Write, Read
+     * @param name unique stream or file name
+     * @param accessMode
+     * @param mpiComm
+     * @param method corresponding method
+     * @return
      */
-    template< class... Args >
-    void Open( const std::string streamName, const std::string accessMode, const std::string transport, Args... args )
-    {
-        if( m_DebugMode == true )
-        {
-            if( m_Capsules.count( streamName ) == 1 ) //it exists
-                throw std::invalid_argument( "ERROR: trying to open existing stream (or file) " + streamName + ".\n" );
-        }
-
-        std::vector<std::string> arguments = { args... };
-        m_Capsules.emplace( streamName, Capsule( m_MPIComm, m_DebugMode, streamName, accessMode, transport, arguments ) );
-    }
+    const unsigned int Open( const std::string name, const std::string accessMode, MPI_Comm mpiComm );
 
     /**
-     * Sets a new transport method to be associated with a current stream.
-     * @param streamName must be created with Open
-     * @param transport
-     * @return transport index
+     * @brief Create an Engine described by a previously defined method
+     * @param name
+     * @param accessMode
+     * @param method
+     * @return
      */
-    template< class... Args >
-    int AddTransport( const std::string streamName, const std::string accessMode, const std::string transport, Args... args )
-    {
-        if( m_DebugMode == true )
-        {
-            if( m_Capsules.count( streamName ) == 0 ) //it exists
-                throw std::invalid_argument( "ERROR: stream (or file) " + streamName + " does not exist in call to AddTransport.\n" );
-        }
-        std::vector<std::string> arguments = { args... };
-        return m_Capsules[streamName].AddTransport( streamName, accessMode, false, transport, arguments );
-    }
+    const unsigned int Open( const std::string name, const std::string accessMode, const std::string method );
+
 
     /**
      * Sets the maximum buffer size of a stream
@@ -134,12 +120,11 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     void Write( const std::string streamName, const std::string groupName, const std::string variableName, const T* values,
                 const int transportIndex = -1 )
     {
-        auto itCapsule = m_Capsules.find( streamName );
         auto itGroup = m_Groups.find( groupName );
 
         if( m_DebugMode == true )
         {
-            CheckCapsule( itCapsule, streamName, " from call to Write variable " + variableName );
+            CheckCapsule( streamName, " from call to Write variable " + variableName );
             CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
             if( transportIndex < -1 )
                 throw std::invalid_argument( "ERROR: transport index " + std::to_string( transportIndex ) +
@@ -159,20 +144,24 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param cores optional parameter for threaded version
      */
     template<class T>
-    void Write( const std::string streamName, const std::string variableName, const T* values,
+    void Write( const int handler, const std::string variableName, const T* values,
                 const int transportIndex = -1 )
     {
-        auto itCapsule = m_Capsules.find( streamName );
         if( m_DebugMode == true )
-            CheckCapsule( itCapsule, streamName, " from call to Write variable " + variableName );
+            CheckCapsule( streamName, " from call to Write variable " + variableName );
 
-        const std::string groupName( itCapsule->second.m_CurrentGroup );
-        auto itGroup = m_Groups.find( groupName );
-        if( m_DebugMode == true )
-            CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
-
-        WriteHelper( itCapsule->second, itGroup->second, variableName, values, transportIndex, m_DebugMode );
+        WriteHelper( itCapsule->second, *itCapsule->second.m_CurrentGroup, variableName, values, transportIndex, m_DebugMode );
     }
+
+    template<class T>
+        void Write( const int handler, const std::string variableName, const T* values,
+                    const int transportIndex = -1 )
+        {
+            if( m_DebugMode == true )
+                CheckCapsule( streamName, " from call to Write variable " + variableName );
+
+            WriteHelper( itCapsule->second, *itCapsule->second.m_CurrentGroup, variableName, values, transportIndex, m_DebugMode );
+        }
 
     /**
      * Close a particular stream and the corresponding transport
@@ -233,25 +222,33 @@ private:
     std::string m_HostLanguage = "C++"; ///< Supported languages: C, C++, Fortran, Python, etc.
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
+    //GROUP
     /**
      * @brief List of groups defined from either ADIOS XML configuration file or the CreateGroup function.
      * <pre>
      *     Key: std::string unique group name
-     *     Value: SGroup struct in SGroup.h
+     *     Value: Group class
      * </pre>
      */
     std::map< std::string, Group > m_Groups;
 
+    //METHODS -> Engine Metadata
+    std::map< std::string, Method > m_Methods;
+
+    //ENGINE
     /**
-     * @brief List of Capsules, each defined from the Open function.
+     * @brief List of Engines, ADIOS Open adds to this container.
      * <pre>
-     *     Key: std::string unique stream/file/capsule name given by ADIOS Open
-     *     Value: CCapsule object
+     *     Key: Engine handle give by a counter
+     *     Value: Engine derived class
      * </pre>
      */
-    std::map< std::string, Capsule > m_Capsules;
+    std::unordered_map< unsigned int, std::shared_ptr<Capsule> > m_Engines;
+    std::set< std::string > m_EngineNames; ///< set used to check Engine name uniqueness in debug mode
+    int m_EngineCounter = -1; ///< used to set the unsigned int key in m_Capsules, helpful is a capsule is removed
 
 
+    //TRANSFORMS
     std::vector< std::shared_ptr<Transform> > m_Transforms; ///< transforms associated with ADIOS run
 
     /**
@@ -269,8 +266,8 @@ private:
      * @param streamName unique name, passed for thrown exception only
      * @param hint adds information to thrown exception
      */
-    void CheckCapsule( std::map< std::string, Capsule >::const_iterator itCapsule,
-                       const std::string streamName, const std::string hint ) const;
+    void CheckEngine( const std::string streamName, const std::string hint ) const;
+
 };
 
 

@@ -11,10 +11,11 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 #include <stdexcept>
+
+#include "../core/Engine.h"
 /// \endcond
 
 
-#include "core/Capsule.h"
 #include "core/Group.h"
 #include "core/Variable.h"
 #include "functions/adiosFunctions.h"

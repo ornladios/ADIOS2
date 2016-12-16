@@ -9,12 +9,12 @@
 #ifdef HAVE_MPI
     #include <mpi.h>
 #else
-    #include "public/mpidummy.h"
+    #include "../../include/mpidummy.h"
     using adios::MPI_Init;
     using adios::MPI_Comm_rank;
 #endif
 
-#include "public/ADIOS.h"
+#include "../../include/ADIOS.h"
 
 
 int main( int argc, char* argv [] )

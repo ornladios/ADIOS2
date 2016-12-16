@@ -19,7 +19,8 @@
 /// \endcond
 
 #include "functions/adiosFunctions.h"
-#include "public/Support.h"
+
+#include "../../include/core/Support.h"
 
 #ifdef HAVE_BZIP2
 #include "transform/CBZIP2.h"

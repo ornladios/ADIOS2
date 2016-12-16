@@ -6,7 +6,7 @@
 
 
 
-#include "public/ADIOS_C.h"
+#include "../../../include/ADIOS_C.h"
 
 
 void main( int argc, char* argv [] )

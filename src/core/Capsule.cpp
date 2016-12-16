@@ -15,8 +15,8 @@
 #include "transform/BZIP2.h"
 #endif
 
-#include "core/Capsule.h"
-#include "public/Support.h"
+#include "../../include/core/Engine.h"
+#include "../../include/core/Support.h"
 
 //transport below
 #include "transport/POSIX.h"

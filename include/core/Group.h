@@ -20,7 +20,7 @@
 #ifdef HAVE_MPI
   #include <mpi.h>
 #else
-  #include "public/mpidummy.h"
+  #include "mpidummy.h"
 #endif
 
 

@@ -3,7 +3,6 @@
  *
  *  Created on: Sep 29, 2016
  *      Author: William F Godoy
- *
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
@@ -13,7 +12,7 @@
 #include <utility>
 /// \endcond
 
-#include "public/ADIOS.h"
+#include "ADIOS.h"
 #include "functions/adiosFunctions.h"
 
 
@@ -60,19 +59,9 @@ ADIOS::~ADIOS( )
 { }
 
 
-void ADIOS::SetMaxBufferSize( const std::string streamName, const size_t maxBufferSize )
+void ADIOS::SetCurrentGroup( const unsigned int engineHandler, const std::string groupName )
 {
-    auto itCapsule = m_Capsules.find( streamName );
-    if( m_DebugMode == true )
-        CheckCapsule( itCapsule, streamName, " from call to SetMaxBufferSize\n" );
-
-    itCapsule->second.m_MaxBufferSize = maxBufferSize;
-}
-
-
-void ADIOS::SetCurrentGroup( const std::string streamName, const std::string groupName )
-{
-    auto itCapsule = m_Capsules.find( streamName );
+    auto itEngine = m_Engine
     if( m_DebugMode == true )
         CheckCapsule( itCapsule, streamName, " from call to SetCurrentGroup\n" );
 
@@ -80,11 +69,49 @@ void ADIOS::SetCurrentGroup( const std::string streamName, const std::string gro
 }
 
 
-void ADIOS::Close( const std::string streamName, const int transportIndex ) //close stream
+const unsigned int ADIOS::Open( const std::string streamName, const std::string accessMode,
+                                MPI_Comm mpiComm, const std::string methodName )
 {
-    auto itCapsule = m_Capsules.find( streamName );
     if( m_DebugMode == true )
-        CheckCapsule( itCapsule, streamName, " from call to Close\n" );
+    {
+        if( m_EngineNames.count( streamName ) == 1 ) //Engine exists
+            throw std::invalid_argument( "ERROR: method " + methodName + " already created by Open, in call from Open.\n" );
+
+        if( m_Methods.count( methodName ) == 0 ) //
+            throw std::invalid_argument( "ERROR: method " + methodName + " has not been defined, in call from Open\n" );
+    }
+
+    ++m_EngineCounter;
+
+    if( methodName.empty() )
+    {
+
+    }
+    else //special cases
+    {
+        if( methodName == "SIRIUS" )
+        {
+            m_Engines[ m_EngineCounter ] =
+        }
+        else if( methodName == "DataMan" )
+        {
+            m_Engines[ m_EngineCounter ] = ;
+        }
+    }
+
+    return m_EngineCounter;
+}
+
+
+void ADIOS::Close( const unsigned int methodHandler, const int transportIndex ) //close stream
+{
+    auto itEngine = m_Engines.find( methodHandler );
+    if( m_DebugMode == true )
+    {
+
+    }
+
+    itEngine
 
     itCapsule->second.Close( transportIndex );
 }
@@ -165,8 +192,7 @@ void ADIOS::CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
         throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
 }
 
-void ADIOS::CheckCapsule( std::map< std::string, Capsule >::const_iterator itCapsule,
-                          const std::string streamName, const std::string hint ) const
+void ADIOS::CheckCapsule( const std::string streamName, const std::string hint ) const
 {
     if( itCapsule == m_Capsules.end() )
         throw std::invalid_argument( "ERROR: stream (or file) " + streamName + " not created with Open , " + hint + "\n" );

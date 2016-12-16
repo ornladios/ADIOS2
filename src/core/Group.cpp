@@ -12,9 +12,10 @@
 
 
 #include "core/Group.h"
+
+#include "../../include/core/Support.h"
 #include "core/Variable.h"
 #include "functions/adiosFunctions.h"
-#include "public/Support.h"
 
 
 namespace adios

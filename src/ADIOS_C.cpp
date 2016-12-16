@@ -5,13 +5,14 @@
  *      Author: wfg
  */
 
+#include "../../include/ADIOS_C.h"
+
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <cstring>
 
-#include "public/ADIOS_C.h"
-#include "public/ADIOS.h"
+#include "../../include/ADIOS.h"
 
 
 #ifdef __cplusplus

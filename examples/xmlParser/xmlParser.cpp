@@ -9,12 +9,12 @@
 #include <iostream>
 #include <string>
 
-#include "public/ADIOS.h"
+#include "../../include/ADIOS.h"
 
 #ifdef HAVE_MPI
     #include <mpi.h>
 #else
-    #include "mpidummy.h"
+    #include "../../include/mpidummy.h"
     using namespace adios;
 #endif
 

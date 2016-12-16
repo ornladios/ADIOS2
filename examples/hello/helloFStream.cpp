@@ -15,10 +15,10 @@
 #ifdef HAVE_MPI
     #include <mpi.h>
 #else
-    #include "public/mpidummy.h"
+    #include "../../include/mpidummy.h"
 #endif
 
-#include "public/ADIOS.h"
+#include "../../include/ADIOS.h"
 
 
 int main( int argc, char* argv [] )

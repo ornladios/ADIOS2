@@ -6,7 +6,7 @@
  */
 
 
-#include "public/Support.h"
+#include "../../include/core/Support.h"
 
 
 namespace adios
@@ -37,18 +37,18 @@ const std::map<std::string, std::set<std::string> > Support::Datatypes
         {
             "char", "std::string", "string",
             "unsigned char",
-            "short", "std::vector<short>", "vector<short>",
-            "unsigned short", "std::vector<unsigned short>", "vector<unsigned short>",
-            "int", "std::vector<int>", "vector<int>", "integer",
-            "unsigned int", "std::vector<unsigned int>", "vector<unsigned int>",
+            "short",
+            "unsigned short",
+            "int", "integer",
+            "unsigned int",
             "long int", "long",
-            "unsigned long int", "std::vector<unsigned long int>", "vector<unsigned long int>", "unsigned long", "std::vector<unsigned long>", "vector<unsigned long>",
+            "unsigned long int", "unsigned long",
             "long long int", "long long",
-            "unsigned long long int", "std::vector<unsigned long long int>", "vector<unsigned long long int>", "unsigned long long", "std::vector<unsigned long long>", "vector<unsigned long long>",
-            "float", "std::vector<float>", "vector<float>",
-            "float complex", "std::complex<float>", "complex<float>",
-            "double", "std::vector<double>", "vector<double>",
-            "long double", "std::vector<long double>", "vector<long double>",
+            "unsigned long long int", "unsigned long long",
+            "float",
+            "float complex",
+            "double",
+            "long double",
             "double complex", "std::complex<double>", "complex<double>"
         }
     },
@@ -75,7 +75,7 @@ const std::map<std::string, std::set<std::string> > Support::Datatypes
         {
             "character",
             "integer*2",
-            "integer",
+            "integer", "real*2",
             "real", "real*4",
             "double precision", "real*8",
             "complex",

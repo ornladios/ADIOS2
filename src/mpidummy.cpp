@@ -19,7 +19,9 @@
 #include <unistd.h>
 /// \endcond
 
-#include "public/mpidummy.h"
+#include "mpidummy.h"
+
+
 
 #if defined(__APPLE__) || defined(__WIN32__) || defined(__CYGWIN__) 
 #    define lseek64 lseek

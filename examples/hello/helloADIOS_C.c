@@ -8,10 +8,10 @@
 #ifdef HAVE_MPI
   #include <mpi.h>
 #else
-  #include "public/mpidummy.h"
+  #include "../../include/mpidummy.h"
 #endif
 
-#include "public/ADIOS_C.h"
+#include "../../include/ADIOS_C.h"
 
 
 
