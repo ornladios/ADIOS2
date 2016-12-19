@@ -19,18 +19,19 @@ class Capsule
 public:
 
     const std::string m_Type; ///< buffer type
-    const char m_AccessMode; ///< 'w': write, 'r': read, 'a': append
+    const std::string m_AccessMode; ///< 'w': write, 'r': read, 'a': append
 
     /**
      * Base class constructor providing type from derived class and accessMode
      * @param type derived class type
      * @param accessMode 'w':write, 'r':read, 'a':append
      */
-    Capsule( const std::string type, const char accessMode );
+    Capsule( const std::string type, const std::string accessMode );
 
     virtual ~Capsule( );
 
     virtual void Write( const std::vector<char>& data, const std::size_t size );
+
 
 };
 

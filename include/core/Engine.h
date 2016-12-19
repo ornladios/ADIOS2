@@ -47,45 +47,69 @@ public:
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
 
-    Group* m_CurrentGroup = nullptr; ///< associated group to look for variable information
+    std::string m_EngineType; ///< from derived class
+    const std::string m_Name; ///< name used for this engine
+    const std::string m_AccessMode; ///< accessMode for buffers used by this engine
+    Method* m_Method = nullptr; ///< associated method containing engine metadata
+    Group* m_Group = nullptr; ///< associated group to look for variable information
+
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
     /**
-     * Multiple argument constructor
+     * Unique constructor based on a method (engine metadata)
+     * @param engineType given by derived classes
+     * @param name engine name
      * @param accessMode
      * @param mpiComm
-     * @param debugMode
+     * @param method
      */
+    Engine( const std::string engineType, const std::string name, const std::string accessMode, const MPI_Comm mpiComm,
+            const Method& method, const bool debugMode );
 
-    Engine( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
-            const Method& method );
 
     virtual ~Engine( );
 
-    virtual void Write( Group& group, Variable<char>& variable );
-    virtual void Write( Group& group, Variable<unsigned char>& variable );
-    virtual void Write( Group& group, Variable<short>& variable );
-    virtual void Write( Group& group, Variable<unsigned short>& variable );
-    virtual void Write( Group& group, Variable<int>& variable );
-    virtual void Write( Group& group, Variable<unsigned int>& variable );
-    virtual void Write( Group& group, Variable<long int>& variable );
-    virtual void Write( Group& group, Variable<unsigned long int>& variable );
-    virtual void Write( Group& group, Variable<long long int>& variable );
-    virtual void Write( Group& group, Variable<unsigned long long int>& variable );
-    virtual void Write( Group& group, Variable<float>& variable );
-    virtual void Write( Group& group, Variable<double>& variable );
-    virtual void Write( Group& group, Variable<long double>& variable );
+    virtual void Write( const Group& group, const std::string variableName, const char* values );
+    virtual void Write( const Group& group, const std::string variableName, const unsigned char* values );
+    virtual void Write( const Group& group, const std::string variableName, const short* values );
+    virtual void Write( const Group& group, const std::string variableName, const unsigned short* values );
+    virtual void Write( const Group& group, const std::string variableName, const int* values );
+    virtual void Write( const Group& group, const std::string variableName, const unsigned int* values );
+    virtual void Write( const Group& group, const std::string variableName, const long int* values );
+    virtual void Write( const Group& group, const std::string variableName, const unsigned long int* values );
+    virtual void Write( const Group& group, const std::string variableName, const long long int* values );
+    virtual void Write( const Group& group, const std::string variableName, const unsigned long long int* values );
+    virtual void Write( const Group& group, const std::string variableName, const float* values );
+    virtual void Write( const Group& group, const std::string variableName, const double* values );
+    virtual void Write( const Group& group, const std::string variableName, const long double* values );
 
-    virtual void Close( int transportIndex ); ///< Closes a particular transport
+    virtual void Write( const std::string variableName, const char* values );
+    virtual void Write( const std::string variableName, const unsigned char* values );
+    virtual void Write( const std::string variableName, const short* values );
+    virtual void Write( const std::string variableName, const unsigned short* values );
+    virtual void Write( const std::string variableName, const int* values );
+    virtual void Write( const std::string variableName, const unsigned int* values );
+    virtual void Write( const std::string variableName, const long int* values );
+    virtual void Write( const std::string variableName, const unsigned long int* values );
+    virtual void Write( const std::string variableName, const long long int* values );
+    virtual void Write( const std::string variableName, const unsigned long long int* values );
+    virtual void Write( const std::string variableName, const float* values );
+    virtual void Write( const std::string variableName, const double* values );
+    virtual void Write( const std::string variableName, const long double* values );
 
-private:
+    virtual void Close( int transportIndex = -1  ); ///< Closes a particular transport
+
+
+protected:
 
     std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
-    std::vector< Capsule > m_Buffers; ///< managed Buffers
-    const bool m_DebugMode = false;
+    std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< managed Buffers
+    bool m_DebugMode = false;
 
-    std::string GetName( const std::vector<std::string>& arguments ) const;
+    void SetTransports( );
+
+    std::string GetName( const std::vector<std::string>& arguments ) const; //might move this to adiosFunctions
 
 };
 

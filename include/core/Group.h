@@ -41,21 +41,24 @@ class Group
 public:
 
     /**
+     * Empty constructor
+     */
+    Group( );
+
+    /**
+     * Empty constructor
+     * @param debugMode true: additional checks throwing exceptions, false: skip checks
+     */
+    Group( const bool debugMode = false );
+
+    /**
      * @brief Constructor for XML config file
      * @param hostLanguage reference from ADIOS class
      * @param xmlGroup contains <adios-group (tag excluded)....</adios-group> single group definition from XML config file
      * @param transforms passed from ADIOS.m_Transforms, single look up table for all transforms
-     * @param debugMode from ADIOS
-     */
-    Group( const std::string hostLanguage, const std::string& xmlGroup,
-           std::vector< std::shared_ptr<Transform> >& transforms, const bool debugMode );
-
-    /**
-     * Non-XML empty constructor
-     * @param hostLanguage reference from ADIOS class
      * @param debugMode
      */
-    Group( const std::string hostLanguage, const bool debugMode );
+    Group( const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms, const bool debugMode );
 
 
     ~Group( ); ///< Using STL containers, no deallocation
@@ -67,20 +70,21 @@ public:
      * @param dimensionsCSV comma separated variable local dimensions (e.g. "Nx,Ny,Nz")
      * @param globalDimensionsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
+     * @param transform pointer reference to a Transform object, default = nullptr
+     * @param parameter corresponding parameter used by Transform to do operations
      */
     void DefineVariable( const std::string variableName, const std::string type,
-                         const std::string dimensionsCSV,
-                         const std::string globalDimensionsCSV, const std::string globalOffsetsCSV,
-                         const short transformIndex = -1, const unsigned short int compressionLevel = 0 );
+                         const std::string dimensionsCSV = "",
+                         const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
+                         const Transform* transform = nullptr, const unsigned short parameter = 0 );
 
     /**
-     * Sets a variable transform contained in ADIOS.m_Transforms (single container for all groups and variables)
+     * Sets a variable transform contained in ADIOS Transforms (single container for all groups and variables)
      * @param variableName variable to be assigned a transformation
-     * @param transformIndex index in
-     * @param compressionLevel from 0 to 9
+     * @param transform corresponding transform object
+     * @param parameter optional parameter interpreted by the corresponding Transform
      */
-    void SetTransform( const std::string variableName, const unsigned int transformIndex, const unsigned int compressionLevel );
-
+    void SetTransform( const std::string variableName, const Transform& transform, const short parameter = 0 );
 
     /**
      * Define a new attribute
@@ -110,8 +114,7 @@ public:
 
 private:
 
-    const std::string m_HostLanguage; ///< copy of ADIOS m_HostLanguage
-    const bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code, known at compile time
+    bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code, known at compile time
 
     std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of CVariable
 
@@ -140,13 +143,16 @@ private:
      */
     std::map< std::string, Attribute > m_Attributes;
 
+
     std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
+
 
     /**
      * Called from XML constructor
      * @param xmlGroup contains <adios-group....</adios-group> single group definition from XML config file passing by reference as it could be big
      */
     void ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms );
+
 
     /**
      * Used by SetVariable and SetAttribute to check if global bounds exist in m_GlobalBounds
@@ -156,12 +162,6 @@ private:
      */
     const short SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept;
 
-    /**
-     * Used by SetVariable to check if transform exists in m_Transform
-     * @param transform variable transformation method (e.g. bzip2, szip, zlib )
-     * @return -1 variable is not associated with a transform, otherwise index in m_Transforms
-     */
-    const int SetTransforms( const std::string transform ) noexcept;
 
     /**
      * Retrieves the value of a variable representing another's variable dimensions. Set with Write

@@ -20,6 +20,7 @@ namespace adios
  */
 struct Method
 {
+    std::string Name; ///< Method name
     std::vector< std::string > Capsules; ///< Capsule type
     std::map< std::string, std::vector<std::string> > Transports; ///< key: transports, value: arguments to Transport
     std::string Group; ///< Associated group name to this engine

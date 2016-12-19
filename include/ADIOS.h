@@ -47,6 +47,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
+
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
@@ -82,102 +83,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
     /**
-     * @brief Open to Write, Read
-     * @param name unique stream or file name
-     * @param accessMode
-     * @param mpiComm
-     * @param method corresponding method
-     * @return
-     */
-    const unsigned int Open( const std::string name, const std::string accessMode, MPI_Comm mpiComm );
-
-    /**
-     * @brief Create an Engine described by a previously defined method
-     * @param name
-     * @param accessMode
-     * @param method
-     * @return
-     */
-    const unsigned int Open( const std::string name, const std::string accessMode, const std::string method );
-
-
-    /**
-     * Sets the maximum buffer size of a stream
-     * @param streamName
-     * @param maxBufferSize
-     */
-    void SetMaxBufferSize( const std::string streamName, const size_t maxBufferSize );
-
-    /**
-     * Sets a default group to be associated with a stream before writing variables with Write function.
-     * @param streamName unique name
-     * @param groupName default group from which variables will be used
-     */
-    void SetCurrentGroup( const std::string streamName, const std::string groupName );
-
-
-    template<class T>
-    void Write( const std::string streamName, const std::string groupName, const std::string variableName, const T* values,
-                const int transportIndex = -1 )
-    {
-        auto itGroup = m_Groups.find( groupName );
-
-        if( m_DebugMode == true )
-        {
-            CheckCapsule( streamName, " from call to Write variable " + variableName );
-            CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
-            if( transportIndex < -1 )
-                throw std::invalid_argument( "ERROR: transport index " + std::to_string( transportIndex ) +
-                                             " must be >= -1, in call to Write\n" );
-        }
-
-        WriteHelper( itCapsule->second, itGroup->second, variableName, values, transportIndex, m_DebugMode );
-    }
-
-
-    /**
-     * Write version using default group, set with Function SetGroup.
-     * Submits a data element values for writing and associates it with the given variableName
-     * @param streamName stream or file to be written to
-     * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
-     * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
-     * @param cores optional parameter for threaded version
-     */
-    template<class T>
-    void Write( const int handler, const std::string variableName, const T* values,
-                const int transportIndex = -1 )
-    {
-        if( m_DebugMode == true )
-            CheckCapsule( streamName, " from call to Write variable " + variableName );
-
-        WriteHelper( itCapsule->second, *itCapsule->second.m_CurrentGroup, variableName, values, transportIndex, m_DebugMode );
-    }
-
-    template<class T>
-        void Write( const int handler, const std::string variableName, const T* values,
-                    const int transportIndex = -1 )
-        {
-            if( m_DebugMode == true )
-                CheckCapsule( streamName, " from call to Write variable " + variableName );
-
-            WriteHelper( itCapsule->second, *itCapsule->second.m_CurrentGroup, variableName, values, transportIndex, m_DebugMode );
-        }
-
-    /**
-     * Close a particular stream and the corresponding transport
-     * @param streamName stream to be closed with all corresponding transports
-     * @param transportIndex identifier to a particular transport, if == -1 Closes all transports
-     */
-    void Close( const std::string streamName, const int transportIndex = -1 );
-
-    /**
-     * @brief Dumps groups information to a file stream or standard output.
-     * Note that either the user closes this fileStream or it's closed at the end.
-     * @param logStream either std::cout standard output, or a std::ofstream file
-     */
-    void MonitorGroups( std::ostream& logStream ) const;
-
-    /**
      * Creates an empty group
      * @param groupName
      */
@@ -196,6 +101,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
                          const std::string dimensionsCSV = "", const std::string globalDimensionsCSV = "",
                          const std::string globalOffsetsCSV = ""  );
 
+
     /**
      * Sets a transform method to a variable, to be applied when writing
      * @param groupName corresponding variable group
@@ -206,14 +112,105 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
     /**
-     * Creates a new Variable, if debugMode = true, program will throw an exception, else it will overwirte current variable with the same name
+     * @brief Creates a new Attribute.
+     * Debug Mode: program will throw an exception if attribute exists (attributeName),
+     * else: overwrites current attribute using the same name
      * @param groupName corresponding variable group
      * @param attributeName corresponding attribute name
      * @param type string or number
-     * @param value string contents of the attribute (e.g. "Communication value" )
+     * @param value string contents of the attribute (e.g. "Communication value", "1" )
      */
     void DefineAttribute( const std::string groupName, const std::string attributeName,
                           const std::string type, const std::string value );
+
+    /**
+     * @brief Open to Write, Read. Creates a new engine from previously defined method
+     * @param streamName unique stream or file name
+     * @param accessMode "w" or "write", "r" or "read", "a" or "append"
+     * @param mpiComm option to modify communicator from ADIOS class constructor
+     * @param method looks for corresponding Method object in ADIOS to initialize the engine
+     * @return handler to created engine
+     */
+    const unsigned int Open( const std::string streamName, const std::string accessMode, MPI_Comm mpiComm,
+                             const std::string methodName );
+
+
+    /**
+     * @brief Open to Write, Read. Creates a new engine from previously defined method. Reuses MPI communicator from ADIOS class constructor.
+     * @param streamName unique stream or file name
+     * @param accessMode "w" or "write", "r" or "read", "a" or "append"
+     * @param method looks for corresponding Method object in ADIOS to initialize the engine
+     * @return handler to created engine
+     */
+    const unsigned int Open( const std::string streamName, const std::string accessMode, const std::string methodName );
+
+
+    /**
+     * Sets the maximum buffer size of a stream
+     * @param streamName
+     * @param maxBufferSize
+     */
+    void SetMaxBufferSize( const unsigned int engineHandler, const size_t maxBufferSize );
+
+    /**
+     * Sets a default group to be associated with a stream before writing variables with Write function.
+     * @param streamName unique name
+     * @param groupName default group from which variables will be used
+     */
+    void SetGroup( const unsigned int handler, const std::string groupName );
+
+
+    template<class T>
+    void Write( const unsigned int handler, const std::string groupName, const std::string variableName, const T* values )
+    {
+        auto itEngine = m_Engines.find( handler );
+        auto itGroup = m_Groups.find( groupName );
+
+        if( m_DebugMode == true )
+        {
+            CheckEngine( itEngine, handler, " from call to Write variable " + variableName );
+            CheckGroup( itGroup, groupName, " from call to Write variable " + variableName );
+        }
+
+        itEngine->second->Write( itGroup->second, variableName, values );
+    }
+
+
+    /**
+     * Write version using default group, set with Function SetGroup.
+     * Submits a data element values for writing and associates it with the given variableName
+     * @param streamName stream or file to be written to
+     * @param variableName name of existing scalar or vector variable in the XML file or created with CreateVariable
+     * @param values pointer to the variable values passed from the user application, use dynamic_cast to check that pointer is of the same value type
+     * @param cores optional parameter for threaded version
+     */
+    template<class T>
+    void Write( const unsigned int handler, const std::string variableName, const T* values )
+    {
+        auto itEngine = m_Engines.find( handler );
+
+        if( m_DebugMode == true )
+            CheckEngine( itEngine, handler, " from call to Write variable " + variableName );
+
+        itEngine->second->Write( variableName, values );
+    }
+
+    /**
+     * Close a particular stream and the corresponding transport
+     * @param streamName stream to be closed with all corresponding transports
+     * @param transportIndex identifier to a particular transport, if == -1 Closes all transports
+     */
+    void Close( const unsigned int handler, const int transportIndex = -1 );
+
+
+    /**
+     * @brief Dumps groups information to a file stream or standard output.
+     * Note that either the user closes this fileStream or it's closed at the end.
+     * @param logStream either std::cout standard output, or a std::ofstream file
+     */
+    void MonitorGroups( std::ostream& logStream ) const;
+
+
 
 
 private:
@@ -243,7 +240,7 @@ private:
      *     Value: Engine derived class
      * </pre>
      */
-    std::unordered_map< unsigned int, std::shared_ptr<Capsule> > m_Engines;
+    std::unordered_map< unsigned int, std::shared_ptr<Engine> > m_Engines;
     std::set< std::string > m_EngineNames; ///< set used to check Engine name uniqueness in debug mode
     int m_EngineCounter = -1; ///< used to set the unsigned int key in m_Capsules, helpful is a capsule is removed
 
@@ -261,12 +258,12 @@ private:
                      const std::string groupName, const std::string hint ) const;
 
     /**
-     * @brief Checks for capsule existence in m_Groups, if failed throws std::invalid_argument exception
-     * @param itCapsule m_Capsule iterator, usually from find function
-     * @param streamName unique name, passed for thrown exception only
+     * @brief Checks for engine existence in m_Engines, if failed throws std::invalid_argument exception
+     * @param itEngine from Open
      * @param hint adds information to thrown exception
      */
-    void CheckEngine( const std::string streamName, const std::string hint ) const;
+    void CheckEngine( std::unordered_map< unsigned int, std::shared_ptr<Engine> >::const_iterator itEngine,
+                      const unsigned int handle, const std::string hint ) const;
 
 };
 

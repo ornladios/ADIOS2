@@ -59,22 +59,39 @@ ADIOS::~ADIOS( )
 { }
 
 
-void ADIOS::SetCurrentGroup( const unsigned int engineHandler, const std::string groupName )
+void ADIOS::DeclareGroup( const std::string groupName )
 {
-    auto itEngine = m_Engine
     if( m_DebugMode == true )
-        CheckCapsule( itCapsule, streamName, " from call to SetCurrentGroup\n" );
+    {
+        if( m_Groups.count( groupName ) == 1 )
+            throw std::invalid_argument( "ERROR: group " + groupName + " already exist, from call to DeclareGroup\n" );
+    }
 
-    itCapsule->second.m_CurrentGroup = groupName;
+    m_Groups.emplace( groupName, Group( m_HostLanguage, m_DebugMode ) );
 }
 
 
-const unsigned int ADIOS::Open( const std::string streamName, const std::string accessMode,
+void ADIOS::SetGroup( const unsigned int handler, const std::string groupName )
+{
+    auto itEngine = m_Engines.find( handler );
+    auto itGroup = m_Groups.find( groupName );
+
+    if( m_DebugMode == true )
+    {
+        CheckEngine( itEngine, handler, " in call to SetGroup.\n" );
+        CheckGroup( itGroup, groupName, " in call to SetGroup.\n" );
+    }
+
+    itEngine->second->m_Group = &( itGroup->second );
+}
+
+
+const unsigned int ADIOS::Open( const std::string name, const std::string accessMode,
                                 MPI_Comm mpiComm, const std::string methodName )
 {
     if( m_DebugMode == true )
     {
-        if( m_EngineNames.count( streamName ) == 1 ) //Engine exists
+        if( m_EngineNames.count( name ) == 1 ) //Engine exists
             throw std::invalid_argument( "ERROR: method " + methodName + " already created by Open, in call from Open.\n" );
 
         if( m_Methods.count( methodName ) == 0 ) //
@@ -83,7 +100,7 @@ const unsigned int ADIOS::Open( const std::string streamName, const std::string 
 
     ++m_EngineCounter;
 
-    if( methodName.empty() )
+    if( methodName.empty() ) //default engine with one transport
     {
 
     }
@@ -116,17 +133,6 @@ void ADIOS::Close( const unsigned int methodHandler, const int transportIndex ) 
     itCapsule->second.Close( transportIndex );
 }
 
-
-void ADIOS::DeclareGroup( const std::string groupName )
-{
-    if( m_DebugMode == true )
-    {
-        if( m_Groups.count( groupName ) == 1 )
-            throw std::invalid_argument( "ERROR: group " + groupName + " already exist, from call to CreateGroup\n" );
-    }
-
-    m_Groups.emplace( groupName, Group( m_HostLanguage, m_DebugMode ) );
-}
 
 
 void ADIOS::DefineVariable( const std::string groupName, const std::string variableName, const std::string type,
@@ -192,10 +198,11 @@ void ADIOS::CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
         throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
 }
 
-void ADIOS::CheckCapsule( const std::string streamName, const std::string hint ) const
+void ADIOS::CheckEngine( std::unordered_map< unsigned int, std::shared_ptr<Engine> >::const_iterator itEngine,
+                         const unsigned int handle, const std::string hint ) const
 {
-    if( itCapsule == m_Capsules.end() )
-        throw std::invalid_argument( "ERROR: stream (or file) " + streamName + " not created with Open , " + hint + "\n" );
+    if( itEngine == m_Engines.end() )
+        throw std::invalid_argument( "ERROR: stream (or file) from handle " + handle + " not created with Open , " + hint + "\n" );
 }
 
 

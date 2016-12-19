@@ -26,8 +26,8 @@ namespace adios
 {
 
 template<class T>
-void WriteHelperToCapsule( Capsule& capsule, Group& group, Variable<T>& variable, const T* values,
-                           const int transportIndex ) noexcept
+void WriteHelperToEngine( Capsule& capsule, Group& group, Variable<T>& variable, const T* values,
+                          const int transportIndex ) noexcept
 {
     variable.m_Values = values;
     auto localDimensions = group.GetDimensions( variable.m_DimensionsCSV );
@@ -40,7 +40,7 @@ void WriteHelperToCapsule( Capsule& capsule, Group& group, Variable<T>& variable
     }
     else //write local variable
     {
-        capsule.Write( variable.m_Values, GetTotalSize( localDimensions ), transportIndex );
+        capsule.Write( variable.m_Values, GetTotalSize( localDimensions ) );
     }
 }
 
@@ -80,7 +80,6 @@ void WriteHelper( Capsule& capsule, Group& group, const std::string variableName
     const unsigned int index = itVariable->second;
     group.m_SetVariables.insert( variableName ); //should be done before writing to buffer, in case there is a crash?
 
-    //will need to add a lambda function later and put types in a set
     if( std::is_same<T,char>::value )
     {
         lf_DebugType( debugMode, type, Support::DatatypesAliases.at("char"), variableName );
