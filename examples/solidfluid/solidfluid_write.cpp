@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "public/ADIOS.h"
+#include "ADIOS.h"
 
 
 struct MYDATA {
@@ -27,7 +27,7 @@ MPI_Comm    comm=MPI_COMM_WORLD;
 int         rank, size;
 
 
-void write_data (adios::ADIOS adios, struct MYDATA &data, ADIOS_OUTPUT &outfile)
+void write_data (adios::ADIOS adios, struct MYDATA &data, unsigned int outfile)
 {
     adios.Write (outfile, "NX", &data.NX);
     adios.Write (outfile, "rank", &rank);
@@ -38,27 +38,27 @@ void write_data (adios::ADIOS adios, struct MYDATA &data, ADIOS_OUTPUT &outfile)
     adios.Write (outfile);
 }
 
-void write_ckpt (struct MYDATA &solid, struct MYDATA &fluid, adios::ADIOS_OUTPUT &ckptfile)
+void write_checkpoint (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &fluid)
 {
     try {
         // Open an output for a Group
         // a transport or an engine should be associated with the group
-        ckptfile.Open("ckpt.bp");
+        int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "w", comm);
 
-        ckptfile.ScheduleWrite ("solid/NX", &solid.NX);
-        ckptfile.ScheduleWrite ("solid/rank", &rank);
-        ckptfile.ScheduleWrite ("solid/size", &size);
-        ckptfile.ScheduleWrite ("solid/temperature", solid.t);
-        ckptfile.ScheduleWrite ("solid/pressure", solid.p);
+        adios.Write (ckptfile, "solid/NX", &solid.NX);
+        adios.Write (ckptfile, "solid/rank", &rank);
+        adios.Write (ckptfile, "solid/size", &size);
+        adios.Write (ckptfile, "solid/temperature", solid.t);
+        adios.Write (ckptfile, "solid/pressure", solid.p);
 
-        ckptfile.ScheduleWrite ("fluid/NX", &fluid.NX);
-        ckptfile.ScheduleWrite ("fluid/rank", &rank);
-        ckptfile.ScheduleWrite ("fluid/size", &size);
-        ckptfile.ScheduleWrite ("fluid/temperature", fluid.t);
-        ckptfile.ScheduleWrite ("fluid/pressure", fluid.p);
+        adios.Write (ckptfile, "fluid/NX", &fluid.NX);
+        adios.Write (ckptfile, "fluid/rank", &rank);
+        adios.Write (ckptfile, "fluid/size", &size);
+        adios.Write (ckptfile, "fluid/temperature", fluid.t);
+        adios.Write (ckptfile, "fluid/pressure", fluid.p);
 
-        ckptfile.Write();
-        ckptfile.Close(); // Should this do Write() if user misses or should we complain?
+        adios.Write(ckptfile);
+        adios.Close(ckptfile); // Should this do Write() if user misses or should we complain?
     }
     catch ( std::exception& e ) //need to think carefully how to handle C++ exceptions with MPI to avoid deadlocking
     {
@@ -69,7 +69,7 @@ void write_ckpt (struct MYDATA &solid, struct MYDATA &fluid, adios::ADIOS_OUTPUT
     }
 }
 
-void write_viz (struct MYDATA &solid, struct MYDATA &fluid, ADIOS_OUTPUT &vizstream)
+void write_viz (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &fluid, unsigned int vizstream)
 {
     // This stream is not associated with a group, so we must say for each write which group to use
     // The output variable is re-defined inside as <groupname>/<varname>, unless given as third string argument
@@ -87,11 +87,11 @@ void write_viz (struct MYDATA &solid, struct MYDATA &fluid, ADIOS_OUTPUT &vizstr
 
     adios.Write (vizstream, "fluid", "temperature", "temperature", fluid.t);
 
-    vizstream.Write();
+    adios.Write(vizstream); // flushes all data to disk; required operation
     vizstream.AdvanceStep();
 }
 
-void compute (struct MYDATA &solid, struct MYDATA &fluid)
+void compute (int it,  struct MYDATA &solid, struct MYDATA &fluid)
 {
     for (int i = 0; i < solid.NX; i++)
     {
@@ -129,7 +129,7 @@ int main( int argc, char* argv [] )
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?
 
-        int solidfile = adios.Open("solid", "solid.bp", "a", comm); // "solid" is a method but incidentally also a group
+        int solidfile = adios.Open("solid.bp", "solid", "a", comm); // "solid" is a method but incidentally also a group
         // Constructor only creates an object and what is needed there but does not open a stream/file
         // It can be used to initialize a staging connection if not declared before
         // FIXME: which argument can be post-poned into Open() instead of constructor?
@@ -141,15 +141,14 @@ int main( int argc, char* argv [] )
         // "a" will append to an already existing file, "w" would create a new file
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?
-        int fluidfile = adios.Open("fluid.bp", "fluid", 
-                                   adios::ACCESS_MODE::APPEND, comm);
+        int fluidfile = adios.Open("fluid.bp", "fluid", "a", comm);
 
-        int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "w", comm);
+        //int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "w", comm);
         // we do not open this here, but every time when needed in a function
 
         // Another output not associated with a single group, so that we can mix variables to it
         //adios:handle vizstream = adios.Open( "stream.bp", comm, "w", "STAGING", "options to staging method");
-        adios::handle vizstream = adios.Open( "stream.bp", comm, "w", "groupless");
+        int vizstream = adios.Open( "stream.bp", comm, "w", "groupless");
 
         // This creates an empty group inside, and we can write all kinds of variables to it
 
@@ -159,16 +158,16 @@ int main( int argc, char* argv [] )
 
         for (int it = 1; it <= 100; it++)
         {
-            compute (solid, fluid);
+            compute (it, solid, fluid);
 
-            write_data(solid, solidfile);
-            write_data(fluid, fluidfile);
+            write_data(adios, solid, solidfile);
+            write_data(adios, fluid, fluidfile);
 
             if (it%10 == 0) {
-                write_checkpoint (solid, fluid);
+                write_checkpoint (adios, solid, fluid);
             }
 
-            write_viz(solid, fluid, vizstream);
+            write_viz(adios, solid, fluid, vizstream);
 
             MPI_Barrier (comm);
             if (rank==0) printf("Timestep %d written\n", it);

@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "public/ADIOS.h"
+#include "ADIOS.h"
 
 
 struct MYDATA {
@@ -26,26 +26,27 @@ struct MYDATA solid, fluid;
 MPI_Comm    comm=MPI_COMM_WORLD;
 int         rank, size;
 
-void read_ckpt (struct MYDATA &solid, struct MYDATA &fluid)
+void read_ckpt (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &fluid)
 {
     try {
         // Open an input which was written with an expected Method
-        // The writing transport method is associated with the group in the XML
+        // The write transport is associated with the group in the XML
         // ADIOS pairs that with the corresponding read transport
         // "r" is required to indicate we are reading
-        adios::ADIOS_INPUT ckptfile( comm, "r", "checkpoint");
-        ckptfile.Open("ckpt.bp");
+        int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "r", comm);
+        // We can also manually set the read transport
+        //int ckptfile = adios.Open("checkpoint.bp", adios::READ_METHOD_BP, "r", comm);
 
         // Note: we only see a single step in the input but the checkpoint has
         // only one step anyway. This makes this code simple
 
         // simple immediate read of a scalar
-        ckptfile.ReadScalar ("solid/NX", &solid.NX);
+        adios.ReadScalar (ckptfile, "solid/NX", &solid.NX);
         // solid.NX is filled at this point
 
         // scheduled version of read of another scalar
-        ckptfile.ScheduleRead ("fluid/NX", &fluid.NX);
-        ckptfile.Read(); // perform reading now
+        adios.ScheduleRead (ckptfile, "fluid/NX", &fluid.NX);
+        adios.Read(ckptfile); // perform reading now
         // fluid.NX is filled at this point
 
         solid.t = new double(solid.NX);
@@ -55,13 +56,13 @@ void read_ckpt (struct MYDATA &solid, struct MYDATA &fluid)
         fluid.p = std::vector<double>(fluid.NX);
 
         adios::ADIOS_SELECTION_WRITEBLOCK sel(rank);
-        ckptfile.ScheduleRead (sel, "solid/temperature", solid.t);
-        ckptfile.ScheduleRead (sel, "solid/pressure",    solid.p);
-        ckptfile.ScheduleRead (sel, "fluid/temperature", fluid.t);
+        adios.ScheduleRead (ckptfile, sel, "solid/temperature", solid.t);
+        adios.ScheduleRead (ckptfile, sel, "solid/pressure",    solid.p);
+        adios.ScheduleRead (ckptfile, sel, "fluid/temperature", fluid.t);
         // force checking if the allocated space equals to the size of the selection:
-        ckptfile.ScheduleRead (sel, "fluid/pressure",    fluid.p, fluid.NX*sizeof(double));
-        ckptfile.Read(true); // true: blocking read
-        ckptfile.Close(); // Should this do Read() if user misses or should we complain?
+        adios.ScheduleRead (ckptfile, sel, "fluid/pressure",    fluid.p, fluid.NX*sizeof(double));
+        adios.Read(ckptfile, true); // true: blocking read, which is also default
+        adios.Close(ckptfile); // Should this do Read() if user misses or should we complain?
     }
     catch ( std::exception& e ) //need to think carefully how to handle C++ exceptions with MPI to avoid deadlocking
     {
@@ -72,21 +73,20 @@ void read_ckpt (struct MYDATA &solid, struct MYDATA &fluid)
     }
 }
 
-void read_solid (struct MYDATA &solid)
+void read_solid (adios::ADIOS adios, struct MYDATA &solid)
 {
     float timeout_sec = 1.0;
     int retval = 0;
 
-    // Open a file for input, no group defined
-    // A reading transport should be defined if not file based
-    // "r" is required to indicate we are reading
-    adios::ADIOS_INPUT solidfile( comm, "r");
 
     try {
-        solidfile.Open("solid.bp"); //, ADIOS_LOCKMODE_NONE, timeout_sec);
-
+        // Open a file for input, no group defined
+        // A reading transport should be defined if not file based
+        // "r" is required to indicate we are reading
+    	int solidfile = adios.Open("solid.bp", "r", comm); //, ADIOS_LOCKMODE_NONE, timeout_sec);
+        //int solidfile = adios.Open("solid.bp", adios::READ_METHOD_BP, "r", comm);
         /* process file here... */
-        const adios::ADIOS_VARINFO &v = solidfile.InqVar ("temperature");
+        const adios::ADIOS_VARINFO &v = adios.InqVar (solidfile, "temperature");
         v.GetBlockInfo();
 
         printf ("ndim = %d\n",  v.ndim);
@@ -103,7 +103,7 @@ void read_solid (struct MYDATA &solid)
         start[1] = 0;
         count[1] = v.dims[1];
 
-        data = malloc (slice_size * v.dims[1] * 8);
+        auto data = std::make_unique<double[]>(slice_size * v.dims[1] * 8);
 
         adios::ADIOS_SELECTION_BOUNDINGBOX sel(v.ndim, start, count);
 
@@ -161,7 +161,7 @@ void read_solid (struct MYDATA &solid)
     }
 }
 
-void read_fluid (struct MYDATA &fluid)
+void read_fluid (adios::ADIOS adios, struct MYDATA &fluid)
 {
     float timeout_sec = 1.0;
     int retval = 0;
@@ -273,11 +273,11 @@ int main (int argc, char ** argv)
         // ADIOS manager object creation. MPI must be initialized
         adios::ADIOS adios( "globalArrayXML.xml", comm, true );
 
-        read_ckpt(solid, fluid);
+        read_ckpt(adios, solid, fluid);
 
-        read_solid(solid);
+        read_solid(adios, solid);
 
-        read_fluid(fluid);
+        read_fluid(adios, fluid);
     }
     catch( std::exception& e ) //need to think carefully how to handle C++ exceptions with MPI to avoid deadlocking
     {
