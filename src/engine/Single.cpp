@@ -25,6 +25,9 @@ Single::Single( const std::string streamName, const std::string accessMode, cons
 }
 
 
+Single::~Single( )
+{ }
+
 
 
 }

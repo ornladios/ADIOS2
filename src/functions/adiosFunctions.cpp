@@ -407,11 +407,11 @@ void CreateDirectory( const std::string fullPath ) noexcept
 
 
 void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<Transform> >& transforms,
-                         const bool debugMode, int& transformIndex, int& compressionLevel )
+                         const bool debugMode, short& transformIndex, short& parameter )
 {
     //get method:compressionLevel from transform
     std::string method( transform ); //default
-    compressionLevel = 0; //default
+    parameter = 0; //default
 
     auto colonPosition = transform.find( ":" );
 
@@ -424,7 +424,7 @@ void SetTransformHelper( const std::string transform, std::vector< std::shared_p
         }
 
         method = transform.substr( 0, colonPosition );
-        compressionLevel = std::stoi( transform.substr( colonPosition+1 ) ); //need to test
+        parameter = std::stoi( transform.substr( colonPosition+1 ) ); //need to test
     }
 
     transformIndex = -1;
@@ -446,9 +446,8 @@ void SetTransformHelper( const std::string transform, std::vector< std::shared_p
             #endif
         }
 
+        transformIndex = static_cast<int>( transforms.size() - 1 );
     }
-
-    transformIndex = static_cast<int>( transforms.size() - 1 );
 }
 
 

@@ -127,10 +127,10 @@ void CreateDirectory( const std::string fullPath ) noexcept;
  * @param transforms container of existing transform methods, owned by ADIOS class
  * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
  * @param transformIndex returns the corresponding transformIndex in transforms for this transport method
- * @param compressionLevel returns the corresponding compression level from transport = "method:compressionLevel"
+ * @param compressionLevel returns the corresponding parameter understood by a transport = "method:parameter"
  */
 void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<Transform> >& transforms,
-                         const bool debugMode, int& transformIndex, int& compressionLevel );
+                         const bool debugMode, short& transformIndex, short& parameter );
 
 /**
  * Check in types set if "type" is one of the aliases for a certain type, (e.g. if type = integer is an accepted alias for "int", returning true)

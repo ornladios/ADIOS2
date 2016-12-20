@@ -40,6 +40,8 @@ class Group
 
 public:
 
+    std::set< std::string > m_WrittenVariables; ///< set of variables whose T* values have been set (no nullptr)
+
     /**
      * Empty constructor
      */
@@ -76,7 +78,7 @@ public:
     void DefineVariable( const std::string variableName, const std::string type,
                          const std::string dimensionsCSV = "",
                          const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
-                         const Transform* transform = nullptr, const unsigned short parameter = 0 );
+                         const Transform* transform = nullptr, const short parameter = 0 );
 
     /**
      * Sets a variable transform contained in ADIOS Transforms (single container for all groups and variables)
@@ -111,9 +113,6 @@ public:
 
     unsigned long long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
-
-private:
-
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code, known at compile time
 
     std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of CVariable
@@ -131,8 +130,6 @@ private:
     std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
     std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
     std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
-
-    std::set<std::string> m_SetVariables; ///< set of variables whose T* values have been set (no nullptr)
 
     /**
      * @brief Contains all group attributes from SAttribute.h

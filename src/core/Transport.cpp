@@ -12,8 +12,8 @@ namespace adios
 {
 
 
-Transport::Transport( const std::string method, MPI_Comm mpiComm, const bool debugMode ):
-    m_Method{ method },
+Transport::Transport( const std::string type, MPI_Comm mpiComm, const bool debugMode ):
+    m_Type{ type },
     m_MPIComm{ mpiComm },
     m_DebugMode{ debugMode }
 {
@@ -26,11 +26,11 @@ Transport::~Transport( )
 { }
 
 
-void Transport::SetBuffer( std::vector<char>& buffer )
+void Transport::Write( const Capsule& capsule )
 { }
 
 
-void Transport::Write( std::vector<char>& buffer )
+void Transport::Close( const Capsule& capsule )
 { }
 
 

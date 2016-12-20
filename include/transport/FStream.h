@@ -33,9 +33,9 @@ public:
 
     void SetBuffer( std::vector<char>& buffer );
 
-    void Write( std::vector<char>& buffer );
+    void Write( const Capsule& capsule );
 
-    void Close( );
+    void Close( const Capsule& capsule );
 
 private:
 

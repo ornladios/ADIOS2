@@ -10,6 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
+#include <vector>
 #include <memory> //shared_ptr
 #include <ostream>
 #include <unordered_map>
@@ -25,7 +26,7 @@
 #include "core/Method.h"
 #include "core/Engine.h"
 #include "core/Support.h"
-#include "functions/adiosTemplates.h"
+#include "functions/engineTemplates.h"
 
 
 namespace adios
@@ -195,6 +196,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         itEngine->second->Write( variableName, values );
     }
 
+
     /**
      * Close a particular stream and the corresponding transport
      * @param streamName stream to be closed with all corresponding transports
@@ -231,6 +233,7 @@ private:
 
     //METHODS -> Engine Metadata
     std::map< std::string, Method > m_Methods;
+
 
     //ENGINE
     /**

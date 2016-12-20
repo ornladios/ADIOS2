@@ -106,31 +106,27 @@ const unsigned int ADIOS::Open( const std::string name, const std::string access
     }
     else //special cases
     {
-        if( methodName == "SIRIUS" )
-        {
-            m_Engines[ m_EngineCounter ] =
-        }
-        else if( methodName == "DataMan" )
-        {
-            m_Engines[ m_EngineCounter ] = ;
-        }
+//        if( methodName == "SIRIUS" )
+//        {
+//            m_Engines[ m_EngineCounter ] =
+//        }
+//        else if( methodName == "DataMan" )
+//        {
+//            m_Engines[ m_EngineCounter ] = ;
+//        }
     }
 
     return m_EngineCounter;
 }
 
 
-void ADIOS::Close( const unsigned int methodHandler, const int transportIndex ) //close stream
+void ADIOS::Close( const unsigned int handler, const int transportIndex ) //close stream
 {
-    auto itEngine = m_Engines.find( methodHandler );
+    auto itEngine = m_Engines.find( handler );
     if( m_DebugMode == true )
-    {
+        CheckEngine( itEngine, handler, " in call to Close\n" );
 
-    }
-
-    itEngine
-
-    itCapsule->second.Close( transportIndex );
+    itEngine->second->Close( transportIndex );
 }
 
 
@@ -159,11 +155,11 @@ void ADIOS::SetTransform( const std::string groupName, const std::string variabl
                                          " not supported, in call to SetTransform\n" );
     }
 
-    int transformIndex, compressionLevel;
+    short transformIndex, parameter;
     //set m_Transforms, transformIndex, compressionLevel
-    SetTransformHelper( transform, m_Transforms, m_DebugMode, transformIndex, compressionLevel );
+    SetTransformHelper( transform, m_Transforms, m_DebugMode, transformIndex, parameter );
     //set Variable with transformIndex, compressionLevel
-    itGroup->second.SetTransform( variableName, transformIndex, compressionLevel );
+    itGroup->second.SetTransform( variableName, *m_Transforms[transformIndex].get(), parameter );
 }
 
 

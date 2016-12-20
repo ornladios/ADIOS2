@@ -70,19 +70,28 @@ public:
 
     virtual ~Engine( );
 
-    virtual void Write( const Group& group, const std::string variableName, const char* values );
-    virtual void Write( const Group& group, const std::string variableName, const unsigned char* values );
-    virtual void Write( const Group& group, const std::string variableName, const short* values );
-    virtual void Write( const Group& group, const std::string variableName, const unsigned short* values );
-    virtual void Write( const Group& group, const std::string variableName, const int* values );
-    virtual void Write( const Group& group, const std::string variableName, const unsigned int* values );
-    virtual void Write( const Group& group, const std::string variableName, const long int* values );
-    virtual void Write( const Group& group, const std::string variableName, const unsigned long int* values );
-    virtual void Write( const Group& group, const std::string variableName, const long long int* values );
-    virtual void Write( const Group& group, const std::string variableName, const unsigned long long int* values );
-    virtual void Write( const Group& group, const std::string variableName, const float* values );
-    virtual void Write( const Group& group, const std::string variableName, const double* values );
-    virtual void Write( const Group& group, const std::string variableName, const long double* values );
+    /**
+     * @brief Write functions can be overridden by derived classes. Base class behavior is to:
+     * 1) Write to Variable values (m_Values) in a group
+     * 2) Transform the data
+     * 3) Write to all capsules -> data and metadata
+     * @param group
+     * @param variableName
+     * @param values coming from user app
+     */
+    virtual void Write( Group& group, const std::string variableName, const char* values );
+    virtual void Write( Group& group, const std::string variableName, const unsigned char* values );
+    virtual void Write( Group& group, const std::string variableName, const short* values );
+    virtual void Write( Group& group, const std::string variableName, const unsigned short* values );
+    virtual void Write( Group& group, const std::string variableName, const int* values );
+    virtual void Write( Group& group, const std::string variableName, const unsigned int* values );
+    virtual void Write( Group& group, const std::string variableName, const long int* values );
+    virtual void Write( Group& group, const std::string variableName, const unsigned long int* values );
+    virtual void Write( Group& group, const std::string variableName, const long long int* values );
+    virtual void Write( Group& group, const std::string variableName, const unsigned long long int* values );
+    virtual void Write( Group& group, const std::string variableName, const float* values );
+    virtual void Write( Group& group, const std::string variableName, const double* values );
+    virtual void Write( Group& group, const std::string variableName, const long double* values );
 
     virtual void Write( const std::string variableName, const char* values );
     virtual void Write( const std::string variableName, const unsigned char* values );
@@ -105,9 +114,24 @@ protected:
 
     std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
     std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< managed Buffers
-    bool m_DebugMode = false;
+    const bool m_DebugMode = false;
 
-    void SetTransports( );
+    virtual void SetCapsules( ); ///< Initialize transports from Method, called from constructor.
+    virtual void SetTransports( ); ///< Initialize transports from Method, called from constructor.
+
+    /**
+     * Performs preliminary checks before writing a variable. Throws an exception if checks fail.
+     * Returns an index to variable type container in Group
+     * @param group variable group owner object
+     * @param variableName variable to be checked
+     * @param types from Support class, collection of type aliases
+     * @param hint added information if exception is thrown
+     * @return index to variable in group type container
+     */
+    const unsigned int PreSetVariable( Group& group, const std::string variableName,
+                                       const std::set<std::string>& types,
+                                       const std::string hint ) const;
+
 
     std::string GetName( const std::vector<std::string>& arguments ) const; //might move this to adiosFunctions
 

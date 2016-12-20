@@ -6,7 +6,7 @@
  */
 
 
-#include <stdio.h>
+#include <stdio.h> //fopen
 
 #include "transport/POSIX.h"
 #include "functions/adiosFunctions.h" // CreateDirectory
@@ -34,7 +34,7 @@ void POSIX::Open( const std::string streamName, const std::string accessMode )
     if( m_MPIRank == 0 )
         CreateDirectory( directory );
 
-    MPI_Barrier( m_MPIComm ); //all processor wait until directory is created
+    MPI_Barrier( m_MPIComm ); //all processors must wait until directory is created
 
     const std::string streamNameRank( directory + "/" + streamName + "." + std::to_string( m_MPIRank ) );
 
@@ -50,7 +50,7 @@ void POSIX::Open( const std::string streamName, const std::string accessMode )
     if( m_DebugMode == true )
     {
         if( m_File == NULL )
-            throw std::ios_base::failure( "ERROR: couldn't open file " + streamName + " in Open function of POSIX transport\n" );
+            throw std::ios_base::failure( "ERROR: couldn't open file " + streamName + ", from call to Open in POSIX transport\n" );
     }
 
     MPI_Barrier( m_MPIComm ); //all of them must wait until the file is opened
@@ -69,15 +69,15 @@ void POSIX::SetBuffer( std::vector<char>& buffer )
 }
 
 
-void POSIX::Write( std::vector<char>& buffer )
+void POSIX::Write( const Capsule& capsule )
 {
-    fwrite( &buffer[0], sizeof(char), buffer.size(), m_File );
+    //fwrite( &buffer[0], sizeof(char), buffer.size(), m_File );
 }
 
 
-void POSIX::Close( )
+void POSIX::Close( const Capsule& capsule )
 {
-    fclose( m_File );
+    //fclose( m_File );
 }
 
 

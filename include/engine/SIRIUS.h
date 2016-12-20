@@ -17,7 +17,10 @@ namespace adios
 class SIRIUS : public Engine
 {
 
-    SIRIUS( );
+    SIRIUS( const std::string name, const std::string accessMode, const MPI_Comm mpiComm,
+            const Method& method, const bool debugMode );
+
+    ~SIRIUS( );
 
 
 

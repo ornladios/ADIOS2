@@ -38,7 +38,7 @@ Group::~Group( )
 void Group::DefineVariable( const std::string variableName, const std::string type,
                             const std::string dimensionsCSV,
                             const std::string globalDimensionsCSV, const std::string globalOffsetsCSV,
-                            const Transform* transform, const unsigned short parameter )
+                            const Transform* transform, const short parameter )
 {
     if( m_DebugMode == true )
     {
@@ -239,7 +239,7 @@ const unsigned long long int Group::GetIntVariableValue( const std::string varia
 {
     if( m_DebugMode == true )
     {
-        if( m_SetVariables.count( variableName ) == 0 )
+        if( m_WrittenVariables.count( variableName ) == 0 )
             throw std::invalid_argument( "ERROR: variable value for " + variableName + " was not set with Write function\n" );
     }
 
@@ -309,7 +309,6 @@ std::vector<unsigned long long int> Group::GetDimensions( const std::string dime
 }
 
 
-//PRIVATE FUNCTIONS BELOW
 void Group::Monitor( std::ostream& logStream ) const
 {
     logStream << "\tVariable \t Type\n";
@@ -328,6 +327,7 @@ void Group::Monitor( std::ostream& logStream ) const
 }
 
 
+//PRIVATE FUNCTIONS BELOW
 void Group::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms )
 {
     std::string::size_type currentPosition( 0 );
@@ -373,13 +373,17 @@ void Group::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared
                 else if( pair.first == "transform"  ) transform = pair.second;
             }
 
-            int transformIndex = -1;
-            int compressionLevel = 0;
+            short transformIndex = -1;
+            short parameter = 0;
 
             if( transform.empty() == false ) //if transform is present
-                SetTransformHelper( transform, transforms, m_DebugMode, transformIndex, compressionLevel );
+                SetTransformHelper( transform, transforms, m_DebugMode, transformIndex, parameter );
 
-            DefineVariable( name, type, dimensionsCSV, globalDimensionsCSV, globalOffsetsCSV, transformIndex, compressionLevel );
+            if( transformIndex == -1 ) //nullptr transport
+                DefineVariable( name, type, dimensionsCSV, globalDimensionsCSV, globalOffsetsCSV );
+            else //transport
+                DefineVariable( name, type, dimensionsCSV, globalDimensionsCSV, globalOffsetsCSV,
+                                transforms[transformIndex].get(), parameter );
         }
         else if( tagName == "attribute" )
         {

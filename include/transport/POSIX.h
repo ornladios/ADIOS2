@@ -8,9 +8,10 @@
 #ifndef POSIX_H_
 #define POSIX_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+/// \endcond
 
 #include <stdio.h> //FILE*
-
 
 #include "core/Transport.h"
 
@@ -32,9 +33,9 @@ public:
 
     void SetBuffer( std::vector<char>& buffer );
 
-    void Write( std::vector<char>& buffer );
+    void Write( const Capsule& capsule );
 
-    void Close( );
+    void Close( const Capsule& capsule );
 
 
 private:

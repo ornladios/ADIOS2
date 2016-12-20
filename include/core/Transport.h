@@ -16,8 +16,10 @@
 #ifdef HAVE_MPI
     #include <mpi.h>
 #else
-    #include "../mpidummy.h"
+    #include "mpidummy.h"
 #endif
+
+#include "core/Capsule.h"
 
 
 namespace adios
@@ -28,7 +30,7 @@ class Transport
 
 public:
 
-    const std::string m_Method; ///< transport method name
+    const std::string m_Type; ///< transport type from derived class
     #ifdef HAVE_MPI
     MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #else
@@ -43,35 +45,30 @@ public:
 
     /**
      * Base constructor that all derived classes pass
+     * @param
      * @param mpiComm passed to m_MPIComm
      * @param debugMode passed to m_DebugMode
      */
-    Transport( const std::string method, MPI_Comm mpiComm, const bool debugMode );
+    Transport( const std::string type, MPI_Comm mpiComm, const bool debugMode );
 
 
     virtual ~Transport( ); ///< empty destructor, using STL for memory management
 
     /**
      * Open Output file accesing a mode
-     * @param streamName name of file
+     * @param streamName name of stream or file
      * @param accessMode r or read, w or write, a or append
      */
     virtual void Open( const std::string streamName, const std::string accessMode ) = 0;
 
     /**
-     * Sets the buffer and bufferSize for certain transport methods
-     * @param buffer to be set to transport
-     */
-    virtual void SetBuffer( std::vector<char>& buffer );
-
-    /**
      * Write function for a transport, only called if required
      * @param buffer
      */
-    virtual void Write( std::vector<char>& buffer );
+    virtual void Write( const Capsule& capsule );
 
 
-    virtual void Close( ) = 0; ///< closes current transport and flushes everything, can't be reachable after this call
+    virtual void Close( const Capsule& capsule ) = 0; ///< closes current transport and flushes everything, can't be reachable after this call
 
 
 protected:

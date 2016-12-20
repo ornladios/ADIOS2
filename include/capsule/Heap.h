@@ -30,6 +30,59 @@ public:
 
     ~Heap( );
 
+    void Write( const Variable<char>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<unsigned char>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<short>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<unsigned short>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<int>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<unsigned int>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<long int>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<unsigned long int>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<long long int>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<unsigned long long int>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<float>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<double>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+    void Write( const Variable<long double>& variable, const std::vector<unsigned long long int>& localDimensions,
+                const std::vector<unsigned long long int>& globalDimensions,
+                const std::vector<unsigned long long int>& globalOffsets );
+
+
 };
 
 } //end namespace

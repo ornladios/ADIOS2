@@ -64,16 +64,16 @@ void FStream::Open( const std::string streamName, const std::string accessMode )
 
 void FStream::SetBuffer( std::vector<char>& buffer )
 {
-    m_FStream.rdbuf()->pubsetbuf( &buffer[0], buffer.size() );
+    //m_FStream.rdbuf()->pubsetbuf( &buffer[0], buffer.size() );
 }
 
-void FStream::Write( std::vector<char>& buffer )
+void FStream::Write( const Capsule& capsule )
 {
-    m_FStream.write( &buffer[0], buffer.size() );
+    //m_FStream.write( &buffer[0], buffer.size() );
 }
 
 
-void FStream::Close(  )
+void FStream::Close( const Capsule& capsule )
 {
     m_FStream.close();
 }
