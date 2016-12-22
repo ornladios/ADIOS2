@@ -1,12 +1,9 @@
-/*
- * Heap.h
- *
- *  Created on: Dec 19, 2016
- *      Author: wfg
- */
 
-#ifndef HEAP_H_
-#define HEAP_H_
+#ifndef SHMSYSTEMV_H_
+#define SHMSYSTEMV_H_
+
+#include <sys/types.h>
+#include <sys/ipc.h>
 
 
 #include "core/Capsule.h"
@@ -16,29 +13,36 @@ namespace adios
 {
 
 /**
- * Buffer and Metadata are allocated in the Heap
+ * Buffer and Metadata are allocated in virtual memory using interprocess communication (IPC) of Unix's System V
  */
-class Heap : public Capsule
+class ShmSystemV : public Capsule
 {
 
 public:
 
-    std::vector<char> m_Data; ///< data buffer allocated using the STL in heap memory
-    std::vector<char> m_Metadata; ///< metadata buffer allocated using the STL in heap memory
+    char* m_Data = nullptr; ///< reference to a shared memory data buffer created with shmget
+    size_t m_DataSize = 2147483648; ///< size of the allocated shared memory segment, needs a default (2 Gb?)
+    key_t m_DataKey; ///< key associated with the data buffer, created with ftok
+    int m_DataShmID; ///< data shared memory buffer id
 
-    const size_t m_MaxDataSize; ///< maximum data size set by user
-    const size_t m_MaxMetadataSize; ///< maximum metadata size set by user
+    char* m_Metadata = nullptr; ///< reference to a shared memory metadata buffer created with shmget
+    size_t m_MetadataSize = 1048576; ///< size of the allocated shared memory segment, needs a default ( 1 Mb?)
+    key_t m_MetadataKey; ///< key associated with the metadata buffer, created with ftok
+    int m_MetadataShmID; ///< metadata shared memory buffer id
 
     /**
-     * Unique constructor
+     * Create a Capsule in shared memory
      * @param accessMode
-     * @param rankMPI
-     * @param dataSize maximum data size set by user
-     * @param metadataSize maximum metadata size set by user
+     * @param pathName used to create the key as a unique identifier
+     * @param id used to create the key as a unique identifier, non-zero typically rank+1
+     * @param dataSize size of allocated memory segment for data
+     * @param metadataSize size of allocated memory segment for metadata
      */
-    Heap( const std::string accessMode, const int rankMPI, const size_t maxDataSize = 0, const size_t maxMetadataSize = 0 );
+    ShmSystemV( const std::string accessMode, const int rankMPI, const std::string pathName, const int id,
+                const size_t dataSize = 2147483648, const size_t metadataSize = 0 );
 
-    ~Heap( );
+    ~ShmSystemV( );
+
 
     void Write( const Variable<char>& variable, const std::vector<unsigned long long int>& localDimensions,
                 const std::vector<unsigned long long int>& globalDimensions,
@@ -94,15 +98,7 @@ public:
 
 };
 
-
-
-
-
 } //end namespace
 
 
-
-
-
-
-#endif /* HEAP_H_ */
+#endif /* SHMSYSTEMV_H_ */

@@ -13,9 +13,10 @@ namespace adios
 {
 
 
-Capsule::Capsule( const std::string type, const std::string accessMode ):
+Capsule::Capsule( const std::string type, const std::string accessMode, const int rankMPI ):
     m_Type{ type },
-    m_AccessMode{ accessMode }
+    m_AccessMode{ accessMode },
+    m_RankMPI{ rankMPI }
 { }
 
 

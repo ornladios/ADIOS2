@@ -68,7 +68,7 @@ public:
     virtual void Write( const Capsule& capsule );
 
 
-    virtual void Close( const Capsule& capsule ) = 0; ///< closes current transport and flushes everything, can't be reachable after this call
+    virtual void Close( ) = 0; ///< closes current transport and flushes everything, can't be reachable after this call
 
 
 protected:
