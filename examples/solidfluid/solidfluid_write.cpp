@@ -33,7 +33,7 @@ void write_data (adios::ADIOS adios, struct MYDATA &data, unsigned int outfile)
     adios.Write (outfile, "rank", &rank);
     adios.Write (outfile, "size", &size);
     adios.Write (outfile, "temperature", data.t);
-    adios.Write (outfile, "pressure", data.p);
+    adios.Write (outfile, "pressure", data.p.data());
     //adios.Write (outfile, true); // true: advance step, this is default value
     adios.Write (outfile);
 }
@@ -49,13 +49,13 @@ void write_checkpoint (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &
         adios.Write (ckptfile, "solid/rank", &rank);
         adios.Write (ckptfile, "solid/size", &size);
         adios.Write (ckptfile, "solid/temperature", solid.t);
-        adios.Write (ckptfile, "solid/pressure", solid.p);
+        adios.Write (ckptfile, "solid/pressure", &solid.p[0]);
 
         adios.Write (ckptfile, "fluid/NX", &fluid.NX);
         adios.Write (ckptfile, "fluid/rank", &rank);
         adios.Write (ckptfile, "fluid/size", &size);
         adios.Write (ckptfile, "fluid/temperature", fluid.t);
-        adios.Write (ckptfile, "fluid/pressure", fluid.p);
+        adios.Write (ckptfile, "fluid/pressure", fluid.p.data());
 
         adios.Write(ckptfile);
         adios.Close(ckptfile); // Should this do Write() if user misses or should we complain?
