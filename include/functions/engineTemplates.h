@@ -32,10 +32,12 @@ namespace adios
  * @param group variable owner, used to get all dimensions as numerical values
  * @param variable variable to be written
  * @param capsules container of capsules coming from an Engine
+ * @param transports used only if buffer size is larger than a certain maximum
  */
 template<class T>
 void WriteToCapsules( const Group& group, Variable<T>& variable, const T* values,
-                      std::vector< std::shared_ptr<Capsule> >& capsules )
+                      std::vector< std::shared_ptr<Capsule> >& capsules,
+                      std::vector< std::shared_ptr<Transport> >& transports )
 {
     variable.Values = values;
     auto localDimensions = group.GetDimensions( variable.DimensionsCSV );
@@ -51,7 +53,7 @@ void WriteToCapsules( const Group& group, Variable<T>& variable, const T* values
 
     for( auto& capsule : capsules )
     {
-        capsule->Write( variable, localDimensions, globalDimensions, globalOffsets );
+        capsule->Write( variable, localDimensions, globalDimensions, globalOffsets, transports );
     }
 }
 

@@ -36,84 +36,84 @@ Engine::~Engine( )
 void Engine::Write( Group& group, const std::string variableName, const char* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("char"), " from call to Write char*" );
-    WriteToCapsules( group, group.m_Char[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_Char[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const unsigned char* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned char"), " from call to Write unsigned char*" );
-    WriteToCapsules( group, group.m_UChar[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_UChar[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const short* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("short"), " from call to Write short*" );
-    WriteToCapsules( group, group.m_Short[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_Short[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const unsigned short* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned short"), " from call to Write unsigned short*" );
-    WriteToCapsules( group, group.m_UShort[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_UShort[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const int* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
-    WriteToCapsules( group, group.m_Int[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_Int[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const unsigned int* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned int"), " from call to Write unsigned int*" );
-    WriteToCapsules( group, group.m_UInt[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_UInt[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const long int* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("long int"), " from call to Write long int*" );
-    WriteToCapsules( group, group.m_LInt[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_LInt[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const unsigned long int* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned long int"), " from call to Write unsigned long int*" );
-    WriteToCapsules( group, group.m_ULInt[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_ULInt[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const long long int* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("long long int"), " from call to Write long long int*" );
-    WriteToCapsules( group, group.m_LLInt[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_LLInt[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const unsigned long long int* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned long long int"), " from call to Write unsigned long long int*" );
-    WriteToCapsules( group, group.m_ULLInt[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_ULLInt[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const float* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("float"), " from call to Write float*" );
-    WriteToCapsules( group, group.m_Float[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_Float[index], values, m_Capsules, m_Transports );
 }
 
 
 void Engine::Write( Group& group, const std::string variableName, const double* values )
 {
     auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("double"), " from call to Write double*" );
-    WriteToCapsules( group, group.m_Double[index], values, m_Capsules );
+    WriteToCapsules( group, group.m_Double[index], values, m_Capsules, m_Transports );
 }
 
 

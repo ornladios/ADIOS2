@@ -123,8 +123,7 @@ void Group::DefineVariable( const std::string variableName, const std::string ty
 }
 
 
-void Group::SetTransform( const std::string variableName, const Transform& transform,
-                          const short parameter )
+void Group::AddTransform( const std::string variableName, Transform& transform, const short parameter )
 {
     auto itVariable = m_Variables.find( variableName );
 
@@ -139,63 +138,63 @@ void Group::SetTransform( const std::string variableName, const Transform& trans
 
     if( IsTypeAlias( type, Support::DatatypesAliases.at("char") ) == true )
     {
-        m_Char[index].Transform = &transform;
-        m_Char[index].Parameter = parameter;
+        m_Char[index].Transforms.push_back( &transform );
+        m_Char[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned char") ) == true )
     {
-        m_UChar[index].Transform = &transform;
-        m_UChar[index].Parameter = parameter;
+        m_UChar[index].Transforms.push_back( &transform );
+        m_UChar[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("short") ) == true )
     {
-        m_Short[index].Transform = &transform;
-        m_Short[index].Parameter = parameter;
+        m_Short[index].Transforms.push_back( &transform );
+        m_Short[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned short") ) == true )
     {
-        m_UShort[index].Transform = &transform;
-        m_UShort[index].Parameter = parameter;
+        m_UShort[index].Transforms.push_back( &transform );
+        m_UShort[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("int") ) == true )
     {
-        m_Int[index].Transform = &transform;
-        m_Int[index].Parameter = parameter;
+        m_Int[index].Transforms.push_back( &transform );
+        m_Int[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned int") ) == true )
     {
-        m_UInt[index].Transform = &transform;
-        m_UInt[index].Parameter = parameter;
+        m_UInt[index].Transforms.push_back( &transform );
+        m_UInt[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("long int") ) == true )
     {
-        m_LInt[index].Transform = &transform;
-        m_LInt[index].Parameter = parameter;
+        m_LInt[index].Transforms.push_back( &transform );
+        m_LInt[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long int") ) == true )
     {
-        m_ULInt[index].Transform = &transform;
-        m_ULInt[index].Parameter = parameter;
+        m_ULInt[index].Transforms.push_back( &transform );
+        m_ULInt[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long long int") ) == true )
     {
-        m_ULLInt[index].Transform = &transform;
-        m_ULLInt[index].Parameter = parameter;
+        m_ULLInt[index].Transforms.push_back( &transform );
+        m_ULLInt[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("float") ) == true )
     {
-        m_Float[index].Transform = &transform;
-        m_Float[index].Parameter = parameter;
+        m_Float[index].Transforms.push_back( &transform );
+        m_Float[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("double") ) == true )
     {
-        m_Double[index].Transform = &transform;
-        m_Double[index].Parameter = parameter;
+        m_Double[index].Transforms.push_back( &transform );
+        m_Double[index].Parameters.push_back( parameter );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("long double") ) == true )
     {
-        m_LDouble[index].Transform = &transform;
-        m_LDouble[index].Parameter = parameter;
+        m_LDouble[index].Transforms.push_back( &transform );
+        m_LDouble[index].Parameters.push_back( parameter );
     }
 }
 
@@ -363,27 +362,32 @@ void Group::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared
 
         if( tagName == "var" ) //assign a Group variable
         {
-            std::string name, type, transform, dimensionsCSV("1");
+            std::string name, type, dimensionsCSV("1");
+            std::vector<std::string> transformNames;
 
             for( auto& pair : pairs ) //loop through all pairs
             {
                 if( pair.first == "name"       ) name = pair.second;
                 else if( pair.first == "type"       ) type = pair.second;
                 else if( pair.first == "dimensions" ) dimensionsCSV = pair.second;
-                else if( pair.first == "transform"  ) transform = pair.second;
+                else if( pair.first == "transform"  ) transformNames.push_back( pair.second );
             }
 
-            short transformIndex = -1;
-            short parameter = 0;
-
-            if( transform.empty() == false ) //if transform is present
-                SetTransformHelper( transform, transforms, m_DebugMode, transformIndex, parameter );
-
-            if( transformIndex == -1 ) //nullptr transport
+            if( transformNames.empty() == true ) //no transforms
+            {
                 DefineVariable( name, type, dimensionsCSV, globalDimensionsCSV, globalOffsetsCSV );
-            else //transport
-                DefineVariable( name, type, dimensionsCSV, globalDimensionsCSV, globalOffsetsCSV,
-                                transforms[transformIndex].get(), parameter );
+            }
+            else
+            {
+                std::vector<short> transformIndices;
+                std::vector<short> parameters;
+                SetTransformsHelper( transformNames, transforms, m_DebugMode, transformIndices, parameters );
+
+                for( unsigned short t = 0; t < transformIndices.size(); ++t )
+                {
+                    AddTransform( name, *transforms[t], parameters[t] );
+                }
+            }
         }
         else if( tagName == "attribute" )
         {

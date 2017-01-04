@@ -11,7 +11,7 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
 #include <string>
-#include <memory> //for shared_pointer
+#include <memory> //shared_pointer
 #include <vector>
 #include <ostream>
 #include <set>
@@ -40,7 +40,7 @@ class Group
 
 public:
 
-    std::set< std::string > m_WrittenVariables; ///< set of variables whose T* values have been set (no nullptr)
+    std::set< std::string > m_WrittenVariables; ///< set of variables whose T* values have been set with Write (no nullptr)
 
     /**
      * Empty constructor
@@ -78,15 +78,15 @@ public:
     void DefineVariable( const std::string variableName, const std::string type,
                          const std::string dimensionsCSV = "",
                          const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
-                         const Transform* transform = nullptr, const short parameter = 0 );
+                         const Transform* transform = nullptr, const short parameter = -1 );
 
     /**
      * Sets a variable transform contained in ADIOS Transforms (single container for all groups and variables)
      * @param variableName variable to be assigned a transformation
-     * @param transform corresponding transform object
+     * @param transform corresponding transform object, non-const as a pointer is created and pushed to a vector
      * @param parameter optional parameter interpreted by the corresponding Transform
      */
-    void SetTransform( const std::string variableName, const Transform& transform, const short parameter = 0 );
+    void AddTransform( const std::string variableName, Transform& transform, const short parameter = -1 );
 
     /**
      * Define a new attribute
@@ -109,7 +109,6 @@ public:
      * @return actual vector values = { Nx, Ny, Nz }
      */
     std::vector<unsigned long long int> GetDimensions( const std::string dimensionsCSV ) const;
-
 
     unsigned long long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 

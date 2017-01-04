@@ -155,11 +155,10 @@ void ADIOS::SetTransform( const std::string groupName, const std::string variabl
                                          " not supported, in call to SetTransform\n" );
     }
 
-    short transformIndex, parameter;
-    //set m_Transforms, transformIndex, compressionLevel
-    SetTransformHelper( transform, m_Transforms, m_DebugMode, transformIndex, parameter );
-    //set Variable with transformIndex, compressionLevel
-    itGroup->second.SetTransform( variableName, *m_Transforms[transformIndex].get(), parameter );
+    std::vector<std::string> transformName = { transform };
+    std::vector<short> transformIndices, parameters;
+    SetTransformsHelper( transformName, m_Transforms, m_DebugMode, transformIndices, parameters );
+    itGroup->second.SetTransform( variableName, *m_Transforms[ transformIndices[0] ], parameters[0] );
 }
 
 
@@ -185,7 +184,6 @@ void ADIOS::MonitorGroups( std::ostream& logStream ) const
 }
 
 
-
 //PRIVATE FUNCTIONS BELOW
 void ADIOS::CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
                         const std::string groupName, const std::string hint ) const
@@ -193,6 +191,7 @@ void ADIOS::CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
     if( itGroup == m_Groups.end() )
         throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
 }
+
 
 void ADIOS::CheckEngine( std::unordered_map< unsigned int, std::shared_ptr<Engine> >::const_iterator itEngine,
                          const unsigned int handle, const std::string hint ) const

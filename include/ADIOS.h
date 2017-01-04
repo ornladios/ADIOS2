@@ -109,7 +109,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param variableName corresponding variable name
      * @param transform method to be applied for this variable
      */
-    void SetTransform( const std::string groupName, const std::string variableName, const std::string transform );
+    void AddTransform( const std::string groupName, const std::string variableName, const std::string transform );
 
 
     /**
@@ -214,7 +214,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
 
-
 private:
 
     std::string m_XMLConfigFile; ///< XML File to be read containing configuration information
@@ -232,6 +231,13 @@ private:
     std::map< std::string, Group > m_Groups;
 
     //METHODS -> Engine Metadata
+    /**
+     * @brief List of Methods defined from either ADIOS XML configuration file or the CreateMethod function.
+     * <pre>
+     *     Key: std::string unique method name
+     *     Value: Method class
+     * </pre>
+     */
     std::map< std::string, Method > m_Methods;
 
 

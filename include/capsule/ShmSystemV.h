@@ -20,82 +20,64 @@ class ShmSystemV : public Capsule
 
 public:
 
+    /**
+     * Create a Capsule in shared memory using System V shm API
+     * @param accessMode
+     * @param pathName used to create the key as a unique identifier
+     * @param dataSize size of allocated memory segment for data
+     * @param metadataSize size of allocated memory segment for metadata
+     */
+    ShmSystemV( const std::string accessMode, const int rankMPI, const std::string pathName,
+                const size_t dataSize, const size_t metadataSize, const unsigned int cores = 1 );
+
+    ~ShmSystemV( );
+
+    char* GetData( ) const; ///< return the pointer to the raw data buffer
+    char* GetMetadata( ) const; ///< return the pointer to the raw metadata buffer
+
+    const std::size_t GetDataSize( ) const; ///< get current data buffer size
+    const std::size_t GetMetadataSize( ) const; ///< get current metadata buffer size
+
+    void WriteData( const std::size_t first, const char* data, const std::size_t size );
+    void WriteData( const std::size_t first, const unsigned char* data, const std::size_t size );
+    void WriteData( const std::size_t first, const short* data, const std::size_t size );
+    void WriteData( const std::size_t first, const unsigned short* data, const std::size_t size );
+    void WriteData( const std::size_t first, const int* data, const std::size_t size );
+    void WriteData( const std::size_t first, const unsigned int* data, const std::size_t size );
+    void WriteData( const std::size_t first, const long int* data, const std::size_t size );
+    void WriteData( const std::size_t first, const unsigned long int* data, const std::size_t size );
+    void WriteData( const std::size_t first, const long long int* data, const std::size_t size );
+    void WriteData( const std::size_t first, const unsigned long long int* data, const std::size_t size );
+    void WriteData( const std::size_t first, const float* data, const std::size_t size );
+    void WriteData( const std::size_t first, const double* data, const std::size_t size );
+    void WriteData( const std::size_t first, const long double* data, const std::size_t size );
+
+    void WriteMetadata( const std::size_t first, const char* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const unsigned char* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const short* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const unsigned short* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const int* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const unsigned int* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const long int* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const unsigned long int* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const long long int* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const unsigned long long int* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const float* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const double* metadata, const std::size_t size );
+    void WriteMetadata( const std::size_t first, const long double* metadata, const std::size_t size );
+
+
+private:
+
     char* m_Data = nullptr; ///< reference to a shared memory data buffer created with shmget
-    size_t m_DataSize = 2147483648; ///< size of the allocated shared memory segment, needs a default (2 Gb?)
+    const size_t m_DataSize; ///< size of the allocated shared memory segment
     key_t m_DataKey; ///< key associated with the data buffer, created with ftok
     int m_DataShmID; ///< data shared memory buffer id
 
     char* m_Metadata = nullptr; ///< reference to a shared memory metadata buffer created with shmget
-    size_t m_MetadataSize = 1048576; ///< size of the allocated shared memory segment, needs a default ( 1 Mb?)
+    const size_t m_MetadataSize; ///< size of the allocated shared memory segment
     key_t m_MetadataKey; ///< key associated with the metadata buffer, created with ftok
     int m_MetadataShmID; ///< metadata shared memory buffer id
-
-    /**
-     * Create a Capsule in shared memory
-     * @param accessMode
-     * @param pathName used to create the key as a unique identifier
-     * @param id used to create the key as a unique identifier, non-zero typically rank+1
-     * @param dataSize size of allocated memory segment for data
-     * @param metadataSize size of allocated memory segment for metadata
-     */
-    ShmSystemV( const std::string accessMode, const int rankMPI, const std::string pathName, const int id,
-                const size_t dataSize = 2147483648, const size_t metadataSize = 0 );
-
-    ~ShmSystemV( );
-
-
-    void Write( const Variable<char>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<unsigned char>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<short>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<unsigned short>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<int>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<unsigned int>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<long int>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<unsigned long int>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<long long int>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<unsigned long long int>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<float>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<double>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
-    void Write( const Variable<long double>& variable, const std::vector<unsigned long long int>& localDimensions,
-                const std::vector<unsigned long long int>& globalDimensions,
-                const std::vector<unsigned long long int>& globalOffsets );
-
 };
 
 } //end namespace

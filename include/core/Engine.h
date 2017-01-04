@@ -47,7 +47,7 @@ public:
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
 
-    std::string m_EngineType; ///< from derived class
+    const std::string m_EngineType; ///< from derived class
     const std::string m_Name; ///< name used for this engine
     const std::string m_AccessMode; ///< accessMode for buffers used by this engine
     Method* m_Method = nullptr; ///< associated method containing engine metadata
@@ -69,6 +69,10 @@ public:
 
 
     virtual ~Engine( );
+
+
+    template< class T >
+    void Write( Group& group, const std::string variableName, const T* values );
 
     /**
      * @brief Write functions can be overridden by derived classes. Base class behavior is to:
@@ -113,7 +117,7 @@ public:
 protected:
 
     std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
-    std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< managed Buffers
+    std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< managed Capsules
     const bool m_DebugMode = false;
 
     virtual void SetCapsules( ); ///< Initialize transports from Method, called from constructor.

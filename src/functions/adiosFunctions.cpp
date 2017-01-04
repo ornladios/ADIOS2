@@ -19,8 +19,7 @@
 /// \endcond
 
 #include "functions/adiosFunctions.h"
-
-#include "../../include/core/Support.h"
+#include "core/Support.h"
 
 #ifdef HAVE_BZIP2
 #include "transform/CBZIP2.h"
@@ -406,47 +405,65 @@ void CreateDirectory( const std::string fullPath ) noexcept
 }
 
 
-void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<Transform> >& transforms,
-                         const bool debugMode, short& transformIndex, short& parameter )
+void SetTransformsHelper( const std::vector<std::string>& transformNames, std::vector< std::shared_ptr<Transform> >& transforms,
+                         const bool debugMode, std::vector<short>& transformIndices, std::vector<short>& parameters )
 {
-    //get method:compressionLevel from transform
-    std::string method( transform ); //default
-    parameter = 0; //default
-
-    auto colonPosition = transform.find( ":" );
-
-    if( colonPosition != transform.npos )
+    //function to get a parameter from "method:parameter"
+    auto lf_GetParameter = []( const std::string transformName, std::string& transformMethod, const bool debugMode ) -> short
     {
-        if( debugMode == true )
+        short parameter = -1;
+        auto colonPosition = transformName.find( ":" );
+
+        if( colonPosition != transformName.npos )
         {
-            if( colonPosition == transform.size() - 1 )
-                throw std::invalid_argument( "ERROR: wrong format for transform " + transform + ", in call to SetTransform\n" );
+            if( debugMode == true )
+            {
+                if( colonPosition == transformName.size() - 1 )
+                    throw std::invalid_argument( "ERROR: wrong format for transform " + transformName + ", in call to SetTransform\n" );
+            }
+
+            transformMethod = transformName.substr( 0, colonPosition );
+            parameter = std::stoi( transformName.substr( colonPosition+1 ) ); //need to test
         }
+        return parameter;
+    };
 
-        method = transform.substr( 0, colonPosition );
-        parameter = std::stoi( transform.substr( colonPosition+1 ) ); //need to test
-    }
-
-    transformIndex = -1;
-    for( unsigned int i = 0; i < transforms.size(); ++i )
+    //Get transform index from transforms, if not found return -1
+    auto lf_GetTransformIndex = []( const std::string transformMethod, const std::vector< std::shared_ptr<Transform> >& transforms )
+            -> short
     {
-        if( transforms[i]->m_Method == transform )
+        short transformIndex = -1;
+        for( unsigned int i = 0; i < transforms.size(); ++i )
         {
-            transformIndex = i;
-            break;
+            if( transforms[i]->m_Method == transformMethod )
+            {
+                transformIndex = i;
+                break;
+            }
         }
-    }
+        return transformIndex;
+    };
 
-    if( transformIndex == -1 ) //not found, then create a new transform
+    //BODY of FUNCTION STARTS HERE
+    for( const std::string transformName : transformNames )
     {
-        if( transform == "bzip2" )
-        {
-            #ifdef HAVE_BZIP2
-            transforms.push_back( std::make_shared<CBZIP2>( ) );
-            #endif
-        }
+        std::string transformMethod( transformName );
+        short parameter = lf_GetParameter( transformName, transformMethod, debugMode ); // from transform = "method:parameter"
+        short transformIndex = lf_GetTransformIndex( transformMethod, transforms );
 
-        transformIndex = static_cast<int>( transforms.size() - 1 );
+        if( transformIndex == -1 ) //not found, then create a new transform
+        {
+            if( transformMethod == "bzip2" )
+            {
+                #ifdef HAVE_BZIP2
+                transforms.push_back( std::make_shared<CBZIP2>( ) );
+                #endif
+            }
+
+            transformIndex = static_cast<short>( transforms.size() - 1 );
+        }
+        transformIndices.push_back( transformIndex );
+        parameters.push_back( parameter );
     }
 }
 

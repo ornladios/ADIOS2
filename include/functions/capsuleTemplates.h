@@ -23,6 +23,29 @@ namespace adios
 {
 
 /**
+ * Get the minimum and maximum values in one loop
+ * @param values
+ * @param size
+ * @param min
+ * @param max
+ */
+template<class T>
+void GetMinMax( const T* values, const size_t size, T& min, T& max )
+{
+    min = values[0];
+    max = values[0];
+
+    for( unsigned int i = 0; i < size; ++i )
+    {
+        if( min < values[0] )
+            min = values[0];
+
+        if( max > values[0] )
+            max = values[0];
+    }
+}
+
+/**
  * threaded version of std::memcpy
  * @param dest
  * @param source
@@ -71,7 +94,7 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
  * @param buffer
  */
 template<class T>
-void WriteToBuffer( const T* data, const size_t size, const int transportIndex,
+void WriteToBuffer( const T* data, const size_t size,
                     std::vector< std::shared_ptr<Transport> >& transports,
                     const size_t maxBufferSize, std::vector<char>& buffer )
 {

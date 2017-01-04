@@ -123,14 +123,14 @@ void CreateDirectory( const std::string fullPath ) noexcept;
 /**
  * Identifies, verifies the corresponding transform method and adds it the transforms container if neccesary.
  * This functions must be updated as new transform methods are supported.
- * @param transform method to be added to transforms with format "method:compressionLevel", or  "method" with compressionLevel=0 (default)
+ * @param variableTransforms methods to be added to transforms with format "method:compressionLevel", or  "method" with compressionLevel=0 (default)
  * @param transforms container of existing transform methods, owned by ADIOS class
  * @param debugMode if true will do more checks, exceptions, warnings, expect slower code
- * @param transformIndex returns the corresponding transformIndex in transforms for this transport method
- * @param compressionLevel returns the corresponding parameter understood by a transport = "method:parameter"
+ * @param transformIndices returns the corresponding indices in ADIOS m_Transforms for a single variable
+ * @param parameters returns the corresponding parameters understood by a collection of transform="method:parameter"
  */
-void SetTransformHelper( const std::string transform, std::vector< std::shared_ptr<Transform> >& transforms,
-                         const bool debugMode, short& transformIndex, short& parameter );
+void SetTransformsHelper( const std::vector<std::string>& transformNames, std::vector< std::shared_ptr<Transform> >& transforms,
+                          const bool debugMode, std::vector<short>& transformIndices, std::vector<short>& parameters );
 
 /**
  * Check in types set if "type" is one of the aliases for a certain type, (e.g. if type = integer is an accepted alias for "int", returning true)
