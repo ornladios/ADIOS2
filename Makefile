@@ -1,4 +1,4 @@
-# Makefile for testing purposes, will build libadios.a 
+# Makefile for testing purposes, will build libadios.a, libadios_nompi.a 
 # Created on: Oct 4, 2016
 #     Author: wfg
      
@@ -30,6 +30,7 @@ OBJMPI:=$(patsubst %.cpp, ./bin/mpi/%.o, $(notdir $(CPPFiles)) )
 OBJMPI:=$(patsubst ./bin/mpi/mpidummy.o, ,$(OBJMPI) )  #remove mpidummy from compilation
 
 OBJNoMPI:=$(patsubst %.cpp, ./bin/nompi/%.o, $(notdir $(CPPFiles)) )
+OBJNoMPI:=$(patsubst ./bin/nompi/MPIFile.o, ,$(OBJNoMPI) )  #remove MPIFile from compilation (not supported in serial)
 
 .PHONY: all clean mpi nompi
 

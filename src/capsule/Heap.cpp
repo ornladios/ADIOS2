@@ -14,8 +14,8 @@ namespace adios
 {
 
 
-Heap::Heap( const std::string accessMode, const int rankMPI, const unsigned int cores ):
-    Capsule( "Heap", accessMode, rankMPI, cores )
+Heap::Heap( const std::string accessMode, const int rankMPI, const bool debugMode, const unsigned int cores ):
+    Capsule( "Heap", accessMode, rankMPI, debugMode, cores )
 {
     m_Data.reserve( 16777216 ); //default capacity = 16Mb
     m_Metadata.reserve( 102400 ); //default capacity = 100Kb

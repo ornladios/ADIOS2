@@ -17,16 +17,16 @@ ifeq ($(HAVE_NETCDF),yes)
     LIBS += -lnetcdf
     CFLAGS += -DHAVE_NETCDF
 else
-    HFiles:=$(filter-out $(TRANSPORT_INC)/CNetCDF4.h,$(HFiles))
-    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/CNetCDF4.cpp,$(CPPFiles))     
+    HFiles:=$(filter-out $(TRANSPORT_INC)/NetCDF4.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/NetCDF4.cpp,$(CPPFiles))     
 endif
 
 ifeq ($(HAVE_PHDF5),yes)
     LIBS += -lhdf5
     CFLAGS += -DHAVE_PHDF5
 else
-    HFiles:=$(filter-out $(TRANSPORT_INC)/CPHDF5.h,$(HFiles))
-    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/CPHDF5.cpp,$(CPPFiles))     
+    HFiles:=$(filter-out $(TRANSPORT_INC)/PHDF5.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/PHDF5.cpp,$(CPPFiles))     
 endif
 
 
@@ -38,22 +38,22 @@ ifeq ($(HAVE_BZIP2),yes)
     LIBS += -lbz2
     CFLAGS += -DHAVE_BZIP2
 else
-    HFiles:=$(filter-out $(TRANSFORM_INC)/CBZIP2.h,$(HFiles))
-    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CBZIP2.cpp,$(CPPFiles))     
+    HFiles:=$(filter-out $(TRANSFORM_INC)/BZIP2.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/BZIP2.cpp,$(CPPFiles))     
 endif
 
 ifeq ($(HAVE_SZIP),yes)
     LIBS += -lsz
     CFLAGS += -DHAVE_SZIP
 else
-    HFiles:=$(filter-out $(TRANSFORM_INC)/CSZIP.h,$(HFiles))
-    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CSZIP.cpp,$(CPPFiles))     
+    HFiles:=$(filter-out $(TRANSFORM_INC)/SZIP.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/SZIP.cpp,$(CPPFiles))     
 endif
 
 ifeq ($(HAVE_ZLIB),yes)
     LIBS += -lz
     CFLAGS += -DHAVE_ZLIB
 else
-    HFiles:=$(filter-out $(TRANSFORM_INC)/CZLIB.h,$(HFiles))
-    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/CZLIB.cpp,$(CPPFiles))     
+    HFiles:=$(filter-out $(TRANSFORM_INC)/ZLIB.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/ZLIB.cpp,$(CPPFiles))     
 endif

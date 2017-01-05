@@ -31,14 +31,14 @@ class Transport
 public:
 
     const std::string m_Type; ///< transport type from derived class
+    const std::string m_Name; ///< from Open
+    const std::string m_AccessMode; ///< from Open
+
     #ifdef HAVE_MPI
     MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #else
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
-
-    //const unsigned int m_Iterations; ///< iteration number for this transport
-    const bool m_DebugMode; ///< if true: additional checks and exceptions
 
     int m_MPIRank = 0; ///< current MPI rank process
     int m_MPISize = 1; ///< current MPI processes size
@@ -56,23 +56,40 @@ public:
 
     /**
      * Open Output file accesing a mode
-     * @param streamName name of stream or file
+     * @param name name of stream or file
      * @param accessMode r or read, w or write, a or append
      */
-    virtual void Open( const std::string streamName, const std::string accessMode ) = 0;
+    virtual void Open( const std::string name, const std::string accessMode ) = 0;
 
     /**
-     * Write function for a transport, only called if required
-     * @param buffer
+     * Set buffer and size for a particular transport
+     * @param buffer raw data buffer
+     * @param size raw data buffer size
      */
-    virtual void Write( const Capsule& capsule );
+    virtual void SetBuffer( char* buffer, std::size_t size );
 
+    /**
+     * Write function for a transport
+     * @param buffer pointer to buffer to be written
+     * @param size size of buffer to be written
+     */
+    virtual void Write( const char* buffer, const std::size_t size ) = 0;
 
-    virtual void Close( ) = 0; ///< closes current transport and flushes everything, can't be reachable after this call
+    /**
+     * Some transports separate the data from the metadata in a different medium
+     * @param buffer
+     * @param size
+     */
+    virtual void WriteMetadata( const char* buffer, const std::size_t size );
+
+    virtual void Flush( ); ///< flushes current contents to physical medium without closing the transport
+
+    virtual void Close( ); ///< closes current transport and flushes everything, transport becomes unreachable
 
 
 protected:
 
+    const bool m_DebugMode = false; ///< if true: additional checks and exceptions
     /**
      * Initialize particular derived transport class members
      * @param arguments particular transport arguments from ADIOS Open variadic function

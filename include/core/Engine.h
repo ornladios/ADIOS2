@@ -50,7 +50,7 @@ public:
     const std::string m_EngineType; ///< from derived class
     const std::string m_Name; ///< name used for this engine
     const std::string m_AccessMode; ///< accessMode for buffers used by this engine
-    Method* m_Method = nullptr; ///< associated method containing engine metadata
+    const Method& m_Method; ///< associated method containing engine metadata
     Group* m_Group = nullptr; ///< associated group to look for variable information
 
     int m_RankMPI = 0; ///< current MPI rank process
@@ -65,7 +65,7 @@ public:
      * @param method
      */
     Engine( const std::string engineType, const std::string name, const std::string accessMode, const MPI_Comm mpiComm,
-            const Method& method, const bool debugMode );
+            const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
 
     virtual ~Engine( );
@@ -116,12 +116,14 @@ public:
 
 protected:
 
-    std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
     std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< managed Capsules
-    const bool m_DebugMode = false;
+    std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
+    const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
+    unsigned int m_Cores = 1;
 
-    virtual void SetCapsules( ); ///< Initialize transports from Method, called from constructor.
-    virtual void SetTransports( ); ///< Initialize transports from Method, called from constructor.
+    virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
+    virtual void InitCapsules( ); ///< Initialize transports from Method, called from Init in constructor.
+    virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor.
 
     /**
      * Performs preliminary checks before writing a variable. Throws an exception if checks fail.
@@ -135,7 +137,6 @@ protected:
     const unsigned int PreSetVariable( Group& group, const std::string variableName,
                                        const std::set<std::string>& types,
                                        const std::string hint ) const;
-
 
     std::string GetName( const std::vector<std::string>& arguments ) const; //might move this to adiosFunctions
 

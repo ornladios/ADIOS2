@@ -9,12 +9,12 @@
 #ifdef HAVE_MPI
     #include <mpi.h>
 #else
-    #include "../../include/mpidummy.h"
+    #include "mpidummy.h"
     using adios::MPI_Init;
     using adios::MPI_Comm_rank;
 #endif
 
-#include "../../include/ADIOS.h"
+#include "ADIOS.h"
 
 
 int main( int argc, char* argv [] )
@@ -38,10 +38,12 @@ int main( int argc, char* argv [] )
         adios.DefineVariable( groupTCP, "myCharsSize", "unsigned int" ); //scalar : group, name, type
         adios.DefineVariable( groupTCP, "myChars",     "char",  "myCharsSize" ); //group, name, type, integer variables defining dimensions
 
+        //Define method or engine
+
         //Open stream using two transports, DataMan is default, POSIX is an additional one
-        const std::string streamTCP( "TCP" );
-        adios.Open( streamTCP, "write", "DataMan" ); //here open a stream called TCPStream for writing (w or write), name is the same as stream
-        adios.AddTransport( streamTCP, "write", "POSIX", "name=TCP.bp" ); //add POSIX transport with .bp name
+        const std::string streamTCP( "TCP.bp" );
+        const unsigned int tcpHandle = adios.Open( streamTCP, "w", "SingleBP" ); //here open a stream called TCPStream for writing (w or write), name is the same as stream
+        adios.AddTransport( , "write", "POSIX", "name=TCP.bp" ); //add POSIX transport with .bp name
         adios.SetMaxBufferSize( streamTCP, 1000000000 ); // Setting max Buffer size to 1Gb
 
         //Writing

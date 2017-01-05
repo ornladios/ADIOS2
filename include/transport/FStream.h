@@ -29,17 +29,22 @@ public:
 
     ~FStream( );
 
-    void Open( const std::string streamName, const std::string accessMode );
+    void Open( const std::string name, const std::string accessMode );
 
-    void SetBuffer( std::vector<char>& buffer );
+    void SetBuffer( char* buffer, std::size_t size );
 
-    void Write( const Capsule& capsule );
+    void Write( const char* buffer, std::size_t size );
 
-    void Close( const Capsule& capsule );
+    void Flush( );
+
+    void Close( );
 
 private:
 
-    std::fstream m_FStream; ///< file stream corresponding to this transport
+    std::fstream m_Data; ///< file stream under name.bp.dir/name.bp.rank
+
+    bool m_HasMetadataFile = false; ///< true if metadata file is defined in arguments as have_metadata_file=1
+    std::fstream m_Metadata; ///< file stream under name.bp storing metadata
 
     void Init( const std::vector<std::string>& arguments );
 

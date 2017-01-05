@@ -30,7 +30,7 @@ public:
      * @param dataSize maximum data size set by user
      * @param metadataSize maximum metadata size set by user
      */
-    Heap( const std::string accessMode, const int rankMPI, const unsigned int cores = 1 );
+    Heap( const std::string accessMode, const int rankMPI, const bool debugMode = false, const unsigned int cores = 1 );
 
     ~Heap( );
 

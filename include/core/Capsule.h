@@ -26,8 +26,6 @@ public:
 
     const std::string m_Type; ///< buffer type
     const std::string m_AccessMode; ///< 'w': write, 'r': read, 'a': append
-    const int m_RankMPI; ///< current MPI rank
-    const unsigned int m_Cores = 1; ///< number of cores for threaded operations
 
     /**
      * Base class constructor providing type from derived class and accessMode
@@ -37,7 +35,8 @@ public:
      * @param cores if using threads
      */
     Capsule( const std::string type, const std::string accessMode, const int rankMPI,
-             const unsigned int cores );
+             const bool debugMode, const unsigned int cores );
+
 
     virtual ~Capsule( );
 
@@ -83,6 +82,13 @@ public:
     virtual void WriteMetadata( const std::size_t first, const float* metadata, const std::size_t size ) = 0;
     virtual void WriteMetadata( const std::size_t first, const double* metadata, const std::size_t size ) = 0;
     virtual void WriteMetadata( const std::size_t first, const long double* metadata, const std::size_t size ) = 0;
+
+
+private:
+
+    const int m_RankMPI; ///< current MPI rank
+    const bool m_DebugMode = false; ///< true: extra checks
+    const unsigned int m_Cores = 1; ///< number of cores for threaded operations
 
 };
 

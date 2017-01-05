@@ -16,12 +16,14 @@ namespace adios
 
 Engine::Engine( const std::string engineType, const std::string name, const std::string accessMode,
                 const MPI_Comm mpiComm, const Method& method,
-                const bool debugMode ):
+                const bool debugMode, const unsigned int cores ):
     m_EngineType{ engineType },
     m_Name{ name },
     m_AccessMode{ accessMode },
     m_Method{ &method },
-    m_MPIComm{ mpiComm }
+    m_MPIComm{ mpiComm },
+    m_DebugMode{ debugMode },
+    m_Cores{ cores }
 {
     MPI_Comm_rank( m_MPIComm, &m_RankMPI );
     MPI_Comm_size( m_MPIComm, &m_SizeMPI );
@@ -29,6 +31,18 @@ Engine::Engine( const std::string engineType, const std::string name, const std:
 
 
 Engine::~Engine( )
+{ }
+
+
+void Engine::Init( )
+{ }
+
+
+void Engine::InitCapsules( )
+{ }
+
+
+void Engine::InitTransports( )
 { }
 
 
@@ -133,7 +147,7 @@ const unsigned int Engine::PreSetVariable( Group& group, const std::string varia
     }
 
     group.m_WrittenVariables.insert( variableName ); //should be done before writing to buffer, in case there is a crash?
-    unsigned int index = itVariable->second.second;
+    const unsigned int index = itVariable->second.second;
     return index;
 }
 
@@ -152,33 +166,7 @@ void Engine::Close( int transportIndex )
 }
 
 
-//PROTECTED FUNCTIONS
-void Engine::SetTransports( )
-{
-    for( const auto& transportPair : m_Method->Transports )
-    {
-        const std::string transport = transportPair.first;
-        const std::vector<std::string>& arguments = transportPair.second;
-
-        if( transport == "POSIX" )
-            m_Transports.push_back( std::make_shared<POSIX>( m_MPIComm, m_DebugMode, arguments ) );
-
-        else if( transport == "FStream" )
-            m_Transports.push_back( std::make_shared<FStream>( m_MPIComm, m_DebugMode, arguments ) );
-
-        else
-        {
-            if( m_DebugMode == true )
-                throw std::invalid_argument( "ERROR: transport + " + transport + " not supported, in Engine constructor (or Open).\n" );
-        }
-
-        std::string name = GetName( arguments );
-        m_Transports.back()->Open( name, m_AccessMode );
-    }
-}
-
-
-
+//PROTECTED
 std::string Engine::GetName( const std::vector<std::string>& arguments ) const
 {
     bool isNameFound = false;
