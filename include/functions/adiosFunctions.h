@@ -141,6 +141,14 @@ void SetTransformsHelper( const std::vector<std::string>& transformNames, std::v
 bool IsTypeAlias( const std::string type, const std::set<std::string>& types );
 
 
+/**
+ * Transforms a vector
+ * @param parameters vector of parameters with format "field=value"
+ * @param debugMode true=check parameters format, false=no checks
+ * @return a map with unique key=field, value=corresponding value
+ */
+std::map<std::string, std::string> BuildParametersMap( const std::vector<std::string>& parameters, const bool debugMode );
+
 
 
 } //end namespace

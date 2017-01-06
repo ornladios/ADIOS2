@@ -6,19 +6,19 @@
  */
 
 
-#include <stdio.h> //fopen
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "transport/POSIX.h"
-#include "functions/adiosFunctions.h" // CreateDirectory
 
 
 namespace adios
 {
 
 
-POSIX::POSIX( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
-    Transport( "POSIX", mpiComm, debugMode ),
-    m_File( NULL )
+POSIX::POSIX( MPI_Comm mpiComm, const bool debugMode ):
+    Transport( "POSIX", mpiComm, debugMode )
 { }
 
 
@@ -26,66 +26,55 @@ POSIX::~POSIX( )
 { }
 
 
-void POSIX::Open( const std::string streamName, const std::string accessMode )
+void POSIX::Open( const std::string name, const std::string accessMode )
 {
-    const std::string directory( streamName + ".dir" );
-
-    //data.bp.dir
-    if( m_MPIRank == 0 )
-        CreateDirectory( directory );
-
-    MPI_Barrier( m_MPIComm ); //all processors must wait until directory is created
-
-    const std::string streamNameRank( directory + "/" + streamName + "." + std::to_string( m_MPIRank ) );
+    m_Name = name;
+    m_AccessMode = accessMode;
 
     if( accessMode == "w" || accessMode == "write" )
-        m_File = fopen( streamNameRank.c_str(), "w" );
+        m_FileDescriptor = open( m_Name.c_str(), O_WRONLY | O_CREAT, 0666 );
 
     else if( accessMode == "a" || accessMode == "append" )
-        m_File = fopen( streamNameRank.c_str(), "a" );
+        m_FileDescriptor = open( m_Name.c_str(),  O_WRONLY | O_APPEND );
 
     else if( accessMode == "r" || accessMode == "read" )
-        m_File = fopen( streamNameRank.c_str(), "r" );
+        m_FileDescriptor = open( m_Name.c_str(), O_RDONLY );
 
     if( m_DebugMode == true )
     {
-        if( m_File == NULL )
-            throw std::ios_base::failure( "ERROR: couldn't open file " + streamName + ", from call to Open in POSIX transport\n" );
-    }
-
-    MPI_Barrier( m_MPIComm ); //all of them must wait until the file is opened
-}
-
-
-void POSIX::SetBuffer( std::vector<char>& buffer )
-{
-    int status = setvbuf( m_File, &buffer[0], _IOFBF, buffer.size() );
-
-    if( m_DebugMode == true )
-    {
-        if( status == 1 )
-            throw std::ios_base::failure( "ERROR: could not set buffer in rank " + std::to_string( m_MPIRank ) + "\n" );
+        if( m_FileDescriptor == -1 )
+            throw std::ios_base::failure( "ERROR: couldn't open file " + m_Name +
+                                          ", from call to Open in POSIX transport\n" );
     }
 }
 
 
-void POSIX::Write( const Capsule& capsule )
+void POSIX::Write( const char* buffer, std::size_t size )
 {
-    //fwrite( &buffer[0], sizeof(char), buffer.size(), m_File );
+    int status = write( m_FileDescriptor, buffer, size );
+
+    if( m_DebugMode == true )
+    {
+        if( status == -1 )
+            throw std::ios_base::failure( "ERROR: couldn't write to file " + m_Name +
+                                          ", in call to POSIX write\n"   );
+    }
 }
 
 
-void POSIX::Close( const Capsule& capsule )
+void POSIX::Close( )
 {
-    //fclose( m_File );
+    int status = close( m_FileDescriptor );
+
+    if( m_DebugMode == true )
+    {
+        if( status == -1 )
+            throw std::ios_base::failure( "ERROR: couldn't close file " + m_Name +
+                                          ", in call to POSIX write\n"   );
+    }
 }
 
 
-//PRIVATE FUNCTIONS
-void POSIX::Init( const std::vector<std::string>& arguments )
-{
-
-}
 
 
 

@@ -64,15 +64,10 @@ public:
      * @param mpiComm
      * @param method
      */
-    Engine( const std::string engineType, const std::string name, const std::string accessMode, const MPI_Comm mpiComm,
-            const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
-
+    Engine( const std::string engineType, const std::string name, const std::string accessMode,
+            MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores );
 
     virtual ~Engine( );
-
-
-    template< class T >
-    void Write( Group& group, const std::string variableName, const T* values );
 
     /**
      * @brief Write functions can be overridden by derived classes. Base class behavior is to:

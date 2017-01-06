@@ -478,4 +478,49 @@ bool IsTypeAlias( const std::string type, const std::set<std::string>& types )
 }
 
 
+std::map<std::string, std::string> BuildParametersMap( const std::vector<std::string>& parameters,
+                                                       const bool debugMode )
+{
+    auto lf_GetFieldValue = []( const std::string parameter, std::string& field, std::string& value, const bool debugMode )
+    {
+        auto equalPosition = parameter.find( "=" );
+
+        if( debugMode == true )
+        {
+            if( equalPosition == parameter.npos )
+                throw std::invalid_argument( "ERROR: wrong format for parameter " + parameter + ", format must be field=value \n" );
+
+            if( equalPosition == parameter.size()-1 )
+                throw std::invalid_argument( "ERROR: empty value in parameter " + parameter + ", format must be field=value \n" );
+        }
+
+        field = parameter.substr( 0, equalPosition );
+        value = parameter.substr( equalPosition+1 ); //need to test
+    };
+
+    //BODY OF FUNCTION STARTS HERE
+    std::map<std::string, std::string> parametersOutput;
+
+    for( const auto parameter : parameters )
+    {
+        std::string field, value;
+        lf_GetFieldValue( parameter, field, value, debugMode );
+
+        if( debugMode == true )
+        {
+            if( parametersOutput.count( field ) == 1 )
+                throw std::invalid_argument( "ERROR: parameter " + field + " already exists, must be unique\n" );
+        }
+
+        parametersOutput[field] = value;
+    }
+
+    return parametersOutput;
+}
+
+
+
+
+
+
 } //end namespace

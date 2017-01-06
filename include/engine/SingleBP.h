@@ -28,7 +28,7 @@ public:
      * @param method
      * @param debugMode
      */
-    SingleBP( const std::string name, const std::string accessMode, const MPI_Comm mpiComm,
+    SingleBP( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
               const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
     ~SingleBP( );

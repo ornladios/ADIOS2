@@ -19,7 +19,6 @@
     #include "mpidummy.h"
 #endif
 
-#include "core/Capsule.h"
 
 
 namespace adios

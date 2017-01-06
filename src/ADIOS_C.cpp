@@ -5,15 +5,15 @@
  *      Author: wfg
  */
 
-#include "../../include/ADIOS_C.h"
+
 
 #include <string>
 #include <fstream>
 #include <iostream>
 #include <cstring>
 
-#include "../../include/ADIOS.h"
-
+#include "ADIOS.h"
+#include "ADIOS_C.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -118,7 +118,7 @@ void adios_write( const ADIOS* adiosC, const char* groupName, const char* variab
 
     try
     {
-        adios->Write( std::string( groupName ), std::string( variableName ), values );
+        adios->Write( const std::string( groupName ), const std::string( variableName ), values );
     }
     catch( std::bad_alloc& e )
     {

@@ -39,7 +39,7 @@ public:
 
 private:
 
-    MPI_File m_MPIFile;
+    MPI_File m_MPIFile; ///< MPI File
 
 };
 

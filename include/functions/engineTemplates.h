@@ -53,7 +53,7 @@ void WriteToCapsules( const Group& group, Variable<T>& variable, const T* values
 
     for( auto& capsule : capsules )
     {
-        capsule->Write( variable, localDimensions, globalDimensions, globalOffsets, transports );
+        //capsule->Write( variable, localDimensions, globalDimensions, globalOffsets, transports );
     }
 }
 

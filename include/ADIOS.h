@@ -14,6 +14,8 @@
 #include <memory> //shared_ptr
 #include <ostream>
 #include <unordered_map>
+#include <set>
+#include <map>
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -26,7 +28,6 @@
 #include "core/Method.h"
 #include "core/Engine.h"
 #include "core/Support.h"
-#include "functions/engineTemplates.h"
 
 
 namespace adios
@@ -101,8 +102,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     void DefineVariable( const std::string groupName, const std::string variableName, const std::string type,
                          const std::string dimensionsCSV = "", const std::string globalDimensionsCSV = "",
                          const std::string globalOffsetsCSV = ""  );
-
-
     /**
      * Sets a transform method to a variable, to be applied when writing
      * @param groupName corresponding variable group
@@ -124,26 +123,67 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     void DefineAttribute( const std::string groupName, const std::string attributeName,
                           const std::string type, const std::string value );
 
+
+    /**
+     * Declares a new method
+     * @param name
+     * @param type
+     */
+    void DeclareMethod( const std::string methodName, const std::string type );
+
+    /**
+     * Add a capsule type to method name defined from DeclareMethod
+     * @param methodName unique method name
+     * @param args variadic parameters with format parameter=value
+     */
+    template< class ...Args>
+    void AddCapsule( const std::string methodName, const Args... args )
+    {
+        auto itMethod = m_Methods.find( methodName );
+        if( m_DebugMode == true )
+            CheckMethod( itMethod, methodName, " from call to AddBuffer\n" );
+
+        itMethod->second.AddCapsule( args );
+    }
+
+    /**
+     * Add a transport type to method name defined from DeclareMethod
+     * @param methodName unique method name
+     * @param args variadic parameters with format parameter=value
+     */
+    template< class ...Args>
+    void AddTransport( const std::string methodName, const Args... args )
+    {
+        auto itMethod = m_Methods.find( methodName );
+        if( m_DebugMode == true )
+            CheckMethod( itMethod, methodName, " from call to AddTransport\n" );
+
+        itMethod->second.AddTransport( args );
+    }
+
     /**
      * @brief Open to Write, Read. Creates a new engine from previously defined method
      * @param streamName unique stream or file name
      * @param accessMode "w" or "write", "r" or "read", "a" or "append"
      * @param mpiComm option to modify communicator from ADIOS class constructor
      * @param method looks for corresponding Method object in ADIOS to initialize the engine
+     * @param cores optional parameter for threaded operations
      * @return handler to created engine
      */
     const unsigned int Open( const std::string streamName, const std::string accessMode, MPI_Comm mpiComm,
-                             const std::string methodName );
+                             const std::string methodName, const unsigned int cores = 1 );
 
 
     /**
      * @brief Open to Write, Read. Creates a new engine from previously defined method. Reuses MPI communicator from ADIOS class constructor.
      * @param streamName unique stream or file name
      * @param accessMode "w" or "write", "r" or "read", "a" or "append"
-     * @param method looks for corresponding Method object in ADIOS to initialize the engine
+     * @param methodName looks for corresponding Method object in ADIOS to initialize the engine
+     * @param cores optional parameter for threaded operations
      * @return handler to created engine
      */
-    const unsigned int Open( const std::string streamName, const std::string accessMode, const std::string methodName );
+    const unsigned int Open( const std::string streamName, const std::string accessMode, const std::string methodName,
+                             const unsigned int cores = 1 );
 
 
     /**
@@ -257,14 +297,25 @@ private:
     //TRANSFORMS
     std::vector< std::shared_ptr<Transform> > m_Transforms; ///< transforms associated with ADIOS run
 
+
     /**
      * @brief Checks for group existence in m_Groups, if failed throws std::invalid_argument exception
-     * @param itGroup m_Group iterator, usually from find function
+     * @param itGroup m_Groups iterator, usually from find function
      * @param groupName unique name, passed for thrown exception only
      * @param hint adds information to thrown exception
      */
     void CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
                      const std::string groupName, const std::string hint ) const;
+
+    /**
+     * @brief Checks for method existence in m_Methods, if failed throws std::invalid_argument exception
+     * @param itMethod m_Methods iterator, usually from find function
+     * @param methodName unique name, passed for thrown exception only
+     * @param hint adds information to thrown exception
+     */
+    void CheckMethod( std::map< std::string, Method >::const_iterator itMethod,
+                      const std::string methodName, const std::string hint ) const;
+
 
     /**
      * @brief Checks for engine existence in m_Engines, if failed throws std::invalid_argument exception

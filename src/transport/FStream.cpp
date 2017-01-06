@@ -6,14 +6,9 @@
  */
 
 /// \cond EXCLUDED_FROM_DOXYGEN
-#include <iostream>
-#include <sstream>
-#include <cmath>
 #include <stdexcept>
-#include <cstring>
 /// \endcond
 
-#include "functions/adiosFunctions.h" //CreateDirectory
 #include "transport/FStream.h"
 
 
@@ -21,7 +16,7 @@ namespace adios
 {
 
 
-FStream::FStream( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments ):
+FStream::FStream( MPI_Comm mpiComm, const bool debugMode ):
     Transport( "FStream", mpiComm, debugMode )
 {
     Init( arguments );
@@ -35,106 +30,54 @@ FStream::~FStream( )
 void FStream::Open( const std::string name, const std::string accessMode )
 {
     m_Name = name;
-    if( name.compare( name.size()-3, 3, ".bp" ) == 0 ) //check if .bp extension already exists
-        m_Name = name.substr( 0, name.size()-3 );
-
     m_AccessMode = accessMode;
 
-    const std::string directory( m_Name + ".bp.dir" ); //data.bp.dir
-
-    if( m_MPIRank == 0 )
-        CreateDirectory( directory );
-
-    MPI_Barrier( m_MPIComm ); //all processor wait until directory is created
-
-    const std::string rankFile( directory + "/" + m_Name + ".bp." + std::to_string( m_MPIRank ) ); //data.bp.dir./data.bp.Rank
-
     if( accessMode == "w" || accessMode == "write" )
-        m_Data.open( rankFile, std::fstream::out );
+        m_FStream.open( name, std::fstream::out );
 
     else if( accessMode == "a" || accessMode == "append" )
-        m_Data.open( rankFile, std::fstream::out | std::fstream::app );
+        m_FStream.open( name, std::fstream::out | std::fstream::app );
 
     else if( accessMode == "r" || accessMode == "read" )
-        m_Data.open( rankFile, std::fstream::in );
-
+        m_FStream.open( name, std::fstream::in );
 
     if( m_DebugMode == true )
     {
-        if( !m_Data )
-            throw std::ios_base::failure( "ERROR: couldn't open file " + rankFile + ", in call to Open from FStream transport\n" );
-    }
-
-
-    if( m_HasMetadataFile == true )
-    {
-        const std::string metadataFile( m_Name + ".bp" );
-        if( accessMode == "w" || accessMode == "write" )
-            m_Metadata.open( metadataFile, std::fstream::out );
-
-        else if( accessMode == "a" || accessMode == "append" )
-            m_Metadata.open( metadataFile, std::fstream::out | std::fstream::app );
-
-        else if( accessMode == "r" || accessMode == "read" )
-            m_Metadata.open( metadataFile, std::fstream::in );
-
-        if( !m_Metadata )
-            throw std::ios_base::failure( "ERROR: couldn't open file " + metadataFile + ", in call to Open from FStream transport\n" );
+        if( !m_FStream )
+            throw std::ios_base::failure( "ERROR: couldn't open file " + name + ", in call to Open from FStream transport\n" );
     }
 }
 
 
 void FStream::SetBuffer( char* buffer, std::size_t size )
 {
-    m_Data.rdbuf()->pubsetbuf( buffer, size );
+    m_FStream.rdbuf()->pubsetbuf( buffer, size );
 }
 
 
 void FStream::Write( const char* buffer, std::size_t size )
 {
-    m_Data.write( buffer, size );
-}
+    m_FStream.write( buffer, size );
 
-
-void FStream::WriteMetadata( const char* buffer, std::size_t size )
-{
-    m_Metadata.write( buffer, size );
+    if( m_DebugMode == true )
+    {
+        if( !m_FStream )
+            throw std::ios_base::failure( "ERROR: couldn't write to file " + m_Name +
+                                          ", in call to FStream write\n"   );
+    }
 }
 
 
 void FStream::Flush( )
 {
-    m_Data.flush( );
+    m_FStream.flush( );
 }
 
 
 void FStream::Close( )
 {
-    m_Data.close();
-
-    if( m_Metadata )
-        m_Metadata.close( );
+    m_FStream.close();
 }
-
-
-void FStream::Init( const std::vector<std::string>& arguments )
-{
-    for( const auto argument : arguments )
-    {
-        if( argument.compare( 0, 19, "have_metadata_file=" ) == 0 )
-        {
-            int haveMetadata = std::stoi( argument.substr(19) );
-
-            if( haveMetadata == 0 )
-                m_HasMetadataFile = false;
-            else if( haveMetadata == 1 )
-                m_HasMetadataFile = true;
-            else
-                throw std::invalid_argument( "ERROR: have_metadata_file= value must be 0 (off) or 1 (on), in FStream transport constructor\n" );
-        }
-    }
-}
-
 
 
 //void CFStream::Write( const CVariable& variable ) ///this is aggregation

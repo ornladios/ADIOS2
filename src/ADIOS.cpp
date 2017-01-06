@@ -87,33 +87,31 @@ void ADIOS::SetGroup( const unsigned int handler, const std::string groupName )
 
 
 const unsigned int ADIOS::Open( const std::string name, const std::string accessMode,
-                                MPI_Comm mpiComm, const std::string methodName )
+                                MPI_Comm mpiComm, const std::string methodName, const unsigned int cores )
 {
+    auto itMethod = m_Methods.find( methodName );
+
     if( m_DebugMode == true )
     {
-        if( m_EngineNames.count( name ) == 1 ) //Engine exists
-            throw std::invalid_argument( "ERROR: method " + methodName + " already created by Open, in call from Open.\n" );
+        CheckMethod( itMethod, methodName, " from call to Open\n" );
 
-        if( m_Methods.count( methodName ) == 0 ) //
-            throw std::invalid_argument( "ERROR: method " + methodName + " has not been defined, in call from Open\n" );
+        if( m_EngineNames.count( name ) == 1 ) //Check if Engine already exists
+            throw std::invalid_argument( "ERROR: engine name " + name + " already created by Open, in call from Open.\n" );
     }
 
     ++m_EngineCounter;
 
-    if( methodName.empty() ) //default engine with one transport
+    if( methodName == "SingleBP" )
     {
-
+        m_Engines[ m_EngineCounter ] = std::make_shared<SingleBP>( name, accessMode, mpiComm, itMethod->second, cores );
     }
-    else //special cases
+    else if( methodName == "SIRIUS" )
     {
-//        if( methodName == "SIRIUS" )
-//        {
-//            m_Engines[ m_EngineCounter ] =
-//        }
-//        else if( methodName == "DataMan" )
-//        {
-//            m_Engines[ m_EngineCounter ] = ;
-//        }
+        //here must complete
+    }
+    else if( methodName == "DataMan" )
+    {
+        //here must complete
     }
 
     return m_EngineCounter;
@@ -143,7 +141,7 @@ void ADIOS::DefineVariable( const std::string groupName, const std::string varia
 }
 
 
-void ADIOS::SetTransform( const std::string groupName, const std::string variableName, const std::string transform )
+void ADIOS::AddTransform( const std::string groupName, const std::string variableName, const std::string transform )
 {
     auto itGroup = m_Groups.find( groupName );
     if( m_DebugMode == true ) //check group and transform
@@ -158,7 +156,7 @@ void ADIOS::SetTransform( const std::string groupName, const std::string variabl
     std::vector<std::string> transformName = { transform };
     std::vector<short> transformIndices, parameters;
     SetTransformsHelper( transformName, m_Transforms, m_DebugMode, transformIndices, parameters );
-    itGroup->second.SetTransform( variableName, *m_Transforms[ transformIndices[0] ], parameters[0] );
+    itGroup->second.AddTransform( variableName, *m_Transforms[ transformIndices[0] ], parameters[0] );
 }
 
 
@@ -190,6 +188,14 @@ void ADIOS::CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
 {
     if( itGroup == m_Groups.end() )
         throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
+}
+
+
+void ADIOS::CheckMethod( std::map< std::string, Method >::const_iterator itMethod,
+                         const std::string methodName, const std::string hint ) const
+{
+    if( itMethod == m_Methods.end() )
+        throw std::invalid_argument( "ERROR: method " + methodName + " not found " + hint + "\n" );
 }
 
 

@@ -25,7 +25,7 @@ class FStream : public Transport
 
 public:
 
-    FStream( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments );
+    FStream( MPI_Comm mpiComm, const bool debugMode );
 
     ~FStream( );
 
@@ -39,14 +39,10 @@ public:
 
     void Close( );
 
+
 private:
 
-    std::fstream m_Data; ///< file stream under name.bp.dir/name.bp.rank
-
-    bool m_HasMetadataFile = false; ///< true if metadata file is defined in arguments as have_metadata_file=1
-    std::fstream m_Metadata; ///< file stream under name.bp storing metadata
-
-    void Init( const std::vector<std::string>& arguments );
+    std::fstream m_FStream; ///< file stream under name.bp.dir/name.bp.rank
 
 };
 
