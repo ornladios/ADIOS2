@@ -1,14 +1,18 @@
 /*
- * POSIXMPI.cpp
+ * POSIX.cpp
  *
  *  Created on: Oct 6, 2016
  *      Author: wfg
  */
 
 
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <fcntl.h>  //open
+#include <sys/types.h> //open
+#include <sys/stat.h> //open
+#include <stddef.h> // write output
+#include <unistd.h> // write, close
+
+#include <ios> //std::ios_base::failure
 
 #include "transport/POSIX.h"
 
@@ -51,12 +55,18 @@ void POSIX::Open( const std::string name, const std::string accessMode )
 
 void POSIX::Write( const char* buffer, std::size_t size )
 {
-    int status = write( m_FileDescriptor, buffer, size );
+    auto writtenSize = write( m_FileDescriptor, buffer, size );
 
     if( m_DebugMode == true )
     {
-        if( status == -1 )
+        if( writtenSize == -1 )
             throw std::ios_base::failure( "ERROR: couldn't write to file " + m_Name +
+                                          ", in call to POSIX write\n"   );
+
+        if( static_cast<std::size_t>( writtenSize ) != size )
+            throw std::ios_base::failure( "ERROR: written size + " + std::to_string( writtenSize ) +
+                                          " is not equal to intended size " +
+                                          std::to_string( size ) + " in file " + m_Name +
                                           ", in call to POSIX write\n"   );
     }
 }
@@ -73,9 +83,6 @@ void POSIX::Close( )
                                           ", in call to POSIX write\n"   );
     }
 }
-
-
-
 
 
 }//end namespace

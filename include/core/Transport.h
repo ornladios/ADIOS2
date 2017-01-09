@@ -30,8 +30,8 @@ class Transport
 public:
 
     const std::string m_Type; ///< transport type from derived class
-    const std::string m_Name; ///< from Open
-    const std::string m_AccessMode; ///< from Open
+    std::string m_Name; ///< from Open
+    std::string m_AccessMode; ///< from Open
 
     #ifdef HAVE_MPI
     MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C

@@ -7,7 +7,8 @@
 
 
 #include "core/Engine.h"
-#include "functions/engineTemplates.h"
+#include "core/Support.h"
+#include "functions/adiosFunctions.h"
 
 
 namespace adios
@@ -16,14 +17,15 @@ namespace adios
 
 Engine::Engine( const std::string engineType, const std::string name, const std::string accessMode,
                 const MPI_Comm mpiComm, const Method& method,
-                const bool debugMode, const unsigned int cores ):
+                const bool debugMode, const unsigned int cores, const std::string endMessage ):
+    m_MPIComm{ mpiComm },
     m_EngineType{ engineType },
     m_Name{ name },
     m_AccessMode{ accessMode },
-    m_Method{ &method },
-    m_MPIComm{ mpiComm },
+    m_Method{ method },
     m_DebugMode{ debugMode },
-    m_Cores{ cores }
+    m_Cores{ cores },
+    m_EndMessage{ endMessage }
 {
     MPI_Comm_rank( m_MPIComm, &m_RankMPI );
     MPI_Comm_size( m_MPIComm, &m_SizeMPI );
@@ -33,104 +35,12 @@ Engine::Engine( const std::string engineType, const std::string name, const std:
 Engine::~Engine( )
 { }
 
-
-void Engine::Init( )
-{ }
-
-
-void Engine::InitCapsules( )
-{ }
-
-
-void Engine::InitTransports( )
-{ }
-
-
-//WRITE Functions
-void Engine::Write( Group& group, const std::string variableName, const char* values )
+void Engine::SetDefaultGroup( Group& group )
 {
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("char"), " from call to Write char*" );
-    WriteToCapsules( group, group.m_Char[index], values, m_Capsules, m_Transports );
+    m_Group = &group;
 }
 
-
-void Engine::Write( Group& group, const std::string variableName, const unsigned char* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned char"), " from call to Write unsigned char*" );
-    WriteToCapsules( group, group.m_UChar[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const short* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("short"), " from call to Write short*" );
-    WriteToCapsules( group, group.m_Short[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const unsigned short* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned short"), " from call to Write unsigned short*" );
-    WriteToCapsules( group, group.m_UShort[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const int* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
-    WriteToCapsules( group, group.m_Int[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const unsigned int* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned int"), " from call to Write unsigned int*" );
-    WriteToCapsules( group, group.m_UInt[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const long int* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("long int"), " from call to Write long int*" );
-    WriteToCapsules( group, group.m_LInt[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const unsigned long int* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned long int"), " from call to Write unsigned long int*" );
-    WriteToCapsules( group, group.m_ULInt[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const long long int* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("long long int"), " from call to Write long long int*" );
-    WriteToCapsules( group, group.m_LLInt[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const unsigned long long int* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned long long int"), " from call to Write unsigned long long int*" );
-    WriteToCapsules( group, group.m_ULLInt[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const float* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("float"), " from call to Write float*" );
-    WriteToCapsules( group, group.m_Float[index], values, m_Capsules, m_Transports );
-}
-
-
-void Engine::Write( Group& group, const std::string variableName, const double* values )
-{
-    auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("double"), " from call to Write double*" );
-    WriteToCapsules( group, group.m_Double[index], values, m_Capsules, m_Transports );
-}
-
-
+//PROTECTED
 const unsigned int Engine::PreSetVariable( Group& group, const std::string variableName,
                                            const std::set<std::string>& types,
                                            const std::string hint ) const
@@ -142,7 +52,7 @@ const unsigned int Engine::PreSetVariable( Group& group, const std::string varia
         if( itVariable == group.m_Variables.end() )
             throw std::invalid_argument( "ERROR: variable " + variableName + " doesn't exist " + hint + ".\n" );
 
-        if( IsTypeAlias( itVariable->first, types ) == false )
+        if( IsTypeAlias( itVariable->second.first, types ) == false )
                 throw std::invalid_argument( "ERROR: type in variable " + variableName + " doesn't match " + hint + ".\n" );
     }
 
@@ -165,8 +75,29 @@ void Engine::Close( int transportIndex )
     }
 }
 
+void Engine::Init( )
+{ }
 
-//PROTECTED
+
+void Engine::InitCapsules( )
+{ }
+
+
+void Engine::InitTransports( )
+{ }
+
+
+void Engine::CheckParameter( const std::map<std::string, std::string>::const_iterator itParam,
+                             const std::map<std::string, std::string>& parameters,
+                             const std::string parameterName,
+                             const std::string hint ) const
+{
+    if( itParam == parameters.end() )
+        throw std::invalid_argument( "ERROR: parameter name " + parameterName + " not found " + hint );
+}
+
+
+
 std::string Engine::GetName( const std::vector<std::string>& arguments ) const
 {
     bool isNameFound = false;
@@ -194,6 +125,3 @@ std::string Engine::GetName( const std::vector<std::string>& arguments ) const
 
 
 } //end namespace
-
-
-

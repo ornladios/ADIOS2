@@ -40,8 +40,8 @@ public:
 
     virtual ~Capsule( );
 
-    virtual char* GetData( ) const = 0; ///< return the pointer to the raw data buffer
-    virtual char* GetMetadata( ) const = 0; ///< return the pointer to the raw metadata buffer
+    virtual char* GetData( ) = 0; ///< return the pointer to the raw data buffer
+    virtual char* GetMetadata( ) = 0; ///< return the pointer to the raw metadata buffer
 
     virtual const std::size_t GetDataSize( ) const = 0; ///< get current data buffer size
     virtual const std::size_t GetMetadataSize( ) const = 0; ///< get current metadata buffer size
@@ -84,9 +84,9 @@ public:
     virtual void WriteMetadata( const std::size_t first, const long double* metadata, const std::size_t size ) = 0;
 
 
-private:
+protected:
 
-    const int m_RankMPI; ///< current MPI rank
+    const int m_RankMPI = 0; ///< current MPI rank
     const bool m_DebugMode = false; ///< true: extra checks
     const unsigned int m_Cores = 1; ///< number of cores for threaded operations
 

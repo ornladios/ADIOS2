@@ -22,7 +22,7 @@ class MPIFile : public Transport
 
 public:
 
-    MPIFile( MPI_Comm mpiComm, const bool debugMode, const std::vector<std::string>& arguments );
+    MPIFile( MPI_Comm mpiComm, const bool debugMode );
 
     ~MPIFile( );
 

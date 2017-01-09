@@ -27,15 +27,16 @@ public:
      * Unique constructor
      * @param accessMode read, write or append
      * @param rankMPI MPI rank
-     * @param dataSize maximum data size set by user
-     * @param metadataSize maximum metadata size set by user
+     * @param debugMode true: extra checks, slower
+     * @param cores threaded operations
      */
-    Heap( const std::string accessMode, const int rankMPI, const bool debugMode = false, const unsigned int cores = 1 );
+    Heap( const std::string accessMode, const int rankMPI, const bool debugMode = false,
+          const unsigned int cores = 1 );
 
     ~Heap( );
 
-    char* GetData( ) const;
-    char* GetMetadata( ) const;
+    char* GetData( );
+    char* GetMetadata( );
 
     const std::size_t GetDataSize( ) const;
     const std::size_t GetMetadataSize( ) const;
@@ -77,8 +78,6 @@ private:
     std::vector<char> m_Data; ///< data buffer allocated using the STL in heap memory, default size = 16 Mb
     std::vector<char> m_Metadata; ///< metadata buffer allocated using the STL in heap memory, default size = 100 Kb
 
-    const size_t m_MaxDataSize; ///< maximum data size set by user
-    const size_t m_MaxMetadataSize; ///< maximum metadata size set by user
 };
 
 

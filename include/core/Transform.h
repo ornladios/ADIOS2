@@ -11,9 +11,8 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
+#include <vector>
 /// \endcond
-
-#include "core/Variable.h"
 
 
 namespace adios
@@ -33,7 +32,6 @@ public:
     /**
      * Initialize parent method
      * @param method zlib, bzip2, szip
-     * @param variable
      */
     Transform( const std::string method );
 

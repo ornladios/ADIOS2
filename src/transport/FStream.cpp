@@ -18,9 +18,7 @@ namespace adios
 
 FStream::FStream( MPI_Comm mpiComm, const bool debugMode ):
     Transport( "FStream", mpiComm, debugMode )
-{
-    Init( arguments );
-}
+{ }
 
 
 FStream::~FStream( )

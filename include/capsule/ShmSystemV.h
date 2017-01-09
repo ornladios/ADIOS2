@@ -26,14 +26,17 @@ public:
      * @param pathName used to create the key as a unique identifier
      * @param dataSize size of allocated memory segment for data
      * @param metadataSize size of allocated memory segment for metadata
+     * @param debugMode true: extra checks, slower
+     * @param cores threaded operations
      */
     ShmSystemV( const std::string accessMode, const int rankMPI, const std::string pathName,
-                const size_t dataSize, const size_t metadataSize, const unsigned int cores = 1 );
+                const size_t dataSize, const size_t metadataSize,
+                const bool debugMode = false, const unsigned int cores = 1 );
 
     ~ShmSystemV( );
 
-    char* GetData( ) const; ///< return the pointer to the raw data buffer
-    char* GetMetadata( ) const; ///< return the pointer to the raw metadata buffer
+    char* GetData( ); ///< return the pointer to the raw data buffer
+    char* GetMetadata( ); ///< return the pointer to the raw metadata buffer
 
     const std::size_t GetDataSize( ) const; ///< get current data buffer size
     const std::size_t GetMetadataSize( ) const; ///< get current metadata buffer size
@@ -78,6 +81,8 @@ private:
     const size_t m_MetadataSize; ///< size of the allocated shared memory segment
     key_t m_MetadataKey; ///< key associated with the metadata buffer, created with ftok
     int m_MetadataShmID; ///< metadata shared memory buffer id
+
+    void CheckShm( ) const; ///< checks if all shared memory allocations are correct, throws std::bad_alloc, called from constructor if debug mode is true
 };
 
 } //end namespace

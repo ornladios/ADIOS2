@@ -24,9 +24,9 @@
   #include "mpidummy.h"
 #endif
 
+#include "core/Engine.h"
 #include "core/Group.h"
 #include "core/Method.h"
-#include "core/Engine.h"
 #include "core/Support.h"
 
 
@@ -129,7 +129,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param name
      * @param type
      */
-    void DeclareMethod( const std::string methodName, const std::string type );
+    void DeclareMethod( const std::string methodName, const std::string type = "SingleBP" );
 
     /**
      * Add a capsule type to method name defined from DeclareMethod
@@ -143,7 +143,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         if( m_DebugMode == true )
             CheckMethod( itMethod, methodName, " from call to AddBuffer\n" );
 
-        itMethod->second.AddCapsule( args );
+        itMethod->second.AddCapsule( args... );
     }
 
     /**
@@ -158,7 +158,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         if( m_DebugMode == true )
             CheckMethod( itMethod, methodName, " from call to AddTransport\n" );
 
-        itMethod->second.AddTransport( args );
+        itMethod->second.AddTransport( args... );
     }
 
     /**
@@ -198,7 +198,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param streamName unique name
      * @param groupName default group from which variables will be used
      */
-    void SetGroup( const unsigned int handler, const std::string groupName );
+    void SetDefaultGroup( const unsigned int handler, const std::string groupName );
 
 
     template<class T>

@@ -1,6 +1,6 @@
 #Language API
-LANGUAGE_INC:=./include/public
-LANGUAGE_SRC:=./src/public
+LANGUAGE_INC:=./include
+LANGUAGE_SRC:=./src
 
 ifeq ($(C_API),yes)
 else

@@ -3,7 +3,7 @@
 #     Author: wfg
 
 
-BASE_NAME=helloADIOSNoXML_OOP
+BASE_NAME=helloSingleBP_OOP
      
 TOOL_DIR=/usr/bin
 
@@ -12,7 +12,7 @@ MPICC=$(TOOL_DIR)/mpic++
 AR=$(TOOL_DIR)/ar
 
 #ADIOS LOCATION
-ADIOS_DIR=../..
+ADIOS_DIR=../../..
 ADIOS_LIB=$(ADIOS_DIR)/lib/libadios.a
 ADIOS_NOMPI_LIB=$(ADIOS_DIR)/lib/libadios_nompi.a
 

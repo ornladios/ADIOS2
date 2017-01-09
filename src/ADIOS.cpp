@@ -15,6 +15,8 @@
 #include "ADIOS.h"
 #include "functions/adiosFunctions.h"
 
+//Engine
+#include "engine/SingleBP.h"
 
 namespace adios
 {
@@ -67,22 +69,33 @@ void ADIOS::DeclareGroup( const std::string groupName )
             throw std::invalid_argument( "ERROR: group " + groupName + " already exist, from call to DeclareGroup\n" );
     }
 
-    m_Groups.emplace( groupName, Group( m_HostLanguage, m_DebugMode ) );
+    m_Groups.emplace( groupName, Group( m_DebugMode ) );
 }
 
 
-void ADIOS::SetGroup( const unsigned int handler, const std::string groupName )
+void ADIOS::SetDefaultGroup( const unsigned int handler, const std::string groupName )
 {
     auto itEngine = m_Engines.find( handler );
     auto itGroup = m_Groups.find( groupName );
 
     if( m_DebugMode == true )
     {
-        CheckEngine( itEngine, handler, " in call to SetGroup.\n" );
-        CheckGroup( itGroup, groupName, " in call to SetGroup.\n" );
+        CheckEngine( itEngine, handler, " in call to SetDefaultGroup.\n" );
+        CheckGroup( itGroup, groupName, " in call to SetDefaultGroup.\n" );
     }
 
-    itEngine->second->m_Group = &( itGroup->second );
+    itEngine->second->SetDefaultGroup( itGroup->second );
+}
+
+
+void ADIOS::DeclareMethod( const std::string methodName, const std::string type )
+{
+    if( m_DebugMode == true )
+    {
+        if( m_Methods.count( methodName ) == 1 )
+            throw std::invalid_argument( "ERROR: method " + methodName + " already declared, from DeclareMethod\n" );
+    }
+    m_Methods.emplace( methodName, Method( type, m_DebugMode ) );
 }
 
 
@@ -100,22 +113,36 @@ const unsigned int ADIOS::Open( const std::string name, const std::string access
     }
 
     ++m_EngineCounter;
+    const std::string type( itMethod->second.m_Type );
 
-    if( methodName == "SingleBP" )
+    if( type == "SingleBP" || type == "singleBP" || type == "singlebp" )
     {
-        m_Engines[ m_EngineCounter ] = std::make_shared<SingleBP>( name, accessMode, mpiComm, itMethod->second, cores );
+        m_Engines.emplace( m_EngineCounter, std::make_shared<engine::SingleBP>( name, accessMode, mpiComm, itMethod->second, cores ) );
     }
-    else if( methodName == "SIRIUS" )
+//    else if( type == "SIRIUS" )
+//    {
+//        //here must complete
+//    }
+//    else if( type == "DataMan" )
+//    {
+//        //here must complete
+//    }
+    else
     {
-        //here must complete
-    }
-    else if( methodName == "DataMan" )
-    {
-        //here must complete
+        if( m_DebugMode == true )
+            throw std::invalid_argument( "ERROR: type " + type + " not supported for method " + methodName + ", in call to Open\n" );
     }
 
     return m_EngineCounter;
 }
+
+
+const unsigned int ADIOS::Open( const std::string streamName, const std::string accessMode, const std::string methodName,
+                                const unsigned int cores )
+{
+    return Open( streamName, accessMode, m_MPIComm, methodName, cores );
+}
+
 
 
 void ADIOS::Close( const unsigned int handler, const int transportIndex ) //close stream
@@ -203,7 +230,7 @@ void ADIOS::CheckEngine( std::unordered_map< unsigned int, std::shared_ptr<Engin
                          const unsigned int handle, const std::string hint ) const
 {
     if( itEngine == m_Engines.end() )
-        throw std::invalid_argument( "ERROR: stream (or file) from handle " + handle + " not created with Open , " + hint + "\n" );
+        throw std::invalid_argument( "ERROR: stream (or file) from handle " + std::to_string( handle ) + " not created with Open , " + hint + "\n" );
 }
 
 

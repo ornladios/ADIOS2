@@ -7,11 +7,13 @@
 
 
 
-#include "transform/BZIP2.h"
+#include "../../include/transform/BZip2.h"
 
 
 
 namespace adios
+{
+namespace transform
 {
 
 
@@ -37,7 +39,7 @@ void BZIP2::Decompress( const std::vector<char>& bufferIn, std::vector<char>& bu
 }
 
 
-
-} //end namespace
+} //end namespace transform
+} //end namespace adios
 
 

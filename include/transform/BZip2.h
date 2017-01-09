@@ -1,5 +1,5 @@
 /*
- * BZIP2.h
+ * BZip2.h
  *
  *  Created on: Oct 17, 2016
  *      Author: wfg
@@ -13,6 +13,8 @@
 
 
 namespace adios
+{
+namespace transform
 {
 
 
@@ -36,7 +38,8 @@ public:
 };
 
 
-} //end namespace
+} //end namespace transform
+} //end namespace adios
 
 
 

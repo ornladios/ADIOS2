@@ -26,15 +26,15 @@ Heap::~Heap( )
 { }
 
 
-char* Heap::GetData( ) const
+char* Heap::GetData( )
 {
-    return m_Data.front();
+    return &m_Data.front();
 }
 
 
-char* Heap::GetMetadata( ) const
+char* Heap::GetMetadata( )
 {
-    return m_Metadata.front();
+    return &m_Metadata.front();
 }
 
 

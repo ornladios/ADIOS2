@@ -38,9 +38,9 @@ namespace adios
 class Group
 {
 
-public:
+    friend class Engine;
 
-    std::set< std::string > m_WrittenVariables; ///< set of variables whose T* values have been set with Write (no nullptr)
+public:
 
     /**
      * Empty constructor
@@ -72,21 +72,22 @@ public:
      * @param dimensionsCSV comma separated variable local dimensions (e.g. "Nx,Ny,Nz")
      * @param globalDimensionsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
      * @param globalOffsetsCSV comma separated variable global dimensions (e.g. "gNx,gNy,gNz"), if globalOffsetsCSV is also empty variable is local
-     * @param transform pointer reference to a Transform object, default = nullptr
-     * @param parameter corresponding parameter used by Transform to do operations
+     * @param transforms collection of Transform objects applied to this variable, sequence matters, default is empty
+     * @param parameters corresponding parameter used by a Transform object in transforms (index should match), default is empty
      */
     void DefineVariable( const std::string variableName, const std::string type,
                          const std::string dimensionsCSV = "",
                          const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
-                         const Transform* transform = nullptr, const short parameter = -1 );
+                         const std::vector<Transform*> transforms = std::vector<Transform*>(),
+                         const std::vector<int> parameters = std::vector<int>() );
 
     /**
      * Sets a variable transform contained in ADIOS Transforms (single container for all groups and variables)
      * @param variableName variable to be assigned a transformation
      * @param transform corresponding transform object, non-const as a pointer is created and pushed to a vector
-     * @param parameter optional parameter interpreted by the corresponding Transform
+     * @param parameter optional parameter interpreted by the corresponding Transform, default = -1
      */
-    void AddTransform( const std::string variableName, Transform& transform, const short parameter = -1 );
+    void AddTransform( const std::string variableName, Transform& transform, const int parameter = -1 );
 
     /**
      * Define a new attribute
@@ -112,9 +113,13 @@ public:
 
     unsigned long long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
+
+private:
+
+    std::set< std::string > m_WrittenVariables; ///< set of variables whose T* values have been set with Write (no nullptr)
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code, known at compile time
 
-    std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of CVariable
+    std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of Variable
 
     std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
     std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
@@ -156,7 +161,7 @@ public:
      * @param globalOffsetsCSV comma separated variables defining global offsets (e.g. "oNx,oNY,oNz")
      * @return -1 if not global --> both inputs are empty, otherwise index in m_GlobalBounds if exist or create a new element in m_GlobalBounds;
      */
-    const short SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept;
+    const int SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept;
 
 
     /**

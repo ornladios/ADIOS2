@@ -19,8 +19,12 @@
 namespace adios
 {
 
-
 Group::Group( )
+{ }
+
+
+Group::Group( const bool debugMode ):
+    m_DebugMode{ debugMode }
 { }
 
 
@@ -38,7 +42,7 @@ Group::~Group( )
 void Group::DefineVariable( const std::string variableName, const std::string type,
                             const std::string dimensionsCSV,
                             const std::string globalDimensionsCSV, const std::string globalOffsetsCSV,
-                            const Transform* transform, const short parameter )
+                            std::vector<Transform*> transforms, std::vector<int> parameters )
 {
     if( m_DebugMode == true )
     {
@@ -46,71 +50,71 @@ void Group::DefineVariable( const std::string variableName, const std::string ty
             throw std::invalid_argument( "ERROR: variable " + variableName + " already exists, in call to DefineVariable\n" );
     }
 
-    short globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
+    const int globalBoundsIndex = SetGlobalBounds( globalDimensionsCSV, globalOffsetsCSV );
 
     if( IsTypeAlias( type, Support::DatatypesAliases.at("char") ) == true )
     {
-        m_Char.push_back( Variable<char>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_Char.push_back( Variable<char>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_Char.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned char") ) == true )
     {
-        m_UChar.push_back( Variable<unsigned char>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_UChar.push_back( Variable<unsigned char>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_UChar.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("short") ) == true )
     {
-        m_Short.push_back( Variable<short>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_Short.push_back( Variable<short>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_Short.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned short") ) == true )
     {
-        m_UShort.push_back( Variable<unsigned short>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_UShort.push_back( Variable<unsigned short>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_UShort.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("int") ) == true )
     {
-        m_Int.push_back( Variable<int>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_Int.push_back( Variable<int>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_Int.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned int") ) == true )
     {
-        m_UInt.push_back( Variable<unsigned int>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_UInt.push_back( Variable<unsigned int>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_UInt.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("long int") ) == true )
     {
-        m_LInt.push_back( Variable<long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_LInt.push_back( Variable<long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_LInt.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long int") ) == true )
     {
-        m_ULInt.push_back( Variable<unsigned long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_ULInt.push_back( Variable<unsigned long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_ULInt.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("long long int") ) == true )
     {
-        m_LLInt.push_back( Variable<long long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_LLInt.push_back( Variable<long long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_LLInt.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("unsigned long long int") ) == true )
     {
-        m_ULLInt.push_back( Variable<unsigned long long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_ULLInt.push_back( Variable<unsigned long long int>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_ULLInt.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("float") ) == true )
     {
-        m_Float.push_back( Variable<float>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_Float.push_back( Variable<float>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_Float.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("double") ) == true )
     {
-        m_Double.push_back( Variable<double>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_Double.push_back( Variable<double>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_Double.size()-1 );
     }
     else if( IsTypeAlias( type, Support::DatatypesAliases.at("long double") ) == true )
     {
-        m_LDouble.push_back( Variable<long double>{ dimensionsCSV, nullptr, globalBoundsIndex, transform, parameter } );
+        m_LDouble.push_back( Variable<long double>{ dimensionsCSV, nullptr, globalBoundsIndex, transforms, parameters } );
         m_Variables[variableName] = std::make_pair( type, m_LDouble.size()-1 );
     }
     else
@@ -123,7 +127,7 @@ void Group::DefineVariable( const std::string variableName, const std::string ty
 }
 
 
-void Group::AddTransform( const std::string variableName, Transform& transform, const short parameter )
+void Group::AddTransform( const std::string variableName, Transform& transform, const int parameter )
 {
     auto itVariable = m_Variables.find( variableName );
 
@@ -203,7 +207,7 @@ void Group::DefineAttribute( const std::string attributeName, const std::string 
 {
     auto lf_GetTypeID = []( const std::string type, const bool debugMode ) -> const char
     {
-        char typeID;
+        char typeID = '\0';
         if( type == "string" )
             typeID = '0';
         else if( type == "numeric" )
@@ -211,7 +215,8 @@ void Group::DefineAttribute( const std::string attributeName, const std::string 
         else
         {
             if( debugMode == true )
-                throw std::invalid_argument( "ERROR: type " + type + " must be string or numeric, in call to DefineAttribute\n" );
+                throw std::invalid_argument( "ERROR: type " + type + " must be string or numeric, "
+                        "                     in call to DefineAttribute\n" );
         }
 
         return typeID;
@@ -423,7 +428,7 @@ void Group::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared
 }
 
 
-const short Group::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
+const int Group::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
 {
     if( globalDimensionsCSV.empty() || globalOffsetsCSV.empty() )
         return -1;

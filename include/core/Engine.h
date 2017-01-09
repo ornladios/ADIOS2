@@ -65,9 +65,12 @@ public:
      * @param method
      */
     Engine( const std::string engineType, const std::string name, const std::string accessMode,
-            MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores );
+            MPI_Comm mpiComm, const Method& method, const bool debugMode = false, const unsigned int cores = 1,
+            const std::string endMessage = "" );
 
     virtual ~Engine( );
+
+    void SetDefaultGroup( Group& group );
 
     /**
      * @brief Write functions can be overridden by derived classes. Base class behavior is to:
@@ -78,33 +81,33 @@ public:
      * @param variableName
      * @param values coming from user app
      */
-    virtual void Write( Group& group, const std::string variableName, const char* values );
-    virtual void Write( Group& group, const std::string variableName, const unsigned char* values );
-    virtual void Write( Group& group, const std::string variableName, const short* values );
-    virtual void Write( Group& group, const std::string variableName, const unsigned short* values );
-    virtual void Write( Group& group, const std::string variableName, const int* values );
-    virtual void Write( Group& group, const std::string variableName, const unsigned int* values );
-    virtual void Write( Group& group, const std::string variableName, const long int* values );
-    virtual void Write( Group& group, const std::string variableName, const unsigned long int* values );
-    virtual void Write( Group& group, const std::string variableName, const long long int* values );
-    virtual void Write( Group& group, const std::string variableName, const unsigned long long int* values );
-    virtual void Write( Group& group, const std::string variableName, const float* values );
-    virtual void Write( Group& group, const std::string variableName, const double* values );
-    virtual void Write( Group& group, const std::string variableName, const long double* values );
+    virtual void Write( Group& group, const std::string variableName, const char* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const unsigned char* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const short* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const unsigned short* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const int* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const unsigned int* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const long int* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const unsigned long int* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const long long int* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const unsigned long long int* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const float* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const double* values ) = 0;
+    virtual void Write( Group& group, const std::string variableName, const long double* values ) = 0;
 
-    virtual void Write( const std::string variableName, const char* values );
-    virtual void Write( const std::string variableName, const unsigned char* values );
-    virtual void Write( const std::string variableName, const short* values );
-    virtual void Write( const std::string variableName, const unsigned short* values );
-    virtual void Write( const std::string variableName, const int* values );
-    virtual void Write( const std::string variableName, const unsigned int* values );
-    virtual void Write( const std::string variableName, const long int* values );
-    virtual void Write( const std::string variableName, const unsigned long int* values );
-    virtual void Write( const std::string variableName, const long long int* values );
-    virtual void Write( const std::string variableName, const unsigned long long int* values );
-    virtual void Write( const std::string variableName, const float* values );
-    virtual void Write( const std::string variableName, const double* values );
-    virtual void Write( const std::string variableName, const long double* values );
+    virtual void Write( const std::string variableName, const char* values ) = 0;
+    virtual void Write( const std::string variableName, const unsigned char* values ) = 0;
+    virtual void Write( const std::string variableName, const short* values ) = 0;
+    virtual void Write( const std::string variableName, const unsigned short* values ) = 0;
+    virtual void Write( const std::string variableName, const int* values ) = 0;
+    virtual void Write( const std::string variableName, const unsigned int* values ) = 0;
+    virtual void Write( const std::string variableName, const long int* values ) = 0;
+    virtual void Write( const std::string variableName, const unsigned long int* values ) = 0;
+    virtual void Write( const std::string variableName, const long long int* values ) = 0;
+    virtual void Write( const std::string variableName, const unsigned long long int* values ) = 0;
+    virtual void Write( const std::string variableName, const float* values ) = 0;
+    virtual void Write( const std::string variableName, const double* values ) = 0;
+    virtual void Write( const std::string variableName, const long double* values ) = 0;
 
     virtual void Close( int transportIndex = -1  ); ///< Closes a particular transport
 
@@ -115,10 +118,11 @@ protected:
     std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
     const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
     unsigned int m_Cores = 1;
+    const std::string m_EndMessage; ///< added to exceptions to improve debugging
 
-    virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
-    virtual void InitCapsules( ); ///< Initialize transports from Method, called from Init in constructor.
-    virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor.
+    virtual void Init( ) = 0; ///< Initialize m_Capsules and m_Transports, called from constructor
+    virtual void InitCapsules( ) = 0; ///< Initialize transports from Method, called from Init in constructor.
+    virtual void InitTransports( ) = 0; ///< Initialize transports from Method, called from Init in constructor.
 
     /**
      * Performs preliminary checks before writing a variable. Throws an exception if checks fail.
@@ -132,6 +136,19 @@ protected:
     const unsigned int PreSetVariable( Group& group, const std::string variableName,
                                        const std::set<std::string>& types,
                                        const std::string hint ) const;
+
+    /**
+     * Used to verify parameters in m_Method containers
+     * @param itParam iterator to a certain parameter
+     * @param parameters map of parameters, from m_Method
+     * @param parameterName used if exception is thrown to provide debugging information
+     * @param hint used if exception is thrown to provide debugging information
+     */
+    void CheckParameter( const std::map<std::string, std::string>::const_iterator itParam,
+                         const std::map<std::string, std::string>& parameters,
+                         const std::string parameterName,
+                         const std::string hint ) const;
+
 
     std::string GetName( const std::vector<std::string>& arguments ) const; //might move this to adiosFunctions
 

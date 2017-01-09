@@ -5,6 +5,8 @@
  *      Author: wfg
  */
 
+#include <ios> //std::ios_base::failure
+
 #include "transport/File.h"
 
 
