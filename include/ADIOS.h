@@ -170,7 +170,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param cores optional parameter for threaded operations
      * @return handler to created engine
      */
-    const unsigned int Open( const std::string streamName, const std::string accessMode, MPI_Comm mpiComm,
+    unsigned int Open( const std::string streamName, const std::string accessMode, MPI_Comm mpiComm,
                              const std::string methodName, const unsigned int cores = 1 );
 
 
@@ -182,7 +182,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param cores optional parameter for threaded operations
      * @return handler to created engine
      */
-    const unsigned int Open( const std::string streamName, const std::string accessMode, const std::string methodName,
+    unsigned int Open( const std::string streamName, const std::string accessMode, const std::string methodName,
                              const unsigned int cores = 1 );
 
 
@@ -306,6 +306,7 @@ private:
      */
     void CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
                      const std::string groupName, const std::string hint ) const;
+
 
     /**
      * @brief Checks for method existence in m_Methods, if failed throws std::invalid_argument exception

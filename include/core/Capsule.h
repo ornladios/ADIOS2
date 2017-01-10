@@ -43,8 +43,8 @@ public:
     virtual char* GetData( ) = 0; ///< return the pointer to the raw data buffer
     virtual char* GetMetadata( ) = 0; ///< return the pointer to the raw metadata buffer
 
-    virtual const std::size_t GetDataSize( ) const = 0; ///< get current data buffer size
-    virtual const std::size_t GetMetadataSize( ) const = 0; ///< get current metadata buffer size
+    virtual std::size_t GetDataSize( ) const = 0; ///< get current data buffer size
+    virtual std::size_t GetMetadataSize( ) const = 0; ///< get current metadata buffer size
 
     virtual void ResizeData( const std::size_t size ); ///< resize data buffer
     virtual void ResizeMetadata( const std::size_t size ); ///< resize metadata buffer

@@ -95,6 +95,14 @@ public:
     virtual void Write( Group& group, const std::string variableName, const double* values ) = 0;
     virtual void Write( Group& group, const std::string variableName, const long double* values ) = 0;
 
+    /**
+     * @brief Write functions can be overridden by derived classes. Base class behavior is to:
+     * 1) Write to Variable values (m_Values) using the pointer to default group *m_Group set with SetDefaultGroup function
+     * 2) Transform the data
+     * 3) Write to all capsules -> data and metadata
+     * @param variableName
+     * @param values coming from user app
+     */
     virtual void Write( const std::string variableName, const char* values ) = 0;
     virtual void Write( const std::string variableName, const unsigned char* values ) = 0;
     virtual void Write( const std::string variableName, const short* values ) = 0;

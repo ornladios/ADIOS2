@@ -40,6 +40,7 @@ void Engine::SetDefaultGroup( Group& group )
     m_Group = &group;
 }
 
+
 //PROTECTED
 const unsigned int Engine::PreSetVariable( Group& group, const std::string variableName,
                                            const std::set<std::string>& types,

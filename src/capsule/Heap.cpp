@@ -38,13 +38,13 @@ char* Heap::GetMetadata( )
 }
 
 
-const std::size_t Heap::GetDataSize( ) const
+std::size_t Heap::GetDataSize( ) const
 {
     return m_Data.size( );
 }
 
 
-const std::size_t Heap::GetMetadataSize( ) const
+std::size_t Heap::GetMetadataSize( ) const
 {
     return m_Metadata.size();
 }

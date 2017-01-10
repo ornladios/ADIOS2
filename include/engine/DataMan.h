@@ -1,12 +1,13 @@
 /*
- * SingleBP.h
+ * DataMan.h
  *
- *  Created on: Dec 16, 2016
+ *  Created on: Jan 10, 2017
  *      Author: wfg
  */
 
-#ifndef SINGLEBP_H_
-#define SINGLEBP_H_
+#ifndef DATAMAN_H_
+#define DATAMAN_H_
+
 
 #include "core/Engine.h"
 
@@ -17,7 +18,7 @@ namespace engine
 {
 
 
-class SingleBP : public Engine
+class DataMan : public Engine
 {
 
 public:
@@ -30,10 +31,10 @@ public:
      * @param method
      * @param debugMode
      */
-    SingleBP( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+    DataMan( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
               const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
-    ~SingleBP( );
+    ~DataMan( );
 
     void Write( Group& group, const std::string variableName, const char* values );
     void Write( Group& group, const std::string variableName, const unsigned char* values );
@@ -76,4 +77,7 @@ private:
 } //end namespace adios
 
 
-#endif /* SINGLEBP_H_ */
+
+
+
+#endif /* DATAMAN_H_ */

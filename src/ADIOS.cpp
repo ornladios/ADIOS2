@@ -99,8 +99,8 @@ void ADIOS::DeclareMethod( const std::string methodName, const std::string type 
 }
 
 
-const unsigned int ADIOS::Open( const std::string name, const std::string accessMode,
-                                MPI_Comm mpiComm, const std::string methodName, const unsigned int cores )
+unsigned int ADIOS::Open( const std::string name, const std::string accessMode,
+                          MPI_Comm mpiComm, const std::string methodName, const unsigned int cores )
 {
     auto itMethod = m_Methods.find( methodName );
 
@@ -137,8 +137,8 @@ const unsigned int ADIOS::Open( const std::string name, const std::string access
 }
 
 
-const unsigned int ADIOS::Open( const std::string streamName, const std::string accessMode, const std::string methodName,
-                                const unsigned int cores )
+unsigned int ADIOS::Open( const std::string streamName, const std::string accessMode, const std::string methodName,
+                          const unsigned int cores )
 {
     return Open( streamName, accessMode, m_MPIComm, methodName, cores );
 }

@@ -239,7 +239,7 @@ void Group::DefineAttribute( const std::string attributeName, const std::string 
 }
 
 
-const unsigned long long int Group::GetIntVariableValue( const std::string variableName ) const
+unsigned long long int Group::GetIntVariableValue( const std::string variableName ) const
 {
     if( m_DebugMode == true )
     {
@@ -428,7 +428,7 @@ void Group::ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared
 }
 
 
-const int Group::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
+int Group::SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept
 {
     if( globalDimensionsCSV.empty() || globalOffsetsCSV.empty() )
         return -1;

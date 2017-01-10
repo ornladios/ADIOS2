@@ -58,13 +58,13 @@ char* ShmSystemV::GetMetadata( )
 }
 
 
-const std::size_t ShmSystemV::GetDataSize( ) const
+std::size_t ShmSystemV::GetDataSize( ) const
 {
     return m_DataSize;
 }
 
 
-const std::size_t ShmSystemV::GetMetadataSize( ) const
+std::size_t ShmSystemV::GetMetadataSize( ) const
 {
     return m_MetadataSize;
 }

@@ -38,8 +38,8 @@ public:
     char* GetData( );
     char* GetMetadata( );
 
-    const std::size_t GetDataSize( ) const;
-    const std::size_t GetMetadataSize( ) const;
+    std::size_t GetDataSize( ) const;
+    std::size_t GetMetadataSize( ) const;
 
     void ResizeData( const std::size_t size );
     void ResizeMetadata( const std::size_t size );

@@ -38,8 +38,8 @@ public:
     char* GetData( ); ///< return the pointer to the raw data buffer
     char* GetMetadata( ); ///< return the pointer to the raw metadata buffer
 
-    const std::size_t GetDataSize( ) const; ///< get current data buffer size
-    const std::size_t GetMetadataSize( ) const; ///< get current metadata buffer size
+    std::size_t GetDataSize( ) const; ///< get current data buffer size
+    std::size_t GetMetadataSize( ) const; ///< get current metadata buffer size
 
     void WriteData( const std::size_t first, const char* data, const std::size_t size );
     void WriteData( const std::size_t first, const unsigned char* data, const std::size_t size );
