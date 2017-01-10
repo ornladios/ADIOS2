@@ -27,7 +27,12 @@ POSIX::POSIX( MPI_Comm mpiComm, const bool debugMode ):
 
 
 POSIX::~POSIX( )
-{ }
+{
+    if( m_FileDescriptor != -1 )
+    {
+        close( m_FileDescriptor );
+    }
+}
 
 
 void POSIX::Open( const std::string name, const std::string accessMode )

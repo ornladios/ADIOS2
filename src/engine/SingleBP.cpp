@@ -135,9 +135,9 @@ void SingleBP::Write( const std::string variableName, const int* values )
 {
     auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
     std::cout << "Hello from SingleBP Write integer with index " << index << "\n";
-    Variable<int>& variable = m_Group->m_Int[index];
-    variable.Values = values;
-    auto localDimensions = m_Group->GetDimensions( variable.DimensionsCSV );
+//    Variable<int>& variable = m_Group->m_Int[index];
+//    variable.Values = values;
+//    auto localDimensions = m_Group->GetDimensions( variable.DimensionsCSV );
 
 }
 
