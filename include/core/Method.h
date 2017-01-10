@@ -8,9 +8,11 @@
 #ifndef METHOD_H_
 #define METHOD_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
 #include <string>
 #include <map>
+/// \endcond
 
 
 namespace adios
@@ -38,23 +40,23 @@ public:
     ~Method( );
 
     template< class ...Args>
-    void AddCapsule( Args... args )
+    void AddCapsule( const std::string type, Args... args )
     {
         std::vector<std::string> parameters = { args... };
-        AddCapsuleParameters( parameters );
+        AddCapsuleParameters( type, parameters );
     }
 
     template< class ...Args>
-    void AddTransport( Args... args )
+    void AddTransport( const std::string type, Args... args )
     {
         std::vector<std::string> parameters = { args... };
-        AddTransportParameters( parameters );
+        AddTransportParameters( type, parameters );
     }
 
 private:
 
-    void AddCapsuleParameters( const std::vector<std::string>& parameters );
-    void AddTransportParameters( const std::vector<std::string>& parameters );
+    void AddCapsuleParameters( const std::string type, const std::vector<std::string>& parameters );
+    void AddTransportParameters( const std::string type, const std::vector<std::string>& parameters );
 
 };
 
