@@ -6,6 +6,7 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <engine/Writer.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -16,7 +17,6 @@
 #include "functions/adiosFunctions.h"
 
 //Engine
-#include "engine/SingleBP.h"
 
 namespace adios
 {
@@ -115,9 +115,9 @@ unsigned int ADIOS::Open( const std::string name, const std::string accessMode,
     ++m_EngineCounter;
     const std::string type( itMethod->second.m_Type );
 
-    if( type == "SingleBP" || type == "singleBP" || type == "singlebp" )
+    if( type == "Writer" || type == "writer" )
     {
-        m_Engines.emplace( m_EngineCounter, std::make_shared<engine::SingleBP>( name, accessMode, mpiComm, itMethod->second, cores ) );
+        m_Engines.emplace( m_EngineCounter, std::make_shared<Writer>( name, accessMode, mpiComm, itMethod->second, cores ) );
     }
 //    else if( type == "SIRIUS" )
 //    {

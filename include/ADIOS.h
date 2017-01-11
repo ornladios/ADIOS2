@@ -129,7 +129,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param name
      * @param type
      */
-    void DeclareMethod( const std::string methodName, const std::string type = "SingleBP" );
+    void DeclareMethod( const std::string methodName, const std::string type );
 
     /**
      * Add a capsule type to method name defined from DeclareMethod
@@ -137,13 +137,13 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param args variadic parameters with format parameter=value
      */
     template< class ...Args>
-    void AddCapsule( const std::string methodName, const Args... args )
+    void AddCapsule( const std::string methodName, const std::string type, const Args... args )
     {
         auto itMethod = m_Methods.find( methodName );
         if( m_DebugMode == true )
             CheckMethod( itMethod, methodName, " from call to AddBuffer\n" );
 
-        itMethod->second.AddCapsule( args... );
+        itMethod->second.AddCapsule( type, args... );
     }
 
     /**
@@ -152,13 +152,13 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param args variadic parameters with format parameter=value
      */
     template< class ...Args>
-    void AddTransport( const std::string methodName, const Args... args )
+    void AddTransport( const std::string methodName, const std::string type, const Args... args )
     {
         auto itMethod = m_Methods.find( methodName );
         if( m_DebugMode == true )
             CheckMethod( itMethod, methodName, " from call to AddTransport\n" );
 
-        itMethod->second.AddTransport( args... );
+        itMethod->second.AddTransport( type, args... );
     }
 
     /**

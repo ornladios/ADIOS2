@@ -5,35 +5,33 @@
  *      Author: wfg
  */
 
-#ifndef SINGLEBP_H_
-#define SINGLEBP_H_
+#ifndef WRITER_H_
+#define WRITER_H_
 
 #include "core/Engine.h"
 
 
 namespace adios
 {
-namespace engine
-{
 
 
-class SingleBP : public Engine
+class Writer : public Engine
 {
 
 public:
 
     /**
-     * Constructor for single BP capsule engine, writes in BP format into a single heap capsule
+     * Constructor for Writer writes in BP format into a single heap capsule, manages several transports
      * @param name unique name given to the engine
      * @param accessMode
      * @param mpiComm
      * @param method
      * @param debugMode
      */
-    SingleBP( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+    Writer( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
               const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
-    ~SingleBP( );
+    ~Writer( );
 
     void Write( Group& group, const std::string variableName, const char* values );
     void Write( Group& group, const std::string variableName, const unsigned char* values );
@@ -72,8 +70,7 @@ private:
 };
 
 
-} //end namespace engine
 } //end namespace adios
 
 
-#endif /* SINGLEBP_H_ */
+#endif /* WRITER_H_ */

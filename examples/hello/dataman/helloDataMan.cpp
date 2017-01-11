@@ -42,8 +42,8 @@ int main( int argc, char* argv [] )
         adios.DefineVariable( groupName, "myInts", "double", "myIntsSize" );
 
         //Define method
-        const std::string methodName( "singleBP" );
-        adios.DeclareMethod( methodName, "singleBP" );
+        const std::string methodName( "DataManSend" );
+        adios.DeclareMethod( methodName, "DataMan" );
         adios.AddCapsule( methodName, "Heap" );
         adios.AddTransport( methodName, "POSIX", "fname=myfile.bp" );
         adios.AddTransport( methodName, "TCP_IP", "fname=myfile.tcp" );
@@ -53,9 +53,8 @@ int main( int argc, char* argv [] )
         adios.SetDefaultGroup( handler, groupName );
 
         double varDouble = 10.;
-        adios.Write( handler, "myIntsSize", &varDouble );
-        adios.Write( handler, "myInts", &myInts.front() );
-        adios.Write( 10, "myInts", &myInts.front() );
+        adios.Write<double>( handler, "myIntsSize", &varDouble );
+        adios.Write<double>( handler, "myInts", &myInts.front() );
         adios.Close( handler );
     }
     catch( std::invalid_argument& e )

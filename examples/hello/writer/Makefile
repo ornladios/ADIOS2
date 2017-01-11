@@ -3,7 +3,7 @@
 #     Author: wfg
 
 
-BASE_NAME=helloSingleBP_OOP
+BASE_NAME=helloWriter_OOP
      
 TOOL_DIR=/usr/bin
 
@@ -25,10 +25,10 @@ CFLAGS=-Wall -O0 -g -Wpedantic -std=c++11
 all: mpi
 
 mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
-	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME)_mpi $(ADIOS_LIB)
+	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME)_mpi $(ADIOS_LIB) -lpthread
 	
 nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
-	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME).cpp -o $(BASE_NAME)_nompi $(ADIOS_NOMPI_LIB)
+	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME).cpp -o $(BASE_NAME)_nompi $(ADIOS_NOMPI_LIB) -lpthread
 
 clean:
 	rm *_mpi; rm *_nompi

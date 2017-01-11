@@ -18,7 +18,7 @@
 #endif
 
 
-#include "ADIOS_OOP.h"
+#include "ADIOS.h"
 
 
 int main( int argc, char* argv [] )
@@ -30,26 +30,29 @@ int main( int argc, char* argv [] )
 
     //Application variable
     std::vector<double> myInts = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    int myIntsSize = static_cast<int>( myInts.size() );
+    int myIntsSize = 10;
 
     try
     {
         //Define group and variables
-        adios::Group group( adiosDebug );
-        group.DefineVariable( "myIntsSize", "int" ); //define size as scalar
-        group.DefineVariable( "myInts",     "double", "myIntsSize" ); //define variable with associate size
+        adios::ADIOS adios( MPI_COMM_WORLD, adiosDebug );
+        const std::string groupName( "ints" );
+        adios.DeclareGroup( groupName );
+        adios.DefineVariable( groupName, "myIntsSize", "int" );
+        adios.DefineVariable( groupName, "myInts", "double", "myIntsSize" );
 
         //Define method
-        adios::Method method; //( "SingleBP", adiosDebug );
-        method.AddCapsule( "Heap" );
-        method.AddTransport( "POSIX", "have_metadata_file=0" );
+        const std::string methodName( "IntsWriter" );
+        adios.DeclareMethod( methodName, "Writer" );
+        adios.AddCapsule( methodName, "Heap" );
+        adios.AddTransport( methodName, "POSIX" );
 
-        //Create engine and Write
-        adios::engine::SingleBP singleBP( "myInts.bp", "w", MPI_COMM_WORLD, method, adiosDebug );
-        singleBP.SetDefaultGroup( group );
-        singleBP.Write( "myIntsSize", &myIntsSize  );
-        singleBP.Write( "myInts", &myInts.front() );
-        singleBP.Close( );
+        //Create engine handler and Write
+        int handler = adios.Open( "myInts.bp", "w", methodName );
+        adios.SetDefaultGroup( handler, groupName );
+        adios.Write<int>( handler, "myIntsSize", &myIntsSize );
+        adios.Write<double>( handler, "myInts", &myInts.front() );
+        adios.Close( handler );
     }
     catch( std::invalid_argument& e )
     {

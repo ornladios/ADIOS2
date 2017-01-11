@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-#include "engine/SingleBP.h"
+#include "engine/Writer.h"
 #include "core/Support.h"
 
 //supported capsules
@@ -21,170 +21,168 @@
 
 namespace adios
 {
-namespace engine
-{
 
 
-SingleBP::SingleBP( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
+Writer::Writer( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
                     const Method& method, const bool debugMode, const unsigned int cores ):
-    Engine( "SingleBP", streamName, accessMode, mpiComm, method, debugMode, cores, " SingleBP constructor (or call to ADIOS Open).\n" )
+    Engine( "Writer", streamName, accessMode, mpiComm, method, debugMode, cores, " Writer constructor (or call to ADIOS Open).\n" )
 {
     Init( );
 }
 
 
-SingleBP::~SingleBP( )
+Writer::~Writer( )
 { }
 
 
-void SingleBP::Init( )
+void Writer::Init( )
 {
     InitCapsules( );
     InitTransports( );
 }
 
 
-void SingleBP::Write( Group& group, const std::string variableName, const char* values )
+void Writer::Write( Group& group, const std::string variableName, const char* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const unsigned char* values )
+void Writer::Write( Group& group, const std::string variableName, const unsigned char* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const short* values )
+void Writer::Write( Group& group, const std::string variableName, const short* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const unsigned short* values )
+void Writer::Write( Group& group, const std::string variableName, const unsigned short* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const int* values )
+void Writer::Write( Group& group, const std::string variableName, const int* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const unsigned int* values )
+void Writer::Write( Group& group, const std::string variableName, const unsigned int* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const long int* values )
+void Writer::Write( Group& group, const std::string variableName, const long int* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const unsigned long int* values )
+void Writer::Write( Group& group, const std::string variableName, const unsigned long int* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const long long int* values )
+void Writer::Write( Group& group, const std::string variableName, const long long int* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const unsigned long long int* values )
+void Writer::Write( Group& group, const std::string variableName, const unsigned long long int* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const float* values )
+void Writer::Write( Group& group, const std::string variableName, const float* values )
 {
 
 }
 
-void SingleBP::Write( Group& group, const std::string variableName, const double* values )
+void Writer::Write( Group& group, const std::string variableName, const double* values )
 {
     //auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("double"), " from call to Write double*" );
 }
 
 
-void SingleBP::Write( Group& group, const std::string variableName, const long double* values )
+void Writer::Write( Group& group, const std::string variableName, const long double* values )
 {
 
 }
 
 
-void SingleBP::Write( const std::string variableName, const char* values )
+void Writer::Write( const std::string variableName, const char* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const unsigned char* values )
+void Writer::Write( const std::string variableName, const unsigned char* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const short* values )
+void Writer::Write( const std::string variableName, const short* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const unsigned short* values )
+void Writer::Write( const std::string variableName, const unsigned short* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const int* values )
+void Writer::Write( const std::string variableName, const int* values )
 {
     auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
-    std::cout << "Hello from SingleBP Write integer with index " << index << "\n";
+    std::cout << "Hello from Writer for an integer with index " << index << "\n";
 //    Variable<int>& variable = m_Group->m_Int[index];
 //    variable.Values = values;
 //    auto localDimensions = m_Group->GetDimensions( variable.DimensionsCSV );
 
 }
 
-void SingleBP::Write( const std::string variableName, const unsigned int* values )
+void Writer::Write( const std::string variableName, const unsigned int* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const long int* values )
+void Writer::Write( const std::string variableName, const long int* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const unsigned long int* values )
+void Writer::Write( const std::string variableName, const unsigned long int* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const long long int* values )
+void Writer::Write( const std::string variableName, const long long int* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const unsigned long long int* values )
+void Writer::Write( const std::string variableName, const unsigned long long int* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const float* values )
+void Writer::Write( const std::string variableName, const float* values )
 {
 
 }
 
-void SingleBP::Write( const std::string variableName, const double* values )
+void Writer::Write( const std::string variableName, const double* values )
 {
     auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("double"), " from call to Write double*" );
     std::cout << "Hello from SingleBP Write double with index " << index << "\n";
 }
 
 
-void SingleBP::Write( const std::string variableName, const long double* values )
+void Writer::Write( const std::string variableName, const long double* values )
 {
 
 }
 
 
-void SingleBP::InitCapsules( )
+void Writer::InitCapsules( )
 {
     if( m_DebugMode == true )
     {
@@ -212,7 +210,7 @@ void SingleBP::InitCapsules( )
 
 
 
-void SingleBP::InitTransports( )
+void Writer::InitTransports( )
 {
     std::set< std::string > transportStreamNames; //used to check for name conflict between transports
 
@@ -266,7 +264,6 @@ void SingleBP::InitTransports( )
                 m_Transports.back()->Open( m_Name, m_AccessMode );
             else
                 m_Transports.back()->Open( m_Name, m_AccessMode );
-
         }
         else if( transportsSize == 0 )
         {
@@ -278,6 +275,5 @@ void SingleBP::InitTransports( )
 
 
 
-} //end namespace engine
 } //end namespace adios
 

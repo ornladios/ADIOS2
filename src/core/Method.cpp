@@ -52,16 +52,16 @@ void Method::AddTransportParameters( const std::string type, const std::vector<s
             throw std::invalid_argument( "ERROR: first argument in AddTransport must be a single word for transport\n" );
     }
 
-    std::map<std::string, std::string> mapParameters = BuildParametersMap(parameters, m_DebugMode);
+    std::map<std::string, std::string> mapParameters = BuildParametersMap( parameters, m_DebugMode );
     if( m_DebugMode == true )
     {
-        if( mapParameters.count("transport") )
+        if( mapParameters.count("transport") == 1 )
             std::invalid_argument( "ERROR: transport can't be redefined with transport=, "
                                    "must be the first argument, in AddTransportParameters( transport, ...);\n" );
     }
 
     mapParameters["transport"] = type;
-    m_TransportParameters.push_back( BuildParametersMap(parameters, m_DebugMode) );
+    m_TransportParameters.push_back( mapParameters );
 }
 
 

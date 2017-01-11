@@ -26,7 +26,7 @@ class Method
 
 public:
 
-    const std::string m_Type = "SingleBP"; ///< Method type
+    const std::string m_Type; ///< Method type
     const bool m_DebugMode = false; ///< true: on, throws exceptions and do additional checks, false: off, faster, but unsafe
     std::vector< std::map<std::string, std::string> > m_CapsuleParameters; ///< each is a separate Transport containing their own parameters
     std::vector< std::map<std::string, std::string> > m_TransportParameters; ///< each is a separate Transport containing their own parameters
@@ -35,7 +35,7 @@ public:
      * Unique constructor, must have a type
      * @param type must be an engine type, default = SingleBP
      */
-    Method( const std::string type = "", const bool debugMode = false );
+    Method( const std::string type, const bool debugMode = false );
 
     ~Method( );
 
