@@ -37,7 +37,6 @@ public:
     Capsule( const std::string type, const std::string accessMode, const int rankMPI,
              const bool debugMode, const unsigned int cores );
 
-
     virtual ~Capsule( );
 
     virtual char* GetData( ) = 0; ///< return the pointer to the raw data buffer

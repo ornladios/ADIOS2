@@ -29,7 +29,7 @@ public:
      * @param debugMode
      */
     Writer( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-              const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
+            const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
     ~Writer( );
 
@@ -60,6 +60,8 @@ public:
     void Write( const std::string variableName, const float* values );
     void Write( const std::string variableName, const double* values );
     void Write( const std::string variableName, const long double* values );
+
+    void Close( int transportIndex = -1 );
 
 private:
 

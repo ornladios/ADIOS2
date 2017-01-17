@@ -38,9 +38,9 @@ namespace adios
 class Group
 {
 
-    friend class Engine;
-
 public:
+
+    const std::string m_Name;
 
     /**
      * Empty constructor
@@ -113,13 +113,7 @@ public:
 
     unsigned long long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
 
-
-private:
-
-    std::set< std::string > m_WrittenVariables; ///< set of variables whose T* values have been set with Write (no nullptr)
-    bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code, known at compile time
-
-    std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of Variable
+    std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
 
     std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
     std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
@@ -135,6 +129,15 @@ private:
     std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
     std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
 
+
+private:
+
+    std::set<std::string> m_WrittenVariables;
+
+    bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code, known at compile time
+
+    std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of Variable
+
     /**
      * @brief Contains all group attributes from SAttribute.h
      * <pre>
@@ -143,10 +146,6 @@ private:
      * </pre>
      */
     std::map< std::string, Attribute > m_Attributes;
-
-
-    std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
-
 
     /**
      * Called from XML constructor

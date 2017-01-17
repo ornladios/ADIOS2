@@ -14,6 +14,7 @@
 #include <string>
 #include <memory> //std::shared_ptr
 #include <map>
+#include <utility> //std::pair
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -128,6 +129,8 @@ protected:
     unsigned int m_Cores = 1;
     const std::string m_EndMessage; ///< added to exceptions to improve debugging
 
+    std::vector< std::pair<Group*, std::string> > m_WrittenVariables;
+
     virtual void Init( ) = 0; ///< Initialize m_Capsules and m_Transports, called from constructor
     virtual void InitCapsules( ) = 0; ///< Initialize transports from Method, called from Init in constructor.
     virtual void InitTransports( ) = 0; ///< Initialize transports from Method, called from Init in constructor.
@@ -141,9 +144,9 @@ protected:
      * @param hint added information if exception is thrown
      * @return index to variable in group type container
      */
-    const unsigned int PreSetVariable( Group& group, const std::string variableName,
-                                       const std::set<std::string>& types,
-                                       const std::string hint ) const;
+    unsigned int PreSetVariable( Group& group, const std::string variableName,
+                                 const std::set<std::string>& types,
+                                 const std::string hint );
 
     /**
      * Used to verify parameters in m_Method containers

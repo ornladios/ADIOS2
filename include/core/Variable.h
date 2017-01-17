@@ -24,7 +24,7 @@ template< class T >
 struct Variable
 {
     std::string DimensionsCSV; ///< comma separated list for variables to search for local dimensions
-    T* Values; ///< pointer to values passed from user in ADIOS Write
+    const T* Values; ///< pointer to values passed from user in ADIOS Write
     int GlobalBoundsIndex; ///< if global > 0, index corresponds to global-bounds in m_GlobalBounds in CGroup, if local then = -1
 
     std::vector< Transform* > Transforms; ///< associated transforms, sequence determines application order, e.g. first Transforms[0] then Transforms[1]. Pointer used as reference (no memory management).

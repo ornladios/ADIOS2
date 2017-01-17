@@ -42,9 +42,8 @@ void Engine::SetDefaultGroup( Group& group )
 
 
 //PROTECTED
-const unsigned int Engine::PreSetVariable( Group& group, const std::string variableName,
-                                           const std::set<std::string>& types,
-                                           const std::string hint ) const
+unsigned int Engine::PreSetVariable( Group& group, const std::string variableName,
+                                     const std::set<std::string>& types, const std::string hint )
 {
     auto itVariable = group.m_Variables.find( variableName );
 
@@ -54,10 +53,11 @@ const unsigned int Engine::PreSetVariable( Group& group, const std::string varia
             throw std::invalid_argument( "ERROR: variable " + variableName + " doesn't exist " + hint + ".\n" );
 
         if( IsTypeAlias( itVariable->second.first, types ) == false )
-                throw std::invalid_argument( "ERROR: type in variable " + variableName + " doesn't match " + hint + ".\n" );
+            throw std::invalid_argument( "ERROR: type in variable " + variableName + " doesn't match " + hint + ".\n" );
     }
 
-    group.m_WrittenVariables.insert( variableName ); //should be done before writing to buffer, in case there is a crash?
+    group.m_WrittenVariables.insert( variableName ); // group tracks its own written variables for dimensions
+    m_WrittenVariables.push_back( std::make_pair( &group, variableName ) );
     const unsigned int index = itVariable->second.second;
     return index;
 }
@@ -90,8 +90,7 @@ void Engine::InitTransports( )
 
 void Engine::CheckParameter( const std::map<std::string, std::string>::const_iterator itParam,
                              const std::map<std::string, std::string>& parameters,
-                             const std::string parameterName,
-                             const std::string hint ) const
+                             const std::string parameterName, const std::string hint ) const
 {
     if( itParam == parameters.end() )
         throw std::invalid_argument( "ERROR: parameter name " + parameterName + " not found " + hint );

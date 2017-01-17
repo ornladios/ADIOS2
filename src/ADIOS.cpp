@@ -6,7 +6,7 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <engine/Writer.h>
+#include <engine/writer/Writer.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>

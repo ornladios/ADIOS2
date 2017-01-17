@@ -11,9 +11,7 @@
 
 #include "core/Group.h"
 #include "core/Method.h"
-#include "engine/Writer.h"
-
-//TRANSFORMS
+#include "engine/writer/Writer.h"
 #include "transform/BZip2.h"
 
 

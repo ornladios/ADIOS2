@@ -7,8 +7,10 @@
 
 #include <iostream>
 
-#include "engine/Writer.h"
+#include "engine/writer/Writer.h"
+#include "engine/writer/WriterHelper.h"
 #include "core/Support.h"
+#include "functions/adiosFunctions.h" //GetTotalSize
 
 //supported capsules
 #include "capsule/Heap.h"
@@ -97,6 +99,7 @@ void Writer::Write( Group& group, const std::string variableName, const float* v
 
 }
 
+
 void Writer::Write( Group& group, const std::string variableName, const double* values )
 {
     //auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("double"), " from call to Write double*" );
@@ -131,11 +134,11 @@ void Writer::Write( const std::string variableName, const unsigned short* values
 
 void Writer::Write( const std::string variableName, const int* values )
 {
-    auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
-    std::cout << "Hello from Writer for an integer with index " << index << "\n";
-//    Variable<int>& variable = m_Group->m_Int[index];
-//    variable.Values = values;
-//    auto localDimensions = m_Group->GetDimensions( variable.DimensionsCSV );
+    const unsigned int index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
+    Variable<int>& variable = m_Group->m_Int[index];
+    variable.Values = values;
+    WriteHelper( m_Group, variable, )
+
 
 }
 
@@ -221,7 +224,6 @@ void Writer::InitTransports( )
         auto itTransport = parameters.find( "transport" );
         if( m_DebugMode == true )
             CheckParameter( itTransport, parameters, "transport", ", in " + m_Name + m_EndMessage );
-
 
         if( itTransport->second == "POSIX" )
         {
