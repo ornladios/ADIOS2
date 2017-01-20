@@ -5,10 +5,10 @@
  *      Author: wfg
  */
 
-#include "../../include/engine/dataman/DataMan.h"
-
 #include <iostream>
 
+
+#include "engine/dataman/DataMan.h"
 #include "core/Support.h"
 
 //supported capsules
@@ -27,7 +27,7 @@ namespace engine
 
 DataMan::DataMan( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
                   const Method& method, const bool debugMode, const unsigned int cores ):
-    Engine( "SingleBP", streamName, accessMode, mpiComm, method, debugMode, cores, " SingleBP constructor (or call to ADIOS Open).\n" )
+    Engine( "DataMan", streamName, accessMode, mpiComm, method, debugMode, cores, " DataMan constructor (or call to ADIOS Open).\n" )
 {
     Init( );
 }
@@ -187,7 +187,7 @@ void DataMan::InitCapsules( )
     {
         if( m_Method.m_CapsuleParameters.size() > 1 )
         {
-            throw std::invalid_argument( "ERROR: SingleBP engine only allows one heap buffer, in " + m_Name +
+            throw std::invalid_argument( "ERROR: DataMan engine only allows one heap buffer, in " + m_Name +
                                          m_EndMessage );
         }
         else if( m_Method.m_CapsuleParameters.size() == 1 )
@@ -199,7 +199,7 @@ void DataMan::InitCapsules( )
                                 ", in " + m_Name + m_EndMessage );
 
             if( !( itType->second == "Heap" || itType->second == "HEAP" ) )
-                throw std::invalid_argument( "ERROR: SingleBP doesn't support Capsule of buffer type " +
+                throw std::invalid_argument( "ERROR: DataMan doesn't support Capsule of buffer type " +
                                               itType->second + " in " + m_Name + m_EndMessage );
         }
     }

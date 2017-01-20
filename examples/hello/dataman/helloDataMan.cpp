@@ -29,7 +29,7 @@ int main( int argc, char* argv [] )
     const bool adiosDebug = true;
 
     //Application variable
-    std::vector<double> myInts = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    std::vector<int> myInts = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     int myIntsSize = 10;
 
     try
@@ -41,12 +41,19 @@ int main( int argc, char* argv [] )
         adios.DefineVariable( groupName, "myIntsSize", "int" );
         adios.DefineVariable( groupName, "myInts", "double", "myIntsSize" );
 
-        //Define method
+        //Define method...
         const std::string methodName( "DataManSend" );
-        adios.DeclareMethod( methodName, "DataMan" );
-        adios.AddCapsule( methodName, "Heap" );
-        adios.AddTransport( methodName, "POSIX", "fname=myfile.bp" );
-        adios.AddTransport( methodName, "TCP_IP", "fname=myfile.tcp" );
+        adios.DeclareMethod( methodName, "DataMan" ); //2nd item is type and must be supported e.g. Writer (empty default), DataMan, Sirius, etc.
+//        adios.AddTransport( methodName, "ZeroMQ", "format=json", "tcp=128.11.1.1.2", "real_time=yes" );
+//        adios.AddTransport( methodName, "MDTM", "format=otherFormat", "tcp=128.11.1.1.2" );
+//        adios.AddTransport( methodName, "POSIX", "fname=myfile.bp" ); //you can write things to file as well
+
+
+        //this illustrates method uniqueness
+        const std::string methodName2( "DataManSend2" );
+        adios.DeclareMethod( methodName2, "DataMan" ); //should this be variadic?
+        adios.AddTransport( methodName2, "ZeroMQ", "format=json", "tcp=128.11.1.1.2", "realtime_change=yes" );
+
 
         //Create engine handler and Write
         int handler = adios.Open( "myInts.bp", "w", methodName );
@@ -54,8 +61,10 @@ int main( int argc, char* argv [] )
 
         double varDouble = 10.;
         adios.Write<double>( handler, "myIntsSize", &varDouble );
-        adios.Write<double>( handler, "myInts", &myInts.front() );
+        adios.Write<int>( handler, "myInts", &myInts.front() );
         adios.Close( handler );
+
+        int handler2 = adios.Open( "somethingelse.bp", "w", methodName2 );
     }
     catch( std::invalid_argument& e )
     {

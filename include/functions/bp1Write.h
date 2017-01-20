@@ -181,36 +181,76 @@ void WriteVariableToBuffers( const Group& group, const std::string variableName,
 
    unsigned int characteristicsCounter = 0; //used for characteristics count, characteristics length will be calculated at the end
 
+   //Get dimensions
+   const std::vector<unsigned long long int> localDimensions = group.GetDimensions( variable.DimensionsCSV );
+
+   //write to metadata characteristic
    //characteristic: dimension
    const std::uint8_t characteristicID = characteristic_dimensions;
    WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset );
+   const std::uint8_t dimensions = localDimensions.size();
+   WriteToBuffers( metadataBuffers, &dimensions, 1, metadataOffset );
+   const std::uint16_t dimensionsLength = dimensions * 24; //24 is from 8 bytes for each: local, global dimension, global offset
+   WriteToBuffers( metadataBuffers, &dimensions, 2, metadataOffset );
 
-   std::size_t dimensions = std::count( variable.DimensionsCSV.begin(), variable.DimensionsCSV.end(), ',' ) + 1;
-   if( dimensions == 1 ) //scalar
+   //dimensions in data buffer
+   if( writeDimensionsInData == true )
    {
-       if( writeDimensionsInData == true )
-       {
-           const char yes = 'y';
-           WriteToBuffers( dataBuffers, &yes, 1, dataOffset );
+       const char yes = 'y';
+       WriteToBuffers( dataBuffers, &yes, 1, dataOffset );
+       //for now only support unsigned long integer value (8 bytes), as in metadata
+       WriteToBuffers( dataBuffers, &dimensions, 1, dataOffset );
+       const std::uint16_t dimensionsLengthInData = dimensions * 27; //27 is from 9 bytes for each: var y/n + local, var y/n + global dimension, var y/n + global offset
+       WriteToBuffers( dataBuffers, &dimensionsLengthInData, 2, dataOffset );
+   }
+   else
+   {
+       const char no = 'n';
+       WriteToBuffers( dataBuffers, &no, 1, dataOffset );
+   }
 
-       }
-       else
+
+   if( variable.GlobalBoundsIndex == -1 ) //local variable
+   {
+       for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
        {
-           const char no = 'n';
-           WriteToBuffers( dataBuffers, &no, 1, dataOffset );
+           //metadata
+           WriteToBuffers( metadataBuffers, &localDimensions[d], 8, metadataOffset );
+           metadataOffset += 16; //skipping global dimension(8), global offset (8)
+
+           //data
+           if( writeDimensionsInData == true )
+           {
+               const char no = 'n';
+               WriteToBuffers( dataBuffers, &no, 1, dataOffset );
+               WriteToBuffers( dataBuffers, &localDimensions[d], 8, dataOffset );
+               dataOffset += 18; //skipping var no + global dimension(8), var no + global offset (8)
+           }
        }
    }
-   else //multidimensional array
+   else //global variable
    {
-       const std::vector<unsigned long long int> localDimensions = group.GetDimensions( variable.DimensionsCSV );
-       std::vector<unsigned long long int> globalDimensions;
-       std::vector<unsigned long long int> globalOffsets;
-       if( variable.GlobalBoundsIndex > -1 ) //global variable
-       {
-           globalDimensions = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].first );
-           globalOffsets = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].second );
-       }
+       std::vector<unsigned long long int> globalDimensions = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].first );
+       std::vector<unsigned long long int> globalOffsets = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].second );
 
+       for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
+       {
+           //metadata
+           WriteToBuffers( metadataBuffers, &localDimensions[d], 8, metadataOffset );
+           WriteToBuffers( metadataBuffers, &globalDimensions[d], 8, metadataOffset );
+           WriteToBuffers( metadataBuffers, &globalOffsets[d], 8, metadataOffset );
+
+           //data
+           if( writeDimensionsInData == true )
+           {
+               const char no = 'n';
+               WriteToBuffers( dataBuffers, &no, 1, dataOffset );
+               WriteToBuffers( dataBuffers, &localDimensions[d], 8, dataOffset );
+               WriteToBuffers( dataBuffers, &no, 1, dataOffset );
+               WriteToBuffers( dataBuffers, &localDimensions[d], 8, dataOffset );
+
+           }
+       }
    }
 
 

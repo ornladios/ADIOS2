@@ -5,8 +5,8 @@
  *      Author: wfg
  */
 
-#ifndef WRITERHELPER_H_
-#define WRITERHELPER_H_
+#ifndef WRITERTEMPLATES_H_
+#define WRITERTEMPLATES_H_
 
 
 
@@ -14,17 +14,12 @@ namespace adios
 {
 
 template <class T>
-void WriteHelper( Group& group, const std::string variableName, Variable<T>& variable, Heap& capsule )
+void WriterWriteVariable( Group& group, const std::string variableName, Variable<T>& variable, Heap& capsule )
 {
     const auto localDimensions = group.GetDimensions( variable.DimensionsCSV );
     const auto size = GetTotalSize( localDimensions );
     T min, max;
     GetMinMax( variable.Values, size, min, max );
-
-
-
-
-
 
 //
 //    const std::size_t bytesToWrite = localSize * sizeof( double ); //size of values + min + max in bytes
@@ -95,4 +90,4 @@ void WriteHelper( Group& group, const std::string variableName, Variable<T>& var
 
 
 
-#endif /* WRITERHELPER_H_ */
+#endif /* WRITERTEMPLATES_H_ */

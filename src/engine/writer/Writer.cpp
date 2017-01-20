@@ -8,7 +8,8 @@
 #include <iostream>
 
 #include "engine/writer/Writer.h"
-#include "engine/writer/WriterHelper.h"
+
+#include "../../../include/engine/writer/WriterTemplates.h"
 #include "core/Support.h"
 #include "functions/adiosFunctions.h" //GetTotalSize
 
@@ -26,7 +27,7 @@ namespace adios
 
 
 Writer::Writer( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
-                    const Method& method, const bool debugMode, const unsigned int cores ):
+                const Method& method, const bool debugMode, const unsigned int cores ):
     Engine( "Writer", streamName, accessMode, mpiComm, method, debugMode, cores, " Writer constructor (or call to ADIOS Open).\n" )
 {
     Init( );
@@ -135,9 +136,8 @@ void Writer::Write( const std::string variableName, const unsigned short* values
 void Writer::Write( const std::string variableName, const int* values )
 {
     const unsigned int index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
-    Variable<int>& variable = m_Group->m_Int[index];
-    variable.Values = values;
-    WriteHelper( m_Group, variable, )
+    m_Group->m_Int[index].Values = values;
+    //here call the Template function WriteHelper( m_Group, variable, )
 
 
 }
