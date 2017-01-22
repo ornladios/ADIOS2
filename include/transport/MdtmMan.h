@@ -8,16 +8,8 @@
 #ifndef MDTMMAN_H_
 #define MDTMMAN_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <thread>
-#include <queue>
-/// \endcond
 
-
-#ifdef HAVE_DATAMAN
 #include "external/json.hpp"
-#endif
-
 #include "core/Transport.h"
 
 
@@ -30,18 +22,27 @@ class MdtmMan : public Transport
 public:
 
 
-    MdtmMan( ); ///< default empty constructor
-
-
-    MdtmMan( const std::string localIP, const std::string remoteIP, const std::string mode, const std::string prefix,
-             const int numberOfPipes, const std::vector<int> tolerance, const std::vector<int> priority,
+    /**
+     *
+     * @param localIP
+     * @param remoteIP
+     * @param mode
+     * @param prefix
+     * @param numberOfPipes
+     * @param tolerances
+     * @param priorities
+     * @param mpiComm
+     * @param debugMode
+     */
+	MdtmMan( const std::string localIP, const std::string remoteIP, const std::string mode, const std::string prefix,
+             const int numberOfPipes, const std::vector<int> tolerances, const std::vector<int> priorities,
              MPI_Comm mpiComm, const bool debugMode );
 
 
     ~MdtmMan( );
 
 
-    void Open( const std::string name, const std::string accessMode ) final;
+    void Open( const std::string name, const std::string accessMode );
 
     void SetBuffer( char* buffer, std::size_t size );
 
@@ -64,9 +65,9 @@ private:
     std::string m_RemoteIP; ///<  remote ip address, can change over time
     std::string m_Mode; ///< send/write, receive/read
     std::string m_Prefix; ///< prefix given to message
-    int m_NumberOfPipes; ///< should it be unsigned int?
-    std::vector<int> m_Tolerace;
-    std::vector<int> m_Priority;
+    int m_NumberOfPipes = -1; ///< should it be unsigned int?
+    std::vector<int> m_Tolerances;
+    std::vector<int> m_Priorities;
 
     /**
      * Should we change data to char* ?
@@ -87,7 +88,7 @@ private:
              const std::uint64_t timestep, const int tolerance, const int priority );
 
     /**
-     * Should we change data to char* ?
+     *
      * @param data
      * @param doid
      * @param variable

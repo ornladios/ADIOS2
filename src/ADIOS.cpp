@@ -6,7 +6,6 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <engine/writer/Writer.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -16,7 +15,10 @@
 #include "ADIOS.h"
 #include "functions/adiosFunctions.h"
 
-//Engine
+//Engines
+#include "engine/writer/Writer.h"
+#include "engine/dataman/DataMan.h"
+
 
 namespace adios
 {
@@ -123,10 +125,10 @@ unsigned int ADIOS::Open( const std::string name, const std::string accessMode,
 //    {
 //        //here must complete
 //    }
-//    else if( type == "DataMan" )
-//    {
-//        //here must complete
-//    }
+    else if( type == "DataMan" )
+    {
+    	m_Engines.emplace( m_EngineCounter, std::make_shared<engine::DataMan>( name, accessMode, mpiComm, itMethod->second, cores ) );
+    }
     else
     {
         if( m_DebugMode == true )

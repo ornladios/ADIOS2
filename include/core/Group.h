@@ -37,6 +37,7 @@ namespace adios
  */
 class Group
 {
+    friend class Engine;
 
 public:
 

@@ -9,6 +9,7 @@
 
 
 #include "engine/dataman/DataMan.h"
+#include "engine/dataman/DataManTemplates.h"
 #include "core/Support.h"
 
 //supported capsules
@@ -46,138 +47,223 @@ void DataMan::Init( )
 
 void DataMan::Write( Group& group, const std::string variableName, const char* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("char"), " from call to Write char*" );
+	Variable<char>& variable = group.m_Char[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const unsigned char* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned char"), " from call to Write unsigned char*" );
+	Variable<unsigned char>& variable = group.m_UChar[index]; //must be a reference
+    variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const short* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("short"), " from call to Write short*" );
+	Variable<short>& variable = group.m_Short[index]; //must be a reference
+    variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const unsigned short* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned short"), " from call to Write unsigned short*" );
+	Variable<unsigned short>& variable = group.m_UShort[index]; //must be a reference
+    variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const int* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
+	Variable<int>& variable = group.m_Int[index]; //must be a reference
+    variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const unsigned int* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned int"), " from call to Write unsigned int*" );
+	Variable<unsigned int>& variable = group.m_UInt[index]; //must be a reference
+    variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const long int* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("long int"), " from call to Write long int*" );
+	Variable<long int>& variable = group.m_LInt[index]; //must be a reference
+    variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const unsigned long int* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned long int"), " from call to Write unsigned long int*" );
+	Variable<unsigned long int>& variable = group.m_ULInt[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const long long int* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("long long int"), " from call to Write long long int*" );
+	Variable<long long int>& variable = group.m_LLInt[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
+
 
 void DataMan::Write( Group& group, const std::string variableName, const unsigned long long int* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("unsigned long long int"), " from call to Write unsigned long long int*" );
+	Variable<unsigned long long int>& variable = group.m_ULLInt[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( Group& group, const std::string variableName, const float* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("float"), " from call to Write float*" );
+	Variable<float>& variable = group.m_Float[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( Group& group, const std::string variableName, const double* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("double"), " from call to Write double*" );
+	Variable<double>& variable = group.m_Double[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
 
 
 void DataMan::Write( Group& group, const std::string variableName, const long double* values )
 {
-
+	auto index = PreSetVariable( group, variableName, Support::DatatypesAliases.at("long double"), " from call to Write long double*" );
+	Variable<long double>& variable = group.m_LDouble[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( group, variableName, variable, m_Capsules, m_Transports );
 }
 
-
+//USING Preset Group
 void DataMan::Write( const std::string variableName, const char* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("char"), " from call to Write char*" );
+	Variable<char>& variable = m_Group->m_Char[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const unsigned char* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("unsigned char"), " from call to Write unsigned char*" );
+	Variable<unsigned char>& variable = m_Group->m_UChar[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const short* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("short"), " from call to Write short*" );
+	Variable<short>& variable = m_Group->m_Short[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const unsigned short* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("unsigned short"), " from call to Write unsigned short*" );
+	Variable<unsigned short>& variable = m_Group->m_UShort[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const int* values )
 {
     auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
-    std::cout << "Hello from DataMan Write integer with index " << index << "\n";
+	Variable<int>& variable = m_Group->m_Int[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 
 }
 
 void DataMan::Write( const std::string variableName, const unsigned int* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("unsigned int"), " from call to Write unsigned int*" );
+	Variable<unsigned int>& variable = m_Group->m_UInt[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const long int* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("long int"), " from call to Write long int*" );
+	Variable<long int>& variable = m_Group->m_LInt[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const unsigned long int* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("unsigned long int"), " from call to Write unsigned long int*" );
+	Variable<unsigned long int>& variable = m_Group->m_ULInt[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const long long int* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("long long int"), " from call to Write long long int*" );
+	Variable<long long int>& variable = m_Group->m_LLInt[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const unsigned long long int* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("unsigned long long int"), " from call to Write unsigned long long int*" );
+	Variable<unsigned long long int>& variable = m_Group->m_ULLInt[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const float* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("float"), " from call to Write float*" );
+	Variable<float>& variable = m_Group->m_Float[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 void DataMan::Write( const std::string variableName, const double* values )
 {
     auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("double"), " from call to Write double*" );
-    std::cout << "Hello from Data Write double with index " << index << "\n";
+	Variable<double>& variable = m_Group->m_Double[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 
 void DataMan::Write( const std::string variableName, const long double* values )
 {
-
+	auto index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("long double"), " from call to Write long double*" );
+	Variable<long double>& variable = m_Group->m_LDouble[index]; //must be a reference
+	variable.Values = values;
+	DataManWriteVariable( *m_Group, variableName, variable, m_Capsules, m_Transports );
 }
 
 

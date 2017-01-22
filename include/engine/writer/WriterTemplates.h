@@ -8,6 +8,15 @@
 #ifndef WRITERTEMPLATES_H_
 #define WRITERTEMPLATES_H_
 
+#include <string>
+
+
+#include "core/Group.h"
+#include "core/Variable.h"
+#include "capsule/Heap.h"
+#include "functions/adiosFunctions.h"
+#include "functions/capsuleTemplates.h"
+
 
 
 namespace adios
@@ -73,13 +82,6 @@ void WriterWriteVariable( Group& group, const std::string variableName, Variable
 //        lf_TransportsWrite( transportIndex, transports, buffer );
 //    }
 }
-
-
-
-
-
-
-
 
 
 

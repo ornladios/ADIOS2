@@ -20,7 +20,9 @@ ARFLAGS:=rcs
 HFiles:=$(shell find ./include -type f -name "*.h")
 CPPFiles:=$(shell find ./src -type f -name "*.cpp")
 INC:=-I./include
-VPATH = ./src ./src/core ./src/functions ./src/engine ./src/engine/writer ./src/capsule ./src/transform ./src/transport
+VPATH = ./src ./src/core ./src/functions \
+        ./src/engine ./src/engine/writer ./src/engine/dataman \
+        ./src/capsule ./src/transform ./src/transport
 
 #SEPARATE EXTERNAL LIBRARIES HANDLING in Makefile.libs
 export $(HFiles) $(CPPFiles) $(CFLAGS) $(LIBS)

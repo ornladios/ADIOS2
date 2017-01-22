@@ -66,9 +66,9 @@ public:
 
 private:
 
-    void Init( );
-    void InitCapsules( );
-    void InitTransports( );
+    void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
+    void InitCapsules( ); ///< from Method
+    void InitTransports( ); ///< from Transports
 
 };
 
