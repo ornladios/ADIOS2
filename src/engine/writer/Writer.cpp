@@ -8,8 +8,7 @@
 #include <iostream>
 
 #include "engine/writer/Writer.h"
-
-#include "../../../include/engine/writer/WriterTemplates.h"
+#include "engine/writer/WriterTemplates.h"
 #include "core/Support.h"
 #include "functions/adiosFunctions.h" //GetTotalSize
 
@@ -138,8 +137,6 @@ void Writer::Write( const std::string variableName, const int* values )
     const unsigned int index = PreSetVariable( *m_Group, variableName, Support::DatatypesAliases.at("int"), " from call to Write int*" );
     m_Group->m_Int[index].Values = values;
     //here call the Template function WriteHelper( m_Group, variable, )
-
-
 }
 
 void Writer::Write( const std::string variableName, const unsigned int* values )
@@ -187,26 +184,6 @@ void Writer::Write( const std::string variableName, const long double* values )
 
 void Writer::InitCapsules( )
 {
-    if( m_DebugMode == true )
-    {
-        if( m_Method.m_CapsuleParameters.size() > 1 )
-        {
-            throw std::invalid_argument( "ERROR: SingleBP engine only allows one heap buffer, in " + m_Name +
-                                         m_EndMessage );
-        }
-        else if( m_Method.m_CapsuleParameters.size() == 1 )
-        {
-            auto itType = m_Method.m_CapsuleParameters[0].find( "buffer" );
-
-            if( m_DebugMode == true )
-                CheckParameter( itType, m_Method.m_CapsuleParameters[0], " capsule buffer",
-                                ", in " + m_Name + m_EndMessage );
-
-            if( !( itType->second == "Heap" || itType->second == "HEAP" ) )
-                throw std::invalid_argument( "ERROR: SingleBP doesn't support Capsule of buffer type " +
-                                              itType->second + " in " + m_Name + m_EndMessage );
-        }
-    }
     //Create single capsule of type heap
     m_Capsules.push_back( std::make_shared<Heap>( m_AccessMode, m_RankMPI, m_Cores ) );
 }

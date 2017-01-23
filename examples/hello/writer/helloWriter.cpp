@@ -44,7 +44,6 @@ int main( int argc, char* argv [] )
         //Define method
         const std::string methodName( "IntsWriter" );
         adios.DeclareMethod( methodName, "Writer" );
-        adios.AddCapsule( methodName, "Heap" );
         adios.AddTransport( methodName, "POSIX" );
 
         //Create engine handler and Write

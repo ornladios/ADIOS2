@@ -197,7 +197,7 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_
     uint64_t bytes_read;
     bytes_read = read (fh, buf, bytes_to_read);
     if (bytes_read != bytes_to_read) {
-        snprintf(mpierrmsg, MPI_MAX_ERROR_STRING, "could not read %llu bytes. read only: %llu \n", bytes_to_read, bytes_read);
+        snprintf(mpierrmsg, MPI_MAX_ERROR_STRING, "could not read %lu bytes. read only: %lu \n", bytes_to_read, bytes_read);
         return -2;
     }
     *status = bytes_read;

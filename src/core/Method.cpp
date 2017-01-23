@@ -19,31 +19,19 @@ Method::Method( const std::string type, const bool debugMode ):
     m_DebugMode{ debugMode }
 { }
 
+
+Method::Method( const std::string type, Group& group, const bool debugMode ):
+    m_Type{ type },
+    m_DebugMode{ debugMode },
+    m_Group{ &group }
+{ }
+
+
 Method::~Method( )
 { }
 
 
 //PRIVATE Functions
-void Method::AddCapsuleParameters( const std::string type, const std::vector<std::string>& parameters )
-{
-    if( m_DebugMode == true )
-    {
-        if( type.empty() || type.find("=") != type.npos )
-            throw std::invalid_argument( "ERROR: first argument in AddCapsule must be a single word for capsule (buffer) type\n" );
-    }
-
-    std::map<std::string, std::string> mapParameters = BuildParametersMap(parameters, m_DebugMode);
-    if( m_DebugMode == true )
-    {
-        if( mapParameters.count("buffer") )
-            throw std::invalid_argument( "ERROR: buffer can't be redefined with buffer=, "
-                                         "must be the first argument, in AddCapsuleParameters( bufferType, ...);\n" );
-    }
-    mapParameters["buffer"] = type;
-    m_CapsuleParameters.push_back( std::move( mapParameters ) );
-}
-
-
 void Method::AddTransportParameters( const std::string type, const std::vector<std::string>& parameters )
 {
     if( m_DebugMode == true )
@@ -56,13 +44,20 @@ void Method::AddTransportParameters( const std::string type, const std::vector<s
     if( m_DebugMode == true )
     {
         if( mapParameters.count("transport") == 1 )
-            std::invalid_argument( "ERROR: transport can't be redefined with transport=, "
-                                   "must be the first argument, in AddTransportParameters( transport, ...);\n" );
+            std::invalid_argument( "ERROR: transport can't be redefined with \"transport=type\", "
+                                   "type must be the first argument\n" );
     }
 
     mapParameters["transport"] = type;
     m_TransportParameters.push_back( mapParameters );
 }
+
+void Method::SetDefaultGroup( Group& group )
+{
+    m_Group = &group;
+}
+
+
 
 
 } //end namespace
