@@ -118,7 +118,7 @@ public:
     virtual void Write( const std::string variableName, const double* values ) = 0;
     virtual void Write( const std::string variableName, const long double* values ) = 0;
 
-    virtual void Close( int transportIndex = -1  ); ///< Closes a particular transport
+    virtual void Close( const int transportIndex = -1  ); ///< Closes a particular transport
 
 
 protected:

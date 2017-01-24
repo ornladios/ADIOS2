@@ -9,6 +9,7 @@
 #define WRITER_H_
 
 #include "core/Engine.h"
+#include "format/BP1Writer.h"
 
 
 namespace adios
@@ -61,9 +62,11 @@ public:
     void Write( const std::string variableName, const double* values );
     void Write( const std::string variableName, const long double* values );
 
-    void Close( int transportIndex = -1 );
+    void Close( const int transportIndex = -1 );
 
 private:
+
+    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Capsules and m_Transports
 
     void Init( );
     void InitCapsules( );

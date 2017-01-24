@@ -7,10 +7,10 @@ SYS_BIN:=/usr/bin
 SYS_LIB:=/usr/lib/x86_64-linux-gnu
 LOCAL_LIB:=/usr/local/lib
 
-#COMPILERS AND LIBRARY LOCATIONS
-CC:=$(SYS_BIN)/g++
-AR:=$(SYS_BIN)/ar
-MPICC:=$(SYS_BIN)/mpic++
+#COMPILERS IN PATH AND LIBRARY LOCATIONS
+CC:=g++
+AR:=ar
+MPICC:=mpic++
 LIBS:= -L$(SYS_LIB) -L$(LOCAL_LIB)
 
 CFLAGS:=-c -Wall -Wpedantic -Woverloaded-virtual -std=c++11 -O0 -g

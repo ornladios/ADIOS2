@@ -30,7 +30,7 @@ namespace adios
  * @param max
  */
 template<class T>
-void GetMinMax( const T* values, const size_t size, T& min, T& max, const unsigned int cores = 1 )
+void GetMinMax( const T* values, const size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
 {
     min = values[0];
     max = values[0];
@@ -78,7 +78,7 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
         else
             memcpyThreads.push_back( std::thread( std::memcpy, &destination[initialDestination], &source[initialSource], stride ) );
     }
-    //Now join the threads
+    //Now join the threads (is this really needed?)
     for( auto& thread : memcpyThreads )
         thread.join( );
 }

@@ -9,26 +9,43 @@
 #define WRITERTEMPLATES_H_
 
 #include <string>
+#include <vector>
+#include <iostream>
+#include <memory>
 
 
 #include "core/Group.h"
 #include "core/Variable.h"
 #include "capsule/Heap.h"
-#include "functions/adiosFunctions.h"
-#include "functions/capsuleTemplates.h"
-
+#include "format/BP1Writer.h"
 
 
 namespace adios
 {
 
+/**
+ * Unique template function that replaces macros to write any variable type to a single heap capsule
+ * @param group variable owner
+ * @param variableName
+ * @param variable
+ * @param buffers single heap capsule containing data and metadata buffers
+ * @param transports all transports from Writer Engine, info is flushed in case of buffer overflow
+ * @param bp1Writer from Writer Engine
+ */
 template <class T>
-void WriterWriteVariable( Group& group, const std::string variableName, Variable<T>& variable, Heap& capsule )
+void WriterWriteVariable( const Group& group, const std::string variableName, const Variable<T>& variable,
+                          Capsule& buffers, std::vector< std::shared_ptr<Transport> >& transports,
+                          format::BP1Writer& bp1Writer )
 {
-    const auto localDimensions = group.GetDimensions( variable.DimensionsCSV );
-    const auto size = GetTotalSize( localDimensions );
-    T min, max;
-    GetMinMax( variable.Values, size, min, max );
+
+    std::cout << "Hello from writing variable " << variableName << "of type " << typeid(T).name() << "\n";
+    //here deal with buffers allocation
+
+
+//    const auto localDimensions = group.GetDimensions( variable.DimensionsCSV );
+//    const auto size = GetTotalSize( localDimensions );
+//    T min, max;
+//    GetMinMax( variable.Values, size, min, max );
 
 //
 //    const std::size_t bytesToWrite = localSize * sizeof( double ); //size of values + min + max in bytes
