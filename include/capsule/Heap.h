@@ -44,34 +44,6 @@ public:
     void ResizeData( const std::size_t size );
     void ResizeMetadata( const std::size_t size );
 
-    void WriteData( const std::size_t first, const char* data, const std::size_t size );
-    void WriteData( const std::size_t first, const unsigned char* data, const std::size_t size );
-    void WriteData( const std::size_t first, const short* data, const std::size_t size );
-    void WriteData( const std::size_t first, const unsigned short* data, const std::size_t size );
-    void WriteData( const std::size_t first, const int* data, const std::size_t size );
-    void WriteData( const std::size_t first, const unsigned int* data, const std::size_t size );
-    void WriteData( const std::size_t first, const long int* data, const std::size_t size );
-    void WriteData( const std::size_t first, const unsigned long int* data, const std::size_t size );
-    void WriteData( const std::size_t first, const long long int* data, const std::size_t size );
-    void WriteData( const std::size_t first, const unsigned long long int* data, const std::size_t size );
-    void WriteData( const std::size_t first, const float* data, const std::size_t size );
-    void WriteData( const std::size_t first, const double* data, const std::size_t size );
-    void WriteData( const std::size_t first, const long double* data, const std::size_t size );
-
-    void WriteMetadata( const std::size_t first, const char* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const unsigned char* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const short* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const unsigned short* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const int* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const unsigned int* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const long int* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const unsigned long int* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const long long int* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const unsigned long long int* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const float* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const double* metadata, const std::size_t size );
-    void WriteMetadata( const std::size_t first, const long double* metadata, const std::size_t size );
-
 
 private:
 

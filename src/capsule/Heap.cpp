@@ -28,13 +28,13 @@ Heap::~Heap( )
 
 char* Heap::GetData( )
 {
-    return &m_Data.front();
+    return m_Data.data( );
 }
 
 
 char* Heap::GetMetadata( )
 {
-    return &m_Metadata.front();
+    return m_Metadata.data( );
 }
 
 
@@ -46,7 +46,7 @@ std::size_t Heap::GetDataSize( ) const
 
 std::size_t Heap::GetMetadataSize( ) const
 {
-    return m_Metadata.size();
+    return m_Metadata.size( );
 }
 
 
@@ -60,142 +60,6 @@ void Heap::ResizeMetadata( const std::size_t size )
 {
     m_Metadata.resize( size );
 }
-
-//WriteData functions
-void Heap::WriteData( const std::size_t first, const char* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( char ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const unsigned char* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( unsigned char ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const short* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( short ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const unsigned short* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( unsigned short ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const int* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( int ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const unsigned int* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( unsigned int ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const long int* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( long int ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const unsigned long int* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( unsigned long int ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const long long int* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( long long int ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const unsigned long long int* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( unsigned long long int ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const float* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( float ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const double* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( double ), m_Cores );
-}
-
-void Heap::WriteData( const std::size_t first, const long double* data, const std::size_t size )
-{
-    MemcpyThreads( &m_Data[first], data, size * sizeof( long double ), m_Cores );
-}
-
-//WriteMetadata functions
-void Heap::WriteMetadata( const std::size_t first, const char* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( char ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const unsigned char* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( unsigned char ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const short* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( short ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const unsigned short* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( unsigned short ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const int* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( int ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const unsigned int* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( unsigned int ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const long int* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( long int ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const unsigned long int* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( unsigned long int ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const long long int* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( long long int ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const unsigned long long int* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( unsigned long long int ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const float* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( float ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const double* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( double ), m_Cores );
-}
-
-void Heap::WriteMetadata( const std::size_t first, const long double* metadata, const std::size_t size )
-{
-    MemcpyThreads( &m_Metadata[first], metadata, size * sizeof( long double ), m_Cores );
-}
-
-
-
-
 
 
 //void Heap::Write( const Variable<double>& variable,
@@ -263,12 +127,6 @@ void Heap::WriteMetadata( const std::size_t first, const long double* metadata, 
 //
 //
 //}
-
-
-
-
-
-
 
 
 
