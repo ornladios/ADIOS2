@@ -153,78 +153,91 @@ void Writer::Write( Group& group, const std::string variableName, const long dou
 
 void Writer::Write( const std::string variableName, const char* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const unsigned char* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const short* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const unsigned short* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const int* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const unsigned int* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const long int* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const unsigned long int* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const long long int* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const unsigned long long int* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const float* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const double* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 
 
 void Writer::Write( const std::string variableName, const long double* values )
 {
+    CheckDefaultGroup( );
     Write( *m_Group, variableName, values );
 }
 

@@ -15,15 +15,19 @@
 #include "ADIOS.h"
 #include "ADIOS_C.h"
 
+
+adios::ADIOS* adios;
+
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 
-ADIOS* adios_init( const char* xmlConfigFile, const MPI_Comm mpiComm )
+void adios_init( const char* xmlConfigFile, const MPI_Comm mpiComm )
 {
-    adios::ADIOS* adios;
+
     int rank;
     MPI_Comm_rank( mpiComm, &rank );
 
@@ -47,7 +51,7 @@ ADIOS* adios_init( const char* xmlConfigFile, const MPI_Comm mpiComm )
             std::cout << "Exception, STOPPING PROGRAM\n" << e.what() << "\n";
     }
 
-    return ( ADIOS* ) ( adios );
+//    return ( ADIOS* ) ( adios );
 }
 
 

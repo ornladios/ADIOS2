@@ -19,6 +19,11 @@
 
 
 typedef void ADIOS;
+typedef void Group;
+typedef void Method;
+typedef void Engine;
+
+
 
 #ifdef __cplusplus
 extern "C"
@@ -26,16 +31,15 @@ extern "C"
 #endif
 
 
-ADIOS* adios_init( const char* xmlConfigFile, const MPI_Comm mpicomm );
-ADIOS* adios_init_debug( const char* xmlConfigFile, const MPI_Comm mpicomm );
+void adios_init( const char* xmlConfigFile, const MPI_Comm mpicomm );
+void adios_init_debug( const char* xmlConfigFile, const MPI_Comm mpicomm );
 
-void adios_open( const ADIOS* adiosC, const char* groupName, const char* fileName, const char* accessMode );
-void adios_write( const ADIOS* adiosC, const char* groupName, const char* variableName, const void* values  );
+int adios_open( const char* fileName, const char* accessMode, MPI_Comm );
+void adios_write(const char* groupName, const char* variableName, const void* values  );
 
-void adios_close( const ADIOS* adiosC, const char* groupName );
+void adios_close( const int handler );
 
-void adios_free( const ADIOS* adiosC ); // deallocate ADIOS pointer
-
+void adios_finalize( const ADIOS* adiosC ); // deallocate ADIOS pointer
 
 void adios_monitor_groups( const ADIOS* adiosC );
 

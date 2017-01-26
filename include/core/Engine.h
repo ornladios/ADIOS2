@@ -73,6 +73,18 @@ public:
 
     void SetDefaultGroup( Group& group );
 
+    template< class T >
+    void Write( const std::string variableName, const T* values )
+    {
+        Write( *m_Group, variableName, values );
+    }
+
+    template< class T >
+    void Write( Group& group, const std::string variableName, const T* values )
+    {
+        Write( group, variableName, values );
+    }
+
     /**
      * @brief Write functions can be overridden by derived classes. Base class behavior is to:
      * 1) Write to Variable values (m_Values) in a group
@@ -160,6 +172,8 @@ protected:
                          const std::string parameterName,
                          const std::string hint ) const;
 
+
+    void CheckDefaultGroup( ) const; ///< checks if default group m_Group is nullptr, throws exception if trying to use
 
     std::string GetName( const std::vector<std::string>& arguments ) const; //might move this to adiosFunctions
 

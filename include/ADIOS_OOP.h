@@ -9,9 +9,12 @@
 #define ADIOS_OOP_H_
 
 
+#include "ADIOS.h"
 #include "core/Group.h"
 #include "core/Method.h"
-#include "engine/writer/Writer.h"
+#include "core/Engine.h"
+
+#include "core/Transform.h"
 #include "transform/BZip2.h"
 
 

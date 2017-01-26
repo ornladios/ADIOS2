@@ -21,5 +21,12 @@ Transform::~Transform( )
 { }
 
 
+void Transform::Compress( const std::vector<char>& bufferIn, std::vector<char>& bufferOut )
+{ }
+
+
+void Transform::Decompress( const std::vector<char>& bufferIn, std::vector<char>& bufferOut )
+{ }
+
 
 } //end namespace

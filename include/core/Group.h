@@ -28,10 +28,13 @@
 #include "core/Attribute.h"
 #include "core/Transport.h"
 #include "core/Transform.h"
+#include "functions/adiosTemplates.h"
 
 
 namespace adios
 {
+
+using Var = std::string;
 /**
  * Class that defines each ADIOS Group composed of Variables, Attributes and GlobalBounds (if global variables exist)
  */
@@ -42,6 +45,21 @@ class Group
 public:
 
     const std::string m_Name;
+    std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
+
+    std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
+    std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
+    std::vector< Variable<short> > m_Short; ///< Key: variable name, Value: variable of type short
+    std::vector< Variable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
+    std::vector< Variable<int> > m_Int; ///< Key: variable name, Value: variable of type int
+    std::vector< Variable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
+    std::vector< Variable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
+    std::vector< Variable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
+    std::vector< Variable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
+    std::vector< Variable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
+    std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
+    std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
+    std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
 
     /**
      * Empty constructor
@@ -52,7 +70,7 @@ public:
      * Empty constructor
      * @param debugMode true: additional checks throwing exceptions, false: skip checks
      */
-    Group( const bool debugMode = false );
+    Group( const std::string name, const bool debugMode = false );
 
     /**
      * @brief Constructor for XML config file
@@ -61,7 +79,7 @@ public:
      * @param transforms passed from ADIOS.m_Transforms, single look up table for all transforms
      * @param debugMode
      */
-    Group( const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms, const bool debugMode );
+    Group( const std::string name, const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms, const bool debugMode );
 
 
     ~Group( ); ///< Using STL containers, no deallocation
@@ -76,11 +94,22 @@ public:
      * @param transforms collection of Transform objects applied to this variable, sequence matters, default is empty
      * @param parameters corresponding parameter used by a Transform object in transforms (index should match), default is empty
      */
-    void DefineVariable( const std::string variableName, const std::string type,
-                         const std::string dimensionsCSV = "",
-                         const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
-                         const std::vector<Transform*> transforms = std::vector<Transform*>(),
-                         const std::vector<int> parameters = std::vector<int>() );
+    Var DefineVariable( const std::string variableName, const std::string type,
+                        const std::string dimensionsCSV = "",
+                        const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
+                        const std::vector<Transform*> transforms = std::vector<Transform*>(),
+                        const std::vector<int> parameters = std::vector<int>() );
+
+
+    template< class T >
+    Var DefineVariable( const std::string variableName,
+                        const std::string dimensionsCSV = "",
+                        const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
+                        const std::vector<Transform*> transforms = std::vector<Transform*>(),
+                        const std::vector<int> parameters = std::vector<int>() )
+    {
+        return DefineVariable( variableName, GetType<T>(), dimensionsCSV, globalDimensionsCSV, globalOffsetsCSV, transforms, parameters );
+    }
 
     /**
      * Sets a variable transform contained in ADIOS Transforms (single container for all groups and variables)
@@ -111,25 +140,6 @@ public:
      * @return actual vector values = { Nx, Ny, Nz }
      */
     std::vector<unsigned long long int> GetDimensions( const std::string dimensionsCSV ) const;
-
-    unsigned long long int m_SerialSize = 0; ///< size used for potential serialization of metadata into a std::vector<char>. Counts sizes from m_Variables, m_Attributes, m_GlobalBounds
-
-    std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
-
-    std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
-    std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
-    std::vector< Variable<short> > m_Short; ///< Key: variable name, Value: variable of type short
-    std::vector< Variable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
-    std::vector< Variable<int> > m_Int; ///< Key: variable name, Value: variable of type int
-    std::vector< Variable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
-    std::vector< Variable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
-    std::vector< Variable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
-    std::vector< Variable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
-    std::vector< Variable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
-    std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
-    std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
-    std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
-
 
 private:
 

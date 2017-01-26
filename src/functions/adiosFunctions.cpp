@@ -269,7 +269,7 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm, const b
                 throw std::invalid_argument( "ERROR: group " + groupName + " defined twice.\n" );
         }
 
-        groups.emplace( groupName, Group( xmlGroup, transforms, debugMode ) );
+        groups.emplace( groupName, Group( groupName, xmlGroup, transforms, debugMode ) );
 
         currentContent.erase( currentContent.find( xmlGroup ), xmlGroup.size() );
         currentPosition = 0;

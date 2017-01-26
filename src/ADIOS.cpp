@@ -63,7 +63,7 @@ ADIOS::~ADIOS( )
 { }
 
 
-void ADIOS::DeclareGroup( const std::string groupName )
+Group& ADIOS::DeclareGroup( const std::string groupName )
 {
     if( m_DebugMode == true )
     {
@@ -71,54 +71,12 @@ void ADIOS::DeclareGroup( const std::string groupName )
             throw std::invalid_argument( "ERROR: group " + groupName + " already exist, from call to DeclareGroup\n" );
     }
 
-    m_Groups.emplace( groupName, Group( m_DebugMode ) );
+    m_Groups.emplace( groupName, Group( groupName, m_DebugMode ) );
+    return m_Groups.at( groupName );
 }
 
 
-void ADIOS::DefineVariable( const std::string groupName, const std::string variableName, const std::string type,
-                            const std::string dimensionsCSV,
-                            const std::string globalDimensionsCSV, const std::string globalOffsetsCSV )
-{
-    auto itGroup = m_Groups.find( groupName );
-    if( m_DebugMode == true )
-        CheckGroup( itGroup, groupName, " from call to CreateVariable \n" );
-
-    itGroup->second.DefineVariable( variableName, type, dimensionsCSV, globalDimensionsCSV, globalOffsetsCSV );
-}
-
-
-void ADIOS::AddTransform( const std::string groupName, const std::string variableName, const std::string transform )
-{
-    auto itGroup = m_Groups.find( groupName );
-    if( m_DebugMode == true ) //check group and transform
-    {
-        CheckGroup( itGroup, groupName, " from call to SetTransform \n" );
-
-        if( Support::Transforms.count( transform ) == 0 )
-            throw std::invalid_argument( "ERROR: transform method " + transform +
-                                         " not supported, in call to SetTransform\n" );
-    }
-
-    std::vector<std::string> transformName = { transform };
-    std::vector<short> transformIndices, parameters;
-    SetTransformsHelper( transformName, m_Transforms, m_DebugMode, transformIndices, parameters );
-    itGroup->second.AddTransform( variableName, *m_Transforms[ transformIndices[0] ], parameters[0] );
-}
-
-
-void ADIOS::DefineAttribute( const std::string groupName, const std::string attributeName,
-                             const std::string type, const std::string value )
-
-{
-    auto itGroup = m_Groups.find( groupName );
-    if( m_DebugMode == true )
-        CheckGroup( itGroup, groupName, " from call to CreateAttribute \n" );
-
-    itGroup->second.DefineAttribute( attributeName, type, value );
-}
-
-
-void ADIOS::DeclareMethod( const std::string methodName, const std::string type )
+Method& ADIOS::DeclareMethod( const std::string methodName, const std::string type )
 {
     if( m_DebugMode == true )
     {
@@ -126,44 +84,25 @@ void ADIOS::DeclareMethod( const std::string methodName, const std::string type 
             throw std::invalid_argument( "ERROR: method " + methodName + " already declared, from DeclareMethod\n" );
     }
     m_Methods.emplace( methodName, Method( type, m_DebugMode ) );
+    return m_Methods.at( methodName );
 }
 
 
-void ADIOS::SetDefaultGroup( const std::string methodName, const std::string groupName )
+std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string accessMode, MPI_Comm mpiComm, const Method& method, const unsigned int cores )
 {
-    auto itMethod = m_Methods.find( methodName );
-    auto itGroup = m_Groups.find( groupName );
-
     if( m_DebugMode == true )
     {
-        if( m_Methods.count( methodName ) == 1 )
-            throw std::invalid_argument( "ERROR: method " + methodName + " already declared, from DeclareMethod\n" );
-
-        CheckGroup( itGroup, groupName, " in call to SetDefaultGroup.\n" );
-    }
-    itMethod->second.SetDefaultGroup( itGroup->second );
-}
-
-
-unsigned int ADIOS::Open( const std::string name, const std::string accessMode,
-                          MPI_Comm mpiComm, const std::string methodName, const unsigned int cores )
-{
-    auto itMethod = m_Methods.find( methodName );
-
-    if( m_DebugMode == true )
-    {
-        CheckMethod( itMethod, methodName, " from call to Open\n" );
-
         if( m_EngineNames.count( name ) == 1 ) //Check if Engine already exists
             throw std::invalid_argument( "ERROR: engine name " + name + " already created by Open, in call from Open.\n" );
     }
 
-    ++m_EngineCounter;
-    const std::string type( itMethod->second.m_Type );
+    m_EngineNames.insert( name );
+
+    const std::string type( method.m_Type );
 
     if( type == "Writer" || type == "writer" )
     {
-        m_Engines.emplace( m_EngineCounter, std::make_shared<Writer>( name, accessMode, mpiComm, itMethod->second, cores ) );
+        return std::make_shared<Writer>( name, accessMode, mpiComm, method, cores );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {
@@ -171,47 +110,43 @@ unsigned int ADIOS::Open( const std::string name, const std::string accessMode,
     }
     else if( type == "DataMan" )
     {
-    	m_Engines.emplace( m_EngineCounter, std::make_shared<engine::DataMan>( name, accessMode, mpiComm, itMethod->second, cores ) );
+    	return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, cores );
     }
     else
     {
         if( m_DebugMode == true )
-            throw std::invalid_argument( "ERROR: type " + type + " not supported for method " + methodName + ", in call to Open\n" );
+            throw std::invalid_argument( "ERROR: method type " + type + " not supported for " + name + ", in call to Open\n" );
     }
 
-    return m_EngineCounter;
+    return nullptr; // if debug mode is off
 }
 
 
-unsigned int ADIOS::Open( const std::string streamName, const std::string accessMode, const std::string methodName,
-                          const unsigned int cores )
+std::shared_ptr<Engine> ADIOS::Open( const std::string streamName, const std::string accessMode, const Method& method,
+                                     const unsigned int cores )
 {
-    return Open( streamName, accessMode, m_MPIComm, methodName, cores );
+    return Open( streamName, accessMode, m_MPIComm, method, cores );
 }
 
 
-void ADIOS::SetDefaultGroup( const unsigned int handler, const std::string groupName )
+std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+                                     const std::string methodName, const unsigned int cores )
 {
-    auto itEngine = m_Engines.find( handler );
-    auto itGroup = m_Groups.find( groupName );
+    auto itMethod = m_Methods.find( methodName );
 
     if( m_DebugMode == true )
     {
-        CheckEngine( itEngine, handler, " in call to SetDefaultGroup.\n" );
-        CheckGroup( itGroup, groupName, " in call to SetDefaultGroup.\n" );
+        CheckMethod( itMethod, methodName, " in call to Open\n" );
     }
 
-    itEngine->second->SetDefaultGroup( itGroup->second );
+    return Open( name, accessMode, mpiComm, itMethod->second, cores );
 }
 
 
-void ADIOS::Close( const unsigned int handler, const int transportIndex ) //close stream
+std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string accessMode,
+                                     const std::string methodName, const unsigned int cores )
 {
-    auto itEngine = m_Engines.find( handler );
-    if( m_DebugMode == true )
-        CheckEngine( itEngine, handler, " in call to Close\n" );
-
-    itEngine->second->Close( transportIndex );
+    return Open( name, accessMode, m_MPIComm, methodName, cores );
 }
 
 
@@ -239,14 +174,6 @@ void ADIOS::CheckMethod( std::map< std::string, Method >::const_iterator itMetho
 {
     if( itMethod == m_Methods.end() )
         throw std::invalid_argument( "ERROR: method " + methodName + " not found " + hint + "\n" );
-}
-
-
-void ADIOS::CheckEngine( std::unordered_map< unsigned int, std::shared_ptr<Engine> >::const_iterator itEngine,
-                         const unsigned int handle, const std::string hint ) const
-{
-    if( itEngine == m_Engines.end() )
-        throw std::invalid_argument( "ERROR: stream (or file) from handle " + std::to_string( handle ) + " not created with Open , " + hint + "\n" );
 }
 
 

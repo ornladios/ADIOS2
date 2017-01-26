@@ -38,7 +38,7 @@ void WriterWriteVariable( const Group& group, const std::string variableName, co
                           format::BP1Writer& bp1Writer )
 {
 
-    std::cout << "Hello from writing variable " << variableName << "of type " << typeid(T).name() << "\n";
+    std::cout << "Hello from bp Writer, writing variable " << variableName << " of typeid(T).name() = " << typeid(T).name() << "\n";
     //here deal with buffers allocation
 
 

@@ -11,9 +11,11 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 #include <vector>
+#include <memory>
 /// \endcond
 
 #include "core/Transform.h"
+
 
 namespace adios
 {
@@ -29,6 +31,8 @@ struct Variable
 
     std::vector< Transform* > Transforms; ///< associated transforms, sequence determines application order, e.g. first Transforms[0] then Transforms[1]. Pointer used as reference (no memory management).
     std::vector< int > Parameters; ///< additional optional parameter understood by the corresponding Transform in Transforms vector
+    //Group& Group; ///< reference to group
+    //bool IsDimension = false; ///< true: is used as a dimension in another variable (typically scalars), false: none
 };
 
 

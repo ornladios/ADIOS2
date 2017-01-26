@@ -1,34 +1,30 @@
-# Makefile for testing purposes, will build libadios.a 
+# Makefile for testing purposes, will build helloWriter_OOP_mpi (make or make mpi) or helloWriter_OOP_nompi (make nompi) 
 # Created on: Oct 4, 2016
 #     Author: wfg
 
-
 BASE_NAME=helloWriter_OOP
-     
-TOOL_DIR=/usr/bin
 
-CC=$(TOOL_DIR)/g++ # Compiling with mpicc for now
-MPICC=$(TOOL_DIR)/mpic++
-AR=$(TOOL_DIR)/ar
+#COMPILERS
+CC=g++ 
+MPICC=mpic++
 
 #ADIOS LOCATION
 ADIOS_DIR=../../..
+ADIOS_INCLUDE=-I$(ADIOS_DIR)/include
 ADIOS_LIB=$(ADIOS_DIR)/lib/libadios.a
 ADIOS_NOMPI_LIB=$(ADIOS_DIR)/lib/libadios_nompi.a
 
-ADIOS_INCLUDE=-I$(ADIOS_DIR)/include
-
-
 #FLAGS
-CFLAGS=-Wall -O0 -g -Wpedantic -std=c++11
+CFLAGS=-Wall -O0 -g -Wpedantic -Woverloaded-virtual -std=c++11
+LDFLAGS=-static-libgcc -static-libstdc++
 
 all: mpi
 
 mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
-	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME)_mpi $(ADIOS_LIB) -lpthread
+	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME)_mpi $(ADIOS_LIB) $(LDFLAGS) -lpthread
 	
 nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
-	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME).cpp -o $(BASE_NAME)_nompi $(ADIOS_NOMPI_LIB) -lpthread
+	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME).cpp -o $(BASE_NAME)_nompi $(ADIOS_NOMPI_LIB) $(LDFLAGS) -lpthread
 
 clean:
 	rm *_mpi; rm *_nompi

@@ -23,6 +23,7 @@ Engine::Engine( const std::string engineType, const std::string name, const std:
     m_Name{ name },
     m_AccessMode{ accessMode },
     m_Method{ method },
+    m_Group{ method.m_Group },
     m_DebugMode{ debugMode },
     m_Cores{ cores },
     m_EndMessage{ endMessage }
@@ -96,6 +97,16 @@ void Engine::CheckParameter( const std::map<std::string, std::string>::const_ite
         throw std::invalid_argument( "ERROR: parameter name " + parameterName + " not found " + hint );
 }
 
+
+
+void Engine::CheckDefaultGroup( ) const
+{
+    if( m_DebugMode == true )
+    {
+        if( m_Group == nullptr )
+            throw std::invalid_argument( "ERROR: default group in engine " + m_Name + " is nullptr, check Method\n" );
+    }
+}
 
 
 std::string Engine::GetName( const std::vector<std::string>& arguments ) const

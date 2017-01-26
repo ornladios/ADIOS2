@@ -368,7 +368,6 @@ public:
        }
 
        ++characteristicsCounter;
-
        //Stat -> Min, Max
        characteristicID = characteristic_stat;
        if( verbose == 0 ) //default verbose
@@ -377,23 +376,38 @@ public:
            //here we can make decisions for threads based on valuesSize
            T min, max;
 
-           if( valuesSize >= 10000000 ) //ten million?
+           if( valuesSize >= 10000000 ) //ten million? this needs actual results
                GetMinMax( variable.Values, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
            else
                GetMinMax( variable.Values, valuesSize, min, max );
 
            const std::int8_t statisticMinID = statistic_min;
            const std::int8_t statisticMaxID = statistic_max;
-           //write statistics here
 
+           //write min and max to metadata
+           WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset  ); //min
+           WriteToBuffers( metadataBuffers, &statisticMinID, 1, metadataOffset  );
+           WriteToBuffers( metadataBuffers, &min, sizeof(T), metadataOffset );
+
+           WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset  ); //max
+           WriteToBuffers( metadataBuffers, &statisticMaxID, 1, metadataOffset  );
+           WriteToBuffers( metadataBuffers, &max, sizeof(T), metadataOffset );
+
+           //write min and max to data
+           WriteToBuffers( dataBuffers, &characteristicID, 1, dataOffset  ); //min
+           const std::int16_t lengthCharacteristic = 1 + sizeof( T );
+           WriteToBuffers( dataBuffers, &lengthCharacteristic, 2, dataOffset  );
+           WriteToBuffers( dataBuffers, &statisticMinID, 1, dataOffset  );
+           WriteToBuffers( dataBuffers, &min, sizeof(T), dataOffset );
+
+           WriteToBuffers( dataBuffers, &characteristicID, 1, dataOffset  ); //max
+           WriteToBuffers( dataBuffers, &lengthCharacteristic, 2, dataOffset  );
+           WriteToBuffers( dataBuffers, &statisticMaxID, 1, dataOffset  );
+           WriteToBuffers( dataBuffers, &max, sizeof(T), dataOffset );
        }
-       //Offsets should be last
-
-
+       //Offsets should be last and only written to metadata
 
     } //end of function
-
-
 
 
 private:

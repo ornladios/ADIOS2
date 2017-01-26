@@ -27,29 +27,42 @@ int main( int argc, char* argv [] )
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     const bool adiosDebug = true;
+    adios::ADIOS adios( MPI_COMM_WORLD, adiosDebug );
 
     //Application variable
-    std::vector<double> myInts = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    int myIntsSize = static_cast<int>( myInts.size() );
+    std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    std::vector<float> myFloats = { 0, -1, -2, -3, -4, -5, -6, -7, -8, -9 };
+    const unsigned int Nx = 10; //static_cast<unsigned int>( myDoubles.size() );
 
     try
     {
-        //Define group and variables
-        adios::Group group( adiosDebug );
-        group.DefineVariable( "myIntsSize", "int" ); //define size as scalar
-        group.DefineVariable( "myInts",     "double", "myIntsSize" ); //define variable with associate size
+        //Define group and variables with transforms
+        adios::Group& ioGroup = adios.DeclareGroup( "ioGroup" );
+        adios::Var ioNx = ioGroup.DefineVariable<unsigned int>( "Nx" );
+        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", "Nx" );
+        adios::Var ioMyFloats = ioGroup.DefineVariable<float>( "myFloats", "Nx" );
 
-        //Define method
-        adios::Method method( "Writer");
-        method.AddCapsule( "Heap" );
-        method.AddTransport( "POSIX", "have_metadata_file=0" );
+        //add transform to variable in group...not executed (just testing API)
+        adios::Transform bzip2 = adios::transform::BZIP2( );
+        ioGroup.AddTransform( ioMyDoubles, bzip2, 1 );
+        ioGroup.AddTransform( ioMyFloats, bzip2, 1 );
 
-        //Create engine and Write
-        adios::Writer writer( "myInts.bp", "w", MPI_COMM_WORLD, method, adiosDebug );
-        writer.SetDefaultGroup( group );
-        writer.Write( "myIntsSize", &myIntsSize  );
-        writer.Write( "myInts", &myInts.front() );
-        writer.Close( );
+        //Define method for engine creation, it is basically straight-forward parameters
+        adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
+        bpWriterSettings.AddTransport( "POSIX", "have_metadata_file=yes" );
+        bpWriterSettings.SetDefaultGroup( ioGroup );
+
+        //Create engine smart pointer due to polymorphism,
+        //Open returns a smart pointer to Engine containing the Derived class Writer
+        auto bpWriter = adios.Open( "myNumbers.bp", "w", bpWriterSettings );
+
+        if( bpWriter == nullptr )
+            throw std::ios_base::failure( "ERROR: failed to open ADIOS bpWriter\n" );
+
+        bpWriter->Write<unsigned int>( ioNx, &Nx );
+        bpWriter->Write<double>( ioMyDoubles, myDoubles.data() );
+        bpWriter->Write<float>( ioMyFloats, myFloats.data() );
+        bpWriter->Close( );
     }
     catch( std::invalid_argument& e )
     {
