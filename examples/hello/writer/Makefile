@@ -15,8 +15,8 @@ ADIOS_LIB=$(ADIOS_DIR)/lib/libadios.a
 ADIOS_NOMPI_LIB=$(ADIOS_DIR)/lib/libadios_nompi.a
 
 #FLAGS
-CFLAGS=-Wall -O0 -g -Wpedantic -Woverloaded-virtual -std=c++11
-LDFLAGS=-static-libgcc -static-libstdc++
+CFLAGS=-Wall -Wpedantic -Woverloaded-virtual -std=c++11 -O0 -g
+LDFLAGS=
 
 all: mpi
 

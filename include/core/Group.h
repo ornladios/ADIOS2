@@ -34,7 +34,7 @@
 namespace adios
 {
 
-using Var = std::string;
+using Var = std::string; ///< used for returning variables from DefineVariable
 /**
  * Class that defines each ADIOS Group composed of Variables, Attributes and GlobalBounds (if global variables exist)
  */
@@ -164,7 +164,6 @@ private:
      */
     void ParseXMLGroup( const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms );
 
-
     /**
      * Used by SetVariable and SetAttribute to check if global bounds exist in m_GlobalBounds
      * @param globalDimensionsCSV comma separated variables defining global dimensions (e.g. "Nx,NY,Nz")
@@ -172,7 +171,6 @@ private:
      * @return -1 if not global --> both inputs are empty, otherwise index in m_GlobalBounds if exist or create a new element in m_GlobalBounds;
      */
     int SetGlobalBounds( const std::string globalDimensionsCSV, const std::string globalOffsetsCSV ) noexcept;
-
 
     /**
      * Retrieves the value of a variable representing another's variable dimensions. Set with Write
@@ -182,6 +180,14 @@ private:
      * @return variable value
      */
     unsigned long long int GetIntVariableValue( const std::string variableName ) const;
+
+    /**
+     * Looks for variables assigned for dimensions in csv entry (local dimensions, global dimensions, or global offsets), and sets the bool flag IsDimension to true
+     * If m_DebugMode is true throws an exception if the variable is not found
+     * @param csv comma separated values string containing the dimension variables to look for
+     * @param hint message used if exceptions are thrown in debug mode to provide more context
+     */
+    void SetDimensionVariablesFlag( const std::string csv, const std::string hint );
 
 };
 

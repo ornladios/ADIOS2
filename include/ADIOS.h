@@ -88,6 +88,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      */
     Group& DeclareGroup( const std::string groupName );
 
+
     /**
      * Declares a new method
      * @param name must be unique

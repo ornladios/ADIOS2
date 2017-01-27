@@ -6,7 +6,7 @@
  */
 
 
-#include "../../include/core/Support.h"
+#include "core/Support.h"
 
 
 namespace adios
@@ -17,12 +17,12 @@ const std::string Support::Version{ "2.00" };
 
 
 const std::set<std::string> Support::HostLanguages{
-    { "C", "C++", "Fortran", "Python", "Java" }
+    { "C++", "C", "Fortran" }
 };
 
 
 const std::set<std::string> Support::Transports{
-    { "NULL", "POSIX", "FStream", "MPI", "MPI_LUSTRE", "MPI_AGGREGATE", "DATASPACES", "DIMES", "FLEXPATH", "PHDF5", "NC4", "ICEE" }
+    { "NULL", "POSIX", "FStream", "MdtmMan" } // "MPI", "MPI_LUSTRE", "MPI_AGGREGATE", "DATASPACES", "DIMES", "FLEXPATH", "PHDF5", "NC4", "ICEE" }
 };
 
 

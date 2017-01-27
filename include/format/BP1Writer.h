@@ -101,7 +101,7 @@ public:
      * @return data type
      */
     template< class T >
-    std::int8_t GetDataType( const Variable<T>& variable )
+    std::int8_t GetDataType( const Variable<T>& variable ) noexcept
     {
         std::int8_t dataType = -1;
         if( std::is_same<T,char>::value )
@@ -151,7 +151,7 @@ public:
      */
     template< class T >
     size_t GetVariableIndexSize( const Group& group, const std::string variableName,
-                                 const Variable<T> variable, const unsigned int verbosity )
+                                 const Variable<T> variable, const unsigned int verbosity ) noexcept
     {
         //size_t indexSize = varEntryLength + memberID + lengthGroupName + groupName + lengthVariableName + lengthOfPath + path + datatype
         size_t indexSize = 23; //without characteristics
@@ -199,7 +199,7 @@ public:
      * @param offset
      */
     template< class T >
-    void WriteToBuffers( std::vector<char*>& buffers, const T* source, std::size_t size, std::size_t& offset )
+    void WriteToBuffers( std::vector<char*>& buffers, const T* source, std::size_t size, std::size_t& offset ) noexcept
     {
         for( auto& buffer : buffers )
         {
@@ -207,6 +207,19 @@ public:
         }
         offset += size;
     }
+
+    template< class T >
+    void CopyToBuffers( std::vector<char*>& buffers, const T* source, std::size_t size, std::size_t& offset ) noexcept
+    {
+        for( auto& buffer : buffers )
+        {
+            std::copy( source, source+size, &buffer[offset] );
+            //std::memcpy( &buffer[offset], source, size );
+        }
+        offset += size;
+    }
+
+
 
     /**
      *
@@ -223,7 +236,7 @@ public:
                         std::vector<char*>& dataBuffers, const std::size_t dataPosition,
                         std::vector<char*>& metadataBuffers, const std::size_t metadataPosition,
                         const unsigned int memberID, const bool writeDimensionsInData,
-                        const unsigned int verbose )
+                        const unsigned int verbose ) noexcept
     {
        std::size_t metadataOffset = metadataPosition + 8; //length of var, will come at the end from this offset
        std::size_t dataOffset = dataPosition + 8; //length of var, will come at the end from this offset

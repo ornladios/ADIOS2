@@ -244,10 +244,8 @@ void Writer::Write( const std::string variableName, const long double* values )
 
 void Writer::InitCapsules( )
 {
-    //Create single capsule of type heap
     m_Capsules.push_back( std::make_shared<Heap>( m_AccessMode, m_RankMPI, m_Cores ) );
 }
-
 
 
 void Writer::InitTransports( )

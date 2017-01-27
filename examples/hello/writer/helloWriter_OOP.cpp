@@ -36,7 +36,7 @@ int main( int argc, char* argv [] )
 
     try
     {
-        //Define group and variables with transforms
+        //Define group and variables with transforms, variables don't have functions, only group can access variables
         adios::Group& ioGroup = adios.DeclareGroup( "ioGroup" );
         adios::Var ioNx = ioGroup.DefineVariable<unsigned int>( "Nx" );
         adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", "Nx" );
@@ -60,7 +60,7 @@ int main( int argc, char* argv [] )
             throw std::ios_base::failure( "ERROR: failed to open ADIOS bpWriter\n" );
 
         bpWriter->Write<unsigned int>( ioNx, &Nx );
-        bpWriter->Write<double>( ioMyDoubles, myDoubles.data() );
+        bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
         bpWriter->Write<float>( ioMyFloats, myFloats.data() );
         bpWriter->Close( );
     }

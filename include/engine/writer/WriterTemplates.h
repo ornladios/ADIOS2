@@ -39,6 +39,12 @@ void WriterWriteVariable( const Group& group, const std::string variableName, co
 {
 
     std::cout << "Hello from bp Writer, writing variable " << variableName << " of typeid(T).name() = " << typeid(T).name() << "\n";
+    if( variable.IsDimension )
+    {
+        std::cout << "Which is a dimension variable\n";
+    }
+
+
     //here deal with buffers allocation
 
 
