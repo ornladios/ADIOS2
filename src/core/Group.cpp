@@ -29,7 +29,8 @@ Group::Group( const std::string name, const bool debugMode ):
 { }
 
 
-Group::Group( const std::string name, const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms, const bool debugMode ):
+Group::Group( const std::string name, const std::string& xmlGroup, std::vector< std::shared_ptr<Transform> >& transforms,
+              const bool debugMode ):
     m_Name{ name },
     m_DebugMode{ debugMode }
 {
@@ -41,9 +42,32 @@ Group::~Group( )
 { }
 
 
+Dims Group::SetDimensions( std::initializer_list<Var> variableList )
+{
+    if( m_DebugMode == true )
+    {
+        if( variableList.size() == 0 )
+            throw std::invalid_argument( "ERROR: variableList is empty, in call to SetDimensions\n" );
+    }
+
+    Dims dimensionsCSV;
+    for( const auto variable : variableList )
+    {
+        if( m_DebugMode == true )
+        {
+            if( variable.find(",") != variable.npos )
+                throw std::invalid_argument( "ERROR: variable can't contain a comma character, in call to SetDimensions\n" );
+        }
+        dimensionsCSV += variable + ",";
+    }
+    dimensionsCSV.pop_back();
+    return dimensionsCSV;
+}
+
+
 Var Group::DefineVariable( const std::string variableName, const std::string type,
-                           const std::string dimensionsCSV,
-                           const std::string globalDimensionsCSV, const std::string globalOffsetsCSV,
+                           const Dims dimensionsCSV,
+                           const Dims globalDimensionsCSV, const Dims globalOffsetsCSV,
                            std::vector<Transform*> transforms, std::vector<int> parameters )
 {
     auto lf_CheckDimensionVariables = [&]( const std::string csv, const std::string dimensionType, const std::string variableName )
@@ -305,6 +329,11 @@ unsigned long long int Group::GetIntVariableValue( const std::string variableNam
 
 std::vector<unsigned long long int> Group::GetDimensions( const std::string dimensionsCSV ) const
 {
+    if( dimensionsCSV == "1" ) //scalar
+    {
+        return std::vector<unsigned long long int>{ 1 };
+    }
+
     std::vector<unsigned long long int> dimensions;
 
     if( dimensionsCSV.find(',') == dimensionsCSV.npos ) //check if 1D

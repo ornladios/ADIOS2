@@ -15,6 +15,7 @@
 #include <vector>
 #include <ostream>
 #include <set>
+#include <initializer_list> //SetDimensions
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -35,6 +36,8 @@ namespace adios
 {
 
 using Var = std::string; ///< used for returning variables from DefineVariable
+using Dims = std::string;
+
 /**
  * Class that defines each ADIOS Group composed of Variables, Attributes and GlobalBounds (if global variables exist)
  */
@@ -84,6 +87,9 @@ public:
 
     ~Group( ); ///< Using STL containers, no deallocation
 
+
+    Dims SetDimensions( std::initializer_list<Var> variables ); ///< returns adios::Dims object from a list of existing adios::Var objects
+
     /**
      * Define a new variable in the group object
      * @param name variable name, must be unique in the group. If name exists it removes the current variable. In debug mode program will exit.
@@ -95,16 +101,16 @@ public:
      * @param parameters corresponding parameter used by a Transform object in transforms (index should match), default is empty
      */
     Var DefineVariable( const std::string variableName, const std::string type,
-                        const std::string dimensionsCSV = "",
-                        const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
+                        const Dims dimensionsCSV = "1",
+                        const Dims globalDimensionsCSV = "", const Dims globalOffsetsCSV = "",
                         const std::vector<Transform*> transforms = std::vector<Transform*>(),
                         const std::vector<int> parameters = std::vector<int>() );
 
 
     template< class T >
     Var DefineVariable( const std::string variableName,
-                        const std::string dimensionsCSV = "",
-                        const std::string globalDimensionsCSV = "", const std::string globalOffsetsCSV = "",
+                        const Dims dimensionsCSV = "",
+                        const Dims globalDimensionsCSV = "", const Dims globalOffsetsCSV = "",
                         const std::vector<Transform*> transforms = std::vector<Transform*>(),
                         const std::vector<int> parameters = std::vector<int>() )
     {
@@ -117,7 +123,7 @@ public:
      * @param transform corresponding transform object, non-const as a pointer is created and pushed to a vector
      * @param parameter optional parameter interpreted by the corresponding Transform, default = -1
      */
-    void AddTransform( const std::string variableName, Transform& transform, const int parameter = -1 );
+    void AddTransform( const Var variableName, Transform& transform, const int parameter = -1 );
 
     /**
      * Define a new attribute
@@ -139,7 +145,7 @@ public:
      * @param dimensionsCSV comma separated dimensions "Nx,Ny,Nz"
      * @return actual vector values = { Nx, Ny, Nz }
      */
-    std::vector<unsigned long long int> GetDimensions( const std::string dimensionsCSV ) const;
+    std::vector<unsigned long long int> GetDimensions( const Dims dimensionsCSV ) const;
 
 private:
 
