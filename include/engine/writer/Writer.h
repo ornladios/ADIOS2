@@ -10,6 +10,7 @@
 
 #include "core/Engine.h"
 #include "format/BP1Writer.h"
+#include "capsule/Heap.h"
 
 
 namespace adios
@@ -66,10 +67,10 @@ public:
 
 private:
 
-    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Capsules and m_Transports
+    Heap m_Buffer; ///< heap capsule
+    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
 
     void Init( );
-    void InitCapsules( );
     void InitTransports( );
 
 };

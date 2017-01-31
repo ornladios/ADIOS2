@@ -7,9 +7,8 @@ BASE_NAME=helloDataMan_OOP
      
 TOOL_DIR=/usr/bin
 
-CC=$(TOOL_DIR)/g++ # Compiling with mpicc for now
-MPICC=$(TOOL_DIR)/mpic++
-AR=$(TOOL_DIR)/ar
+CC=g++ # Compiling with mpicc for now
+MPICC=mpic++
 
 #ADIOS LOCATION
 ADIOS_DIR=../../..

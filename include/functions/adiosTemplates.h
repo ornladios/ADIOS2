@@ -11,43 +11,23 @@
 
 namespace adios
 {
+/**
+ * Get the primitive type in a string from a template
+ * @return if T is a char, returns string = "char"
+ */
+template< class T> inline std::string GetType( ) noexcept { return ""; }
 
-template< class T> inline
-std::string GetType( ) noexcept
-{ return ""; }
-
-template<> inline
-std::string GetType<char>() noexcept { return "char"; }
-
-template<> inline
-std::string GetType<unsigned char>() noexcept { return "unsigned char"; }
-
-template<> inline
-std::string GetType<short>() noexcept { return "short"; }
-
-template<> inline
-std::string GetType<unsigned short>() noexcept { return "unsigned short"; }
-
-template<> inline
-std::string GetType<int>() noexcept { return "int"; }
-
-template<> inline
-std::string GetType<unsigned int>() noexcept { return "unsigned int"; }
-
-template<> inline
-std::string GetType<long int>() noexcept { return "long int"; }
-
-template<> inline
-std::string GetType<unsigned long int>() noexcept { return "unsigned long int"; }
-
-template<> inline
-std::string GetType<float>() noexcept { return "float"; }
-
-template<> inline
-std::string GetType<double>() noexcept { return "double"; }
-
-template<> inline
-std::string GetType<long double>() noexcept { return "long double"; }
+template<> inline std::string GetType<char>() noexcept { return "char"; }
+template<> inline std::string GetType<unsigned char>() noexcept { return "unsigned char"; }
+template<> inline std::string GetType<short>() noexcept { return "short"; }
+template<> inline std::string GetType<unsigned short>() noexcept { return "unsigned short"; }
+template<> inline std::string GetType<int>() noexcept { return "int"; }
+template<> inline std::string GetType<unsigned int>() noexcept { return "unsigned int"; }
+template<> inline std::string GetType<long int>() noexcept { return "long int"; }
+template<> inline std::string GetType<unsigned long int>() noexcept { return "unsigned long int"; }
+template<> inline std::string GetType<float>() noexcept { return "float"; }
+template<> inline std::string GetType<double>() noexcept { return "double"; }
+template<> inline std::string GetType<long double>() noexcept { return "long double"; }
 
 
 /**
@@ -61,7 +41,7 @@ template<class T>
 bool IsTypeAlias( const std::string type,
 		          const std::map<std::string, std::set<std::string>>& aliases ) noexcept
 {
-	if( type == GetType<T>() ) //most of the time we will pass the same type
+	if( type == GetType<T>() ) //most of the time we will pass the same type, which is a key in aliases
 		return true;
 
 	bool isAlias = false;

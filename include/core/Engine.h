@@ -135,7 +135,7 @@ public:
 
 protected:
 
-    std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< managed Capsules
+    //std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< managed Capsules might not be needed by certain engines
     std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
     const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
     unsigned int m_Cores = 1;
@@ -143,9 +143,9 @@ protected:
 
     std::vector< std::pair<Group*, std::string> > m_WrittenVariables;
 
-    virtual void Init( ) = 0; ///< Initialize m_Capsules and m_Transports, called from constructor
-    virtual void InitCapsules( ) = 0; ///< Initialize transports from Method, called from Init in constructor.
-    virtual void InitTransports( ) = 0; ///< Initialize transports from Method, called from Init in constructor.
+    virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
+    virtual void InitCapsules( ); ///< Initialize transports from Method, called from Init in constructor.
+    virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor.
 
     /**
      * Performs preliminary checks before writing a variable. Throws an exception if checks fail.

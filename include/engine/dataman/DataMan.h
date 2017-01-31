@@ -10,6 +10,8 @@
 
 
 #include "core/Engine.h"
+#include "capsule/Heap.h"
+#include "format/BP1Writer.h"
 
 
 namespace adios
@@ -66,9 +68,19 @@ public:
 
 private:
 
+    Heap m_Buffer; ///< heap capsule, contains data and metadata buffers
+    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
+
     void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
-    void InitCapsules( ); ///< from Method
     void InitTransports( ); ///< from Transports
+
+    /**
+     * From transport Mdtm in m_Method
+     * @param parameter must be an accepted parameter
+     * @param mdtmParameters
+     * @return value either returns user-defined from "parameter=value" or a default
+     */
+    std::string GetMdtmParameter( const std::string parameter, const std::map<std::string,std::string>& mdtmParameters );
 
 };
 

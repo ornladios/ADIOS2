@@ -142,6 +142,23 @@ void SetTransformsHelper( const std::vector<std::string>& transformNames, std::v
 std::map<std::string, std::string> BuildParametersMap( const std::vector<std::string>& parameters, const bool debugMode );
 
 
+/**
+ * Single call that extract data buffers information from Capsule. That way virtual Capsule functions are called a few times
+ * @param capsules input
+ * @param dataBuffers from Capsule.GetData()
+ * @param positions
+ * @param absolutePositions
+ */
+//void GetDataBuffers( const std::vector<Capsule*>& capsules, std::vector<char*>& dataBuffers, std::vector<std::size_t>& positions,
+//                     std::vector<std::size_t>& absolutePositions );
+
+/**
+ * Converts comma-separated values to a vector of integers
+ * @param csv "1,2,3"
+ * @return vector<int> = { 1, 2, 3 }
+ */
+std::vector<int> CSVToVectorInt( const std::string csv );
+
 
 } //end namespace
 

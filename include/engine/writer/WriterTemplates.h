@@ -34,7 +34,7 @@ namespace adios
  */
 template <class T>
 void WriterWriteVariable( const Group& group, const std::string variableName, const Variable<T>& variable,
-                          Capsule& buffers, std::vector< std::shared_ptr<Transport> >& transports,
+                          Heap& buffer, std::vector< std::shared_ptr<Transport> >& transports,
                           format::BP1Writer& bp1Writer )
 {
 

@@ -11,7 +11,7 @@
 
 #include <vector>
 #include <cstdint>
-#include <algorithm> //std::count, std::copy
+#include <algorithm> //std::count, std::copy, std::for_each
 #include <cstring> //std::memcpy
 
 #include "core/Variable.h"
@@ -105,52 +105,6 @@ public:
 
 
     /**
-     * Returns data type index from enum Datatypes
-     * @param variable input variable
-     * @return data type
-     */
-    template< class T >
-    std::int8_t GetDataType( const Variable<T>& variable ) noexcept
-    {
-        std::int8_t dataType = -1;
-        if( std::is_same<T,char>::value )
-            dataType = type_byte;
-
-        else if( std::is_same<T,short>::value )
-            dataType = type_short;
-
-        else if( std::is_same<T,int>::value )
-            dataType = type_integer;
-
-        else if( std::is_same<T,long int>::value )
-            dataType = type_long;
-
-        else if( std::is_same<T,unsigned char>::value )
-            dataType = type_unsigned_byte;
-
-        else if( std::is_same<T,unsigned short>::value )
-            dataType = type_unsigned_short;
-
-        else if( std::is_same<T,unsigned int>::value )
-            dataType = type_unsigned_integer;
-
-        else if( std::is_same<T,unsigned long int>::value )
-            dataType = type_unsigned_long;
-
-        else if( std::is_same<T,float>::value )
-            dataType = type_real;
-
-        else if( std::is_same<T,double>::value )
-            dataType = type_double;
-
-        else if( std::is_same<T,long double>::value )
-            dataType = type_long_double;
-        //need to implement complex and string
-        return dataType;
-    }
-
-
-    /**
      * Returns the estimated variable index size
      * @param group
      * @param variableName
@@ -208,71 +162,117 @@ public:
      * @param offset
      */
     template< class T >
-    void WriteToBuffers( std::vector<char*>& buffers, const T* source, std::size_t size, std::size_t& offset ) noexcept
+    void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const T* source, std::size_t size ) noexcept
     {
-        for( auto& buffer : buffers )
+        const unsigned int length = buffers.size( );
+
+        for( unsigned int i = 0; i < length; ++i )
         {
-            std::memcpy( &buffer[offset], source, size );
+            std::memcpy( &buffers[positions[i]], source, size );
+            positions[i] += size;
         }
-        offset += size;
     }
 
-    template< class T, class U >
-    void CopyToBuffers( std::vector<char*>& buffers, const T* source, U size, std::size_t& offset ) noexcept
+    template< class T >
+    void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+                          const std::vector<T>& source, std::size_t size ) noexcept
     {
-        for( auto& buffer : buffers )
+        const unsigned int length = buffers.size( );
+
+        for( unsigned int i = 0; i < length; ++i )
         {
-            std::copy( source, source+size, &buffer[offset] );
+            std::memcpy( &buffers[positions[i]], &source[i], size );
+            positions[i] += size;
         }
-        offset += size;
+    }
+
+
+
+    template< class T, class U >
+    void CopyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const T* source, U size ) noexcept
+    {
+        const unsigned int length = buffers.size( );
+
+        for( unsigned int i = 0; i < length; ++i )
+        {
+            std::copy( source, source+size, &buffers[ positions[i] ] );
+            positions[i] += size;
+        }
+    }
+
+
+    template< class T, class U >
+    void CopyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const std::vector<T>& source, U size ) noexcept
+    {
+        const unsigned int length = buffers.size( );
+
+        for( unsigned int i = 0; i < length; ++i )
+        {
+            std::copy( &source[i], &source[i]+size, &buffers[ positions[i] ] );
+            positions[i] += size;
+        }
     }
 
     /**
-     * Writes a variable to BP format in data and metadata (index) buffers
      * @param group variable owner
      * @param variableName name of variable to be written
      * @param variable object carrying variable information
      * @param dataBuffers buffers to which variable metadata and payload (values) will be written. Metadata is added in case of system corruption to allow regeneration.
-     * @param dataPosition initial data position
+     * @param dataPosition initial data relative position
+     * @param dataAbsolutePosition data absolute position will be updated with dataPosition, needed for variable offset and variable payload offset
      * @param metadataBuffers buffers to which only variable metadata will be written
-     * @param metadataPosition
-     * @param memberID
-     * @return number of bytes written, needed for variable entry length
+     * @param metadataPosition position in metadataBuffer
      */
     template< class T >
-    void WriteVariable( const Group& group, const Var variableName,
-                        const Variable<T>& variable,
-                        std::vector<char*>& dataBuffers, const std::size_t dataPosition,
-                        std::vector<char*>& metadataBuffers, const std::size_t metadataPosition ) noexcept
+    void WriteVariable( const Group& group, const Var variableName, const Variable<T>& variable,
+                        std::vector<char*>& dataBuffers,
+                        std::vector<std::size_t>& dataPositions,
+                        std::vector<std::size_t>& dataAbsolutePositions,
+                        std::vector<char*>& metadataBuffers,
+                        std::vector<std::size_t>& metadataPositions ) noexcept
     {
-        std::size_t metadataOffset = metadataPosition + 4; //length of var, will come at the end from this offset
-        std::size_t dataOffset = dataPosition + 8; //length of var, will come at the end from this offset
+        auto lf_MovePositions = []( const int bytes, std::vector<std::size_t>& positions )
+        {
+            for( auto& position : positions ) // value or reference?
+                position += bytes;
+        };
+
+        const std::vector<std::size_t> metadataLengthPositions( metadataPositions );
+        const std::vector<std::size_t> dataLengthPositions( dataPositions );
+
+        lf_MovePositions( 4, metadataPositions ); //length of var, will come at the end from this offset
+        lf_MovePositions( 8, dataPositions ); //length of var, will come at the end from this offset
 
         //memberID
-        WriteToBuffers( metadataBuffers, &m_VariablesCount, 4, metadataOffset );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &m_VariablesCount, 4 );
         //group, only in metadata
         const std::uint16_t lengthGroupName = group.m_Name.length();
-        WriteToBuffers( metadataBuffers, &lengthGroupName, 2, metadataOffset ); //2 bytes
-        WriteToBuffers( metadataBuffers, group.m_Name.c_str(), lengthGroupName, metadataOffset );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &lengthGroupName, 2 ); //2 bytes
+        MemcpyToBuffers( metadataBuffers, metadataPositions, group.m_Name.c_str(), lengthGroupName );
+
         //variable name to metadata and data
         const std::uint16_t lengthVariableName = variableName.length();
-        WriteToBuffers( metadataBuffers, &lengthVariableName, 2, metadataOffset );
-        WriteToBuffers( metadataBuffers, variableName.c_str(), lengthVariableName, metadataOffset );
-        WriteToBuffers( dataBuffers, &lengthVariableName, 2, dataOffset );
-        WriteToBuffers( dataBuffers, variableName.c_str(), lengthVariableName, dataOffset );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &lengthVariableName, 2 );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, variableName.c_str(), lengthVariableName );
+        MemcpyToBuffers( dataBuffers, dataPositions, &lengthVariableName, 2 );
+        MemcpyToBuffers( dataBuffers, dataPositions, variableName.c_str(), lengthVariableName );
+
         //skip path (jump 2 bytes, already set to zero)
-        metadataOffset += 2;
-        dataOffset += 2;
+        lf_MovePositions( 2, metadataPositions ); //length of var, will come at the end from this offset
+        lf_MovePositions( 2, dataPositions ); //length of var, will come at the end from this offset
+
         //dataType
-        const std::uint8_t dataType = GetDataType( variable );
-        WriteToBuffers( metadataBuffers, &dataType, 1, metadataOffset );
-        WriteToBuffers( dataBuffers, &dataType, 1, dataOffset );
+        const std::uint8_t dataType = GetDataType<T>();
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &dataType, 1 );
+        MemcpyToBuffers( dataBuffers, dataPositions, &dataType, 1 );
 
         //Characteristics Sets in Metadata and Data
-        //const std::size_t metadataCharacteristicsSetsCountPosition = metadataOffset; //very important piece
-        std::size_t dataCharacteristicsCountPosition = dataOffset;
+        //const std::vector<std::size_t> metadataCharacteristicsSetsCountPosition( metadataPositions ); //very important piece
+        std::vector<std::size_t> dataCharacteristicsCountPositions( dataPositions ); //very important piece
+
         const std::uint64_t sets = 1; //write one for now
-        WriteToBuffers( metadataBuffers, &sets, 8, metadataOffset );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &sets, 8 );
+        std::vector<std::size_t> metadataCharacteristicsCountPositions( metadataPositions ); //very important, can't be const as it is updated by MemcpyToBuffer
 
         std::uint8_t characteristicsCounter = 0; //used for characteristics count, characteristics length will be calculated at the end
 
@@ -282,94 +282,92 @@ public:
         //write to metadata characteristic
         //characteristic: dimension
         std::uint8_t characteristicID = characteristic_dimensions;
-        WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 );
         const std::uint8_t dimensions = localDimensions.size();
-        WriteToBuffers( metadataBuffers, &dimensions, 1, metadataOffset );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &dimensions, 1 );
         const std::uint16_t dimensionsLength = dimensions * 24; //24 is from 8 bytes for each: local dimension, global dimension, global offset
-        WriteToBuffers( metadataBuffers, &dimensionsLength, 2, metadataOffset );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &dimensionsLength, 2 );
 
         //write in data if it's a dimension variable (scalar) y or n
         const char dimensionYorN = ( variable.IsDimension ) ? 'y' : 'n';
-        WriteToBuffers( dataBuffers, &dimensionYorN, 1, dataOffset );
-        WriteToBuffers( dataBuffers, &dimensions, 1, dataOffset );
+        MemcpyToBuffers( dataBuffers, dataPositions, &dimensionYorN, 1 );
+        MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
         const std::uint16_t dimensionsLengthInData = dimensions * 27; //27 is from 9 bytes for each: var y/n + local, var y/n + global dimension, var y/n + global offset
-        WriteToBuffers( dataBuffers, &dimensionsLengthInData, 2, dataOffset );
+        MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLengthInData, 2 );
 
         if( variable.GlobalBoundsIndex == -1 ) //local variable
         {
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
                 //metadata characteristics
-                WriteToBuffers( metadataBuffers, &localDimensions[d], 8, metadataOffset );
-                metadataOffset += 16; //skipping global dimension(8), global offset (8)
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &localDimensions[d], 8 );
+                lf_MovePositions( 16, metadataPositions ); //skipping global dimension(8), global offset (8)
             }
 
             const char no = 'n'; //dimension format unsigned int value (not using memberID for now)
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
                 //data dimensions
-                WriteToBuffers( dataBuffers, &no, 1, dataOffset );
-                WriteToBuffers( dataBuffers, &localDimensions[d], 8, dataOffset );
-                dataOffset += 18; //skipping var no + global dimension(8), var no + global offset (8)
+                MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
+                lf_MovePositions( 18, dataPositions ); //skipping var no + global dimension(8), var no + global offset (8)
             }
 
             //dimensions in data characteristic entry
-            dataCharacteristicsCountPosition = dataOffset;
-            dataOffset += 5; //skip characteristics count(1) + length (4)
-            WriteToBuffers( dataBuffers, &characteristicID, 1, dataOffset );
+            dataCharacteristicsCountPositions = dataPositions; //very important
 
-            std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
-            WriteToBuffers( dataBuffers, &lengthOfDimensionsCharacteristic, 2, dataOffset );
+            lf_MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
+            MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
 
-            WriteToBuffers( dataBuffers, &dimensions, 1, dataOffset );
-            WriteToBuffers( dataBuffers, &dimensionsLength, 2, dataOffset );
+            const std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
+            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfDimensionsCharacteristic, 2 );
+            MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
+            MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLength, 2 );
 
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
-                //data characteristics
-                WriteToBuffers( dataBuffers, &localDimensions[d], 8, dataOffset );
-                metadataOffset += 16; //skipping global dimension(8), global offset (8)
+                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
+                lf_MovePositions( 16, dataPositions );
             }
         }
         else //global variable
         {
-            std::vector<unsigned long long int> globalDimensions = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].first );
-            std::vector<unsigned long long int> globalOffsets = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].second );
+            const std::vector<unsigned long long int> globalDimensions = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].first );
+            const std::vector<unsigned long long int> globalOffsets = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].second );
 
             //metadata, writing in characteristics
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
-                WriteToBuffers( metadataBuffers, &localDimensions[d], 8, metadataOffset );
-                WriteToBuffers( metadataBuffers, &globalDimensions[d], 8, metadataOffset );
-                WriteToBuffers( metadataBuffers, &globalOffsets[d], 8, metadataOffset );
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &localDimensions[d], 8 );
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &globalDimensions[d], 8 );
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &globalOffsets[d], 8 );
             }
 
             //data dimensions entry
+            const char no = 'n'; //dimension format unsigned int value
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
-                const char no = 'n'; //dimension format unsigned int value
-                WriteToBuffers( dataBuffers, &no, 1, dataOffset );
-                WriteToBuffers( dataBuffers, &localDimensions[d], 8, dataOffset );
-                WriteToBuffers( dataBuffers, &no, 1, dataOffset );
-                WriteToBuffers( dataBuffers, &localDimensions[d], 8, dataOffset );
+                MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
             }
 
-            //dimensions in data characteristic entry (might not be required)
-            dataCharacteristicsCountPosition = dataOffset;
-            dataOffset += 5; //skip characteristics count(1) + length (4)
-            WriteToBuffers( dataBuffers, &characteristicID, 1, dataOffset ); //id
+            //dimensions in data characteristic entry
+            dataCharacteristicsCountPositions = dataPositions;
+            lf_MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
+            MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //id
 
-            std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
-            WriteToBuffers( dataBuffers, &lengthOfDimensionsCharacteristic, 2, dataOffset );
-
-            WriteToBuffers( dataBuffers, &dimensions, 1, dataOffset );
-            WriteToBuffers( dataBuffers, &dimensionsLength, 2, dataOffset );
+            const std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
+            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfDimensionsCharacteristic, 2 );
+            MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
+            MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLength, 2 );
 
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
-                WriteToBuffers( dataBuffers, &localDimensions[d], 8, dataOffset );
-                WriteToBuffers( dataBuffers, &globalDimensions[d], 8, dataOffset );
-                WriteToBuffers( dataBuffers, &globalOffsets[d], 8, dataOffset );
+                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &globalDimensions[d], 8 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &globalOffsets[d], 8 );
             }
         }
         ++characteristicsCounter;
@@ -379,18 +377,18 @@ public:
         if( variable.DimensionsCSV == "1" ) //scalar //just doing string scalars for now (by name), needs to be modified when user passes value
         {
             characteristicID = characteristic_value;
-            std::int16_t lenghtOfName = variableName.length();
+            const std::int16_t lenghtOfName = variableName.length();
             //metadata
-            WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset  );
-            WriteToBuffers( metadataBuffers, &lenghtOfName, 2, metadataOffset  );
-            WriteToBuffers( metadataBuffers, variableName.c_str(), lenghtOfName, metadataOffset  );
+            MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1  );
+            MemcpyToBuffers( metadataBuffers, metadataPositions, &lenghtOfName, 2 );
+            MemcpyToBuffers( metadataBuffers, metadataPositions, variableName.c_str(), lenghtOfName );
 
             //data
-            WriteToBuffers( dataBuffers, &characteristicID, 1, dataOffset  );
-            std::int16_t lengthOfCharacteristic = 2 + lenghtOfName;
-            WriteToBuffers( dataBuffers, &lengthOfCharacteristic, 2, dataOffset );
-            WriteToBuffers( dataBuffers, &lenghtOfName, 2, dataOffset  );
-            WriteToBuffers( dataBuffers, variableName.c_str(), lenghtOfName, dataOffset  );
+            MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
+            const std::int16_t lengthOfCharacteristic = 2 + lenghtOfName;
+            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfCharacteristic, 2 );
+            MemcpyToBuffers( dataBuffers, dataPositions, &lenghtOfName, 2 );
+            MemcpyToBuffers( dataBuffers, dataPositions, variableName.c_str(), lenghtOfName );
         }
         else // Stat -> Min, Max for arrays,
         {
@@ -398,10 +396,9 @@ public:
             {
                 //Get min and max
                 const std::size_t valuesSize = GetTotalSize( localDimensions );
-                //here we can make decisions for threads based on valuesSize
                 T min, max;
 
-                if( valuesSize >= 10000000 ) //ten million? this needs actual results
+                if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
                     GetMinMax( variable.Values, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
                 else
                     GetMinMax( variable.Values, valuesSize, min, max );
@@ -412,55 +409,98 @@ public:
                 const std::int8_t statisticMaxID = statistic_max;
 
                 //write min and max to metadata
-                WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset  ); //min
-                WriteToBuffers( metadataBuffers, &statisticMinID, 1, metadataOffset  );
-                WriteToBuffers( metadataBuffers, &min, sizeof(T), metadataOffset );
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //min
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &statisticMinID, 1 );
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &min, sizeof(T) );
 
-                WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset  ); //max
-                WriteToBuffers( metadataBuffers, &statisticMaxID, 1, metadataOffset  );
-                WriteToBuffers( metadataBuffers, &max, sizeof(T), metadataOffset );
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1  ); //max
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &statisticMaxID, 1 );
+                MemcpyToBuffers( metadataBuffers, metadataPositions, &max, sizeof(T) );
 
                 //write min and max to data
-                WriteToBuffers( dataBuffers, &characteristicID, 1, dataOffset  ); //min
+                MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //min
                 const std::int16_t lengthCharacteristic = 1 + sizeof( T );
-                WriteToBuffers( dataBuffers, &lengthCharacteristic, 2, dataOffset  );
-                WriteToBuffers( dataBuffers, &statisticMinID, 1, dataOffset  );
-                WriteToBuffers( dataBuffers, &min, sizeof(T), dataOffset );
+                MemcpyToBuffers( dataBuffers, dataPositions, &lengthCharacteristic, 2 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &statisticMinID, 1 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &min, sizeof(T) );
 
-                WriteToBuffers( dataBuffers, &characteristicID, 1, dataOffset  ); //max
-                WriteToBuffers( dataBuffers, &lengthCharacteristic, 2, dataOffset  );
-                WriteToBuffers( dataBuffers, &statisticMaxID, 1, dataOffset  );
-                WriteToBuffers( dataBuffers, &max, sizeof(T), dataOffset );
+                MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //max
+                MemcpyToBuffers( dataBuffers, dataPositions, &lengthCharacteristic, 2 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &statisticMaxID, 1 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &max, sizeof(T) );
             }
         }
         ++characteristicsCounter;
-        //here write characteristics count and length to data
-        std::uint32_t characteristicsLengthInData = dataOffset - dataCharacteristicsCountPosition;
-        WriteToBuffers( dataBuffers, &characteristicsCounter, 1, dataCharacteristicsCountPosition );
-        WriteToBuffers( dataBuffers, &characteristicsLengthInData, 4, dataCharacteristicsCountPosition );
-        dataCharacteristicsCountPosition -= 5;
 
-        //Offsets should be last and only written to metadata
+        //Characteristics count and length in Data
+        std::vector<std::uint32_t> dataCharacteristicsLengths( dataPositions );
+        std::transform( dataCharacteristicsLengths.begin( ), dataCharacteristicsLengths.end( ),
+                        dataCharacteristicsCountPositions.begin(), dataCharacteristicsCountPositions.end(),
+                        std::minus<std::uint32_t>() );
+
+        MemcpyToBuffers( dataBuffers, dataCharacteristicsCountPositions, &characteristicsCounter, 1 );
+        MemcpyToBuffers( dataBuffers, dataCharacteristicsCountPositions, dataCharacteristicsLengths, 4 ); //vector to vector
+        lf_MovePositions( -5, dataCharacteristicsCountPositions ); //back to original position
+
+        //Offsets should be last and only written to metadata, they come from absolute positions
         characteristicID = characteristic_offset;
-        WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset  ); //variable offset id
-        WriteToBuffers( metadataBuffers, &dataPosition, 8, metadataOffset ); //variable offset
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //variable offset id
+        MemcpyToBuffers( metadataBuffers, metadataPositions, dataAbsolutePositions, 8 ); //variable offset
         ++characteristicsCounter;
+
+        //update absolute positions with dataPositions, this is the payload offset
+        std::transform( dataAbsolutePositions.begin(), dataAbsolutePositions.end(),
+                        dataPositions.begin(), dataPositions.end(), std::plus<std::size_t>() );
 
         characteristicID = characteristic_payload_offset;
-        WriteToBuffers( metadataBuffers, &characteristicID, 1, metadataOffset  ); //variable payload offset id
-        WriteToBuffers( metadataBuffers, &dataOffset, 8, metadataOffset ); //variable offset
+        MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //variable payload offset id
+        MemcpyToBuffers( metadataBuffers, metadataPositions, dataAbsolutePositions, 8 ); //variable payload offset
         ++characteristicsCounter;
 
-        //here write var entry length in metadata
+        //Characteristics count and length in Metadata
+        std::vector<std::uint32_t> metadataCharacteristicsLengths( metadataPositions );
+        std::transform( metadataCharacteristicsLengths.begin( ), metadataCharacteristicsLengths.end( ),
+                        metadataCharacteristicsCountPositions.begin(), metadataCharacteristicsCountPositions.end(),
+                        std::minus<std::uint32_t>() );
+        MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, &characteristicsCounter, 1 );
+        MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, metadataCharacteristicsLengths, 4 ); //vector to vector
+        lf_MovePositions( -5, metadataCharacteristicsCountPositions ); //back to original position
+
+        //here write payload
+
+
 
 
         ++m_VariablesCount;
     } //end of function
 
+
+private:
+
+    /**
+     * Returns data type index from enum Datatypes
+     * @param variable input variable
+     * @return data type
+     */
+    template< class T > inline std::int8_t GetDataType( ) noexcept { return type_unknown; }
+
 };
 
 
+//Moving template BP1Writer::GetDataType template specializations outside of the class
+template< > inline std::int8_t BP1Writer::GetDataType<char>( ) noexcept { return type_byte; }
+template< > inline std::int8_t BP1Writer::GetDataType<short>( ) noexcept{ return type_short; }
+template< > inline std::int8_t BP1Writer::GetDataType<int>( ) noexcept{ return type_integer; }
+template< > inline std::int8_t BP1Writer::GetDataType<long int>( ) noexcept{ return type_long; }
 
+template< > inline std::int8_t BP1Writer::GetDataType<unsigned char>( ) noexcept { return type_unsigned_byte; }
+template< > inline std::int8_t BP1Writer::GetDataType<unsigned short>( ) noexcept{ return type_unsigned_short; }
+template< > inline std::int8_t BP1Writer::GetDataType<unsigned int>( ) noexcept{ return type_unsigned_integer; }
+template< > inline std::int8_t BP1Writer::GetDataType<unsigned long int>( ) noexcept{ return type_unsigned_long; }
+
+template< > inline std::int8_t BP1Writer::GetDataType<float>( ) noexcept{ return type_real; }
+template< > inline std::int8_t BP1Writer::GetDataType<double>( ) noexcept{ return type_double; }
+template< > inline std::int8_t BP1Writer::GetDataType<long double>( ) noexcept{ return type_long_double; }
 
 
 

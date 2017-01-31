@@ -12,6 +12,7 @@
 #include <iostream>
 #include <thread>  //std::thread
 #include <cstring> //std::memcpy
+#include <algorithm> //std::count
 
 #include <sys/types.h> //CreateDirectory
 #include <sys/stat.h> //stat
@@ -509,6 +510,32 @@ std::map<std::string, std::string> BuildParametersMap( const std::vector<std::st
     return parametersOutput;
 }
 
+
+std::vector<int> CSVToVectorInt( const std::string csv )
+{
+    std::vector<int> numbers;
+    if( csv.empty() )
+        return numbers;
+
+    if( csv.find(",") == csv.npos ) //check if no commas, one int
+    {
+        numbers.push_back( std::stoi( csv ) ); //might need to be checked
+    }
+    else
+    {
+        int count = std::count( csv.begin(), csv.end(), ',' );
+        numbers.reserve( count );
+
+        std::istringstream csvSS( csv );
+        std::string value;
+        while( std::getline( csvSS, value, ',' ) ) //need to test
+        {
+            numbers.push_back( std::stoi( csv ) );
+        }
+    }
+
+    return numbers;
+}
 
 
 

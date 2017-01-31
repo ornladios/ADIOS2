@@ -14,19 +14,35 @@
 
 #include "core/Group.h"
 #include "core/Variable.h"
-#include "core/Capsule.h"
+#include "capsule/Heap.h"
 #include "core/Transport.h"
+#include "format/BP1Writer.h"
 
 
 namespace adios
 {
 
+/**
+ *
+ * @param group variable owner
+ * @param variableName string type
+ * @param variable
+ * @param buffer heap buffer to writer variables to for disk I/O
+ * @param transports
+ * @param bp1Writer
+ */
 template<class T>
-void DataManWriteVariable( Group& group, const std::string variableName, Variable<T>& variable, std::vector<std::shared_ptr<Capsule> >& capsules,
-		                   std::vector<std::shared_ptr<Transport> >& transports )
+void DataManWriteVariable( const Group& group, const Var variableName, Variable<T>& variable,
+                           Heap& buffer, std::vector< std::shared_ptr<Transport> >& transports,
+                           format::BP1Writer& bp1Writer )
+
 {
-    //here write your magic, this template replaces MACRO
-	std::cout << "Hello from DataMan Write variable " << variableName << "\n";
+    //here write your magic, this template replaces C MACROS
+    std::cout << "Hello from DataMan, writing variable " << variableName << " of typeid(T).name() = " << typeid(T).name() << "\n";
+    if( variable.IsDimension )
+    {
+        std::cout << "Which is a dimension variable\n";
+    }
 }
 
 
