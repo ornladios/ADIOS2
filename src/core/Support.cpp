@@ -7,6 +7,7 @@
 
 
 #include "core/Support.h"
+#include "functions/adiosTemplates.h"
 
 
 namespace adios
@@ -87,19 +88,19 @@ const std::map<std::string, std::set<std::string> > Support::Datatypes
 
 const std::map<std::string, std::set<std::string> > Support::DatatypesAliases
 {
-    { "char",           { "char", "character" }  },
-    { "unsigned char",  { "unsigned char", "unsigned character" }  },
-    { "short",          { "short", "integer*2" } },
-    { "unsigned short", { "unsigned short" }  },
-    { "int",                    { "int", "integer" } },
-    { "unsigned int",           { "unsigned int", "unsigned integer" } },
-    { "long int",               { "long int", "long", "long integer" } },
-    { "unsigned long int",      { "unsigned long int", "unsigned long", "unsigned long integer" } },
-    { "long long int",          { "long long int", "long long", "long long integer" } },
-    { "unsigned long long int", { "unsigned long long int", "unsigned long long", "unsigned long long integer" } },
-    { "float", { "float", "real", "real*4" } },
-    { "double", { "double", "double precision", "real*8" } },
-    { "long double", { "long double", "long double precision", "real*16" } }
+    { GetType<char>(),         { GetType<char>(), "character" }  },
+    { GetType<unsigned char>(),  { GetType<unsigned char>(), "unsigned character" }  },
+    { GetType<short>(),          { GetType<short>(), "integer*2" } },
+    { GetType<unsigned short>(), { GetType<unsigned short>() }  },
+    { GetType<int>(),            { GetType<int>(), "integer" } },
+    { GetType<unsigned int>(),   { GetType<unsigned int>(), "unsigned integer" } },
+    { GetType<long int>(),       { GetType<long int>(), "long", "long integer" } },
+    { GetType<unsigned long int>(), { GetType<unsigned long int>(), "unsigned long", "unsigned long integer" } },
+    { GetType<long long int>(),  { GetType<long long int>(), "long long", "long long integer" } },
+    { GetType<unsigned long long int>(), { GetType<unsigned long long int>(), "unsigned long long", "unsigned long long integer" } },
+    { GetType<float>(),                  { GetType<float>(), "real", "real*4" } },
+    { GetType<double>(),      { GetType<double>(), "double precision", "real*8" } },
+    { GetType<long double>(), { GetType<long double>(), "long double precision", "real*16" } }
 };
 
 

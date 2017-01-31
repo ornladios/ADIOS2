@@ -152,12 +152,10 @@ protected:
      * Returns an index to variable type container in Group
      * @param group variable group owner object
      * @param variableName variable to be checked
-     * @param types from Support class, collection of type aliases
      * @param hint added information if exception is thrown
      * @return index to variable in group type container
      */
     unsigned int PreSetVariable( Group& group, const std::string variableName,
-                                 const std::set<std::string>& types,
                                  const std::string hint );
 
     /**

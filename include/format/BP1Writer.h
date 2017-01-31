@@ -269,7 +269,7 @@ public:
         WriteToBuffers( dataBuffers, &dataType, 1, dataOffset );
 
         //Characteristics Sets in Metadata and Data
-        const std::size_t metadataCharacteristicsSetsCountPosition = metadataOffset; //very important piece
+        //const std::size_t metadataCharacteristicsSetsCountPosition = metadataOffset; //very important piece
         std::size_t dataCharacteristicsCountPosition = dataOffset;
         const std::uint64_t sets = 1; //write one for now
         WriteToBuffers( metadataBuffers, &sets, 8, metadataOffset );
@@ -456,11 +456,6 @@ public:
 
         ++m_VariablesCount;
     } //end of function
-
-
-private:
-
-    bool m_DebugMode = false;
 
 };
 

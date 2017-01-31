@@ -38,11 +38,12 @@ int main( int argc, char* argv [] )
     {
         //Define group and variables with transforms, variables don't have functions, only group can access variables
         adios::Group& ioGroup = adios.DeclareGroup( "ioGroup" );
-        adios::Var ioNx = ioGroup.DefineVariable<unsigned int>( "Nx" );
 
-        adios::Dims dimNx = ioGroup.SetDimensions( {ioNx} );
-        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", dimNx );
-        adios::Var ioMyFloats = ioGroup.DefineVariable<float>( "myFloats", dimNx );
+        adios::Var ioNx = ioGroup.DefineVariable<unsigned int>( "Nx" );
+        //adios::Dims dimNx = ioGroup.SetDimensions( {ioNx} );
+
+        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", "Nx" );
+        adios::Var ioMyFloats = ioGroup.DefineVariable<float>( "myFloats", "Nx" );
 
         //add transform to variable in group...not executed (just testing API)
         adios::Transform bzip2 = adios::transform::BZIP2( );

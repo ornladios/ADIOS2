@@ -468,15 +468,6 @@ void SetTransformsHelper( const std::vector<std::string>& transformNames, std::v
 }
 
 
-bool IsTypeAlias( const std::string type, const std::set<std::string>& types )
-{
-    bool isAlias = false;
-    if( types.count( type ) == 1 )
-        isAlias = true;
-
-    return isAlias;
-}
-
 
 std::map<std::string, std::string> BuildParametersMap( const std::vector<std::string>& parameters,
                                                        const bool debugMode )

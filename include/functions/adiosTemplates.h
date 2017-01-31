@@ -12,45 +12,63 @@
 namespace adios
 {
 
-template< class T >
+template< class T> inline
 std::string GetType( ) noexcept
+{ return ""; }
+
+template<> inline
+std::string GetType<char>() noexcept { return "char"; }
+
+template<> inline
+std::string GetType<unsigned char>() noexcept { return "unsigned char"; }
+
+template<> inline
+std::string GetType<short>() noexcept { return "short"; }
+
+template<> inline
+std::string GetType<unsigned short>() noexcept { return "unsigned short"; }
+
+template<> inline
+std::string GetType<int>() noexcept { return "int"; }
+
+template<> inline
+std::string GetType<unsigned int>() noexcept { return "unsigned int"; }
+
+template<> inline
+std::string GetType<long int>() noexcept { return "long int"; }
+
+template<> inline
+std::string GetType<unsigned long int>() noexcept { return "unsigned long int"; }
+
+template<> inline
+std::string GetType<float>() noexcept { return "float"; }
+
+template<> inline
+std::string GetType<double>() noexcept { return "double"; }
+
+template<> inline
+std::string GetType<long double>() noexcept { return "long double"; }
+
+
+/**
+ * Check in types set if "type" is one of the aliases for a certain type,
+ * (e.g. if type = integer is an accepted alias for "int", returning true)
+ * @param type input to be compared with an alias
+ * @param aliases set containing aliases to a certain type, typically Support::DatatypesAliases from Support.h
+ * @return true: is an alias, false: is not
+ */
+template<class T>
+bool IsTypeAlias( const std::string type,
+		          const std::map<std::string, std::set<std::string>>& aliases ) noexcept
 {
-    std::string type;
+	if( aliases.count( type ) == 1 ) //most of the time we will pass the same type
+		return true;
 
-    if( std::is_same<T,char>::value )
-        type = "char";
+	bool isAlias = false;
+	if( aliases.at( GetType<T>() ).count( type ) == 1 )
+	    isAlias = true;
 
-    else if( std::is_same<T,short>::value )
-        type = "short";
-
-    else if( std::is_same<T,int>::value )
-        type = "int";
-
-    else if( std::is_same<T,long int>::value )
-        type = "long int";
-
-    else if( std::is_same<T,unsigned char>::value )
-        type = "unsigned char";
-
-    else if( std::is_same<T,unsigned short>::value )
-        type = "unsigned short";
-
-    else if( std::is_same<T,unsigned int>::value )
-        type = "unsigned int";
-
-    else if( std::is_same<T,unsigned long int>::value )
-        type = "unsigned long int";
-
-    else if( std::is_same<T,float>::value )
-        type = "float";
-
-    else if( std::is_same<T,double>::value )
-        type = "double";
-
-    else if( std::is_same<T,long double>::value )
-        type = "long double";
-
-    return type;
+	return isAlias;
 }
 
 

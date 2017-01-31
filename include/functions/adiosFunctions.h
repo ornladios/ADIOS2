@@ -132,14 +132,6 @@ void CreateDirectory( const std::string fullPath ) noexcept;
 void SetTransformsHelper( const std::vector<std::string>& transformNames, std::vector< std::shared_ptr<Transform> >& transforms,
                           const bool debugMode, std::vector<short>& transformIndices, std::vector<short>& parameters );
 
-/**
- * Check in types set if "type" is one of the aliases for a certain type, (e.g. if type = integer is an accepted alias for "int", returning true)
- * @param type input to be compared with an alias
- * @param types set containing aliases to a certain type, from Support.h
- * @return true: is an alias, false: is not
- */
-bool IsTypeAlias( const std::string type, const std::set<std::string>& types );
-
 
 /**
  * Transforms a vector

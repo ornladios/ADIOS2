@@ -44,7 +44,7 @@ void Engine::SetDefaultGroup( Group& group )
 
 //PROTECTED
 unsigned int Engine::PreSetVariable( Group& group, const std::string variableName,
-                                     const std::set<std::string>& types, const std::string hint )
+                                     const std::string hint )
 {
     auto itVariable = group.m_Variables.find( variableName );
 
@@ -52,9 +52,6 @@ unsigned int Engine::PreSetVariable( Group& group, const std::string variableNam
     {
         if( itVariable == group.m_Variables.end() )
             throw std::invalid_argument( "ERROR: variable " + variableName + " doesn't exist " + hint + ".\n" );
-
-        if( IsTypeAlias( itVariable->second.first, types ) == false )
-            throw std::invalid_argument( "ERROR: type in variable " + variableName + " doesn't match " + hint + ".\n" );
     }
 
     group.m_WrittenVariables.insert( variableName ); // group tracks its own written variables for dimensions
