@@ -61,7 +61,7 @@ template<class T>
 bool IsTypeAlias( const std::string type,
 		          const std::map<std::string, std::set<std::string>>& aliases ) noexcept
 {
-	if( aliases.count( type ) == 1 ) //most of the time we will pass the same type
+	if( type == GetType<T>() ) //most of the time we will pass the same type
 		return true;
 
 	bool isAlias = false;
