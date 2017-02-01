@@ -76,7 +76,7 @@ public:
     template< class T >
     void Write( const std::string variableName, const T* values )
     {
-        Write( *m_Group, variableName, values );
+        Write( variableName, values );
     }
 
     template< class T >

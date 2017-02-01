@@ -8,6 +8,14 @@
 #ifndef ADIOSTEMPLATES_H_
 #define ADIOSTEMPLATES_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <cstring> //std::memcpy
+#include <vector>
+#include <thread>
+/// \endcond
+
+
+
 
 namespace adios
 {
@@ -51,6 +59,68 @@ bool IsTypeAlias( const std::string type,
 	return isAlias;
 }
 
+
+/**
+ * Get the minimum and maximum values in one loop
+ * @param values
+ * @param size
+ * @param min
+ * @param max
+ */
+template<class T>
+void GetMinMax( const T* values, const size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
+{
+    min = values[0];
+    max = values[0];
+
+    for( unsigned int i = 0; i < size; ++i )
+    {
+        if( min < values[0] )
+            min = values[0];
+
+        if( max > values[0] )
+            max = values[0];
+    }
+}
+
+
+/**
+ * threaded version of std::memcpy
+ * @param dest
+ * @param source
+ * @param count
+ * @param cores
+ */
+template<class T, class U>
+void MemcpyThreads( T* destination, const U* source, std::size_t count, const unsigned int cores = 1 )
+{
+    if( cores == 1 )
+    {
+        std::memcpy( &destination[0], &source[0], count );
+        return;
+    }
+
+    const unsigned long long int stride =  count/cores;
+    const unsigned long long int remainder = count % cores;
+    const unsigned long long int last = stride + remainder;
+
+    std::vector<std::thread> memcpyThreads;
+    memcpyThreads.reserve( cores );
+
+    for( unsigned int core = 0; core < cores; ++core )
+    {
+        const size_t initialDestination = stride * core / sizeof(T);
+        const size_t initialSource = stride * core / sizeof(U);
+
+        if( core == cores-1 )
+            memcpyThreads.push_back( std::thread( std::memcpy, &destination[initialDestination], &source[initialSource], last ) );
+        else
+            memcpyThreads.push_back( std::thread( std::memcpy, &destination[initialDestination], &source[initialSource], stride ) );
+    }
+    //Now join the threads (is this really needed?)
+    for( auto& thread : memcpyThreads )
+        thread.join( );
+}
 
 
 } //end namespace

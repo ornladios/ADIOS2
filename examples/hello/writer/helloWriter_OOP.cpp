@@ -40,15 +40,15 @@ int main( int argc, char* argv [] )
         adios::Group& ioGroup = adios.DeclareGroup( "ioGroup" );
 
         adios::Var ioNx = ioGroup.DefineVariable<unsigned int>( "Nx" );
-        //adios::Dims dimNx = ioGroup.SetDimensions( {ioNx} );
+        adios::Dims dimNx = ioGroup.SetDimensions( {ioNx} );
 
-        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", "Nx" );
-        adios::Var ioMyFloats = ioGroup.DefineVariable<float>( "myFloats", "Nx" );
+        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", dimNx );
+        //adios::Var ioMyFloats = ioGroup.DefineVariable<float>( "myFloats", dimNx ) ;
 
         //add transform to variable in group...not executed (just testing API)
         adios::Transform bzip2 = adios::transform::BZIP2( );
         ioGroup.AddTransform( ioMyDoubles, bzip2, 1 );
-        ioGroup.AddTransform( ioMyFloats, bzip2, 1 );
+        //ioGroup.AddTransform( ioMyFloats, bzip2, 1 );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
@@ -63,8 +63,8 @@ int main( int argc, char* argv [] )
             throw std::ios_base::failure( "ERROR: failed to open ADIOS bpWriter\n" );
 
         bpWriter->Write<unsigned int>( ioNx, &Nx );
-        bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-        bpWriter->Write<float>( ioMyFloats, myFloats.data() );
+        //bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        //bpWriter->Write<float>( ioMyFloats, myFloats.data() );
         bpWriter->Close( );
     }
     catch( std::invalid_argument& e )

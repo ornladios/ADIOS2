@@ -27,8 +27,10 @@ public:
     const std::string m_Type; ///< buffer type
     const std::string m_AccessMode; ///< 'w': write, 'r': read, 'a': append
 
-    std::size_t m_AbsoluteDataPosition; ///< includes the data flushed to transports
-    std::size_t m_AbsoluteMetadataPosition; ///< includes the metadata flushed to transports
+    std::size_t m_DataPosition = 0; ///< position in current data buffer (not included data flushed to transports)
+    std::size_t m_DataAbsolutePosition = 0; ///< includes the data flushed to transports
+
+    std::size_t m_MetadataPosition = 0; ///< position in metadata buffer
 
     /**
      * Base class constructor providing type from derived class and accessMode

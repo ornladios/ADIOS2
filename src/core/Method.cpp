@@ -52,6 +52,7 @@ void Method::AddTransportParameters( const std::string type, const std::vector<s
     m_TransportParameters.push_back( mapParameters );
 }
 
+
 void Method::SetDefaultGroup( Group& group )
 {
     m_Group = &group;

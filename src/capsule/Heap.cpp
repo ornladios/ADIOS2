@@ -15,10 +15,10 @@ namespace adios
 
 
 Heap::Heap( const std::string accessMode, const int rankMPI, const bool debugMode, const unsigned int cores ):
-    Capsule( "Heap", accessMode, rankMPI, debugMode, cores )
+    Capsule( "Heap", accessMode, rankMPI, debugMode, cores ),
+    m_Data( std::vector<char>( 16777216, '\0' ) )
 {
-    m_Data.reserve( 16777216 ); //default capacity = 16Mb
-    m_Metadata.reserve( 102400 ); //default capacity = 100Kb
+    //m_Data.resize( 16777216 ); //default capacity = 16Mb using resize
 }
 
 

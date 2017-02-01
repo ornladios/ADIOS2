@@ -28,7 +28,8 @@ namespace adios
 Writer::Writer( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
                 const Method& method, const bool debugMode, const unsigned int cores ):
     Engine( "Writer", streamName, accessMode, mpiComm, method, debugMode, cores, " Writer constructor (or call to ADIOS Open).\n" ),
-    m_Buffer{ Heap( accessMode, m_RankMPI, m_DebugMode, cores ) }
+    m_Buffer{ Heap( accessMode, m_RankMPI, m_DebugMode, cores ) },
+    m_MaxBufferSize{ m_Buffer.m_Data.max_size() }
 {
     Init( );
 }
@@ -40,7 +41,14 @@ Writer::~Writer( )
 
 void Writer::Init( )
 {
-    InitCapsules( );
+    auto itGrowthFactor = m_Method.m_Parameters.find( "buffer_growth" );
+    if( itGrowthFactor != m_Method.m_Parameters.end() )
+        m_GrowthFactor = std::stof( itGrowthFactor->second ); //float
+
+    auto itMaxBufferSize = m_Method.m_Parameters.find( "max_size_MB" );
+    if( itMaxBufferSize != m_Method.m_Parameters.end() )
+        m_MaxBufferSize = std::stoul( itGrowthFactor->second ) * 1000000; //convert to bytes
+
     InitTransports( );
 }
 
@@ -50,7 +58,7 @@ void Writer::Write( Group& group, const std::string variableName, const char* va
     auto index = PreSetVariable( group, variableName, " from call to Write char*" );
     Variable<char>& variable = group.m_Char[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const unsigned char* values )
@@ -58,7 +66,7 @@ void Writer::Write( Group& group, const std::string variableName, const unsigned
     auto index = PreSetVariable( group, variableName, " from call to Write unsigned char*" );
     Variable<unsigned char>& variable = group.m_UChar[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const short* values )
@@ -66,7 +74,7 @@ void Writer::Write( Group& group, const std::string variableName, const short* v
     auto index = PreSetVariable( group, variableName, " from call to Write short*" );
     Variable<short>& variable = group.m_Short[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const unsigned short* values )
@@ -74,7 +82,7 @@ void Writer::Write( Group& group, const std::string variableName, const unsigned
     auto index = PreSetVariable( group, variableName, " from call to Write unsigned short*" );
     Variable<unsigned short>& variable = group.m_UShort[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const int* values )
@@ -82,7 +90,7 @@ void Writer::Write( Group& group, const std::string variableName, const int* val
     auto index = PreSetVariable( group, variableName, " from call to Write int*" );
     Variable<int>& variable = group.m_Int[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const unsigned int* values )
@@ -90,7 +98,7 @@ void Writer::Write( Group& group, const std::string variableName, const unsigned
     auto index = PreSetVariable( group, variableName, " from call to Write unsigned int*" );
     Variable<unsigned int>& variable = group.m_UInt[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const long int* values )
@@ -98,7 +106,7 @@ void Writer::Write( Group& group, const std::string variableName, const long int
     auto index = PreSetVariable( group, variableName, " from call to Write long int*" );
     Variable<long int>& variable = group.m_LInt[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const unsigned long int* values )
@@ -106,7 +114,7 @@ void Writer::Write( Group& group, const std::string variableName, const unsigned
     auto index = PreSetVariable( group, variableName, " from call to Write unsigned long int*" );
     Variable<unsigned long int>& variable = group.m_ULInt[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const long long int* values )
@@ -114,7 +122,7 @@ void Writer::Write( Group& group, const std::string variableName, const long lon
     auto index = PreSetVariable( group, variableName, " from call to Write long long int*" );
     Variable<long long int>& variable = group.m_LLInt[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const unsigned long long int* values )
@@ -122,7 +130,7 @@ void Writer::Write( Group& group, const std::string variableName, const unsigned
     auto index = PreSetVariable( group, variableName, " from call to Write unsigned long long int*" );
     Variable<unsigned long long int>& variable = group.m_ULLInt[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 void Writer::Write( Group& group, const std::string variableName, const float* values )
@@ -130,7 +138,7 @@ void Writer::Write( Group& group, const std::string variableName, const float* v
     auto index = PreSetVariable( group, variableName, " from call to Write float*" );
     Variable<float>& variable = group.m_Float[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 
@@ -139,7 +147,7 @@ void Writer::Write( Group& group, const std::string variableName, const double* 
     auto index = PreSetVariable( group, variableName, " from call to Write double*" );
     Variable<double>& variable = group.m_Double[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 
@@ -148,7 +156,7 @@ void Writer::Write( Group& group, const std::string variableName, const long dou
     auto index = PreSetVariable( group, variableName, " from call to Write long double*" );
     Variable<long double>& variable = group.m_LDouble[index]; //must be a reference
     variable.Values = values;
-    WriterWriteVariable( group, variableName, variable, m_Buffer, m_Transports, m_BP1Writer );
+    WriterWriteVariable( group, variableName, variable, m_GrowthFactor, m_MaxBufferSize, m_RankMPI, m_Buffer, m_Transports, m_BP1Writer );
 }
 
 
@@ -309,7 +317,20 @@ void Writer::InitTransports( )
 
 void Writer::Close( const int transportIndex )
 {
+    //this should be done by BP1Format
+    if( transportIndex == -1 ) // all transports
+    {
+        for( auto& transport : m_Transports )
+            transport->Write( m_Buffer.m_Data.data(), m_Buffer.m_Data.size() );
 
+        for( auto& transport : m_Transports )
+            transport->Close( );
+    }
+    else
+    {
+        m_Transports[ transportIndex ]->Write( m_Buffer.m_Data.data(), m_Buffer.m_Data.size() );
+        m_Transports[ transportIndex ]->Close( );
+    }
 }
 
 

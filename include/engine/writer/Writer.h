@@ -68,6 +68,8 @@ public:
 private:
 
     Heap m_Buffer; ///< heap capsule
+    float m_GrowthFactor = 1.5;
+    std::size_t m_MaxBufferSize;
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
 
     void Init( );

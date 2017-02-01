@@ -72,7 +72,7 @@ public:
      * @param buffer pointer to buffer to be written
      * @param size size of buffer to be written
      */
-    virtual void Write( const char* buffer, const std::size_t size ) = 0;
+    virtual void Write( const char* buffer, std::size_t size ) = 0;
 
     /**
      * Some transports separate the data from the metadata in a different medium

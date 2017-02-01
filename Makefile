@@ -22,7 +22,7 @@ CPPFiles:=$(shell find ./src -type f -name "*.cpp")
 INC:=-I./include
 VPATH = ./src ./src/core ./src/functions \
         ./src/engine ./src/engine/writer ./src/engine/dataman \
-        ./src/capsule ./src/transform ./src/transport
+        ./src/capsule ./src/transform ./src/transport ./src/format
 
 #SEPARATE EXTERNAL LIBRARIES HANDLING in Makefile.libs
 export $(HFiles) $(CPPFiles) $(CFLAGS) $(LIBS)

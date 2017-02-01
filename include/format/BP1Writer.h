@@ -8,15 +8,18 @@
 #ifndef BP1WRITER_H_
 #define BP1WRITER_H_
 
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
 #include <cstdint>
 #include <algorithm> //std::count, std::copy, std::for_each
 #include <cstring> //std::memcpy
+#include <cmath>   //std::ceil
+/// \endcond
 
 #include "core/Variable.h"
 #include "core/Group.h"
-
+#include "functions/adiosTemplates.h"
+#include "functions/adiosFunctions.h"
 
 
 namespace adios
@@ -36,14 +39,17 @@ public:
 
     std::uint32_t m_VariablesCount = 0; ///< number of written Variables
     std::uint64_t m_VariablesLength = 0; ///< length in bytes of written Variables
-    std::vector<char> m_VariableIndex; ///< metadata variable index
+    std::size_t m_VariableIndexPosition = 12; ///< initial position in bytes
+    std::vector<char> m_VariableIndex = std::vector<char>( 102400 ); ///< metadata variable index, start with 1Kb
+    std::map< std::string, std::pair<std::size_t,std::size_t> > m_VariablePositions;
 
     std::uint32_t m_AttributesCount = 0; ///< number of Attributes
     std::uint64_t m_AttributesLength = 0; ///< length in bytes of Attributes
-    std::vector<char> m_AttributeIndex; ///< metadata attribute index
+    std::vector<char> m_AttributeIndex = std::vector<char>( 102400 ); ///< metadata attribute index
 
     const unsigned int m_Cores = 1;
     const unsigned int m_Verbosity = 0;
+    const float m_GrowthFactor = 1.5;
 
     /**
      * DataTypes mapping in BP Format
@@ -102,7 +108,6 @@ public:
         statistic_hist            = 5,
         statistic_finite          = 6
     };
-
 
     /**
      * Returns the estimated variable index size
@@ -168,7 +173,10 @@ public:
 
         for( unsigned int i = 0; i < length; ++i )
         {
-            std::memcpy( &buffers[positions[i]], source, size );
+            //std::memcpy( buffers[positions[i]], source, size );
+            char* buffer = buffers[i];
+            std::memcpy( &buffer[ positions[i] ], source, size );
+            //std::copy( source, source+size, &buffers[ positions[i] ] );
             positions[i] += size;
         }
     }
@@ -181,34 +189,9 @@ public:
 
         for( unsigned int i = 0; i < length; ++i )
         {
-            std::memcpy( &buffers[positions[i]], &source[i], size );
-            positions[i] += size;
-        }
-    }
-
-
-
-    template< class T, class U >
-    void CopyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const T* source, U size ) noexcept
-    {
-        const unsigned int length = buffers.size( );
-
-        for( unsigned int i = 0; i < length; ++i )
-        {
-            std::copy( source, source+size, &buffers[ positions[i] ] );
-            positions[i] += size;
-        }
-    }
-
-
-    template< class T, class U >
-    void CopyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const std::vector<T>& source, U size ) noexcept
-    {
-        const unsigned int length = buffers.size( );
-
-        for( unsigned int i = 0; i < length; ++i )
-        {
-            std::copy( &source[i], &source[i]+size, &buffers[ positions[i] ] );
+            char* buffer = buffers[i];
+            std::memcpy( &buffer[ positions[i] ], &source[i], size );
+            //std::copy( &source[i], &source[i]+size, &buffers[ positions[i] ] );
             positions[i] += size;
         }
     }
@@ -224,16 +207,16 @@ public:
      * @param metadataPosition position in metadataBuffer
      */
     template< class T >
-    void WriteVariable( const Group& group, const Var variableName, const Variable<T>& variable,
-                        std::vector<char*>& dataBuffers,
-                        std::vector<std::size_t>& dataPositions,
-                        std::vector<std::size_t>& dataAbsolutePositions,
-                        std::vector<char*>& metadataBuffers,
-                        std::vector<std::size_t>& metadataPositions ) noexcept
+    void WriteVariableIndex( const Group& group, const Var variableName, const Variable<T>& variable,
+                             std::vector<char*>& dataBuffers,
+                             std::vector<std::size_t>& dataPositions,
+                             std::vector<std::size_t>& dataAbsolutePositions,
+                             std::vector<char*>& metadataBuffers,
+                             std::vector<std::size_t>& metadataPositions ) noexcept
     {
         auto lf_MovePositions = []( const int bytes, std::vector<std::size_t>& positions )
         {
-            for( auto& position : positions ) // value or reference?
+            for( auto& position : positions )
                 position += bytes;
         };
 
@@ -304,7 +287,7 @@ public:
                 lf_MovePositions( 16, metadataPositions ); //skipping global dimension(8), global offset (8)
             }
 
-            const char no = 'n'; //dimension format unsigned int value (not using memberID for now)
+            constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
                 //data dimensions
@@ -344,7 +327,7 @@ public:
             }
 
             //data dimensions entry
-            const char no = 'n'; //dimension format unsigned int value
+            constexpr char no = 'n'; //dimension format unsigned int value
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
                 MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
@@ -405,8 +388,8 @@ public:
 
                 //set characteristic ids for min and max
                 characteristicID = characteristic_stat;
-                const std::int8_t statisticMinID = statistic_min;
-                const std::int8_t statisticMaxID = statistic_max;
+                constexpr std::int8_t statisticMinID = statistic_min;
+                constexpr std::int8_t statisticMaxID = statistic_max;
 
                 //write min and max to metadata
                 MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //min
@@ -419,7 +402,7 @@ public:
 
                 //write min and max to data
                 MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //min
-                const std::int16_t lengthCharacteristic = 1 + sizeof( T );
+                constexpr std::int16_t lengthCharacteristic = 1 + sizeof( T );
                 MemcpyToBuffers( dataBuffers, dataPositions, &lengthCharacteristic, 2 );
                 MemcpyToBuffers( dataBuffers, dataPositions, &statisticMinID, 1 );
                 MemcpyToBuffers( dataBuffers, dataPositions, &min, sizeof(T) );
@@ -433,10 +416,9 @@ public:
         ++characteristicsCounter;
 
         //Characteristics count and length in Data
-        std::vector<std::uint32_t> dataCharacteristicsLengths( dataPositions );
-        std::transform( dataCharacteristicsLengths.begin( ), dataCharacteristicsLengths.end( ),
-                        dataCharacteristicsCountPositions.begin(), dataCharacteristicsCountPositions.end(),
-                        std::minus<std::uint32_t>() );
+        std::vector<std::uint32_t> dataCharacteristicsLengths( dataPositions.size() );
+        for( unsigned int i = 0; i < dataPositions.size(); ++i )
+            dataCharacteristicsLengths[i] = dataPositions[i] - dataCharacteristicsCountPositions[i];
 
         MemcpyToBuffers( dataBuffers, dataCharacteristicsCountPositions, &characteristicsCounter, 1 );
         MemcpyToBuffers( dataBuffers, dataCharacteristicsCountPositions, dataCharacteristicsLengths, 4 ); //vector to vector
@@ -449,30 +431,31 @@ public:
         ++characteristicsCounter;
 
         //update absolute positions with dataPositions, this is the payload offset
-        std::transform( dataAbsolutePositions.begin(), dataAbsolutePositions.end(),
-                        dataPositions.begin(), dataPositions.end(), std::plus<std::size_t>() );
+        for( unsigned int i = 0; i < dataAbsolutePositions.size(); ++i )
+            dataAbsolutePositions[i] += dataPositions[i];
 
         characteristicID = characteristic_payload_offset;
         MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //variable payload offset id
         MemcpyToBuffers( metadataBuffers, metadataPositions, dataAbsolutePositions, 8 ); //variable payload offset
         ++characteristicsCounter;
 
-        //Characteristics count and length in Metadata
-        std::vector<std::uint32_t> metadataCharacteristicsLengths( metadataPositions );
-        std::transform( metadataCharacteristicsLengths.begin( ), metadataCharacteristicsLengths.end( ),
-                        metadataCharacteristicsCountPositions.begin(), metadataCharacteristicsCountPositions.end(),
-                        std::minus<std::uint32_t>() );
+        //Back to writing characteristics count and length in Metadata
+        std::vector<std::uint32_t> metadataCharacteristicsLengths( metadataPositions.size() );
+        for( unsigned int i = 0; i < metadataPositions.size(); ++i )
+            metadataCharacteristicsLengths[i] = metadataPositions[i] - metadataCharacteristicsCountPositions[i];
+
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, &characteristicsCounter, 1 );
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, metadataCharacteristicsLengths, 4 ); //vector to vector
         lf_MovePositions( -5, metadataCharacteristicsCountPositions ); //back to original position
 
-        //here write payload
-
-
-
-
         ++m_VariablesCount;
     } //end of function
+
+    /**
+     * Checks for var index current size and reallocates if needed for newIndexSize (coming from GetVariableIndexSize)
+     * @param newIndexSize size of new variable index to be written
+     */
+    void CheckVariableIndexSize( const std::size_t newIndexSize );
 
 
 private:
@@ -483,6 +466,16 @@ private:
      * @return data type
      */
     template< class T > inline std::int8_t GetDataType( ) noexcept { return type_unknown; }
+
+    /**
+     * Grows a buffer until newDataSize bytes can be written into the buffer from currentPosition.
+     * Buffer will grow at a rate given by m_GrowthFactor
+     * @param newDataSize size of data to be written after current position
+     * @param currentPosition current buffer position
+     * @param buffer to be reallocated
+     */
+    void GrowBuffer( const std::size_t newDataSize, const std::size_t currentPosition, std::vector<char>& buffer );
+
 
 };
 

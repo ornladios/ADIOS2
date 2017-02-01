@@ -60,7 +60,7 @@ Dims Group::SetDimensions( std::initializer_list<Var> variableList )
         }
         dimensionsCSV += variable + ",";
     }
-    dimensionsCSV.pop_back();
+    dimensionsCSV.pop_back(); //remove last comma
     return dimensionsCSV;
 }
 
@@ -72,7 +72,7 @@ Var Group::DefineVariable( const std::string variableName, const std::string typ
 {
     auto lf_CheckDimensionVariables = [&]( const std::string csv, const std::string dimensionType, const std::string variableName )
     {
-        if( csv.empty() == false )
+        if( csv.empty() == false && csv != "1" ) //skip scalars
             SetDimensionVariablesFlag( csv, " in " + dimensionType + " of variable " + variableName );
     };
 
@@ -81,6 +81,9 @@ Var Group::DefineVariable( const std::string variableName, const std::string typ
     {
         if( m_Variables.count( variableName ) == 1 )
             throw std::invalid_argument( "ERROR: variable " + variableName + " already exists, in call to DefineVariable\n" );
+
+        if( dimensionsCSV.empty() == true )
+            throw std::invalid_argument( "ERROR: variable " + variableName + " dimensions can't be empty, in call to DefineVariable\n" );
     }
 
     //Check for dimension variables

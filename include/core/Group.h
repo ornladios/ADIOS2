@@ -109,7 +109,7 @@ public:
 
     template< class T >
     Var DefineVariable( const std::string variableName,
-                        const Dims dimensionsCSV = "",
+                        const Dims dimensionsCSV = "1",
                         const Dims globalDimensionsCSV = "", const Dims globalOffsetsCSV = "",
                         const std::vector<Transform*> transforms = std::vector<Transform*>(),
                         const std::vector<int> parameters = std::vector<int>() )
