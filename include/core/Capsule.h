@@ -40,7 +40,7 @@ public:
      * @param cores if using threads
      */
     Capsule( const std::string type, const std::string accessMode, const int rankMPI,
-             const bool debugMode, const unsigned int cores );
+             const bool debugMode );
 
     virtual ~Capsule( );
 
@@ -58,7 +58,6 @@ protected:
 
     const int m_RankMPI = 0; ///< current MPI rank
     const bool m_DebugMode = false; ///< true: extra checks
-    const unsigned int m_Cores = 1; ///< number of cores for threaded operations
 
 };
 

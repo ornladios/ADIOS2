@@ -30,14 +30,6 @@ void Transport::SetBuffer( char* buffer, size_t size )
 { }
 
 
-void Transport::Init( const std::vector<std::string>& arguments )
-{ }
-
-
-void Transport::WriteMetadata( const char* buffer, const std::size_t size )
-{ }
-
-
 void Transport::Flush( )
 { }
 

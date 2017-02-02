@@ -5,14 +5,15 @@
  *      Author: wfg
  */
 
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <fcntl.h>  //open
 #include <sys/types.h> //open
 #include <sys/stat.h> //open
 #include <stddef.h> // write output
 #include <unistd.h> // write, close
-
 #include <ios> //std::ios_base::failure
+/// \endcond
+
 
 #include "transport/POSIX.h"
 

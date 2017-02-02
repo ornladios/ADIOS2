@@ -16,8 +16,10 @@
 #include <cmath>   //std::ceil
 /// \endcond
 
+#include "format/BP1.h"
 #include "core/Variable.h"
 #include "core/Group.h"
+#include "core/Capsule.h"
 #include "functions/adiosTemplates.h"
 #include "functions/adiosFunctions.h"
 
@@ -33,81 +35,21 @@ class BP1Writer
 
 public:
 
-    std::uint64_t m_ProcessGroupsCount = 0; ///< number of process groups
-    std::uint64_t m_ProcessGroupsLength = 0; ///< length in bytes of process groups
-    std::vector<char> m_ProcessGroupIndex; ///< process group index metadata
+    std::vector<BP1MetadataSet> m_BPMetadataSets;
 
-    std::uint32_t m_VariablesCount = 0; ///< number of written Variables
-    std::uint64_t m_VariablesLength = 0; ///< length in bytes of written Variables
-    std::size_t m_VariableIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> m_VariableIndex = std::vector<char>( 102400 ); ///< metadata variable index, start with 1Kb
-    std::map< std::string, std::pair<std::size_t,std::size_t> > m_VariablePositions;
-
-    std::uint32_t m_AttributesCount = 0; ///< number of Attributes
-    std::uint64_t m_AttributesLength = 0; ///< length in bytes of Attributes
-    std::vector<char> m_AttributeIndex = std::vector<char>( 102400 ); ///< metadata attribute index
-
-    const unsigned int m_Cores = 1;
-    const unsigned int m_Verbosity = 0;
-    const float m_GrowthFactor = 1.5;
+    unsigned int m_Cores = 1;  ///< number of cores for thread operations in large array (min,max)
+    unsigned int m_Verbosity = 0; ///< statistics verbosity, can change if redefined in Engine method.
+    float m_GrowthFactor = 1.5; ///< memory growth factor, can change if redefined in Engine method.
+    unsigned int m_VariablesCount = 0;
 
     /**
-     * DataTypes mapping in BP Format
+     * Unique constructor
+     * @param metadataSets number of metadata indices sets in BP format, sets the size of m_BPIndices. Typically one per capsule to separate metadata.
      */
-    enum DataTypes
-    {
-        type_unknown = -1,         //!< type_unknown
-        type_byte = 0,             //!< type_byte
-        type_short = 1,            //!< type_short
-        type_integer = 2,          //!< type_integer
-        type_long = 4,             //!< type_long
-
-        type_unsigned_byte = 50,   //!< type_unsigned_byte
-        type_unsigned_short = 51,  //!< type_unsigned_short
-        type_unsigned_integer = 52,//!< type_unsigned_integer
-        type_unsigned_long = 54,   //!< type_unsigned_long
-
-        type_real = 5,             //!< type_real or float
-        type_double = 6,           //!< type_double
-        type_long_double = 7,      //!< type_long_double
-
-        type_string = 9,           //!< type_string
-        type_complex = 10,         //!< type_complex
-        type_double_complex = 11,  //!< type_double_complex
-        type_string_array = 12     //!< type_string_array
-    };
-
-    /**
-     * Characteristic ID in variable metadata
-     */
-    enum VariableCharacteristicID
-    {
-        characteristic_value          = 0, //!< characteristic_value
-        characteristic_min            = 1, //!< This is no longer used. Used to read in older bp file format
-        characteristic_max            = 2, //!< This is no longer used. Used to read in older bp file format
-        characteristic_offset         = 3, //!< characteristic_offset
-        characteristic_dimensions     = 4, //!< characteristic_dimensions
-        characteristic_var_id         = 5, //!< characteristic_var_id
-        characteristic_payload_offset = 6, //!< characteristic_payload_offset
-        characteristic_file_index     = 7, //!< characteristic_file_index
-        characteristic_time_index     = 8, //!< characteristic_time_index
-        characteristic_bitmap         = 9, //!< characteristic_bitmap
-        characteristic_stat           = 10,//!< characteristic_stat
-        characteristic_transform_type = 11 //!< characteristic_transform_type
-    };
+    BP1Writer( const unsigned int metadataSets );
 
 
-    /** Define statistics type for characteristic ID = 10 in bp1 format */
-    enum VariableStatistics
-    {
-        statistic_min             = 0,
-        statistic_max             = 1,
-        statistic_cnt             = 2,
-        statistic_sum             = 3,
-        statistic_sum_square      = 4,
-        statistic_hist            = 5,
-        statistic_finite          = 6
-    };
+    ~BP1Writer( );
 
     /**
      * Returns the estimated variable index size
@@ -159,42 +101,7 @@ public:
         //need to add transform characteristics
     }
 
-    /**
-     * Write to many buffers and updates offset
-     * @param buffers
-     * @param source
-     * @param size
-     * @param offset
-     */
-    template< class T >
-    void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const T* source, std::size_t size ) noexcept
-    {
-        const unsigned int length = buffers.size( );
 
-        for( unsigned int i = 0; i < length; ++i )
-        {
-            //std::memcpy( buffers[positions[i]], source, size );
-            char* buffer = buffers[i];
-            std::memcpy( &buffer[ positions[i] ], source, size );
-            //std::copy( source, source+size, &buffers[ positions[i] ] );
-            positions[i] += size;
-        }
-    }
-
-    template< class T >
-    void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                          const std::vector<T>& source, std::size_t size ) noexcept
-    {
-        const unsigned int length = buffers.size( );
-
-        for( unsigned int i = 0; i < length; ++i )
-        {
-            char* buffer = buffers[i];
-            std::memcpy( &buffer[ positions[i] ], &source[i], size );
-            //std::copy( &source[i], &source[i]+size, &buffers[ positions[i] ] );
-            positions[i] += size;
-        }
-    }
 
     /**
      * @param group variable owner
@@ -214,35 +121,26 @@ public:
                              std::vector<char*>& metadataBuffers,
                              std::vector<std::size_t>& metadataPositions ) noexcept
     {
-        auto lf_MovePositions = []( const int bytes, std::vector<std::size_t>& positions )
-        {
-            for( auto& position : positions )
-                position += bytes;
-        };
-
         const std::vector<std::size_t> metadataLengthPositions( metadataPositions );
         const std::vector<std::size_t> dataLengthPositions( dataPositions );
 
-        lf_MovePositions( 4, metadataPositions ); //length of var, will come at the end from this offset
-        lf_MovePositions( 8, dataPositions ); //length of var, will come at the end from this offset
+        MovePositions( 4, metadataPositions ); //length of var, will come at the end from this offset
+        MovePositions( 8, dataPositions ); //length of var, will come at the end from this offset
 
         //memberID
         MemcpyToBuffers( metadataBuffers, metadataPositions, &m_VariablesCount, 4 );
         //group, only in metadata
         const std::uint16_t lengthGroupName = group.m_Name.length();
-        MemcpyToBuffers( metadataBuffers, metadataPositions, &lengthGroupName, 2 ); //2 bytes
-        MemcpyToBuffers( metadataBuffers, metadataPositions, group.m_Name.c_str(), lengthGroupName );
+        WriteNameRecord( group.m_Name, lengthGroupName, metadataBuffers, metadataPositions );
 
         //variable name to metadata and data
         const std::uint16_t lengthVariableName = variableName.length();
-        MemcpyToBuffers( metadataBuffers, metadataPositions, &lengthVariableName, 2 );
-        MemcpyToBuffers( metadataBuffers, metadataPositions, variableName.c_str(), lengthVariableName );
-        MemcpyToBuffers( dataBuffers, dataPositions, &lengthVariableName, 2 );
-        MemcpyToBuffers( dataBuffers, dataPositions, variableName.c_str(), lengthVariableName );
+        WriteNameRecord( variableName, lengthVariableName, metadataBuffers, metadataPositions );
+        WriteNameRecord( variableName, lengthVariableName, dataBuffers, dataPositions );
 
         //skip path (jump 2 bytes, already set to zero)
-        lf_MovePositions( 2, metadataPositions ); //length of var, will come at the end from this offset
-        lf_MovePositions( 2, dataPositions ); //length of var, will come at the end from this offset
+        MovePositions( 2, metadataPositions ); //length of var, will come at the end from this offset
+        MovePositions( 2, dataPositions ); //length of var, will come at the end from this offset
 
         //dataType
         const std::uint8_t dataType = GetDataType<T>();
@@ -284,7 +182,7 @@ public:
             {
                 //metadata characteristics
                 MemcpyToBuffers( metadataBuffers, metadataPositions, &localDimensions[d], 8 );
-                lf_MovePositions( 16, metadataPositions ); //skipping global dimension(8), global offset (8)
+                MovePositions( 16, metadataPositions ); //skipping global dimension(8), global offset (8)
             }
 
             constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
@@ -293,13 +191,13 @@ public:
                 //data dimensions
                 MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
                 MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
-                lf_MovePositions( 18, dataPositions ); //skipping var no + global dimension(8), var no + global offset (8)
+                MovePositions( 18, dataPositions ); //skipping var no + global dimension(8), var no + global offset (8)
             }
 
             //dimensions in data characteristic entry
             dataCharacteristicsCountPositions = dataPositions; //very important
 
-            lf_MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
+            MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
 
             const std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
@@ -310,7 +208,7 @@ public:
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
                 MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
-                lf_MovePositions( 16, dataPositions );
+                MovePositions( 16, dataPositions );
             }
         }
         else //global variable
@@ -327,18 +225,20 @@ public:
             }
 
             //data dimensions entry
-            constexpr char no = 'n'; //dimension format unsigned int value
+            constexpr char no = 'n'; //dimension format unsigned int value for now
             for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
             {
                 MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
                 MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
                 MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &globalDimensions[d], 8 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
+                MemcpyToBuffers( dataBuffers, dataPositions, &globalOffsets[d], 8 );
             }
 
             //dimensions in data characteristic entry
             dataCharacteristicsCountPositions = dataPositions;
-            lf_MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
+            MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //id
 
             const std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
@@ -360,18 +260,16 @@ public:
         if( variable.DimensionsCSV == "1" ) //scalar //just doing string scalars for now (by name), needs to be modified when user passes value
         {
             characteristicID = characteristic_value;
-            const std::int16_t lenghtOfName = variableName.length();
+            const std::int16_t lengthOfName = variableName.length();
             //metadata
             MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1  );
-            MemcpyToBuffers( metadataBuffers, metadataPositions, &lenghtOfName, 2 );
-            MemcpyToBuffers( metadataBuffers, metadataPositions, variableName.c_str(), lenghtOfName );
+            WriteNameRecord( variableName, lengthOfName, metadataBuffers, metadataPositions );
 
             //data
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
-            const std::int16_t lengthOfCharacteristic = 2 + lenghtOfName;
+            const std::int16_t lengthOfCharacteristic = 2 + lengthOfName;
             MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfCharacteristic, 2 );
-            MemcpyToBuffers( dataBuffers, dataPositions, &lenghtOfName, 2 );
-            MemcpyToBuffers( dataBuffers, dataPositions, variableName.c_str(), lenghtOfName );
+            WriteNameRecord( variableName, lengthOfName, dataBuffers, dataPositions );
         }
         else // Stat -> Min, Max for arrays,
         {
@@ -391,26 +289,10 @@ public:
                 constexpr std::int8_t statisticMinID = statistic_min;
                 constexpr std::int8_t statisticMaxID = statistic_max;
 
-                //write min and max to metadata
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //min
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &statisticMinID, 1 );
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &min, sizeof(T) );
-
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1  ); //max
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &statisticMaxID, 1 );
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &max, sizeof(T) );
-
-                //write min and max to data
-                MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //min
-                constexpr std::int16_t lengthCharacteristic = 1 + sizeof( T );
-                MemcpyToBuffers( dataBuffers, dataPositions, &lengthCharacteristic, 2 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &statisticMinID, 1 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &min, sizeof(T) );
-
-                MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //max
-                MemcpyToBuffers( dataBuffers, dataPositions, &lengthCharacteristic, 2 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &statisticMaxID, 1 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &max, sizeof(T) );
+                WriteStatisticsRecord( statisticMinID, min, metadataBuffers, metadataPositions );
+                WriteStatisticsRecord( statisticMaxID, max, metadataBuffers, metadataPositions );
+                WriteStatisticsRecord( statisticMinID, min, dataBuffers, dataPositions, true ); //addLength in between
+                WriteStatisticsRecord( statisticMaxID, max, dataBuffers, dataPositions, true ); //addLength in between
             }
         }
         ++characteristicsCounter;
@@ -422,7 +304,7 @@ public:
 
         MemcpyToBuffers( dataBuffers, dataCharacteristicsCountPositions, &characteristicsCounter, 1 );
         MemcpyToBuffers( dataBuffers, dataCharacteristicsCountPositions, dataCharacteristicsLengths, 4 ); //vector to vector
-        lf_MovePositions( -5, dataCharacteristicsCountPositions ); //back to original position
+        MovePositions( -5, dataCharacteristicsCountPositions ); //back to original position
 
         //Offsets should be last and only written to metadata, they come from absolute positions
         characteristicID = characteristic_offset;
@@ -446,19 +328,52 @@ public:
 
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, &characteristicsCounter, 1 );
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, metadataCharacteristicsLengths, 4 ); //vector to vector
-        lf_MovePositions( -5, metadataCharacteristicsCountPositions ); //back to original position
+        MovePositions( -5, metadataCharacteristicsCountPositions ); //back to original position
 
         ++m_VariablesCount;
     } //end of function
 
-    /**
-     * Checks for var index current size and reallocates if needed for newIndexSize (coming from GetVariableIndexSize)
-     * @param newIndexSize size of new variable index to be written
-     */
-    void CheckVariableIndexSize( const std::size_t newIndexSize );
+
+    void Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport );
 
 
 private:
+
+    /**
+     * Writes name record using a
+     * @param name to be written
+     * @param length number of characters in name
+     * @param buffers to be written
+     * @param positions to be moved
+     */
+    void WriteNameRecord( const std::string& name, const std::uint16_t& length,
+                          std::vector<char*>& buffers, std::vector<std::size_t>& positions );
+
+    /**
+     *
+     * @param id
+     * @param value
+     * @param buffers
+     * @param positions
+     * @param addLength true for data, false for metadata
+     */
+    template< class T>
+    void WriteStatisticsRecord( const std::uint8_t& id, const T& value,
+                                std::vector<char*>& buffers, std::vector<std::size_t>& positions, const bool addLength = false )
+    {
+        const std::uint8_t characteristicID = characteristic_stat;
+        MemcpyToBuffers( buffers, positions, &characteristicID, 1 );
+
+        if( addLength == true )
+        {
+            const std::int16_t lengthCharacteristic = 1 + sizeof( T );
+            MemcpyToBuffers( buffers, positions, &lengthCharacteristic, 2 );
+        }
+
+        MemcpyToBuffers( buffers, positions, &id, 1 );
+        MemcpyToBuffers( buffers, positions, &value, sizeof(T) );
+    }
+
 
     /**
      * Returns data type index from enum Datatypes
@@ -467,16 +382,10 @@ private:
      */
     template< class T > inline std::int8_t GetDataType( ) noexcept { return type_unknown; }
 
-    /**
-     * Grows a buffer until newDataSize bytes can be written into the buffer from currentPosition.
-     * Buffer will grow at a rate given by m_GrowthFactor
-     * @param newDataSize size of data to be written after current position
-     * @param currentPosition current buffer position
-     * @param buffer to be reallocated
-     */
-    void GrowBuffer( const std::size_t newDataSize, const std::size_t currentPosition, std::vector<char>& buffer );
+    void SetMiniFooter( BP1MetadataSet& metadataSet ); ///< sets the minifooter
+    void SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule ); ///< sets the metadata buffer in capsule with indices and minifooter
 
-
+    void ClosePOSIX( Capsule& capsule, Transport& transport );
 };
 
 

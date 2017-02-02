@@ -539,6 +539,41 @@ std::vector<int> CSVToVectorInt( const std::string csv )
 
 
 
+int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, const std::size_t currentPosition,
+                std::vector<char>& buffer )
+{
+    const std::size_t currentCapacity = buffer.capacity();
+    const std::size_t availableSpace = currentCapacity - currentPosition;
+    const double gf = static_cast<double>( growthFactor );
 
+    if( incomingDataSize > availableSpace )
+    {
+        const std::size_t neededCapacity = incomingDataSize + currentPosition;
+        const double numerator = std::log( static_cast<double>( neededCapacity ) / static_cast<double>( currentCapacity ) );
+        const double denominator = std::log( gf );
+
+        double n = std::ceil( numerator / denominator );
+        const std::size_t newSize = static_cast<std::size_t>( std::ceil(  std::pow( gf, n ) * currentCapacity ) );
+
+        try
+        {
+            buffer.resize( newSize );
+        }
+        catch( std::bad_alloc& e )
+        {
+            return -1;
+        }
+
+        return 1;
+    }
+    return 0;
+}
+
+
+void MovePositions( const int bytes, std::vector<std::size_t>& positions )
+{
+    for( auto& position : positions )
+        position += bytes;
+}
 
 } //end namespace

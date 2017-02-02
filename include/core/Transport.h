@@ -32,6 +32,7 @@ public:
     const std::string m_Type; ///< transport type from derived class
     std::string m_Name; ///< from Open
     std::string m_AccessMode; ///< from Open
+    bool m_IsOpen = false;
 
     #ifdef HAVE_MPI
     MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
@@ -73,13 +74,6 @@ public:
      * @param size size of buffer to be written
      */
     virtual void Write( const char* buffer, std::size_t size ) = 0;
-
-    /**
-     * Some transports separate the data from the metadata in a different medium
-     * @param buffer
-     * @param size
-     */
-    virtual void WriteMetadata( const char* buffer, const std::size_t size );
 
     virtual void Flush( ); ///< flushes current contents to physical medium without closing the transport
 

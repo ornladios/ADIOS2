@@ -42,84 +42,65 @@ template <class T>
 void WriterWriteVariable( const Group& group, const Var variableName, const Variable<T>& variable,
                           const float growthFactor, const std::size_t maxBufferSize, const int rankMPI,
                           Heap& buffer, std::vector< std::shared_ptr<Transport> >& transports,
-                          format::BP1Writer& bp1Writer )
+                          format::BP1Writer& bp1Writer, const unsigned int cores = 1 )
 {
+    auto lf_CheckAllocationResult = [ ]( const int result, const std::string variableName, const int rankMPI )
+    {
+        if( result == -1 )
+            throw std::runtime_error( "ERROR: bad_alloc when writing variable " + variableName +
+                                      " from rank " + std::to_string( rankMPI ) );
+    };
+
     //Check if data in buffer needs to be reallocated
     const size_t indexSize = bp1Writer.GetVariableIndexSize( group, variableName, variable ); //metadata size
     const std::size_t payloadSize = GetTotalSize( group.GetDimensions( variable.DimensionsCSV ) ) * sizeof( T );
     const std::size_t dataSize = payloadSize + indexSize + 10; //adding some bytes tolerance
 
-    const std::size_t currentCapacity = buffer.m_Data.capacity( );
-    const std::size_t availableSize = currentCapacity - buffer.m_DataPosition;
-
     bool doTransportsFlush = false; // might need to write payload in batches
-
-    if( dataSize > availableSize )
+    const std::size_t neededSize = dataSize + buffer.m_DataPosition;
+    if( neededSize > maxBufferSize )
     {
-        const std::size_t minimumNewSize = dataSize + buffer.m_DataPosition;
-        const unsigned int factor = static_cast<unsigned int>( std::ceil( minimumNewSize / currentCapacity / growthFactor ) );
-        const std::size_t newSize = factor * growthFactor * currentCapacity;
-
-        if( newSize <= maxBufferSize )
-        {
-            try
-            {
-                buffer.m_Data.resize( newSize );
-            }
-            catch( std::bad_alloc& e )
-            {
-                throw std::invalid_argument( "ERROR: couldn't allocate maximum buffer size of " + std::to_string( maxBufferSize ) +
-                                             " in rank " + std::to_string( rankMPI ) + " when Write variable " + variableName + "\n"  );
-            }
-        }
-        else
-        {
-            doTransportsFlush = true;
-            try
-            {
-                buffer.m_Data.resize( maxBufferSize );
-            }
-            catch( std::bad_alloc& e )
-            {
-                throw std::invalid_argument( "ERROR: couldn't allocate maximum buffer size of " + std::to_string( maxBufferSize ) +
-                                             " in rank " + std::to_string( rankMPI ) + " when Write variable " + variableName + "\n"  );
-            }
-        }
+        doTransportsFlush = true;
+        int result = GrowBuffer( maxBufferSize, growthFactor, buffer.m_DataPosition, buffer.m_Data );
+        lf_CheckAllocationResult( result, variableName, rankMPI );
+    }
+    else
+    {
+        int result = GrowBuffer( neededSize, growthFactor, buffer.m_DataPosition, buffer.m_Data );
+        lf_CheckAllocationResult( result, variableName, rankMPI );
     }
 
     //WRITE INDEX//
-    bp1Writer.CheckVariableIndexSize( indexSize ); //checks bp1Writer m_VariableIndex
+    auto& bpMetadataSet = bp1Writer.m_BPMetadataSets[0];
+    int result = GrowBuffer( indexSize, growthFactor, bpMetadataSet.VarsIndexPosition, bpMetadataSet.VarsIndex );
+    lf_CheckAllocationResult( result, variableName, rankMPI );
 
     //Write in BP Format
     std::vector<char*> dataBuffers { buffer.m_Data.data() };
     std::vector<std::size_t> dataPositions { buffer.m_DataPosition }; //needs to be updated
     std::vector<std::size_t> dataAbsolutePositions { buffer.m_DataAbsolutePosition }; //needs to be updated at the end
-    std::vector<char*> metadataBuffers { bp1Writer.m_VariableIndex.data() };
-    std::vector<std::size_t> metadataPositions { bp1Writer.m_VariableIndexPosition }; //needs to be updated
+    std::vector<char*> metadataBuffers { bpMetadataSet.VarsIndex.data() };
+    std::vector<std::size_t> metadataPositions { bpMetadataSet.VarsIndexPosition  }; //needs to be updated
 
     bp1Writer.WriteVariableIndex( group, variableName, variable, dataBuffers, dataPositions,
                                   dataAbsolutePositions, metadataBuffers, metadataPositions );
 
     buffer.m_DataPosition = dataPositions[0];
     buffer.m_DataAbsolutePosition = dataAbsolutePositions[0];
-    bp1Writer.m_VariableIndexPosition = metadataPositions[0];
-
-
+    bpMetadataSet.VarsIndexPosition = metadataPositions[0];
 
     //here write payload to data
-    if( doTransportsFlush == true )
+    if( doTransportsFlush == true ) //in batches
     {
 
     }
     else
     {
-        bp1Writer.MemcpyToBuffers( dataBuffers, dataPositions, variable.Values, payloadSize ); //this is the expensive part might want to use Cores
-        buffer.m_DataPosition = dataPositions[0];
+        //this is the expensive part might want to use threaded memcpy
+        MemcpyThreads( buffer.m_Data.data(), variable.Values, payloadSize, cores );
+        buffer.m_DataPosition += payloadSize;
         buffer.m_DataAbsolutePosition += buffer.m_DataPosition;
     }
-
-
-
 
 //
 //    const std::size_t bytesToWrite = localSize * sizeof( double ); //size of values + min + max in bytes

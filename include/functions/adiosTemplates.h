@@ -123,6 +123,52 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
 }
 
 
+/**
+ * Write to many buffers and updates positions a single piece of data source
+ * @param buffers
+ * @param positions  each element is updated to += size
+ * @param source
+ * @param size
+ */
+template< class T >
+void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const T* source, std::size_t size ) noexcept
+{
+    const unsigned int length = buffers.size( );
+
+    for( unsigned int i = 0; i < length; ++i )
+    {
+        char* buffer = buffers[i];
+        std::memcpy( &buffer[ positions[i] ], source, size );
+        //std::copy( source, source+size, &buffers[ positions[i] ] );
+        positions[i] += size;
+    }
+}
+
+
+/**
+ * Version that adds a source container for a 1 to 1 buffer memory copy
+ * @param buffers
+ * @param positions
+ * @param source
+ * @param size
+ */
+template< class T >
+void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+                      const std::vector<T>& source, std::size_t size ) noexcept
+{
+    const unsigned int length = buffers.size( );
+
+    for( unsigned int i = 0; i < length; ++i )
+    {
+        char* buffer = buffers[i];
+        std::memcpy( &buffer[ positions[i] ], &source[i], size );
+        //std::copy( &source[i], &source[i]+size, &buffers[ positions[i] ] );
+        positions[i] += size;
+    }
+}
+
+
+
 } //end namespace
 
 

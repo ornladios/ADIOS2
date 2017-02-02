@@ -14,12 +14,11 @@ namespace adios
 
 
 Capsule::Capsule( const std::string type, const std::string accessMode, const int rankMPI,
-                  const bool debugMode, const unsigned int cores ):
+                  const bool debugMode ):
     m_Type{ type },
     m_AccessMode{ accessMode },
     m_RankMPI{ rankMPI },
-    m_DebugMode{ debugMode },
-    m_Cores{ cores }
+    m_DebugMode{ debugMode }
 { }
 
 

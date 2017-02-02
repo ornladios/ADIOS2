@@ -6,11 +6,9 @@
  */
 
 #include <sys/shm.h>
-
 #include <ios> //std::ios_base::failure
 
 #include "capsule/ShmSystemV.h"
-#include "functions/capsuleTemplates.h"
 
 
 namespace adios
@@ -18,9 +16,8 @@ namespace adios
 
 
 ShmSystemV::ShmSystemV( const std::string accessMode, const int rankMPI, const std::string pathName,
-                        const size_t dataSize, const size_t metadataSize,
-                        const bool debugMode, const unsigned int cores ):
-    Capsule( "ShmSystemV", accessMode, rankMPI, debugMode, cores ),
+                        const size_t dataSize, const size_t metadataSize, const bool debugMode ):
+    Capsule( "ShmSystemV", accessMode, rankMPI, debugMode ),
     m_DataSize{ dataSize },
     m_MetadataSize{ metadataSize }
 {

@@ -31,10 +31,8 @@ public:
      * @param accessMode read, write or append
      * @param rankMPI MPI rank
      * @param debugMode true: extra checks, slower
-     * @param cores threaded operations
      */
-    Heap( const std::string accessMode, const int rankMPI, const bool debugMode = false,
-          const unsigned int cores = 1 );
+    Heap( const std::string accessMode, const int rankMPI, const bool debugMode = false );
 
     ~Heap( );
 

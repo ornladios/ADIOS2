@@ -31,7 +31,8 @@ namespace engine
 DataMan::DataMan( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
                   const Method& method, const bool debugMode, const unsigned int cores ):
     Engine( "DataMan", streamName, accessMode, mpiComm, method, debugMode, cores, " DataMan constructor (or call to ADIOS Open).\n" ),
-    m_Buffer{ Heap( accessMode, m_RankMPI, m_DebugMode, cores ) }
+    m_Buffer( accessMode, m_RankMPI, m_DebugMode ),
+    m_BP1Writer( 1 )
 {
     Init( );
 }

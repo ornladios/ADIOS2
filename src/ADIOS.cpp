@@ -102,7 +102,7 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
     if( type == "Writer" || type == "writer" )
     {
-        return std::make_shared<Writer>( name, accessMode, mpiComm, method, cores );
+        return std::make_shared<Writer>( name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {
@@ -110,7 +110,7 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
     }
     else if( type == "DataMan" )
     {
-    	return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, cores );
+    	return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else
     {

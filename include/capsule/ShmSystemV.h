@@ -30,8 +30,7 @@ public:
      * @param cores threaded operations
      */
     ShmSystemV( const std::string accessMode, const int rankMPI, const std::string pathName,
-                const size_t dataSize, const size_t metadataSize,
-                const bool debugMode = false, const unsigned int cores = 1 );
+                const size_t dataSize, const size_t metadataSize, const bool debugMode = false );
 
     ~ShmSystemV( );
 
@@ -45,12 +44,12 @@ public:
 private:
 
     char* m_Data = nullptr; ///< reference to a shared memory data buffer created with shmget
-    const size_t m_DataSize; ///< size of the allocated shared memory segment
+    const std::size_t m_DataSize; ///< size of the allocated shared memory segment
     key_t m_DataKey; ///< key associated with the data buffer, created with ftok
     int m_DataShmID; ///< data shared memory buffer id
 
     char* m_Metadata = nullptr; ///< reference to a shared memory metadata buffer created with shmget
-    const size_t m_MetadataSize; ///< size of the allocated shared memory segment
+    const std::size_t m_MetadataSize; ///< size of the allocated shared memory segment
     key_t m_MetadataKey; ///< key associated with the metadata buffer, created with ftok
     int m_MetadataShmID; ///< metadata shared memory buffer id
 

@@ -160,6 +160,24 @@ std::map<std::string, std::string> BuildParametersMap( const std::vector<std::st
 std::vector<int> CSVToVectorInt( const std::string csv );
 
 
+/**
+ * Grows a buffer by a factor of  n . growthFactor . currentCapacity to accommodate for incomingDataSize
+ * @param incomingDataSize size of new data required to be stored in buffer
+ * @param growthFactor buffer grows in multiples of the growth buffer
+ * @param currentPosition current buffer position, needed to get available space = currentCapacity - currentPosition
+ * @param buffer to be resized
+ * @return -1: failed to allocate (bad_alloc), 0: didn't have to allocate (enough space), 1: successful allocation
+ */
+int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, const std::size_t currentPosition,
+                std::vector<char>& buffer );
+
+/**
+ * Moves positions in a vector by a number of bytes
+ * @param bytes input number of bytes
+ * @param positions  += bytes
+ */
+void MovePositions( const int bytes, std::vector<std::size_t>& positions );
+
 } //end namespace
 
 
