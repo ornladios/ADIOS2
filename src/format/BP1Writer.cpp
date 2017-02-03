@@ -34,8 +34,8 @@ void BP1Writer::Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Tran
 }
 
 //PRIVATE FUNCTIONS
-void WriteNameRecord( const std::string& name, const std::uint16_t& length,
-                      std::vector<char*>& buffers, std::vector<std::size_t>& positions )
+void BP1Writer::WriteNameRecord( const std::string& name, const std::uint16_t& length,
+                                 std::vector<char*>& buffers, std::vector<std::size_t>& positions )
 {
     MemcpyToBuffers( buffers, positions, &length, 2 );
     MemcpyToBuffers( buffers, positions, name.c_str( ), length );

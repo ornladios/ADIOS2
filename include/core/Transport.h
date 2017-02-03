@@ -83,11 +83,6 @@ public:
 protected:
 
     const bool m_DebugMode = false; ///< if true: additional checks and exceptions
-    /**
-     * Initialize particular derived transport class members
-     * @param arguments particular transport arguments
-     */
-    virtual void Init( const std::vector<std::string>& arguments );
 
 };
 
