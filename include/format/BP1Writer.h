@@ -178,80 +178,38 @@ public:
 
         if( variable.GlobalBoundsIndex == -1 ) //local variable
         {
-            for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
-            {
-                //metadata characteristics
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &localDimensions[d], 8 );
-                MovePositions( 16, metadataPositions ); //skipping global dimension(8), global offset (8)
-            }
+            WriteDimensionRecord( metadataBuffers, metadataPositions, localDimensions, 16 );
+            WriteDimensionRecord( dataBuffers, dataPositions, localDimensions, 18, true ); //not using memberID for now
 
-            constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
-            for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
-            {
-                //data dimensions
-                MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
-                MovePositions( 18, dataPositions ); //skipping var no + global dimension(8), var no + global offset (8)
-            }
+            dataCharacteristicsCountPositions = dataPositions; //very important to track as writer is going back to this position
+            MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
 
             //dimensions in data characteristic entry
-            dataCharacteristicsCountPositions = dataPositions; //very important
-
-            MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
-
             const std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
             MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfDimensionsCharacteristic, 2 );
             MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
             MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLength, 2 );
-
-            for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
-            {
-                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
-                MovePositions( 16, dataPositions );
-            }
+            WriteDimensionRecord( dataBuffers, dataPositions, localDimensions, 16 );
         }
         else //global variable
         {
             const std::vector<unsigned long long int> globalDimensions = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].first );
             const std::vector<unsigned long long int> globalOffsets = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].second );
 
-            //metadata, writing in characteristics
-            for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
-            {
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &localDimensions[d], 8 );
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &globalDimensions[d], 8 );
-                MemcpyToBuffers( metadataBuffers, metadataPositions, &globalOffsets[d], 8 );
-            }
+            WriteDimensionRecord( metadataBuffers, metadataPositions, localDimensions, globalDimensions, globalOffsets );
+            WriteDimensionRecord( dataBuffers, dataPositions, localDimensions, globalDimensions, globalOffsets, true );
 
-            //data dimensions entry
-            constexpr char no = 'n'; //dimension format unsigned int value for now
-            for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
-            {
-                MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &globalDimensions[d], 8 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &no, 1 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &globalOffsets[d], 8 );
-            }
+            dataCharacteristicsCountPositions = dataPositions; //very important, going back to these positions
+            MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
 
             //dimensions in data characteristic entry
-            dataCharacteristicsCountPositions = dataPositions;
-            MovePositions( 5, dataPositions ); //skip characteristics count(1) + length (4)
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //id
-
             const std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
             MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfDimensionsCharacteristic, 2 );
             MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
             MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLength, 2 );
-
-            for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
-            {
-                MemcpyToBuffers( dataBuffers, dataPositions, &localDimensions[d], 8 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &globalDimensions[d], 8 );
-                MemcpyToBuffers( dataBuffers, dataPositions, &globalOffsets[d], 8 );
-            }
+            WriteDimensionRecord( dataBuffers, dataPositions, localDimensions, globalDimensions, globalOffsets );
         }
         ++characteristicsCounter;
 
@@ -268,7 +226,7 @@ public:
             //data
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
             const std::int16_t lengthOfCharacteristic = 2 + lengthOfName;
-            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfCharacteristic, 2 );
+            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfCharacteristic, 2 ); //added in data
             WriteNameRecord( variableName, lengthOfName, dataBuffers, dataPositions );
         }
         else // Stat -> Min, Max for arrays,
@@ -349,6 +307,17 @@ private:
     void WriteNameRecord( const std::string& name, const std::uint16_t& length,
                           std::vector<char*>& buffers, std::vector<std::size_t>& positions );
 
+    void WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+                               const std::vector<unsigned long long int>& localDimensions,
+                               const std::vector<unsigned long long int>& globalDimensions,
+                               const std::vector<unsigned long long int>& globalOffsets,
+                               const bool addType = false );
+
+    void WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+                               const std::vector<unsigned long long int>& localDimensions,
+                               const unsigned int skip,
+                               const bool addType = false );
+
     /**
      *
      * @param id
@@ -357,7 +326,7 @@ private:
      * @param positions
      * @param addLength true for data, false for metadata
      */
-    template< class T>
+    template<class T>
     void WriteStatisticsRecord( const std::uint8_t& id, const T& value,
                                 std::vector<char*>& buffers, std::vector<std::size_t>& positions, const bool addLength = false )
     {

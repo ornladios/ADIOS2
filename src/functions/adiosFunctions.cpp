@@ -9,10 +9,10 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include <iostream>
 #include <thread>  //std::thread
 #include <cstring> //std::memcpy
 #include <algorithm> //std::count
+#include <cmath> // std::ceil, std::pow, std::log
 
 #include <sys/types.h> //CreateDirectory
 #include <sys/stat.h> //stat
@@ -575,5 +575,6 @@ void MovePositions( const int bytes, std::vector<std::size_t>& positions )
     for( auto& position : positions )
         position += bytes;
 }
+
 
 } //end namespace

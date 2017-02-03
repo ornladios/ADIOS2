@@ -42,6 +42,63 @@ void BP1Writer::WriteNameRecord( const std::string& name, const std::uint16_t& l
 }
 
 
+void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+                                      const std::vector<unsigned long long int>& localDimensions,
+                                      const std::vector<unsigned long long int>& globalDimensions,
+                                      const std::vector<unsigned long long int>& globalOffsets,
+                                      const bool addType )
+{
+    if( addType == true )
+    {
+        constexpr char no = 'n'; //dimension format unsigned int value for now
+        for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
+        {
+            MemcpyToBuffers( buffers, positions, &no, 1 );
+            MemcpyToBuffers( buffers, positions, &localDimensions[d], 8 );
+            MemcpyToBuffers( buffers, positions, &no, 1 );
+            MemcpyToBuffers( buffers, positions, &globalDimensions[d], 8 );
+            MemcpyToBuffers( buffers, positions, &no, 1 );
+            MemcpyToBuffers( buffers, positions, &globalOffsets[d], 8 );
+        }
+    }
+    else
+    {
+        for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
+        {
+            MemcpyToBuffers( buffers, positions, &localDimensions[d], 8 );
+            MemcpyToBuffers( buffers, positions, &globalDimensions[d], 8 );
+            MemcpyToBuffers( buffers, positions, &globalOffsets[d], 8 );
+        }
+    }
+}
+
+void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+                                      const std::vector<unsigned long long int>& localDimensions,
+                                      const unsigned int skip,
+                                      const bool addType )
+{
+
+    if( addType == true )
+    {
+        constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
+        for( const auto& localDimension : localDimensions )
+        {
+            MemcpyToBuffers( buffers, positions, &no, 1 );
+            MemcpyToBuffers( buffers, positions, &localDimension, 8 );
+            MovePositions( skip, positions );
+        }
+    }
+    else
+    {
+        for( const auto& localDimension : localDimensions )
+        {
+            MemcpyToBuffers( buffers, positions, &localDimension, 8 );
+            MovePositions( skip, positions );
+        }
+    }
+}
+
+
 void BP1Writer::ClosePOSIX( Capsule& capsule, Transport& transport )
 {
 

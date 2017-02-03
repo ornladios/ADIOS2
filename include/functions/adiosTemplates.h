@@ -68,7 +68,7 @@ bool IsTypeAlias( const std::string type,
  * @param max
  */
 template<class T>
-void GetMinMax( const T* values, const size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
+void GetMinMax( const T* values, const std::size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
 {
     min = values[0];
     max = values[0];

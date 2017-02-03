@@ -44,7 +44,7 @@ void WriterWriteVariable( const Group& group, const Var variableName, const Vari
                           Heap& buffer, std::vector< std::shared_ptr<Transport> >& transports,
                           format::BP1Writer& bp1Writer, const unsigned int cores = 1 )
 {
-    auto lf_CheckAllocationResult = [ ]( const int result, const std::string variableName, const int rankMPI )
+    auto lf_CheckAllocationResult = []( const int result, const std::string variableName, const int rankMPI )
     {
         if( result == -1 )
             throw std::runtime_error( "ERROR: bad_alloc when writing variable " + variableName +

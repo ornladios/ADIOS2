@@ -28,6 +28,7 @@ int main( int argc, char* argv [] )
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     const bool adiosDebug = true;
     adios::ADIOS adios( MPI_COMM_WORLD, adiosDebug );
+    //adios::ADIOS adios( "xmlFile.adios", MPI_COMM_WORLD, adiosDebug );
 
     //Application variable
     std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -38,17 +39,13 @@ int main( int argc, char* argv [] )
     {
         //Define group and variables with transforms, variables don't have functions, only group can access variables
         adios::Group& ioGroup = adios.DeclareGroup( "ioGroup" );
-
         adios::Var ioNx = ioGroup.DefineVariable<unsigned int>( "Nx" );
         adios::Dims dimNx = ioGroup.SetDimensions( {ioNx} );
-
-        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", dimNx );
-        //adios::Var ioMyFloats = ioGroup.DefineVariable<float>( "myFloats", dimNx ) ;
+        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles" );
 
         //add transform to variable in group...not executed (just testing API)
         adios::Transform bzip2 = adios::transform::BZIP2( );
         ioGroup.AddTransform( ioMyDoubles, bzip2, 1 );
-        //ioGroup.AddTransform( ioMyFloats, bzip2, 1 );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
@@ -63,8 +60,7 @@ int main( int argc, char* argv [] )
             throw std::ios_base::failure( "ERROR: failed to open ADIOS bpWriter\n" );
 
         bpWriter->Write<unsigned int>( ioNx, &Nx );
-        //bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-        //bpWriter->Write<float>( ioMyFloats, myFloats.data() );
+        bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
         bpWriter->Close( );
     }
     catch( std::invalid_argument& e )
