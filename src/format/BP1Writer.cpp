@@ -25,6 +25,64 @@ BP1Writer::~BP1Writer( )
 { }
 
 
+std::size_t BP1Writer::GetProcessIndexSize( const std::string name, const std::string timeStepName )
+{
+    return name.length() + timeStepName.length() + 23;
+}
+
+
+void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
+                                        const std::string timeStepName, const unsigned int timeStep,
+                                        std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
+                                        std::vector<std::size_t>& dataAbsolutePositions,
+                                        std::vector<char*>& metadataBuffers,
+                                        std::vector<std::size_t>& metadataPositions )
+{
+    std::vector<std::size_t> metadataLengthPositions( metadataPositions ); //get length of pg position
+
+    MovePositions( 2, metadataPositions ); //skip length of pg in metadata, 2 bytes, would write at the end
+    MovePositions( 8, dataPositions ); //skip length of pg including data, 8 bytes, would write at the end
+
+    //write name to metadata
+    const std::uint16_t lengthOfName = name.length();
+    WriteNameRecord( name, lengthOfName, metadataBuffers, metadataPositions );
+
+    //write is host language Fortran in metadata and data
+    const char hostFortran = ( isFortran ) ? 'y' : 'n'; //if host language is fortran
+    MemcpyToBuffers( metadataBuffers, metadataPositions, &hostFortran, 1 );
+    MemcpyToBuffers( dataBuffers, dataPositions, &hostFortran, 1 );
+
+    //name in data
+    WriteNameRecord( name, lengthOfName, dataBuffers, dataPositions );
+
+    //processID,
+    MemcpyToBuffers( metadataBuffers, metadataPositions, &processID, 4 );
+    //skip coordination var in data ....what is coordination var?
+    MovePositions( 4, dataPositions );
+
+    //time step name to metadata and data
+    const std::uint16_t lengthOfTimeStep = timeStepName.length();
+    WriteNameRecord( timeStepName, lengthOfTimeStep, metadataBuffers, metadataPositions );
+    WriteNameRecord( timeStepName, lengthOfTimeStep, dataBuffers, dataPositions );
+    //time step to metadata and data
+    MemcpyToBuffers( metadataBuffers, metadataPositions, &timeStep, 4 );
+    MemcpyToBuffers( dataBuffers, dataPositions, &timeStep, 4 );
+
+    //write offset to pg in data on metadata which is the current absolute position
+    MemcpyToBuffers( metadataBuffers, metadataPositions, dataAbsolutePositions, 8 );
+
+
+    //get pg index length
+    std::vector<std::uint16_t> metadataIndexLengths( metadataPositions.size() );
+    for( unsigned int i = 0; i < metadataPositions.size(); ++i )
+        metadataIndexLengths[i] = metadataPositions[i] - metadataLengthPositions[i];
+
+    //write to metadata length position the pgIndex length
+    MemcpyToBuffers( metadataBuffers, metadataLengthPositions, metadataIndexLengths, 2 );
+    MovePositions( -2, metadataLengthPositions ); //back to original position
+}
+
+
 
 void BP1Writer::Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport )
 {
@@ -34,7 +92,7 @@ void BP1Writer::Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Tran
 }
 
 //PRIVATE FUNCTIONS
-void BP1Writer::WriteNameRecord( const std::string& name, const std::uint16_t& length,
+void BP1Writer::WriteNameRecord( const std::string name, const std::uint16_t length,
                                  std::vector<char*>& buffers, std::vector<std::size_t>& positions )
 {
     MemcpyToBuffers( buffers, positions, &length, 2 );

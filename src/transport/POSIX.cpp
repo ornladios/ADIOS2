@@ -42,13 +42,17 @@ void POSIX::Open( const std::string name, const std::string accessMode )
     m_AccessMode = accessMode;
 
     if( accessMode == "w" || accessMode == "write" )
+    {
         m_FileDescriptor = open( m_Name.c_str(), O_WRONLY | O_CREAT, 0666 );
-
+    }
     else if( accessMode == "a" || accessMode == "append" )
+    {
         m_FileDescriptor = open( m_Name.c_str(),  O_WRONLY | O_APPEND );
-
+    }
     else if( accessMode == "r" || accessMode == "read" )
+    {
         m_FileDescriptor = open( m_Name.c_str(), O_RDONLY );
+    }
 
     if( m_DebugMode == true )
     {

@@ -104,5 +104,12 @@ const std::map<std::string, std::set<std::string> > Support::DatatypesAliases
 };
 
 
+const std::set<std::string> Support::FileTransports{
+    { "POSIX", "File", "FStream", "MPIFile" }
+};
+
+
+
+
 } //end namespace
 

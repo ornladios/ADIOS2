@@ -51,6 +51,15 @@ public:
 
     ~BP1Writer( );
 
+    std::size_t GetProcessIndexSize( const std::string name, const std::string timeStepName );
+
+    void WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
+                                 const std::string timeStepName, const unsigned int timeStep,
+                                 std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
+                                 std::vector<std::size_t>& dataAbsolutePositions,
+                                 std::vector<char*>& metadataBuffers,
+                                 std::vector<std::size_t>& metadataPositions );
+
     /**
      * Returns the estimated variable index size
      * @param group
@@ -69,7 +78,7 @@ public:
         indexSize += variableName.size();
 
         // characteristics 3 and 4, check variable number of dimensions
-        std::size_t dimensions = std::count( variable.DimensionsCSV.begin(), variable.DimensionsCSV.end(), ',' ) + 1; //number of commas in CSV + 1
+        const std::size_t dimensions = std::count( variable.DimensionsCSV.begin(), variable.DimensionsCSV.end(), ',' ) + 1; //number of commas in CSV + 1
         indexSize += 28 * dimensions; //28 bytes per dimension
         indexSize += 1; //id
 
@@ -129,7 +138,7 @@ public:
 
         //memberID
         MemcpyToBuffers( metadataBuffers, metadataPositions, &m_VariablesCount, 4 );
-        //group, only in metadata
+        //group name, only in metadata
         const std::uint16_t lengthGroupName = group.m_Name.length();
         WriteNameRecord( group.m_Name, lengthGroupName, metadataBuffers, metadataPositions );
 
@@ -291,11 +300,14 @@ public:
         ++m_VariablesCount;
     } //end of function
 
-
     void Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport );
 
 
 private:
+
+
+
+
 
     /**
      * Writes name record using a
@@ -304,7 +316,7 @@ private:
      * @param buffers to be written
      * @param positions to be moved
      */
-    void WriteNameRecord( const std::string& name, const std::uint16_t& length,
+    void WriteNameRecord( const std::string name, const std::uint16_t length,
                           std::vector<char*>& buffers, std::vector<std::size_t>& positions );
 
     void WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,

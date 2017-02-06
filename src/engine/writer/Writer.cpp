@@ -261,7 +261,9 @@ void Writer::Write( const std::string variableName, const long double* values )
 
 void Writer::InitTransports( )
 {
-    //Let BPFormat handle this??
+    //Let BPFormat handle this
+    //InitTransportsBP( m_Method.m_TransportParameters, m_Transports, m_Name+m_EndMessage );
+
     std::set< std::string > transportStreamNames; //used to check for name conflict between transports
 
     const unsigned int transportsSize = m_Method.m_TransportParameters.size();

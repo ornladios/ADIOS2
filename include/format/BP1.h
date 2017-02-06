@@ -96,8 +96,6 @@ enum VariableStatistics
 
 
 
-
-
 } //end namespace format
 } //end namespace adios
 

@@ -106,6 +106,42 @@ void Engine::CheckDefaultGroup( ) const
 }
 
 
+bool Engine::TransportNamesUniqueness( ) const
+{
+    auto lf_CheckTransportsType = [&]( const std::set<std::string>& specificType ) -> bool
+    {
+        std::set<std::string> transportNames;
+
+        for( const auto& parameters : m_Method.m_TransportParameters )
+        {
+            auto itTransport = parameters.find( "transport" );
+            if( m_DebugMode == true )
+            {
+                if( itTransport == parameters.end() )
+                    throw std::invalid_argument( "ERROR: transport not defined in Method input to Engine " + m_Name );
+            }
+
+            const std::string type( itTransport->second );
+            if( specificType.count( type ) == 1   ) //file transports type
+            {
+                std::string name( m_Name );
+                auto itName = parameters.find("name");
+                if( itName != parameters.end() )
+                    name = itName->second;
+
+                if( transportNames.count( name ) == 0 )
+                    transportNames.insert( name );
+                else
+                    return false;
+            }
+        }
+        return true;
+    };
+
+    return lf_CheckTransportsType( Support::FileTransports );
+}
+
+
 std::string Engine::GetName( const std::vector<std::string>& arguments ) const
 {
     bool isNameFound = false;

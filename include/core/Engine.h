@@ -170,8 +170,9 @@ protected:
                          const std::string parameterName,
                          const std::string hint ) const;
 
-
     void CheckDefaultGroup( ) const; ///< checks if default group m_Group is nullptr, throws exception if trying to use
+
+    bool TransportNamesUniqueness( ) const; ///< checks if transport names are unique among the same types (file I/O)
 
     std::string GetName( const std::vector<std::string>& arguments ) const; //might move this to adiosFunctions
 
