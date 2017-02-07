@@ -14,9 +14,8 @@
 #include <algorithm> //std::count, std::copy, std::for_each
 #include <cstring> //std::memcpy
 #include <cmath>   //std::ceil
-/// \endcond
 
-#include "format/BP1.h"
+#include "BP1.h"
 #include "core/Variable.h"
 #include "core/Group.h"
 #include "core/Capsule.h"
@@ -30,7 +29,7 @@ namespace format
 {
 
 
-class BP1Writer
+class BP1Writer : public BP1
 {
 
 public:
@@ -363,10 +362,11 @@ private:
      */
     template< class T > inline std::int8_t GetDataType( ) noexcept { return type_unknown; }
 
-    void SetMiniFooter( BP1MetadataSet& metadataSet ); ///< sets the minifooter
-    void SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule ); ///< sets the metadata buffer in capsule with indices and minifooter
+    void CloseRankFile( Capsule& capsule, Transport& transport );
 
-    void ClosePOSIX( Capsule& capsule, Transport& transport );
+    void SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule ); ///< sets the metadata buffer in capsule with indices and minifooter
+    void SetMiniFooter( BP1MetadataSet& metadataSet ); ///< sets the minifooter
+
 };
 
 

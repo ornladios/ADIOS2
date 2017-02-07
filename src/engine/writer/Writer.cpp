@@ -261,32 +261,38 @@ void Writer::Write( const std::string variableName, const long double* values )
 
 void Writer::InitTransports( )
 {
-    //Let BPFormat handle this
-    //InitTransportsBP( m_Method.m_TransportParameters, m_Transports, m_Name+m_EndMessage );
-
-    std::set< std::string > transportStreamNames; //used to check for name conflict between transports
-
-    const unsigned int transportsSize = m_Method.m_TransportParameters.size();
+    if( m_DebugMode == true )
+    {
+        if( TransportNamesUniqueness( ) == false )
+        {
+            std::invalid_argument( "ERROR: two transports of the same kind (e.g file IO) "
+                                   "can't have the same name, modify with name= in Method AddTransport\n" );
+        }
+    }
 
     for( const auto& parameters : m_Method.m_TransportParameters )
     {
         auto itTransport = parameters.find( "transport" );
-        if( m_DebugMode == true )
-            CheckParameter( itTransport, parameters, "transport", ", in " + m_Name + m_EndMessage );
 
         if( itTransport->second == "POSIX" )
         {
-            m_Transports.push_back( std::make_shared<POSIX>( m_MPIComm, m_DebugMode ) );
+            auto file = std::make_shared<POSIX>( m_MPIComm, m_DebugMode );
+            m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
+            m_Transports.push_back( std::move( file ) );
         }
         else if( itTransport->second == "File" )
         {
-            m_Transports.push_back( std::make_shared<File>( m_MPIComm, m_DebugMode ) );
+            auto file = std::make_shared<File>( m_MPIComm, m_DebugMode );
+            m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
+            m_Transports.push_back( std::move( file ) );
         }
         else if( itTransport->second == "FStream" )
         {
-            m_Transports.push_back( std::make_shared<FStream>( m_MPIComm, m_DebugMode ) );
+            auto file = std::make_shared<File>( m_MPIComm, m_DebugMode );
+            m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
+            m_Transports.push_back( std::move( file ) );
         }
-        else if( itTransport->second == "MPIFile" )
+        else if( itTransport->second == "MPIFile" ) //not yet supported
         {
             //m_Transports.push_back( std::make_shared<MPIFile>( m_MPIComm, m_DebugMode ) );
         }
@@ -296,38 +302,14 @@ void Writer::InitTransports( )
                 throw std::invalid_argument( "ERROR: transport + " + itTransport->second + " not supported, in " +
                                               m_Name + m_EndMessage );
         }
-        //name
-        if( transportsSize > 1 )
-        {
-            auto itName = parameters.find( "name" ); //first check name
-
-            if( m_DebugMode == true )
-                CheckParameter( itName, parameters, "name", " in transport " + itTransport->second +
-                                ", in " + m_Name + m_EndMessage );
-
-            m_Transports.back()->Open( itName->second, m_AccessMode );
-        }
-        else if( transportsSize == 1 )
-        {
-            auto itName = parameters.find( "name" );
-
-            if( itName == parameters.end() ) //take streamName
-                m_Transports.back()->Open( m_Name, m_AccessMode );
-            else
-                m_Transports.back()->Open( m_Name, m_AccessMode );
-        }
-        else if( transportsSize == 0 )
-        {
-            if( m_DebugMode == true )
-                throw std::invalid_argument( "ERROR: transport not defined for engine " + m_Name + m_EndMessage );
-        }
     }
 }
 
 
+
 void Writer::Close( const int transportIndex )
 {
-    //this should be done by BP1Format ?
+    //flush the last of data
     if( transportIndex == -1 ) // all transports
     {
         for( auto& transport : m_Transports )
@@ -341,6 +323,9 @@ void Writer::Close( const int transportIndex )
         m_Transports[ transportIndex ]->Write( m_Buffer.m_Data.data(), m_Buffer.m_DataPosition );
         m_Transports[ transportIndex ]->Close( );
     }
+
+    //BP1Writer to take care of metadata indices at Close
+
 }
 
 

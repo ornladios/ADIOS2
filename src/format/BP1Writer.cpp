@@ -157,13 +157,9 @@ void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<s
 }
 
 
-void BP1Writer::ClosePOSIX( Capsule& capsule, Transport& transport )
+void BP1Writer::CloseRankFile( Capsule& capsule, Transport& transport )
 {
 
-//
-//    const char* dataBuffer = capsule.GetData( );
-//    //write data buffer first up to data position
-//    transport.Write( dataBuffer, capsule.m_DataPosition );
 }
 
 
@@ -177,7 +173,7 @@ void BP1Writer::SetMiniFooter( BP1MetadataSet& metadataSet )
 }
 
 
-void SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule )
+void BP1Writer::SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule )
 {
 
     //setup metadata to capsule metadata buffer

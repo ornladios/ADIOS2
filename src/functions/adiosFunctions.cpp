@@ -23,7 +23,7 @@
 #include "core/Support.h"
 
 #ifdef HAVE_BZIP2
-#include "transform/CBZIP2.h"
+#include "transform/BZIP2.h"
 #endif
 
 
