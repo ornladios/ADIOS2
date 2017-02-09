@@ -29,10 +29,11 @@ namespace engine
 {
 
 DataMan::DataMan( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
-                  const Method& method, const bool debugMode, const unsigned int cores ):
-    Engine( "DataMan", streamName, accessMode, mpiComm, method, debugMode, cores, " DataMan constructor (or call to ADIOS Open).\n" ),
-    m_Buffer( accessMode, m_RankMPI, m_DebugMode ),
-    m_BP1Writer( 1 )
+                  const Method& method, const bool debugMode, const unsigned int cores,
+                  const std::string hostLanguage ):
+    Engine( "DataMan", streamName, accessMode, mpiComm, method, debugMode, cores,
+            " DataMan constructor (or call to ADIOS Open).\n", hostLanguage ),
+    m_Buffer( accessMode, m_RankMPI, m_DebugMode )
 {
     Init( );
 }
@@ -246,15 +247,12 @@ void DataMan::Write( const std::string variableName, const long double* values )
 
 void DataMan::InitTransports( ) //maybe move this?
 {
-    std::set< std::string > transportStreamNames; //used to check for name conflict between transports
+    TransportNamesUniqueness( );
 
-    //const unsigned int transportsSize = m_Method.m_TransportParameters.size();
 
     for( const auto& parameters : m_Method.m_TransportParameters )
     {
         auto itTransport = parameters.find( "transport" );
-        if( m_DebugMode == true )
-            CheckParameter( itTransport, parameters, "transport", ", in " + m_Name + m_EndMessage );
 
         if( itTransport->second == "POSIX" )
         {

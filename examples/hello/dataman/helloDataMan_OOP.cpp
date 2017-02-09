@@ -43,13 +43,13 @@ int main( int argc, char* argv [] )
 
         adios::Method& wanMethod = adios.DeclareMethod( "WAN_Method", "DataMan" ); //name and type
         wanMethod.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );//add as many as you want
-        //wanMethod.AddTransport( "POSIX", "have_metadata_file=true" );
         wanMethod.SetDefaultGroup( wanGroup );
 
         auto dataManWriter = adios.Open( "hello_dataman", "w", wanMethod ); //here pass the method to your engine
         dataManWriter->Write<int>( ioDim1D, &myNX ); //a template Write is good to have
         dataManWriter->Write<double>( ioNumbers, myNumbers.data() );
         dataManWriter->Close( );
+
     }
     catch( std::invalid_argument& e )
     {

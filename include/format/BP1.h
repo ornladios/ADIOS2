@@ -22,6 +22,31 @@ namespace adios
 namespace format
 {
 
+/**
+ * Struct that tracks metadata indices in bp format
+ */
+struct BP1MetadataSet
+{
+    std::uint64_t PGCount = 0; ///< number of process groups
+    std::uint64_t PGLength = 0; ///< length in bytes of process groups
+    std::size_t PGIndexPosition = 16;
+    std::vector<char> PGIndex = std::vector<char>( 102400 ); ///< process group index metadata
+
+    std::uint32_t VarsCount = 0; ///< number of written Variables
+    std::uint64_t VarsLength = 0; ///< length in bytes of written Variables
+    std::size_t   VarsIndexPosition = 12; ///< initial position in bytes
+    std::vector<char> VarsIndex = std::vector<char>( 102400 ); ///< metadata variable index, start with 1Kb
+    //    std::map< std::string, std::pair<std::size_t,std::size_t> > VariablePositions;
+
+    std::uint32_t AttributesCount = 0; ///< number of Attributes
+    std::uint64_t AttributesLength = 0; ///< length in bytes of Attributes
+    std::size_t AttributesIndexPosition = 12; ///< initial position in bytes
+    std::vector<char> AttributeIndex = std::vector<char>( 102400 ); ///< metadata attribute index, start with 1Kb
+
+    std::vector<char> MiniFooter = std::vector<char>( 28 );
+};
+
+
 class BP1
 {
 
@@ -38,31 +63,6 @@ public:
 
 
 protected:
-
-    /**
-     * Struct that tracks metadata indices in bp format
-     */
-    struct BP1MetadataSet
-    {
-        std::uint64_t PGCount = 0; ///< number of process groups
-        std::uint64_t PGLength = 0; ///< length in bytes of process groups
-        std::size_t PGIndexPosition = 16;
-        std::vector<char> PGIndex = std::vector<char>( 102400 ); ///< process group index metadata
-
-        std::uint32_t VarsCount = 0; ///< number of written Variables
-        std::uint64_t VarsLength = 0; ///< length in bytes of written Variables
-        std::size_t   VarsIndexPosition = 12; ///< initial position in bytes
-        std::vector<char> VarsIndex = std::vector<char>( 102400 ); ///< metadata variable index, start with 1Kb
-        //    std::map< std::string, std::pair<std::size_t,std::size_t> > VariablePositions;
-
-        std::uint32_t m_AttributesCount = 0; ///< number of Attributes
-        std::uint64_t m_AttributesLength = 0; ///< length in bytes of Attributes
-        std::size_t m_AttributesIndexPosition = 12; ///< initial position in bytes
-        std::vector<char> m_AttributeIndex = std::vector<char>( 102400 ); ///< metadata attribute index, start with 1Kb
-
-        std::vector<char> m_MiniFooter = std::vector<char>( 28 );
-    };
-
     /**
      * DataTypes mapping in BP Format
      */

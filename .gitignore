@@ -1,9 +1,12 @@
 *.o
 *.a
 *.so
+*.tmp
 
 #Eclipse
 .cproject
 .project
 .settings/
+.pydevproject
+
 

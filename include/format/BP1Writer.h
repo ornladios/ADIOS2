@@ -14,11 +14,13 @@
 #include <algorithm> //std::count, std::copy, std::for_each
 #include <cstring> //std::memcpy
 #include <cmath>   //std::ceil
+/// \endcond
 
 #include "BP1.h"
 #include "core/Variable.h"
 #include "core/Group.h"
 #include "core/Capsule.h"
+#include "capsule/Heap.h"
 #include "functions/adiosTemplates.h"
 #include "functions/adiosFunctions.h"
 
@@ -34,24 +36,32 @@ class BP1Writer : public BP1
 
 public:
 
-    std::vector<BP1MetadataSet> m_BPMetadataSets;
-
     unsigned int m_Cores = 1;  ///< number of cores for thread operations in large array (min,max)
     unsigned int m_Verbosity = 0; ///< statistics verbosity, can change if redefined in Engine method.
     float m_GrowthFactor = 1.5; ///< memory growth factor, can change if redefined in Engine method.
-    unsigned int m_VariablesCount = 0;
+    unsigned int m_VariablesTotalCount = 0;
 
     /**
-     * Unique constructor
-     * @param metadataSets number of metadata indices sets in BP format, sets the size of m_BPIndices. Typically one per capsule to separate metadata.
+     * Calculates the Process Index size in bytes according to the BP format
+     * @param name process group name
+     * @param timeStepName name of the corresponding time step
+     * @return size of process group index in bytes
      */
-    BP1Writer( const unsigned int metadataSets );
-
-
-    ~BP1Writer( );
-
     std::size_t GetProcessIndexSize( const std::string name, const std::string timeStepName );
 
+    /**
+     * Writes a PGIndex, done at Open or aggregation
+     * @param isFortran
+     * @param name
+     * @param processID
+     * @param timeStepName
+     * @param timeStep
+     * @param dataBuffers
+     * @param dataPositions
+     * @param dataAbsolutePositions
+     * @param metadataBuffers
+     * @param metadataPositions
+     */
     void WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
                                  const std::string timeStepName, const unsigned int timeStep,
                                  std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
@@ -109,26 +119,100 @@ public:
         //need to add transform characteristics
     }
 
-
-
     /**
-     * @param group variable owner
-     * @param variableName name of variable to be written
-     * @param variable object carrying variable information
-     * @param dataBuffers buffers to which variable metadata and payload (values) will be written. Metadata is added in case of system corruption to allow regeneration.
-     * @param dataPosition initial data relative position
-     * @param dataAbsolutePosition data absolute position will be updated with dataPosition, needed for variable offset and variable payload offset
-     * @param metadataBuffers buffers to which only variable metadata will be written
-     * @param metadataPosition position in metadataBuffer
+     * Version that takes directly a single Heap buffer class and a single BP1MetadataSet
+     * Skip virtual if optimized to an object
+     * @param group
+     * @param variableName
+     * @param variable
+     * @param buffer
+     * @param metadataSet
      */
     template< class T >
     void WriteVariableIndex( const Group& group, const Var variableName, const Variable<T>& variable,
-                             std::vector<char*>& dataBuffers,
-                             std::vector<std::size_t>& dataPositions,
-                             std::vector<std::size_t>& dataAbsolutePositions,
-                             std::vector<char*>& metadataBuffers,
-                             std::vector<std::size_t>& metadataPositions ) noexcept
+                             Heap& buffer, BP1MetadataSet& metadataSet ) noexcept
     {
+        // adapt this part to local variables
+        std::vector<char*> dataBuffers{ buffer.m_Data.data() };
+        std::vector<size_t> dataPositions { buffer.m_DataPosition };
+        std::vector<size_t> dataAbsolutePositions { buffer.m_DataAbsolutePosition };
+
+        std::vector<char*> metadataBuffers{ metadataSet.VarsIndex.data() };
+        std::vector<std::size_t> metadataPositions{ metadataSet.VarsIndexPosition };
+        std::vector<unsigned int> variablesCount{ metadataSet.VarsCount };
+
+        WriteVariableCommon( group, variableName, variable, dataBuffers, dataPositions, dataAbsolutePositions,
+                             metadataBuffers, metadataPositions, variablesCount );
+
+        //update positions and varsCount originally passed by value
+        buffer.m_DataPosition = dataPositions[0];
+        buffer.m_DataAbsolutePosition = dataAbsolutePositions[0];
+        metadataSet.VarsIndexPosition = metadataPositions[0];
+        metadataSet.VarsCount += 1;
+    }
+
+
+    /**
+     * Version that writes to a vector of capsules
+     * @param group variable owner
+     * @param variableName name of variable to be written
+     * @param variable object carrying variable information
+     * @param capsules from Engine member m_Capsules
+     * @param metadataSets
+     */
+    template< class T >
+    void WriteVariableIndex( const Group& group, const Var variableName, const Variable<T>& variable,
+                             std::vector< std::shared_ptr<Capsule> >& capsules,
+                             std::vector<BP1MetadataSet>& metadataSets ) noexcept
+    {
+        // adapt this part to local variables
+        std::vector<char*> metadataBuffers, dataBuffers;
+        std::vector<std::size_t> metadataPositions, dataPositions, dataAbsolutePositions;
+        std::vector<unsigned int> variablesCount;
+
+        for( auto& metadataSet : metadataSets )
+        {
+            metadataBuffers.push_back( metadataSet.VarsIndex.data() );
+            metadataPositions.push_back( metadataSet.VarsIndexPosition );
+            variablesCount.push_back( metadataSet.VarsCount );
+        }
+
+        for( auto& capsule : capsules )
+        {
+            dataBuffers.push_back( capsule->GetData( ) );
+            dataPositions.push_back( capsule->m_DataPosition );
+            dataAbsolutePositions.push_back( capsule->m_DataAbsolutePosition );
+        }
+
+        WriteVariableCommon( group, variableName, variable, dataBuffers, dataPositions, dataAbsolutePositions,
+                             metadataBuffers, metadataPositions, variablesCount );
+
+        //update positions and varsCount originally passed by value
+        const unsigned int buffersSize = static_cast<unsigned int>( capsules.size() );
+        for( unsigned int i = 0; i < buffersSize; ++i )
+        {
+            metadataSets[i].VarsIndexPosition = metadataPositions[i];
+            metadataSets[i].VarsCount += 1;
+
+            capsules[i]->m_DataPosition = dataPositions[i];
+            capsules[i]->m_DataAbsolutePosition = dataAbsolutePositions[i];
+        }
+    }
+
+    void Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport );
+
+
+private:
+
+
+    template<class T>
+    void WriteVariableCommon( const Group& group, const Var variableName, const Variable<T>& variable,
+                              std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
+                              std::vector<size_t>& dataAbsolutePositions,
+                              std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions,
+                              std::vector<unsigned int> variablesCount )
+    {
+        //capture initial positions
         const std::vector<std::size_t> metadataLengthPositions( metadataPositions );
         const std::vector<std::size_t> dataLengthPositions( dataPositions );
 
@@ -136,7 +220,7 @@ public:
         MovePositions( 8, dataPositions ); //length of var, will come at the end from this offset
 
         //memberID
-        MemcpyToBuffers( metadataBuffers, metadataPositions, &m_VariablesCount, 4 );
+        MemcpyToBuffers( metadataBuffers, metadataPositions, variablesCount, 4 );
         //group name, only in metadata
         const std::uint16_t lengthGroupName = group.m_Name.length();
         WriteNameRecord( group.m_Name, lengthGroupName, metadataBuffers, metadataPositions );
@@ -263,7 +347,7 @@ public:
         }
         ++characteristicsCounter;
 
-        //Characteristics count and length in Data
+        //Back to count and length in Data
         std::vector<std::uint32_t> dataCharacteristicsLengths( dataPositions.size() );
         for( unsigned int i = 0; i < dataPositions.size(); ++i )
             dataCharacteristicsLengths[i] = dataPositions[i] - dataCharacteristicsCountPositions[i];
@@ -296,16 +380,8 @@ public:
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, metadataCharacteristicsLengths, 4 ); //vector to vector
         MovePositions( -5, metadataCharacteristicsCountPositions ); //back to original position
 
-        ++m_VariablesCount;
+        ++m_VariablesTotalCount;
     } //end of function
-
-    void Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport );
-
-
-private:
-
-
-
 
 
     /**
@@ -318,12 +394,29 @@ private:
     void WriteNameRecord( const std::string name, const std::uint16_t length,
                           std::vector<char*>& buffers, std::vector<std::size_t>& positions );
 
+    /**
+     * Write a dimension record for a global variable used by WriteVariableCommon
+     * @param buffers
+     * @param positions
+     * @param localDimensions
+     * @param globalDimensions
+     * @param globalOffsets
+     * @param addType true: for data buffers, false: for metadata buffer and data characteristic
+     */
     void WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
                                const std::vector<unsigned long long int>& localDimensions,
                                const std::vector<unsigned long long int>& globalDimensions,
                                const std::vector<unsigned long long int>& globalOffsets,
                                const bool addType = false );
 
+    /**
+     * Write a dimension record for a local variable used by WriteVariableCommon
+     * @param buffers
+     * @param positions
+     * @param localDimensions
+     * @param skip
+     * @param addType true: for data buffers, false: for metadata buffer and data characteristic
+     */
     void WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
                                const std::vector<unsigned long long int>& localDimensions,
                                const unsigned int skip,
@@ -339,7 +432,8 @@ private:
      */
     template<class T>
     void WriteStatisticsRecord( const std::uint8_t& id, const T& value,
-                                std::vector<char*>& buffers, std::vector<std::size_t>& positions, const bool addLength = false )
+                                std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+                                const bool addLength = false )
     {
         const std::uint8_t characteristicID = characteristic_stat;
         MemcpyToBuffers( buffers, positions, &characteristicID, 1 );
@@ -353,7 +447,6 @@ private:
         MemcpyToBuffers( buffers, positions, &id, 1 );
         MemcpyToBuffers( buffers, positions, &value, sizeof(T) );
     }
-
 
     /**
      * Returns data type index from enum Datatypes

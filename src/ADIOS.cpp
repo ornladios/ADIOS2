@@ -18,6 +18,7 @@
 //Engines
 #include "engine/writer/Writer.h"
 #include "engine/dataman/DataMan.h"
+#include "engine/vis/Vis.h"
 
 
 namespace adios
@@ -102,15 +103,20 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
     if( type == "Writer" || type == "writer" )
     {
-        return std::make_shared<Writer>( name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<Writer>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {
-        //here must complete
+        //not yet supported
+        //return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
     }
     else if( type == "DataMan" )
     {
-    	return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, m_DebugMode, cores );
+    	return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
+    }
+    else if( type == "Vis" )
+    {
+        return std::make_shared<engine::Vis>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
     }
     else
     {

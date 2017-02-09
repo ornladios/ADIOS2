@@ -34,12 +34,12 @@ void BP1::OpenRankFiles( const std::string name, const std::string accessMode, T
         CreateDirectory( name +".bp.dir" );
     }
 
-    std::string fileName( directory + "/" + baseName + ".bp" + std::to_string( file.m_MPIRank ) );
+    std::string fileName( directory + "/" + baseName + ".bp." + std::to_string( file.m_MPIRank ) );
 
     if( file.m_MPIComm == MPI_COMM_SELF )
         fileName = name;
 
-    file.Open( fileName, accessMode );  // opens a file transport under name.bp.dir/name.bp.rank
+    file.Open( fileName, accessMode );  // opens a file transport under name.bp.dir/name.bp.rank reserve that location fro writing
 }
 
 

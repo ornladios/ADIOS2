@@ -17,7 +17,8 @@ namespace adios
 
 Engine::Engine( const std::string engineType, const std::string name, const std::string accessMode,
                 const MPI_Comm mpiComm, const Method& method,
-                const bool debugMode, const unsigned int cores, const std::string endMessage ):
+                const bool debugMode, const unsigned int cores, const std::string endMessage,
+                const std::string hostLanguage ):
     m_MPIComm{ mpiComm },
     m_EngineType{ engineType },
     m_Name{ name },
@@ -26,7 +27,8 @@ Engine::Engine( const std::string engineType, const std::string name, const std:
     m_Group{ method.m_Group },
     m_DebugMode{ debugMode },
     m_Cores{ cores },
-    m_EndMessage{ endMessage }
+    m_EndMessage{ endMessage },
+    m_HostLanguage{ hostLanguage }
 {
     MPI_Comm_rank( m_MPIComm, &m_RankMPI );
     MPI_Comm_size( m_MPIComm, &m_SizeMPI );
@@ -139,32 +141,6 @@ bool Engine::TransportNamesUniqueness( ) const
     };
 
     return lf_CheckTransportsType( Support::FileTransports );
-}
-
-
-std::string Engine::GetName( const std::vector<std::string>& arguments ) const
-{
-    bool isNameFound = false;
-    std::string name;
-
-    for( const auto argument : arguments )
-    {
-        auto namePosition = argument.find( "name=" );
-        if( namePosition != argument.npos )
-        {
-            isNameFound = true;
-            name = argument.substr( namePosition + 5 );
-            break;
-        }
-    }
-
-    if( m_DebugMode == true )
-    {
-        if( name.empty() || isNameFound == false )
-            std::invalid_argument( "ERROR: argument to name= is empty or not found in call to AddTransport" );
-    }
-
-    return name;
 }
 
 

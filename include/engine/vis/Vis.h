@@ -5,8 +5,8 @@
  *      Author: wfg
  */
 
-#ifndef DATAMAN_H_
-#define DATAMAN_H_
+#ifndef VIS_H_
+#define VIS_H_
 
 
 #include "core/Engine.h"
@@ -20,7 +20,7 @@ namespace engine
 {
 
 
-class DataMan : public Engine
+class Vis : public Engine
 {
 
 public:
@@ -28,17 +28,17 @@ public:
     /**
      * Constructor for single BP capsule engine, writes in BP format into a single heap capsule
      * @param name unique name given to the engine
-     * @param accessMode
-     * @param mpiComm
-     * @param method
-     * @param debugMode
-     * @param hostLanguage
+     * @param accessMode "w" or "write", "r" or "read", "a" or "append"
+     * @param mpiComm communicator used for MPI operations
+     * @param method contains Engine metadata options provide by the user, Vis can make decisions based on these "knobs"
+     * @param debugMode true: handle exceptions, false: skip extra exceptions checks
+     * @param hostLanguage for Fortran users (due to array index), most of the time will be set with C++
      */
-    DataMan( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-             const Method& method, const bool debugMode = false, const unsigned int cores = 1,
-             const std::string hostLanguage = "C++" );
+    Vis( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+         const Method& method, const bool debugMode = false, const unsigned int cores = 1,
+         const std::string hostLanguage = "C++" );
 
-    ~DataMan( );
+    ~Vis( );
 
     void Write( Group& group, const std::string variableName, const char* values );
     void Write( Group& group, const std::string variableName, const unsigned char* values );
@@ -68,21 +68,20 @@ public:
     void Write( const std::string variableName, const double* values );
     void Write( const std::string variableName, const long double* values );
 
+    void Close( const int transportID = -1 );
+
 private:
 
-    Heap m_Buffer; ///< heap capsule, contains data and metadata buffers
+    std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< it can be any derived class from Capsule: Heap, Shmem, RDMA ?
+    std::size_t m_MaxBufferSize; ///< maximum buffer size
+    float m_GrowthFactor = 1.5; ///< buffer growth factor if using a Heap capsule. New_size = f * Previous_size
+
+    //optional if BP format is required
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
+    format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
 
-    void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
+    void Init( );  ///< calls InitTransports based on Method and can extend other Init functions, called from constructor
     void InitTransports( ); ///< from Transports
-
-    /**
-     * From transport Mdtm in m_Method
-     * @param parameter must be an accepted parameter
-     * @param mdtmParameters
-     * @return value either returns user-defined from "parameter=value" or a default
-     */
-    std::string GetMdtmParameter( const std::string parameter, const std::map<std::string,std::string>& mdtmParameters );
 
 };
 
@@ -94,4 +93,4 @@ private:
 
 
 
-#endif /* DATAMAN_H_ */
+#endif /* VIS_H_ */

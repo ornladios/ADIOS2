@@ -560,7 +560,7 @@ void Group::SetDimensionVariablesFlag( const std::string csv, const std::string 
         std::string dimensionVariable;
         while( std::getline( csvSS, dimensionVariable, ',' ) ) //need to test
         {
-            lf_SetVariableFlag( csv, dimensionVariable, m_DebugMode );
+            lf_SetVariableFlag( dimensionVariable, " from call to DeclareVariable ", m_DebugMode );
         }
     }
 }

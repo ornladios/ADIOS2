@@ -16,15 +16,6 @@ namespace format
 {
 
 
-BP1Writer::BP1Writer( const unsigned int metadataSets ):
-    m_BPMetadataSets( metadataSets )
-{ }
-
-
-BP1Writer::~BP1Writer( )
-{ }
-
-
 std::size_t BP1Writer::GetProcessIndexSize( const std::string name, const std::string timeStepName )
 {
     return name.length() + timeStepName.length() + 23;

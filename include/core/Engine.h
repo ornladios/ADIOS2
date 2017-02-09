@@ -67,20 +67,35 @@ public:
      */
     Engine( const std::string engineType, const std::string name, const std::string accessMode,
             MPI_Comm mpiComm, const Method& method, const bool debugMode = false, const unsigned int cores = 1,
-            const std::string endMessage = "" );
+            const std::string endMessage = "", const std::string hostLanguage = "C++" );
 
     virtual ~Engine( );
 
     void SetDefaultGroup( Group& group );
 
+    /**
+     * Write function that adds static checking on the variable to be passed by values
+     * It then calls its corresponding derived class virtual function
+     * This version uses m_Group to look for the variableName.
+     * @param variableName name of variable to the written
+     * @param values pointer passed from the application
+     */
     template< class T >
-    void Write( const std::string variableName, const T* values )
+    void Write( const Var variableName, const T* values )
     {
         Write( variableName, values );
     }
 
+    /**
+     * Write function that adds static checking on the variable to be passed by values.
+     * It then calls its corresponding derived class virtual function.
+     * This version accepts a group explicitly.
+     * @param group group object that contains the variable with variableName
+     * @param variableName name of variable to the written
+     * @param values pointer passed from the application
+     */
     template< class T >
-    void Write( Group& group, const std::string variableName, const T* values )
+    void Write( Group& group, const Var variableName, const T* values )
     {
         Write( group, variableName, values );
     }
@@ -130,7 +145,7 @@ public:
     virtual void Write( const std::string variableName, const double* values ) = 0;
     virtual void Write( const std::string variableName, const long double* values ) = 0;
 
-    virtual void Close( const int transportIndex = -1  ); ///< Closes a particular transport
+    virtual void Close( const int transportIndex = -1  ); ///< Closes a particular transport, or all if -1
 
 
 protected:
@@ -140,6 +155,7 @@ protected:
     const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
     unsigned int m_Cores = 1;
     const std::string m_EndMessage; ///< added to exceptions to improve debugging
+    const std::string m_HostLanguage = "C++"; ///< passed from ADIOS class to recognize language calling the ADIOS library
 
     std::vector< std::pair<Group*, std::string> > m_WrittenVariables;
 
@@ -173,8 +189,6 @@ protected:
     void CheckDefaultGroup( ) const; ///< checks if default group m_Group is nullptr, throws exception if trying to use
 
     bool TransportNamesUniqueness( ) const; ///< checks if transport names are unique among the same types (file I/O)
-
-    std::string GetName( const std::vector<std::string>& arguments ) const; //might move this to adiosFunctions
 
 };
 

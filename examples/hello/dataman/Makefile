@@ -21,7 +21,7 @@ ADIOS_INCLUDE=-I$(ADIOS_DIR)/include
 #FLAGS
 CFLAGS=-Wall -O0 -g -Wpedantic -std=c++11
 
-all: mpi
+all: mpi nompi
 
 mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
 	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME)_mpi $(ADIOS_LIB) -lpthread

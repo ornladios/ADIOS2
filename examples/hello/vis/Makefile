@@ -2,7 +2,7 @@
 # Created on: Oct 4, 2016
 #     Author: wfg
 
-BASE_NAME=helloWriter_OOP
+BASE_NAME=helloVis
 
 #COMPILERS
 CC=g++ 
@@ -20,10 +20,14 @@ LDFLAGS=
 
 all: mpi nompi
 
-mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
+mpi: $(BASE_NAME).cpp
+	@echo;
+	@echo Building mpi version $(BASE_NAME)_mpi;
 	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME)_mpi $(ADIOS_LIB) $(LDFLAGS) -lpthread
 	
-nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
+nompi: $(BASE_NAME).cpp
+	@echo;
+	@echo Building nompi version $(BASE_NAME)_nompi;
 	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME).cpp -o $(BASE_NAME)_nompi $(ADIOS_NOMPI_LIB) $(LDFLAGS) -lpthread
 
 clean:
