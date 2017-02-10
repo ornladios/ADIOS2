@@ -10,7 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
-#include <cstdint>
+#include <cstdint>  //std::intX_t fixed size classes
 #include <algorithm> //std::count, std::copy, std::for_each
 #include <cstring> //std::memcpy
 #include <cmath>   //std::ceil
@@ -29,6 +29,7 @@ namespace adios
 {
 namespace format
 {
+
 
 
 class BP1Writer : public BP1

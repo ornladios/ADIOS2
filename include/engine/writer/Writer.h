@@ -37,43 +37,6 @@ public:
     ~Writer( );
 
 
-    template< class T >
-    void WriteVariable( const Group& group, const Var variableName, const Variable<T>& variable )
-    {
-        auto lf_CheckAllocationResult = []( const int result, const std::string variableName, const int rankMPI )
-        {
-            if( result == -1 )
-                throw std::runtime_error( "ERROR: bad_alloc when writing variable " + variableName +
-                        " from rank " + std::to_string( rankMPI ) );
-        };
-
-        //Check if data in buffer needs to be reallocated
-        const size_t indexSize = m_BP1Writer.GetVariableIndexSize( group, variableName, variable ); //metadata size
-        const std::size_t payloadSize = GetTotalSize( group.GetDimensions( variable.DimensionsCSV ) ) * sizeof( T );
-        const std::size_t dataSize = payloadSize + indexSize + 10; //adding some bytes tolerance
-        const std::size_t neededSize = dataSize + m_Buffer.m_DataPosition;
-        // might need to write payload in batches
-        const bool doTransportsFlush = ( neededSize > m_MaxBufferSize )? true : false;
-
-        int result = GrowBuffer( m_MaxBufferSize, m_GrowthFactor, m_Buffer.m_DataPosition, m_Buffer.m_Data );
-        lf_CheckAllocationResult( result, variableName, m_RankMPI );
-
-        //WRITE INDEX//
-        m_BP1Writer.WriteVariableIndex( group, variableName, variable, m_Buffer, m_MetadataSet );
-
-        if( doTransportsFlush == true ) //in batches
-        {
-
-        }
-        else //Write data
-        {
-            //this is the expensive part might want to use threaded memcpy
-            MemcpyThreads( m_Buffer.m_Data.data(), variable.Values, payloadSize, m_Cores );
-            m_Buffer.m_DataPosition += payloadSize;
-            m_Buffer.m_DataAbsolutePosition += payloadSize;
-        }
-    }
-
     void Write( Group& group, const std::string variableName, const char* values );
     void Write( Group& group, const std::string variableName, const unsigned char* values );
     void Write( Group& group, const std::string variableName, const short* values );
@@ -111,9 +74,59 @@ private:
     format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
     std::size_t m_MaxBufferSize;
     float m_GrowthFactor = 1.5;
+    bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
 
     void Init( );
     void InitTransports( );
+
+
+    /**
+     * Common function
+     * @param group
+     * @param variableName
+     * @param variable
+     */
+    template< class T >
+    void WriteVariable( const Group& group, const Var variableName, const Variable<T>& variable )
+    {
+        //precalculate new metadata and payload sizes
+        const std::size_t indexSize = m_BP1Writer.GetVariableIndexSize( group, variableName, variable );
+        const std::size_t payloadSize = GetTotalSize( group.GetDimensions( variable.DimensionsCSV ) ) * sizeof( T );
+
+        //Buffer reallocation, expensive part
+        m_TransportFlush = CheckBuffersAllocation( group, variableName, indexSize, payloadSize );
+
+        //WRITE INDEX to data buffer and metadata structure (in memory)//
+        m_BP1Writer.WriteVariableIndex( group, variableName, variable, m_Buffer, m_MetadataSet );
+
+        if( m_TransportFlush == true ) //in batches
+        {
+            //write pg index
+
+            //flush to transports
+
+            //reset positions to zero, update absolute position
+
+        }
+        else //Write data to buffer
+        {
+            //Values to Buffer -> Copy of data, Expensive part might want to use threads if large. Need a model to apply threading.
+            MemcpyThreads( m_Buffer.m_Data.data(), variable.Values, payloadSize, m_Cores );
+            //update indices
+            m_Buffer.m_DataPosition += payloadSize;
+            m_Buffer.m_DataAbsolutePosition += payloadSize;
+        }
+    }
+
+    /**
+     * Check if heap buffers for data and metadata need reallocation or maximum sizes have been reached.
+     * @param group variable owner
+     * @param variableName name of the variable to be written
+     * @param indexSize precalculated index size
+     * @param payloadSize payload size from variable total size
+     * @return true: transport must be flush and buffers reset, false: buffer is sufficient
+     */
+    bool CheckBuffersAllocation( const Group& group, const Var variableName, const std::size_t indexSize, const std::size_t payloadSize );
 
 };
 

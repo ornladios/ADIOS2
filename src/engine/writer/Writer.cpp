@@ -258,14 +258,44 @@ void Writer::Write( const std::string variableName, const long double* values )
 }
 
 
+void Writer::Close( const int transportIndex )
+{
+    //BP1Writer to update the metadata indices
+
+
+    //merge all metadata indices in capsule.m_Metadata buffer or capsule.m_Data buffer (depends on transport predefined functionality)
+
+
+    //BP1Writer to write to corresponding transport
+
+    if( transportIndex == -1 ) // all transports
+    {
+        for( auto& transport : m_Transports )
+            transport->Write( m_Buffer.m_Data.data(), m_Buffer.m_DataPosition );
+
+        for( auto& transport : m_Transports )
+            transport->Close( );   //actually no need, close is in destructor (like fstream)
+    }
+    else
+    {
+        m_Transports[ transportIndex ]->Write( m_Buffer.m_Data.data(), m_Buffer.m_DataPosition );
+    }
+
+    //Close the corresponding transport
+}
+
+
+
+
+
 void Writer::InitTransports( )
 {
     if( m_DebugMode == true )
     {
         if( TransportNamesUniqueness( ) == false )
         {
-            std::invalid_argument( "ERROR: two transports of the same kind (e.g file IO) "
-                                   "can't have the same name, modify with name= in Method AddTransport\n" );
+            throw std::invalid_argument( "ERROR: two transports of the same kind (e.g file IO) "
+                                         "can't have the same name, modify with name= in Method AddTransport\n" );
         }
     }
 
@@ -306,26 +336,21 @@ void Writer::InitTransports( )
 
 
 
-void Writer::Close( const int transportIndex )
+bool Writer::CheckBuffersAllocation( const Group& group, const Var variableName, const std::size_t indexSize,
+                                     const std::size_t payloadSize )
 {
-    //flush the last piece of data
-    if( transportIndex == -1 ) // all transports
-    {
-        for( auto& transport : m_Transports )
-            transport->Write( m_Buffer.m_Data.data(), m_Buffer.m_DataPosition );
+    //Check if data in buffer needs to be reallocated
+    const std::size_t dataSize = payloadSize + indexSize + 10; //adding some bytes tolerance
+    const std::size_t neededSize = dataSize + m_Buffer.m_DataPosition;
+    // might need to write payload in batches
+    bool doTransportsFlush = ( neededSize > m_MaxBufferSize )? true : false;
 
-        for( auto& transport : m_Transports )
-            transport->Close( );
-    }
-    else
-    {
-        m_Transports[ transportIndex ]->Write( m_Buffer.m_Data.data(), m_Buffer.m_DataPosition );
-    }
+    if( GrowBuffer( m_MaxBufferSize, m_GrowthFactor, m_Buffer.m_DataPosition, m_Buffer.m_Data ) == -1 )
+        doTransportsFlush = true;
 
-    //BP1Writer to take care of metadata indices at Close
-
+    GrowBuffer( indexSize, m_GrowthFactor, m_MetadataSet.VarsIndexPosition, m_MetadataSet.VarsIndex ); //not checking for metadata
+    return doTransportsFlush;
 }
-
 
 
 
