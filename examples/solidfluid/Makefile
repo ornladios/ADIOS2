@@ -3,12 +3,12 @@
 #     Author: pnorbert
 
 
-BASE_NAME=solidfluid
+BASE_NAME=solidfluid_write
      
 TOOL_DIR=/usr/bin
 
 CC=$(TOOL_DIR)/g++ # Compiling with mpicc for now
-MPICC:=/usr/local/bin/mpic++
+MPICC:=mpic++
 AR=$(TOOL_DIR)/ar
 
 #ADIOS LOCATION

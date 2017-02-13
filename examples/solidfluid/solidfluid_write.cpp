@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "ADIOS.h"
+#include "ADIOS_OOP.h"
 
 
 struct MYDATA {
@@ -27,15 +27,14 @@ MPI_Comm    comm=MPI_COMM_WORLD;
 int         rank, size;
 
 
-void write_data (adios::ADIOS adios, struct MYDATA &data, unsigned int outfile)
+void write_data (std::shared_ptr<adios::Engine> writer, struct MYDATA &data)
 {
-    adios.Write (outfile, "NX", &data.NX);
-    adios.Write (outfile, "rank", &rank);
-    adios.Write (outfile, "size", &size);
-    adios.Write (outfile, "temperature", data.t);
-    adios.Write (outfile, "pressure", data.p.data());
-    //adios.Write (outfile, true); // true: advance step, this is default value
-    adios.Write (outfile);
+    writer->Write("NX", &data.NX);
+    writer->Write("rank", &rank);
+    writer->Write("size", &size);
+    writer->Write("temperature", data.t);
+    writer->Write("pressure", data.p.data());
+    //writer->Flush();
 }
 
 void write_checkpoint (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &fluid)
@@ -43,22 +42,22 @@ void write_checkpoint (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &
     try {
         // Open an output for a Group
         // a transport or an engine should be associated with the group
-        int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "w", comm);
+        auto ckptfile = adios.Open("checkpoint.bp","w",comm,"checkpoint");
 
-        adios.Write (ckptfile, "solid/NX", &solid.NX);
-        adios.Write (ckptfile, "solid/rank", &rank);
-        adios.Write (ckptfile, "solid/size", &size);
-        adios.Write (ckptfile, "solid/temperature", solid.t);
-        adios.Write (ckptfile, "solid/pressure", &solid.p[0]);
+        ckptfile->Write ("solid/NX", &solid.NX);
+        ckptfile->Write ("solid/rank", &rank);
+        ckptfile->Write ("solid/size", &size);
+        ckptfile->Write ("solid/temperature", solid.t);
+        ckptfile->Write ("solid/pressure", &solid.p[0]);
 
-        adios.Write (ckptfile, "fluid/NX", &fluid.NX);
-        adios.Write (ckptfile, "fluid/rank", &rank);
-        adios.Write (ckptfile, "fluid/size", &size);
-        adios.Write (ckptfile, "fluid/temperature", fluid.t);
-        adios.Write (ckptfile, "fluid/pressure", fluid.p.data());
+        ckptfile->Write ("fluid/NX", &fluid.NX);
+        ckptfile->Write ("fluid/rank", &rank);
+        ckptfile->Write ("fluid/size", &size);
+        ckptfile->Write ("fluid/temperature", fluid.t);
+        ckptfile->Write ("fluid/pressure", fluid.p.data());
 
-        adios.Write(ckptfile);
-        adios.Close(ckptfile); // Should this do Write() if user misses or should we complain?
+        //ckptfile->Flush();
+        ckptfile->Close(); // Should this do Write() if user misses or should we complain?
     }
     catch ( std::exception& e ) //need to think carefully how to handle C++ exceptions with MPI to avoid deadlocking
     {
@@ -69,26 +68,29 @@ void write_checkpoint (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &
     }
 }
 
-void write_viz (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &fluid, unsigned int vizstream)
+void write_viz (std::shared_ptr<adios::Engine> vizstream, struct MYDATA &solid, struct MYDATA &fluid)
 {
     // This stream is not associated with a group, so we must say for each write which group to use
     // The output variable is re-defined inside as <groupname>/<varname>, unless given as third string argument
     // An array variable's dimension definitions are also re-defined with dimensions <groupname>/<dimensionvar>
-    adios.Write (vizstream, "solid", "NX", &solid.NX);
-    adios.Write (vizstream, "solid", "rank", &rank);
-    adios.Write (vizstream, "solid", "size", &size);
+
+    //vizstream->Write ("solid", "NX", &solid.NX);
+    //vizstream->Write ("solid", "rank", &rank);
+    //vizstream->Write ("solid", "size", &size);
+
     // write solid group's temperature simply as temperature, risking overloading the 'temperature' variable when
     // reading from a file
-    adios.Write (vizstream, "solid", "temperature", "my/tempvarinfile", solid.t);
 
-    adios.Write (vizstream, "fluid", "NX", &fluid.NX);
-    adios.Write (vizstream, "fluid", "rank", &rank);
-    adios.Write (vizstream, "fluid", "size", &size);
+    //vizstream->Write ("solid", "temperature", "my/tempvarinfile", solid.t);
 
-    adios.Write (vizstream, "fluid", "temperature", "temperature", fluid.t);
+    //vizstream->Write ("fluid", "NX", &fluid.NX);
+    //vizstream->Write ("fluid", "rank", &rank);
+    //vizstream->Write ("fluid", "size", &size);
 
-    adios.Write(vizstream); // flushes all data to disk; required operation
-    vizstream.AdvanceStep();
+    //vizstream->Write ("fluid", "temperature", "temperature", fluid.t);
+
+    //vizstream->Flush(); // flushes all data to disk; required operation
+    //vizstream.AdvanceStep();
 }
 
 void compute (int it,  struct MYDATA &solid, struct MYDATA &fluid)
@@ -122,14 +124,15 @@ int main( int argc, char* argv [] )
     try
     {
         // ADIOS manager object creation. MPI must be initialized
-        adios::ADIOS adios( "globalArrayXML.xml", comm, true );
+        adios::ADIOS adios( "solidfluid.xml", comm, true );
 
         // Open a file with a Method which has selected a group and a transport in the XML.
         // "a" will append to an already existing file, "w" would create a new file
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?
 
-        int solidfile = adios.Open("solid.bp", "solid", "a", comm); // "solid" is a method but incidentally also a group
+        auto solidfile = adios.Open("solid.bp", "a", comm, "solid");
+        // "solid" is a method but incidentally also a group
         // Constructor only creates an object and what is needed there but does not open a stream/file
         // It can be used to initialize a staging connection if not declared before
         // FIXME: which argument can be post-poned into Open() instead of constructor?
@@ -141,14 +144,14 @@ int main( int argc, char* argv [] )
         // "a" will append to an already existing file, "w" would create a new file
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?
-        int fluidfile = adios.Open("fluid.bp", "fluid", "a", comm);
+        auto fluidfile = adios.Open("fluid.bp", "a", comm, "fluid");
 
         //int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "w", comm);
         // we do not open this here, but every time when needed in a function
 
         // Another output not associated with a single group, so that we can mix variables to it
         //adios:handle vizstream = adios.Open( "stream.bp", comm, "w", "STAGING", "options to staging method");
-        int vizstream = adios.Open( "stream.bp", comm, "w", "groupless");
+        auto vizstream = adios.Open("stream.bp", "w", comm, "groupless");
 
         // This creates an empty group inside, and we can write all kinds of variables to it
 
@@ -160,22 +163,22 @@ int main( int argc, char* argv [] )
         {
             compute (it, solid, fluid);
 
-            write_data(adios, solid, solidfile);
-            write_data(adios, fluid, fluidfile);
+            write_data(solidfile, solid);
+            write_data(fluidfile, fluid);
 
             if (it%10 == 0) {
                 write_checkpoint (adios, solid, fluid);
             }
 
-            write_viz(adios, solid, fluid, vizstream);
+            write_viz(vizstream, solid, fluid);
 
             MPI_Barrier (comm);
             if (rank==0) printf("Timestep %d written\n", it);
         }
 
-        adios.Close(solidfile);
-        adios.Close(fluidfile);
-        adios.Close(vizstream);
+        solidfile->Close();
+        fluidfile->Close();
+        vizstream->Close();
 
         // need barrier before we destroy the ADIOS object here automatically
         MPI_Barrier (comm);
@@ -185,7 +188,7 @@ int main( int argc, char* argv [] )
     {
         if( rank == 0 )
         {
-            std::cout << e.what() << "\n";
+            std::cout << "Error: " << e.what() << "\n";
         }
     }
 
