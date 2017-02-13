@@ -41,7 +41,7 @@ int main( int argc, char* argv [] )
         adios::Group& ioGroup = adios.DeclareGroup( "ioGroup" );
         adios::Var ioNx = ioGroup.DefineVariable<unsigned int>( "Nx" );
         adios::Dims dimNx = ioGroup.SetDimensions( {ioNx} );
-        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles" );
+        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", dimNx );
 
         //add transform to variable in group...not executed (just testing API)
         adios::Transform bzip2 = adios::transform::BZIP2( );
