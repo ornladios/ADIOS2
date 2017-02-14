@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "ADIOS.h"
+#include "ADIOS_OOP.h"
 
 
 struct MYDATA {
@@ -33,20 +33,21 @@ void read_ckpt (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &fluid)
         // The write transport is associated with the group in the XML
         // ADIOS pairs that with the corresponding read transport
         // "r" is required to indicate we are reading
-        int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "r", comm);
+        auto ckptfile = adios.Open("checkpoint.bp", "r", comm, "checkpoint");
         // We can also manually set the read transport
-        //int ckptfile = adios.Open("checkpoint.bp", adios::READ_METHOD_BP, "r", comm);
+        //auto ckptfile = adios.Open("checkpoint.bp", adios::READ_METHOD_BP, "r", comm);
 
         // Note: we only see a single step in the input but the checkpoint has
         // only one step anyway. This makes this code simple
 
         // simple immediate read of a scalar
-        adios.ReadScalar (ckptfile, "solid/NX", &solid.NX);
+        ckptfile->ReadScalar("solid/NX", &solid.NX);
         // solid.NX is filled at this point
 
         // scheduled version of read of another scalar
-        adios.ScheduleRead (ckptfile, "fluid/NX", &fluid.NX);
-        adios.Read(ckptfile); // perform reading now
+        // //ckptfile->ScheduleRead ("fluid/NX", &fluid.NX);
+        // //ckptfile->Read(); // perform reading now
+        ckptfile->Read("fluid/NX", &fluid.NX);
         // fluid.NX is filled at this point
 
         solid.t = new double(solid.NX);
@@ -56,11 +57,11 @@ void read_ckpt (adios::ADIOS adios, struct MYDATA &solid, struct MYDATA &fluid)
         fluid.p = std::vector<double>(fluid.NX);
 
         adios::ADIOS_SELECTION_WRITEBLOCK sel(rank);
-        adios.ScheduleRead (ckptfile, sel, "solid/temperature", solid.t);
-        adios.ScheduleRead (ckptfile, sel, "solid/pressure",    solid.p);
-        adios.ScheduleRead (ckptfile, sel, "fluid/temperature", fluid.t);
+        adios.Read (ckptfile, sel, "solid/temperature", solid.t);
+        adios.Read (ckptfile, sel, "solid/pressure",    solid.p);
+        adios.Read (ckptfile, sel, "fluid/temperature", fluid.t);
         // force checking if the allocated space equals to the size of the selection:
-        adios.ScheduleRead (ckptfile, sel, "fluid/pressure",    fluid.p, fluid.NX*sizeof(double));
+        adios.Read (ckptfile, sel, "fluid/pressure",    fluid.p, fluid.NX*sizeof(double));
         adios.Read(ckptfile, true); // true: blocking read, which is also default
         adios.Close(ckptfile); // Should this do Read() if user misses or should we complain?
     }
@@ -253,16 +254,6 @@ void read_fluid (adios::ADIOS adios, struct MYDATA &fluid)
 
 int main (int argc, char ** argv)
 {
-    int         i, j;
-    ADIOS_FILE * f;
-    ADIOS_VARINFO * v;
-    ADIOS_SELECTION * sel;
-    int steps = 0;
-    int retval = 0;
-    float timeout_sec = 1.0;
-
-    void * data = NULL;
-    uint64_t start[2], count[2];
 
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (comm, &rank);
