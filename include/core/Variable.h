@@ -16,10 +16,15 @@
 
 #include "core/Transform.h"
 
-class Group;
+
 
 namespace adios
 {
+
+class ADIOS;
+
+using Dims = std::vector<size_t>;
+
 /**
  * @param Base (parent) class for template derived (child) class CVariable. Required to put CVariable objects in STL containers.
  */
@@ -29,12 +34,19 @@ class Variable
 
 public:
 
-    const Group& m_Group; ///< reference to the group it belongs to
+    const ADIOS& m_ADIOS; ///< reference to the adios class it belongs to
     const std::string m_Name; ///< variable name
     const std::string m_Type; ///< variable type
+
+    const Dims m_Dimensions;
     const std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
+
+    const Dims m_GlobalDimensions;
     const std::string m_GlobalDimensionsCSV; ///< comma separated list for variables to search for global dimensions
+
+    const Dims m_GlobalOffsets;
     const std::string m_GlobalOffsetsCSV; ///< comma separated list for variables to search for global offsets
+
     const bool m_DebugMode = false;
 
     const T* m_ValuesWrite = nullptr; ///< pointer to values passed from user in ADIOS Write, it might change in ADIOS Read
@@ -53,7 +65,7 @@ public:
     std::vector< TransformData > m_Transforms; ///< associated transforms, sequence determines application order, e.g. first Transforms[0] then Transforms[1]. Pointer used as reference (no memory management).
 
     /**
-     * Constructor from Group
+     * Constructor for dynamic config file
      * @param group
      * @param name
      * @param dimensionsCSV
@@ -61,15 +73,35 @@ public:
      * @param debugMode
      */
     template< class T >
-    Variable( const Group& group, const std::string name, const std::string dimensionsCSV, const std::string globalDimensionsCSV = "",
-              const std::string globalOffsetsCSV = "", const bool debugMode = false  ):
-        m_Group{ group },
+    Variable( const ADIOS& adios, const std::string name, const std::string dimensionsCSV, const std::string globalDimensionsCSV,
+              const std::string globalOffsetsCSV, const bool debugMode ):
+        m_ADIOS{ adios },
         m_Name{ name },
         m_DimensionsCSV{ dimensionsCSV },
         m_GlobalDimensionsCSV{ globalDimensionsCSV },
         m_GlobalOffsetsCSV{ globalOffsetsCSV },
         m_DebugMode{ debugMode }
-   { }
+    { }
+
+    /**
+     * Constructor for static config file
+     * @param group
+     * @param name
+     * @param dimensionsCSV
+     * @param globalBoundsIndex
+     * @param debugMode
+     */
+    template< class T >
+    Variable( const ADIOS& adios, const std::string name, const Dims dimensionsCSV, const Dims globalDimensionsCSV,
+              const Dims globalOffsetsCSV, const bool debugMode ):
+        m_ADIOS{ adios },
+        m_Name{ name },
+        m_DimensionsCSV{ dimensionsCSV },
+        m_GlobalDimensionsCSV{ globalDimensionsCSV },
+        m_GlobalOffsetsCSV{ globalOffsetsCSV },
+        m_DebugMode{ debugMode }
+    { }
+
 
     template< class ...Args>
     void AddTransform( Transform& transform, Args... args )
@@ -77,12 +109,6 @@ public:
         std::vector<std::string> parameters = { args... };
         m_Transforms.emplace_back( transform, BuildParametersMap( parameters, m_DebugMode ) ); //need to check
     }
-
-
-private:
-
-    std::vector<size_t> GetDimensions( const std::string csvDimensions );
-
 
 };
 

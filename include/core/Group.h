@@ -50,19 +50,7 @@ public:
     const std::string m_Name;
     std::vector< std::pair< std::string, std::string > > m_GlobalBounds; ///<  if a variable or an attribute is global it fills this container, from global-bounds in XML File, data in global space, pair.first = global dimensions, pair.second = global bounds
 
-    std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
-    std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
-    std::vector< Variable<short> > m_Short; ///< Key: variable name, Value: variable of type short
-    std::vector< Variable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
-    std::vector< Variable<int> > m_Int; ///< Key: variable name, Value: variable of type int
-    std::vector< Variable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
-    std::vector< Variable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
-    std::vector< Variable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
-    std::vector< Variable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
-    std::vector< Variable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
-    std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
-    std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
-    std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
+
 
     /**
      * Empty constructor

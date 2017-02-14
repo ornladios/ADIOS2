@@ -24,7 +24,7 @@
 #endif
 
 #include "core/Engine.h"
-#include "core/Group.h"
+#include "core/Variable.h"
 #include "core/Method.h"
 #include "core/Support.h"
 
@@ -47,6 +47,20 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
+
+    std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
+    std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
+    std::vector< Variable<short> > m_Short; ///< Key: variable name, Value: variable of type short
+    std::vector< Variable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
+    std::vector< Variable<int> > m_Int; ///< Key: variable name, Value: variable of type int
+    std::vector< Variable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
+    std::vector< Variable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
+    std::vector< Variable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
+    std::vector< Variable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
+    std::vector< Variable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
+    std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
+    std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
+    std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
 
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
@@ -82,11 +96,13 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     ~ADIOS( ); ///< empty, using STL containers for memory management
 
 
-    /**
-     * Creates an empty group
-     * @param groupName
-     */
-    Group& DeclareGroup( const std::string groupName );
+    template<class T> inline
+    Variable<T>& DefineVariable( const std::string name, const Dims dimensions = Dims{1},
+                                 const Dims globalDimensions = Dims( ),
+                                 const Dims globalOffsets = Dims() )
+    {
+        throw std::invalid_argument( "ERROR: type not supported for variable " + name + "\n" );
+    }
 
 
     /**
@@ -170,15 +186,9 @@ private: //no const to allow default empty and copy constructors
     std::string m_HostLanguage = "C++"; ///< Supported languages: C, C++, Fortran, Python, etc.
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
-    //GROUP
-    /**
-     * @brief List of groups defined from either ADIOS XML configuration file or the DeclareGroup function.
-     * <pre>
-     *     Key: std::string unique group name
-     *     Value: Group class
-     * </pre>
-     */
-    std::map< std::string, Group > m_Groups;
+    //Variables
+    std::map< std::string, std::pair< std::string, unsigned int > > m_Variables; ///< Makes variable name unique, key: variable name, value: pair.first = type, pair.second = index in corresponding vector of Variable
+
     std::vector< std::shared_ptr<Transform> > m_Transforms; ///< transforms associated with ADIOS run
 
 
@@ -198,8 +208,7 @@ private: //no const to allow default empty and copy constructors
      * @param groupName unique name, passed for thrown exception only
      * @param hint adds information to thrown exception
      */
-    void CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
-                     const std::string groupName, const std::string hint ) const;
+    void CheckVariable( const std::string name, const Dims& dimensions ) const;
 
 
     /**
@@ -212,6 +221,138 @@ private: //no const to allow default empty and copy constructors
                       const std::string methodName, const std::string hint ) const;
 
 };
+
+//template specializations of DefineVariable:
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<char>( const std::string name, const Dims dimensions = Dims{1},
+                                          const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_Char.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<char>(), m_Char.size()-1 ) );
+    return m_Char.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<short>( const std::string name, const Dims dimensions = Dims{1},
+                                           const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_UChar.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned char>(), m_UChar.size()-1 ) );
+    return m_UChar.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<unsigned short>( const std::string name, const Dims dimensions = Dims{1},
+                                                    const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_UShort.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned short>(), m_UShort.size()-1 ) );
+    return m_UShort.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<int>( const std::string name, const Dims dimensions = Dims{1},
+                                         const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_Int.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<int>(), m_Int.size()-1 ) );
+    return m_Int.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<unsigned int>( const std::string name, const Dims dimensions = Dims{1},
+                                                  const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_UInt.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned int>(), m_UInt.size()-1 ) );
+    return m_UInt.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<long int>( const std::string name, const Dims dimensions = Dims{1},
+                                                       const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_LInt.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<long int>(), m_LInt.size()-1 ) );
+    return m_LInt.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<unsigned long int>( const std::string name, const Dims dimensions = Dims{1},
+                                                       const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_ULInt.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned long int>(), m_ULInt.size()-1 ) );
+    return m_ULInt.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<long long int>( const std::string name, const Dims dimensions = Dims{1},
+                                                   const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_LLInt.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<long long int>(), m_LLInt.size()-1 ) );
+    return m_LLInt.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<unsigned long long int>( const std::string name, const Dims dimensions = Dims{1},
+                                                            const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_ULLInt.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned long long int>(), m_ULLInt.size()-1 ) );
+    return m_ULLInt.back();
+}
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<float>( const std::string name, const Dims dimensions = Dims{1},
+                                           const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_Float.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<float>(), m_Float.size()-1 ) );
+    return m_Float.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<double>( const std::string name, const Dims dimensions = Dims{1},
+                                            const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_Double.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<double>(), m_Double.size()-1 ) );
+    return m_Double.back();
+}
+
+
+template<class T> inline
+Variable<T>& ADIOS::DefineVariable<long double>( const std::string name, const Dims dimensions = Dims{1},
+                                                 const Dims globalDimensions = Dims(), const Dims globalOffsets = Dims() )
+{
+    CheckVariable( name, dimensions );
+    m_LDouble.emplace_back( *this, name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<long double>(), m_LDouble.size()-1 ) );
+    return m_LDouble.back();
+}
 
 
 

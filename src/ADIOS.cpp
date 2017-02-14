@@ -167,11 +167,16 @@ void ADIOS::MonitorGroups( std::ostream& logStream ) const
 
 
 //PRIVATE FUNCTIONS BELOW
-void ADIOS::CheckGroup( std::map< std::string, Group >::const_iterator itGroup,
-                        const std::string groupName, const std::string hint ) const
+void ADIOS::CheckVariable( const std::string name, const Dims& dimensions ) const
 {
-    if( itGroup == m_Groups.end() )
-        throw std::invalid_argument( "ERROR: group " + groupName + " not found " + hint + "\n" );
+    if( m_DebugMode == true )
+    {
+        if( m_Variables.count( name ) == 1 )
+            throw std::invalid_argument( "ERROR: variable " + name + " already exists, in call to DefineVariable\n" );
+
+        if( dimensions.empty() == true )
+            throw std::invalid_argument( "ERROR: variable " + name + " dimensions can't be empty, in call to DefineVariable\n" );
+    }
 }
 
 
