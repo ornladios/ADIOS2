@@ -6,7 +6,6 @@
  */
 
 #include <stdexcept>
-#include <mpi.h>
 #include <iostream>
 #include <fstream>
 #include <string>
