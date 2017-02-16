@@ -8,6 +8,10 @@
 #ifndef HEAP_H_
 #define HEAP_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <vector>
+/// \endcond
+
 
 #include "core/Capsule.h"
 

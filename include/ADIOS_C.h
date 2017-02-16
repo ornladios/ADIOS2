@@ -19,7 +19,6 @@
 
 
 typedef void ADIOS;
-typedef void Group;
 typedef void Method;
 typedef void Engine;
 

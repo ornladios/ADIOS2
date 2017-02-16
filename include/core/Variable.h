@@ -11,19 +11,27 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 #include <vector>
-#include <memory>
+#include <map>
+#include <ostream> //std::ostream in MonitorGroups
 /// \endcond
 
 #include "core/Transform.h"
+#include "functions/adiosFunctions.h"
+#include "functions/adiosTemplates.h"
 
 
 
 namespace adios
 {
 
-class ADIOS;
-
 using Dims = std::vector<size_t>;
+
+struct TransformData
+{
+    Transform& Operation; ///< pointer to transform object
+    std::map<std::string, std::string> Parameters; ///< transforms parameters
+    std::vector<std::size_t> Size;  ///< vector that carries the sizes after a transformation is applied
+};
 
 /**
  * @param Base (parent) class for template derived (child) class CVariable. Required to put CVariable objects in STL containers.
@@ -34,74 +42,38 @@ class Variable
 
 public:
 
-    const ADIOS& m_ADIOS; ///< reference to the adios class it belongs to
     const std::string m_Name; ///< variable name
     const std::string m_Type; ///< variable type
 
-    const Dims m_Dimensions;
-    const std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
+    Dims m_Dimensions;
+    std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
 
-    const Dims m_GlobalDimensions;
-    const std::string m_GlobalDimensionsCSV; ///< comma separated list for variables to search for global dimensions
+    Dims m_GlobalDimensions;
+    std::string m_GlobalDimensionsCSV; ///< comma separated list for variables to search for global dimensions
 
-    const Dims m_GlobalOffsets;
-    const std::string m_GlobalOffsetsCSV; ///< comma separated list for variables to search for global offsets
+    Dims m_GlobalOffsets;
+    std::string m_GlobalOffsetsCSV; ///< comma separated list for variables to search for global offsets
 
     const bool m_DebugMode = false;
 
-    const T* m_ValuesWrite = nullptr; ///< pointer to values passed from user in ADIOS Write, it might change in ADIOS Read
-    T* m_ValuesRead = nullptr;
+    const T* m_AppValues = nullptr; ///< pointer to values passed from user in ADIOS Write, it might change in ADIOS Read
+    std::vector<T> m_Values; ///< Vector variable returned to user, might be used for zero-copy?
 
-    bool IsDimension = false; ///< true: is used as a dimension in another variable (typically scalars), false: none
-
-
-    struct TransformData
-    {
-        Transform* Transform = nullptr; ///< pointer to transform object
-        std::map<std::string, std::string> Parameters; ///< transforms parameters
-        std::vector<std::size_t> Size;  ///< vector that carries the sizes after a transformation is applied
-    };
-
+    bool m_IsScalar = false;
+    const bool m_IsDimension = false;
     std::vector< TransformData > m_Transforms; ///< associated transforms, sequence determines application order, e.g. first Transforms[0] then Transforms[1]. Pointer used as reference (no memory management).
 
-    /**
-     * Constructor for dynamic config file
-     * @param group
-     * @param name
-     * @param dimensionsCSV
-     * @param globalBoundsIndex
-     * @param debugMode
-     */
-    template< class T >
-    Variable( const ADIOS& adios, const std::string name, const std::string dimensionsCSV, const std::string globalDimensionsCSV,
-              const std::string globalOffsetsCSV, const bool debugMode ):
-        m_ADIOS{ adios },
+    Variable( const std::string name, const Dims dimensions, const Dims globalDimensions, const Dims globalOffsets, const bool debugMode ):
         m_Name{ name },
-        m_DimensionsCSV{ dimensionsCSV },
-        m_GlobalDimensionsCSV{ globalDimensionsCSV },
-        m_GlobalOffsetsCSV{ globalOffsetsCSV },
+        m_Type{ GetType<T>() },
+        m_Dimensions{ dimensions },
+        m_GlobalDimensions{ globalDimensions },
+        m_GlobalOffsets{ globalOffsets },
         m_DebugMode{ debugMode }
-    { }
-
-    /**
-     * Constructor for static config file
-     * @param group
-     * @param name
-     * @param dimensionsCSV
-     * @param globalBoundsIndex
-     * @param debugMode
-     */
-    template< class T >
-    Variable( const ADIOS& adios, const std::string name, const Dims dimensionsCSV, const Dims globalDimensionsCSV,
-              const Dims globalOffsetsCSV, const bool debugMode ):
-        m_ADIOS{ adios },
-        m_Name{ name },
-        m_DimensionsCSV{ dimensionsCSV },
-        m_GlobalDimensionsCSV{ globalDimensionsCSV },
-        m_GlobalOffsetsCSV{ globalOffsetsCSV },
-        m_DebugMode{ debugMode }
-    { }
-
+    {
+        if( m_Dimensions == Dims{1} )
+            m_IsScalar = true;
+    }
 
     template< class ...Args>
     void AddTransform( Transform& transform, Args... args )
@@ -110,7 +82,44 @@ public:
         m_Transforms.emplace_back( transform, BuildParametersMap( parameters, m_DebugMode ) ); //need to check
     }
 
+
+    void Monitor( std::ostream& logInfo ) const noexcept
+    {
+        logInfo << "Hello from DataMan Write variable " << m_Name << "\n";
+        logInfo << "Type: " << m_Type << "\n";
+        logInfo << "Size: " << TotalSize() << " elements\n";
+        logInfo << "Payload: " << PayLoadSize() << " bytes\n";
+        logInfo << "Values: \n";
+
+        for( unsigned int i = 0; i < TotalSize(); ++i  )
+        {
+            logInfo << m_AppValues[i] << " ";
+        }
+        logInfo << "\n";
+    }
+
+    /**
+     * Returns the payload size in bytes
+     * @return TotalSize * sizeof(T)
+     */
+    std::size_t PayLoadSize( ) const noexcept
+    {
+        return GetTotalSize( m_Dimensions ) * sizeof(T);
+    }
+
+    /**
+     * Returns the total size
+     * @return number of elements
+     */
+    std::size_t TotalSize( ) const noexcept
+    {
+        return GetTotalSize( m_Dimensions );
+    }
+
 };
 
 
 } //end namespace
+
+
+#endif /* VARIABLE_H_ */

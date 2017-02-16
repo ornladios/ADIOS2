@@ -24,15 +24,14 @@ void BP1::OpenRankFiles( const std::string name, const std::string accessMode, T
     if( name.find(".bp") == name.size()-3 ) //need to test
     {
         baseName = name.substr( 0, name.size()-3 );
-        directory = name + ".dir";
-        CreateDirectory( name +".dir" );
+        directory = name;
     }
     else
     {
         baseName = name;
-        directory = name + ".bp.dir";
-        CreateDirectory( name +".bp.dir" );
+        directory = name + ".bp";
     }
+    CreateDirectory( directory );
 
     std::string fileName( directory + "/" + baseName + ".bp." + std::to_string( file.m_MPIRank ) );
 

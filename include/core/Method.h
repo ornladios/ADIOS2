@@ -14,7 +14,6 @@
 #include <map>
 /// \endcond
 
-#include "core/Group.h"
 #include "functions/adiosFunctions.h"
 
 namespace adios
@@ -32,21 +31,12 @@ public:
     const bool m_DebugMode = false; ///< true: on, throws exceptions and do additional checks, false: off, faster, but unsafe
     std::map<std::string, std::string> m_Parameters; ///< method parameters
     std::vector< std::map<std::string, std::string> > m_TransportParameters; ///< each is a separate Transport containing their own parameters
-    Group* m_Group = nullptr; ///< Set default group
 
     /**
      * Constructor
      * @param type must be an engine type, default = SingleBP
      */
     Method( const std::string type, const bool debugMode = false );
-
-    /**
-     * Constructor that accepts a group reference for access to a default group access
-     * @param type
-     * @param group
-     * @param debugMode
-     */
-    Method( const std::string type, Group& group, const bool debugMode = false );
 
     ~Method( );
 
@@ -73,7 +63,6 @@ public:
         AddTransportParameters( type, parameters );
     }
 
-    void SetDefaultGroup( Group& group );
 
 private:
 

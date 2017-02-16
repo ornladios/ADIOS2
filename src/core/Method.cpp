@@ -20,13 +20,6 @@ Method::Method( const std::string type, const bool debugMode ):
 { }
 
 
-Method::Method( const std::string type, Group& group, const bool debugMode ):
-    m_Type{ type },
-    m_DebugMode{ debugMode },
-    m_Group{ &group }
-{ }
-
-
 Method::~Method( )
 { }
 
@@ -51,13 +44,6 @@ void Method::AddTransportParameters( const std::string type, const std::vector<s
     mapParameters["transport"] = type;
     m_TransportParameters.push_back( mapParameters );
 }
-
-
-void Method::SetDefaultGroup( Group& group )
-{
-    m_Group = &group;
-}
-
 
 
 

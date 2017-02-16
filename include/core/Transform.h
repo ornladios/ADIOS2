@@ -26,7 +26,6 @@ class Transform
 
 public:
 
-
     const std::string m_Method;
 
     /**

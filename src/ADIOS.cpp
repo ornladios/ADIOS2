@@ -18,36 +18,36 @@
 //Engines
 #include "engine/writer/Writer.h"
 #include "engine/dataman/DataMan.h"
-#include "engine/vis/Vis.h"
+//#include "engine/vis/Vis.h"
 
 
 namespace adios
 {
 
 
-ADIOS::ADIOS( )
+ADIOS::ADIOS( const bool debugMode ):
+    m_DebugMode{ debugMode }
 {
-    MPI_Comm_rank( m_MPIComm, &m_RankMPI );
-    MPI_Comm_size( m_MPIComm, &m_SizeMPI );
+    InitMPI( );
 }
 
 
-ADIOS::ADIOS( const std::string xmlConfigFile, const bool debugMode ):
-    m_XMLConfigFile{ xmlConfigFile },
+ADIOS::ADIOS( const std::string configFileName, const bool debugMode ):
+    m_ConfigFile{ configFileName },
     m_DebugMode{ debugMode }
 {
-    InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Transforms, m_Groups );
+   InitMPI( );
+    // InitXML( m_ConfigFile, m_MPIComm, m_DebugMode, m_Transforms );
 }
 
 
 ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode  ):
     m_MPIComm{ mpiComm },
-    m_XMLConfigFile{ xmlConfigFile },
+    m_ConfigFile{ xmlConfigFile },
 	m_DebugMode{ debugMode }
 {
-    MPI_Comm_rank( m_MPIComm, &m_RankMPI );
-    MPI_Comm_size( m_MPIComm, &m_SizeMPI );
-    InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Transforms, m_Groups );
+    InitMPI( );
+    //InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage, m_Transforms, m_Groups );
 }
 
 
@@ -55,8 +55,7 @@ ADIOS::ADIOS( const MPI_Comm mpiComm, const bool debugMode ):
     m_MPIComm{ mpiComm },
     m_DebugMode{ debugMode }
 {
-    MPI_Comm_rank( m_MPIComm, &m_RankMPI );
-    MPI_Comm_size( m_MPIComm, &m_SizeMPI );
+    InitMPI( );
 }
 
 
@@ -64,16 +63,10 @@ ADIOS::~ADIOS( )
 { }
 
 
-Group& ADIOS::DeclareGroup( const std::string groupName )
+void ADIOS::InitMPI( )
 {
-    if( m_DebugMode == true )
-    {
-        if( m_Groups.count( groupName ) == 1 )
-            throw std::invalid_argument( "ERROR: group " + groupName + " already exist, from call to DeclareGroup\n" );
-    }
-
-    m_Groups.emplace( groupName, Group( groupName, m_DebugMode ) );
-    return m_Groups.at( groupName );
+    MPI_Comm_rank( m_MPIComm, &m_RankMPI );
+    MPI_Comm_size( m_MPIComm, &m_SizeMPI );
 }
 
 
@@ -103,7 +96,7 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
     if( type == "Writer" || type == "writer" )
     {
-        return std::make_shared<Writer>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
+        return std::make_shared<Writer>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {
@@ -112,11 +105,11 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
     }
     else if( type == "DataMan" )
     {
-    	return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
+    	return std::make_shared<DataMan>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "Vis" )
     {
-        return std::make_shared<engine::Vis>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
+        //return std::make_shared<Vis>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else
     {
@@ -156,18 +149,20 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 }
 
 
-void ADIOS::MonitorGroups( std::ostream& logStream ) const
+void ADIOS::MonitorVariables( std::ostream& logStream ) const
 {
-    for( auto& groupPair : m_Groups )
+    logStream << "\tVariable \t Type\n";
+
+    for( auto& variablePair : m_Variables )
     {
-        logStream << "Group:..." << groupPair.first << "\n";
-        groupPair.second.Monitor( logStream );
+        logStream << "Variable:..." << variablePair.first << "\n";
+        //variablePair.second.Monitor( logStream );
     }
 }
 
 
 //PRIVATE FUNCTIONS BELOW
-void ADIOS::CheckVariable( const std::string name, const Dims& dimensions ) const
+void ADIOS::CheckVariableInput( const std::string name, const Dims& dimensions ) const
 {
     if( m_DebugMode == true )
     {
@@ -176,6 +171,17 @@ void ADIOS::CheckVariable( const std::string name, const Dims& dimensions ) cons
 
         if( dimensions.empty() == true )
             throw std::invalid_argument( "ERROR: variable " + name + " dimensions can't be empty, in call to DefineVariable\n" );
+    }
+}
+
+
+void ADIOS::CheckVariableName( std::map< std::string, std::pair< std::string, unsigned int > >::const_iterator itVariable,
+                               const std::string name, const std::string hint ) const
+{
+    if( m_DebugMode == true )
+    {
+        if( itVariable == m_Variables.end() )
+            throw std::invalid_argument( "ERROR: variable " + name + " does not exist " + hint + "\n" );
     }
 }
 

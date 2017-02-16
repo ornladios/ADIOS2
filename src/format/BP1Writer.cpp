@@ -92,9 +92,9 @@ void BP1Writer::WriteNameRecord( const std::string name, const std::uint16_t len
 
 
 void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                                      const std::vector<unsigned long long int>& localDimensions,
-                                      const std::vector<unsigned long long int>& globalDimensions,
-                                      const std::vector<unsigned long long int>& globalOffsets,
+                                      const std::vector<std::size_t>& localDimensions,
+                                      const std::vector<std::size_t>& globalDimensions,
+                                      const std::vector<std::size_t>& globalOffsets,
                                       const bool addType )
 {
     if( addType == true )
@@ -122,7 +122,7 @@ void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<s
 }
 
 void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                                      const std::vector<unsigned long long int>& localDimensions,
+                                      const std::vector<std::size_t>& localDimensions,
                                       const unsigned int skip,
                                       const bool addType )
 {

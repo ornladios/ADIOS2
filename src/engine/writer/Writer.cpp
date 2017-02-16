@@ -5,10 +5,7 @@
  *      Author: wfg
  */
 
-#include <iostream>
-
 #include "engine/writer/Writer.h"
-#include "core/Support.h"
 #include "functions/adiosFunctions.h" //GetTotalSize
 
 //supported capsules
@@ -19,15 +16,15 @@
 #include "transport/FStream.h"
 #include "transport/File.h"
 
+#include "ADIOS.h"
 
 namespace adios
 {
 
 
-Writer::Writer( const std::string streamName, const std::string accessMode, const MPI_Comm mpiComm,
-                const Method& method, const bool debugMode, const unsigned int cores, const std::string hostLanguage ):
-    Engine( "Writer", streamName, accessMode, mpiComm, method, debugMode,
-            cores, " Writer constructor (or call to ADIOS Open).\n", hostLanguage ),
+Writer::Writer( ADIOS& adios, const std::string name, const std::string accessMode, const MPI_Comm mpiComm,
+                const Method& method, const bool debugMode, const unsigned int cores ):
+    Engine( adios, "Writer", name, accessMode, mpiComm, method, debugMode, cores, " Writer constructor (or call to ADIOS Open).\n" ),
     m_Buffer{ Heap( accessMode, m_RankMPI, m_DebugMode ) },
     m_MaxBufferSize{ m_Buffer.m_Data.max_size() }
 {
@@ -60,202 +57,86 @@ void Writer::Init( )
 }
 
 
-void Writer::Write( Group& group, const std::string variableName, const char* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write char*" );
-    Variable<char>& variable = group.m_Char[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<char>& variable, const char* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const unsigned char* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write unsigned char*" );
-    Variable<unsigned char>& variable = group.m_UChar[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<unsigned char>& variable, const unsigned char* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const short* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write short*" );
-    Variable<short>& variable = group.m_Short[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<short>& variable, const short* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const unsigned short* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write unsigned short*" );
-    Variable<unsigned short>& variable = group.m_UShort[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<unsigned short>& variable, const unsigned short* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const int* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write int*" );
-    Variable<int>& variable = group.m_Int[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<int>& variable, const int* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const unsigned int* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write unsigned int*" );
-    Variable<unsigned int>& variable = group.m_UInt[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<unsigned int>& variable, const unsigned int* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const long int* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write long int*" );
-    Variable<long int>& variable = group.m_LInt[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<long int>& variable, const long int* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const unsigned long int* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write unsigned long int*" );
-    Variable<unsigned long int>& variable = group.m_ULInt[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<unsigned long int>& variable, const unsigned long int* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const long long int* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write long long int*" );
-    Variable<long long int>& variable = group.m_LLInt[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<long long int>& variable, const long long int* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const unsigned long long int* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write unsigned long long int*" );
-    Variable<unsigned long long int>& variable = group.m_ULLInt[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<unsigned long long int>& variable, const unsigned long long int* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const float* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write float*" );
-    Variable<float>& variable = group.m_Float[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<float>& variable, const float* values )
+{ WriteVariable( variable, values ); }
 
+void Writer::Write( Variable<double>& variable, const double* values )
+{ WriteVariable( variable, values ); }
 
-void Writer::Write( Group& group, const std::string variableName, const double* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write double*" );
-    Variable<double>& variable = group.m_Double[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
+void Writer::Write( Variable<long double>& variable, const long double* values )
+{ WriteVariable( variable, values ); }
 
-
-void Writer::Write( Group& group, const std::string variableName, const long double* values )
-{
-    auto index = PreSetVariable( group, variableName, " from call to Write long double*" );
-    Variable<long double>& variable = group.m_LDouble[index]; //must be a reference
-    variable.Values = values;
-    WriteVariable( group, variableName, variable );
-}
-
-
+//String version
 void Writer::Write( const std::string variableName, const char* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<char>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const unsigned char* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<unsigned char>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const short* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<short>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const unsigned short* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<unsigned short>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const int* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<int>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const unsigned int* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<unsigned int>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const long int* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<long int>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const unsigned long int* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<unsigned long int>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const long long int* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<long long int>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const unsigned long long int* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<unsigned long long int>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const float* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<float>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const double* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
-
+{ WriteVariable( m_ADIOS.GetVariable<double>( variableName ), values ); }
 
 void Writer::Write( const std::string variableName, const long double* values )
-{
-    CheckDefaultGroup( );
-    Write( *m_Group, variableName, values );
-}
+{ WriteVariable( m_ADIOS.GetVariable<long double>( variableName ), values ); }
+
+
 
 
 void Writer::Close( const int transportIndex )
@@ -336,7 +217,7 @@ void Writer::InitTransports( )
 
 
 
-bool Writer::CheckBuffersAllocation( const Group& group, const Var variableName, const std::size_t indexSize,
+bool Writer::CheckBuffersAllocation( const std::string variableName, const std::size_t indexSize,
                                      const std::size_t payloadSize )
 {
     //Check if data in buffer needs to be reallocated

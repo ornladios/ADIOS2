@@ -30,26 +30,24 @@ public:
      * @param method
      * @param debugMode
      */
-    Writer( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-            const Method& method, const bool debugMode = false, const unsigned int cores = 1,
-            const std::string hostLanguage = "C++" );
+    Writer( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+            const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
     ~Writer( );
 
-
-    void Write( Group& group, const std::string variableName, const char* values );
-    void Write( Group& group, const std::string variableName, const unsigned char* values );
-    void Write( Group& group, const std::string variableName, const short* values );
-    void Write( Group& group, const std::string variableName, const unsigned short* values );
-    void Write( Group& group, const std::string variableName, const int* values );
-    void Write( Group& group, const std::string variableName, const unsigned int* values );
-    void Write( Group& group, const std::string variableName, const long int* values );
-    void Write( Group& group, const std::string variableName, const unsigned long int* values );
-    void Write( Group& group, const std::string variableName, const long long int* values );
-    void Write( Group& group, const std::string variableName, const unsigned long long int* values );
-    void Write( Group& group, const std::string variableName, const float* values );
-    void Write( Group& group, const std::string variableName, const double* values );
-    void Write( Group& group, const std::string variableName, const long double* values );
+    void Write( Variable<char>& variable, const char* values );
+    void Write( Variable<unsigned char>& variable, const unsigned char* values );
+    void Write( Variable<short>& variable, const short* values );
+    void Write( Variable<unsigned short>& variable, const unsigned short* values );
+    void Write( Variable<int>& variable, const int* values );
+    void Write( Variable<unsigned int>& variable, const unsigned int* values );
+    void Write( Variable<long int>& variable, const long int* values );
+    void Write( Variable<unsigned long int>& variable, const unsigned long int* values );
+    void Write( Variable<long long int>& variable, const long long int* values );
+    void Write( Variable<unsigned long long int>& variable, const unsigned long long int* values ) ;
+    void Write( Variable<float>& variable, const float* values );
+    void Write( Variable<double>& variable, const double* values );
+    void Write( Variable<long double>& variable, const long double* values );
 
     void Write( const std::string variableName, const char* values );
     void Write( const std::string variableName, const unsigned char* values );
@@ -79,7 +77,6 @@ private:
     void Init( );
     void InitTransports( );
 
-
     /**
      * Common function
      * @param group
@@ -87,17 +84,20 @@ private:
      * @param variable
      */
     template< class T >
-    void WriteVariable( const Group& group, const Var variableName, const Variable<T>& variable )
+    void WriteVariable( Variable<T>& variable, const T* values )
     {
+        //set variable
+        variable.m_AppValues = values;
+        m_WrittenVariables.insert( variable.m_Name );
         //precalculate new metadata and payload sizes
-        const std::size_t indexSize = m_BP1Writer.GetVariableIndexSize( group, variableName, variable );
-        const std::size_t payloadSize = GetTotalSize( group.GetDimensions( variable.DimensionsCSV ) ) * sizeof( T );
+        const std::size_t indexSize = m_BP1Writer.GetVariableIndexSize( variable );
+        const std::size_t payloadSize = variable.PayLoadSize();
 
         //Buffer reallocation, expensive part
-        m_TransportFlush = CheckBuffersAllocation( group, variableName, indexSize, payloadSize );
+        m_TransportFlush = CheckBuffersAllocation( variable.m_Name, indexSize, payloadSize );
 
         //WRITE INDEX to data buffer and metadata structure (in memory)//
-        m_BP1Writer.WriteVariableIndex( group, variableName, variable, m_Buffer, m_MetadataSet );
+        m_BP1Writer.WriteVariableIndex( variable, m_Buffer, m_MetadataSet );
 
         if( m_TransportFlush == true ) //in batches
         {
@@ -110,8 +110,8 @@ private:
         }
         else //Write data to buffer
         {
-            //Values to Buffer -> Copy of data, Expensive part might want to use threads if large. Need a model to apply threading.
-            MemcpyThreads( m_Buffer.m_Data.data(), variable.Values, payloadSize, m_Cores );
+            //EXPENSIVE part might want to use threads if large.
+            MemcpyThreads( m_Buffer.m_Data.data(), variable.m_AppValues, payloadSize, m_Cores );
             //update indices
             m_Buffer.m_DataPosition += payloadSize;
             m_Buffer.m_DataAbsolutePosition += payloadSize;
@@ -120,13 +120,12 @@ private:
 
     /**
      * Check if heap buffers for data and metadata need reallocation or maximum sizes have been reached.
-     * @param group variable owner
      * @param variableName name of the variable to be written
      * @param indexSize precalculated index size
      * @param payloadSize payload size from variable total size
      * @return true: transport must be flush and buffers reset, false: buffer is sufficient
      */
-    bool CheckBuffersAllocation( const Group& group, const Var variableName, const std::size_t indexSize, const std::size_t payloadSize );
+    bool CheckBuffersAllocation( const std::string variableName, const std::size_t indexSize, const std::size_t payloadSize );
 
 };
 

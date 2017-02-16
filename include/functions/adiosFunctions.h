@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <cstring> //std::size_t
+#include <memory> //std::shared_ptr
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -21,9 +22,7 @@
   #include "mpidummy.h"
 #endif
 
-
-#include "core/Group.h"
-
+#include "core/Transform.h"
 
 namespace adios
 {
@@ -84,9 +83,9 @@ void GetPairsFromTag( const std::string& fileContent, const std::string tag,
  * @param transforms return the modified transforms vector if there are variables with transformations
  * @param groups passed returns the map of groups defined in fileContent
  */
-void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
-                 std::string& hostLanguage, std::vector< std::shared_ptr<Transform> >& transforms,
-                 std::map< std::string, Group >& groups );
+//void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
+//                 std::string& hostLanguage, std::vector< std::shared_ptr<Transform> >& transforms,
+//                 std::map< std::string, Group >& groups );
 
 
 /**
@@ -98,9 +97,9 @@ void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
  * @param transforms return the modified transforms vector if there are variables with transformations
  * @param groups passed returns the map of groups defined in fileContent
  */
-void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode,
-              std::string& hostLanguage, std::vector< std::shared_ptr<Transform> >& transforms,
-              std::map< std::string, Group >& groups );
+//void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode,
+//              std::string& hostLanguage, std::vector< std::shared_ptr<Transform> >& transforms,
+//              std::map< std::string, Group >& groups );
 
 
 /**
@@ -108,7 +107,7 @@ void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
  * @param dimensions input containing size on each dimension {Nx, Ny, Nz}
  * @return product of all dimensions Nx * Ny * Nz
  */
-unsigned long long int GetTotalSize( const std::vector<unsigned long long int>& dimensions );
+std::size_t GetTotalSize( const std::vector<size_t>& dimensions );
 
 
 /**
