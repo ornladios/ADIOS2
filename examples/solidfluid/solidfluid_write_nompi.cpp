@@ -6,7 +6,6 @@
  */
 
 #include <stdexcept>
-#include <mpi.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -25,19 +24,29 @@ struct MYDATA {
 
 const int N = 10;
 struct MYDATA solid, fluid;
-MPI_Comm    comm=MPI_COMM_WORLD;
-int         rank, size;
+int         rank = 0, size = 1;
 
 
-void write_data( adiosFile writer, struct MYDATA &data )
+void set_io_variables( adios::ADIOS& adios, const std::string process )
 {
-    writer->Write("NX", &data.NX);
-    writer->Write("rank", &rank);
-    writer->Write("size", &size);
-    writer->Write("temperature", data.t);
-    writer->Write("pressure", data.p.data());
+    adios.DefineVariable<int>( process + "/NX" );
+    adios.DefineVariable<int>( process + "/rank" );
+    adios.DefineVariable<int>( process + "/size" );
+    adios.DefineVariable<double>( process + "/temperature", adios::Dims{N} );
+    adios.DefineVariable<double>( process + "/pressure", adios::Dims{N} );
+}
+
+
+void write_data( adiosFile writer, const std::string process, struct MYDATA &data)
+{
+    writer->Write( process + "/NX", &data.NX);
+    writer->Write( process + "/rank", &rank);
+    writer->Write( process + "/size", &size);
+    writer->Write( process + "/temperature", data.t );
+    writer->Write( process + "/pressure", data.p.data());
     //writer->Flush();  AdvanceStep()???
 }
+
 
 void write_checkpoint( adiosFile ckptfile, const struct MYDATA &solid, const struct MYDATA &fluid )
 {
@@ -67,7 +76,7 @@ void write_checkpoint( adiosFile ckptfile, const struct MYDATA &solid, const str
     }
 }
 
-void write_viz (std::shared_ptr<adios::Engine> vizstream, struct MYDATA &solid, struct MYDATA &fluid)
+void write_viz( adiosFile vizstream, struct MYDATA &solid, struct MYDATA &fluid )
 {
     // This stream is not associated with a group, so we must say for each write which group to use
     // The output variable is re-defined inside as <groupname>/<varname>, unless given as third string argument
@@ -108,10 +117,6 @@ void compute (int it,  struct MYDATA &solid, struct MYDATA &fluid)
 
 int main( int argc, char* argv [] )
 {
-    MPI_Init (&argc, &argv);
-    MPI_Comm_rank (comm, &rank);
-    MPI_Comm_size (comm, &size);
-
     solid.NX = N;
     solid.t = new double[N];
     solid.p = std::vector<double>(N);
@@ -123,7 +128,9 @@ int main( int argc, char* argv [] )
     try
     {
         // ADIOS manager object creation. MPI must be initialized
-        adios::ADIOS adios( comm, true );
+        adios::ADIOS adios( true );
+        set_io_variables( adios, "solid" );
+        set_io_variables( adios, "fluid" );
 
         adios::Method& fileSettings = adios.DeclareMethod( "Reusable" ); //default engine is BP writer
         fileSettings.AddTransport( "POSIX", "have_metadata_file=no" );
@@ -133,7 +140,7 @@ int main( int argc, char* argv [] )
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?
 
-        auto solidfile = adios.Open( "solid.bp", "w", comm, fileSettings );
+        auto solidfile = adios.Open( "solid.bp", "w", fileSettings );
 
 
         // "solid" is a method but incidentally also a group
@@ -148,21 +155,21 @@ int main( int argc, char* argv [] )
         // "a" will append to an already existing file, "w" would create a new file
         // Multiple writes to the same file work as append in this application run
         // FIXME: how do we support Update to same step?
-        auto fluidfile = adios.Open("fluid.bp", "w", comm, fileSettings );
+        auto fluidfile = adios.Open("fluid.bp", "w", fileSettings );
 
-        auto checkpointFile = adios.Open("checkpoint.bp", "w", comm, fileSettings );
+        auto checkpointFile = adios.Open("checkpoint.bp", "w", fileSettings );
 
         //int ckptfile = adios.Open("checkpoint.bp", "checkpoint", "w", comm);
         // we do not open this here, but every time when needed in a function
 
         // Another output not associated with a single group, so that we can mix variables to it
         //adios:handle vizstream = adios.Open( "stream.bp", comm, "w", "STAGING", "options to staging method");
-        auto vizstream = adios.Open("stream.bp", "w", comm, fileSettings );
+        auto vizstream = adios.Open("stream.bp", "w", fileSettings );
 
         // This creates an empty group inside, and we can write all kinds of variables to it
 
         //Get Monitor info
-        std::ofstream logStream( "info_" + std::to_string(rank) + ".log" );
+        std::ofstream logStream( "info_nompi.log" );
         adios.MonitorVariables( logStream );
 
         int checkPointSteps = 10;
@@ -172,48 +179,39 @@ int main( int argc, char* argv [] )
         {
             compute (it, solid, fluid);
 
-            write_data( solidfile, solid );
-            write_data( fluidfile, fluid );
+            write_data( solidfile, "solid", solid );
+            write_data( fluidfile, "fluid", fluid );
 
             if (it%checkPointSteps == 0) {
                 write_checkpoint( checkpointFile, solid, fluid );
 
-                MPI_Barrier( comm );
-                if( rank == 0 )
                 {
                     std::cout << "New checkpoint step, current = " << checkPointSteps << "\n";
                     std::cin >> checkPointSteps;
-                    MPI_Bcast( &checkPointSteps, 1, MPI_INT, 0, comm );
                 }
-                MPI_Barrier( comm );
+
             }
 
             write_viz(vizstream, solid, fluid);
 
-            MPI_Barrier (comm);
-            if (rank==0) printf("Timestep %d written\n", it);
+            std::cout << "Timestep " << it << " written\n";
         }
 
         solidfile->Close();
         fluidfile->Close();
         vizstream->Close();
+        checkpointFile->Close();
 
-        // need barrier before we destroy the ADIOS object here automatically
-        MPI_Barrier (comm);
-        if (rank==0) printf("Finalize adios\n");
+        // need barrier before we destroy the ADIOS object here automatically ...no!
+        std::cout << "Finalize adios\n";
     }
     catch( std::exception& e ) //need to think carefully how to handle C++ exceptions with MPI to avoid deadlocking
     {
-        if( rank == 0 )
-        {
-            std::cout << "ERROR: " << e.what() << "\n";
-        }
+        std::cout << e.what() << "\n";
     }
 
     delete[] solid.t;
     delete[] fluid.t;
 
-    if (rank==0) printf("Finalize MPI\n");
-    MPI_Finalize ();
     return 0;
 }

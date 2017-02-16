@@ -85,16 +85,21 @@ public:
 
     void Monitor( std::ostream& logInfo ) const noexcept
     {
-        logInfo << "Hello from DataMan Write variable " << m_Name << "\n";
+        logInfo << "Variable: " << m_Name << "\n";
         logInfo << "Type: " << m_Type << "\n";
         logInfo << "Size: " << TotalSize() << " elements\n";
         logInfo << "Payload: " << PayLoadSize() << " bytes\n";
-        logInfo << "Values: \n";
 
-        for( unsigned int i = 0; i < TotalSize(); ++i  )
+        if( m_AppValues != nullptr )
         {
-            logInfo << m_AppValues[i] << " ";
+            logInfo << "Values (first 10): \n";
+            for( unsigned int i = 0; i < 100; ++i  )
+            {
+                logInfo << m_AppValues[i] << " ";
+            }
+            logInfo << " ...";
         }
+
         logInfo << "\n";
     }
 

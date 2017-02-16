@@ -149,14 +149,53 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 }
 
 
-void ADIOS::MonitorVariables( std::ostream& logStream ) const
+void ADIOS::MonitorVariables( std::ostream& logStream )
 {
     logStream << "\tVariable \t Type\n";
 
     for( auto& variablePair : m_Variables )
     {
-        logStream << "Variable:..." << variablePair.first << "\n";
-        //variablePair.second.Monitor( logStream );
+        const std::string name( variablePair.first );
+        const std::string type( variablePair.second.first );
+
+        if( type == GetType<char>() )
+            GetVariable<char>( name ).Monitor( logStream );
+
+        else if( type == GetType<unsigned char>() )
+            GetVariable<unsigned char>( name ).Monitor( logStream );
+
+        else if( type == GetType<short>() )
+            GetVariable<short>( name ).Monitor( logStream );
+
+        else if( type == GetType<unsigned short>() )
+            GetVariable<unsigned short>( name ).Monitor( logStream );
+
+        else if( type == GetType<int>() )
+            GetVariable<int>( name ).Monitor( logStream );
+
+        else if( type == GetType<unsigned int>() )
+            GetVariable<unsigned int>( name ).Monitor( logStream );
+
+        else if( type == GetType<long int>() )
+            GetVariable<long int>( name ).Monitor( logStream );
+
+        else if( type == GetType<unsigned long int>() )
+            GetVariable<unsigned long int>( name ).Monitor( logStream );
+
+        else if( type == GetType<long long int>() )
+            GetVariable<long long int>( name ).Monitor( logStream );
+
+        else if( type == GetType<unsigned long long int>() )
+            GetVariable<unsigned long long int>( name ).Monitor( logStream );
+
+        else if( type == GetType<float>() )
+            GetVariable<float>( name ).Monitor( logStream );
+
+        else if( type == GetType<double>() )
+            GetVariable<double>( name ).Monitor( logStream );
+
+        else if( type == GetType<long double>() )
+            GetVariable<long double>( name ).Monitor( logStream );
     }
 }
 

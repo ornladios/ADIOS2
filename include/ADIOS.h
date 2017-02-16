@@ -184,7 +184,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * Note that either the user closes this fileStream or it's closed at the end.
      * @param logStream either std::cout standard output, or a std::ofstream file
      */
-    void MonitorVariables( std::ostream& logStream ) const;
+    void MonitorVariables( std::ostream& logStream );
 
 
 
@@ -236,7 +236,7 @@ private: //no const to allow default empty and copy constructors
                       const std::string methodName, const std::string hint ) const;
 
     template< class T >
-    unsigned int GetVariableIndex( const std::string name ) const
+    unsigned int GetVariableIndex( const std::string name )
     {
         auto itVariable = m_Variables.find( name );
         CheckVariableName( itVariable, name, "in call to GetVariable<" + GetType<T>() + ">" );
@@ -324,8 +324,8 @@ Variable<long int>& ADIOS::DefineVariable( const std::string name, const Dims di
 
 
 template<> inline
-Variable<unsigned long int>& ADIOS::DefineVariable<unsigned long int>( const std::string name, const Dims dimensions,
-                                                                       const Dims globalDimensions, const Dims globalOffsets )
+Variable<unsigned long int>& ADIOS::DefineVariable( const std::string name, const Dims dimensions,
+                                                    const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
     m_ULInt.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
@@ -438,7 +438,7 @@ Variable<double>& ADIOS::GetVariable( const std::string name )
 { return m_Double[ GetVariableIndex<double>(name) ]; }
 
 template<> inline
-Variable<long double>& ADIOS::GetVariable<long double>( const std::string name )
+Variable<long double>& ADIOS::GetVariable( const std::string name )
 { return m_LDouble[ GetVariableIndex<long double>(name) ]; }
 
 

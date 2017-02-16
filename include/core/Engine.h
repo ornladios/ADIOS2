@@ -79,7 +79,7 @@ public:
      * Write function that adds static checking on the variable to be passed by values
      * It then calls its corresponding derived class virtual function
      * This version uses m_Group to look for the variableName.
-     * @param variableName name of variable to the written
+     * @param variable name of variable to the written
      * @param values pointer passed from the application
      */
     template< class T >

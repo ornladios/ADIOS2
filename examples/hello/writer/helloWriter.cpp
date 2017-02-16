@@ -32,7 +32,7 @@ int main( int argc, char* argv [] )
     try
     {
         //Define variable and local size
-        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx} );
+        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
