@@ -105,7 +105,7 @@ private:
             }
             else
             {
-                sleep( 0.1 );
+                sleep( 1 );
             }
         }
         MPI_Barrier( m_MPIComm );
