@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include <mpi.h>
-#include "ADIOS_OOP.h"
+#include "ADIOS_CPP.h"
 
 namespace adios {
     typedef enum {

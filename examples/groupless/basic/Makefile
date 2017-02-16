@@ -7,7 +7,7 @@ CC=g++
 MPICC=mpic++
 
 #ADIOS LOCATION
-ADIOS_DIR=../..
+ADIOS_DIR=../../..
 ADIOS_INCLUDE=-I$(ADIOS_DIR)/include
 ADIOS_LIB=$(ADIOS_DIR)/lib/libadios.a
 ADIOS_NOMPI_LIB=$(ADIOS_DIR)/lib/libadios_nompi.a
@@ -22,5 +22,5 @@ writer reader: $(ADIOS_LIB) $(ADIOS_HFiles)
 	    $(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $@.cpp -o $@ $(ADIOS_LIB) $(LDFLAGS) -lpthread  \
 	
 clean:
-	rm writer reader
+	rm -f writer reader
      

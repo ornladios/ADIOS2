@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include <mpi.h>
-#include "ADIOS_OOP.h"
+#include "ADIOS_CPP.h"
 
 
 int main( int argc, char* argv [] )
@@ -120,7 +120,8 @@ int main( int argc, char* argv [] )
         }
 
         /* Extra help to process Ragged */
-        int maxRaggedDim = varRagged->m_GlobalDimensions[1]; // contains the largest
+        int maxRaggedDim = varRagged->GetMaxGlobalDimensions(1); // contains the largest
+        vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(1); // contains all individual sizes in that dimension
 
 
 
@@ -128,8 +129,8 @@ int main( int argc, char* argv [] )
         bpReader->Release();
 
         // want to move on to the next available step
-        //bpReader->AdvanceStep(adios::NextImmediateStep);
-        //bpReader->AdvanceStep(adios::NextAvailableStep);
+        //bpReader->Advance(adios::NextImmediateStep);
+        //bpReader->Advance(adios::NextAvailableStep);
         bpReader->Advance(); // default is adios::NextAvailableStep
 
 
