@@ -28,6 +28,7 @@ int main( int argc, char* argv [] )
     unsigned int Nx;
     int Nparts;
     int Nwriters;
+    int Nsteps;
 
     try
     {
@@ -38,6 +39,8 @@ int main( int argc, char* argv [] )
         {
             // if not defined by user, we can change the default settings
             bpReaderSettings.SetEngine( "BP" ); // BP is the default engine
+            // By default we see all steps available in a file, so the next line is not needed
+            bpReaderSettings.SetParameters ("Stepping", false);
         }
 
         //Create engine smart pointer due to polymorphism,
@@ -133,9 +136,9 @@ int main( int argc, char* argv [] )
         //bpReader->Advance(adios::NextAvailableStep);
         bpReader->Advance(); // default is adios::NextAvailableStep
 
-
         // Close file/stream
         bpReader->Close( );
+
     }
     catch( std::invalid_argument& e )
     {

@@ -16,11 +16,11 @@ ADIOS_NOMPI_LIB=$(ADIOS_DIR)/lib/libadios_nompi.a
 CFLAGS=-Wall -Wpedantic -Woverloaded-virtual -std=c++11 -O0 -g
 LDFLAGS=
 
-all: writer reader 
+all: writer_multistep reader_allsteps reader_stepping
 
-writer reader: $(ADIOS_LIB) $(ADIOS_HFiles)
+writer_multistep reader_allsteps reader_stepping: $(ADIOS_LIB) $(ADIOS_HFiles)
 	    $(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $@.cpp -o $@ $(ADIOS_LIB) $(LDFLAGS) -lpthread  \
 	
 clean:
-	rm -f writer reader
+	rm -f writer_multistep reader_allsteps reader_stepping
      

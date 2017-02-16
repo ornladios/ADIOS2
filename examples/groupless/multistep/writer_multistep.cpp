@@ -26,12 +26,13 @@ int main( int argc, char* argv [] )
     MPI_Comm_rank( MPI_COMM_WORLD, &rank);
     MPI_Comm_size( MPI_COMM_WORLD, &nproc);
     const bool adiosDebug = true;
+    const int NSTEPS = 5;
 
     adios::ADIOS adios( MPI_COMM_WORLD, adiosDebug );
 
     //Application variable
     const unsigned int Nx = 10;
-    const int Nparts = rand()%6 + 5; // random size per process, 5..10 each
+    int Nparts; // random size per process, 5..10 each
 
     std::vector<double> NiceArray( Nx );
     for( int i=0; i < Nx; i++ )
@@ -39,12 +40,7 @@ int main( int argc, char* argv [] )
         NiceArray[i] = rank*Nx + (double)i;
     }
 
-    std::vector<float> RaggedArray( Nparts );
-    for( int i=0; i < Nparts; i++ )
-    {
-        RaggedArray[i] = rank*Nx + (float)i;
-    }
-
+    std::vector<float> RaggedArray;
 
     try
     {
@@ -79,32 +75,42 @@ int main( int argc, char* argv [] )
         if( bpWriter == nullptr )
             throw std::ios_base::failure( "ERROR: failed to open ADIOS bpWriter\n" );
 
-        if( rank == 0 )
+        for ( int step; step < NSTEPS; step++ )
         {
-            // Writing a global scalar from only one process
-            bpWriter->Write<unsigned int>( varNX, &Nx );
+            int Nparts = rand()%6 + 5; // random size per process, 5..10 each
+            RaggedArray.reserve(Nparts);
+            for( int i=0; i < Nparts; i++ )
+            {
+                RaggedArray[i] = rank*Nx + (float)i;
+            }
+
+            if( rank == 0 )
+            {
+                // Writing a global scalar from only one process
+                bpWriter->Write<unsigned int>( varNX, &Nx );
+            }
+            // Writing a local scalar on every process. Will be shown at reading as a 1D array
+            bpWriter->Write<int>( varNparts, &Nparts );
+
+            // Writing a global scalar on every process is useless. Information will be thrown away
+            // and only rank 0's data will be in the output
+            bpWriter->Write<int>( varNproc, &nproc );
+
+            // Make a 1D selection to describe the local dimensions of the variable we write and
+            // its offsets in the global spaces
+            adios::Selection& sel = adios.SelectionBoundingBox( {Nx}, {rank*Nx} ); // local dims and offsets; both as list
+            NiceArray.SetSelection( sel );
+            bpWriter->Write<double>( varNice, NiceArray.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+
+            adios::Selection& lsel = adios.SelectionBoundingBox( {1,Nparts}, {rank,0} );
+            RaggedArray.SetSelection( sel );
+            bpWriter->Write<float>( varRagged, RaggedArray.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+
+            // Indicate we are done for this step
+            // N-to-M Aggregation, disk I/O will be performed during this call, unless
+            // time aggregation postpones all of that to some later step
+            bpWriter->Advance( );
         }
-        // Writing a local scalar on every process. Will be shown at reading as a 1D array
-        bpWriter->Write<int>( varNparts, &Nparts );
-
-        // Writing a global scalar on every process is useless. Information will be thrown away
-        // and only rank 0's data will be in the output
-        bpWriter->Write<int>( varNproc, &nproc );
-
-        // Make a 1D selection to describe the local dimensions of the variable we write and
-        // its offsets in the global spaces
-        adios::Selection& sel = adios.SelectionBoundingBox( {Nx}, {rank*Nx} ); // local dims and offsets; both as list
-        NiceArray.SetSelection( sel );
-        bpWriter->Write<double>( varNice, NiceArray.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-
-        adios::Selection& lsel = adios.SelectionBoundingBox( {1,Nparts}, {rank,0} );
-        RaggedArray.SetSelection( sel );
-        bpWriter->Write<float>( varRagged, RaggedArray.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-
-        // Indicate we are done for this step
-        // N-to-M Aggregation, disk I/O will be performed during this call, unless
-        // time aggregation postpones all of that to some later step
-        bpWriter->Advance( );
 
         // Called once: indicate that we are done with this output for the run
         bpWriter->Close( );
