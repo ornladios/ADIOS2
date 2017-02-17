@@ -46,8 +46,15 @@ int main( int argc, char* argv [] )
         // this would just open with a default transport, which is "BP"
         auto bpReader = adios.Open( "myNumbers.bp", "r", bpReaderSettings );
 
+        // All the above is same as default use:
+        //auto bpReader = adios.Open( "myNumbers.bp", "r");
+
         if( bpReader == nullptr )
             throw std::ios_base::failure( "ERROR: failed to open ADIOS bpReader\n" );
+
+
+        /* Variable names are available as a vector of strings */
+        std::cout << "List of variables in file: " << bpReader->VariableNames << "\n";
 
         /* NX */
         bpReader->Read<unsigned int>( "NX", &Nx );  // read a Global scalar which has a single value in a step
@@ -63,9 +70,15 @@ int main( int argc, char* argv [] )
         // 1D array of Nwriters values.
         if( rank < Nwriters )
         {
+            std::shared_ptr<adios::Variable<void> > varNparts = bpReader.InquiryVariable("Nparts");
             std::unique_ptr<adios::Selection> selNparts = adios.SelectionBoundingBox( {1}, {rank} );
-            bpReader->Read<int>( "Nparts", selNparts, &Nparts );
+            varNparts->SetSelection( selNparts );
+            bpReader->Read<int>( varNparts, &Nparts );
         }
+        // or we could just read the whole array by every process
+        std::vector<int> partsV( Nwriters );
+        bpReader->Read<int>( "Nparts", &partsV ); // read with string name, no selection => read whole array
+
 
 
         /* Nice */
@@ -89,7 +102,8 @@ int main( int argc, char* argv [] )
         // Make a 1D selection to describe the local dimensions of the variable we READ and
         // its offsets in the global spaces
         std::unique_ptr<adios::Selection> bbsel = adios.SelectionBoundingBox( {ldim}, {offs} ); // local dims and offsets; both as list
-        bpReader->Read<double>( "Nice", bbsel, NiceArray.data() ); // Base class Engine own the Read<T> that will call overloaded Read from Derived
+        varNice->SetSelection( bbsel );
+        bpReader->Read<double>( varNice, NiceArray.data() );
 
 
 
@@ -112,30 +126,22 @@ int main( int argc, char* argv [] )
             RaggedArray.resize( ldim );
 
             std::unique_ptr<adios::Selection> wbsel = adios.SelectionWriteblock( rank );
-            bpReader->Read<float>( "Ragged", wbsel, RaggedArray.data() );
+            varRagged->SetSelection( wbsel );
+            bpReader->Read<float>( varRagged, RaggedArray.data() );
 
             // We can use bounding box selection as well
             std::unique_ptr<adios::Selection> rbbsel = adios.SelectionBoundingBox( {1,ldim}, {rank,0} );
-            bpReader->Read<float>( "Ragged", rbbsel, RaggedArray.data() );
+            varRagged->SetSelection( rbbsel );
+            bpReader->Read<float>( varRagged, RaggedArray.data() );
         }
 
         /* Extra help to process Ragged */
         int maxRaggedDim = varRagged->GetMaxGlobalDimensions(1); // contains the largest
-        vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(1); // contains all individual sizes in that dimension
-
-
-
-        // promise to not read more from this step
-        bpReader->Release();
-
-        // want to move on to the next available step
-        //bpReader->Advance(adios::NextImmediateStep);
-        //bpReader->Advance(adios::NextAvailableStep);
-        bpReader->Advance(); // default is adios::NextAvailableStep
+        std::vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(1); // contains all individual sizes in that dimension
 
 
         // Close file/stream
-        bpReader->Close( );
+        bpReader->Close();
     }
     catch( std::invalid_argument& e )
     {

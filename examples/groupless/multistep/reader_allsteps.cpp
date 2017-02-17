@@ -25,7 +25,7 @@ int main( int argc, char* argv [] )
     //Application variable
     std::vector<double> NiceArray;
     std::vector<float> RaggedArray;
-    unsigned int Nx;
+
     int Nparts;
     int Nwriters;
     int Nsteps;
@@ -49,26 +49,55 @@ int main( int argc, char* argv [] )
         // this would just open with a default transport, which is "BP"
         auto bpReader = adios.Open( "myNumbers.bp", "r", bpReaderSettings );
 
+        // All the above is same as default use:
+        //auto bpReader = adios.Open( "myNumbers.bp", "r");
+
         if( bpReader == nullptr )
             throw std::ios_base::failure( "ERROR: failed to open ADIOS bpReader\n" );
 
+
+        /* Note: there is no global number of steps. Each variable has its own number of steps */
+
         /* NX */
+        /* There is a single value for each step. We can read all into a 1D array with a step selection.
+         * We can also just conveniently get the first with a simple read statement.
+         * Steps are not automatically presented as an array dimension and read does not read it as array.
+         */
+        unsigned int Nx;
         bpReader->Read<unsigned int>( "NX", &Nx );  // read a Global scalar which has a single value in a step
+
+        std::shared_ptr<adios::Variable<void> > varNx = bpReader.InquiryVariable("Nx");
+        std::vector<int> Nxs( varNx->nsteps() );  // number of steps available
+        // make a StepSelection to select multiple steps. Args: From, #of consecutive steps
+        std::unique_ptr<adios::StepSelection> stepsNx = adios.StepSelection( 0, varNx->nsteps() );
+        // ? How do we make a selection for an arbitrary list of steps ?
+        varNX.SetStepSelection( stepsNx );
+        bpReader->Read<unsigned int>( varNx, Nxs.data() );
+
+        auto itmax = std::max_element(std::begin(Nxs), std::end(Nxs));
+        auto itmin = std::min_element(std::begin(Nxs), std::end(Nxs));
+        if (*itmin != *itmax)
+        {
+            throw std::ios_base::failure( "ERROR: NX is not the same at all steps!\n" );
+        }
+
 
         /* nproc */
         bpReader->Read<int>( "nproc", &Nwriters );  // also a global scalar
 
 
+
         /* Nparts */
         // Nparts local scalar is presented as a 1D array of Nwriters elements.
-        // We need to read a specific value the same way as reading from any 1D array.
-        // Make a single-value selection to describe our rank's position in the
-        // 1D array of Nwriters values.
-        if( rank < Nwriters )
-        {
-            std::unique_ptr<adios::Selection> selNparts = adios.SelectionBoundingBox( {1}, {rank} );
-            bpReader->Read<int>( "Nparts", selNparts, &Nparts );
-        }
+        // We can read all steps into a 2D array of nproc * Nwriters
+        std::shared_ptr<adios::Variable<void> > varNparts = bpReader.InquiryVariable("Nparts");
+        std::vector<int> partsV( Nproc*Nwriters );
+        varNparts->SetStepSelection(
+                                    adios.StepSelection( 0, varNparts->nsteps() )
+                                   );
+        bpReader->Read<int>( varNparts, partsV.data() ); // missing spatial selection = whole array at each step
+
+
 
 
         /* Nice */
@@ -124,20 +153,14 @@ int main( int argc, char* argv [] )
 
         /* Extra help to process Ragged */
         int maxRaggedDim = varRagged->GetMaxGlobalDimensions(1); // contains the largest
-        vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(1); // contains all individual sizes in that dimension
+        std::vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(1); // contains all individual sizes in that dimension
 
 
 
-        // promise to not read more from this step
-        bpReader->Release();
 
-        // want to move on to the next available step
-        //bpReader->Advance(adios::NextImmediateStep);
-        //bpReader->Advance(adios::NextAvailableStep);
-        bpReader->Advance(); // default is adios::NextAvailableStep
 
         // Close file/stream
-        bpReader->Close( );
+        bpReader->Close();
 
     }
     catch( std::invalid_argument& e )
