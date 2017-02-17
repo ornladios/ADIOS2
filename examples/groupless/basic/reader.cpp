@@ -57,10 +57,10 @@ int main( int argc, char* argv [] )
         std::cout << "List of variables in file: " << bpReader->VariableNames << "\n";
 
         /* NX */
-        bpReader->Read<unsigned int>( "NX", &Nx );  // read a Global scalar which has a single value in a step
+        bpReader->Read<unsigned int>( "NX", Nx );  // read a Global scalar which has a single value in a step
 
         /* nproc */
-        bpReader->Read<int>( "nproc", &Nwriters );  // also a global scalar
+        bpReader->Read<int>( "nproc", Nwriters );  // also a global scalar
 
 
         /* Nparts */
@@ -70,28 +70,30 @@ int main( int argc, char* argv [] )
         // 1D array of Nwriters values.
         if( rank < Nwriters )
         {
-            std::shared_ptr<adios::Variable<void> > varNparts = bpReader.InquiryVariable("Nparts");
+            std::shared_ptr<adios::Variable> varNparts = bpReader.InquiryVariable("Nparts");
             std::unique_ptr<adios::Selection> selNparts = adios.SelectionBoundingBox( {1}, {rank} );
             varNparts->SetSelection( selNparts );
-            bpReader->Read<int>( varNparts, &Nparts );
+            bpReader->Read<int>( varNparts, Nparts );
         }
         // or we could just read the whole array by every process
         std::vector<int> partsV( Nwriters );
-        bpReader->Read<int>( "Nparts", &partsV ); // read with string name, no selection => read whole array
+        bpReader->Read<int>( "Nparts", partsV.data() ); // read with string name, no selection => read whole array
 
-
+        std::vector<int> partsV;
+        bpReader->Read<int>( "Nparts", partsV); // read with string name, no selection => read whole array
+        (Nwriters == partsV.size())
 
         /* Nice */
         // inquiry about a variable, whose name we know
-        std::shared_ptr<adios::Variable<void> > varNice = bpReader.InquiryVariable("Nice");
+        std::shared_ptr<adios::Variable> varNice = bpReader.InquiryVariable("Nice");
 
         if( varNice == nullptr )
             throw std::ios_base::failure( "ERROR: failed to find variable 'myDoubles' in input file\n" );
 
         // ? how do we know about the type? std::string varNice->m_Type
-        unsigned long long int gdim = varMyDoubles->m_GlobalDimensions[0];  // ?member var or member func?
-        unsigned long long int ldim = gdim / nproc;
-        unsigned long long int offs = rank * ldim;
+        uint64_t gdim = varNice->m_GlobalDimensions[0];  // ?member var or member func?
+        uint64_t ldim = gdim / nproc;
+        uint64_t offs = rank * ldim;
         if( rank == nproc-1 )
         {
             ldim = gdim - (ldim * gdim);
@@ -122,7 +124,7 @@ int main( int argc, char* argv [] )
             varRagged->InquiryBlocks();
             // now we have the dimensions per block
 
-            unsigned long long int ldim = varRagged->blockinfo[rank].m_Dimensions[0];
+            unsigned long long int ldim = varRagged->blockinfo[rank].m_Dimensions[1];
             RaggedArray.resize( ldim );
 
             std::unique_ptr<adios::Selection> wbsel = adios.SelectionWriteblock( rank );
