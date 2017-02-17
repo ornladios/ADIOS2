@@ -54,6 +54,8 @@ void Writer::Init( )
         m_BP1Writer.m_Verbosity = std::stoi( itVerbosity->second );
 
     InitTransports( );
+    InitProcessGroup( );
+
 }
 
 
@@ -166,9 +168,6 @@ void Writer::Close( const int transportIndex )
 }
 
 
-
-
-
 void Writer::InitTransports( )
 {
     if( m_DebugMode == true )
@@ -216,9 +215,48 @@ void Writer::InitTransports( )
 }
 
 
+void Writer::InitProcessGroup( )
+{
+    if( m_AccessMode == "a" )
+    {
+        //Get last pg timestep and update timestep counter in format::BP1MetadataSet
+    }
+    WriteProcessGroupIndex( );
+}
 
-bool Writer::CheckBuffersAllocation( const std::string variableName, const std::size_t indexSize,
-                                     const std::size_t payloadSize )
+
+
+void Writer::WriteProcessGroupIndex( )
+{
+    //pg = process group
+    const std::string pgName( std::to_string( m_RankMPI ) ); //using rank as name
+    const unsigned int timeStep = m_MetadataSet.TimeStep;
+    const std::string timeStepName( std::to_string( timeStep ) );
+    const std::size_t pgIndexSize = m_BP1Writer.GetProcessGroupIndexSize( pgName, timeStepName, m_Transports.size() );
+
+    //metadata
+    GrowBuffer( pgIndexSize, m_GrowthFactor, m_MetadataSet.PGIndexPosition, m_MetadataSet.PGIndex );
+
+    //data? Need to be careful, maybe add some trailing tolerance in variable ????
+    GrowBuffer( pgIndexSize, m_GrowthFactor, m_Buffer.m_DataPosition, m_Buffer.m_Data );
+
+//    const bool isFortran = ( m_HostLanguage == "Fortran" ) ? true : false;
+//    const unsigned int processID = static_cast<unsigned int> ( m_RankMPI );
+
+//    m_BP1Writer.WriteProcessGroupIndex( isFortran, name, processID, timeStepName, timeStep, m_Transports,
+//                                        m_Buffer.m_Data, m_Buffer.m_DataPosition, m_Buffer.m_DataAbsolutePosition,
+//                                        m_MetadataSet.PGIndex, m_MetadataSet.PGIndexPosition );
+
+//        const bool isFortran, const std::string name, const unsigned int processID,
+//                                                const std::string timeStepName, const unsigned int timeStep,
+//                                                std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
+//                                                std::vector<std::size_t>& dataAbsolutePositions,
+//                                                std::vector<char*>& metadataBuffers,
+//                                                std::vector<std::size_t>& metadataPositions
+
+}
+
+bool Writer::CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize )
 {
     //Check if data in buffer needs to be reallocated
     const std::size_t dataSize = payloadSize + indexSize + 10; //adding some bytes tolerance

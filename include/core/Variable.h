@@ -92,8 +92,12 @@ public:
 
         if( m_AppValues != nullptr )
         {
-            logInfo << "Values (first 10): \n";
-            for( unsigned int i = 0; i < 100; ++i  )
+            logInfo << "Values (first 10 or max_size): \n";
+            std::size_t size = TotalSize();
+            if( size > 10 )
+                size = 10;
+
+            for( std::size_t i = 0; i < size; ++i  )
             {
                 logInfo << m_AppValues[i] << " ";
             }

@@ -8,6 +8,9 @@
 #ifndef BP1_H_
 #define BP1_H_
 
+
+#include <memory> //std::shared_ptr
+
 #ifdef HAVE_MPI
   #include <mpi.h>
 #else
@@ -15,7 +18,6 @@
 #endif
 
 #include "core/Transport.h"
-
 
 namespace adios
 {
@@ -27,6 +29,9 @@ namespace format
  */
 struct BP1MetadataSet
 {
+    std::string TimeStepName; ///< time step name associated with this PG
+    std::uint32_t TimeStep = 0; ///< current time step, updated with advance step, if append it will be updated to last
+
     std::uint64_t PGCount = 0; ///< number of process groups
     std::uint64_t PGLength = 0; ///< length in bytes of process groups
     std::size_t PGIndexPosition = 16;
@@ -36,7 +41,6 @@ struct BP1MetadataSet
     std::uint64_t VarsLength = 0; ///< length in bytes of written Variables
     std::size_t   VarsIndexPosition = 12; ///< initial position in bytes
     std::vector<char> VarsIndex = std::vector<char>( 102400 ); ///< metadata variable index, start with 1Kb
-    //    std::map< std::string, std::pair<std::size_t,std::size_t> > VariablePositions;
 
     std::uint32_t AttributesCount = 0; ///< number of Attributes
     std::uint64_t AttributesLength = 0; ///< length in bytes of Attributes
@@ -63,6 +67,48 @@ public:
 
 
 protected:
+
+    /**
+     * method type for file I/O
+     */
+    enum IO_METHOD {
+         METHOD_UNKNOWN     = -2//!< ADIOS_METHOD_UNKNOWN
+        ,METHOD_NULL        = -1                 //!< ADIOS_METHOD_NULL
+        ,METHOD_MPI         = 0                  //!< METHOD_MPI
+        ,METHOD_DATATAP     = 1     //OBSOLETE
+        ,METHOD_POSIX       = 2                  //!< METHOD_POSIX
+        ,METHOD_DATASPACES  = 3                  //!< METHOD_DATASPACES
+        ,METHOD_VTK         = 4     //non-existent
+        ,METHOD_POSIX_ASCII = 5     //non-existent
+        ,METHOD_MPI_CIO     = 6     //OBSOLETE
+        ,METHOD_PHDF5       = 7                  //!< METHOD_PHDF5
+        ,METHOD_PROVENANCE  = 8     //OBSOLETE
+        ,METHOD_MPI_STRIPE  = 9     //OBSOLETE
+        ,METHOD_MPI_LUSTRE  = 10                 //!< METHOD_MPI_LUSTRE
+        ,METHOD_MPI_STAGGER = 11    //OBSOLETE
+        ,METHOD_MPI_AGG     = 12    //OBSOLETE
+        ,METHOD_ADAPTIVE    = 13    //OBSOLETE
+        ,METHOD_POSIX1      = 14    //OBSOLETE
+        ,METHOD_NC4         = 15                 //!< METHOD_NC4
+        ,METHOD_MPI_AMR     = 16                 //!< METHOD_MPI_AMR
+        ,METHOD_MPI_AMR1    = 17    //OBSOLETE
+        ,METHOD_FLEXPATH    = 18                 //!< METHOD_FLEXPATH
+        ,METHOD_NSSI_STAGING = 19                //!< METHOD_NSSI_STAGING
+        ,METHOD_NSSI_FILTER  = 20                //!< METHOD_NSSI_FILTER
+        ,METHOD_DIMES        = 21                //!< METHOD_DIMES
+        ,METHOD_VAR_MERGE   = 22                 //!< METHOD_VAR_MERGE
+        ,METHOD_MPI_BGQ     = 23                 //!< METHOD_MPI_BGQ
+        ,METHOD_ICEE        = 24                 //!< METHOD_ICEE
+        ,METHOD_COUNT       = 25                 //!< METHOD_COUNT
+        ,METHOD_FSTREAM     = 26
+        ,METHOD_FILE        = 27
+        ,METHOD_ZMQ         = 28
+        ,METHOD_MDTM        = 29
+
+
+    };
+
+
     /**
      * DataTypes mapping in BP Format
      */
@@ -122,8 +168,36 @@ protected:
     };
 
 
+    /**
+     * Returns data type index from enum Datatypes
+     * @param variable input variable
+     * @return data type
+     */
+    template< class T > inline std::int8_t GetDataType( ) const noexcept
+    {
+        return type_unknown;
+    }
+
+
+    std::vector<int> GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept;
+
 };
 
+
+//Moving template BP1Writer::GetDataType template specializations outside of the class
+template< > inline std::int8_t BP1::GetDataType<char>( ) const noexcept { return type_byte; }
+template< > inline std::int8_t BP1::GetDataType<short>( ) const noexcept{ return type_short; }
+template< > inline std::int8_t BP1::GetDataType<int>( ) const noexcept{ return type_integer; }
+template< > inline std::int8_t BP1::GetDataType<long int>( ) const noexcept{ return type_long; }
+
+template< > inline std::int8_t BP1::GetDataType<unsigned char>( ) const noexcept { return type_unsigned_byte; }
+template< > inline std::int8_t BP1::GetDataType<unsigned short>( ) const noexcept{ return type_unsigned_short; }
+template< > inline std::int8_t BP1::GetDataType<unsigned int>( ) const noexcept{ return type_unsigned_integer; }
+template< > inline std::int8_t BP1::GetDataType<unsigned long int>( ) const noexcept{ return type_unsigned_long; }
+
+template< > inline std::int8_t BP1::GetDataType<float>( ) const noexcept{ return type_real; }
+template< > inline std::int8_t BP1::GetDataType<double>( ) const noexcept{ return type_double; }
+template< > inline std::int8_t BP1::GetDataType<long double>( ) const noexcept{ return type_long_double; }
 
 
 

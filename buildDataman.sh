@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-# buildTest.sh for vis engine build and run test
+# buildTest.sh for Dataman example
 # Created on: Feb 9, 2017
 #     Author: wfg
 
@@ -14,21 +14,21 @@ echo
 
 echo
 echo "#################################################################"
-echo "Building vis example"
+echo "Building Dataman example"
 echo "#################################################################"
-make -C ./examples/hello/vis
+make -C ./examples/hello/dataman
 
 echo
 echo
 echo "#################################################################"
-echo "Running vis nompi example"
+echo "Running helloDataman_nompi.exe example"
 echo "#################################################################"
-./examples/hello/vis/helloVis_nompi
+./examples/hello/dataman/helloDataMan_nompi.exe
 
 echo
 echo
 echo "#################################################################"
 echo "To run mpi version with 4 mpi processes: "
-echo "mpirun -n 4 ./examples/hello/vis/helloVis_mpi"
+echo "mpirun -n 4 ./examples/hello/dataman/helloDataman.exe"
 echo "END"
 echo "################################################################"

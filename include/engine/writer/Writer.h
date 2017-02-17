@@ -1,5 +1,5 @@
 /*
- * SingleBP.h
+ * BPWriter.h
  *
  *  Created on: Dec 16, 2016
  *      Author: wfg
@@ -74,8 +74,14 @@ private:
     float m_GrowthFactor = 1.5;
     bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
 
+
     void Init( );
     void InitTransports( );
+    void InitProcessGroup( );
+
+
+    void WriteProcessGroupIndex( );
+
 
     /**
      * Common function
@@ -91,10 +97,10 @@ private:
         m_WrittenVariables.insert( variable.m_Name );
         //precalculate new metadata and payload sizes
         const std::size_t indexSize = m_BP1Writer.GetVariableIndexSize( variable );
-        const std::size_t payloadSize = variable.PayLoadSize();
+        const std::size_t payloadSize = variable.PayLoadSize(); //will change if compression is applied
 
         //Buffer reallocation, expensive part
-        m_TransportFlush = CheckBuffersAllocation( variable.m_Name, indexSize, payloadSize );
+        m_TransportFlush = CheckBuffersAllocation( indexSize, payloadSize );
 
         //WRITE INDEX to data buffer and metadata structure (in memory)//
         m_BP1Writer.WriteVariableIndex( variable, m_Buffer, m_MetadataSet );
@@ -110,7 +116,7 @@ private:
         }
         else //Write data to buffer
         {
-            //EXPENSIVE part might want to use threads if large.
+            //EXPENSIVE part, might want to use threads if large.
             MemcpyThreads( m_Buffer.m_Data.data(), variable.m_AppValues, payloadSize, m_Cores );
             //update indices
             m_Buffer.m_DataPosition += payloadSize;
@@ -120,12 +126,11 @@ private:
 
     /**
      * Check if heap buffers for data and metadata need reallocation or maximum sizes have been reached.
-     * @param variableName name of the variable to be written
      * @param indexSize precalculated index size
      * @param payloadSize payload size from variable total size
      * @return true: transport must be flush and buffers reset, false: buffer is sufficient
      */
-    bool CheckBuffersAllocation( const std::string variableName, const std::size_t indexSize, const std::size_t payloadSize );
+    bool CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize );
 
 };
 

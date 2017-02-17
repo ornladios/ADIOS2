@@ -57,7 +57,7 @@ void File::SetBuffer( char* buffer, std::size_t size )
     {
         if( status == 1 )
             throw std::ios_base::failure( "ERROR: could not set buffer in rank "
-                                           + std::to_string( m_MPIRank ) + "\n" );
+                                           + std::to_string( m_RankMPI ) + "\n" );
     }
 }
 

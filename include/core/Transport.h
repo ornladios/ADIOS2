@@ -40,8 +40,8 @@ public:
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
 
-    int m_MPIRank = 0; ///< current MPI rank process
-    int m_MPISize = 1; ///< current MPI processes size
+    int m_RankMPI = 0; ///< current MPI rank process
+    int m_SizeMPI = 1; ///< current MPI processes size
 
     /**
      * Base constructor that all derived classes pass
