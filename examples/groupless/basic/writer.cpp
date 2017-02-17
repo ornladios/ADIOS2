@@ -82,29 +82,30 @@ int main( int argc, char* argv [] )
         if( rank == 0 )
         {
             // Writing a global scalar from only one process
-            bpWriter->Write<unsigned int>( varNX, &Nx );
+            bpWriter->Write<unsigned int>( varNX, Nx );
         }
         // Writing a local scalar on every process. Will be shown at reading as a 1D array
-        bpWriter->Write<int>( varNparts, &Nparts );
+        bpWriter->Write<int>( varNparts, Nparts );
 
         // Writing a global scalar on every process is useless. Information will be thrown away
         // and only rank 0's data will be in the output
-        bpWriter->Write<int>( varNproc, &nproc );
+        bpWriter->Write<int>( varNproc, nproc );
 
         // Make a 1D selection to describe the local dimensions of the variable we write and
         // its offsets in the global spaces
         adios::Selection& sel = adios.SelectionBoundingBox( {Nx}, {rank*Nx} ); // local dims and offsets; both as list
-        NiceArray.SetSelection( sel );
+        varNice.SetSelection( sel );
         bpWriter->Write<double>( varNice, NiceArray.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
 
         adios::Selection& lsel = adios.SelectionBoundingBox( {1,Nparts}, {rank,0} );
-        RaggedArray.SetSelection( sel );
+        varRagged.SetSelection( sel );
         bpWriter->Write<float>( varRagged, RaggedArray.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
 
         // Indicate we are done for this step
         // N-to-M Aggregation, disk I/O will be performed during this call, unless
         // time aggregation postpones all of that to some later step
         bpWriter->Advance( );
+        bpWriter->AdvanceAsync( callback_func_to_notify_me );
 
         // Called once: indicate that we are done with this output for the run
         bpWriter->Close( );

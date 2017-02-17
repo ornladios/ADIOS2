@@ -50,104 +50,110 @@ int main( int argc, char* argv [] )
         {
             auto bpReader = adios.Open( "myNumbers.bp", "r", bpReaderSettings );
 
-        while (true)
-        {
-            /* NX */
-            bpReader->Read<unsigned int>( "NX", &Nx );  // read a Global scalar which has a single value in a step
-
-            /* nproc */
-            bpReader->Read<int>( "nproc", &Nwriters );  // also a global scalar
-
-
-            /* Nparts */
-            // Nparts local scalar is presented as a 1D array of Nwriters elements.
-            // We need to read a specific value the same way as reading from any 1D array.
-            // Make a single-value selection to describe our rank's position in the
-            // 1D array of Nwriters values.
-            if( rank < Nwriters )
+            while (true)
             {
-                std::unique_ptr<adios::Selection> selNparts = adios.SelectionBoundingBox( {1}, {rank} );
-                bpReader->Read<int>( "Nparts", selNparts, &Nparts );
+                /* NX */
+                bpReader->Read<unsigned int>( "NX", &Nx );  // read a Global scalar which has a single value in a step
+
+                /* nproc */
+                bpReader->Read<int>( "nproc", &Nwriters );  // also a global scalar
+
+
+                /* Nparts */
+                // Nparts local scalar is presented as a 1D array of Nwriters elements.
+                // We can read all as a 1D array
+                std::vector<int> partsV( Nwriters );
+                bpReader->Read<int>( "Nparts", &partsV ); // read with string name, no selection => read whole array
+
+
+                /* Nice */
+                // inquiry about a variable, whose name we know
+                std::shared_ptr<adios::Variable<void> > varNice = bpReader.InquiryVariable("Nice");
+
+                if( varNice == nullptr )
+                    throw std::ios_base::failure( "ERROR: failed to find variable 'myDoubles' in input file\n" );
+
+                // ? how do we know about the type? std::string varNice->m_Type
+                unsigned long long int gdim = varMyDoubles->m_GlobalDimensions[0];  // ?member var or member func?
+                unsigned long long int ldim = gdim / nproc;
+                unsigned long long int offs = rank * ldim;
+                if( rank == nproc-1 )
+                {
+                    ldim = gdim - (ldim * gdim);
+                }
+
+                NiceArray.reserve(ldim);
+
+                // Make a 1D selection to describe the local dimensions of the variable we READ and
+                // its offsets in the global spaces
+                std::unique_ptr<adios::Selection> bbsel = adios.SelectionBoundingBox( {ldim}, {offs} ); // local dims and offsets; both as list
+                varNice->SetSelection( bbsel );
+                bpReader->Read<double>( varNice, NiceArray.data() );
+
+
+                /* Ragged */
+                // inquiry about a variable, whose name we know
+                std::shared_ptr<adios::Variable<void> > varRagged = bpReader.InquiryVariable("Ragged");
+                if( varRagged->m_GlobalDimensions[1] != adios::VARYING_DIMENSION)
+                {
+                    throw std::ios_base::failure( "Unexpected condition: Ragged array's fast dimension "
+                            "is supposed to be VARYING_DIMENSION\n" );
+                }
+                // We have here varRagged->sum_nblocks, nsteps, nblocks[], global
+                if( rank < varRagged->nblocks[0] ) // same as rank < Nwriters in this example
+                {
+                    // get per-writer size information
+                    varRagged->InquiryBlocks();
+                    // now we have the dimensions per block
+
+                    unsigned long long int ldim = varRagged->blockinfo[rank].m_Dimensions[0];
+                    RaggedArray.resize( ldim );
+
+                    std::unique_ptr<adios::Selection> wbsel = adios.SelectionWriteblock( rank );
+                    varRagged->SetSelection( wbsel );
+                    bpReader->Read<float>( varRagged, RaggedArray.data() );
+
+                    // We can use bounding box selection as well
+                    std::unique_ptr<adios::Selection> rbbsel = adios.SelectionBoundingBox( {1,ldim}, {rank,0} );
+                    varRagged->SetSelection( rbbsel );
+                    bpReader->Read<float>( varRagged, RaggedArray.data() );
+                }
+
+                /* Extra help to process Ragged */
+                int maxRaggedDim = varRagged->GetMaxGlobalDimensions(1); // contains the largest
+                std::vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(1); // contains all individual sizes in that dimension
+
+
+
+                // promise to not read more from this step
+                bpReader->Release();
+
+                // want to move on to the next available step
+                //bpReader->Advance(adios::NextStep);
+                //bpReader->Advance(adios::LatestStep);
+                bpReader->Advance(); // default is adios::NextStep
+
             }
 
-
-            /* Nice */
-            // inquiry about a variable, whose name we know
-            std::shared_ptr<adios::Variable<void> > varNice = bpReader.InquiryVariable("Nice");
-
-            if( varNice == nullptr )
-                throw std::ios_base::failure( "ERROR: failed to find variable 'myDoubles' in input file\n" );
-
-            // ? how do we know about the type? std::string varNice->m_Type
-            unsigned long long int gdim = varMyDoubles->m_GlobalDimensions[0];  // ?member var or member func?
-            unsigned long long int ldim = gdim / nproc;
-            unsigned long long int offs = rank * ldim;
-            if( rank == nproc-1 )
-            {
-                ldim = gdim - (ldim * gdim);
-            }
-
-            NiceArray.reserve(ldim);
-
-            // Make a 1D selection to describe the local dimensions of the variable we READ and
-            // its offsets in the global spaces
-            std::unique_ptr<adios::Selection> bbsel = adios.SelectionBoundingBox( {ldim}, {offs} ); // local dims and offsets; both as list
-            bpReader->Read<double>( "Nice", bbsel, NiceArray.data() ); // Base class Engine own the Read<T> that will call overloaded Read from Derived
-
-
-
-            /* Ragged */
-            // inquiry about a variable, whose name we know
-            std::shared_ptr<adios::Variable<void> > varRagged = bpReader.InquiryVariable("Ragged");
-            if( varRagged->m_GlobalDimensions[1] != adios::VARYING_DIMENSION)
-            {
-                throw std::ios_base::failure( "Unexpected condition: Ragged array's fast dimension "
-                        "is supposed to be VARYING_DIMENSION\n" );
-            }
-            // We have here varRagged->sum_nblocks, nsteps, nblocks[], global
-            if( rank < varRagged->nblocks[0] ) // same as rank < Nwriters in this example
-            {
-                // get per-writer size information
-                varRagged->InquiryBlocks();
-                // now we have the dimensions per block
-
-                unsigned long long int ldim = varRagged->blockinfo[rank].m_Dimensions[0];
-                RaggedArray.resize( ldim );
-
-                std::unique_ptr<adios::Selection> wbsel = adios.SelectionWriteblock( rank );
-                bpReader->Read<float>( "Ragged", wbsel, RaggedArray.data() );
-
-                // We can use bounding box selection as well
-                std::unique_ptr<adios::Selection> rbbsel = adios.SelectionBoundingBox( {1,ldim}, {rank,0} );
-                bpReader->Read<float>( "Ragged", rbbsel, RaggedArray.data() );
-            }
-
-            /* Extra help to process Ragged */
-            int maxRaggedDim = varRagged->GetMaxGlobalDimensions(1); // contains the largest
-            vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(1); // contains all individual sizes in that dimension
-
-
-
-            // promise to not read more from this step
-            bpReader->Release();
-
-            // want to move on to the next available step
-            //bpReader->Advance(adios::NextImmediateStep);
-            //bpReader->Advance(adios::NextAvailableStep);
-            bpReader->Advance(); // default is adios::NextAvailableStep
-
-        }
-
-        // Close file/stream
-        bpReader->Close( );
+            // Close file/stream
+            bpReader->Close();
 
         }
         catch( adios::end_of_stream& e )
         {
+            if( rank == 0 )
+            {
+                std::cout << "Reached end of stream, end processing loop.\n";
+            }
+            // Close file/stream
+            bpReader->Close();
         }
         catch( adios::file_not_found& e )
         {
-
+            if( rank == 0 )
+            {
+                std::cout << "File/stream does not exist, quit.\n";
+            }
         }
     }
     catch( std::invalid_argument& e )
