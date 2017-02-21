@@ -15,6 +15,8 @@
 
 namespace adios
 {
+namespace transport
+{
 
 class MdtmMan : public Transport
 {
@@ -126,6 +128,7 @@ private:
 };
 
 
+} //end namespace transport
 } //end namespace
 
 

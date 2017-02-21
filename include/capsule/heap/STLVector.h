@@ -5,8 +5,8 @@
  *      Author: wfg
  */
 
-#ifndef HEAP_H_
-#define HEAP_H_
+#ifndef STLVECTOR_H_
+#define STLVECTOR_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
@@ -18,11 +18,13 @@
 
 namespace adios
 {
+namespace capsule
+{
 
 /**
  * Data and Metadata buffers are allocated in the Heap
  */
-class Heap : public Capsule
+class STLVector : public Capsule
 {
 
 public:
@@ -36,9 +38,9 @@ public:
      * @param rankMPI MPI rank
      * @param debugMode true: extra checks, slower
      */
-    Heap( const std::string accessMode, const int rankMPI, const bool debugMode = false );
+    STLVector( const std::string accessMode, const int rankMPI, const bool debugMode = false );
 
-    ~Heap( );
+    ~STLVector( );
 
     char* GetData( );
     char* GetMetadata( );
@@ -52,14 +54,9 @@ public:
 };
 
 
-
-
-
+} //end namespace capsule
 } //end namespace
 
 
 
-
-
-
-#endif /* HEAP_H_ */
+#endif /* STLVECTOR_H_ */

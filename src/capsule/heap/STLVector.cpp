@@ -10,14 +10,16 @@
 #include <stdexcept> //std::runtime_error
 /// \endcond
 
-#include "capsule/Heap.h"
+#include "capsule/heap/STLVector.h"
 
 
 namespace adios
 {
+namespace capsule
+{
 
 
-Heap::Heap( const std::string accessMode, const int rankMPI, const bool debugMode ):
+STLVector::STLVector( const std::string accessMode, const int rankMPI, const bool debugMode ):
     Capsule( "Heap", accessMode, rankMPI, debugMode ),
     m_Data( 16777216, '\0' )
 {
@@ -25,35 +27,35 @@ Heap::Heap( const std::string accessMode, const int rankMPI, const bool debugMod
 }
 
 
-Heap::~Heap( )
+STLVector::~STLVector( )
 { }
 
 
-char* Heap::GetData( )
+char* STLVector::GetData( )
 {
     return m_Data.data( );
 }
 
 
-char* Heap::GetMetadata( )
+char* STLVector::GetMetadata( )
 {
     return m_Metadata.data( );
 }
 
 
-std::size_t Heap::GetDataSize( ) const
+std::size_t STLVector::GetDataSize( ) const
 {
     return m_Data.size( );
 }
 
 
-std::size_t Heap::GetMetadataSize( ) const
+std::size_t STLVector::GetMetadataSize( ) const
 {
     return m_Metadata.size( );
 }
 
 
-void Heap::ResizeData( const std::size_t size )
+void STLVector::ResizeData( const std::size_t size )
 {
     if( m_DebugMode == true )
     {
@@ -67,7 +69,7 @@ void Heap::ResizeData( const std::size_t size )
     }
 }
 
-void Heap::ResizeMetadata( const std::size_t size )
+void STLVector::ResizeMetadata( const std::size_t size )
 {
     if( m_DebugMode == true )
     {
@@ -82,4 +84,5 @@ void Heap::ResizeMetadata( const std::size_t size )
 }
 
 
+}  //end namespace heap
 }  //end namespace

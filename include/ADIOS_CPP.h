@@ -13,10 +13,9 @@
 #include "core/Method.h"
 
 #include "core/Engine.h"
-#include "engine/writer/Writer.h"
-#include "engine/dataman/DataMan.h"
-
 #include "core/Transform.h"
+#include "engine/bp/BPWriter.h"
+#include "engine/dataman/DataManWriter.h"
 #include "transform/BZip2.h"
 
 

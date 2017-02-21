@@ -5,21 +5,22 @@
  *      Author: wfg
  */
 
-#ifndef DATAMAN_H_
-#define DATAMAN_H_
+#ifndef DATAMANWRITER_H_
+#define DATAMANWRITER_H_
 
 #include <iostream> //must be removed
 #include <unistd.h> //must be removed
 
 #include "core/Engine.h"
-#include "capsule/Heap.h"
 #include "format/BP1Writer.h"
 
+//supported capsules
+#include "capsule/heap/STLVector.h"
 
 namespace adios
 {
 
-class DataMan : public Engine
+class DataManWriter : public Engine
 {
 
 public:
@@ -33,10 +34,10 @@ public:
      * @param debugMode
      * @param hostLanguage
      */
-    DataMan( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+    DataManWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
              const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
-    ~DataMan( );
+    ~DataManWriter( );
 
     void Write( Variable<char>& variable, const char* values );
     void Write( Variable<unsigned char>& variable, const unsigned char* values );
@@ -68,7 +69,7 @@ public:
 
 private:
 
-    Heap m_Buffer; ///< heap capsule, contains data and metadata buffers
+    capsule::STLVector m_Buffer; ///< heap capsule, contains data and metadata buffers
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
 
     void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
@@ -120,4 +121,4 @@ private:
 
 
 
-#endif /* DATAMAN_H_ */
+#endif /* DATAMANWRITER_H_ */

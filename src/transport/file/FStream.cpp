@@ -9,10 +9,12 @@
 #include <stdexcept>
 /// \endcond
 
-#include "transport/FStream.h"
+#include "transport/file/FStream.h"
 
 
 namespace adios
+{
+namespace transport
 {
 
 
@@ -60,8 +62,7 @@ void FStream::Write( const char* buffer, std::size_t size )
     if( m_DebugMode == true )
     {
         if( !m_FStream )
-            throw std::ios_base::failure( "ERROR: couldn't write to file " + m_Name +
-                                          ", in call to FStream write\n"   );
+            throw std::ios_base::failure( "ERROR: couldn't write to file " + m_Name + ", in call to FStream write\n"   );
     }
 }
 
@@ -78,5 +79,6 @@ void FStream::Close( )
 }
 
 
+} //end namespace transport
 } //end namespace
 

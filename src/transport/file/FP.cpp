@@ -1,32 +1,37 @@
 /*
- * File.cpp
+ * FP.cpp
  *
  *  Created on: Jan 6, 2017
  *      Author: wfg
  */
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
+/// \endcond
 
-#include "transport/File.h"
+
+#include "transport/file/FP.h"
 
 
 namespace adios
 {
+namespace transport
+{
 
 
-File::File( MPI_Comm mpiComm, const bool debugMode ):
+FP::FP( MPI_Comm mpiComm, const bool debugMode ):
     Transport( "File", mpiComm, debugMode )
 { }
 
 
-File::~File( )
+FP::~FP( )
 {
     if( m_File != NULL )
         fclose( m_File );
 }
 
 
-void File::Open( const std::string name, const std::string accessMode )
+void FP::Open( const std::string name, const std::string accessMode )
 {
     m_Name = name;
     m_AccessMode = accessMode;
@@ -49,7 +54,7 @@ void File::Open( const std::string name, const std::string accessMode )
 }
 
 
-void File::SetBuffer( char* buffer, std::size_t size )
+void FP::SetBuffer( char* buffer, std::size_t size )
 {
     int status = setvbuf( m_File, buffer, _IOFBF, size );
 
@@ -62,7 +67,7 @@ void File::SetBuffer( char* buffer, std::size_t size )
 }
 
 
-void File::Write( const char* buffer, std::size_t size )
+void FP::Write( const char* buffer, std::size_t size )
 {
     fwrite( buffer, sizeof(char), size, m_File );
 
@@ -70,22 +75,22 @@ void File::Write( const char* buffer, std::size_t size )
     {
         if( ferror( m_File ) )
             throw std::ios_base::failure( "ERROR: couldn't write to file " + m_Name +
-                                          ", in call to File write\n"   );
+                                          ", in call to FP write\n"   );
     }
 }
 
 
-void File::Flush( )
+void FP::Flush( )
 {
     fflush( m_File );
 }
 
 
-void File::Close( )
+void FP::Close( )
 {
     fclose( m_File );
 }
 
 
-
+} //end namespace transport
 } //end namespace

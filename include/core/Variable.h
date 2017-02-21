@@ -15,16 +15,13 @@
 #include <ostream> //std::ostream in MonitorGroups
 /// \endcond
 
+#include "core/VariableBase.h"
 #include "core/Transform.h"
-#include "functions/adiosFunctions.h"
-#include "functions/adiosTemplates.h"
-
 
 
 namespace adios
 {
 
-using Dims = std::vector<size_t>;
 
 struct TransformData
 {
@@ -37,39 +34,18 @@ struct TransformData
  * @param Base (parent) class for template derived (child) class CVariable. Required to put CVariable objects in STL containers.
  */
 template< class T >
-class Variable
+class Variable : public VariableBase
 {
 
 public:
 
-    const std::string m_Name; ///< variable name
-    const std::string m_Type; ///< variable type
-
-    Dims m_Dimensions;
-    std::string m_DimensionsCSV; ///< comma separated list for variables to search for local dimensions
-
-    Dims m_GlobalDimensions;
-    std::string m_GlobalDimensionsCSV; ///< comma separated list for variables to search for global dimensions
-
-    Dims m_GlobalOffsets;
-    std::string m_GlobalOffsetsCSV; ///< comma separated list for variables to search for global offsets
-
-    const bool m_DebugMode = false;
-
     const T* m_AppValues = nullptr; ///< pointer to values passed from user in ADIOS Write, it might change in ADIOS Read
     std::vector<T> m_Values; ///< Vector variable returned to user, might be used for zero-copy?
-
-    bool m_IsScalar = false;
-    const bool m_IsDimension = false;
     std::vector< TransformData > m_Transforms; ///< associated transforms, sequence determines application order, e.g. first Transforms[0] then Transforms[1]. Pointer used as reference (no memory management).
 
-    Variable( const std::string name, const Dims dimensions, const Dims globalDimensions, const Dims globalOffsets, const bool debugMode ):
-        m_Name{ name },
-        m_Type{ GetType<T>() },
-        m_Dimensions{ dimensions },
-        m_GlobalDimensions{ globalDimensions },
-        m_GlobalOffsets{ globalOffsets },
-        m_DebugMode{ debugMode }
+    Variable<T>( const std::string name, const Dims dimensions, const Dims globalDimensions, const Dims globalOffsets,
+                 const bool debugMode ):
+        VariableBase( name, GetType<T>(), sizeof(T), dimensions, globalDimensions, globalOffsets, debugMode )
     {
         if( m_Dimensions == Dims{1} )
             m_IsScalar = true;
@@ -81,7 +57,6 @@ public:
         std::vector<std::string> parameters = { args... };
         m_Transforms.emplace_back( transform, BuildParametersMap( parameters, m_DebugMode ) ); //need to check
     }
-
 
     void Monitor( std::ostream& logInfo ) const noexcept
     {
@@ -103,27 +78,9 @@ public:
             }
             logInfo << " ...";
         }
-
         logInfo << "\n";
     }
 
-    /**
-     * Returns the payload size in bytes
-     * @return TotalSize * sizeof(T)
-     */
-    std::size_t PayLoadSize( ) const noexcept
-    {
-        return GetTotalSize( m_Dimensions ) * sizeof(T);
-    }
-
-    /**
-     * Returns the total size
-     * @return number of elements
-     */
-    std::size_t TotalSize( ) const noexcept
-    {
-        return GetTotalSize( m_Dimensions );
-    }
 
 };
 

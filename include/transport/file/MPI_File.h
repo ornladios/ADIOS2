@@ -5,26 +5,31 @@
  *      Author: wfg
  */
 
-#ifndef MPIFILE_H_
-#define MPIFILE_H_
+#ifndef MPI_FILE_H_
+#define MPI_FILE_H_
 
+
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <mpi.h>
+/// \endcond
 
 
 namespace adios
+{
+namespace transport
 {
 
 /**
  * Class that defines a transport method using C++ file streams
  */
-class MPIFile : public Transport
+class MPI_File : public Transport
 {
 
 public:
 
-    MPIFile( MPI_Comm mpiComm, const bool debugMode );
+    MPI_File( MPI_Comm mpiComm, const bool debugMode );
 
-    ~MPIFile( );
+    ~MPI_File( );
 
     void Open( const std::string streamName, const std::string accessMode );
 
@@ -45,11 +50,11 @@ private:
 
 
 
-
+} //end namespace transport
 } //end namespace
 
 
 
 
 
-#endif /* MPIFILE_H_ */
+#endif /* MPI_FILE_H_ */

@@ -15,6 +15,7 @@
 #include <ostream>
 #include <set>
 #include <map>
+#include <complex>
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -25,6 +26,7 @@
 
 #include "core/Transform.h"
 #include "core/Variable.h"
+#include "core/VariableCompound.h"
 #include "core/Method.h"
 #include "core/Support.h"
 #include "functions/adiosTemplates.h"
@@ -53,20 +55,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     int m_SizeMPI = 1; ///< current MPI processes size
 
     std::string m_HostLanguage = "C++";
-
-    std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
-    std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
-    std::vector< Variable<short> > m_Short; ///< Key: variable name, Value: variable of type short
-    std::vector< Variable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
-    std::vector< Variable<int> > m_Int; ///< Key: variable name, Value: variable of type int
-    std::vector< Variable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
-    std::vector< Variable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
-    std::vector< Variable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
-    std::vector< Variable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
-    std::vector< Variable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
-    std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
-    std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
-    std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
 
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
@@ -113,20 +101,30 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
         //throw std::invalid_argument( "ERROR: type not supported for variable " + name + "\n" );
     }
 
-
     template<class T> inline
     Variable<T>& GetVariable( const std::string name )
+    { }
+
+
+    template<class T>
+    VariableCompound& DefineVariableCompound( const std::string name, const Dims dimensions = Dims{1},
+                                              const Dims globalDimensions = Dims(),
+                                              const Dims globalOffsets = Dims() )
     {
-        //throw std::invalid_argument( "ERROR: variable " + name + " and type don't match in call to GetVariable\n" );
+        CheckVariableInput( name, dimensions );
+        m_Compound.emplace_back( name, sizeof(T), dimensions, globalDimensions, globalOffsets, m_DebugMode );
+        m_Variables.emplace( name, std::make_pair( GetType<T>(), m_Compound.size()-1 ) );
+        return m_Compound.back();
     }
 
+    VariableCompound& GetVariableCompound( const std::string name );
 
     /**
      * Declares a new method
      * @param name must be unique
      * @param type supported type : "Writer" (default), "DataMan"...future: "Sirius"
      */
-    Method& DeclareMethod( const std::string methodName, const std::string type = "Writer" );
+    Method& DeclareMethod( const std::string methodName, const std::string type = "BPWriter" );
 
 
     /**
@@ -190,6 +188,24 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 private: //no const to allow default empty and copy constructors
 
+    std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
+    std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
+    std::vector< Variable<short> > m_Short; ///< Key: variable name, Value: variable of type short
+    std::vector< Variable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
+    std::vector< Variable<int> > m_Int; ///< Key: variable name, Value: variable of type int
+    std::vector< Variable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
+    std::vector< Variable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
+    std::vector< Variable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
+    std::vector< Variable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
+    std::vector< Variable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
+    std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
+    std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
+    std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
+    std::vector< Variable<std::complex<float>> > m_CFloat; ///< Key: variable name, Value: variable of type complex<float>
+    std::vector< Variable<std::complex<double>> > m_CDouble; ///< Key: variable name, Value: variable of type complex<float>
+    std::vector< Variable<std::complex<long double>> > m_CLDouble; ///< Key: variable name, Value: variable of type complex<float>
+    std::vector< VariableCompound > m_Compound; ///< Key: variable name, Value: compound type variable
+
     std::string m_ConfigFile; ///< XML File to be read containing configuration information
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
 
@@ -239,7 +255,7 @@ private: //no const to allow default empty and copy constructors
     unsigned int GetVariableIndex( const std::string name )
     {
         auto itVariable = m_Variables.find( name );
-        CheckVariableName( itVariable, name, "in call to GetVariable<" + GetType<T>() + ">" );
+        CheckVariableName( itVariable, name, "in call to GetVariable<" + GetType<T>() + ">, or call to GetVariableCompound if <T> = <compound>\n" );
         return itVariable->second.second;
     }
 

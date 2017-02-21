@@ -13,7 +13,7 @@ AR:=ar
 MPICC:=mpic++
 LIBS:= -L$(SYS_LIB) -L$(LOCAL_LIB)
 
-CFLAGS:=-c -Wall -Wpedantic -Woverloaded-virtual -std=c++11 -O0 -g
+CFLAGS:=-c -Wall -Wpedantic -std=c++11 -O0 -g
 ARFLAGS:=rcs
 
 #ADIOS 
@@ -21,8 +21,11 @@ HFiles:=$(shell find ./include -type f -name "*.h")
 CPPFiles:=$(shell find ./src -type f -name "*.cpp")
 INC:=-I./include
 VPATH = ./src ./src/core ./src/functions \
-        ./src/engine ./src/engine/writer ./src/engine/dataman \
-        ./src/capsule ./src/transform ./src/transport ./src/format
+        ./src/engine/bp ./src/engine/dataman \
+		./src/transport/file ./src/transport/wan \
+		./src/capsule/heap ./src/capsule/shmem \
+		./src/transform \
+		./src/format
 
 #SEPARATE EXTERNAL LIBRARIES HANDLING in Makefile.libs
 export $(HFiles) $(CPPFiles) $(CFLAGS) $(LIBS)

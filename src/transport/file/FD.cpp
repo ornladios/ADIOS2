@@ -1,5 +1,5 @@
 /*
- * POSIX.cpp
+ * FD.cpp file descriptor
  *
  *  Created on: Oct 6, 2016
  *      Author: wfg
@@ -15,19 +15,20 @@
 /// \endcond
 
 
-#include "transport/POSIX.h"
+#include "transport/file/FD.h"
 
 
 namespace adios
 {
+namespace transport
+{
 
-
-POSIX::POSIX( MPI_Comm mpiComm, const bool debugMode ):
-    Transport( "POSIX", mpiComm, debugMode )
+FD::FD( MPI_Comm mpiComm, const bool debugMode ):
+    Transport( "FD", mpiComm, debugMode )
 { }
 
 
-POSIX::~POSIX( )
+FD::~FD( )
 {
     if( m_FileDescriptor != -1 )
     {
@@ -36,7 +37,7 @@ POSIX::~POSIX( )
 }
 
 
-void POSIX::Open( const std::string name, const std::string accessMode )
+void FD::Open( const std::string name, const std::string accessMode )
 {
     m_Name = name;
     m_AccessMode = accessMode;
@@ -63,7 +64,7 @@ void POSIX::Open( const std::string name, const std::string accessMode )
 }
 
 
-void POSIX::Write( const char* buffer, std::size_t size )
+void FD::Write( const char* buffer, std::size_t size )
 {
     auto writtenSize = write( m_FileDescriptor, buffer, size );
 
@@ -82,7 +83,7 @@ void POSIX::Write( const char* buffer, std::size_t size )
 }
 
 
-void POSIX::Close( )
+void FD::Close( )
 {
     int status = close( m_FileDescriptor );
 
@@ -95,4 +96,5 @@ void POSIX::Close( )
 }
 
 
+} //end namespace transport
 }//end namespace

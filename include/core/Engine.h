@@ -15,6 +15,7 @@
 #include <memory> //std::shared_ptr
 #include <map>
 #include <utility> //std::pair
+#include <complex> //std::complex
 /// \endcond
 
 #ifdef HAVE_MPI
@@ -26,6 +27,7 @@
 #include "ADIOS.h"
 #include "core/Method.h"
 #include "core/Variable.h"
+#include "core/VariableCompound.h"
 #include "core/Transform.h"
 #include "core/Transport.h"
 #include "core/Capsule.h"
@@ -88,19 +90,57 @@ public:
         Write( variable, values );
     }
 
-    virtual void Write( Variable<char>& variable, const char* values ) = 0;
-    virtual void Write( Variable<unsigned char>& variable, const unsigned char* values ) = 0;
-    virtual void Write( Variable<short>& variable, const short* values ) = 0;
-    virtual void Write( Variable<unsigned short>& variable, const unsigned short* values ) = 0;
-    virtual void Write( Variable<int>& variable, const int* values ) = 0;
-    virtual void Write( Variable<unsigned int>& variable, const unsigned int* values ) = 0;
-    virtual void Write( Variable<long int>& variable, const long int* values ) = 0;
-    virtual void Write( Variable<unsigned long int>& variable, const unsigned long int* values ) = 0;
-    virtual void Write( Variable<long long int>& variable, const long long int* values ) = 0;
-    virtual void Write( Variable<unsigned long long int>& variable, const unsigned long long int* values ) = 0;
-    virtual void Write( Variable<float>& variable, const float* values ) = 0;
-    virtual void Write( Variable<double>& variable, const double* values ) = 0;
-    virtual void Write( Variable<long double>& variable, const long double* values ) = 0;
+    /**
+     * String version
+     * @param variableName
+     * @param values
+     */
+    template< class T >
+    void Write( const std::string variableName, const T* values )
+    {
+        Write( variableName, values );
+    }
+
+    /**
+     * Single value version
+     * @param variable
+     * @param values
+     */
+    template< class T >
+    void Write( Variable<T>& variable, const T& values )
+    {
+        Write( variable, &values );
+    }
+
+    /**
+     * Single value version using string as variable handlers
+     * @param variableName
+     * @param values
+     */
+    template< class T >
+    void Write( const std::string variableName, const T& values )
+    {
+        Write( variableName, &values );
+    }
+
+    virtual void Write( Variable<char>& variable,                      const char* values );
+    virtual void Write( Variable<unsigned char>& variable,             const unsigned char* values );
+    virtual void Write( Variable<short>& variable,                     const short* values );
+    virtual void Write( Variable<unsigned short>& variable,            const unsigned short* values );
+    virtual void Write( Variable<int>& variable,                       const int* values );
+    virtual void Write( Variable<unsigned int>& variable,              const unsigned int* values );
+    virtual void Write( Variable<long int>& variable,                  const long int* values );
+    virtual void Write( Variable<unsigned long int>& variable,         const unsigned long int* values );
+    virtual void Write( Variable<long long int>& variable,             const long long int* values );
+    virtual void Write( Variable<unsigned long long int>& variable,    const unsigned long long int* values );
+    virtual void Write( Variable<float>& variable,                     const float* values );
+    virtual void Write( Variable<double>& variable,                    const double* values );
+    virtual void Write( Variable<long double>& variable,               const long double* values );
+    virtual void Write( Variable<std::complex<float>>& variable,       const std::complex<float>* values );
+    virtual void Write( Variable<std::complex<double>>& variable,      const std::complex<double>* values );
+    virtual void Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values );
+    virtual void Write( VariableCompound& variable,                    const void* values );
+
 
     /**
      * @brief Write functions can be overridden by derived classes. Base class behavior is to:
@@ -110,19 +150,48 @@ public:
      * @param variableName
      * @param values coming from user app
      */
-    virtual void Write( const std::string variableName, const char* values ) = 0;
-    virtual void Write( const std::string variableName, const unsigned char* values ) = 0;
-    virtual void Write( const std::string variableName, const short* values ) = 0;
-    virtual void Write( const std::string variableName, const unsigned short* values ) = 0;
-    virtual void Write( const std::string variableName, const int* values ) = 0;
-    virtual void Write( const std::string variableName, const unsigned int* values ) = 0;
-    virtual void Write( const std::string variableName, const long int* values ) = 0;
-    virtual void Write( const std::string variableName, const unsigned long int* values ) = 0;
-    virtual void Write( const std::string variableName, const long long int* values ) = 0;
-    virtual void Write( const std::string variableName, const unsigned long long int* values ) = 0;
-    virtual void Write( const std::string variableName, const float* values ) = 0;
-    virtual void Write( const std::string variableName, const double* values ) = 0;
-    virtual void Write( const std::string variableName, const long double* values ) = 0;
+    virtual void Write( const std::string variableName, const char* values );
+    virtual void Write( const std::string variableName, const unsigned char* values );
+    virtual void Write( const std::string variableName, const short* values );
+    virtual void Write( const std::string variableName, const unsigned short* values );
+    virtual void Write( const std::string variableName, const int* values );
+    virtual void Write( const std::string variableName, const unsigned int* values );
+    virtual void Write( const std::string variableName, const long int* values );
+    virtual void Write( const std::string variableName, const unsigned long int* values );
+    virtual void Write( const std::string variableName, const long long int* values );
+    virtual void Write( const std::string variableName, const unsigned long long int* values );
+    virtual void Write( const std::string variableName, const float* values );
+    virtual void Write( const std::string variableName, const double* values );
+    virtual void Write( const std::string variableName, const long double* values );
+    virtual void Write( const std::string variableName, const std::complex<float>* values );
+    virtual void Write( const std::string variableName, const std::complex<double>* values );
+    virtual void Write( const std::string variableName, const std::complex<long double>* values );
+    virtual void Write( const std::string variableName, const void* values );
+
+    //Read API
+//    template< class T >
+//    virtual Variable<T>* InquireVariable( const std::string name )
+//    {
+//        return InquireVariable<T>( name );
+//    }
+//
+//    virtual Variable<char>* InquireVariable( const std::string name );
+//    virtual Variable<unsigned char>* InquireVariable( const std::string name );
+//    virtual Variable<short>* InquireVariable( const std::string name );
+//    virtual Variable<unsigned short>* InquireVariable( const std::string name );
+//    virtual Variable<int>* InquireVariable( const std::string name );
+//    virtual Variable<unsigned int>* InquireVariable( const std::string name );
+//    virtual Variable<long int>* InquireVariable( const std::string name );
+//    virtual Variable<unsigned long int>* InquireVariable( const std::string name );
+//    virtual Variable<long long int>* InquireVariable( const std::string name );
+//    virtual Variable<unsigned long long int>* InquireVariable( const std::string name );
+//    virtual Variable<float>* InquireVariable( const std::string name );
+//    virtual Variable<double>* InquireVariable( const std::string name );
+//    virtual Variable<long double>* InquireVariable( const std::string name );
+//    virtual Variable<std::complex<float>>* InquireVariable( const std::string name );
+//    virtual Variable<std::complex<double>>* InquireVariable( const std::string name );
+//    virtual Variable<std::complex<long double>>* InquireVariable( const std::string name );
+
 
     virtual void Close( const int transportIndex = -1  ); ///< Closes a particular transport, or all if -1
 

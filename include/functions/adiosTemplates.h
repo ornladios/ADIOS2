@@ -13,6 +13,7 @@
 #include <vector>
 #include <thread>
 #include <set>
+#include <complex>
 /// \endcond
 
 
@@ -24,8 +25,7 @@ namespace adios
  * Get the primitive type in a string from a template
  * @return if T is a char, returns string = "char"
  */
-template< class T> inline std::string GetType( ) noexcept { return ""; }
-
+template< class T> inline std::string GetType( ) noexcept { return "compound"; }
 template<> inline std::string GetType<char>() noexcept { return "char"; }
 template<> inline std::string GetType<unsigned char>() noexcept { return "unsigned char"; }
 template<> inline std::string GetType<short>() noexcept { return "short"; }
@@ -39,6 +39,10 @@ template<> inline std::string GetType<unsigned long long int>() noexcept { retur
 template<> inline std::string GetType<float>() noexcept { return "float"; }
 template<> inline std::string GetType<double>() noexcept { return "double"; }
 template<> inline std::string GetType<long double>() noexcept { return "long double"; }
+template<> inline std::string GetType<std::complex<float>>() noexcept { return "float complex"; }
+template<> inline std::string GetType<std::complex<double>>() noexcept { return "double complex"; }
+template<> inline std::string GetType<std::complex<long double>>() noexcept { return "long double complex"; }
+
 
 
 /**

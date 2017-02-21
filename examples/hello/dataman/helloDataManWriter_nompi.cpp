@@ -24,11 +24,11 @@ int main( int argc, char* argv [] )
     {
         //Define variable and local size
         //Define variable and local size
-        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx} );
+        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
 
         //Define method for engine creation, it is basically straight-forward parameters
-        adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataMan" ); //default method type is Writer
-        datamanSettings.SetParameters( "peer-to-peer=yes", "optimize=yes", "compress=yes" );
+        adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManWriter" ); //default method type is Writer
+        datamanSettings.SetParameters( "peer-to-peer=yes", "real_time=yes", "compress=no" );
         datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
         //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
 
@@ -42,6 +42,26 @@ int main( int argc, char* argv [] )
         //datamanWriter->Write( "myDoubles", myDoubles.data() ); //you can write either by string or by object
         datamanWriter->Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
         datamanWriter->Close( );
+
+
+//        auto datamanReader = adios.Open( "myDoubles.bp", "r", datamanSettings );
+//
+//        if( datamanReader == nullptr )
+//            throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
+//
+//        adios::Variable<double>& readMyDoubles = datamanReader->Inquire<double>( "myDoubles" );
+//        std::cout << "Hello dataman Reader\n";
+//        for( auto value : readMyDoubles.m_Values )
+//        {
+//            std::cout << value << "\n";
+//        }
+//
+//
+//        datamanReader->Close( );
+
+
+
+
     }
     catch( std::invalid_argument& e )
     {

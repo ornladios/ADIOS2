@@ -5,8 +5,8 @@
  *      Author: wfg
  */
 
-#ifndef POSIX_H_
-#define POSIX_H_
+#ifndef FD_H_
+#define FD_H_
 
 
 #include "core/Transport.h"
@@ -14,16 +14,20 @@
 
 namespace adios
 {
+namespace transport
+{
 
-
-class POSIX : public Transport
+/**
+ * File descriptor transport using the POSIX library
+ */
+class FD : public Transport
 {
 
 public:
 
-    POSIX( MPI_Comm mpiComm, const bool debugMode );
+    FD( MPI_Comm mpiComm, const bool debugMode );
 
-    ~POSIX( );
+    ~FD( );
 
     void Open( const std::string name, const std::string accessMode );
 
@@ -38,7 +42,8 @@ private:
 };
 
 
+
+
+} //end namespace transport
 } //end namespace
-
-
-#endif /* POSIX_H_ */
+#endif /* FD_H_ */

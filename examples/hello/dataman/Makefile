@@ -3,7 +3,7 @@
 #     Author: wfg
 
 
-BASE_NAME=helloDataMan
+BASE_NAME=helloDataManWriter
 
 CC=g++ # Compiling with defaults
 MPICC=mpic++

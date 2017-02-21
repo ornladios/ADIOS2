@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <ios>  //std::ios_base::failure
 #include <thread>  //std::thread
 #include <cstring> //std::memcpy
 #include <algorithm> //std::count

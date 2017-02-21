@@ -35,8 +35,8 @@ int main( int argc, char* argv [] )
         auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx} );
 
         //Define method for engine creation, it is basically straight-forward parameters
-        adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataMan" ); //default method type is Writer
-        datamanSettings.SetParameters( "peer-to-peer=yes", "optimize=yes", "compress=yes" );
+        adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManWriter" ); //default method type is Writer
+        datamanSettings.SetParameters( "peer-to-peer=yes", "real_time=yes", "compress=no" );
         datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
         //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported, will throw an exception
 

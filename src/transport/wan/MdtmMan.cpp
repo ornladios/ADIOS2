@@ -7,13 +7,14 @@
 
 
 
-#include "transport/MdtmMan.h"
+#include "transport/wan/MdtmMan.h"
 
 
 
 namespace adios
 {
-
+namespace transport
+{
 
 MdtmMan::MdtmMan( const std::string localIP, const std::string remoteIP, const std::string mode, const std::string prefix,
                   const int numberOfPipes, const std::vector<int> tolerances, const std::vector<int> priorities,
@@ -91,5 +92,5 @@ void MdtmMan::OnReceive( nlohmann::json& jData )
 
 
 
-
+} //end namespace transport
 } //end namespace

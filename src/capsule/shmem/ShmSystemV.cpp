@@ -4,11 +4,13 @@
  *  Created on: Dec 22, 2016
  *      Author: wfg
  */
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <sys/shm.h>
 #include <ios> //std::ios_base::failure
+/// \endcond
 
-#include "capsule/ShmSystemV.h"
+
+#include "capsule/shmem/ShmSystemV.h"
 
 
 namespace adios

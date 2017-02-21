@@ -5,29 +5,32 @@
  *      Author: wfg
  */
 
-#ifndef FILE_H_
-#define FILE_H_
+#ifndef FP_H_
+#define FP_H_
 
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <stdio.h> // FILE*
+/// \endcond
 
 #include "core/Transport.h"
 
 
 namespace adios
 {
+namespace transport
+{
 
 /**
- * Class that defines a transport method using C file pointer to streams FILE*
+ * Class that defines a transport method using C file pointer (FP) to streams FILE*
  */
-class File : public Transport
+class FP : public Transport
 {
 
 public:
 
-    File( MPI_Comm mpiComm, const bool debugMode );
+    FP( MPI_Comm mpiComm, const bool debugMode );
 
-    ~File( );
+    ~FP( );
 
     void Open( const std::string name, const std::string accessMode );
 
@@ -47,9 +50,10 @@ private:
 };
 
 
+} //end namespace transport
 } //end namespace
 
 
 
 
-#endif /* FILE_H_ */
+#endif /* FP_H_ */

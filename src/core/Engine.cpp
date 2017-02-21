@@ -37,9 +37,46 @@ Engine::~Engine( )
 { }
 
 
-//PROTECTED
+//should these functions throw an exception?
+void Engine::Write( Variable<char>& variable,                      const char* values ){ }
+void Engine::Write( Variable<unsigned char>& variable,             const unsigned char* values ){ }
+void Engine::Write( Variable<short>& variable,                     const short* values ){ }
+void Engine::Write( Variable<unsigned short>& variable,            const unsigned short* values ){ }
+void Engine::Write( Variable<int>& variable,                       const int* values ){ }
+void Engine::Write( Variable<unsigned int>& variable,              const unsigned int* values ){ }
+void Engine::Write( Variable<long int>& variable,                  const long int* values ){ }
+void Engine::Write( Variable<unsigned long int>& variable,         const unsigned long int* values ){ }
+void Engine::Write( Variable<long long int>& variable,             const long long int* values ){ }
+void Engine::Write( Variable<unsigned long long int>& variable,    const unsigned long long int* values ){ }
+void Engine::Write( Variable<float>& variable,                     const float* values ){ }
+void Engine::Write( Variable<double>& variable,                    const double* values ){ }
+void Engine::Write( Variable<long double>& variable,               const long double* values ){ }
+void Engine::Write( Variable<std::complex<float>>& variable,       const std::complex<float>* values ){ }
+void Engine::Write( Variable<std::complex<double>>& variable,      const std::complex<double>* values ){ }
+void Engine::Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values ){ }
+void Engine::Write( VariableCompound& variable,                    const void* values ){ }
 
-void Engine::Close( int transportIndex )
+void Engine::Write( const std::string variableName, const char* values ){ }
+void Engine::Write( const std::string variableName, const unsigned char* values ){ }
+void Engine::Write( const std::string variableName, const short* values ){ }
+void Engine::Write( const std::string variableName, const unsigned short* values ){ }
+void Engine::Write( const std::string variableName, const int* values ){ }
+void Engine::Write( const std::string variableName, const unsigned int* values ){ }
+void Engine::Write( const std::string variableName, const long int* values ){ }
+void Engine::Write( const std::string variableName, const unsigned long int* values ){ }
+void Engine::Write( const std::string variableName, const long long int* values ){ }
+void Engine::Write( const std::string variableName, const unsigned long long int* values ){ }
+void Engine::Write( const std::string variableName, const float* values ){ }
+void Engine::Write( const std::string variableName, const double* values ){ }
+void Engine::Write( const std::string variableName, const long double* values ){ }
+void Engine::Write( const std::string variableName, const std::complex<float>* values ){ }
+void Engine::Write( const std::string variableName, const std::complex<double>* values ){ }
+void Engine::Write( const std::string variableName, const std::complex<long double>* values ){ }
+void Engine::Write( const std::string variableName, const void* values ){ }
+
+
+
+void Engine::Close( const int transportIndex )
 {
     if( transportIndex == -1 ) //close all transports
     {
@@ -52,6 +89,7 @@ void Engine::Close( int transportIndex )
     }
 }
 
+//PROTECTED
 void Engine::Init( )
 { }
 
@@ -107,6 +145,7 @@ bool Engine::TransportNamesUniqueness( ) const
 
     return lf_CheckTransportsType( Support::FileTransports );
 }
+
 
 
 } //end namespace

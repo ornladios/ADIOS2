@@ -1,5 +1,5 @@
 /*
- * CFStream.h
+ * FStream.h
  *
  *  Created on: Oct 18, 2016
  *      Author: wfg
@@ -8,17 +8,20 @@
 #ifndef FSTREAM_H_
 #define FSTREAM_H_
 
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
+/// \endcond
 
 #include "core/Transport.h"
 
 
 namespace adios
 {
+namespace transport
+{
 
 /**
- * Class that defines a transport method using C++ file streams
+ * File stream transport using C++ fstream
  */
 class FStream : public Transport
 {
@@ -47,6 +50,7 @@ private:
 };
 
 
+} //end namespace transport
 } //end namespace
 
 

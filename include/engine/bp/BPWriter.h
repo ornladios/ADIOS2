@@ -5,19 +5,20 @@
  *      Author: wfg
  */
 
-#ifndef WRITER_H_
-#define WRITER_H_
+#ifndef BPWRITER_H_
+#define BPWRITER_H_
 
 #include "core/Engine.h"
 #include "format/BP1Writer.h"
-#include "capsule/Heap.h"
+
+//supported capsules
+#include "capsule/heap/STLVector.h"
 
 
 namespace adios
 {
 
-
-class Writer : public Engine
+class BPWriter : public Engine
 {
 
 public:
@@ -30,10 +31,10 @@ public:
      * @param method
      * @param debugMode
      */
-    Writer( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-            const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
+    BPWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+              const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
-    ~Writer( );
+    ~BPWriter( );
 
     void Write( Variable<char>& variable, const char* values );
     void Write( Variable<unsigned char>& variable, const unsigned char* values );
@@ -44,10 +45,14 @@ public:
     void Write( Variable<long int>& variable, const long int* values );
     void Write( Variable<unsigned long int>& variable, const unsigned long int* values );
     void Write( Variable<long long int>& variable, const long long int* values );
-    void Write( Variable<unsigned long long int>& variable, const unsigned long long int* values ) ;
+    void Write( Variable<unsigned long long int>& variable, const unsigned long long int* values );
     void Write( Variable<float>& variable, const float* values );
     void Write( Variable<double>& variable, const double* values );
     void Write( Variable<long double>& variable, const long double* values );
+    void Write( Variable<std::complex<float>>& variable,       const std::complex<float>* values );
+    void Write( Variable<std::complex<double>>& variable,      const std::complex<double>* values );
+    void Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values );
+    void Write( VariableCompound& variable, const void* values );
 
     void Write( const std::string variableName, const char* values );
     void Write( const std::string variableName, const unsigned char* values );
@@ -62,18 +67,21 @@ public:
     void Write( const std::string variableName, const float* values );
     void Write( const std::string variableName, const double* values );
     void Write( const std::string variableName, const long double* values );
+    void Write( const std::string variableName, const std::complex<float>* values );
+    void Write( const std::string variableName, const std::complex<double>* values );
+    void Write( const std::string variableName, const std::complex<long double>* values );
+    void Write( const std::string variableName, const void* values );
 
     void Close( const int transportIndex = -1 );
 
 private:
 
-    Heap m_Buffer; ///< heap capsule
+    capsule::STLVector m_Buffer; ///< heap capsule using STL std::vector<char>
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
     format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
     std::size_t m_MaxBufferSize;
     float m_GrowthFactor = 1.5;
     bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
-
 
     void Init( );
     void InitTransports( );
@@ -138,4 +146,4 @@ private:
 } //end namespace adios
 
 
-#endif /* WRITER_H_ */
+#endif /* BPWRITER_H_ */
