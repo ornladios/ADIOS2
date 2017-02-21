@@ -8,8 +8,8 @@
 #ifndef DATAMANWRITER_H_
 #define DATAMANWRITER_H_
 
-#include <iostream> //must be removed
-#include <unistd.h> //must be removed
+#include <iostream> //std::cout must be removed, only used for hello example
+#include <unistd.h> //sleep must be removed
 
 #include "core/Engine.h"
 #include "format/BP1Writer.h"
@@ -35,7 +35,7 @@ public:
      * @param hostLanguage
      */
     DataManWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-             const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
+                   const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
     ~DataManWriter( );
 
@@ -67,6 +67,8 @@ public:
     void Write( const std::string variableName, const double* values );
     void Write( const std::string variableName, const long double* values );
 
+    void Close( const int transportIndex = -1 );
+
 private:
 
     capsule::STLVector m_Buffer; ///< heap capsule, contains data and metadata buffers
@@ -86,9 +88,9 @@ private:
 
 
     template<class T>
-    void WriteVariable( Variable<T>& variable, const T* values )
+    void WriteVariableCommon( Variable<T>& variable, const T* values )
     {
-        //here comes your magic at Writting now variable.m_UserValues has the data passed by the user
+        //here comes your magic at Writing now variable.m_UserValues has the data passed by the user
         //set variable
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );

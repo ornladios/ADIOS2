@@ -42,26 +42,6 @@ int main( int argc, char* argv [] )
         //datamanWriter->Write( "myDoubles", myDoubles.data() ); //you can write either by string or by object
         datamanWriter->Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
         datamanWriter->Close( );
-
-
-//        auto datamanReader = adios.Open( "myDoubles.bp", "r", datamanSettings );
-//
-//        if( datamanReader == nullptr )
-//            throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
-//
-//        adios::Variable<double>& readMyDoubles = datamanReader->Inquire<double>( "myDoubles" );
-//        std::cout << "Hello dataman Reader\n";
-//        for( auto value : readMyDoubles.m_Values )
-//        {
-//            std::cout << value << "\n";
-//        }
-//
-//
-//        datamanReader->Close( );
-
-
-
-
     }
     catch( std::invalid_argument& e )
     {

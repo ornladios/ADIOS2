@@ -75,19 +75,26 @@ void Engine::Write( const std::string variableName, const std::complex<long doub
 void Engine::Write( const std::string variableName, const void* values ){ }
 
 
+//READ
+Variable<void>* Engine::InquireVariable( const std::string name, const bool readIn ){ return nullptr; }
+Variable<char>* Engine::InquireVariableChar( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned char>* Engine::InquireVariableUChar( const std::string name, const bool readIn ){ return nullptr; }
+Variable<short>* Engine::InquireVariableShort( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned short>* Engine::InquireVariableUShort( const std::string name, const bool readIn ){ return nullptr; }
+Variable<int>* Engine::InquireVariableInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned int>* Engine::InquireVariableUInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<long int>* Engine::InquireVariableLInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned long int>* Engine::InquireVariableULInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<long long int>* Engine::InquireVariableLLInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned long long int>* Engine::InquireVariableULLInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<float>* Engine::InquireVariableFloat( const std::string name, const bool readIn ){ return nullptr; }
+Variable<double>* Engine::InquireVariableDouble( const std::string name, const bool readIn ){ return nullptr; }
+Variable<long double>* Engine::InquireVariableLDouble( const std::string name, const bool readIn ){ return nullptr; }
+Variable<std::complex<float>>* Engine::InquireVariableCFloat( const std::string name, const bool readIn ){ return nullptr; }
+Variable<std::complex<double>>* Engine::InquireVariableCDouble( const std::string name, const bool readIn ){ return nullptr; }
+Variable<std::complex<long double>>* Engine::InquireVariableCLDouble( const std::string name, const bool readIn ){ return nullptr; }
+VariableCompound* Engine::InquireVariableCompound( const std::string name, const bool readIn ){ return nullptr;  }
 
-void Engine::Close( const int transportIndex )
-{
-    if( transportIndex == -1 ) //close all transports
-    {
-        for( auto& transport : m_Transports )
-            transport->Close( );
-    }
-    else
-    {
-        m_Transports[transportIndex]->Close( ); //here need to pass the buffer
-    }
-}
 
 //PROTECTED
 void Engine::Init( )

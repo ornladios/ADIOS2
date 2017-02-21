@@ -169,31 +169,34 @@ public:
     virtual void Write( const std::string variableName, const void* values );
 
     //Read API
-//    template< class T >
-//    virtual Variable<T>* InquireVariable( const std::string name )
-//    {
-//        return InquireVariable<T>( name );
-//    }
-//
-//    virtual Variable<char>* InquireVariable( const std::string name );
-//    virtual Variable<unsigned char>* InquireVariable( const std::string name );
-//    virtual Variable<short>* InquireVariable( const std::string name );
-//    virtual Variable<unsigned short>* InquireVariable( const std::string name );
-//    virtual Variable<int>* InquireVariable( const std::string name );
-//    virtual Variable<unsigned int>* InquireVariable( const std::string name );
-//    virtual Variable<long int>* InquireVariable( const std::string name );
-//    virtual Variable<unsigned long int>* InquireVariable( const std::string name );
-//    virtual Variable<long long int>* InquireVariable( const std::string name );
-//    virtual Variable<unsigned long long int>* InquireVariable( const std::string name );
-//    virtual Variable<float>* InquireVariable( const std::string name );
-//    virtual Variable<double>* InquireVariable( const std::string name );
-//    virtual Variable<long double>* InquireVariable( const std::string name );
-//    virtual Variable<std::complex<float>>* InquireVariable( const std::string name );
-//    virtual Variable<std::complex<double>>* InquireVariable( const std::string name );
-//    virtual Variable<std::complex<long double>>* InquireVariable( const std::string name );
+    /**
+     * Inquires and (optionally) allocates and copies the contents of a variable
+     * If success: it returns a pointer to the internal stored variable object in ADIOS class.
+     * If failure: it returns nullptr
+     * @param name variable name to look for
+     * @param readIn if true: reads the full variable and payload, allocating values in memory, if false: internal payload is nullptr
+     * @return success: it returns a pointer to the internal stored variable object in ADIOS class, failure: nullptr
+     */
+    virtual Variable<void>* InquireVariable( const std::string name, const bool readIn = true );
+    virtual Variable<char>* InquireVariableChar( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned char>* InquireVariableUChar( const std::string name, const bool readIn = true );
+    virtual Variable<short>* InquireVariableShort( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned short>* InquireVariableUShort( const std::string name, const bool readIn = true );
+    virtual Variable<int>* InquireVariableInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned int>* InquireVariableUInt( const std::string name, const bool readIn = true );
+    virtual Variable<long int>* InquireVariableLInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned long int>* InquireVariableULInt( const std::string name, const bool readIn = true );
+    virtual Variable<long long int>* InquireVariableLLInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned long long int>* InquireVariableULLInt( const std::string name, const bool readIn = true );
+    virtual Variable<float>* InquireVariableFloat( const std::string name, const bool readIn = true );
+    virtual Variable<double>* InquireVariableDouble( const std::string name, const bool readIn = true );
+    virtual Variable<long double>* InquireVariableLDouble( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<float>>* InquireVariableCFloat( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<double>>* InquireVariableCDouble( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<long double>>* InquireVariableCLDouble( const std::string name, const bool readIn = true );
+    virtual VariableCompound* InquireVariableCompound( const std::string name, const bool readIn = true );
 
-
-    virtual void Close( const int transportIndex = -1  ); ///< Closes a particular transport, or all if -1
+    virtual void Close( const int transportIndex = -1  ) = 0; ///< Closes a particular transport, or all if -1
 
 
 protected:

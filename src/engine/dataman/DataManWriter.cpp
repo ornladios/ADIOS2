@@ -25,7 +25,7 @@ namespace adios
 
 DataManWriter::DataManWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
                               const Method& method, const bool debugMode, const unsigned int cores ):
-    Engine( adios, "DataManWriter", name, accessMode, mpiComm, method, debugMode, cores, " Dataman constructor (or call to ADIOS Open).\n" ),
+    Engine( adios, "DataManWriter", name, accessMode, mpiComm, method, debugMode, cores, " DataManWriter constructor (or call to ADIOS Open).\n" ),
     m_Buffer( accessMode, m_RankMPI, m_DebugMode )
 {
     Init( );
@@ -38,90 +38,106 @@ DataManWriter::~DataManWriter( )
 
 void DataManWriter::Init( )
 {
+    if( m_DebugMode == true )
+    {
+        if( m_AccessMode != "w" && m_AccessMode != "write" && m_AccessMode != "a" && m_AccessMode != "append" )
+            throw std::invalid_argument( "ERROR: DataManWriter doesn't support access mode " + m_AccessMode +
+                                         ", in call to ADIOS Open or DataManWriter constructor\n"  );
+    }
+
     InitCapsules( );
     InitTransports( );
 }
 
 
 void DataManWriter::Write( Variable<char>& variable, const char* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<unsigned char>& variable, const unsigned char* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<short>& variable, const short* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<unsigned short>& variable, const unsigned short* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<int>& variable, const int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<unsigned int>& variable, const unsigned int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<long int>& variable, const long int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<unsigned long int>& variable, const unsigned long int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<long long int>& variable, const long long int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<unsigned long long int>& variable, const unsigned long long int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<float>& variable, const float* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<double>& variable, const double* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( Variable<long double>& variable, const long double* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void DataManWriter::Write( const std::string variableName, const char* values )
-{ WriteVariable( m_ADIOS.GetVariable<char>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<char>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const unsigned char* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned char>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned char>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const short* values )
-{ WriteVariable( m_ADIOS.GetVariable<short>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<short>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const unsigned short* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned short>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned short>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const int* values )
-{ WriteVariable( m_ADIOS.GetVariable<int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<int>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const unsigned int* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned int>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const long int* values )
-{ WriteVariable( m_ADIOS.GetVariable<long int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<long int>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const unsigned long int* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned long int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned long int>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const long long int* values )
-{ WriteVariable( m_ADIOS.GetVariable<long long int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<long long int>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const unsigned long long int* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned long long int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned long long int>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const float* values )
-{ WriteVariable( m_ADIOS.GetVariable<float>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<float>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const double* values )
-{ WriteVariable( m_ADIOS.GetVariable<double>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<double>( variableName ), values ); }
 
 void DataManWriter::Write( const std::string variableName, const long double* values )
-{ WriteVariable( m_ADIOS.GetVariable<long double>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<long double>( variableName ), values ); }
 
 
+
+void DataManWriter::Close( const int transportIndex )
+{
+    //here close IPs and deallocate or free/close resources (if using STL no need for memory deallocation)
+}
+
+
+
+//PRIVATE functions below
 void DataManWriter::InitCapsules( )
 {
     //here init memory capsules

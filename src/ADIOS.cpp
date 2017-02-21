@@ -20,6 +20,7 @@
 //Engines
 #include "engine/bp/BPWriter.h"
 #include "engine/dataman/DataManWriter.h"
+#include "engine/dataman/DataManReader.h"
 
 
 namespace adios
@@ -107,6 +108,10 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
     else if( type == "DataManWriter" )
     {
     	return std::make_shared<DataManWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+    }
+    else if( type == "DataManReader" )
+    {
+        return std::make_shared<DataManReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "Vis" )
     {
