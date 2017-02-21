@@ -18,7 +18,6 @@
 
 #include "BP1.h"
 #include "core/Variable.h"
-#include "core/Group.h"
 #include "core/Capsule.h"
 #include "capsule/Heap.h"
 #include "functions/adiosTemplates.h"
@@ -40,35 +39,52 @@ public:
     unsigned int m_Cores = 1;  ///< number of cores for thread operations in large array (min,max)
     unsigned int m_Verbosity = 0; ///< statistics verbosity, can change if redefined in Engine method.
     float m_GrowthFactor = 1.5; ///< memory growth factor, can change if redefined in Engine method.
-    unsigned int m_VariablesTotalCount = 0;
 
     /**
-     * Calculates the Process Index size in bytes according to the BP format
-     * @param name process group name
-     * @param timeStepName name of the corresponding time step
-     * @return size of process group index in bytes
+     * Calculates the Process Index size in bytes according to the BP format, including list of method with no parameters (for now)
+     * @param name
+     * @param timeStepName
+     * @param numberOfTransports
+     * @return size of pg index
      */
-    std::size_t GetProcessIndexSize( const std::string name, const std::string timeStepName );
+    std::size_t GetProcessGroupIndexSize( const std::string name, const std::string timeStepName,
+                                          const std::size_t numberOfTransports ) const noexcept;
 
     /**
-     * Writes a PGIndex, done at Open or aggregation
+     * Writes a process group index PGIndex and list of methods (from transports), done at Open or aggregation of new time step
+     * Version that operates on a single heap buffer and metadataset.
      * @param isFortran
      * @param name
      * @param processID
      * @param timeStepName
      * @param timeStep
-     * @param dataBuffers
-     * @param dataPositions
-     * @param dataAbsolutePositions
-     * @param metadataBuffers
-     * @param metadataPositions
+     * @param transports
+     * @param buffer
+     * @param metadataSet
      */
     void WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
                                  const std::string timeStepName, const unsigned int timeStep,
-                                 std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
-                                 std::vector<std::size_t>& dataAbsolutePositions,
-                                 std::vector<char*>& metadataBuffers,
-                                 std::vector<std::size_t>& metadataPositions );
+                                 const std::vector< std::shared_ptr<Transport> >& transports,
+                                 Heap& buffer,
+                                 BP1MetadataSet& metadataSet ) const noexcept;
+    /**
+     * Writes a process group index PGIndex and list of methods (from transports), done at Open or aggregation of new time step
+     * Version that operates on many capsules and metadatasets
+     * @param isFortran
+     * @param name
+     * @param processID
+     * @param timeStepName
+     * @param timeStep
+     * @param transports
+     * @param capsules
+     * @param metadataSets
+     */
+    void WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
+                                 const std::string timeStepName, const unsigned int timeStep,
+                                 const std::vector< std::shared_ptr<Transport> >& transports,
+                                 std::vector< std::shared_ptr<Capsule> >& capsules,
+                                 std::vector<BP1MetadataSet>& metadataSets ) const noexcept;
+
 
     /**
      * Returns the estimated variable index size
@@ -79,16 +95,14 @@ public:
      * @return variable index size
      */
     template< class T >
-    size_t GetVariableIndexSize( const Group& group, const std::string variableName,
-                                 const Variable<T> variable ) noexcept
+    size_t GetVariableIndexSize( const Variable<T>& variable ) const noexcept
     {
         //size_t indexSize = varEntryLength + memberID + lengthGroupName + groupName + lengthVariableName + lengthOfPath + path + datatype
         size_t indexSize = 23; //without characteristics
-        indexSize += group.m_Name.size();
-        indexSize += variableName.size();
+        indexSize += variable.m_Name.size();
 
         // characteristics 3 and 4, check variable number of dimensions
-        const std::size_t dimensions = std::count( variable.DimensionsCSV.begin(), variable.DimensionsCSV.end(), ',' ) + 1; //number of commas in CSV + 1
+        const std::size_t dimensions = variable.m_Dimensions.size(); //number of commas in CSV + 1
         indexSize += 28 * dimensions; //28 bytes per dimension
         indexSize += 1; //id
 
@@ -105,7 +119,7 @@ public:
             indexSize += sizeof(T);
             indexSize += 1; //id
             //must have an if here
-            indexSize += 2 + variableName.size();
+            indexSize += 2 + variable.m_Name.size();
             indexSize += 1; //id
         }
 
@@ -130,8 +144,7 @@ public:
      * @param metadataSet
      */
     template< class T >
-    void WriteVariableIndex( const Group& group, const Var variableName, const Variable<T>& variable,
-                             Heap& buffer, BP1MetadataSet& metadataSet ) noexcept
+    void WriteVariableIndex( const Variable<T>& variable, Heap& buffer, BP1MetadataSet& metadataSet ) const noexcept
     {
         // adapt this part to local variables
         std::vector<char*> dataBuffers{ buffer.m_Data.data() };
@@ -142,8 +155,8 @@ public:
         std::vector<std::size_t> metadataPositions{ metadataSet.VarsIndexPosition };
         std::vector<unsigned int> variablesCount{ metadataSet.VarsCount };
 
-        WriteVariableCommon( group, variableName, variable, dataBuffers, dataPositions, dataAbsolutePositions,
-                             metadataBuffers, metadataPositions, variablesCount );
+        WriteVariableIndexCommon( variable, dataBuffers, dataPositions, dataAbsolutePositions,
+                                  metadataBuffers, metadataPositions, variablesCount );
 
         //update positions and varsCount originally passed by value
         buffer.m_DataPosition = dataPositions[0];
@@ -162,9 +175,9 @@ public:
      * @param metadataSets
      */
     template< class T >
-    void WriteVariableIndex( const Group& group, const Var variableName, const Variable<T>& variable,
+    void WriteVariableIndex( const Variable<T>& variable,
                              std::vector< std::shared_ptr<Capsule> >& capsules,
-                             std::vector<BP1MetadataSet>& metadataSets ) noexcept
+                             std::vector<BP1MetadataSet>& metadataSets ) const noexcept
     {
         // adapt this part to local variables
         std::vector<char*> metadataBuffers, dataBuffers;
@@ -185,8 +198,8 @@ public:
             dataAbsolutePositions.push_back( capsule->m_DataAbsolutePosition );
         }
 
-        WriteVariableCommon( group, variableName, variable, dataBuffers, dataPositions, dataAbsolutePositions,
-                             metadataBuffers, metadataPositions, variablesCount );
+        WriteVariableIndexCommon( variable, dataBuffers, dataPositions, dataAbsolutePositions,
+                                  metadataBuffers, metadataPositions, variablesCount );
 
         //update positions and varsCount originally passed by value
         const unsigned int buffersSize = static_cast<unsigned int>( capsules.size() );
@@ -200,18 +213,49 @@ public:
         }
     }
 
-    void Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport );
+    void Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport ) const;
 
 
 private:
 
+    /**
+     * Common function that Writes a process group index PGIndex, done at Open or aggregation of new time step.
+     * Called from public WriteProcessGroupIndex functions.
+     * @param isFortran true: using Fortran, false: other language
+     * @param name process group, usually the rank (maybe communicator?)
+     * @param processID processID, usually the rank
+     * @param timeStepName
+     * @param timeStep
+     * @param dataBuffers
+     * @param dataPositions
+     * @param dataAbsolutePositions
+     * @param metadataBuffers
+     * @param metadataPositions
+     */
+    void WriteProcessGroupIndexCommon( const bool isFortran, const std::string name, const unsigned int processID,
+                                       const std::string timeStepName, const unsigned int timeStep,
+                                       const std::vector<int>& methodIDs,
+                                       std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
+                                       std::vector<std::size_t>& dataAbsolutePositions,
+                                       std::vector<char*>& metadataBuffers,
+                                       std::vector<std::size_t>& metadataPositions ) const noexcept;
 
+    /**
+     *
+     * @param variable
+     * @param dataBuffers
+     * @param dataPositions
+     * @param dataAbsolutePositions
+     * @param metadataBuffers
+     * @param metadataPositions
+     * @param variablesCount
+     */
     template<class T>
-    void WriteVariableCommon( const Group& group, const Var variableName, const Variable<T>& variable,
-                              std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
-                              std::vector<size_t>& dataAbsolutePositions,
-                              std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions,
-                              std::vector<unsigned int> variablesCount )
+    void WriteVariableIndexCommon( const Variable<T>& variable,
+                                   std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
+                                   std::vector<size_t>& dataAbsolutePositions,
+                                   std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions,
+                                   std::vector<unsigned int> variablesCount ) const noexcept
     {
         //capture initial positions
         const std::vector<std::size_t> metadataLengthPositions( metadataPositions );
@@ -222,14 +266,13 @@ private:
 
         //memberID
         MemcpyToBuffers( metadataBuffers, metadataPositions, variablesCount, 4 );
-        //group name, only in metadata
-        const std::uint16_t lengthGroupName = group.m_Name.length();
-        WriteNameRecord( group.m_Name, lengthGroupName, metadataBuffers, metadataPositions );
+        //skipping 2 bytes for length of group name which is zero, only in metadata
+        MovePositions( 2, metadataPositions ); //length of var, will come at the end from this offset
 
         //variable name to metadata and data
-        const std::uint16_t lengthVariableName = variableName.length();
-        WriteNameRecord( variableName, lengthVariableName, metadataBuffers, metadataPositions );
-        WriteNameRecord( variableName, lengthVariableName, dataBuffers, dataPositions );
+        const std::uint16_t lengthVariableName = variable.m_Name.length();
+        WriteNameRecord( variable.m_Name, lengthVariableName, metadataBuffers, metadataPositions );
+        WriteNameRecord( variable.m_Name, lengthVariableName, dataBuffers, dataPositions );
 
         //skip path (jump 2 bytes, already set to zero)
         MovePositions( 2, metadataPositions ); //length of var, will come at the end from this offset
@@ -251,7 +294,7 @@ private:
         std::uint8_t characteristicsCounter = 0; //used for characteristics count, characteristics length will be calculated at the end
 
         //DIMENSIONS CHARACTERISTIC
-        const std::vector<unsigned long long int> localDimensions = group.GetDimensions( variable.DimensionsCSV );
+        const std::vector<size_t>& localDimensions = variable.m_Dimensions;
 
         //write to metadata characteristic
         //characteristic: dimension
@@ -263,13 +306,13 @@ private:
         MemcpyToBuffers( metadataBuffers, metadataPositions, &dimensionsLength, 2 );
 
         //write in data if it's a dimension variable (scalar) y or n
-        const char dimensionYorN = ( variable.IsDimension ) ? 'y' : 'n';
+        const char dimensionYorN = ( variable.m_IsDimension ) ? 'y' : 'n';
         MemcpyToBuffers( dataBuffers, dataPositions, &dimensionYorN, 1 );
         MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
         const std::uint16_t dimensionsLengthInData = dimensions * 27; //27 is from 9 bytes for each: var y/n + local, var y/n + global dimension, var y/n + global offset
         MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLengthInData, 2 );
 
-        if( variable.GlobalBoundsIndex == -1 ) //local variable
+        if( variable.m_GlobalDimensions.empty() ) //local variable
         {
             WriteDimensionRecord( metadataBuffers, metadataPositions, localDimensions, 16 );
             WriteDimensionRecord( dataBuffers, dataPositions, localDimensions, 18, true ); //not using memberID for now
@@ -287,8 +330,8 @@ private:
         }
         else //global variable
         {
-            const std::vector<unsigned long long int> globalDimensions = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].first );
-            const std::vector<unsigned long long int> globalOffsets = group.GetDimensions( group.m_GlobalBounds[variable.GlobalBoundsIndex].second );
+            const std::vector<std::size_t>& globalDimensions = variable.m_GlobalDimensions;
+            const std::vector<std::size_t>& globalOffsets = variable.m_GlobalOffsets;
 
             WriteDimensionRecord( metadataBuffers, metadataPositions, localDimensions, globalDimensions, globalOffsets );
             WriteDimensionRecord( dataBuffers, dataPositions, localDimensions, globalDimensions, globalOffsets, true );
@@ -308,32 +351,32 @@ private:
 
         //VALUE for SCALAR or STAT min, max for ARRAY
         //Value for scalar
-        if( variable.DimensionsCSV == "1" ) //scalar //just doing string scalars for now (by name), needs to be modified when user passes value
+        if( variable.m_IsScalar ) //scalar //just doing string scalars for now (by name), needs to be modified when user passes value
         {
             characteristicID = characteristic_value;
-            const std::int16_t lengthOfName = variableName.length();
+            const std::int16_t lengthOfName = variable.m_Name.length();
             //metadata
             MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1  );
-            WriteNameRecord( variableName, lengthOfName, metadataBuffers, metadataPositions );
+            WriteNameRecord( variable.m_Name, lengthOfName, metadataBuffers, metadataPositions );
 
             //data
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
             const std::int16_t lengthOfCharacteristic = 2 + lengthOfName;
             MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfCharacteristic, 2 ); //added in data
-            WriteNameRecord( variableName, lengthOfName, dataBuffers, dataPositions );
+            WriteNameRecord( variable.m_Name, lengthOfName, dataBuffers, dataPositions );
         }
         else // Stat -> Min, Max for arrays,
         {
             if( m_Verbosity == 0 ) //default verbose
             {
                 //Get min and max
-                const std::size_t valuesSize = GetTotalSize( localDimensions );
+                const std::size_t valuesSize = variable.TotalSize();
                 T min, max;
 
                 if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
-                    GetMinMax( variable.Values, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+                    GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
                 else
-                    GetMinMax( variable.Values, valuesSize, min, max );
+                    GetMinMax( variable.m_AppValues, valuesSize, min, max );
 
                 //set characteristic ids for min and max
                 characteristicID = characteristic_stat;
@@ -380,8 +423,6 @@ private:
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, &characteristicsCounter, 1 );
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, metadataCharacteristicsLengths, 4 ); //vector to vector
         MovePositions( -5, metadataCharacteristicsCountPositions ); //back to original position
-
-        ++m_VariablesTotalCount;
     } //end of function
 
 
@@ -393,7 +434,7 @@ private:
      * @param positions to be moved
      */
     void WriteNameRecord( const std::string name, const std::uint16_t length,
-                          std::vector<char*>& buffers, std::vector<std::size_t>& positions );
+                          std::vector<char*>& buffers, std::vector<std::size_t>& positions ) const noexcept;
 
     /**
      * Write a dimension record for a global variable used by WriteVariableCommon
@@ -405,10 +446,10 @@ private:
      * @param addType true: for data buffers, false: for metadata buffer and data characteristic
      */
     void WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                               const std::vector<unsigned long long int>& localDimensions,
-                               const std::vector<unsigned long long int>& globalDimensions,
-                               const std::vector<unsigned long long int>& globalOffsets,
-                               const bool addType = false );
+                               const std::vector<std::size_t>& localDimensions,
+                               const std::vector<std::size_t>& globalDimensions,
+                               const std::vector<std::size_t>& globalOffsets,
+                               const bool addType = false ) const noexcept;
 
     /**
      * Write a dimension record for a local variable used by WriteVariableCommon
@@ -419,9 +460,9 @@ private:
      * @param addType true: for data buffers, false: for metadata buffer and data characteristic
      */
     void WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                               const std::vector<unsigned long long int>& localDimensions,
+                               const std::vector<std::size_t>& localDimensions,
                                const unsigned int skip,
-                               const bool addType = false );
+                               const bool addType = false ) const noexcept;
 
     /**
      *
@@ -434,7 +475,7 @@ private:
     template<class T>
     void WriteStatisticsRecord( const std::uint8_t& id, const T& value,
                                 std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                                const bool addLength = false )
+                                const bool addLength = false ) const noexcept
     {
         const std::uint8_t characteristicID = characteristic_stat;
         MemcpyToBuffers( buffers, positions, &characteristicID, 1 );
@@ -449,35 +490,19 @@ private:
         MemcpyToBuffers( buffers, positions, &value, sizeof(T) );
     }
 
+
     /**
-     * Returns data type index from enum Datatypes
-     * @param variable input variable
-     * @return data type
+     *
+     * @param capsule
+     * @param transport
      */
-    template< class T > inline std::int8_t GetDataType( ) noexcept { return type_unknown; }
+    void CloseRankFile( Capsule& capsule, Transport& transport ) const;
 
-    void CloseRankFile( Capsule& capsule, Transport& transport );
-
-    void SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule ); ///< sets the metadata buffer in capsule with indices and minifooter
-    void SetMiniFooter( BP1MetadataSet& metadataSet ); ///< sets the minifooter
+    void SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule ) const; ///< sets the metadata buffer in capsule with indices and minifooter
+    void SetMiniFooter( BP1MetadataSet& metadataSet ) const; ///< sets the minifooter
 
 };
 
-
-//Moving template BP1Writer::GetDataType template specializations outside of the class
-template< > inline std::int8_t BP1Writer::GetDataType<char>( ) noexcept { return type_byte; }
-template< > inline std::int8_t BP1Writer::GetDataType<short>( ) noexcept{ return type_short; }
-template< > inline std::int8_t BP1Writer::GetDataType<int>( ) noexcept{ return type_integer; }
-template< > inline std::int8_t BP1Writer::GetDataType<long int>( ) noexcept{ return type_long; }
-
-template< > inline std::int8_t BP1Writer::GetDataType<unsigned char>( ) noexcept { return type_unsigned_byte; }
-template< > inline std::int8_t BP1Writer::GetDataType<unsigned short>( ) noexcept{ return type_unsigned_short; }
-template< > inline std::int8_t BP1Writer::GetDataType<unsigned int>( ) noexcept{ return type_unsigned_integer; }
-template< > inline std::int8_t BP1Writer::GetDataType<unsigned long int>( ) noexcept{ return type_unsigned_long; }
-
-template< > inline std::int8_t BP1Writer::GetDataType<float>( ) noexcept{ return type_real; }
-template< > inline std::int8_t BP1Writer::GetDataType<double>( ) noexcept{ return type_double; }
-template< > inline std::int8_t BP1Writer::GetDataType<long double>( ) noexcept{ return type_long_double; }
 
 
 

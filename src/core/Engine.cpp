@@ -15,20 +15,18 @@ namespace adios
 {
 
 
-Engine::Engine( const std::string engineType, const std::string name, const std::string accessMode,
-                const MPI_Comm mpiComm, const Method& method,
-                const bool debugMode, const unsigned int cores, const std::string endMessage,
-                const std::string hostLanguage ):
+Engine::Engine( ADIOS& adios, const std::string engineType, const std::string name, const std::string accessMode,
+                const MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores,
+                const std::string endMessage ):
     m_MPIComm{ mpiComm },
     m_EngineType{ engineType },
     m_Name{ name },
     m_AccessMode{ accessMode },
     m_Method{ method },
-    m_Group{ method.m_Group },
+    m_ADIOS{ adios },
     m_DebugMode{ debugMode },
     m_Cores{ cores },
-    m_EndMessage{ endMessage },
-    m_HostLanguage{ hostLanguage }
+    m_EndMessage{ endMessage }
 {
     MPI_Comm_rank( m_MPIComm, &m_RankMPI );
     MPI_Comm_size( m_MPIComm, &m_SizeMPI );
@@ -38,30 +36,8 @@ Engine::Engine( const std::string engineType, const std::string name, const std:
 Engine::~Engine( )
 { }
 
-void Engine::SetDefaultGroup( Group& group )
-{
-    m_Group = &group;
-}
-
 
 //PROTECTED
-unsigned int Engine::PreSetVariable( Group& group, const std::string variableName,
-                                     const std::string hint )
-{
-    auto itVariable = group.m_Variables.find( variableName );
-
-    if( m_DebugMode == true )
-    {
-        if( itVariable == group.m_Variables.end() )
-            throw std::invalid_argument( "ERROR: variable " + variableName + " doesn't exist " + hint + ".\n" );
-    }
-
-    group.m_WrittenVariables.insert( variableName ); // group tracks its own written variables for dimensions
-    m_WrittenVariables.push_back( std::make_pair( &group, variableName ) );
-    const unsigned int index = itVariable->second.second;
-    return index;
-}
-
 
 void Engine::Close( int transportIndex )
 {
@@ -94,17 +70,6 @@ void Engine::CheckParameter( const std::map<std::string, std::string>::const_ite
 {
     if( itParam == parameters.end() )
         throw std::invalid_argument( "ERROR: parameter name " + parameterName + " not found " + hint );
-}
-
-
-
-void Engine::CheckDefaultGroup( ) const
-{
-    if( m_DebugMode == true )
-    {
-        if( m_Group == nullptr )
-            throw std::invalid_argument( "ERROR: default group in engine " + m_Name + " is nullptr, check Method\n" );
-    }
 }
 
 

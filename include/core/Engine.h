@@ -23,8 +23,8 @@
   #include "mpidummy.h"
 #endif
 
+#include "ADIOS.h"
 #include "core/Method.h"
-#include "core/Group.h"
 #include "core/Variable.h"
 #include "core/Transform.h"
 #include "core/Transport.h"
@@ -43,7 +43,7 @@ class Engine
 public:
 
     #ifdef HAVE_MPI
-    MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
+    MPI_Comm m_MPIComm = MPI_COMM_NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #else
     MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
     #endif
@@ -52,76 +52,55 @@ public:
     const std::string m_Name; ///< name used for this engine
     const std::string m_AccessMode; ///< accessMode for buffers used by this engine
     const Method& m_Method; ///< associated method containing engine metadata
-    Group* m_Group = nullptr; ///< associated group to look for variable information
 
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
+    const std::string m_HostLanguage = "C++";
+
     /**
-     * Unique constructor based on a method (engine metadata)
-     * @param engineType given by derived classes
-     * @param name engine name
+     * Unique constructor
+     * @param engineType
+     * @param name
      * @param accessMode
      * @param mpiComm
      * @param method
+     * @param debugMode
+     * @param cores
+     * @param endMessage
      */
-    Engine( const std::string engineType, const std::string name, const std::string accessMode,
-            MPI_Comm mpiComm, const Method& method, const bool debugMode = false, const unsigned int cores = 1,
-            const std::string endMessage = "", const std::string hostLanguage = "C++" );
+    Engine( ADIOS& adios, const std::string engineType, const std::string name, const std::string accessMode,
+            MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores,
+            const std::string endMessage );
 
     virtual ~Engine( );
-
-    void SetDefaultGroup( Group& group );
 
     /**
      * Write function that adds static checking on the variable to be passed by values
      * It then calls its corresponding derived class virtual function
      * This version uses m_Group to look for the variableName.
-     * @param variableName name of variable to the written
+     * @param variable name of variable to the written
      * @param values pointer passed from the application
      */
     template< class T >
-    void Write( const Var variableName, const T* values )
+    void Write( Variable<T>& variable, const T* values )
     {
-        Write( variableName, values );
+        Write( variable, values );
     }
 
-    /**
-     * Write function that adds static checking on the variable to be passed by values.
-     * It then calls its corresponding derived class virtual function.
-     * This version accepts a group explicitly.
-     * @param group group object that contains the variable with variableName
-     * @param variableName name of variable to the written
-     * @param values pointer passed from the application
-     */
-    template< class T >
-    void Write( Group& group, const Var variableName, const T* values )
-    {
-        Write( group, variableName, values );
-    }
-
-    /**
-     * @brief Write functions can be overridden by derived classes. Base class behavior is to:
-     * 1) Write to Variable values (m_Values) in a group
-     * 2) Transform the data
-     * 3) Write to all capsules -> data and metadata
-     * @param group
-     * @param variableName
-     * @param values coming from user app
-     */
-    virtual void Write( Group& group, const std::string variableName, const char* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const unsigned char* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const short* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const unsigned short* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const int* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const unsigned int* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const long int* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const unsigned long int* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const long long int* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const unsigned long long int* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const float* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const double* values ) = 0;
-    virtual void Write( Group& group, const std::string variableName, const long double* values ) = 0;
+    virtual void Write( Variable<char>& variable, const char* values ) = 0;
+    virtual void Write( Variable<unsigned char>& variable, const unsigned char* values ) = 0;
+    virtual void Write( Variable<short>& variable, const short* values ) = 0;
+    virtual void Write( Variable<unsigned short>& variable, const unsigned short* values ) = 0;
+    virtual void Write( Variable<int>& variable, const int* values ) = 0;
+    virtual void Write( Variable<unsigned int>& variable, const unsigned int* values ) = 0;
+    virtual void Write( Variable<long int>& variable, const long int* values ) = 0;
+    virtual void Write( Variable<unsigned long int>& variable, const unsigned long int* values ) = 0;
+    virtual void Write( Variable<long long int>& variable, const long long int* values ) = 0;
+    virtual void Write( Variable<unsigned long long int>& variable, const unsigned long long int* values ) = 0;
+    virtual void Write( Variable<float>& variable, const float* values ) = 0;
+    virtual void Write( Variable<double>& variable, const double* values ) = 0;
+    virtual void Write( Variable<long double>& variable, const long double* values ) = 0;
 
     /**
      * @brief Write functions can be overridden by derived classes. Base class behavior is to:
@@ -150,29 +129,17 @@ public:
 
 protected:
 
-    //std::vector< std::shared_ptr<Capsule> > m_Capsules; ///< managed Capsules might not be needed by certain engines
+    ADIOS& m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
     std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
     const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
     unsigned int m_Cores = 1;
     const std::string m_EndMessage; ///< added to exceptions to improve debugging
-    const std::string m_HostLanguage = "C++"; ///< passed from ADIOS class to recognize language calling the ADIOS library
 
-    std::vector< std::pair<Group*, std::string> > m_WrittenVariables;
+    std::set<std::string> m_WrittenVariables; ///< contains the names of the variables that are being written
 
     virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
     virtual void InitCapsules( ); ///< Initialize transports from Method, called from Init in constructor.
     virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor.
-
-    /**
-     * Performs preliminary checks before writing a variable. Throws an exception if checks fail.
-     * Returns an index to variable type container in Group
-     * @param group variable group owner object
-     * @param variableName variable to be checked
-     * @param hint added information if exception is thrown
-     * @return index to variable in group type container
-     */
-    unsigned int PreSetVariable( Group& group, const std::string variableName,
-                                 const std::string hint );
 
     /**
      * Used to verify parameters in m_Method containers
@@ -185,8 +152,6 @@ protected:
                          const std::map<std::string, std::string>& parameters,
                          const std::string parameterName,
                          const std::string hint ) const;
-
-    void CheckDefaultGroup( ) const; ///< checks if default group m_Group is nullptr, throws exception if trying to use
 
     bool TransportNamesUniqueness( ) const; ///< checks if transport names are unique among the same types (file I/O)
 

@@ -8,7 +8,9 @@
 #ifndef CAPSULE_H_
 #define CAPSULE_H_
 
-#include "core/Variable.h"
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+/// \endcond
 
 
 namespace adios
@@ -37,10 +39,8 @@ public:
      * @param type derived class type
      * @param accessMode 'w':write, 'r':read, 'a':append
      * @param rankMPI current MPI rank
-     * @param cores if using threads
      */
-    Capsule( const std::string type, const std::string accessMode, const int rankMPI,
-             const bool debugMode );
+    Capsule( const std::string type, const std::string accessMode, const int rankMPI, const bool debugMode );
 
     virtual ~Capsule( );
 

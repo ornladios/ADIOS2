@@ -1,24 +1,20 @@
 /*
- * helloADIOSNoXML_OOP.cpp
+ * helloWriter.cpp
  *
- *  Created on: Jan 9, 2017
+ *  Created on: Feb 16, 2017
  *      Author: wfg
  */
+
+
 
 #include <vector>
 #include <iostream>
 
-#ifdef HAVE_MPI
-    #include <mpi.h>
-#else
-    #include "mpidummy.h"
-    using adios::MPI_Init;
-    using adios::MPI_Comm_rank;
-    using adios::MPI_Finalize;
-#endif
+
+#include <mpi.h>
 
 
-#include "ADIOS_OOP.h"
+#include "ADIOS_CPP.h"
 
 
 int main( int argc, char* argv [] )
@@ -28,39 +24,28 @@ int main( int argc, char* argv [] )
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     const bool adiosDebug = true;
     adios::ADIOS adios( MPI_COMM_WORLD, adiosDebug );
-    //adios::ADIOS adios( "xmlFile.adios", MPI_COMM_WORLD, adiosDebug );
 
     //Application variable
     std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    std::vector<float> myFloats = { 0, -1, -2, -3, -4, -5, -6, -7, -8, -9 };
-    const unsigned int Nx = 10; //static_cast<unsigned int>( myDoubles.size() );
+    const std::size_t Nx = myDoubles.size();
 
     try
     {
-        //Define group and variables with transforms, variables don't have functions, only group can access variables
-        adios::Group& ioGroup = adios.DeclareGroup( "ioGroup" );
-        adios::Var ioNx = ioGroup.DefineVariable<unsigned int>( "Nx" );
-        adios::Dims dimNx = ioGroup.SetDimensions( {ioNx} );
-        adios::Var ioMyDoubles = ioGroup.DefineVariable<double>( "myDoubles", dimNx );
-
-        //add transform to variable in group...not executed (just testing API)
-        adios::Transform bzip2 = adios::transform::BZIP2( );
-        ioGroup.AddTransform( ioMyDoubles, bzip2, 1 );
+        //Define variable and local size
+        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
         bpWriterSettings.AddTransport( "POSIX", "have_metadata_file=yes" );
-        bpWriterSettings.SetDefaultGroup( ioGroup );
 
         //Create engine smart pointer due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class Writer
-        auto bpWriter = adios.Open( "myNumbers.bp", "w", bpWriterSettings );
+        auto bpWriter = adios.Open( "myDoubles.bp", "w", bpWriterSettings );
 
         if( bpWriter == nullptr )
-            throw std::ios_base::failure( "ERROR: failed to open ADIOS bpWriter\n" );
+            throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );
 
-        bpWriter->Write<unsigned int>( ioNx, &Nx );
-        bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        bpWriter->Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
         bpWriter->Close( );
     }
     catch( std::invalid_argument& e )
@@ -93,6 +78,3 @@ int main( int argc, char* argv [] )
     return 0;
 
 }
-
-
-

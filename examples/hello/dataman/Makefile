@@ -3,11 +3,9 @@
 #     Author: wfg
 
 
-BASE_NAME=helloDataMan_OOP
-     
-TOOL_DIR=/usr/bin
+BASE_NAME=helloDataMan
 
-CC=g++ # Compiling with mpicc for now
+CC=g++ # Compiling with defaults
 MPICC=mpic++
 
 #ADIOS LOCATION
@@ -24,11 +22,11 @@ CFLAGS=-Wall -O0 -g -Wpedantic -std=c++11
 all: mpi nompi
 
 mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
-	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME)_mpi $(ADIOS_LIB) -lpthread
+	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME).exe $(ADIOS_LIB) -lpthread
 	
 nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
-	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME).cpp -o $(BASE_NAME)_nompi $(ADIOS_NOMPI_LIB) -lpthread
+	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME)_nompi.cpp -o $(BASE_NAME)_nompi.exe $(ADIOS_NOMPI_LIB) -lpthread
 
 clean:
-	rm *_mpi; rm *_nompi
+	rm *.exe;
      

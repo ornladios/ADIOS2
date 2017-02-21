@@ -16,18 +16,98 @@ namespace format
 {
 
 
-std::size_t BP1Writer::GetProcessIndexSize( const std::string name, const std::string timeStepName )
+std::size_t BP1Writer::GetProcessGroupIndexSize( const std::string name, const std::string timeStepName,
+                                                 const size_t numberOfTransports ) const noexcept
 {
-    return name.length() + timeStepName.length() + 23;
+    //pgIndex + list of methods (transports)
+    return ( name.length() + timeStepName.length() + 23 ) + ( 3 + numberOfTransports ); //should be sufficient for data and metadata pgindices
 }
-
 
 void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
                                         const std::string timeStepName, const unsigned int timeStep,
-                                        std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
-                                        std::vector<std::size_t>& dataAbsolutePositions,
-                                        std::vector<char*>& metadataBuffers,
-                                        std::vector<std::size_t>& metadataPositions )
+                                        const std::vector< std::shared_ptr<Transport> >& transports,
+                                        Heap& buffer, BP1MetadataSet& metadataSet ) const noexcept
+{
+    // adapt this part to local variables
+    std::vector<char*> dataBuffers{ buffer.m_Data.data() };
+    std::vector<size_t> dataPositions{ buffer.m_DataPosition };
+    std::vector<size_t> dataAbsolutePositions{ buffer.m_DataAbsolutePosition };
+
+    std::vector<char*> metadataBuffers{ metadataSet.PGIndex.data() };
+    std::vector<std::size_t> metadataPositions{ metadataSet.PGIndexPosition };
+
+    const std::vector<int> methodIDs = GetMethodIDs( transports );
+
+    WriteProcessGroupIndexCommon( isFortran, name, processID, timeStepName, timeStep, methodIDs,
+                                  dataBuffers, dataPositions, dataAbsolutePositions,
+                                  metadataBuffers, metadataPositions );
+
+    buffer.m_DataPosition = dataPositions[0];
+    buffer.m_DataAbsolutePosition = dataAbsolutePositions[0];
+    metadataSet.PGIndexPosition = metadataPositions[0];
+
+}
+
+void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
+                                        const std::string timeStepName, const unsigned int timeStep,
+                                        const std::vector< std::shared_ptr<Transport> >& transports,
+                                        std::vector< std::shared_ptr<Capsule> >& capsules,
+                                        std::vector<BP1MetadataSet>& metadataSets ) const noexcept
+{
+
+    // adapt this part to local variables
+    std::vector<char*> metadataBuffers, dataBuffers;
+    std::vector<std::size_t> metadataPositions, dataPositions, dataAbsolutePositions;
+
+    for( auto& metadataSet : metadataSets )
+    {
+        metadataBuffers.push_back( metadataSet.PGIndex.data() );
+        metadataPositions.push_back( metadataSet.PGIndexPosition );
+    }
+
+    for( auto& capsule : capsules )
+    {
+        dataBuffers.push_back( capsule->GetData( ) );
+        dataPositions.push_back( capsule->m_DataPosition );
+        dataAbsolutePositions.push_back( capsule->m_DataAbsolutePosition );
+    }
+
+    const std::vector<int> methodIDs = GetMethodIDs( transports );
+
+    WriteProcessGroupIndexCommon( isFortran, name, processID, timeStepName, timeStep, methodIDs,
+                                  dataBuffers, dataPositions, dataAbsolutePositions,
+                                  metadataBuffers, metadataPositions );
+
+    //update positions and varsCount originally passed by value
+    const unsigned int buffersSize = static_cast<unsigned int>( capsules.size() );
+    for( unsigned int i = 0; i < buffersSize; ++i )
+    {
+        metadataSets[i].PGIndexPosition = metadataPositions[i];
+
+        capsules[i]->m_DataPosition = dataPositions[i];
+        capsules[i]->m_DataAbsolutePosition = dataAbsolutePositions[i];
+    }
+}
+
+
+
+void BP1Writer::Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport ) const
+{
+
+
+
+}
+
+
+
+
+void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::string name, const unsigned int processID,
+                                              const std::string timeStepName, const unsigned int timeStep,
+                                              const std::vector<int>& methodIDs,
+                                              std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
+                                              std::vector<std::size_t>& dataAbsolutePositions,
+                                              std::vector<char*>& metadataBuffers,
+                                              std::vector<std::size_t>& metadataPositions ) const noexcept
 {
     std::vector<std::size_t> metadataLengthPositions( metadataPositions ); //get length of pg position
 
@@ -62,7 +142,6 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
     //write offset to pg in data on metadata which is the current absolute position
     MemcpyToBuffers( metadataBuffers, metadataPositions, dataAbsolutePositions, 8 );
 
-
     //get pg index length
     std::vector<std::uint16_t> metadataIndexLengths( metadataPositions.size() );
     for( unsigned int i = 0; i < metadataPositions.size(); ++i )
@@ -73,18 +152,9 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
     MovePositions( -2, metadataLengthPositions ); //back to original position
 }
 
-
-
-void BP1Writer::Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport )
-{
-
-
-
-}
-
 //PRIVATE FUNCTIONS
 void BP1Writer::WriteNameRecord( const std::string name, const std::uint16_t length,
-                                 std::vector<char*>& buffers, std::vector<std::size_t>& positions )
+                                 std::vector<char*>& buffers, std::vector<std::size_t>& positions ) const noexcept
 {
     MemcpyToBuffers( buffers, positions, &length, 2 );
     MemcpyToBuffers( buffers, positions, name.c_str( ), length );
@@ -92,10 +162,10 @@ void BP1Writer::WriteNameRecord( const std::string name, const std::uint16_t len
 
 
 void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                                      const std::vector<unsigned long long int>& localDimensions,
-                                      const std::vector<unsigned long long int>& globalDimensions,
-                                      const std::vector<unsigned long long int>& globalOffsets,
-                                      const bool addType )
+                                      const std::vector<std::size_t>& localDimensions,
+                                      const std::vector<std::size_t>& globalDimensions,
+                                      const std::vector<std::size_t>& globalOffsets,
+                                      const bool addType ) const noexcept
 {
     if( addType == true )
     {
@@ -122,11 +192,10 @@ void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<s
 }
 
 void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                                      const std::vector<unsigned long long int>& localDimensions,
+                                      const std::vector<std::size_t>& localDimensions,
                                       const unsigned int skip,
-                                      const bool addType )
+                                      const bool addType ) const noexcept
 {
-
     if( addType == true )
     {
         constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
@@ -148,7 +217,7 @@ void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<s
 }
 
 
-void BP1Writer::CloseRankFile( Capsule& capsule, Transport& transport )
+void BP1Writer::CloseRankFile( Capsule& capsule, Transport& transport ) const
 {
 
 }
@@ -156,7 +225,7 @@ void BP1Writer::CloseRankFile( Capsule& capsule, Transport& transport )
 
 
 
-void BP1Writer::SetMiniFooter( BP1MetadataSet& metadataSet )
+void BP1Writer::SetMiniFooter( BP1MetadataSet& metadataSet ) const
 {
 
 
@@ -164,7 +233,7 @@ void BP1Writer::SetMiniFooter( BP1MetadataSet& metadataSet )
 }
 
 
-void BP1Writer::SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule )
+void BP1Writer::SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule ) const
 {
 
     //setup metadata to capsule metadata buffer

@@ -4,12 +4,9 @@
 
 
 BASE_NAME=solidfluid_write
-     
-TOOL_DIR=/usr/bin
 
-CC=$(TOOL_DIR)/g++ # Compiling with mpicc for now
+CC=g++ # Compiling with mpicc for now
 MPICC:=mpic++
-AR=$(TOOL_DIR)/ar
 
 #ADIOS LOCATION
 ADIOS_DIR=../..
@@ -22,15 +19,15 @@ ADIOS_INCLUDE=-I$(ADIOS_DIR)/include
 #FLAGS
 CFLAGS=-Wall -O0 -g -Wpedantic -std=c++11
 
-all: mpi
+all: mpi nompi
 
 mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
-	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME)_mpi $(ADIOS_LIB)
+	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME).exe $(ADIOS_LIB) -lpthread
 	
 nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
-	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME).cpp -o $(BASE_NAME)_nompi $(ADIOS_NOMPI_LIB)
+	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME)_nompi.cpp -o $(BASE_NAME)_nompi.exe $(ADIOS_NOMPI_LIB) -lpthread
 
 clean:
-	rm -f *_mpi *_nompi *.o 
+	rm -f *.exe 
 	rm -rf *.dSYM
      

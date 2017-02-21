@@ -12,6 +12,7 @@
 #include <cstring> //std::memcpy
 #include <vector>
 #include <thread>
+#include <set>
 /// \endcond
 
 
@@ -33,6 +34,8 @@ template<> inline std::string GetType<int>() noexcept { return "int"; }
 template<> inline std::string GetType<unsigned int>() noexcept { return "unsigned int"; }
 template<> inline std::string GetType<long int>() noexcept { return "long int"; }
 template<> inline std::string GetType<unsigned long int>() noexcept { return "unsigned long int"; }
+template<> inline std::string GetType<long long int>() noexcept { return "long long int"; }
+template<> inline std::string GetType<unsigned long long int>() noexcept { return "unsigned long long int"; }
 template<> inline std::string GetType<float>() noexcept { return "float"; }
 template<> inline std::string GetType<double>() noexcept { return "double"; }
 template<> inline std::string GetType<long double>() noexcept { return "long double"; }
@@ -100,9 +103,9 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
         return;
     }
 
-    const unsigned long long int stride =  count/cores;
-    const unsigned long long int remainder = count % cores;
-    const unsigned long long int last = stride + remainder;
+    const std::size_t stride =  count/cores;
+    const std::size_t remainder = count % cores;
+    const std::size_t last = stride + remainder;
 
     std::vector<std::thread> memcpyThreads;
     memcpyThreads.reserve( cores );

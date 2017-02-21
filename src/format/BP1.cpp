@@ -24,17 +24,16 @@ void BP1::OpenRankFiles( const std::string name, const std::string accessMode, T
     if( name.find(".bp") == name.size()-3 ) //need to test
     {
         baseName = name.substr( 0, name.size()-3 );
-        directory = name + ".dir";
-        CreateDirectory( name +".dir" );
+        directory = name;
     }
     else
     {
         baseName = name;
-        directory = name + ".bp.dir";
-        CreateDirectory( name +".bp.dir" );
+        directory = name + ".bp";
     }
+    CreateDirectory( directory );
 
-    std::string fileName( directory + "/" + baseName + ".bp." + std::to_string( file.m_MPIRank ) );
+    std::string fileName( directory + "/" + baseName + ".bp." + std::to_string( file.m_RankMPI ) );
 
     if( file.m_MPIComm == MPI_COMM_SELF )
         fileName = name;
@@ -42,6 +41,33 @@ void BP1::OpenRankFiles( const std::string name, const std::string accessMode, T
     file.Open( fileName, accessMode );  // opens a file transport under name.bp.dir/name.bp.rank reserve that location fro writing
 }
 
+
+
+
+std::vector<int> BP1::GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept
+{
+    auto lf_GetMethodID = []( const std::string method ) -> int
+    {
+        int id = METHOD_UNKNOWN;
+        if( method == "NULL" ) id = METHOD_NULL;
+        else if( method == "POSIX" ) id = METHOD_POSIX;
+        else if( method == "FStream" ) id = METHOD_FSTREAM;
+        else if( method == "File" ) id = METHOD_FILE;
+        else if( method == "MPI" ) id = METHOD_MPI;
+
+        return id;
+    };
+
+    std::vector<int> methodIDs;
+    methodIDs.reserve( transports.size() );
+
+    for( const auto transport : transports )
+    {
+        methodIDs.push_back( lf_GetMethodID( transport->m_Type ) );
+    }
+
+    return methodIDs;
+}
 
 
 } //end namespace format
