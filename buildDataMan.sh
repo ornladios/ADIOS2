@@ -5,10 +5,10 @@
 # Created on: Feb 9, 2017
 #     Author: wfg
 
-
+DATAMAN_LOCATION=/home/wfg/Applications/DataMan
 echo "#################################################################"
 echo "Start building ADIOS ./lib/libadios.a ./libadios_nompi.a"
-make       #build the ./lib/libadios.a and ./libadios_nompi.a
+make HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION       #build the ./lib/libadios.a and ./libadios_nompi.a
 echo "#################################################################"
 echo
 
@@ -16,9 +16,9 @@ echo
 echo "#################################################################"
 echo "Building Dataman Reader and Writer examples"
 echo "#################################################################"
-make -C ./examples/hello/datamanWriter
+make -C ./examples/hello/datamanWriter HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION
 echo
-make -C ./examples/hello/datamanReader
+make -C ./examples/hello/datamanReader HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION
 
 echo
 echo

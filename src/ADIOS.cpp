@@ -19,9 +19,11 @@
 
 //Engines
 #include "engine/bp/BPWriter.h"
+
+#ifdef HAVE_DATAMAN  //external dependencies
 #include "engine/dataman/DataManWriter.h"
 #include "engine/dataman/DataManReader.h"
-
+#endif
 
 namespace adios
 {
@@ -107,11 +109,20 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
     }
     else if( type == "DataManWriter" )
     {
-    	return std::make_shared<DataManWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        #ifdef HAVE_DATAMAN
+        return std::make_shared<DataManWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        #else
+        throw std::invalid_argument( "ERROR: this version didn't compile with Dataman library, can't Open DataManWriter\n" );
+        #endif
+
     }
     else if( type == "DataManReader" )
     {
+        #ifdef HAVE_DATAMAN
         return std::make_shared<DataManReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        #else
+        throw std::invalid_argument( "ERROR: this version didn't compile with Dataman library, can't Open DataManReader\n" );
+        #endif
     }
     else if( type == "Vis" )
     {

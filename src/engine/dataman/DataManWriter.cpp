@@ -19,6 +19,7 @@
 #include "transport/wan/MdtmMan.h" //uses Mdtm library
 
 
+
 namespace adios
 {
 
@@ -44,6 +45,15 @@ void DataManWriter::Init( )
             throw std::invalid_argument( "ERROR: DataManWriter doesn't support access mode " + m_AccessMode +
                                          ", in call to ADIOS Open or DataManWriter constructor\n"  );
     }
+
+    auto itRealTime = m_Method.m_Parameters.find( "real_time" );
+    if( itRealTime != m_Method.m_Parameters.end() )
+    {
+        if( itRealTime->second == "yes" || itRealTime->second == "true" )
+            m_DoRealTime = true;
+    }
+
+
 
     InitCapsules( );
     InitTransports( );

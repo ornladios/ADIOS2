@@ -56,108 +56,115 @@ void BPWriter::Init( )
 
 
 void BPWriter::Write( Variable<char>& variable, const char* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<unsigned char>& variable, const unsigned char* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<short>& variable, const short* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<unsigned short>& variable, const unsigned short* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<int>& variable, const int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<unsigned int>& variable, const unsigned int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<long int>& variable, const long int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<unsigned long int>& variable, const unsigned long int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<long long int>& variable, const long long int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<unsigned long long int>& variable, const unsigned long long int* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<float>& variable, const float* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<double>& variable, const double* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<long double>& variable, const long double* values )
-{ WriteVariable( variable, values ); }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<std::complex<float>>& variable, const std::complex<float>* values )
-{ }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<std::complex<double>>& variable, const std::complex<double>* values )
-{ }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values )
-{ }
+{ WriteVariableCommon( variable, values ); }
 
 void BPWriter::Write( VariableCompound& variable, const void* values )
 { }
 
 //String version
 void BPWriter::Write( const std::string variableName, const char* values )
-{ WriteVariable( m_ADIOS.GetVariable<char>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<char>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const unsigned char* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned char>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned char>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const short* values )
-{ WriteVariable( m_ADIOS.GetVariable<short>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<short>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const unsigned short* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned short>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned short>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const int* values )
-{ WriteVariable( m_ADIOS.GetVariable<int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<int>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const unsigned int* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned int>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const long int* values )
-{ WriteVariable( m_ADIOS.GetVariable<long int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<long int>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const unsigned long int* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned long int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned long int>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const long long int* values )
-{ WriteVariable( m_ADIOS.GetVariable<long long int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<long long int>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const unsigned long long int* values )
-{ WriteVariable( m_ADIOS.GetVariable<unsigned long long int>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<unsigned long long int>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const float* values )
-{ WriteVariable( m_ADIOS.GetVariable<float>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<float>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const double* values )
-{ WriteVariable( m_ADIOS.GetVariable<double>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<double>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const long double* values )
-{ WriteVariable( m_ADIOS.GetVariable<long double>( variableName ), values ); }
+{ WriteVariableCommon( m_ADIOS.GetVariable<long double>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const std::complex<float>* values )
-{ }
+{ WriteVariableCommon( m_ADIOS.GetVariable<std::complex<float>>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const std::complex<double>* values )
-{ }
+{ WriteVariableCommon( m_ADIOS.GetVariable<std::complex<double>>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const std::complex<long double>* values )
-{ }
+{ WriteVariableCommon( m_ADIOS.GetVariable<std::complex<long double>>( variableName ), values ); }
 
 void BPWriter::Write( const std::string variableName, const void* values )
 { }
 
+
+void BPWriter::AdvanceStep( )
+{
+
+
+
+}
 
 
 void BPWriter::Close( const int transportIndex )
@@ -187,6 +194,8 @@ void BPWriter::Close( const int transportIndex )
 }
 
 
+
+//PRIVATE FUNCTIONS
 void BPWriter::InitTransports( )
 {
     if( m_DebugMode == true )

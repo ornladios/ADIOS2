@@ -17,6 +17,10 @@
 //supported capsules
 #include "capsule/heap/STLVector.h"
 
+
+#include "DataMan.h"  //here comes your DataMan header
+
+
 namespace adios
 {
 
@@ -74,6 +78,8 @@ private:
     capsule::STLVector m_Buffer; ///< heap capsule, contains data and metadata buffers
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
 
+    bool m_DoRealTime = false;
+
     void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
     void InitCapsules( );
     void InitTransports( ); ///< from Transports
@@ -96,6 +102,7 @@ private:
         m_WrittenVariables.insert( variable.m_Name );
 
         //This part will go away, this is just to monitor variables per rank
+        std::cout << "I am hooked to the DataMan library\n";
         MPI_Barrier( m_MPIComm );
 
         for( int i = 0; i < m_SizeMPI; ++i )

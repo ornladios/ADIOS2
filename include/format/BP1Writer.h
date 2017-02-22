@@ -85,7 +85,6 @@ public:
                                  std::vector< std::shared_ptr<Capsule> >& capsules,
                                  std::vector<BP1MetadataSet>& metadataSets ) const noexcept;
 
-
     /**
      * Returns the estimated variable index size
      * @param group
@@ -367,26 +366,10 @@ private:
         }
         else // Stat -> Min, Max for arrays,
         {
+            characteristicID = characteristic_stat;
             if( m_Verbosity == 0 ) //default verbose
             {
-                //Get min and max
-                const std::size_t valuesSize = variable.TotalSize();
-                T min, max;
-
-                if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
-                    GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
-                else
-                    GetMinMax( variable.m_AppValues, valuesSize, min, max );
-
-                //set characteristic ids for min and max
-                characteristicID = characteristic_stat;
-                constexpr std::int8_t statisticMinID = statistic_min;
-                constexpr std::int8_t statisticMaxID = statistic_max;
-
-                WriteStatisticsRecord( statisticMinID, min, metadataBuffers, metadataPositions );
-                WriteStatisticsRecord( statisticMaxID, max, metadataBuffers, metadataPositions );
-                WriteStatisticsRecord( statisticMinID, min, dataBuffers, dataPositions, true ); //addLength in between
-                WriteStatisticsRecord( statisticMaxID, max, dataBuffers, dataPositions, true ); //addLength in between
+                WriteMinMax( variable, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
             }
         }
         ++characteristicsCounter;
@@ -465,7 +448,50 @@ private:
                                const bool addType = false ) const noexcept;
 
     /**
-     *
+     * Function that writes min and max into data and metadata, called from WriteVariableIndex common.
+     * Will be specialized for complex types, this is the version for primitive types
+     * @param variable
+     * @param dataBuffers
+     * @param dataPositions
+     * @param metadataBuffers
+     * @param metadataPositions
+     */
+    template<class T> inline
+    void WriteMinMax( const Variable<T>& variable,
+                      std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
+                      std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions ) const noexcept
+    {
+        T min, max;
+        const std::size_t valuesSize = variable.TotalSize();
+        if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
+            GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+        else
+            GetMinMax( variable.m_AppValues, valuesSize, min, max );
+
+        WriteStatisticsMinMax( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+    }
+
+
+    /**
+     * Common part of WriteMinMax specialized templates. Writes to buffers after min and max are calculated.
+     */
+    template<class T>
+    void WriteStatisticsMinMax( const T min, const T max,
+                                std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
+                                std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions ) const noexcept
+    {
+        constexpr std::int8_t statisticMinID = statistic_min;
+        constexpr std::int8_t statisticMaxID = statistic_max;
+
+        WriteStatisticsRecord( statisticMinID, min, metadataBuffers, metadataPositions );
+        WriteStatisticsRecord( statisticMaxID, max, metadataBuffers, metadataPositions );
+        WriteStatisticsRecord( statisticMinID, min, dataBuffers, dataPositions, true ); //addLength in between
+        WriteStatisticsRecord( statisticMaxID, max, dataBuffers, dataPositions, true ); //addLength in between)
+    }
+
+
+    /**
+     * Write a statistics record to buffer
      * @param id
      * @param value
      * @param buffers
@@ -491,6 +517,7 @@ private:
     }
 
 
+
     /**
      *
      * @param capsule
@@ -502,6 +529,63 @@ private:
     void SetMiniFooter( BP1MetadataSet& metadataSet ) const; ///< sets the minifooter
 
 };
+
+
+
+/**
+ * Specilized version of WriteMinMax for std::complex<float>
+ * @param variable
+ * @param dataBuffers
+ * @param dataPositions
+ * @param metadataBuffers
+ * @param metadataPositions
+ */
+template<> inline
+void BP1Writer::WriteMinMax<std::complex<float>>( const Variable<std::complex<float>>& variable,
+                                                  std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
+                                                  std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions ) const noexcept
+{
+    float min, max;
+    const std::size_t valuesSize = variable.TotalSize();
+    if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
+        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+    else
+        GetMinMax( variable.m_AppValues, valuesSize, min, max );
+
+    WriteStatisticsMinMax( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+}
+
+
+template<> inline
+void BP1Writer::WriteMinMax<std::complex<double>>( const Variable<std::complex<double>>& variable,
+                                                  std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
+                                                  std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions ) const noexcept
+{
+    double min, max;
+    const std::size_t valuesSize = variable.TotalSize();
+    if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
+        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+    else
+        GetMinMax( variable.m_AppValues, valuesSize, min, max );
+
+    WriteStatisticsMinMax( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+}
+
+
+template<> inline
+void BP1Writer::WriteMinMax<std::complex<long double>>( const Variable<std::complex<long double>>& variable,
+                                                        std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
+                                                        std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions ) const noexcept
+{
+    long double min, max;
+    const std::size_t valuesSize = variable.TotalSize();
+    if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
+        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+    else
+        GetMinMax( variable.m_AppValues, valuesSize, min, max );
+
+    WriteStatisticsMinMax( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+}
 
 
 

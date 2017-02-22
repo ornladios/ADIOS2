@@ -72,6 +72,8 @@ public:
     void Write( const std::string variableName, const std::complex<long double>* values );
     void Write( const std::string variableName, const void* values );
 
+    void AdvanceStep( );
+
     void Close( const int transportIndex = -1 );
 
 private:
@@ -92,13 +94,13 @@ private:
 
 
     /**
-     * Common function
+     * Common function for primitive (including std::complex) writes
      * @param group
      * @param variableName
      * @param variable
      */
     template< class T >
-    void WriteVariable( Variable<T>& variable, const T* values )
+    void WriteVariableCommon( Variable<T>& variable, const T* values )
     {
         //set variable
         variable.m_AppValues = values;

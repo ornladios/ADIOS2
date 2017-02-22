@@ -98,12 +98,14 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
                                  const Dims globalDimensions = Dims( ),
                                  const Dims globalOffsets = Dims() )
     {
-        //throw std::invalid_argument( "ERROR: type not supported for variable " + name + "\n" );
+        throw std::invalid_argument( "ERROR: type not supported for variable " + name + " in call to DefineVariable\n" );
     }
 
     template<class T> inline
     Variable<T>& GetVariable( const std::string name )
-    { }
+    {
+        throw std::invalid_argument( "ERROR: type not supported for variable " + name + " in call to GetVariable\n" );
+    }
 
 
     template<class T>

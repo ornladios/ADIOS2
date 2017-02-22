@@ -8,11 +8,29 @@ else
     CPPFiles:=$(filter-out $(LANGUAGE_SRC)/ADIOS_C.cpp,$(CPPFiles))     
 endif
 
-
-#TRANSPORTS WITH EXTERNAL DEPENDENCIES
+#EXTERNAL DEPENDECIES
+ENGINE_INC:=./include/engine
+ENGINE_SRC:=./src/engine
 TRANSPORT_INC:=./include/transport
 TRANSPORT_SRC:=./src/transport
 
+ifeq ($(HAVE_DATAMAN),yes)
+    DATAMAN_LOC:=/home/wfg/Applications/DataMan# need to change this to your local dataman location
+    CFLAGS += -DHAVE_DATAMAN
+    INC += -I$(DATAMAN_LOC)/include
+    LIBS += -L$(DATAMAN_LOC)/lib -lcacheman -lstreamman -lzmqman
+else
+    HFiles:=$(filter-out $(ENGINE_INC)/dataman/DataManWriter.h,$(HFiles))
+    HFiles:=$(filter-out $(ENGINE_INC)/dataman/DataManReader.h,$(HFiles))
+    HFiles:=$(filter-out $(TRANSPORT_INC)/wan/MdtmMan.h,$(HFiles))
+    
+    CPPFiles:=$(filter-out $(ENGINE_SRC)/dataman/DataManWriter.cpp,$(CPPFiles))
+    CPPFiles:=$(filter-out $(ENGINE_SRC)/dataman/DataManReader.cpp,$(CPPFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/wan/MdtmMan.cpp,$(CPPFiles))
+endif
+
+
+#EXTERNAL DEPENDENCIES
 ifeq ($(HAVE_NETCDF),yes)
     LIBS += -lnetcdf
     CFLAGS += -DHAVE_NETCDF
@@ -29,10 +47,6 @@ else
     CPPFiles:=$(filter-out $(TRANSPORT_SRC)/PHDF5.cpp,$(CPPFiles))     
 endif
 
-
-#TRANSFORMS WITH EXTERNAL DEPENDENCIES
-TRANSFORM_INC:=./include/transform
-TRANSFORM_SRC:=./src/transform
 
 ifeq ($(HAVE_BZIP2),yes)
     LIBS += -lbz2

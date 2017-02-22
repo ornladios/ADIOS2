@@ -74,6 +74,7 @@ void Engine::Write( const std::string variableName, const std::complex<double>* 
 void Engine::Write( const std::string variableName, const std::complex<long double>* values ){ }
 void Engine::Write( const std::string variableName, const void* values ){ }
 
+void Engine::AdvanceStep( ){ }
 
 //READ
 Variable<void>* Engine::InquireVariable( const std::string name, const bool readIn ){ return nullptr; }
