@@ -17,6 +17,7 @@
 #include "transport/file/FStream.h" // uses C++ fstream
 #include "transport/wan/MdtmMan.h" //uses Mdtm library
 
+#include "DataMan.h"  //here comes your DataMan header from external dataman library
 
 namespace adios
 {

@@ -15,7 +15,13 @@
 #include "core/Engine.h"
 #include "core/Transform.h"
 #include "engine/bp/BPWriter.h"
+
+//Will allow to create engines directly (no polymorphism)
+#ifdef HAVE_DATAMAN
 #include "engine/dataman/DataManWriter.h"
+#include "engine/dataman/DataManReader.h"
+#endif
+
 #include "transform/BZip2.h"
 
 

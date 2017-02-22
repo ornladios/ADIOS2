@@ -168,6 +168,12 @@ public:
     virtual void Write( const std::string variableName, const std::complex<long double>* values );
     virtual void Write( const std::string variableName, const void* values );
 
+    /**
+     * Indicates that a new step is going to be written as new variables come in.
+     */
+    virtual void AdvanceStep( );
+
+
     //Read API
     /**
      * Inquires and (optionally) allocates and copies the contents of a variable

@@ -14,9 +14,8 @@
 #include <thread>
 #include <set>
 #include <complex>
+#include <cmath> //std::sqrt
 /// \endcond
-
-
 
 
 namespace adios
@@ -69,27 +68,64 @@ bool IsTypeAlias( const std::string type,
 
 /**
  * Get the minimum and maximum values in one loop
- * @param values
- * @param size
- * @param min
- * @param max
+ * @param values array of primitives
+ * @param size of the values array
+ * @param min from values
+ * @param max from values
  */
-template<class T>
+template<class T> inline
 void GetMinMax( const T* values, const std::size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
 {
     min = values[0];
     max = values[0];
 
-    for( unsigned int i = 0; i < size; ++i )
+    for( std::size_t i = 1; i < size; ++i )
     {
-        if( min < values[0] )
-            min = values[0];
+        if( min < values[i] )
+        {
+            min = values[i];
+            continue;
+        }
 
-        if( max > values[0] )
-            max = values[0];
+        if( max > values[i] )
+            max = values[i];
     }
 }
 
+/**
+ * Overloaded version for complex types, gets the "doughnut" range between min and max modulus
+ * @param values array of complex numbers
+ * @param size of the values array
+ * @param min modulus from values
+ * @param max modulus from values
+ * @param cores
+ */
+template<class T> inline
+void GetMinMax( const std::complex<T>* values, const std::size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
+{
+
+    min = std::norm( values[0] );
+    max = min;
+
+    for( std::size_t i = 1; i < size; ++i )
+    {
+        T norm = std::norm( values[i] );
+
+        if( min < norm )
+        {
+            min = norm;
+            continue;
+        }
+
+        if( max > norm )
+        {
+            max = norm;
+        }
+    }
+
+    min = std::sqrt( min );
+    max = std::sqrt( max );
+}
 
 /**
  * threaded version of std::memcpy
@@ -146,7 +182,7 @@ void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& pos
     {
         char* buffer = buffers[i];
         std::memcpy( &buffer[ positions[i] ], source, size );
-        //std::copy( source, source+size, &buffers[ positions[i] ] );
+        //std::copy( source, source+size, &buffers[ positions[i] ] ); wrong version
         positions[i] += size;
     }
 }

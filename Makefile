@@ -2,16 +2,11 @@
 # Created on: Oct 4, 2016
 #     Author: wfg
      
-#SYSTEM DIRECTORIES, USER MUST MODIFY THESE VALUES
-SYS_BIN:=/usr/bin
-SYS_LIB:=/usr/lib/x86_64-linux-gnu
-LOCAL_LIB:=/usr/local/lib
-
-#COMPILERS IN PATH AND LIBRARY LOCATIONS
+#DEFAULT COMPILERS IN PATH, LIBS will be modified in Makefile.libs
 CC:=g++
 AR:=ar
 MPICC:=mpic++
-LIBS:= -L$(SYS_LIB) -L$(LOCAL_LIB)
+LIBS:=
 
 CFLAGS:=-c -Wall -Wpedantic -std=c++11 -O0 -g
 ARFLAGS:=rcs
@@ -27,8 +22,8 @@ VPATH = ./src ./src/core ./src/functions \
 		./src/transform \
 		./src/format
 
-#SEPARATE EXTERNAL LIBRARIES HANDLING in Makefile.libs
-export $(HFiles) $(CPPFiles) $(CFLAGS) $(LIBS)
+#SEPARATE EXTERNAL HEADERS AND LIBRARIES HANDLING in Makefile.libs, export variables 
+export $(HFiles) $(CPPFiles) $(CFLAGS) $(INC) $(LIBS)  
 include Makefile.libs
 
 OBJMPI:=$(patsubst %.cpp, ./bin/mpi/%.o, $(notdir $(CPPFiles)) )

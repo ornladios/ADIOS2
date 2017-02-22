@@ -12,6 +12,7 @@
 #include "external/json.hpp"
 #include "core/Transport.h"
 
+#include "DataMan.h"  //here comes your DataMan header
 
 namespace adios
 {
