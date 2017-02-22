@@ -19,7 +19,7 @@
 #include "BP1.h"
 #include "core/Variable.h"
 #include "core/Capsule.h"
-#include "capsule/Heap.h"
+#include "capsule/heap/STLVector.h"
 #include "functions/adiosTemplates.h"
 #include "functions/adiosFunctions.h"
 
@@ -65,7 +65,7 @@ public:
     void WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
                                  const std::string timeStepName, const unsigned int timeStep,
                                  const std::vector< std::shared_ptr<Transport> >& transports,
-                                 Heap& buffer,
+                                 capsule::STLVector& buffer,
                                  BP1MetadataSet& metadataSet ) const noexcept;
     /**
      * Writes a process group index PGIndex and list of methods (from transports), done at Open or aggregation of new time step
@@ -102,7 +102,7 @@ public:
         indexSize += variable.m_Name.size();
 
         // characteristics 3 and 4, check variable number of dimensions
-        const std::size_t dimensions = variable.m_Dimensions.size(); //number of commas in CSV + 1
+        const std::size_t dimensions = variable.DimensionsSize(); //number of commas in CSV + 1
         indexSize += 28 * dimensions; //28 bytes per dimension
         indexSize += 1; //id
 
@@ -144,7 +144,7 @@ public:
      * @param metadataSet
      */
     template< class T >
-    void WriteVariableIndex( const Variable<T>& variable, Heap& buffer, BP1MetadataSet& metadataSet ) const noexcept
+    void WriteVariableIndex( const Variable<T>& variable, capsule::STLVector& buffer, BP1MetadataSet& metadataSet ) const noexcept
     {
         // adapt this part to local variables
         std::vector<char*> dataBuffers{ buffer.m_Data.data() };

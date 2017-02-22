@@ -14,21 +14,32 @@ echo
 
 echo
 echo "#################################################################"
-echo "Building Dataman example"
+echo "Building Dataman Reader and Writer examples"
 echo "#################################################################"
-make -C ./examples/hello/dataman
+make -C ./examples/hello/datamanWriter
+echo
+make -C ./examples/hello/datamanReader
 
 echo
 echo
 echo "#################################################################"
-echo "Running helloDataman_nompi.exe example"
+echo "Running nompi.exe examples"
 echo "#################################################################"
-./examples/hello/dataman/helloDataMan_nompi.exe
+echo "#################################################################"
+echo "DataMan writer"
+echo "#################################################################"
+./examples/hello/datamanWriter/helloDataManWriter_nompi.exe
+
+echo "#################################################################"
+echo "DataMan reader"
+echo "#################################################################"
+./examples/hello/datamanReader/helloDataManReader_nompi.exe
 
 echo
 echo
 echo "#################################################################"
 echo "To run mpi version with 4 mpi processes: "
-echo "mpirun -n 4 ./examples/hello/dataman/helloDataman.exe"
+echo "mpirun -n 4 ./examples/hello/datamanWriter/helloDatamanWriter.exe"
+echo "mpirun -n 4 ./examples/hello/datamanReader/helloDatamanReader.exe"
 echo "END"
 echo "################################################################"

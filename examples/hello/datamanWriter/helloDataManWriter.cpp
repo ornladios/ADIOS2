@@ -32,21 +32,24 @@ int main( int argc, char* argv [] )
     try
     {
         //Define variable and local size
-        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx} );
 
         //Define method for engine creation, it is basically straight-forward parameters
-        adios::Method& bpWriterSettings = adios.DeclareMethod( "SingleFile" ); //default method type is BPWriter
-        bpWriterSettings.AddTransport( "File", "have_metadata_file=yes" ); //uses default POSIX library
+        adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManWriter" ); //default method type is Writer
+        datamanSettings.SetParameters( "peer-to-peer=yes", "real_time=yes", "compress=no" );
+        datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
+        //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported, will throw an exception
 
-        //Create engine smart pointer due to polymorphism,
-        //Open returns a smart pointer to Engine containing the Derived class Writer
-        auto bpWriter = adios.Open( "myDoubles.bp", "w", bpWriterSettings );
+        //Create engine smart pointer to DataMan Engine due to polymorphism,
+        //Open returns a smart pointer to Engine containing the Derived class DataMan
+        auto datamanWriter = adios.Open( "myDoubles.bp", "w", datamanSettings );
 
-        if( bpWriter == nullptr )
-            throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );
+        if( datamanWriter == nullptr )
+            throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
 
-        bpWriter->Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-        bpWriter->Close( );
+        datamanWriter->Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        datamanWriter->Close( );
+
     }
     catch( std::invalid_argument& e )
     {

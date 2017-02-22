@@ -1,20 +1,27 @@
 /*
- * helloWriter.cpp
+ * helloCompound.cpp
  *
- *  Created on: Feb 16, 2017
+ *  Created on: Feb 20, 2017
  *      Author: wfg
  */
 
-
-
 #include <vector>
 #include <iostream>
+#include <cstddef>  // offsetof
 
 
 #include <mpi.h>
 
 
 #include "ADIOS_CPP.h"
+
+
+struct Particle
+{
+    char Type[10];  ///< alpha, beta, gamma, etc.
+    double Position[3];  ///< x, y, z
+    double Velocity[3];  ///< Vx, Vy, Vz
+};
 
 
 int main( int argc, char* argv [] )
@@ -29,10 +36,25 @@ int main( int argc, char* argv [] )
     std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     const std::size_t Nx = myDoubles.size();
 
+    Particle myParticle;
+    sprintf( myParticle.Type, "%s", "photon" );
+    myParticle.Position[0] = 0;
+    myParticle.Position[1] = 1;
+    myParticle.Position[2] = 2;
+
+    myParticle.Velocity[0] = 10;
+    myParticle.Velocity[1] = 11;
+    myParticle.Velocity[2] = 12;
+
     try
     {
         //Define variable and local size
-        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+        adios::Variable<double>& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+
+        adios::VariableCompound& ioMyParticle = adios.DefineVariableCompound<Particle>( "myParticle", adios::Dims{1} );
+        ioMyParticle.InsertMember<std::string>( "Type", offsetof(Particle,Type) );
+        ioMyParticle.InsertMember<std::vector<double>>( "Position", offsetof(Particle,Position) );
+        ioMyParticle.InsertMember<std::vector<double>>( "Velocity", offsetof(Particle,Velocity) );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SingleFile" ); //default method type is BPWriter
@@ -78,3 +100,5 @@ int main( int argc, char* argv [] )
     return 0;
 
 }
+
+

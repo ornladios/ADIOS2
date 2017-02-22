@@ -23,10 +23,11 @@ std::size_t BP1Writer::GetProcessGroupIndexSize( const std::string name, const s
     return ( name.length() + timeStepName.length() + 23 ) + ( 3 + numberOfTransports ); //should be sufficient for data and metadata pgindices
 }
 
+
 void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
                                         const std::string timeStepName, const unsigned int timeStep,
                                         const std::vector< std::shared_ptr<Transport> >& transports,
-                                        Heap& buffer, BP1MetadataSet& metadataSet ) const noexcept
+                                        capsule::STLVector& buffer, BP1MetadataSet& metadataSet ) const noexcept
 {
     // adapt this part to local variables
     std::vector<char*> dataBuffers{ buffer.m_Data.data() };
@@ -45,8 +46,8 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
     buffer.m_DataPosition = dataPositions[0];
     buffer.m_DataAbsolutePosition = dataAbsolutePositions[0];
     metadataSet.PGIndexPosition = metadataPositions[0];
-
 }
+
 
 void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
                                         const std::string timeStepName, const unsigned int timeStep,

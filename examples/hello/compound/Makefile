@@ -2,7 +2,7 @@
 # Created on: Oct 4, 2016
 #     Author: wfg
 
-BASE_NAME=helloWriter
+BASE_NAME=helloCompound
 
 #COMPILERS
 CC=g++

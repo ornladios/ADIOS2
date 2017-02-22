@@ -37,21 +37,66 @@ Engine::~Engine( )
 { }
 
 
+//should these functions throw an exception?
+void Engine::Write( Variable<char>& variable,                      const char* values ){ }
+void Engine::Write( Variable<unsigned char>& variable,             const unsigned char* values ){ }
+void Engine::Write( Variable<short>& variable,                     const short* values ){ }
+void Engine::Write( Variable<unsigned short>& variable,            const unsigned short* values ){ }
+void Engine::Write( Variable<int>& variable,                       const int* values ){ }
+void Engine::Write( Variable<unsigned int>& variable,              const unsigned int* values ){ }
+void Engine::Write( Variable<long int>& variable,                  const long int* values ){ }
+void Engine::Write( Variable<unsigned long int>& variable,         const unsigned long int* values ){ }
+void Engine::Write( Variable<long long int>& variable,             const long long int* values ){ }
+void Engine::Write( Variable<unsigned long long int>& variable,    const unsigned long long int* values ){ }
+void Engine::Write( Variable<float>& variable,                     const float* values ){ }
+void Engine::Write( Variable<double>& variable,                    const double* values ){ }
+void Engine::Write( Variable<long double>& variable,               const long double* values ){ }
+void Engine::Write( Variable<std::complex<float>>& variable,       const std::complex<float>* values ){ }
+void Engine::Write( Variable<std::complex<double>>& variable,      const std::complex<double>* values ){ }
+void Engine::Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values ){ }
+void Engine::Write( VariableCompound& variable,                    const void* values ){ }
+
+void Engine::Write( const std::string variableName, const char* values ){ }
+void Engine::Write( const std::string variableName, const unsigned char* values ){ }
+void Engine::Write( const std::string variableName, const short* values ){ }
+void Engine::Write( const std::string variableName, const unsigned short* values ){ }
+void Engine::Write( const std::string variableName, const int* values ){ }
+void Engine::Write( const std::string variableName, const unsigned int* values ){ }
+void Engine::Write( const std::string variableName, const long int* values ){ }
+void Engine::Write( const std::string variableName, const unsigned long int* values ){ }
+void Engine::Write( const std::string variableName, const long long int* values ){ }
+void Engine::Write( const std::string variableName, const unsigned long long int* values ){ }
+void Engine::Write( const std::string variableName, const float* values ){ }
+void Engine::Write( const std::string variableName, const double* values ){ }
+void Engine::Write( const std::string variableName, const long double* values ){ }
+void Engine::Write( const std::string variableName, const std::complex<float>* values ){ }
+void Engine::Write( const std::string variableName, const std::complex<double>* values ){ }
+void Engine::Write( const std::string variableName, const std::complex<long double>* values ){ }
+void Engine::Write( const std::string variableName, const void* values ){ }
+
+
+//READ
+Variable<void>* Engine::InquireVariable( const std::string name, const bool readIn ){ return nullptr; }
+Variable<char>* Engine::InquireVariableChar( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned char>* Engine::InquireVariableUChar( const std::string name, const bool readIn ){ return nullptr; }
+Variable<short>* Engine::InquireVariableShort( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned short>* Engine::InquireVariableUShort( const std::string name, const bool readIn ){ return nullptr; }
+Variable<int>* Engine::InquireVariableInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned int>* Engine::InquireVariableUInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<long int>* Engine::InquireVariableLInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned long int>* Engine::InquireVariableULInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<long long int>* Engine::InquireVariableLLInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<unsigned long long int>* Engine::InquireVariableULLInt( const std::string name, const bool readIn ){ return nullptr; }
+Variable<float>* Engine::InquireVariableFloat( const std::string name, const bool readIn ){ return nullptr; }
+Variable<double>* Engine::InquireVariableDouble( const std::string name, const bool readIn ){ return nullptr; }
+Variable<long double>* Engine::InquireVariableLDouble( const std::string name, const bool readIn ){ return nullptr; }
+Variable<std::complex<float>>* Engine::InquireVariableCFloat( const std::string name, const bool readIn ){ return nullptr; }
+Variable<std::complex<double>>* Engine::InquireVariableCDouble( const std::string name, const bool readIn ){ return nullptr; }
+Variable<std::complex<long double>>* Engine::InquireVariableCLDouble( const std::string name, const bool readIn ){ return nullptr; }
+VariableCompound* Engine::InquireVariableCompound( const std::string name, const bool readIn ){ return nullptr;  }
+
+
 //PROTECTED
-
-void Engine::Close( int transportIndex )
-{
-    if( transportIndex == -1 ) //close all transports
-    {
-        for( auto& transport : m_Transports )
-            transport->Close( );
-    }
-    else
-    {
-        m_Transports[transportIndex]->Close( ); //here need to pass the buffer
-    }
-}
-
 void Engine::Init( )
 { }
 
@@ -107,6 +152,7 @@ bool Engine::TransportNamesUniqueness( ) const
 
     return lf_CheckTransportsType( Support::FileTransports );
 }
+
 
 
 } //end namespace

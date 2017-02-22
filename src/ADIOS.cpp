@@ -13,12 +13,14 @@
 /// \endcond
 
 #include "ADIOS.h"
+
+
 #include "functions/adiosFunctions.h"
 
 //Engines
-#include "engine/writer/Writer.h"
-#include "engine/dataman/DataMan.h"
-//#include "engine/vis/Vis.h"
+#include "engine/bp/BPWriter.h"
+#include "engine/dataman/DataManWriter.h"
+#include "engine/dataman/DataManReader.h"
 
 
 namespace adios
@@ -94,18 +96,22 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
     const std::string type( method.m_Type );
 
-    if( type == "Writer" || type == "writer" )
+    if( type == "BPWriter" || type == "bpwriter" )
     {
-        return std::make_shared<Writer>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<BPWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {
         //not yet supported
         //return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
     }
-    else if( type == "DataMan" )
+    else if( type == "DataManWriter" )
     {
-    	return std::make_shared<DataMan>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+    	return std::make_shared<DataManWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+    }
+    else if( type == "DataManReader" )
+    {
+        return std::make_shared<DataManReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "Vis" )
     {
@@ -146,6 +152,12 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
                                      const std::string methodName, const unsigned int cores )
 {
     return Open( name, accessMode, m_MPIComm, methodName, cores );
+}
+
+
+VariableCompound& ADIOS::GetVariableCompound( const std::string name )
+{
+    return m_Compound[ GetVariableIndex<void>(name) ];
 }
 
 
