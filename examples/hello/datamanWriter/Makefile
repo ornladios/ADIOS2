@@ -20,8 +20,8 @@ INC+= -I$(ADIOS_DIR)/include
 #DATAMAN
 DATAMAN_LOC=/home/wfg/Applications/DataMan
 INC+= -I$(DATAMAN_LOC)/include
-LIB+= -Wl,-rpath=$(DATAMAN_LOC)/lib -L$(DATAMAN_LOC)/lib -ldataman # -lcacheman -lstreamman -lzmqman
-LIB_NOMPI+= -Wl,-rpath=$(DATAMAN_LOC)/lib -L$(DATAMAN_LOC)/lib -ldataman # -lcacheman -lstreamman -lzmqman
+LIB+= -L$(DATAMAN_LOC)/lib -ldataman # -lcacheman -lstreamman -lzmqman
+LIB_NOMPI+= -L$(DATAMAN_LOC)/lib -ldataman # -lcacheman -lstreamman -lzmqman
 
 #COMPILER FLAGS
 CFLAGS=-Wall -O0 -g -Wpedantic -std=c++11

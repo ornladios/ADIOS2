@@ -9,9 +9,11 @@ DATAMAN_LOCATION=/home/wfg/Applications/DataMan
 MPICOMPILER=mpic++
 
 if [ "$(uname)" == "Darwin" ]; then
-	CCOMPILER=g++-6        
+	CCOMPILER=clang++
+	export DYLD_LIBRARY_PATH=$DATAMAN_LOCATION/lib:$DYLD_LIBRARY_PATH
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	CCOMPILER=g++
+	export LD_LIBRARY_PATH=$DATAMAN_LOCATION/lib:$LD_LIBRARY_PATH
 fi
 echo "######################################################################################"
 echo "Start building ADIOS ./lib/libadios.a ./libadios_nompi.a with DataMan library" 
