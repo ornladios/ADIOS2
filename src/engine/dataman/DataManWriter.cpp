@@ -53,10 +53,36 @@ void DataManWriter::Init( )
             m_DoRealTime = true;
     }
 
+    if(m_DoRealTime)
+    {
+        string method_type, method, local_ip, remote_ip;
+        int local_port, remote_port;
 
+        auto i = m_Method.m_Parameters.find( "method_type" );
+        if( i != m_Method.m_Parameters.end() )
+            method_type = i->second;
+        i = m_Method.m_Parameters.find( "method" );
+        if( i != m_Method.m_Parameters.end() )
+            method = i->second;
+        i = m_Method.m_Parameters.find( "local_ip" );
+        if( i != m_Method.m_Parameters.end() )
+            local_ip = i->second;
+        i = m_Method.m_Parameters.find( "remote_ip" );
+        if( i != m_Method.m_Parameters.end() )
+            remote_ip = i->second;
+        i = m_Method.m_Parameters.find( "local_port" );
+        if( i != m_Method.m_Parameters.end() )
+            istringstream(i->second) >> local_port;
+        i = m_Method.m_Parameters.find( "remote_port" );
+        if( i != m_Method.m_Parameters.end() )
+            istringstream(i->second) >> remote_port;
+    }
+    else
+    {
+        InitCapsules( );
+        InitTransports( );
+    }
 
-    InitCapsules( );
-    InitTransports( );
 }
 
 

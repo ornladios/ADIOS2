@@ -15,10 +15,10 @@ TRANSPORT_INC:=./include/transport
 TRANSPORT_SRC:=./src/transport
 
 ifeq ($(HAVE_DATAMAN),yes)
-    DATAMAN_LOC:=/home/wfg/Applications/DataMan# need to change this to your local dataman location
+    DATAMAN_LOC:=/Users/w4g/Dropbox/lib/DataMan# need to change this to your local dataman location
     CFLAGS += -DHAVE_DATAMAN
     INC += -I$(DATAMAN_LOC)/include
-    LIBS += -L$(DATAMAN_LOC)/lib -lcacheman -lstreamman -lzmqman
+    LIBS += -L$(DATAMAN_LOC)/lib -ldataman
 else
     HFiles:=$(filter-out $(ENGINE_INC)/dataman/DataManWriter.h,$(HFiles))
     HFiles:=$(filter-out $(ENGINE_INC)/dataman/DataManReader.h,$(HFiles))

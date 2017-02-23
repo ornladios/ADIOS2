@@ -18,7 +18,7 @@
 #include "capsule/heap/STLVector.h"
 
 
-#include "DataMan.h"  //here comes your DataMan header
+#include "DataManager.h"  //here comes your DataMan header
 
 
 namespace adios
@@ -79,6 +79,7 @@ private:
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
 
     bool m_DoRealTime = false;
+    DataManager m_Man;
 
     void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
     void InitCapsules( );
