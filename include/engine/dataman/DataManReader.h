@@ -16,7 +16,7 @@
 //supported capsules
 #include "capsule/heap/STLVector.h"
 
-
+#include "DataManager.h"
 
 namespace adios
 {

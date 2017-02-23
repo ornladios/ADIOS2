@@ -18,7 +18,7 @@
 #include "capsule/heap/STLVector.h"
 
 
-#include "DataMan.h"  //here comes your DataMan header
+#include "DataManager.h"  //here comes your DataMan header
 
 
 namespace adios
@@ -107,6 +107,9 @@ private:
         //set variable
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );
+
+        DataManager dataManager;
+        dataManager.add_stream( "0", "0", 1, 1, 1, "0" );
 
         //This part will go away, this is just to monitor variables per rank
         std::cout << "I am hooked to the DataMan library\n";

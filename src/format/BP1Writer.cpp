@@ -224,12 +224,6 @@ void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<s
 }
 
 
-void BP1Writer::CloseRankFile( Capsule& capsule, Transport& transport ) const
-{
-
-}
-
-
 
 void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, Capsule& capsule ) const noexcept
 {

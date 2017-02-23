@@ -110,7 +110,7 @@ private:
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );
 
-        //precalculate new metadata and payload sizes
+        //pre-calculate new metadata and payload sizes
         const std::size_t indexSize = m_BP1Writer.GetVariableIndexSize( variable );
         const std::size_t payloadSize = variable.PayLoadSize(); //will change if compression is applied
         //Buffer reallocation, expensive part

@@ -167,6 +167,17 @@ void BPWriter::AdvanceStep( )
 
 void BPWriter::Close( const int transportIndex )
 {
+    CheckTransportIndex( transportIndex );
+    if( transportIndex == -1 )
+    {
+        for( auto& transport : m_Transports ) //by reference or value or it doesn't matter?
+            m_BP1Writer.Close( m_MetadataSet, m_Buffer, *transport, m_IsFirstClose );
+    }
+    else
+    {
+        m_BP1Writer.Close( m_MetadataSet, m_Buffer, *m_Transports[transportIndex], m_IsFirstClose );
+    }
+
     //BP1Writer to update the metadata indices
 
 
@@ -272,7 +283,7 @@ void BPWriter::WriteProcessGroupIndex( )
     m_BP1Writer.WriteProcessGroupIndex( isFortran, name, processID, timeStepName, timeStep, m_Transports,
                                         m_Buffer, m_MetadataSet );
 
-    m_BufferVariableCountPosition = m_Buffer.m_DataPosition; //fixed for every PG
+    m_BufferVariableCountPosition = m_Buffer.m_DataPosition; //fixed for every new PG
 }
 
 

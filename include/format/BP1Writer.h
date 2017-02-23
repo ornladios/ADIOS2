@@ -541,15 +541,6 @@ private:
         MemcpyToBuffers( buffers, positions, &value, sizeof(T) );
     }
 
-
-
-    /**
-     *
-     * @param capsule
-     * @param transport
-     */
-    void CloseRankFile( Capsule& capsule, Transport& transport ) const;
-
     /**
      * Flattens the metadata indices into a single metadata buffer in capsule
      * @param metadataSet
