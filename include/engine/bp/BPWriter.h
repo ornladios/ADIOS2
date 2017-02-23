@@ -74,6 +74,10 @@ public:
 
     void AdvanceStep( );
 
+    /**
+     * Closes a single transport or all transports
+     * @param transportIndex, if -1 (default) closes all transports, otherwise it closes a transport in m_Transport[transportIndex]. In debug mode the latter is bounds-checked.
+     */
     void Close( const int transportIndex = -1 );
 
 private:
@@ -81,7 +85,7 @@ private:
     capsule::STLVector m_Buffer; ///< heap capsule using STL std::vector<char>
     std::size_t m_BufferVariableCountPosition = 0; ///< needs to be updated in every advance step
     bool m_IsFirstClose = true; ///< set to false after first Close is reached so metadata doesn't have to be accommodated for a subsequent Close
-    std::size_t m_MaxBufferSize;
+    std::size_t m_MaxBufferSize; ///< maximum allowed memory to be allocated
     float m_GrowthFactor = 1.5; ///< capsule memory growth factor, new_memory = m_GrowthFactor * current_memory
 
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports

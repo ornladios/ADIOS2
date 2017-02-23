@@ -177,19 +177,6 @@ void BPWriter::Close( const int transportIndex )
     {
         m_BP1Writer.Close( m_MetadataSet, m_Buffer, *m_Transports[transportIndex], m_IsFirstClose );
     }
-
-    //BP1Writer to update the metadata indices
-
-
-
-    //merge all metadata indices in capsule.m_Metadata buffer or capsule.m_Data buffer (depends on transport predefined functionality)
-
-
-    //BP1BPWriter to write to corresponding transport
-
-
-
-    //Close the corresponding transport
 }
 
 
