@@ -131,7 +131,7 @@ void GetMinMax( const std::complex<T>* values, const std::size_t size, T& min, T
  * threaded version of std::memcpy
  * @param dest
  * @param source
- * @param count
+ * @param count total number of bytest (as in memcpy)
  * @param cores
  */
 template<class T, class U>

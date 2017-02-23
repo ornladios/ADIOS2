@@ -56,6 +56,9 @@ public:
     void Write( Variable<float>& variable, const float* values );
     void Write( Variable<double>& variable, const double* values );
     void Write( Variable<long double>& variable, const long double* values );
+    void Write( Variable<std::complex<float>>& variable, const std::complex<float>* values );
+    void Write( Variable<std::complex<double>>& variable, const std::complex<double>* values );
+    void Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values );
 
     void Write( const std::string variableName, const char* values );
     void Write( const std::string variableName, const unsigned char* values );
@@ -70,6 +73,10 @@ public:
     void Write( const std::string variableName, const float* values );
     void Write( const std::string variableName, const double* values );
     void Write( const std::string variableName, const long double* values );
+    void Write( const std::string variableName, const std::complex<float>* values );
+    void Write( const std::string variableName, const std::complex<double>* values );
+    void Write( const std::string variableName, const std::complex<long double>* values );
+
 
     void Close( const int transportIndex = -1 );
 

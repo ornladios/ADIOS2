@@ -99,6 +99,16 @@ void DataManWriter::Write( Variable<double>& variable, const double* values )
 void DataManWriter::Write( Variable<long double>& variable, const long double* values )
 { WriteVariableCommon( variable, values ); }
 
+void DataManWriter::Write( Variable<std::complex<float>>& variable, const std::complex<float>* values )
+{ WriteVariableCommon( variable, values ); }
+
+void DataManWriter::Write( Variable<std::complex<double>>& variable, const std::complex<double>* values )
+{ WriteVariableCommon( variable, values ); }
+
+void DataManWriter::Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values )
+{ WriteVariableCommon( variable, values ); }
+
+//String version
 void DataManWriter::Write( const std::string variableName, const char* values )
 { WriteVariableCommon( m_ADIOS.GetVariable<char>( variableName ), values ); }
 
@@ -138,6 +148,14 @@ void DataManWriter::Write( const std::string variableName, const double* values 
 void DataManWriter::Write( const std::string variableName, const long double* values )
 { WriteVariableCommon( m_ADIOS.GetVariable<long double>( variableName ), values ); }
 
+void DataManWriter::Write( const std::string variableName, const std::complex<float>* values )
+{ WriteVariableCommon( m_ADIOS.GetVariable<std::complex<float>>( variableName ), values ); }
+
+void DataManWriter::Write( const std::string variableName, const std::complex<double>* values )
+{ WriteVariableCommon( m_ADIOS.GetVariable<std::complex<double>>( variableName ), values ); }
+
+void DataManWriter::Write( const std::string variableName, const std::complex<long double>* values )
+{ WriteVariableCommon( m_ADIOS.GetVariable<std::complex<long double>>( variableName ), values ); }
 
 
 void DataManWriter::Close( const int transportIndex )
