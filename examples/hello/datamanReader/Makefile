@@ -5,7 +5,7 @@
 
 BASE_NAME=helloDataManReader
 
-CC=g++ # Compiling with defaults
+CC=g++-6 # Compiling with defaults
 MPICC=mpic++
 INC=
 LIB=
@@ -20,8 +20,8 @@ INC+= -I$(ADIOS_DIR)/include
 #DATAMAN
 DATAMAN_LOC=/Users/w4g/Dropbox/lib/DataMan
 INC+= -I$(DATAMAN_LOC)/include
-LIB+= -L$(DATAMAN_LOC)/lib -ldataman
-LIB_NOMPI+= -L$(DATAMAN_LOC)/lib -ldataman
+LIB+= -Wl,-rpath,$(DATAMAN_LOC)/lib -L$(DATAMAN_LOC)/lib -ldataman
+LIB_NOMPI+= -Wl,-rpath,$(DATAMAN_LOC)/lib -L$(DATAMAN_LOC)/lib -ldataman
 
 #COMPILER FLAGS
 CFLAGS=-Wall -O0 -g -Wpedantic -std=c++11

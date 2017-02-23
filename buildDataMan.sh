@@ -7,6 +7,7 @@
 
 DATAMAN_LOCATION=/Users/w4g/Dropbox/lib/DataMan
 MPICOMPILER=mpic++
+export DYLD_LIBRARY_PATH=$DATAMAN_LOCATION/lib:$DYLD_LIBRARY_PATH
 
 if [ "$(uname)" == "Darwin" ]; then
 	CCOMPILER=g++-6        
