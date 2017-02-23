@@ -5,7 +5,7 @@
 # Created on: Feb 9, 2017
 #     Author: wfg
 
-DATAMAN_LOCATION=/home/wfg/Applications/DataMan
+DATAMAN_LOCATION=/Users/w4g/Dropbox/lib/DataMan
 echo "######################################################################################"
 echo "Start building ADIOS ./lib/libadios.a ./libadios_nompi.a with DataMan library" 
 echo "######################################################################################"

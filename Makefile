@@ -3,7 +3,7 @@
 #     Author: wfg
      
 #DEFAULT COMPILERS IN PATH, LIBS will be modified in Makefile.libs
-CC:=g++
+CC:=g++-6
 AR:=ar
 MPICC:=mpic++
 LIBS:=

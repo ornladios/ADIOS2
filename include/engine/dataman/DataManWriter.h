@@ -110,7 +110,6 @@ private:
         m_WrittenVariables.insert( variable.m_Name );
 
         DataManager dataManager;
-        dataManager.add_stream( "0", "0", 1, 1, 1, "0" );
 
         //This part will go away, this is just to monitor variables per rank
         std::cout << "I am hooked to the DataMan library\n";
