@@ -253,7 +253,7 @@ void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, Capsule& capsule )
     const std::uint64_t offsetPGIndex = capsule.m_DataAbsolutePosition;
     const std::uint64_t offsetVarsIndex = offsetPGIndex + pgLength;
     const std::uint64_t offsetAttributeIndex = offsetVarsIndex + varsIndexLength;
-    std::size_t position = attributesIndexLength;
+    std::size_t position = pgLength + varsIndexLength + attributesIndexLength;
 
     //offsets
     std::memcpy( &metadata[position], &offsetPGIndex, 8 );

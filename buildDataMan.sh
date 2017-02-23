@@ -6,18 +6,25 @@
 #     Author: wfg
 
 DATAMAN_LOCATION=/home/wfg/Applications/DataMan
+MPICOMPILER=mpic++
+
+if [ "$(uname)" == "Darwin" ]; then
+	CCOMPILER=g++-6        
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+	CCOMPILER=g++
+fi
 echo "######################################################################################"
 echo "Start building ADIOS ./lib/libadios.a ./libadios_nompi.a with DataMan library" 
 echo "######################################################################################"
 echo
-make HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION       #build the ./lib/libadios.a and ./libadios_nompi.a
+make HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER       #build the ./lib/libadios.a and ./libadios_nompi.a
 echo
 echo "#################################################################"
 echo "Building Dataman Reader and Writer examples"
 echo "#################################################################"
-make -C ./examples/hello/datamanWriter HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION
+make -C ./examples/hello/datamanWriter HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER
 echo
-make -C ./examples/hello/datamanReader HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION
+make -C ./examples/hello/datamanReader HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER
 
 echo
 echo
