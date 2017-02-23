@@ -6,12 +6,11 @@
 #     Author: wfg
 
 DATAMAN_LOCATION=/home/wfg/Applications/DataMan
-echo "#################################################################"
-echo "Start building ADIOS ./lib/libadios.a ./libadios_nompi.a"
-make HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION       #build the ./lib/libadios.a and ./libadios_nompi.a
-echo "#################################################################"
+echo "######################################################################################"
+echo "Start building ADIOS ./lib/libadios.a ./libadios_nompi.a with DataMan library" 
+echo "######################################################################################"
 echo
-
+make HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION       #build the ./lib/libadios.a and ./libadios_nompi.a
 echo
 echo "#################################################################"
 echo "Building Dataman Reader and Writer examples"
@@ -25,6 +24,8 @@ echo
 echo "#################################################################"
 echo "Running nompi.exe examples"
 echo "#################################################################"
+echo
+echo
 echo "#################################################################"
 echo "DataMan writer"
 echo "#################################################################"

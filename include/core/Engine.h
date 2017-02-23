@@ -233,6 +233,13 @@ protected:
 
     bool TransportNamesUniqueness( ) const; ///< checks if transport names are unique among the same types (file I/O)
 
+
+    /**
+     * Throws an exception in debug mode if transport index is out of range.
+     * @param transportIndex must be in the range [ -1 , m_Transports.size()-1 ]
+     */
+    void CheckTransportIndex( const int transportIndex );
+
 };
 
 

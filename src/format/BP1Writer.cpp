@@ -46,6 +46,8 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
     buffer.m_DataPosition = dataPositions[0];
     buffer.m_DataAbsolutePosition = dataAbsolutePositions[0];
     metadataSet.PGIndexPosition = metadataPositions[0];
+
+    ++metadataSet.PGCount;
 }
 
 
@@ -91,15 +93,19 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
 }
 
 
-
-void BP1Writer::Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport ) const
+void BP1Writer::Close( BP1MetadataSet& metadataSet, Capsule& capsule,
+                       Transport& transport, bool& isFirstClose ) const noexcept
 {
-
-
-
+    if( isFirstClose == true )
+    {
+        FlattenMetadata( metadataSet, capsule ); //now capsule
+        isFirstClose = false;
+    }
+    //implementing N-to-N for now, no aggregation
+    transport.Write( capsule.GetData(), capsule.m_DataPosition );
+    transport.Write( capsule.GetMetadata(), capsule.GetMetadataSize() ); //we can improve this by copying metadata to data
+    transport.Close();
 }
-
-
 
 
 void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::string name, const unsigned int processID,
@@ -218,34 +224,57 @@ void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<s
 }
 
 
-void BP1Writer::CloseRankFile( Capsule& capsule, Transport& transport ) const
-{
 
+void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, Capsule& capsule ) const noexcept
+{
+    //Finish writing metadata counts and lengths (IndexPosition)
+    const std::size_t pgLength = metadataSet.PGIndexPosition;
+    std::memcpy( &metadataSet.PGIndex[0], &metadataSet.PGCount, 8 );
+    std::memcpy( &metadataSet.PGIndex[8], &pgLength, 8 );
+
+    const std::size_t varsIndexLength = metadataSet.VarsIndexPosition;
+    std::memcpy( &metadataSet.VarsIndex[0], &metadataSet.VarsCount, 4 );
+    std::memcpy( &metadataSet.VarsIndex[4], &varsIndexLength, 8 );
+
+    const std::size_t attributesIndexLength = metadataSet.AttributesIndexPosition;
+    std::memcpy( &metadataSet.AttributesIndex[0], &metadataSet.AttributesCount, 4 );
+    std::memcpy( &metadataSet.AttributesIndex[4], &attributesIndexLength, 8 );
+
+    const std::size_t metadataSize = pgLength + varsIndexLength + attributesIndexLength + metadataSet.MiniFooter.size();
+
+    capsule.ResizeMetadata( metadataSize );
+    char* metadata = capsule.GetMetadata();
+
+    std::memcpy( &metadata[0], metadataSet.PGIndex.data(), pgLength );
+    std::memcpy( &metadata[pgLength], metadataSet.VarsIndex.data(), varsIndexLength );
+    std::memcpy( &metadata[varsIndexLength], metadataSet.AttributesIndex.data(), attributesIndexLength );
+
+    //getting absolute offsets, minifooter is 28 bytes for now
+    const std::uint64_t offsetPGIndex = capsule.m_DataAbsolutePosition;
+    const std::uint64_t offsetVarsIndex = offsetPGIndex + pgLength;
+    const std::uint64_t offsetAttributeIndex = offsetVarsIndex + varsIndexLength;
+    std::size_t position = attributesIndexLength;
+
+    //offsets
+    std::memcpy( &metadata[position], &offsetPGIndex, 8 );
+    std::memcpy( &metadata[position+8], &offsetVarsIndex, 8 );
+    std::memcpy( &metadata[position+16], &offsetAttributeIndex, 8 );
+
+    position += 24; //position position to version record
+    if( IsLittleEndian() == true )//little endian machine
+    {
+        constexpr std::uint8_t littleEndian = 0;
+        std::memcpy( &metadata[position], &littleEndian, 1 );
+    }
+    else //big endian
+    {
+        constexpr std::uint8_t bigEndian = 1;
+        std::memcpy( &metadata[position], &bigEndian, 1 );
+    }
+    position += 3;
+    std::memcpy( &metadata[position], &m_Version, 1 );
 }
 
-
-
-
-void BP1Writer::SetMiniFooter( BP1MetadataSet& metadataSet ) const
-{
-
-
-
-}
-
-
-void BP1Writer::SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule ) const
-{
-
-    //setup metadata to capsule metadata buffer
-    //    const std::size_t processGroupIndexSize = m_ProcessGroupsLength + 16;
-    //    const std::size_t variableIndexSize = m_VariablesLength + 12;
-    //    const std::size_t attributeIndexSize = m_AttributesLength + 12;
-    //    const std::size_t minifooterSize = 28; //28
-    //    const std::size_t metadataSize = processGroupIndexSize + variableIndexSize + attributeIndexSize + minifooterSize;
-    //
-    //    capsule.ResizeMetadata( metadataSize );
-}
 
 
 

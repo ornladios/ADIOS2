@@ -175,7 +175,14 @@ int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, co
  * @param bytes input number of bytes
  * @param positions  += bytes
  */
-void MovePositions( const int bytes, std::vector<std::size_t>& positions );
+void MovePositions( const int bytes, std::vector<std::size_t>& positions ) noexcept;
+
+
+/**
+ * Check if system is little endian
+ * @return true: little endian, false: big endian
+ */
+bool IsLittleEndian( ) noexcept;
 
 
 } //end namespace

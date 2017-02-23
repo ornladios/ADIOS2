@@ -2,6 +2,8 @@
 *.a
 *.so
 *.tmp
+*.exe
+*.bp
 
 #Eclipse
 .cproject

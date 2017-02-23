@@ -39,6 +39,7 @@ public:
     unsigned int m_Cores = 1;  ///< number of cores for thread operations in large array (min,max)
     unsigned int m_Verbosity = 0; ///< statistics verbosity, can change if redefined in Engine method.
     float m_GrowthFactor = 1.5; ///< memory growth factor, can change if redefined in Engine method.
+    const std::uint8_t m_Version = 3;
 
     /**
      * Calculates the Process Index size in bytes according to the BP format, including list of method with no parameters (for now)
@@ -212,7 +213,31 @@ public:
         }
     }
 
-    void Close( const BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport ) const;
+    /**
+     * Expensive part this is only for heap buffers need to adapt to vector of capsules
+     * @param variable
+     * @param buffer
+     */
+    template< class T >
+    void WriteVariablePayload( const Variable<T>& variable, capsule::STLVector& buffer, const unsigned int cores = 1 ) const noexcept
+    {
+        std::size_t payloadSize = variable.PayLoadSize();
+        MemcpyThreads( buffer.m_Data.data(), variable.m_AppValues, payloadSize, cores ); //EXPENSIVE part, might want to use threads if large.
+        //update indices
+        buffer.m_DataPosition += payloadSize;
+        buffer.m_DataAbsolutePosition += payloadSize;
+    }
+
+
+    /**
+     * Function that collects metadata (if first close) and writes to a single transport
+     * @param metadataSet
+     * @param capsule
+     * @param transport
+     * @param isFirstClose
+     */
+    void Close( BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport, bool& isFirstClose ) const noexcept;
+
 
 
 private:
@@ -516,17 +541,12 @@ private:
         MemcpyToBuffers( buffers, positions, &value, sizeof(T) );
     }
 
-
-
     /**
-     *
+     * Flattens the metadata indices into a single metadata buffer in capsule
+     * @param metadataSet
      * @param capsule
-     * @param transport
      */
-    void CloseRankFile( Capsule& capsule, Transport& transport ) const;
-
-    void SetMetadata( const BP1MetadataSet& metadataSet, Capsule& capsule ) const; ///< sets the metadata buffer in capsule with indices and minifooter
-    void SetMiniFooter( BP1MetadataSet& metadataSet ) const; ///< sets the minifooter
+    void FlattenMetadata( BP1MetadataSet& metadataSet, Capsule& capsule ) const noexcept; ///< sets the metadata buffer in capsule with indices and minifooter
 
 };
 

@@ -79,10 +79,14 @@ public:
 private:
 
     capsule::STLVector m_Buffer; ///< heap capsule using STL std::vector<char>
+    std::size_t m_BufferVariableCountPosition = 0; ///< needs to be updated in every advance step
+    bool m_IsFirstClose = true; ///< set to false after first Close is reached so metadata doesn't have to be accommodated for a subsequent Close
+    std::size_t m_MaxBufferSize;
+    float m_GrowthFactor = 1.5; ///< capsule memory growth factor, new_memory = m_GrowthFactor * current_memory
+
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
     format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
-    std::size_t m_MaxBufferSize;
-    float m_GrowthFactor = 1.5;
+
     bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
 
     void Init( );
@@ -105,10 +109,10 @@ private:
         //set variable
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );
-        //precalculate new metadata and payload sizes
+
+        //pre-calculate new metadata and payload sizes
         const std::size_t indexSize = m_BP1Writer.GetVariableIndexSize( variable );
         const std::size_t payloadSize = variable.PayLoadSize(); //will change if compression is applied
-
         //Buffer reallocation, expensive part
         m_TransportFlush = CheckBuffersAllocation( indexSize, payloadSize );
 
@@ -126,11 +130,7 @@ private:
         }
         else //Write data to buffer
         {
-            //EXPENSIVE part, might want to use threads if large.
-            MemcpyThreads( m_Buffer.m_Data.data(), variable.m_AppValues, payloadSize, m_Cores );
-            //update indices
-            m_Buffer.m_DataPosition += payloadSize;
-            m_Buffer.m_DataAbsolutePosition += payloadSize;
+            m_BP1Writer.WriteVariablePayload( variable, m_Buffer, m_Cores );
         }
     }
 

@@ -20,11 +20,18 @@ int main( int argc, char* argv [] )
     std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     const std::size_t Nx = myDoubles.size();
 
+    std::vector<std::complex<float>> myCFloats;
+    myCFloats.reserve( 3 );
+    myCFloats.emplace_back( 1, 3 );
+    myCFloats.emplace_back( 2, 2 );
+    myCFloats.emplace_back( 3, 1 );
+
     try
     {
         //Define variable and local size
         //Define variable and local size
         auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+        auto& ioMyCFloats = adios.DefineVariable<std::complex<float>>( "myCFloats", {3} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManWriter" ); //default method type is Writer
@@ -39,8 +46,8 @@ int main( int argc, char* argv [] )
         if( datamanWriter == nullptr )
             throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
 
-        //datamanWriter->Write( "myDoubles", myDoubles.data() ); //you can write either by string or by object
         datamanWriter->Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        datamanWriter->Write( ioMyCFloats, myCFloats.data() );
         datamanWriter->Close( );
     }
     catch( std::invalid_argument& e )

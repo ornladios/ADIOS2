@@ -406,6 +406,39 @@ Variable<long double>& ADIOS::DefineVariable( const std::string name, const Dims
 }
 
 
+template<> inline
+Variable<std::complex<float>>& ADIOS::DefineVariable( const std::string name, const Dims dimensions,
+                                                      const Dims globalDimensions, const Dims globalOffsets )
+{
+    CheckVariableInput( name, dimensions );
+    m_CFloat.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<std::complex<float>>(), m_CFloat.size()-1 ) );
+    return m_CFloat.back();
+}
+
+
+template<> inline
+Variable<std::complex<double>>& ADIOS::DefineVariable( const std::string name, const Dims dimensions,
+                                                       const Dims globalDimensions, const Dims globalOffsets )
+{
+    CheckVariableInput( name, dimensions );
+    m_CDouble.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<std::complex<double>>(), m_CDouble.size()-1 ) );
+    return m_CDouble.back();
+}
+
+
+template<> inline
+Variable<std::complex<long double>>& ADIOS::DefineVariable( const std::string name, const Dims dimensions,
+                                                            const Dims globalDimensions, const Dims globalOffsets )
+{
+    CheckVariableInput( name, dimensions );
+    m_CLDouble.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
+    m_Variables.emplace( name, std::make_pair( GetType<std::complex<double>>(), m_CLDouble.size()-1 ) );
+    return m_CLDouble.back();
+}
+
+
 //Get template specialization
 template<> inline
 Variable<char>& ADIOS::GetVariable( const std::string name )
@@ -458,6 +491,18 @@ Variable<double>& ADIOS::GetVariable( const std::string name )
 template<> inline
 Variable<long double>& ADIOS::GetVariable( const std::string name )
 { return m_LDouble[ GetVariableIndex<long double>(name) ]; }
+
+template<> inline
+Variable<std::complex<float>>& ADIOS::GetVariable( const std::string name )
+{ return m_CFloat[ GetVariableIndex<std::complex<float>>(name) ]; }
+
+template<> inline
+Variable<std::complex<double>>& ADIOS::GetVariable( const std::string name )
+{ return m_CDouble[ GetVariableIndex<std::complex<double>>(name) ]; }
+
+template<> inline
+Variable<std::complex<long double>>& ADIOS::GetVariable( const std::string name )
+{ return m_CLDouble[ GetVariableIndex<std::complex<long double>>(name) ]; }
 
 
 

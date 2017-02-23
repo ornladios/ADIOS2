@@ -72,10 +72,21 @@ public:
             if( size > 10 )
                 size = 10;
 
-            for( std::size_t i = 0; i < size; ++i  )
+            if( m_Type.find("complex") != m_Type.npos ) //it's complex
             {
-                logInfo << m_AppValues[i] << " ";
+                for( unsigned int i = 0; i < size; ++i  )
+                {
+                    logInfo << "( " << std::real( m_AppValues[i] ) << " , " << std::imag( m_AppValues[i] ) << " )  ";
+                }
             }
+            else
+            {
+                for( unsigned int i = 0; i < size; ++i  )
+                {
+                    logInfo << m_AppValues[i] << " ";
+                }
+            }
+
             logInfo << " ...";
         }
         logInfo << "\n";

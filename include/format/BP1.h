@@ -33,24 +33,23 @@ struct BP1MetadataSet
     std::uint32_t TimeStep = 0; ///< current time step, updated with advance step, if append it will be updated to last
 
     std::uint64_t PGCount = 0; ///< number of process groups
-    std::uint64_t PGLength = 0; ///< length in bytes of process groups
     std::size_t PGIndexPosition = 16;
     std::vector<char> PGIndex = std::vector<char>( 102400 ); ///< process group index metadata
 
     std::uint32_t VarsCount = 0; ///< number of written Variables
-    std::uint64_t VarsLength = 0; ///< length in bytes of written Variables
     std::size_t   VarsIndexPosition = 12; ///< initial position in bytes
     std::vector<char> VarsIndex = std::vector<char>( 102400 ); ///< metadata variable index, start with 1Kb
 
     std::uint32_t AttributesCount = 0; ///< number of Attributes
-    std::uint64_t AttributesLength = 0; ///< length in bytes of Attributes
     std::size_t AttributesIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> AttributeIndex = std::vector<char>( 102400 ); ///< metadata attribute index, start with 1Kb
+    std::vector<char> AttributesIndex = std::vector<char>( 102400 ); ///< metadata attribute index, start with 1Kb
 
-    std::vector<char> MiniFooter = std::vector<char>( 28 );
+    std::vector<char> MiniFooter = std::vector<char>( 28 ); ///< 56?
 };
 
-
+/**
+ * Base class for BP1Writer and BP1Reader format
+ */
 class BP1
 {
 

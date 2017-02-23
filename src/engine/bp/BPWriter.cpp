@@ -161,15 +161,25 @@ void BPWriter::Write( const std::string variableName, const void* values )
 
 void BPWriter::AdvanceStep( )
 {
-
-
-
+    //first close current pg
 }
 
 
 void BPWriter::Close( const int transportIndex )
 {
-    //BP1BPWriter to update the metadata indices
+    CheckTransportIndex( transportIndex );
+    if( transportIndex == -1 )
+    {
+        for( auto& transport : m_Transports ) //by reference or value or it doesn't matter?
+            m_BP1Writer.Close( m_MetadataSet, m_Buffer, *transport, m_IsFirstClose );
+    }
+    else
+    {
+        m_BP1Writer.Close( m_MetadataSet, m_Buffer, *m_Transports[transportIndex], m_IsFirstClose );
+    }
+
+    //BP1Writer to update the metadata indices
+
 
 
     //merge all metadata indices in capsule.m_Metadata buffer or capsule.m_Data buffer (depends on transport predefined functionality)
@@ -177,18 +187,7 @@ void BPWriter::Close( const int transportIndex )
 
     //BP1BPWriter to write to corresponding transport
 
-    if( transportIndex == -1 ) // all transports
-    {
-        for( auto& transport : m_Transports )
-            transport->Write( m_Buffer.m_Data.data(), m_Buffer.m_DataPosition );
 
-        for( auto& transport : m_Transports )
-            transport->Close( );   //actually no need, close is in destructor (like fstream)
-    }
-    else
-    {
-        m_Transports[ transportIndex ]->Write( m_Buffer.m_Data.data(), m_Buffer.m_DataPosition );
-    }
 
     //Close the corresponding transport
 }
@@ -239,9 +238,15 @@ void BPWriter::InitTransports( )
             else
             {
                 if( m_DebugMode == true )
-                    throw std::invalid_argument( "ERROR: transport + " + itTransport->second + " not supported, in " +
+                    throw std::invalid_argument( "ERROR: file transport library " + itLibrary->second + " not supported, in " +
                                                   m_Name + m_EndMessage );
             }
+        }
+        else
+        {
+            if( m_DebugMode == true )
+                throw std::invalid_argument( "ERROR: transport " + itTransport->second + " (you mean File?) not supported, in " +
+                                              m_Name + m_EndMessage );
         }
     }
 }
@@ -261,10 +266,10 @@ void BPWriter::InitProcessGroup( )
 void BPWriter::WriteProcessGroupIndex( )
 {
     //pg = process group
-    const std::string pgName( std::to_string( m_RankMPI ) ); //using rank as name
+    const std::string name( std::to_string( m_RankMPI ) ); //using rank as name
     const unsigned int timeStep = m_MetadataSet.TimeStep;
     const std::string timeStepName( std::to_string( timeStep ) );
-    const std::size_t pgIndexSize = m_BP1Writer.GetProcessGroupIndexSize( pgName, timeStepName, m_Transports.size() );
+    const std::size_t pgIndexSize = m_BP1Writer.GetProcessGroupIndexSize( name, timeStepName, m_Transports.size() );
 
     //metadata
     GrowBuffer( pgIndexSize, m_GrowthFactor, m_MetadataSet.PGIndexPosition, m_MetadataSet.PGIndex );
@@ -272,21 +277,18 @@ void BPWriter::WriteProcessGroupIndex( )
     //data? Need to be careful, maybe add some trailing tolerance in variable ????
     GrowBuffer( pgIndexSize, m_GrowthFactor, m_Buffer.m_DataPosition, m_Buffer.m_Data );
 
-//    const bool isFortran = ( m_HostLanguage == "Fortran" ) ? true : false;
-//    const unsigned int processID = static_cast<unsigned int> ( m_RankMPI );
+    const bool isFortran = ( m_HostLanguage == "Fortran" ) ? true : false;
+    const unsigned int processID = static_cast<unsigned int> ( m_RankMPI );
 
-//    m_BP1BPWriter.WriteProcessGroupIndex( isFortran, name, processID, timeStepName, timeStep, m_Transports,
-//                                        m_Buffer.m_Data, m_Buffer.m_DataPosition, m_Buffer.m_DataAbsolutePosition,
-//                                        m_MetadataSet.PGIndex, m_MetadataSet.PGIndexPosition );
+    m_BP1Writer.WriteProcessGroupIndex( isFortran, name, processID, timeStepName, timeStep, m_Transports,
+                                        m_Buffer, m_MetadataSet );
 
-//        const bool isFortran, const std::string name, const unsigned int processID,
-//                                                const std::string timeStepName, const unsigned int timeStep,
-//                                                std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
-//                                                std::vector<std::size_t>& dataAbsolutePositions,
-//                                                std::vector<char*>& metadataBuffers,
-//                                                std::vector<std::size_t>& metadataPositions
-
+    m_BufferVariableCountPosition = m_Buffer.m_DataPosition; //fixed for every new PG
 }
+
+
+
+
 
 bool BPWriter::CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize )
 {
