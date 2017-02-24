@@ -18,7 +18,7 @@ LIB_NOMPI+= $(ADIOS_DIR)/lib/libadios_nompi.a
 INC+= -I$(ADIOS_DIR)/include
 
 #DATAMAN
-DATAMAN_LOC=/home/wfg/Applications/DataMan
+DATAMAN_LOC=/Users/w4g/Dropbox/lib/DataMan
 INC+= -I$(DATAMAN_LOC)/include
 LIB+= -L$(DATAMAN_LOC)/lib -ldataman # -lcacheman -lstreamman -lzmqman
 LIB_NOMPI+= -L$(DATAMAN_LOC)/lib -ldataman

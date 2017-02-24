@@ -5,8 +5,9 @@
 # Created on: Feb 9, 2017
 #     Author: wfg
 
-DATAMAN_LOCATION=/home/wfg/Applications/DataMan
+DATAMAN_LOCATION=/Users/w4g/Dropbox/lib/DataMan
 MPICOMPILER=mpic++
+export DYLD_LIBRARY_PATH=$DATAMAN_LOCATION/lib:$DYLD_LIBRARY_PATH
 
 if [ "$(uname)" == "Darwin" ]; then
 	CCOMPILER=clang++
@@ -19,14 +20,14 @@ echo "##########################################################################
 echo "Start building ADIOS ./lib/libadios.a ./libadios_nompi.a with DataMan library" 
 echo "######################################################################################"
 echo
-make HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER       #build the ./lib/libadios.a and ./libadios_nompi.a
+make -j4 HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER       #build the ./lib/libadios.a and ./libadios_nompi.a
 echo
 echo "#################################################################"
 echo "Building Dataman Reader and Writer examples"
 echo "#################################################################"
-make -C ./examples/hello/datamanWriter HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER
+make -j4 -C ./examples/hello/datamanWriter HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER
 echo
-make -C ./examples/hello/datamanReader HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER
+make -j4 -C ./examples/hello/datamanReader HAVE_DATAMAN=yes DATAMAN_LOC=$DATAMAN_LOCATION CC=$CCOMPILER MPICC=$MPICOMPILER
 
 echo
 echo

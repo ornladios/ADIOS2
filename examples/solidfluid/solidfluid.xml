@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<adios-config>
+<adios-config host-language="C">
 
   <!--  Changes to ADIOS-1 XML
         Accommodate for the following extensions and flexiblity:

@@ -86,6 +86,7 @@ private:
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
 
     bool m_DoRealTime = false;
+    DataManager m_Man;
 
     void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
     void InitCapsules( );
@@ -108,10 +109,10 @@ private:
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );
 
-        DataManager dataManager;
-        dataManager.add_stream( "0", "0", 1, 1, 1, "0" );
-
         //This part will go away, this is just to monitor variables per rank
+
+
+
         std::cout << "I am hooked to the DataMan library\n";
         MPI_Barrier( m_MPIComm );
 
