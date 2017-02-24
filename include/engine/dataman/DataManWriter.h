@@ -111,7 +111,7 @@ private:
 
         //This part will go away, this is just to monitor variables per rank
 
-
+        m_Man.put(values, "", variable.m_Name, GetType<T>(), variable.m_Dimensions, variable.m_GlobalDimensions, variable.m_GlobalOffsets, 0);
 
         std::cout << "I am hooked to the DataMan library\n";
         MPI_Barrier( m_MPIComm );
