@@ -109,9 +109,10 @@ private:
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );
 
-        DataManager dataManager;
-
         //This part will go away, this is just to monitor variables per rank
+
+
+
         std::cout << "I am hooked to the DataMan library\n";
         MPI_Barrier( m_MPIComm );
 
