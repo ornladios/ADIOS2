@@ -5,7 +5,7 @@
 
 BASE_NAME=helloDataManReader
 
-CC=g++-6 # Compiling with defaults
+CC=g++ # Compiling with defaults
 MPICC=mpic++
 INC=
 LIB=

@@ -5,7 +5,7 @@
 
 BASE_NAME=helloDataManWriter
 
-CC=clang++ # Compiling with defaults
+CC=g++ # Compiling with defaults
 MPICC=mpic++
 INC=
 LIB=
