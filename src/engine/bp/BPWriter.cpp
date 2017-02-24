@@ -159,7 +159,7 @@ void BPWriter::Write( const std::string variableName, const void* values )
 { }
 
 
-void BPWriter::AdvanceStep( )
+void BPWriter::Advance( )
 {
     //first close current pg
 }

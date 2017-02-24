@@ -74,7 +74,7 @@ void Engine::Write( const std::string variableName, const std::complex<double>* 
 void Engine::Write( const std::string variableName, const std::complex<long double>* values ){ }
 void Engine::Write( const std::string variableName, const void* values ){ }
 
-void Engine::AdvanceStep( ){ }
+void Engine::Advance( ){ }
 
 //READ
 Variable<void>* Engine::InquireVariable( const std::string name, const bool readIn ){ return nullptr; }
@@ -157,7 +157,14 @@ bool Engine::TransportNamesUniqueness( ) const
 
 void Engine::CheckTransportIndex( const int transportIndex )
 {
-
+    if( m_DebugMode == true )
+    {
+        if( transportIndex >= static_cast<int>( m_Transports.size() ) || transportIndex < -1 )
+        {
+            throw std::invalid_argument( "ERROR: transport index " + std::to_string( transportIndex ) +
+                                         " is out of range, in call to " + m_Name + "Close \n");
+        }
+    }
 }
 
 

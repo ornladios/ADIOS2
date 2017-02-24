@@ -93,6 +93,14 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     void InitMPI( ); ///< sets rank and size in m_rank and m_Size, respectively.
 
 
+    /**
+     * Look for template specialization
+     * @param name
+     * @param dimensions
+     * @param globalDimensions
+     * @param globalOffsets
+     * @return
+     */
     template<class T> inline
     Variable<T>& DefineVariable( const std::string name, const Dims dimensions = Dims{1},
                                  const Dims globalDimensions = Dims( ),

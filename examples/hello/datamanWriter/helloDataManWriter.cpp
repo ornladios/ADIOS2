@@ -53,6 +53,9 @@ int main( int argc, char* argv [] )
 
         //Create engine smart pointer to DataMan Engine due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class DataMan
+
+        //adios::DataManWriter datamanWriter;
+
         auto datamanWriter = adios.Open( "myDoubles.bp", "w", datamanSettings );
 
         if( datamanWriter == nullptr )

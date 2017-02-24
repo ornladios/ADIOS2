@@ -171,7 +171,7 @@ public:
     /**
      * Indicates that a new step is going to be written as new variables come in.
      */
-    virtual void AdvanceStep( );
+    virtual void Advance( );
 
 
     //Read API

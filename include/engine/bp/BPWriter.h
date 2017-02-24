@@ -72,7 +72,7 @@ public:
     void Write( const std::string variableName, const std::complex<long double>* values );
     void Write( const std::string variableName, const void* values );
 
-    void AdvanceStep( );
+    void Advance( );
 
     /**
      * Closes a single transport or all transports
@@ -135,7 +135,9 @@ private:
         else //Write data to buffer
         {
             m_BP1Writer.WriteVariablePayload( variable, m_Buffer, m_Cores );
+
         }
+        variable.m_AppValues = nullptr; //setting pointer to null as not needed after write
     }
 
     /**
