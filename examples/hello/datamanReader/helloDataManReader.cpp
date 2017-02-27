@@ -1,5 +1,5 @@
 /*
- * helloWriter.cpp
+ * helloDataManReader.cpp
  *
  *  Created on: Feb 16, 2017
  *      Author: wfg
@@ -8,13 +8,30 @@
 
 
 #include <vector>
-#include <iostream>
+#include <iostream> //std::cout, std::endl
+#include <string>
+#include <numeric> //std::accumulate
+#include <functional> //std::multiplies
 
 
 #include <mpi.h>
 
 
 #include "ADIOS_CPP.h"
+
+void getcb( const void *data, std::string doid, std::string var, std::string dtype, std::vector<std::size_t> varshape )
+{
+    std::cout << "data object ID = " << doid << "\n"; //do you need to flush?
+    std::cout << "variable name = " << var << "\n";
+    std::cout << "data type = " << dtype << "\n";
+    float *dataf = (float*)data;
+
+    std::size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1, std::multiplies<std::size_t>());
+
+    for (int i=0; i<varsize; i++)
+        std::cout << ((float*)data)[i] << " ";
+    std::cout << std::endl;
+}
 
 
 int main( int argc, char* argv [] )
@@ -24,7 +41,6 @@ int main( int argc, char* argv [] )
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     const bool adiosDebug = true;
     adios::ADIOS adios( MPI_COMM_WORLD, adiosDebug );
-
 
     try
     {
@@ -40,6 +56,8 @@ int main( int argc, char* argv [] )
 
         if( datamanReader == nullptr )
             throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
+
+        datamanReader->SetCallBack( getcb );
 
         adios::Variable<double>* ioMyDoubles = datamanReader->InquireVariableDouble( "ioMyDoubles" );
         if( ioMyDoubles == nullptr )

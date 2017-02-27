@@ -33,19 +33,10 @@ DataManReader::DataManReader( ADIOS& adios, const std::string name, const std::s
 DataManReader::~DataManReader( )
 { }
 
-void DataManReader::Init( )
+void DataManWriter::SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback )
 {
-    if( m_DebugMode == true )
-    {
-        if( m_AccessMode != "r" && m_AccessMode != "read" )
-            throw std::invalid_argument( "ERROR: DataManReader doesn't support access mode " + m_AccessMode +
-                                         ", in call to ADIOS Open or DataManReader constructor\n"  );
-    }
-
-    InitCapsules( );
-    InitTransports( );
+    m_CallBack = callback;
 }
-
 
 Variable<void>* DataManReader::InquireVariable( const std::string name, const bool readIn ) //not yet implemented
 { return nullptr; }
@@ -109,6 +100,20 @@ void DataManReader::Close( const int transportIndex )
 
 
 //PRIVATE
+void DataManReader::Init( )
+{
+    if( m_DebugMode == true )
+    {
+        if( m_AccessMode != "r" && m_AccessMode != "read" )
+            throw std::invalid_argument( "ERROR: DataManReader doesn't support access mode " + m_AccessMode +
+                                         ", in call to ADIOS Open or DataManReader constructor\n"  );
+    }
+
+    InitCapsules( );
+    InitTransports( );
+}
+
+
 void DataManReader::InitCapsules( )
 {
     //here init memory capsules

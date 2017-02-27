@@ -36,62 +36,10 @@ DataManWriter::DataManWriter( ADIOS& adios, const std::string name, const std::s
 DataManWriter::~DataManWriter( )
 { }
 
-
-void DataManWriter::Init( )
+void DataManWriter::SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback )
 {
-    if( m_DebugMode == true )
-    {
-        if( m_AccessMode != "w" && m_AccessMode != "write" && m_AccessMode != "a" && m_AccessMode != "append" )
-            throw std::invalid_argument( "ERROR: DataManWriter doesn't support access mode " + m_AccessMode +
-                                         ", in call to ADIOS Open or DataManWriter constructor\n"  );
-    }
-
-    auto itRealTime = m_Method.m_Parameters.find( "real_time" );
-    if( itRealTime != m_Method.m_Parameters.end() )
-    {
-        if( itRealTime->second == "yes" || itRealTime->second == "true" )
-            m_DoRealTime = true;
-    }
-
-    if(m_DoRealTime)
-    {
-        string method_type="", method="", local_ip="", remote_ip="";
-        int local_port=0, remote_port=0, num_channels=0;
-
-        auto i = m_Method.m_Parameters.find( "method_type" );
-        if( i != m_Method.m_Parameters.end() )
-            method_type = i->second;
-        if(method_type == "stream"){
-            i = m_Method.m_Parameters.find( "method" );
-            if( i != m_Method.m_Parameters.end() )
-                method = i->second;
-            i = m_Method.m_Parameters.find( "local_ip" );
-            if( i != m_Method.m_Parameters.end() )
-                local_ip = i->second;
-            i = m_Method.m_Parameters.find( "remote_ip" );
-            if( i != m_Method.m_Parameters.end() )
-                remote_ip = i->second;
-            i = m_Method.m_Parameters.find( "local_port" );
-            if( i != m_Method.m_Parameters.end() )
-                istringstream(i->second) >> local_port;
-            i = m_Method.m_Parameters.find( "remote_port" );
-            if( i != m_Method.m_Parameters.end() )
-                istringstream(i->second) >> remote_port;
-            i = m_Method.m_Parameters.find( "num_channels" );
-            if( i != m_Method.m_Parameters.end() )
-                istringstream(i->second) >> num_channels;
-            m_Man.add_stream(local_ip, remote_ip, local_port, remote_port, num_channels, method);
-        }
-
-    }
-    else
-    {
-        InitCapsules( );
-        InitTransports( );
-    }
-
+    m_CallBack = callback;
 }
-
 
 void DataManWriter::Write( Variable<char>& variable, const char* values )
 { WriteVariableCommon( variable, values ); }
@@ -199,6 +147,72 @@ void DataManWriter::Close( const int transportIndex )
 
 
 //PRIVATE functions below
+void DataManWriter::Init( )
+{
+    if( m_DebugMode == true )
+    {
+        if( m_AccessMode != "w" && m_AccessMode != "write" && m_AccessMode != "a" && m_AccessMode != "append" )
+            throw std::invalid_argument( "ERROR: DataManWriter doesn't support access mode " + m_AccessMode +
+                                         ", in call to ADIOS Open or DataManWriter constructor\n"  );
+    }
+
+    auto itRealTime = m_Method.m_Parameters.find( "real_time" );
+    if( itRealTime != m_Method.m_Parameters.end() )
+    {
+        if( itRealTime->second == "yes" || itRealTime->second == "true" )
+            m_DoRealTime = true;
+    }
+
+    if(m_DoRealTime)
+    {
+        /**
+         * Lambda function that assigns a parameter in m_Method to a localVariable of type std::string
+         */
+        auto lf_AssignString = [this]( const std::string parameter, std::string& localVariable )
+        {
+            auto it = m_Method.m_Parameters.find( parameter );
+            if( it != m_Method.m_Parameters.end() )
+            {
+                localVariable = it->second;
+            }
+        };
+
+        /**
+         * Lambda function that assigns a parameter in m_Method to a localVariable of type int
+         */
+        auto lf_AssignInt = [this]( const std::string parameter, int& localVariable )
+        {
+            auto it = m_Method.m_Parameters.find( parameter );
+            if( it != m_Method.m_Parameters.end() )
+            {
+                localVariable = std::stoi( it->second );
+            }
+        };
+
+        std::string method_type, method, local_ip, remote_ip; //no need to initialize to empty (it's default)
+        int local_port=0, remote_port=0, num_channels=0;
+
+        lf_AssignString( "method_type", method_type );
+        if( method_type == "stream" )
+        {
+            lf_AssignString( "method", method );
+            lf_AssignString( "local_ip", local_ip );
+            lf_AssignString( "remote_ip", remote_ip );
+            lf_AssignInt( "local_port", local_port );
+            lf_AssignInt( "remote_port", remote_port );
+            lf_AssignInt( "num_channels", num_channels );
+
+            m_Man.add_stream(local_ip, remote_ip, local_port, remote_port, num_channels, method);
+        }
+    }
+    else
+    {
+        InitCapsules( );
+        InitTransports( );
+    }
+
+}
+
 void DataManWriter::InitCapsules( )
 {
     //here init memory capsules

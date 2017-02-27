@@ -77,6 +77,13 @@ public:
 
     virtual ~Engine( );
 
+
+    /**
+     * Needed for DataMan Engine
+     * @param callback
+     */
+    virtual void SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback );
+
     /**
      * Write function that adds static checking on the variable to be passed by values
      * It then calls its corresponding derived class virtual function

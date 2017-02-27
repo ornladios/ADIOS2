@@ -40,6 +40,12 @@ public:
 
     ~DataManReader( );
 
+    /**
+     * Set callback function from user application
+     * @param callback function (get) provided by the user to be applied in DataMan
+     */
+    void SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback );
+
     Variable<void>* InquireVariable( const std::string name, const bool readIn = true );
     Variable<char>* InquireVariableChar( const std::string name, const bool readIn = true );
     Variable<unsigned char>* InquireVariableUChar( const std::string name, const bool readIn = true );

@@ -43,6 +43,8 @@ public:
 
     ~DataManWriter( );
 
+    void SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback );
+
     void Write( Variable<char>& variable, const char* values );
     void Write( Variable<unsigned char>& variable, const unsigned char* values );
     void Write( Variable<short>& variable, const short* values );
@@ -87,6 +89,7 @@ private:
 
     bool m_DoRealTime = false;
     DataManager m_Man;
+    std::function<void( const void*, std::string, std::string, std::string, Dims )> m_CallBack; ///< call back function
 
     void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
     void InitCapsules( );
@@ -111,7 +114,19 @@ private:
 
         //This part will go away, this is just to monitor variables per rank
 
-        m_Man.put(values, "", variable.m_Name, GetType<T>(), variable.m_Dimensions, variable.m_GlobalDimensions, variable.m_GlobalOffsets, 0);
+//        put(void *p_data,
+//                        string p_doid,
+//                        string p_var,
+//                        string p_dtype,
+//                        vector<uint64_t> p_putshape,
+//                        vector<uint64_t> p_varshape,
+//                        vector<uint64_t> p_offset,
+//                        uint64_t p_timestep,
+//                        int p_tolerance,
+//                        int p_priority
+//                        ){
+
+        m_Man.put( values, "", variable.m_Name, GetType<T>(), variable.m_Dimensions, variable.m_GlobalDimensions, variable.m_GlobalOffsets, 0);
 
         std::cout << "I am hooked to the DataMan library\n";
         MPI_Barrier( m_MPIComm );

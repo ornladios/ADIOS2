@@ -36,6 +36,7 @@ Engine::Engine( ADIOS& adios, const std::string engineType, const std::string na
 Engine::~Engine( )
 { }
 
+void Engine::SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback ){ }
 
 //should these functions throw an exception?
 void Engine::Write( Variable<char>& variable,                      const char* values ){ }
