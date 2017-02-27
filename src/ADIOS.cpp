@@ -19,6 +19,7 @@
 
 //Engines
 #include "engine/bp/BPWriter.h"
+#include "engine/bp/BPReader.h"
 
 #ifdef HAVE_DATAMAN  //external dependencies
 #include "engine/dataman/DataManWriter.h"
@@ -98,9 +99,16 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
     const std::string type( method.m_Type );
 
-    if( type == "BPWriter" || type == "bpwriter" )
+    const bool isDefaultWriter = ( accessMode == "w" || accessMode == "write" ) && type.empty() ? true : false;
+    const bool isDefaultReader = ( accessMode == "r" || accessMode == "read" ) && type.empty() ? true : false;
+
+    if( isDefaultWriter || type == "BPWriter" || type == "bpwriter" )
     {
         return std::make_shared<BPWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+    }
+    else if( isDefaultReader || type == "BPReader" || type == "bpreader" )
+    {
+        return std::make_shared<BPReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {

@@ -180,7 +180,6 @@ void BPWriter::Close( const int transportIndex )
 }
 
 
-
 //PRIVATE FUNCTIONS
 void BPWriter::InitTransports( )
 {
@@ -205,7 +204,7 @@ void BPWriter::InitTransports( )
                 m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
                 m_Transports.push_back( std::move( file ) );
             }
-            else if( itLibrary->second == "FILE*" )
+            else if( itLibrary->second == "FILE*" || itLibrary->second == "stdio.h" )
             {
                 auto file = std::make_shared<transport::FP>( m_MPIComm, m_DebugMode );
                 m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
@@ -280,8 +279,7 @@ void BPWriter::WriteProcessGroupIndex( )
 bool BPWriter::CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize )
 {
     //Check if data in buffer needs to be reallocated
-    const std::size_t dataSize = payloadSize + indexSize + 10; //adding some bytes tolerance
-    const std::size_t neededSize = dataSize + m_Buffer.m_DataPosition;
+    const std::size_t neededSize = m_Buffer.m_DataPosition + payloadSize + indexSize + 60; //adding some bytes tolerance
     // might need to write payload in batches
     bool doTransportsFlush = ( neededSize > m_MaxBufferSize )? true : false;
 
