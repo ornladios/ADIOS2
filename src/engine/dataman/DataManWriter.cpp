@@ -39,6 +39,7 @@ DataManWriter::~DataManWriter( )
 void DataManWriter::SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback )
 {
     m_CallBack = callback;
+    m_Man.reg_callback(callback);
 }
 
 void DataManWriter::Write( Variable<char>& variable, const char* values )
@@ -141,6 +142,7 @@ void DataManWriter::Write( const std::string variableName, const std::complex<lo
 
 void DataManWriter::Close( const int transportIndex )
 {
+    m_Man.flush();
     //here close IPs and deallocate or free/close resources (if using STL no need for memory deallocation)
 }
 
@@ -209,6 +211,7 @@ void DataManWriter::Init( )
             jmsg["local_port"] = local_port;
             jmsg["remote_port"] = remote_port;
             jmsg["num_channels"] = num_channels;
+            jmsg["stream_mode"] = "sender";
 
             m_Man.add_stream(jmsg);
         }
