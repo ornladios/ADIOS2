@@ -8,16 +8,16 @@
 #include "IO.h"
 
 
-IO::IO( std::string output_basename )
+IO::IO( std::shared_ptr<Settings> s, MPI_Comm comm )
 {
-    m_outputfilename = output_basename + ".bp";
+    m_outputfilename = s->outputfile + ".bp";
 }
 
 IO::~IO()
 {
 }
 
-void IO::write( int step, int curr, Settings& s )
+void IO::write(int step, std::shared_ptr<HeatTransfer> ht, std::shared_ptr<Settings> s, MPI_Comm comm )
 {
 }
 

@@ -59,13 +59,15 @@ int main( int argc, char* argv [] )
         double timeStart = MPI_Wtime();
         std::shared_ptr<Settings> settings( new Settings( argc, argv, rank, nproc ));
         std::shared_ptr<HeatTransfer> ht( new HeatTransfer( settings ));
-        std::shared_ptr<IO> io( new IO( settings->outputfile, mpiHeatTransferComm ));
+        std::shared_ptr<IO> io( new IO( settings, mpiHeatTransferComm ));
 
-
-        ht->init(false);
+        ht->init(true);
         ht->printT("Initialized T:", mpiHeatTransferComm);
         ht->heatEdges();
+        //ht->exchange( mpiHeatTransferComm );
         ht->printT("Heated T:", mpiHeatTransferComm);
+        io->write( 0, ht, settings, mpiHeatTransferComm );
+
         for( int t = 1; t <= settings->steps; ++t )
         {
             if( rank == 0 )
@@ -73,8 +75,8 @@ int main( int argc, char* argv [] )
             for( int iter = 1; iter <= settings->iterations; ++iter )
             {
                 ht->iterate();
-                ht->heatEdges();
                 ht->exchange( mpiHeatTransferComm );
+                ht->heatEdges();
             }
             io->write( t, ht, settings, mpiHeatTransferComm );
         }
@@ -101,6 +103,7 @@ int main( int argc, char* argv [] )
 		std::cout << e.what() << std::endl;
 	}
 
+	MPI_Finalize();
 	return 0;
 }
 

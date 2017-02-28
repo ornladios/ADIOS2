@@ -1,5 +1,5 @@
 /*
- * IO_ADIOS2.cpp
+ * IO_ascii.cpp
  *
  *  Created on: Feb 2017
  *      Author: Norbert Podhorszki
@@ -14,9 +14,9 @@
 static std::ofstream of;
 static std::streambuf *buf;
 
-IO::IO( std::string output_basename, MPI_Comm comm )
+IO::IO( std::shared_ptr<Settings> s, MPI_Comm comm )
 {
-    m_outputfilename = output_basename;
+    m_outputfilename = s->outputfile;
 
     if (m_outputfilename == "cout")
     {
@@ -27,7 +27,7 @@ IO::IO( std::string output_basename, MPI_Comm comm )
         int rank;
         MPI_Comm_rank( comm, &rank );
         std::string rs = std::to_string(rank);
-        of.open(output_basename + rs + ".txt");
+        of.open(m_outputfilename + rs + ".txt");
         buf = of.rdbuf();
     }
 }
@@ -43,7 +43,7 @@ IO::~IO()
 void IO::write( int step, std::shared_ptr<HeatTransfer> ht, std::shared_ptr<Settings> s, MPI_Comm comm)
 {
     std::ostream out(buf);
-    if( step == 1)
+    if( step == 0)
     {
         out << "rank=" << s->rank
                   << " size=" << s->ndx << "x" << s->ndy
