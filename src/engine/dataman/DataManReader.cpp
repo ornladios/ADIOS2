@@ -36,6 +36,7 @@ DataManReader::~DataManReader( )
 void DataManReader::SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback )
 {
     m_CallBack = callback;
+    m_Man.reg_callback(callback);
 }
 
 Variable<void>* DataManReader::InquireVariable( const std::string name, const bool readIn ) //not yet implemented
@@ -109,8 +110,69 @@ void DataManReader::Init( )
                                          ", in call to ADIOS Open or DataManReader constructor\n"  );
     }
 
-    InitCapsules( );
-    InitTransports( );
+    auto itRealTime = m_Method.m_Parameters.find( "real_time" );
+    if( itRealTime != m_Method.m_Parameters.end() )
+    {
+        if( itRealTime->second == "yes" || itRealTime->second == "true" )
+            m_DoRealTime = true;
+    }
+
+    if(m_DoRealTime)
+    {
+        /**
+         * Lambda function that assigns a parameter in m_Method to a localVariable of type std::string
+         */
+        auto lf_AssignString = [this]( const std::string parameter, std::string& localVariable )
+        {
+            auto it = m_Method.m_Parameters.find( parameter );
+            if( it != m_Method.m_Parameters.end() )
+            {
+                localVariable = it->second;
+            }
+        };
+
+        /**
+         * Lambda function that assigns a parameter in m_Method to a localVariable of type int
+         */
+        auto lf_AssignInt = [this]( const std::string parameter, int& localVariable )
+        {
+            auto it = m_Method.m_Parameters.find( parameter );
+            if( it != m_Method.m_Parameters.end() )
+            {
+                localVariable = std::stoi( it->second );
+            }
+        };
+
+        std::string method_type, method, local_ip, remote_ip; //no need to initialize to empty (it's default)
+        int local_port=0, remote_port=0, num_channels=0;
+
+        lf_AssignString( "method_type", method_type );
+        if( method_type == "stream" )
+        {
+            lf_AssignString( "method", method );
+            lf_AssignString( "local_ip", local_ip );
+            lf_AssignString( "remote_ip", remote_ip );
+            lf_AssignInt( "local_port", local_port );
+            lf_AssignInt( "remote_port", remote_port );
+            lf_AssignInt( "num_channels", num_channels );
+
+            json jmsg;
+            jmsg["method"] = method;
+            jmsg["local_ip"] = local_ip;
+            jmsg["remote_ip"] = remote_ip;
+            jmsg["local_port"] = local_port;
+            jmsg["remote_port"] = remote_port;
+            jmsg["num_channels"] = num_channels;
+            jmsg["stream_mode"] = "receiver";
+
+            m_Man.add_stream(jmsg);
+        }
+    }
+    else
+    {
+        InitCapsules( );
+        InitTransports( );
+    }
 }
 
 

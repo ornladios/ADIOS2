@@ -24,7 +24,6 @@ void getcb( const void *data, std::string doid, std::string var, std::string dty
     std::cout << "data object ID = " << doid << "\n"; //do you need to flush?
     std::cout << "variable name = " << var << "\n";
     std::cout << "data type = " << dtype << "\n";
-    float *dataf = (float*)data;
 
     std::size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1, std::multiplies<std::size_t>());
 
@@ -32,7 +31,6 @@ void getcb( const void *data, std::string doid, std::string var, std::string dty
         std::cout << ((float*)data)[i] << " ";
     std::cout << std::endl;
 }
-
 
 int main( int argc, char* argv [] )
 {

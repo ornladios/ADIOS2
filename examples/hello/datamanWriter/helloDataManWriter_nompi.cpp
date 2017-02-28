@@ -17,6 +17,7 @@ int main( int argc, char* argv [] )
     adios::ADIOS adios( adiosDebug );
 
     //Application variable
+    std::vector<float> myFloats = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     const std::size_t Nx = myDoubles.size();
 
@@ -30,12 +31,13 @@ int main( int argc, char* argv [] )
     {
         //Define variable and local size
         //Define variable and local size
-        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
-        auto& ioMyCFloats = adios.DefineVariable<std::complex<float>>( "myCFloats", {3} );
+        auto& ioMyFloats = adios.DefineVariable<float>( "myfloats", adios::Dims{Nx} );
+//        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+//        auto& ioMyCFloats = adios.DefineVariable<std::complex<float>>( "myCFloats", {3} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManWriter" ); //default method type is Writer
-        datamanSettings.SetParameters( "real_time=yes", "method_type=stream", "method=dump", "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12306", "remote_port=12307" );
+        datamanSettings.SetParameters( "real_time=yes", "method_type=stream", "method=zmq", "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12306", "remote_port=12307" );
 //        datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
         //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
 
@@ -46,8 +48,8 @@ int main( int argc, char* argv [] )
         if( datamanWriter == nullptr )
             throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
 
-        datamanWriter->Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-        datamanWriter->Write( ioMyCFloats, myCFloats.data() );
+        datamanWriter->Write( ioMyFloats, myFloats.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+//        datamanWriter->Write( ioMyCFloats, myCFloats.data() );
         datamanWriter->Close( );
     }
     catch( std::invalid_argument& e )
