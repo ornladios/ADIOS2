@@ -202,7 +202,15 @@ void DataManWriter::Init( )
             lf_AssignInt( "remote_port", remote_port );
             lf_AssignInt( "num_channels", num_channels );
 
-            m_Man.add_stream(local_ip, remote_ip, local_port, remote_port, num_channels, method);
+            json jmsg;
+            jmsg["method"] = method;
+            jmsg["local_ip"] = local_ip;
+            jmsg["remote_ip"] = remote_ip;
+            jmsg["local_port"] = local_port;
+            jmsg["remote_port"] = remote_port;
+            jmsg["num_channels"] = num_channels;
+
+            m_Man.add_stream(jmsg);
         }
     }
     else

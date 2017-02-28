@@ -114,19 +114,15 @@ private:
 
         //This part will go away, this is just to monitor variables per rank
 
-//        put(void *p_data,
-//                        string p_doid,
-//                        string p_var,
-//                        string p_dtype,
-//                        vector<uint64_t> p_putshape,
-//                        vector<uint64_t> p_varshape,
-//                        vector<uint64_t> p_offset,
-//                        uint64_t p_timestep,
-//                        int p_tolerance,
-//                        int p_priority
-//                        ){
-
-        m_Man.put( values, "", variable.m_Name, GetType<T>(), variable.m_Dimensions, variable.m_GlobalDimensions, variable.m_GlobalOffsets, 0);
+        json jmsg;
+        jmsg["doid"] = m_Name;
+        jmsg["var"] = variable.m_Name;
+        jmsg["dtype"] = GetType<T>();
+        jmsg["putshape"] = variable.m_Dimensions;
+        jmsg["varshape"] = variable.m_GlobalDimensions;
+        jmsg["offset"] = variable.m_GlobalOffsets;
+        jmsg["timestep"] = 0;
+        m_Man.put(values, jmsg);
 
         std::cout << "I am hooked to the DataMan library\n";
         MPI_Barrier( m_MPIComm );

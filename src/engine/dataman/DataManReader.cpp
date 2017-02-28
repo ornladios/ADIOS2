@@ -33,7 +33,7 @@ DataManReader::DataManReader( ADIOS& adios, const std::string name, const std::s
 DataManReader::~DataManReader( )
 { }
 
-void DataManWriter::SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback )
+void DataManReader::SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback )
 {
     m_CallBack = callback;
 }
