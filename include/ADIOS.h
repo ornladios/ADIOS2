@@ -11,7 +11,7 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 #include <vector>
-#include <memory> //shared_ptr
+#include <memory> //std::shared_ptr
 #include <ostream>
 #include <set>
 #include <map>
@@ -134,7 +134,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param name must be unique
      * @param type supported type : "Writer" (default), "DataMan"...future: "Sirius"
      */
-    Method& DeclareMethod( const std::string methodName, const std::string type = "BPWriter" );
+    Method& DeclareMethod( const std::string methodName, const std::string type = "" );
 
 
     /**

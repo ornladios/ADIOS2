@@ -39,7 +39,7 @@ public:
     unsigned int m_Cores = 1;  ///< number of cores for thread operations in large array (min,max)
     unsigned int m_Verbosity = 0; ///< statistics verbosity, can change if redefined in Engine method.
     float m_GrowthFactor = 1.5; ///< memory growth factor, can change if redefined in Engine method.
-    const std::uint8_t m_Version = 3;
+    const std::uint8_t m_Version = 3; ///< BP format version
 
     /**
      * Calculates the Process Index size in bytes according to the BP format, including list of method with no parameters (for now)
@@ -230,14 +230,16 @@ public:
 
 
     /**
-     * Function that collects metadata (if first close) and writes to a single transport
-     * @param metadataSet
-     * @param capsule
-     * @param transport
-     * @param isFirstClose
+     * Function that sets metadata (if first close) and writes to a single transport
+     * @param metadataSet current rank metadata set
+     * @param capsule contains data and metadata buffers
+     * @param transport does a write after data and metadata is setup
+     * @param isFirstClose true: metadata has been set and aggregated
+     * @param haveMetadata true: attach metadata buffer to each data buffer and do a transport write
+     * @param haveTiming true: add timing.log file
      */
-    void Close( BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport, bool& isFirstClose ) const noexcept;
-
+    void Close( BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport, bool& isFirstClose,
+    		    const bool haveMetadata = true, const bool haveTiming = false ) const noexcept;
 
 
 private:

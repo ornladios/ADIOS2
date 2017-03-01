@@ -135,20 +135,20 @@ void BPReader::InitTransports( ) //maybe move this?
             if( itLibrary == parameters.end() || itLibrary->second == "POSIX" ) //use default POSIX
             {
                 auto file = std::make_shared<transport::FD>( m_MPIComm, m_DebugMode );
-                //m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
+                //m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
                 m_Transports.push_back( std::move( file ) );
             }
             else if( itLibrary->second == "FILE*" || itLibrary->second == "stdio.h" )
             {
                 auto file = std::make_shared<transport::FP>( m_MPIComm, m_DebugMode );
-                //m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
+                //m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
                 m_Transports.push_back( std::move( file ) );
 
             }
             else if( itLibrary->second == "fstream" || itLibrary->second == "std::fstream" )
             {
                 auto file = std::make_shared<transport::FStream>( m_MPIComm, m_DebugMode );
-                //m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
+                //m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
                 m_Transports.push_back( std::move( file ) );
             }
             else if( itLibrary->second == "MPI-IO" )

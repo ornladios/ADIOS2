@@ -24,6 +24,7 @@ namespace adios
 namespace format
 {
 
+
 /**
  * Struct that tracks metadata indices in bp format
  */

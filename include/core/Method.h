@@ -34,7 +34,7 @@ public:
 
     /**
      * Constructor
-     * @param type must be an engine type, default = SingleBP
+     * @param type must be an engine type
      */
     Method( const std::string type, const bool debugMode = false );
 

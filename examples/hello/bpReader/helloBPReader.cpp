@@ -28,16 +28,15 @@ int main( int argc, char* argv [] )
     try
     {
         //Define method for engine creation, it is basically straight-forward parameters
-        adios::Method& bpWriterSettings = adios.DeclareMethod( "SingleFile" ); //default method type is BPWriter
-        bpWriterSettings.AddTransport( "File" ); //uses default POSIX library
+        adios::Method& bpReaderSettings = adios.DeclareMethod( "SingleFile" ); //default method type is BPWriter
+        bpReaderSettings.AddTransport( "File" ); //uses default POSIX library
 
         //Create engine smart pointer due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class Writer
-        auto bpWriter = adios.Open( "myDoubles.bp", "r", bpWriterSettings );
+        auto bpReader = adios.Open( "myDoubles_nompi.bp", "r", bpReaderSettings );
 
-        if( bpWriter == nullptr )
-            throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );
-
+        if( bpReader == nullptr )
+            throw std::ios_base::failure( "ERROR: couldn't create bpReader at Open\n" );
 
     }
     catch( std::invalid_argument& e )

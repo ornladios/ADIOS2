@@ -93,21 +93,28 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
 }
 
 
-void BP1Writer::Close( BP1MetadataSet& metadataSet, Capsule& capsule,
-                       Transport& transport, bool& isFirstClose ) const noexcept
+void BP1Writer::Close( BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport, bool& isFirstClose,
+    		           const bool haveMetadata, const bool haveTiming ) const noexcept
 {
     if( isFirstClose == true )
     {
-        FlattenMetadata( metadataSet, capsule ); //now capsule
+        FlattenMetadata( metadataSet, capsule );
         isFirstClose = false;
     }
     //implementing N-to-N for now, no aggregation
     transport.Write( capsule.GetData(), capsule.m_DataPosition );
-    transport.Write( capsule.GetMetadata(), capsule.GetMetadataSize() ); //we can improve this by copying metadata to data
+
+    if( haveMetadata == true )
+    	transport.Write( capsule.GetMetadata(), capsule.GetMetadataSize() ); //we can improve this by copying metadata to data
+
+    //here accumulate in metadata file
+
     transport.Close();
 }
 
 
+
+//PRIVATE FUNCTIONS
 void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::string name, const unsigned int processID,
                                               const std::string timeStepName, const unsigned int timeStep,
                                               const std::vector<int>& methodIDs,
