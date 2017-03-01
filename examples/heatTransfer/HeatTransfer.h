@@ -23,6 +23,8 @@ public:
     void heatEdges(); // reset the heat values at the global edge
     void exchange( MPI_Comm comm ); // send updates to neighbors
 
+    // return a single value at index i,j. 0 <= i <= ndx+2, 0 <= j <= ndy+2
+    double T( int i, int j) {return m_TCurrent[i][j];};
     // return (1D) pointer to current T data, ndx+2 * ndy+2 elements
     const double *data() {return m_TCurrent[0];};
     // return (1D) pointer to current T data without ghost cells, ndx*ndy elements
