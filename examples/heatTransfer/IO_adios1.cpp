@@ -15,10 +15,10 @@
 static int64_t group;
 static int rank_saved;
 
-IO::IO( std::shared_ptr<Settings> s, MPI_Comm comm )
+IO::IO( const Settings& s, MPI_Comm comm )
 {
-    rank_saved = s->rank;
-    m_outputfilename = s->outputfile + ".bp";
+    rank_saved = s.rank;
+    m_outputfilename = s.outputfile + ".bp";
     adios_init_noxml( comm );
     adios_declare_group( &group, "heat", "", adios_stat_default );
     adios_select_method( group, "MPI", "", "" );
@@ -26,9 +26,9 @@ IO::IO( std::shared_ptr<Settings> s, MPI_Comm comm )
     adios_define_var( group, "gndx", "", adios_integer, "", "", "");
     adios_define_var( group, "gndy", "", adios_integer, "", "", "");
 
-    std::string ldims( std::to_string( s->ndx ) + "," + std::to_string( s->ndy ));
-    std::string gdims( std::to_string( s->gndx ) + "," + std::to_string( s->gndy ));
-    std::string offs( std::to_string( s->offsx ) + "," + std::to_string( s->offsy ));
+    std::string ldims( std::to_string( s.ndx ) + "," + std::to_string( s.ndy ));
+    std::string gdims( std::to_string( s.gndx ) + "," + std::to_string( s.gndy ));
+    std::string offs( std::to_string( s.offsx ) + "," + std::to_string( s.offsy ));
     uint64_t T_id;
     T_id = adios_define_var( group, "T", "", adios_double,
                              ldims.c_str(), gdims.c_str(), offs.c_str() );
@@ -42,7 +42,7 @@ IO::~IO()
    adios_finalize(rank_saved);
 }
 
-void IO::write( int step, std::shared_ptr<HeatTransfer> ht, std::shared_ptr<Settings> s, MPI_Comm comm )
+void IO::write( int step, const HeatTransfer& ht, const Settings& s, MPI_Comm comm )
 {
     char mode[2] = "w";
     if (step > 0)
@@ -56,17 +56,17 @@ void IO::write( int step, std::shared_ptr<HeatTransfer> ht, std::shared_ptr<Sett
 
     int64_t f;
     adios_open( &f, "heat", m_outputfilename.c_str(), mode, comm);
-    adios_write( f, "gndx", &s->gndx);
-    adios_write( f, "gndy", &s->gndy);
-    adios_write( f, "T", ht->data_noghost().data() );
+    adios_write( f, "gndx", &s.gndx);
+    adios_write( f, "gndy", &s.gndy);
+    adios_write( f, "T", ht.data_noghost().data() );
     adios_close( f );
 
     MPI_Barrier( comm );
     double total_time = MPI_Wtime() - time_start;
-    uint64_t adios_totalsize = 2*sizeof(int) + 2*s->ndx*s->ndy*sizeof(double);
-    uint64_t sizeMB = adios_totalsize * s->nproc/1024/1024/1024; // size in MB
+    uint64_t adios_totalsize = 2*sizeof(int) + 2*s.ndx*s.ndy*sizeof(double);
+    uint64_t sizeMB = adios_totalsize * s.nproc/1024/1024/1024; // size in MB
     uint64_t mbs = sizeMB/total_time;
-    if (s->rank==0)
+    if (s.rank==0)
         std::cout << "Step " << step << ": " << m_outputfilename
                   << " " << sizeMB << " " << total_time << "" << mbs << std::endl;
 }

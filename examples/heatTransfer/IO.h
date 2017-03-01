@@ -16,9 +16,9 @@ class IO
 {
 
 public:
-    IO( std::shared_ptr<Settings> s, MPI_Comm comm );
+    IO( const Settings& s, MPI_Comm comm );
     ~IO();
-    void write( int step, std::shared_ptr<HeatTransfer> ht, std::shared_ptr<Settings> s, MPI_Comm comm );
+    void write( int step, const HeatTransfer& ht, const Settings& s, MPI_Comm comm );
     
 private:
     std::string m_outputfilename;

@@ -19,6 +19,11 @@ ADIOS1_DIR=/opt/adios/1.11
 #ADIOS2 LOCATION
 ADIOS2_DIR=../..
 
+# SEQUENTIAL HDF5 LOCATION
+HDF5_DIR=/opt/hdf5-1.8.17
+HDF5_INCLUDE=-I$(HDF5_DIR)/include 
+HDF5_LIB=$(HDF5_DIR)/lib/libhdf5.la
+
 #
 #   SHOULD NOT NEED TO CHANGE ANYTHING BELOW
 #
@@ -47,6 +52,9 @@ help: default
 ascii: main.cpp HeatTransfer.cpp Settings.cpp IO_ascii.cpp 
 	    $(MPICC) $(CFLAGS) -o heatTransfer_ascii $^ $(LDFLAGS)   
 
+hdf5_a: main.cpp HeatTransfer.cpp Settings.cpp IO_hdf5_a.cpp 
+	    libtool --mode=link --tag=CC $(MPICC) $(CFLAGS) $(HDF5_INCLUDE) -o heatTransfer_hdf5_a $^ $(HDF5_LIB) $(LDFLAGS)
+	    
 adios1: main.cpp HeatTransfer.cpp Settings.cpp IO_adios1.cpp 
 	    $(MPICC) $(CFLAGS) $(ADIOS1_INCLUDE) -o heatTransfer_adios1 $^ $(ADIOS1_LIB) $(LDFLAGS)  
 
@@ -54,5 +62,5 @@ adios2: main.cpp HeatTransfer.cpp Settings.cpp IO_adios2.cpp
 	    $(MPICC) $(CFLAGS) $(ADIOS2_INCLUDE) -o heatTransfer_adios2 $^ $(ADIOS2_LIB) $(LDFLAGS)  
 	
 clean:
-	rm -f heatTransfer_ascii heatTransfer_adios1 heatTransfer_adios2
+	rm -f heatTransfer_ascii heatTransfer_hdf5_a heatTransfer_adios1 heatTransfer_adios2
      

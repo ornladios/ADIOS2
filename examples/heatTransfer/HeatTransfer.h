@@ -16,7 +16,7 @@
 class HeatTransfer
 {
 public:
-    HeatTransfer( std::shared_ptr<Settings> settings ); // Create two 2D arrays with ghost cells to compute
+    HeatTransfer( const Settings& settings ); // Create two 2D arrays with ghost cells to compute
     ~HeatTransfer();
     void init(bool init_with_rank); // set up array values with either rank or real demo values
     void iterate();  // one local calculation step
@@ -24,13 +24,13 @@ public:
     void exchange( MPI_Comm comm ); // send updates to neighbors
 
     // return a single value at index i,j. 0 <= i <= ndx+2, 0 <= j <= ndy+2
-    double T( int i, int j) {return m_TCurrent[i][j];};
+    double T( int i, int j) const {return m_TCurrent[i][j];};
     // return (1D) pointer to current T data, ndx+2 * ndy+2 elements
-    const double *data() {return m_TCurrent[0];};
+    double *data() const {return m_TCurrent[0];};
     // return (1D) pointer to current T data without ghost cells, ndx*ndy elements
-    std::vector<double> data_noghost();
+    std::vector<double> data_noghost() const;
 
-    void printT(std::string message, MPI_Comm comm); // debug: print local TCurrent on stdout
+    void printT(std::string message, MPI_Comm comm) const; // debug: print local TCurrent on stdout
 
 private:
     const double edgetemp = 3.0; // temperature at the edges of the global plate
@@ -39,7 +39,7 @@ private:
     double **m_T2;       // another 2D array
     double **m_TCurrent; // pointer to T1 or T2
     double **m_TNext;    // pointer to T2 or T1
-    std::shared_ptr<Settings> m_s;
+    const Settings& m_s;
     void switchCurrentNext(); // switch the current array with the next array
 };
 

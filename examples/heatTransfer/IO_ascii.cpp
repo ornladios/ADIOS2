@@ -14,9 +14,9 @@
 static std::ofstream of;
 static std::streambuf *buf;
 
-IO::IO( std::shared_ptr<Settings> s, MPI_Comm comm )
+IO::IO( const Settings& s, MPI_Comm comm )
 {
-    m_outputfilename = s->outputfile;
+    m_outputfilename = s.outputfile;
 
     if (m_outputfilename == "cout")
     {
@@ -40,19 +40,19 @@ IO::~IO()
     }
 }
 
-void IO::write( int step, std::shared_ptr<HeatTransfer> ht, std::shared_ptr<Settings> s, MPI_Comm comm)
+void IO::write( int step, const HeatTransfer& ht, const Settings& s, MPI_Comm comm)
 {
     std::ostream out(buf);
     if( step == 0)
     {
-        out << "rank=" << s->rank
-                  << " size=" << s->ndx << "x" << s->ndy
-                  << " offsets=" << s->offsx << ":" << s->offsy
+        out << "rank=" << s.rank
+                  << " size=" << s.ndx << "x" << s.ndy
+                  << " offsets=" << s.offsx << ":" << s.offsy
                   << " step=" << step << std::endl;
-        out << " time   row   columns " << s->offsy << "..." << s->offsy+s->ndy-1 << std::endl;
+        out << " time   row   columns " << s.offsy << "..." << s.offsy+s.ndy-1 << std::endl;
         out << "        ";
-        for (int j = 1; j <= s->ndy; ++j) {
-            out <<  std::setw(9) << s->offsy+j-1;
+        for (int j = 1; j <= s.ndy; ++j) {
+            out <<  std::setw(9) << s.offsy+j-1;
         }
         out << "\n--------------------------------------------------------------\n";
     }
@@ -61,12 +61,12 @@ void IO::write( int step, std::shared_ptr<HeatTransfer> ht, std::shared_ptr<Sett
         out << std::endl;
     }
 
-    for (int i = 1; i <= s->ndx; ++i)
+    for (int i = 1; i <= s.ndx; ++i)
     {
-        out <<  std::setw(5) << step << std::setw(5) << s->offsx+i-1;
-        for (int j = 1; j <= s->ndy; ++j)
+        out <<  std::setw(5) << step << std::setw(5) << s.offsx+i-1;
+        for (int j = 1; j <= s.ndy; ++j)
         {
-            out <<  std::setw(9) << ht->T(i,j);
+            out <<  std::setw(9) << ht.T(i,j);
         }
         out << std::endl;
     }
