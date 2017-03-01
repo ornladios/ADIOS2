@@ -9,6 +9,8 @@
 #define HEATTRANSFER_H_
 
 #include <mpi.h>
+#include <vector>
+
 #include "Settings.h"
 
 class HeatTransfer
@@ -21,8 +23,10 @@ public:
     void heatEdges(); // reset the heat values at the global edge
     void exchange( MPI_Comm comm ); // send updates to neighbors
 
-    const double *data() {return m_TCurrent[0];}; // return (1D) pointer to current T data
-    const double T(int i, int j) {return m_TCurrent[i][j];}; // return current T value at i,j local coordinate
+    // return (1D) pointer to current T data, ndx+2 * ndy+2 elements
+    const double *data() {return m_TCurrent[0];};
+    // return (1D) pointer to current T data without ghost cells, ndx*ndy elements
+    std::vector<double> data_noghost();
 
     void printT(std::string message, MPI_Comm comm); // debug: print local TCurrent on stdout
 

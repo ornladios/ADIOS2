@@ -16,7 +16,7 @@ class IO
 {
 
 public:
-    IO( std::string output_basename, MPI_Comm comm );
+    IO( std::shared_ptr<Settings> s, MPI_Comm comm );
     ~IO();
     void write( int step, std::shared_ptr<HeatTransfer> ht, std::shared_ptr<Settings> s, MPI_Comm comm );
     
