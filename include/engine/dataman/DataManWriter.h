@@ -118,11 +118,18 @@ private:
         jmsg["doid"] = m_Name;
         jmsg["var"] = variable.m_Name;
         jmsg["dtype"] = GetType<T>();
+        std::cout << "variable.m_Dimensions.size() = " << variable.m_Dimensions.size() << endl;
         jmsg["putshape"] = variable.m_Dimensions;
+//        if(variable.m_GlobalDimensions.size() == 0) variable.m_GlobalDimensions = variable.m_Dimensions;
         jmsg["varshape"] = variable.m_GlobalDimensions;
+//        if(variable.m_GlobalOffsets.size() == 0) variable.m_GlobalOffsets.assign(variable.m_Dimensions.size(),0);
         jmsg["offset"] = variable.m_GlobalOffsets;
         jmsg["timestep"] = 0;
         m_Man.put(values, jmsg);
+
+        std::cout << "putshape " << variable.m_Dimensions.size() << endl;
+        std::cout << "varshape " << variable.m_GlobalDimensions.size() << endl;
+        std::cout << "offset " << variable.m_GlobalOffsets.size() << endl;
 
         std::cout << "I am hooked to the DataMan library\n";
         MPI_Barrier( m_MPIComm );
