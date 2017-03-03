@@ -34,10 +34,10 @@ LIB_NOMPI+= -ldl -lpthread
 all: mpi nompi
 
 mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
-	$(MPICC) $(CFLAGS) $(INC) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME).exe $(LIB)
+	$(MPICC) $(CFLAGS) $(INC) $(BASE_NAME).cpp -o $(BASE_NAME).exe $(LIB)
 	
 nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
-	$(CC) $(CFLAGS) $(INC) $(BASE_NAME)_nompi.cpp -o $(BASE_NAME)_nompi.exe $(LIB_NOMPI)
+	$(CC) $(CFLAGS) $(INC) -DADIOS_NOMPI $(BASE_NAME)_nompi.cpp -o $(BASE_NAME)_nompi.exe $(LIB_NOMPI)
 
 clean:
 	rm *.exe;

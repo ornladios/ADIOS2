@@ -27,13 +27,14 @@ class DataManReader : public Engine
 public:
 
     /**
-     * Constructor for single BP capsule engine, writes in BP format into a single heap capsule
-     * @param name unique name given to the engine
+     * Constructor for dataman engine Reader for WAN communications
+     * @param adios
+     * @param name
      * @param accessMode
      * @param mpiComm
      * @param method
      * @param debugMode
-     * @param hostLanguage
+     * @param cores
      */
     DataManReader( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
                    const Method& method, const bool debugMode = false, const unsigned int cores = 1 );

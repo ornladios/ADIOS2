@@ -8,22 +8,23 @@
 #ifndef BP1_H_
 #define BP1_H_
 
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <memory> //std::shared_ptr
+/// \endcond
 
-#ifdef HAVE_MPI
-  #include <mpi.h>
-#else
+#if ADIOS_NOMPI
   #include "mpidummy.h"
+#else
+  #include <mpi.h>
 #endif
 
 #include "core/Transport.h"
+
 
 namespace adios
 {
 namespace format
 {
-
 
 /**
  * Struct that tracks metadata indices in bp format
@@ -45,7 +46,11 @@ struct BP1MetadataSet
     std::size_t AttributesIndexPosition = 12; ///< initial position in bytes
     std::vector<char> AttributesIndex = std::vector<char>( 102400 ); ///< metadata attribute index, start with 1Kb
 
-    std::vector<char> MiniFooter = std::vector<char>( 28 ); ///< 56?
+    const unsigned int MiniFooterSize = 28; ///< 28 for now
+
+    //PG (relative) positions in Data buffer to be updated
+    std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative ) position, needs to be updated in every advance step or init
+    std::size_t DataVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
 };
 
 /**

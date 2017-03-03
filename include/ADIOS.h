@@ -18,10 +18,10 @@
 #include <complex>
 /// \endcond
 
-#ifdef HAVE_MPI
-  #include <mpi.h>
-#else
+#ifdef ADIOS_NOMPI
   #include "mpidummy.h"
+#else
+  #include <mpi.h>
 #endif
 
 #include "core/Transform.h"
@@ -45,11 +45,7 @@ class ADIOS
 
 public: // PUBLIC Constructors and Functions define the User Interface with ADIOS
 
-    #ifdef HAVE_MPI
-    MPI_Comm m_MPIComm = MPI_COMM_NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
-    #else
-    MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
-    #endif
+    MPI_Comm m_MPIComm = MPI_COMM_SELF; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
 
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
@@ -63,12 +59,11 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
     /**
-     * @brief Serial constructor for config file
+     * @brief Serial constructor for config file, only allowed and compiled in libadios_nompi.a
      * @param configFileName passed to m_ConfigFile
      * @param debugMode true: on throws exceptions and do additional checks, false: off (faster, but unsafe)
      */
     ADIOS( const std::string configFileName, const bool debugMode = false );
-
 
     /**
      * @brief Parallel constructor for XML config file and MPI
@@ -76,7 +71,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param mpiComm MPI communicator ...const to be discussed
      * @param debugMode true: on, false: off (faster, but unsafe)
      */
-    ADIOS( const std::string configFileName, const MPI_Comm mpiComm, const bool debugMode = false );
+    ADIOS( const std::string configFileName, MPI_Comm mpiComm, const bool debugMode = false );
 
 
     /**
@@ -84,7 +79,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param mpiComm MPI communicator passed to m_MPIComm*
      * @param debugMode true: on, false: off (faster)
      */
-    ADIOS( const MPI_Comm mpiComm, const bool debugMode = false );
+    ADIOS( MPI_Comm mpiComm, const bool debugMode = false );
 
 
     ~ADIOS( ); ///< empty, using STL containers for memory management
@@ -132,7 +127,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     /**
      * Declares a new method
      * @param name must be unique
-     * @param type supported type : "Writer" (default), "DataMan"...future: "Sirius"
+     * @param type supported type : "BPWriter/BPReader" (default), "DataMan"...future: "Sirius"
      */
     Method& DeclareMethod( const std::string methodName, const std::string type = "" );
 

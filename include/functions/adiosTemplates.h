@@ -72,22 +72,23 @@ bool IsTypeAlias( const std::string type,
  * @param size of the values array
  * @param min from values
  * @param max from values
+ * @param cores threaded version not yet implemented
  */
 template<class T> inline
 void GetMinMax( const T* values, const std::size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
 {
     min = values[0];
-    max = values[0];
+    max = min;
 
     for( std::size_t i = 1; i < size; ++i )
     {
-        if( min < values[i] )
+        if( values[i] < min )
         {
             min = values[i];
             continue;
         }
 
-        if( max > values[i] )
+        if( values[i] > max  )
             max = values[i];
     }
 }
@@ -111,13 +112,13 @@ void GetMinMax( const std::complex<T>* values, const std::size_t size, T& min, T
     {
         T norm = std::norm( values[i] );
 
-        if( min < norm )
+        if( norm < min )
         {
             min = norm;
             continue;
         }
 
-        if( max > norm )
+        if( norm > max )
         {
             max = norm;
         }

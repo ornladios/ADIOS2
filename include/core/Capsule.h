@@ -39,6 +39,7 @@ public:
      * @param type derived class type
      * @param accessMode 'w':write, 'r':read, 'a':append
      * @param rankMPI current MPI rank
+     * @param debugMode
      */
     Capsule( const std::string type, const std::string accessMode, const int rankMPI, const bool debugMode );
 

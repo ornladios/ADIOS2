@@ -31,16 +31,11 @@ void BP1::OpenRankFiles( const std::string name, const std::string accessMode, T
         baseName = name;
         directory = name + ".bp";
     }
-    CreateDirectory( directory );
+    CreateDirectory( directory ); //creates a directory and sub-directories recursively
 
     std::string fileName( directory + "/" + baseName + ".bp." + std::to_string( file.m_RankMPI ) );
-
-    if( file.m_MPIComm == MPI_COMM_SELF )
-        fileName = name;
-
     file.Open( fileName, accessMode );  // opens a file transport under name.bp.dir/name.bp.rank reserve that location fro writing
 }
-
 
 
 

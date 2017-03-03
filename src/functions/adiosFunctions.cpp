@@ -578,6 +578,7 @@ void MovePositions( const int bytes, std::vector<std::size_t>& positions ) noexc
 }
 
 
+
 bool IsLittleEndian( ) noexcept
 {
     std::uint16_t hexa = 0x1234;

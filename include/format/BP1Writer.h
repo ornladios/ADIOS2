@@ -10,7 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
-#include <cstdint>  //std::intX_t fixed size classes
+#include <cstdint>  //std::intX_t fixed size integers
 #include <algorithm> //std::count, std::copy, std::for_each
 #include <cstring> //std::memcpy
 #include <cmath>   //std::ceil
@@ -28,7 +28,6 @@ namespace adios
 {
 namespace format
 {
-
 
 
 class BP1Writer : public BP1
@@ -130,7 +129,7 @@ public:
             indexSize += 1 + 1; //id
         }
 
-        return indexSize;
+        return indexSize + 12; ///extra 12 bytes in case of attributes
         //need to add transform characteristics
     }
 
@@ -318,9 +317,12 @@ private:
         std::vector<std::size_t> metadataCharacteristicsCountPositions( metadataPositions ); //very important, can't be const as it is updated by MemcpyToBuffer
 
         std::uint8_t characteristicsCounter = 0; //used for characteristics count, characteristics length will be calculated at the end
+        //here move positions 5 bytes in data and metadata for characteristics count + length
+        MovePositions( 5, metadataPositions );
+
 
         //DIMENSIONS CHARACTERISTIC
-        const std::vector<size_t>& localDimensions = variable.m_Dimensions;
+        const std::vector<std::size_t>& localDimensions = variable.m_Dimensions;
 
         //write to metadata characteristic
         //characteristic: dimension
@@ -418,7 +420,7 @@ private:
 
         //update absolute positions with dataPositions, this is the payload offset
         for( unsigned int i = 0; i < dataAbsolutePositions.size(); ++i )
-            dataAbsolutePositions[i] += dataPositions[i];
+            dataAbsolutePositions[i] += dataPositions[i] - dataLengthPositions[i];
 
         characteristicID = characteristic_payload_offset;
         MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //variable payload offset id
@@ -549,6 +551,14 @@ private:
      * @param capsule
      */
     void FlattenMetadata( BP1MetadataSet& metadataSet, Capsule& capsule ) const noexcept; ///< sets the metadata buffer in capsule with indices and minifooter
+
+
+    /**
+     * Flattens the data and fills the pg length, vars count, vars length and attributes
+     * @param metadataSet
+     * @param capsule
+     */
+    void FlattenData( BP1MetadataSet& metadataSet, Capsule& capsule ) const noexcept;
 
 };
 

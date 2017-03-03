@@ -30,13 +30,14 @@ class DataManWriter : public Engine
 public:
 
     /**
-     * Constructor for single BP capsule engine, writes in BP format into a single heap capsule
+     * Constructor for dataman engine Writer for WAN communications
+     * @param adios
      * @param name unique name given to the engine
      * @param accessMode
      * @param mpiComm
      * @param method
      * @param debugMode
-     * @param hostLanguage
+     * @param cores
      */
     DataManWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
                    const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
@@ -44,6 +45,21 @@ public:
     ~DataManWriter( );
 
     void SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback );
+
+    void Close( const int transportIndex = -1 );
+
+private:
+
+    capsule::STLVector m_Buffer; ///< heap capsule, contains data and metadata buffers
+    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
+
+    bool m_DoRealTime = false;
+    DataManager m_Man;
+    std::function<void( const void*, std::string, std::string, std::string, Dims )> m_CallBack; ///< call back function
+
+    void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
+    void InitCapsules( );
+    void InitTransports( ); ///< from Transports
 
     void Write( Variable<char>& variable, const char* values );
     void Write( Variable<unsigned char>& variable, const unsigned char* values );
@@ -79,21 +95,6 @@ public:
     void Write( const std::string variableName, const std::complex<double>* values );
     void Write( const std::string variableName, const std::complex<long double>* values );
 
-
-    void Close( const int transportIndex = -1 );
-
-private:
-
-    capsule::STLVector m_Buffer; ///< heap capsule, contains data and metadata buffers
-    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
-
-    bool m_DoRealTime = false;
-    DataManager m_Man;
-    std::function<void( const void*, std::string, std::string, std::string, Dims )> m_CallBack; ///< call back function
-
-    void Init( );  ///< calls InitCapsules and InitTransports based on Method, called from constructor
-    void InitCapsules( );
-    void InitTransports( ); ///< from Transports
 
     /**
      * From transport Mdtm in m_Method

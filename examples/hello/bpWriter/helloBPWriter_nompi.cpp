@@ -12,7 +12,7 @@
 
 
 int main( int argc, char* argv [] )
-{
+ {
     const bool adiosDebug = true;
     adios::ADIOS adios( adiosDebug );
 
@@ -23,7 +23,7 @@ int main( int argc, char* argv [] )
     try
     {
         //Define variable and local size
-        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+        adios::Variable<double>& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
@@ -38,6 +38,7 @@ int main( int argc, char* argv [] )
 
         bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
         bpWriter->Close( );
+        //
     }
     catch( std::invalid_argument& e )
     {

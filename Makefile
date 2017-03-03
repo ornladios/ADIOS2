@@ -44,7 +44,7 @@ mpi: $(HFiles) $(OBJMPI)
     
 ./bin/mpi/%.o: %.cpp $(HFiles)
 	@( mkdir -p ./bin/mpi );
-	$(MPICC) $(CFLAGS) -DHAVE_MPI $(INC) -o $@ $<
+	$(MPICC) $(CFLAGS) $(INC) -o $@ $<
 
 nompi: $(HFiles) $(OBJNoMPI)
 	@( mkdir -p ./lib );
@@ -54,7 +54,7 @@ nompi: $(HFiles) $(OBJNoMPI)
 
 ./bin/nompi/%.o: %.cpp $(HFiles)
 	@( mkdir -p ./bin/nompi );
-	$(CC) $(CFLAGS) $(INC) -o $@ $<
+	$(CC) $(CFLAGS) $(INC) -DADIOS_NOMPI -o $@ $<
 	
 clean:
 	rm ./bin/mpi/*.o ./lib/libadios.a ./bin/nompi/*.o ./lib/libadios_nompi.a	

@@ -16,10 +16,10 @@
 #include <memory> //std::shared_ptr
 /// \endcond
 
-#ifdef HAVE_MPI
-  #include <mpi.h>
-#else
+#ifdef ADIOS_NOMPI
   #include "mpidummy.h"
+#else
+  #include <mpi.h>
 #endif
 
 #include "core/Transform.h"

@@ -16,7 +16,7 @@ namespace adios
 
 
 Engine::Engine( ADIOS& adios, const std::string engineType, const std::string name, const std::string accessMode,
-                const MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores,
+                MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores,
                 const std::string endMessage ):
     m_MPIComm{ mpiComm },
     m_EngineType{ engineType },
@@ -28,6 +28,13 @@ Engine::Engine( ADIOS& adios, const std::string engineType, const std::string na
     m_Cores{ cores },
     m_EndMessage{ endMessage }
 {
+    if( m_DebugMode == true )
+    {
+        if( m_MPIComm == MPI_COMM_NULL )
+            throw std::ios_base::failure( "ERROR: engine communicator is MPI_COMM_NULL,"
+                                          " in call to ADIOS Open or Constructor\n" );
+    }
+
     MPI_Comm_rank( m_MPIComm, &m_RankMPI );
     MPI_Comm_size( m_MPIComm, &m_SizeMPI );
 }

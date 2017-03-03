@@ -1,5 +1,5 @@
 /*
- * Capsule.h
+ * Engine.h
  *
  *  Created on: Nov 7, 2016
  *      Author: wfg
@@ -18,10 +18,10 @@
 #include <complex> //std::complex
 /// \endcond
 
-#ifdef HAVE_MPI
-  #include <mpi.h>
-#else
+#ifdef ADIOS_NOMPI
   #include "mpidummy.h"
+#else
+  #include <mpi.h>
 #endif
 
 #include "ADIOS.h"
@@ -44,11 +44,7 @@ class Engine
 
 public:
 
-    #ifdef HAVE_MPI
-    MPI_Comm m_MPIComm = MPI_COMM_NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
-    #else
-    MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
-    #endif
+    MPI_Comm m_MPIComm = MPI_COMM_SELF;
 
     const std::string m_EngineType; ///< from derived class
     const std::string m_Name; ///< name used for this engine
@@ -58,10 +54,11 @@ public:
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
-    const std::string m_HostLanguage = "C++";
+    const std::string m_HostLanguage = "C++"; ///< default host language
 
     /**
      * Unique constructor
+     * @param adios
      * @param engineType
      * @param name
      * @param accessMode
@@ -80,7 +77,7 @@ public:
 
     /**
      * Needed for DataMan Engine
-     * @param callback
+     * @param callback function passed from the user
      */
     virtual void SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback );
 
@@ -114,66 +111,24 @@ public:
      * @param values
      */
     template< class T >
-    void Write( Variable<T>& variable, const T& values )
+    void Write( Variable<T>& variable, const T values )
     {
-        Write( variable, &values );
+        const T val = values;
+        Write( variable, &val );
     }
 
     /**
-     * Single value version using string as variable handlers
+     * Single value version using string as variable handlers, allows rvalues to be passed
      * @param variableName
      * @param values
      */
     template< class T >
-    void Write( const std::string variableName, const T& values )
+    void Write( const std::string variableName, const T values )
     {
-        Write( variableName, &values );
+        const T val = values;
+        Write( variableName, &val );
     }
 
-    virtual void Write( Variable<char>& variable,                      const char* values );
-    virtual void Write( Variable<unsigned char>& variable,             const unsigned char* values );
-    virtual void Write( Variable<short>& variable,                     const short* values );
-    virtual void Write( Variable<unsigned short>& variable,            const unsigned short* values );
-    virtual void Write( Variable<int>& variable,                       const int* values );
-    virtual void Write( Variable<unsigned int>& variable,              const unsigned int* values );
-    virtual void Write( Variable<long int>& variable,                  const long int* values );
-    virtual void Write( Variable<unsigned long int>& variable,         const unsigned long int* values );
-    virtual void Write( Variable<long long int>& variable,             const long long int* values );
-    virtual void Write( Variable<unsigned long long int>& variable,    const unsigned long long int* values );
-    virtual void Write( Variable<float>& variable,                     const float* values );
-    virtual void Write( Variable<double>& variable,                    const double* values );
-    virtual void Write( Variable<long double>& variable,               const long double* values );
-    virtual void Write( Variable<std::complex<float>>& variable,       const std::complex<float>* values );
-    virtual void Write( Variable<std::complex<double>>& variable,      const std::complex<double>* values );
-    virtual void Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values );
-    virtual void Write( VariableCompound& variable,                    const void* values );
-
-
-    /**
-     * @brief Write functions can be overridden by derived classes. Base class behavior is to:
-     * 1) Write to Variable values (m_Values) using the pointer to default group *m_Group set with SetDefaultGroup function
-     * 2) Transform the data
-     * 3) Write to all capsules -> data and metadata
-     * @param variableName
-     * @param values coming from user app
-     */
-    virtual void Write( const std::string variableName, const char* values );
-    virtual void Write( const std::string variableName, const unsigned char* values );
-    virtual void Write( const std::string variableName, const short* values );
-    virtual void Write( const std::string variableName, const unsigned short* values );
-    virtual void Write( const std::string variableName, const int* values );
-    virtual void Write( const std::string variableName, const unsigned int* values );
-    virtual void Write( const std::string variableName, const long int* values );
-    virtual void Write( const std::string variableName, const unsigned long int* values );
-    virtual void Write( const std::string variableName, const long long int* values );
-    virtual void Write( const std::string variableName, const unsigned long long int* values );
-    virtual void Write( const std::string variableName, const float* values );
-    virtual void Write( const std::string variableName, const double* values );
-    virtual void Write( const std::string variableName, const long double* values );
-    virtual void Write( const std::string variableName, const std::complex<float>* values );
-    virtual void Write( const std::string variableName, const std::complex<double>* values );
-    virtual void Write( const std::string variableName, const std::complex<long double>* values );
-    virtual void Write( const std::string variableName, const void* values );
 
     /**
      * Indicates that a new step is going to be written as new variables come in.
@@ -225,6 +180,53 @@ protected:
     virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
     virtual void InitCapsules( ); ///< Initialize transports from Method, called from Init in constructor.
     virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor.
+
+
+    virtual void Write( Variable<char>& variable,                      const char* values );
+    virtual void Write( Variable<unsigned char>& variable,             const unsigned char* values );
+    virtual void Write( Variable<short>& variable,                     const short* values );
+    virtual void Write( Variable<unsigned short>& variable,            const unsigned short* values );
+    virtual void Write( Variable<int>& variable,                       const int* values );
+    virtual void Write( Variable<unsigned int>& variable,              const unsigned int* values );
+    virtual void Write( Variable<long int>& variable,                  const long int* values );
+    virtual void Write( Variable<unsigned long int>& variable,         const unsigned long int* values );
+    virtual void Write( Variable<long long int>& variable,             const long long int* values );
+    virtual void Write( Variable<unsigned long long int>& variable,    const unsigned long long int* values );
+    virtual void Write( Variable<float>& variable,                     const float* values );
+    virtual void Write( Variable<double>& variable,                    const double* values );
+    virtual void Write( Variable<long double>& variable,               const long double* values );
+    virtual void Write( Variable<std::complex<float>>& variable,       const std::complex<float>* values );
+    virtual void Write( Variable<std::complex<double>>& variable,      const std::complex<double>* values );
+    virtual void Write( Variable<std::complex<long double>>& variable, const std::complex<long double>* values );
+    virtual void Write( VariableCompound& variable,                    const void* values );
+
+
+    /**
+     * @brief Write functions can be overridden by derived classes. Base class behavior is to:
+     * 1) Write to Variable values (m_Values) using the pointer to default group *m_Group set with SetDefaultGroup function
+     * 2) Transform the data
+     * 3) Write to all capsules -> data and metadata
+     * @param variableName
+     * @param values coming from user app
+     */
+    virtual void Write( const std::string variableName, const char* values );
+    virtual void Write( const std::string variableName, const unsigned char* values );
+    virtual void Write( const std::string variableName, const short* values );
+    virtual void Write( const std::string variableName, const unsigned short* values );
+    virtual void Write( const std::string variableName, const int* values );
+    virtual void Write( const std::string variableName, const unsigned int* values );
+    virtual void Write( const std::string variableName, const long int* values );
+    virtual void Write( const std::string variableName, const unsigned long int* values );
+    virtual void Write( const std::string variableName, const long long int* values );
+    virtual void Write( const std::string variableName, const unsigned long long int* values );
+    virtual void Write( const std::string variableName, const float* values );
+    virtual void Write( const std::string variableName, const double* values );
+    virtual void Write( const std::string variableName, const long double* values );
+    virtual void Write( const std::string variableName, const std::complex<float>* values );
+    virtual void Write( const std::string variableName, const std::complex<double>* values );
+    virtual void Write( const std::string variableName, const std::complex<long double>* values );
+    virtual void Write( const std::string variableName, const void* values );
+
 
     /**
      * Used to verify parameters in m_Method containers

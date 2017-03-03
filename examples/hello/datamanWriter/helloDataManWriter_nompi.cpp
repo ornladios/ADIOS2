@@ -31,14 +31,16 @@ int main( int argc, char* argv [] )
     {
         //Define variable and local size
         //Define variable and local size
-        auto& ioMyFloats = adios.DefineVariable<float>( "myfloats", adios::Dims{Nx} );
-        auto& ioMyFloat = adios.DefineVariable<float>( "myfloat", adios::Dims{1} );
+        adios::ADIOS adios( "config.xml", adiosDebug );
+
+        auto ioMyFloats = adios.DefineVariable<float>( "myfloats", adios::Dims{Nx} );
+        auto ioMyFloat = adios.DefineVariable<float>( "myfloat", adios::Dims{1} );
 //        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
 //        auto& ioMyCFloats = adios.DefineVariable<std::complex<float>>( "myCFloats", {3} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManWriter" ); //default method type is Writer
-        datamanSettings.SetParameters( "real_time=yes", "method_type=stream", "method=dump", "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12306", "remote_port=12307" );
+        datamanSettings.SetParameters( "real_time=yes", "method_type=stream", "method=dump", "application=XGC1", "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12306", "remote_port=12307" );
 //        datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
         //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
 
@@ -49,8 +51,9 @@ int main( int argc, char* argv [] )
         if( datamanWriter == nullptr )
             throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
 
-        datamanWriter->Write( ioMyFloats, myFloats.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-        datamanWriter->Write( ioMyFloat, (float) 1.12 ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        datamanWriter->Write<float>( ioMyFloats, myFloats.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        const float num = 1.12;
+        datamanWriter->Write<float>( ioMyFloat, &num ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
 //        datamanWriter->Write( ioMyCFloats, myCFloats.data() );
         datamanWriter->Close( );
     }

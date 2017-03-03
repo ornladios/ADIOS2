@@ -19,7 +19,7 @@ namespace adios
 {
 
 
-BPWriter::BPWriter( ADIOS& adios, const std::string name, const std::string accessMode, const MPI_Comm mpiComm,
+BPWriter::BPWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
                     const Method& method, const bool debugMode, const unsigned int cores ):
     Engine( adios, "BPWriter", name, accessMode, mpiComm, method, debugMode, cores, " BPWriter constructor (or call to ADIOS Open).\n" ),
     m_Buffer{ capsule::STLVector( accessMode, m_RankMPI, m_DebugMode ) },
@@ -269,7 +269,6 @@ void BPWriter::WriteProcessGroupIndex( )
     m_BP1Writer.WriteProcessGroupIndex( isFortran, name, processID, timeStepName, timeStep, m_Transports,
                                         m_Buffer, m_MetadataSet );
 
-    m_BufferVariableCountPosition = m_Buffer.m_DataPosition; //fixed for every new PG
 }
 
 

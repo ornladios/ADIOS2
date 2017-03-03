@@ -13,10 +13,10 @@
 #include <vector>
 /// \endcond
 
-#ifdef HAVE_MPI
-    #include <mpi.h>
+#ifdef ADIOS_NOMPI
+  #include "mpidummy.h"
 #else
-    #include "mpidummy.h"
+  #include <mpi.h>
 #endif
 
 
@@ -34,11 +34,7 @@ public:
     std::string m_AccessMode; ///< from Open
     bool m_IsOpen = false;
 
-    #ifdef HAVE_MPI
-    MPI_Comm m_MPIComm = NULL; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
-    #else
-    MPI_Comm m_MPIComm = 0; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
-    #endif
+    MPI_Comm m_MPIComm = MPI_COMM_SELF;
 
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size

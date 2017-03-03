@@ -8,12 +8,12 @@
 #ifndef ADIOS_C_H_
 #define ADIOS_C_H_
 
-#ifdef HAVE_MPI
-  #include <mpi.h>
-#else
-  #include "../mpidummy.h"
+#ifdef ADIOS_NOMPI
+  #include "mpidummy.h"
   using adios::MPI_Comm_rank;
   using adios::MPI_Comm;
+#else
+  #include <mpi.h>
 #endif
 
 
@@ -29,13 +29,44 @@ extern "C"
 {
 #endif
 
+/**
+ * ADIOS Init
+ * @param mpicomm MPI communicator from user app
+ */
+void adios_init( MPI_Comm mpiComm );
 
-void adios_init( const char* xmlConfigFile, const MPI_Comm mpicomm );
-void adios_init_debug( const char* xmlConfigFile, const MPI_Comm mpicomm );
+/**
+ * ADIOS Init in debug mode: extra checks
+ * @param mpicomm MPI communicator from user app
+ */
+void adios_init_debug( MPI_Comm mpiComm );
 
-int adios_open( const char* fileName, const char* accessMode, MPI_Comm );
-void adios_write(const char* groupName, const char* variableName, const void* values  );
+/**
+ * Sequential version (nompi)
+ */
+void adios_init_nompi( );
 
+
+/**
+ *
+ * @param fileName
+ * @param accessMode
+ * @param mpiComm
+ * @return engine handler
+ */
+int adios_open( const char* fileName, const char* accessMode, MPI_Comm mpiComm );
+
+/**
+ *
+ * @param variableName
+ * @param values
+ */
+void adios_write( const char* variableName, const void* values  );
+
+/**
+ *
+ * @param handler
+ */
 void adios_close( const int handler );
 
 void adios_finalize( const ADIOS* adiosC ); // deallocate ADIOS pointer

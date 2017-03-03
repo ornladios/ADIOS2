@@ -73,5 +73,4 @@ private:
 
 } //end namespace
 
-
 #endif /* METHOD_H_ */

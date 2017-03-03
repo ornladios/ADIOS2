@@ -32,7 +32,7 @@ int main( int argc, char* argv [] )
     try
     {
         //Define variable and local size
-        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+        auto ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SingleFile" ); //default method type is BPWriter
@@ -45,7 +45,7 @@ int main( int argc, char* argv [] )
         if( bpWriter == nullptr )
             throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );
 
-        bpWriter->Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
         bpWriter->Close( );
     }
     catch( std::invalid_argument& e )

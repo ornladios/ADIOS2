@@ -36,6 +36,35 @@ public:
 
     ~BPWriter( );
 
+
+
+    void Advance( );
+
+    /**
+     * Closes a single transport or all transports
+     * @param transportIndex, if -1 (default) closes all transports, otherwise it closes a transport in m_Transport[transportIndex]. In debug mode the latter is bounds-checked.
+     */
+    void Close( const int transportIndex = -1 );
+
+private:
+
+    capsule::STLVector m_Buffer; ///< heap capsule using STL std::vector<char>
+
+    bool m_IsFirstClose = true; ///< set to false after first Close is reached so metadata doesn't have to be accommodated for a subsequent Close
+    std::size_t m_MaxBufferSize; ///< maximum allowed memory to be allocated
+    float m_GrowthFactor = 1.5; ///< capsule memory growth factor, new_memory = m_GrowthFactor * current_memory
+
+    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
+    format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
+
+    bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
+
+    void Init( );
+    void InitTransports( );
+    void InitProcessGroup( );
+
+    void WriteProcessGroupIndex( );
+
     void Write( Variable<char>& variable, const char* values );
     void Write( Variable<unsigned char>& variable, const unsigned char* values );
     void Write( Variable<short>& variable, const short* values );
@@ -72,34 +101,6 @@ public:
     void Write( const std::string variableName, const std::complex<long double>* values );
     void Write( const std::string variableName, const void* values );
 
-    void Advance( );
-
-    /**
-     * Closes a single transport or all transports
-     * @param transportIndex, if -1 (default) closes all transports, otherwise it closes a transport in m_Transport[transportIndex]. In debug mode the latter is bounds-checked.
-     */
-    void Close( const int transportIndex = -1 );
-
-private:
-
-    capsule::STLVector m_Buffer; ///< heap capsule using STL std::vector<char>
-    std::size_t m_BufferVariableCountPosition = 0; ///< needs to be updated in every advance step
-    bool m_IsFirstClose = true; ///< set to false after first Close is reached so metadata doesn't have to be accommodated for a subsequent Close
-    std::size_t m_MaxBufferSize; ///< maximum allowed memory to be allocated
-    float m_GrowthFactor = 1.5; ///< capsule memory growth factor, new_memory = m_GrowthFactor * current_memory
-
-    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
-    format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
-
-    bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
-
-    void Init( );
-    void InitTransports( );
-    void InitProcessGroup( );
-
-
-    void WriteProcessGroupIndex( );
-
 
     /**
      * Common function for primitive (including std::complex) writes
@@ -135,8 +136,8 @@ private:
         else //Write data to buffer
         {
             m_BP1Writer.WriteVariablePayload( variable, m_Buffer, m_Cores );
-
         }
+
         variable.m_AppValues = nullptr; //setting pointer to null as not needed after write
     }
 
