@@ -58,40 +58,15 @@ public:
         m_Transforms.emplace_back( transform, BuildParametersMap( parameters, m_DebugMode ) ); //need to check
     }
 
-    void Monitor( std::ostream& logInfo ) const noexcept
-    {
-        logInfo << "Variable: " << m_Name << "\n";
-        logInfo << "Type: " << m_Type << "\n";
-        logInfo << "Size: " << TotalSize() << " elements\n";
-        logInfo << "Payload: " << PayLoadSize() << " bytes\n";
+    /** Return the global dimensions of the variable
+     *  @return vector of std::size_t values
+     */
+    std::vector<std::size_t> GetGlobalDimensions();
 
-        if( m_AppValues != nullptr )
-        {
-            logInfo << "Values (first 10 or max_size): \n";
-            std::size_t size = TotalSize();
-            if( size > 10 )
-                size = 10;
-
-            if( m_Type.find("complex") != m_Type.npos ) //it's complex
-            {
-                for( unsigned int i = 0; i < size; ++i  )
-                {
-                    logInfo << "( " << std::real( m_AppValues[i] ) << " , " << std::imag( m_AppValues[i] ) << " )  ";
-                }
-            }
-            else
-            {
-                for( unsigned int i = 0; i < size; ++i  )
-                {
-                    logInfo << m_AppValues[i] << " ";
-                }
-            }
-
-            logInfo << " ...";
-        }
-        logInfo << "\n";
-    }
-
+    /** Return the number of steps available for the variable
+     *  @return Number of steps
+     */
+    int GetSteps();
 
 };
 
