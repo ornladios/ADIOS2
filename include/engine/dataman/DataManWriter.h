@@ -54,6 +54,7 @@ private:
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
 
     bool m_DoRealTime = false;
+    bool m_DoMonitor = false;
     DataManager m_Man;
     std::function<void( const void*, std::string, std::string, std::string, Dims )> m_CallBack; ///< call back function
 
@@ -95,7 +96,6 @@ private:
     void Write( const std::string variableName, const std::complex<double>* values );
     void Write( const std::string variableName, const std::complex<long double>* values );
 
-
     /**
      * From transport Mdtm in m_Method
      * @param parameter must be an accepted parameter
@@ -119,36 +119,35 @@ private:
         jmsg["doid"] = m_Name;
         jmsg["var"] = variable.m_Name;
         jmsg["dtype"] = GetType<T>();
-        std::cout << "variable.m_Dimensions.size() = " << variable.m_Dimensions.size() << endl;
         jmsg["putshape"] = variable.m_Dimensions;
-//        if(variable.m_GlobalDimensions.size() == 0) variable.m_GlobalDimensions = variable.m_Dimensions;
+        if(variable.m_GlobalDimensions.size() == 0) variable.m_GlobalDimensions = variable.m_Dimensions;
         jmsg["varshape"] = variable.m_GlobalDimensions;
-//        if(variable.m_GlobalOffsets.size() == 0) variable.m_GlobalOffsets.assign(variable.m_Dimensions.size(),0);
+        if(variable.m_GlobalOffsets.size() == 0) variable.m_GlobalOffsets.assign(variable.m_Dimensions.size(),0);
         jmsg["offset"] = variable.m_GlobalOffsets;
         jmsg["timestep"] = 0;
         m_Man.put(values, jmsg);
 
-        std::cout << "putshape " << variable.m_Dimensions.size() << endl;
-        std::cout << "varshape " << variable.m_GlobalDimensions.size() << endl;
-        std::cout << "offset " << variable.m_GlobalOffsets.size() << endl;
-
-        std::cout << "I am hooked to the DataMan library\n";
-        MPI_Barrier( m_MPIComm );
-
-        for( int i = 0; i < m_SizeMPI; ++i )
-        {
-            if( i == m_RankMPI )
+        if(m_DoMonitor){
+            MPI_Barrier( m_MPIComm );
+            std::cout << "I am hooked to the DataMan library\n";
+            std::cout << "putshape " << variable.m_Dimensions.size() << endl;
+            std::cout << "varshape " << variable.m_GlobalDimensions.size() << endl;
+            std::cout << "offset " << variable.m_GlobalOffsets.size() << endl;
+            for( int i = 0; i < m_SizeMPI; ++i )
             {
-                std::cout << "Rank: " << m_RankMPI << "\n";
-                variable.Monitor( std::cout );
-                std::cout << std::endl;
+                if( i == m_RankMPI )
+                {
+                    std::cout << "Rank: " << m_RankMPI << "\n";
+                    variable.Monitor( std::cout );
+                    std::cout << std::endl;
+                }
+                else
+                {
+                    sleep( 1 );
+                }
             }
-            else
-            {
-                sleep( 1 );
-            }
+            MPI_Barrier( m_MPIComm );
         }
-        MPI_Barrier( m_MPIComm );
     }
 
 };
