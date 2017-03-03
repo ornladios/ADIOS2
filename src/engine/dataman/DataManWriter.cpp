@@ -165,6 +165,13 @@ void DataManWriter::Init( )
             m_DoRealTime = true;
     }
 
+    itRealTime = m_Method.m_Parameters.find( "monitoring" );
+    if( itRealTime != m_Method.m_Parameters.end() )
+    {
+        if( itRealTime->second == "yes" || itRealTime->second == "true" )
+            m_DoMonitor = true;
+    }
+
     if(m_DoRealTime)
     {
         /**

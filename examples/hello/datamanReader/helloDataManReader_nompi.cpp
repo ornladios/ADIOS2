@@ -19,7 +19,7 @@ void getcb( const void *data, std::string doid, std::string var, std::string dty
 
     std::size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1, std::multiplies<std::size_t>());
 
-    for (int i=0; i<varsize; i++)
+    for (size_t i=0; i<varsize; i++)
         std::cout << ((float*)data)[i] << " ";
     std::cout << std::endl;
 }

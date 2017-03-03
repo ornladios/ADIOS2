@@ -9,7 +9,7 @@ DATAMAN_LOCATION=/Users/w4g/Dropbox/lib/DataMan
 MPICOMPILER=mpic++
 
 if [ "$(uname)" == "Darwin" ]; then
-	CCOMPILER=clang++
+	CCOMPILER=g++
 	export DYLD_LIBRARY_PATH=$DATAMAN_LOCATION/lib:$DYLD_LIBRARY_PATH
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 	CCOMPILER=g++
@@ -43,7 +43,7 @@ echo "#################################################################"
 echo "#################################################################"
 echo "DataMan reader"
 echo "#################################################################"
-./examples/hello/datamanReader/helloDataManReader_nompi.exe
+#./examples/hello/datamanReader/helloDataManReader_nompi.exe
 
 echo
 echo
