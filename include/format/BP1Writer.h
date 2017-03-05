@@ -283,8 +283,8 @@ private:
                                    std::vector<unsigned int> variablesCount ) const noexcept
     {
         //capture initial positions
-        const std::vector<std::size_t> metadataLengthPositions( metadataPositions );
-        const std::vector<std::size_t> dataLengthPositions( dataPositions );
+        std::vector<std::size_t> metadataLengthPositions( metadataPositions );
+        std::vector<std::size_t> dataLengthPositions( dataPositions );
 
         MovePositions( 4, metadataPositions ); //length of var, will come at the end from this offset
         MovePositions( 8, dataPositions ); //length of var, will come at the end from this offset
@@ -419,8 +419,13 @@ private:
         ++characteristicsCounter;
 
         //update absolute positions with dataPositions, this is the payload offset
+        std::vector<std::uint64_t> varLengths( dataPositions.size() );
         for( unsigned int i = 0; i < dataAbsolutePositions.size(); ++i )
-            dataAbsolutePositions[i] += dataPositions[i] - dataLengthPositions[i];
+        {
+        	varLengths[i] = dataPositions[i] - dataLengthPositions[i];
+        	dataAbsolutePositions[i] += varLengths[i];
+        	varLengths[i] += variable.PayLoadSize() - 8;
+        }
 
         characteristicID = characteristic_payload_offset;
         MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //variable payload offset id
@@ -434,8 +439,17 @@ private:
 
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, &characteristicsCounter, 1 );
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, metadataCharacteristicsLengths, 4 ); //vector to vector
-        MovePositions( -5, metadataCharacteristicsCountPositions ); //back to original position
-    } //end of function
+
+        //Back to var entry length
+        std::vector<std::uint32_t> metadataVarEntryLengths( metadataPositions.size() );
+        for( unsigned int i = 0; i < metadataPositions.size(); ++i )
+        	metadataVarEntryLengths[i] = metadataPositions[i] - metadataLengthPositions[i];
+
+        MemcpyToBuffers( metadataBuffers, metadataLengthPositions, metadataVarEntryLengths, 4 ); //vector to vector
+
+        //Need to add length of var including payload size
+        MemcpyToBuffers( dataBuffers, dataLengthPositions, varLengths, 8 );
+    }
 
 
     /**

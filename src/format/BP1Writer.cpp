@@ -50,7 +50,7 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
     metadataSet.PGIndexPosition = metadataPositions[0];
 
     metadataSet.DataVarsCountPosition = dataPositions[0];
-    ++metadataSet.PGCount;
+    metadataSet.PGCount += 1;
 
 }
 
@@ -97,6 +97,8 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
         capsules[i]->m_DataPosition = dataPositions[i];
         capsules[i]->m_DataAbsolutePosition = dataAbsolutePositions[i];
         metadataSets[i].DataVarsCountPosition = dataPositions[i];
+
+        metadataSets[i].PGCount += 1;
     }
 }
 
@@ -112,7 +114,7 @@ void BP1Writer::Close( BP1MetadataSet& metadataSet, Capsule& capsule, Transport&
     }
     //implementing N-to-N for now, no aggregation
     transport.Write( capsule.GetData(), capsule.m_DataPosition );
-    transport.Write( capsule.GetMetadata(), capsule.GetMetadataSize() ); //we can improve this by copying metadata to data
+    transport.Write( capsule.GetMetadata(), capsule.m_MetadataPosition ); //we can improve this by copying metadata to data
 
     if( haveMetadata == true )
     {
@@ -133,7 +135,7 @@ void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::s
                                               std::vector<char*>& metadataBuffers,
                                               std::vector<std::size_t>& metadataPositions ) const noexcept
 {
-    const std::vector<std::size_t> initialDataPositions( dataPositions );
+	const std::vector<std::size_t> pgLengthDataPositions( dataPositions );
     std::vector<std::size_t> pgLengthPositions( metadataPositions ); //get length of pg position
 
     MovePositions( 2, metadataPositions ); //skip length of pg in metadata, 2 bytes, would write at the end
@@ -173,11 +175,18 @@ void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::s
 
     //write to metadata length position the pgIndex length
     MemcpyToBuffers( metadataBuffers, pgLengthPositions, metadataIndexLengths, 2 );
-    //MovePositions( -2, pgLengthPositions ); //back to original position, not needed for now
+
+    //here write method
+    const std::uint8_t methodsSize = methodIDs.size();
+    MemcpyToBuffers( dataBuffers, dataPositions, &methodsSize, 1 );
+    MemcpyToBuffers( dataBuffers, dataPositions, &methodsSize, 2 ); //assume one byte for methodID for now
+
+    for( auto& methodID : methodIDs )
+    	MemcpyToBuffers( dataBuffers, dataPositions, &methodID, 1 ); //method ID
 
     //dataAbsolutePositions need to be updated
     for( unsigned int i = 0; i < dataPositions.size(); ++i )
-        dataAbsolutePositions[i] += dataPositions[i] - initialDataPositions[i];
+        dataAbsolutePositions[i] += dataPositions[i] - pgLengthDataPositions[i];
 }
 
 //PRIVATE FUNCTIONS
@@ -249,7 +258,7 @@ void BP1Writer::FlattenData( BP1MetadataSet& metadataSet, Capsule& capsule ) con
 {
     //Finish writing pg group length and, vars count and length in Data
     char* data = capsule.GetData();
-    const std::uint64_t dataPGLength = capsule.m_DataPosition - metadataSet.DataPGLengthPosition - 8; //without record itself
+    const std::uint64_t dataPGLength = capsule.m_DataPosition - metadataSet.DataPGLengthPosition - 8 + 12; //without record itself, 12 due to empty attributes
     std::memcpy( &data[metadataSet.DataPGLengthPosition], &dataPGLength, 8 );
 
     //vars count
@@ -261,58 +270,64 @@ void BP1Writer::FlattenData( BP1MetadataSet& metadataSet, Capsule& capsule ) con
 
     //here add empty attributes
     capsule.m_DataPosition += 12;
+    capsule.m_DataAbsolutePosition += 12;
 }
 
 
 void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, Capsule& capsule ) const noexcept
 {
-    //Finish writing metadata counts and lengths (IndexPosition)
-    const std::size_t pgLength = metadataSet.PGIndexPosition - 16; //without record itself
-    std::memcpy( &metadataSet.PGIndex[0], &metadataSet.PGCount, 8 );
-    std::memcpy( &metadataSet.PGIndex[8], &pgLength, 8 );
+	//Finish writing metadata counts and lengths (IndexPosition)
+    const std::uint64_t pgIndexCount = metadataSet.PGCount;
+    const std::uint64_t pgIndexLength = metadataSet.PGIndexPosition - 16; //without record itself
+    std::size_t pgIndexPosition = 0;
+    MemcpyToBuffer( metadataSet.PGIndex.data(), pgIndexPosition, &pgIndexCount, 8 );
+    MemcpyToBuffer( metadataSet.PGIndex.data(), pgIndexPosition, &pgIndexLength, 8 );
 
-    const std::size_t varsIndexLength = metadataSet.VarsIndexPosition - 12; //without record itself
-    std::memcpy( &metadataSet.VarsIndex[0], &metadataSet.VarsCount, 4 );
-    std::memcpy( &metadataSet.VarsIndex[4], &varsIndexLength, 8 );
+    const std::uint32_t varsIndexCount = metadataSet.VarsCount;
+    const std::uint64_t varsIndexLength = metadataSet.VarsIndexPosition - 12; //without record itself
+    std::size_t varsIndexPosition = 0;
+    MemcpyToBuffer( metadataSet.VarsIndex.data(), varsIndexPosition, &varsIndexCount, 4 );
+    MemcpyToBuffer( metadataSet.VarsIndex.data(), varsIndexPosition, &varsIndexLength, 8 );
 
-    const std::size_t attributesIndexLength = metadataSet.AttributesIndexPosition - 12; //without record itself
-    std::memcpy( &metadataSet.AttributesIndex[0], &metadataSet.AttributesCount, 4 );
-    std::memcpy( &metadataSet.AttributesIndex[4], &attributesIndexLength, 8 );
+    const std::uint32_t attributesIndexCount = metadataSet.AttributesCount;
+    const std::uint64_t attributesIndexLength = metadataSet.AttributesIndexPosition - 12; //without record itself
+    std::size_t attributesIndexPosition = 0;
+    MemcpyToBuffer( metadataSet.AttributesIndex.data(), attributesIndexPosition, &attributesIndexCount, 4 );
+    MemcpyToBuffer( metadataSet.AttributesIndex.data(), attributesIndexPosition, &attributesIndexLength, 8 );
 
-    const std::size_t metadataSize = pgLength + varsIndexLength + attributesIndexLength + metadataSet.MiniFooterSize + 40;
-
+    const std::size_t metadataSize = pgIndexLength + varsIndexLength + attributesIndexLength + metadataSet.MiniFooterSize + 40;
     capsule.ResizeMetadata( metadataSize );
     char* metadata = capsule.GetMetadata();
 
-    std::memcpy( &metadata[0], metadataSet.PGIndex.data(), pgLength );
-    std::memcpy( &metadata[pgLength], metadataSet.VarsIndex.data(), varsIndexLength );
-    std::memcpy( &metadata[pgLength+varsIndexLength], metadataSet.AttributesIndex.data(), attributesIndexLength );
+    std::size_t position = 0;
+    MemcpyToBuffer( metadata, position, metadataSet.PGIndex.data(), metadataSet.PGIndexPosition );
+    MemcpyToBuffer( metadata, position, metadataSet.VarsIndex.data(), metadataSet.VarsIndexPosition );
+    MemcpyToBuffer( metadata, position, metadataSet.AttributesIndex.data(), metadataSet.AttributesIndexPosition );
 
     //getting absolute offsets, minifooter is 28 bytes for now
     const std::uint64_t offsetPGIndex = capsule.m_DataAbsolutePosition;
-    const std::uint64_t offsetVarsIndex = offsetPGIndex + pgLength;
-    const std::uint64_t offsetAttributeIndex = offsetVarsIndex + varsIndexLength;
-    std::size_t position = pgLength + varsIndexLength + attributesIndexLength; //adding 28 to reach 56 bytes?
+    MemcpyToBuffer( metadata, position, &offsetPGIndex, 8 );
 
-    //offsets
-    std::memcpy( &metadata[position], &offsetPGIndex, 8 );
-    std::memcpy( &metadata[position+8], &offsetVarsIndex, 8 );
-    std::memcpy( &metadata[position+16], &offsetAttributeIndex, 8 );
+    const std::uint64_t offsetVarsIndex = offsetPGIndex + metadataSet.PGIndexPosition;
+    MemcpyToBuffer( metadata, position, &offsetVarsIndex, 8 );
 
-    position += 24; //position to version record
-    if( IsLittleEndian() == true )//little endian machine
+    const std::uint64_t offsetAttributeIndex = offsetVarsIndex + metadataSet.VarsIndexPosition;
+    MemcpyToBuffer( metadata, position, &offsetAttributeIndex, 8 );
+
+    //version
+    if( IsLittleEndian( ) )
     {
-        constexpr std::uint8_t littleEndian = 0;
-        std::memcpy( &metadata[position], &littleEndian, 1 );
+    	const std::uint8_t endian = 0;
+    	MemcpyToBuffer( metadata, position, &endian, 1 );
+    	position += 2;
+    	MemcpyToBuffer( metadata, position, &m_Version, 1 );
     }
-    else //big endian
+    else
     {
-        constexpr std::uint8_t bigEndian = 1;
-        std::memcpy( &metadata[position], &bigEndian, 1 );
+
     }
-    position += 3;
-    std::memcpy( &metadata[position], &m_Version, 1 );
-    capsule.m_MetadataPosition = position + 1;
+
+    capsule.m_MetadataPosition = position;
 }
 
 

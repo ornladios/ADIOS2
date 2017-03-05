@@ -212,6 +212,14 @@ void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& pos
 }
 
 
+template< class T >
+void MemcpyToBuffer( char* buffer, std::size_t& position, const T* source, std::size_t size ) noexcept
+{
+    std::memcpy( &buffer[position], source, size );
+    position += size;
+}
+
+
 
 } //end namespace
 
