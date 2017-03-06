@@ -320,7 +320,6 @@ private:
         //here move positions 5 bytes in data and metadata for characteristics count + length
         MovePositions( 5, metadataPositions );
 
-
         //DIMENSIONS CHARACTERISTIC
         const std::vector<std::size_t>& localDimensions = variable.m_Dimensions;
 
@@ -336,6 +335,7 @@ private:
         //write in data if it's a dimension variable (scalar) y or n
         const char dimensionYorN = ( variable.m_IsDimension ) ? 'y' : 'n';
         MemcpyToBuffers( dataBuffers, dataPositions, &dimensionYorN, 1 );
+
         MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
         const std::uint16_t dimensionsLengthInData = dimensions * 27; //27 is from 9 bytes for each: var y/n + local, var y/n + global dimension, var y/n + global offset
         MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLengthInData, 2 );
@@ -350,7 +350,7 @@ private:
 
             //dimensions in data characteristic entry
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
-            const std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
+            const std::int16_t lengthOfDimensionsCharacteristic = 24 * dimensions; // 24 = 3 local, global, global offset x 8 bytes/each
             MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfDimensionsCharacteristic, 2 );
             MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
             MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLength, 2 );
@@ -369,7 +369,7 @@ private:
 
             //dimensions in data characteristic entry
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 ); //id
-            const std::int16_t lengthOfDimensionsCharacteristic = 3 + 24 * dimensions; // 3 = dimension(1) + length(2) ; 24 = 3 local, global, global offset x 8 bytes/each
+            const std::int16_t lengthOfDimensionsCharacteristic = 24 * dimensions; // 24 = 3 local, global, global offset x 8 bytes/each
             MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfDimensionsCharacteristic, 2 );
             MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
             MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLength, 2 );
@@ -389,30 +389,29 @@ private:
 
             //data
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
-            const std::int16_t lengthOfCharacteristic = 2 + lengthOfName;
-            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfCharacteristic, 2 ); //added in data
+            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfName, 2 ); //add length of characteristic in data
             WriteNameRecord( variable.m_Name, lengthOfName, dataBuffers, dataPositions );
+
+            ++characteristicsCounter;
         }
         else // Stat -> Min, Max for arrays,
         {
-            characteristicID = characteristic_stat;
             if( m_Verbosity == 0 ) //default verbose
             {
                 WriteMinMax( variable, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+                characteristicsCounter += 2;
             }
         }
-        ++characteristicsCounter;
 
-        //Back to count and length in Data
+        //Back to characteristics count and length in Data
         std::vector<std::uint32_t> dataCharacteristicsLengths( dataPositions.size() );
         for( unsigned int i = 0; i < dataPositions.size(); ++i )
-            dataCharacteristicsLengths[i] = dataPositions[i] - dataCharacteristicsCountPositions[i];
+            dataCharacteristicsLengths[i] = dataPositions[i] - dataCharacteristicsCountPositions[i] - 4 - 1; //remove its own length (4 bytes) + characteristic counter
 
         MemcpyToBuffers( dataBuffers, dataCharacteristicsCountPositions, &characteristicsCounter, 1 );
         MemcpyToBuffers( dataBuffers, dataCharacteristicsCountPositions, dataCharacteristicsLengths, 4 ); //vector to vector
-        MovePositions( -5, dataCharacteristicsCountPositions ); //back to original position
 
-        //Offsets should be last and only written to metadata, they come from absolute positions
+        //Metadata only: Offsets should be last, they come from data absolute positions
         characteristicID = characteristic_offset;
         MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1 ); //variable offset id
         MemcpyToBuffers( metadataBuffers, metadataPositions, dataAbsolutePositions, 8 ); //variable offset
@@ -424,7 +423,7 @@ private:
         {
         	varLengths[i] = dataPositions[i] - dataLengthPositions[i];
         	dataAbsolutePositions[i] += varLengths[i];
-        	varLengths[i] += variable.PayLoadSize() - 8;
+        	varLengths[i] += variable.PayLoadSize() - 8; //remove its own size
         }
 
         characteristicID = characteristic_payload_offset;
@@ -435,7 +434,7 @@ private:
         //Back to writing characteristics count and length in Metadata
         std::vector<std::uint32_t> metadataCharacteristicsLengths( metadataPositions.size() );
         for( unsigned int i = 0; i < metadataPositions.size(); ++i )
-            metadataCharacteristicsLengths[i] = metadataPositions[i] - metadataCharacteristicsCountPositions[i];
+            metadataCharacteristicsLengths[i] = metadataPositions[i] - metadataCharacteristicsCountPositions[i] - 4 - 1; //remove its own size and characteristic counter size
 
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, &characteristicsCounter, 1 );
         MemcpyToBuffers( metadataBuffers, metadataCharacteristicsCountPositions, metadataCharacteristicsLengths, 4 ); //vector to vector
@@ -443,7 +442,7 @@ private:
         //Back to var entry length
         std::vector<std::uint32_t> metadataVarEntryLengths( metadataPositions.size() );
         for( unsigned int i = 0; i < metadataPositions.size(); ++i )
-        	metadataVarEntryLengths[i] = metadataPositions[i] - metadataLengthPositions[i];
+        	metadataVarEntryLengths[i] = metadataPositions[i] - metadataLengthPositions[i] - 4; //remove its own size
 
         MemcpyToBuffers( metadataBuffers, metadataLengthPositions, metadataVarEntryLengths, 4 ); //vector to vector
 
@@ -511,7 +510,7 @@ private:
         else
             GetMinMax( variable.m_AppValues, valuesSize, min, max );
 
-        WriteStatisticsMinMax( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+        WriteMinMaxValues( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
     }
 
 
@@ -519,17 +518,17 @@ private:
      * Common part of WriteMinMax specialized templates. Writes to buffers after min and max are calculated.
      */
     template<class T>
-    void WriteStatisticsMinMax( const T min, const T max,
-                                std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
-                                std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions ) const noexcept
+    void WriteMinMaxValues( const T min, const T max,
+                            std::vector<char*>& dataBuffers, std::vector<size_t>& dataPositions,
+                            std::vector<char*>& metadataBuffers, std::vector<size_t>& metadataPositions ) const noexcept
     {
-        constexpr std::int8_t statisticMinID = statistic_min;
-        constexpr std::int8_t statisticMaxID = statistic_max;
+        constexpr std::int8_t characteristicMinID = characteristic_min;
+        constexpr std::int8_t characteristicMaxID = characteristic_max;
 
-        WriteStatisticsRecord( statisticMinID, min, metadataBuffers, metadataPositions );
-        WriteStatisticsRecord( statisticMaxID, max, metadataBuffers, metadataPositions );
-        WriteStatisticsRecord( statisticMinID, min, dataBuffers, dataPositions, true ); //addLength in between
-        WriteStatisticsRecord( statisticMaxID, max, dataBuffers, dataPositions, true ); //addLength in between)
+        WriteValueRecord( characteristicMinID, min, metadataBuffers, metadataPositions );
+        WriteValueRecord( characteristicMaxID, max, metadataBuffers, metadataPositions );
+        WriteValueRecord( characteristicMinID, min, dataBuffers, dataPositions, true ); //addLength in between for data
+        WriteValueRecord( characteristicMaxID, max, dataBuffers, dataPositions, true ); //addLength in between for data
     }
 
 
@@ -542,11 +541,10 @@ private:
      * @param addLength true for data, false for metadata
      */
     template<class T>
-    void WriteStatisticsRecord( const std::uint8_t& id, const T& value,
-                                std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                                const bool addLength = false ) const noexcept
+    void WriteValueRecord( const std::uint8_t& characteristicID, const T& value,
+                           std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+                           const bool addLength = false ) const noexcept
     {
-        const std::uint8_t characteristicID = characteristic_stat;
         MemcpyToBuffers( buffers, positions, &characteristicID, 1 );
 
         if( addLength == true )
@@ -555,7 +553,6 @@ private:
             MemcpyToBuffers( buffers, positions, &lengthCharacteristic, 2 );
         }
 
-        MemcpyToBuffers( buffers, positions, &id, 1 );
         MemcpyToBuffers( buffers, positions, &value, sizeof(T) );
     }
 
@@ -598,7 +595,7 @@ void BP1Writer::WriteMinMax<std::complex<float>>( const Variable<std::complex<fl
     else
         GetMinMax( variable.m_AppValues, valuesSize, min, max );
 
-    WriteStatisticsMinMax( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+    WriteMinMaxValues( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
 }
 
 
@@ -614,7 +611,7 @@ void BP1Writer::WriteMinMax<std::complex<double>>( const Variable<std::complex<d
     else
         GetMinMax( variable.m_AppValues, valuesSize, min, max );
 
-    WriteStatisticsMinMax( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+    WriteMinMaxValues( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
 }
 
 
@@ -630,7 +627,7 @@ void BP1Writer::WriteMinMax<std::complex<long double>>( const Variable<std::comp
     else
         GetMinMax( variable.m_AppValues, valuesSize, min, max );
 
-    WriteStatisticsMinMax( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
+    WriteMinMaxValues( min, max, dataBuffers, dataPositions, metadataBuffers, metadataPositions );
 }
 
 

@@ -36,15 +36,15 @@ struct BP1MetadataSet
 
     std::uint64_t PGCount = 0; ///< number of process groups
     std::size_t PGIndexPosition = 16;
-    std::vector<char> PGIndex = std::vector<char>( 102400 ); ///< process group index metadata
+    std::vector<char> PGIndex = std::vector<char>( 102400, '\0' ); ///< process group index metadata
 
     std::uint32_t VarsCount = 0; ///< number of written Variables
     std::size_t   VarsIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> VarsIndex = std::vector<char>( 102400 ); ///< metadata variable index, start with 1Kb
+    std::vector<char> VarsIndex = std::vector<char>( 102400, '\0' ); ///< metadata variable index, start with 1Kb
 
     std::uint32_t AttributesCount = 0; ///< number of Attributes
     std::size_t AttributesIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> AttributesIndex = std::vector<char>( 102400 ); ///< metadata attribute index, start with 1Kb
+    std::vector<char> AttributesIndex = std::vector<char>( 102400, '\0' ); ///< metadata attribute index, start with 1Kb
 
     const unsigned int MiniFooterSize = 28; ///< 28 for now
 
@@ -146,8 +146,8 @@ protected:
     enum VariableCharacteristicID
     {
         characteristic_value          = 0, //!< characteristic_value
-        characteristic_min            = 1, //!< This is no longer used. Used to read in older bp file format
-        characteristic_max            = 2, //!< This is no longer used. Used to read in older bp file format
+        characteristic_min            = 1, //!< Used to read in older bp file format
+        characteristic_max            = 2, //!< Used to read in older bp file format
         characteristic_offset         = 3, //!< characteristic_offset
         characteristic_dimensions     = 4, //!< characteristic_dimensions
         characteristic_var_id         = 5, //!< characteristic_var_id

@@ -169,20 +169,20 @@ void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::s
     MemcpyToBuffers( metadataBuffers, metadataPositions, dataAbsolutePositions, 8 );
 
     //get pg index length
-    std::vector<std::uint16_t> metadataIndexLengths( metadataPositions.size() );
+    std::vector<std::uint16_t> metadataPGIndexLengths( metadataPositions.size() );
     for( unsigned int i = 0; i < metadataPositions.size(); ++i )
-        metadataIndexLengths[i] = metadataPositions[i] - pgLengthPositions[i] - 2; //without length of group record?
+        metadataPGIndexLengths[i] = metadataPositions[i] - pgLengthPositions[i] - 2; //without length of group record
 
     //write to metadata length position the pgIndex length
-    MemcpyToBuffers( metadataBuffers, pgLengthPositions, metadataIndexLengths, 2 );
+    MemcpyToBuffers( metadataBuffers, pgLengthPositions, metadataPGIndexLengths, 2 );
 
-    //here write method
+    //here write method in data
     const std::uint8_t methodsSize = methodIDs.size();
-    MemcpyToBuffers( dataBuffers, dataPositions, &methodsSize, 1 );
-    MemcpyToBuffers( dataBuffers, dataPositions, &methodsSize, 2 ); //assume one byte for methodID for now
+    MemcpyToBuffers( dataBuffers, dataPositions, &methodsSize, 1 ); //method count
+    MemcpyToBuffers( dataBuffers, dataPositions, &methodsSize, 2 ); //method length, assume one byte for methodID for now
 
     for( auto& methodID : methodIDs )
-    	MemcpyToBuffers( dataBuffers, dataPositions, &methodID, 1 ); //method ID
+    	MemcpyToBuffers( dataBuffers, dataPositions, &methodID, 1 ); //method ID, unknown for now
 
     //dataAbsolutePositions need to be updated
     for( unsigned int i = 0; i < dataPositions.size(); ++i )
@@ -265,7 +265,7 @@ void BP1Writer::FlattenData( BP1MetadataSet& metadataSet, Capsule& capsule ) con
     std::memcpy( &data[metadataSet.DataVarsCountPosition], &metadataSet.VarsCount, 4 );
 
     //vars length
-    const std::uint64_t dataVarsLength = capsule.m_DataPosition - metadataSet.DataVarsCountPosition - 8 - 4; //without record itself
+    const std::uint64_t dataVarsLength = capsule.m_DataPosition - metadataSet.DataVarsCountPosition - 8 - 4; //without record itself and vars count
     std::memcpy( &data[metadataSet.DataVarsCountPosition+4], &dataVarsLength, 8 );
 
     //here add empty attributes

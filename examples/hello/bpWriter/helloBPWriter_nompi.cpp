@@ -20,10 +20,17 @@ int main( int argc, char* argv [] )
     std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     const std::size_t Nx = myDoubles.size();
 
+    const std::size_t rows = 3;
+    const std::size_t columns = 3;
+    std::vector<float> myMatrix = { 1, 2, 3,
+                                    4, 5, 6,
+                                    7, 8, 9, };
+
     try
     {
         //Define variable and local size
         adios::Variable<double>& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+        adios::Variable<float>& ioMyMatrix = adios.DefineVariable<float>( "myMatrix", adios::Dims{rows,columns} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
@@ -37,6 +44,7 @@ int main( int argc, char* argv [] )
             throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );
 
         bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        bpWriter->Write<float>( ioMyMatrix, myMatrix.data() ); //2d Example
         bpWriter->Close( );
         //
     }

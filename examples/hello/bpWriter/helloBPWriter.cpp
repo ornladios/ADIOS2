@@ -29,10 +29,23 @@ int main( int argc, char* argv [] )
     std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     const std::size_t Nx = myDoubles.size();
 
+    const std::size_t rows = 3;
+    const std::size_t columns = 3;
+
+    std::vector<float> myMatrix;
+    if( rank % 2 == 0 ) //even rank
+    {
+        myMatrix.reserve( rows * columns );
+        myMatrix.push_back( 1 ); myMatrix.push_back( 2 ), myMatrix.push_back( 3 );
+        myMatrix.push_back( 4 ); myMatrix.push_back( 5 ), myMatrix.push_back( 6 );
+        myMatrix.push_back( 7 ); myMatrix.push_back( 8 ), myMatrix.push_back( 8 );
+    }
+
     try
     {
         //Define variable and local size
-        auto ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
+        auto ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx} );
+        adios::Variable<float>& ioMyMatrix = adios.DefineVariable<float>( "myMatrix", {rows,columns} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SingleFile" ); //default method type is BPWriter
@@ -46,6 +59,10 @@ int main( int argc, char* argv [] )
             throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );
 
         bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+
+        if( rank % 2 == 0 ) //even rank
+            bpWriter->Write<float>( ioMyMatrix, myMatrix.data() );
+
         bpWriter->Close( );
     }
     catch( std::invalid_argument& e )

@@ -37,7 +37,6 @@ public:
     ~BPWriter( );
 
 
-
     void Advance( );
 
     /**
