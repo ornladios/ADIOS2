@@ -36,7 +36,7 @@ ADIOS::ADIOS( const bool debugMode ):
     InitMPI( );
 }
 
-#ifdef ADIOS_NOMPI
+
 ADIOS::ADIOS( const std::string configFileName, const bool debugMode ):
     m_ConfigFile{ configFileName },
     m_DebugMode{ debugMode }
@@ -44,7 +44,7 @@ ADIOS::ADIOS( const std::string configFileName, const bool debugMode ):
    InitMPI( );
     // InitXML( m_ConfigFile, m_MPIComm, m_DebugMode, m_Transforms );
 }
-#endif
+
 
 
 ADIOS::ADIOS( const std::string xmlConfigFile, MPI_Comm mpiComm, const bool debugMode  ):
@@ -187,7 +187,7 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
 VariableCompound& ADIOS::GetVariableCompound( const std::string name )
 {
-    return m_Compound[ GetVariableIndex<void>(name) ];
+    return m_Compound.at( GetVariableIndex<void>(name) );
 }
 
 

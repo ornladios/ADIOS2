@@ -44,7 +44,7 @@ int main( int argc, char* argv [] )
     try
     {
         //Define variable and local size
-        auto ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx} );
+        adios::Variable<double>& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx} );
         adios::Variable<float>& ioMyMatrix = adios.DefineVariable<float>( "myMatrix", {rows,columns} );
 
         //Define method for engine creation, it is basically straight-forward parameters

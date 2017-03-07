@@ -117,9 +117,10 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
                                               const Dims globalOffsets = Dims() )
     {
         CheckVariableInput( name, dimensions );
-        m_Compound.emplace_back( name, sizeof(T), dimensions, globalDimensions, globalOffsets, m_DebugMode );
-        m_Variables.emplace( name, std::make_pair( GetType<T>(), m_Compound.size()-1 ) );
-        return m_Compound.back();
+        const unsigned int size = m_Compound.size();
+        m_Compound.emplace( size, VariableCompound( name, sizeof(T), dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+        m_Variables.emplace( name, std::make_pair( GetType<T>(), size ) );
+        return m_Compound.at( size );
     }
 
     VariableCompound& GetVariableCompound( const std::string name );
@@ -193,23 +194,23 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 private: //no const to allow default empty and copy constructors
 
-    std::vector< Variable<char> > m_Char; ///< Key: variable name, Value: variable of type char
-    std::vector< Variable<unsigned char> > m_UChar; ///< Key: variable name, Value: variable of type unsigned char
-    std::vector< Variable<short> > m_Short; ///< Key: variable name, Value: variable of type short
-    std::vector< Variable<unsigned short> > m_UShort; ///< Key: variable name, Value: variable of type unsigned short
-    std::vector< Variable<int> > m_Int; ///< Key: variable name, Value: variable of type int
-    std::vector< Variable<unsigned int> > m_UInt; ///< Key: variable name, Value: variable of type unsigned int
-    std::vector< Variable<long int> > m_LInt; ///< Key: variable name, Value: variable of type long int
-    std::vector< Variable<unsigned long int> > m_ULInt; ///< Key: variable name, Value: variable of type unsigned long int
-    std::vector< Variable<long long int> > m_LLInt; ///< Key: variable name, Value: variable of type long long int
-    std::vector< Variable<unsigned long long int> > m_ULLInt; ///< Key: variable name, Value: variable of type unsigned long long int
-    std::vector< Variable<float> > m_Float; ///< Key: variable name, Value: variable of type float
-    std::vector< Variable<double> > m_Double; ///< Key: variable name, Value: variable of type double
-    std::vector< Variable<long double> > m_LDouble; ///< Key: variable name, Value: variable of type double
-    std::vector< Variable<std::complex<float>> > m_CFloat; ///< Key: variable name, Value: variable of type complex<float>
-    std::vector< Variable<std::complex<double>> > m_CDouble; ///< Key: variable name, Value: variable of type complex<float>
-    std::vector< Variable<std::complex<long double>> > m_CLDouble; ///< Key: variable name, Value: variable of type complex<float>
-    std::vector< VariableCompound > m_Compound; ///< Key: variable name, Value: compound type variable
+    std::map<unsigned int, Variable<char> > m_Char;
+    std::map<unsigned int, Variable<unsigned char> > m_UChar;
+    std::map<unsigned int, Variable<short> > m_Short;
+    std::map<unsigned int, Variable<unsigned short> > m_UShort;
+    std::map<unsigned int, Variable<int> > m_Int;
+    std::map<unsigned int, Variable<unsigned int> > m_UInt;
+    std::map<unsigned int, Variable<long int> > m_LInt;
+    std::map<unsigned int, Variable<unsigned long int> > m_ULInt;
+    std::map<unsigned int, Variable<long long int> > m_LLInt;
+    std::map<unsigned int, Variable<unsigned long long int> > m_ULLInt;
+    std::map<unsigned int, Variable<float> > m_Float;
+    std::map<unsigned int, Variable<double> > m_Double;
+    std::map<unsigned int, Variable<long double> > m_LDouble;
+    std::map<unsigned int, Variable<std::complex<float>> > m_CFloat;
+    std::map<unsigned int, Variable<std::complex<double>> > m_CDouble;
+    std::map<unsigned int, Variable<std::complex<long double>> > m_CLDouble;
+    std::map<unsigned int, VariableCompound > m_Compound;
 
     std::string m_ConfigFile; ///< XML File to be read containing configuration information
     bool m_DebugMode = false; ///< if true will do more checks, exceptions, warnings, expect slower code
@@ -272,9 +273,10 @@ Variable<char>& ADIOS::DefineVariable( const std::string name, const Dims dimens
                                        const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_Char.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<char>(), m_Char.size()-1 ) );
-    return m_Char.back();
+    const unsigned int size = m_Char.size();
+    m_Char.emplace( size, Variable<char>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<char>(), size ) );
+    return m_Char.at( size );
 }
 
 
@@ -283,9 +285,10 @@ Variable<unsigned char>& ADIOS::DefineVariable( const std::string name, const Di
                                                 const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_UChar.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<unsigned char>(), m_UChar.size()-1 ) );
-    return m_UChar.back();
+    const unsigned int size = m_UChar.size();
+    m_UChar.emplace( size, Variable<unsigned char>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned char>(), size ) );
+    return m_UChar.at( size );
 }
 
 
@@ -294,9 +297,10 @@ Variable<short>& ADIOS::DefineVariable( const std::string name, const Dims dimen
                                         const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_Short.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<unsigned char>(), m_Short.size()-1 ) );
-    return m_Short.back();
+    const unsigned int size = m_Short.size();
+    m_Short.emplace( size, Variable<short>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned char>(), size ) );
+    return m_Short.at( size );
 }
 
 
@@ -305,9 +309,10 @@ Variable<unsigned short>& ADIOS::DefineVariable( const std::string name, const D
                                                  const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_UShort.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<unsigned short>(), m_UShort.size()-1 ) );
-    return m_UShort.back();
+    const unsigned int size = m_UShort.size();
+    m_UShort.emplace( size, Variable<unsigned short>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned short>(), size ) );
+    return m_UShort.at( size );
 }
 
 
@@ -316,9 +321,10 @@ Variable<int>& ADIOS::DefineVariable( const std::string name, const Dims dimensi
                                       const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_Int.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<int>(), m_Int.size()-1 ) );
-    return m_Int.back();
+    const unsigned int size = m_Int.size();
+    m_Int.emplace( size, Variable<int>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<int>(), size ) );
+    return m_Int.at( size );
 }
 
 
@@ -327,9 +333,10 @@ Variable<unsigned int>& ADIOS::DefineVariable( const std::string name, const Dim
                                                const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_UInt.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<unsigned int>(), m_UInt.size()-1 ) );
-    return m_UInt.back();
+    const unsigned int size = m_UInt.size();
+    m_UInt.emplace( size, Variable<unsigned int>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned int>(), size ) );
+    return m_UInt.at( size );
 }
 
 
@@ -338,9 +345,10 @@ Variable<long int>& ADIOS::DefineVariable( const std::string name, const Dims di
                                            const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_LInt.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<long int>(), m_LInt.size()-1 ) );
-    return m_LInt.back();
+    const unsigned int size = m_LInt.size();
+    m_LInt.emplace( size, Variable<long int>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<long int>(), size ) );
+    return m_LInt.at( size );
 }
 
 
@@ -349,9 +357,10 @@ Variable<unsigned long int>& ADIOS::DefineVariable( const std::string name, cons
                                                     const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_ULInt.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<unsigned long int>(), m_ULInt.size()-1 ) );
-    return m_ULInt.back();
+    const unsigned int size = m_LInt.size();
+    m_ULInt.emplace( size, Variable<unsigned long int>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned long int>(), size ) );
+    return m_ULInt.at( size );
 }
 
 
@@ -360,9 +369,10 @@ Variable<long long int>& ADIOS::DefineVariable( const std::string name, const Di
                                                 const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_LLInt.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<long long int>(), m_LLInt.size()-1 ) );
-    return m_LLInt.back();
+    const unsigned int size = m_LLInt.size();
+    m_LLInt.emplace( size, Variable<long long int>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<long long int>(), size ) );
+    return m_LLInt.at( size );
 }
 
 
@@ -371,9 +381,10 @@ Variable<unsigned long long int>& ADIOS::DefineVariable( const std::string name,
                                                          const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_ULLInt.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<unsigned long long int>(), m_ULLInt.size()-1 ) );
-    return m_ULLInt.back();
+    const unsigned int size = m_ULLInt.size();
+    m_ULLInt.emplace( size, Variable<unsigned long long int>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<unsigned long long int>(), size ) );
+    return m_ULLInt.at( size );
 }
 
 template<> inline
@@ -381,9 +392,10 @@ Variable<float>& ADIOS::DefineVariable( const std::string name, const Dims dimen
                                         const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_Float.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<float>(), m_Float.size()-1 ) );
-    return m_Float.back();
+    const unsigned int size = m_Float.size();
+    m_Float.emplace( size, Variable<float>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<float>(), size ) );
+    return m_Float.at( size );
 }
 
 
@@ -392,9 +404,10 @@ Variable<double>& ADIOS::DefineVariable( const std::string name, const Dims dime
                                          const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_Double.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<double>(), m_Double.size()-1 ) );
-    return m_Double.back();
+    const unsigned int size = m_Double.size();
+    m_Double.emplace( size, Variable<double>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<double>(), size ) );
+    return m_Double.at( size );
 }
 
 
@@ -403,9 +416,10 @@ Variable<long double>& ADIOS::DefineVariable( const std::string name, const Dims
                                               const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_LDouble.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<long double>(), m_LDouble.size()-1 ) );
-    return m_LDouble.back();
+    const unsigned int size = m_LDouble.size();
+    m_LDouble.emplace( size, Variable<long double>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<long double>(), size ) );
+    return m_LDouble.at( size );
 }
 
 
@@ -414,9 +428,10 @@ Variable<std::complex<float>>& ADIOS::DefineVariable( const std::string name, co
                                                       const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_CFloat.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<std::complex<float>>(), m_CFloat.size()-1 ) );
-    return m_CFloat.back();
+    const unsigned int size = m_CFloat.size();
+    m_CFloat.emplace( size, Variable<std::complex<float>>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<std::complex<float>>(), size ) );
+    return m_CFloat.at( size );
 }
 
 
@@ -425,9 +440,10 @@ Variable<std::complex<double>>& ADIOS::DefineVariable( const std::string name, c
                                                        const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_CDouble.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<std::complex<double>>(), m_CDouble.size()-1 ) );
-    return m_CDouble.back();
+    const unsigned int size = m_CDouble.size();
+    m_CDouble.emplace( size, Variable<std::complex<double>>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<std::complex<double>>(), size ) );
+    return m_CDouble.at( size );
 }
 
 
@@ -436,76 +452,77 @@ Variable<std::complex<long double>>& ADIOS::DefineVariable( const std::string na
                                                             const Dims globalDimensions, const Dims globalOffsets )
 {
     CheckVariableInput( name, dimensions );
-    m_CLDouble.emplace_back( name, dimensions, globalDimensions, globalOffsets, m_DebugMode );
-    m_Variables.emplace( name, std::make_pair( GetType<std::complex<double>>(), m_CLDouble.size()-1 ) );
-    return m_CLDouble.back();
+    const unsigned int size = m_CLDouble.size();
+    m_CLDouble.emplace( size, Variable<std::complex<long double>>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
+    m_Variables.emplace( name, std::make_pair( GetType<std::complex<long double>>(), size ) );
+    return m_CLDouble.at( size );
 }
 
 
 //Get template specialization
 template<> inline
 Variable<char>& ADIOS::GetVariable( const std::string name )
-{ return m_Char[ GetVariableIndex<char>(name) ]; }
+{ return m_Char.at( GetVariableIndex<char>(name) ); }
 
 template<> inline
 Variable<unsigned char>& ADIOS::GetVariable( const std::string name )
-{ return m_UChar[ GetVariableIndex<unsigned char>(name) ]; }
+{ return m_UChar.at( GetVariableIndex<unsigned char>(name) ); }
 
 template<> inline
 Variable<short>& ADIOS::GetVariable( const std::string name )
-{ return m_Short[ GetVariableIndex<short>(name) ]; }
+{ return m_Short.at( GetVariableIndex<short>(name) ); }
 
 template<> inline
 Variable<unsigned short>& ADIOS::GetVariable( const std::string name )
-{ return m_UShort[ GetVariableIndex<unsigned short>(name) ]; }
+{ return m_UShort.at( GetVariableIndex<unsigned short>(name) ); }
 
 template<> inline
 Variable<int>& ADIOS::GetVariable( const std::string name )
-{ return m_Int[ GetVariableIndex<int>(name) ]; }
+{ return m_Int.at( GetVariableIndex<int>(name) ); }
 
 template<> inline
 Variable<unsigned int>& ADIOS::GetVariable( const std::string name )
-{ return m_UInt[ GetVariableIndex<unsigned int>(name) ]; }
+{ return m_UInt.at( GetVariableIndex<unsigned int>(name) ); }
 
 template<> inline
 Variable<long int>& ADIOS::GetVariable( const std::string name )
-{ return m_LInt[ GetVariableIndex<unsigned int>(name) ]; }
+{ return m_LInt.at( GetVariableIndex<unsigned int>(name) ); }
 
 template<> inline
 Variable<unsigned long int>& ADIOS::GetVariable( const std::string name )
-{ return m_ULInt[ GetVariableIndex<unsigned long int>(name) ]; }
+{ return m_ULInt.at( GetVariableIndex<unsigned long int>(name) ); }
 
 template<> inline
 Variable<long long int>& ADIOS::GetVariable( const std::string name )
-{ return m_LLInt[ GetVariableIndex<long long int>(name) ]; }
+{ return m_LLInt.at( GetVariableIndex<long long int>(name) ); }
 
 template<> inline
 Variable<unsigned long long int>& ADIOS::GetVariable( const std::string name )
-{ return m_ULLInt[ GetVariableIndex<unsigned long long int>(name) ]; }
+{ return m_ULLInt.at( GetVariableIndex<unsigned long long int>(name) ); }
 
 template<> inline
 Variable<float>& ADIOS::GetVariable( const std::string name )
-{ return m_Float[ GetVariableIndex<float>(name) ]; }
+{ return m_Float.at( GetVariableIndex<float>(name) ); }
 
 template<> inline
 Variable<double>& ADIOS::GetVariable( const std::string name )
-{ return m_Double[ GetVariableIndex<double>(name) ]; }
+{ return m_Double.at( GetVariableIndex<double>(name) ); }
 
 template<> inline
 Variable<long double>& ADIOS::GetVariable( const std::string name )
-{ return m_LDouble[ GetVariableIndex<long double>(name) ]; }
+{ return m_LDouble.at( GetVariableIndex<long double>(name) ); }
 
 template<> inline
 Variable<std::complex<float>>& ADIOS::GetVariable( const std::string name )
-{ return m_CFloat[ GetVariableIndex<std::complex<float>>(name) ]; }
+{ return m_CFloat.at( GetVariableIndex<std::complex<float>>(name) ); }
 
 template<> inline
 Variable<std::complex<double>>& ADIOS::GetVariable( const std::string name )
-{ return m_CDouble[ GetVariableIndex<std::complex<double>>(name) ]; }
+{ return m_CDouble.at( GetVariableIndex<std::complex<double>>(name) ); }
 
 template<> inline
 Variable<std::complex<long double>>& ADIOS::GetVariable( const std::string name )
-{ return m_CLDouble[ GetVariableIndex<std::complex<long double>>(name) ]; }
+{ return m_CLDouble.at( GetVariableIndex<std::complex<long double>>(name) ); }
 
 
 
