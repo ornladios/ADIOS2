@@ -41,11 +41,16 @@ int main( int argc, char* argv [] )
         myMatrix.push_back( 7 ); myMatrix.push_back( 8 ), myMatrix.push_back( 8 );
     }
 
+    std::vector<float> myMatrix2 = { -1, -2, -3,
+                                     -4, -5, -6,
+                                     -7, -8, -9 };
+
     try
     {
         //Define variable and local size
         adios::Variable<double>& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx} );
         adios::Variable<float>& ioMyMatrix = adios.DefineVariable<float>( "myMatrix", {rows,columns} );
+        adios::Variable<float>& ioMyMatrix2 = adios.DefineVariable<float>( "myMatrix2", {rows,columns} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SingleFile" ); //default method type is BPWriter
@@ -61,7 +66,10 @@ int main( int argc, char* argv [] )
         bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
 
         if( rank % 2 == 0 ) //even rank
+        {
             bpWriter->Write<float>( ioMyMatrix, myMatrix.data() );
+            bpWriter->Write<float>( ioMyMatrix2, myMatrix2.data() );
+        }
 
         bpWriter->Close( );
     }

@@ -140,7 +140,7 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
 {
     if( cores == 1 )
     {
-        std::memcpy( &destination[0], &source[0], count );
+        std::memcpy( destination, source, count ); //here is the bug!!!
         return;
     }
 

@@ -221,7 +221,8 @@ public:
     void WriteVariablePayload( const Variable<T>& variable, capsule::STLVector& buffer, const unsigned int cores = 1 ) const noexcept
     {
         std::size_t payloadSize = variable.PayLoadSize();
-        MemcpyThreads( buffer.m_Data.data(), variable.m_AppValues, payloadSize, cores ); //EXPENSIVE part, might want to use threads if large.
+        //serial for now, expensive part
+        MemcpyThreads( &buffer.m_Data[buffer.m_DataPosition], variable.m_AppValues, payloadSize, cores ); //EXPENSIVE part, might want to use threads if large.
         //update indices
         buffer.m_DataPosition += payloadSize;
         buffer.m_DataAbsolutePosition += payloadSize;
@@ -289,8 +290,10 @@ private:
         MovePositions( 4, metadataPositions ); //length of var, will come at the end from this offset
         MovePositions( 8, dataPositions ); //length of var, will come at the end from this offset
 
-        //memberID
+        //memberID in metadata and data
         MemcpyToBuffers( metadataBuffers, metadataPositions, variablesCount, 4 );
+        MemcpyToBuffers( dataBuffers, dataPositions, variablesCount, 4 );
+
         //skipping 2 bytes for length of group name which is zero, only in metadata
         MovePositions( 2, metadataPositions ); //length of var, will come at the end from this offset
 
@@ -308,15 +311,16 @@ private:
         MemcpyToBuffers( metadataBuffers, metadataPositions, &dataType, 1 );
         MemcpyToBuffers( dataBuffers, dataPositions, &dataType, 1 );
 
-        //Characteristics Sets in Metadata and Data
-        //const std::vector<std::size_t> metadataCharacteristicsSetsCountPosition( metadataPositions ); //very important piece
-        std::vector<std::size_t> dataCharacteristicsCountPositions( dataPositions ); //very important piece
+        //write in data if it's a dimension variable (scalar) y or n
+        const char dimensionYorN = ( variable.m_IsDimension ) ? 'y' : 'n';
+        MemcpyToBuffers( dataBuffers, dataPositions, &dimensionYorN, 1 );
 
+        //Characteristics Sets in Metadata and Data
         const std::uint64_t sets = 1; //write one for now
         MemcpyToBuffers( metadataBuffers, metadataPositions, &sets, 8 );
-        std::vector<std::size_t> metadataCharacteristicsCountPositions( metadataPositions ); //very important, can't be const as it is updated by MemcpyToBuffer
 
         std::uint8_t characteristicsCounter = 0; //used for characteristics count, characteristics length will be calculated at the end
+        std::vector<std::size_t> metadataCharacteristicsCountPositions( metadataPositions ); //very important, can't be const as it is updated by MemcpyToBuffer
         //here move positions 5 bytes in data and metadata for characteristics count + length
         MovePositions( 5, metadataPositions );
 
@@ -332,13 +336,12 @@ private:
         const std::uint16_t dimensionsLength = dimensions * 24; //24 is from 8 bytes for each: local dimension, global dimension, global offset
         MemcpyToBuffers( metadataBuffers, metadataPositions, &dimensionsLength, 2 );
 
-        //write in data if it's a dimension variable (scalar) y or n
-        const char dimensionYorN = ( variable.m_IsDimension ) ? 'y' : 'n';
-        MemcpyToBuffers( dataBuffers, dataPositions, &dimensionYorN, 1 );
-
+        //write dimensions count and length in data
         MemcpyToBuffers( dataBuffers, dataPositions, &dimensions, 1 );
         const std::uint16_t dimensionsLengthInData = dimensions * 27; //27 is from 9 bytes for each: var y/n + local, var y/n + global dimension, var y/n + global offset
         MemcpyToBuffers( dataBuffers, dataPositions, &dimensionsLengthInData, 2 );
+
+        std::vector<std::size_t> dataCharacteristicsCountPositions( dataPositions ); //very important piece, will redefine later
 
         if( variable.m_GlobalDimensions.empty() ) //local variable
         {
@@ -382,15 +385,14 @@ private:
         if( variable.m_IsScalar ) //scalar //just doing string scalars for now (by name), needs to be modified when user passes value
         {
             characteristicID = characteristic_value;
-            const std::int16_t lengthOfName = variable.m_Name.length();
-            //metadata
             MemcpyToBuffers( metadataBuffers, metadataPositions, &characteristicID, 1  );
-            WriteNameRecord( variable.m_Name, lengthOfName, metadataBuffers, metadataPositions );
+            MemcpyToBuffers( metadataBuffers, metadataPositions, variable.m_AppValues, sizeof(T) );
 
             //data
             MemcpyToBuffers( dataBuffers, dataPositions, &characteristicID, 1 );
-            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfName, 2 ); //add length of characteristic in data
-            WriteNameRecord( variable.m_Name, lengthOfName, dataBuffers, dataPositions );
+            const std::uint16_t lengthOfValue = sizeof( T );
+            MemcpyToBuffers( dataBuffers, dataPositions, &lengthOfValue, 2 ); //add length of characteristic in data
+            MemcpyToBuffers( dataBuffers, dataPositions, variable.m_AppValues, sizeof(T) );
 
             ++characteristicsCounter;
         }

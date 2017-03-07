@@ -50,7 +50,7 @@ int main( int argc, char* argv [] )
 
         bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
         bpWriter->Write<float>( ioMyMatrix, myMatrix.data() ); //2d Example
-        //bpWriter->Write<float>( ioMyMatrix2, myMatrix2.data() ); //2d Example
+        bpWriter->Write<float>( ioMyMatrix2, myMatrix2.data() ); //2d Example
         bpWriter->Close( );
         //
     }

@@ -45,11 +45,10 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
                                   dataBuffers, dataPositions, dataAbsolutePositions,
                                   metadataBuffers, metadataPositions );
 
-    buffer.m_DataPosition = dataPositions[0];
-    buffer.m_DataAbsolutePosition = dataAbsolutePositions[0];
     metadataSet.PGIndexPosition = metadataPositions[0];
-
     metadataSet.DataVarsCountPosition = dataPositions[0];
+    buffer.m_DataPosition = dataPositions[0] + 12; //add 12 for vars count and vars length
+    buffer.m_DataAbsolutePosition = dataAbsolutePositions[0] + 12; //add 12 for vars count and vars length
     metadataSet.PGCount += 1;
 
 }
@@ -93,11 +92,9 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
     for( unsigned int i = 0; i < buffersSize; ++i )
     {
         metadataSets[i].PGIndexPosition = metadataPositions[i];
-
-        capsules[i]->m_DataPosition = dataPositions[i];
-        capsules[i]->m_DataAbsolutePosition = dataAbsolutePositions[i];
         metadataSets[i].DataVarsCountPosition = dataPositions[i];
-
+        capsules[i]->m_DataPosition = dataPositions[i] + 12; //add 12 for vars count and vars length
+        capsules[i]->m_DataAbsolutePosition = dataAbsolutePositions[i] + 12; //add 12 for vars count and vars length
         metadataSets[i].PGCount += 1;
     }
 }
@@ -135,7 +132,7 @@ void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::s
                                               std::vector<char*>& metadataBuffers,
                                               std::vector<std::size_t>& metadataPositions ) const noexcept
 {
-	const std::vector<std::size_t> pgLengthDataPositions( dataPositions );
+	const std::vector<std::size_t> pgLengthDataPositions( dataPositions ); //needed to update dataAbsolutePositions
     std::vector<std::size_t> pgLengthPositions( metadataPositions ); //get length of pg position
 
     MovePositions( 2, metadataPositions ); //skip length of pg in metadata, 2 bytes, would write at the end
@@ -182,7 +179,10 @@ void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::s
     MemcpyToBuffers( dataBuffers, dataPositions, &methodsSize, 2 ); //method length, assume one byte for methodID for now
 
     for( auto& methodID : methodIDs )
-    	MemcpyToBuffers( dataBuffers, dataPositions, &methodID, 1 ); //method ID, unknown for now
+    {
+        MemcpyToBuffers( dataBuffers, dataPositions, &methodID, 1 ); //method ID, unknown for now
+        MovePositions( 2, dataPositions ); //method params length = 0 for now
+    }
 
     //dataAbsolutePositions need to be updated
     for( unsigned int i = 0; i < dataPositions.size(); ++i )
