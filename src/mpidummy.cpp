@@ -1,4 +1,4 @@
-/* 
+/*
  * ADIOS is freely available under the terms of the BSD license described
  * in the COPYING file in the top level directory of this source distribution.
  *
@@ -9,6 +9,7 @@
    A dummy MPI implementation for the BP READ API, to have an MPI-free version of the API
 */
 /// \cond EXCLUDE_FROM_DOXYGEN
+#define __STDC_FORMAT_MACROS
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -24,7 +25,7 @@
 
 
 
-#if defined(__APPLE__) || defined(__WIN32__) || defined(__CYGWIN__) 
+#if defined(__APPLE__) || defined(__WIN32__) || defined(__CYGWIN__)
 #    define lseek64 lseek
 #    define open64  open
 #endif
@@ -35,16 +36,16 @@ namespace adios
 
 static char mpierrmsg[MPI_MAX_ERROR_STRING];
 
-int MPI_Init(int *argc, char ***argv) 
-{ 
-    mpierrmsg[0] = '\0'; 
-    return MPI_SUCCESS; 
+int MPI_Init(int *argc, char ***argv)
+{
+    mpierrmsg[0] = '\0';
+    return MPI_SUCCESS;
 }
 
-int MPI_Finalize() 
-{ 
-    mpierrmsg[0] = '\0'; 
-    return MPI_SUCCESS; 
+int MPI_Finalize()
+{
+    mpierrmsg[0] = '\0';
+    return MPI_SUCCESS;
 }
 
 int MPI_Initialized( int* flag )
@@ -64,8 +65,8 @@ int MPI_Comm_size(MPI_Comm comm, int *size) { *size = 1; return MPI_SUCCESS; }
 int MPI_Comm_free(MPI_Comm *comm) { *comm = 0; return MPI_SUCCESS; }
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm) { return comm; }
 
-int MPI_Gather(void *sendbuf, int sendcnt, MPI_Datatype sendtype, 
-               void *recvbuf, int recvcnt, MPI_Datatype recvtype, 
+int MPI_Gather(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+               void *recvbuf, int recvcnt, MPI_Datatype recvtype,
                int root, MPI_Comm comm)
 {
   int ier = MPI_SUCCESS;
@@ -97,8 +98,8 @@ int MPI_Gather(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   return ier ;
 }
 
-int MPI_Gatherv(void *sendbuf, int sendcnt, MPI_Datatype sendtype, 
-                void *recvbuf, int *recvcnts, int *displs, 
+int MPI_Gatherv(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                void *recvbuf, int *recvcnts, int *displs,
                 MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
   int ier = MPI_SUCCESS;
@@ -117,8 +118,8 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return MPI_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm);
 }
 
-int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype, 
-               void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, 
+int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+               void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
                MPI_Comm comm)
 {
   int ier = MPI_SUCCESS;
@@ -150,7 +151,7 @@ int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   return ier ;
 }
 
-int MPI_Scatterv( void *sendbuf, int *sendcnts, int *displs, 
+int MPI_Scatterv( void *sendbuf, int *sendcnts, int *displs,
                  MPI_Datatype sendtype, void *recvbuf, int recvcnt,
                  MPI_Datatype recvtype,
                  int root, MPI_Comm comm)
@@ -170,7 +171,7 @@ int MPI_Recv( void *recvbuffer, int count, MPI_Datatype type, int source, int ta
 int MPI_Send( void *sendbuffer, int count, MPI_Datatype type, int destination, int tag, MPI_Comm comm )
 { return 0; }
 
-int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh) 
+int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh)
 {
     *fh = open64 (filename, amode);
     if (*fh == -1) {
@@ -214,15 +215,15 @@ int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
     return MPI_SUCCESS;
 }
 
-int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) 
-{ 
+int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
+{
     *count = (int) *status;
     return MPI_SUCCESS;
 }
 
 int MPI_Error_string(int errorcode, char *string, int *resultlen)
 {
-    //sprintf(string, "Dummy lib does not know error strings. Code=%d\n",errorcode); 
+    //sprintf(string, "Dummy lib does not know error strings. Code=%d\n",errorcode);
     strcpy(string, mpierrmsg);
     *resultlen = strlen(string);
     return MPI_SUCCESS;
@@ -233,7 +234,7 @@ double MPI_Wtime()
     // Implementation not tested
     struct timeval tv;
     gettimeofday (&tv, NULL);
-    return (double)(tv.tv_sec) + (double)(tv.tv_usec) / 1000000;    
+    return (double)(tv.tv_sec) + (double)(tv.tv_usec) / 1000000;
 }
 
 int MPI_Get_processor_name (char *name, int *resultlen)
