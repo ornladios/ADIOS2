@@ -36,6 +36,7 @@ int main( int argc, char* argv [] )
         adios::Variable<double>& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
         adios::Variable<float>& ioMyMatrix = adios.DefineVariable<float>( "myMatrix", adios::Dims{rows,columns} );
         adios::Variable<float>& ioMyMatrix2 = adios.DefineVariable<float>( "myMatrix2", adios::Dims{rows,columns} );
+        adios::Variable<float>& ioMyMatrix3 = adios.DefineVariable<float>( "myMatrix3", adios::Dims{rows,columns} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
@@ -43,15 +44,16 @@ int main( int argc, char* argv [] )
 
         //Create engine smart pointer due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class Writer
-        auto bpWriter = adios.Open( "myDoubles_nompi.bp", "w", bpWriterSettings );
+        auto bpFileWriter = adios.Open( "myDoubles_nompi.bp", "w", bpWriterSettings );
 
-        if( bpWriter == nullptr )
+        if( bpFileWriter == nullptr )
             throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );
 
-        bpWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-        bpWriter->Write<float>( ioMyMatrix, myMatrix.data() ); //2d Example
-        bpWriter->Write<float>( ioMyMatrix2, myMatrix2.data() ); //2d Example
-        bpWriter->Close( );
+        bpFileWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        bpFileWriter->Write<float>( ioMyMatrix, myMatrix.data() ); //2d Example
+        bpFileWriter->Write<float>( ioMyMatrix2, myMatrix2.data() ); //2d Example
+        bpFileWriter->Write<float>( ioMyMatrix3, myMatrix2.data() ); //2d Example
+        bpFileWriter->Close( );
         //
     }
     catch( std::invalid_argument& e )

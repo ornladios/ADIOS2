@@ -5,8 +5,8 @@
  *      Author: wfg
  */
 
-#ifndef BPREADER_H_
-#define BPREADER_H_
+#ifndef BPFILEREADER_H_
+#define BPFILEREADER_H_
 
 #include <iostream> //this must go away
 
@@ -20,7 +20,7 @@ namespace adios
 {
 
 
-class BPReader : public Engine
+class BPFileReader : public Engine
 {
 
 public:
@@ -34,10 +34,10 @@ public:
      * @param debugMode
      * @param hostLanguage
      */
-    BPReader( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+    BPFileReader( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
                    const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
-    ~BPReader( );
+    ~BPFileReader( );
 
 
     Variable<void>* InquireVariable( const std::string name, const bool readIn = true );
@@ -98,4 +98,4 @@ private:
 } //end namespace adios
 
 
-#endif /* BPREADER_H_ */
+#endif /* BPFILEREADER_H_ */

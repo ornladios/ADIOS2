@@ -1,5 +1,5 @@
 /*
- * BPReader.cpp
+ * BPFileReader.cpp
  *
  *  Created on: Feb 27, 2017
  *      Author: wfg
@@ -7,7 +7,7 @@
 
 
 
-#include "engine/bp/BPReader.h"
+#include "engine/bp/BPFileReader.h"
 
 #include "core/Support.h"
 #include "functions/adiosFunctions.h" //CSVToVector
@@ -21,87 +21,87 @@
 namespace adios
 {
 
-BPReader::BPReader( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+BPFileReader::BPFileReader( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
                     const Method& method, const bool debugMode, const unsigned int cores ):
-    Engine( adios, "BPReader", name, accessMode, mpiComm, method, debugMode, cores, " BPReader constructor (or call to ADIOS Open).\n" ),
+    Engine( adios, "BPFileReader", name, accessMode, mpiComm, method, debugMode, cores, " BPFileReader constructor (or call to ADIOS Open).\n" ),
     m_Buffer( accessMode, m_RankMPI, m_DebugMode )
 {
     Init( );
 }
 
-BPReader::~BPReader( )
+BPFileReader::~BPFileReader( )
 { }
 
 
-Variable<void>* BPReader::InquireVariable( const std::string name, const bool readIn ) //not yet implemented
+Variable<void>* BPFileReader::InquireVariable( const std::string name, const bool readIn ) //not yet implemented
 { return nullptr; }
 
-Variable<char>* BPReader::InquireVariableChar( const std::string name, const bool readIn )
+Variable<char>* BPFileReader::InquireVariableChar( const std::string name, const bool readIn )
 { return InquireVariableCommon<char>( name, readIn ); }
 
-Variable<unsigned char>* BPReader::InquireVariableUChar( const std::string name, const bool readIn )
+Variable<unsigned char>* BPFileReader::InquireVariableUChar( const std::string name, const bool readIn )
 { return InquireVariableCommon<unsigned char>( name, readIn ); }
 
-Variable<short>* BPReader::InquireVariableShort( const std::string name, const bool readIn )
+Variable<short>* BPFileReader::InquireVariableShort( const std::string name, const bool readIn )
 { return InquireVariableCommon<short>( name, readIn ); }
 
-Variable<unsigned short>* BPReader::InquireVariableUShort( const std::string name, const bool readIn )
+Variable<unsigned short>* BPFileReader::InquireVariableUShort( const std::string name, const bool readIn )
 { return InquireVariableCommon<unsigned short>( name, readIn ); }
 
-Variable<int>* BPReader::InquireVariableInt( const std::string name, const bool readIn )
+Variable<int>* BPFileReader::InquireVariableInt( const std::string name, const bool readIn )
 { return InquireVariableCommon<int>( name, readIn ); }
 
-Variable<unsigned int>* BPReader::InquireVariableUInt( const std::string name, const bool readIn )
+Variable<unsigned int>* BPFileReader::InquireVariableUInt( const std::string name, const bool readIn )
 { return InquireVariableCommon<unsigned int>( name, readIn ); }
 
-Variable<long int>* BPReader::InquireVariableLInt( const std::string name, const bool readIn )
+Variable<long int>* BPFileReader::InquireVariableLInt( const std::string name, const bool readIn )
 { return InquireVariableCommon<long int>( name, readIn ); }
 
-Variable<unsigned long int>* BPReader::InquireVariableULInt( const std::string name, const bool readIn )
+Variable<unsigned long int>* BPFileReader::InquireVariableULInt( const std::string name, const bool readIn )
 { return InquireVariableCommon<unsigned long int>( name, readIn ); }
 
-Variable<long long int>* BPReader::InquireVariableLLInt( const std::string name, const bool readIn )
+Variable<long long int>* BPFileReader::InquireVariableLLInt( const std::string name, const bool readIn )
 { return InquireVariableCommon<long long int>( name, readIn ); }
 
-Variable<unsigned long long int>* BPReader::InquireVariableULLInt( const std::string name, const bool readIn )
+Variable<unsigned long long int>* BPFileReader::InquireVariableULLInt( const std::string name, const bool readIn )
 { return InquireVariableCommon<unsigned long long int>( name, readIn ); }
 
-Variable<float>* BPReader::InquireVariableFloat( const std::string name, const bool readIn )
+Variable<float>* BPFileReader::InquireVariableFloat( const std::string name, const bool readIn )
 { return InquireVariableCommon<float>( name, readIn ); }
 
-Variable<double>* BPReader::InquireVariableDouble( const std::string name, const bool readIn )
+Variable<double>* BPFileReader::InquireVariableDouble( const std::string name, const bool readIn )
 { return InquireVariableCommon<double>( name, readIn ); }
 
-Variable<long double>* BPReader::InquireVariableLDouble( const std::string name, const bool readIn )
+Variable<long double>* BPFileReader::InquireVariableLDouble( const std::string name, const bool readIn )
 { return InquireVariableCommon<long double>( name, readIn ); }
 
-Variable<std::complex<float>>* BPReader::InquireVariableCFloat( const std::string name, const bool readIn )
+Variable<std::complex<float>>* BPFileReader::InquireVariableCFloat( const std::string name, const bool readIn )
 { return InquireVariableCommon<std::complex<float>>( name, readIn ); }
 
-Variable<std::complex<double>>* BPReader::InquireVariableCDouble( const std::string name, const bool readIn )
+Variable<std::complex<double>>* BPFileReader::InquireVariableCDouble( const std::string name, const bool readIn )
 { return InquireVariableCommon<std::complex<double>>( name, readIn ); }
 
-Variable<std::complex<long double>>* BPReader::InquireVariableCLDouble( const std::string name, const bool readIn )
+Variable<std::complex<long double>>* BPFileReader::InquireVariableCLDouble( const std::string name, const bool readIn )
 { return InquireVariableCommon<std::complex<long double>>( name, readIn ); }
 
-VariableCompound* BPReader::InquireVariableCompound( const std::string name, const bool readIn )
+VariableCompound* BPFileReader::InquireVariableCompound( const std::string name, const bool readIn )
 { return nullptr; }
 
 
-void BPReader::Close( const int transportIndex )
+void BPFileReader::Close( const int transportIndex )
 {
 
 }
 
 
 //PRIVATE
-void BPReader::Init( )
+void BPFileReader::Init( )
 {
     if( m_DebugMode == true )
     {
         if( m_AccessMode != "r" && m_AccessMode != "read" )
-            throw std::invalid_argument( "ERROR: BPReader doesn't support access mode " + m_AccessMode +
-                                         ", in call to ADIOS Open or BPReader constructor\n"  );
+            throw std::invalid_argument( "ERROR: BPFileReader doesn't support access mode " + m_AccessMode +
+                                         ", in call to ADIOS Open or BPFileReader constructor\n"  );
     }
 
     InitCapsules( );
@@ -109,13 +109,13 @@ void BPReader::Init( )
 }
 
 
-void BPReader::InitCapsules( )
+void BPFileReader::InitCapsules( )
 {
     //here init memory capsules
 }
 
 
-void BPReader::InitTransports( ) //maybe move this?
+void BPFileReader::InitTransports( ) //maybe move this?
 {
     if( m_DebugMode == true )
     {

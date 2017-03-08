@@ -15,6 +15,7 @@
 #include <set>
 #include <complex>
 #include <cmath> //std::sqrt
+#include <iostream>
 /// \endcond
 
 
@@ -140,7 +141,7 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
 {
     if( cores == 1 )
     {
-        std::memcpy( destination, source, count ); //here is the bug!!!
+        std::memcpy( destination, source, count );
         return;
     }
 
@@ -167,58 +168,26 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
 }
 
 
-/**
- * Write to many buffers and updates positions a single piece of data source
- * @param buffers
- * @param positions  each element is updated to += size
- * @param source
- * @param size
- */
 template< class T >
-void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const T* source, std::size_t size ) noexcept
+void MemcpyToBuffer( std::vector<char>& raw, std::size_t& position, const T* source, std::size_t size ) noexcept
 {
-    const unsigned int length = buffers.size( );
-
-    for( unsigned int i = 0; i < length; ++i )
-    {
-        char* buffer = buffers[i];
-        std::memcpy( &buffer[ positions[i] ], source, size );
-        //std::copy( source, source+size, &buffers[ positions[i] ] ); wrong version
-        positions[i] += size;
-    }
-}
-
-
-/**
- * Version that adds a source container for a 1 to 1 buffer memory copy
- * @param buffers
- * @param positions
- * @param source
- * @param size
- */
-template< class T >
-void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                      const std::vector<T>& source, std::size_t size ) noexcept
-{
-    const unsigned int length = buffers.size( );
-
-    for( unsigned int i = 0; i < length; ++i )
-    {
-        char* buffer = buffers[i];
-        std::memcpy( &buffer[ positions[i] ], &source[i], size );
-        //std::copy( &source[i], &source[i]+size, &buffers[ positions[i] ] );
-        positions[i] += size;
-    }
-}
-
-
-template< class T >
-void MemcpyToBuffer( char* buffer, std::size_t& position, const T* source, std::size_t size ) noexcept
-{
-    std::memcpy( &buffer[position], source, size );
+    std::memcpy( &raw[position], source, size );
     position += size;
 }
 
+
+template< class T >
+void PrintValues( const std::string name, const char* buffer, const std::size_t position, const std::size_t elements )
+{
+    std::vector<T> values( elements );
+    std::memcpy( values.data(), &buffer[position], elements * sizeof(T) );
+
+    std::cout << "Read " << name << "\n";
+    for( const auto value : values )
+        std::cout << value << " ";
+
+    std::cout << "\n";
+}
 
 
 } //end namespace

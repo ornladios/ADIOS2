@@ -13,13 +13,11 @@
 /// \endcond
 
 #include "ADIOS.h"
-
-
 #include "functions/adiosFunctions.h"
 
 //Engines
-#include "engine/bp/BPWriter.h"
-#include "engine/bp/BPReader.h"
+#include "engine/bp/BPFileWriter.h"
+#include "engine/bp/BPFileReader.h"
 
 #ifdef HAVE_DATAMAN  //external dependencies
 #include "engine/dataman/DataManWriter.h"
@@ -113,13 +111,13 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
     const bool isDefaultReader = ( accessMode == "r" || accessMode == "read" ) && type.empty() ? true : false;
 
-    if( isDefaultWriter || type == "BPWriter" || type == "bpwriter" )
+    if( isDefaultWriter || type == "BPFileWriter" || type == "bpfilewriter" )
     {
-        return std::make_shared<BPWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<BPFileWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( isDefaultReader || type == "BPReader" || type == "bpreader" )
     {
-        return std::make_shared<BPReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<BPFileReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {

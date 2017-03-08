@@ -59,7 +59,7 @@ void FD::Open( const std::string name, const std::string accessMode )
     {
         if( m_FileDescriptor == -1 )
             throw std::ios_base::failure( "ERROR: couldn't open file " + m_Name +
-                                          ", from call to Open in FD transport using POSIX Open\n" );
+                                          ", from call to Open in FD transport using POSIX open. Does file exists?\n" );
     }
 }
 

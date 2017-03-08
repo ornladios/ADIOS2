@@ -170,13 +170,6 @@ std::vector<int> CSVToVectorInt( const std::string csv );
 int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, const std::size_t currentPosition,
                 std::vector<char>& buffer );
 
-/**
- * Moves positions in a vector by a number of bytes
- * @param bytes input number of bytes
- * @param positions  += bytes
- */
-void MovePositions( const int bytes, std::vector<std::size_t>& positions ) noexcept;
-
 
 /**
  * Check if system is little endian

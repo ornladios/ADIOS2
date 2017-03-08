@@ -571,13 +571,6 @@ int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, co
 }
 
 
-void MovePositions( const int bytes, std::vector<std::size_t>& positions ) noexcept
-{
-    for( auto& position : positions )
-        position += bytes;
-}
-
-
 
 bool IsLittleEndian( ) noexcept
 {
