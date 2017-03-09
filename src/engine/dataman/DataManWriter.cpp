@@ -13,8 +13,6 @@
 #include "functions/adiosFunctions.h" //CSVToVector
 
 //supported transports
-#include "transport/file/FD.h" // uses POSIX
-#include "transport/file/FP.h" // uses C FILE*
 #include "transport/file/FStream.h" // uses C++ fstream
 #include "transport/wan/MdtmMan.h" //uses Mdtm library
 

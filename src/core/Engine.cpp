@@ -109,10 +109,8 @@ VariableCompound* Engine::InquireVariableCompound( const std::string name, const
 void Engine::Init( )
 { }
 
-
-void Engine::InitCapsules( )
+void Engine::InitParameters( )
 { }
-
 
 void Engine::InitTransports( )
 { }

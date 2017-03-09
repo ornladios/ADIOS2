@@ -10,7 +10,7 @@
 /// \endcond
 
 
-#include "transport/file/FP.h"
+#include "transport/file/FilePointer.h"
 
 
 namespace adios
@@ -19,19 +19,19 @@ namespace transport
 {
 
 
-FP::FP( MPI_Comm mpiComm, const bool debugMode ):
+FilePointer::FilePointer( MPI_Comm mpiComm, const bool debugMode ):
     Transport( "File", mpiComm, debugMode )
 { }
 
 
-FP::~FP( )
+FilePointer::~FilePointer( )
 {
     if( m_File != NULL )
         fclose( m_File );
 }
 
 
-void FP::Open( const std::string name, const std::string accessMode )
+void FilePointer::Open( const std::string name, const std::string accessMode )
 {
     m_Name = name;
     m_AccessMode = accessMode;
@@ -49,12 +49,12 @@ void FP::Open( const std::string name, const std::string accessMode )
     {
         if( m_File == NULL )
             throw std::ios_base::failure( "ERROR: couldn't open file " + name + ", "
-                                          "in call to Open from File transport\n" );
+                                          "in call to Open from File* transport\n" );
     }
 }
 
 
-void FP::SetBuffer( char* buffer, std::size_t size )
+void FilePointer::SetBuffer( char* buffer, std::size_t size )
 {
     int status = setvbuf( m_File, buffer, _IOFBF, size );
 
@@ -67,7 +67,7 @@ void FP::SetBuffer( char* buffer, std::size_t size )
 }
 
 
-void FP::Write( const char* buffer, std::size_t size )
+void FilePointer::Write( const char* buffer, std::size_t size )
 {
     fwrite( buffer, sizeof(char), size, m_File );
 
@@ -75,18 +75,18 @@ void FP::Write( const char* buffer, std::size_t size )
     {
         if( ferror( m_File ) )
             throw std::ios_base::failure( "ERROR: couldn't write to file " + m_Name +
-                                          ", in call to FP write\n"   );
+                                          ", in call to File* write\n"   );
     }
 }
 
 
-void FP::Flush( )
+void FilePointer::Flush( )
 {
     fflush( m_File );
 }
 
 
-void FP::Close( )
+void FilePointer::Close( )
 {
     fclose( m_File );
 }

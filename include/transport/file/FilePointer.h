@@ -1,12 +1,12 @@
 /*
- * File.h
+ * FilePointer.h
  *
  *  Created on: Jan 6, 2017
  *      Author: wfg
  */
 
-#ifndef FP_H_
-#define FP_H_
+#ifndef FILEPOINTER_H_
+#define FILEPOINTER_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <stdio.h> // FILE*
@@ -23,14 +23,14 @@ namespace transport
 /**
  * Class that defines a transport method using C file pointer (FP) to streams FILE*
  */
-class FP : public Transport
+class FilePointer : public Transport
 {
 
 public:
 
-    FP( MPI_Comm mpiComm, const bool debugMode );
+    FilePointer( MPI_Comm mpiComm, const bool debugMode );
 
-    ~FP( );
+    ~FilePointer( );
 
     void Open( const std::string name, const std::string accessMode );
 
@@ -56,4 +56,4 @@ private:
 
 
 
-#endif /* FP_H_ */
+#endif /* FILEPOINTER_H_ */

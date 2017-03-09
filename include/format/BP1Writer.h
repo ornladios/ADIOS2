@@ -316,11 +316,6 @@ public:
     void WriteVariablePayload( const Variable<T>& variable, capsule::STLVector& buffer, const unsigned int cores = 1 ) const noexcept
     {
         std::size_t payloadSize = variable.PayLoadSize(); //not using const due to memcpy inside Memcpythreads
-//        std::cout << variable.m_Name << "\n";
-//        std::cout << "Payload position: " << buffer.m_DataPosition << "\n";
-//        std::cout << "Payload size: " << payloadSize << "\n\n";
-
-
         //EXPENSIVE part, might want to use threads if large, serial for now
         MemcpyThreads( &buffer.m_Data[buffer.m_DataPosition], variable.m_AppValues, payloadSize, cores );
         //update indices

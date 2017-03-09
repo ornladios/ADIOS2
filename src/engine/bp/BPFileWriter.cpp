@@ -9,10 +9,9 @@
 #include "ADIOS.h"
 
 //supported transports
-#include "transport/file/FD.h"
-#include "transport/file/FP.h"
+#include "transport/file/FileDescriptor.h"
+#include "transport/file/FilePointer.h"
 #include "transport/file/FStream.h"
-
 
 namespace adios
 {
@@ -34,21 +33,6 @@ BPFileWriter::~BPFileWriter( )
 
 void BPFileWriter::Init( )
 {
-    auto itGrowthFactor = m_Method.m_Parameters.find( "buffer_growth" );
-    if( itGrowthFactor != m_Method.m_Parameters.end() )
-    {
-        m_GrowthFactor = std::stof( itGrowthFactor->second ); //float
-        m_BP1Writer.m_GrowthFactor = m_GrowthFactor;
-    }
-
-    auto itMaxBufferSize = m_Method.m_Parameters.find( "max_size_MB" );
-    if( itMaxBufferSize != m_Method.m_Parameters.end() )
-        m_MaxBufferSize = std::stoul( itGrowthFactor->second ) * 1000000; //convert to bytes
-
-    auto itVerbosity = m_Method.m_Parameters.find( "verbose" );
-    if( itVerbosity != m_Method.m_Parameters.end() )
-        m_BP1Writer.m_Verbosity = std::stoi( itVerbosity->second );
-
     InitTransports( );
     InitProcessGroup( );
 }
@@ -180,6 +164,74 @@ void BPFileWriter::Close( const int transportIndex )
 
 
 //PRIVATE FUNCTIONS
+void BPFileWriter::InitParameters( )
+{
+    auto itGrowthFactor = m_Method.m_Parameters.find( "buffer_growth" );
+    if( itGrowthFactor != m_Method.m_Parameters.end() )
+    {
+        const float growthFactor = std::stof( itGrowthFactor->second );
+        if( m_DebugMode == true )
+        {
+            if( growthFactor == 1.f )
+                throw std::invalid_argument( "ERROR: buffer_growth argument can't be less of equal than 1, in " + m_EndMessage + "\n" );
+        }
+
+        m_BP1Writer.m_GrowthFactor = growthFactor;
+        m_GrowthFactor = growthFactor; //float
+    }
+
+    auto itMaxBufferSize = m_Method.m_Parameters.find( "max_size_MB" );
+    if( itMaxBufferSize != m_Method.m_Parameters.end() )
+    {
+        if( m_DebugMode == true )
+        {
+            if( m_GrowthFactor <= 1.f )
+                throw std::invalid_argument( "ERROR: Method buffer_growth argument can't be less of equal than 1, in " + m_EndMessage + "\n" );
+        }
+
+        m_MaxBufferSize = std::stoul( itMaxBufferSize->second ) * 1048576; //convert to bytes
+    }
+
+    auto itVerbosity = m_Method.m_Parameters.find( "verbose" );
+    if( itVerbosity != m_Method.m_Parameters.end() )
+    {
+        int verbosity = std::stoi( itVerbosity->second );
+        if( m_DebugMode == true )
+        {
+            if( verbosity < 0 || verbosity > 5 )
+                throw std::invalid_argument( "ERROR: Method verbose argument must be an integer in the range [0,5], in call to Open or Engine constructor\n" );
+        }
+        m_BP1Writer.m_Verbosity = verbosity;
+    }
+
+    auto itProfile = m_Method.m_Parameters.find( "profile_buffering_units" );
+    if( itProfile != m_Method.m_Parameters.end() )
+    {
+        if( itProfile->second == "mus" || itProfile->second == "microseconds" )
+            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::mus );
+
+        else if( itProfile->second == "ms" || itProfile->second == "milliseconds" )
+            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::ms );
+
+        else if( itProfile->second == "s" || itProfile->second == "seconds" )
+            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::s );
+
+        else if( itProfile->second == "min" || itProfile->second == "minutes" )
+            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::m );
+
+        else if( itProfile->second == "h" || itProfile->second == "hours" )
+            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::h );
+        else
+        {
+            if( m_DebugMode == true )
+                throw std::invalid_argument( "ERROR: Method profile_buffering_units argument must be mus, ms, s, min or h, in call to Open or Engine constructor\n" );
+        }
+
+        m_Profiler.m_IsActive = true;
+    }
+}
+
+
 void BPFileWriter::InitTransports( )
 {
     if( m_DebugMode == true )
@@ -193,30 +245,66 @@ void BPFileWriter::InitTransports( )
 
     for( const auto& parameters : m_Method.m_TransportParameters )
     {
+        auto itProfile = parameters.find( "profile_units" );
+        Support::Resolutions resolution;
+        if( itProfile != parameters.end() )
+        {
+            if( itProfile->second == "mus" || itProfile->second == "microseconds" )
+                resolution = Support::Resolutions::mus;
+
+            else if( itProfile->second == "ms" || itProfile->second == "milliseconds" )
+                resolution = Support::Resolutions::ms;
+
+            else if( itProfile->second == "s" || itProfile->second == "seconds" )
+                resolution = Support::Resolutions::s;
+
+            else if( itProfile->second == "min" || itProfile->second == "minutes" )
+                resolution = Support::Resolutions::m;
+
+            else if( itProfile->second == "h" || itProfile->second == "hours" )
+                resolution = Support::Resolutions::h;
+
+            else
+            {
+                if( m_DebugMode == true )
+                    throw std::invalid_argument( "ERROR: Transport profile_units argument must be mus, ms, s, min or h " + m_EndMessage );
+            }
+        }
+
         auto itTransport = parameters.find( "transport" );
+
         if( itTransport->second == "file" || itTransport->second == "File" )
         {
             auto itLibrary = parameters.find( "library" );
             if( itLibrary == parameters.end() || itLibrary->second == "POSIX" ) //use default POSIX
             {
-                auto file = std::make_shared<transport::FD>( m_MPIComm, m_DebugMode );
-                m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
-                m_Transports.push_back( std::move( file ) );
-            }
-            else if( itLibrary->second == "FILE*" || itLibrary->second == "stdio.h" )
-            {
-                auto file = std::make_shared<transport::FP>( m_MPIComm, m_DebugMode );
+                auto file = std::make_shared<transport::FileDescriptor>( m_MPIComm, m_DebugMode );
+                if( parameters.count( "profile_units" ) == 1 )
+                    file->InitProfiler( resolution );
+
                 m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
                 m_Transports.push_back( std::move( file ) );
 
             }
-            else if( itLibrary->second == "fstream" || itLibrary->second == "std::fstream" )
+            else if( itLibrary->second == "FILE*" || itLibrary->second == "stdio" )
             {
-                auto file = std::make_shared<transport::FStream>( m_MPIComm, m_DebugMode );
+                auto file = std::make_shared<transport::FilePointer>( m_MPIComm, m_DebugMode );
+                if( parameters.count( "profile_units" ) == 1 )
+                    file->InitProfiler( resolution );
+
                 m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
                 m_Transports.push_back( std::move( file ) );
             }
-            else if( itLibrary->second == "MPI-IO" )
+            else if( itLibrary->second == "fstream" || itLibrary->second == "std::fstream" )
+            {
+                auto file = std::make_shared<transport::FStream>( m_MPIComm, m_DebugMode );
+                if( parameters.count( "profile_units" ) == 1 )
+                    file->InitProfiler( resolution );
+
+                m_BP1Writer.OpenRankFiles( m_Name, m_AccessMode, *file );
+                m_Transports.push_back( std::move( file ) );
+            }
+            else if( itLibrary->second == "MPI_File" || itLibrary->second == "MPI-IO" )
             {
 
             }

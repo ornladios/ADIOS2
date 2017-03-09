@@ -107,10 +107,6 @@ void BP1Writer::Close( BP1MetadataSet& metadataSet, capsule::STLVector& buffer, 
         isFirstClose = false;
     }
     //implementing N-to-N for now, no aggregation
-//    PrintValues<double>( "myDoubles", capsule.GetData(), 155, 10  );
-//    PrintValues<float>( "myMatrix", capsule.GetData(), 391, 9  );
-//    PrintValues<float>( "myMatrix2", capsule.GetData(), 584, 9  );
-//    PrintValues<float>( "myMatrix3", capsule.GetData(), 777, 9  );
 
     transport.Write( buffer.m_Data.data(), buffer.m_DataPosition ); //single write
 

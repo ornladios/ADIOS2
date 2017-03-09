@@ -31,7 +31,7 @@
 #include "core/Transform.h"
 #include "core/Transport.h"
 #include "core/Capsule.h"
-
+#include "core/Profiler.h"
 
 namespace adios
 {
@@ -175,11 +175,13 @@ protected:
     unsigned int m_Cores = 1;
     const std::string m_EndMessage; ///< added to exceptions to improve debugging
 
+    Profiler m_Profiler; ///< engine time and bytes profiler
+
     std::set<std::string> m_WrittenVariables; ///< contains the names of the variables that are being written
 
     virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
-    virtual void InitCapsules( ); ///< Initialize transports from Method, called from Init in constructor.
-    virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor.
+    virtual void InitParameters( ); ///< Initialize parameters from Method, called from Initi in constructor
+    virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor
 
 
     virtual void Write( Variable<char>& variable,                      const char* values );

@@ -1,12 +1,12 @@
 /*
- * POSIXMPI.h
+ * FileDescriptor.h
  *
  *  Created on: Oct 6, 2016
  *      Author: wfg
  */
 
-#ifndef FD_H_
-#define FD_H_
+#ifndef FILEDESCRIPTOR_H_
+#define FILEDESCRIPTOR_H_
 
 
 #include "core/Transport.h"
@@ -20,14 +20,14 @@ namespace transport
 /**
  * File descriptor transport using the POSIX library
  */
-class FD : public Transport
+class FileDescriptor : public Transport
 {
 
 public:
 
-    FD( MPI_Comm mpiComm, const bool debugMode );
+    FileDescriptor( MPI_Comm mpiComm, const bool debugMode );
 
-    ~FD( );
+    ~FileDescriptor( );
 
     void Open( const std::string name, const std::string accessMode );
 
@@ -38,7 +38,8 @@ public:
 
 private:
 
-    int m_FileDescriptor = -1; ///< POSIX file descriptor
+    int m_FileDescriptor = -1; ///< file descriptor returned by POSIX open
+
 };
 
 
@@ -46,4 +47,4 @@ private:
 
 } //end namespace transport
 } //end namespace
-#endif /* FD_H_ */
+#endif /* FILEDESCRIPTOR_H_ */

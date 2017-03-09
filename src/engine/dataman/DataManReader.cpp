@@ -12,12 +12,12 @@
 #include "functions/adiosFunctions.h" //CSVToVector
 
 //supported transports
-#include "transport/file/FD.h" // uses POSIX
-#include "transport/file/FP.h" // uses C FILE*
 #include "transport/file/FStream.h" // uses C++ fstream
 #include "transport/wan/MdtmMan.h" //uses Mdtm library
 
 #include "DataMan.h"  //here comes your DataMan header from external dataman library
+#include "../../../include/transport/file/FileDescriptor.h" // uses POSIX
+#include "../../../include/transport/file/FilePointer.h" // uses C FILE*
 
 namespace adios
 {

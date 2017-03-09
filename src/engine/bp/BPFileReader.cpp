@@ -9,12 +9,12 @@
 
 #include "engine/bp/BPFileReader.h"
 
+#include "transport/file/FileDescriptor.h" // uses POSIX
+#include "transport/file/FilePointer.h" // uses C FILE*
 #include "core/Support.h"
 #include "functions/adiosFunctions.h" //CSVToVector
 
 //supported transports
-#include "transport/file/FD.h" // uses POSIX
-#include "transport/file/FP.h" // uses C FILE*
 #include "transport/file/FStream.h" // uses C++ fstream
 
 
@@ -134,13 +134,13 @@ void BPFileReader::InitTransports( ) //maybe move this?
             auto itLibrary = parameters.find( "library" );
             if( itLibrary == parameters.end() || itLibrary->second == "POSIX" ) //use default POSIX
             {
-                auto file = std::make_shared<transport::FD>( m_MPIComm, m_DebugMode );
+                auto file = std::make_shared<transport::FileDescriptor>( m_MPIComm, m_DebugMode );
                 //m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
                 m_Transports.push_back( std::move( file ) );
             }
             else if( itLibrary->second == "FILE*" || itLibrary->second == "stdio.h" )
             {
-                auto file = std::make_shared<transport::FP>( m_MPIComm, m_DebugMode );
+                auto file = std::make_shared<transport::FilePointer>( m_MPIComm, m_DebugMode );
                 //m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
                 m_Transports.push_back( std::move( file ) );
 

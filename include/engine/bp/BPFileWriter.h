@@ -8,8 +8,6 @@
 #ifndef BPFILEWRITER_H_
 #define BPFILEWRITER_H_
 
-#include <iostream> //will go away
-
 #include "core/Engine.h"
 #include "format/BP1Writer.h"
 
@@ -60,6 +58,7 @@ private:
     bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
 
     void Init( );
+    void InitParameters( );
     void InitTransports( );
     void InitProcessGroup( );
 

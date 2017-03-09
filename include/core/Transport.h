@@ -19,6 +19,7 @@
   #include <mpi.h>
 #endif
 
+#include "core/Profiler.h"
 
 
 namespace adios
@@ -38,6 +39,7 @@ public:
 
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
+    Profiler m_Profiler; ///< collects information about Open and bytes Transport
 
     /**
      * Base constructor that all derived classes pass
@@ -76,9 +78,13 @@ public:
     virtual void Close( ); ///< closes current transport and flushes everything, transport becomes unreachable
 
 
+    virtual void InitProfiler( const Support::Resolutions resolution );
+
 protected:
 
     const bool m_DebugMode = false; ///< if true: additional checks and exceptions
+
+
 
 };
 
