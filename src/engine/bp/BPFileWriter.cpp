@@ -246,7 +246,7 @@ void BPFileWriter::InitTransports( )
     for( const auto& parameters : m_Method.m_TransportParameters )
     {
         auto itProfile = parameters.find( "profile_units" );
-        Support::Resolutions resolution;
+        Support::Resolutions resolution = Support::Resolutions::s; //default is seconds
         if( itProfile != parameters.end() )
         {
             if( itProfile->second == "mus" || itProfile->second == "microseconds" )
@@ -362,7 +362,7 @@ void BPFileWriter::WriteProcessGroupIndex( )
 bool BPFileWriter::CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize )
 {
     //Check if data in buffer needs to be reallocated
-    const std::size_t neededSize = m_Buffer.m_DataPosition + payloadSize + indexSize + 500; //adding some bytes tolerance
+    const std::size_t neededSize = m_Buffer.m_DataPosition + payloadSize + indexSize + 100; //adding some bytes tolerance
     // might need to write payload in batches
     bool doTransportsFlush = ( neededSize > m_MaxBufferSize )? true : false;
 

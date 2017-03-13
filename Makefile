@@ -4,12 +4,24 @@
      
 #DEFAULT COMPILERS IN PATH, LIBS will be modified in Makefile.libs
 CC:=g++
-AR:=ar
 MPICC:=mpic++
 LIBS:=
 
+SHARED:=no
 CFLAGS:=-c -Wall -Wpedantic -std=c++11 -O0 -g
-ARFLAGS:=rcs
+LINKERMPI:=ar
+LINKERNoMPI:=ar
+LINKERFLAGS:= rcs
+LIBEXT:=a
+
+ifeq ($(SHARED),yes)
+	CFLAGS+= -fPIC
+	LINKERMPI=$(MPICC) 
+	LINKERNoMPI=$(CC)
+	LINKERFLAGS= -shared -o
+	LIBEXT=so
+endif
+
 
 #ADIOS 
 HFiles:=$(shell find ./include -type f -name "*.h")
@@ -38,8 +50,8 @@ all: mpi nompi
 
 mpi: $(HFiles) $(OBJMPI)
 	@( mkdir -p ./lib );
-	$(AR) $(ARFLAGS) ./lib/libadios.a $(OBJMPI)
-	@echo "Finished building MPI library lib/libadios.a";
+	$(LINKERMPI) $(LINKERFLAGS) ./lib/libadios.$(LIBEXT) $(OBJMPI)
+	@echo "Finished building MPI library ./lib/libadios.$(LIBEXT)";
 	@echo
     
 ./bin/mpi/%.o: %.cpp $(HFiles)
@@ -48,8 +60,8 @@ mpi: $(HFiles) $(OBJMPI)
 
 nompi: $(HFiles) $(OBJNoMPI)
 	@( mkdir -p ./lib );
-	$(AR) $(ARFLAGS) ./lib/libadios_nompi.a $(OBJNoMPI)
-	@echo "Finished building noMPI library lib/libadios_nompi.a";
+	$(LINKERNoMPI) $(LINKERFLAGS) ./lib/libadios_nompi.$(LIBEXT) $(OBJNoMPI)
+	@echo "Finished building noMPI library ./lib/libadios.$(LIBEXT)";
 	@echo
 
 ./bin/nompi/%.o: %.cpp $(HFiles)

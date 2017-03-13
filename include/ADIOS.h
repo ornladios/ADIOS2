@@ -84,9 +84,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
     ~ADIOS( ); ///< empty, using STL containers for memory management
 
-
     void InitMPI( ); ///< sets rank and size in m_rank and m_Size, respectively.
-
 
     /**
      * Look for template specialization
@@ -192,7 +190,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
 
-private: //no const to allow default empty and copy constructors
+protected: //no const to allow default empty and copy constructors
 
     std::map<unsigned int, Variable<char> > m_Char;
     std::map<unsigned int, Variable<unsigned char> > m_UChar;
