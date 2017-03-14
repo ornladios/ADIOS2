@@ -9,6 +9,7 @@
 #define ADIOSPYFUNCTIONS_H_
 
 #include <vector>
+#include <map>
 #include <string>
 #include <boost/python.hpp>
 
@@ -16,9 +17,15 @@
 namespace adios
 {
 
-std::vector<std::size_t> ListToVector( const boost::python::list& list );
+using Dims = std::vector<std::size_t>;
+/**
+ * Transforms a boost python list to a Dims (std::vector<std::size_t>) object
+ * @param list input boost python list from python program
+ * @return Dims (std::vector<std::size_t>) object than can be passed to python
+ */
+Dims ListToVector( const boost::python::list& list );
 
-boost::python::list VectorToList( const std::vector<std::size_t>& list );
+std::map<std::string, std::string> DictToMap( const boost::python::dict& dictionary );
 
 }
 

@@ -359,20 +359,5 @@ void BPFileWriter::WriteProcessGroupIndex( )
 }
 
 
-bool BPFileWriter::CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize )
-{
-    //Check if data in buffer needs to be reallocated
-    const std::size_t neededSize = m_Buffer.m_DataPosition + payloadSize + indexSize + 100; //adding some bytes tolerance
-    // might need to write payload in batches
-    bool doTransportsFlush = ( neededSize > m_MaxBufferSize )? true : false;
-
-    if( GrowBuffer( neededSize, m_GrowthFactor, m_Buffer.m_DataPosition, m_Buffer.m_Data ) == -1 )
-        doTransportsFlush = true;
-
-    GrowBuffer( indexSize, m_GrowthFactor, m_MetadataSet.VarsIndexPosition, m_MetadataSet.VarsIndex );
-    return doTransportsFlush;
-}
-
-
 
 } //end namespace adios

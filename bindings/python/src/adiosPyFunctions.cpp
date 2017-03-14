@@ -12,10 +12,10 @@
 namespace adios
 {
 
-std::vector<std::size_t> ListToVector( const boost::python::list& list )
+Dims ListToVector( const boost::python::list& list )
 {
     const boost::python::ssize_t length = boost::python::len( list );
-    std::vector<std::size_t> vec;
+    Dims vec;
     vec.reserve( length );
 
     for( unsigned int i=0; i<length;i++ )
@@ -24,22 +24,24 @@ std::vector<std::size_t> ListToVector( const boost::python::list& list )
     return vec;
 }
 
-
-boost::python::list VectorToList( const std::vector<std::size_t>& vec )
+std::map<std::string, std::string> DictToMap( const boost::python::dict& dictionary )
 {
-    boost::python::list list;
+    boost::python::list keys = dictionary.keys();
+    unsigned int length = boost::python::len( keys );
 
-    for( auto vecElement : vec )
+    std::map<std::string, std::string> parameters;
+
+    for( unsigned int k = 0; k < length; ++k )
     {
-        list.append( vecElement );
+        const std::string key( boost::python::extract<std::string>( keys[k] ) );
+        const std::string value( boost::python::extract<std::string>( dictionary[ keys[k] ] ) );
+        parameters.insert( std::make_pair( key, value ) );
     }
 
-    return list;
+    return parameters;
 }
 
 
 
-
-
-}
+} //end namespace
 

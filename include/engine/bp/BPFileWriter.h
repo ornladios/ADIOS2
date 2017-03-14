@@ -115,10 +115,10 @@ private:
         m_WrittenVariables.insert( variable.m_Name );
 
         //pre-calculate new metadata and payload sizes
-        const std::size_t indexSize = m_BP1Writer.GetVariableIndexSize( variable );
-        const std::size_t payloadSize = variable.PayLoadSize(); //will change if compression is applied
-        //Buffer reallocation, expensive part
-        m_TransportFlush = CheckBuffersAllocation( indexSize, payloadSize );
+        m_TransportFlush = CheckBuffersAllocation( m_BP1Writer.GetVariableIndexSize( variable ), variable.PayLoadSize(),
+                                                   m_GrowthFactor, m_MaxBufferSize,
+                                                   m_MetadataSet.VarsIndexPosition, m_MetadataSet.VarsIndex,
+                                                   m_Buffer.m_DataPosition, m_Buffer.m_Data );
 
         //WRITE INDEX to data buffer and metadata structure (in memory)//
         m_BP1Writer.WriteVariableIndex( variable, m_Buffer, m_MetadataSet );
@@ -129,7 +129,7 @@ private:
 
             //flush to transports
 
-            //reset positions to zero, update absolute position
+            //reset relative positions to zero, update absolute position
 
         }
         else //Write data to buffer
@@ -139,14 +139,6 @@ private:
 
         variable.m_AppValues = nullptr; //setting pointer to null as not needed after write
     }
-
-    /**
-     * Check if heap buffers for data and metadata need reallocation or maximum sizes have been reached.
-     * @param indexSize precalculated index size
-     * @param payloadSize payload size from variable total size
-     * @return true: transport must be flush and buffers reset, false: buffer is sufficient
-     */
-    bool CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize );
 
 };
 

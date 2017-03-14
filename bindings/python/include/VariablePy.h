@@ -21,7 +21,7 @@ class VariablePy : public Variable<T>
 public:
 
 	VariablePy<T>( const std::string name, const Dims dimensions, const Dims globalDimensions, const Dims globalOffsets,
-            	const bool debugMode ):
+            	   const bool debugMode ):
         Variable<T>( name, dimensions, globalDimensions, globalOffsets, debugMode )
 	{ }
 
@@ -33,7 +33,14 @@ public:
 		this->m_Dimensions = ListToVector( list );
 	}
 
-	std::vector<std::size_t> GetLocalDimensions( )
+	void SetGlobalDimensionsAndOffsets( const boost::python::list globalDimensions, const boost::python::list globalOffsets  )
+    {
+        this->m_GlobalDimensions = ListToVector( globalDimensions );
+        this->m_GlobalOffsets = ListToVector( globalOffsets );
+    }
+
+
+	Dims GetLocalDimensions( )
 	{
 		return this->m_Dimensions;
 	}
@@ -43,7 +50,7 @@ public:
 
 
 
-}
+} //end namespace
 
 
 

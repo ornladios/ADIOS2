@@ -15,10 +15,13 @@
 #include "ADIOS.h"
 #include "adiosPyFunctions.h" //ListToVector, VectorToList
 #include "VariablePy.h"
+#include "MethodPy.h"
 
 
 namespace adios
 {
+
+using pyList = boost::python::list;
 
 
 class ADIOSPy : public ADIOS
@@ -31,32 +34,26 @@ public:
 
     void HelloMPI( ); ///< says hello from rank/size for testing
 
-    VariablePy<double>& DefineVariableDouble( const std::string name,
-                                      const boost::python::list localDimensionsPy = boost::python::list(),
-                                      const boost::python::list globalDimensionsPy = boost::python::list(),
-                                      const boost::python::list globalOffsetsPy = boost::python::list() );
 
-    std::string DefineVariableFloat( const std::string name,
-                                     const boost::python::list localDimensionsPy = boost::python::list(),
-                                     const boost::python::list globalDimensionsPy = boost::python::list(),
-                                     const boost::python::list globalOffsetsPy = boost::python::list() );
-
-    void SetVariableLocalDimensions( const std::string name, const boost::python::list list );
-
-    std::vector<std::size_t> GetVariableLocalDimensions( const std::string name );
-
-
-private:
-    template< class T >
-    std::string DefineVariablePy( const std::string name, const boost::python::list& localDimensionsPy,
-                                  const boost::python::list& globalDimensionsPy, const boost::python::list& globalOffsetsPy )
+    template<class T> inline
+    VariablePy<T>& DefineVariablePy( const std::string name,
+                                     const pyList localDimensionsPy = pyList(),
+                                     const pyList globalDimensionsPy = pyList(),
+                                     const pyList globalOffsetsPy = pyList()   )
     {
-        DefineVariable<T>( name, ListToVector( localDimensionsPy ), ListToVector( globalDimensionsPy ), ListToVector( globalOffsetsPy ) );
-        return name;
+        Variable<T>& var = DefineVariable<T>( name, ListToVector( localDimensionsPy ), ListToVector( globalDimensionsPy ), ListToVector( globalOffsetsPy ) );
+        return *reinterpret_cast<VariablePy<T>*>( &var );
     }
 
 
+    MethodPy& DeclareMethodPy( const std::string methodName, const std::string type = "" );
+
+
+
+
 };
+
+
 
 
 

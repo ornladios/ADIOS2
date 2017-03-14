@@ -8,7 +8,8 @@ from ADIOSPy import *
 adios = ADIOSPy( MPI.COMM_WORLD, True)
 adios.HelloMPI( )
 
-lDims = [10, 11, 12]
+rank = MPI.COMM_WORLD.Get_rank()
+lDims = [rank+1, rank+2, rank+3]
 Nx = 1
 
 ioMyDoubles = adios.DefineVariableDouble( "ioMyDoubles", lDims, [], [] )
@@ -24,17 +25,14 @@ dims = ioMyDoubles.GetLocalDimensions( )
 print "New Dimensions " 
 for dim in dims:
     print dim
+    
+method = adios.DeclareMethod("myMethod", "BPFileWriter")
+method.SetParameters( max_buffer_size = '10000000' )
+method.AddTransport( 'File', have_metadata_file = 'yes', library = 'FStream' )
+method.AddTransport( "Mdtm", localIP='128.0.0.0.1', remoteIP='128.0.0.0.2', tolerances='1,2,3' )
+print
+method.PrintAll( )
 
-
-# dims = adios.GetVariableLocalDimensions( ioMyDoubles )
-# 
-# lDims = [20,20,20]
-# adios.SetVariableLocalDimensions( ioMyDoubles, lDims )
-# 
-# dims = adios.GetVariableLocalDimensions( ioMyDoubles )
-# print "New Dimensions " 
-# for dim in dims:
-#     print dim
 
 
 # bpWriter = adios.Open( )

@@ -539,6 +539,24 @@ std::vector<int> CSVToVectorInt( const std::string csv )
 }
 
 
+bool CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize,
+                             const float growthFactor, const std::size_t maxBufferSize,
+                             const std::size_t indexPosition, std::vector<char>& indexBuffer,
+                             const std::size_t dataPosition, std::vector<char>& dataBuffer )
+{
+    //Check if data in buffer needs to be reallocated
+    const std::size_t requiredDataSize = dataPosition + payloadSize + indexSize + 100; //adding some bytes tolerance
+    // might need to write payload in batches
+    bool doTransportsFlush = ( requiredDataSize > maxBufferSize )? true : false;
+
+    if( GrowBuffer( requiredDataSize, growthFactor, dataPosition, dataBuffer ) == -1 )
+        doTransportsFlush = true;
+
+    GrowBuffer( indexSize, growthFactor, indexPosition, indexBuffer );
+    return doTransportsFlush;
+}
+
+
 
 int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, const std::size_t currentPosition,
                 std::vector<char>& buffer )
