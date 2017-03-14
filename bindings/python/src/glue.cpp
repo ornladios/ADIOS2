@@ -38,11 +38,18 @@ BOOST_PYTHON_MODULE( ADIOSPy )
     //classes
     boost::python::class_<adios::ADIOSPy>("ADIOS", boost::python::no_init )
         .def("HelloMPI", &adios::ADIOSPy::HelloMPI )
-        .def("DefineVariableDouble", &adios::ADIOSPy::DefineVariableDouble, d_overloads() )
+        .def("DefineVariableDouble", &adios::ADIOSPy::DefineVariableDouble,
+            boost::python::return_value_policy<boost::python::reference_existing_object>(), d_overloads() )
         .def("DefineVariableFloat", &adios::ADIOSPy::DefineVariableFloat, f_overloads() )
         .def("SetVariableLocalDimensions", &adios::ADIOSPy::SetVariableLocalDimensions )
         .def("GetVariableLocalDimensions", &adios::ADIOSPy::GetVariableLocalDimensions )
     ;
+
+    //classes
+    boost::python::class_<adios::VariablePy<double>>("VariableDouble", boost::python::no_init )
+		.def("SetLocalDimensions", &adios::VariablePy<double>::SetLocalDimensions )
+		.def("GetLocalDimensions", &adios::VariablePy<double>::GetLocalDimensions )
+	;
 
 
 }

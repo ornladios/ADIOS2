@@ -12,8 +12,8 @@ BOOST_INC:= /usr/include/boost
 BOOST_LIBLOC:= /lib/x86_64-linux-gnu/
 
 # location of ADIOS include and lib
-ADIOS_INC:= /home/wfg/workspace/ADIOSPP/include
-ADIOS_LIB:= /home/wfg/workspace/ADIOSPP/lib
+ADIOS_INC:= /home/wgodoy/workspace/ADIOSPP/include
+ADIOS_LIB:= /home/wgodoy/workspace/ADIOSPP/lib
 ADIOSPy_INC:=./include
 
 CFLAGS:=-c -Wall -fPIC -O0 -g -std=c++11

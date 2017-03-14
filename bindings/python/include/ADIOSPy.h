@@ -14,6 +14,7 @@
 
 #include "ADIOS.h"
 #include "adiosPyFunctions.h" //ListToVector, VectorToList
+#include "VariablePy.h"
 
 
 namespace adios
@@ -30,7 +31,7 @@ public:
 
     void HelloMPI( ); ///< says hello from rank/size for testing
 
-    std::string DefineVariableDouble( const std::string name,
+    VariablePy<double>& DefineVariableDouble( const std::string name,
                                       const boost::python::list localDimensionsPy = boost::python::list(),
                                       const boost::python::list globalDimensionsPy = boost::python::list(),
                                       const boost::python::list globalOffsetsPy = boost::python::list() );
@@ -42,7 +43,7 @@ public:
 
     void SetVariableLocalDimensions( const std::string name, const boost::python::list list );
 
-    boost::python::list GetVariableLocalDimensions( const std::string name );
+    std::vector<std::size_t> GetVariableLocalDimensions( const std::string name );
 
 
 private:

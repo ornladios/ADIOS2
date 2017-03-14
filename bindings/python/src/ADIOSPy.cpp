@@ -35,10 +35,13 @@ std::string ADIOSPy::DefineVariableFloat( const std::string name, const boost::p
 }
 
 
-std::string ADIOSPy::DefineVariableDouble( const std::string name, const boost::python::list localDimensionsPy,
-                                           const boost::python::list globalDimensionsPy, const boost::python::list globalOffsetsPy )
+VariablePy<double>& ADIOSPy::DefineVariableDouble( const std::string name, const boost::python::list localDimensionsPy,
+                                                 const boost::python::list globalDimensionsPy, const boost::python::list globalOffsetsPy )
 {
-    return DefineVariablePy<double>( name, localDimensionsPy, globalDimensionsPy, globalOffsetsPy );
+
+	Variable<double>& var = DefineVariable<double>( name, ListToVector( localDimensionsPy ), ListToVector( globalDimensionsPy ), ListToVector( globalOffsetsPy ) );
+	VariablePy<double>& varPy = *reinterpret_cast<VariablePy<double>*>( &var );
+	return varPy;
 }
 
 
@@ -100,7 +103,8 @@ void ADIOSPy::SetVariableLocalDimensions( const std::string name, const boost::p
 }
 
 
-boost::python::list ADIOSPy::GetVariableLocalDimensions( const std::string name )
+//boost::python::list ADIOSPy::GetVariableLocalDimensions( const std::string name )
+std::vector<std::size_t> ADIOSPy::GetVariableLocalDimensions( const std::string name )
 {
     auto itVar = m_Variables.find( name );
     CheckVariableName( itVar, name, " in SetVariableLocalDimensions\n" );
@@ -157,8 +161,8 @@ boost::python::list ADIOSPy::GetVariableLocalDimensions( const std::string name 
     else if( type == GetType<std::complex<long double>>() )
         dims = GetVariable<std::complex<long double>>( name ).m_Dimensions;
 
-    //return dims;
-    return VectorToList( dims );
+    return dims;
+    //return VectorToList( dims );
 }
 
 

@@ -11,24 +11,30 @@ adios.HelloMPI( )
 lDims = [10, 11, 12]
 Nx = 1
 
-print lDims
-print lDims[0]
-ioMyDoubles = adios.DefineVariableDouble( "ioMyDoubles", lDims )
-ioMyFloats = adios.DefineVariableFloat( "ioMyFloats", [Nx] )
+ioMyDoubles = adios.DefineVariableDouble( "ioMyDoubles", lDims, [], [] )
 
-print "My ADIOS Variable Double " + ioMyDoubles
-print "My ADIOS Variable Float " + ioMyFloats
+dims = ioMyDoubles.GetLocalDimensions( )
+print "Old Dimensions" 
+for dim in dims:
+    print dim
 
-dims = adios.GetVariableLocalDimensions( ioMyDoubles )
-print "Old Dimensions " 
-print dims
+ioMyDoubles.SetLocalDimensions( [20,20,20] )
 
-lDims = [20,20,20]
-adios.SetVariableLocalDimensions( ioMyDoubles, lDims )
-
-dims = adios.GetVariableLocalDimensions( ioMyDoubles )
+dims = ioMyDoubles.GetLocalDimensions( )
 print "New Dimensions " 
-print dims
+for dim in dims:
+    print dim
+
+
+# dims = adios.GetVariableLocalDimensions( ioMyDoubles )
+# 
+# lDims = [20,20,20]
+# adios.SetVariableLocalDimensions( ioMyDoubles, lDims )
+# 
+# dims = adios.GetVariableLocalDimensions( ioMyDoubles )
+# print "New Dimensions " 
+# for dim in dims:
+#     print dim
 
 
 # bpWriter = adios.Open( )
