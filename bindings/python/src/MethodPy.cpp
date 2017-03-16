@@ -51,15 +51,16 @@ void MethodPy::PrintAll( ) const
 {
     std::cout << "Method parameters\n";
     for( const auto& param : m_Parameters )
-        std::cout << "Key: " << param.first << "\t Value: " << param.second << "\n";
+        std::cout << "Parameter: " << param.first << "\t Value: " << param.second << "\n";
 
     std::cout << "\n";
-    std::cout << "Method transports\n";
-    std::cout << "\n";
+    std::cout << "Transport Parameters\n";
+
     for( const auto& transportParameters : m_TransportParameters )
     {
-        for( const auto& param : transportParameters )
-            std::cout << "Key: " << param.first << "\t Value: " << param.second << "\n";
+        std::cout << "Transport:\n";
+    	for( const auto& param : transportParameters )
+            std::cout << "Parameter: " << param.first << "\t Value: " << param.second << "\n";
 
         std::cout << "\n";
     }

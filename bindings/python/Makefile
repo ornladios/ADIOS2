@@ -8,21 +8,21 @@ PYTHON_INC:= /usr/include/python$(PYTHON_VERSION)
 PYTHON_LIBLOC:= /usr/lib/python2.7/config-x86_64-linux-gnu/
  
 # location of the Boost Python include files and library 
-BOOST_INC:= /usr/include/boost
-BOOST_LIBLOC:= /lib/x86_64-linux-gnu/
+BOOST_INC:= /home/wgodoy/Apps/boost_1_63_0/
+BOOST_LIBLOC:= /home/wgodoy/Apps/boost_1_63_0/stage/lib/
 
 # location of ADIOS include and lib
 ADIOS_INC:= /home/wgodoy/workspace/ADIOSPP/include
 ADIOS_LIB:= /home/wgodoy/workspace/ADIOSPP/lib
 ADIOSPy_INC:=./include
 
-CFLAGS:=-c -Wall -fPIC -O0 -g -std=c++11
+CFLAGS:=-c -Wall -fPIC -O0 -g -std=c++11 -Wno-deprecated-declarations
 
 CPPFiles:=$(shell find ./src -type f -name "*.cpp")
 OBJS:=$(patsubst %.cpp, ./bin/%.o, $(notdir $(CPPFiles)) )
 
 INC:= -I$(PYTHON_INC) -I$(BOOST_INC) -I$(ADIOS_INC) -I$(ADIOSPy_INC)
-LIBS:= -L$(ADIOS_LIB) -ladios -L$(BOOST_LIBLOC) -lboost_python-py27 -L$(PYTHON_LIBLOC) -lpython$(PYTHON_VERSION)
+LIBS:= -L$(ADIOS_LIB) -ladios -L$(BOOST_LIBLOC) -lboost_python -lboost_numpy -L$(PYTHON_LIBLOC) -lpython$(PYTHON_VERSION)
 
  
 # compile mesh classes

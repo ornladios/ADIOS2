@@ -11,7 +11,8 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <boost/python.hpp>
+
+#include "boost/python.hpp"
 
 
 namespace adios
@@ -27,7 +28,25 @@ Dims ListToVector( const boost::python::list& list );
 
 std::map<std::string, std::string> DictToMap( const boost::python::dict& dictionary );
 
+
+template< class T >
+T* PyObjectToPointer( const boost::python::object& object )
+{
+	return reinterpret_cast<T*>( object.ptr() );
+
+
+//	Py_buffer pyBuffer;
+//	if(PyObject_GetBuffer( object.ptr(), &pyBuffer, PyBUF_SIMPLE)!=-1)
+//	{
+//
+//	}
+//
+//	return nullptr;
 }
+
+
+
+} //end namespace
 
 
 

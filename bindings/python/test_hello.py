@@ -4,39 +4,40 @@
 
 from mpi4py import MPI
 from ADIOSPy import *
+import numpy as np
 
-adios = ADIOSPy( MPI.COMM_WORLD, True)
-adios.HelloMPI( )
-
+# Create ADIOS and verify MPI Comm is passed correctly
+adios = ADIOSPy( MPI.COMM_WORLD, True ) #Pass communicator and debug flag is True
 rank = MPI.COMM_WORLD.Get_rank()
-lDims = [rank+1, rank+2, rank+3]
-Nx = 1
+size = MPI.COMM_WORLD.Get_size()
 
-ioMyDoubles = adios.DefineVariableDouble( "ioMyDoubles", lDims, [], [] )
+# User data
+myArray = np.array( [1,2,3,4], dtype=np.double )
 
-dims = ioMyDoubles.GetLocalDimensions( )
-print "Old Dimensions" 
-for dim in dims:
-    print dim
+if( rank % 2 == 1 ):  # odd ranks only
+    oddRankArray = np.array([11,12,13,14],dtype=np.float)
 
-ioMyDoubles.SetLocalDimensions( [20,20,20] )
+# ADIOS Define Variables    
+ioMyDoubles = adios.DefineVariableDouble( "ioMyDoubles", [myArray.size], [], [] )
 
-dims = ioMyDoubles.GetLocalDimensions( )
-print "New Dimensions " 
-for dim in dims:
-    print dim
+if( rank % 2 == 1 ): # odd ranks only
+    ioMyFloats = adios.DefineVariableDouble( "ioMyFloats", [oddRankArray.size], [], [] )
+
+#Setup method and print summary
+ioSettings = adios.DeclareMethod("adiosSettings", "BPFileWriter")
+ioSettings.SetParameters( max_buffer_size = '10000000' )
+ioSettings.AddTransport( 'File', have_metadata_file = 'yes', library = 'POSIX' )  # POSIX is default, just checking
+
+#Start Engine
+bpFileWriter = adios.Open( "file.bp", "w", ioSettings, None )  # Open files using N-to-N method, None means no new MPI communicator
+bpFileWriter.Write( ioMyDoubles, myArray )
+
+if( rank % 2 == 1 ): 
+    bpFileWriter.Write( ioMyFloats, oddRankArray )
+
+bpFileWriter.Close( ) 
+
+if( rank == 0 ):
+    print "Done writing " + str( size ) + " bp files"
+    ioSettings.PrintAll( ) # just prints a summary of Method/Transport parameters
     
-method = adios.DeclareMethod("myMethod", "BPFileWriter")
-method.SetParameters( max_buffer_size = '10000000' )
-method.AddTransport( 'File', have_metadata_file = 'yes', library = 'FStream' )
-method.AddTransport( "Mdtm", localIP='128.0.0.0.1', remoteIP='128.0.0.0.2', tolerances='1,2,3' )
-print
-method.PrintAll( )
-
-
-
-# bpWriter = adios.Open( )
-# ADIOS.SetEngineComm( bpWriter, comm ) 
-# bpWriter.Hello( )
-
-# challenge is to pass comm to C++

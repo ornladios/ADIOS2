@@ -9,14 +9,15 @@
 #define ADIOSPY_H_
 
 #include <string>
+#include <memory> //std::shared_ptr
 
-#include <boost/python.hpp>
+#include "boost/python.hpp"
 
 #include "ADIOS.h"
 #include "adiosPyFunctions.h" //ListToVector, VectorToList
 #include "VariablePy.h"
 #include "MethodPy.h"
-
+#include "EnginePy.h"
 
 namespace adios
 {
@@ -48,8 +49,8 @@ public:
 
     MethodPy& DeclareMethodPy( const std::string methodName, const std::string type = "" );
 
-
-
+    EnginePy OpenPy( const std::string name, const std::string accessMode,
+    		         const MethodPy&  method, boost::python::object py_comm = boost::python::object() );
 
 };
 

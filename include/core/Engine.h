@@ -129,61 +129,6 @@ public:
         Write( variableName, &val );
     }
 
-
-    /**
-     * Indicates that a new step is going to be written as new variables come in.
-     */
-    virtual void Advance( );
-
-
-    //Read API
-    /**
-     * Inquires and (optionally) allocates and copies the contents of a variable
-     * If success: it returns a pointer to the internal stored variable object in ADIOS class.
-     * If failure: it returns nullptr
-     * @param name variable name to look for
-     * @param readIn if true: reads the full variable and payload, allocating values in memory, if false: internal payload is nullptr
-     * @return success: it returns a pointer to the internal stored variable object in ADIOS class, failure: nullptr
-     */
-    virtual Variable<void>* InquireVariable( const std::string name, const bool readIn = true );
-    virtual Variable<char>* InquireVariableChar( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned char>* InquireVariableUChar( const std::string name, const bool readIn = true );
-    virtual Variable<short>* InquireVariableShort( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned short>* InquireVariableUShort( const std::string name, const bool readIn = true );
-    virtual Variable<int>* InquireVariableInt( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned int>* InquireVariableUInt( const std::string name, const bool readIn = true );
-    virtual Variable<long int>* InquireVariableLInt( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned long int>* InquireVariableULInt( const std::string name, const bool readIn = true );
-    virtual Variable<long long int>* InquireVariableLLInt( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned long long int>* InquireVariableULLInt( const std::string name, const bool readIn = true );
-    virtual Variable<float>* InquireVariableFloat( const std::string name, const bool readIn = true );
-    virtual Variable<double>* InquireVariableDouble( const std::string name, const bool readIn = true );
-    virtual Variable<long double>* InquireVariableLDouble( const std::string name, const bool readIn = true );
-    virtual Variable<std::complex<float>>* InquireVariableCFloat( const std::string name, const bool readIn = true );
-    virtual Variable<std::complex<double>>* InquireVariableCDouble( const std::string name, const bool readIn = true );
-    virtual Variable<std::complex<long double>>* InquireVariableCLDouble( const std::string name, const bool readIn = true );
-    virtual VariableCompound* InquireVariableCompound( const std::string name, const bool readIn = true );
-
-    virtual void Close( const int transportIndex = -1  ) = 0; ///< Closes a particular transport, or all if -1
-
-
-protected:
-
-    ADIOS& m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
-    std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
-    const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
-    unsigned int m_Cores = 1;
-    const std::string m_EndMessage; ///< added to exceptions to improve debugging
-
-    Profiler m_Profiler; ///< engine time and bytes profiler
-
-    std::set<std::string> m_WrittenVariables; ///< contains the names of the variables that are being written
-
-    virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
-    virtual void InitParameters( ); ///< Initialize parameters from Method, called from Initi in constructor
-    virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor
-
-
     virtual void Write( Variable<char>& variable,                      const char* values );
     virtual void Write( Variable<unsigned char>& variable,             const unsigned char* values );
     virtual void Write( Variable<short>& variable,                     const short* values );
@@ -229,6 +174,59 @@ protected:
     virtual void Write( const std::string variableName, const std::complex<long double>* values );
     virtual void Write( const std::string variableName, const void* values );
 
+
+    /**
+     * Indicates that a new step is going to be written as new variables come in.
+     */
+    virtual void Advance( );
+
+
+    //Read API
+    /**
+     * Inquires and (optionally) allocates and copies the contents of a variable
+     * If success: it returns a pointer to the internal stored variable object in ADIOS class.
+     * If failure: it returns nullptr
+     * @param name variable name to look for
+     * @param readIn if true: reads the full variable and payload, allocating values in memory, if false: internal payload is nullptr
+     * @return success: it returns a pointer to the internal stored variable object in ADIOS class, failure: nullptr
+     */
+    virtual Variable<void>* InquireVariable( const std::string name, const bool readIn = true );
+    virtual Variable<char>* InquireVariableChar( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned char>* InquireVariableUChar( const std::string name, const bool readIn = true );
+    virtual Variable<short>* InquireVariableShort( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned short>* InquireVariableUShort( const std::string name, const bool readIn = true );
+    virtual Variable<int>* InquireVariableInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned int>* InquireVariableUInt( const std::string name, const bool readIn = true );
+    virtual Variable<long int>* InquireVariableLInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned long int>* InquireVariableULInt( const std::string name, const bool readIn = true );
+    virtual Variable<long long int>* InquireVariableLLInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned long long int>* InquireVariableULLInt( const std::string name, const bool readIn = true );
+    virtual Variable<float>* InquireVariableFloat( const std::string name, const bool readIn = true );
+    virtual Variable<double>* InquireVariableDouble( const std::string name, const bool readIn = true );
+    virtual Variable<long double>* InquireVariableLDouble( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<float>>* InquireVariableCFloat( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<double>>* InquireVariableCDouble( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<long double>>* InquireVariableCLDouble( const std::string name, const bool readIn = true );
+    virtual VariableCompound* InquireVariableCompound( const std::string name, const bool readIn = true );
+
+    virtual void Close( const int transportIndex = -1 ); ///< Closes a particular transport, or all if -1
+
+
+protected:
+
+    ADIOS& m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
+    std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
+    const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
+    unsigned int m_Cores = 1;
+    const std::string m_EndMessage; ///< added to exceptions to improve debugging
+
+    Profiler m_Profiler; ///< engine time and bytes profiler
+
+    std::set<std::string> m_WrittenVariables; ///< contains the names of the variables that are being written
+
+    virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
+    virtual void InitParameters( ); ///< Initialize parameters from Method, called from Initi in constructor
+    virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor
 
     /**
      * Used to verify parameters in m_Method containers
