@@ -8,14 +8,33 @@
 #ifndef METHODPY_H_
 #define METHODPY_H_
 
-#include <boost/python.hpp>
+#ifdef HAVE_BOOSTPYTHON
+  #include "boost/python.hpp"
+#endif
+
+#ifdef HAVE_PYBIND11
+  #include "pybind11/pybind11.h"
+  #include "pybind11/cast.h"
+#endif
+
 
 #include "core/Method.h"
 
 namespace adios
 {
 
-using pyList = boost::python::list;
+#ifdef HAVE_BOOSTPYTHON
+using pyObject = boost::python::object;
+using pyTuple = boost::python::tuple;
+using pyDict = boost::python::dict;
+#endif
+
+#ifdef HAVE_PYBIND11
+using pyObject = pybind11::object;
+using pyTuple = pybind11::tuple;
+using pyDict = pybind11::dict;
+#endif
+
 
 class MethodPy : public Method
 {
@@ -31,18 +50,13 @@ public:
      * @param dictionary
      * @return
      */
-    static boost::python::object SetParametersPy( boost::python::tuple args, boost::python::dict kwargs );
+    static pyObject SetParametersPy( pyTuple args, pyDict kwargs );
 
-    static boost::python::object AddTransportPy( boost::python::tuple args, boost::python::dict kwargs );
+    static pyObject AddTransportPy( pyTuple args, pyDict kwargs );
 
     void PrintAll( ) const;
 
 };
-
-
-
-
-
 
 
 }

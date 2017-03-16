@@ -25,7 +25,8 @@ namespace adios
  * Get the primitive type in a string from a template
  * @return if T is a char, returns string = "char"
  */
-template< class T> inline std::string GetType( ) noexcept { return "compound"; }
+template<class T> inline std::string GetType( ) noexcept { return "compound"; }
+template<> inline std::string GetType<void>() noexcept { return "unknown"; }
 template<> inline std::string GetType<char>() noexcept { return "char"; }
 template<> inline std::string GetType<unsigned char>() noexcept { return "unsigned char"; }
 template<> inline std::string GetType<short>() noexcept { return "short"; }

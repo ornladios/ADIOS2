@@ -40,10 +40,10 @@ MethodPy& ADIOSPy::DeclareMethodPy( const std::string methodName, const std::str
 
 
 EnginePy ADIOSPy::OpenPy( const std::string name, const std::string accessMode,
-    		              const MethodPy& method, boost::python::object py_comm )
+    		              const MethodPy& method, pyObject py_comm )
 {
 	EnginePy enginePy;
-	if( py_comm == boost::python::object() ) //None
+	if( py_comm == pyObject() ) //None
 	{
 		enginePy.m_Engine = Open( name, accessMode, method );
 	}
@@ -51,11 +51,11 @@ EnginePy ADIOSPy::OpenPy( const std::string name, const std::string accessMode,
 	{
 		if (import_mpi4py() < 0) throw std::logic_error( "ERROR: could not import mpi4py communicator in Open " + name + "\n" );
 		MPI_Comm* comm_p = PyMPIComm_Get( py_comm.ptr() );
-		if( comm_p == nullptr ) boost::python::throw_error_already_set();
+		if( comm_p == nullptr ) throw std::invalid_argument( "ERROR: MPI communicator is nullptr in Open " + name + "\n" );
 
 		enginePy.m_Engine = Open( name, accessMode, *comm_p, method );
 	}
-	//here downcast
+
 	return enginePy;
 }
 

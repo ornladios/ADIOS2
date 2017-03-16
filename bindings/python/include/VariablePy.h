@@ -14,6 +14,15 @@
 namespace adios
 {
 
+#ifdef HAVE_BOOSTPYTHON
+using pyList = boost::python::list;
+#endif
+
+#ifdef HAVE_PYBIND11
+using pyList = pybind11::list;
+#endif
+
+
 template< class T>
 class VariablePy : public Variable<T>
 {
@@ -28,17 +37,16 @@ public:
 	~VariablePy( )
 	{ }
 
-	void SetLocalDimensions( const boost::python::list list )
+	void SetLocalDimensions( const pyList list )
 	{
 		this->m_Dimensions = ListToVector( list );
 	}
 
-	void SetGlobalDimensionsAndOffsets( const boost::python::list globalDimensions, const boost::python::list globalOffsets  )
+	void SetGlobalDimensionsAndOffsets( const pyList globalDimensions, const pyList globalOffsets  )
     {
         this->m_GlobalDimensions = ListToVector( globalDimensions );
         this->m_GlobalOffsets = ListToVector( globalOffsets );
     }
-
 
 	Dims GetLocalDimensions( )
 	{

@@ -12,38 +12,54 @@
 #include <map>
 #include <string>
 
-#include "boost/python.hpp"
+#ifdef HAVE_BOOSTPYTHON
+  #include "boost/python.hpp"
+  #include "boost/python/numpy.hpp"
+#endif
+
+#ifdef HAVE_PYBIND11
+  #include "pybind11/pybind11.h"
+  #include "pybind11/numpy.h"
+#endif
 
 
 namespace adios
 {
 
 using Dims = std::vector<std::size_t>;
+
+#ifdef HAVE_BOOSTPYTHON
+using pyList = boost::python::list;
+using pyDict = boost::python::dict;
+using pyArray = boost::python::numpy::ndarray;
+#endif
+
+#ifdef HAVE_PYBIND11
+using pyList = pybind11::list;
+using pyDict = pybind11::dict;
+using pyArray = pybind11::array;
+#endif
+
 /**
  * Transforms a boost python list to a Dims (std::vector<std::size_t>) object
  * @param list input boost python list from python program
  * @return Dims (std::vector<std::size_t>) object than can be passed to python
  */
-Dims ListToVector( const boost::python::list& list );
+Dims ListToVector( const pyList& list );
 
-std::map<std::string, std::string> DictToMap( const boost::python::dict& dictionary );
-
+std::map<std::string, std::string> DictToMap( const pyDict& dictionary );
 
 template< class T >
-T* PyObjectToPointer( const boost::python::object& object )
+const T* PyArrayToPointer( const pyArray& array )
 {
-	return reinterpret_cast<T*>( object.ptr() );
+    #ifdef HAVE_BOOSTPYTHON
+    return reinterpret_cast<const T*>( array.get_data() );
+    #endif
 
-
-//	Py_buffer pyBuffer;
-//	if(PyObject_GetBuffer( object.ptr(), &pyBuffer, PyBUF_SIMPLE)!=-1)
-//	{
-//
-//	}
-//
-//	return nullptr;
+    #ifdef HAVE_PYBIND11
+    return reinterpret_cast<const T*>( array.data() );
+    #endif
 }
-
 
 
 } //end namespace

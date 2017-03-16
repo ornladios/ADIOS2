@@ -12,28 +12,30 @@ rank = MPI.COMM_WORLD.Get_rank()
 size = MPI.COMM_WORLD.Get_size()
 
 # User data
-myArray = np.array( [1,2,3,4], dtype=np.double )
+myArray = np.array( [1,2,3,4] )
 
-if( rank % 2 == 1 ):  # odd ranks only
-    oddRankArray = np.array([11,12,13,14],dtype=np.float)
+# if( rank % 2 == 1 ):  # odd ranks only
+oddRankArray = np.array( [11.,12.,13.,14.])
 
 # ADIOS Define Variables    
-ioMyDoubles = adios.DefineVariableDouble( "ioMyDoubles", [myArray.size], [], [] )
+# ioMyDoubles = adios.DefineVariableDouble( "ioMyDoubles", [myArray.size], [], [] )
 
-if( rank % 2 == 1 ): # odd ranks only
-    ioMyFloats = adios.DefineVariableDouble( "ioMyFloats", [oddRankArray.size], [], [] )
+# if( rank % 2 == 1 ): # odd ranks only
+ioMyFloats = adios.DefineVariable( "ioMyFloats", [oddRankArray.size], [], [] )
+print oddRankArray.dtype
+print myArray.dtype
 
 #Setup method and print summary
 ioSettings = adios.DeclareMethod("adiosSettings", "BPFileWriter")
 ioSettings.SetParameters( max_buffer_size = '10000000' )
-ioSettings.AddTransport( 'File', have_metadata_file = 'yes', library = 'POSIX' )  # POSIX is default, just checking
+ioSettings.AddTransport( 'File', have_metadata_file = 'yes', library = 'POSIX', blah = 'sds' )  # POSIX is default, just checking
 
 #Start Engine
 bpFileWriter = adios.Open( "file.bp", "w", ioSettings, None )  # Open files using N-to-N method, None means no new MPI communicator
-bpFileWriter.Write( ioMyDoubles, myArray )
+# bpFileWriter.Write( ioMyDoubles, myArray )
 
-if( rank % 2 == 1 ): 
-    bpFileWriter.Write( ioMyFloats, oddRankArray )
+# if( rank % 2 == 1 ): 
+bpFileWriter.Write( ioMyFloats, oddRankArray )
 
 bpFileWriter.Close( ) 
 
