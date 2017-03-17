@@ -12,7 +12,7 @@ rank = MPI.COMM_WORLD.Get_rank()
 size = MPI.COMM_WORLD.Get_size()
 
 # User data
-myArray = np.array( [1,2,3,4] )
+myArray = np.array( [1,2,3,4])
 
 # if( rank % 2 == 1 ):  # odd ranks only
 oddRankArray = np.array( [11.,12.,13.,14.])

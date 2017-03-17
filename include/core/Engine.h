@@ -172,7 +172,6 @@ public:
     virtual void Write( const std::string variableName, const std::complex<float>* values );
     virtual void Write( const std::string variableName, const std::complex<double>* values );
     virtual void Write( const std::string variableName, const std::complex<long double>* values );
-    virtual void Write( const std::string variableName, const void* values );
 
 
     /**
@@ -209,7 +208,7 @@ public:
     virtual Variable<std::complex<long double>>* InquireVariableCLDouble( const std::string name, const bool readIn = true );
     virtual VariableCompound* InquireVariableCompound( const std::string name, const bool readIn = true );
 
-    virtual void Close( const int transportIndex = -1 ); ///< Closes a particular transport, or all if -1
+    virtual void Close( const int transportIndex = -1 ) = 0; ///< Closes a particular transport, or all if -1
 
 
 protected:

@@ -10,6 +10,7 @@
 
 #include <string>
 #include <memory> //std::shared_ptr
+#include <map>
 
 #ifdef HAVE_BOOSTPYTHON
   #include "boost/python.hpp"
@@ -23,7 +24,6 @@
 #include "adiosPyFunctions.h" //ListToVector, VectorToList
 #include "VariablePy.h"
 #include "MethodPy.h"
-#include "EnginePy.h"
 
 namespace adios
 {
@@ -39,6 +39,8 @@ using pyObject = pybind11::object;
 #endif
 
 
+class EnginePy;
+
 
 class ADIOSPy : public ADIOS
 {
@@ -50,22 +52,19 @@ public:
 
     void HelloMPI( ); ///< says hello from rank/size for testing
 
-
-    template<class T> inline
-    VariablePy<T>& DefineVariablePy( const std::string name,
-                                     const pyList localDimensionsPy = pyList(),
-                                     const pyList globalDimensionsPy = pyList(),
-                                     const pyList globalOffsetsPy = pyList()   )
-    {
-        Variable<T>& var = DefineVariable<T>( name, ListToVector( localDimensionsPy ), ListToVector( globalDimensionsPy ), ListToVector( globalOffsetsPy ) );
-        return *reinterpret_cast<VariablePy<T>*>( &var );
-    }
-
+    VariablePy DefineVariablePy( const std::string name, const pyList localDimensionsPy = pyList(),
+                                 const pyList globalDimensionsPy = pyList(), const pyList globalOffsetsPy = pyList() );
 
     MethodPy& DeclareMethodPy( const std::string methodName, const std::string type = "" );
 
-    EnginePy OpenPy( const std::string name, const std::string accessMode,
-    		         const MethodPy&  method, pyObject py_comm = pyObject() );
+    EnginePy OpenPy( const std::string name, const std::string accessMode, const MethodPy&  method, pyObject py_comm = pyObject() );
+
+    void DefineVariableType( VariablePy& variablePy );
+
+
+private:
+
+    std::set<std::string> m_VariablesPyNames;
 
 };
 

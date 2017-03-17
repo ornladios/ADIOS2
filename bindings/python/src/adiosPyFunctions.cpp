@@ -58,5 +58,19 @@ std::map<std::string, std::string> DictToMap( const pyDict& dictionary )
 }
 
 
+dtype DType( const pyArray& array )
+{
+
+#ifdef HAVE_BOOSTPYTHON
+    return array.get_dtype();
+#endif
+
+#ifdef HAVE_PYBIND11
+    return array.dtype();
+#endif
+
+}
+
+
 } //end namespace
 

@@ -26,7 +26,7 @@ Engine::Engine( ADIOS& adios, const std::string engineType, const std::string na
     m_ADIOS{ adios },
     m_DebugMode{ debugMode },
     m_Cores{ cores },
-    m_EndMessage{ endMessage }
+    m_EndMessage( endMessage )
 {
     if( m_DebugMode == true )
     {
@@ -80,7 +80,6 @@ void Engine::Write( const std::string variableName, const long double* values ){
 void Engine::Write( const std::string variableName, const std::complex<float>* values ){ }
 void Engine::Write( const std::string variableName, const std::complex<double>* values ){ }
 void Engine::Write( const std::string variableName, const std::complex<long double>* values ){ }
-void Engine::Write( const std::string variableName, const void* values ){ }
 
 void Engine::Advance(){ }
 

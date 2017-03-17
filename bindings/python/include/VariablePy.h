@@ -23,38 +23,29 @@ using pyList = pybind11::list;
 #endif
 
 
-template< class T>
-class VariablePy : public Variable<T>
+class VariablePy
 {
 
 public:
 
-	VariablePy<T>( const std::string name, const Dims dimensions, const Dims globalDimensions, const Dims globalOffsets,
-            	   const bool debugMode ):
-        Variable<T>( name, dimensions, globalDimensions, globalOffsets, debugMode )
-	{ }
+    VariablePy( const std::string name, const pyList localDimensionsPy, const pyList globalDimensionsPy, const pyList globalOffsetsPy );
 
-	~VariablePy( )
-	{ }
+    ~VariablePy( );
 
-	void SetLocalDimensions( const pyList list )
-	{
-		this->m_Dimensions = ListToVector( list );
-	}
+	void SetLocalDimensions( const pyList list );
 
-	void SetGlobalDimensionsAndOffsets( const pyList globalDimensions, const pyList globalOffsets  )
-    {
-        this->m_GlobalDimensions = ListToVector( globalDimensions );
-        this->m_GlobalOffsets = ListToVector( globalOffsets );
-    }
+	void SetGlobalDimensionsAndOffsets( const pyList globalDimensions, const pyList globalOffsets );
 
-	Dims GetLocalDimensions( )
-	{
-		return this->m_Dimensions;
-	}
+	Dims GetLocalDimensions( );
 
+	void* m_VariablePtr = nullptr;
+	bool m_IsVariableDefined = false;
+
+	const std::string m_Name;
+	Dims m_LocalDimensions;
+	Dims m_GlobalDimensions;
+	Dims m_GlobalOffsets;
 };
-
 
 
 

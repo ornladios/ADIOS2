@@ -14,53 +14,58 @@
 namespace adios
 {
 
-void EnginePy::WritePy( VariablePy<char>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<char>( array ) ); }
+EnginePy::EnginePy( ADIOSPy& adiosPy ):
+    m_ADIOSPy{ adiosPy }
+{ }
 
-void EnginePy::WritePy( VariablePy<unsigned char>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<unsigned char>( array ) ); }
 
-void EnginePy::WritePy( VariablePy<short>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<short>( array ) ); }
+EnginePy::~EnginePy( )
+{ }
 
-void EnginePy::WritePy( VariablePy<unsigned short>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<unsigned short>( array ) ); }
 
-void EnginePy::WritePy( VariablePy<int>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<int>( array ) ); }
+void EnginePy::WritePy( VariablePy& variable, const pyArray& array )
+{
+    const dtype arrayDType = DType( array );
 
-void EnginePy::WritePy( VariablePy<unsigned int>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<unsigned int>( array ) ); }
+    if( variable.m_IsVariableDefined == false ) //here define variable
+    {
+             if( arrayDType == GetDType<char>() ) DefineVariableInADIOS<char>( variable );
+        else if( arrayDType == GetDType<unsigned char>() ) DefineVariableInADIOS<unsigned char>( variable );
+        else if( arrayDType == GetDType<short>() ) DefineVariableInADIOS<short>( variable );
+        else if( arrayDType == GetDType<unsigned short>() ) DefineVariableInADIOS<unsigned short>( variable );
+        else if( arrayDType == GetDType<int>() ) DefineVariableInADIOS<int>( variable );
+        else if( arrayDType == GetDType<unsigned int>() ) DefineVariableInADIOS<unsigned int>( variable );
+        else if( arrayDType == GetDType<long int>() ) DefineVariableInADIOS<long int>( variable );
+        else if( arrayDType == GetDType<unsigned long int>() ) DefineVariableInADIOS<unsigned long int>( variable );
+        else if( arrayDType == GetDType<long long int>() ) DefineVariableInADIOS<long long int>( variable );
+        else if( arrayDType == GetDType<unsigned long long int>() ) DefineVariableInADIOS<unsigned long long int>( variable );
+        else if( arrayDType == GetDType<float>() ) DefineVariableInADIOS<float>( variable );
+        else if( arrayDType == GetDType<double>() ) DefineVariableInADIOS<double>( variable );
+        else if( arrayDType == GetDType<long double>() ) DefineVariableInADIOS<long double>( variable );
+        else if( arrayDType == GetDType<std::complex<float>>() ) DefineVariableInADIOS<std::complex<float>>( variable );
+        else if( arrayDType == GetDType<std::complex<double>>() ) DefineVariableInADIOS<std::complex<double>>( variable );
+        else if( arrayDType == GetDType<std::complex<long double>>() ) DefineVariableInADIOS<std::complex<long double>>( variable );
+    }
 
-void EnginePy::WritePy( VariablePy<long int>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<long int>( array ) ); }
+         if( arrayDType == GetDType<char>() ) WriteVariableInADIOS<char>( variable, array );
+    else if( arrayDType == GetDType<unsigned char>() ) WriteVariableInADIOS<unsigned char>( variable, array );
+    else if( arrayDType == GetDType<short>() ) WriteVariableInADIOS<short>( variable, array );
+    else if( arrayDType == GetDType<unsigned short>() ) WriteVariableInADIOS<unsigned short>( variable, array );
+    else if( arrayDType == GetDType<int>() ) WriteVariableInADIOS<int>( variable, array );
+    else if( arrayDType == GetDType<unsigned int>() ) WriteVariableInADIOS<unsigned int>( variable, array );
+    else if( arrayDType == GetDType<long int>() ) WriteVariableInADIOS<long int>( variable, array );
+    else if( arrayDType == GetDType<unsigned long int>() ) WriteVariableInADIOS<unsigned long int>( variable, array );
+    else if( arrayDType == GetDType<long long int>() ) WriteVariableInADIOS<long long int>( variable, array );
+    else if( arrayDType == GetDType<unsigned long long int>() ) WriteVariableInADIOS<unsigned long long int>( variable, array );
+    else if( arrayDType == GetDType<float>() ) WriteVariableInADIOS<float>( variable, array );
+    else if( arrayDType == GetDType<double>() ) WriteVariableInADIOS<double>( variable, array );
+    else if( arrayDType == GetDType<long double>() ) WriteVariableInADIOS<long double>( variable, array );
+    else if( arrayDType == GetDType<std::complex<float>>() ) WriteVariableInADIOS<std::complex<float>>( variable, array );
+    else if( arrayDType == GetDType<std::complex<double>>() ) WriteVariableInADIOS<std::complex<double>>( variable, array );
+    else if( arrayDType == GetDType<std::complex<long double>>() ) WriteVariableInADIOS<std::complex<long double>>( variable, array );
+}
 
-void EnginePy::WritePy( VariablePy<unsigned long int>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<unsigned long int>( array ) ); }
 
-void EnginePy::WritePy( VariablePy<long long int>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<long long int>( array ) ); }
-
-void EnginePy::WritePy( VariablePy<unsigned long long int>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<unsigned long long int>( array ) ); }
-
-void EnginePy::WritePy( VariablePy<float>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<float>( array ) ); }
-
-void EnginePy::WritePy( VariablePy<double>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<double>( array ) ); }
-
-void EnginePy::WritePy( VariablePy<long double>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<long double>( array ) ); }
-
-void EnginePy::WritePy( VariablePy<std::complex<float>>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<std::complex<float>>( array ) ); }
-
-void EnginePy::WritePy( VariablePy<std::complex<double>>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<std::complex<double>>( array ) ); }
-
-void EnginePy::WritePy( VariablePy<std::complex<long double>>& variable, const pyArray& array )
-{ m_Engine->Write( variable, PyArrayToPointer<std::complex<long double>>( array ) ); }
 
 void EnginePy::GetType( ) const
 {

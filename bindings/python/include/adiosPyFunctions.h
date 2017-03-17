@@ -32,12 +32,14 @@ using Dims = std::vector<std::size_t>;
 using pyList = boost::python::list;
 using pyDict = boost::python::dict;
 using pyArray = boost::python::numpy::ndarray;
+using dtype = boost::python::numpy::dtype;
 #endif
 
 #ifdef HAVE_PYBIND11
 using pyList = pybind11::list;
 using pyDict = pybind11::dict;
 using pyArray = pybind11::array;
+using dtype = pybind11::dtype;
 #endif
 
 /**
@@ -60,6 +62,28 @@ const T* PyArrayToPointer( const pyArray& array )
     return reinterpret_cast<const T*>( array.data() );
     #endif
 }
+
+
+template< class T >
+dtype GetDType( )
+{
+    #ifdef HAVE_BOOSTPYTHON
+    return dtype::get_builtin<T>();
+    #endif
+
+    #ifdef HAVE_PYBIND11
+    return dtype::of<T>();
+    #endif
+}
+
+dtype DType( const pyArray& array );
+
+
+
+
+
+
+
 
 
 } //end namespace

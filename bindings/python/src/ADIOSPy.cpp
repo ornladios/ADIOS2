@@ -39,6 +39,26 @@ MethodPy& ADIOSPy::DeclareMethodPy( const std::string methodName, const std::str
 }
 
 
+VariablePy ADIOSPy::DefineVariablePy( const std::string name, const pyList localDimensionsPy,
+                                      const pyList globalDimensionsPy, const pyList globalOffsetsPy )
+{
+    if( m_DebugMode == true )
+    {
+        if( m_VariablesPyNames.count( name ) == 1 )
+            throw std::invalid_argument( "ERROR: Variable " + name + " is already defined\n" );
+    }
+
+    m_VariablesPyNames.insert( name );
+    return VariablePy( name, localDimensionsPy, globalDimensionsPy, globalOffsetsPy );
+}
+
+void ADIOSPy::DefineVariableType( VariablePy& variablePy )
+{
+
+}
+
+
+
 EnginePy ADIOSPy::OpenPy( const std::string name, const std::string accessMode,
     		              const MethodPy& method, pyObject py_comm )
 {
@@ -61,7 +81,4 @@ EnginePy ADIOSPy::OpenPy( const std::string name, const std::string accessMode,
 
 
 
-
 } //end namespace
-
-

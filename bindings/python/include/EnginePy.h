@@ -18,6 +18,7 @@
 #include "pybind11/numpy.h"
 #endif
 
+#include "ADIOSPy.h"
 #include "core/Engine.h"
 #include "VariablePy.h"
 #include "adiosPyFunctions.h"
@@ -26,11 +27,13 @@ namespace adios
 {
 
 #ifdef HAVE_BOOSTPYTHON
-using pyArray = boost::python::numpy::ndarray;
+//using pyArray = boost::python::numpy::ndarray;
+using dtype = boost::python::numpy::dtype;
 #endif
 
 #ifdef HAVE_PYBIND11
 using pyArray = pybind11::array;
+using dtype = pybind11::dtype;
 #endif
 
 
@@ -39,28 +42,37 @@ class EnginePy
 
 public:
 
-	std::shared_ptr<Engine> m_Engine;
+	EnginePy( ADIOSPy& adiosPy );
 
-	void WritePy( VariablePy<char>& variable, const pyArray& array );
-	void WritePy( VariablePy<unsigned char>& variable, const pyArray& array );
-	void WritePy( VariablePy<short>& variable, const pyArray& array );
-	void WritePy( VariablePy<unsigned short>& variable, const pyArray& array );
-	void WritePy( VariablePy<int>& variable, const pyArray& array );
-	void WritePy( VariablePy<unsigned int>& variable, const pyArray& array );
-	void WritePy( VariablePy<long int>& variable, const pyArray& array );
-	void WritePy( VariablePy<unsigned long int>& variable, const pyArray& array );
-	void WritePy( VariablePy<long long int>& variable, const pyArray& array );
-	void WritePy( VariablePy<unsigned long long int>& variable, const pyArray& array );
-	void WritePy( VariablePy<float>& variable, const pyArray& array );
-	void WritePy( VariablePy<double>& variable, const pyArray& array );
-	void WritePy( VariablePy<long double>& variable, const pyArray& array );
-	void WritePy( VariablePy<std::complex<float>>& variable, const pyArray& array );
-	void WritePy( VariablePy<std::complex<double>>& variable, const pyArray& array );
-	void WritePy( VariablePy<std::complex<long double>>& variable, const pyArray& array );
+	~EnginePy( );
+
+    std::shared_ptr<Engine> m_Engine;
+
+	void WritePy( VariablePy& variable, const pyArray& array );
 
 	void Close( );
 
 	void GetType( ) const;
+
+private:
+
+	ADIOSPy& m_ADIOSPy;
+	bool m_IsVariableTypeDefined = false;
+
+	template< class T >
+    void DefineVariableInADIOS( VariablePy& variable )
+    {
+        auto& var = m_ADIOSPy.DefineVariable<T>( variable.m_Name, variable.m_LocalDimensions,
+                                                 variable.m_GlobalDimensions, variable.m_GlobalOffsets );
+        variable.m_VariablePtr = &var;
+        variable.m_IsVariableDefined = true;
+    }
+
+    template< class T >
+    void WriteVariableInADIOS( VariablePy& variable, const pyArray& array )
+    {
+        m_Engine->Write( *reinterpret_cast<Variable<T>*>( variable.m_VariablePtr ), PyArrayToPointer<T>( array ) );
+    }
 
 };
 
