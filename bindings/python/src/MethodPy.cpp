@@ -6,6 +6,8 @@
  */
 
 
+#include <iostream>
+
 #include "MethodPy.h"
 #include "adiosPyFunctions.h"
 
@@ -29,20 +31,13 @@ MethodPy::MethodPy( const std::string type, const bool debugMode ):
 MethodPy::~MethodPy( )
 { }
 
-
+#ifdef HAVE_BOOSTPYTHON
 pyObject MethodPy::SetParametersPy( pyTuple args, pyDict kwargs )
 {
     if( py::len( args ) > 1  )
         throw std::invalid_argument( "ERROR: syntax of Method SetParameters function is incorrect, only use dictionary\n" );
 
-    #ifdef HAVE_BOOSTPYTHON
-    MethodPy& self = boost::python::extract<MethodPy&>( args[0] );
-    #endif
-
-    #ifdef HAVE_PYBIND11
-    MethodPy& self = (*this)( &args[0] );
-    #endif
-
+    MethodPy& self = PyCast<MethodPy&>( args[0] );
     self.m_Parameters = DictToMap( kwargs );
     return args[0];
 }
@@ -53,21 +48,32 @@ pyObject MethodPy::AddTransportPy( pyTuple args, pyDict kwargs )
     if( py::len( args ) != 2  )
         throw std::invalid_argument( "ERROR: syntax of Method AddTransport function is incorrect, only use one string for transport followed by a dictionary for parameters\n" );
 
-    #ifdef HAVE_BOOSTPYTHON
-    MethodPy& self = boost::python::extract<MethodPy&>( args[0] );
-    const std::string type = boost::python::extract<std::string>( args[1] );
-    #endif
-
-    #ifdef HAVE_PYBIND11
-    MethodPy& self = (*this)( &args[0] );
-    const std::string type = reinterpret_cast<std::string>( args[1] );
-    #endif
+    MethodPy& self = PyCast<MethodPy&>( args[0] );
+    const std::string type = PyCast<std::string>( args[1] );
 
     auto parameters = DictToMap( kwargs );
     parameters.insert( std::make_pair( "transport", type ) );
     self.m_TransportParameters.push_back( parameters );
     return args[0];
 }
+#endif
+
+
+#ifdef HAVE_PYBIND11
+void MethodPy::SetParametersPyBind11( pybind11::kwargs kwargs )
+{
+    this->m_Parameters = KwargsToMap( kwargs );
+}
+
+
+void MethodPy::AddTransportPyBind11( const std::string type, pybind11::kwargs kwargs )
+{
+    auto parameters = KwargsToMap( kwargs );
+    parameters.insert( std::make_pair( "transport", type ) );
+    this->m_TransportParameters.push_back( parameters );
+}
+#endif
+
 
 
 void MethodPy::PrintAll( ) const

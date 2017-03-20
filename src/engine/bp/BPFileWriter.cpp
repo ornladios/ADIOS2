@@ -144,7 +144,7 @@ void BPFileWriter::Write( const std::string variableName, const void* values )
 
 void BPFileWriter::Advance( )
 {
-    //first close current pg
+
 }
 
 

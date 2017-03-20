@@ -192,8 +192,6 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 protected: //no const to allow default empty and copy constructors
 
-    std::map<unsigned int, Variable<void> > m_Unknown; ///< C style void* Variable, type is unknown at DefineVariable, used in Python
-
     std::map<unsigned int, Variable<char> > m_Char;
     std::map<unsigned int, Variable<unsigned char> > m_UChar;
     std::map<unsigned int, Variable<short> > m_Short;
@@ -268,17 +266,6 @@ protected: //no const to allow default empty and copy constructors
 };
 
 //template specializations of DefineVariable:
-template<> inline
-Variable<void>& ADIOS::DefineVariable( const std::string name, const Dims dimensions,
-                                       const Dims globalDimensions, const Dims globalOffsets )
-{
-    CheckVariableInput( name, dimensions );
-    const unsigned int size = m_Unknown.size();
-    m_Unknown.emplace( size, Variable<void>( name, dimensions, globalDimensions, globalOffsets, m_DebugMode ) );
-    m_Variables.emplace( name, std::make_pair( GetType<void>(), size ) );
-    return m_Unknown.at( size );
-}
-
 template<> inline
 Variable<char>& ADIOS::DefineVariable( const std::string name, const Dims dimensions,
                                        const Dims globalDimensions, const Dims globalOffsets )
@@ -471,10 +458,6 @@ Variable<std::complex<long double>>& ADIOS::DefineVariable( const std::string na
 
 
 //Get template specialization
-template<> inline
-Variable<void>& ADIOS::GetVariable( const std::string name )
-{ return m_Unknown.at( GetVariableIndex<void>(name) ); }
-
 template<> inline
 Variable<char>& ADIOS::GetVariable( const std::string name )
 { return m_Char.at( GetVariableIndex<char>(name) ); }

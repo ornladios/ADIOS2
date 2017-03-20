@@ -10,8 +10,7 @@
 #include <mpi4py/mpi4py.h>
 
 #include "ADIOSPy.h"
-
-#include "core/Engine.h"
+#include "EnginePy.h"
 
 namespace adios
 {
@@ -62,8 +61,11 @@ void ADIOSPy::DefineVariableType( VariablePy& variablePy )
 EnginePy ADIOSPy::OpenPy( const std::string name, const std::string accessMode,
     		              const MethodPy& method, pyObject py_comm )
 {
-	EnginePy enginePy;
-	if( py_comm == pyObject() ) //None
+	EnginePy enginePy( *this );
+
+	bool isEmpty = IsEmpty( py_comm );
+
+	if( isEmpty == true   ) //None
 	{
 		enginePy.m_Engine = Open( name, accessMode, method );
 	}

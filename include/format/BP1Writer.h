@@ -324,6 +324,9 @@ public:
     }
 
 
+    void Advance( BP1MetadataSet& metadataSet, capsule::STLVector& buffer );
+
+
     /**
      * Function that sets metadata (if first close) and writes to a single transport
      * @param metadataSet current rank metadata set

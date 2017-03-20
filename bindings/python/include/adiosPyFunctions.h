@@ -33,6 +33,8 @@ using pyList = boost::python::list;
 using pyDict = boost::python::dict;
 using pyArray = boost::python::numpy::ndarray;
 using dtype = boost::python::numpy::dtype;
+using pyKwargs = boost::python::dict;
+using pyObject = boost::python::object;
 #endif
 
 #ifdef HAVE_PYBIND11
@@ -40,6 +42,8 @@ using pyList = pybind11::list;
 using pyDict = pybind11::dict;
 using pyArray = pybind11::array;
 using dtype = pybind11::dtype;
+using pyKwargs = pybind11::kwargs;
+using pyObject = pybind11::object;
 #endif
 
 /**
@@ -49,7 +53,14 @@ using dtype = pybind11::dtype;
  */
 Dims ListToVector( const pyList& list );
 
+#ifdef HAVE_BOOSTPYTHON
 std::map<std::string, std::string> DictToMap( const pyDict& dictionary );
+#endif
+
+#ifdef HAVE_PYBIND11
+std::map<std::string, std::string> KwargsToMap( const pybind11::kwargs& dictionary );
+#endif
+
 
 template< class T >
 const T* PyArrayToPointer( const pyArray& array )
@@ -63,27 +74,35 @@ const T* PyArrayToPointer( const pyArray& array )
     #endif
 }
 
-
 template< class T >
-dtype GetDType( )
+bool IsType( const pyArray& array )
 {
     #ifdef HAVE_BOOSTPYTHON
-    return dtype::get_builtin<T>();
+    if( array.get_dtype() == dtype::get_builtin<T>() ) return true;
     #endif
 
     #ifdef HAVE_PYBIND11
-    return dtype::of<T>();
+    if( pybind11::isinstance<pybind11::array_t<T>>( array ) ) return true;
+    #endif
+
+    return false;
+}
+
+
+template< class T, class U>
+T PyCast( U object )
+{
+    #ifdef HAVE_BOOSTPYTHON
+    return boost::python::extract<T>( object );
+    #endif
+
+    #ifdef HAVE_PYBIND11
+    return pybind11::cast<T>( object );
     #endif
 }
 
-dtype DType( const pyArray& array );
 
-
-
-
-
-
-
+bool IsEmpty( pyObject object );
 
 
 } //end namespace

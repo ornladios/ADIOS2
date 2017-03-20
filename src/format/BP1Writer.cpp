@@ -95,6 +95,13 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
 
 
 
+void BP1Writer::Advance( BP1MetadataSet& metadataSet, capsule::STLVector& buffer )
+{
+    FlattenData( metadataSet, buffer );
+
+
+}
+
 
 
 void BP1Writer::Close( BP1MetadataSet& metadataSet, capsule::STLVector& buffer, Transport& transport, bool& isFirstClose,

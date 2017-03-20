@@ -102,8 +102,6 @@ private:
 
     void WriteProcessGroupIndex( );
 
-
-
     /**
      * Common function for primitive (including std::complex) writes
      * @param group

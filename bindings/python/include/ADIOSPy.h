@@ -31,6 +31,7 @@ namespace adios
 #ifdef HAVE_BOOSTPYTHON
 using pyList = boost::python::list;
 using pyObject = boost::python::object;
+using pyNone = pyObject();
 #endif
 
 #ifdef HAVE_PYBIND11

@@ -12,6 +12,7 @@
 #include "pybind11/pybind11.h"
 
 #include "ADIOSPy.h"
+#include "EnginePy.h"
 
 
 namespace py = pybind11;
@@ -35,13 +36,28 @@ PYBIND11_PLUGIN( ADIOSPy )
 
     py::class_<adios::ADIOSPy>( m, "ADIOS" )
         .def("HelloMPI", &adios::ADIOSPy::HelloMPI )
-        .def("DefineVariableDouble", &adios::ADIOSPy::DefineVariablePy<double>, py::return_value_policy::reference_internal )
-        .def("DefineVariableFloat", &adios::ADIOSPy::DefineVariablePy<float>, py::return_value_policy::reference_internal )
-//                py::arg("localDimensionsPy") = py::list(),
-//                py::arg("globalDimensionsPy") = py::list(), py::arg("globalOffsetsPy") = py::list()   )
+        .def("DefineVariable", &adios::ADIOSPy::DefineVariablePy )
         .def("DeclareMethod", &adios::ADIOSPy::DeclareMethodPy, py::return_value_policy::reference_internal )
         .def("Open", &adios::ADIOSPy::OpenPy )
     ;
+
+    py::class_<adios::VariablePy>( m, "Variable")
+        .def("SetLocalDimensions", &adios::VariablePy::SetLocalDimensions )
+        .def("GetLocalDimensions", &adios::VariablePy::GetLocalDimensions )
+    ;
+
+    py::class_<adios::MethodPy>( m, "Method")
+        .def("SetParameters", &adios::MethodPy::SetParametersPyBind11 )
+        .def("AddTransport", &adios::MethodPy::AddTransportPyBind11 )
+        .def("PrintAll", &adios::MethodPy::PrintAll )
+    ;
+
+    //Engine
+    py::class_<adios::EnginePy>( m, "Engine")
+        .def("Write", &adios::EnginePy::WritePy )
+        .def("Close", &adios::EnginePy::Close )
+    ;
+
 
     return m.ptr();
 }

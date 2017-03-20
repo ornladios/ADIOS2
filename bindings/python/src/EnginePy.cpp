@@ -5,6 +5,7 @@
  *      Author: wgodoy
  */
 
+#include <string>
 
 
 #include "EnginePy.h"
@@ -25,49 +26,49 @@ EnginePy::~EnginePy( )
 
 void EnginePy::WritePy( VariablePy& variable, const pyArray& array )
 {
-    const dtype arrayDType = DType( array );
 
     if( variable.m_IsVariableDefined == false ) //here define variable
     {
-             if( arrayDType == GetDType<char>() ) DefineVariableInADIOS<char>( variable );
-        else if( arrayDType == GetDType<unsigned char>() ) DefineVariableInADIOS<unsigned char>( variable );
-        else if( arrayDType == GetDType<short>() ) DefineVariableInADIOS<short>( variable );
-        else if( arrayDType == GetDType<unsigned short>() ) DefineVariableInADIOS<unsigned short>( variable );
-        else if( arrayDType == GetDType<int>() ) DefineVariableInADIOS<int>( variable );
-        else if( arrayDType == GetDType<unsigned int>() ) DefineVariableInADIOS<unsigned int>( variable );
-        else if( arrayDType == GetDType<long int>() ) DefineVariableInADIOS<long int>( variable );
-        else if( arrayDType == GetDType<unsigned long int>() ) DefineVariableInADIOS<unsigned long int>( variable );
-        else if( arrayDType == GetDType<long long int>() ) DefineVariableInADIOS<long long int>( variable );
-        else if( arrayDType == GetDType<unsigned long long int>() ) DefineVariableInADIOS<unsigned long long int>( variable );
-        else if( arrayDType == GetDType<float>() ) DefineVariableInADIOS<float>( variable );
-        else if( arrayDType == GetDType<double>() ) DefineVariableInADIOS<double>( variable );
-        else if( arrayDType == GetDType<long double>() ) DefineVariableInADIOS<long double>( variable );
-        else if( arrayDType == GetDType<std::complex<float>>() ) DefineVariableInADIOS<std::complex<float>>( variable );
-        else if( arrayDType == GetDType<std::complex<double>>() ) DefineVariableInADIOS<std::complex<double>>( variable );
-        else if( arrayDType == GetDType<std::complex<long double>>() ) DefineVariableInADIOS<std::complex<long double>>( variable );
+             if( IsType<char>( array ) ) DefineVariableInADIOS<char>( variable );
+        else if( IsType<unsigned char>( array ) ) DefineVariableInADIOS<unsigned char>( variable );
+        else if( IsType<short>( array ) ) DefineVariableInADIOS<short>( variable );
+        else if( IsType<unsigned short>( array ) ) DefineVariableInADIOS<unsigned short>( variable );
+        else if( IsType<int>( array ) ) DefineVariableInADIOS<int>( variable );
+        else if( IsType<unsigned int>( array ) ) DefineVariableInADIOS<unsigned int>( variable );
+        else if( IsType<long int>( array ) ) DefineVariableInADIOS<long int>( variable );
+        else if( IsType<unsigned long int>( array ) ) DefineVariableInADIOS<unsigned long int>( variable );
+        else if( IsType<long long int>( array ) ) DefineVariableInADIOS<long long int>( variable );
+        else if( IsType<unsigned long long int>( array ) ) DefineVariableInADIOS<unsigned long long int>( variable );
+        else if( IsType<float>( array ) ) DefineVariableInADIOS<float>( variable );
+        else if( IsType<double>( array ) ) DefineVariableInADIOS<double>( variable );
+        else if( IsType<long double>( array ) ) DefineVariableInADIOS<long double>( variable );
+        else if( IsType<std::complex<float>>( array ) ) DefineVariableInADIOS<std::complex<float>>( variable );
+        else if( IsType<std::complex<double>>( array ) ) DefineVariableInADIOS<std::complex<double>>( variable );
+        else if( IsType<std::complex<long double>>( array ) ) DefineVariableInADIOS<std::complex<long double>>( variable );
     }
 
-         if( arrayDType == GetDType<char>() ) WriteVariableInADIOS<char>( variable, array );
-    else if( arrayDType == GetDType<unsigned char>() ) WriteVariableInADIOS<unsigned char>( variable, array );
-    else if( arrayDType == GetDType<short>() ) WriteVariableInADIOS<short>( variable, array );
-    else if( arrayDType == GetDType<unsigned short>() ) WriteVariableInADIOS<unsigned short>( variable, array );
-    else if( arrayDType == GetDType<int>() ) WriteVariableInADIOS<int>( variable, array );
-    else if( arrayDType == GetDType<unsigned int>() ) WriteVariableInADIOS<unsigned int>( variable, array );
-    else if( arrayDType == GetDType<long int>() ) WriteVariableInADIOS<long int>( variable, array );
-    else if( arrayDType == GetDType<unsigned long int>() ) WriteVariableInADIOS<unsigned long int>( variable, array );
-    else if( arrayDType == GetDType<long long int>() ) WriteVariableInADIOS<long long int>( variable, array );
-    else if( arrayDType == GetDType<unsigned long long int>() ) WriteVariableInADIOS<unsigned long long int>( variable, array );
-    else if( arrayDType == GetDType<float>() ) WriteVariableInADIOS<float>( variable, array );
-    else if( arrayDType == GetDType<double>() ) WriteVariableInADIOS<double>( variable, array );
-    else if( arrayDType == GetDType<long double>() ) WriteVariableInADIOS<long double>( variable, array );
-    else if( arrayDType == GetDType<std::complex<float>>() ) WriteVariableInADIOS<std::complex<float>>( variable, array );
-    else if( arrayDType == GetDType<std::complex<double>>() ) WriteVariableInADIOS<std::complex<double>>( variable, array );
-    else if( arrayDType == GetDType<std::complex<long double>>() ) WriteVariableInADIOS<std::complex<long double>>( variable, array );
+         if( IsType<char>( array ) ) WriteVariableInADIOS<char>( variable, array );
+    else if( IsType<unsigned char>( array ) ) WriteVariableInADIOS<unsigned char>( variable, array );
+    else if( IsType<short>( array ) ) WriteVariableInADIOS<short>( variable, array );
+    else if( IsType<unsigned short>( array ) ) WriteVariableInADIOS<unsigned short>( variable, array );
+    else if( IsType<int>( array ) ) WriteVariableInADIOS<int>( variable, array );
+    else if( IsType<unsigned int>( array ) ) WriteVariableInADIOS<unsigned int>( variable, array );
+    else if( IsType<long int>( array ) ) WriteVariableInADIOS<long int>( variable, array );
+    else if( IsType<unsigned long int>( array ) ) WriteVariableInADIOS<unsigned long int>( variable, array );
+    else if( IsType<long long int>( array ) ) WriteVariableInADIOS<long long int>( variable, array );
+    else if( IsType<unsigned long long int>( array ) ) WriteVariableInADIOS<unsigned long long int>( variable, array );
+    else if( IsType<float>( array ) ) WriteVariableInADIOS<float>( variable, array );
+    else if( IsType<double>( array ) ) WriteVariableInADIOS<double>( variable, array );
+    else if( IsType<long double>( array ) ) WriteVariableInADIOS<long double>( variable, array );
+    else if( IsType<std::complex<float>>( array ) ) WriteVariableInADIOS<std::complex<float>>( variable, array );
+    else if( IsType<std::complex<double>>( array ) ) WriteVariableInADIOS<std::complex<double>>( variable, array );
+    else if( IsType<std::complex<long double>>( array ) ) WriteVariableInADIOS<std::complex<long double>>( variable, array );
+
 }
 
 
 
-void EnginePy::GetType( ) const
+void EnginePy::GetEngineType( ) const
 {
 	std::cout << "Engine type " << m_Engine->m_EngineType << "\n";
 }

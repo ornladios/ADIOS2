@@ -27,7 +27,6 @@ namespace adios
 {
 
 #ifdef HAVE_BOOSTPYTHON
-//using pyArray = boost::python::numpy::ndarray;
 using dtype = boost::python::numpy::dtype;
 #endif
 
@@ -52,7 +51,7 @@ public:
 
 	void Close( );
 
-	void GetType( ) const;
+	void GetEngineType( ) const;
 
 private:
 
