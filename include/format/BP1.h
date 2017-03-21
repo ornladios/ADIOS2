@@ -19,6 +19,7 @@
 #endif
 
 #include "core/Transport.h"
+#include "core/Profiler.h"
 
 
 namespace adios
@@ -51,6 +52,9 @@ struct BP1MetadataSet
     //PG (relative) positions in Data buffer to be updated
     std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative ) position, needs to be updated in every advance step or init
     std::size_t DataVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
+    bool DataPGIsOpen = false;
+
+    Profiler Log;
 };
 
 /**

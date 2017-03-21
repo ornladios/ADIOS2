@@ -66,16 +66,22 @@ void EnginePy::WritePy( VariablePy& variable, const pyArray& array )
 
 }
 
-
-
-void EnginePy::GetEngineType( ) const
+void EnginePy::Advance( )
 {
-	std::cout << "Engine type " << m_Engine->m_EngineType << "\n";
+
 }
+
+
 
 void EnginePy::Close( )
 {
 	m_Engine->Close( -1 );
+}
+
+
+void EnginePy::GetEngineType( ) const
+{
+    std::cout << "Engine type " << m_Engine->m_EngineType << "\n";
 }
 
 

@@ -30,6 +30,7 @@ namespace adios
 
 typedef int MPI_Comm;
 typedef uint64_t MPI_Status;
+typedef uint64_t MPI_Request;
 typedef int MPI_File;
 typedef int MPI_Info;
 typedef int MPI_Datatype;  /* Store the byte size of a type in such vars */
@@ -87,7 +88,9 @@ int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype, void *recvbuf
 int MPI_Scatterv(void *sendbuf, int *sendcnts, int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
 
 int MPI_Recv( void *recvbuffer, int count, MPI_Datatype type, int source, int tag, MPI_Comm comm, MPI_Status* status );
+int MPI_Irecv( void *recvbuffer, int count, MPI_Datatype type, int source, int tag, MPI_Comm comm, MPI_Request* request );
 int MPI_Send( void *sendbuffer, int count, MPI_Datatype type, int destination, int tag, MPI_Comm comm );
+int MPI_Isend( void *recvbuffer, int count, MPI_Datatype type, int source, int tag, MPI_Comm comm, MPI_Request* request );
 
 int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh);
 int MPI_File_close(MPI_File *fh);

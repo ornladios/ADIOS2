@@ -89,6 +89,8 @@ void FilePointer::Flush( )
 void FilePointer::Close( )
 {
     fclose( m_File );
+
+    m_IsOpen = false;
 }
 
 

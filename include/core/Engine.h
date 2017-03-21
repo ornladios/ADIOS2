@@ -172,7 +172,7 @@ public:
     virtual void Write( const std::string variableName, const std::complex<float>* values );
     virtual void Write( const std::string variableName, const std::complex<double>* values );
     virtual void Write( const std::string variableName, const std::complex<long double>* values );
-
+    virtual void Write( const std::string variableName, const void* values );
 
     /**
      * Indicates that a new step is going to be written as new variables come in.
@@ -218,9 +218,6 @@ protected:
     const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
     unsigned int m_Cores = 1;
     const std::string m_EndMessage; ///< added to exceptions to improve debugging
-
-    Profiler m_Profiler; ///< engine time and bytes profiler
-
     std::set<std::string> m_WrittenVariables; ///< contains the names of the variables that are being written
 
     virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor

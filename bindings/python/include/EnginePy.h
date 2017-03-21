@@ -49,6 +49,8 @@ public:
 
 	void WritePy( VariablePy& variable, const pyArray& array );
 
+	void Advance( );
+
 	void Close( );
 
 	void GetEngineType( ) const;

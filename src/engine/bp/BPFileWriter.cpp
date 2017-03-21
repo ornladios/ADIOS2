@@ -21,6 +21,7 @@ BPFileWriter::BPFileWriter( ADIOS& adios, const std::string name, const std::str
                             const Method& method, const bool debugMode, const unsigned int cores ):
     Engine( adios, "BPFileWriter", name, accessMode, mpiComm, method, debugMode, cores, " BPFileWriter constructor (or call to ADIOS Open).\n" ),
     m_Buffer{ capsule::STLVector( accessMode, m_RankMPI, m_DebugMode ) },
+    m_BP1Aggregator{ format::BP1Aggregator( m_MPIComm, debugMode ) },
     m_MaxBufferSize{ m_Buffer.m_Data.max_size() }
 {
     Init( );
@@ -138,7 +139,7 @@ void BPFileWriter::Write( const std::string variableName, const std::complex<dou
 void BPFileWriter::Write( const std::string variableName, const std::complex<long double>* values )
 { WriteVariableCommon( m_ADIOS.GetVariable<std::complex<long double>>( variableName ), values ); }
 
-void BPFileWriter::Write( const std::string variableName, const void* values )
+void BPFileWriter::Write( const std::string variableName, const void* values ) //Compound type
 { }
 
 
@@ -154,12 +155,33 @@ void BPFileWriter::Close( const int transportIndex )
     if( transportIndex == -1 )
     {
         for( auto& transport : m_Transports ) //by reference or value or it doesn't matter?
-            m_BP1Writer.Close( m_MetadataSet, m_Buffer, *transport, m_IsFirstClose );
+            m_BP1Writer.Close( m_MetadataSet, m_Buffer, *transport, m_IsFirstClose, false ); //false: not using aggregation for now
     }
     else
     {
-        m_BP1Writer.Close( m_MetadataSet, m_Buffer, *m_Transports[transportIndex], m_IsFirstClose );
+        m_BP1Writer.Close( m_MetadataSet, m_Buffer, *m_Transports[transportIndex], m_IsFirstClose, false ); //false: not using aggregation for now
     }
+
+    if( m_MetadataSet.Log.m_IsActive == true )
+    {
+        bool allClose = true;
+        for( auto& transport : m_Transports )
+        {
+            if( transport->m_IsOpen == true )
+            {
+                allClose = false;
+                break;
+            }
+        }
+        if( allClose == true ) //aggregate and write profiling.log
+        {
+            const std::string rankLog = m_BP1Writer.GetRankProfilingLog( m_RankMPI, m_MetadataSet, m_Transports );
+
+
+
+        }
+    }
+
 }
 
 
@@ -204,30 +226,32 @@ void BPFileWriter::InitParameters( )
         m_BP1Writer.m_Verbosity = verbosity;
     }
 
-    auto itProfile = m_Method.m_Parameters.find( "profile_buffering_units" );
+    auto itProfile = m_Method.m_Parameters.find( "profile_units" );
     if( itProfile != m_Method.m_Parameters.end() )
     {
+        auto& profiler = m_MetadataSet.Log;
+
         if( itProfile->second == "mus" || itProfile->second == "microseconds" )
-            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::mus );
+            profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::mus );
 
         else if( itProfile->second == "ms" || itProfile->second == "milliseconds" )
-            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::ms );
+            profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::ms );
 
         else if( itProfile->second == "s" || itProfile->second == "seconds" )
-            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::s );
+            profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::s );
 
         else if( itProfile->second == "min" || itProfile->second == "minutes" )
-            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::m );
+            profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::m );
 
         else if( itProfile->second == "h" || itProfile->second == "hours" )
-            m_Profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::h );
+            profiler.m_Timers.emplace_back( "Buffering", Support::Resolutions::h );
         else
         {
             if( m_DebugMode == true )
                 throw std::invalid_argument( "ERROR: Method profile_buffering_units argument must be mus, ms, s, min or h, in call to Open or Engine constructor\n" );
         }
 
-        m_Profiler.m_IsActive = true;
+        profiler.m_IsActive = true;
     }
 }
 
@@ -327,11 +351,19 @@ void BPFileWriter::InitTransports( )
 
 void BPFileWriter::InitProcessGroup( )
 {
+    if( m_MetadataSet.Log.m_IsActive == true )
+        m_MetadataSet.Log.m_Timers[0].SetInitialTime();
+
     if( m_AccessMode == "a" )
     {
         //Get last pg timestep and update timestep counter in format::BP1MetadataSet
     }
+
     WriteProcessGroupIndex( );
+    m_MetadataSet.DataPGIsOpen = true;
+
+    if( m_MetadataSet.Log.m_IsActive == true )
+        m_MetadataSet.Log.m_Timers[0].SetTime();
 }
 
 

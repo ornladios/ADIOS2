@@ -55,6 +55,7 @@ PYBIND11_PLUGIN( ADIOSPy )
     //Engine
     py::class_<adios::EnginePy>( m, "Engine")
         .def("Write", &adios::EnginePy::WritePy )
+        .def("Advance", &adios::EnginePy::WritePy )
         .def("Close", &adios::EnginePy::Close )
     ;
 

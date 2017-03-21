@@ -83,9 +83,6 @@ public:
 protected:
 
     const bool m_DebugMode = false; ///< if true: additional checks and exceptions
-
-
-
 };
 
 

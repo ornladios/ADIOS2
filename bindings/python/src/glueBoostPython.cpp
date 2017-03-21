@@ -68,7 +68,8 @@ BOOST_PYTHON_MODULE( ADIOSPy )
     //Engine
     py::class_<adios::EnginePy>("EnginePy", py::no_init )
         .def("Write", &adios::EnginePy::WritePy )
-		.def( "Close", &adios::EnginePy::Close )
+        .def("Advance", &adios::EnginePy::WritePy )
+		.def("Close", &adios::EnginePy::Close )
     ;
 }
 

@@ -5,8 +5,13 @@
  *      Author: wfg
  */
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+/// \endcond
 
 #include "format/BP1Writer.h"
+#include "core/Profiler.h"
+
 
 
 
@@ -105,25 +110,70 @@ void BP1Writer::Advance( BP1MetadataSet& metadataSet, capsule::STLVector& buffer
 
 
 void BP1Writer::Close( BP1MetadataSet& metadataSet, capsule::STLVector& buffer, Transport& transport, bool& isFirstClose,
-    		           const bool haveMetadata, const bool haveTiming ) const noexcept
+                       const bool doAggregation ) const noexcept
 {
+    if( metadataSet.Log.m_IsActive == true )
+        metadataSet.Log.m_Timers[0].SetInitialTime();
+
     if( isFirstClose == true )
     {
-        FlattenData( metadataSet, buffer );
+        if( metadataSet.DataPGIsOpen == true )
+        {
+            FlattenData( metadataSet, buffer );
+        }
+
         FlattenMetadata( metadataSet, buffer );
+
+        if( metadataSet.Log.m_IsActive == true )
+            metadataSet.Log.m_Timers[0].SetInitialTime();
+
+        if( doAggregation == true ) //N-to-M  where 1 <= M <= N-1, might need a new Log metadataSet.Log.m_Timers just for aggregation
+        {
+            //here call aggregator
+        }
+
         isFirstClose = false;
     }
-    //implementing N-to-N for now, no aggregation
 
-    transport.Write( buffer.m_Data.data(), buffer.m_DataPosition ); //single write
-
-
-    if( haveMetadata == true )
+    if( doAggregation == true ) //N-to-M  where 1 <= M <= N-1
     {
-        //here call aggregator
+        //here call aggregator to select transports for Write and Close
     }
+    else // N-to-N
+    {
+        transport.Write( buffer.m_Data.data(), buffer.m_DataPosition ); //single write
+        transport.Close();
+    }
+}
 
-    transport.Close();
+
+std::string BP1Writer::GetRankProfilingLog( const int rank, const BP1MetadataSet& metadataSet,
+                                            const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept
+{
+    auto lf_WriterTimer = []( const std::string name, const Timer& timer, std::string rankLog )
+    {
+        rankLog += "'" + name + "_" + timer.GetUnits() + "': " + std::to_string( timer.ProcessTime ) + ", ";
+    };
+
+    //prepare string dictionary per rank
+    std::string rankLog( "'rank_" + std::to_string( rank ) + "': { " );
+
+    auto& profiler = metadataSet.Log;
+    rankLog += "'totalBytes': " + std::to_string( profiler.m_TotalBytes[0] ) + ", ";
+    lf_WriterTimer( "t_buffering", profiler.m_Timers[0], rankLog );
+
+    for( unsigned int t = 0; t < transports.size(); ++t )
+    {
+        auto& timers = transports[t]->m_Profiler.m_Timers;
+
+        rankLog += "'transport_" + std::to_string(t) + "': { ";
+        lf_WriterTimer( "t_open", timers[0], rankLog );
+        lf_WriterTimer( "t_write", timers[1], rankLog );
+        lf_WriterTimer( "t_close", timers[2], rankLog );
+        rankLog += " }, ";
+    }
+    rankLog += "}, ";
+    return rankLog;
 }
 
 
@@ -259,6 +309,12 @@ void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, capsule::STLVector
     }
 
     buffer.m_DataAbsolutePosition += metadataSize;
+
+    if( metadataSet.Log.m_IsActive == true )
+    {
+        metadataSet.Log.m_TotalBytes.push_back( buffer.m_DataAbsolutePosition );
+    }
+
 }
 
 

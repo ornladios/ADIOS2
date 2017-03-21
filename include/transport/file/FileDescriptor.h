@@ -1,5 +1,5 @@
 /*
- * FileDescriptor.h
+ * FileDescriptor.h uses POSIX as the underlying library
  *
  *  Created on: Oct 6, 2016
  *      Author: wfg
@@ -35,13 +35,11 @@ public:
 
     void Close( );
 
-
 private:
 
     int m_FileDescriptor = -1; ///< file descriptor returned by POSIX open
 
 };
-
 
 
 

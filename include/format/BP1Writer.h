@@ -19,6 +19,7 @@
 #include "BP1.h"
 #include "core/Variable.h"
 #include "core/Capsule.h"
+#include "core/Profiler.h"
 #include "capsule/heap/STLVector.h"
 #include "functions/adiosTemplates.h"
 #include "functions/adiosFunctions.h"
@@ -326,19 +327,27 @@ public:
 
     void Advance( BP1MetadataSet& metadataSet, capsule::STLVector& buffer );
 
-
     /**
      * Function that sets metadata (if first close) and writes to a single transport
      * @param metadataSet current rank metadata set
      * @param buffer contains data
      * @param transport does a write after data and metadata is setup
      * @param isFirstClose true: metadata has been set and aggregated
-     * @param haveMetadata true: attach metadata buffer to each data buffer and do a transport write
-     * @param haveTiming true: add timing.log file
+     * @param doAggregation true: for N-to-M, false: for N-to-N
      */
     void Close( BP1MetadataSet& metadataSet, capsule::STLVector& buffer, Transport& transport, bool& isFirstClose,
-    		    const bool haveMetadata = true, const bool haveTiming = false ) const noexcept;
+                const bool doAggregation ) const noexcept;
 
+
+    /**
+     * Writes the ADIOS log information (buffering, open, write and close) for a rank process
+     * @param rank current rank
+     * @param metadataSet contains Profile info for buffering
+     * @param transports  contains Profile info for transport open, writes and close
+     * @return string for this rank that will be aggregated into profiling.log
+     */
+    std::string GetRankProfilingLog( const int rank, const BP1MetadataSet& metadataSet,
+                                     const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept;
 
 private:
 

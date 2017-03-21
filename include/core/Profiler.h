@@ -15,21 +15,16 @@
 namespace adios
 {
 
-/**
- * Utilities for profiling using the chrono header in C++11
- */
-struct Profiler
+class Timer
 {
-    class Timer
-    {
 
-    public:
-        const std::string Process;
-        unsigned long long int ProcessTime = 0;
+public:
+    const std::string Process;
+    unsigned long long int ProcessTime = 0;
 
-        Timer( const std::string process, const Support::Resolutions resolution ):
-            Process{ process },
-            Resolution{ resolution }
+    Timer( const std::string process, const Support::Resolutions resolution ):
+        Process{ process },
+        Resolution{ resolution }
         { }
 
         void SetInitialTime( )
@@ -63,14 +58,31 @@ struct Profiler
             return -1; //failure
         }
 
-    private:
+        std::string GetUnits( ) const
+        {
+            std::string units;
+            if( Resolution == Support::Resolutions::mus )      units = "mus";
+            else if( Resolution == Support::Resolutions::ms )  units = "ms";
+            else if( Resolution == Support::Resolutions::s )   units = "s";
+            else if( Resolution == Support::Resolutions::m )   units = "m";
+            else if( Resolution == Support::Resolutions::h )   units = "h";
+            return units;
+        }
+
+private:
 
         const Support::Resolutions Resolution;
         std::chrono::time_point<std::chrono::high_resolution_clock> InitialTime;
         std::chrono::time_point<std::chrono::high_resolution_clock> ElapsedTime;
         bool InitialTimeSet = false;
-    };
+};
 
+
+/**
+ * Utilities for profiling using the chrono header in C++11
+ */
+struct Profiler
+{
     std::vector<Timer> m_Timers;
     std::vector<unsigned long long int> m_TotalBytes;
     bool m_IsActive = false;

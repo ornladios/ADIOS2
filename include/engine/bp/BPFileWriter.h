@@ -10,6 +10,7 @@
 
 #include "core/Engine.h"
 #include "format/BP1Writer.h"
+#include "format/BP1Aggregator.h"
 
 //supported capsules
 #include "capsule/heap/STLVector.h"
@@ -72,8 +73,6 @@ public:
     void Write( const std::string variableName, const std::complex<long double>* values );
     void Write( const std::string variableName, const void* values );
 
-
-
     void Advance( );
 
     /**
@@ -88,12 +87,14 @@ private:
     capsule::STLVector m_Buffer; ///< heap capsule using STL std::vector<char>
     format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
     format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
+    format::BP1Aggregator m_BP1Aggregator;
 
     bool m_IsFirstClose = true; ///< set to false after first Close is reached so metadata doesn't have to be accommodated for a subsequent Close
     std::size_t m_MaxBufferSize; ///< maximum allowed memory to be allocated
     float m_GrowthFactor = 1.5; ///< capsule memory growth factor, new_memory = m_GrowthFactor * current_memory
 
     bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
+    bool m_CloseProcessGroup = false; ///< set to true if advance is called, this prevents flattening the data and metadata in Close
 
     void Init( );
     void InitParameters( );
@@ -111,6 +112,9 @@ private:
     template< class T >
     void WriteVariableCommon( Variable<T>& variable, const T* values )
     {
+        if( m_MetadataSet.Log.m_IsActive == true )
+            m_MetadataSet.Log.m_Timers[0].SetInitialTime();
+
         //set variable
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );
@@ -139,6 +143,9 @@ private:
         }
 
         variable.m_AppValues = nullptr; //setting pointer to null as not needed after write
+
+        if( m_MetadataSet.Log.m_IsActive == true )
+            m_MetadataSet.Log.m_Timers[0].SetTime();
     }
 
 };
