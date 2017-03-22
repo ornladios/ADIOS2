@@ -27,7 +27,7 @@ HeatTransfer::HeatTransfer( const Settings& settings )
     m_T1[0] = new double[ (m_s.ndx+2) * (m_s.ndy+2) ];
     m_T2 = new double*[ m_s.ndx+2 ];
     m_T2[0] = new double[ (m_s.ndx+2) * (m_s.ndy+2) ];
-    for (int i = 1; i < m_s.ndx+2; i++)
+    for (unsigned int i = 1; i < m_s.ndx+2; i++)
     {
         m_T1[i] = m_T1[i-1] + m_s.ndy+2;
         m_T2[i] = m_T2[i-1] + m_s.ndy+2;
@@ -49,8 +49,8 @@ void HeatTransfer::init(bool init_with_rank)
 {
     if (init_with_rank)
     {
-        for (int i = 0; i < m_s.ndx+2; i++)
-            for (int j = 0; j < m_s.ndy+2; j++)
+        for (unsigned int i = 0; i < m_s.ndx+2; i++)
+            for (unsigned int j = 0; j < m_s.ndy+2; j++)
                 m_T1[i][j] = m_s.rank;
     }
     else
@@ -59,10 +59,10 @@ void HeatTransfer::init(bool init_with_rank)
         const double hy = 2.0 * 4.0*atan(1.0)/m_s.ndy;
 
         double x, y;
-        for (int i = 0; i < m_s.ndx+2; i++)
+        for (unsigned int i = 0; i < m_s.ndx+2; i++)
         {
             x = 0.0 + hx*(i-1);
-            for (int j = 0; j < m_s.ndy+2; j++)
+            for (unsigned int j = 0; j < m_s.ndy+2; j++)
             {
                 y = 0.0 + hy*(j-1);
                 m_T1[i][j] = cos(8*x) + cos(6*x) - cos(4*x) + cos(2*x) - cos(x) +
@@ -88,10 +88,10 @@ void HeatTransfer::printT(std::string message, MPI_Comm comm) const
     }
 
     std::cout << "Rank " << rank << " " << message << std::endl;
-    for (int i = 0; i < m_s.ndx+2; i++)
+    for (unsigned int i = 0; i < m_s.ndx+2; i++)
     {
         std::cout << "  T[" << i << "][] = ";
-        for (int j = 0; j < m_s.ndy+2; j++)
+        for (unsigned int j = 0; j < m_s.ndy+2; j++)
         {
             std::cout << std::setw(6) << m_TCurrent[i][j];
         }
@@ -115,9 +115,9 @@ void HeatTransfer::switchCurrentNext()
 
 void HeatTransfer::iterate()
 {
-    for( int i = 1; i <= m_s.ndx; ++i)
+    for( unsigned int i = 1; i <= m_s.ndx; ++i)
     {
-        for( int j = 1; j <= m_s.ndy; ++j)
+        for( unsigned int j = 1; j <= m_s.ndy; ++j)
         {
             m_TNext[i][j] =
                     omega/4*(m_TCurrent[i-1][j] +
@@ -134,19 +134,19 @@ void HeatTransfer::heatEdges()
 {
     // Heat the whole global edges
     if( m_s.posx==0 )
-        for( int j = 0; j < m_s.ndy+2; ++j)
+        for( unsigned int j = 0; j < m_s.ndy+2; ++j)
             m_TCurrent[0][j]= edgetemp;
 
     if( m_s.posx==m_s.npx-1 )
-        for( int j = 0; j < m_s.ndy+2; ++j)
+        for( unsigned int j = 0; j < m_s.ndy+2; ++j)
             m_TCurrent[m_s.ndx+1][j]= edgetemp;
 
     if (m_s.posy==0)
-        for( int i = 0; i < m_s.ndx+2; ++i)
+        for( unsigned int i = 0; i < m_s.ndx+2; ++i)
             m_TCurrent[i][0]= edgetemp;
 
     if (m_s.posy==m_s.npy-1)
-        for( int i = 0; i < m_s.ndx+2; ++i)
+        for( unsigned int i = 0; i < m_s.ndx+2; ++i)
             m_TCurrent[i][m_s.ndy+1]= edgetemp;
 }
 
@@ -163,7 +163,7 @@ void HeatTransfer::exchange( MPI_Comm comm )
     if( m_s.rank_left >= 0 )
     {
         std::cout << "Rank " << m_s.rank << " send left to rank " <<  m_s.rank_left << std::endl;
-        for( int i = 0; i < m_s.ndx+2; ++i)
+        for( unsigned int i = 0; i < m_s.ndx+2; ++i)
             send_x[i] = m_TCurrent[i][1];
          MPI_Send(send_x, m_s.ndx+2, MPI_REAL8, m_s.rank_left, tag, comm);
     }
@@ -171,7 +171,7 @@ void HeatTransfer::exchange( MPI_Comm comm )
     {
         std::cout << "Rank " << m_s.rank << " receive from right from rank " <<  m_s.rank_right << std::endl;
         MPI_Recv(recv_x, m_s.ndx+2, MPI_REAL8, m_s.rank_right, tag, comm, &status);
-        for( int i = 0; i < m_s.ndx+2; ++i)
+        for( unsigned int i = 0; i < m_s.ndx+2; ++i)
             m_TCurrent[i][m_s.ndy+1] = recv_x[i];
     }
 
@@ -180,7 +180,7 @@ void HeatTransfer::exchange( MPI_Comm comm )
     if( m_s.rank_right >= 0 )
     {
         std::cout << "Rank " << m_s.rank << " send right to rank " <<  m_s.rank_right << std::endl;
-        for( int i = 0; i < m_s.ndx+2; ++i)
+        for( unsigned int i = 0; i < m_s.ndx+2; ++i)
             send_x[i] = m_TCurrent[i][m_s.ndy];
         MPI_Send(send_x, m_s.ndx+2, MPI_REAL8, m_s.rank_right, tag, comm);
     }
@@ -188,7 +188,7 @@ void HeatTransfer::exchange( MPI_Comm comm )
     {
         std::cout << "Rank " << m_s.rank << " receive from left from rank " <<  m_s.rank_left << std::endl;
         MPI_Recv(recv_x, m_s.ndx+2, MPI_REAL8, m_s.rank_left, tag, comm, &status);
-        for( int i = 0; i < m_s.ndx+2; ++i)
+        for( unsigned int i = 0; i < m_s.ndx+2; ++i)
             m_TCurrent[i][0] = recv_x[i];
     }
 
@@ -230,7 +230,7 @@ void HeatTransfer::exchange( MPI_Comm comm )
 std::vector<double> HeatTransfer::data_noghost() const
 {
     std::vector<double>d( m_s.ndx * m_s.ndy );
-    for( int i = 1; i <= m_s.ndx; ++i )
+    for( unsigned int i = 1; i <= m_s.ndx; ++i )
     {
         std::memcpy( &d[(i-1)*m_s.ndy], m_TCurrent[i]+1, m_s.ndy*sizeof(double));
     }

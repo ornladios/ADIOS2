@@ -68,11 +68,11 @@ int main( int argc, char* argv [] )
         ht.printT("Heated T:", mpiHeatTransferComm);
         io.write( 0, ht, settings, mpiHeatTransferComm );
 
-        for( int t = 1; t <= settings.steps; ++t )
+        for( unsigned int t = 1; t <= settings.steps; ++t )
         {
             if( rank == 0 )
                 std::cout << "Step " << t << ":\n";
-            for( int iter = 1; iter <= settings.iterations; ++iter )
+            for( unsigned int iter = 1; iter <= settings.iterations; ++iter )
             {
                 ht.iterate();
                 ht.exchange( mpiHeatTransferComm );

@@ -13,7 +13,7 @@
 #include "Settings.h"
 
 
-static int convertToInt( std::string varName, char *arg )
+static unsigned int convertToUint( std::string varName, char *arg )
 {
     char *end;
     int retval = std::strtoll( arg, &end, 10);
@@ -22,26 +22,32 @@ static int convertToInt( std::string varName, char *arg )
         throw std::invalid_argument( "Invalid value given for " + varName + ": "
                 + std::string(arg) );
     }
-    return retval;
+    if( retval < 0 )
+    {
+        throw std::invalid_argument( "Negative value given for " + varName + ": "
+                + std::string(arg) );
+    }
+    return (unsigned int) retval;
 }
 
 Settings::Settings( int argc, char* argv [], int rank, int nproc )
-: rank{rank}, nproc{nproc}
+: rank{rank}
 {
     if (argc < 8)
     {
         throw std::invalid_argument( "Not enough arguments" );
     }
+    this->nproc = (unsigned int) nproc;
 
     outputfile = argv[1];
-    npx = convertToInt("N", argv[2]);
-    npy = convertToInt("M", argv[3]);
-    ndx = convertToInt("nx", argv[4]);
-    ndy = convertToInt("ny", argv[5]);
-    steps = convertToInt("steps", argv[6]);
-    iterations = convertToInt("iterations", argv[7]);
+    npx = convertToUint("N", argv[2]);
+    npy = convertToUint("M", argv[3]);
+    ndx = convertToUint("nx", argv[4]);
+    ndy = convertToUint("ny", argv[5]);
+    steps = convertToUint("steps", argv[6]);
+    iterations = convertToUint("iterations", argv[7]);
 
-    if( npx * npy != nproc )
+    if( npx * npy != this->nproc )
     {
         throw std::invalid_argument( "N*M must equal the number of processes" );
     }
