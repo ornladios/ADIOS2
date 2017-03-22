@@ -69,4 +69,4 @@ nompi: $(HFiles) $(OBJNoMPI)
 	$(CC) $(CFLAGS) $(INC) -DADIOS_NOMPI -o $@ $<
 	
 clean:
-	rm ./bin/mpi/*.o ./bin/nompi/*.o ./lib/*.a ./lib/*.so	
+	rm ./bin/mpi/*.o ./bin/nompi/*.o ./lib/*	

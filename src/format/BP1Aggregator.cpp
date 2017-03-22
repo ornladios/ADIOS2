@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <fstream>
+#include <iostream> // must be deleted
+#include <unistd.h> // must be deleted
 
 #include "format/BP1Aggregator.h"
 
@@ -30,61 +32,61 @@ BP1Aggregator::~BP1Aggregator( )
 { }
 
 
-
 void BP1Aggregator::WriteProfilingLog( const std::string fileName, const std::string& rankLog )
 {
     if( m_RankMPI == 0 )
     {
-        std::vector< std::vector<char> > rankLogs( m_SizeMPI - 1 ); //rankLogs from other processes
+        unsigned int sizeMPI = static_cast<unsigned int>( m_SizeMPI );
+        std::vector< std::vector<char> > rankLogs( sizeMPI - 1 ); //rankLogs from other processes
+        std::vector< int > rankLogsSizes( sizeMPI-1, -1 ); //init with -1
+        std::vector<MPI_Request> requests( sizeMPI );
+        std::vector<MPI_Status> statuses( sizeMPI );
 
         //first receive sizes
-        unsigned int sizeMPI = static_cast<unsigned int>( m_SizeMPI );
+        for( unsigned int i = 1; i < sizeMPI; ++i )
+            MPI_Irecv( &rankLogsSizes[i-1], 1, MPI_INT, i, 0, m_MPIComm, &requests[i] );
 
         for( unsigned int i = 1; i < sizeMPI; ++i )
         {
-            int size = -1;
-            MPI_Request request;
-            MPI_Irecv( &size, 1, MPI_INT, i, 0, m_MPIComm, &request );
-
+            MPI_Wait( &requests[i], &statuses[i] );
             if( m_DebugMode == true )
             {
-                if( size == -1 )
+                if( rankLogsSizes[i-1] == -1 )
                     throw std::runtime_error( "ERROR: couldn't get size from rank " + std::to_string(i) + ", in ADIOS aggregator for Profiling.log\n" );
-                //here check request
             }
-            rankLogs[i-1].resize( size ); //allocate with zeros
+            rankLogs[i-1].resize( rankLogsSizes[i-1] ); //allocate with zeros
         }
+
         //receive rankLog from other ranks
         for( unsigned int i = 1; i < sizeMPI; ++i )
-        {
-            int size = static_cast<int>( rankLogs[i-1].size() );
-            MPI_Request request;
-            MPI_Irecv( rankLogs[i-1].data(), size, MPI_CHAR, i, 0, m_MPIComm, &request );
+            MPI_Irecv( rankLogs[i-1].data(), rankLogsSizes[i-1], MPI_CHAR, i, 1, m_MPIComm, &requests[i] );
 
-            if( m_DebugMode == true )
-            {
-                //here check request
-            }
-        }
+        for( unsigned int i = 1; i < sizeMPI; ++i )
+            MPI_Wait( &requests[i], &statuses[i] );
+
         //write file
-        std::string logFile( "log = { " + rankLog + "\n" );
+        std::string logFile( "log = { \n" );
+        logFile += rankLog + "\n";
         for( unsigned int i = 1; i < sizeMPI; ++i )
         {
-            std::string rankLogStr( rankLogs[i-1].data() );
+            const std::string rankLogStr( rankLogs[i-1].data(), rankLogs[i-1].size() );
             logFile += rankLogStr + "\n";
         }
         logFile += " }\n";
 
+        std::cout << logFile;
         std::ofstream logStream( fileName );
         logStream.write( logFile.c_str(), logFile.size() );
         logStream.close();
     }
     else
     {
-        int size = static_cast<int>( rankLog.size() );
-        MPI_Request request;
-        MPI_Isend( &size, 1, MPI_INT, 0, 0, m_MPIComm, &request );
-        MPI_Isend( const_cast<char*>( rankLog.c_str() ), size, MPI_CHAR, 0, 0, m_MPIComm, &request );
+        int rankLogSize = static_cast<int>( rankLog.size() );
+        MPI_Request requestSize;
+        MPI_Isend( &rankLogSize, 1, MPI_INT, 0, 0, m_MPIComm, &requestSize );
+
+        MPI_Request requestRankLog;
+        MPI_Isend( const_cast<char*>( rankLog.c_str() ), rankLogSize, MPI_CHAR, 0, 1, m_MPIComm, &requestRankLog );
     }
 }
 

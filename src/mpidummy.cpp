@@ -177,6 +177,8 @@ int MPI_Send( void *sendbuffer, int count, MPI_Datatype type, int destination, i
 int MPI_Isend( void *recvbuffer, int count, MPI_Datatype type, int source, int tag, MPI_Comm comm, MPI_Request* request )
 { return 0; }
 
+int MPI_Wait( MPI_Request* request, MPI_Status* status )
+{ return 0; }
 
 int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh)
 {

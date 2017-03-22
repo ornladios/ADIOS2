@@ -27,8 +27,8 @@ if( rank % 2 == 1 ): # odd ranks only
 
 #Setup method and print summary
 ioSettings = adios.DeclareMethod("adiosSettings", "BPFileWriter")
-ioSettings.SetParameters( max_buffer_size = '10000000' )
-ioSettings.AddTransport( 'File', have_metadata_file = 'yes', library = 'POSIX' )  # POSIX is default, just checking
+ioSettings.SetParameters( profile_units = 'mus' )
+ioSettings.AddTransport( 'File', have_metadata_file = 'no', profile_units = 'mus' )  # POSIX is default, just checking
 
 #Start Engine
 bpFileWriter = adios.Open( "file.bp", "w", ioSettings, None )  # Open files using N-to-N method, None means no new MPI communicator

@@ -16,27 +16,27 @@ namespace format
 {
 
 
-void BP1::OpenRankFiles( const std::string name, const std::string accessMode, Transport& file )
+std::string BP1::GetDirectoryName( const std::string name ) const noexcept
 {
     std::string directory;
-    std::string baseName;
 
-    if( name.find(".bp") == name.size()-3 ) //need to test
-    {
-        baseName = name.substr( 0, name.size()-3 );
+    if( name.find(".bp") == name.size()-3 )
         directory = name;
-    }
     else
-    {
-        baseName = name;
         directory = name + ".bp";
-    }
-    CreateDirectory( directory ); //creates a directory and sub-directories recursively
 
-    std::string fileName( directory + "/" + baseName + ".bp." + std::to_string( file.m_RankMPI ) );
-    file.Open( fileName, accessMode );  // opens a file transport under name.bp.dir/name.bp.rank reserve that location fro writing
+    return directory;
 }
 
+
+void BP1::OpenRankFiles( const std::string name, const std::string accessMode, Transport& file ) const
+{
+    const std::string directory = GetDirectoryName( name );
+    CreateDirectory( directory ); //creates a directory and sub-directories recursively
+
+    std::string fileName( directory + "/" + directory + "." + std::to_string( file.m_RankMPI ) );
+    file.Open( fileName, accessMode );  // opens a file transport under name.bp.dir/name.bp.rank reserve that location fro writing
+}
 
 
 std::vector<int> BP1::GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept

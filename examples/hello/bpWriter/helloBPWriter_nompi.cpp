@@ -40,7 +40,8 @@ int main( int argc, char* argv [] )
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
-        bpWriterSettings.AddTransport( "File", "have_metadata_file=yes" );
+        bpWriterSettings.SetParameters( "profile_units=mus" );
+        bpWriterSettings.AddTransport( "File", "have_metadata_file=yes", "profile_units=mus" );
 
         //Create engine smart pointer due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class Writer

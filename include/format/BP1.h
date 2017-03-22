@@ -66,13 +66,20 @@ class BP1
 public:
 
     /**
+     * Checks if input name has .bp extension and returns a .bp directory name
+     * @param name input (might or not have .bp)
+     * @return either name.bp (name has no .bp) or name (name has .bp extension)
+     */
+    std::string GetDirectoryName( const std::string name ) const noexcept;
+
+    /**
      * Opens rank files in the following format:
      * if transport.m_MPIComm different from MPI_Comm_SELF --> name.bp.dir/name.bp.rank
      * @param name might contain .bp or not, if not .bp will be added
      * @param accessMode "write" "w", "r" "read",  "append" "a"
      * @param transport file I/O transport
      */
-    void OpenRankFiles( const std::string name, const std::string accessMode, Transport& transport );
+    void OpenRankFiles( const std::string name, const std::string accessMode, Transport& transport ) const;
 
 
 protected:

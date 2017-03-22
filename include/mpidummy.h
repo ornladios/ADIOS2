@@ -92,6 +92,8 @@ int MPI_Irecv( void *recvbuffer, int count, MPI_Datatype type, int source, int t
 int MPI_Send( void *sendbuffer, int count, MPI_Datatype type, int destination, int tag, MPI_Comm comm );
 int MPI_Isend( void *recvbuffer, int count, MPI_Datatype type, int source, int tag, MPI_Comm comm, MPI_Request* request );
 
+int MPI_Wait( MPI_Request* request, MPI_Status* status );
+
 int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh);
 int MPI_File_close(MPI_File *fh);
 int MPI_File_get_size(MPI_File fh, MPI_Offset *size);

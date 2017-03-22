@@ -7,6 +7,8 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
+#include <iostream>
+#include <unistd.h> //sleep must be removed
 /// \endcond
 
 #include "format/BP1Writer.h"
@@ -103,8 +105,6 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
 void BP1Writer::Advance( BP1MetadataSet& metadataSet, capsule::STLVector& buffer )
 {
     FlattenData( metadataSet, buffer );
-
-
 }
 
 
@@ -150,29 +150,33 @@ void BP1Writer::Close( BP1MetadataSet& metadataSet, capsule::STLVector& buffer, 
 std::string BP1Writer::GetRankProfilingLog( const int rank, const BP1MetadataSet& metadataSet,
                                             const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept
 {
-    auto lf_WriterTimer = []( const std::string name, const Timer& timer, std::string rankLog )
+    auto lf_WriterTimer = []( std::string& rankLog, const Timer& timer )
     {
-        rankLog += "'" + name + "_" + timer.GetUnits() + "': " + std::to_string( timer.ProcessTime ) + ", ";
+        rankLog += timer.Process + "_" + timer.GetUnits() + "': " + std::to_string( timer.ProcessTime ) + ", ";
     };
 
     //prepare string dictionary per rank
     std::string rankLog( "'rank_" + std::to_string( rank ) + "': { " );
 
     auto& profiler = metadataSet.Log;
-    rankLog += "'totalBytes': " + std::to_string( profiler.m_TotalBytes[0] ) + ", ";
-    lf_WriterTimer( "t_buffering", profiler.m_Timers[0], rankLog );
+    rankLog += "'bytes': " + std::to_string( profiler.m_TotalBytes[0] ) + ", ";
+    lf_WriterTimer( rankLog, profiler.m_Timers[0] );
 
     for( unsigned int t = 0; t < transports.size(); ++t )
     {
         auto& timers = transports[t]->m_Profiler.m_Timers;
 
         rankLog += "'transport_" + std::to_string(t) + "': { ";
-        lf_WriterTimer( "t_open", timers[0], rankLog );
-        lf_WriterTimer( "t_write", timers[1], rankLog );
-        lf_WriterTimer( "t_close", timers[2], rankLog );
+        rankLog += "'lib:' " + transports[t]->m_Type + ", ";
+
+        for( unsigned int i = 0; i < 3; ++i )
+            lf_WriterTimer( rankLog, timers[i] );
+
         rankLog += " }, ";
     }
     rankLog += "}, ";
+
+    //std::cout << rankLog << "\n";
     return rankLog;
 }
 

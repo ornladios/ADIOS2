@@ -378,9 +378,7 @@ void CreateDirectory( const std::string fullPath ) noexcept
     auto lf_Mkdir = []( const std::string directory, struct stat& st )
     {
         if ( stat( directory.c_str(), &st ) == -1 )
-        {
             mkdir( directory.c_str(), 0777 );
-        }
     };
 
     auto directoryPosition = fullPath.find( "/" );

@@ -78,7 +78,7 @@ public:
     virtual void Close( ); ///< closes current transport and flushes everything, transport becomes unreachable
 
 
-    virtual void InitProfiler( const Support::Resolutions resolution );
+    virtual void InitProfiler( const std::string accessMode, const Support::Resolutions resolution );
 
 protected:
 

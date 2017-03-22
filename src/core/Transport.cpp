@@ -37,17 +37,17 @@ void Transport::Close( )
 { }
 
 
-void Transport::InitProfiler( const Support::Resolutions resolution )
+void Transport::InitProfiler( const std::string accessMode, const Support::Resolutions resolution )
 {
     m_Profiler.m_Timers.emplace_back( "open", Support::Resolutions::mus );
 
-    if( m_AccessMode == "w" || m_AccessMode == "write" )
+    if( accessMode == "w" || accessMode == "write" )
         m_Profiler.m_Timers.emplace_back( "write", resolution );
 
-    else if( m_AccessMode == "a" || m_AccessMode == "append" )
+    else if( accessMode == "a" || accessMode == "append" )
         m_Profiler.m_Timers.emplace_back( "append", resolution );
 
-    else if( m_AccessMode == "r" || m_AccessMode == "read" )
+    else if( accessMode == "r" || accessMode == "read" )
         m_Profiler.m_Timers.emplace_back( "read", resolution );
 
     m_Profiler.m_Timers.emplace_back( "close", Support::Resolutions::mus );
