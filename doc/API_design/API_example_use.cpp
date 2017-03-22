@@ -92,7 +92,7 @@ int main( int argc, char* argv[])
         // Engine will copy this bounding box from the data pointer into the buffer. Size of the bounding box should match the
         // "space" selection which was given above. Default memspace is the full selection.
         adios::Selection memspace = adios.SelectionBoundingBox( {1,NX}, {0,1} ); // local dims and offsets; both as list
-        var2D.SetMemorySelection( sel );
+        var2D.SetMemorySelection( memspace );
 
         writer->Write<double>( var2D, *Temperature );
 
