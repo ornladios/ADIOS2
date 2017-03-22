@@ -37,7 +37,7 @@ namespace adios
 
 /** Use these values in Dims() when defining variables
  */
-typedef enum {
+enum {
     VARYING_DIMENSION = -1,//!< VARYING_DIMENSION
     LOCAL_VALUE = 0,       //!< LOCAL_VALUE
     GLOBAL_VALUE = 1       //!< GLOBAL_VALUE
@@ -151,7 +151,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open( const std::string streamName, const std::string accessMode, MPI_Comm mpiComm,
-                                  const Method& method, const enum IOMode iomode );
+                                  const Method& method, const IOMode iomode );
 
     /**
      * @brief Open to Read with a timeout value specified. Creates a new engine from previously defined method
@@ -164,7 +164,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open( const std::string streamName, const std::string accessMode, MPI_Comm mpiComm,
-                                  const Method& method, const enum IOMode iomode,
+                                  const Method& method, const IOMode iomode,
                                   const float timeout_sec );
     /**
      * @brief Open to Write, Read. Creates a new engine from previously defined method.
@@ -176,7 +176,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open( const std::string streamName, const std::string accessMode, const Method& method,
-                                  const enum IOMode iomode );
+                                  const IOMode iomode );
 
 
     /**
@@ -190,7 +190,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open( const std::string streamName, const std::string accessMode, const Method& method,
-                                  const enum IOMode iomode,
+                                  const IOMode iomode,
                                   const float timeout_sec );
 
 
@@ -204,7 +204,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> OpenFileReader( const std::string streamName, MPI_Comm mpiComm,
-                                            const Method& method, const enum IOMode iomode );
+                                            const Method& method, const IOMode iomode );
 
     /**
      * @brief Dumps groups information to a file stream or standard output.
