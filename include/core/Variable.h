@@ -40,7 +40,7 @@ class Variable : public VariableBase
 public:
 
     const T* m_AppValues = nullptr; ///< pointer to values passed from user in ADIOS Write, it might change in ADIOS Read
-    //std::vector<T> m_Values; ///< Vector variable returned to user, might be used for zero-copy?
+
     std::vector< TransformData > m_Transforms; ///< associated transforms, sequence determines application order, e.g. first Transforms[0] then Transforms[1]. Pointer used as reference (no memory management).
 
     Variable<T>( const std::string name, const Dims dimensions, const Dims globalDimensions, const Dims globalOffsets,
@@ -67,6 +67,40 @@ public:
      *  @return Number of steps
      */
     int GetSteps();
+    
+    void Monitor( std::ostream& logInfo ) const noexcept
+    {
+        logInfo << "Variable: " << m_Name << "\n";
+        logInfo << "Type: " << m_Type << "\n";
+        logInfo << "Size: " << TotalSize() << " elements\n";
+        logInfo << "Payload: " << PayLoadSize() << " bytes\n";
+
+        if( m_AppValues != nullptr )
+        {
+            logInfo << "Values (first 10 or max_size): \n";
+            std::size_t size = TotalSize();
+            if( size > 10 )
+                size = 10;
+
+            if( m_Type.find("complex") != m_Type.npos ) //it's complex
+            {
+                for( unsigned int i = 0; i < size; ++i  )
+                {
+                    logInfo << "( " << std::real( m_AppValues[i] ) << " , " << std::imag( m_AppValues[i] ) << " )  ";
+                }
+            }
+            else
+            {
+                for( unsigned int i = 0; i < size; ++i  )
+                {
+                    logInfo << m_AppValues[i] << " ";
+                }
+            }
+
+            logInfo << " ...";
+        }
+        logInfo << "\n";
+    }
 
 };
 

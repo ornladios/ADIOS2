@@ -13,13 +13,11 @@
 /// \endcond
 
 #include "ADIOS.h"
-
-
 #include "functions/adiosFunctions.h"
 
 //Engines
-#include "engine/bp/BPWriter.h"
-#include "engine/bp/BPReader.h"
+#include "engine/bp/BPFileWriter.h"
+#include "engine/bp/BPFileReader.h"
 
 #ifdef HAVE_DATAMAN  //external dependencies
 #include "engine/dataman/DataManWriter.h"
@@ -46,7 +44,8 @@ ADIOS::ADIOS( const std::string configFileName, const bool debugMode ):
 }
 
 
-ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const bool debugMode  ):
+
+ADIOS::ADIOS( const std::string xmlConfigFile, MPI_Comm mpiComm, const bool debugMode  ):
     m_MPIComm{ mpiComm },
     m_ConfigFile{ xmlConfigFile },
 	m_DebugMode{ debugMode }
@@ -56,7 +55,7 @@ ADIOS::ADIOS( const std::string xmlConfigFile, const MPI_Comm mpiComm, const boo
 }
 
 
-ADIOS::ADIOS( const MPI_Comm mpiComm, const bool debugMode ):
+ADIOS::ADIOS( MPI_Comm mpiComm, const bool debugMode ):
     m_MPIComm{ mpiComm },
     m_DebugMode{ debugMode }
 {
@@ -70,6 +69,13 @@ ADIOS::~ADIOS( )
 
 void ADIOS::InitMPI( )
 {
+    if( m_DebugMode == true )
+    {
+        if( m_MPIComm == MPI_COMM_NULL )
+            throw std::ios_base::failure( "ERROR: engine communicator is MPI_COMM_NULL,"
+                                          " in call to ADIOS Open or Constructor\n" );
+    }
+
     MPI_Comm_rank( m_MPIComm, &m_RankMPI );
     MPI_Comm_size( m_MPIComm, &m_SizeMPI );
 }
@@ -87,7 +93,8 @@ Method& ADIOS::DeclareMethod( const std::string methodName, const std::string ty
 }
 
 
-std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string accessMode, MPI_Comm mpiComm, const Method& method, const unsigned int cores )
+std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+                                     const Method& method, const unsigned int cores )
 {
     if( m_DebugMode == true )
     {
@@ -99,16 +106,18 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
     const std::string type( method.m_Type );
 
-    const bool isDefaultWriter = ( accessMode == "w" || accessMode == "write" ) && type.empty() ? true : false;
+    const bool isDefaultWriter = ( accessMode == "w" || accessMode == "write" ||
+                                   accessMode == "a" || accessMode == "append" ) && type.empty() ? true : false;
+
     const bool isDefaultReader = ( accessMode == "r" || accessMode == "read" ) && type.empty() ? true : false;
 
-    if( isDefaultWriter || type == "BPWriter" || type == "bpwriter" )
+    if( isDefaultWriter || type == "BPFileWriter" || type == "bpfilewriter" )
     {
-        return std::make_shared<BPWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<BPFileWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( isDefaultReader || type == "BPReader" || type == "bpreader" )
     {
-        return std::make_shared<BPReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<BPFileReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {
@@ -176,7 +185,7 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
 VariableCompound& ADIOS::GetVariableCompound( const std::string name )
 {
-    return m_Compound[ GetVariableIndex<void>(name) ];
+    return m_Compound.at( GetVariableIndex<void>(name) );
 }
 
 
@@ -227,6 +236,15 @@ void ADIOS::MonitorVariables( std::ostream& logStream )
 
         else if( type == GetType<long double>() )
             GetVariable<long double>( name ).Monitor( logStream );
+
+        else if( type == GetType<std::complex<float>>() )
+            GetVariable<std::complex<float>>( name ).Monitor( logStream );
+
+        else if( type == GetType<std::complex<double>>() )
+            GetVariable<std::complex<double>>( name ).Monitor( logStream );
+
+        else if( type == GetType<std::complex<long double>>() )
+            GetVariable<std::complex<long double>>( name ).Monitor( logStream );
     }
 }
 

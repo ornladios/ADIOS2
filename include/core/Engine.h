@@ -1,5 +1,5 @@
 /*
- * Capsule.h
+ * Engine.h
  *
  *  Created on: Nov 7, 2016
  *      Author: wfg
@@ -18,10 +18,10 @@
 #include <complex> //std::complex
 /// \endcond
 
-#ifdef HAVE_MPI
-  #include <mpi.h>
-#else
+#ifdef ADIOS_NOMPI
   #include "mpidummy.h"
+#else
+  #include <mpi.h>
 #endif
 
 #include "ADIOS.h"
@@ -31,7 +31,7 @@
 #include "core/Transform.h"
 #include "core/Transport.h"
 #include "core/Capsule.h"
-
+#include "core/Profiler.h"
 
 namespace adios
 {
@@ -51,6 +51,19 @@ class Engine
 {
 
 public:
+
+
+    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+
+    const std::string m_EngineType; ///< from derived class
+    const std::string m_Name; ///< name used for this engine
+    const std::string m_AccessMode; ///< accessMode for buffers used by this engine
+    const Method& m_Method; ///< associated method containing engine metadata
+
+    int m_RankMPI = 0; ///< current MPI rank process
+    int m_SizeMPI = 1; ///< current MPI processes size
+
+    const std::string m_HostLanguage = "C++"; ///< default host language
 
     /**
      * Unique constructor
@@ -89,11 +102,11 @@ public:
         throw std::invalid_argument( "ERROR: type not supported for variable " + var->name + " in call to GetVariable\n" );
     }
 
-    /*
+    /**
      * Needed for DataMan Engine
-     * @param callback
+     * @param callback function passed from the user
      */
-    //virtual void SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback );
+    virtual void SetCallBack( std::function<void( const void*, std::string, std::string, std::string, Dims )> callback );
 
     /**
      * Write function that adds static checking on the variable to be passed by values
@@ -125,20 +138,22 @@ public:
      * @param values
      */
     template< class T >
-    void Write( Variable<T>& variable, const T& values )
+    void Write( Variable<T>& variable, const T values )
     {
-        Write( variable, &values );
+        const T val = values;
+        Write( variable, &val );
     }
 
     /**
-     * Single value version using string as variable handlers
+     * Single value version using string as variable handlers, allows rvalues to be passed
      * @param variableName
      * @param values
      */
     template< class T >
-    void Write( const std::string variableName, const T& values )
+    void Write( const std::string variableName, const T values )
     {
-        Write( variableName, &values );
+        const T val = values;
+        Write( variableName, &val );
     }
 
     virtual void Write( Variable<char>& variable,                      const char* values );
@@ -316,7 +331,6 @@ public:
      */
     void PerformReads( PerformReadMode mode );
 
-
     /**
      * Reader application indicates that no more data will be read from the current stream before advancing.
      * This is necessary to allow writers to advance as soon as possible.
@@ -380,6 +394,41 @@ public:
     std::vector<std::string> VariableNames();
 
     virtual void Close( const int transportIndex = -1  ) = 0; ///< Closes a particular transport, or all if -1
+
+
+protected:
+
+    ADIOS& m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
+    std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
+    const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
+    unsigned int m_Cores = 1;
+    const std::string m_EndMessage; ///< added to exceptions to improve debugging
+    std::set<std::string> m_WrittenVariables; ///< contains the names of the variables that are being written
+
+    virtual void Init( ); ///< Initialize m_Capsules and m_Transports, called from constructor
+    virtual void InitParameters( ); ///< Initialize parameters from Method, called from Initi in constructor
+    virtual void InitTransports( ); ///< Initialize transports from Method, called from Init in constructor
+
+    /**
+     * Used to verify parameters in m_Method containers
+     * @param itParam iterator to a certain parameter
+     * @param parameters map of parameters, from m_Method
+     * @param parameterName used if exception is thrown to provide debugging information
+     * @param hint used if exception is thrown to provide debugging information
+     */
+    void CheckParameter( const std::map<std::string, std::string>::const_iterator itParam,
+                         const std::map<std::string, std::string>& parameters,
+                         const std::string parameterName,
+                         const std::string hint ) const;
+
+    bool TransportNamesUniqueness( ) const; ///< checks if transport names are unique among the same types (file I/O)
+
+
+    /**
+     * Throws an exception in debug mode if transport index is out of range.
+     * @param transportIndex must be in the range [ -1 , m_Transports.size()-1 ]
+     */
+    void CheckTransportIndex( const int transportIndex );
 
 };
 
