@@ -28,31 +28,32 @@ namespace format
 {
 
 /**
- * Struct that tracks metadata indices in bp format
+ * Used for Variables and Attributes, needed in a container for characteristic sets merge independently for each Variable or Attribute
+ */
+struct BP1Index
+{
+    std::vector<char> Index = std::vector<char>( 102400, '\0' ); ///< metadata variable index, start with 100Kb
+    std::size_t Position = 0; ///< initial position in bytes
+    std::uint64_t Count = 0; ///< number of characteristics sets (time and spatial aggregation)
+};
+
+/**
+ * Single struct that tracks metadata indices in bp format
  */
 struct BP1MetadataSet
 {
-    std::string TimeStepName; ///< time step name associated with this PG
     std::uint32_t TimeStep = 0; ///< current time step, updated with advance step, if append it will be updated to last
 
-    std::uint64_t PGCount = 0; ///< number of process groups
-    std::size_t PGIndexPosition = 16;
-    std::vector<char> PGIndex = std::vector<char>( 102400, '\0' ); ///< process group index metadata
-
-    std::uint32_t VarsCount = 0; ///< number of written Variables
-    std::size_t   VarsIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> VarsIndex = std::vector<char>( 102400, '\0' ); ///< metadata variable index, start with 1Kb
-
-    std::uint32_t AttributesCount = 0; ///< number of Attributes
-    std::size_t AttributesIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> AttributesIndex = std::vector<char>( 102400, '\0' ); ///< metadata attribute index, start with 1Kb
+    BP1Index PGIndex;
+    std::unordered_map< std::string, BP1Index > VarsIndices; ///< key: variable name, value: bp metadata variable index
+    std::unordered_map< std::string, BP1Index > AttributesIndices; ///< key: attribute name, value: bp metadata attribute index
 
     const unsigned int MiniFooterSize = 28; ///< 28 for now
 
     //PG (relative) positions in Data buffer to be updated
-    std::uint32_t DataPGVarsCount = 0;
     std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative ) position, needs to be updated in every advance step or init
-    std::size_t DataVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
+    std::uint32_t DataPGVarsCount = 0; ///< variables in current PG
+    std::size_t DataPGVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
     bool DataPGIsOpen = false;
 
     Profiler Log;
@@ -121,8 +122,6 @@ protected:
         ,METHOD_FILE        = 27
         ,METHOD_ZMQ         = 28
         ,METHOD_MDTM        = 29
-
-
     };
 
 
@@ -194,7 +193,6 @@ protected:
     {
         return type_unknown;
     }
-
 
     std::vector<int> GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept;
 
