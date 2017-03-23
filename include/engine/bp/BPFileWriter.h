@@ -119,6 +119,10 @@ private:
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );
 
+        //if first timestep Write
+        if( m_MetadataSet.DataPGIsOpen == false ) //create a new pg index timestep ready to write variables
+            WriteProcessGroupIndex( );
+
         //pre-calculate new metadata and payload sizes
         m_TransportFlush = CheckBuffersAllocation( m_BP1Writer.GetVariableIndexSize( variable ), variable.PayLoadSize(),
                                                    m_GrowthFactor, m_MaxBufferSize,

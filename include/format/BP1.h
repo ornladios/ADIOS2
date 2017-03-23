@@ -50,6 +50,7 @@ struct BP1MetadataSet
     const unsigned int MiniFooterSize = 28; ///< 28 for now
 
     //PG (relative) positions in Data buffer to be updated
+    std::uint32_t DataPGVarsCount = 0;
     std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative ) position, needs to be updated in every advance step or init
     std::size_t DataVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
     bool DataPGIsOpen = false;

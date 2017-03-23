@@ -270,6 +270,17 @@ public:
             }
         }
 
+        //Characteristic time index in metadata and data
+        characteristicID = characteristic_time_index;
+        MemcpyToBuffer( metadataSet.VarsIndex, metadataSet.VarsIndexPosition, &characteristicID, 1  );
+        MemcpyToBuffer( metadataSet.VarsIndex, metadataSet.VarsIndexPosition, &metadataSet.TimeStep, 4 );
+
+        MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &characteristicID, 1 );
+        const std::uint16_t lengthOfTimeIndex = 4;
+        MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &lengthOfTimeIndex, 2 ); //add length of characteristic in data
+        MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &metadataSet.TimeStep, 4 );
+        ++characteristicsCounter;
+
         //Back to characteristics count and length in Data
         //count
         std::memcpy( &buffer.m_Data[dataCharacteristicsCountPosition], &characteristicsCounter, 1 );
@@ -305,6 +316,7 @@ public:
         std::memcpy( &metadataSet.VarsIndex[metadataVarLengthPosition], &metadataVarEntryLength, 4 );
 
         ++metadataSet.VarsCount;
+        ++metadataSet.DataPGVarsCount;
     }
 
 
