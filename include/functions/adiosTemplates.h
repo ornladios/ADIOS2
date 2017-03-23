@@ -15,6 +15,7 @@
 #include <set>
 #include <complex>
 #include <cmath> //std::sqrt
+#include <iostream>
 /// \endcond
 
 
@@ -24,7 +25,8 @@ namespace adios
  * Get the primitive type in a string from a template
  * @return if T is a char, returns string = "char"
  */
-template< class T> inline std::string GetType( ) noexcept { return "compound"; }
+template<class T> inline std::string GetType( ) noexcept { return "compound"; }
+template<> inline std::string GetType<void>() noexcept { return "unknown"; }
 template<> inline std::string GetType<char>() noexcept { return "char"; }
 template<> inline std::string GetType<unsigned char>() noexcept { return "unsigned char"; }
 template<> inline std::string GetType<short>() noexcept { return "short"; }
@@ -72,22 +74,23 @@ bool IsTypeAlias( const std::string type,
  * @param size of the values array
  * @param min from values
  * @param max from values
+ * @param cores threaded version not yet implemented
  */
 template<class T> inline
 void GetMinMax( const T* values, const std::size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
 {
     min = values[0];
-    max = values[0];
+    max = min;
 
     for( std::size_t i = 1; i < size; ++i )
     {
-        if( min < values[i] )
+        if( values[i] < min )
         {
             min = values[i];
             continue;
         }
 
-        if( max > values[i] )
+        if( values[i] > max  )
             max = values[i];
     }
 }
@@ -111,13 +114,13 @@ void GetMinMax( const std::complex<T>* values, const std::size_t size, T& min, T
     {
         T norm = std::norm( values[i] );
 
-        if( min < norm )
+        if( norm < min )
         {
             min = norm;
             continue;
         }
 
-        if( max > norm )
+        if( norm > max )
         {
             max = norm;
         }
@@ -139,7 +142,7 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
 {
     if( cores == 1 )
     {
-        std::memcpy( &destination[0], &source[0], count );
+        std::memcpy( destination, source, count );
         return;
     }
 
@@ -166,50 +169,26 @@ void MemcpyThreads( T* destination, const U* source, std::size_t count, const un
 }
 
 
-/**
- * Write to many buffers and updates positions a single piece of data source
- * @param buffers
- * @param positions  each element is updated to += size
- * @param source
- * @param size
- */
 template< class T >
-void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions, const T* source, std::size_t size ) noexcept
+void MemcpyToBuffer( std::vector<char>& raw, std::size_t& position, const T* source, std::size_t size ) noexcept
 {
-    const unsigned int length = buffers.size( );
-
-    for( unsigned int i = 0; i < length; ++i )
-    {
-        char* buffer = buffers[i];
-        std::memcpy( &buffer[ positions[i] ], source, size );
-        //std::copy( source, source+size, &buffers[ positions[i] ] ); wrong version
-        positions[i] += size;
-    }
+    std::memcpy( &raw[position], source, size );
+    position += size;
 }
 
 
-/**
- * Version that adds a source container for a 1 to 1 buffer memory copy
- * @param buffers
- * @param positions
- * @param source
- * @param size
- */
 template< class T >
-void MemcpyToBuffers( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
-                      const std::vector<T>& source, std::size_t size ) noexcept
+void PrintValues( const std::string name, const char* buffer, const std::size_t position, const std::size_t elements )
 {
-    const unsigned int length = buffers.size( );
+    std::vector<T> values( elements );
+    std::memcpy( values.data(), &buffer[position], elements * sizeof(T) );
 
-    for( unsigned int i = 0; i < length; ++i )
-    {
-        char* buffer = buffers[i];
-        std::memcpy( &buffer[ positions[i] ], &source[i], size );
-        //std::copy( &source[i], &source[i]+size, &buffers[ positions[i] ] );
-        positions[i] += size;
-    }
+    std::cout << "Read " << name << "\n";
+    for( const auto value : values )
+        std::cout << value << " ";
+
+    std::cout << "\n";
 }
-
 
 
 } //end namespace

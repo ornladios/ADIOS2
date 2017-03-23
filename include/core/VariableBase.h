@@ -22,7 +22,6 @@ namespace adios
 
 using Dims = std::vector<std::size_t>;
 
-
 class VariableBase
 {
 

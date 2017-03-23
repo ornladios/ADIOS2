@@ -13,8 +13,6 @@
 #include "functions/adiosFunctions.h" //CSVToVector
 
 //supported transports
-#include "transport/file/FD.h" // uses POSIX
-#include "transport/file/FP.h" // uses C FILE*
 #include "transport/file/FStream.h" // uses C++ fstream
 #include "transport/wan/MdtmMan.h" //uses Mdtm library
 
@@ -198,37 +196,33 @@ void DataManWriter::Init( )
             }
         };
 
-        std::string method_type, method, local_ip, remote_ip; //no need to initialize to empty (it's default)
-        int local_port=0, remote_port=0, num_channels=0;
-
-        lf_AssignString( "method_type", method_type );
-        if( method_type == "stream" )
+        auto is_number = [] (const std::string& s)
         {
-            lf_AssignString( "method", method );
-            lf_AssignString( "local_ip", local_ip );
-            lf_AssignString( "remote_ip", remote_ip );
-            lf_AssignInt( "local_port", local_port );
-            lf_AssignInt( "remote_port", remote_port );
-            lf_AssignInt( "num_channels", num_channels );
+            return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) { return !std::isdigit(c);  }) == s.end();
+        };
 
-            json jmsg;
-            jmsg["method"] = method;
-            jmsg["local_ip"] = local_ip;
-            jmsg["remote_ip"] = remote_ip;
-            jmsg["local_port"] = local_port;
-            jmsg["remote_port"] = remote_port;
-            jmsg["num_channels"] = num_channels;
-            jmsg["stream_mode"] = "sender";
-
-            m_Man.add_stream(jmsg);
+        json jmsg;
+        for(auto &i : m_Method.m_Parameters){
+            if( is_number(i.second) ){
+                jmsg[i.first] = std::stoi(i.second);
+            }
+            else{
+                jmsg[i.first] = i.second;
+            }
         }
+        jmsg["stream_mode"] = "sender";
+        m_Man.add_stream(jmsg);
+
+        std::string method_type;
+        int num_channels=0;
+        lf_AssignString( "method_type", method_type );
+        lf_AssignInt( "num_channels", num_channels );
     }
     else
     {
         InitCapsules( );
         InitTransports( );
     }
-
 }
 
 void DataManWriter::InitCapsules( )

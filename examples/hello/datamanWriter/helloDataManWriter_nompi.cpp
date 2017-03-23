@@ -49,8 +49,9 @@ int main( int argc, char* argv [] )
         if( datamanWriter == nullptr )
             throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
 
-        datamanWriter->Write( ioMyFloats, myFloats.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-        datamanWriter->Write( ioMyFloat, (float) 1.12 ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        datamanWriter->Write<float>( ioMyFloats, myFloats.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
+        const float num = 1.12;
+        datamanWriter->Write<float>( ioMyFloat, &num ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
 //        datamanWriter->Write( ioMyCFloats, myCFloats.data() );
         datamanWriter->Close( );
     }

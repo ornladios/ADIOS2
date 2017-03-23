@@ -5,8 +5,15 @@
  *      Author: wfg
  */
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+#include <iostream>
+#include <unistd.h> //sleep must be removed
+/// \endcond
 
 #include "format/BP1Writer.h"
+#include "core/Profiler.h"
+
 
 
 
@@ -29,153 +36,162 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
                                         const std::vector< std::shared_ptr<Transport> >& transports,
                                         capsule::STLVector& buffer, BP1MetadataSet& metadataSet ) const noexcept
 {
-    // adapt this part to local variables
-    std::vector<char*> dataBuffers{ buffer.m_Data.data() };
-    std::vector<size_t> dataPositions{ buffer.m_DataPosition };
-    std::vector<size_t> dataAbsolutePositions{ buffer.m_DataAbsolutePosition };
-
-    std::vector<char*> metadataBuffers{ metadataSet.PGIndex.data() };
-    std::vector<std::size_t> metadataPositions{ metadataSet.PGIndexPosition };
-
-    const std::vector<int> methodIDs = GetMethodIDs( transports );
-
-    WriteProcessGroupIndexCommon( isFortran, name, processID, timeStepName, timeStep, methodIDs,
-                                  dataBuffers, dataPositions, dataAbsolutePositions,
-                                  metadataBuffers, metadataPositions );
-
-    buffer.m_DataPosition = dataPositions[0];
-    buffer.m_DataAbsolutePosition = dataAbsolutePositions[0];
-    metadataSet.PGIndexPosition = metadataPositions[0];
-
-    ++metadataSet.PGCount;
-}
-
-
-void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string name, const unsigned int processID,
-                                        const std::string timeStepName, const unsigned int timeStep,
-                                        const std::vector< std::shared_ptr<Transport> >& transports,
-                                        std::vector< std::shared_ptr<Capsule> >& capsules,
-                                        std::vector<BP1MetadataSet>& metadataSets ) const noexcept
-{
+    metadataSet.DataPGLengthPosition = buffer.m_DataPosition;
 
     // adapt this part to local variables
-    std::vector<char*> metadataBuffers, dataBuffers;
-    std::vector<std::size_t> metadataPositions, dataPositions, dataAbsolutePositions;
-
-    for( auto& metadataSet : metadataSets )
-    {
-        metadataBuffers.push_back( metadataSet.PGIndex.data() );
-        metadataPositions.push_back( metadataSet.PGIndexPosition );
-    }
-
-    for( auto& capsule : capsules )
-    {
-        dataBuffers.push_back( capsule->GetData( ) );
-        dataPositions.push_back( capsule->m_DataPosition );
-        dataAbsolutePositions.push_back( capsule->m_DataAbsolutePosition );
-    }
-
     const std::vector<int> methodIDs = GetMethodIDs( transports );
 
-    WriteProcessGroupIndexCommon( isFortran, name, processID, timeStepName, timeStep, methodIDs,
-                                  dataBuffers, dataPositions, dataAbsolutePositions,
-                                  metadataBuffers, metadataPositions );
+    const std::size_t dataPGLengthPosition = buffer.m_DataPosition;
+    const std::size_t metadataPGLengthPosition = metadataSet.PGIndexPosition;
 
-    //update positions and varsCount originally passed by value
-    const unsigned int buffersSize = static_cast<unsigned int>( capsules.size() );
-    for( unsigned int i = 0; i < buffersSize; ++i )
-    {
-        metadataSets[i].PGIndexPosition = metadataPositions[i];
-
-        capsules[i]->m_DataPosition = dataPositions[i];
-        capsules[i]->m_DataAbsolutePosition = dataAbsolutePositions[i];
-    }
-}
-
-
-void BP1Writer::Close( BP1MetadataSet& metadataSet, Capsule& capsule, Transport& transport, bool& isFirstClose,
-    		           const bool haveMetadata, const bool haveTiming ) const noexcept
-{
-    if( isFirstClose == true )
-    {
-        FlattenMetadata( metadataSet, capsule );
-        isFirstClose = false;
-    }
-    //implementing N-to-N for now, no aggregation
-    transport.Write( capsule.GetData(), capsule.m_DataPosition );
-
-    if( haveMetadata == true )
-    	transport.Write( capsule.GetMetadata(), capsule.GetMetadataSize() ); //we can improve this by copying metadata to data
-
-    //here accumulate in metadata file
-
-    transport.Close();
-}
-
-
-
-//PRIVATE FUNCTIONS
-void BP1Writer::WriteProcessGroupIndexCommon( const bool isFortran, const std::string name, const unsigned int processID,
-                                              const std::string timeStepName, const unsigned int timeStep,
-                                              const std::vector<int>& methodIDs,
-                                              std::vector<char*>& dataBuffers, std::vector<std::size_t>& dataPositions,
-                                              std::vector<std::size_t>& dataAbsolutePositions,
-                                              std::vector<char*>& metadataBuffers,
-                                              std::vector<std::size_t>& metadataPositions ) const noexcept
-{
-    std::vector<std::size_t> metadataLengthPositions( metadataPositions ); //get length of pg position
-
-    MovePositions( 2, metadataPositions ); //skip length of pg in metadata, 2 bytes, would write at the end
-    MovePositions( 8, dataPositions ); //skip length of pg including data, 8 bytes, would write at the end
+    metadataSet.PGIndexPosition += 2; //skip length of pg in metadata, 2 bytes, would write at the end
+    buffer.m_DataPosition += 8; //skip length of pg in data, 8 bytes, would write at the end
 
     //write name to metadata
     const std::uint16_t lengthOfName = name.length();
-    WriteNameRecord( name, lengthOfName, metadataBuffers, metadataPositions );
+    WriteNameRecord( name, lengthOfName, metadataSet.PGIndex, metadataSet.PGIndexPosition );
 
-    //write is host language Fortran in metadata and data
+    //write if host language Fortran in metadata and data
     const char hostFortran = ( isFortran ) ? 'y' : 'n'; //if host language is fortran
-    MemcpyToBuffers( metadataBuffers, metadataPositions, &hostFortran, 1 );
-    MemcpyToBuffers( dataBuffers, dataPositions, &hostFortran, 1 );
+    MemcpyToBuffer( metadataSet.PGIndex, metadataSet.PGIndexPosition, &hostFortran, 1 );
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &hostFortran, 1 );
 
     //name in data
-    WriteNameRecord( name, lengthOfName, dataBuffers, dataPositions );
+    WriteNameRecord( name, lengthOfName, buffer.m_Data, buffer.m_DataPosition );
 
     //processID,
-    MemcpyToBuffers( metadataBuffers, metadataPositions, &processID, 4 );
+    MemcpyToBuffer( metadataSet.PGIndex, metadataSet.PGIndexPosition, &processID, 4 );
     //skip coordination var in data ....what is coordination var?
-    MovePositions( 4, dataPositions );
+    buffer.m_DataPosition += 4;
 
     //time step name to metadata and data
     const std::uint16_t lengthOfTimeStep = timeStepName.length();
-    WriteNameRecord( timeStepName, lengthOfTimeStep, metadataBuffers, metadataPositions );
-    WriteNameRecord( timeStepName, lengthOfTimeStep, dataBuffers, dataPositions );
+    WriteNameRecord( timeStepName, lengthOfTimeStep, metadataSet.PGIndex, metadataSet.PGIndexPosition );
+    WriteNameRecord( timeStepName, lengthOfTimeStep, buffer.m_Data, buffer.m_DataPosition );
+
     //time step to metadata and data
-    MemcpyToBuffers( metadataBuffers, metadataPositions, &timeStep, 4 );
-    MemcpyToBuffers( dataBuffers, dataPositions, &timeStep, 4 );
+    MemcpyToBuffer( metadataSet.PGIndex, metadataSet.PGIndexPosition, &timeStep, 4 );
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &timeStep, 4 );
 
-    //write offset to pg in data on metadata which is the current absolute position
-    MemcpyToBuffers( metadataBuffers, metadataPositions, dataAbsolutePositions, 8 );
+    //offset to pg in data in metadata which is the current absolute position
+    MemcpyToBuffer( metadataSet.PGIndex, metadataSet.PGIndexPosition, &buffer.m_DataAbsolutePosition, 8 );
 
-    //get pg index length
-    std::vector<std::uint16_t> metadataIndexLengths( metadataPositions.size() );
-    for( unsigned int i = 0; i < metadataPositions.size(); ++i )
-        metadataIndexLengths[i] = metadataPositions[i] - metadataLengthPositions[i];
+    //Back to writing metadata pg index length (length of group)
+    const std::uint16_t metadataPGIndexLength = metadataSet.PGIndexPosition - metadataPGLengthPosition - 2; //without length of group record
+    std::memcpy( &metadataSet.PGIndex[metadataPGLengthPosition], &metadataPGIndexLength, 2 );
 
-    //write to metadata length position the pgIndex length
-    MemcpyToBuffers( metadataBuffers, metadataLengthPositions, metadataIndexLengths, 2 );
-    MovePositions( -2, metadataLengthPositions ); //back to original position
+
+    //here write method in data
+    const std::uint8_t methodsSize = methodIDs.size();
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &methodsSize, 1 ); //method count
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &methodsSize, 2 ); //method length, assume one byte for methodID for now
+
+    for( auto& methodID : methodIDs )
+    {
+        MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &methodID, 1 ); //method ID, unknown for now
+        buffer.m_DataPosition += 2; //skip method params length = 0 (2 bytes) for now
+    }
+
+    buffer.m_DataAbsolutePosition = buffer.m_DataPosition - dataPGLengthPosition; //update aboslute position
+
+    buffer.m_DataPosition += 12; //add vars count and length
+    buffer.m_DataAbsolutePosition += 12; //add vars count and length
+
+    metadataSet.PGCount += 1;
 }
+
+
+
+void BP1Writer::Advance( BP1MetadataSet& metadataSet, capsule::STLVector& buffer )
+{
+    FlattenData( metadataSet, buffer );
+}
+
+
+
+void BP1Writer::Close( BP1MetadataSet& metadataSet, capsule::STLVector& buffer, Transport& transport, bool& isFirstClose,
+                       const bool doAggregation ) const noexcept
+{
+    if( metadataSet.Log.m_IsActive == true )
+        metadataSet.Log.m_Timers[0].SetInitialTime();
+
+    if( isFirstClose == true )
+    {
+        if( metadataSet.DataPGIsOpen == true )
+        {
+            FlattenData( metadataSet, buffer );
+        }
+
+        FlattenMetadata( metadataSet, buffer );
+
+        if( metadataSet.Log.m_IsActive == true )
+            metadataSet.Log.m_Timers[0].SetInitialTime();
+
+        if( doAggregation == true ) //N-to-M  where 1 <= M <= N-1, might need a new Log metadataSet.Log.m_Timers just for aggregation
+        {
+            //here call aggregator
+        }
+
+        isFirstClose = false;
+    }
+
+    if( doAggregation == true ) //N-to-M  where 1 <= M <= N-1
+    {
+        //here call aggregator to select transports for Write and Close
+    }
+    else // N-to-N
+    {
+        transport.Write( buffer.m_Data.data(), buffer.m_DataPosition ); //single write
+        transport.Close();
+    }
+}
+
+
+std::string BP1Writer::GetRankProfilingLog( const int rank, const BP1MetadataSet& metadataSet,
+                                            const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept
+{
+    auto lf_WriterTimer = []( std::string& rankLog, const Timer& timer )
+    {
+        rankLog += timer.Process + "_" + timer.GetUnits() + "': " + std::to_string( timer.ProcessTime ) + ", ";
+    };
+
+    //prepare string dictionary per rank
+    std::string rankLog( "'rank_" + std::to_string( rank ) + "': { " );
+
+    auto& profiler = metadataSet.Log;
+    rankLog += "'bytes': " + std::to_string( profiler.m_TotalBytes[0] ) + ", ";
+    lf_WriterTimer( rankLog, profiler.m_Timers[0] );
+
+    for( unsigned int t = 0; t < transports.size(); ++t )
+    {
+        auto& timers = transports[t]->m_Profiler.m_Timers;
+
+        rankLog += "'transport_" + std::to_string(t) + "': { ";
+        rankLog += "'lib:' " + transports[t]->m_Type + ", ";
+
+        for( unsigned int i = 0; i < 3; ++i )
+            lf_WriterTimer( rankLog, timers[i] );
+
+        rankLog += " }, ";
+    }
+    rankLog += "}, ";
+
+    //std::cout << rankLog << "\n";
+    return rankLog;
+}
+
+
 
 //PRIVATE FUNCTIONS
 void BP1Writer::WriteNameRecord( const std::string name, const std::uint16_t length,
-                                 std::vector<char*>& buffers, std::vector<std::size_t>& positions ) const noexcept
+                                 std::vector<char>& buffer, std::size_t& position ) const noexcept
 {
-    MemcpyToBuffers( buffers, positions, &length, 2 );
-    MemcpyToBuffers( buffers, positions, name.c_str( ), length );
+    MemcpyToBuffer( buffer, position, &length, 2 );
+    MemcpyToBuffer( buffer, position, name.c_str( ), length );
 }
 
 
-void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& position,
                                       const std::vector<std::size_t>& localDimensions,
                                       const std::vector<std::size_t>& globalDimensions,
                                       const std::vector<std::size_t>& globalOffsets,
@@ -184,28 +200,28 @@ void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<s
     if( addType == true )
     {
         constexpr char no = 'n'; //dimension format unsigned int value for now
-        for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
+        for( unsigned int d = 0; d < localDimensions.size(); ++d )
         {
-            MemcpyToBuffers( buffers, positions, &no, 1 );
-            MemcpyToBuffers( buffers, positions, &localDimensions[d], 8 );
-            MemcpyToBuffers( buffers, positions, &no, 1 );
-            MemcpyToBuffers( buffers, positions, &globalDimensions[d], 8 );
-            MemcpyToBuffers( buffers, positions, &no, 1 );
-            MemcpyToBuffers( buffers, positions, &globalOffsets[d], 8 );
+            MemcpyToBuffer( buffer, position, &no, 1 );
+            MemcpyToBuffer( buffer, position, &localDimensions[d], 8 );
+            MemcpyToBuffer( buffer, position, &no, 1 );
+            MemcpyToBuffer( buffer, position, &globalDimensions[d], 8 );
+            MemcpyToBuffer( buffer, position, &no, 1 );
+            MemcpyToBuffer( buffer, position, &globalOffsets[d], 8 );
         }
     }
     else
     {
-        for( unsigned int d = 0; d < (unsigned int)localDimensions.size(); ++d )
+        for( unsigned int d = 0; d < localDimensions.size(); ++d )
         {
-            MemcpyToBuffers( buffers, positions, &localDimensions[d], 8 );
-            MemcpyToBuffers( buffers, positions, &globalDimensions[d], 8 );
-            MemcpyToBuffers( buffers, positions, &globalOffsets[d], 8 );
+            MemcpyToBuffer( buffer, position, &localDimensions[d], 8 );
+            MemcpyToBuffer( buffer, position, &globalDimensions[d], 8 );
+            MemcpyToBuffer( buffer, position, &globalOffsets[d], 8 );
         }
     }
 }
 
-void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<std::size_t>& positions,
+void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& position,
                                       const std::vector<std::size_t>& localDimensions,
                                       const unsigned int skip,
                                       const bool addType ) const noexcept
@@ -215,71 +231,94 @@ void BP1Writer::WriteDimensionRecord( std::vector<char*>& buffers, std::vector<s
         constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
         for( const auto& localDimension : localDimensions )
         {
-            MemcpyToBuffers( buffers, positions, &no, 1 );
-            MemcpyToBuffers( buffers, positions, &localDimension, 8 );
-            MovePositions( skip, positions );
+            MemcpyToBuffer( buffer, position, &no, 1 );
+            MemcpyToBuffer( buffer, position, &localDimension, 8 );
+            position += skip;
         }
     }
     else
     {
         for( const auto& localDimension : localDimensions )
         {
-            MemcpyToBuffers( buffers, positions, &localDimension, 8 );
-            MovePositions( skip, positions );
+            MemcpyToBuffer( buffer, position, &localDimension, 8 );
+            position += skip;
         }
     }
 }
 
 
-
-void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, Capsule& capsule ) const noexcept
+void BP1Writer::FlattenData( BP1MetadataSet& metadataSet, capsule::STLVector& buffer ) const noexcept
 {
-    //Finish writing metadata counts and lengths (IndexPosition)
-    const std::size_t pgLength = metadataSet.PGIndexPosition;
-    std::memcpy( &metadataSet.PGIndex[0], &metadataSet.PGCount, 8 );
-    std::memcpy( &metadataSet.PGIndex[8], &pgLength, 8 );
+    //vars count and Length
+    std::memcpy( &buffer.m_Data[metadataSet.DataVarsCountPosition], &metadataSet.VarsCount, 4 ); //count
+    const std::uint64_t dataVarsLength = buffer.m_DataPosition - metadataSet.DataVarsCountPosition - 8 - 4; //without record itself and vars count
+    std::memcpy( &buffer.m_Data[metadataSet.DataVarsCountPosition+4], &dataVarsLength, 8 ); //length
 
-    const std::size_t varsIndexLength = metadataSet.VarsIndexPosition;
-    std::memcpy( &metadataSet.VarsIndex[0], &metadataSet.VarsCount, 4 );
+    //attributes (empty for now) count and length by moving positions
+    buffer.m_DataPosition += 12;
+    buffer.m_DataAbsolutePosition += 12;
+
+    //Finish writing pg group length and, vars count and length in Data
+    const std::uint64_t dataPGLength = buffer.m_DataPosition - metadataSet.DataPGLengthPosition - 8; //without record itself, 12 due to empty attributes
+    std::memcpy( &buffer.m_Data[metadataSet.DataPGLengthPosition], &dataPGLength, 8 );
+}
+
+
+void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, capsule::STLVector& buffer ) const noexcept
+{
+	//Finish writing metadata counts and lengths (IndexPosition)
+    //pg index
+    std::memcpy( &metadataSet.PGIndex[0], &metadataSet.PGCount, 8 ); //count
+    const std::uint64_t pgIndexLength = metadataSet.PGIndexPosition - 16; //without record itself
+    std::memcpy( &metadataSet.PGIndex[8], &pgIndexLength, 8 );
+    //vars index
+    std::memcpy( &metadataSet.VarsIndex[0], &metadataSet.VarsCount, 4 ); //count
+    const std::uint64_t varsIndexLength = metadataSet.VarsIndexPosition - 12; //without record itself
     std::memcpy( &metadataSet.VarsIndex[4], &varsIndexLength, 8 );
-
-    const std::size_t attributesIndexLength = metadataSet.AttributesIndexPosition;
-    std::memcpy( &metadataSet.AttributesIndex[0], &metadataSet.AttributesCount, 4 );
+    //attributes index
+    std::memcpy( &metadataSet.AttributesIndex[0], &metadataSet.AttributesCount, 4 ); //count
+    const std::uint64_t attributesIndexLength = metadataSet.AttributesIndexPosition - 12; //without record itself
     std::memcpy( &metadataSet.AttributesIndex[4], &attributesIndexLength, 8 );
 
-    const std::size_t metadataSize = pgLength + varsIndexLength + attributesIndexLength + metadataSet.MiniFooter.size();
+    const std::size_t metadataSize = metadataSet.PGIndexPosition + metadataSet.VarsIndexPosition +
+                                     metadataSet.AttributesIndexPosition + metadataSet.MiniFooterSize;
 
-    capsule.ResizeMetadata( metadataSize );
-    char* metadata = capsule.GetMetadata();
+    buffer.m_Data.resize( buffer.m_DataPosition + metadataSize ); //resize data to fit metadata, must replace with growth buffer strategy
 
-    std::memcpy( &metadata[0], metadataSet.PGIndex.data(), pgLength );
-    std::memcpy( &metadata[pgLength], metadataSet.VarsIndex.data(), varsIndexLength );
-    std::memcpy( &metadata[varsIndexLength], metadataSet.AttributesIndex.data(), attributesIndexLength );
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, metadataSet.PGIndex.data(), metadataSet.PGIndexPosition );
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, metadataSet.VarsIndex.data(), metadataSet.VarsIndexPosition );
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, metadataSet.AttributesIndex.data(), metadataSet.AttributesIndexPosition );
 
     //getting absolute offsets, minifooter is 28 bytes for now
-    const std::uint64_t offsetPGIndex = capsule.m_DataAbsolutePosition;
-    const std::uint64_t offsetVarsIndex = offsetPGIndex + pgLength;
-    const std::uint64_t offsetAttributeIndex = offsetVarsIndex + varsIndexLength;
-    std::size_t position = pgLength + varsIndexLength + attributesIndexLength;
+    const std::uint64_t offsetPGIndex = buffer.m_DataAbsolutePosition;
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &offsetPGIndex, 8 );
 
-    //offsets
-    std::memcpy( &metadata[position], &offsetPGIndex, 8 );
-    std::memcpy( &metadata[position+8], &offsetVarsIndex, 8 );
-    std::memcpy( &metadata[position+16], &offsetAttributeIndex, 8 );
+    const std::uint64_t offsetVarsIndex = offsetPGIndex + metadataSet.PGIndexPosition;
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &offsetVarsIndex, 8 );
 
-    position += 24; //position position to version record
-    if( IsLittleEndian() == true )//little endian machine
+    const std::uint64_t offsetAttributeIndex = offsetVarsIndex + metadataSet.VarsIndexPosition;
+    MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &offsetAttributeIndex, 8 );
+
+    //version
+    if( IsLittleEndian( ) )
     {
-        constexpr std::uint8_t littleEndian = 0;
-        std::memcpy( &metadata[position], &littleEndian, 1 );
+    	const std::uint8_t endian = 0;
+    	MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &endian, 1 );
+    	buffer.m_DataPosition += 2;
+    	MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &m_Version, 1 );
     }
-    else //big endian
+    else
     {
-        constexpr std::uint8_t bigEndian = 1;
-        std::memcpy( &metadata[position], &bigEndian, 1 );
+
     }
-    position += 3;
-    std::memcpy( &metadata[position], &m_Version, 1 );
+
+    buffer.m_DataAbsolutePosition += metadataSize;
+
+    if( metadataSet.Log.m_IsActive == true )
+    {
+        metadataSet.Log.m_TotalBytes.push_back( buffer.m_DataAbsolutePosition );
+    }
+
 }
 
 

@@ -58,7 +58,6 @@ class ADIOS
 
 public: // PUBLIC Constructors and Functions define the User Interface with ADIOS
 
-
     MPI_Comm m_MPIComm = MPI_COMM_SELF; ///< only used as reference to MPI communicator passed from parallel constructor, MPI_Comm is a pointer itself. Public as called from C
 
     int m_RankMPI = 0; ///< current MPI rank process
@@ -73,12 +72,11 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
 
 
     /**
-     * @brief Serial constructor for config file
+     * @brief Serial constructor for config file, only allowed and compiled in libadios_nompi.a
      * @param configFileName passed to m_ConfigFile
      * @param debugMode true: on throws exceptions and do additional checks, false: off (faster, but unsafe)
      */
     ADIOS( const std::string configFileName, const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
-
 
     /**
      * @brief Parallel constructor for XML config file and MPI
@@ -86,7 +84,8 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param mpiComm MPI communicator ...const to be discussed
      * @param debugMode true: on, false: off (faster, but unsafe)
      */
-    ADIOS( const std::string configFileName, const MPI_Comm mpiComm, const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
+
+    ADIOS( const std::string configFileName, MPI_Comm mpiComm, const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
 
 
     /**
@@ -94,14 +93,15 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param mpiComm MPI communicator passed to m_MPIComm*
      * @param debugMode true: on, false: off (faster)
      */
-    ADIOS( const MPI_Comm mpiComm, const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
+    ADIOS(  MPI_Comm mpiComm, const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
+
 
 
     ~ADIOS( ); ///< empty, using STL containers for memory management
 
     void InitMPI( ); ///< sets rank and size in m_rank and m_Size, respectively.
 
-     /**
+    /**
      * Look for template specialization
      * @param name
      * @param dimensions
@@ -557,8 +557,6 @@ template<> inline
 Variable<std::complex<long double>>& ADIOS::GetVariable( const std::string name )
 { return m_CLDouble.at( GetVariableIndex<std::complex<long double>>(name) ); }
 
-
-};
 
 } //end namespace
 

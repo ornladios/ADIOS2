@@ -5,11 +5,12 @@
  *      Author: wfg
  */
 
-#ifndef BPWRITER_H_
-#define BPWRITER_H_
+#ifndef BPFILEWRITER_H_
+#define BPFILEWRITER_H_
 
 #include "core/Engine.h"
 #include "format/BP1Writer.h"
+#include "format/BP1Aggregator.h"
 
 //supported capsules
 #include "capsule/heap/STLVector.h"
@@ -18,7 +19,7 @@
 namespace adios
 {
 
-class BPWriter : public Engine
+class BPFileWriter : public Engine
 {
 
 public:
@@ -31,10 +32,10 @@ public:
      * @param method
      * @param debugMode
      */
-    BPWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-              const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
+    BPFileWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
+                  const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
 
-    ~BPWriter( );
+    ~BPFileWriter( );
 
     void Write( Variable<char>& variable, const char* values );
     void Write( Variable<unsigned char>& variable, const unsigned char* values );
@@ -80,26 +81,27 @@ public:
      */
     void Close( const int transportIndex = -1 );
 
+
 private:
 
     capsule::STLVector m_Buffer; ///< heap capsule using STL std::vector<char>
-    std::size_t m_BufferVariableCountPosition = 0; ///< needs to be updated in every advance step
+    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
+    format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
+    format::BP1Aggregator m_BP1Aggregator;
+
     bool m_IsFirstClose = true; ///< set to false after first Close is reached so metadata doesn't have to be accommodated for a subsequent Close
     std::size_t m_MaxBufferSize; ///< maximum allowed memory to be allocated
     float m_GrowthFactor = 1.5; ///< capsule memory growth factor, new_memory = m_GrowthFactor * current_memory
 
-    format::BP1Writer m_BP1Writer; ///< format object will provide the required BP functionality to be applied on m_Buffer and m_Transports
-    format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap buffer data in bp format. Needed by m_BP1Writer
-
     bool m_TransportFlush = false; ///< true: transport flush happened, buffer must be reset
+    bool m_CloseProcessGroup = false; ///< set to true if advance is called, this prevents flattening the data and metadata in Close
 
     void Init( );
+    void InitParameters( );
     void InitTransports( );
     void InitProcessGroup( );
 
-
     void WriteProcessGroupIndex( );
-
 
     /**
      * Common function for primitive (including std::complex) writes
@@ -110,15 +112,18 @@ private:
     template< class T >
     void WriteVariableCommon( Variable<T>& variable, const T* values )
     {
+        if( m_MetadataSet.Log.m_IsActive == true )
+            m_MetadataSet.Log.m_Timers[0].SetInitialTime();
+
         //set variable
         variable.m_AppValues = values;
         m_WrittenVariables.insert( variable.m_Name );
 
         //pre-calculate new metadata and payload sizes
-        const std::size_t indexSize = m_BP1Writer.GetVariableIndexSize( variable );
-        const std::size_t payloadSize = variable.PayLoadSize(); //will change if compression is applied
-        //Buffer reallocation, expensive part
-        m_TransportFlush = CheckBuffersAllocation( indexSize, payloadSize );
+        m_TransportFlush = CheckBuffersAllocation( m_BP1Writer.GetVariableIndexSize( variable ), variable.PayLoadSize(),
+                                                   m_GrowthFactor, m_MaxBufferSize,
+                                                   m_MetadataSet.VarsIndexPosition, m_MetadataSet.VarsIndex,
+                                                   m_Buffer.m_DataPosition, m_Buffer.m_Data );
 
         //WRITE INDEX to data buffer and metadata structure (in memory)//
         m_BP1Writer.WriteVariableIndex( variable, m_Buffer, m_MetadataSet );
@@ -129,24 +134,19 @@ private:
 
             //flush to transports
 
-            //reset positions to zero, update absolute position
+            //reset relative positions to zero, update absolute position
 
         }
         else //Write data to buffer
         {
             m_BP1Writer.WriteVariablePayload( variable, m_Buffer, m_Cores );
-
         }
-        variable.m_AppValues = nullptr; //setting pointer to null as not needed after write
-    }
 
-    /**
-     * Check if heap buffers for data and metadata need reallocation or maximum sizes have been reached.
-     * @param indexSize precalculated index size
-     * @param payloadSize payload size from variable total size
-     * @return true: transport must be flush and buffers reset, false: buffer is sufficient
-     */
-    bool CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize );
+        variable.m_AppValues = nullptr; //setting pointer to null as not needed after write
+
+        if( m_MetadataSet.Log.m_IsActive == true )
+            m_MetadataSet.Log.m_Timers[0].SetTime();
+    }
 
 };
 
@@ -154,4 +154,4 @@ private:
 } //end namespace adios
 
 
-#endif /* BPWRITER_H_ */
+#endif /* BPFILEWRITER_H_ */

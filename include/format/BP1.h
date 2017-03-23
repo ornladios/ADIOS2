@@ -8,22 +8,24 @@
 #ifndef BP1_H_
 #define BP1_H_
 
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <memory> //std::shared_ptr
+/// \endcond
 
-#ifdef HAVE_MPI
-  #include <mpi.h>
-#else
+#if ADIOS_NOMPI
   #include "mpidummy.h"
+#else
+  #include <mpi.h>
 #endif
 
 #include "core/Transport.h"
+#include "core/Profiler.h"
+
 
 namespace adios
 {
 namespace format
 {
-
 
 /**
  * Struct that tracks metadata indices in bp format
@@ -35,17 +37,24 @@ struct BP1MetadataSet
 
     std::uint64_t PGCount = 0; ///< number of process groups
     std::size_t PGIndexPosition = 16;
-    std::vector<char> PGIndex = std::vector<char>( 102400 ); ///< process group index metadata
+    std::vector<char> PGIndex = std::vector<char>( 102400, '\0' ); ///< process group index metadata
 
     std::uint32_t VarsCount = 0; ///< number of written Variables
     std::size_t   VarsIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> VarsIndex = std::vector<char>( 102400 ); ///< metadata variable index, start with 1Kb
+    std::vector<char> VarsIndex = std::vector<char>( 102400, '\0' ); ///< metadata variable index, start with 1Kb
 
     std::uint32_t AttributesCount = 0; ///< number of Attributes
     std::size_t AttributesIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> AttributesIndex = std::vector<char>( 102400 ); ///< metadata attribute index, start with 1Kb
+    std::vector<char> AttributesIndex = std::vector<char>( 102400, '\0' ); ///< metadata attribute index, start with 1Kb
 
-    std::vector<char> MiniFooter = std::vector<char>( 28 ); ///< 56?
+    const unsigned int MiniFooterSize = 28; ///< 28 for now
+
+    //PG (relative) positions in Data buffer to be updated
+    std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative ) position, needs to be updated in every advance step or init
+    std::size_t DataVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
+    bool DataPGIsOpen = false;
+
+    Profiler Log;
 };
 
 /**
@@ -57,13 +66,20 @@ class BP1
 public:
 
     /**
+     * Checks if input name has .bp extension and returns a .bp directory name
+     * @param name input (might or not have .bp)
+     * @return either name.bp (name has no .bp) or name (name has .bp extension)
+     */
+    std::string GetDirectoryName( const std::string name ) const noexcept;
+
+    /**
      * Opens rank files in the following format:
      * if transport.m_MPIComm different from MPI_Comm_SELF --> name.bp.dir/name.bp.rank
      * @param name might contain .bp or not, if not .bp will be added
      * @param accessMode "write" "w", "r" "read",  "append" "a"
      * @param transport file I/O transport
      */
-    void OpenRankFiles( const std::string name, const std::string accessMode, Transport& transport );
+    void OpenRankFiles( const std::string name, const std::string accessMode, Transport& transport ) const;
 
 
 protected:
@@ -141,8 +157,8 @@ protected:
     enum VariableCharacteristicID
     {
         characteristic_value          = 0, //!< characteristic_value
-        characteristic_min            = 1, //!< This is no longer used. Used to read in older bp file format
-        characteristic_max            = 2, //!< This is no longer used. Used to read in older bp file format
+        characteristic_min            = 1, //!< Used to read in older bp file format
+        characteristic_max            = 2, //!< Used to read in older bp file format
         characteristic_offset         = 3, //!< characteristic_offset
         characteristic_dimensions     = 4, //!< characteristic_dimensions
         characteristic_var_id         = 5, //!< characteristic_var_id

@@ -30,13 +30,14 @@ class DataManWriter : public Engine
 public:
 
     /**
-     * Constructor for single BP capsule engine, writes in BP format into a single heap capsule
+     * Constructor for dataman engine Writer for WAN communications
+     * @param adios
      * @param name unique name given to the engine
      * @param accessMode
      * @param mpiComm
      * @param method
      * @param debugMode
-     * @param hostLanguage
+     * @param cores
      */
     DataManWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
                    const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
@@ -78,7 +79,6 @@ public:
     void Write( const std::string variableName, const std::complex<float>* values );
     void Write( const std::string variableName, const std::complex<double>* values );
     void Write( const std::string variableName, const std::complex<long double>* values );
-
 
     void Close( const int transportIndex = -1 );
 

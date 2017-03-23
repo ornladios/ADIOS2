@@ -52,7 +52,6 @@ class Engine
 
 public:
 
-
     MPI_Comm m_MPIComm = MPI_COMM_SELF;
 
     const std::string m_EngineType; ///< from derived class
@@ -393,7 +392,7 @@ public:
      */
     std::vector<std::string> VariableNames();
 
-    virtual void Close( const int transportIndex = -1  ) = 0; ///< Closes a particular transport, or all if -1
+    virtual void Close( const int transportIndex = -1 ) = 0; ///< Closes a particular transport, or all if -1
 
 
 protected:

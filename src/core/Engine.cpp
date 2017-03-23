@@ -16,7 +16,7 @@ namespace adios
 
 
 Engine::Engine( ADIOS& adios, const std::string engineType, const std::string name, const std::string accessMode,
-                const MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores,
+                MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores,
                 const std::string endMessage ):
     m_MPIComm{ mpiComm },
     m_EngineType{ engineType },
@@ -26,8 +26,15 @@ Engine::Engine( ADIOS& adios, const std::string engineType, const std::string na
     m_ADIOS{ adios },
     m_DebugMode{ debugMode },
     m_Cores{ cores },
-    m_EndMessage{ endMessage }
+    m_EndMessage( endMessage )
 {
+    if( m_DebugMode == true )
+    {
+        if( m_MPIComm == MPI_COMM_NULL )
+            throw std::ios_base::failure( "ERROR: engine communicator is MPI_COMM_NULL,"
+                                          " in call to ADIOS Open or Constructor\n" );
+    }
+
     MPI_Comm_rank( m_MPIComm, &m_RankMPI );
     MPI_Comm_size( m_MPIComm, &m_SizeMPI );
 }
@@ -75,7 +82,9 @@ void Engine::Write( const std::string variableName, const std::complex<double>* 
 void Engine::Write( const std::string variableName, const std::complex<long double>* values ){ }
 void Engine::Write( const std::string variableName, const void* values ){ }
 
-void Engine::Advance( ){ }
+void Engine::Advance(){ }
+
+void Engine::Close( const int transportIndex ){ }
 
 //READ
 Variable<void>* Engine::InquireVariable( const std::string name, const bool readIn ){ return nullptr; }
@@ -102,10 +111,8 @@ VariableCompound* Engine::InquireVariableCompound( const std::string name, const
 void Engine::Init( )
 { }
 
-
-void Engine::InitCapsules( )
+void Engine::InitParameters( )
 { }
-
 
 void Engine::InitTransports( )
 { }

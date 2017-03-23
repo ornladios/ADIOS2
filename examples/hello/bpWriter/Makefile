@@ -21,10 +21,10 @@ LDFLAGS=
 all: mpi nompi
 
 mpi: $(ADIOS_LIB) $(ADIOS_HFiles)
-	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) -DHAVE_MPI $(BASE_NAME).cpp -o $(BASE_NAME).exe $(ADIOS_LIB) $(LDFLAGS) -lpthread
+	$(MPICC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME).cpp -o $(BASE_NAME).exe $(ADIOS_LIB) $(LDFLAGS) -lpthread
 	
 nompi: $(ADIOS_NOMPI_LIB) $(NoMPI_HFiles)
-	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) $(BASE_NAME)_nompi.cpp -o $(BASE_NAME)_nompi.exe $(ADIOS_NOMPI_LIB) $(LDFLAGS) -lpthread
+	$(CC) $(CFLAGS) $(ADIOS_INCLUDE) -DADIOS_NOMPI $(BASE_NAME)_nompi.cpp -o $(BASE_NAME)_nompi.exe $(ADIOS_NOMPI_LIB) $(LDFLAGS) -lpthread
 
 clean:
 	rm *.exe

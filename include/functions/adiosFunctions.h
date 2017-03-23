@@ -16,10 +16,10 @@
 #include <memory> //std::shared_ptr
 /// \endcond
 
-#ifdef HAVE_MPI
-  #include <mpi.h>
-#else
+#ifdef ADIOS_NOMPI
   #include "mpidummy.h"
+#else
+  #include <mpi.h>
 #endif
 
 #include "core/Transform.h"
@@ -160,6 +160,22 @@ std::vector<int> CSVToVectorInt( const std::string csv );
 
 
 /**
+ * Common strategy to check for heap buffer allocation for data and metadata typically calculated in Write
+ * @param indexSize metadata index size for a variable
+ * @param payloadSize variable payload size from application
+ * @param growthFactor user provided growth factor for index and data memory buffers ( default = 1.5 )
+ * @param maxBufferSize user provided maximum buffer size
+ * @param indexPosition
+ * @param indexBuffer
+ * @param buffer heap capsule containing data buffer for payload
+ * @return true: must do a transport flush, false: buffer sizes are enough to contain incoming data, no need for transport flush
+ */
+bool CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize,
+                             const float growthFactor, const std::size_t maxBufferSize,
+                             const std::size_t indexPosition, std::vector<char>& indexBuffer,
+                             const std::size_t dataPosition, std::vector<char>& dataBuffer );
+
+/**
  * Grows a buffer by a factor of  n . growthFactor . currentCapacity to accommodate for incomingDataSize
  * @param incomingDataSize size of new data required to be stored in buffer
  * @param growthFactor buffer grows in multiples of the growth buffer
@@ -169,13 +185,6 @@ std::vector<int> CSVToVectorInt( const std::string csv );
  */
 int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, const std::size_t currentPosition,
                 std::vector<char>& buffer );
-
-/**
- * Moves positions in a vector by a number of bytes
- * @param bytes input number of bytes
- * @param positions  += bytes
- */
-void MovePositions( const int bytes, std::vector<std::size_t>& positions ) noexcept;
 
 
 /**
