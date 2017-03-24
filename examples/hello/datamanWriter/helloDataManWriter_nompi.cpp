@@ -14,7 +14,7 @@
 int main( int argc, char* argv [] )
 {
     const bool adiosDebug = true;
-    adios::ADIOS adios( adiosDebug );
+    adios::ADIOS adios( adios::Verbose::WARN, adiosDebug );
 
     //Application variable
     std::vector<float> myFloats = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -49,7 +49,7 @@ int main( int argc, char* argv [] )
 
         //Create engine smart pointer to DataMan Engine due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class DataMan
-        auto datamanWriter = adios.Open( "myDoubles.bp", "w", datamanSettings );
+        auto datamanWriter = adios.Open( "myDoubles.bp", "w", datamanSettings, adios::IOMode::INDEPENDENT );
 
         if( datamanWriter == nullptr )
             throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );

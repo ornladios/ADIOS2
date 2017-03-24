@@ -27,19 +27,24 @@ void getcb( const void *data, std::string doid, std::string var, std::string dty
 int main( int argc, char* argv [] )
 {
     const bool adiosDebug = true;
-    adios::ADIOS adios( adiosDebug );
+    adios::ADIOS adios( adios::Verbose::WARN, adiosDebug );
 
     try
     {
         //Define method for engine creation, it is basically straight-forward parameters
-        adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManReader" ); //default method type is BPWriter
-        datamanSettings.SetParameters( "real_time=yes", "method_type=stream", "method=zmq", "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12307", "remote_port=12306" );
-//        datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
-        //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
+        adios::Method& datamanSettings = adios.DeclareMethod( "WAN" );
+        if( ! datamanSettings.isUserDefined())
+        {
+            // if not defined by user, we can change the default settings
+            datamanSettings.SetEngine( "DataManReader" );
+            datamanSettings.SetParameters( "real_time=yes", "method_type=stream", "method=zmq", "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12307", "remote_port=12306" );
+            //datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
+            //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
+        }
 
         //Create engine smart pointer to DataManReader Engine due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class DataManReader
-        auto datamanReader = adios.Open( "myDoubles.bp", "r", datamanSettings );
+        auto datamanReader = adios.Open( "myDoubles.bp", "r", datamanSettings, adios::IOMode::INDEPENDENT );
 
         if( datamanReader == nullptr )
             throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );

@@ -38,19 +38,24 @@ int main( int argc, char* argv [] )
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     const bool adiosDebug = true;
-    adios::ADIOS adios( MPI_COMM_WORLD, adiosDebug );
+    adios::ADIOS adios( MPI_COMM_WORLD, adios::Verbose::WARN, adiosDebug );
 
     try
     {
         //Define method for engine creation, it is basically straight-forward parameters
-        adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManReader" ); //default method type is BPWriter
-        datamanSettings.SetParameters( "peer-to-peer=yes" );
-        datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
-        //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
+        adios::Method& datamanSettings = adios.DeclareMethod( "WAN" );
+        if( ! datamanSettings.isUserDefined())
+        {
+            // if not defined by user, we can change the default settings
+            datamanSettings.SetEngine( "DataManReader" );
+            datamanSettings.SetParameters( "peer-to-peer=yes" );
+            datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
+            //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
+        }
 
         //Create engine smart pointer to DataManReader Engine due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class DataManReader
-        auto datamanReader = adios.Open( "myDoubles.bp", "r", datamanSettings );
+        auto datamanReader = adios.Open( "myDoubles.bp", "r", datamanSettings, adios::IOMode::INDEPENDENT );
 
         if( datamanReader == nullptr )
             throw std::ios_base::failure( "ERROR: failed to create DataMan I/O engine at Open\n" );
