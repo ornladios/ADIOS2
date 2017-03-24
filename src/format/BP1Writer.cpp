@@ -36,12 +36,10 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
                                         const std::vector< std::shared_ptr<Transport> >& transports,
                                         capsule::STLVector& buffer, BP1MetadataSet& metadataSet ) const noexcept
 {
-    metadataSet.DataPGLengthPosition = buffer.m_DataPosition;
-
     // adapt this part to local variables
     const std::vector<int> methodIDs = GetMethodIDs( transports );
 
-    const std::size_t dataPGLengthPosition = buffer.m_DataPosition;
+    metadataSet.DataPGLengthPosition = buffer.m_DataPosition;
     const std::size_t metadataPGLengthPosition = metadataSet.PGIndexPosition;
 
     metadataSet.PGIndexPosition += 2; //skip length of pg in metadata, 2 bytes, would write at the end
@@ -80,7 +78,6 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
     const std::uint16_t metadataPGIndexLength = metadataSet.PGIndexPosition - metadataPGLengthPosition - 2; //without length of group record
     std::memcpy( &metadataSet.PGIndex[metadataPGLengthPosition], &metadataPGIndexLength, 2 );
 
-
     //here write method in data
     const std::uint8_t methodsSize = methodIDs.size();
     MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &methodsSize, 1 ); //method count
@@ -92,12 +89,16 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
         buffer.m_DataPosition += 2; //skip method params length = 0 (2 bytes) for now
     }
 
-    buffer.m_DataAbsolutePosition = buffer.m_DataPosition - dataPGLengthPosition; //update aboslute position
+    buffer.m_DataAbsolutePosition += buffer.m_DataPosition - metadataSet.DataPGLengthPosition; //update absolute position
+
+    metadataSet.DataVarsCountPosition = buffer.m_DataPosition; //update vars count and vars count position
 
     buffer.m_DataPosition += 12; //add vars count and length
     buffer.m_DataAbsolutePosition += 12; //add vars count and length
 
-    metadataSet.PGCount += 1;
+    ++metadataSet.PGCount;
+    metadataSet.DataPGVarsCount = 0;
+    metadataSet.DataPGIsOpen = true;
 }
 
 
@@ -118,9 +119,7 @@ void BP1Writer::Close( BP1MetadataSet& metadataSet, capsule::STLVector& buffer, 
     if( isFirstClose == true )
     {
         if( metadataSet.DataPGIsOpen == true )
-        {
             FlattenData( metadataSet, buffer );
-        }
 
         FlattenMetadata( metadataSet, buffer );
 
@@ -131,7 +130,6 @@ void BP1Writer::Close( BP1MetadataSet& metadataSet, capsule::STLVector& buffer, 
         {
             //here call aggregator
         }
-
         isFirstClose = false;
     }
 
@@ -250,17 +248,20 @@ void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& po
 void BP1Writer::FlattenData( BP1MetadataSet& metadataSet, capsule::STLVector& buffer ) const noexcept
 {
     //vars count and Length
-    std::memcpy( &buffer.m_Data[metadataSet.DataVarsCountPosition], &metadataSet.VarsCount, 4 ); //count
+    std::memcpy( &buffer.m_Data[metadataSet.DataVarsCountPosition], &metadataSet.DataPGVarsCount, 4 ); //count
     const std::uint64_t dataVarsLength = buffer.m_DataPosition - metadataSet.DataVarsCountPosition - 8 - 4; //without record itself and vars count
     std::memcpy( &buffer.m_Data[metadataSet.DataVarsCountPosition+4], &dataVarsLength, 8 ); //length
 
-    //attributes (empty for now) count and length by moving positions
+    //attributes (empty for now) count (4) and length (8) are zero by moving positions in time step zero
     buffer.m_DataPosition += 12;
     buffer.m_DataAbsolutePosition += 12;
 
-    //Finish writing pg group length and, vars count and length in Data
+    //Finish writing pg group length
     const std::uint64_t dataPGLength = buffer.m_DataPosition - metadataSet.DataPGLengthPosition - 8; //without record itself, 12 due to empty attributes
     std::memcpy( &buffer.m_Data[metadataSet.DataPGLengthPosition], &dataPGLength, 8 );
+
+    ++metadataSet.TimeStep;
+    metadataSet.DataPGIsOpen = false;
 }
 
 
@@ -320,7 +321,6 @@ void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, capsule::STLVector
     }
 
 }
-
 
 
 

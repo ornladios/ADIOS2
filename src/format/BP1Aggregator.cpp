@@ -5,10 +5,11 @@
  *      Author: wfg
  */
 
+
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
 #include <fstream>
-#include <iostream> // must be deleted
-#include <unistd.h> // must be deleted
+/// \endcond
 
 #include "format/BP1Aggregator.h"
 
@@ -74,7 +75,6 @@ void BP1Aggregator::WriteProfilingLog( const std::string fileName, const std::st
         }
         logFile += " }\n";
 
-        std::cout << logFile;
         std::ofstream logStream( fileName );
         logStream.write( logFile.c_str(), logFile.size() );
         logStream.close();

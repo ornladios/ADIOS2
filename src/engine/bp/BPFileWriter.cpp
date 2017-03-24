@@ -147,7 +147,7 @@ void BPFileWriter::Write( const std::string variableName, const void* values ) /
 
 void BPFileWriter::Advance( )
 {
-
+    m_BP1Writer.Advance( m_MetadataSet, m_Buffer );
 }
 
 
@@ -365,7 +365,6 @@ void BPFileWriter::InitProcessGroup( )
     }
 
     WriteProcessGroupIndex( );
-    m_MetadataSet.DataPGIsOpen = true;
 
     if( m_MetadataSet.Log.m_IsActive == true )
         m_MetadataSet.Log.m_Timers[0].SetTime();
@@ -376,11 +375,9 @@ void BPFileWriter::InitProcessGroup( )
 void BPFileWriter::WriteProcessGroupIndex( )
 {
     //pg = process group
-    const std::string name( std::to_string( m_RankMPI ) ); //using rank as name
-    const unsigned int timeStep = m_MetadataSet.TimeStep;
-    const std::string timeStepName( std::to_string( timeStep ) );
-    const std::size_t pgIndexSize = m_BP1Writer.GetProcessGroupIndexSize( name, timeStepName, m_Transports.size() );
-
+    const std::size_t pgIndexSize = m_BP1Writer.GetProcessGroupIndexSize( std::to_string( m_RankMPI ),
+                                                                          std::to_string( m_MetadataSet.TimeStep ),
+                                                                          m_Transports.size() );
     //metadata
     GrowBuffer( pgIndexSize, m_GrowthFactor, m_MetadataSet.PGIndexPosition, m_MetadataSet.PGIndex );
 
@@ -388,11 +385,10 @@ void BPFileWriter::WriteProcessGroupIndex( )
     GrowBuffer( pgIndexSize, m_GrowthFactor, m_Buffer.m_DataPosition, m_Buffer.m_Data );
 
     const bool isFortran = ( m_HostLanguage == "Fortran" ) ? true : false;
-    const unsigned int processID = static_cast<unsigned int> ( m_RankMPI );
 
-    m_BP1Writer.WriteProcessGroupIndex( isFortran, name, processID, timeStepName, timeStep, m_Transports,
+    m_BP1Writer.WriteProcessGroupIndex( isFortran, std::to_string( m_RankMPI ), static_cast<unsigned int> ( m_RankMPI ),
+                                        std::to_string( m_MetadataSet.TimeStep ), m_MetadataSet.TimeStep, m_Transports,
                                         m_Buffer, m_MetadataSet );
-
 }
 
 
