@@ -23,7 +23,8 @@ namespace adios
 
 
 DataManWriter::DataManWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-                              const Method& method, const bool debugMode, const unsigned int nthreads ):
+                              const Method& method, const IOMode iomode, const float timeout_sec,
+                              const bool debugMode, const unsigned int nthreads ):
     Engine( adios, "DataManWriter", name, accessMode, mpiComm, method, debugMode, nthreads, " DataManWriter constructor (or call to ADIOS Open).\n" ),
     m_Buffer( accessMode, m_RankMPI, m_DebugMode )
 {

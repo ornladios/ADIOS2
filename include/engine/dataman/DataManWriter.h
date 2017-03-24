@@ -40,7 +40,8 @@ public:
      * @param nthreads
      */
     DataManWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-                   const Method& method, const bool debugMode = false, const unsigned int nthreads = 1 );
+                   const Method& method, const IOMode iomode, const float timeout_sec,
+                   const bool debugMode = false, const unsigned int nthreads = 1 );
 
     ~DataManWriter( );
 
