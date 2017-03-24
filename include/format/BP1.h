@@ -10,6 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <memory> //std::shared_ptr
+//#include <queue>  //std::priority_queue to be added later
 /// \endcond
 
 #if ADIOS_NOMPI
@@ -32,9 +33,14 @@ namespace format
  */
 struct BP1Index
 {
-    std::vector<char> Index = std::vector<char>( 102400, '\0' ); ///< metadata variable index, start with 100Kb
+    std::vector<char> Metadata = std::vector<char>( 102400, '\0' ); ///< metadata variable index, start with 100Kb
     std::size_t Position = 0; ///< initial position in bytes
     std::uint64_t Count = 0; ///< number of characteristics sets (time and spatial aggregation)
+    const std::uint32_t MemberID;
+
+    BP1Index( const std::uint32_t memberID ):
+        MemberID{ memberID }
+    { }
 };
 
 /**
@@ -44,11 +50,13 @@ struct BP1MetadataSet
 {
     std::uint32_t TimeStep = 0; ///< current time step, updated with advance step, if append it will be updated to last
 
-    BP1Index PGIndex;
+    BP1Index PGIndex; ///< single buffer for PGIndex
+
+    //no priority for now
     std::unordered_map< std::string, BP1Index > VarsIndices; ///< key: variable name, value: bp metadata variable index
     std::unordered_map< std::string, BP1Index > AttributesIndices; ///< key: attribute name, value: bp metadata attribute index
 
-    const unsigned int MiniFooterSize = 28; ///< 28 for now
+    const unsigned int MiniFooterSize = 28; ///< from bpls reader
 
     //PG (relative) positions in Data buffer to be updated
     std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative ) position, needs to be updated in every advance step or init
@@ -56,7 +64,7 @@ struct BP1MetadataSet
     std::size_t DataPGVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
     bool DataPGIsOpen = false;
 
-    Profiler Log;
+    Profiler Log; ///< object that takes buffering profiling info
 };
 
 /**

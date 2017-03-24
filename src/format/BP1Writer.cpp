@@ -181,14 +181,6 @@ std::string BP1Writer::GetRankProfilingLog( const int rank, const BP1MetadataSet
 
 
 //PRIVATE FUNCTIONS
-void BP1Writer::WriteNameRecord( const std::string name, const std::uint16_t length,
-                                 std::vector<char>& buffer, std::size_t& position ) const noexcept
-{
-    MemcpyToBuffer( buffer, position, &length, 2 );
-    MemcpyToBuffer( buffer, position, name.c_str( ), length );
-}
-
-
 void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& position,
                                       const std::vector<std::size_t>& localDimensions,
                                       const std::vector<std::size_t>& globalDimensions,
@@ -200,21 +192,23 @@ void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& po
         constexpr char no = 'n'; //dimension format unsigned int value for now
         for( unsigned int d = 0; d < localDimensions.size(); ++d )
         {
-            MemcpyToBuffer( buffer, position, &no, 1 );
-            MemcpyToBuffer( buffer, position, &localDimensions[d], 8 );
-            MemcpyToBuffer( buffer, position, &no, 1 );
-            MemcpyToBuffer( buffer, position, &globalDimensions[d], 8 );
-            MemcpyToBuffer( buffer, position, &no, 1 );
-            MemcpyToBuffer( buffer, position, &globalOffsets[d], 8 );
+            CopyToBuffer( buffer, position, &no );
+            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimensions[d] ) );
+
+            CopyToBuffer( buffer, position, &no );
+            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalDimensions[d] ) );
+
+            CopyToBuffer( buffer, position, &no );
+            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalOffsets[d] ) );
         }
     }
     else
     {
         for( unsigned int d = 0; d < localDimensions.size(); ++d )
         {
-            MemcpyToBuffer( buffer, position, &localDimensions[d], 8 );
-            MemcpyToBuffer( buffer, position, &globalDimensions[d], 8 );
-            MemcpyToBuffer( buffer, position, &globalOffsets[d], 8 );
+            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimensions[d] ) );
+            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalDimensions[d] ) );
+            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalOffsets[d] ) );
         }
     }
 }
@@ -229,8 +223,8 @@ void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& po
         constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
         for( const auto& localDimension : localDimensions )
         {
-            MemcpyToBuffer( buffer, position, &no, 1 );
-            MemcpyToBuffer( buffer, position, &localDimension, 8 );
+            CopyToBuffer( buffer, position, &no );
+            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimension ) );
             position += skip;
         }
     }
@@ -238,11 +232,25 @@ void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& po
     {
         for( const auto& localDimension : localDimensions )
         {
-            MemcpyToBuffer( buffer, position, &localDimension, 8 );
+            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimension ) );
             position += skip;
         }
     }
 }
+
+
+void BP1Writer::WriteNameRecord( const std::string name, std::vector<char>& buffer, std::size_t& position )
+{
+    const std::uint16_t length = name.length( );
+    CopyToBuffer( buffer, position, &length );
+    CopyToBuffer( buffer, position, name.c_str(), length );
+}
+
+
+
+
+
+
 
 
 void BP1Writer::FlattenData( BP1MetadataSet& metadataSet, capsule::STLVector& buffer ) const noexcept

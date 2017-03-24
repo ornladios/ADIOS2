@@ -118,45 +118,126 @@ public:
     }
 
     /**
-         *
-         * @param variable
-         * @param dataBuffers
-         * @param dataPositions
-         * @param dataAbsolutePositions
-         * @param metadataBuffers
-         * @param metadataPositions
-         * @param variablesCount
-         */
+     *
+     * @param variable
+     * @param dataBuffers
+     * @param dataPositions
+     * @param dataAbsolutePositions
+     * @param metadataBuffers
+     * @param metadataPositions
+     * @param variablesCount
+     */
     template<class T>
-    void WriteVariableIndex( const Variable<T>& variable, capsule::STLVector& buffer, BP1MetadataSet& metadataSet ) const noexcept
+    void WriteVariableMetadata( const Variable<T>& variable, capsule::STLVector& buffer, BP1MetadataSet& metadataSet ) const noexcept
     {
-        auto lf_String = []( const std::string name, const std::uint16_t length,
-                             std::vector<char>& buffer, std::size_t& position )
+        auto itName = metadataSet.VarsIndices.find( variable.m_Name );
+        if( itName == metadataSet.VarsIndices.end() )
         {
-            MemcpyToBuffer( buffer, position, &length, 2 );
-            MemcpyToBuffer( buffer, position, name.c_str(), length );
-        };
-
-        auto lf_MemberID = []( const std::uint32_t memberID, capsule::STLVector& buffer, BP1MetadataSet& metadataSet )
+            metadataSet.VarsIndices.emplace( variable.m_Name, BP1Index( metadataSet.VarsIndices.size() ) );
+        }
+        else
         {
-            MemcpyToBuffer( metadataSet.VarsIndex, metadataSet.VarsIndexPosition, &memberID, 4 );
-            MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &memberID, 4 );
-        };
+            //WriteExistingVariableMetadata( variable, buffer, itName->second ); need to implement
+        }
+    }
 
-        auto lf_VarName = [&]( const std::string name, capsule::STLVector& buffer, BP1MetadataSet& metadataSet )
+
+    template< class T >
+    void WriteVariableMetadataInData( const Variable<T>& variable, capsule::STLVector& heap, BP1Index& varIndex )
+    {
+        auto& buffer = heap.m_Data;
+        auto& position = heap.m_DataPosition;
+
+        const std::size_t dataVarLengthPosition = position; //capture initial position for variable length
+        position += 8; //skip var length
+
+        CopyToBuffer( buffer, position, &varIndex.MemberID ); //memberID
+        WriteNameRecord( variable.m_Name, buffer, position ); //variable name
+        position += 2; //skip path
+        //dataType
+        const std::uint8_t dataType = GetDataType<T>();
+        CopyToBuffer( buffer, position, &dataType );
+        //variable is not dimension (removed in ADIOS2) check if constexpr works
+        const char no = 'n';
+        CopyToBuffer( buffer, position, &no );
+
+        //write variable dimensions
+        const auto& localDimensions = variable.m_Dimensions;
+        //write dimensions count and length in data
+        const std::uint8_t dimensions = localDimensions.size();
+        CopyToBuffer( buffer, position, &dimensions );
+        const std::uint16_t dimensionsLength = dimensions * 27; //27 is from 9 bytes for each: var y/n + local, var y/n + global dimension, var y/n + global offset
+        CopyToBuffer( buffer, position, &dimensionsLength );
+
+        std::uint8_t characteristicsCounter = 0;
+        std::uint8_t characteristicID = characteristic_dimensions;
+        std::size_t characteristicsCountPosition = position; //will be modified
+
+        if( variable.m_GlobalDimensions.empty() ) //local variable
         {
-            const std::uint16_t length = name.length();
-            lf_String( name, length, buffer.m_Data, buffer.m_DataPosition );
-            lf_String( name, length, metadataSet.VarsIndex, metadataSet.VarsIndexPosition );
-        };
+            WriteDimensionRecord( buffer, position, localDimensions, 18, true ); //not using memberID for now
 
-        auto lf_DataType = []( const std::uint8_t dataType, capsule::STLVector& buffer, BP1MetadataSet& metadataSet )
+            characteristicsCountPosition = position; //very important to track as writer is going back to this position
+            position += 5; //skip characteristics count(1) + length (4)
+
+            //dimensions in data characteristic entry
+            CopyToBuffer( buffer, position, &characteristicID );
+            const std::int16_t lengthOfDimensionsCharacteristic = 24 * dimensions; // 24 = 3 local, global, global offset x 8 bytes/each
+            CopyToBuffer( buffer, position, &lengthOfDimensionsCharacteristic );
+            CopyToBuffer( buffer, position, &dimensions );
+            CopyToBuffer( buffer, position, &dimensionsLength );
+            WriteDimensionRecord( buffer, position, localDimensions, 16 );
+        }
+        else //global variable
         {
-            MemcpyToBuffer( metadataSet.VarsIndex, metadataSet.VarsIndexPosition, &dataType, 1 );
-            MemcpyToBuffer( buffer.m_Data, buffer.m_DataPosition, &dataType, 1 );
-        };
+            const auto& globalDimensions = variable.m_GlobalDimensions;
+            const auto& globalOffsets = variable.m_GlobalOffsets;
+
+            WriteDimensionRecord( buffer, position, localDimensions, globalDimensions, globalOffsets, true );
+
+            characteristicsCountPosition = position; //very important, going back to these positions
+            position += 5; //skip characteristics count(1) + length (4)
+
+            //dimensions in data characteristic entry
+            CopyToBuffer( buffer, position, &characteristicID, 1 ); //id
+            const std::int16_t lengthOfDimensionsCharacteristic = 24 * dimensions; // 24 = 3 local, global, global offset x 8 bytes/each
+            CopyToBuffer( buffer, position, &lengthOfDimensionsCharacteristic, 2 );
+            CopyToBuffer( buffer, position, &dimensions, 1 );
+            CopyToBuffer( buffer, position, &dimensionsLength, 2 );
+            WriteDimensionRecord( buffer, position, localDimensions, globalDimensions, globalOffsets );
+        }
+        ++characteristicsCounter;
+
+        //VALUE for SCALAR or STAT min, max for ARRAY
+        //Value for scalar
+        if( variable.m_IsScalar ) //scalar //just doing string scalars for now (by name), needs to be modified when user passes value
+        {
+            characteristicID = characteristic_value;
+            CopyToBuffer( buffer, position, &characteristicID, 1 );
+            const std::uint16_t lengthOfValue = sizeof( T );
+            CopyToBuffer( buffer, position, &lengthOfValue, 2 ); //add length of characteristic in data
+            CopyToBuffer( buffer, position, variable.m_AppValues, sizeof(T) );
+            ++characteristicsCounter;
+        }
+        else // Stat -> Min, Max for arrays,
+        {
+            if( m_Verbosity == 0 ) //default verbose
+            {
+                // FIXME: fixe WriteMinMax
+                WriteMinMax( variable, buffer, metadataSet );
+                characteristicsCounter += 2;
+            }
+        }
+
+    }
 
 
+
+
+
+    template< class T >
+    void WriteNewVariableMetadata( const Variable<T>& variable, capsule::STLVector& buffer, BP1Index& varIndex ) const noexcept
+    {
         //BODY of function starts here
         //capture initial positions storing the variable Length
         const std::size_t metadataVarLengthPosition = metadataSet.VarsIndexPosition;
@@ -364,14 +445,14 @@ public:
 private:
 
     /**
-     * Writes name record using a
-     * @param name to be written
-     * @param length number of characters in name
-     * @param buffers to be written
-     * @param positions to be moved
+     * Writes from &buffer[position]:  [2 bytes:string.length()][string.length(): string.c_str()]
+     * @param name
+     * @param buffer
+     * @param position
      */
-    void WriteNameRecord( const std::string name, const std::uint16_t length,
-                          std::vector<char>& buffer, std::size_t& position ) const noexcept;
+    void WriteNameRecord( const std::string name, std::vector<char>& buffer, std::size_t& position );
+
+
 
     /**
      * Write a dimension record for a global variable used by WriteVariableCommon

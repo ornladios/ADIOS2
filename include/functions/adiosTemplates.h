@@ -177,6 +177,23 @@ void MemcpyToBuffer( std::vector<char>& raw, std::size_t& position, const T* sou
 }
 
 
+template<class T>
+void CopyToBuffer( std::vector<char>& raw, std::size_t& position, const T* source, const std::size_t elements = 1 ) noexcept
+{
+    const char* src = reinterpret_cast<const char*>( source );
+    std::copy( src, src + elements*sizeof(T), raw.begin() + position );
+    position += elements * sizeof(T);
+}
+
+
+template<class T>
+void CopyFromBuffer( T* destination, std::size_t elements, const std::vector<char>& raw, std::size_t& position ) noexcept
+{
+    std::copy( raw.begin() + position, raw.begin() + position + sizeof(T)*elements, reinterpret_cast<char*>(destination) );
+    position += elements*sizeof(T);
+}
+
+
 template< class T >
 void PrintValues( const std::string name, const char* buffer, const std::size_t position, const std::size_t elements )
 {
