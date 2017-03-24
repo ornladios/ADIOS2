@@ -24,6 +24,7 @@
   #include <mpi.h>
 #endif
 
+#include "ADIOSTypes.h"
 #include "core/Transform.h"
 #include "core/Variable.h"
 #include "core/VariableCompound.h"
@@ -34,19 +35,6 @@
 
 namespace adios
 {
-
-/** Use these values in Dims() when defining variables
- */
-enum {
-    VARYING_DIMENSION = -1,//!< VARYING_DIMENSION
-    LOCAL_VALUE = 0,       //!< LOCAL_VALUE
-    GLOBAL_VALUE = 1       //!< GLOBAL_VALUE
-};
-
-typedef enum { ERROR = 0, WARN = 1, INFO = 2, DEBUG = 3 } VerboseFlag;
-
-typedef enum { INDEPENDENT_IO = 0, COLLECTIVE_IO = 1 } IOMode;
-
 
 class Engine;
 
@@ -68,7 +56,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
-    ADIOS( const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
+    ADIOS( const Verbose verbose = Verbose::WARN, const bool debugMode = false );
 
 
     /**
@@ -76,7 +64,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param configFileName passed to m_ConfigFile
      * @param debugMode true: on throws exceptions and do additional checks, false: off (faster, but unsafe)
      */
-    ADIOS( const std::string configFileName, const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
+    ADIOS( const std::string configFileName, const Verbose verbose = Verbose::WARN, const bool debugMode = false );
 
     /**
      * @brief Parallel constructor for XML config file and MPI
@@ -85,7 +73,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param debugMode true: on, false: off (faster, but unsafe)
      */
 
-    ADIOS( const std::string configFileName, MPI_Comm mpiComm, const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
+    ADIOS( const std::string configFileName, MPI_Comm mpiComm, const Verbose verbose = Verbose::WARN, const bool debugMode = false );
 
 
     /**
@@ -93,7 +81,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param mpiComm MPI communicator passed to m_MPIComm*
      * @param debugMode true: on, false: off (faster)
      */
-    ADIOS(  MPI_Comm mpiComm, const adios::VerboseFlag verbose = WARN, const bool debugMode = false );
+    ADIOS(  MPI_Comm mpiComm, const Verbose verbose = Verbose::WARN, const bool debugMode = false );
 
 
 
@@ -146,9 +134,8 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * Otherwise it will create and return a new Method with default settings.
      * Use method.isUserDefined() to distinguish between the two cases.
      * @param methodName must be unique
-     * @param type supported type : "BP" (default), "DataMan"...future: "Sirius"
      */
-    Method& DeclareMethod( const std::string methodName, const std::string type = "" );
+    Method& DeclareMethod( const std::string methodName );
 
 
     /**
@@ -213,8 +200,21 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @param iomode Independent or collective open/advance by writers/readers? Write() operations are always independent.
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
-    std::shared_ptr<Engine> OpenFileReader( const std::string streamName, MPI_Comm mpiComm,
+    std::shared_ptr<Engine> OpenFileReader( const std::string fileName, MPI_Comm mpiComm,
                                             const Method& method, const IOMode iomode );
+
+    /**
+     * @brief Open to Read all steps from a file. No streaming, advancing is possible here. All steps in the file
+     * are immediately available for reading. Creates a new engine from previously defined method.
+     * Version required by the XML config file implementation, searches method inside ADIOS through a unique name.
+     * @param fileName file name
+     * @param mpiComm option to modify communicator from ADIOS class constructor
+     * @param methodName used to search method object inside ADIOS object
+      * @param iomode Independent or collective open/advance by writers/readers? Write() operations are always independent.
+     * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
+     */
+    std::shared_ptr<Engine> OpenFileReader( const std::string fileName, MPI_Comm mpiComm,
+                                            const std::string methodName, const IOMode iomode );
 
     /**
      * @brief Dumps groups information to a file stream or standard output.

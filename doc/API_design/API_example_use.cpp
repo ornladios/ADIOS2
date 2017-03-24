@@ -41,12 +41,12 @@ int main( int argc, char* argv[])
     {
         // if not defined by user, we can change the default settings
         wmethod.SetEngine( "BP" ); // BP is the default engine
-        wmethod.SetAvailableCores( 1 ); // no threading for data processing (except for staging)
+        wmethod.AllowThreads( 1 ); // no threading for data processing (except for staging)
         wmethod.AddTransport( "File", "lucky=yes" ); // ISO-POSIX file is the default transport
         wmethod.AddTransport( "Staging" ); //"The" staging method developed in ECP
         wmethod.SetParameters("have_metadata_file","yes" ); // Passing parameters to the engine
         wmethod.SetParameters( "Aggregation", (nproc+1)/2 ); // number of aggregators
-        wmethod.SetParameters( "verbose", adios::WARN ); // Verbosity level for this engine and what it calls
+        wmethod.SetParameters( "verbose", adios::Verbose::WARN ); // Verbosity level for this engine and what it calls
     }
 
 
@@ -64,7 +64,7 @@ int main( int argc, char* argv[])
 
     // open...write.write.write...advance...write.write.write...advance... ...close  cycle
     // "w" create/overwrite on open, "a" append at open, "u" open for update (does not increase step), "r" open for read.
-    std::shared_ptr<adios::Engine> writer = adios.Open( "myNumbers.bp", "w", comm, wmethod, adios::INDEPENDENT_IO);
+    std::shared_ptr<adios::Engine> writer = adios.Open( "myNumbers.bp", "w", comm, wmethod, adios::IOMode::INDEPENDENT);
 
     if( writer == nullptr )
         throw std::ios_base::failure( "ERROR: failed to open ADIOS writer\n" );
@@ -102,7 +102,7 @@ int main( int argc, char* argv[])
         // When Advance() returns, user can overwrite its Zero Copy variables.
         // Internal buffer is freed only if there are no Zero Copy variables and there is no time aggregation going on
         writer->Advance(); // same as AppendMode
-        writer->Advance( adios::APPEND ); // append new step at next write
+        writer->Advance( adios::APPEND, 0.0 ); // append new step at next write
         writer->Advance( adios::UPDATE ); // do not increase step;
 
         // When AdvanceAsync returns, user need to wait for notification that he can overwrite the Zero Copy variables.
@@ -126,7 +126,7 @@ int main( int argc, char* argv[])
         rmethod.SetEngine( "BP" ); // BP is the default engine
         rmethod.AddTransport( "Staging" ); //"The" staging method developed in ECP
         rmethod.SetParameters( "Aggregation", (nproc+1)/2 ); // number of aggregators
-        rmethod.SetParameters( "verbose", adios::WARN ); // Verbosity level for this engine and what it calls
+        rmethod.SetParameters( "verbose", adios::Verbose::WARN ); // Verbosity level for this engine and what it calls
     }
 
     // 1. Open a stream, where every reader can see everything in a stream (so that they can read a global array)
@@ -139,7 +139,7 @@ int main( int argc, char* argv[])
 
         // Open a stream
         std::shared_ptr<adios::Engine> reader =
-                adios.Open( "filename.bp", "r", comm, rmethod, adios::COLLECTIVE_IO,
+                adios.Open( "filename.bp", "r", comm, rmethod, adios::IOMode::COLLECTIVE,
                             /*timeout_sec=*/ 300.0); // wait this long for the stream, return error afterwards
 
         /* Variable names are available as a vector of strings */
@@ -206,7 +206,7 @@ int main( int argc, char* argv[])
 
         // Open a stream
         std::shared_ptr<adios::Engine> reader =
-                adios.Open( "filename.bp", "r", comm, rmethod, adios::INDEPENDENT_IO,
+                adios.Open( "filename.bp", "r", comm, rmethod, adios::IOMode::INDEPENDENT,
                            /*timeout_sec=*/ 300.0 ); // wait this long for the stream, return error afterwards
 
         while( true )
@@ -240,7 +240,7 @@ int main( int argc, char* argv[])
 
         // Open a stream
         std::shared_ptr<adios::Engine> reader =
-                adios.Open( "filename.bp", "r", comm, rmethod, adios::INDEPENDENT_IO );
+                adios.Open( "filename.bp", "r", comm, rmethod, adios::IOMode::INDEPENDENT );
 
         while( true )
         {

@@ -24,6 +24,7 @@
   #include <mpi.h>
 #endif
 
+#include "ADIOSTypes.h"
 #include "ADIOS.h"
 #include "core/Method.h"
 #include "core/Variable.h"
@@ -73,11 +74,11 @@ public:
      * @param mpiComm
      * @param method
      * @param debugMode
-     * @param cores
+     * @param nthreads
      * @param endMessage
      */
     Engine( ADIOS& adios, const std::string engineType, const std::string name, const std::string accessMode,
-            MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores,
+            MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int nthreads,
             const std::string endMessage );
 
     virtual ~Engine( );
@@ -247,24 +248,24 @@ public:
     }
 
     /**
-      * Unallocated version, ADIOS will allocate space for incoming data
-      * @param variable
-      */
-     template< class T >
-     void Read( Variable<T>& variable )
-     {
-         Read( variable, nullptr );
-     }
+     * Unallocated version, ADIOS will allocate space for incoming data
+     * @param variable
+     */
+    template< class T >
+    void Read( Variable<T>& variable )
+    {
+        Read( variable, nullptr );
+    }
 
-     /**
-       * Unallocated version, ADIOS will allocate space for incoming data
-       * @param variableName
-       */
-      template< class T >
-      void Read( const std::string variableName )
-      {
-          Read( variableName, nullptr );
-      }
+    /**
+     * Unallocated version, ADIOS will allocate space for incoming data
+     * @param variableName
+     */
+    template< class T >
+    void Read( const std::string variableName )
+    {
+        Read( variableName, nullptr );
+    }
 
 
     virtual void Read( Variable<double>& variable,                    const double* values );
@@ -317,10 +318,21 @@ public:
     }
 
     /**
-     * Single value version using string as variable handlers
+     * Unallocated version, ADIOS will allocate space for incoming data
+     * @param variableName
      */
-    void ScheduleRead();
+    void ScheduleRead( const std::string variableName )
+    {
+        ScheduleRead( variableName, nullptr );
+    }
 
+    /**
+     * Unallocated unspecified version, ADIOS will receive any variable and will allocate space for incoming data
+     */
+    void ScheduleRead( )
+    {
+        ScheduleRead( nullptr, nullptr );
+    }
 
     virtual void ScheduleRead( Variable<double>& variable,                    const double* values );
 
@@ -366,24 +378,24 @@ public:
      * @param readIn if true: reads the full variable and payload, allocating values in memory, if false: internal payload is nullptr
      * @return success: it returns a pointer to the internal stored variable object in ADIOS class, failure: nullptr
      */
-    virtual Variable<void> InquireVariable( const std::string name, const bool readIn = true );
-    virtual Variable<char> InquireVariableChar( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned char> InquireVariableUChar( const std::string name, const bool readIn = true );
-    virtual Variable<short> InquireVariableShort( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned short> InquireVariableUShort( const std::string name, const bool readIn = true );
-    virtual Variable<int> InquireVariableInt( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned int> InquireVariableUInt( const std::string name, const bool readIn = true );
-    virtual Variable<long int> InquireVariableLInt( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned long int> InquireVariableULInt( const std::string name, const bool readIn = true );
-    virtual Variable<long long int> InquireVariableLLInt( const std::string name, const bool readIn = true );
-    virtual Variable<unsigned long long int> InquireVariableULLInt( const std::string name, const bool readIn = true );
-    virtual Variable<float> InquireVariableFloat( const std::string name, const bool readIn = true );
-    virtual Variable<double> InquireVariableDouble( const std::string name, const bool readIn = true );
-    virtual Variable<long double> InquireVariableLDouble( const std::string name, const bool readIn = true );
-    virtual Variable<std::complex<float>> InquireVariableCFloat( const std::string name, const bool readIn = true );
-    virtual Variable<std::complex<double>> InquireVariableCDouble( const std::string name, const bool readIn = true );
-    virtual Variable<std::complex<long double>> InquireVariableCLDouble( const std::string name, const bool readIn = true );
-    virtual VariableCompound InquireVariableCompound( const std::string name, const bool readIn = true );
+    virtual Variable<void>* InquireVariable( const std::string name, const bool readIn = true );
+    virtual Variable<char>* InquireVariableChar( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned char>* InquireVariableUChar( const std::string name, const bool readIn = true );
+    virtual Variable<short>* InquireVariableShort( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned short>* InquireVariableUShort( const std::string name, const bool readIn = true );
+    virtual Variable<int>* InquireVariableInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned int>* InquireVariableUInt( const std::string name, const bool readIn = true );
+    virtual Variable<long int>* InquireVariableLInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned long int>* InquireVariableULInt( const std::string name, const bool readIn = true );
+    virtual Variable<long long int>* InquireVariableLLInt( const std::string name, const bool readIn = true );
+    virtual Variable<unsigned long long int>* InquireVariableULLInt( const std::string name, const bool readIn = true );
+    virtual Variable<float>* InquireVariableFloat( const std::string name, const bool readIn = true );
+    virtual Variable<double>* InquireVariableDouble( const std::string name, const bool readIn = true );
+    virtual Variable<long double>* InquireVariableLDouble( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<float>>* InquireVariableCFloat( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<double>>* InquireVariableCDouble( const std::string name, const bool readIn = true );
+    virtual Variable<std::complex<long double>>* InquireVariableCLDouble( const std::string name, const bool readIn = true );
+    virtual VariableCompound* InquireVariableCompound( const std::string name, const bool readIn = true );
 
 
     /** Return the names of all variables present in a stream/file opened for reading
@@ -400,7 +412,7 @@ protected:
     ADIOS& m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
     std::vector< std::shared_ptr<Transport> > m_Transports; ///< transports managed
     const bool m_DebugMode = false; ///< true: additional checks, false: by-pass checks
-    unsigned int m_Cores = 1;
+    unsigned int m_nThreads = 0;
     const std::string m_EndMessage; ///< added to exceptions to improve debugging
     std::set<std::string> m_WrittenVariables; ///< contains the names of the variables that are being written
 

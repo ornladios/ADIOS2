@@ -28,14 +28,14 @@ namespace adios
 {
 
 
-ADIOS::ADIOS( const bool debugMode ):
+ADIOS::ADIOS( const Verbose verbose, const bool debugMode ):
     m_DebugMode{ debugMode }
 {
     InitMPI( );
 }
 
 
-ADIOS::ADIOS( const std::string configFileName, const bool debugMode ):
+ADIOS::ADIOS( const std::string configFileName, const Verbose verbose, const bool debugMode ):
     m_ConfigFile{ configFileName },
     m_DebugMode{ debugMode }
 {
@@ -45,7 +45,7 @@ ADIOS::ADIOS( const std::string configFileName, const bool debugMode ):
 
 
 
-ADIOS::ADIOS( const std::string xmlConfigFile, MPI_Comm mpiComm, const bool debugMode  ):
+ADIOS::ADIOS( const std::string xmlConfigFile, MPI_Comm mpiComm, const Verbose verbose, const bool debugMode  ):
     m_MPIComm{ mpiComm },
     m_ConfigFile{ xmlConfigFile },
 	m_DebugMode{ debugMode }
@@ -55,7 +55,7 @@ ADIOS::ADIOS( const std::string xmlConfigFile, MPI_Comm mpiComm, const bool debu
 }
 
 
-ADIOS::ADIOS( MPI_Comm mpiComm, const bool debugMode ):
+ADIOS::ADIOS( MPI_Comm mpiComm, const Verbose verbose, const bool debugMode ):
     m_MPIComm{ mpiComm },
     m_DebugMode{ debugMode }
 {
@@ -81,20 +81,20 @@ void ADIOS::InitMPI( )
 }
 
 
-Method& ADIOS::DeclareMethod( const std::string methodName, const std::string type )
+Method& ADIOS::DeclareMethod( const std::string methodName )
 {
     if( m_DebugMode == true )
     {
         if( m_Methods.count( methodName ) == 1 )
             throw std::invalid_argument( "ERROR: method " + methodName + " already declared, from DeclareMethod\n" );
     }
-    m_Methods.emplace( methodName, Method( type, m_DebugMode ) );
+    m_Methods.emplace( methodName, Method( methodName, m_DebugMode ) );
     return m_Methods.at( methodName );
 }
 
 
 std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-                                     const Method& method, const unsigned int cores )
+                                     const Method& method, const IOMode iomode, const float timeout_sec )
 {
     if( m_DebugMode == true )
     {
@@ -113,21 +113,21 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 
     if( isDefaultWriter || type == "BPFileWriter" || type == "bpfilewriter" )
     {
-        return std::make_shared<BPFileWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<BPFileWriter>( *this, name, accessMode, mpiComm, method, iomode, timeout_sec, m_DebugMode, method.m_nThreads );
     }
     else if( isDefaultReader || type == "BPReader" || type == "bpreader" )
     {
-        return std::make_shared<BPFileReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<BPFileReader>( *this, name, accessMode, mpiComm, method, iomode, timeout_sec, m_DebugMode, method.m_nThreads );
     }
     else if( type == "SIRIUS" || type == "sirius" || type == "Sirius" )
     {
         //not yet supported
-        //return std::make_shared<engine::DataMan>( name, accessMode, mpiComm, method, m_DebugMode, cores, m_HostLanguage );
+        //return std::make_shared<engine::DataMan>( *this, name, accessMode, mpiComm, method, iomode, timeout_sec, m_DebugMode, method.m_nThreads );
     }
     else if( type == "DataManWriter" )
     {
         #ifdef HAVE_DATAMAN
-        return std::make_shared<DataManWriter>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<DataManWriter>( *this, name, accessMode, mpiComm, method, iomode, timeout_sec, m_DebugMode, method.m_nThreads );
         #else
         throw std::invalid_argument( "ERROR: this version didn't compile with Dataman library, can't Open DataManWriter\n" );
         #endif
@@ -136,14 +136,14 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
     else if( type == "DataManReader" )
     {
         #ifdef HAVE_DATAMAN
-        return std::make_shared<DataManReader>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        return std::make_shared<DataManReader>( *this, name, accessMode, mpiComm, method, iomode, timeout_sec, m_DebugMode, method.m_nThreads );
         #else
         throw std::invalid_argument( "ERROR: this version didn't compile with Dataman library, can't Open DataManReader\n" );
         #endif
     }
     else if( type == "Vis" )
     {
-        //return std::make_shared<Vis>( *this, name, accessMode, mpiComm, method, m_DebugMode, cores );
+        //return std::make_shared<Vis>( *this, name, accessMode, mpiComm, method, iomode, timeout_sec, m_DebugMode, method.m_nThreads );
     }
     else
     {
@@ -155,15 +155,15 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
 }
 
 
-std::shared_ptr<Engine> ADIOS::Open( const std::string streamName, const std::string accessMode, const Method& method,
-                                     const unsigned int cores )
+std::shared_ptr<Engine> ADIOS::Open( const std::string streamName, const std::string accessMode,
+                                     const Method& method, const IOMode iomode, const float timeout_sec )
 {
-    return Open( streamName, accessMode, m_MPIComm, method, cores );
+    return Open( streamName, accessMode, m_MPIComm, method, iomode, timeout_sec );
 }
 
 
 std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-                                     const std::string methodName, const unsigned int cores )
+                                     const std::string methodName, const IOMode iomode, const float timeout_sec )
 {
     auto itMethod = m_Methods.find( methodName );
 
@@ -172,16 +172,34 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
         CheckMethod( itMethod, methodName, " in call to Open\n" );
     }
 
-    return Open( name, accessMode, mpiComm, itMethod->second, cores );
+    return Open( name, accessMode, mpiComm, itMethod->second, iomode, timeout_sec );
 }
 
 
 std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string accessMode,
-                                     const std::string methodName, const unsigned int cores )
+                                     const std::string methodName, const IOMode iomode, const float timeout_sec )
 {
-    return Open( name, accessMode, m_MPIComm, methodName, cores );
+    return Open( name, accessMode, m_MPIComm, methodName, iomode, timeout_sec );
 }
 
+std::shared_ptr<Engine> ADIOS::OpenFileReader( const std::string name, MPI_Comm mpiComm,
+                                         const Method& method, const IOMode iomode )
+{
+    return Open( name, "r", m_MPIComm, method, iomode );
+}
+
+std::shared_ptr<Engine> ADIOS::OpenFileReader( const std::string name, MPI_Comm mpiComm,
+                                               const std::string methodName, const IOMode iomode )
+{
+    auto itMethod = m_Methods.find( methodName );
+
+    if( m_DebugMode == true )
+    {
+        CheckMethod( itMethod, methodName, " in call to Open\n" );
+    }
+
+    return Open( name, "r", m_MPIComm, itMethod->second, iomode );
+}
 
 VariableCompound& ADIOS::GetVariableCompound( const std::string name )
 {

@@ -34,10 +34,10 @@ public:
      * @param mpiComm
      * @param method
      * @param debugMode
-     * @param cores
+     * @param nthreads
      */
     DataManReader( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-                   const Method& method, const bool debugMode = false, const unsigned int cores = 1 );
+                   const Method& method, const bool debugMode = false, const unsigned int nthreads = 1 );
 
     ~DataManReader( );
 

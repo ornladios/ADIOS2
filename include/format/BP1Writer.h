@@ -36,7 +36,7 @@ class BP1Writer : public BP1
 
 public:
 
-    unsigned int m_Cores = 1;  ///< number of cores for thread operations in large array (min,max)
+    unsigned int m_Threads = 1;  ///< number of threads for thread operations in large array (min,max)
     unsigned int m_Verbosity = 0; ///< statistics verbosity, can change if redefined in Engine method.
     float m_GrowthFactor = 1.5; ///< memory growth factor, can change if redefined in Engine method.
     const std::uint8_t m_Version = 3; ///< BP format version
@@ -314,11 +314,11 @@ public:
      * @param buffer
      */
     template< class T >
-    void WriteVariablePayload( const Variable<T>& variable, capsule::STLVector& buffer, const unsigned int cores = 1 ) const noexcept
+    void WriteVariablePayload( const Variable<T>& variable, capsule::STLVector& buffer, const unsigned int nthreads = 1 ) const noexcept
     {
         std::size_t payloadSize = variable.PayLoadSize(); //not using const due to memcpy inside Memcpythreads
         //EXPENSIVE part, might want to use threads if large, serial for now
-        MemcpyThreads( &buffer.m_Data[buffer.m_DataPosition], variable.m_AppValues, payloadSize, cores );
+        MemcpyThreads( &buffer.m_Data[buffer.m_DataPosition], variable.m_AppValues, payloadSize, nthreads );
         //update indices
         buffer.m_DataPosition += payloadSize;
         buffer.m_DataAbsolutePosition += payloadSize;
@@ -404,7 +404,7 @@ private:
         T min, max;
         const std::size_t valuesSize = variable.TotalSize();
         if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
-            GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+            GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Threads ); //here we can add threads from constructor
         else
             GetMinMax( variable.m_AppValues, valuesSize, min, max );
 
@@ -485,7 +485,7 @@ void BP1Writer::WriteMinMax<std::complex<float>>( const Variable<std::complex<fl
     float min, max;
     const std::size_t valuesSize = variable.TotalSize();
     if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
-        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Threads ); //here we can add threads from constructor
     else
         GetMinMax( variable.m_AppValues, valuesSize, min, max );
 
@@ -500,7 +500,7 @@ void BP1Writer::WriteMinMax<std::complex<double>>( const Variable<std::complex<d
     double min, max;
     const std::size_t valuesSize = variable.TotalSize();
     if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
-        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Threads ); //here we can add threads from constructor
     else
         GetMinMax( variable.m_AppValues, valuesSize, min, max );
 
@@ -516,7 +516,7 @@ void BP1Writer::WriteMinMax<std::complex<long double>>( const Variable<std::comp
     long double min, max;
     const std::size_t valuesSize = variable.TotalSize();
     if( valuesSize >= 10000000 ) //ten million? this needs actual results //here we can make decisions for threads based on valuesSize
-        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Cores ); //here we can add cores from constructor
+        GetMinMax( variable.m_AppValues, valuesSize, min, max, m_Threads ); //here we can add threads from constructor
     else
         GetMinMax( variable.m_AppValues, valuesSize, min, max );
 

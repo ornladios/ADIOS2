@@ -14,6 +14,7 @@
 #include <map>
 /// \endcond
 
+#include "ADIOSTypes.h"
 #include "functions/adiosFunctions.h"
 
 namespace adios
@@ -34,8 +35,10 @@ class Method
 
 public:
 
-    const std::string m_Type; ///< Method type
+    const std::string m_Name; ///< Method name (as defined in XML)
     const bool m_DebugMode = false; ///< true: on, throws exceptions and do additional checks, false: off, faster, but unsafe
+    int m_nThreads;
+    std::string m_Type; ///< Method's engine type
     std::map<std::string, std::string> m_Parameters; ///< method parameters
     std::vector< std::map<std::string, std::string> > m_TransportParameters; ///< each is a separate Transport containing their own parameters
 
@@ -61,12 +64,15 @@ public:
 
 
     /**
-     * Tell how many cores the engine can use for its operations.
-     * If only 1 core is specified, no extra threads will be created during the ADIOS calls, except
-     * that staging always creates an extra thread for communication.
-     * @param number of cores, minimum 1 is required
+     * Set how many threads the engine can use for its operations (e.g. file io, compression, staging).
+     * If 1 is allowed, no extra threads will be created during the ADIOS calls for asynchronous operations.
+     * Note that some transports may require and use extra thread(s). See their documentation for their
+     * requirements. E.g. some staging transports always create an extra thread for communication.
+     * Set this parameter like you set it for OpenMP, i.e. count one thread for the main process that calls
+     * ADIOS functions.
+     * @param number of threads, minimum 1 is required
      */
-    void SetAvailableCores( const int nCores );
+    void AllowThreads( const int nThreads );
 
     /**
      * Sets parameters for the method in "parameter=value" format
@@ -94,8 +100,11 @@ public:
     void SetReadMultiplexPattern( const ReadMultiplexPattern pattern );  // How to split stream content among readers
     void SetStreamOpenMode( const StreamOpenMode mode);  // In Read mode, should Open() wait for the first step appear  (default)
 
+    void SetVerbose( const Verbose verbose = Verbose::WARN ) { m_Verbose = verbose; };
+    Verbose GetVerbose( ) { return m_Verbose; };
 
 private:
+    Verbose m_Verbose = Verbose::WARN;
 
     void AddTransportParameters( const std::string type, const std::vector<std::string>& parameters );
 

@@ -23,7 +23,7 @@ int main( int argc, char* argv [] )
     int rank;
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
     const bool adiosDebug = true;
-    adios::ADIOS adios( MPI_COMM_WORLD, adiosDebug );
+    adios::ADIOS adios( MPI_COMM_WORLD, adios::Verbose::INFO, adiosDebug );
 
     //Application variable
     std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -59,7 +59,7 @@ int main( int argc, char* argv [] )
 
         //Create engine smart pointer due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class Writer
-        auto bpWriter = adios.Open( "myDoubles.bp", "w", bpWriterSettings );
+        auto bpWriter = adios.Open( "myDoubles.bp", "w", bpWriterSettings, adios::IOMode::COLLECTIVE );
 
         if( bpWriter == nullptr )
             throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );

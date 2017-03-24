@@ -37,10 +37,15 @@ int main( int argc, char* argv [] )
 //        auto& ioMyCFloats = adios.DefineVariable<std::complex<float>>( "myCFloats", {3} );
 
         //Define method for engine creation, it is basically straight-forward parameters
-        adios::Method& datamanSettings = adios.DeclareMethod( "WAN", "DataManWriter" ); //default method type is Writer
-        datamanSettings.SetParameters( "real_time=yes", "method_type=stream", "method=dump", "monitoring=yes", "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12306", "remote_port=12307" );
-//        datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
-        //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
+        adios::Method& datamanSettings = adios.DeclareMethod( "WAN" );
+        if( ! datamanSettings.isUserDefined())
+        {
+            // if not defined by user, we can change the default settings
+            datamanSettings.SetEngine( "DataManWriter" );
+            datamanSettings.SetParameters( "real_time=yes", "method_type=stream", "method=dump", "monitoring=yes", "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12306", "remote_port=12307" );
+            //datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1", "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
+            //datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1", "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported , will throw an exception
+        }
 
         //Create engine smart pointer to DataMan Engine due to polymorphism,
         //Open returns a smart pointer to Engine containing the Derived class DataMan

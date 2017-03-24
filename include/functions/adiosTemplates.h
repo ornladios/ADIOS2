@@ -74,10 +74,10 @@ bool IsTypeAlias( const std::string type,
  * @param size of the values array
  * @param min from values
  * @param max from values
- * @param cores threaded version not yet implemented
+ * @param nthreads threaded version not yet implemented
  */
 template<class T> inline
-void GetMinMax( const T* values, const std::size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
+void GetMinMax( const T* values, const std::size_t size, T& min, T& max, const unsigned int nthreads = 1 ) noexcept
 {
     min = values[0];
     max = min;
@@ -101,10 +101,10 @@ void GetMinMax( const T* values, const std::size_t size, T& min, T& max, const u
  * @param size of the values array
  * @param min modulus from values
  * @param max modulus from values
- * @param cores
+ * @param nthreads
  */
 template<class T> inline
-void GetMinMax( const std::complex<T>* values, const std::size_t size, T& min, T& max, const unsigned int cores = 1 ) noexcept
+void GetMinMax( const std::complex<T>* values, const std::size_t size, T& min, T& max, const unsigned int nthreads = 1 ) noexcept
 {
 
     min = std::norm( values[0] );
@@ -134,31 +134,35 @@ void GetMinMax( const std::complex<T>* values, const std::size_t size, T& min, T
  * threaded version of std::memcpy
  * @param dest
  * @param source
- * @param count total number of bytest (as in memcpy)
- * @param cores
+ * @param count total number of bytes (as in memcpy)
+ * @param nthreads
  */
 template<class T, class U>
-void MemcpyThreads( T* destination, const U* source, std::size_t count, const unsigned int cores = 1 )
+void MemcpyThreads( T* destination, const U* source, std::size_t count, const unsigned int nthreads = 1 )
 {
-    if( cores == 1 )
+    // do not decompose tasks to less than 4MB pieces
+    const std::size_t minBlockSize = 4194304;
+    const std::size_t maxNThreads = std::max( (std::size_t)nthreads, count / minBlockSize );
+
+    if( maxNThreads == 1)
     {
         std::memcpy( destination, source, count );
         return;
     }
 
-    const std::size_t stride =  count/cores;
-    const std::size_t remainder = count % cores;
+    const std::size_t stride =  count/maxNThreads;
+    const std::size_t remainder = count % maxNThreads;
     const std::size_t last = stride + remainder;
 
     std::vector<std::thread> memcpyThreads;
-    memcpyThreads.reserve( cores );
+    memcpyThreads.reserve( maxNThreads );
 
-    for( unsigned int core = 0; core < cores; ++core )
+    for( unsigned int t = 0; t < maxNThreads; ++t )
     {
-        const size_t initialDestination = stride * core / sizeof(T);
-        const size_t initialSource = stride * core / sizeof(U);
+        const size_t initialDestination = stride * t / sizeof(T);
+        const size_t initialSource = stride * t / sizeof(U);
 
-        if( core == cores-1 )
+        if( t == maxNThreads-1 )
             memcpyThreads.push_back( std::thread( std::memcpy, &destination[initialDestination], &source[initialSource], last ) );
         else
             memcpyThreads.push_back( std::thread( std::memcpy, &destination[initialDestination], &source[initialSource], stride ) );

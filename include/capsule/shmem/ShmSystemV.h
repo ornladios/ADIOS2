@@ -27,7 +27,6 @@ public:
      * @param dataSize size of allocated memory segment for data
      * @param metadataSize size of allocated memory segment for metadata
      * @param debugMode true: extra checks, slower
-     * @param cores threaded operations
      */
     ShmSystemV( const std::string accessMode, const int rankMPI, const std::string pathName,
                 const size_t dataSize, const size_t metadataSize, const bool debugMode = false );

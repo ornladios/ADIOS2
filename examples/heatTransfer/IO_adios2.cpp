@@ -19,7 +19,7 @@ IO::IO( const Settings& s, MPI_Comm comm )
 {
     rank_saved = s.rank;
     m_outputfilename = s.outputfile + ".bp";
-    ad = new adios::ADIOS( "adios2.xml", comm, adios::INFO );
+    ad = new adios::ADIOS( "adios2.xml", comm, adios::Verbose::INFO );
 
     //Define method for engine creation
     // 1. Get method def from config file or define new one
@@ -29,7 +29,7 @@ IO::IO( const Settings& s, MPI_Comm comm )
     {
         // if not defined by user, we can change the default settings
         bpWriterSettings.SetEngine( "BP" ); // BP is the default engine
-        bpWriterSettings.SetAvailableCores( 2); // no threading for data processing (except for staging)
+        bpWriterSettings.AllowThreads( 1 ); // allow 1 extra thread for data processing
         bpWriterSettings.AddTransport( "File", "lucky=yes" ); // ISO-POSIX file is the default transport
                                                               // Passing parameters to the transport
         bpWriterSettings.SetParameters("have_metadata_file","yes" ); // Passing parameters to the engine
@@ -51,7 +51,7 @@ IO::IO( const Settings& s, MPI_Comm comm )
     //varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    bpWriter = ad->Open( m_outputfilename, "w", comm, bpWriterSettings, adios::COLLECTIVE_IO);
+    bpWriter = ad->Open( m_outputfilename, "w", comm, bpWriterSettings, adios::IOMode::COLLECTIVE);
 
     if( bpWriter == nullptr )
         throw std::ios_base::failure( "ERROR: failed to open ADIOS bpWriter\n" );

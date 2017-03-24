@@ -16,7 +16,7 @@ namespace adios
 
 
 Engine::Engine( ADIOS& adios, const std::string engineType, const std::string name, const std::string accessMode,
-                MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int cores,
+                MPI_Comm mpiComm, const Method& method, const bool debugMode, const unsigned int nthreads,
                 const std::string endMessage ):
     m_MPIComm{ mpiComm },
     m_EngineType{ engineType },
@@ -25,7 +25,7 @@ Engine::Engine( ADIOS& adios, const std::string engineType, const std::string na
     m_Method{ method },
     m_ADIOS{ adios },
     m_DebugMode{ debugMode },
-    m_Cores{ cores },
+    m_nThreads{ nthreads },
     m_EndMessage( endMessage )
 {
     if( m_DebugMode == true )
@@ -82,7 +82,10 @@ void Engine::Write( const std::string variableName, const std::complex<double>* 
 void Engine::Write( const std::string variableName, const std::complex<long double>* values ){ }
 void Engine::Write( const std::string variableName, const void* values ){ }
 
-void Engine::Advance(){ }
+void Engine::Advance( float timeout_sec ){ }
+void Engine::Advance( AdvanceMode mode, float timeout_sec ){ }
+void Engine::AdvanceAsync ( AdvanceMode mode, std::function<void( std::shared_ptr<adios::Engine> )> callback ){ }
+
 
 void Engine::Close( const int transportIndex ){ }
 
@@ -106,6 +109,9 @@ Variable<std::complex<double>>* Engine::InquireVariableCDouble( const std::strin
 Variable<std::complex<long double>>* Engine::InquireVariableCLDouble( const std::string name, const bool readIn ){ return nullptr; }
 VariableCompound* Engine::InquireVariableCompound( const std::string name, const bool readIn ){ return nullptr;  }
 
+void Engine::Read( Variable<double>& variable,                    const double* values ){ }
+void Engine::ScheduleRead( Variable<double>& variable,                    const double* values ){ }
+void Engine::Release( ){ }
 
 //PROTECTED
 void Engine::Init( )

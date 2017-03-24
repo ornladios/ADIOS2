@@ -14,14 +14,35 @@ namespace adios
 {
 
 
-Method::Method( const std::string type, const bool debugMode ):
-    m_Type{ type },
+Method::Method( const std::string name, const bool debugMode ):
+    m_Name{ name },
     m_DebugMode{ debugMode }
-{ }
+{
+    // m_Type can stay empty (forcing the choice of the default engine)
+    m_nThreads = 1;
+}
 
 
 Method::~Method( )
 { }
+
+bool MethodisUserDefined()
+{
+    return false; //TODO: check if XML has the method defined
+}
+
+void Method::SetEngine( const std::string type )
+{
+    m_Type = type;
+}
+
+void Method::AllowThreads( const int nThreads )
+{
+    if (nThreads > 1)
+        m_nThreads = nThreads;
+    else
+        m_nThreads = 1;
+}
 
 
 //PRIVATE Functions

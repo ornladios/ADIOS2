@@ -8,7 +8,7 @@
 #ifndef ADIOS_CPP_H_
 #define ADIOS_CPP_H_
 
-
+#include "ADIOSTypes.h"
 #include "ADIOS.h"
 #include "core/Method.h"
 
