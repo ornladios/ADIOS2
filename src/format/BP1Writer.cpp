@@ -181,60 +181,62 @@ std::string BP1Writer::GetRankProfilingLog( const int rank, const BP1MetadataSet
 
 
 //PRIVATE FUNCTIONS
-void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& position,
-                                      const std::vector<std::size_t>& localDimensions,
-                                      const std::vector<std::size_t>& globalDimensions,
-                                      const std::vector<std::size_t>& globalOffsets,
-                                      const bool addType ) const noexcept
+void BP1Writer::WriteDimensionsRecord( std::vector<char>& buffer, std::size_t& position,
+                                       const std::vector<std::size_t>& localDimensions,
+                                       const std::vector<std::size_t>& globalDimensions,
+                                       const std::vector<std::size_t>& globalOffsets,
+									   const unsigned int skip,
+                                       const bool addType ) const noexcept
 {
-    if( addType == true )
+    auto lf_WriteFlaggedDim = []( std::vector<char>& buffer, std::size_t& position, const char no,
+    		                      const std::size_t dimension )
     {
-        constexpr char no = 'n'; //dimension format unsigned int value for now
-        for( unsigned int d = 0; d < localDimensions.size(); ++d )
+    	CopyToBuffer( buffer, position, &no );
+        CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &dimension ) );
+    };
+
+    //BODY Starts here
+    if( globalDimensions.empty() )
+    {
+        if( addType == true )
         {
-            CopyToBuffer( buffer, position, &no );
-            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimensions[d] ) );
-
-            CopyToBuffer( buffer, position, &no );
-            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalDimensions[d] ) );
-
-            CopyToBuffer( buffer, position, &no );
-            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalOffsets[d] ) );
+        	constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
+        	for( const auto& localDimension : localDimensions )
+        	{
+        		lf_WriteFlaggedDim( buffer, position, no, localDimension );
+        		position += skip;
+        	}
+        }
+        else
+        {
+        	for( const auto& localDimension : localDimensions )
+        	{
+        		CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimension ) );
+        		position += skip;
+        	}
         }
     }
     else
     {
-        for( unsigned int d = 0; d < localDimensions.size(); ++d )
-        {
-            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimensions[d] ) );
-            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalDimensions[d] ) );
-            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalOffsets[d] ) );
-        }
-    }
-}
-
-void BP1Writer::WriteDimensionRecord( std::vector<char>& buffer, std::size_t& position,
-                                      const std::vector<std::size_t>& localDimensions,
-                                      const unsigned int skip,
-                                      const bool addType ) const noexcept
-{
-    if( addType == true )
-    {
-        constexpr char no = 'n'; //dimension format unsigned int value (not using memberID for now)
-        for( const auto& localDimension : localDimensions )
-        {
-            CopyToBuffer( buffer, position, &no );
-            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimension ) );
-            position += skip;
-        }
-    }
-    else
-    {
-        for( const auto& localDimension : localDimensions )
-        {
-            CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimension ) );
-            position += skip;
-        }
+    	if( addType == true )
+    	{
+    		constexpr char no = 'n'; //dimension format unsigned int value for now
+    		for( unsigned int d = 0; d < localDimensions.size(); ++d )
+    		{
+    			lf_WriteFlaggedDim( buffer, position, no, localDimensions[d] );
+    			lf_WriteFlaggedDim( buffer, position, no, globalDimensions[d] );
+    			lf_WriteFlaggedDim( buffer, position, no, globalOffsets[d] );
+    		}
+    	}
+    	else
+    	{
+    		for( unsigned int d = 0; d < localDimensions.size(); ++d )
+    		{
+    			CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &localDimensions[d] ) );
+    			CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalDimensions[d] ) );
+    			CopyToBuffer( buffer, position, reinterpret_cast<std::uint64_t*>( &globalOffsets[d] ) );
+    		}
+    	}
     }
 }
 
@@ -248,9 +250,19 @@ void BP1Writer::WriteNameRecord( const std::string name, std::vector<char>& buff
 
 
 
+BP1Index& GetBP1Index( const std::string name, std::unordered_map<std::string, BP1Index>& indices, bool& isNew )
+{
+	auto itName = indices.find( name );
+    if( itName == indices.end() )
+    {
+    	indices.emplace( name, BP1Index( indices.size() ) );
+    	isNew = true;
+    	return indices.at( name );
+    }
 
-
-
+    isNew = false;
+    return itName->second;
+}
 
 
 void BP1Writer::FlattenData( BP1MetadataSet& metadataSet, capsule::STLVector& buffer ) const noexcept

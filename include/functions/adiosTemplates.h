@@ -185,7 +185,6 @@ void CopyToBuffer( std::vector<char>& raw, std::size_t& position, const T* sourc
     position += elements * sizeof(T);
 }
 
-
 template<class T>
 void CopyFromBuffer( T* destination, std::size_t elements, const std::vector<char>& raw, std::size_t& position ) noexcept
 {

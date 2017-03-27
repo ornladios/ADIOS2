@@ -10,6 +10,9 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <memory> //std::shared_ptr
+#include <cstdint> //std::uintX_t
+#include <unordered_map>
+#include <vector>
 //#include <queue>  //std::priority_queue to be added later
 /// \endcond
 
@@ -190,6 +193,24 @@ protected:
         statistic_hist            = 5,
         statistic_finite          = 6
     };
+
+    template<class T>
+    struct Stats
+	{
+    	T Min;
+    	T Max;
+    	std::uint64_t Offset;
+    	std::uint64_t PayloadOffset;
+    	std::uint32_t TimeIndex;
+
+
+//		unsigned long int count;
+//		long double sum;
+//		long double sumSquare;
+		//unsigned long int histogram
+		//bool finite??
+	};
+
 
 
     /**
