@@ -374,20 +374,20 @@ void BPFileWriter::InitProcessGroup( )
 void BPFileWriter::WriteProcessGroupIndex( )
 {
     //pg = process group
-    const std::size_t pgIndexSize = m_BP1Writer.GetProcessGroupIndexSize( std::to_string( m_RankMPI ),
-                                                                          std::to_string( m_MetadataSet.TimeStep ),
-                                                                          m_Transports.size() );
+//    const std::size_t pgIndexSize = m_BP1Writer.GetProcessGroupIndexSize( std::to_string( m_RankMPI ),
+//                                                                          std::to_string( m_MetadataSet.TimeStep ),
+//                                                                          m_Transports.size() );
     //metadata
-    GrowBuffer( pgIndexSize, m_GrowthFactor, m_MetadataSet.PGIndexPosition, m_MetadataSet.PGIndex );
+    //GrowBuffer( pgIndexSize, m_GrowthFactor, m_MetadataSet.PGIndex );
 
     //data? Need to be careful, maybe add some trailing tolerance in variable ????
-    GrowBuffer( pgIndexSize, m_GrowthFactor, m_Buffer.m_DataPosition, m_Buffer.m_Data );
+    //GrowBuffer( pgIndexSize, m_GrowthFactor, m_Buffer.m_Data );
 
     const bool isFortran = ( m_HostLanguage == "Fortran" ) ? true : false;
 
-    m_BP1Writer.WriteProcessGroupIndex( isFortran, std::to_string( m_RankMPI ), static_cast<unsigned int> ( m_RankMPI ),
-                                        std::to_string( m_MetadataSet.TimeStep ), m_MetadataSet.TimeStep, m_Transports,
-                                        m_Buffer, m_MetadataSet );
+    m_BP1Writer.WriteProcessGroupIndex( isFortran, std::to_string( m_RankMPI ), static_cast<std::uint32_t>( m_RankMPI ),
+                                        m_Transports, m_Buffer, m_MetadataSet );
+
 }
 
 

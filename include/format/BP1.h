@@ -36,14 +36,15 @@ namespace format
  */
 struct BP1Index
 {
-    std::vector<char> Metadata = std::vector<char>( 102400, '\0' ); ///< metadata variable index, start with 100Kb
-    std::size_t Position = 0; ///< initial position in bytes
+    std::vector<char> Buffer; ///< metadata variable index, start with 100Kb
     std::uint64_t Count = 0; ///< number of characteristics sets (time and spatial aggregation)
     const std::uint32_t MemberID;
 
     BP1Index( const std::uint32_t memberID ):
         MemberID{ memberID }
-    { }
+    {
+        Buffer.reserve( 500 );
+    }
 };
 
 /**
@@ -53,7 +54,7 @@ struct BP1MetadataSet
 {
     std::uint32_t TimeStep = 0; ///< current time step, updated with advance step, if append it will be updated to last
 
-    BP1Index PGIndex; ///< single buffer for PGIndex
+    BP1Index PGIndex = BP1Index( 0 ); ///< single buffer for PGIndex
 
     //no priority for now
     std::unordered_map< std::string, BP1Index > VarsIndices; ///< key: variable name, value: bp metadata variable index
@@ -62,6 +63,7 @@ struct BP1MetadataSet
     const unsigned int MiniFooterSize = 28; ///< from bpls reader
 
     //PG (relative) positions in Data buffer to be updated
+    std::uint64_t DataPGCount = 0;
     std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative ) position, needs to be updated in every advance step or init
     std::uint32_t DataPGVarsCount = 0; ///< variables in current PG
     std::size_t DataPGVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
@@ -202,6 +204,7 @@ protected:
     	std::uint64_t Offset;
     	std::uint64_t PayloadOffset;
     	std::uint32_t TimeIndex;
+    	std::uint32_t MemberID;
 
 
 //		unsigned long int count;
@@ -223,7 +226,7 @@ protected:
         return type_unknown;
     }
 
-    std::vector<int> GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept;
+    std::vector<std::uint8_t> GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept;
 
 };
 

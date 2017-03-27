@@ -20,9 +20,10 @@ namespace capsule
 
 
 STLVector::STLVector( const std::string accessMode, const int rankMPI, const bool debugMode ):
-    Capsule( "Heap", accessMode, rankMPI, debugMode ),
-    m_Data( 16777216, '\0' ) //default capacity = 16Mb
-{ }
+    Capsule( "Heap", accessMode, rankMPI, debugMode )
+{
+    m_Data.reserve( 16777216 );
+}
 
 
 STLVector::~STLVector( )

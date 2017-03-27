@@ -120,17 +120,15 @@ private:
         m_WrittenVariables.insert( variable.m_Name );
 
         //if first timestep Write
-        if( m_MetadataSet.DataPGIsOpen == false ) //create a new pg index timestep ready to write variables
+        if( m_MetadataSet.DataPGIsOpen == false ) //create a new pg index
             WriteProcessGroupIndex( );
 
         //pre-calculate new metadata and payload sizes
-        m_TransportFlush = CheckBuffersAllocation( m_BP1Writer.GetVariableIndexSize( variable ), variable.PayLoadSize(),
-                                                   m_GrowthFactor, m_MaxBufferSize,
-                                                   m_MetadataSet.VarsIndexPosition, m_MetadataSet.VarsIndex,
-                                                   m_Buffer.m_DataPosition, m_Buffer.m_Data );
+        m_TransportFlush = CheckBufferAllocation( m_BP1Writer.GetVariableIndexSize( variable ) + variable.PayLoadSize(),
+                                                  m_GrowthFactor, m_MaxBufferSize, m_Buffer.m_Data );
 
         //WRITE INDEX to data buffer and metadata structure (in memory)//
-        m_BP1Writer.WriteVariableIndex( variable, m_Buffer, m_MetadataSet );
+        m_BP1Writer.WriteVariableMetadata( variable, m_Buffer, m_MetadataSet );
 
         if( m_TransportFlush == true ) //in batches
         {

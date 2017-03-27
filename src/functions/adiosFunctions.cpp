@@ -537,35 +537,32 @@ std::vector<int> CSVToVectorInt( const std::string csv )
 }
 
 
-bool CheckBuffersAllocation( const std::size_t indexSize, const std::size_t payloadSize,
-                             const float growthFactor, const std::size_t maxBufferSize,
-                             const std::size_t indexPosition, std::vector<char>& indexBuffer,
-                             const std::size_t dataPosition, std::vector<char>& dataBuffer )
+bool CheckBufferAllocation( const std::size_t newSize, const float growthFactor, const std::size_t maxBufferSize,
+                            std::vector<char>& buffer )
 {
     //Check if data in buffer needs to be reallocated
-    const std::size_t requiredDataSize = dataPosition + payloadSize + indexSize + 100; //adding some bytes tolerance
+    const std::size_t requiredDataSize = buffer.size() + newSize + 100; //adding some bytes for tolerance
     // might need to write payload in batches
     bool doTransportsFlush = ( requiredDataSize > maxBufferSize )? true : false;
 
-    if( GrowBuffer( requiredDataSize, growthFactor, dataPosition, dataBuffer ) == -1 )
+    if( GrowBuffer( requiredDataSize, growthFactor, buffer ) == -1 )
         doTransportsFlush = true;
 
-    GrowBuffer( indexSize, growthFactor, indexPosition, indexBuffer );
     return doTransportsFlush;
 }
 
 
 
-int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, const std::size_t currentPosition,
+int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor,
                 std::vector<char>& buffer )
 {
     const std::size_t currentCapacity = buffer.capacity();
-    const std::size_t availableSpace = currentCapacity - currentPosition;
+    const std::size_t availableSpace = currentCapacity - buffer.size();
     const double gf = static_cast<double>( growthFactor );
 
     if( incomingDataSize > availableSpace )
     {
-        const std::size_t neededCapacity = incomingDataSize + currentPosition;
+        const std::size_t neededCapacity = incomingDataSize + buffer.size();
         const double numerator = std::log( static_cast<double>( neededCapacity ) / static_cast<double>( currentCapacity ) );
         const double denominator = std::log( gf );
 
@@ -574,7 +571,7 @@ int GrowBuffer( const std::size_t incomingDataSize, const float growthFactor, co
 
         try
         {
-            buffer.resize( newSize );
+            buffer.reserve( newSize );
         }
         catch( std::bad_alloc& e )
         {

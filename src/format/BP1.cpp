@@ -39,9 +39,9 @@ void BP1::OpenRankFiles( const std::string name, const std::string accessMode, T
 }
 
 
-std::vector<int> BP1::GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept
+std::vector<std::uint8_t> BP1::GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept
 {
-    auto lf_GetMethodID = []( const std::string method ) -> int
+    auto lf_GetMethodID = []( const std::string method ) -> std::uint8_t
     {
         int id = METHOD_UNKNOWN;
         if( method == "NULL" ) id = METHOD_NULL;
@@ -53,13 +53,11 @@ std::vector<int> BP1::GetMethodIDs( const std::vector< std::shared_ptr<Transport
         return id;
     };
 
-    std::vector<int> methodIDs;
+    std::vector<std::uint8_t> methodIDs;
     methodIDs.reserve( transports.size() );
 
-    for( const auto transport : transports )
-    {
+    for( const auto& transport : transports )
         methodIDs.push_back( lf_GetMethodID( transport->m_Type ) );
-    }
 
     return methodIDs;
 }
