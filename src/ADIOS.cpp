@@ -24,6 +24,12 @@
 #include "engine/dataman/DataManReader.h"
 #endif
 
+
+#ifdef HAVE_ADIOS1  //external dependencies
+#include "engine/adios1/ADIOS1Writer.h"
+#include "engine/adios1/ADIOS1Reader.h"
+#endif
+
 namespace adios
 {
 
@@ -139,6 +145,14 @@ std::shared_ptr<Engine> ADIOS::Open( const std::string name, const std::string a
         return std::make_shared<DataManReader>( *this, name, accessMode, mpiComm, method, iomode, timeout_sec, m_DebugMode, method.m_nThreads );
         #else
         throw std::invalid_argument( "ERROR: this version didn't compile with Dataman library, can't Open DataManReader\n" );
+        #endif
+    }
+    else if( type == "ADIOS1Writer" )
+    {
+        #ifdef HAVE_ADIOS1
+        return std::make_shared<ADIOS1Writer>( *this, name, accessMode, mpiComm, method, iomode, timeout_sec, m_DebugMode, method.m_nThreads );
+        #else
+        throw std::invalid_argument( "ERROR: this version didn't compile with ADIOS 1.x library, can't Open ADIOS1Writer\n" );
         #endif
     }
     else if( type == "Vis" )

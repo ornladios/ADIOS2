@@ -11,6 +11,8 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
 #include <string>
+#include <sstream>
+#include <iterator>
 /// \endcond
 
 #include "functions/adiosFunctions.h" //GetTotalSize
@@ -83,6 +85,25 @@ public:
     const bool m_DebugMode = false;
 
 
+    std::string GetDimensionAsString() { return dimsToString( m_Dimensions ); }
+    std::string GetGlobalDimensionAsString() { return dimsToString( m_GlobalDimensions ); }
+    std::string GetOffsetsAsString() { return dimsToString( m_GlobalOffsets ); }
+
+
+private:
+    std::string dimsToString( Dims dims )
+    {
+        std::ostringstream oss;
+        if (!dims.empty())
+        {
+            // Convert all but the last element to avoid a trailing ","
+            std::copy(dims.begin(), dims.end()-1,
+                    std::ostream_iterator<std::size_t>(oss, ","));
+            // Now add the last element with no delimiter
+            oss << dims.back();
+        }
+        return oss.str();
+    }
 };
 
 

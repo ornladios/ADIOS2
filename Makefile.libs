@@ -30,6 +30,20 @@ else
 endif
 
 
+ifeq ($(HAVE_ADIOS1),yes)
+    ADIOS1_DIR=/opt/adios/lean/1.11# need to change this to your local adios 1.x installation
+    CFLAGS += -DHAVE_ADIOS1
+    INC += -I$(ADIOS1_DIR)/include
+    LIBS += $(shell ${ADIOS1_DIR}/bin/adios_config -l)
+else
+    HFiles:=$(filter-out $(ENGINE_INC)/adios1/ADIOS1Writer.h,$(HFiles))
+    HFiles:=$(filter-out $(ENGINE_INC)/adios1/ADIOS1Reader.h,$(HFiles))
+    CPPFiles:=$(filter-out $(ENGINE_SRC)/adios1/ADIOS1Writer.cpp,$(CPPFiles))
+    CPPFiles:=$(filter-out $(ENGINE_SRC)/adios1/ADIOS1Reader.cpp,$(CPPFiles))
+endif
+
+
+
 #EXTERNAL DEPENDENCIES
 ifeq ($(HAVE_NETCDF),yes)
     LIBS += -lnetcdf

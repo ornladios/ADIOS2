@@ -28,7 +28,7 @@ HFiles:=$(shell find ./include -type f -name "*.h")
 CPPFiles:=$(shell find ./src -type f -name "*.cpp")
 INC:=-I./include
 VPATH = ./src ./src/core ./src/functions \
-        ./src/engine/bp ./src/engine/dataman \
+        ./src/engine/bp ./src/engine/dataman ./src/engine/adios1 \
 		./src/transport/file ./src/transport/wan \
 		./src/capsule/heap ./src/capsule/shmem \
 		./src/transform \
