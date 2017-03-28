@@ -12,9 +12,7 @@
 #include <vector>
 /// \endcond
 
-
 #include "core/Capsule.h"
-
 
 namespace adios
 {
@@ -28,35 +26,33 @@ class STLVector : public Capsule
 {
 
 public:
+  std::vector<char> m_Data;     ///< data buffer allocated using the STL in heap
+                                ///memory, default size = 16 Mb
+  std::vector<char> m_Metadata; ///< metadata buffer allocated using the STL in
+                                ///heap memory, default size = 100 Kb
 
-    std::vector<char> m_Data; ///< data buffer allocated using the STL in heap memory, default size = 16 Mb
-    std::vector<char> m_Metadata; ///< metadata buffer allocated using the STL in heap memory, default size = 100 Kb
+  /**
+   * Unique constructor
+   * @param accessMode read, write or append
+   * @param rankMPI MPI rank
+   * @param debugMode true: extra checks, slower
+   */
+  STLVector(const std::string accessMode, const int rankMPI,
+            const bool debugMode = false);
 
-    /**
-     * Unique constructor
-     * @param accessMode read, write or append
-     * @param rankMPI MPI rank
-     * @param debugMode true: extra checks, slower
-     */
-    STLVector( const std::string accessMode, const int rankMPI, const bool debugMode = false );
+  ~STLVector();
 
-    ~STLVector( );
+  char *GetData();
+  char *GetMetadata();
 
-    char* GetData( );
-    char* GetMetadata( );
+  std::size_t GetDataSize() const;
+  std::size_t GetMetadataSize() const;
 
-    std::size_t GetDataSize( ) const;
-    std::size_t GetMetadataSize( ) const;
-
-    void ResizeData( const std::size_t size );
-    void ResizeMetadata( const std::size_t size );
-
+  void ResizeData(const std::size_t size);
+  void ResizeMetadata(const std::size_t size);
 };
 
-
-} //end namespace capsule
-} //end namespace
-
-
+} // end namespace capsule
+} // end namespace
 
 #endif /* STLVECTOR_H_ */

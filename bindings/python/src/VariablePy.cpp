@@ -5,45 +5,34 @@
  *      Author: wfg
  */
 
-
 #include "VariablePy.h"
-
 
 namespace adios
 {
 
-VariablePy::VariablePy( const std::string name, const pyList localDimensionsPy,
-                        const pyList globalDimensionsPy, const pyList globalOffsetsPy ):
-    m_Name{ name },
-    m_LocalDimensions{ ListToVector( localDimensionsPy ) },
-    m_GlobalDimensions{ ListToVector( globalDimensionsPy ) },
-    m_GlobalOffsets{ ListToVector( globalOffsetsPy ) }
-{ }
-
-
-VariablePy::~VariablePy( )
-{ }
-
-
-void VariablePy::SetLocalDimensions( const pyList list )
+VariablePy::VariablePy(const std::string name, const pyList localDimensionsPy,
+                       const pyList globalDimensionsPy,
+                       const pyList globalOffsetsPy)
+    : m_Name{name}, m_LocalDimensions{ListToVector(localDimensionsPy)},
+      m_GlobalDimensions{ListToVector(globalDimensionsPy)},
+      m_GlobalOffsets{ListToVector(globalOffsetsPy)}
 {
-//      this->m_Dimensions = ListToVector( list );
-
 }
 
+VariablePy::~VariablePy() {}
 
-void VariablePy::SetGlobalDimensionsAndOffsets( const pyList globalDimensions, const pyList globalOffsets  )
+void VariablePy::SetLocalDimensions(const pyList list)
 {
-//        this->m_GlobalDimensions = ListToVector( globalDimensions );
-//        this->m_GlobalOffsets = ListToVector( globalOffsets );
+  //      this->m_Dimensions = ListToVector( list );
 }
 
-
-Dims VariablePy::GetLocalDimensions( )
+void VariablePy::SetGlobalDimensionsAndOffsets(const pyList globalDimensions,
+                                               const pyList globalOffsets)
 {
-    return this->m_LocalDimensions;
+  //        this->m_GlobalDimensions = ListToVector( globalDimensions );
+  //        this->m_GlobalOffsets = ListToVector( globalOffsets );
 }
 
+Dims VariablePy::GetLocalDimensions() { return this->m_LocalDimensions; }
 
-
-} //end namespace
+} // end namespace

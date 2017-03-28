@@ -8,11 +8,9 @@
 #ifndef MPI_FILE_H_
 #define MPI_FILE_H_
 
-
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <mpi.h>
 /// \endcond
-
 
 namespace adios
 {
@@ -26,35 +24,25 @@ class MPI_File : public Transport
 {
 
 public:
+  MPI_File(MPI_Comm mpiComm, const bool debugMode);
 
-    MPI_File( MPI_Comm mpiComm, const bool debugMode );
+  ~MPI_File();
 
-    ~MPI_File( );
+  void Open(const std::string streamName, const std::string accessMode);
 
-    void Open( const std::string streamName, const std::string accessMode );
+  void SetBuffer(char *buffer, std::size_t size);
 
-    void SetBuffer( char* buffer, std::size_t size );
+  void Write(const char *buffer, std::size_t size);
 
-    void Write( const char* buffer, std::size_t size );
+  void Flush();
 
-    void Flush( );
-
-    void Close( );
-
+  void Close();
 
 private:
-
-    MPI_File m_MPIFile; ///< MPI File
-
+  MPI_File m_MPIFile; ///< MPI File
 };
 
-
-
-} //end namespace transport
-} //end namespace
-
-
-
-
+} // end namespace transport
+} // end namespace
 
 #endif /* MPI_FILE_H_ */

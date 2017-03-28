@@ -8,14 +8,11 @@
 #ifndef BP1AGGREGATOR_H_
 #define BP1AGGREGATOR_H_
 
-
-
 #ifdef ADIOS_NOMPI
-  #include "mpidummy.h"
+#include "mpidummy.h"
 #else
-  #include <mpi.h>
+#include <mpi.h>
 #endif
-
 
 namespace adios
 {
@@ -29,35 +26,31 @@ class BP1Aggregator
 {
 
 public:
+  MPI_Comm m_MPIComm = MPI_COMM_SELF; ///< MPI communicator from Engine
+  int m_RankMPI = 0;                  ///< current MPI rank process
+  int m_SizeMPI = 1;                  ///< current MPI processes size
 
-    MPI_Comm m_MPIComm = MPI_COMM_SELF; ///< MPI communicator from Engine
-    int m_RankMPI = 0; ///< current MPI rank process
-    int m_SizeMPI = 1; ///< current MPI processes size
+  /**
+   * Unique constructor
+   * @param mpiComm coming from engine
+   */
+  BP1Aggregator(MPI_Comm mpiComm, const bool debugMode = false);
 
-    /**
-     * Unique constructor
-     * @param mpiComm coming from engine
-     */
-    BP1Aggregator( MPI_Comm mpiComm, const bool debugMode = false );
+  ~BP1Aggregator();
 
-    ~BP1Aggregator( );
-
-
-    /**
-     * Function that aggregates and writes (from rank = 0) profiling.log in python dictionary format
-     * @param rankLog contain rank profiling info to be aggregated
-     */
-    void WriteProfilingLog( const std::string fileName, const std::string& rankLog );
+  /**
+   * Function that aggregates and writes (from rank = 0) profiling.log in python
+   * dictionary format
+   * @param rankLog contain rank profiling info to be aggregated
+   */
+  void WriteProfilingLog(const std::string fileName,
+                         const std::string &rankLog);
 
 private:
-
-    const bool m_DebugMode = false;
-
-
+  const bool m_DebugMode = false;
 };
 
-
-} //end namespace format
-} //end namespace adios
+} // end namespace format
+} // end namespace adios
 
 #endif /* BP1AGGREGATOR_H_ */

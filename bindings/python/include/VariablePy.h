@@ -8,8 +8,8 @@
 #ifndef VARIABLEPY_H_
 #define VARIABLEPY_H_
 
-#include "core/Variable.h"
 #include "adiosPyFunctions.h"
+#include "core/Variable.h"
 
 namespace adios
 {
@@ -22,36 +22,31 @@ using pyList = boost::python::list;
 using pyList = pybind11::list;
 #endif
 
-
 class VariablePy
 {
 
 public:
+  VariablePy(const std::string name, const pyList localDimensionsPy,
+             const pyList globalDimensionsPy, const pyList globalOffsetsPy);
 
-    VariablePy( const std::string name, const pyList localDimensionsPy, const pyList globalDimensionsPy, const pyList globalOffsetsPy );
+  ~VariablePy();
 
-    ~VariablePy( );
+  void SetLocalDimensions(const pyList list);
 
-	void SetLocalDimensions( const pyList list );
+  void SetGlobalDimensionsAndOffsets(const pyList globalDimensions,
+                                     const pyList globalOffsets);
 
-	void SetGlobalDimensionsAndOffsets( const pyList globalDimensions, const pyList globalOffsets );
+  Dims GetLocalDimensions();
 
-	Dims GetLocalDimensions( );
+  void *m_VariablePtr = nullptr;
+  bool m_IsVariableDefined = false;
 
-	void* m_VariablePtr = nullptr;
-	bool m_IsVariableDefined = false;
-
-	const std::string m_Name;
-	Dims m_LocalDimensions;
-	Dims m_GlobalDimensions;
-	Dims m_GlobalOffsets;
+  const std::string m_Name;
+  Dims m_LocalDimensions;
+  Dims m_GlobalDimensions;
+  Dims m_GlobalOffsets;
 };
 
-
-
-} //end namespace
-
-
-
+} // end namespace
 
 #endif /* BINDINGS_PYTHON_INCLUDE_VARIABLEPY_H_ */

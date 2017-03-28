@@ -8,22 +8,16 @@
 #ifndef CAPSULETEMPLATES_H_
 #define CAPSULETEMPLATES_H_
 
-
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstring> //std::memcpy
-#include <vector>
 #include <thread>
+#include <vector>
 /// \endcond
-
 
 #include "core/Transport.h"
 
-
 namespace adios
 {
-
-
-
 
 /**
  *
@@ -34,12 +28,13 @@ namespace adios
  * @param maxBufferSize
  * @param buffer
  */
-//template<class T>
-//void WriteToBuffer( const T* data, const size_t size,
+// template<class T>
+// void WriteToBuffer( const T* data, const size_t size,
 //                    std::vector< std::shared_ptr<Transport> >& transports,
 //                    const size_t maxBufferSize, std::vector<char>& buffer )
 //{
-//    auto lf_TransportsWrite = []( const int transportIndex, std::vector< std::shared_ptr<Transport> >& transports,
+//    auto lf_TransportsWrite = []( const int transportIndex, std::vector<
+//    std::shared_ptr<Transport> >& transports,
 //                                  std::vector<char>& buffer )
 //    {
 //        if( transportIndex == -1 ) // all transports
@@ -59,7 +54,8 @@ namespace adios
 //    {
 //        for( auto& transport : transports )
 //        {
-//            if( transport->m_Method == "DataMan" ) //DataMan needs all the information
+//            if( transport->m_Method == "DataMan" ) //DataMan needs all the
+//            information
 //                buffer.resize( dataBytes ); //resize buffer to fit all data
 //        }
 //    }
@@ -71,22 +67,28 @@ namespace adios
 //
 //    if( dataBytes <= buffer.size() ) // dataBytes < buffer.size()
 //    {
-//        buffer.resize( dataBytes ); //this resize shouldn't change capacity or call realloc
-//        MemcpyThreads( &buffer[0], data, dataBytes, 1 ); //copy memory in threaded fashion, need to test with size, serial for now
+//        buffer.resize( dataBytes ); //this resize shouldn't change capacity or
+//        call realloc
+//        MemcpyThreads( &buffer[0], data, dataBytes, 1 ); //copy memory in
+//        threaded fashion, need to test with size, serial for now
 //        lf_TransportsWrite( transportIndex, transports, buffer );
 //        return;
 //    }
 //
-//    if( buffer.size() < dataBytes && dataBytes <= maxBufferSize ) //  buffer.size() < dataBytes <  maxBufferSize
+//    if( buffer.size() < dataBytes && dataBytes <= maxBufferSize ) //
+//    buffer.size() < dataBytes <  maxBufferSize
 //    {
 //        buffer.resize( dataBytes );
-//        MemcpyThreads( &buffer[0], data, dataBytes, 1 ); //copy memory in threaded fashion, need to test with size, serial for now
+//        MemcpyThreads( &buffer[0], data, dataBytes, 1 ); //copy memory in
+//        threaded fashion, need to test with size, serial for now
 //        lf_TransportsWrite( transportIndex, transports, buffer );
 //        return;
 //    }
 //
-//    // dataBytes > maxBufferSize == buffer.size() split the variable in buffer buckets
-//    buffer.resize( maxBufferSize ); //resize to maxBufferSize, this might call realloc
+//    // dataBytes > maxBufferSize == buffer.size() split the variable in buffer
+//    buckets
+//    buffer.resize( maxBufferSize ); //resize to maxBufferSize, this might call
+//    realloc
 //    const size_t buckets =  dataBytes / maxBufferSize + 1;
 //    const size_t remainder = dataBytes % maxBufferSize;
 //
@@ -103,10 +105,6 @@ namespace adios
 //    }
 //}
 
-
-
-} //end namespace
-
-
+} // end namespace
 
 #endif /* CAPSULETEMPLATES_H_ */

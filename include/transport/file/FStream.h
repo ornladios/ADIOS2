@@ -14,7 +14,6 @@
 
 #include "core/Transport.h"
 
-
 namespace adios
 {
 namespace transport
@@ -27,32 +26,25 @@ class FStream : public Transport
 {
 
 public:
+  FStream(MPI_Comm mpiComm, const bool debugMode);
 
-    FStream( MPI_Comm mpiComm, const bool debugMode );
+  ~FStream();
 
-    ~FStream( );
+  void Open(const std::string name, const std::string accessMode);
 
-    void Open( const std::string name, const std::string accessMode );
+  void SetBuffer(char *buffer, std::size_t size);
 
-    void SetBuffer( char* buffer, std::size_t size );
+  void Write(const char *buffer, std::size_t size);
 
-    void Write( const char* buffer, std::size_t size );
+  void Flush();
 
-    void Flush( );
-
-    void Close( );
-
+  void Close();
 
 private:
-
-    std::fstream m_FStream; ///< file stream under name.bp.dir/name.bp.rank
-
+  std::fstream m_FStream; ///< file stream under name.bp.dir/name.bp.rank
 };
 
-
-} //end namespace transport
-} //end namespace
-
-
+} // end namespace transport
+} // end namespace
 
 #endif /* FSTREAM_H_ */
