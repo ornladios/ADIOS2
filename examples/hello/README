@@ -1,0 +1,10 @@
+Test if ADIOS MPI and noMPI code can be separated at compilation stage
+Single Makefile handles different binaries
+
+make mpi -> for MPI code, links ../../lib/libadios.a
+make nompi -> for noMPI code links ../../lib/libadios_nompi.a
+
+Choose different BASE_NAMES
+
+make nompi BASE_NAME=helloFStream
+make nompi BASE_NAME=helloADIOS

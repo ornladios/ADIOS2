@@ -1,0 +1,87 @@
+#Language API
+LANGUAGE_INC:=./include
+LANGUAGE_SRC:=./src
+
+ifeq ($(C_API),yes)
+else
+    HFiles:=$(filter-out $(LANGUAGE_INC)/ADIOS_C.h,$(HFiles))
+    CPPFiles:=$(filter-out $(LANGUAGE_SRC)/ADIOS_C.cpp,$(CPPFiles))     
+endif
+
+#EXTERNAL DEPENDECIES
+ENGINE_INC:=./include/engine
+ENGINE_SRC:=./src/engine
+TRANSPORT_INC:=./include/transport
+TRANSPORT_SRC:=./src/transport
+
+ifeq ($(HAVE_DATAMAN),yes)
+    DATAMAN_LOC:=/Users/w4g/Dropbox/lib/DataMan# need to change this to your local dataman location
+    CFLAGS += -DHAVE_DATAMAN
+    INC += -I$(DATAMAN_LOC)/include
+    LIBS += -L$(DATAMAN_LOC)/lib -ldataman
+else
+    HFiles:=$(filter-out $(ENGINE_INC)/dataman/DataManWriter.h,$(HFiles))
+    HFiles:=$(filter-out $(ENGINE_INC)/dataman/DataManReader.h,$(HFiles))
+    HFiles:=$(filter-out $(TRANSPORT_INC)/wan/MdtmMan.h,$(HFiles))
+    
+    CPPFiles:=$(filter-out $(ENGINE_SRC)/dataman/DataManWriter.cpp,$(CPPFiles))
+    CPPFiles:=$(filter-out $(ENGINE_SRC)/dataman/DataManReader.cpp,$(CPPFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/wan/MdtmMan.cpp,$(CPPFiles))
+endif
+
+
+ifeq ($(HAVE_ADIOS1),yes)
+    ADIOS1_DIR=/opt/adios/lean/1.11# need to change this to your local adios 1.x installation
+    CFLAGS += -DHAVE_ADIOS1
+    INC += -I$(ADIOS1_DIR)/include
+    LIBS += $(shell ${ADIOS1_DIR}/bin/adios_config -l)
+else
+    HFiles:=$(filter-out $(ENGINE_INC)/adios1/ADIOS1Writer.h,$(HFiles))
+    HFiles:=$(filter-out $(ENGINE_INC)/adios1/ADIOS1Reader.h,$(HFiles))
+    CPPFiles:=$(filter-out $(ENGINE_SRC)/adios1/ADIOS1Writer.cpp,$(CPPFiles))
+    CPPFiles:=$(filter-out $(ENGINE_SRC)/adios1/ADIOS1Reader.cpp,$(CPPFiles))
+endif
+
+
+
+#EXTERNAL DEPENDENCIES
+ifeq ($(HAVE_NETCDF),yes)
+    LIBS += -lnetcdf
+    CFLAGS += -DHAVE_NETCDF
+else
+    HFiles:=$(filter-out $(TRANSPORT_INC)/NetCDF4.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/NetCDF4.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_PHDF5),yes)
+    LIBS += -lhdf5
+    CFLAGS += -DHAVE_PHDF5
+else
+    HFiles:=$(filter-out $(TRANSPORT_INC)/PHDF5.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSPORT_SRC)/PHDF5.cpp,$(CPPFiles))     
+endif
+
+
+ifeq ($(HAVE_BZIP2),yes)
+    LIBS += -lbz2
+    CFLAGS += -DHAVE_BZIP2
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/BZIP2.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/BZIP2.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_SZIP),yes)
+    LIBS += -lsz
+    CFLAGS += -DHAVE_SZIP
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/SZIP.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/SZIP.cpp,$(CPPFiles))     
+endif
+
+ifeq ($(HAVE_ZLIB),yes)
+    LIBS += -lz
+    CFLAGS += -DHAVE_ZLIB
+else
+    HFiles:=$(filter-out $(TRANSFORM_INC)/ZLIB.h,$(HFiles))
+    CPPFiles:=$(filter-out $(TRANSFORM_SRC)/ZLIB.cpp,$(CPPFiles))     
+endif
