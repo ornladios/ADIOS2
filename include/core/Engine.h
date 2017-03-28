@@ -489,7 +489,7 @@ protected:
 
   bool TransportNamesUniqueness() const; ///< checks if transport names are
                                          /// unique among the same types (file
-  /// I/O)
+                                         /// I/O)
 
   /**
    * Throws an exception in debug mode if transport index is out of range.
