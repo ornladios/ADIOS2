@@ -33,7 +33,7 @@ public:
      * @param debugMode
      */
     BPFileWriter( ADIOS& adios, const std::string name, const std::string accessMode, MPI_Comm mpiComm,
-                  const Method& method, const IOMode iomode, const float timeout_sec,
+                  const Method& method, const IOMode iomode = IOMode::INDEPENDENT, const float timeout_sec = 0.,
                   const bool debugMode = false, const unsigned int nthreads = 1 );
 
     ~BPFileWriter( );
@@ -74,7 +74,7 @@ public:
     void Write( const std::string variableName, const std::complex<long double>* values );
     void Write( const std::string variableName, const void* values );
 
-    void Advance( );
+    void Advance( float timeout_sec = 0.0 );
 
     /**
      * Closes a single transport or all transports
@@ -121,17 +121,15 @@ private:
         m_WrittenVariables.insert( variable.m_Name );
 
         //if first timestep Write
-        if( m_MetadataSet.DataPGIsOpen == false ) //create a new pg index timestep ready to write variables
+        if( m_MetadataSet.DataPGIsOpen == false ) //create a new pg index
             WriteProcessGroupIndex( );
 
         //pre-calculate new metadata and payload sizes
-        m_TransportFlush = CheckBuffersAllocation( m_BP1Writer.GetVariableIndexSize( variable ), variable.PayLoadSize(),
-                                                   m_GrowthFactor, m_MaxBufferSize,
-                                                   m_MetadataSet.VarsIndexPosition, m_MetadataSet.VarsIndex,
-                                                   m_Buffer.m_DataPosition, m_Buffer.m_Data );
+//        m_TransportFlush = CheckBufferAllocation( m_BP1Writer.GetVariableIndexSize( variable ) + variable.PayLoadSize(),
+//                                                  m_GrowthFactor, m_MaxBufferSize, m_Buffer.m_Data );
 
         //WRITE INDEX to data buffer and metadata structure (in memory)//
-        m_BP1Writer.WriteVariableIndex( variable, m_Buffer, m_MetadataSet );
+        m_BP1Writer.WriteVariableMetadata( variable, m_Buffer, m_MetadataSet );
 
         if( m_TransportFlush == true ) //in batches
         {

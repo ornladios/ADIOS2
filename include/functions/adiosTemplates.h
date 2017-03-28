@@ -181,6 +181,43 @@ void MemcpyToBuffer( std::vector<char>& raw, std::size_t& position, const T* sou
 }
 
 
+
+/**
+ * Version that pushed to the end of the buffer, updates vec.size() automatically
+ * @param raw
+ * @param source using pointer notation
+ * @param elements
+ */
+template<class T>
+void CopyToBuffer( std::vector<char>& buffer, const T* source, const std::size_t elements = 1 ) noexcept
+{
+    const char* src = reinterpret_cast<const char*>( source );
+    buffer.insert( buffer.end(), src, src + elements*sizeof(T) );
+}
+
+/**
+ * Overloaded version to copies data to a specific location in the buffer, doesn't update vec.size()
+ * @param raw
+ * @param position
+ * @param source
+ * @param elements
+ */
+template<class T>
+void CopyToBuffer( std::vector<char>& buffer, const std::size_t position, const T* source, const std::size_t elements = 1 ) noexcept
+{
+    const char* src = reinterpret_cast<const char*>( source );
+    std::copy( src, src + elements*sizeof(T), buffer.begin() + position );
+}
+
+
+template<class T>
+void CopyFromBuffer( T* destination, std::size_t elements, const std::vector<char>& raw, std::size_t& position ) noexcept
+{
+    std::copy( raw.begin() + position, raw.begin() + position + sizeof(T)*elements, reinterpret_cast<char*>(destination) );
+    position += elements*sizeof(T);
+}
+
+
 template< class T >
 void PrintValues( const std::string name, const char* buffer, const std::size_t position, const std::size_t elements )
 {
