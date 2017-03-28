@@ -56,7 +56,7 @@ public:
     VariablePy DefineVariablePy( const std::string name, const pyList localDimensionsPy = pyList(),
                                  const pyList globalDimensionsPy = pyList(), const pyList globalOffsetsPy = pyList() );
 
-    MethodPy& DeclareMethodPy( const std::string methodName, const std::string type = "" );
+    MethodPy& DeclareMethodPy( const std::string methodName );
 
     EnginePy OpenPy( const std::string name, const std::string accessMode, const MethodPy&  method, pyObject py_comm = pyObject() );
 

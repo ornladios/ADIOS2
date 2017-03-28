@@ -26,7 +26,7 @@ if( rank % 2 == 1 ): # odd ranks only
     
 
 #Setup method and print summary
-ioSettings = adios.DeclareMethod("adiosSettings", "BPFileWriter")
+ioSettings = adios.DeclareMethod("adiosSettings")
 ioSettings.SetParameters( profile_units = 'mus' )
 ioSettings.AddTransport( 'File', have_metadata_file = 'no', profile_units = 'mus' )  # POSIX is default, just checking
 

@@ -17,7 +17,7 @@ namespace adios
 
 
 ADIOSPy::ADIOSPy( MPI_Comm mpiComm, const bool debug ):
-    ADIOS( mpiComm, debug )
+    ADIOS( mpiComm, adios::Verbose::ERROR, debug )
 { }
 
 
@@ -31,9 +31,9 @@ void ADIOSPy::HelloMPI( )
 }
 
 
-MethodPy& ADIOSPy::DeclareMethodPy( const std::string methodName, const std::string type )
+MethodPy& ADIOSPy::DeclareMethodPy( const std::string methodName )
 {
-    Method& method = DeclareMethod( methodName, type );
+    Method& method = DeclareMethod( methodName );
     return *reinterpret_cast<MethodPy*>( &method );
 }
 
