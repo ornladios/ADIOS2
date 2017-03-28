@@ -21,28 +21,28 @@ echo
 make -j4 HAVE_ADIOS1=yes ADIOS1_DIR=${ADIOS1_DIR} CC=$CCOMPILER MPICC=$MPICOMPILER       #build the ./lib/libadios.a and ./libadios_nompi.a
 echo
 echo "#################################################################"
-echo "Building BPWriter example"
+echo "Building ADIOS1Writer example"
 echo "#################################################################"
-make -j4 -C ./examples/hello/bpWriter CC=$CCOMPILER MPICC=$MPICOMPILER
-#make -j4 -C ./examples/hello/bpReader CC=$CCOMPILER MPICC=$MPICOMPILER
+make -j4 -C ./examples/hello/adios1Writer CC=$CCOMPILER MPICC=$MPICOMPILER mpi
+#make -j4 -C ./examples/hello/adios1Reader CC=$CCOMPILER MPICC=$MPICOMPILER mpi
 echo
 echo
 echo
 echo "#################################################################"
-echo "Running nompi.exe example"
+echo "Running the MPI example"
 echo "#################################################################"
 echo
 echo
 echo "#################################################################"
-echo "BP writer"
+echo "ADIOS1 writer"
 echo "#################################################################"
-./examples/hello/bpWriter/helloBPWriter_nompi.exe
-echo "DONE...check for myDoubles_nompi.bp directory"
+mpirun -np 4 ./examples/hello/adios1Writer/helloADIOS1Writer.exe
+echo "DONE...check for myDoubles.bp directory"
 
 echo "#################################################################"
-echo "BP reader..not ready yet"
+echo "ADIOS1 reader..not ready yet"
 echo "#################################################################"
-#./examples/hello/bpWriter/helloBPReader.exe
+#./examples/hello/adios1Writer/helloADIOS1Reader.exe
 echo
 echo
 echo "#################################################################"
