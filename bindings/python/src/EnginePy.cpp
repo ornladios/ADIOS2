@@ -68,7 +68,7 @@ void EnginePy::WritePy( VariablePy& variable, const pyArray& array )
 
 void EnginePy::Advance( )
 {
-
+    m_Engine->Advance( );
 }
 
 

@@ -149,7 +149,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
       * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open( const std::string streamName, const std::string accessMode, MPI_Comm mpiComm,
-                                  const Method& method, const IOMode iomode, const float timeout_sec = 0.0 );
+                                  const Method& method, const IOMode iomode = IOMode::INDEPENDENT, const float timeout_sec = 0.0 );
 
     /**
      * @brief Open to Write, Read. Creates a new engine from previously defined method.
@@ -162,7 +162,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
       * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open( const std::string streamName, const std::string accessMode, 
-    							  const Method& method, const IOMode iomode, const float timeout_sec = 0.0 );
+    							  const Method& method, const IOMode iomode = IOMode::INDEPENDENT, const float timeout_sec = 0.0 );
 
 
     /**
@@ -176,7 +176,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open( const std::string streamName, const std::string accessMode, MPI_Comm mpiComm,
-                                  const std::string methodName, const IOMode iomode, const float timeout_sec = 0.0 );
+                                  const std::string methodName, const IOMode iomode = IOMode::INDEPENDENT, const float timeout_sec = 0.0 );
 
     /**
      * Version required by the XML config file implementation, searches method inside ADIOS through a unique name.
@@ -189,7 +189,8 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open( const std::string streamName, const std::string accessMode,
-                                  const std::string methodName, const IOMode iomode, const float timeout_sec = 0.0 );
+                                  const std::string methodName, const IOMode iomode = IOMode::INDEPENDENT,
+                                  const float timeout_sec = 0.0 );
 
     /**
      * @brief Open to Read all steps from a file. No streaming, advancing is possible here. All steps in the file
@@ -201,7 +202,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> OpenFileReader( const std::string fileName, MPI_Comm mpiComm,
-                                            const Method& method, const IOMode iomode );
+                                            const Method& method, const IOMode iomode = IOMode::INDEPENDENT );
 
     /**
      * @brief Open to Read all steps from a file. No streaming, advancing is possible here. All steps in the file
@@ -214,7 +215,7 @@ public: // PUBLIC Constructors and Functions define the User Interface with ADIO
      * @return Derived class of base Engine depending on Method parameters, shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> OpenFileReader( const std::string fileName, MPI_Comm mpiComm,
-                                            const std::string methodName, const IOMode iomode );
+                                            const std::string methodName, const IOMode iomode = IOMode::INDEPENDENT );
 
     /**
      * @brief Dumps groups information to a file stream or standard output.

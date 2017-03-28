@@ -10,6 +10,10 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <memory> //std::shared_ptr
+#include <cstdint> //std::uintX_t
+#include <unordered_map>
+#include <vector>
+//#include <queue>  //std::priority_queue to be added later
 /// \endcond
 
 #if ADIOS_NOMPI
@@ -28,34 +32,44 @@ namespace format
 {
 
 /**
- * Struct that tracks metadata indices in bp format
+ * Used for Variables and Attributes, needed in a container for characteristic sets merge independently for each Variable or Attribute
+ */
+struct BP1Index
+{
+    std::vector<char> Buffer; ///< metadata variable index, start with 100Kb
+    std::uint64_t Count = 0; ///< number of characteristics sets (time and spatial aggregation)
+    const std::uint32_t MemberID;
+
+    BP1Index( const std::uint32_t memberID ):
+        MemberID{ memberID }
+    {
+        Buffer.reserve( 500 );
+    }
+};
+
+/**
+ * Single struct that tracks metadata indices in bp format
  */
 struct BP1MetadataSet
 {
-    std::string TimeStepName; ///< time step name associated with this PG
-    std::uint32_t TimeStep = 0; ///< current time step, updated with advance step, if append it will be updated to last
+    std::uint32_t TimeStep; ///< current time step, updated with advance step, if append it will be updated to last, starts with one in ADIOS1
 
-    std::uint64_t PGCount = 0; ///< number of process groups
-    std::size_t PGIndexPosition = 16;
-    std::vector<char> PGIndex = std::vector<char>( 102400, '\0' ); ///< process group index metadata
+    BP1Index PGIndex = BP1Index( 0 ); ///< single buffer for PGIndex
 
-    std::uint32_t VarsCount = 0; ///< number of written Variables
-    std::size_t   VarsIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> VarsIndex = std::vector<char>( 102400, '\0' ); ///< metadata variable index, start with 1Kb
+    //no priority for now
+    std::unordered_map< std::string, BP1Index > VarsIndices; ///< key: variable name, value: bp metadata variable index
+    std::unordered_map< std::string, BP1Index > AttributesIndices; ///< key: attribute name, value: bp metadata attribute index
 
-    std::uint32_t AttributesCount = 0; ///< number of Attributes
-    std::size_t AttributesIndexPosition = 12; ///< initial position in bytes
-    std::vector<char> AttributesIndex = std::vector<char>( 102400, '\0' ); ///< metadata attribute index, start with 1Kb
-
-    const unsigned int MiniFooterSize = 28; ///< 28 for now
+    const unsigned int MiniFooterSize = 28; ///< from bpls reader
 
     //PG (relative) positions in Data buffer to be updated
-    std::uint32_t DataPGVarsCount = 0;
+    std::uint64_t DataPGCount = 0;
     std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative ) position, needs to be updated in every advance step or init
-    std::size_t DataVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
+    std::uint32_t DataPGVarsCount = 0; ///< variables in current PG
+    std::size_t DataPGVarsCountPosition = 0; ///< current PG variable count ( relative ) position, needs to be updated in every advance step or init
     bool DataPGIsOpen = false;
 
-    Profiler Log;
+    Profiler Log; ///< object that takes buffering profiling info
 };
 
 /**
@@ -121,8 +135,6 @@ protected:
         ,METHOD_FILE        = 27
         ,METHOD_ZMQ         = 28
         ,METHOD_MDTM        = 29
-
-
     };
 
 
@@ -184,6 +196,25 @@ protected:
         statistic_finite          = 6
     };
 
+    template<class T>
+    struct Stats
+	{
+    	T Min;
+    	T Max;
+    	std::uint64_t Offset;
+    	std::uint64_t PayloadOffset;
+    	std::uint32_t TimeIndex;
+    	std::uint32_t MemberID;
+
+
+//		unsigned long int count;
+//		long double sum;
+//		long double sumSquare;
+		//unsigned long int histogram
+		//bool finite??
+	};
+
+
 
     /**
      * Returns data type index from enum Datatypes
@@ -195,8 +226,7 @@ protected:
         return type_unknown;
     }
 
-
-    std::vector<int> GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept;
+    std::vector<std::uint8_t> GetMethodIDs( const std::vector< std::shared_ptr<Transport> >& transports ) const noexcept;
 
 };
 
