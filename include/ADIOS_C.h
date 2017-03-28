@@ -9,9 +9,7 @@
 #define ADIOS_C_H_
 
 #ifdef ADIOS_NOMPI
-  #include "mpidummy.h"
-  using adios::MPI_Comm_rank;
-  using adios::MPI_Comm;
+#define MPI_Comm int
 #else
   #include <mpi.h>
 #endif
@@ -79,6 +77,10 @@ void adios_monitor_groups_file( const ADIOS* adiosC, const char* fileName, const
 
 #ifdef __cplusplus
 } //end extern C
+#endif
+
+#ifdef ADIOS_NOMPI
+#undef MPI_Comm
 #endif
 
 #endif /* ADIOS_C_H_ */

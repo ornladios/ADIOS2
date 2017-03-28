@@ -7,6 +7,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
+#include <vector>
 /// \endcond
 
 #include "core/Profiler.h"

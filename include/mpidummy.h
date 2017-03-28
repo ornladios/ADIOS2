@@ -20,10 +20,6 @@
 #include <stdio.h>
 /// \endcond
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 namespace adios
 {
 
@@ -109,9 +105,5 @@ int MPI_Get_processor_name (char *name, int *resultlen);
 double MPI_Wtime();
 
 } //end namespace
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
