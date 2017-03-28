@@ -24,6 +24,7 @@ BPFileWriter::BPFileWriter( ADIOS& adios, const std::string name, const std::str
     m_BP1Aggregator{ format::BP1Aggregator( m_MPIComm, debugMode ) },
     m_MaxBufferSize{ m_Buffer.m_Data.max_size() }
 {
+    m_MetadataSet.TimeStep = 1; //starting at one to be compatible with ADIOS1.x
     Init( );
 }
 

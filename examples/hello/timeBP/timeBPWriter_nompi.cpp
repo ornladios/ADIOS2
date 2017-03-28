@@ -18,7 +18,7 @@ int main( int argc, char* argv [] )
     adios::ADIOS adios( adiosDebug );
 
     //Application variable
-    std::vector<double> myDoubles = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    std::vector<double> myDoubles = { 10, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     const std::size_t Nx = myDoubles.size();
 
     const std::size_t rows = 3;
@@ -47,21 +47,18 @@ int main( int argc, char* argv [] )
         bpWriterSettings.SetParameters( "profile_units=mus" );
         bpWriterSettings.AddTransport( "File", "profile_units=mus", "have_metadata_file=no" ); //uses default POSIX library
 
-        //Create engine smart pointer due to polymorphism,
-        //Open returns a smart pointer to Engine containing the Derived class Writer
-        //auto bpWriter = adios.Open( "time_nompi.bp", "w", bpWriterSettings );
-
+        //Create object directly rather than using polymorphism with ADIOS.Open
         adios::BPFileWriter bpWriter( adios, "time_nompi.bp", "w", adios.m_MPIComm, bpWriterSettings, adiosDebug );
 
-        for( unsigned int t = 0; t < 2; ++t )
+        for( unsigned int t = 0; t < 3; ++t )
         {
-            myDoubles[0] = t;
-//            myMatrix[0] = t;
-//            myMatrix2[0] = t;
+            myDoubles[0] = t; // t * -1;
+            myMatrix[0] = t;
+            myMatrix2[0] = t;
 
             bpWriter.Write( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-//            bpWriter.Write( ioMyMatrix, myMatrix.data() );
-//            bpWriter.Write( ioMyMatrix2, myMatrix2.data() );
+            bpWriter.Write( ioMyMatrix, myMatrix.data() );
+            bpWriter.Write( ioMyMatrix2, myMatrix2.data() );
             bpWriter.Advance();
         }
 

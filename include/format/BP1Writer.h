@@ -253,7 +253,7 @@ private:
         }
         else //update characteristics sets count
         {
-            const std::size_t characteristicsSetsCountPosition = 13 + variable.m_Name.size();
+            const std::size_t characteristicsSetsCountPosition = 15 + variable.m_Name.size();
             ++index.Count;
             CopyToBuffer( buffer, characteristicsSetsCountPosition, &index.Count ); //test
         }

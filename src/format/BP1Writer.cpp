@@ -7,8 +7,6 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
-#include <iostream>
-#include <unistd.h> //sleep must be removed
 /// \endcond
 
 #include "format/BP1Writer.h"
@@ -150,7 +148,7 @@ std::string BP1Writer::GetRankProfilingLog( const int rank, const BP1MetadataSet
 {
     auto lf_WriterTimer = []( std::string& rankLog, const Timer& timer )
     {
-        rankLog += timer.Process + "_" + timer.GetUnits() + "': " + std::to_string( timer.ProcessTime ) + ", ";
+        rankLog += "'" + timer.Process + "_" + timer.GetUnits() + "': " + std::to_string( timer.ProcessTime ) + ", ";
     };
 
     //prepare string dictionary per rank
@@ -165,16 +163,15 @@ std::string BP1Writer::GetRankProfilingLog( const int rank, const BP1MetadataSet
         auto& timers = transports[t]->m_Profiler.m_Timers;
 
         rankLog += "'transport_" + std::to_string(t) + "': { ";
-        rankLog += "'lib:' " + transports[t]->m_Type + ", ";
+        rankLog += "'lib': " + transports[t]->m_Type + ", ";
 
         for( unsigned int i = 0; i < 3; ++i )
             lf_WriterTimer( rankLog, timers[i] );
 
-        rankLog += " }, ";
+        rankLog += "}, ";
     }
     rankLog += "}, ";
 
-    //std::cout << rankLog << "\n";
     return rankLog;
 }
 

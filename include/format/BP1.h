@@ -52,7 +52,7 @@ struct BP1Index
  */
 struct BP1MetadataSet
 {
-    std::uint32_t TimeStep = 0; ///< current time step, updated with advance step, if append it will be updated to last
+    std::uint32_t TimeStep; ///< current time step, updated with advance step, if append it will be updated to last, starts with one in ADIOS1
 
     BP1Index PGIndex = BP1Index( 0 ); ///< single buffer for PGIndex
 

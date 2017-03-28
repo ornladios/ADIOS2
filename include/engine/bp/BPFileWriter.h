@@ -124,8 +124,8 @@ private:
             WriteProcessGroupIndex( );
 
         //pre-calculate new metadata and payload sizes
-        m_TransportFlush = CheckBufferAllocation( m_BP1Writer.GetVariableIndexSize( variable ) + variable.PayLoadSize(),
-                                                  m_GrowthFactor, m_MaxBufferSize, m_Buffer.m_Data );
+//        m_TransportFlush = CheckBufferAllocation( m_BP1Writer.GetVariableIndexSize( variable ) + variable.PayLoadSize(),
+//                                                  m_GrowthFactor, m_MaxBufferSize, m_Buffer.m_Data );
 
         //WRITE INDEX to data buffer and metadata structure (in memory)//
         m_BP1Writer.WriteVariableMetadata( variable, m_Buffer, m_MetadataSet );
