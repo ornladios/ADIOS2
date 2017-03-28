@@ -27,9 +27,9 @@ class STLVector : public Capsule
 
 public:
   std::vector<char> m_Data;     ///< data buffer allocated using the STL in heap
-                                ///memory, default size = 16 Mb
+                                /// memory, default size = 16 Mb
   std::vector<char> m_Metadata; ///< metadata buffer allocated using the STL in
-                                ///heap memory, default size = 100 Kb
+                                /// heap memory, default size = 100 Kb
 
   /**
    * Unique constructor

@@ -96,8 +96,8 @@ private:
   capsule::STLVector
       m_Buffer; ///< heap capsule, contains data and metadata buffers
   format::BP1Writer m_BP1Writer; ///< format object will provide the required BP
-                                 ///functionality to be applied on m_Buffer and
-                                 ///m_Transports
+                                 /// functionality to be applied on m_Buffer and
+  /// m_Transports
 
   bool m_DoRealTime = false;
   bool m_DoMonitor = false;
@@ -106,7 +106,7 @@ private:
       m_CallBack; ///< call back function
 
   void Init(); ///< calls InitCapsules and InitTransports based on Method,
-               ///called from constructor
+               /// called from constructor
   void InitCapsules();
   void InitTransports(); ///< from Transports
 

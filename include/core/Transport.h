@@ -71,10 +71,10 @@ public:
   virtual void Write(const char *buffer, std::size_t size) = 0;
 
   virtual void Flush(); ///< flushes current contents to physical medium without
-                        ///closing the transport
+                        /// closing the transport
 
   virtual void Close(); ///< closes current transport and flushes everything,
-                        ///transport becomes unreachable
+                        /// transport becomes unreachable
 
   virtual void InitProfiler(const std::string accessMode,
                             const Support::Resolutions resolution);

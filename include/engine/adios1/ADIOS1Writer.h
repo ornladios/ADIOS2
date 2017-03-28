@@ -96,11 +96,11 @@ public:
 
 private:
   const char *m_groupname; ///< ADIOS1 group name created from the method's
-                           ///name. Must be a unique group name.
+                           /// name. Must be a unique group name.
   const char *m_filename;  ///< Save file name from constructor for Advance()
-                           ///when we re-open in ADIOS1
+                           /// when we re-open in ADIOS1
   MPI_Comm m_comm; ///< Save MPI communicator from constructor for Advance()
-                   ///when we re-open in ADIOS1
+                   /// when we re-open in ADIOS1
 
   bool m_initialized = false; ///< set to true after calling adios_init()
   int64_t m_adios_file = 0;   ///< ADIOS1 file handler returned by adios_open()

@@ -511,7 +511,7 @@ private:
   void FlattenMetadata(BP1MetadataSet &metadataSet,
                        capsule::STLVector &buffer) const
       noexcept; ///< sets the metadata buffer in capsule with indices and
-                ///minifooter
+                /// minifooter
 };
 
 } // end namespace format

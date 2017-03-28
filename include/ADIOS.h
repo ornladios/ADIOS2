@@ -42,13 +42,11 @@ class Engine;
  */
 class ADIOS
 {
-
-public
-    : // PUBLIC Constructors and Functions define the User Interface with ADIOS
+public:
   MPI_Comm m_MPIComm = MPI_COMM_SELF; ///< only used as reference to MPI
-                                      ///communicator passed from parallel
-                                      ///constructor, MPI_Comm is a pointer
-                                      ///itself. Public as called from C
+                                      /// communicator passed from parallel
+  /// constructor, MPI_Comm is a pointer
+  /// itself. Public as called from C
 
   int m_RankMPI = 0; ///< current MPI rank process
   int m_SizeMPI = 1; ///< current MPI processes size
@@ -293,15 +291,15 @@ protected: // no const to allow default empty and copy constructors
   std::map<unsigned int, VariableCompound> m_Compound;
 
   std::string m_ConfigFile; ///< XML File to be read containing configuration
-                            ///information
+                            /// information
   bool m_DebugMode = false; ///< if true will do more checks, exceptions,
-                            ///warnings, expect slower code
+                            /// warnings, expect slower code
 
   // Variables
   std::map<std::string, std::pair<std::string, unsigned int>>
       m_Variables; ///< Makes variable name unique, key: variable name, value:
-                   ///pair.first = type, pair.second = index in corresponding
-                   ///vector of Variable
+                   /// pair.first = type, pair.second = index in corresponding
+  /// vector of Variable
 
   std::vector<std::shared_ptr<Transform>>
       m_Transforms; ///< transforms associated with ADIOS run

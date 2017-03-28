@@ -53,8 +53,8 @@ struct BP1Index
 struct BP1MetadataSet
 {
   std::uint32_t TimeStep; ///< current time step, updated with advance step, if
-                          ///append it will be updated to last, starts with one
-                          ///in ADIOS1
+                          /// append it will be updated to last, starts with one
+  /// in ADIOS1
 
   BP1Index PGIndex = BP1Index(0); ///< single buffer for PGIndex
 
@@ -62,23 +62,23 @@ struct BP1MetadataSet
   std::unordered_map<std::string, BP1Index>
       VarsIndices; ///< key: variable name, value: bp metadata variable index
   std::unordered_map<std::string, BP1Index> AttributesIndices; ///< key:
-                                                               ///attribute
-                                                               ///name, value:
-                                                               ///bp metadata
-                                                               ///attribute
-                                                               ///index
+                                                               /// attribute
+  /// name, value:
+  /// bp metadata
+  /// attribute
+  /// index
 
   const unsigned int MiniFooterSize = 28; ///< from bpls reader
 
   // PG (relative) positions in Data buffer to be updated
   std::uint64_t DataPGCount = 0;
   std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative )
-                                        ///position, needs to be updated in
-                                        ///every advance step or init
-  std::uint32_t DataPGVarsCount = 0;    ///< variables in current PG
+                                        /// position, needs to be updated in
+  /// every advance step or init
+  std::uint32_t DataPGVarsCount = 0; ///< variables in current PG
   std::size_t DataPGVarsCountPosition =
       0; ///< current PG variable count ( relative ) position, needs to be
-         ///updated in every advance step or init
+         /// updated in every advance step or init
   bool DataPGIsOpen = false;
 
   Profiler Log; ///< object that takes buffering profiling info

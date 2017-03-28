@@ -458,21 +458,21 @@ public:
 
 protected:
   ADIOS
-      &m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
+  &m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
   std::vector<std::shared_ptr<Transport>> m_Transports; ///< transports managed
   const bool m_DebugMode =
       false; ///< true: additional checks, false: by-pass checks
   unsigned int m_nThreads = 0;
   const std::string m_EndMessage; ///< added to exceptions to improve debugging
   std::set<std::string> m_WrittenVariables; ///< contains the names of the
-                                            ///variables that are being written
+                                            /// variables that are being written
 
   virtual void
   Init(); ///< Initialize m_Capsules and m_Transports, called from constructor
   virtual void InitParameters(); ///< Initialize parameters from Method, called
-                                 ///from Initi in constructor
+                                 /// from Initi in constructor
   virtual void InitTransports(); ///< Initialize transports from Method, called
-                                 ///from Init in constructor
+                                 /// from Init in constructor
 
   /**
    * Used to verify parameters in m_Method containers
@@ -488,8 +488,8 @@ protected:
       const std::string parameterName, const std::string hint) const;
 
   bool TransportNamesUniqueness() const; ///< checks if transport names are
-                                         ///unique among the same types (file
-                                         ///I/O)
+                                         /// unique among the same types (file
+  /// I/O)
 
   /**
    * Throws an exception in debug mode if transport index is out of range.

@@ -38,13 +38,13 @@ template <class T> class Variable : public VariableBase
 
 public:
   const T *m_AppValues = nullptr; ///< pointer to values passed from user in
-                                  ///ADIOS Write, it might change in ADIOS Read
+                                  /// ADIOS Write, it might change in ADIOS Read
 
   std::vector<TransformData> m_Transforms; ///< associated transforms, sequence
-                                           ///determines application order, e.g.
-                                           ///first Transforms[0] then
-                                           ///Transforms[1]. Pointer used as
-                                           ///reference (no memory management).
+  /// determines application order, e.g.
+  /// first Transforms[0] then
+  /// Transforms[1]. Pointer used as
+  /// reference (no memory management).
 
   Variable<T>(const std::string name, const Dims dimensions,
               const Dims globalDimensions, const Dims globalOffsets,

@@ -95,7 +95,7 @@ private:
   // BP functionality to be applied on m_Buffer and m_Transports
 
   void Init(); ///< calls InitCapsules and InitTransports based on Method,
-               ///called from constructor
+               /// called from constructor
   void InitCapsules();
   void InitTransports(); ///< from Transports
 

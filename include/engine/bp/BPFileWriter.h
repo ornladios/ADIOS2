@@ -96,25 +96,25 @@ public:
 private:
   capsule::STLVector m_Buffer;   ///< heap capsule using STL std::vector<char>
   format::BP1Writer m_BP1Writer; ///< format object will provide the required BP
-                                 ///functionality to be applied on m_Buffer and
-                                 ///m_Transports
+                                 /// functionality to be applied on m_Buffer and
+  /// m_Transports
   format::BP1MetadataSet m_MetadataSet; ///< metadata set accompanying the heap
-                                        ///buffer data in bp format. Needed by
-                                        ///m_BP1Writer
+                                        /// buffer data in bp format. Needed by
+  /// m_BP1Writer
   format::BP1Aggregator m_BP1Aggregator;
 
-  bool m_IsFirstClose = true;  ///< set to false after first Close is reached so
-                               ///metadata doesn't have to be accommodated for a
-                               ///subsequent Close
+  bool m_IsFirstClose = true; ///< set to false after first Close is reached so
+                              /// metadata doesn't have to be accommodated for a
+  /// subsequent Close
   std::size_t m_MaxBufferSize; ///< maximum allowed memory to be allocated
   float m_GrowthFactor = 1.5;  ///< capsule memory growth factor, new_memory =
-                               ///m_GrowthFactor * current_memory
+                               /// m_GrowthFactor * current_memory
 
   bool m_TransportFlush =
       false; ///< true: transport flush happened, buffer must be reset
   bool m_CloseProcessGroup = false; ///< set to true if advance is called, this
-                                    ///prevents flattening the data and metadata
-                                    ///in Close
+  /// prevents flattening the data and metadata
+  /// in Close
 
   void Init();
   void InitParameters();

@@ -41,14 +41,14 @@ class Method
 public:
   const std::string m_Name;       ///< Method name (as defined in XML)
   const bool m_DebugMode = false; ///< true: on, throws exceptions and do
-                                  ///additional checks, false: off, faster, but
-                                  ///unsafe
+                                  /// additional checks, false: off, faster, but
+  /// unsafe
   int m_nThreads;
   std::string m_Type;                              ///< Method's engine type
   std::map<std::string, std::string> m_Parameters; ///< method parameters
   std::vector<std::map<std::string, std::string>>
       m_TransportParameters; ///< each is a separate Transport containing their
-                             ///own parameters
+                             /// own parameters
 
   /**
    * Constructor

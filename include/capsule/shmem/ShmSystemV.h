@@ -46,16 +46,16 @@ private:
   int m_DataShmID; ///< data shared memory buffer id
 
   char *m_Metadata = nullptr; ///< reference to a shared memory metadata buffer
-                              ///created with shmget
+                              /// created with shmget
   const std::size_t
       m_MetadataSize;  ///< size of the allocated shared memory segment
   key_t m_MetadataKey; ///< key associated with the metadata buffer, created
-                       ///with ftok
+                       /// with ftok
   int m_MetadataShmID; ///< metadata shared memory buffer id
 
   void CheckShm() const; ///< checks if all shared memory allocations are
-                         ///correct, throws std::bad_alloc, called from
-                         ///constructor if debug mode is true
+                         /// correct, throws std::bad_alloc, called from
+  /// constructor if debug mode is true
 };
 
 } // end namespace
