@@ -55,7 +55,8 @@ void BP1Writer::WriteProcessGroupIndex( const bool isFortran, const std::string 
 
     //processID in metadata,
     CopyToBuffer( metadataBuffer, &processID );
-    metadataBuffer.insert( metadataBuffer.end(), 4, 0 ); //skip coordination var in data ....what is coordination var?
+    //skip coordination var in data ....what is coordination var?
+    dataBuffer.insert( dataBuffer.end(), 4, 0 );
 
     //time step name to metadata and data
     const std::string timeStepName( std::to_string( metadataSet.TimeStep ) );
@@ -320,9 +321,8 @@ void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, capsule::STLVector
 
     //Finish writing metadata counts and lengths
     //PG Index
-    CopyToBuffer( metadataSet.PGIndex.Buffer, 0, &metadataSet.DataPGCount );
-    const std::uint64_t pgLength = metadataSet.PGIndex.Buffer.size() - 16;
-    CopyToBuffer( metadataSet.PGIndex.Buffer, 8, &pgLength );
+    const std::uint64_t pgCount = metadataSet.DataPGCount;
+    const std::uint64_t pgLength = metadataSet.PGIndex.Buffer.size();
 
     //var index count and length (total), and each index length
     std::uint32_t varsCount;
@@ -334,13 +334,17 @@ void BP1Writer::FlattenMetadata( BP1MetadataSet& metadataSet, capsule::STLVector
     lf_IndexCountLength( metadataSet.AttributesIndices, attributesCount, attributesLength );
 
     const std::size_t footerSize = (pgLength+16) + (varsLength+12) + (attributesLength+12) + metadataSet.MiniFooterSize;
-
     auto& buffer = heap.m_Data;
     buffer.reserve( buffer.size() + footerSize ); //reserve data to fit metadata, must replace with growth buffer strategy
 
-    CopyToBuffer( buffer, metadataSet.PGIndex.Buffer.data(), metadataSet.PGIndex.Buffer.size() ); //PGIndex
-    lf_FlattenIndices( varsCount, varsLength, metadataSet.VarsIndices, buffer ); //VarsIndices
-    lf_FlattenIndices( attributesCount, attributesLength, metadataSet.AttributesIndices, buffer ); //AttributesIndices
+    //write pg index
+    CopyToBuffer( buffer, &pgCount );
+    CopyToBuffer( buffer, &pgLength );
+    CopyToBuffer( buffer, metadataSet.PGIndex.Buffer.data(), pgLength );
+    //Vars indices
+    lf_FlattenIndices( varsCount, varsLength, metadataSet.VarsIndices, buffer );
+    //Attribute indices
+    lf_FlattenIndices( attributesCount, attributesLength, metadataSet.AttributesIndices, buffer );
 
     //getting absolute offsets, minifooter is 28 bytes for now
     const std::uint64_t offsetPGIndex = heap.m_DataAbsolutePosition;

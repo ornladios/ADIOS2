@@ -34,9 +34,9 @@ int main( int argc, char* argv [] )
     {
         //Define variable and local size
         adios::Variable<double>& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", adios::Dims{Nx} );
-        adios::Variable<float>& ioMyMatrix = adios.DefineVariable<float>( "myMatrix", adios::Dims{rows,columns} );
-        adios::Variable<float>& ioMyMatrix2 = adios.DefineVariable<float>( "myMatrix2", adios::Dims{rows,columns} );
-        adios::Variable<float>& ioMyMatrix3 = adios.DefineVariable<float>( "myMatrix3", adios::Dims{rows,columns} );
+//        adios::Variable<float>& ioMyMatrix = adios.DefineVariable<float>( "myMatrix", adios::Dims{rows,columns} );
+//        adios::Variable<float>& ioMyMatrix2 = adios.DefineVariable<float>( "myMatrix2", adios::Dims{rows,columns} );
+//        adios::Variable<float>& ioMyMatrix3 = adios.DefineVariable<float>( "myMatrix3", adios::Dims{rows,columns} );
 
         //Define method for engine creation, it is basically straight-forward parameters
         adios::Method& bpWriterSettings = adios.DeclareMethod( "SinglePOSIXFile" ); //default method type is Writer
@@ -51,9 +51,9 @@ int main( int argc, char* argv [] )
             throw std::ios_base::failure( "ERROR: couldn't create bpWriter at Open\n" );
 
         bpFileWriter->Write<double>( ioMyDoubles, myDoubles.data() ); // Base class Engine own the Write<T> that will call overloaded Write from Derived
-        bpFileWriter->Write<float>( ioMyMatrix, myMatrix.data() ); //2d Example
-        bpFileWriter->Write<float>( ioMyMatrix2, myMatrix2.data() ); //2d Example
-        bpFileWriter->Write<float>( ioMyMatrix3, myMatrix2.data() ); //2d Example
+//        bpFileWriter->Write<float>( ioMyMatrix, myMatrix.data() ); //2d Example
+//        bpFileWriter->Write<float>( ioMyMatrix2, myMatrix2.data() ); //2d Example
+//        bpFileWriter->Write<float>( ioMyMatrix3, myMatrix2.data() ); //2d Example
         bpFileWriter->Close( );
         //
     }
