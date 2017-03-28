@@ -2,7 +2,7 @@
 
 # Run clang-format to verify prior to committing
 if [ "$(git config --bool hooks.clang-format)" == "true" ] && \
-   [ -n "${git merge-base origin/master HEAD)" ]
+   [ -n "$(git merge-base origin/master HEAD)" ]
 then
   git clang-format -vv
 fi
