@@ -3,17 +3,16 @@ language: cpp
 dist: trusty
 addons:
   apt:
-    sources:
-      - llvm-toolchain-trusty-3.8
     packages:
       - clang-format-3.8
       - clang-tidy-3.8
 before_install:
-  - wget http://www.cmake.org/files/v3.7/cmake-3.7.1-Linux-x86_64.tar.gz
+  - wget http://www.cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.tar.gz
 install: 
-  - tar -xf cmake-3.7.1-Linux-x86_64.tar.gz
+  - tar -xf cmake-3.7.2-Linux-x86_64.tar.gz
   - export PATH="${PWD}/cmake-3.7.1-Linux-x86_64/bin:${PATH}"
   - pip install --user flake8
+  - git config --global clangformat.binary clang-format-3.8
 env:
   - BUILD_MATRIX_ENTRY=format
 script:
