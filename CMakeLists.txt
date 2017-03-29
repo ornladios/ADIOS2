@@ -58,15 +58,10 @@ if(ADIOS_ENABLE_PIC)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-# MPI
 option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" ON)
-if(ADIOS_USE_MPI)
-  find_package(MPI COMPONENTS C)
-  if(NOT MPI_FOUND)
-    message(WARNING "Unable to find MPI.  Disabling ADIOS_USE_MPI")
-    set(ADIOS_USE_MPI OFF CACHE BOOL "Enable the MPI version of ADIOS" FORCE)
-  endif()
-endif()
+option(ADIOS_USE_BZip2 "Enable support for BZip2 transforms" ON)
+option(ADIOS_USE_ADIOS1 "Enable support for the ADIOS 1 engine" OFF)
+option(ADIOS_USE_DataMan "Enable support for the DataMan engine" OFF)
 
 #------------------------------------------------------------------------------#
 # Third party libraries

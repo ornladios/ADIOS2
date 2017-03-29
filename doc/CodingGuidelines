@@ -1,0 +1,167 @@
+CodingGuidelines
+ Created on: Sep 30, 2016 
+     Rev:    0.1
+     Author: William F Godoy, godoywf@ornl.gov
+
+This document introduces coding guidelines that all developers must follow as standard practice.
+This list is open as corrections and new ideas/suggestions come in place. 
+Take them as mandatory to improve ADIOS development and collaboration.
+Many items from this list are taken from Stroustrup, Sutter, and Meyers books.
+       
+
+Objectives:
+
+1) Improve collaboration:
+    1.a. Reduce new code development and integration times for developers and users, by making code easy to understand
+    1.b. Allocate more time for discussion and pathfinding rather than understanding developers' coding
+    1.c. Expand developers and users base
+
+2) Execute new ideas faster
+
+3) Allocate more time to research and publication from new ideas
+
+4) Improve quality of final software product: reduce potential security risks (segmentation faults, core dumps, overflows)
+   and ease the integration of customers' products with ADIOS
+
+
+
+C++ coding guidelines, all mandatory in no particular order:
+
+Text style for readability (Coding format setup in Eclipse with Window > Preferences > C/C++ > CodeStyle > Formatters )
+1) Use meaningful English words (time not t, rank not r or rk), well-known acronyms (MPI, XML, CFD, GMRES, etc.) 
+   or well-known short names (Config, Comm, 2D, 3D).
+   Examples: timeInitial instead of tIni, or work instead of wrk
+   One Exception: when redefining long types with the keyword "using" some mnemonics and short names is allowed, document scope of using
+2) Avoid "_" in names, adds unnecessary length (specially when mixed with STL containers) to the variable name and could conflict with name mangling. 
+   Reserve it for prefix of special cases (see class members and lambda functions).
+   Use upper case letter instead:
+   Don't: std::vector< std::vector<double> > this_is_my_very_very_long_two_dimensional_vector_name
+      Do: std::vector< std::vector<double> > thisIsMyVeryVeryLongTwoDimensionalVectorName
+
+3) Use 4 spaces instead of tab. Tab behaves different in other editors (vi, emacs, gedit, slickedit, code blocks, etc.)
+4) Use 4 spaces for nested logic structure indentation (like in Python), Eclipse has a CTRL+I option to set it automatically.
+   if( number1 < 1 )
+   {
+       if( number2 < 2 )
+       {
+           ....
+       }
+   }
+
+    
+5) Brackets: use an extra space for brackets. Only one line conditionals can skip having brackets.
+    Do: 
+    if( number < 1 )
+    {
+        number = 4;
+        ...
+    } 
+    
+    Don't:
+    if( number < 1 ){
+    number = 4;    .....
+                     .....}
+
+   It's ok to omit brackets in one line conditionals:
+   if( itMap == map.end() ) throw std::invalid_argument( "ERROR: not found in map\n" );
+    
+6) Prefer the keyword "using" over "typedef". Only rename very long complex or custom types, 
+   do not rename standard types (int, double, std::vector) 
+   Don't: typedef std::vector<std::vector< std::map<std::string,double> >> MapIn2DVector;
+   Do:    using std::vector<std::vector< std::map<std::string,double> >> = MapIn2DVector;
+   
+   See 1) for Exception: when redefining long types with the keyword "using" 
+   some mnemonics and short names are allowed, document scope of using (local, class, file, etc.), though
+    
+
+Documentation/Comments
+1) Use Doxygen as the official API documentation tool. 
+   Eclipse has a template autocomplete option for function declarations.
+2) Only use Doxygen function documentation in header declaration (.h) files, 
+   never in source definition (.cpp). Use informative // comments in the latter, see next.
+3) Use meaningful comments that are not redundant in the definition. Add context instead.
+   Example: Don't: int size; // define the size of the MPI processes
+               Do: int size; // global size for tracking purposes at close() 
+
+
+Variable scope and Namespaces
+1) Local scope variables and function arguments passed by value: first letter must be lower case ( int rank, int size ).
+2) Functions: start with an upper case letter ( e.g. void Transform ( ), double Fourier( ), etc.  )
+3) Lambda functions: use hungarian notation with prefix lf_ in the function name. ( e.g. auto lf_Fourier = []( const double argument ) )   
+4) Avoid the "using namespace foo" clause, instead use the namespace explicitly. 
+   (e.g. std::cout not cout, adios::CHDF5 not CHDF5 ) 
+   This prevents name conflict and allows identifying the function/variable source.   
+5) Declare variables right before they are needed, not at the beginning (Fortran style). 
+   e.g. Don't ---> int rank; ...Many Lines of code...  ; rank = SomeFunction( );
+        Do---> ...Many Lines of code...  ; int rank = SomeFunction( );
+6) Always pass by value primitives ( const int, double, const std::string ) if only a copy if needed.
+   The latter allows compiler optimization hints.
+   For bigger objects and STL containers pass by reference always 
+   ( CNETCDF& netcdf, std::vector<std::string>& names ) 
+7) Use auto keyword only when it doesn't interfere with understanding the logic of the code (don't abuse its use). 
+   Don't use it to replace primitives (int, unsigned int, double) or well-known types (std::vector). 
+   Use it for iterators, when the container is well-known and comes from a STL member function.
+   e.g. auto itMap = myMap.find("William");   (we know it is an iterator from find in map)  
+    
+    
+Classes / Structs
+1) Classes will be initialized with an upper case letter, example: ( ADIOS, NETCDF, PHDF5, Transform, Group, etc. )
+2) Class member variables will use hungarian notation "m_" prefix followed an upper case letter: m_XMLConfig, m_GlobalSize. While member functions will have the same rules as regular functions (e.g. start with an upper case letter).
+3) Reserve structs for public member variables only, Structs should not have member functions, inheritance or private members. Structs will be initialized with an upper case letter and member variables won't use hungarian notation as classes.
+   
+   
+4) Only allow one header and one source file per class ( e.g. class Transport in Transport.h and Transport.cpp), do not define several classes in the same file. 
+   Structs are always define in one header file, ( e.g. Attribute in Attribute.h )
+   One EXCEPTION: structs with static member variables, which must be defined in a source (*.cpp) file   
+ 
+ 
+Memory Management: Pointers, Smart Pointers, References and STL Containers
+1) Avoid bare pointers (*p) at all cost for memory management (new/delete). Prefer smart pointers 
+   unique_ptr, shared_ptr. Also, use smart pointers for polymorphism as objects are a dynamic (runtime) concept.
+   ONE Exception: MPI Data_TYPE that require pointers 
+2) Prefer references (&) over pointers in passing by reference or for members of a class. 
+   ONE Exception: Use a bare pointer only if a reference to an object can be nullptr 
+   (NEVER use it for memory management).
+3) Prefer the STL for memory management to minimize new structs/object (new/delete) creation 
+   (e.g. std::vector<double> instead of double* )
+4) Avoid storing bare pointers in STL containers, they must be deallocated manually if so. 
+   The STL is already taking care of object memory management.
+      Do: std::vector<double>
+   Don't: std::vector<double*>   
+5) Use reference and pointer identifiers attached to the type not the variable name, 
+   Do: double* numbers , Don't: double * numbers 
+   Do: std::vector<double>& vector, Don't: std::vector<double> &vector
+6) Use RAII: resource allocation is initialization. 
+   A good design should allocate memory resources at the constructor stage, 
+   or as soon as the required information is available.
+   Fine tuning memory should be used only if it causes a big impact.    
+ 
+ 
+const / constexpr  correctness, macro, and include statements
+1) Always use const or constexpr when it is due as they are optimized and caught at compilation time
+2) Do not use pre-processor macros (#define) unless it's a must (e.g. #ifdef __cplusplus or #pragma )
+3) Use const in functions that don't change the state of an Object or its members
+4) Use const in function arguments (value or references) if the state of the argument is not changed.
+5) Always use include guards in headers (*.h), Eclipse does it automatically at file creation 
+   using the file name. 
+   (e.g. in CADIOS.h start with #ifndef CADIOS_H_ 
+                                #define CADIOS_H_ )
+6) Only include header files at the beginning of the file (#include <cmath>). Make each *.h file self-contained.
+   Don't include the same header file in *.cpp already defined in an included *.h file. 
+   Example: if cmath is included in CADIOS.h, which is included by CADIOS.cpp,
+   then don't include cmath in CADIOS.cpp     
+
+
+Avoid mixing C-like equivalents
+1) Use exclusive C++ header versions of their C-counterpart ( cmath over math.h, cstdlib over stdlib.h ). 
+   Only use C-headers in these cases: 
+   a. If there is no C++ equivalent (e.g. unistd.h )
+   b. When C++ libraries are deprecated or not fully supported ( MPI, CUDA_C, PETSc )
+   c. When interoperability is required with another language, C++ --> C ---> Fortran, or C++ --> C ---> JNI ---> Java  
+2) Do not use C functions if there is a C++ equivalent ( use std::cout instead of printf, new instead of malloc )
+
+
+C++ Exceptions
+1) Throw C++ standard exceptions for error handling, do not throw integers. This is helpful as it allows handling of different exception types in different ways. In rare cases a custom exceptions must be defined/declared.
+2) All error exceptions must be caught at main (program stops) and must start with "ERROR: ". Use informative messages for exception handling to complement the nature of the exception. Help the user fix the error/warning.
+3) Exceptions thrown by the code (no by STL functions) must be inside a debug mode condition set in the ADIOS class constructor.

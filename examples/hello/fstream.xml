@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<adios-config host-language="C++">
+  <adios-group name="Vector">
+    <var name="size" type="unsigned int"/>
+    <var name="numbers" type="int" dimension="size"/>
+    <attribute name="description" value="1 to 10"/>
+  </adios-group>
+  
+  
+  <transform type="bzip2" >
+  </transform> 
+  
+  <!--  transport group="Types" method="FStream">verbose=3</transport> -->
+  
+  <method name="SingleFile" profile_units="mus" max_buffer_size="10000">
+  	<transport type="File" have_metadata_file="no" aggregators="10" profile_units="mus"/>
+  </method>
+  
+  <!--  <buffer size-MB="40" allocate-time="now"/> -->
+
+</adios-config>
