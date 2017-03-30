@@ -68,6 +68,8 @@ option(ADIOS_USE_DataMan "Enable support for the DataMan engine" OFF)
 #------------------------------------------------------------------------------#
 # Third party libraries
 #------------------------------------------------------------------------------#
+option(ADIOS_BUILD_TESTING "Build ADIOS tests" OFF)
+set(BUILD_TESTING ${ADIOS_BUILD_TESTING} CACHE INTERNAL "")
 include(CTest)
 add_subdirectory(thirdparty)
 
@@ -94,8 +96,6 @@ endif()
 #------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
-option(ADIOS_BUILD_TESTING "Build ADIOS tests" OFF)
-set(BUILD_TESTING ${ADIOS_BUILD_TESTING})
 # We have to wait until after the library is defined to enable testing
 if(BUILD_TESTING)
   enable_testing()
