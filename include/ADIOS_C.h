@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * ADIOS_C.h  "C" interface to ADIOS C++ class. This header defines the C API
  *
  *  Created on: Oct 31, 2016

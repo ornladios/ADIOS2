@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * IO_hdf5_a.cpp
  *
  * Write output with sequential HDF5, one file per process, one separate set per

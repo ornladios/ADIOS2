@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * ADIOS1Reader.h
  * Class to read files using old adios 1.x library.
  * It requires adios 1.x installed
