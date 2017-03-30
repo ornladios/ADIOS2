@@ -16,7 +16,7 @@ cd ${SOURCE_DIR}
 # Check C and C++ code with clang-format
 echo "Checking formatting for commit range: ${COMMIT_RANGE}"
 DIFF="$(./scripts/developer/git/git-clang-format --diff ${COMMIT_RANGE})"
-if [ -n "${DIFF}" ]
+if [ -n "${DIFF}" ] && [ "${DIFF}" != "no modified files to format" ]
 then
   echo "clang-format:"
   echo "  Code format checks failed."

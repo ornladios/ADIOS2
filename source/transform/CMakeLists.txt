@@ -1,5 +1,0 @@
-if(ADIOS_USE_BZIP2)
-  find_package(BZip REQUIRED)
-  target_sources(adios2 BZip2.cpp)
-  target_link_libraries(adios2 PRIVATE BZip2::BZip2)
-endif()
