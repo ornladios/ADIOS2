@@ -10,6 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
+#include <stdexcept>
 #include <vector>
 /// \endcond
 
