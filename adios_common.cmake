@@ -57,9 +57,16 @@
 
 set(CTEST_PROJECT_NAME "ADIOS")
 set(CTEST_DROP_SITE "open.cdash.org")
-
 set(dashboard_git_url "https://github.com/ornladios/ADIOS2.git")
-set(dashboard_root_name "Builds/My Tests")
-set(dashboard_source_name "ADIOS2")
+set(dashboard_git_branch master)
 
+if(NOT dashboard_root_name)
+  set(dashboard_root_name "Builds/My Tests")
+endif()
+if(NOT dashboard_source_name)
+  set(dashboard_source_name "ADIOS2")
+endif()
+if(NOT dashboard_model)
+  set(dashboard_model Experimental)
+endif()
 include(${CMAKE_CURRENT_LIST_DIR}/universal.cmake)
