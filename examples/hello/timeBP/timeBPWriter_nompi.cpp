@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * timeBPWriter.cpp  example for time aggregation
  *
  *  Created on: Feb 16, 2017

@@ -1,3 +1,7 @@
+#------------------------------------------------------------------------------#
+# Distributed under the OSI-approved Apache License, Version 2.0.  See
+# accompanying file Copyright.txt for details.
+#------------------------------------------------------------------------------#
 
 ExternalProject_Add(googletest
   URL     https://github.com/google/googletest/archive/release-1.8.0.zip

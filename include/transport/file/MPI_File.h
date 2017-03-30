@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * MPIFile.h
  *
  *  Created on: Jan 5, 2017

@@ -1,3 +1,8 @@
+#------------------------------------------------------------------------------#
+# Distributed under the OSI-approved Apache License, Version 2.0.  See
+# accompanying file Copyright.txt for details.
+#------------------------------------------------------------------------------#
+
 set(ADIOS_THIRDPARTY_DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads
   CACHE PATH "Download directory for third party dependencies")
 

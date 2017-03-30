@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * ADIOS is freely available under the terms of the BSD license described
  * in the COPYING file in the top level directory of this source distribution.
  *
