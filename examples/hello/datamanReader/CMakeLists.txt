@@ -1,0 +1,5 @@
+add_executable(hello_datamanReader helloDataManReader.cpp)
+target_link_libraries(hello_datamanReader adios2)
+
+add_executable(hello_datamanReader_nompi helloDataManReader_nompi.cpp)
+target_link_libraries(hello_datamanReader_nompi adios2)

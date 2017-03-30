@@ -6,5 +6,6 @@ if(ADIOS_USE_ADIOS1)
 endif()
 
 if(ADIOS_USE_DataMan)
-  add_subdirectory(dataman)
+  add_subdirectory(datamanReader)
+  add_subdirectory(datamanWriter)
 endif()
