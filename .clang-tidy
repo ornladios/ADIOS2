@@ -1,1 +1,1 @@
-Checks: -*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*
+Checks: -*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,-cppcoreguidelines-pro-type-vararg,-cppcoreguidelines-pro-bounds-array-to-pointer-decay
