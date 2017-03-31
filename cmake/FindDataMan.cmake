@@ -21,8 +21,16 @@
 # You can also set the following variable to help guide the search:
 #   DataMan_ROOT_DIR - The install prefix for DataMan containing the
 #                      include and lib folders
+#                      Note: this can be set as a CMake variable or an
+#                            environment variable.  If specified as a CMake
+#                            variable, it will override any setting specified
+#                            as an environment variable.
 
 if(NOT DataMan_FOUND)
+  if((NOT DataMan_ROOT_DIR) AND (NOT (ENV{DataMan_ROOT_DIR} STREQUAL "")))
+    set(DataMan_ROOT_DIR "$ENV{DataMan_ROOT_DIR}")
+  endif()
+
   # Search for the core libraries
   if(DataMan_ROOT_DIR)
     # If a root directory is specified, then don't look anywhere else 
