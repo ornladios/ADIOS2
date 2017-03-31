@@ -42,12 +42,12 @@ else()
 endif()
 
 if(ADIOS_USE_ADIOS1)
-  find_package(ADIOS REQUIRED)
+  find_package(ADIOS1 REQUIRED)
   target_sources(adios2 PRIVATE
     engine/adios1/ADIOS1Reader.cpp
     engine/adios1/ADIOS1Writer.cpp
   )
-  target_link_libraries(adios2 PRIVATE adios::adios)
+  target_link_libraries(adios2 PRIVATE adios1::adios)
 endif()
 
 if(ADIOS_USE_DataMan)
