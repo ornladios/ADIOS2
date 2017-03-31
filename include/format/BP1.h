@@ -19,11 +19,7 @@
 //#include <queue>  //std::priority_queue to be added later
 /// \endcond
 
-#if ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 #include "core/Profiler.h"
 #include "core/Transport.h"

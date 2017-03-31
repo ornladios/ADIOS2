@@ -11,11 +11,7 @@
 #ifndef ADIOS_C_H_
 #define ADIOS_C_H_
 
-#ifdef ADIOS_NOMPI
-#define MPI_Comm int
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 typedef void ADIOS;
 typedef void Method;
