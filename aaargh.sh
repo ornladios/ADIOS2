@@ -54,3 +54,8 @@ echo "Building ${COMP_ID}-${COMP_VER} ${MPI_ID}"
 LOGBASE=${BASEDIR}/../Logs/${COMP_ID}-${COMP_VER}_${MPI_ID}
 ctest -DCOMP_ID=${COMP_ID} -DCOMP_VER=${COMP_VER} -DMPI_ID=${MPI_ID} \
   -S ${BASEDIR}/aaargh.cmake -VV 1>${LOGBASE}.out 2>${LOGBASE}.err
+
+echo "Building ${COMP_ID}-${COMP_VER} ${MPI_ID} ClangTidy"
+LOGBASE=${BASEDIR}/../Logs/${COMP_ID}-${COMP_VER}_${MPI_ID}_ClangTidy
+ctest -DCOMP_ID=${COMP_ID} -DCOMP_VER=${COMP_VER} -DMPI_ID=${MPI_ID} \
+  -S ${BASEDIR}/aaargh.cmake -VV 1>${LOGBASE}.out 2>${LOGBASE}.err
