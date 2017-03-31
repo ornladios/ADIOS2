@@ -11,11 +11,7 @@
 #ifndef BP1AGGREGATOR_H_
 #define BP1AGGREGATOR_H_
 
-#ifdef ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 namespace adios
 {

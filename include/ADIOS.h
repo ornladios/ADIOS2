@@ -21,11 +21,7 @@
 #include <vector>
 /// \endcond
 
-#ifdef ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 #include "ADIOSTypes.h"
 #include "core/Method.h"

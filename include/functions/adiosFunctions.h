@@ -19,11 +19,7 @@
 #include <vector>
 /// \endcond
 
-#ifdef ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 #include "core/Transform.h"
 
