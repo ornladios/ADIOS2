@@ -47,6 +47,7 @@ if(ADIOS_USE_ADIOS1)
     engine/adios1/ADIOS1Reader.cpp
     engine/adios1/ADIOS1Writer.cpp
   )
+  target_compile_definitions(adios2 PRIVATE HAS_ADIOS1)
   target_link_libraries(adios2 PRIVATE adios::adios)
 endif()
 
@@ -57,11 +58,13 @@ if(ADIOS_USE_DataMan)
     engine/dataman/DataManWriter.cpp
     transport/wan/MdtmMan.cpp
   )
+  target_compile_definitions(adios2 PRIVATE HAS_DATAMAN)
   target_link_libraries(adios2 PRIVATE DataMan::DataMan)
 endif()
 
 if(ADIOS_USE_BZip2)
   find_package(BZip2 REQUIRED)
   target_sources(adios2 PRIVATE transform/BZip2.cpp)
+  target_compile_definitions(adios2 PRIVATE HAS_BZIP2)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
