@@ -8,6 +8,8 @@
  *      Author: wfg
  */
 
+#include <ios> //std::ios_base::failure
+
 #include "core/Engine.h"
 #include "core/Support.h"
 #include "functions/adiosFunctions.h"

@@ -8,7 +8,9 @@
  *      Author: wfg
  */
 
+#include <ios>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
 #include "ADIOS_CPP.h"
