@@ -71,7 +71,7 @@ void BP1Writer::WriteProcessGroupIndex(
 
   // offset to pg in data in metadata which is the current absolute position
   CopyToBuffer(metadataBuffer,
-               reinterpret_cast<std::uint64_t *>(&heap.m_DataAbsolutePosition));
+               static_cast<uint64_t *>(&heap.m_DataAbsolutePosition));
 
   // Back to writing metadata pg index length (length of group)
   const std::uint16_t metadataPGIndexLength =
@@ -121,17 +121,23 @@ void BP1Writer::Close(BP1MetadataSet &metadataSet, capsule::STLVector &heap,
                       const bool doAggregation) const noexcept
 {
   if (metadataSet.Log.m_IsActive == true)
+  {
     metadataSet.Log.m_Timers[0].SetInitialTime();
+  }
 
   if (isFirstClose == true)
   {
     if (metadataSet.DataPGIsOpen == true)
+    {
       FlattenData(metadataSet, heap);
+    }
 
     FlattenMetadata(metadataSet, heap);
 
     if (metadataSet.Log.m_IsActive == true)
+    {
       metadataSet.Log.m_Timers[0].SetInitialTime();
+    }
 
     if (doAggregation == true) // N-to-M  where 1 <= M <= N-1, might need a new
                                // Log metadataSet.Log.m_Timers just for
@@ -177,7 +183,9 @@ std::string BP1Writer::GetRankProfilingLog(
     rankLog += "'lib': " + transports[t]->m_Type + ", ";
 
     for (unsigned int i = 0; i < 3; ++i)
+    {
       lf_WriterTimer(rankLog, timers[i]);
+    }
 
     rankLog += "}, ";
   }
@@ -196,7 +204,7 @@ void BP1Writer::WriteDimensionsRecord(
   auto lf_WriteFlaggedDim = [](std::vector<char> &buffer, const char no,
                                const std::size_t dimension) {
     CopyToBuffer(buffer, &no);
-    CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(&dimension));
+    CopyToBuffer(buffer, static_cast<const uint64_t *>(&dimension));
   };
 
   // BODY Starts here
@@ -216,8 +224,7 @@ void BP1Writer::WriteDimensionsRecord(
     {
       for (const auto &localDimension : localDimensions)
       {
-        CopyToBuffer(buffer,
-                     reinterpret_cast<const std::uint64_t *>(&localDimension));
+        CopyToBuffer(buffer, static_cast<const uint64_t *>(&localDimension));
         buffer.insert(buffer.end(), skip, 0);
       }
     }
@@ -238,12 +245,11 @@ void BP1Writer::WriteDimensionsRecord(
     {
       for (unsigned int d = 0; d < localDimensions.size(); ++d)
       {
-        CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(
-                                 &localDimensions[d]));
-        CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(
-                                 &globalDimensions[d]));
-        CopyToBuffer(
-            buffer, reinterpret_cast<const std::uint64_t *>(&globalOffsets[d]));
+        CopyToBuffer(buffer,
+                     static_cast<const uint64_t *>(&localDimensions[d]));
+        CopyToBuffer(buffer,
+                     static_cast<const uint64_t *>(&globalDimensions[d]));
+        CopyToBuffer(buffer, static_cast<const uint64_t *>(&globalOffsets[d]));
       }
     }
   }
@@ -391,7 +397,9 @@ void BP1Writer::FlattenMetadata(BP1MetadataSet &metadataSet,
   heap.m_DataAbsolutePosition += footerSize;
 
   if (metadataSet.Log.m_IsActive == true)
+  {
     metadataSet.Log.m_TotalBytes.push_back(heap.m_DataAbsolutePosition);
+  }
 }
 
 } // end namespace format

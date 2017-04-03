@@ -44,9 +44,9 @@ public:
    * @param mpiComm passed to m_MPIComm
    * @param debugMode passed to m_DebugMode
    */
-  Transport(const std::string type, MPI_Comm mpiComm, const bool debugMode);
+  Transport(std::string type, MPI_Comm mpiComm, bool debugMode);
 
-  virtual ~Transport(); ///< empty destructor, using STL for memory management
+  virtual ~Transport() = default;
 
   /**
    * Open Output file accesing a mode
@@ -82,6 +82,6 @@ protected:
   const bool m_DebugMode = false; ///< if true: additional checks and exceptions
 };
 
-} // end namespace
+} // end namespace adios
 
 #endif /* TRANSPORT_H_ */

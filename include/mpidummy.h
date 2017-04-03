@@ -73,34 +73,35 @@ int MPI_Comm_size(MPI_Comm comm, int *size);
 int MPI_Comm_free(MPI_Comm *comm);
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
 
-int MPI_Gather(void *sendbuf, int sendcnt, MPI_Datatype sendtype, void *recvbuf,
-               int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm);
-int MPI_Gatherv(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                void *recvbuf, int *recvcnts, int *displs,
+int MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+               void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+               MPI_Comm comm);
+int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                void *recvbuf, const int *recvcounts, const int *displs,
                 MPI_Datatype recvtype, int root, MPI_Comm comm);
-int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm);
 
-int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
+int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                 MPI_Comm comm);
-int MPI_Scatterv(void *sendbuf, int *sendcnts, int *displs,
-                 MPI_Datatype sendtype, void *recvbuf, int recvcnt,
+int MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
+                 MPI_Datatype sendtype, void *recvbuf, int recvcount,
                  MPI_Datatype recvtype, int root, MPI_Comm comm);
 
-int MPI_Recv(void *recvbuffer, int count, MPI_Datatype type, int source,
-             int tag, MPI_Comm comm, MPI_Status *status);
-int MPI_Irecv(void *recvbuffer, int count, MPI_Datatype type, int source,
-              int tag, MPI_Comm comm, MPI_Request *request);
-int MPI_Send(void *sendbuffer, int count, MPI_Datatype type, int destination,
+int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
+             MPI_Comm comm, MPI_Status *status);
+int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
+              MPI_Comm comm, MPI_Request *request);
+int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
              int tag, MPI_Comm comm);
-int MPI_Isend(void *recvbuffer, int count, MPI_Datatype type, int source,
+int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
               int tag, MPI_Comm comm, MPI_Request *request);
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status);
 
-int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info,
+int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info,
                   MPI_File *fh);
 int MPI_File_close(MPI_File *fh);
 int MPI_File_get_size(MPI_File fh, MPI_Offset *size);
@@ -108,7 +109,7 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
                   MPI_Status *status);
 int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
 
-int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
+int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count);
 int MPI_Error_string(int errorcode, char *string, int *resultlen);
 int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *comm_out);
 

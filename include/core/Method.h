@@ -58,9 +58,9 @@ public:
    * @param name is a label that can be used in the config file to set up the
    * method at runtime
    */
-  Method(const std::string name, const bool debugMode = false);
+  Method(std::string name, bool debugMode = false);
 
-  ~Method();
+  ~Method() = default;
 
   /** Check if the method was defined by the user in the config file.
    * @return true if the method was user-defined, false otherwise when method is
@@ -135,6 +135,6 @@ private:
                               const std::vector<std::string> &parameters);
 };
 
-} // end namespace
+} // end namespace adios
 
 #endif /* METHOD_H_ */

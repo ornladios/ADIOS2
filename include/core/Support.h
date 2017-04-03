@@ -51,6 +51,6 @@ struct Support
   };
 };
 
-} // end namespace
+} // end namespace adios
 
 #endif /* SUPPORT_H_ */
