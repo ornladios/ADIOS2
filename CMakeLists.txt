@@ -61,6 +61,10 @@ if(ADIOS_ENABLE_PIC)
 endif()
 
 option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" ON)
+if(ADIOS_USE_MPI)
+# Workaround for OpenMPI forcing th elink of C++ bindings
+  add_definitions(-DOMPI_SKIP_MPICXX)
+endif()
 option(ADIOS_USE_BZip2 "Enable support for BZip2 transforms" ON)
 option(ADIOS_USE_ADIOS1 "Enable support for the ADIOS 1 engine" OFF)
 option(ADIOS_USE_DataMan "Enable support for the DataMan engine" OFF)
