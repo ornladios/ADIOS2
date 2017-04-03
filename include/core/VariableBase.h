@@ -42,9 +42,9 @@ public:
                const std::size_t elementSize, const Dims dimensions,
                const Dims globalDimensions, const Dims globalOffsets,
                const bool debugMode)
-      : m_Name{name}, m_Type{type}, m_ElementSize{elementSize},
-        m_Dimensions{dimensions}, m_GlobalDimensions{globalDimensions},
-        m_GlobalOffsets{globalOffsets}, m_DebugMode{debugMode}
+  : m_Name{name}, m_Type{type}, m_ElementSize{elementSize},
+    m_Dimensions{dimensions}, m_GlobalDimensions{globalDimensions},
+    m_GlobalOffsets{globalOffsets}, m_DebugMode{debugMode}
   {
   }
 

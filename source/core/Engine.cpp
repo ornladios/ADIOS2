@@ -18,11 +18,10 @@ namespace adios
 Engine::Engine(ADIOS &adios, std::string engineType, std::string name,
                std::string accessMode, MPI_Comm mpiComm, const Method &method,
                bool debugMode, unsigned int nthreads, std::string endMessage)
-: m_MPIComm{mpiComm}, m_EngineType{std::move(engineType)}, m_Name{std::move(
-                                                               name)},
-  m_AccessMode{std::move(accessMode)}, m_Method{method},
-  m_ADIOS(adios), m_DebugMode{debugMode}, m_nThreads{nthreads},
-  m_EndMessage(std::move(endMessage))
+: m_MPIComm{mpiComm}, m_EngineType{std::move(engineType)},
+  m_Name{std::move(name)}, m_AccessMode{std::move(accessMode)},
+  m_Method{method}, m_ADIOS(adios), m_DebugMode{debugMode},
+  m_nThreads{nthreads}, m_EndMessage(std::move(endMessage))
 {
   if (m_DebugMode == true)
   {
@@ -98,14 +97,16 @@ void Engine::Write(Variable<std::complex<long double>> & /*variable*/,
 }
 void Engine::Write(VariableCompound & /*variable*/, const void * /*values*/) {}
 
-void Engine::Write(const std::string & /*variableName*/, const char * /*values*/)
+void Engine::Write(const std::string & /*variableName*/,
+                   const char * /*values*/)
 {
 }
 void Engine::Write(const std::string & /*variableName*/,
                    const unsigned char * /*values*/)
 {
 }
-void Engine::Write(const std::string & /*variableName*/, const short * /*values*/)
+void Engine::Write(const std::string & /*variableName*/,
+                   const short * /*values*/)
 {
 }
 void Engine::Write(const std::string & /*variableName*/,
@@ -135,7 +136,8 @@ void Engine::Write(const std::string & /*variableName*/,
                    const unsigned long long int * /*values*/)
 {
 }
-void Engine::Write(const std::string & /*variableName*/, const float * /*values*/)
+void Engine::Write(const std::string & /*variableName*/,
+                   const float * /*values*/)
 {
 }
 void Engine::Write(const std::string & /*variableName*/,
@@ -158,7 +160,8 @@ void Engine::Write(const std::string & /*variableName*/,
                    const std::complex<long double> * /*values*/)
 {
 }
-void Engine::Write(const std::string & /*variableName*/, const void * /*values*/)
+void Engine::Write(const std::string & /*variableName*/,
+                   const void * /*values*/)
 {
 }
 

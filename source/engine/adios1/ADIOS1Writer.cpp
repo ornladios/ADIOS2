@@ -24,11 +24,9 @@ ADIOS1Writer::ADIOS1Writer(ADIOS &adios, const std::string name,
                            const Method &method, const IOMode iomode,
                            const float timeout_sec, const bool debugMode,
                            const unsigned int nthreads)
-    : Engine(adios, "ADIOS1Writer", name, accessMode, mpiComm, method,
-             debugMode, nthreads,
-             " ADIOS1Writer constructor (or call to ADIOS Open).\n"),
-      m_groupname{method.m_Name.c_str()}, m_filename{name.c_str()},
-      m_comm{mpiComm}
+: Engine(adios, "ADIOS1Writer", name, accessMode, mpiComm, method, debugMode,
+         nthreads, " ADIOS1Writer constructor (or call to ADIOS Open).\n"),
+  m_groupname{method.m_Name.c_str()}, m_filename{name.c_str()}, m_comm{mpiComm}
 {
   Init();
   adios_open(&m_adios_file, m_groupname, m_filename, accessMode.c_str(),

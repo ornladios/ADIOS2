@@ -136,7 +136,8 @@ public:
    * @param variableName
    * @param values
    */
-  template <class T> void Write(const std::string &variableName, const T *values)
+  template <class T>
+  void Write(const std::string &variableName, const T *values)
   {
     Write(variableName, values);
   }
@@ -220,7 +221,8 @@ public:
                      const unsigned long long int *values);
   virtual void Write(const std::string &variableName, const float *values);
   virtual void Write(const std::string &variableName, const double *values);
-  virtual void Write(const std::string &variableName, const long double *values);
+  virtual void Write(const std::string &variableName,
+                     const long double *values);
   virtual void Write(const std::string &variableName,
                      const std::complex<float> *values);
   virtual void Write(const std::string &variableName,
