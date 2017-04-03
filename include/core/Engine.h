@@ -77,12 +77,11 @@ public:
    * @param nthreads
    * @param endMessage
    */
-  Engine(ADIOS &adios, const std::string engineType, const std::string name,
-         const std::string accessMode, MPI_Comm mpiComm, const Method &method,
-         const bool debugMode, const unsigned int nthreads,
-         const std::string endMessage);
+  Engine(ADIOS &adios, std::string engineType, std::string name,
+         std::string accessMode, MPI_Comm mpiComm, const Method &method,
+         bool debugMode, unsigned int nthreads, std::string endMessage);
 
-  virtual ~Engine();
+  virtual ~Engine() = default;
 
   /** @brief Let ADIOS allocate memory for a variable, which can be used by the
    * user.
@@ -137,7 +136,7 @@ public:
    * @param variableName
    * @param values
    */
-  template <class T> void Write(const std::string variableName, const T *values)
+  template <class T> void Write(const std::string &variableName, const T *values)
   {
     Write(variableName, values);
   }
@@ -159,7 +158,7 @@ public:
    * @param variableName
    * @param values
    */
-  template <class T> void Write(const std::string variableName, const T values)
+  template <class T> void Write(const std::string &variableName, const T values)
   {
     const T val = values;
     Write(variableName, &val);
@@ -203,32 +202,32 @@ public:
    * @param variableName
    * @param values coming from user app
    */
-  virtual void Write(const std::string variableName, const char *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName, const char *values);
+  virtual void Write(const std::string &variableName,
                      const unsigned char *values);
-  virtual void Write(const std::string variableName, const short *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName, const short *values);
+  virtual void Write(const std::string &variableName,
                      const unsigned short *values);
-  virtual void Write(const std::string variableName, const int *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName, const int *values);
+  virtual void Write(const std::string &variableName,
                      const unsigned int *values);
-  virtual void Write(const std::string variableName, const long int *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName, const long int *values);
+  virtual void Write(const std::string &variableName,
                      const unsigned long int *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName,
                      const long long int *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName,
                      const unsigned long long int *values);
-  virtual void Write(const std::string variableName, const float *values);
-  virtual void Write(const std::string variableName, const double *values);
-  virtual void Write(const std::string variableName, const long double *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName, const float *values);
+  virtual void Write(const std::string &variableName, const double *values);
+  virtual void Write(const std::string &variableName, const long double *values);
+  virtual void Write(const std::string &variableName,
                      const std::complex<float> *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName,
                      const std::complex<double> *values);
-  virtual void Write(const std::string variableName,
+  virtual void Write(const std::string &variableName,
                      const std::complex<long double> *values);
-  virtual void Write(const std::string variableName, const void *values);
+  virtual void Write(const std::string &variableName, const void *values);
 
   /**
    * Read function that adds static checking on the variable to be passed by
