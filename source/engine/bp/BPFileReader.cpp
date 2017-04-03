@@ -21,24 +21,23 @@
 namespace adios
 {
 
-BPFileReader::BPFileReader(ADIOS &adios, const std::string name,
-                           const std::string accessMode, MPI_Comm mpiComm,
-                           const Method &method, const IOMode iomode,
-                           const float timeout_sec, const bool debugMode,
-                           const unsigned int nthreads)
-: Engine(adios, "BPFileReader", name, accessMode, mpiComm, method, debugMode,
-         nthreads, " BPFileReader constructor (or call to ADIOS Open).\n"),
+BPFileReader::BPFileReader(ADIOS &adios, std::string name,
+                           std::string accessMode, MPI_Comm mpiComm,
+                           const Method &method, IOMode /*iomode*/,
+                           float /*timeout_sec*/, bool debugMode,
+                           unsigned int nthreads)
+: Engine(adios, "BPFileReader", std::move(name), std::move(accessMode), mpiComm,
+         method, debugMode, nthreads,
+         " BPFileReader constructor (or call to ADIOS Open).\n"),
   m_Buffer(accessMode, m_RankMPI, m_DebugMode)
 {
   Init();
 }
 
-BPFileReader::~BPFileReader() {}
-
-Variable<void> *
-BPFileReader::InquireVariable(const std::string name,
-                              const bool readIn) // not yet implemented
+Variable<void> *BPFileReader::InquireVariable(const std::string /*name*/,
+                                              const bool /*readIn*/)
 {
+  // not yet implemented
   return nullptr;
 }
 
@@ -138,13 +137,14 @@ BPFileReader::InquireVariableCLDouble(const std::string name, const bool readIn)
   return InquireVariableCommon<std::complex<long double>>(name, readIn);
 }
 
-VariableCompound *BPFileReader::InquireVariableCompound(const std::string name,
-                                                        const bool readIn)
+VariableCompound *
+BPFileReader::InquireVariableCompound(const std::string /*name*/,
+                                      const bool /*readIn*/)
 {
   return nullptr;
 }
 
-void BPFileReader::Close(const int transportIndex) {}
+void BPFileReader::Close(const int /*transportIndex*/) {}
 
 // PRIVATE
 void BPFileReader::Init()
@@ -152,9 +152,11 @@ void BPFileReader::Init()
   if (m_DebugMode == true)
   {
     if (m_AccessMode != "r" && m_AccessMode != "read")
+    {
       throw std::invalid_argument(
           "ERROR: BPFileReader doesn't support access mode " + m_AccessMode +
           ", in call to ADIOS Open or BPFileReader constructor\n");
+    }
   }
 
   InitCapsules();
@@ -214,19 +216,23 @@ void BPFileReader::InitTransports() // maybe move this?
       else
       {
         if (m_DebugMode == true)
+        {
           throw std::invalid_argument(
               "ERROR: file transport library " + itLibrary->second +
               " not supported, in " + m_Name + m_EndMessage);
+        }
       }
     }
     else
     {
       if (m_DebugMode == true)
+      {
         throw std::invalid_argument("ERROR: transport " + itTransport->second +
                                     " (you mean File?) not supported, in " +
                                     m_Name + m_EndMessage);
+      }
     }
   }
 }
 
-} // end namespace
+} // end namespace adios

@@ -9,6 +9,7 @@
  */
 
 /// \cond EXCLUDED_FROM_DOXYGEN
+#include <ios> // std::ios_base::failure
 #include <stdexcept>
 /// \endcond
 
@@ -19,12 +20,10 @@ namespace adios
 namespace transport
 {
 
-FStream::FStream(MPI_Comm mpiComm, const bool debugMode)
+FStream::FStream(MPI_Comm mpiComm, bool debugMode)
 : Transport("fstream", mpiComm, debugMode)
 {
 }
-
-FStream::~FStream() {}
 
 void FStream::Open(const std::string name, const std::string accessMode)
 {
@@ -32,20 +31,26 @@ void FStream::Open(const std::string name, const std::string accessMode)
   m_AccessMode = accessMode;
 
   if (accessMode == "w" || accessMode == "write")
+  {
     m_FStream.open(name, std::fstream::out);
-
+  }
   else if (accessMode == "a" || accessMode == "append")
+  {
     m_FStream.open(name, std::fstream::out | std::fstream::app);
-
+  }
   else if (accessMode == "r" || accessMode == "read")
+  {
     m_FStream.open(name, std::fstream::in);
+  }
 
   if (m_DebugMode == true)
   {
     if (!m_FStream)
+    {
       throw std::ios_base::failure(
           "ERROR: couldn't open file " + name +
           ", in call to Open from FStream transport\n");
+    }
   }
 }
 
@@ -61,8 +66,10 @@ void FStream::Write(const char *buffer, std::size_t size)
   if (m_DebugMode == true)
   {
     if (!m_FStream)
+    {
       throw std::ios_base::failure("ERROR: couldn't write to file " + m_Name +
                                    ", in call to FStream write\n");
+    }
   }
 }
 
@@ -71,4 +78,4 @@ void FStream::Flush() { m_FStream.flush(); }
 void FStream::Close() { m_FStream.close(); }
 
 } // end namespace transport
-} // end namespace
+} // end namespace adios

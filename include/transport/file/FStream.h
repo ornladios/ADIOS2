@@ -31,7 +31,7 @@ class FStream : public Transport
 public:
   FStream(MPI_Comm mpiComm, const bool debugMode);
 
-  ~FStream();
+  virtual ~FStream() = default;
 
   void Open(const std::string name, const std::string accessMode);
 
@@ -48,6 +48,6 @@ private:
 };
 
 } // end namespace transport
-} // end namespace
+} // end namespace adios
 
 #endif /* FSTREAM_H_ */

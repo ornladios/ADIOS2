@@ -35,13 +35,12 @@ public:
    * @param debugMode
    * @param hostLanguage
    */
-  BPFileReader(ADIOS &adios, const std::string name,
-               const std::string accessMode, MPI_Comm mpiComm,
-               const Method &method, const IOMode iomode,
-               const float timeout_sec, const bool debugMode = false,
-               const unsigned int nthreads = 1);
+  BPFileReader(ADIOS &adios, std::string name, std::string accessMode,
+               MPI_Comm mpiComm, const Method &method, IOMode iomode,
+               float timeout_sec, bool debugMode = false,
+               unsigned int nthreads = 1);
 
-  ~BPFileReader();
+  virtual ~BPFileReader() = default;
 
   Variable<void> *InquireVariable(const std::string name,
                                   const bool readIn = true);
