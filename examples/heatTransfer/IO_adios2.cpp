@@ -69,12 +69,16 @@ IO::~IO()
   delete ad;
 }
 
-void /*IO::*/ old_style_write(int step, const HeatTransfer &ht,
-                              const Settings &s, MPI_Comm comm)
+#if 1
+
+void IO::write(int step, const HeatTransfer &ht,
+        const Settings &s, MPI_Comm comm)
 {
   bpWriter->Write<double>(*varT, ht.data_noghost().data());
   bpWriter->Advance();
 }
+
+#else
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
@@ -107,3 +111,5 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
   bpWriter->Write<double>(*varT, ht.data());
   bpWriter->Advance();
 }
+
+#endif // 1
