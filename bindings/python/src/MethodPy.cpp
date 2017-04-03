@@ -25,7 +25,7 @@ namespace py = pybind11;
 #endif
 
 MethodPy::MethodPy(const std::string type, const bool debugMode)
-    : Method(type, debugMode)
+: Method(type, debugMode)
 {
 }
 

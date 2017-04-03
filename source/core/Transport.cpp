@@ -15,7 +15,7 @@ namespace adios
 
 Transport::Transport(const std::string type, MPI_Comm mpiComm,
                      const bool debugMode)
-    : m_Type{type}, m_MPIComm{mpiComm}, m_DebugMode{debugMode}
+: m_Type{type}, m_MPIComm{mpiComm}, m_DebugMode{debugMode}
 {
   MPI_Comm_rank(m_MPIComm, &m_RankMPI);
   MPI_Comm_size(m_MPIComm, &m_SizeMPI);

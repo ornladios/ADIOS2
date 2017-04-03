@@ -3,3 +3,20 @@
 
 # Emacs temporary files
 *~
+
+#Eclipse
+.cproject
+.project
+.settings/
+.pydevproject
+
+#binary, library, or temporary build files
+*.o
+*.a
+*.so
+*.tmp
+*.exe
+*.bp
+*.out
+build/
+

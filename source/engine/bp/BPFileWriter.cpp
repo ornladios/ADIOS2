@@ -24,12 +24,11 @@ BPFileWriter::BPFileWriter(ADIOS &adios, const std::string name,
                            const Method &method, const IOMode iomode,
                            const float timeout_sec, const bool debugMode,
                            const unsigned int nthreads)
-    : Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method,
-             debugMode, nthreads,
-             " BPFileWriter constructor (or call to ADIOS Open).\n"),
-      m_Buffer{capsule::STLVector(accessMode, m_RankMPI, m_DebugMode)},
-      m_BP1Aggregator{format::BP1Aggregator(m_MPIComm, debugMode)},
-      m_MaxBufferSize{m_Buffer.m_Data.max_size()}
+: Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method, debugMode,
+         nthreads, " BPFileWriter constructor (or call to ADIOS Open).\n"),
+  m_Buffer{capsule::STLVector(accessMode, m_RankMPI, m_DebugMode)},
+  m_BP1Aggregator{format::BP1Aggregator(m_MPIComm, debugMode)},
+  m_MaxBufferSize{m_Buffer.m_Data.max_size()}
 {
   m_MetadataSet.TimeStep = 1; // starting at one to be compatible with ADIOS1.x
   Init();

@@ -16,9 +16,9 @@ namespace adios
 VariablePy::VariablePy(const std::string name, const pyList localDimensionsPy,
                        const pyList globalDimensionsPy,
                        const pyList globalOffsetsPy)
-    : m_Name{name}, m_LocalDimensions{ListToVector(localDimensionsPy)},
-      m_GlobalDimensions{ListToVector(globalDimensionsPy)},
-      m_GlobalOffsets{ListToVector(globalOffsetsPy)}
+: m_Name{name}, m_LocalDimensions{ListToVector(localDimensionsPy)},
+  m_GlobalDimensions{ListToVector(globalDimensionsPy)},
+  m_GlobalOffsets{ListToVector(globalOffsetsPy)}
 {
 }
 

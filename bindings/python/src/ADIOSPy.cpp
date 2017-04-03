@@ -19,7 +19,7 @@ namespace adios
 {
 
 ADIOSPy::ADIOSPy(MPI_Comm mpiComm, const bool debug)
-    : ADIOS(mpiComm, adios::Verbose::ERROR, debug)
+: ADIOS(mpiComm, adios::Verbose::ERROR, debug)
 {
 }
 

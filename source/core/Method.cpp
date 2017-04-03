@@ -15,7 +15,7 @@ namespace adios
 {
 
 Method::Method(const std::string name, const bool debugMode)
-    : m_Name{name}, m_DebugMode{debugMode}
+: m_Name{name}, m_DebugMode{debugMode}
 {
   // m_Type can stay empty (forcing the choice of the default engine)
   m_nThreads = 1;

@@ -20,14 +20,11 @@ namespace adios
 namespace capsule
 {
 
-STLVector::STLVector(const std::string accessMode, const int rankMPI,
-                     const bool debugMode)
-    : Capsule("Heap", accessMode, rankMPI, debugMode)
+STLVector::STLVector(std::string accessMode, int rankMPI, bool debugMode)
+: Capsule{"Heap", std::move(accessMode), rankMPI, debugMode}
 {
   m_Data.reserve(16777216);
 }
-
-STLVector::~STLVector() {}
 
 char *STLVector::GetData() { return m_Data.data(); }
 
@@ -79,5 +76,5 @@ void STLVector::ResizeMetadata(const std::size_t size)
   }
 }
 
-} // end namespace heap
-} // end namespace
+} // end namespace capsule
+} // end namespace adios

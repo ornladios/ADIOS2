@@ -8,22 +8,22 @@
  *      Author: wfg
  */
 
+#include <utility>
+
 #include "core/Capsule.h"
 
 namespace adios
 {
 
-Capsule::Capsule(const std::string type, const std::string accessMode,
-                 const int rankMPI, const bool debugMode)
-    : m_Type{type}, m_AccessMode{accessMode}, m_RankMPI{rankMPI},
-      m_DebugMode{debugMode}
+Capsule::Capsule(std::string type, std::string accessMode, int rankMPI,
+                 bool debugMode)
+: m_Type{std::move(type)}, m_AccessMode{std::move(accessMode)},
+  m_RankMPI{rankMPI}, m_DebugMode{debugMode}
 {
 }
 
-Capsule::~Capsule() {}
+void Capsule::ResizeData(size_t /*size*/) {}
 
-void Capsule::ResizeData(const std::size_t size) {}
+void Capsule::ResizeMetadata(size_t /*size*/) {}
 
-void Capsule::ResizeMetadata(const std::size_t size) {}
-
-} // end namespace
+} // end namespace adios

@@ -36,8 +36,8 @@ public:
   VariableCompound(const std::string name, const std::size_t sizeOfStruct,
                    const Dims dimensions, const Dims globalDimensions,
                    const Dims globalOffsets, const bool debugMode)
-      : VariableBase(name, "compound", sizeOfStruct, dimensions,
-                     globalDimensions, globalOffsets, debugMode)
+  : VariableBase(name, "compound", sizeOfStruct, dimensions, globalDimensions,
+                 globalOffsets, debugMode)
   {
   }
 
