@@ -28,7 +28,7 @@ BP1Aggregator::BP1Aggregator(MPI_Comm mpiComm, const bool debugMode)
   MPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
-BP1Aggregator::~BP1Aggregator() {}
+BP1Aggregator::~BP1Aggregator() = default;
 
 void BP1Aggregator::WriteProfilingLog(const std::string fileName,
                                       const std::string &rankLog)
@@ -44,8 +44,10 @@ void BP1Aggregator::WriteProfilingLog(const std::string fileName,
 
     // first receive sizes
     for (unsigned int i = 1; i < sizeMPI; ++i)
+    {
       MPI_Irecv(&rankLogsSizes[i - 1], 1, MPI_INT, i, 0, m_MPIComm,
                 &requests[i]);
+    }
 
     for (unsigned int i = 1; i < sizeMPI; ++i)
     {
@@ -53,20 +55,26 @@ void BP1Aggregator::WriteProfilingLog(const std::string fileName,
       if (m_DebugMode == true)
       {
         if (rankLogsSizes[i - 1] == -1)
+        {
           throw std::runtime_error("ERROR: couldn't get size from rank " +
                                    std::to_string(i) +
                                    ", in ADIOS aggregator for Profiling.log\n");
+        }
       }
       rankLogs[i - 1].resize(rankLogsSizes[i - 1]); // allocate with zeros
     }
 
     // receive rankLog from other ranks
     for (unsigned int i = 1; i < sizeMPI; ++i)
+    {
       MPI_Irecv(rankLogs[i - 1].data(), rankLogsSizes[i - 1], MPI_CHAR, i, 1,
                 m_MPIComm, &requests[i]);
+    }
 
     for (unsigned int i = 1; i < sizeMPI; ++i)
+    {
       MPI_Wait(&requests[i], &statuses[i]);
+    }
 
     // write file
     std::string logFile("log = { \n");
@@ -90,8 +98,8 @@ void BP1Aggregator::WriteProfilingLog(const std::string fileName,
     MPI_Isend(&rankLogSize, 1, MPI_INT, 0, 0, m_MPIComm, &requestSize);
 
     MPI_Request requestRankLog;
-    MPI_Isend(const_cast<char *>(rankLog.c_str()), rankLogSize, MPI_CHAR, 0, 1,
-              m_MPIComm, &requestRankLog);
+    MPI_Isend(rankLog.data(), rankLogSize, MPI_CHAR, 0, 1, m_MPIComm,
+              &requestRankLog);
   }
 }
 

@@ -11,9 +11,7 @@
 #include <iostream>
 #include <vector>
 
-#define OMPI_SKIP_MPICXX 1 // workaround for OpenMPI forcing C++ bindings
 #include <mpi.h>
-#undef OMPI_SKIP_MPICXX
 
 #include "ADIOS_CPP.h"
 

@@ -21,8 +21,8 @@ namespace adios
 
 BPFileWriter::BPFileWriter(ADIOS &adios, const std::string name,
                            const std::string accessMode, MPI_Comm mpiComm,
-                           const Method &method, const IOMode iomode,
-                           const float timeout_sec, const bool debugMode,
+                           const Method &method, const IOMode /*iomode*/,
+                           const float /*timeout_sec*/, const bool debugMode,
                            const unsigned int nthreads)
 : Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method, debugMode,
          nthreads, " BPFileWriter constructor (or call to ADIOS Open).\n"),
@@ -34,7 +34,7 @@ BPFileWriter::BPFileWriter(ADIOS &adios, const std::string name,
   Init();
 }
 
-BPFileWriter::~BPFileWriter() {}
+BPFileWriter::~BPFileWriter() = default;
 
 void BPFileWriter::Init()
 {
@@ -133,7 +133,10 @@ void BPFileWriter::Write(Variable<std::complex<long double>> &variable,
   WriteVariableCommon(variable, values);
 }
 
-void BPFileWriter::Write(VariableCompound &variable, const void *values) {}
+void BPFileWriter::Write(VariableCompound & /*variable*/,
+                         const void * /*values*/)
+{
+}
 
 // String version
 void BPFileWriter::Write(const std::string variableName, const char *values)
@@ -232,12 +235,12 @@ void BPFileWriter::Write(const std::string variableName,
       m_ADIOS.GetVariable<std::complex<long double>>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
-                         const void *values) // Compound type
+void BPFileWriter::Write(const std::string /*variableName*/,
+                         const void * /*values*/) // Compound type
 {
 }
 
-void BPFileWriter::Advance(float timeout_sec)
+void BPFileWriter::Advance(float /*timeout_sec*/)
 {
   m_BP1Writer.Advance(m_MetadataSet, m_Buffer);
 }
@@ -247,10 +250,11 @@ void BPFileWriter::Close(const int transportIndex)
   CheckTransportIndex(transportIndex);
   if (transportIndex == -1)
   {
-    for (auto &transport :
-         m_Transports) // by reference or value or it doesn't matter?
+    for (auto &transport : m_Transports)
+    { // by reference or value or it doesn't matter?
       m_BP1Writer.Close(m_MetadataSet, m_Buffer, *transport, m_IsFirstClose,
                         false); // false: not using aggregation for now
+    }
   }
   else
   {
@@ -292,9 +296,11 @@ void BPFileWriter::InitParameters()
     if (m_DebugMode == true)
     {
       if (growthFactor == 1.f)
+      {
         throw std::invalid_argument(
             "ERROR: buffer_growth argument can't be less of equal than 1, in " +
             m_EndMessage + "\n");
+      }
     }
 
     m_BP1Writer.m_GrowthFactor = growthFactor;
@@ -307,9 +313,11 @@ void BPFileWriter::InitParameters()
     if (m_DebugMode == true)
     {
       if (m_GrowthFactor <= 1.f)
+      {
         throw std::invalid_argument("ERROR: Method buffer_growth argument "
                                     "can't be less of equal than 1, in " +
                                     m_EndMessage + "\n");
+      }
     }
 
     m_MaxBufferSize = std::stoul(itMaxBufferSize->second) *
@@ -323,9 +331,11 @@ void BPFileWriter::InitParameters()
     if (m_DebugMode == true)
     {
       if (verbosity < 0 || verbosity > 5)
+      {
         throw std::invalid_argument("ERROR: Method verbose argument must be an "
                                     "integer in the range [0,5], in call to "
                                     "Open or Engine constructor\n");
+      }
     }
     m_BP1Writer.m_Verbosity = verbosity;
   }
@@ -336,25 +346,33 @@ void BPFileWriter::InitParameters()
     auto &profiler = m_MetadataSet.Log;
 
     if (itProfile->second == "mus" || itProfile->second == "microseconds")
+    {
       profiler.m_Timers.emplace_back("buffering", Support::Resolutions::mus);
-
+    }
     else if (itProfile->second == "ms" || itProfile->second == "milliseconds")
+    {
       profiler.m_Timers.emplace_back("buffering", Support::Resolutions::ms);
-
+    }
     else if (itProfile->second == "s" || itProfile->second == "seconds")
+    {
       profiler.m_Timers.emplace_back("buffering", Support::Resolutions::s);
-
+    }
     else if (itProfile->second == "min" || itProfile->second == "minutes")
+    {
       profiler.m_Timers.emplace_back("buffering", Support::Resolutions::m);
-
+    }
     else if (itProfile->second == "h" || itProfile->second == "hours")
+    {
       profiler.m_Timers.emplace_back("buffering", Support::Resolutions::h);
+    }
     else
     {
       if (m_DebugMode == true)
+      {
         throw std::invalid_argument("ERROR: Method profile_buffering_units "
                                     "argument must be mus, ms, s, min or h, in "
                                     "call to Open or Engine constructor\n");
+      }
     }
 
     profiler.m_IsActive = true;
@@ -383,26 +401,33 @@ void BPFileWriter::InitTransports()
     if (itProfile != parameters.end())
     {
       if (itProfile->second == "mus" || itProfile->second == "microseconds")
+      {
         resolution = Support::Resolutions::mus;
-
+      }
       else if (itProfile->second == "ms" || itProfile->second == "milliseconds")
+      {
         resolution = Support::Resolutions::ms;
-
+      }
       else if (itProfile->second == "s" || itProfile->second == "seconds")
+      {
         resolution = Support::Resolutions::s;
-
+      }
       else if (itProfile->second == "min" || itProfile->second == "minutes")
+      {
         resolution = Support::Resolutions::m;
-
+      }
       else if (itProfile->second == "h" || itProfile->second == "hours")
+      {
         resolution = Support::Resolutions::h;
-
+      }
       else
       {
         if (m_DebugMode == true)
+        {
           throw std::invalid_argument("ERROR: Transport profile_units argument "
                                       "must be mus, ms, s, min or h " +
                                       m_EndMessage);
+        }
       }
       doProfiling = true;
     }
@@ -418,7 +443,9 @@ void BPFileWriter::InitTransports()
         auto file =
             std::make_shared<transport::FileDescriptor>(m_MPIComm, m_DebugMode);
         if (doProfiling == true)
+        {
           file->InitProfiler(m_AccessMode, resolution);
+        }
 
         m_BP1Writer.OpenRankFiles(m_Name, m_AccessMode, *file);
         m_Transports.push_back(std::move(file));
@@ -428,7 +455,9 @@ void BPFileWriter::InitTransports()
         auto file =
             std::make_shared<transport::FilePointer>(m_MPIComm, m_DebugMode);
         if (doProfiling == true)
+        {
           file->InitProfiler(m_AccessMode, resolution);
+        }
 
         m_BP1Writer.OpenRankFiles(m_Name, m_AccessMode, *file);
         m_Transports.push_back(std::move(file));
@@ -440,7 +469,9 @@ void BPFileWriter::InitTransports()
             std::make_shared<transport::FStream>(m_MPIComm, m_DebugMode);
 
         if (doProfiling == true)
+        {
           file->InitProfiler(m_AccessMode, resolution);
+        }
 
         m_BP1Writer.OpenRankFiles(m_Name, m_AccessMode, *file);
         m_Transports.push_back(std::move(file));
@@ -451,17 +482,21 @@ void BPFileWriter::InitTransports()
       else
       {
         if (m_DebugMode == true)
+        {
           throw std::invalid_argument(
               "ERROR: file transport library " + itLibrary->second +
               " not supported, in " + m_Name + m_EndMessage);
+        }
       }
     }
     else
     {
       if (m_DebugMode == true)
+      {
         throw std::invalid_argument("ERROR: transport " + itTransport->second +
                                     " (you mean File?) not supported, in " +
                                     m_Name + m_EndMessage);
+      }
     }
   }
 }
@@ -469,7 +504,9 @@ void BPFileWriter::InitTransports()
 void BPFileWriter::InitProcessGroup()
 {
   if (m_MetadataSet.Log.m_IsActive == true)
+  {
     m_MetadataSet.Log.m_Timers[0].SetInitialTime();
+  }
 
   if (m_AccessMode == "a")
   {
@@ -480,7 +517,9 @@ void BPFileWriter::InitProcessGroup()
   WriteProcessGroupIndex();
 
   if (m_MetadataSet.Log.m_IsActive == true)
+  {
     m_MetadataSet.Log.m_Timers[0].SetTime();
+  }
 }
 
 void BPFileWriter::WriteProcessGroupIndex()

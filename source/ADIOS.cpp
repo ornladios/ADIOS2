@@ -10,12 +10,14 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
+#include <ios> //std::ios_base::failure
 #include <iostream>
 #include <sstream>
 #include <utility>
 /// \endcond
 
 #include "ADIOS.h"
+
 #include "functions/adiosFunctions.h"
 
 // Engines

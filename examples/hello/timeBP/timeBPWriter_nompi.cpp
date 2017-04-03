@@ -13,7 +13,7 @@
 
 #include "ADIOS_CPP.h"
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char ** /*argv*/)
 {
   const bool adiosDebug = true;
   adios::ADIOS adios(adios::Verbose::ERROR, adiosDebug);

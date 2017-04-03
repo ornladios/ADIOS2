@@ -19,10 +19,9 @@ const std::string Support::Version{"2.00"};
 const std::set<std::string> Support::HostLanguages{{"C++", "C", "Fortran"}};
 
 const std::set<std::string> Support::Transports{
-    {"NULL", "POSIX", "FStream",
-     "MdtmMan"} // "MPI", "MPI_LUSTRE", "MPI_AGGREGATE", "DATASPACES", "DIMES",
-                // "FLEXPATH", "PHDF5", "NC4", "ICEE" }
-};
+    {"NULL", "POSIX", "FStream", "MdtmMan"}};
+// TODO(chuckatkins): Add transports MPI, MPI_LUSTRE, MPI_AGGREGATE,
+//                    DATASPACES, DIMES, FLEXPATH, PHDF5, NC4, ICEE
 
 const std::set<std::string> Support::Transforms{
     {"none", "identity", "bzip2", "isobar", "szip", "zlib"}};
@@ -90,4 +89,4 @@ const std::map<std::string, std::set<std::string>> Support::DatatypesAliases{
 const std::set<std::string> Support::FileTransports{
     {"POSIX", "File", "FStream", "MPIFile"}};
 
-} // end namespace
+} // end namespace adios

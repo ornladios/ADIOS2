@@ -38,6 +38,11 @@ endif()
 # Top level options
 #------------------------------------------------------------------------------#
 
+# Default to a debug build if not specified
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+endif()
+
 # Force C++11
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -61,6 +66,10 @@ if(ADIOS_ENABLE_PIC)
 endif()
 
 option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" ON)
+if(ADIOS_USE_MPI)
+  # Workaround for OpenMPI forcing th elink of C++ bindings
+  add_definitions(-DOMPI_SKIP_MPICXX)
+endif()
 option(ADIOS_USE_BZip2 "Enable support for BZip2 transforms" ON)
 option(ADIOS_USE_ADIOS1 "Enable support for the ADIOS 1 engine" OFF)
 option(ADIOS_USE_DataMan "Enable support for the DataMan engine" OFF)
@@ -68,8 +77,9 @@ option(ADIOS_USE_DataMan "Enable support for the DataMan engine" OFF)
 #------------------------------------------------------------------------------#
 # Third party libraries
 #------------------------------------------------------------------------------#
-option(ADIOS_BUILD_TESTING "Build ADIOS tests" OFF)
-set(BUILD_TESTING ${ADIOS_BUILD_TESTING} CACHE INTERNAL "")
+option(ADIOS_BUILD_TESTING "Build ADIOS tests" ON)
+set(BUILD_TESTING ${ADIOS_BUILD_TESTING})
+mark_as_advanced(BUILD_TESTING)
 include(CTest)
 add_subdirectory(thirdparty)
 
@@ -113,10 +123,11 @@ message("")
 message("  Installation prefix: ${CMAKE_INSTALL_PREFIX}")
 message("  Features:")
 if(BUILD_SHARED_LIBS)
-  message("    Type:    shared")
+  message("    Library Type: shared")
 else()
-  message("    Type:    static")
+  message("    Library Type: static")
 endif()
+message("    Build Type:   ${CMAKE_BUILD_TYPE}")
 message("    Testing: ${BUILD_TESTING}")
 message("    MPI:     ${ADIOS_USE_MPI}")
 message("    BZip2:   ${ADIOS_USE_BZip2}")

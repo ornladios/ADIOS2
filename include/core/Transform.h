@@ -33,9 +33,9 @@ public:
    * Initialize parent method
    * @param method zlib, bzip2, szip
    */
-  Transform(const std::string method);
+  Transform(std::string method);
 
-  virtual ~Transform();
+  virtual ~Transform() = default;
 
   virtual void Compress(const std::vector<char> &bufferIn,
                         std::vector<char> &bufferOut);
@@ -44,5 +44,5 @@ public:
                           std::vector<char> &bufferOut);
 };
 
-} // end namespace
+} // end namespace adios
 #endif /* TRANSFORM_H_ */

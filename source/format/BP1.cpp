@@ -21,10 +21,13 @@ std::string BP1::GetDirectoryName(const std::string name) const noexcept
   std::string directory;
 
   if (name.find(".bp") == name.size() - 3)
+  {
     directory = name;
+  }
   else
+  {
     directory = name + ".bp";
-
+  }
   return directory;
 }
 
@@ -48,15 +51,25 @@ std::vector<std::uint8_t> BP1::GetMethodIDs(
   auto lf_GetMethodID = [](const std::string method) -> std::uint8_t {
     int id = METHOD_UNKNOWN;
     if (method == "NULL")
+    {
       id = METHOD_NULL;
+    }
     else if (method == "POSIX")
+    {
       id = METHOD_POSIX;
+    }
     else if (method == "FStream")
+    {
       id = METHOD_FSTREAM;
+    }
     else if (method == "File")
+    {
       id = METHOD_FILE;
+    }
     else if (method == "MPI")
+    {
       id = METHOD_MPI;
+    }
 
     return id;
   };
@@ -65,7 +78,9 @@ std::vector<std::uint8_t> BP1::GetMethodIDs(
   methodIDs.reserve(transports.size());
 
   for (const auto &transport : transports)
+  {
     methodIDs.push_back(lf_GetMethodID(transport->m_Type));
+  }
 
   return methodIDs;
 }
