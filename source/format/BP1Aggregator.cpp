@@ -98,8 +98,8 @@ void BP1Aggregator::WriteProfilingLog(const std::string fileName,
     MPI_Isend(&rankLogSize, 1, MPI_INT, 0, 0, m_MPIComm, &requestSize);
 
     MPI_Request requestRankLog;
-    MPI_Isend(rankLog.data(), rankLogSize, MPI_CHAR, 0, 1,
-              m_MPIComm, &requestRankLog);
+    MPI_Isend(rankLog.data(), rankLogSize, MPI_CHAR, 0, 1, m_MPIComm,
+              &requestRankLog);
   }
 }
 

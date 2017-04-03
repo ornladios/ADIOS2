@@ -224,8 +224,7 @@ void BP1Writer::WriteDimensionsRecord(
     {
       for (const auto &localDimension : localDimensions)
       {
-        CopyToBuffer(buffer,
-                     static_cast<const uint64_t *>(&localDimension));
+        CopyToBuffer(buffer, static_cast<const uint64_t *>(&localDimension));
         buffer.insert(buffer.end(), skip, 0);
       }
     }
@@ -246,10 +245,10 @@ void BP1Writer::WriteDimensionsRecord(
     {
       for (unsigned int d = 0; d < localDimensions.size(); ++d)
       {
-        CopyToBuffer(buffer, static_cast<const uint64_t *>(
-                                 &localDimensions[d]));
-        CopyToBuffer(buffer, static_cast<const uint64_t *>(
-                                 &globalDimensions[d]));
+        CopyToBuffer(buffer,
+                     static_cast<const uint64_t *>(&localDimensions[d]));
+        CopyToBuffer(buffer,
+                     static_cast<const uint64_t *>(&globalDimensions[d]));
         CopyToBuffer(buffer, static_cast<const uint64_t *>(&globalOffsets[d]));
       }
     }
