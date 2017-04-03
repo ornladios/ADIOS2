@@ -30,12 +30,12 @@ public:
   const std::string m_Type;       ///< buffer type
   const std::string m_AccessMode; ///< 'w': write, 'r': read, 'a': append
 
-  std::size_t m_DataPosition = 0; ///< position in current data buffer (not
-                                  /// included data flushed to transports)
-  std::size_t m_DataAbsolutePosition =
+  size_t m_DataPosition = 0; ///< position in current data buffer (not
+                             /// included data flushed to transports)
+  size_t m_DataAbsolutePosition =
       0; ///< includes the data flushed to transports
 
-  std::size_t m_MetadataPosition = 0; ///< position in metadata buffer
+  size_t m_MetadataPosition = 0; ///< position in metadata buffer
 
   /**
    * Base class constructor providing type from derived class and accessMode
@@ -44,22 +44,21 @@ public:
    * @param rankMPI current MPI rank
    * @param debugMode
    */
-  Capsule(const std::string type, const std::string accessMode,
-          const int rankMPI, const bool debugMode);
+  Capsule(std::string type, std::string accessMode, int rankMPI,
+          bool debugMode);
 
-  virtual ~Capsule();
+  virtual ~Capsule() = default;
 
   virtual char *GetData() = 0; ///< return the pointer to the raw data buffer
   virtual char *
   GetMetadata() = 0; ///< return the pointer to the raw metadata buffer
 
-  virtual std::size_t GetDataSize() const = 0; ///< get current data buffer size
-  virtual std::size_t
+  virtual size_t GetDataSize() const = 0; ///< get current data buffer size
+  virtual size_t
   GetMetadataSize() const = 0; ///< get current metadata buffer size
 
-  virtual void ResizeData(const std::size_t size); ///< resize data buffer
-  virtual void
-  ResizeMetadata(const std::size_t size); ///< resize metadata buffer
+  virtual void ResizeData(size_t size);     ///< resize data buffer
+  virtual void ResizeMetadata(size_t size); ///< resize metadata buffer
 
 protected:
   const int m_RankMPI = 0;        ///< current MPI rank

@@ -26,7 +26,7 @@ public:
   unsigned long long int ProcessTime = 0;
 
   Timer(const std::string process, const Support::Resolutions resolution)
-      : Process{process}, Resolution{resolution}
+  : Process{process}, Resolution{resolution}
   {
   }
 

@@ -25,7 +25,7 @@ namespace transport
 {
 
 FileDescriptor::FileDescriptor(MPI_Comm mpiComm, const bool debugMode)
-    : Transport("POSIX_IO", mpiComm, debugMode)
+: Transport("POSIX_IO", mpiComm, debugMode)
 {
 }
 

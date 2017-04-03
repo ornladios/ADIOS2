@@ -1,4 +1,5 @@
-Language:          Cpp
-BasedOnStyle:      LLVM
-BreakBeforeBraces: Allman
+Language:  Cpp
+BasedOnStyle:  LLVM
+BreakBeforeBraces:  Allman
 IndentCaseLabels:  true
+ConstructorInitializerIndentWidth:  0

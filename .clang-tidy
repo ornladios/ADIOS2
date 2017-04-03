@@ -1,1 +1,5 @@
-Checks: -*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*
+Checks: -*,cppcoreguidelines-*,google-*,llvm-*,misc-*,modernize-*,performance-*,-cppcoreguidelines-pro-type-vararg,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-google-runtime-int
+
+CheckOptions:
+  - key: 	google-runtime-int.TypeSuffix
+    value:	_t

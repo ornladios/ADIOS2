@@ -52,8 +52,8 @@ public:
   Variable<T>(const std::string name, const Dims dimensions,
               const Dims globalDimensions, const Dims globalOffsets,
               const bool debugMode)
-      : VariableBase(name, GetType<T>(), sizeof(T), dimensions,
-                     globalDimensions, globalOffsets, debugMode)
+  : VariableBase(name, GetType<T>(), sizeof(T), dimensions, globalDimensions,
+                 globalOffsets, debugMode)
   {
     if (m_Dimensions == Dims{1})
       m_IsScalar = true;

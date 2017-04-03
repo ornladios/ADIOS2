@@ -20,7 +20,7 @@ namespace transport
 {
 
 FStream::FStream(MPI_Comm mpiComm, const bool debugMode)
-    : Transport("fstream", mpiComm, debugMode)
+: Transport("fstream", mpiComm, debugMode)
 {
 }
 
