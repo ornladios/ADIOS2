@@ -121,17 +121,23 @@ void BP1Writer::Close(BP1MetadataSet &metadataSet, capsule::STLVector &heap,
                       const bool doAggregation) const noexcept
 {
   if (metadataSet.Log.m_IsActive == true)
+  {
     metadataSet.Log.m_Timers[0].SetInitialTime();
+  }
 
   if (isFirstClose == true)
   {
     if (metadataSet.DataPGIsOpen == true)
+    {
       FlattenData(metadataSet, heap);
+    }
 
     FlattenMetadata(metadataSet, heap);
 
     if (metadataSet.Log.m_IsActive == true)
+    {
       metadataSet.Log.m_Timers[0].SetInitialTime();
+    }
 
     if (doAggregation == true) // N-to-M  where 1 <= M <= N-1, might need a new
                                // Log metadataSet.Log.m_Timers just for
@@ -177,7 +183,9 @@ std::string BP1Writer::GetRankProfilingLog(
     rankLog += "'lib': " + transports[t]->m_Type + ", ";
 
     for (unsigned int i = 0; i < 3; ++i)
+    {
       lf_WriterTimer(rankLog, timers[i]);
+    }
 
     rankLog += "}, ";
   }
@@ -391,7 +399,9 @@ void BP1Writer::FlattenMetadata(BP1MetadataSet &metadataSet,
   heap.m_DataAbsolutePosition += footerSize;
 
   if (metadataSet.Log.m_IsActive == true)
+  {
     metadataSet.Log.m_TotalBytes.push_back(heap.m_DataAbsolutePosition);
+  }
 }
 
 } // end namespace format

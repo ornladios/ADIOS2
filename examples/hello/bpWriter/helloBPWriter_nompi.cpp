@@ -13,7 +13,7 @@
 
 #include "ADIOS_CPP.h"
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char ** /*argv*/)
 {
   const bool adiosDebug = true;
   adios::ADIOS adios(adios::Verbose::WARN, adiosDebug);
@@ -55,7 +55,9 @@ int main(int argc, char *argv[])
                                    adios::IOMode::COLLECTIVE);
 
     if (bpFileWriter == nullptr)
+    {
       throw std::ios_base::failure("ERROR: couldn't create bpWriter at Open\n");
+    }
 
     bpFileWriter->Write<double>(
         ioMyDoubles, myDoubles.data()); // Base class Engine own the Write<T>

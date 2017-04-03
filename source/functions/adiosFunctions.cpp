@@ -37,10 +37,12 @@ void DumpFileToString(const std::string fileName, std::string &fileContent)
 {
   std::ifstream fileStream(fileName);
 
-  if (fileStream.good() == false) // check file
+  if (fileStream.good() == false)
+  { // check file
     throw std::ios_base::failure(
         "ERROR: file " + fileName +
         " could not be opened. Check permissions or file existence\n");
+  }
 
   std::ostringstream fileSS;
   fileSS << fileStream.rdbuf();
@@ -48,7 +50,9 @@ void DumpFileToString(const std::string fileName, std::string &fileContent)
   fileContent = fileSS.str(); // convert to string and check
 
   if (fileContent.empty())
+  {
     throw std::invalid_argument("ERROR: file " + fileName + " is empty\n");
+  }
 }
 
 void GetSubString(const std::string initialTag, const std::string finalTag,
@@ -101,25 +105,35 @@ void GetSubString(const std::string initialTag, const std::string finalTag,
         (singleQuotePosition == content.npos && end < doubleQuotePosition) ||
         (doubleQuotePosition == content.npos && end < singleQuotePosition) ||
         (end < singleQuotePosition && end < doubleQuotePosition))
+    {
       break;
+    }
 
     // find the closing corresponding quote
     std::string::size_type closingQuotePosition;
 
-    if (singleQuotePosition == content.npos) // no ' anywhere
+    if (singleQuotePosition == content.npos)
+    { // no ' anywhere
       lf_SetPositions('\"', doubleQuotePosition, content, currentPosition,
                       closingQuotePosition);
-    else if (doubleQuotePosition == content.npos) // no " anywhere
+    }
+    else if (doubleQuotePosition == content.npos)
+    { // no " anywhere
       lf_SetPositions('\'', singleQuotePosition, content, currentPosition,
                       closingQuotePosition);
+    }
     else
     {
       if (singleQuotePosition < doubleQuotePosition)
+      {
         lf_SetPositions('\'', singleQuotePosition, content, currentPosition,
                         closingQuotePosition);
-      else // find the closing "
+      }
+      else
+      { // find the closing "
         lf_SetPositions('\"', doubleQuotePosition, content, currentPosition,
                         closingQuotePosition);
+      }
     }
 
     if (closingQuotePosition ==
@@ -132,7 +146,9 @@ void GetSubString(const std::string initialTag, const std::string finalTag,
     currentPosition = closingQuotePosition + 1;
 
     if (closingQuotePosition < end)
+    {
       continue;
+    }
 
     // if this point is reached it means it's a value inside " " or ' ', move to
     // the next end
@@ -151,8 +167,10 @@ void GetQuotedValue(const char quote,
   auto nextQuotePosition = currentTag.find(quote);
 
   if (nextQuotePosition == currentTag.npos)
+  {
     throw std::invalid_argument("ERROR: Invalid attribute in..." + currentTag +
                                 "...check XML file\n");
+  }
 
   value = currentTag.substr(0, nextQuotePosition);
   currentTag = currentTag.substr(nextQuotePosition + 1);
@@ -201,8 +219,10 @@ void GetPairsFromTag(
                                      ">"); // check for closing tagName
 
     if (fileContent.find(closingTagName) == fileContent.npos)
+    {
       throw std::invalid_argument("ERROR: closing tag " + closingTagName +
                                   " missing, check XML file\n");
+    }
 
     GetPairs(tag, pairs);
   }
@@ -411,7 +431,9 @@ std::size_t GetTotalSize(const std::vector<std::size_t> &dimensions)
   std::size_t product = 1;
 
   for (const auto dimension : dimensions)
+  {
     product *= dimension;
+  }
 
   return product;
 }
@@ -420,13 +442,17 @@ void CreateDirectory(const std::string fullPath) noexcept
 {
   auto lf_Mkdir = [](const std::string directory, struct stat &st) {
     if (stat(directory.c_str(), &st) == -1)
+    {
       mkdir(directory.c_str(), 0777);
+    }
   };
 
   auto directoryPosition = fullPath.find("/");
 
-  if (fullPath[0] == '/' || fullPath[0] == '.') // find the second '/'
+  if (fullPath[0] == '/' || fullPath[0] == '.')
+  { // find the second '/'
     directoryPosition = fullPath.find("/", directoryPosition + 1);
+  }
 
   struct stat st = {0};
   if (directoryPosition == fullPath.npos) // no subdirectories
@@ -464,9 +490,11 @@ void SetTransformsHelper(const std::vector<std::string> &transformNames,
       if (debugMode == true)
       {
         if (colonPosition == transformName.size() - 1)
+        {
           throw std::invalid_argument("ERROR: wrong format for transform " +
                                       transformName +
                                       ", in call to SetTransform\n");
+        }
       }
 
       transformMethod = transformName.substr(0, colonPosition);
@@ -528,14 +556,18 @@ BuildParametersMap(const std::vector<std::string> &parameters,
     if (debugMode == true)
     {
       if (equalPosition == parameter.npos)
+      {
         throw std::invalid_argument("ERROR: wrong format for parameter " +
                                     parameter +
                                     ", format must be field=value \n");
+      }
 
       if (equalPosition == parameter.size() - 1)
+      {
         throw std::invalid_argument("ERROR: empty value in parameter " +
                                     parameter +
                                     ", format must be field=value \n");
+      }
     }
 
     field = parameter.substr(0, equalPosition);
@@ -553,8 +585,10 @@ BuildParametersMap(const std::vector<std::string> &parameters,
     if (debugMode == true)
     {
       if (parametersOutput.count(field) == 1)
+      {
         throw std::invalid_argument("ERROR: parameter " + field +
                                     " already exists, must be unique\n");
+      }
     }
 
     parametersOutput[field] = value;
@@ -567,7 +601,9 @@ std::vector<int> CSVToVectorInt(const std::string csv)
 {
   std::vector<int> numbers;
   if (csv.empty())
+  {
     return numbers;
+  }
 
   if (csv.find(",") == csv.npos) // check if no commas, one int
   {
@@ -600,7 +636,9 @@ bool CheckBufferAllocation(const std::size_t newSize, const float growthFactor,
   bool doTransportsFlush = (requiredDataSize > maxBufferSize) ? true : false;
 
   if (GrowBuffer(requiredDataSize, growthFactor, buffer) == -1)
+  {
     doTransportsFlush = true;
+  }
 
   return doTransportsFlush;
 }
@@ -643,4 +681,4 @@ bool IsLittleEndian() noexcept
   return *reinterpret_cast<std::uint8_t *>(&hexa) != 0x12;
 }
 
-} // end namespace
+} // namespace adios
