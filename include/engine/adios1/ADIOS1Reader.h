@@ -10,8 +10,8 @@
  *      Author: pnb
  */
 
-#ifndef BPFILEREADER_H_
-#define BPFILEREADER_H_
+#ifndef ADIOS1READER_H_
+#define ADIOS1READER_H_
 
 #include <iostream> //this must go away
 
@@ -23,7 +23,13 @@
 namespace adios
 {
 
-class BPFileReader : public Engine
+#ifdef ADIOS_NOMPI
+#define _NOMPI 1
+#endif
+#include "adios_read_v2.h" // this is adios 1.x header file
+
+
+class ADIOS1Reader : public Engine
 {
 
 public:
@@ -37,13 +43,13 @@ public:
    * @param debugMode
    * @param hostLanguage
    */
-  BPFileReader(ADIOS &adios, const std::string name,
+  ADIOS1Reader(ADIOS &adios, const std::string name,
                const std::string accessMode, MPI_Comm mpiComm,
                const Method &method, const IOMode iomode,
                const float timeout_sec, const bool debugMode = false,
                const unsigned int nthreads = 1);
 
-  ~BPFileReader();
+  ~ADIOS1Reader();
 
   Variable<void> *InquireVariable(const std::string name,
                                   const bool readIn = true);
@@ -92,24 +98,13 @@ public:
   void Close(const int transportIndex = -1);
 
 private:
-  capsule::STLVector
-      m_Buffer; ///< heap capsule, contains data and metadata buffers
-  // format::BP1Writer m_BP1Writer; ///< format object will provide the required
-  // BP functionality to be applied on m_Buffer and m_Transports
 
-  void Init(); ///< calls InitCapsules and InitTransports based on Method,
-               /// called from constructor
-  void InitCapsules();
-  void InitTransports(); ///< from Transports
-
-  std::string
-  GetMdtmParameter(const std::string parameter,
-                   const std::map<std::string, std::string> &mdtmParameters);
+  void Init(); ///< called from constructor, gets the selected ADIOS1 transport method from settings
 
   template <class T>
   Variable<T> *InquireVariableCommon(const std::string name, const bool readIn)
   {
-    std::cout << "Hello BPReaderCommon\n";
+    std::cout << "Hello ADIOS1Reader::InquireVariableCommon\n";
 
     // here read variable metadata (dimensions, type, etc.)...then create a
     // Variable like below:
@@ -117,8 +112,10 @@ private:
     // return &variable; //return address if success
     return nullptr; // on failure
   }
+
+  enum ADIOS_READ_METHOD read_method = ADIOS_READ_METHOD_BP;
 };
 
 } // end namespace adios
 
-#endif /* BPFILEREADER_H_ */
+#endif /* ADIOS1READER_H_ */
