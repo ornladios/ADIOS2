@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * Engine.h
  *
  *  Created on: Nov 7, 2016
@@ -17,11 +20,7 @@
 #include <vector>
 /// \endcond
 
-#ifdef ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 #include "ADIOS.h"
 #include "ADIOSTypes.h"

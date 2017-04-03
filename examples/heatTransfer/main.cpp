@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * main.cpp
  *
  * Recreates heat_transfer.f90 (Fortran) ADIOS tutorial example in C++

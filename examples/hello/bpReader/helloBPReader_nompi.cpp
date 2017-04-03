@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * helloADIOSNoXML_OOP.cpp
  *
  *  Created on: Jan 9, 2017

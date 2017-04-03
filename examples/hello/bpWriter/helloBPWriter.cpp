@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * helloWriter.cpp
  *
  *  Created on: Feb 16, 2017
@@ -8,7 +11,9 @@
 #include <iostream>
 #include <vector>
 
+#define OMPI_SKIP_MPICXX 1 // workaround for OpenMPI forcing C++ bindings
 #include <mpi.h>
+#undef OMPI_SKIP_MPICXX
 
 #include "ADIOS_CPP.h"
 

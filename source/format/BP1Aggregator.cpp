@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * BP1Aggregator.cpp
  *
  *  Created on: Mar 21, 2017
@@ -7,6 +10,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
+#include <stdexcept>
 #include <vector>
 /// \endcond
 

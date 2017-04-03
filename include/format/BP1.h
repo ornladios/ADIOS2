@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * BP1.h
  *
  *  Created on: Feb 2, 2017
@@ -16,11 +19,7 @@
 //#include <queue>  //std::priority_queue to be added later
 /// \endcond
 
-#if ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 #include "core/Profiler.h"
 #include "core/Transport.h"

@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * Transport.h
  *
  *  Created on: Oct 6, 2016
@@ -13,11 +16,7 @@
 #include <vector>
 /// \endcond
 
-#ifdef ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 #include "core/Profiler.h"
 

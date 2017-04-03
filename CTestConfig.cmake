@@ -3,14 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(bpWriter)
-add_subdirectory(timeBP)
+set(CTEST_PROJECT_NAME "ADIOS")
+set(CTEST_NIGHTLY_START_TIME "01:00:00 UTC")
 
-if(ADIOS_USE_ADIOS1)
-  add_subdirectory(adios1Writer)
-endif()
-
-if(ADIOS_USE_DataMan)
-  add_subdirectory(datamanReader)
-  add_subdirectory(datamanWriter)
-endif()
+set(CTEST_DROP_METHOD "http")
+set(CTEST_DROP_SITE "open.cdash.org")
+set(CTEST_DROP_LOCATION "/submit.php?project=ADIOS")
+set(CTEST_DROP_SITE_CDASH TRUE)

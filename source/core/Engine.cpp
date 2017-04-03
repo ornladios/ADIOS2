@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * Engine.cpp
  *
  *  Created on: Dec 19, 2016
@@ -17,7 +20,7 @@ Engine::Engine(ADIOS &adios, const std::string engineType,
                MPI_Comm mpiComm, const Method &method, const bool debugMode,
                const unsigned int nthreads, const std::string endMessage)
     : m_MPIComm{mpiComm}, m_EngineType{engineType}, m_Name{name},
-      m_AccessMode{accessMode}, m_Method{method}, m_ADIOS{adios},
+      m_AccessMode{accessMode}, m_Method{method}, m_ADIOS(adios),
       m_DebugMode{debugMode}, m_nThreads{nthreads}, m_EndMessage(endMessage)
 {
   if (m_DebugMode == true)

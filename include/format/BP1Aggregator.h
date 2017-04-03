@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * BP1Aggregator.h
  *
  *  Created on: Mar 1, 2017
@@ -8,11 +11,7 @@
 #ifndef BP1AGGREGATOR_H_
 #define BP1AGGREGATOR_H_
 
-#ifdef ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 namespace adios
 {

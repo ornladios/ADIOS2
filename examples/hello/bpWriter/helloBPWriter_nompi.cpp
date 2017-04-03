@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * helloADIOSNoXML_OOP.cpp
  *
  *  Created on: Jan 9, 2017
@@ -13,7 +16,7 @@
 int main(int argc, char *argv[])
 {
   const bool adiosDebug = true;
-  adios::ADIOS adios(adiosDebug);
+  adios::ADIOS adios(adios::Verbose::WARN, adiosDebug);
 
   // Application variable
   std::vector<double> myDoubles = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};

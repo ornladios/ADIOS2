@@ -3,14 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(bpWriter)
-add_subdirectory(timeBP)
+add_executable(hello_datamanWriter helloDataManWriter.cpp)
+target_link_libraries(hello_datamanWriter adios2)
 
-if(ADIOS_USE_ADIOS1)
-  add_subdirectory(adios1Writer)
-endif()
-
-if(ADIOS_USE_DataMan)
-  add_subdirectory(datamanReader)
-  add_subdirectory(datamanWriter)
-endif()
+add_executable(hello_datamanWriter_nompi helloDataManWriter_nompi.cpp)
+target_link_libraries(hello_datamanWriter_nompi adios2)

@@ -1,4 +1,7 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * ADIOS.h
  *
  *  Created on: Oct 3, 2016
@@ -18,11 +21,7 @@
 #include <vector>
 /// \endcond
 
-#ifdef ADIOS_NOMPI
-#include "mpidummy.h"
-#else
-#include <mpi.h>
-#endif
+#include "ADIOS_MPI.h"
 
 #include "ADIOSTypes.h"
 #include "core/Method.h"
