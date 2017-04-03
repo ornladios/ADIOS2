@@ -9,8 +9,18 @@ if(ADIOS_USE_MPI)
   target_link_libraries(hello_timeBPWriter adios2)
   target_include_directories(hello_timeBPWriter PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_timeBPWriter adios2 ${MPI_C_LIBRARIES})
+
+  if(ADIOS_BUILD_TESTING)
+    add_test(NAME Example::hello::timeBPWriter COMMAND hello_timeBPWriter)
+  endif()
+else()
+  add_executable(hello_timeBPWriter_nompi timeBPWriter_nompi.cpp)
+  target_link_libraries(hello_timeBPWriter_nompi adios2)
+
+  if(ADIOS_BUILD_TESTING)
+    add_test(
+      NAME Example::hello::timeBPWriter_nompi
+      COMMAND hello_timeBPWriter_nompi
+    )
+  endif()
 endif()
-
-
-add_executable(hello_timeBPWriter_nompi timeBPWriter_nompi.cpp)
-target_link_libraries(hello_timeBPWriter_nompi adios2)
