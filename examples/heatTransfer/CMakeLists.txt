@@ -25,4 +25,5 @@ if(ADIOS_USE_ADIOS1)
     endif()
 endif()
 
-#add_subdirectory(read)
+add_subdirectory(read)
+

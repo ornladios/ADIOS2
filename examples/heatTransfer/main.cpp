@@ -65,10 +65,10 @@ int main(int argc, char *argv[])
     IO io(settings, mpiHeatTransferComm);
 
     ht.init(true);
-    ht.printT("Initialized T:", mpiHeatTransferComm);
+    //ht.printT("Initialized T:", mpiHeatTransferComm);
     ht.heatEdges();
-    // ht.exchange( mpiHeatTransferComm );
-    ht.printT("Heated T:", mpiHeatTransferComm);
+    ht.exchange( mpiHeatTransferComm );
+    //ht.printT("Heated T:", mpiHeatTransferComm);
     io.write(0, ht, settings, mpiHeatTransferComm);
 
     for (unsigned int t = 1; t <= settings.steps; ++t)
