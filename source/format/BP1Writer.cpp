@@ -71,7 +71,7 @@ void BP1Writer::WriteProcessGroupIndex(
 
   // offset to pg in data in metadata which is the current absolute position
   CopyToBuffer(metadataBuffer,
-               reinterpret_cast<std::uint64_t *>(&heap.m_DataAbsolutePosition));
+               static_cast<uint64_t *>(&heap.m_DataAbsolutePosition));
 
   // Back to writing metadata pg index length (length of group)
   const std::uint16_t metadataPGIndexLength =
@@ -204,7 +204,7 @@ void BP1Writer::WriteDimensionsRecord(
   auto lf_WriteFlaggedDim = [](std::vector<char> &buffer, const char no,
                                const std::size_t dimension) {
     CopyToBuffer(buffer, &no);
-    CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(&dimension));
+    CopyToBuffer(buffer, static_cast<const uint64_t *>(&dimension));
   };
 
   // BODY Starts here
@@ -225,7 +225,7 @@ void BP1Writer::WriteDimensionsRecord(
       for (const auto &localDimension : localDimensions)
       {
         CopyToBuffer(buffer,
-                     reinterpret_cast<const std::uint64_t *>(&localDimension));
+                     static_cast<const uint64_t *>(&localDimension));
         buffer.insert(buffer.end(), skip, 0);
       }
     }
@@ -246,12 +246,11 @@ void BP1Writer::WriteDimensionsRecord(
     {
       for (unsigned int d = 0; d < localDimensions.size(); ++d)
       {
-        CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(
+        CopyToBuffer(buffer, static_cast<const uint64_t *>(
                                  &localDimensions[d]));
-        CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(
+        CopyToBuffer(buffer, static_cast<const uint64_t *>(
                                  &globalDimensions[d]));
-        CopyToBuffer(
-            buffer, reinterpret_cast<const std::uint64_t *>(&globalOffsets[d]));
+        CopyToBuffer(buffer, static_cast<const uint64_t *>(&globalOffsets[d]));
       }
     }
   }

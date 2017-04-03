@@ -677,8 +677,8 @@ int GrowBuffer(const std::size_t incomingDataSize, const float growthFactor,
 
 bool IsLittleEndian() noexcept
 {
-  std::uint16_t hexa = 0x1234;
-  return *reinterpret_cast<std::uint8_t *>(&hexa) != 0x12;
+  uint16_t hexa = 0x1234;
+  return *reinterpret_cast<uint8_t *>(&hexa) != 0x12; // NOLINT
 }
 
 } // namespace adios
