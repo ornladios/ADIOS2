@@ -20,10 +20,10 @@ namespace adios
 Engine::Engine(ADIOS &adios, std::string engineType, std::string name,
                std::string accessMode, MPI_Comm mpiComm, const Method &method,
                bool debugMode, unsigned int nthreads, std::string endMessage)
-: m_MPIComm{mpiComm}, m_EngineType{std::move(engineType)},
-  m_Name{std::move(name)}, m_AccessMode{std::move(accessMode)},
-  m_Method{method}, m_ADIOS{adios}, m_DebugMode{debugMode},
-  m_nThreads{nthreads}, m_EndMessage{std::move(endMessage)}
+: m_MPIComm(mpiComm), m_EngineType(std::move(engineType)),
+  m_Name(std::move(name)), m_AccessMode(std::move(accessMode)),
+  m_Method(method), m_ADIOS(adios), m_DebugMode(debugMode),
+  m_nThreads(nthreads), m_EndMessage(std::move(endMessage))
 {
   if (m_DebugMode == true)
   {
