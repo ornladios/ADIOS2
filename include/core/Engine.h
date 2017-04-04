@@ -26,7 +26,6 @@
 #include "ADIOSTypes.h"
 #include "core/Capsule.h"
 #include "core/Method.h"
-#include "core/Profiler.h"
 #include "core/Transform.h"
 #include "core/Transport.h"
 #include "core/Variable.h"
@@ -56,8 +55,7 @@ public:
 
   const std::string m_EngineType; ///< from derived class
   const std::string m_Name;       ///< name used for this engine
-  const std::string
-      m_AccessMode;       ///< accessMode for buffers used by this engine
+  const std::string m_AccessMode; ///< "w", "r", "a"
   const Method &m_Method; ///< associated method containing engine metadata
 
   int m_RankMPI = 0; ///< current MPI rank process
@@ -73,13 +71,11 @@ public:
    * @param accessMode
    * @param mpiComm
    * @param method
-   * @param debugMode
-   * @param nthreads
    * @param endMessage
    */
-  Engine(ADIOS &adios, std::string engineType, std::string name,
-         std::string accessMode, MPI_Comm mpiComm, const Method &method,
-         bool debugMode, unsigned int nthreads, std::string endMessage);
+  Engine(ADIOS &adios, const std::string engineType, const std::string name,
+         const std::string accessMode, MPI_Comm mpiComm, const Method &method,
+         std::string endMessage);
 
   virtual ~Engine() = default;
 
@@ -136,8 +132,7 @@ public:
    * @param variableName
    * @param values
    */
-  template <class T>
-  void Write(const std::string &variableName, const T *values)
+  template <class T> void Write(const std::string variableName, const T *values)
   {
     Write(variableName, values);
   }
@@ -159,7 +154,7 @@ public:
    * @param variableName
    * @param values
    */
-  template <class T> void Write(const std::string &variableName, const T values)
+  template <class T> void Write(const std::string variableName, const T values)
   {
     const T val = values;
     Write(variableName, &val);
@@ -203,33 +198,32 @@ public:
    * @param variableName
    * @param values coming from user app
    */
-  virtual void Write(const std::string &variableName, const char *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName, const char *values);
+  virtual void Write(const std::string variableName,
                      const unsigned char *values);
-  virtual void Write(const std::string &variableName, const short *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName, const short *values);
+  virtual void Write(const std::string variableName,
                      const unsigned short *values);
-  virtual void Write(const std::string &variableName, const int *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName, const int *values);
+  virtual void Write(const std::string variableName,
                      const unsigned int *values);
-  virtual void Write(const std::string &variableName, const long int *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName, const long int *values);
+  virtual void Write(const std::string variableName,
                      const unsigned long int *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName,
                      const long long int *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName,
                      const unsigned long long int *values);
-  virtual void Write(const std::string &variableName, const float *values);
-  virtual void Write(const std::string &variableName, const double *values);
-  virtual void Write(const std::string &variableName,
-                     const long double *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName, const float *values);
+  virtual void Write(const std::string variableName, const double *values);
+  virtual void Write(const std::string variableName, const long double *values);
+  virtual void Write(const std::string variableName,
                      const std::complex<float> *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName,
                      const std::complex<double> *values);
-  virtual void Write(const std::string &variableName,
+  virtual void Write(const std::string variableName,
                      const std::complex<long double> *values);
-  virtual void Write(const std::string &variableName, const void *values);
+  virtual void Write(const std::string variableName, const void *values);
 
   /**
    * Read function that adds static checking on the variable to be passed by
@@ -452,17 +446,17 @@ public:
    */
   std::vector<std::string> VariableNames();
 
-  virtual void
-  Close(const int transportIndex =
-            -1) = 0; ///< Closes a particular transport, or all if -1
+  /**
+   * Closes a particular transport, or all if -1
+   * @param transportIndex order from Method AddTransport
+   */
+  virtual void Close(const int transportIndex = -1) = 0;
 
 protected:
-  ADIOS
-  &m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
+  ADIOS &m_ADIOS; ///< creates Engine at Open
   std::vector<std::shared_ptr<Transport>> m_Transports; ///< transports managed
-  const bool m_DebugMode =
-      false; ///< true: additional checks, false: by-pass checks
-  unsigned int m_nThreads = 0;
+  const bool m_DebugMode = false; ///< true: additional exceptions checks
+  unsigned int m_nThreads = 0;    ///< from Method nthreads
   const std::string m_EndMessage; ///< added to exceptions to improve debugging
   std::set<std::string> m_WrittenVariables; ///< contains the names of the
                                             /// variables that are being written

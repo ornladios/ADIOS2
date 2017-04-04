@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "format/BP1.h"
+#include "packages/format/bp1/BP1Base.h"
 #include "functions/adiosFunctions.h"
 
 namespace adios
@@ -16,7 +16,7 @@ namespace adios
 namespace format
 {
 
-std::string BP1::GetDirectoryName(const std::string name) const noexcept
+std::string BP1Base::GetDirectoryName(const std::string name) const noexcept
 {
   std::string directory;
 
@@ -28,8 +28,9 @@ std::string BP1::GetDirectoryName(const std::string name) const noexcept
   return directory;
 }
 
-void BP1::OpenRankFiles(const std::string name, const std::string accessMode,
-                        Transport &file) const
+// this should go outside
+void BP1Base::OpenRankFiles(const std::string name,
+                            const std::string accessMode, Transport &file) const
 {
   const std::string directory = GetDirectoryName(name);
   CreateDirectory(
@@ -42,7 +43,7 @@ void BP1::OpenRankFiles(const std::string name, const std::string accessMode,
                                    // location fro writing
 }
 
-std::vector<std::uint8_t> BP1::GetMethodIDs(
+std::vector<std::uint8_t> BP1Base::GetMethodIDs(
     const std::vector<std::shared_ptr<Transport>> &transports) const noexcept
 {
   auto lf_GetMethodID = [](const std::string method) -> std::uint8_t {

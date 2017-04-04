@@ -15,7 +15,7 @@
 #include <unistd.h> //sleep must be removed
 
 #include "core/Engine.h"
-#include "format/BP1Writer.h"
+#include "packages/format/bp1/BP1Writer.h"
 
 // supported capsules
 #include "capsule/heap/STLVector.h"
@@ -153,9 +153,9 @@ private:
     {
       MPI_Barrier(m_MPIComm);
       std::cout << "I am hooked to the DataMan library\n";
-      std::cout << "putshape " << variable.m_Dimensions.size() << endl;
-      std::cout << "varshape " << variable.m_GlobalDimensions.size() << endl;
-      std::cout << "offset " << variable.m_GlobalOffsets.size() << endl;
+      std::cout << "putshape " << variable.m_Dimensions.size() << "\n";
+      std::cout << "varshape " << variable.m_GlobalDimensions.size() << "\n";
+      std::cout << "offset " << variable.m_GlobalOffsets.size() << "\n";
       for (int i = 0; i < m_SizeMPI; ++i)
       {
         if (i == m_RankMPI)

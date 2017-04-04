@@ -12,8 +12,7 @@
 #define BPFILEWRITER_H_
 
 #include "core/Engine.h"
-#include "format/BP1Aggregator.h"
-#include "format/BP1Writer.h"
+#include "packages/format/bp1/BP1.h"
 
 // supported capsules
 #include "capsule/heap/STLVector.h"
@@ -36,9 +35,7 @@ public:
    */
   BPFileWriter(ADIOS &adios, const std::string name,
                const std::string accessMode, MPI_Comm mpiComm,
-               const Method &method, const IOMode iomode = IOMode::INDEPENDENT,
-               const float timeout_sec = 0., const bool debugMode = false,
-               const unsigned int nthreads = 1);
+               const Method &method);
 
   ~BPFileWriter();
 
@@ -113,8 +110,8 @@ private:
   float m_GrowthFactor = 1.5;  ///< capsule memory growth factor, new_memory =
                                /// m_GrowthFactor * current_memory
 
-  bool m_TransportFlush =
-      false; ///< true: transport flush happened, buffer must be reset
+  bool m_TransportFlush = false; ///< true: due to buffer overflow
+
   bool m_CloseProcessGroup = false; ///< set to true if advance is called, this
   /// prevents flattening the data and metadata
   /// in Close
@@ -135,8 +132,8 @@ private:
   template <class T>
   void WriteVariableCommon(Variable<T> &variable, const T *values)
   {
-    if (m_MetadataSet.Log.m_IsActive == true)
-      m_MetadataSet.Log.m_Timers[0].SetInitialTime();
+    if (m_MetadataSet.Log.IsActive == true)
+      m_MetadataSet.Log.Timers[0].SetInitialTime();
 
     // set variable
     variable.m_AppValues = values;
@@ -173,8 +170,8 @@ private:
     variable.m_AppValues =
         nullptr; // setting pointer to null as not needed after write
 
-    if (m_MetadataSet.Log.m_IsActive == true)
-      m_MetadataSet.Log.m_Timers[0].SetTime();
+    if (m_MetadataSet.Log.IsActive == true)
+      m_MetadataSet.Log.Timers[0].SetTime();
   }
 };
 

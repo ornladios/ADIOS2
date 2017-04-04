@@ -27,8 +27,8 @@ DataManWriter::DataManWriter(ADIOS &adios, const std::string name,
                              const Method &method, const IOMode iomode,
                              const float timeout_sec, const bool debugMode,
                              const unsigned int nthreads)
-: Engine(adios, "DataManWriter", name, accessMode, mpiComm, method, debugMode,
-         nthreads, " DataManWriter constructor (or call to ADIOS Open).\n"),
+: Engine(adios, "DataManWriter", name, accessMode, mpiComm, method,
+         " DataManWriter constructor (or call to ADIOS Open).\n"),
   m_Buffer(accessMode, m_RankMPI, m_DebugMode)
 {
   Init();

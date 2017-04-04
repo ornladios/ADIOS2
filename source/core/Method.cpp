@@ -30,7 +30,7 @@ bool Method::isUserDefined()
 
 void Method::SetEngine(const std::string type) { m_Type = type; }
 
-void Method::AllowThreads(const int nThreads)
+void Method::AllowThreads(const unsigned int nThreads)
 {
   if (nThreads > 1)
     m_nThreads = nThreads;

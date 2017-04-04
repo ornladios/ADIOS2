@@ -46,8 +46,8 @@ public:
   const bool m_DebugMode = false; ///< true: on, throws exceptions and do
                                   /// additional checks, false: off, faster, but
   /// unsafe
-  int m_nThreads;
-  std::string m_Type;                              ///< Method's engine type
+  std::string m_Type; ///< Method's engine type
+  unsigned int m_nThreads;
   std::map<std::string, std::string> m_Parameters; ///< method parameters
   std::vector<std::map<std::string, std::string>>
       m_TransportParameters; ///< each is a separate Transport containing their
@@ -86,9 +86,9 @@ public:
    * Set this parameter like you set it for OpenMP, i.e. count one thread for
    * the main process that calls
    * ADIOS functions.
-   * @param number of threads, minimum 1 is required
+   * @param nThreads, minimum 1 is required
    */
-  void AllowThreads(const int nThreads);
+  void AllowThreads(const unsigned int nThreads);
 
   /**
    * Sets parameters for the method in "parameter=value" format

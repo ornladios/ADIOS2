@@ -23,11 +23,9 @@ namespace adios
 
 BPFileReader::BPFileReader(ADIOS &adios, const std::string name,
                            const std::string accessMode, MPI_Comm mpiComm,
-                           const Method &method, const IOMode iomode,
-                           const float timeout_sec, const bool debugMode,
-                           const unsigned int nthreads)
-: Engine(adios, "BPFileReader", name, accessMode, mpiComm, method, debugMode,
-         nthreads, " BPFileReader constructor (or call to ADIOS Open).\n"),
+                           const Method &method)
+: Engine(adios, "BPFileReader", name, accessMode, mpiComm, method,
+         " BPFileReader constructor (or call to ADIOS Open).\n"),
   m_Buffer(accessMode, m_RankMPI, m_DebugMode)
 {
   Init();

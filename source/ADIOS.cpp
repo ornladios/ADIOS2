@@ -129,14 +129,12 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
   if (isDefaultWriter || type == "BPFileWriter" || type == "bpfilewriter")
   {
     return std::make_shared<BPFileWriter>(*this, name, accessMode, mpiComm,
-                                          method, iomode, timeout_sec,
-                                          m_DebugMode, method.m_nThreads);
+                                          method);
   }
   else if (isDefaultReader || type == "BPReader" || type == "bpreader")
   {
     return std::make_shared<BPFileReader>(*this, name, accessMode, mpiComm,
-                                          method, iomode, timeout_sec,
-                                          m_DebugMode, method.m_nThreads);
+                                          method);
   }
   else if (type == "SIRIUS" || type == "sirius" || type == "Sirius")
   {
@@ -148,8 +146,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
   {
 #ifdef HAVE_DATAMAN
     return std::make_shared<DataManWriter>(*this, name, accessMode, mpiComm,
-                                           method, iomode, timeout_sec,
-                                           m_DebugMode, method.m_nThreads);
+                                           method);
 #else
     throw std::invalid_argument("ERROR: this version didn't compile with "
                                 "Dataman library, can't Open DataManWriter\n");
@@ -159,8 +156,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
   {
 #ifdef HAVE_DATAMAN
     return std::make_shared<DataManReader>(*this, name, accessMode, mpiComm,
-                                           method, iomode, timeout_sec,
-                                           m_DebugMode, method.m_nThreads);
+                                           method);
 #else
     throw std::invalid_argument("ERROR: this version didn't compile with "
                                 "Dataman library, can't Open DataManReader\n");
@@ -170,8 +166,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
   {
 #ifdef HAVE_ADIOS1
     return std::make_shared<ADIOS1Writer>(*this, name, accessMode, mpiComm,
-                                          method, iomode, timeout_sec,
-                                          m_DebugMode, method.m_nThreads);
+                                          method);
 #else
     throw std::invalid_argument("ERROR: this version didn't compile with ADIOS "
                                 "1.x library, can't Open ADIOS1Writer\n");

@@ -13,8 +13,7 @@
 #include <vector>
 /// \endcond
 
-#include "core/Profiler.h"
-#include "format/BP1Writer.h"
+#include "packages/format/bp1/BP1Writer.h"
 
 namespace adios
 {
@@ -120,8 +119,8 @@ void BP1Writer::Close(BP1MetadataSet &metadataSet, capsule::STLVector &heap,
                       Transport &transport, bool &isFirstClose,
                       const bool doAggregation) const noexcept
 {
-  if (metadataSet.Log.m_IsActive == true)
-    metadataSet.Log.m_Timers[0].SetInitialTime();
+  if (metadataSet.Log.IsActive == true)
+    metadataSet.Log.Timers[0].SetInitialTime();
 
   if (isFirstClose == true)
   {
@@ -130,8 +129,8 @@ void BP1Writer::Close(BP1MetadataSet &metadataSet, capsule::STLVector &heap,
 
     FlattenMetadata(metadataSet, heap);
 
-    if (metadataSet.Log.m_IsActive == true)
-      metadataSet.Log.m_Timers[0].SetInitialTime();
+    if (metadataSet.Log.IsActive == true)
+      metadataSet.Log.Timers[0].SetInitialTime();
 
     if (doAggregation == true) // N-to-M  where 1 <= M <= N-1, might need a new
                                // Log metadataSet.Log.m_Timers just for
@@ -157,21 +156,22 @@ std::string BP1Writer::GetRankProfilingLog(
     const int rank, const BP1MetadataSet &metadataSet,
     const std::vector<std::shared_ptr<Transport>> &transports) const noexcept
 {
-  auto lf_WriterTimer = [](std::string &rankLog, const Timer &timer) {
-    rankLog += "'" + timer.Process + "_" + timer.GetUnits() + "': " +
-               std::to_string(timer.ProcessTime) + ", ";
+  auto lf_WriterTimer = [](std::string &rankLog,
+                           const profiling::Timer &timer) {
+    rankLog += "'" + timer.m_Process + "_" + timer.GetUnits() + "': " +
+               std::to_string(timer.m_ProcessTime) + ", ";
   };
 
   // prepare string dictionary per rank
   std::string rankLog("'rank_" + std::to_string(rank) + "': { ");
 
   auto &profiler = metadataSet.Log;
-  rankLog += "'bytes': " + std::to_string(profiler.m_TotalBytes[0]) + ", ";
-  lf_WriterTimer(rankLog, profiler.m_Timers[0]);
+  rankLog += "'bytes': " + std::to_string(profiler.TotalBytes[0]) + ", ";
+  lf_WriterTimer(rankLog, profiler.Timers[0]);
 
   for (unsigned int t = 0; t < transports.size(); ++t)
   {
-    auto &timers = transports[t]->m_Profiler.m_Timers;
+    auto &timers = transports[t]->m_Profiler.Timers;
 
     rankLog += "'transport_" + std::to_string(t) + "': { ";
     rankLog += "'lib': " + transports[t]->m_Type + ", ";
@@ -307,6 +307,7 @@ void BP1Writer::FlattenMetadata(BP1MetadataSet &metadataSet,
   auto lf_IndexCountLength =
       [](std::unordered_map<std::string, BP1Index> &indices,
          std::uint32_t &count, std::uint64_t &length) {
+
         count = indices.size();
         length = 0;
         for (auto &indexPair : indices) // set each index length
@@ -390,8 +391,8 @@ void BP1Writer::FlattenMetadata(BP1MetadataSet &metadataSet,
 
   heap.m_DataAbsolutePosition += footerSize;
 
-  if (metadataSet.Log.m_IsActive == true)
-    metadataSet.Log.m_TotalBytes.push_back(heap.m_DataAbsolutePosition);
+  if (metadataSet.Log.IsActive == true)
+    metadataSet.Log.TotalBytes.push_back(heap.m_DataAbsolutePosition);
 }
 
 } // end namespace format

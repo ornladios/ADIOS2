@@ -21,13 +21,11 @@ namespace adios
 
 BPFileWriter::BPFileWriter(ADIOS &adios, const std::string name,
                            const std::string accessMode, MPI_Comm mpiComm,
-                           const Method &method, const IOMode iomode,
-                           const float timeout_sec, const bool debugMode,
-                           const unsigned int nthreads)
-: Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method, debugMode,
-         nthreads, " BPFileWriter constructor (or call to ADIOS Open).\n"),
+                           const Method &method)
+: Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method,
+         " BPFileWriter constructor (or call to ADIOS Open).\n"),
   m_Buffer{capsule::STLVector(accessMode, m_RankMPI, m_DebugMode)},
-  m_BP1Aggregator{format::BP1Aggregator(m_MPIComm, debugMode)},
+  m_BP1Aggregator{format::BP1Aggregator(m_MPIComm, m_DebugMode)},
   m_MaxBufferSize{m_Buffer.m_Data.max_size()}
 {
   m_MetadataSet.TimeStep = 1; // starting at one to be compatible with ADIOS1.x
@@ -259,7 +257,7 @@ void BPFileWriter::Close(const int transportIndex)
                       false); // false: not using aggregation for now
   }
 
-  if (m_MetadataSet.Log.m_IsActive == true)
+  if (m_MetadataSet.Log.IsActive == true)
   {
     bool allClose = true;
     for (auto &transport : m_Transports)
@@ -336,19 +334,19 @@ void BPFileWriter::InitParameters()
     auto &profiler = m_MetadataSet.Log;
 
     if (itProfile->second == "mus" || itProfile->second == "microseconds")
-      profiler.m_Timers.emplace_back("buffering", Support::Resolutions::mus);
+      profiler.Timers.emplace_back("buffering", Support::Resolutions::mus);
 
     else if (itProfile->second == "ms" || itProfile->second == "milliseconds")
-      profiler.m_Timers.emplace_back("buffering", Support::Resolutions::ms);
+      profiler.Timers.emplace_back("buffering", Support::Resolutions::ms);
 
     else if (itProfile->second == "s" || itProfile->second == "seconds")
-      profiler.m_Timers.emplace_back("buffering", Support::Resolutions::s);
+      profiler.Timers.emplace_back("buffering", Support::Resolutions::s);
 
     else if (itProfile->second == "min" || itProfile->second == "minutes")
-      profiler.m_Timers.emplace_back("buffering", Support::Resolutions::m);
+      profiler.Timers.emplace_back("buffering", Support::Resolutions::m);
 
     else if (itProfile->second == "h" || itProfile->second == "hours")
-      profiler.m_Timers.emplace_back("buffering", Support::Resolutions::h);
+      profiler.Timers.emplace_back("buffering", Support::Resolutions::h);
     else
     {
       if (m_DebugMode == true)
@@ -357,7 +355,7 @@ void BPFileWriter::InitParameters()
                                     "call to Open or Engine constructor\n");
     }
 
-    profiler.m_IsActive = true;
+    profiler.IsActive = true;
   }
 }
 
@@ -468,8 +466,8 @@ void BPFileWriter::InitTransports()
 
 void BPFileWriter::InitProcessGroup()
 {
-  if (m_MetadataSet.Log.m_IsActive == true)
-    m_MetadataSet.Log.m_Timers[0].SetInitialTime();
+  if (m_MetadataSet.Log.IsActive == true)
+    m_MetadataSet.Log.Timers[0].SetInitialTime();
 
   if (m_AccessMode == "a")
   {
@@ -479,8 +477,8 @@ void BPFileWriter::InitProcessGroup()
 
   WriteProcessGroupIndex();
 
-  if (m_MetadataSet.Log.m_IsActive == true)
-    m_MetadataSet.Log.m_Timers[0].SetTime();
+  if (m_MetadataSet.Log.IsActive == true)
+    m_MetadataSet.Log.Timers[0].SetTime();
 }
 
 void BPFileWriter::WriteProcessGroupIndex()

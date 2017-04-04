@@ -17,29 +17,25 @@
 #include <cstring>   //std::memcpy
 /// \endcond
 
-#include "BP1.h"
 #include "capsule/heap/STLVector.h"
-#include "core/Capsule.h"
-#include "core/Profiler.h"
 #include "core/Variable.h"
 #include "functions/adiosFunctions.h"
 #include "functions/adiosTemplates.h"
+#include "packages/format/bp1/BP1Base.h"
+#include "packages/format/bp1/BP1Structs.h"
 
 namespace adios
 {
 namespace format
 {
 
-class BP1Writer : public BP1
+class BP1Writer : public BP1Base
 {
 
 public:
-  unsigned int m_Threads =
-      1; ///< number of threads for thread operations in large array (min,max)
-  unsigned int m_Verbosity =
-      0; ///< statistics verbosity, can change if redefined in Engine method.
-  float m_GrowthFactor =
-      1.5; ///< memory growth factor, can change if redefined in Engine method.
+  unsigned int m_Threads = 1;   ///< thread operations in large array (min,max)
+  unsigned int m_Verbosity = 0; ///< statistics verbosity, only 0 is supported
+  float m_GrowthFactor = 1.5;   ///< memory growth factor
   const std::uint8_t m_Version = 3; ///< BP format version
 
   /**
@@ -90,7 +86,7 @@ public:
 
     // characteristics 3 and 4, check variable number of dimensions
     const std::size_t dimensions =
-        variable.DimensionsSize(); // number of commas in CSV + 1
+        variable.DimensionsSize(); // commas in CSV + 1
     indexSize += 28 * dimensions;  // 28 bytes per dimension
     indexSize += 1;                // id
 
@@ -124,9 +120,9 @@ public:
    * @param metadataSet
    */
   template <class T>
-  inline void WriteVariableMetadata(const Variable<T> &variable,
-                                    capsule::STLVector &heap,
-                                    BP1MetadataSet &metadataSet) const noexcept
+  void WriteVariableMetadata(const Variable<T> &variable,
+                             capsule::STLVector &heap,
+                             BP1MetadataSet &metadataSet) const noexcept
   {
     Stats<T> stats = GetStats(variable);
     WriteVariableMetadataCommon(variable, stats, heap, metadataSet);
@@ -425,7 +421,7 @@ private:
                                   // //here we can make decisions for threads
                                   // based on valuesSize
         GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
-                  m_Threads); // here we can add cores from constructor
+                  m_Threads);
       else
         GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max);
     }

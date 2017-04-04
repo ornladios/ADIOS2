@@ -14,11 +14,11 @@
 #include "functions/adiosFunctions.h" //CSVToVector
 
 // supported transports
-#include "transport/file/FStream.h" // uses C++ fstream
-#include "transport/wan/MdtmMan.h"  //uses Mdtm library
+#include "transport/file/FStream.h"        // uses C++ fstream
+#include "transport/file/FileDescriptor.h" // uses POSIX
+#include "transport/file/FilePointer.h"    // uses C FILE*
+#include "transport/wan/MdtmMan.h"         //uses Mdtm library
 
-#include "../../../include/transport/file/FileDescriptor.h" // uses POSIX
-#include "../../../include/transport/file/FilePointer.h"    // uses C FILE*
 #include "DataMan.h" //here comes your DataMan header from external dataman library
 
 namespace adios
@@ -26,12 +26,10 @@ namespace adios
 
 DataManReader::DataManReader(ADIOS &adios, const std::string name,
                              const std::string accessMode, MPI_Comm mpiComm,
-                             const Method &method, const IOMode iomode,
-                             const float timeout_sec, const bool debugMode,
-                             const unsigned int nthreads)
-: Engine(adios, "DataManReader", name, accessMode, mpiComm, method, debugMode,
-         nthreads, " DataManReader constructor (or call to ADIOS Open).\n"),
-  m_Buffer(accessMode, m_RankMPI, m_DebugMode)
+                             const Method &method)
+: Engine(adios, "DataManReader", name, accessMode, mpiComm, method,
+         " DataManReader constructor (or call to ADIOS Open).\n")
+// m_Buffer(accessMode, m_RankMPI, m_DebugMode)
 {
   Init();
 }

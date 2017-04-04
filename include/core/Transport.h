@@ -18,7 +18,7 @@
 
 #include "ADIOS_MPI.h"
 
-#include "core/Profiler.h"
+#include "packages/profiling/iochrono/IOChrono.h"
 
 namespace adios
 {
@@ -34,9 +34,9 @@ public:
 
   MPI_Comm m_MPIComm = MPI_COMM_SELF;
 
-  int m_RankMPI = 0;   ///< current MPI rank process
-  int m_SizeMPI = 1;   ///< current MPI processes size
-  Profiler m_Profiler; ///< collects information about Open and bytes Transport
+  int m_RankMPI = 0;              ///< current MPI rank process
+  int m_SizeMPI = 1;              ///< current MPI processes size
+  profiling::IOChrono m_Profiler; ///< profiles Open, Write/Read, Close
 
   /**
    * Base constructor that all derived classes pass
@@ -75,6 +75,11 @@ public:
   virtual void Close(); ///< closes current transport and flushes everything,
                         /// transport becomes unreachable
 
+  /**
+   * Inits the profiler
+   * @param accessMode
+   * @param resolution
+   */
   virtual void InitProfiler(const std::string accessMode,
                             const Support::Resolutions resolution);
 

@@ -8,20 +8,18 @@
  *      Author: wfg
  */
 
-#ifndef BP1_H_
-#define BP1_H_
+#ifndef BP1BASE_H_
+#define BP1BASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstdint> //std::uintX_t
 #include <memory>  //std::shared_ptr
 #include <unordered_map>
 #include <vector>
-//#include <queue>  //std::priority_queue to be added later
 /// \endcond
 
+//#include <queue>  //std::priority_queue to be added later
 #include "ADIOS_MPI.h"
-
-#include "core/Profiler.h"
 #include "core/Transport.h"
 
 namespace adios
@@ -30,63 +28,9 @@ namespace format
 {
 
 /**
- * Used for Variables and Attributes, needed in a container for characteristic
- * sets merge independently for each Variable or Attribute
- */
-struct BP1Index
-{
-  std::vector<char> Buffer; ///< metadata variable index, start with 100Kb
-  std::uint64_t Count =
-      0; ///< number of characteristics sets (time and spatial aggregation)
-  const std::uint32_t MemberID;
-
-  BP1Index(const std::uint32_t memberID) : MemberID{memberID}
-  {
-    Buffer.reserve(500);
-  }
-};
-
-/**
- * Single struct that tracks metadata indices in bp format
- */
-struct BP1MetadataSet
-{
-  std::uint32_t TimeStep; ///< current time step, updated with advance step, if
-                          /// append it will be updated to last, starts with one
-  /// in ADIOS1
-
-  BP1Index PGIndex = BP1Index(0); ///< single buffer for PGIndex
-
-  // no priority for now
-  std::unordered_map<std::string, BP1Index>
-      VarsIndices; ///< key: variable name, value: bp metadata variable index
-  std::unordered_map<std::string, BP1Index> AttributesIndices; ///< key:
-                                                               /// attribute
-  /// name, value:
-  /// bp metadata
-  /// attribute
-  /// index
-
-  const unsigned int MiniFooterSize = 28; ///< from bpls reader
-
-  // PG (relative) positions in Data buffer to be updated
-  std::uint64_t DataPGCount = 0;
-  std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative )
-                                        /// position, needs to be updated in
-  /// every advance step or init
-  std::uint32_t DataPGVarsCount = 0; ///< variables in current PG
-  std::size_t DataPGVarsCountPosition =
-      0; ///< current PG variable count ( relative ) position, needs to be
-         /// updated in every advance step or init
-  bool DataPGIsOpen = false;
-
-  Profiler Log; ///< object that takes buffering profiling info
-};
-
-/**
  * Base class for BP1Writer and BP1Reader format
  */
-class BP1
+class BP1Base
 {
 
 public:
@@ -106,7 +50,7 @@ public:
    * @param transport file I/O transport
    */
   void OpenRankFiles(const std::string name, const std::string accessMode,
-                     Transport &transport) const;
+                     Transport &file) const;
 
 protected:
   /**
@@ -266,50 +210,58 @@ protected:
 
 // Moving template BP1Writer::GetDataType template specializations outside of
 // the class
-template <> inline std::int8_t BP1::GetDataType<char>() const noexcept
+template <> inline std::int8_t BP1Base::GetDataType<char>() const noexcept
 {
   return type_byte;
 }
-template <> inline std::int8_t BP1::GetDataType<short>() const noexcept
+
+template <> inline std::int8_t BP1Base::GetDataType<short>() const noexcept
 {
   return type_short;
 }
-template <> inline std::int8_t BP1::GetDataType<int>() const noexcept
+
+template <> inline std::int8_t BP1Base::GetDataType<int>() const noexcept
 {
   return type_integer;
 }
-template <> inline std::int8_t BP1::GetDataType<long int>() const noexcept
+template <> inline std::int8_t BP1Base::GetDataType<long int>() const noexcept
 {
   return type_long;
 }
 
-template <> inline std::int8_t BP1::GetDataType<unsigned char>() const noexcept
+template <>
+inline std::int8_t BP1Base::GetDataType<unsigned char>() const noexcept
 {
   return type_unsigned_byte;
 }
-template <> inline std::int8_t BP1::GetDataType<unsigned short>() const noexcept
+template <>
+inline std::int8_t BP1Base::GetDataType<unsigned short>() const noexcept
 {
   return type_unsigned_short;
 }
-template <> inline std::int8_t BP1::GetDataType<unsigned int>() const noexcept
+template <>
+inline std::int8_t BP1Base::GetDataType<unsigned int>() const noexcept
 {
   return type_unsigned_integer;
 }
 template <>
-inline std::int8_t BP1::GetDataType<unsigned long int>() const noexcept
+inline std::int8_t BP1Base::GetDataType<unsigned long int>() const noexcept
 {
   return type_unsigned_long;
 }
 
-template <> inline std::int8_t BP1::GetDataType<float>() const noexcept
+template <> inline std::int8_t BP1Base::GetDataType<float>() const noexcept
 {
   return type_real;
 }
-template <> inline std::int8_t BP1::GetDataType<double>() const noexcept
+
+template <> inline std::int8_t BP1Base::GetDataType<double>() const noexcept
 {
   return type_double;
 }
-template <> inline std::int8_t BP1::GetDataType<long double>() const noexcept
+
+template <>
+inline std::int8_t BP1Base::GetDataType<long double>() const noexcept
 {
   return type_long_double;
 }
@@ -317,4 +269,4 @@ template <> inline std::int8_t BP1::GetDataType<long double>() const noexcept
 } // end namespace format
 } // end namespace adios
 
-#endif /* BP1_H_ */
+#endif /* BP1BASE_H_ */

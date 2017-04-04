@@ -11,6 +11,10 @@
 #ifndef BP1AGGREGATOR_H_
 #define BP1AGGREGATOR_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+/// \endcond
+
 #include "ADIOS_MPI.h"
 
 namespace adios
