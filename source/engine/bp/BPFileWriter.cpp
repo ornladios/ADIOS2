@@ -7,6 +7,7 @@
  *  Created on: Dec 19, 2016
  *      Author: wfg
  */
+#include <utility>
 
 #include "engine/bp/BPFileWriter.h"
 #include "ADIOS.h"
@@ -19,14 +20,15 @@
 namespace adios
 {
 
-BPFileWriter::BPFileWriter(ADIOS &adios, const std::string name,
-                           const std::string accessMode, MPI_Comm mpiComm,
+BPFileWriter::BPFileWriter(ADIOS &adios, std::string name,
+                           const std::string &accessMode, MPI_Comm mpiComm,
                            const Method &method, const IOMode /*iomode*/,
                            const float /*timeout_sec*/, const bool debugMode,
                            const unsigned int nthreads)
-: Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method, debugMode,
-         nthreads, " BPFileWriter constructor (or call to ADIOS Open).\n"),
-  m_Buffer{capsule::STLVector(accessMode, m_RankMPI, m_DebugMode)},
+: Engine{adios, "BPFileWriter", std::move(name), accessMode, mpiComm, method,
+         debugMode, nthreads,
+         " BPFileWriter constructor (or call to ADIOS Open).\n"},
+  m_Buffer{capsule::STLVector{accessMode, m_RankMPI, m_DebugMod}},
   m_BP1Aggregator{format::BP1Aggregator(m_MPIComm, debugMode)},
   m_MaxBufferSize{m_Buffer.m_Data.max_size()}
 {

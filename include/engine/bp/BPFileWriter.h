@@ -34,8 +34,8 @@ public:
    * @param method
    * @param debugMode
    */
-  BPFileWriter(ADIOS &adios, const std::string name,
-               const std::string accessMode, MPI_Comm mpiComm,
+  BPFileWriter(ADIOS &adios, std::string name,
+               const std::string &accessMode, MPI_Comm mpiComm,
                const Method &method, const IOMode iomode = IOMode::INDEPENDENT,
                const float timeout_sec = 0., const bool debugMode = false,
                const unsigned int nthreads = 1);
