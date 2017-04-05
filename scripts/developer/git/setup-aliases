@@ -3,14 +3,13 @@
 echo "Setting up git aliases..."
 if ! which clang-format 2>1 1>/dev/null
 then
-  echo "ADIOS development requires clang-format to be available in your path."
-  exit 1
+  echo "Warning: ADIOS uses clang-format to enforce style guidelines but no"
+  echo "         clang-format binary was found in tyour path"
 fi
 
 if ! git config alias.clang-format "!scripts/developer/git/git-clang-format"
 then
   echo "Error adding clang-format alias"
-  exit 2
 fi
 
 exit 0

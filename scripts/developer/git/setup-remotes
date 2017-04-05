@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+echo "Checking github username..."
+GHUSER=$(git remote get-url origin | sed 's|.*[:/]\([^/]*\)/adios2.git|\1|')
+if [ -z "${GHUSER}" ]
+then
+  echo "  Warning: Unable to determine github username.  Are you sure you"
+  echo "  cloned your fork?"
+  exit 1
+fi
+echo "Using github user ${GHUSER}"
+
+echo "Adding upstream remote..."
+if git remote show upstream > /dev/null 2>&1
+then
+  echo "  Warning: upstream remote already exists; skipping"
+else
+  git remote add upstream https://github.com/ornladios/adios2.git
+fi
+git fetch --all -p
+
+echo "Reconfiguring local master branch to use upstream"
+git config branch.master.remote upstream
+git config branch.master.mergeOptions "--ff-only"
+git config merge.log 100
+
+exit 0

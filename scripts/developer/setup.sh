@@ -10,6 +10,9 @@ function test_cmd {
 
 cd "${BASH_SOURCE%/*}/../.."
 
+test_cmd scripts/developer/git/setup-remotes \
+  "Failed to setup upstream remotes " 2
+
 test_cmd scripts/developer/git/setup-aliases \
   "Failed to setup git aliases" 2
 
