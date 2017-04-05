@@ -27,6 +27,7 @@ ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string name,
 {
     Init();
     adios_read_init_method(read_method, m_MPIComm, "");
+
 }
 
 ADIOS1Reader::~ADIOS1Reader() { adios_read_finalize_method(read_method); }
@@ -172,5 +173,6 @@ void ADIOS1Reader::Init()
         }
     }
 }
+
 
 } // end namespace

@@ -39,7 +39,7 @@ public:
 
 private:
     char *m_Data = nullptr;  ///< reference to a shared memory data buffer
-                             ///created with shmget
+                             /// created with shmget
     const size_t m_DataSize; ///< size of the allocated shared memory segment
     key_t m_DataKey; ///< key associated with the data buffer, created with ftok
     int m_DataShmID; ///< data shared memory buffer id

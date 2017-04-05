@@ -6,8 +6,8 @@
 
 void cb_AsyncWriteAdvanceCompleted(std::shared_ptr<adios::Engine> writer)
 {
-    std::cout
-        << "AdvanceAsync() completed. We can modify our zero-copy variables\n";
+    std::cout << "AdvanceAsync() completed. We can modify our zero-copy "
+                 "variables\n";
 }
 
 void cb_AsyncReadAdvanceCompleted(std::shared_ptr<adios::Engine> writer)
@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
     auto &varNproc = adios.DefineVariable<int>(
         "nproc", adios::Dims{adios::GLOBAL_VALUE}); // same def for global value
     adios::Variable<int> &varNparts = adios.DefineVariable<int>(
-        "Nparts",
-        adios::Dims{
-            adios::LOCAL_VALUE}); // a single-value different on every process
+        "Nparts", adios::Dims{adios::LOCAL_VALUE}); // a single-value
+                                                    // different on every
+                                                    // process
     adios::Variable<double> &var2D = adios.DefineVariable<double>(
         "Temperature",
         adios::Dims{nproc, NX}); // 2D global array, 1D decomposition
@@ -215,8 +215,9 @@ int main(int argc, char *argv[])
         struct adios::BlockInfo blocks = reader.InquiryVariableBlockInfo(
             reader, var2D); // get per-writer size info
         // this is adios1 ADIOS_VARBLOCK
-        struct adios::Statistics stats = reader.InquiryVariableStat(
-            reader, var2D, perstepstat, perblockstat); // get min/max statistics
+        struct adios::Statistics stats =
+            reader.InquiryVariableStat(reader, var2D, perstepstat,
+                                       perblockstat); // get min/max statistics
         // this is adios1 ADIOS_VARSTAT
 
         while (true)
@@ -242,9 +243,9 @@ int main(int argc, char *argv[])
             reader->Release();
 
             // want to move on to the next available step/item
-            reader->Advance(adios::NEXT_AVAILABLE); // default
-            reader->Advance(
-                adios::LATEST_AVAILABLE); // interested only in the latest data
+            reader->Advance(adios::NEXT_AVAILABLE);   // default
+            reader->Advance(adios::LATEST_AVAILABLE); // interested only in the
+                                                      // latest data
         }
         // Close file/stream
         reader->Close();

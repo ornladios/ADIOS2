@@ -85,8 +85,8 @@ int main(int argc, char *argv[])
 
                 // ? how do we know about the type? std::string varNice->m_Type
                 unsigned long long int gdim =
-                    varMyDoubles
-                        ->m_GlobalDimensions[0]; // ?member var or member func?
+                    varMyDoubles->m_GlobalDimensions[0]; // ?member var or
+                                                         // member func?
                 unsigned long long int ldim = gdim / nproc;
                 unsigned long long int offs = rank * ldim;
                 if (rank == nproc - 1)
@@ -114,14 +114,14 @@ int main(int argc, char *argv[])
                     adios::VARYING_DIMENSION)
                 {
                     throw std::ios_base::failure(
-                        "Unexpected condition: Ragged array's fast dimension "
+                        "Unexpected condition: Ragged array's fast "
+                        "dimension "
                         "is supposed to be VARYING_DIMENSION\n");
                 }
                 // We have here varRagged->sum_nblocks, nsteps, nblocks[],
                 // global
-                if (rank <
-                    varRagged
-                        ->nblocks[0]) // same as rank < Nwriters in this example
+                if (rank < varRagged->nblocks[0]) // same as rank < Nwriters in
+                                                  // this example
                 {
                     // get per-writer size information
                     varRagged->InquiryBlocks();
@@ -148,7 +148,8 @@ int main(int argc, char *argv[])
                     1); // contains the largest
                 std::vector<int> raggedDims =
                     varRagged->GetVaryingGlobalDimensions(
-                        1); // contains all individual sizes in that dimension
+                        1); // contains all individual sizes in that
+                            // dimension
 
                 // promise to not read more from this step
                 bpReader->Release();

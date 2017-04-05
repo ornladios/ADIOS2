@@ -307,8 +307,9 @@ protected: // no const to allow default empty and copy constructors
 
     // Variables
     std::map<std::string, std::pair<std::string, unsigned int>>
-        m_Variables; ///< Makes variable name unique, key: variable name, value:
-                     /// pair.first = type, pair.second = index in corresponding
+        m_Variables; ///< Makes variable name unique, key: variable name,
+                     /// value:
+    /// pair.first = type, pair.second = index in corresponding
     /// vector of Variable
 
     std::vector<std::shared_ptr<Transform>>
@@ -324,7 +325,7 @@ protected: // no const to allow default empty and copy constructors
      */
     std::map<std::string, Method> m_Methods;
     std::set<std::string> m_EngineNames; ///< set used to check Engine name
-                                         ///uniqueness in debug mode
+                                         /// uniqueness in debug mode
 
     /**
      * @brief Checks for group existence in m_Groups, if failed throws
@@ -362,10 +363,10 @@ protected: // no const to allow default empty and copy constructors
     template <class T> unsigned int GetVariableIndex(const std::string &name)
     {
         auto itVariable = m_Variables.find(name);
-        CheckVariableName(
-            itVariable, name,
-            "in call to GetVariable<" + GetType<T>() +
-                ">, or call to GetVariableCompound if <T> = <compound>\n");
+        CheckVariableName(itVariable, name,
+                          "in call to GetVariable<" + GetType<T>() +
+                              ">, or call to GetVariableCompound if <T> = "
+                              "<compound>\n");
         return itVariable->second.second;
     }
 };

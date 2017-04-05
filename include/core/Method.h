@@ -51,7 +51,7 @@ public:
     std::map<std::string, std::string> m_Parameters; ///< method parameters
     std::vector<std::map<std::string, std::string>>
         m_TransportParameters; ///< each is a separate Transport containing
-                               ///their
+                               /// their
                                /// own parameters
 
     /**

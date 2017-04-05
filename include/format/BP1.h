@@ -36,8 +36,8 @@ namespace format
 struct BP1Index
 {
     std::vector<char> Buffer; ///< metadata variable index, start with 100Kb
-    std::uint64_t Count =
-        0; ///< number of characteristics sets (time and spatial aggregation)
+    std::uint64_t Count = 0;  ///< number of characteristics sets (time and
+                              /// spatial aggregation)
     const std::uint32_t MemberID;
 
     BP1Index(const std::uint32_t memberID) : MemberID{memberID}
@@ -59,8 +59,10 @@ struct BP1MetadataSet
     BP1Index PGIndex = BP1Index(0); ///< single buffer for PGIndex
 
     // no priority for now
-    std::unordered_map<std::string, BP1Index>
-        VarsIndices; ///< key: variable name, value: bp metadata variable index
+    std::unordered_map<std::string, BP1Index> VarsIndices; ///< key: variable
+                                                           /// name, value: bp
+    /// metadata variable
+    /// index
     std::unordered_map<std::string, BP1Index> AttributesIndices; ///< key:
                                                                  /// attribute
     /// name, value:

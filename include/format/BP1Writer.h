@@ -34,12 +34,12 @@ class BP1Writer : public BP1
 {
 
 public:
-    unsigned int m_Threads =
-        1; ///< number of threads for thread operations in large array (min,max)
-    unsigned int m_Verbosity =
-        0; ///< statistics verbosity, can change if redefined in Engine method.
+    unsigned int m_Threads = 1; ///< number of threads for thread operations in
+                                /// large array (min,max)
+    unsigned int m_Verbosity = 0;     ///< statistics verbosity, can change if
+                                      /// redefined in Engine method.
     float m_GrowthFactor = 1.5;       ///< memory growth factor, can change if
-                                      ///redefined in Engine method.
+                                      /// redefined in Engine method.
     const std::uint8_t m_Version = 3; ///< BP format version
 
     /**
@@ -306,7 +306,8 @@ private:
         noexcept
     {
         const std::size_t characteristicsCountPosition =
-            buffer.size(); // very important to track as writer is going back to
+            buffer.size(); // very important to track as writer is going
+                           // back to
                            // this position
         buffer.insert(buffer.end(), 5,
                       0); // skip characteristics count(1) + length (4)
@@ -355,8 +356,8 @@ private:
                      &characteristicsCounter); // count (1)
         const std::uint32_t characteristicsLength =
             buffer.size() - characteristicsCountPosition - 4 -
-            1; // remove its own length (4 bytes) + characteristic counter ( 1
-               // byte
+            1; // remove its own length (4 bytes) + characteristic counter (
+               // 1 byte
                // )
         CopyToBuffer(buffer, characteristicsCountPosition + 1,
                      &characteristicsLength); // length

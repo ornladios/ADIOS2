@@ -63,8 +63,8 @@ void FileDescriptor::Open(const std::string name, const std::string accessMode)
             m_Profiler.m_Timers[0].SetInitialTime();
         }
 
-        m_FileDescriptor =
-            open(m_Name.c_str(), O_WRONLY | O_APPEND); // we need to change this
+        m_FileDescriptor = open(m_Name.c_str(),
+                                O_WRONLY | O_APPEND); // we need to change this
 
         if (m_Profiler.m_IsActive == true)
         {

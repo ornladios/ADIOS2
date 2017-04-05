@@ -118,8 +118,8 @@ int main(int argc, char *argv[])
             bpReader.InquiryVariable("Nice");
 
         if (varNice == nullptr)
-            throw std::ios_base::failure(
-                "ERROR: failed to find variable 'myDoubles' in input file\n");
+            throw std::ios_base::failure("ERROR: failed to find variable "
+                                         "'myDoubles' in input file\n");
 
         // ? how do we know about the type? std::string varNice->m_Type
         unsigned long long int gdim =

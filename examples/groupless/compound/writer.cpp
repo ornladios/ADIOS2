@@ -64,9 +64,11 @@ int main(int argc, char *argv[])
                 "NX"); // global single-value across processes
         adios::Variable<int> &varNproc = adios.DefineVariable<int>(
             "nproc", adios::GLOBAL_VALUE); // same def for global value
-        adios::Variable<int> &varNparts = adios.DefineVariable<int>(
-            "Nparts",
-            adios::LOCAL_VALUE); // a single-value different on every process
+        adios::Variable<int> &varNparts =
+            adios.DefineVariable<int>("Nparts",
+                                      adios::LOCAL_VALUE); // a single-value
+                                                           // different on
+                                                           // every process
 
         // GSE === template necessary or useful here? Extra argument for
         // previously-built compound type information */
@@ -85,8 +87,9 @@ int main(int argc, char *argv[])
             // if not defined by user, we can change the default settings
             bpWriterSettings.SetEngine("BP"); // BP is the default engine
             bpWriterSettings.AddTransport(
-                "File", "lucky=yes"); // ISO-POSIX file is the default transport
-                                      // Passing parameters to the transport
+                "File",
+                "lucky=yes"); // ISO-POSIX file is the default transport
+                              // Passing parameters to the transport
             bpWriterSettings.SetParameters(
                 "have_metadata_file",
                 "yes"); // Passing parameters to the engine

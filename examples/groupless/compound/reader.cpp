@@ -96,9 +96,9 @@ int main(int argc, char *argv[])
                                             // selection => read whole array
 
         std::vector<int> partsV;
-        bpReader->Read<int>(
-            "Nparts",
-            partsV); // read with string name, no selection => read whole array
+        bpReader->Read<int>("Nparts",
+                            partsV); // read with string name, no selection =>
+                                     // read whole array
         (Nwriters == partsV.size())
 
             /* Nice */
@@ -123,8 +123,8 @@ int main(int argc, char *argv[])
             bpReader.InquiryVariable("Nice", mtype);
 
         if (varNice == nullptr)
-            throw std::ios_base::failure(
-                "ERROR: failed to find variable 'myDoubles' in input file\n");
+            throw std::ios_base::failure("ERROR: failed to find variable "
+                                         "'myDoubles' in input file\n");
 
         // ? how do we know about the type? std::string varNice->m_Type
         uint64_t gdim =

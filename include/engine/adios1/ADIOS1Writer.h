@@ -110,9 +110,9 @@ private:
                      /// when we re-open in ADIOS1
 
     bool m_initialized = false; ///< set to true after calling adios_init()
-    int64_t m_adios_file = 0; ///< ADIOS1 file handler returned by adios_open()
-    int64_t m_adios_group =
-        0; ///< ADIOS1 group pointer that holds the ADIOS1 variable definitions
+    int64_t m_adios_file = 0;  ///< ADIOS1 file handler returned by adios_open()
+    int64_t m_adios_group = 0; ///< ADIOS1 group pointer that holds the ADIOS1
+                               /// variable definitions
     bool m_IsFileOpen = false;
 
     void Init();

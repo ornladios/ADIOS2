@@ -62,9 +62,9 @@ void Method::AddTransportParameters(const std::string type,
     {
         if (mapParameters.count("transport") == 1)
         {
-            std::invalid_argument(
-                "ERROR: transport can't be redefined with \"transport=type\", "
-                "type must be the first argument\n");
+            std::invalid_argument("ERROR: transport can't be redefined with "
+                                  "\"transport=type\", "
+                                  "type must be the first argument\n");
         }
     }
 

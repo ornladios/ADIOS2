@@ -29,7 +29,7 @@ struct TransformData
     Transform &Operation; ///< pointer to transform object
     std::map<std::string, std::string> Parameters; ///< transforms parameters
     std::vector<std::size_t> Size; ///< vector that carries the sizes after a
-                                   ///transformation is applied
+                                   /// transformation is applied
 };
 
 /**
