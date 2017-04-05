@@ -64,7 +64,8 @@ std::map<std::string, std::string>
 KwargsToMap(const pybind11::kwargs &dictionary);
 #endif
 
-template <class T> const T *PyArrayToPointer(const pyArray &array)
+template <class T>
+const T *PyArrayToPointer(const pyArray &array)
 {
 #ifdef HAVE_BOOSTPYTHON
     return reinterpret_cast<const T *>(array.get_data());
@@ -75,7 +76,8 @@ template <class T> const T *PyArrayToPointer(const pyArray &array)
 #endif
 }
 
-template <class T> bool IsType(const pyArray &array)
+template <class T>
+bool IsType(const pyArray &array)
 {
 #ifdef HAVE_BOOSTPYTHON
     if (array.get_dtype() == dtype::get_builtin<T>())
@@ -90,7 +92,8 @@ template <class T> bool IsType(const pyArray &array)
     return false;
 }
 
-template <class T, class U> T PyCast(U object)
+template <class T, class U>
+T PyCast(U object)
 {
 #ifdef HAVE_BOOSTPYTHON
     return boost::python::extract<T>(object);

@@ -97,7 +97,8 @@ public:
      * @param args list of parameters with format "parameter1=value1", ...,
      * "parameterN=valueN"
      */
-    template <class... Args> void SetParameters(Args... args)
+    template <class... Args>
+    void SetParameters(Args... args)
     {
         std::vector<std::string> parameters = {args...};
         m_Parameters = BuildParametersMap(parameters, m_DebugMode);

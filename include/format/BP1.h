@@ -236,7 +236,8 @@ protected:
         statistic_finite = 6
     };
 
-    template <class T> struct Stats
+    template <class T>
+    struct Stats
     {
         T Min;
         T Max;
@@ -257,7 +258,8 @@ protected:
      * @param variable input variable
      * @return data type
      */
-    template <class T> inline std::int8_t GetDataType() const noexcept
+    template <class T>
+    inline std::int8_t GetDataType() const noexcept
     {
         return type_unknown;
     }
@@ -269,32 +271,39 @@ protected:
 
 // Moving template BP1Writer::GetDataType template specializations outside of
 // the class
-template <> inline std::int8_t BP1::GetDataType<char>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<char>() const noexcept
 {
     return type_byte;
 }
-template <> inline std::int8_t BP1::GetDataType<short>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<short>() const noexcept
 {
     return type_short;
 }
-template <> inline std::int8_t BP1::GetDataType<int>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<int>() const noexcept
 {
     return type_integer;
 }
-template <> inline std::int8_t BP1::GetDataType<long int>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<long int>() const noexcept
 {
     return type_long;
 }
 
-template <> inline std::int8_t BP1::GetDataType<unsigned char>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<unsigned char>() const noexcept
 {
     return type_unsigned_byte;
 }
-template <> inline std::int8_t BP1::GetDataType<unsigned short>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<unsigned short>() const noexcept
 {
     return type_unsigned_short;
 }
-template <> inline std::int8_t BP1::GetDataType<unsigned int>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<unsigned int>() const noexcept
 {
     return type_unsigned_integer;
 }
@@ -304,15 +313,18 @@ inline std::int8_t BP1::GetDataType<unsigned long int>() const noexcept
     return type_unsigned_long;
 }
 
-template <> inline std::int8_t BP1::GetDataType<float>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<float>() const noexcept
 {
     return type_real;
 }
-template <> inline std::int8_t BP1::GetDataType<double>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<double>() const noexcept
 {
     return type_double;
 }
-template <> inline std::int8_t BP1::GetDataType<long double>() const noexcept
+template <>
+inline std::int8_t BP1::GetDataType<long double>() const noexcept
 {
     return type_long_double;
 }

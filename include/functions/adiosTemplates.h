@@ -27,54 +27,93 @@ namespace adios
  * Get the primitive type in a string from a template
  * @return if T is a char, returns string = "char"
  */
-template <class T> inline std::string GetType() noexcept { return "compound"; }
-template <> inline std::string GetType<void>() noexcept { return "unknown"; }
-template <> inline std::string GetType<char>() noexcept { return "char"; }
-template <> inline std::string GetType<unsigned char>() noexcept
+template <class T>
+inline std::string GetType() noexcept
+{
+    return "compound";
+}
+template <>
+inline std::string GetType<void>() noexcept
+{
+    return "unknown";
+}
+template <>
+inline std::string GetType<char>() noexcept
+{
+    return "char";
+}
+template <>
+inline std::string GetType<unsigned char>() noexcept
 {
     return "unsigned char";
 }
-template <> inline std::string GetType<short>() noexcept { return "short"; }
-template <> inline std::string GetType<unsigned short>() noexcept
+template <>
+inline std::string GetType<short>() noexcept
+{
+    return "short";
+}
+template <>
+inline std::string GetType<unsigned short>() noexcept
 {
     return "unsigned short";
 }
-template <> inline std::string GetType<int>() noexcept { return "int"; }
-template <> inline std::string GetType<unsigned int>() noexcept
+template <>
+inline std::string GetType<int>() noexcept
+{
+    return "int";
+}
+template <>
+inline std::string GetType<unsigned int>() noexcept
 {
     return "unsigned int";
 }
-template <> inline std::string GetType<long int>() noexcept
+template <>
+inline std::string GetType<long int>() noexcept
 {
     return "long int";
 }
-template <> inline std::string GetType<unsigned long int>() noexcept
+template <>
+inline std::string GetType<unsigned long int>() noexcept
 {
     return "unsigned long int";
 }
-template <> inline std::string GetType<long long int>() noexcept
+template <>
+inline std::string GetType<long long int>() noexcept
 {
     return "long long int";
 }
-template <> inline std::string GetType<unsigned long long int>() noexcept
+template <>
+inline std::string GetType<unsigned long long int>() noexcept
 {
     return "unsigned long long int";
 }
-template <> inline std::string GetType<float>() noexcept { return "float"; }
-template <> inline std::string GetType<double>() noexcept { return "double"; }
-template <> inline std::string GetType<long double>() noexcept
+template <>
+inline std::string GetType<float>() noexcept
+{
+    return "float";
+}
+template <>
+inline std::string GetType<double>() noexcept
+{
+    return "double";
+}
+template <>
+inline std::string GetType<long double>() noexcept
 {
     return "long double";
 }
-template <> inline std::string GetType<std::complex<float>>() noexcept
+template <>
+inline std::string GetType<std::complex<float>>() noexcept
 {
     return "float complex";
 }
-template <> inline std::string GetType<std::complex<double>>() noexcept
+template <>
+inline std::string GetType<std::complex<double>>() noexcept
 {
     return "double complex";
 }
-template <> inline std::string GetType<std::complex<long double>>() noexcept
+template <>
+inline std::string GetType<std::complex<long double>>() noexcept
 {
     return "long double complex";
 }

@@ -130,7 +130,8 @@ public:
      * @param variable name of variable to the written
      * @param values pointer passed from the application
      */
-    template <class T> void Write(Variable<T> &variable, const T *values)
+    template <class T>
+    void Write(Variable<T> &variable, const T *values)
     {
         Write(variable, values);
     }
@@ -151,7 +152,8 @@ public:
      * @param variable
      * @param values
      */
-    template <class T> void Write(Variable<T> &variable, const T values)
+    template <class T>
+    void Write(Variable<T> &variable, const T values)
     {
         const T val = values;
         Write(variable, &val);
@@ -245,7 +247,8 @@ public:
      * @param values pointer passed from the application, nullptr not allowed,
      * must use Read(variable) instead intentionally
      */
-    template <class T> void Read(Variable<T> &variable, const T *values)
+    template <class T>
+    void Read(Variable<T> &variable, const T *values)
     {
         Read(variable, values);
     }
@@ -266,7 +269,8 @@ public:
      * @param variable
      * @param values
      */
-    template <class T> void Read(Variable<T> &variable, const T &values)
+    template <class T>
+    void Read(Variable<T> &variable, const T &values)
     {
         Read(variable, &values);
     }
@@ -286,7 +290,8 @@ public:
      * Unallocated version, ADIOS will allocate space for incoming data
      * @param variable
      */
-    template <class T> void Read(Variable<T> &variable)
+    template <class T>
+    void Read(Variable<T> &variable)
     {
         Read(variable, nullptr);
     }
@@ -295,7 +300,8 @@ public:
      * Unallocated version, ADIOS will allocate space for incoming data
      * @param variableName
      */
-    template <class T> void Read(const std::string variableName)
+    template <class T>
+    void Read(const std::string variableName)
     {
         Read(variableName, nullptr);
     }
@@ -310,7 +316,8 @@ public:
      * @param variable name of variable to the written
      * @param values pointer passed from the application
      */
-    template <class T> void ScheduleRead(Variable<T> &variable, const T *values)
+    template <class T>
+    void ScheduleRead(Variable<T> &variable, const T *values)
     {
         ScheduleRead(variable, values);
     }
@@ -331,7 +338,8 @@ public:
      * @param variable
      * @param values
      */
-    template <class T> void ScheduleRead(Variable<T> &variable, const T &values)
+    template <class T>
+    void ScheduleRead(Variable<T> &variable, const T &values)
     {
         ScheduleRead(variable, &values);
     }
