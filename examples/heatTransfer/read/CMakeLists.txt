@@ -15,7 +15,7 @@
 
 if(ADIOS_USE_ADIOS1)
     find_package(ADIOS1 REQUIRED)
-    add_executable(heatRead_adios1 heatRead_adios1.cpp)
+    add_executable(heatRead_adios1 heatRead_adios1.cpp PrintData.cpp)
     if(ADIOS_USE_MPI)
         target_include_directories(heatRead_adios1 PRIVATE ${MPI_C_INCLUDE_PATH})
         target_link_libraries(heatRead_adios1  adios1::adios ${MPI_C_LIBRARIES})

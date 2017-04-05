@@ -9,8 +9,10 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-
+#include <cstdint>
 #include "adios_read.h"
+
+#include "PrintData.h"
 
 int main(int argc, char *argv[])
 {
@@ -74,7 +76,7 @@ int main(int argc, char *argv[])
         readsize[1] = gndy - readsize[1]*(nproc-1);
     }
 
-    std::cout << "rank " << rank << "reads " << readsize[1] << "columns from offset " << offset[1] << std::endl;
+    std::cout << "rank " << rank << " reads " << readsize[1] << " columns from offset " << offset[1] << std::endl;
 
     ADIOS_VARINFO * vT = adios_inq_var (f, "T");
 
@@ -88,7 +90,7 @@ int main(int argc, char *argv[])
     adios_schedule_read( f, sel, "T", 0, vT->nsteps, T );
     adios_perform_reads( f, 1 );
 
-    //print_array (T, offset, rank, vT->nsteps);
+    printData(T, readsize, offset, rank, vT->nsteps);
     adios_read_close( f );
     adios_free_varinfo( vT );
     delete[] T;
