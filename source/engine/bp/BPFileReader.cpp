@@ -11,12 +11,10 @@
 #include "engine/bp/BPFileReader.h"
 
 #include "core/Support.h"
-#include "functions/adiosFunctions.h"      //CSVToVector
+#include "functions/adiosFunctions.h"      // CSVToVector
+#include "transport/file/FStream.h"        // uses C++ fstream
 #include "transport/file/FileDescriptor.h" // uses POSIX
 #include "transport/file/FilePointer.h"    // uses C FILE*
-
-// supported transports
-#include "transport/file/FStream.h" // uses C++ fstream
 
 namespace adios
 {
@@ -31,12 +29,10 @@ BPFileReader::BPFileReader(ADIOS &adios, const std::string name,
   Init();
 }
 
-BPFileReader::~BPFileReader() {}
-
-Variable<void> *
-BPFileReader::InquireVariable(const std::string name,
-                              const bool readIn) // not yet implemented
+Variable<void> *BPFileReader::InquireVariable(const std::string /*name*/,
+                                              const bool /*readIn*/)
 {
+  // not yet implemented
   return nullptr;
 }
 
@@ -136,13 +132,14 @@ BPFileReader::InquireVariableCLDouble(const std::string name, const bool readIn)
   return InquireVariableCommon<std::complex<long double>>(name, readIn);
 }
 
-VariableCompound *BPFileReader::InquireVariableCompound(const std::string name,
-                                                        const bool readIn)
+VariableCompound *
+BPFileReader::InquireVariableCompound(const std::string /*name*/,
+                                      const bool /*readIn*/)
 {
   return nullptr;
 }
 
-void BPFileReader::Close(const int transportIndex) {}
+void BPFileReader::Close(const int /*transportIndex*/) {}
 
 // PRIVATE
 void BPFileReader::Init()
@@ -150,9 +147,11 @@ void BPFileReader::Init()
   if (m_DebugMode == true)
   {
     if (m_AccessMode != "r" && m_AccessMode != "read")
+    {
       throw std::invalid_argument(
           "ERROR: BPFileReader doesn't support access mode " + m_AccessMode +
           ", in call to ADIOS Open or BPFileReader constructor\n");
+    }
   }
 
   InitCapsules();
@@ -212,19 +211,23 @@ void BPFileReader::InitTransports() // maybe move this?
       else
       {
         if (m_DebugMode == true)
+        {
           throw std::invalid_argument(
               "ERROR: file transport library " + itLibrary->second +
               " not supported, in " + m_Name + m_EndMessage);
+        }
       }
     }
     else
     {
       if (m_DebugMode == true)
+      {
         throw std::invalid_argument("ERROR: transport " + itTransport->second +
                                     " (you mean File?) not supported, in " +
                                     m_Name + m_EndMessage);
+      }
     }
   }
 }
 
-} // end namespace
+} // end namespace adios

@@ -10,12 +10,14 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
+#include <ios> //std::ios_base::failure
 #include <iostream>
 #include <sstream>
 #include <utility>
 /// \endcond
 
 #include "ADIOS.h"
+
 #include "functions/adiosFunctions.h"
 
 // Engines
@@ -41,17 +43,17 @@ ADIOS::ADIOS(const Verbose /*verbose*/, const bool debugMode)
   InitMPI();
 }
 
-ADIOS::ADIOS(std::string config, const Verbose /*verbose*/,
+ADIOS::ADIOS(const std::string config, const Verbose /*verbose*/,
              const bool debugMode)
-: m_ConfigFile{std::move(config)}, m_DebugMode{debugMode}
+: m_ConfigFile{config}, m_DebugMode{debugMode}
 {
   InitMPI();
   // InitXML( m_ConfigFile, m_MPIComm, m_DebugMode, m_Transforms );
 }
 
-ADIOS::ADIOS(std::string config, MPI_Comm mpiComm, const Verbose /*verbose*/,
-             const bool debugMode)
-: m_MPIComm{mpiComm}, m_ConfigFile{std::move(config)}, m_DebugMode{debugMode}
+ADIOS::ADIOS(const std::string config, MPI_Comm mpiComm,
+             const Verbose /*verbose*/, const bool debugMode)
+: m_MPIComm{mpiComm}, m_ConfigFile{config}, m_DebugMode{debugMode}
 {
   InitMPI();
   // InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage,
@@ -82,7 +84,7 @@ void ADIOS::InitMPI()
   MPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
-Method &ADIOS::DeclareMethod(const std::string &methodName)
+Method &ADIOS::DeclareMethod(const std::string methodName)
 {
   if (m_DebugMode == true)
   {
@@ -96,11 +98,9 @@ Method &ADIOS::DeclareMethod(const std::string &methodName)
   return m_Methods.at(methodName);
 }
 
-std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
-                                    const std::string &accessMode,
-                                    MPI_Comm mpiComm, const Method &method,
-                                    const IOMode iomode,
-                                    const float timeout_sec)
+std::shared_ptr<Engine> ADIOS::Open(const std::string name,
+                                    const std::string accessMode,
+                                    MPI_Comm mpiComm, const Method &method)
 {
   if (m_DebugMode == true)
   {
@@ -190,50 +190,17 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
   return nullptr; // if debug mode is off
 }
 
-std::shared_ptr<Engine> ADIOS::Open(const std::string &streamName,
-                                    const std::string &accessMode,
-                                    const Method &method, const IOMode iomode,
-                                    const float timeout_sec)
+std::shared_ptr<Engine> ADIOS::Open(const std::string name,
+                                    const std::string accessMode,
+                                    const Method &method)
 {
-  return Open(streamName, accessMode, m_MPIComm, method, iomode, timeout_sec);
+  return Open(name, accessMode, m_MPIComm, method);
 }
 
-std::shared_ptr<Engine>
-ADIOS::Open(const std::string &name, const std::string &accessMode,
-            MPI_Comm mpiComm, const std::string &methodName,
-            const IOMode iomode, const float timeout_sec)
-{
-  auto itMethod = m_Methods.find(methodName);
-
-  if (m_DebugMode == true)
-  {
-    CheckMethod(itMethod, methodName, " in call to Open\n");
-  }
-
-  return Open(name, accessMode, mpiComm, itMethod->second, iomode, timeout_sec);
-}
-
-std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
-                                    const std::string &accessMode,
-                                    const std::string &methodName,
-                                    const IOMode iomode,
-                                    const float timeout_sec)
-{
-  return Open(name, accessMode, m_MPIComm, methodName, iomode, timeout_sec);
-}
-
-std::shared_ptr<Engine> ADIOS::OpenFileReader(const std::string &name,
-                                              MPI_Comm /*mpiComm*/,
-                                              const Method &method,
-                                              const IOMode iomode)
-{
-  return Open(name, "r", m_MPIComm, method, iomode);
-}
-
-std::shared_ptr<Engine> ADIOS::OpenFileReader(const std::string &name,
-                                              MPI_Comm /*mpiComm*/,
-                                              const std::string &methodName,
-                                              const IOMode iomode)
+std::shared_ptr<Engine> ADIOS::Open(const std::string name,
+                                    const std::string accessMode,
+                                    MPI_Comm mpiComm,
+                                    const std::string methodName)
 {
   auto itMethod = m_Methods.find(methodName);
 
@@ -242,10 +209,38 @@ std::shared_ptr<Engine> ADIOS::OpenFileReader(const std::string &name,
     CheckMethod(itMethod, methodName, " in call to Open\n");
   }
 
-  return Open(name, "r", m_MPIComm, itMethod->second, iomode);
+  return Open(name, accessMode, mpiComm, itMethod->second);
 }
 
-VariableCompound &ADIOS::GetVariableCompound(const std::string &name)
+std::shared_ptr<Engine> ADIOS::Open(const std::string name,
+                                    const std::string accessMode,
+                                    const std::string methodName)
+{
+  return Open(name, accessMode, m_MPIComm, methodName);
+}
+
+std::shared_ptr<Engine> ADIOS::OpenFileReader(const std::string name,
+                                              MPI_Comm mpiComm,
+                                              const Method &method)
+{
+  return Open(name, "r", mpiComm, method);
+}
+
+std::shared_ptr<Engine> ADIOS::OpenFileReader(const std::string name,
+                                              MPI_Comm mpiComm,
+                                              const std::string methodName)
+{
+  auto itMethod = m_Methods.find(methodName);
+
+  if (m_DebugMode == true)
+  {
+    CheckMethod(itMethod, methodName, " in call to Open\n");
+  }
+
+  return Open(name, "r", m_MPIComm, itMethod->second);
+}
+
+VariableCompound &ADIOS::GetVariableCompound(const std::string name)
 {
   return m_Compound.at(GetVariableIndex<void>(name));
 }
@@ -327,7 +322,7 @@ void ADIOS::MonitorVariables(std::ostream &logStream)
 }
 
 // PRIVATE FUNCTIONS BELOW
-void ADIOS::CheckVariableInput(const std::string &name,
+void ADIOS::CheckVariableInput(const std::string name,
                                const Dims &dimensions) const
 {
   if (m_DebugMode == true)
@@ -351,7 +346,7 @@ void ADIOS::CheckVariableInput(const std::string &name,
 void ADIOS::CheckVariableName(
     std::map<std::string, std::pair<std::string, unsigned int>>::const_iterator
         itVariable,
-    const std::string &name, const std::string &hint) const
+    const std::string name, const std::string hint) const
 {
   if (m_DebugMode == true)
   {
@@ -364,8 +359,8 @@ void ADIOS::CheckVariableName(
 }
 
 void ADIOS::CheckMethod(std::map<std::string, Method>::const_iterator itMethod,
-                        const std::string &methodName,
-                        const std::string &hint) const
+                        const std::string methodName,
+                        const std::string hint) const
 {
   if (itMethod == m_Methods.end())
   {

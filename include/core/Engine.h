@@ -75,7 +75,7 @@ public:
    */
   Engine(ADIOS &adios, const std::string engineType, const std::string name,
          const std::string accessMode, MPI_Comm mpiComm, const Method &method,
-         std::string endMessage);
+         const std::string endMessage);
 
   virtual ~Engine() = default;
 

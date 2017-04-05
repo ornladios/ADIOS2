@@ -20,9 +20,10 @@
 #include <cstring>
 
 //#define _LARGEFILE64_SOURCE
+#include <unistd.h>
+
 #include <sys/time.h>
 #include <sys/types.h>
-#include <unistd.h>
 /// \endcond
 
 #include "mpidummy.h"
@@ -95,8 +96,9 @@ int MPI_Comm_free(MPI_Comm *comm)
 
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm) { return comm; }
 
-int MPI_Gather(void *sendbuf, int sendcnt, MPI_Datatype sendtype, void *recvbuf,
-               int recvcnt, MPI_Datatype recvtype, int root, MPI_Comm comm)
+int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+               void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
+               MPI_Comm comm)
 {
   int ier = MPI_SUCCESS;
   size_t n = 0, nsent = 0, nrecv = 0;
@@ -146,8 +148,8 @@ int MPI_Gather(void *sendbuf, int sendcnt, MPI_Datatype sendtype, void *recvbuf,
   return ier;
 }
 
-int MPI_Gatherv(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                void *recvbuf, int *recvcnts, int *displs,
+int MPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                void *recvbuf, const int *recvcnts, const int *displs,
                 MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
   int ier = MPI_SUCCESS;
@@ -165,7 +167,7 @@ int MPI_Gatherv(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   return ier;
 }
 
-int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm)
 {
@@ -173,7 +175,7 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
                     0, comm);
 }
 
-int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
                 void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
                 MPI_Comm comm)
 {
@@ -216,7 +218,7 @@ int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
   if (ier == MPI_SUCCESS)
   {
-    memcpy(sendbuf, recvbuf, nsent);
+    memcpy(recvbuf, sendbuf, nsent);
   }
   else
   {
@@ -226,7 +228,7 @@ int MPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   return ier;
 }
 
-int MPI_Scatterv(void *sendbuf, int *sendcnts, int *displs,
+int MPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
                  MPI_Datatype sendtype, void *recvbuf, int recvcnt,
                  MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
@@ -260,13 +262,13 @@ int MPI_Irecv(void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
   return 0;
 }
 
-int MPI_Send(void * /*sendbuffer*/, int /*count*/, MPI_Datatype /*type*/,
+int MPI_Send(const void * /*sendbuffer*/, int /*count*/, MPI_Datatype /*type*/,
              int /*destination*/, int /*tag*/, MPI_Comm /*comm*/)
 {
   return 0;
 }
 
-int MPI_Isend(void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
+int MPI_Isend(const void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
               int /*source*/, int /*tag*/, MPI_Comm /*comm*/,
               MPI_Request * /*request*/)
 {
@@ -275,7 +277,7 @@ int MPI_Isend(void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
 
 int MPI_Wait(MPI_Request * /*request*/, MPI_Status * /*status*/) { return 0; }
 
-int MPI_File_open(MPI_Comm /*comm*/, char *filename, int amode,
+int MPI_File_open(MPI_Comm /*comm*/, const char *filename, int amode,
                   MPI_Info /*info*/, MPI_File *fh)
 {
   *fh = open64(filename, amode);
@@ -327,7 +329,7 @@ int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
   return MPI_SUCCESS;
 }
 
-int MPI_Get_count(MPI_Status *status, MPI_Datatype, int *count)
+int MPI_Get_count(const MPI_Status *status, MPI_Datatype, int *count)
 {
   *count = static_cast<int>(*status);
   return MPI_SUCCESS;

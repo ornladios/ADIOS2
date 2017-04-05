@@ -40,7 +40,8 @@ public:
    * @param rankMPI MPI rank
    * @param debugMode true: extra checks, slower
    */
-  STLVector(std::string accessMode, int rankMPI, bool debugMode = false);
+  STLVector(const std::string accessMode, const int rankMPI,
+            const bool debugMode = false);
 
   ~STLVector() = default;
 

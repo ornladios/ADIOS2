@@ -28,7 +28,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
   // 1. Get method def from config file or define new one
 
   adios::Method &bpWriterSettings = ad->DeclareMethod("output");
-  if (!bpWriterSettings.isUserDefined())
+  if (!bpWriterSettings.IsUserDefined())
   {
     // if not defined by user, we can change the default settings
     bpWriterSettings.SetEngine("BP"); // BP is the default engine
@@ -37,8 +37,8 @@ IO::IO(const Settings &s, MPI_Comm comm)
     bpWriterSettings.AddTransport(
         "File", "lucky=yes"); // ISO-POSIX file is the default transport
                               // Passing parameters to the transport
-    bpWriterSettings.SetParameters("have_metadata_file",
-                                   "yes"); // Passing parameters to the engine
+    bpWriterSettings.SetParameters(
+        "have_metadata_file=yes"); // Passing parameters to the engine
     bpWriterSettings.SetParameters(
         "Aggregation",
         std::to_string((s.nproc + 1) / 2)); // number of aggregators
@@ -56,8 +56,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
   // varT.AddTransform( tr, "" );
   // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-  bpWriter = ad->Open(m_outputfilename, "w", comm, bpWriterSettings,
-                      adios::IOMode::COLLECTIVE);
+  bpWriter = ad->Open(m_outputfilename, "w", comm, bpWriterSettings);
 
   if (bpWriter == nullptr)
     throw std::ios_base::failure("ERROR: failed to open ADIOS bpWriter\n");

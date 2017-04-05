@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "packages/format/bp1/BP1Base.h"
+#include "utilities/format/bp1/BP1Base.h"
 #include "functions/adiosFunctions.h"
 
 namespace adios
@@ -39,8 +39,8 @@ void BP1Base::OpenRankFiles(const std::string name,
   std::string fileName(directory + "/" + directory + "." +
                        std::to_string(file.m_RankMPI));
   file.Open(fileName, accessMode); // opens a file transport under
-                                   // name.bp.dir/name.bp.rank reserve that
-                                   // location fro writing
+                                   // name.bp/name.bp.rank reserve that
+                                   // location for writing
 }
 
 std::vector<std::uint8_t> BP1Base::GetMethodIDs(

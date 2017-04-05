@@ -18,7 +18,7 @@
 #include <vector>
 /// \endcond
 
-#include "packages/profiling/iochrono/IOChrono.h"
+#include "utilities/profiling/iochrono/IOChrono.h"
 
 namespace adios
 {
@@ -54,8 +54,8 @@ struct BP1MetadataSet
   BP1Index PGIndex = BP1Index(0); ///< single buffer for PGIndex
 
   // no priority for now
-  std::unordered_map<std::string, BP1Index>
-      VarsIndices; ///< key: variable name, value: bp metadata variable index
+  /** @brief key: variable name, value: bp metadata variable index */
+  std::unordered_map<std::string, BP1Index> VarsIndices;
 
   std::unordered_map<std::string, BP1Index>
       AttributesIndices; ///< key: name, value: attribute bp index
@@ -68,9 +68,13 @@ struct BP1MetadataSet
                                         /// position, needs to be updated in
   /// every advance step or init
   std::uint32_t DataPGVarsCount = 0; ///< variables in current PG
+
+  /**
+   * current PG variable count ( relative ) position, needs to be
+   * updated in very Advance
+   */
   std::size_t DataPGVarsCountPosition = 0;
-  ///< current PG variable count ( relative ) position, needs to be
-  /// updated in every advance step or init
+
   bool DataPGIsOpen = false;
 
   profiling::IOChrono Log; ///< object that takes buffering profiling info

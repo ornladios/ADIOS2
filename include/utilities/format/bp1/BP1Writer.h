@@ -15,14 +15,15 @@
 #include <algorithm> //std::count, std::copy, std::for_each
 #include <cmath>     //std::ceil
 #include <cstring>   //std::memcpy
+
+#include "utilities/format/bp1/BP1Base.h"
+#include "utilities/format/bp1/BP1Structs.h"
 /// \endcond
 
 #include "capsule/heap/STLVector.h"
 #include "core/Variable.h"
 #include "functions/adiosFunctions.h"
 #include "functions/adiosTemplates.h"
-#include "packages/format/bp1/BP1Base.h"
-#include "packages/format/bp1/BP1Structs.h"
 
 namespace adios
 {

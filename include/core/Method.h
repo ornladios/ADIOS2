@@ -44,10 +44,12 @@ class Method
 public:
   const std::string m_Name;       ///< Method name (as defined in XML)
   const bool m_DebugMode = false; ///< true: on, throws exceptions and do
-                                  /// additional checks, false: off, faster, but
+                                  /// additional checks, false: off, faster
   /// unsafe
   std::string m_Type; ///< Method's engine type
-  unsigned int m_nThreads;
+  unsigned int m_nThreads = 1;
+  adios::IOMode m_IOMode = adios::IOMode::INDEPENDENT;
+
   std::map<std::string, std::string> m_Parameters; ///< method parameters
   std::vector<std::map<std::string, std::string>>
       m_TransportParameters; ///< each is a separate Transport containing their
@@ -60,13 +62,13 @@ public:
    */
   Method(const std::string name, const bool debugMode = false);
 
-  ~Method();
+  ~Method() = default;
 
   /** Check if the method was defined by the user in the config file.
    * @return true if the method was user-defined, false otherwise when method is
    * set with default parameters
    */
-  bool isUserDefined();
+  bool IsUserDefined();
 
   /**
    * Define the engine type
@@ -135,6 +137,6 @@ private:
                               const std::vector<std::string> &parameters);
 };
 
-} // end namespace
+} // end namespace adios
 
 #endif /* METHOD_H_ */

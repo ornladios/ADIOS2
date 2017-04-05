@@ -11,9 +11,7 @@
 #include <iostream>
 #include <vector>
 
-#define OMPI_SKIP_MPICXX 1 // workaround for OpenMPI forcing C++ bindings
 #include <mpi.h>
-#undef OMPI_SKIP_MPICXX
 
 #include "ADIOS_CPP.h"
 
@@ -68,8 +66,7 @@ int main(int argc, char *argv[])
     // Create engine smart pointer due to polymorphism,
     // Open returns a smart pointer to Engine containing the Derived class
     // Writer
-    auto bpWriter = adios.Open("myDoubles.bp", "w", bpWriterSettings,
-                               adios::IOMode::COLLECTIVE);
+    auto bpWriter = adios.Open("myDoubles.bp", "w", bpWriterSettings);
 
     if (bpWriter == nullptr)
       throw std::ios_base::failure("ERROR: couldn't create bpWriter at Open\n");

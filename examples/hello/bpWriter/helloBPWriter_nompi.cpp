@@ -8,12 +8,14 @@
  *      Author: wfg
  */
 
+#include <ios>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
 #include "ADIOS_CPP.h"
 
-int main(int argc, char *argv[])
+int main(int /*argc*/, char ** /*argv*/)
 {
   const bool adiosDebug = true;
   adios::ADIOS adios(adios::Verbose::WARN, adiosDebug);
@@ -25,7 +27,6 @@ int main(int argc, char *argv[])
   const std::size_t rows = 3;
   const std::size_t columns = 3;
   std::vector<float> myMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-
   std::vector<float> myMatrix2 = {-1, -2, -3, -4, -5, -6, -7, -8, -9};
 
   try
@@ -51,11 +52,12 @@ int main(int argc, char *argv[])
     // Create engine smart pointer due to polymorphism,
     // Open returns a smart pointer to Engine containing the Derived class
     // Writer
-    auto bpFileWriter = adios.Open("myDoubles_nompi.bp", "w", bpWriterSettings,
-                                   adios::IOMode::COLLECTIVE);
+    auto bpFileWriter = adios.Open("myDoubles_nompi.bp", "w", bpWriterSettings);
 
     if (bpFileWriter == nullptr)
+    {
       throw std::ios_base::failure("ERROR: couldn't create bpWriter at Open\n");
+    }
 
     bpFileWriter->Write<double>(
         ioMyDoubles, myDoubles.data()); // Base class Engine own the Write<T>

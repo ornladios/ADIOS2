@@ -20,11 +20,11 @@ add_library(adios2
   engine/bp/BPFileReader.cpp
   engine/bp/BPFileWriter.cpp
 
-  packages/format/bp1/BP1Base.cpp
-  packages/format/bp1/BP1Aggregator.cpp
-  packages/format/bp1/BP1Writer.cpp
+  utilities/format/bp1/BP1Base.cpp
+  utilities/format/bp1/BP1Aggregator.cpp
+  utilities/format/bp1/BP1Writer.cpp
   
-  packages/profiling/iochrono/Timer.cpp
+  utilities/profiling/iochrono/Timer.cpp
 
   functions/adiosFunctions.cpp
 

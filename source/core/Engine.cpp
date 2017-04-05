@@ -8,6 +8,8 @@
  *      Author: wfg
  */
 
+#include <ios> //std::ios_base::failure
+
 #include "core/Engine.h"
 #include "core/Support.h"
 #include "functions/adiosFunctions.h"
@@ -17,7 +19,8 @@ namespace adios
 
 Engine::Engine(ADIOS &adios, const std::string engineType,
                const std::string name, const std::string accessMode,
-               MPI_Comm mpiComm, const Method &method, std::string endMessage)
+               MPI_Comm mpiComm, const Method &method,
+               const std::string endMessage)
 : m_MPIComm{mpiComm}, m_EngineType{std::move(engineType)},
   m_Name{std::move(name)}, m_AccessMode{std::move(accessMode)},
   m_Method{method}, m_ADIOS(adios), m_EndMessage(std::move(endMessage)),

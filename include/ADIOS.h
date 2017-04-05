@@ -60,11 +60,11 @@ public:
   /**
    * @brief Serial constructor for config file, only allowed and compiled in
    * libadios_nompi.a
-   * @param config XML config file
+   * @param config XML config file name
    * @param debugMode true: on throws exceptions and do additional checks,
    * false: off (faster, but unsafe)
    */
-  ADIOS(std::string config, const Verbose verbose = Verbose::WARN,
+  ADIOS(const std::string config, const Verbose verbose = Verbose::WARN,
         const bool debugMode = false);
 
   /**
@@ -74,7 +74,7 @@ public:
    * @param debugMode true: on, false: off (faster, but unsafe)
    */
 
-  ADIOS(std::string config, MPI_Comm mpiComm,
+  ADIOS(const std::string config, MPI_Comm mpiComm,
         const Verbose verbose = Verbose::WARN, const bool debugMode = false);
 
   /**
@@ -98,7 +98,7 @@ public:
    * @return
    */
   template <class T>
-  inline Variable<T> &DefineVariable(const std::string &name,
+  inline Variable<T> &DefineVariable(const std::string name,
                                      const Dims dimensions = Dims{1},
                                      const Dims globalDimensions = Dims(),
                                      const Dims globalOffsets = Dims())
@@ -107,14 +107,14 @@ public:
                                 name + " in call to DefineVariable\n");
   }
 
-  template <class T> inline Variable<T> &GetVariable(const std::string &name)
+  template <class T> inline Variable<T> &GetVariable(const std::string name)
   {
     throw std::invalid_argument("ERROR: type not supported for variable " +
                                 name + " in call to GetVariable\n");
   }
 
   template <class T>
-  VariableCompound &DefineVariableCompound(const std::string &name,
+  VariableCompound &DefineVariableCompound(const std::string name,
                                            const Dims dimensions = Dims{1},
                                            const Dims globalDimensions = Dims(),
                                            const Dims globalOffsets = Dims())
@@ -128,7 +128,7 @@ public:
     return m_Compound.at(size);
   }
 
-  VariableCompound &GetVariableCompound(const std::string &name);
+  VariableCompound &GetVariableCompound(const std::string name);
 
   /**
    * Declares a new method. If the method is defined in the user config file,
@@ -139,7 +139,7 @@ public:
    * Use method.isUserDefined() to distinguish between the two cases.
    * @param methodName must be unique
    */
-  Method &DeclareMethod(const std::string &methodName);
+  Method &DeclareMethod(const std::string methodName);
 
   /**
    * @brief Open to Write, Read. Creates a new engine from previously defined
@@ -157,11 +157,9 @@ public:
     * @return Derived class of base Engine depending on Method parameters,
    * shared_ptr for potential flexibility
    */
-  std::shared_ptr<Engine> Open(const std::string &streamName,
-                               const std::string &accessMode, MPI_Comm mpiComm,
-                               const Method &method,
-                               const IOMode iomode = IOMode::INDEPENDENT,
-                               const float timeout_sec = 0.0);
+  std::shared_ptr<Engine> Open(const std::string streamName,
+                               const std::string accessMode, MPI_Comm mpiComm,
+                               const Method &method);
 
   /**
    * @brief Open to Write, Read. Creates a new engine from previously defined
@@ -178,11 +176,9 @@ public:
     * @return Derived class of base Engine depending on Method parameters,
    * shared_ptr for potential flexibility
    */
-  std::shared_ptr<Engine> Open(const std::string &streamName,
-                               const std::string &accessMode,
-                               const Method &method,
-                               const IOMode iomode = IOMode::INDEPENDENT,
-                               const float timeout_sec = 0.0);
+  std::shared_ptr<Engine> Open(std::string streamName,
+                               const std::string accessMode,
+                               const Method &method);
 
   /**
    * Version required by the XML config file implementation, searches method
@@ -198,11 +194,9 @@ public:
    * @return Derived class of base Engine depending on Method parameters,
    * shared_ptr for potential flexibility
    */
-  std::shared_ptr<Engine> Open(const std::string &streamName,
-                               const std::string &accessMode, MPI_Comm mpiComm,
-                               const std::string &methodName,
-                               const IOMode iomode = IOMode::INDEPENDENT,
-                               const float timeout_sec = 0.0);
+  std::shared_ptr<Engine> Open(const std::string streamName,
+                               const std::string accessMode, MPI_Comm mpiComm,
+                               const std::string methodName);
 
   /**
    * Version required by the XML config file implementation, searches method
@@ -218,11 +212,9 @@ public:
    * @return Derived class of base Engine depending on Method parameters,
    * shared_ptr for potential flexibility
    */
-  std::shared_ptr<Engine> Open(const std::string &streamName,
-                               const std::string &accessMode,
-                               const std::string &methodName,
-                               const IOMode iomode = IOMode::INDEPENDENT,
-                               const float timeout_sec = 0.0);
+  std::shared_ptr<Engine> Open(const std::string streamName,
+                               const std::string accessMode,
+                               const std::string methodName);
 
   /**
    * @brief Open to Read all steps from a file. No streaming, advancing is
@@ -238,10 +230,9 @@ public:
    * @return Derived class of base Engine depending on Method parameters,
    * shared_ptr for potential flexibility
    */
-  std::shared_ptr<Engine>
-  OpenFileReader(const std::string &fileName, MPI_Comm mpiComm,
-                 const Method &method,
-                 const IOMode iomode = IOMode::INDEPENDENT);
+  std::shared_ptr<Engine> OpenFileReader(const std::string fileName,
+                                         MPI_Comm mpiComm,
+                                         const Method &method);
 
   /**
    * @brief Open to Read all steps from a file. No streaming, advancing is
@@ -258,10 +249,9 @@ public:
    * @return Derived class of base Engine depending on Method parameters,
    * shared_ptr for potential flexibility
    */
-  std::shared_ptr<Engine>
-  OpenFileReader(const std::string &fileName, MPI_Comm mpiComm,
-                 const std::string &methodName,
-                 const IOMode iomode = IOMode::INDEPENDENT);
+  std::shared_ptr<Engine> OpenFileReader(const std::string fileName,
+                                         MPI_Comm mpiComm,
+                                         const std::string methodName);
 
   /**
    * @brief Dumps groups information to a file stream or standard output.
@@ -322,8 +312,7 @@ protected: // no const to allow default empty and copy constructors
    * @param groupName unique name, passed for thrown exception only
    * @param hint adds information to thrown exception
    */
-  void CheckVariableInput(const std::string &name,
-                          const Dims &dimensions) const;
+  void CheckVariableInput(const std::string name, const Dims &dimensions) const;
 
   /**
    * Checks for variable name, if not found throws an invalid exception
@@ -334,7 +323,7 @@ protected: // no const to allow default empty and copy constructors
   void CheckVariableName(
       std::map<std::string,
                std::pair<std::string, unsigned int>>::const_iterator itVariable,
-      const std::string &name, const std::string &hint) const;
+      const std::string name, const std::string hint) const;
 
   /**
    * @brief Checks for method existence in m_Methods, if failed throws
@@ -344,10 +333,9 @@ protected: // no const to allow default empty and copy constructors
    * @param hint adds information to thrown exception
    */
   void CheckMethod(std::map<std::string, Method>::const_iterator itMethod,
-                   const std::string &methodName,
-                   const std::string &hint) const;
+                   const std::string methodName, const std::string hint) const;
 
-  template <class T> unsigned int GetVariableIndex(const std::string &name)
+  template <class T> unsigned int GetVariableIndex(const std::string name)
   {
     auto itVariable = m_Variables.find(name);
     CheckVariableName(
@@ -361,7 +349,7 @@ protected: // no const to allow default empty and copy constructors
 // template specializations of DefineVariable:
 template <>
 inline Variable<char> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -374,7 +362,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<unsigned char> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -388,7 +376,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<short> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -401,7 +389,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<unsigned short> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -415,7 +403,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<int> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -428,7 +416,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<unsigned int> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -442,7 +430,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<long int> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -455,7 +443,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<unsigned long int> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -469,7 +457,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<long long int> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -483,7 +471,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<unsigned long long int> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -498,7 +486,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<float> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -511,7 +499,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<double> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -524,7 +512,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<long double> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -538,7 +526,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<std::complex<float>> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -546,6 +534,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
   m_CFloat.emplace(
       size, Variable<std::complex<float>>(name, dimensions, globalDimensions,
                                           globalOffsets, m_DebugMode));
+
   m_Variables.emplace(name,
                       std::make_pair(GetType<std::complex<float>>(), size));
   return m_CFloat.at(size);
@@ -553,7 +542,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<std::complex<double>> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -568,7 +557,7 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 
 template <>
 inline Variable<std::complex<long double>> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
+ADIOS::DefineVariable(const std::string name, const Dims dimensions,
                       const Dims globalDimensions, const Dims globalOffsets)
 {
   CheckVariableInput(name, dimensions);
@@ -582,97 +571,96 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 }
 
 // Get template specialization
-template <> inline Variable<char> &ADIOS::GetVariable(const std::string &name)
+template <> inline Variable<char> &ADIOS::GetVariable(const std::string name)
 {
   return m_Char.at(GetVariableIndex<char>(name));
 }
 
 template <>
-inline Variable<unsigned char> &ADIOS::GetVariable(const std::string &name)
+inline Variable<unsigned char> &ADIOS::GetVariable(const std::string name)
 {
   return m_UChar.at(GetVariableIndex<unsigned char>(name));
 }
 
-template <> inline Variable<short> &ADIOS::GetVariable(const std::string &name)
+template <> inline Variable<short> &ADIOS::GetVariable(const std::string name)
 {
   return m_Short.at(GetVariableIndex<short>(name));
 }
 
 template <>
-inline Variable<unsigned short> &ADIOS::GetVariable(const std::string &name)
+inline Variable<unsigned short> &ADIOS::GetVariable(const std::string name)
 {
   return m_UShort.at(GetVariableIndex<unsigned short>(name));
 }
 
-template <> inline Variable<int> &ADIOS::GetVariable(const std::string &name)
+template <> inline Variable<int> &ADIOS::GetVariable(const std::string name)
 {
   return m_Int.at(GetVariableIndex<int>(name));
 }
 
 template <>
-inline Variable<unsigned int> &ADIOS::GetVariable(const std::string &name)
+inline Variable<unsigned int> &ADIOS::GetVariable(const std::string name)
 {
   return m_UInt.at(GetVariableIndex<unsigned int>(name));
 }
 
 template <>
-inline Variable<long int> &ADIOS::GetVariable(const std::string &name)
+inline Variable<long int> &ADIOS::GetVariable(const std::string name)
 {
   return m_LInt.at(GetVariableIndex<unsigned int>(name));
 }
 
 template <>
-inline Variable<unsigned long int> &ADIOS::GetVariable(const std::string &name)
+inline Variable<unsigned long int> &ADIOS::GetVariable(const std::string name)
 {
   return m_ULInt.at(GetVariableIndex<unsigned long int>(name));
 }
 
 template <>
-inline Variable<long long int> &ADIOS::GetVariable(const std::string &name)
+inline Variable<long long int> &ADIOS::GetVariable(const std::string name)
 {
   return m_LLInt.at(GetVariableIndex<long long int>(name));
 }
 
 template <>
 inline Variable<unsigned long long int> &
-ADIOS::GetVariable(const std::string &name)
+ADIOS::GetVariable(const std::string name)
 {
   return m_ULLInt.at(GetVariableIndex<unsigned long long int>(name));
 }
 
-template <> inline Variable<float> &ADIOS::GetVariable(const std::string &name)
+template <> inline Variable<float> &ADIOS::GetVariable(const std::string name)
 {
   return m_Float.at(GetVariableIndex<float>(name));
 }
 
-template <> inline Variable<double> &ADIOS::GetVariable(const std::string &name)
+template <> inline Variable<double> &ADIOS::GetVariable(const std::string name)
 {
   return m_Double.at(GetVariableIndex<double>(name));
 }
 
 template <>
-inline Variable<long double> &ADIOS::GetVariable(const std::string &name)
+inline Variable<long double> &ADIOS::GetVariable(const std::string name)
 {
   return m_LDouble.at(GetVariableIndex<long double>(name));
 }
 
 template <>
-inline Variable<std::complex<float>> &
-ADIOS::GetVariable(const std::string &name)
+inline Variable<std::complex<float>> &ADIOS::GetVariable(const std::string name)
 {
   return m_CFloat.at(GetVariableIndex<std::complex<float>>(name));
 }
 
 template <>
 inline Variable<std::complex<double>> &
-ADIOS::GetVariable(const std::string &name)
+ADIOS::GetVariable(const std::string name)
 {
   return m_CDouble.at(GetVariableIndex<std::complex<double>>(name));
 }
 
 template <>
 inline Variable<std::complex<long double>> &
-ADIOS::GetVariable(const std::string &name)
+ADIOS::GetVariable(const std::string name)
 {
   return m_CLDouble.at(GetVariableIndex<std::complex<long double>>(name));
 }

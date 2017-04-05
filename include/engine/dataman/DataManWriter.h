@@ -14,10 +14,8 @@
 #include <iostream> //std::cout must be removed, only used for hello example
 #include <unistd.h> //sleep must be removed
 
+#include "../../utilities/format/bp1/BP1Writer.h"
 #include "core/Engine.h"
-#include "packages/format/bp1/BP1Writer.h"
-
-// supported capsules
 #include "capsule/heap/STLVector.h"
 
 #include "DataManager.h" //here comes your DataMan header

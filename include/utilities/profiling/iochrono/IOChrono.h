@@ -15,7 +15,7 @@
 #include <vector>
 /// \endcond
 
-#include "packages/profiling/iochrono/Timer.h"
+#include "profiling/iochrono/Timer.h"
 
 namespace adios
 {

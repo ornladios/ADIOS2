@@ -54,6 +54,7 @@ void FileDescriptor::Open(const std::string name, const std::string accessMode)
   }
   else if (accessMode == "a" || accessMode == "append")
   {
+
     if (m_Profiler.IsActive == true)
       m_Profiler.Timers[0].SetInitialTime();
 
@@ -65,6 +66,7 @@ void FileDescriptor::Open(const std::string name, const std::string accessMode)
   }
   else if (accessMode == "r" || accessMode == "read")
   {
+
     if (m_Profiler.IsActive == true)
       m_Profiler.Timers[0].SetInitialTime();
 
@@ -77,14 +79,17 @@ void FileDescriptor::Open(const std::string name, const std::string accessMode)
   if (m_DebugMode == true)
   {
     if (m_FileDescriptor == -1)
+    {
       throw std::ios_base::failure("ERROR: couldn't open file " + m_Name +
                                    ", from call to Open in FD transport using "
                                    "POSIX open. Does file exists?\n");
+    }
   }
 }
 
 void FileDescriptor::Write(const char *buffer, std::size_t size)
 {
+
   if (m_Profiler.IsActive == true)
     m_Profiler.Timers[1].SetInitialTime();
 
@@ -96,14 +101,18 @@ void FileDescriptor::Write(const char *buffer, std::size_t size)
   if (m_DebugMode == true)
   {
     if (writtenSize == -1)
+    {
       throw std::ios_base::failure("ERROR: couldn't write to file " + m_Name +
                                    ", in call to POSIX write\n");
+    }
 
     if (static_cast<std::size_t>(writtenSize) != size)
+    {
       throw std::ios_base::failure(
           "ERROR: written size + " + std::to_string(writtenSize) +
           " is not equal to intended size " + std::to_string(size) +
           " in file " + m_Name + ", in call to POSIX write\n");
+    }
   }
 }
 
@@ -120,12 +129,14 @@ void FileDescriptor::Close()
   if (m_DebugMode == true)
   {
     if (status == -1)
+    {
       throw std::ios_base::failure("ERROR: couldn't close file " + m_Name +
                                    ", in call to POSIX write\n");
+    }
   }
 
   m_IsOpen = false;
 }
 
 } // end namespace transport
-} // end namespace
+} // namespace adios

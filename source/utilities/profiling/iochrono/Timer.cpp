@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "packages/profiling/iochrono/Timer.h"
+#include "utilities/profiling/iochrono/Timer.h"
 
 namespace adios
 {

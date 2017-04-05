@@ -8,22 +8,21 @@
  *      Author: wfg
  */
 
+#include <utility>
+
 #include "core/Transport.h"
 
 namespace adios
 {
 
-Transport::Transport(const std::string type, MPI_Comm mpiComm,
-                     const bool debugMode)
+Transport::Transport(std::string type, MPI_Comm mpiComm, bool debugMode)
 : m_Type{type}, m_MPIComm{mpiComm}, m_DebugMode{debugMode}
 {
   MPI_Comm_rank(m_MPIComm, &m_RankMPI);
   MPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
-Transport::~Transport() {}
-
-void Transport::SetBuffer(char *buffer, size_t size) {}
+void Transport::SetBuffer(char * /*buffer*/, size_t /*size*/) {}
 
 void Transport::Flush() {}
 
@@ -49,4 +48,4 @@ void Transport::InitProfiler(const std::string accessMode,
   m_Profiler.IsActive = true;
 }
 
-} // end namespace
+} // end namespace adios

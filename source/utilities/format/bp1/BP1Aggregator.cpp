@@ -9,12 +9,12 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include "utilities/format/bp1/BP1Aggregator.h"
+
 #include <fstream>
 #include <stdexcept>
 #include <vector>
 /// \endcond
-
-#include "packages/format/bp1/BP1Aggregator.h"
 
 namespace adios
 {

@@ -11,11 +11,9 @@
 #ifndef BPFILEWRITER_H_
 #define BPFILEWRITER_H_
 
-#include "core/Engine.h"
-#include "packages/format/bp1/BP1.h"
-
-// supported capsules
 #include "capsule/heap/STLVector.h"
+#include "core/Engine.h"
+#include "utilities/format/bp1/BP1.h"
 
 namespace adios
 {

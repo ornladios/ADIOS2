@@ -15,7 +15,6 @@
 
 #include "core/Engine.h"
 
-// supported capsules
 #include "capsule/heap/STLVector.h"
 
 namespace adios
@@ -39,7 +38,7 @@ public:
                const std::string accessMode, MPI_Comm mpiComm,
                const Method &method);
 
-  ~BPFileReader();
+  virtual ~BPFileReader() = default;
 
   Variable<void> *InquireVariable(const std::string name,
                                   const bool readIn = true);

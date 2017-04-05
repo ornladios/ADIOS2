@@ -11,9 +11,8 @@
 #ifndef BP1_H_
 #define BP1_H_
 
-#include "packages/format/bp1/BP1Structs.h"
-#include "packages/format/bp1/BP1Writer.h"
-// will add Reader later
-#include "packages/format/bp1/BP1Aggregator.h"
+#include "utilities/format/bp1/BP1Aggregator.h"
+#include "utilities/format/bp1/BP1Structs.h"
+#include "utilities/format/bp1/BP1Writer.h"
 
 #endif /* BP1_H_ */
