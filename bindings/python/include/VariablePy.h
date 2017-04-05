@@ -29,25 +29,25 @@ class VariablePy
 {
 
 public:
-  VariablePy(const std::string name, const pyList localDimensionsPy,
-             const pyList globalDimensionsPy, const pyList globalOffsetsPy);
+    VariablePy(const std::string name, const pyList localDimensionsPy,
+               const pyList globalDimensionsPy, const pyList globalOffsetsPy);
 
-  ~VariablePy();
+    ~VariablePy();
 
-  void SetLocalDimensions(const pyList list);
+    void SetLocalDimensions(const pyList list);
 
-  void SetGlobalDimensionsAndOffsets(const pyList globalDimensions,
-                                     const pyList globalOffsets);
+    void SetGlobalDimensionsAndOffsets(const pyList globalDimensions,
+                                       const pyList globalOffsets);
 
-  Dims GetLocalDimensions();
+    Dims GetLocalDimensions();
 
-  void *m_VariablePtr = nullptr;
-  bool m_IsVariableDefined = false;
+    void *m_VariablePtr = nullptr;
+    bool m_IsVariableDefined = false;
 
-  const std::string m_Name;
-  Dims m_LocalDimensions;
-  Dims m_GlobalDimensions;
-  Dims m_GlobalOffsets;
+    const std::string m_Name;
+    Dims m_LocalDimensions;
+    Dims m_GlobalDimensions;
+    Dims m_GlobalOffsets;
 };
 
 } // end namespace

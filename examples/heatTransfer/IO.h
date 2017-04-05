@@ -19,13 +19,13 @@ class IO
 {
 
 public:
-  IO(const Settings &s, MPI_Comm comm);
-  ~IO();
-  void write(int step, const HeatTransfer &ht, const Settings &s,
-             MPI_Comm comm);
+    IO(const Settings &s, MPI_Comm comm);
+    ~IO();
+    void write(int step, const HeatTransfer &ht, const Settings &s,
+               MPI_Comm comm);
 
 private:
-  std::string m_outputfilename;
+    std::string m_outputfilename;
 };
 
 #endif /* IO_H_ */

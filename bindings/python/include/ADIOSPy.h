@@ -48,25 +48,25 @@ class ADIOSPy : public ADIOS
 {
 
 public:
-  ADIOSPy(MPI_Comm mpiComm, const bool debug);
-  ~ADIOSPy();
+    ADIOSPy(MPI_Comm mpiComm, const bool debug);
+    ~ADIOSPy();
 
-  void HelloMPI(); ///< says hello from rank/size for testing
+    void HelloMPI(); ///< says hello from rank/size for testing
 
-  VariablePy DefineVariablePy(const std::string name,
-                              const pyList localDimensionsPy = pyList(),
-                              const pyList globalDimensionsPy = pyList(),
-                              const pyList globalOffsetsPy = pyList());
+    VariablePy DefineVariablePy(const std::string name,
+                                const pyList localDimensionsPy = pyList(),
+                                const pyList globalDimensionsPy = pyList(),
+                                const pyList globalOffsetsPy = pyList());
 
-  MethodPy &DeclareMethodPy(const std::string methodName);
+    MethodPy &DeclareMethodPy(const std::string methodName);
 
-  EnginePy OpenPy(const std::string name, const std::string accessMode,
-                  const MethodPy &method, pyObject py_comm = pyObject());
+    EnginePy OpenPy(const std::string name, const std::string accessMode,
+                    const MethodPy &method, pyObject py_comm = pyObject());
 
-  void DefineVariableType(VariablePy &variablePy);
+    void DefineVariableType(VariablePy &variablePy);
 
 private:
-  std::set<std::string> m_VariablesPyNames;
+    std::set<std::string> m_VariablesPyNames;
 };
 
 } // end namespace

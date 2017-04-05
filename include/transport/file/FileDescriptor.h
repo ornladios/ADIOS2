@@ -25,18 +25,18 @@ class FileDescriptor : public Transport
 {
 
 public:
-  FileDescriptor(MPI_Comm mpiComm, const bool debugMode);
+    FileDescriptor(MPI_Comm mpiComm, const bool debugMode);
 
-  ~FileDescriptor();
+    ~FileDescriptor();
 
-  void Open(const std::string name, const std::string accessMode);
+    void Open(const std::string name, const std::string accessMode);
 
-  void Write(const char *buffer, std::size_t size);
+    void Write(const char *buffer, std::size_t size);
 
-  void Close();
+    void Close();
 
 private:
-  int m_FileDescriptor = -1; ///< file descriptor returned by POSIX open
+    int m_FileDescriptor = -1; ///< file descriptor returned by POSIX open
 };
 
 } // end namespace transport
