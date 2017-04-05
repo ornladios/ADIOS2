@@ -15,4 +15,4 @@ test_cmd scripts/developer/git/setup-aliases \
 
 test_cmd scripts/developer/git/setup-hooks \
   "Failed to setup git hooks" 1
-git config hooks.clang-format true
+git config hooks.clang-format false
