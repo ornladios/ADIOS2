@@ -18,23 +18,23 @@ namespace adios
  */
 enum
 {
-  VARYING_DIMENSION = -1, //!< VARYING_DIMENSION
-  LOCAL_VALUE = 0,        //!< LOCAL_VALUE
-  GLOBAL_VALUE = 1        //!< GLOBAL_VALUE
+    VARYING_DIMENSION = -1, //!< VARYING_DIMENSION
+    LOCAL_VALUE = 0,        //!< LOCAL_VALUE
+    GLOBAL_VALUE = 1        //!< GLOBAL_VALUE
 };
 
 enum class Verbose
 {
-  ERROR = 0,
-  WARN = 1,
-  INFO = 2,
-  DEBUG = 3
+    ERROR = 0,
+    WARN = 1,
+    INFO = 2,
+    DEBUG = 3
 };
 
 enum class IOMode
 {
-  INDEPENDENT = 0,
-  COLLECTIVE = 1
+    INDEPENDENT = 0,
+    COLLECTIVE = 1
 };
 
 } // end namespace

@@ -22,20 +22,20 @@ class BZIP2 : public Transform
 {
 
 public:
-  /**
-   * Initialize parent method
-   * @param compressionLevel
-   * @param variable
-   */
-  BZIP2();
+    /**
+     * Initialize parent method
+     * @param compressionLevel
+     * @param variable
+     */
+    BZIP2();
 
-  ~BZIP2();
+    ~BZIP2();
 
-  void Compress(const std::vector<char> &bufferIn,
-                std::vector<char> &bufferOut);
-
-  void Decompress(const std::vector<char> &bufferIn,
+    void Compress(const std::vector<char> &bufferIn,
                   std::vector<char> &bufferOut);
+
+    void Decompress(const std::vector<char> &bufferIn,
+                    std::vector<char> &bufferOut);
 };
 
 } // end namespace transform

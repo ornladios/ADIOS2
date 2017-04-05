@@ -25,18 +25,18 @@ Engine::Engine(ADIOS &adios, std::string engineType, std::string name,
   m_Method(method), m_ADIOS(adios), m_DebugMode(debugMode),
   m_nThreads(nthreads), m_EndMessage(std::move(endMessage))
 {
-  if (m_DebugMode == true)
-  {
-    if (m_MPIComm == MPI_COMM_NULL)
+    if (m_DebugMode == true)
     {
-      throw std::ios_base::failure(
-          "ERROR: engine communicator is MPI_COMM_NULL,"
-          " in call to ADIOS Open or Constructor\n");
+        if (m_MPIComm == MPI_COMM_NULL)
+        {
+            throw std::ios_base::failure(
+                "ERROR: engine communicator is MPI_COMM_NULL,"
+                " in call to ADIOS Open or Constructor\n");
+        }
     }
-  }
 
-  MPI_Comm_rank(m_MPIComm, &m_RankMPI);
-  MPI_Comm_size(m_MPIComm, &m_SizeMPI);
+    MPI_Comm_rank(m_MPIComm, &m_RankMPI);
+    MPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
 void Engine::SetCallBack(std::function<void(const void *, std::string,
@@ -181,95 +181,95 @@ void Engine::Close(const int /*transportIndex*/) {}
 Variable<void> *Engine::InquireVariable(const std::string /*name*/,
                                         const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<char> *Engine::InquireVariableChar(const std::string /*name*/,
                                             const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<unsigned char> *
 Engine::InquireVariableUChar(const std::string /*name*/, const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<short> *Engine::InquireVariableShort(const std::string /*name*/,
                                               const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<unsigned short> *
 Engine::InquireVariableUShort(const std::string /*name*/, const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<int> *Engine::InquireVariableInt(const std::string /*name*/,
                                           const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<unsigned int> *Engine::InquireVariableUInt(const std::string /*name*/,
                                                     const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<long int> *Engine::InquireVariableLInt(const std::string /*name*/,
                                                 const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<unsigned long int> *
 Engine::InquireVariableULInt(const std::string /*name*/, const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<long long int> *
 Engine::InquireVariableLLInt(const std::string /*name*/, const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<unsigned long long int> *
 Engine::InquireVariableULLInt(const std::string /*name*/, const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<float> *Engine::InquireVariableFloat(const std::string /*name*/,
                                               const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<double> *Engine::InquireVariableDouble(const std::string /*name*/,
                                                 const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<long double> *
 Engine::InquireVariableLDouble(const std::string /*name*/,
                                const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<std::complex<float>> *
 Engine::InquireVariableCFloat(const std::string /*name*/, const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<std::complex<double>> *
 Engine::InquireVariableCDouble(const std::string /*name*/,
                                const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 Variable<std::complex<long double>> *
 Engine::InquireVariableCLDouble(const std::string /*name*/,
                                 const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 VariableCompound *Engine::InquireVariableCompound(const std::string /*name*/,
                                                   const bool /*readIn*/)
 {
-  return nullptr;
+    return nullptr;
 }
 
 void Engine::Read(Variable<double> & /*variable*/, const double * /*values*/) {}
@@ -291,72 +291,72 @@ void Engine::CheckParameter(
     const std::map<std::string, std::string> &parameters,
     const std::string parameterName, const std::string hint) const
 {
-  if (itParam == parameters.end())
-  {
+    if (itParam == parameters.end())
     {
-      throw std::invalid_argument("ERROR: parameter name " + parameterName +
-                                  " not found " + hint);
+        {
+            throw std::invalid_argument("ERROR: parameter name " +
+                                        parameterName + " not found " + hint);
+        }
     }
-  }
 }
 
 bool Engine::TransportNamesUniqueness() const
 {
-  auto lf_CheckTransportsType =
-      [&](const std::set<std::string> &specificType) -> bool {
-    std::set<std::string> transportNames;
+    auto lf_CheckTransportsType =
+        [&](const std::set<std::string> &specificType) -> bool {
+        std::set<std::string> transportNames;
 
-    for (const auto &parameters : m_Method.m_TransportParameters)
-    {
-      auto itTransport = parameters.find("transport");
-      if (m_DebugMode == true)
-      {
-        if (itTransport == parameters.end())
+        for (const auto &parameters : m_Method.m_TransportParameters)
         {
-          throw std::invalid_argument(
-              "ERROR: transport not defined in Method input to Engine " +
-              m_Name);
-        }
-      }
+            auto itTransport = parameters.find("transport");
+            if (m_DebugMode == true)
+            {
+                if (itTransport == parameters.end())
+                {
+                    throw std::invalid_argument("ERROR: transport not defined "
+                                                "in Method input to Engine " +
+                                                m_Name);
+                }
+            }
 
-      const std::string type(itTransport->second);
-      if (specificType.count(type) == 1) // file transports type
-      {
-        std::string name(m_Name);
-        auto itName = parameters.find("name");
-        if (itName != parameters.end())
-        {
-          name = itName->second;
-        }
+            const std::string type(itTransport->second);
+            if (specificType.count(type) == 1) // file transports type
+            {
+                std::string name(m_Name);
+                auto itName = parameters.find("name");
+                if (itName != parameters.end())
+                {
+                    name = itName->second;
+                }
 
-        if (transportNames.count(name) == 0)
-        {
-          transportNames.insert(name);
+                if (transportNames.count(name) == 0)
+                {
+                    transportNames.insert(name);
+                }
+                else
+                {
+                    return false;
+                }
+            }
         }
-        else
-        {
-          return false;
-        }
-      }
-    }
-    return true;
-  };
+        return true;
+    };
 
-  return lf_CheckTransportsType(Support::FileTransports);
+    return lf_CheckTransportsType(Support::FileTransports);
 }
 
 void Engine::CheckTransportIndex(const int transportIndex)
 {
-  if (m_DebugMode == true)
-  {
-    if (transportIndex >= static_cast<int>(m_Transports.size()) ||
-        transportIndex < -1)
+    if (m_DebugMode == true)
     {
-      throw std::invalid_argument(
-          "ERROR: transport index " + std::to_string(transportIndex) +
-          " is out of range, in call to " + m_Name + "Close \n");
+        if (transportIndex >= static_cast<int>(m_Transports.size()) ||
+            transportIndex < -1)
+        {
+            throw std::invalid_argument(
+                "ERROR: transport index " + std::to_string(transportIndex) +
+                " is out of range, in call to " + m_Name + "Close \n");
+        }
     }
-  }
 }
 
 } // end namespace adios

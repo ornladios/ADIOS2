@@ -27,50 +27,51 @@ FStream::FStream(MPI_Comm mpiComm, bool debugMode)
 
 void FStream::Open(const std::string name, const std::string accessMode)
 {
-  m_Name = name;
-  m_AccessMode = accessMode;
+    m_Name = name;
+    m_AccessMode = accessMode;
 
-  if (accessMode == "w" || accessMode == "write")
-  {
-    m_FStream.open(name, std::fstream::out);
-  }
-  else if (accessMode == "a" || accessMode == "append")
-  {
-    m_FStream.open(name, std::fstream::out | std::fstream::app);
-  }
-  else if (accessMode == "r" || accessMode == "read")
-  {
-    m_FStream.open(name, std::fstream::in);
-  }
-
-  if (m_DebugMode == true)
-  {
-    if (!m_FStream)
+    if (accessMode == "w" || accessMode == "write")
     {
-      throw std::ios_base::failure(
-          "ERROR: couldn't open file " + name +
-          ", in call to Open from FStream transport\n");
+        m_FStream.open(name, std::fstream::out);
     }
-  }
+    else if (accessMode == "a" || accessMode == "append")
+    {
+        m_FStream.open(name, std::fstream::out | std::fstream::app);
+    }
+    else if (accessMode == "r" || accessMode == "read")
+    {
+        m_FStream.open(name, std::fstream::in);
+    }
+
+    if (m_DebugMode == true)
+    {
+        if (!m_FStream)
+        {
+            throw std::ios_base::failure(
+                "ERROR: couldn't open file " + name +
+                ", in call to Open from FStream transport\n");
+        }
+    }
 }
 
 void FStream::SetBuffer(char *buffer, std::size_t size)
 {
-  m_FStream.rdbuf()->pubsetbuf(buffer, size);
+    m_FStream.rdbuf()->pubsetbuf(buffer, size);
 }
 
 void FStream::Write(const char *buffer, std::size_t size)
 {
-  m_FStream.write(buffer, size);
+    m_FStream.write(buffer, size);
 
-  if (m_DebugMode == true)
-  {
-    if (!m_FStream)
+    if (m_DebugMode == true)
     {
-      throw std::ios_base::failure("ERROR: couldn't write to file " + m_Name +
-                                   ", in call to FStream write\n");
+        if (!m_FStream)
+        {
+            throw std::ios_base::failure("ERROR: couldn't write to file " +
+                                         m_Name +
+                                         ", in call to FStream write\n");
+        }
     }
-  }
 }
 
 void FStream::Flush() { m_FStream.flush(); }

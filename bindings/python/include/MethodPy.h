@@ -41,21 +41,21 @@ class MethodPy : public Method
 {
 
 public:
-  MethodPy(const std::string type, const bool debugMode);
+    MethodPy(const std::string type, const bool debugMode);
 
-  ~MethodPy();
+    ~MethodPy();
 
 #ifdef HAVE_BOOSTPYTHON
-  static pyObject SetParametersPy(pyTuple args, pyDict kwargs);
-  static pyObject AddTransportPy(pyTuple args, pyDict kwargs);
+    static pyObject SetParametersPy(pyTuple args, pyDict kwargs);
+    static pyObject AddTransportPy(pyTuple args, pyDict kwargs);
 #endif
 
 #ifdef HAVE_PYBIND11
-  void SetParametersPyBind11(pybind11::kwargs kwargs);
-  void AddTransportPyBind11(const std::string type, pybind11::kwargs kwargs);
+    void SetParametersPyBind11(pybind11::kwargs kwargs);
+    void AddTransportPyBind11(const std::string type, pybind11::kwargs kwargs);
 #endif
 
-  void PrintAll() const;
+    void PrintAll() const;
 };
 }
 

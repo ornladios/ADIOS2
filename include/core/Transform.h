@@ -27,21 +27,21 @@ class Transform
 {
 
 public:
-  const std::string m_Method;
+    const std::string m_Method;
 
-  /**
-   * Initialize parent method
-   * @param method zlib, bzip2, szip
-   */
-  Transform(std::string method);
+    /**
+     * Initialize parent method
+     * @param method zlib, bzip2, szip
+     */
+    Transform(std::string method);
 
-  virtual ~Transform() = default;
+    virtual ~Transform() = default;
 
-  virtual void Compress(const std::vector<char> &bufferIn,
-                        std::vector<char> &bufferOut);
-
-  virtual void Decompress(const std::vector<char> &bufferIn,
+    virtual void Compress(const std::vector<char> &bufferIn,
                           std::vector<char> &bufferOut);
+
+    virtual void Decompress(const std::vector<char> &bufferIn,
+                            std::vector<char> &bufferOut);
 };
 
 } // end namespace adios

@@ -23,8 +23,8 @@ namespace adios
  */
 struct Attribute
 {
-  const char TypeID;       ///< '0': string, '1': numeric
-  const std::string Value; ///< information about the attribute
+    const char TypeID;       ///< '0': string, '1': numeric
+    const std::string Value; ///< information about the attribute
 };
 
 } // end namespace
