@@ -30,22 +30,22 @@ class FilePointer : public Transport
 {
 
 public:
-  FilePointer(MPI_Comm mpiComm, const bool debugMode);
+    FilePointer(MPI_Comm mpiComm, const bool debugMode);
 
-  ~FilePointer();
+    ~FilePointer();
 
-  void Open(const std::string name, const std::string accessMode);
+    void Open(const std::string name, const std::string accessMode);
 
-  void SetBuffer(char *buffer, std::size_t size);
+    void SetBuffer(char *buffer, std::size_t size);
 
-  void Write(const char *buffer, std::size_t size);
+    void Write(const char *buffer, std::size_t size);
 
-  void Flush();
+    void Flush();
 
-  void Close();
+    void Close();
 
 private:
-  FILE *m_File = NULL; ///< C file pointer
+    FILE *m_File = NULL; ///< C file pointer
 };
 
 } // end namespace transport

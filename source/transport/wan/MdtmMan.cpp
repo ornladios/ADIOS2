@@ -49,7 +49,7 @@ int MdtmMan::Put(const void *data, const std::string doid,
                  const int priority)
 {
 
-  return 0;
+    return 0;
 }
 
 int MdtmMan::Get(void *data, const std::string doid, const std::string variable,
@@ -61,7 +61,7 @@ int MdtmMan::Get(void *data, const std::string doid, const std::string variable,
                  const int priority)
 {
 
-  return 0;
+    return 0;
 }
 
 int MdtmMan::Get(void *data, const std::string doid, const std::string variable,
@@ -69,7 +69,7 @@ int MdtmMan::Get(void *data, const std::string doid, const std::string variable,
                  const std::uint64_t timestep)
 {
 
-  return 0;
+    return 0;
 }
 
 void MdtmMan::OnReceive(nlohmann::json &jData) {}

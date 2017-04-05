@@ -26,14 +26,14 @@ VariablePy::~VariablePy() {}
 
 void VariablePy::SetLocalDimensions(const pyList list)
 {
-  //      this->m_Dimensions = ListToVector( list );
+    //      this->m_Dimensions = ListToVector( list );
 }
 
 void VariablePy::SetGlobalDimensionsAndOffsets(const pyList globalDimensions,
                                                const pyList globalOffsets)
 {
-  //        this->m_GlobalDimensions = ListToVector( globalDimensions );
-  //        this->m_GlobalOffsets = ListToVector( globalOffsets );
+    //        this->m_GlobalDimensions = ListToVector( globalDimensions );
+    //        this->m_GlobalOffsets = ListToVector( globalOffsets );
 }
 
 Dims VariablePy::GetLocalDimensions() { return this->m_LocalDimensions; }
