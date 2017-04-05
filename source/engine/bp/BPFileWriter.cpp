@@ -7,9 +7,10 @@
  *  Created on: Dec 19, 2016
  *      Author: wfg
  */
+#include <utility>
 
-#include "engine/bp/BPFileWriter.h"
 #include "ADIOS.h"
+#include "engine/bp/BPFileWriter.h"
 
 // supported transports
 #include "transport/file/FStream.h"
@@ -24,9 +25,9 @@ BPFileWriter::BPFileWriter(ADIOS &adios, const std::string name,
                            const Method &method)
 : Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method,
          " BPFileWriter constructor (or call to ADIOS Open).\n"),
-  m_Buffer{capsule::STLVector(accessMode, m_RankMPI, m_DebugMode)},
-  m_BP1Aggregator{format::BP1Aggregator(m_MPIComm, m_DebugMode)},
-  m_MaxBufferSize{m_Buffer.m_Data.max_size()}
+  m_Buffer(accessMode, m_RankMPI, m_DebugMode),
+  m_BP1Aggregator(m_MPIComm, m_DebugMode),
+  m_MaxBufferSize(m_Buffer.m_Data.max_size())
 {
   m_MetadataSet.TimeStep = 1; // starting at one to be compatible with ADIOS1.x
   Init();

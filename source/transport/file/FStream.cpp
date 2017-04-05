@@ -20,7 +20,7 @@ namespace adios
 namespace transport
 {
 
-FStream::FStream(MPI_Comm mpiComm, bool debugMode)
+FStream::FStream(MPI_Comm mpiComm, const bool debugMode)
 : Transport("fstream", mpiComm, debugMode)
 {
 }

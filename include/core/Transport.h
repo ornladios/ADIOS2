@@ -15,11 +15,10 @@
 #include <string>
 #include <vector>
 
-#include "../utilities/profiling/iochrono/IOChrono.h"
+#include "utilities/profiling/iochrono/IOChrono.h"
 /// \endcond
 
 #include "ADIOS_MPI.h"
-
 
 namespace adios
 {
@@ -45,7 +44,7 @@ public:
    * @param mpiComm passed to m_MPIComm
    * @param debugMode passed to m_DebugMode
    */
-  Transport(std::string type, MPI_Comm mpiComm, bool debugMode);
+  Transport(const std::string type, MPI_Comm mpiComm, const bool debugMode);
 
   virtual ~Transport() = default;
 

@@ -21,10 +21,10 @@ Engine::Engine(ADIOS &adios, const std::string engineType,
                const std::string name, const std::string accessMode,
                MPI_Comm mpiComm, const Method &method,
                const std::string endMessage)
-: m_MPIComm{mpiComm}, m_EngineType{std::move(engineType)},
-  m_Name{std::move(name)}, m_AccessMode{std::move(accessMode)},
-  m_Method{method}, m_ADIOS(adios), m_EndMessage(std::move(endMessage)),
-  m_DebugMode{m_Method.m_DebugMode}, m_nThreads{m_Method.m_nThreads}
+: m_MPIComm(mpiComm), m_EngineType(engineType), m_Name(name),
+  m_AccessMode(accessMode), m_Method(method), m_ADIOS(adios),
+  m_EndMessage(endMessage), m_DebugMode(m_Method.m_DebugMode),
+  m_nThreads(m_Method.m_nThreads)
 {
   if (m_DebugMode == true)
   {
@@ -48,44 +48,93 @@ void Engine::SetCallBack(std::function<void(const void *, std::string,
 
 // should these functions throw an exception?
 
-// clang-format off
-void Engine::Write(Variable<char> &variable,                      const char *values) {}
-void Engine::Write(Variable<unsigned char> &variable,             const unsigned char *values){ }
-void Engine::Write(Variable<short> &variable,                     const short *values) {}
-void Engine::Write(Variable<unsigned short> &variable,            const unsigned short *values) {}
-void Engine::Write(Variable<int> &variable,                       const int *values) {}
-void Engine::Write(Variable<unsigned int> &variable,              const unsigned int *values) {}
-void Engine::Write(Variable<long int> &variable,                  const long int *values) {}
-void Engine::Write(Variable<unsigned long int> &variable,         const unsigned long int *values) {}
-void Engine::Write(Variable<long long int> &variable,             const long long int *values) {}
-void Engine::Write(Variable<unsigned long long int> &variable,    const unsigned long long int *values) {}
-void Engine::Write(Variable<float> &variable,                     const float *values) {}
-void Engine::Write(Variable<double> &variable,                    const double *values) {}
-void Engine::Write(Variable<long double> &variable,               const long double *values) {}
-void Engine::Write(Variable<std::complex<float>> &variable,       const std::complex<float> *values) {}
-void Engine::Write(Variable<std::complex<double>> &variable,      const std::complex<double> *values) {}
-void Engine::Write(Variable<std::complex<long double>> &variable, const std::complex<long double> *values) {}
-void Engine::Write(VariableCompound &variable,                    const void *values) {}
+void Engine::Write(Variable<char> &variable, const char *values) {}
+void Engine::Write(Variable<unsigned char> &variable,
+                   const unsigned char *values)
+{
+}
+void Engine::Write(Variable<short> &variable, const short *values) {}
+void Engine::Write(Variable<unsigned short> &variable,
+                   const unsigned short *values)
+{
+}
+void Engine::Write(Variable<int> &variable, const int *values) {}
+void Engine::Write(Variable<unsigned int> &variable, const unsigned int *values)
+{
+}
+void Engine::Write(Variable<long int> &variable, const long int *values) {}
+void Engine::Write(Variable<unsigned long int> &variable,
+                   const unsigned long int *values)
+{
+}
+void Engine::Write(Variable<long long int> &variable,
+                   const long long int *values)
+{
+}
+void Engine::Write(Variable<unsigned long long int> &variable,
+                   const unsigned long long int *values)
+{
+}
+void Engine::Write(Variable<float> &variable, const float *values) {}
+void Engine::Write(Variable<double> &variable, const double *values) {}
+void Engine::Write(Variable<long double> &variable, const long double *values)
+{
+}
+void Engine::Write(Variable<std::complex<float>> &variable,
+                   const std::complex<float> *values)
+{
+}
+void Engine::Write(Variable<std::complex<double>> &variable,
+                   const std::complex<double> *values)
+{
+}
+void Engine::Write(Variable<std::complex<long double>> &variable,
+                   const std::complex<long double> *values)
+{
+}
+void Engine::Write(VariableCompound &variable, const void *values) {}
 
 // String version
 void Engine::Write(const std::string variableName, const char *values) {}
-void Engine::Write(const std::string variableName, const unsigned char *values) {}
+void Engine::Write(const std::string variableName, const unsigned char *values)
+{
+}
 void Engine::Write(const std::string variableName, const short *values) {}
-void Engine::Write(const std::string variableName, const unsigned short *values) {}
+void Engine::Write(const std::string variableName, const unsigned short *values)
+{
+}
 void Engine::Write(const std::string variableName, const int *values) {}
-void Engine::Write(const std::string variableName, const unsigned int *values) {}
+void Engine::Write(const std::string variableName, const unsigned int *values)
+{
+}
 void Engine::Write(const std::string variableName, const long int *values) {}
-void Engine::Write(const std::string variableName, const unsigned long int *values) {}
-void Engine::Write(const std::string variableName, const long long int *values) {}
-void Engine::Write(const std::string variableName, const unsigned long long int *values) {}
+void Engine::Write(const std::string variableName,
+                   const unsigned long int *values)
+{
+}
+void Engine::Write(const std::string variableName, const long long int *values)
+{
+}
+void Engine::Write(const std::string variableName,
+                   const unsigned long long int *values)
+{
+}
 void Engine::Write(const std::string variableName, const float *values) {}
 void Engine::Write(const std::string variableName, const double *values) {}
 void Engine::Write(const std::string variableName, const long double *values) {}
-void Engine::Write(const std::string variableName, const std::complex<float> *values) {}
-void Engine::Write(const std::string variableName, const std::complex<double> *values) {}
-void Engine::Write(const std::string variableName, const std::complex<long double> *values) {}
+void Engine::Write(const std::string variableName,
+                   const std::complex<float> *values)
+{
+}
+void Engine::Write(const std::string variableName,
+                   const std::complex<double> *values)
+{
+}
+void Engine::Write(const std::string variableName,
+                   const std::complex<long double> *values)
+{
+}
 void Engine::Write(const std::string variableName, const void *values) {}
-// clang-format on
 
 void Engine::Advance(float timeout_sec) {}
 void Engine::Advance(AdvanceMode mode, float timeout_sec) {}

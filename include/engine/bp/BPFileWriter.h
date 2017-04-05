@@ -31,10 +31,10 @@ public:
    * @param method
    * @param debugMode
    */
+
   BPFileWriter(ADIOS &adios, const std::string name,
                const std::string accessMode, MPI_Comm mpiComm,
                const Method &method);
-
   ~BPFileWriter();
 
   void Write(Variable<char> &variable, const char *values);

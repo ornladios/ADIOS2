@@ -31,10 +31,6 @@ public:
   unsigned long long int m_ProcessTime = 0;
 
   /**
-   *
-   */
-  /**
-   *
    * Timer object constructor using std::chrono class
    * @param process name of process to be measured
    * @param resolution time resolution (mus, ms, s, etc.) from Resolutions in
