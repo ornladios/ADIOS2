@@ -107,7 +107,8 @@ public:
                                     name + " in call to DefineVariable\n");
     }
 
-    template <class T> inline Variable<T> &GetVariable(const std::string &name)
+    template <class T>
+    inline Variable<T> &GetVariable(const std::string &name)
     {
         throw std::invalid_argument("ERROR: type not supported for variable " +
                                     name + " in call to GetVariable\n");
@@ -360,7 +361,8 @@ protected: // no const to allow default empty and copy constructors
                      const std::string &methodName,
                      const std::string &hint) const;
 
-    template <class T> unsigned int GetVariableIndex(const std::string &name)
+    template <class T>
+    unsigned int GetVariableIndex(const std::string &name)
     {
         auto itVariable = m_Variables.find(name);
         CheckVariableName(itVariable, name,
@@ -596,7 +598,8 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
 }
 
 // Get template specialization
-template <> inline Variable<char> &ADIOS::GetVariable(const std::string &name)
+template <>
+inline Variable<char> &ADIOS::GetVariable(const std::string &name)
 {
     return m_Char.at(GetVariableIndex<char>(name));
 }
@@ -607,7 +610,8 @@ inline Variable<unsigned char> &ADIOS::GetVariable(const std::string &name)
     return m_UChar.at(GetVariableIndex<unsigned char>(name));
 }
 
-template <> inline Variable<short> &ADIOS::GetVariable(const std::string &name)
+template <>
+inline Variable<short> &ADIOS::GetVariable(const std::string &name)
 {
     return m_Short.at(GetVariableIndex<short>(name));
 }
@@ -618,7 +622,8 @@ inline Variable<unsigned short> &ADIOS::GetVariable(const std::string &name)
     return m_UShort.at(GetVariableIndex<unsigned short>(name));
 }
 
-template <> inline Variable<int> &ADIOS::GetVariable(const std::string &name)
+template <>
+inline Variable<int> &ADIOS::GetVariable(const std::string &name)
 {
     return m_Int.at(GetVariableIndex<int>(name));
 }
@@ -654,12 +659,14 @@ ADIOS::GetVariable(const std::string &name)
     return m_ULLInt.at(GetVariableIndex<unsigned long long int>(name));
 }
 
-template <> inline Variable<float> &ADIOS::GetVariable(const std::string &name)
+template <>
+inline Variable<float> &ADIOS::GetVariable(const std::string &name)
 {
     return m_Float.at(GetVariableIndex<float>(name));
 }
 
-template <> inline Variable<double> &ADIOS::GetVariable(const std::string &name)
+template <>
+inline Variable<double> &ADIOS::GetVariable(const std::string &name)
 {
     return m_Double.at(GetVariableIndex<double>(name));
 }

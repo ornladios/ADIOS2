@@ -36,7 +36,8 @@ struct TransformData
  * @param Base (parent) class for template derived (child) class CVariable.
  * Required to put CVariable objects in STL containers.
  */
-template <class T> class Variable : public VariableBase
+template <class T>
+class Variable : public VariableBase
 {
 
 public:

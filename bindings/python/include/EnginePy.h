@@ -60,7 +60,8 @@ private:
     ADIOSPy &m_ADIOSPy;
     bool m_IsVariableTypeDefined = false;
 
-    template <class T> void DefineVariableInADIOS(VariablePy &variable)
+    template <class T>
+    void DefineVariableInADIOS(VariablePy &variable)
     {
         auto &var = m_ADIOSPy.DefineVariable<T>(
             variable.m_Name, variable.m_LocalDimensions,
