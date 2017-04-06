@@ -67,7 +67,7 @@ endif()
 
 option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" ON)
 if(ADIOS_USE_MPI)
-  # Workaround for OpenMPI forcing th elink of C++ bindings
+  # Workaround for OpenMPI forcing the link of C++ bindings
   add_definitions(-DOMPI_SKIP_MPICXX)
 endif()
 option(ADIOS_USE_BZip2 "Enable support for BZip2 transforms" ON)
@@ -117,7 +117,8 @@ endif()
 #------------------------------------------------------------------------------#
 message("")
 message("ADIOS2 build configuration:")
-message("  C++ Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} ${CMAKE_CXX_COMPILER_WRAPPER}")
+message("  ADIOS Version: ${ADIOS_VERSION}")
+message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} ${CMAKE_CXX_COMPILER_WRAPPER}")
 message("  ${CMAKE_CXX_COMPILER}")
 message("")
 message("  Installation prefix: ${CMAKE_INSTALL_PREFIX}")

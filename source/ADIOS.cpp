@@ -17,6 +17,7 @@
 /// \endcond
 
 #include "ADIOS.h"
+#include "ADIOS.tcc"
 
 #include "functions/adiosFunctions.h"
 
@@ -24,12 +25,12 @@
 #include "engine/bp/BPFileReader.h"
 #include "engine/bp/BPFileWriter.h"
 
-#ifdef HAVE_DATAMAN // external dependencies
+#ifdef ADIOS_HAVE_DATAMAN // external dependencies
 #include "engine/dataman/DataManReader.h"
 #include "engine/dataman/DataManWriter.h"
 #endif
 
-#ifdef HAVE_ADIOS1 // external dependencies
+#ifdef ADIOS_HAVE_ADIOS1 // external dependencies
 #include "engine/adios1/ADIOS1Reader.h"
 #include "engine/adios1/ADIOS1Writer.h"
 #endif
@@ -151,7 +152,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
     }
     else if (type == "DataManWriter")
     {
-#ifdef HAVE_DATAMAN
+#ifdef ADIOS_HAVE_DATAMAN
         return std::make_shared<DataManWriter>(*this, name, accessMode, mpiComm,
                                                method, iomode, timeout_sec,
                                                m_DebugMode, method.m_nThreads);
@@ -163,7 +164,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
     }
     else if (type == "DataManReader")
     {
-#ifdef HAVE_DATAMAN
+#ifdef ADIOS_HAVE_DATAMAN
         return std::make_shared<DataManReader>(*this, name, accessMode, mpiComm,
                                                method, iomode, timeout_sec,
                                                m_DebugMode, method.m_nThreads);
@@ -175,7 +176,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
     }
     else if (type == "ADIOS1Writer")
     {
-#ifdef HAVE_ADIOS1
+#ifdef ADIOS_HAVE_ADIOS1
         return std::make_shared<ADIOS1Writer>(*this, name, accessMode, mpiComm,
                                               method, iomode, timeout_sec,
                                               m_DebugMode, method.m_nThreads);
