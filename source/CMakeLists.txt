@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_library(adios2
-  ADIOS.cpp
+  ADIOS.cpp ADIOS.tcc ADIOS_inst.cpp
   #ADIOS_C.cpp
 
   capsule/heap/STLVector.cpp
