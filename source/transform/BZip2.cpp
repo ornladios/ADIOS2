@@ -15,16 +15,14 @@ namespace adios
 namespace transform
 {
 
-BZIP2::BZIP2() : Transform("bzip2") {}
+BZip2::BZip2() : Transform("bzip2") {}
 
-BZIP2::~BZIP2() = default;
-
-void BZIP2::Compress(const std::vector<char> & /*bufferIn*/,
+void BZip2::Compress(const std::vector<char> & /*bufferIn*/,
                      std::vector<char> & /*bufferOut*/)
 {
 }
 
-void BZIP2::Decompress(const std::vector<char> & /*bufferIn*/,
+void BZip2::Decompress(const std::vector<char> & /*bufferIn*/,
                        std::vector<char> & /*bufferOut*/)
 {
 }

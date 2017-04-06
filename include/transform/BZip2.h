@@ -18,7 +18,7 @@ namespace adios
 namespace transform
 {
 
-class BZIP2 : public Transform
+class BZip2 : public Transform
 {
 
 public:
@@ -27,9 +27,9 @@ public:
      * @param compressionLevel
      * @param variable
      */
-    BZIP2();
+    BZip2();
 
-    ~BZIP2();
+    virtual ~BZip2() = default;
 
     void Compress(const std::vector<char> &bufferIn,
                   std::vector<char> &bufferOut);
