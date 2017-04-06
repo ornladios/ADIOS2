@@ -17,6 +17,7 @@
 /// \endcond
 
 #include "ADIOS.h"
+#include "ADIOS.tcc"
 
 #include "functions/adiosFunctions.h"
 

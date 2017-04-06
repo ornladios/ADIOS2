@@ -2,11 +2,9 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * ADIOS.h
- *
+ * ADIOS.\ *
  *  Created on: Oct 3, 2016
- *      Author: wfg
- */
+ *      Author: wfg`123 */
 
 #ifndef ADIOS_H_
 #define ADIOS_H_
@@ -42,24 +40,27 @@ class Engine;
 class ADIOS
 {
 public:
-    MPI_Comm m_MPIComm = MPI_COMM_SELF; ///< only used as reference to MPI
-                                        /// communicator passed from parallel
-    /// constructor, MPI_Comm is a pointer
-    /// itself. Public as called from C
+    /**
+     * Passed from parallel constructor, MPI_Comm is a pointer itself.
+     *  Public as called from C
+     */
+    MPI_Comm m_MPIComm = MPI_COMM_SELF;
 
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
-    std::string m_HostLanguage = "C++";
+    std::string m_HostLanguage = "C++"; ///< changed by bindings
 
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
      */
     ADIOS(const Verbose verbose = Verbose::WARN, const bool debugMode = false);
+
     /**
      * @brief Serial constructor for config file, only allowed and compiled in
      * libadios_nompi.a
-     * @param configFile XML config file name
+     * @param configFile XML config file (maybe support different formats in the
+     * future?)
      * @param debugMode true: on throws exceptions and do additional checks,
      * false: off (faster, but unsafe)
      */
@@ -68,11 +69,11 @@ public:
 
     /**
      * @brief Parallel constructor for XML config file and MPI
-     * @param config XML config file
+     * @param config XML config file (maybe support different formats in the
+     * future?)
      * @param mpiComm MPI communicator ...const to be discussed
      * @param debugMode true: on, false: off (faster, but unsafe)
      */
-
     ADIOS(const std::string configFile, MPI_Comm mpiComm,
           const Verbose verbose = Verbose::WARN, const bool debugMode = false);
 
@@ -97,37 +98,20 @@ public:
      * @return
      */
     template <class T>
-    inline Variable<T> &DefineVariable(const std::string &name,
-                                       const Dims &dimensions = Dims{1},
-                                       const Dims &globalDimensions = Dims(),
-                                       const Dims &globalOffsets = Dims())
-    {
-        throw std::invalid_argument("ERROR: type not supported for variable " +
-                                    name + " in call to DefineVariable\n");
-    }
+    Variable<T> &DefineVariable(const std::string &name,
+                                const Dims dimensions = Dims{1},
+                                const Dims globalDimensions = Dims(),
+                                const Dims globalOffsets = Dims());
 
     template <class T>
-    inline Variable<T> &GetVariable(const std::string &name)
-    {
-        throw std::invalid_argument("ERROR: type not supported for variable " +
-                                    name + " in call to GetVariable\n");
-    }
+    Variable<T> &GetVariable(const std::string &name);
 
     template <class T>
     VariableCompound &
     DefineVariableCompound(const std::string &name,
-                           const Dims &dimensions = Dims{1},
-                           const Dims &globalDimensions = Dims(),
-                           const Dims &globalOffsets = Dims())
-    {
-        CheckVariableInput(name, dimensions);
-        const unsigned int size = m_Compound.size();
-        m_Compound.emplace(size, VariableCompound(name, sizeof(T), dimensions,
-                                                  globalDimensions,
-                                                  globalOffsets, m_DebugMode));
-        m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
-        return m_Compound.at(size);
-    }
+                           const Dims dimensions = Dims{1},
+                           const Dims globalDimensions = Dims(),
+                           const Dims globalOffsets = Dims());
 
     VariableCompound &GetVariableCompound(const std::string &name);
 
@@ -153,7 +137,12 @@ public:
      * @param method looks for corresponding Method object in ADIOS to
      * initialize
      * the engine
-     * @return Derived class of base Engine depending on Method parameters,
+     * @param iomode Independent or collective open/advance by writers/readers?
+     * Write() operations are always independent.
+     * @param timeout_sec Wait some time before reporting on missing stream
+     * (i.e.
+     * wait for it for a while)
+      * @return Derived class of base Engine depending on Method parameters,
      * shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open(const std::string &streamName,
@@ -168,6 +157,13 @@ public:
      * @param accessMode "w" or "write", "r" or "read", "a" or "append", "u" or
      * "update"
      * @param method contains engine parameters
+     * @param iomode Independent or collective open/advance by writers/readers?
+     * Write() operations are always independent.
+     * @param timeout_sec Wait some time before reporting on missing stream
+     * (i.e.
+     * wait for it for a while)
+      * @return Derived class of base Engine depending on Method parameters,
+     * shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open(const std::string &streamName,
                                  const std::string accessMode,
@@ -180,12 +176,18 @@ public:
      * @param accessMode "w" or "write", "r" or "read", "a" or "append"
      * @param mpiComm mpi Communicator
      * @param methodName used to search method object inside ADIOS object
+     * @param iomode Independent or collective open/advance by writers/readers?
+     * Write() operations are always independent.
+     * @param timeout_sec Wait some time before reporting on missing stream
+     * (i.e.
+     * wait for it for a while)
      * @return Derived class of base Engine depending on Method parameters,
      * shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open(const std::string &streamName,
                                  const std::string accessMode, MPI_Comm mpiComm,
                                  const std::string methodName);
+
     /**
      * Version required by the XML config file implementation, searches method
      * inside ADIOS through a unique name.
@@ -193,6 +195,11 @@ public:
      * @param streamName unique stream or file name
      * @param accessMode "w" or "write", "r" or "read", "a" or "append"
      * @param methodName used to search method object inside ADIOS object
+     * @param iomode Independent or collective open/advance by writers/readers?
+     * Write() operations are always independent.
+     * @param timeout_sec Wait some time before reporting on missing stream
+     * (i.e.
+     * wait for it for a while)
      * @return Derived class of base Engine depending on Method parameters,
      * shared_ptr for potential flexibility
      */
@@ -209,7 +216,10 @@ public:
      * @param fileName file name
      * @param mpiComm option to modify communicator from ADIOS class constructor
      * @param method looks for corresponding Method object in ADIOS to
-     * initialize the engine
+     * initialize
+     * the engine
+     * @param iomode Independent or collective open/advance by writers/readers?
+     * Write() operations are always independent.
      * @return Derived class of base Engine depending on Method parameters,
      * shared_ptr for potential flexibility
      */
@@ -221,18 +231,22 @@ public:
      * @brief Open to Read all steps from a file. No streaming, advancing is
      * possible here. All steps in the file
      * are immediately available for reading. Creates a new engine from
-     * previously defined method.
+     * previously
+     * defined method.
      * Version required by the XML config file implementation, searches method
      * inside ADIOS through a unique name.
      * @param fileName file name
      * @param mpiComm option to modify communicator from ADIOS class constructor
      * @param methodName used to search method object inside ADIOS object
+      * @param iomode Independent or collective open/advance by writers/readers?
+     * Write() operations are always independent.
      * @return Derived class of base Engine depending on Method parameters,
      * shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> OpenFileReader(const std::string &fileName,
                                            MPI_Comm mpiComm,
                                            const std::string methodName);
+
     /**
      * @brief Dumps groups information to a file stream or standard output.
      * Note that either the user closes this fileStream or it's closed at the
@@ -322,343 +336,28 @@ protected: // no const to allow default empty and copy constructors
                      const std::string hint) const;
 
     template <class T>
-    unsigned int GetVariableIndex(const std::string &name)
-    {
-        auto itVariable = m_Variables.find(name);
-        CheckVariableName(itVariable, name,
-                          "in call to GetVariable<" + GetType<T>() +
-                              ">, or call to GetVariableCompound if <T> = "
-                              "<compound>\n");
-        return itVariable->second.second;
-    }
+    unsigned int GetVariableIndex(const std::string &name);
+
+    // Helper function for DefineVariable
+    template <class T>
+    std::map<unsigned int, Variable<T>> &GetVarMap();
 };
 
-// template specializations of DefineVariable:
-template <>
-inline Variable<char> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
+template <class T>
+VariableCompound &ADIOS::DefineVariableCompound(const std::string &name,
+                                                const Dims dimensions,
+                                                const Dims globalDimensions,
+                                                const Dims globalOffsets)
 {
     CheckVariableInput(name, dimensions);
-    const unsigned int size = m_Char.size();
-    m_Char.emplace(size, Variable<char>(name, dimensions, globalDimensions,
-                                        globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<char>(), size));
-    return m_Char.at(size);
+    const unsigned int size = m_Compound.size();
+    m_Compound.emplace(size, VariableCompound(name, sizeof(T), dimensions,
+                                              globalDimensions, globalOffsets,
+                                              m_DebugMode));
+    m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
+    return m_Compound.at(size);
 }
 
-template <>
-inline Variable<unsigned char> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_UChar.size();
-    m_UChar.emplace(size,
-                    Variable<unsigned char>(name, dimensions, globalDimensions,
-                                            globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<unsigned char>(), size));
-    return m_UChar.at(size);
-}
-
-template <>
-inline Variable<short> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_Short.size();
-    m_Short.emplace(size, Variable<short>(name, dimensions, globalDimensions,
-                                          globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<unsigned char>(), size));
-    return m_Short.at(size);
-}
-
-template <>
-inline Variable<unsigned short> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_UShort.size();
-    m_UShort.emplace(
-        size, Variable<unsigned short>(name, dimensions, globalDimensions,
-                                       globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<unsigned short>(), size));
-    return m_UShort.at(size);
-}
-
-template <>
-inline Variable<int> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_Int.size();
-    m_Int.emplace(size, Variable<int>(name, dimensions, globalDimensions,
-                                      globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<int>(), size));
-    return m_Int.at(size);
-}
-
-template <>
-inline Variable<unsigned int> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_UInt.size();
-    m_UInt.emplace(size,
-                   Variable<unsigned int>(name, dimensions, globalDimensions,
-                                          globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<unsigned int>(), size));
-    return m_UInt.at(size);
-}
-
-template <>
-inline Variable<long int> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_LInt.size();
-    m_LInt.emplace(size, Variable<long int>(name, dimensions, globalDimensions,
-                                            globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<long int>(), size));
-    return m_LInt.at(size);
-}
-
-template <>
-inline Variable<unsigned long int> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_LInt.size();
-    m_ULInt.emplace(
-        size, Variable<unsigned long int>(name, dimensions, globalDimensions,
-                                          globalOffsets, m_DebugMode));
-    m_Variables.emplace(name,
-                        std::make_pair(GetType<unsigned long int>(), size));
-    return m_ULInt.at(size);
-}
-
-template <>
-inline Variable<long long int> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_LLInt.size();
-    m_LLInt.emplace(size,
-                    Variable<long long int>(name, dimensions, globalDimensions,
-                                            globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<long long int>(), size));
-    return m_LLInt.at(size);
-}
-
-template <>
-inline Variable<unsigned long long int> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_ULLInt.size();
-    m_ULLInt.emplace(size, Variable<unsigned long long int>(
-                               name, dimensions, globalDimensions,
-                               globalOffsets, m_DebugMode));
-    m_Variables.emplace(
-        name, std::make_pair(GetType<unsigned long long int>(), size));
-    return m_ULLInt.at(size);
-}
-
-template <>
-inline Variable<float> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_Float.size();
-    m_Float.emplace(size, Variable<float>(name, dimensions, globalDimensions,
-                                          globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<float>(), size));
-    return m_Float.at(size);
-}
-
-template <>
-inline Variable<double> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_Double.size();
-    m_Double.emplace(size, Variable<double>(name, dimensions, globalDimensions,
-                                            globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<double>(), size));
-    return m_Double.at(size);
-}
-
-template <>
-inline Variable<long double> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_LDouble.size();
-    m_LDouble.emplace(size,
-                      Variable<long double>(name, dimensions, globalDimensions,
-                                            globalOffsets, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<long double>(), size));
-    return m_LDouble.at(size);
-}
-
-template <>
-inline Variable<std::complex<float>> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_CFloat.size();
-    m_CFloat.emplace(
-        size, Variable<std::complex<float>>(name, dimensions, globalDimensions,
-                                            globalOffsets, m_DebugMode));
-    m_Variables.emplace(name,
-                        std::make_pair(GetType<std::complex<float>>(), size));
-    return m_CFloat.at(size);
-}
-
-template <>
-inline Variable<std::complex<double>> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_CDouble.size();
-    m_CDouble.emplace(
-        size, Variable<std::complex<double>>(name, dimensions, globalDimensions,
-                                             globalOffsets, m_DebugMode));
-    m_Variables.emplace(name,
-                        std::make_pair(GetType<std::complex<double>>(), size));
-    return m_CDouble.at(size);
-}
-
-template <>
-inline Variable<std::complex<long double>> &
-ADIOS::DefineVariable(const std::string &name, const Dims &dimensions,
-                      const Dims &globalDimensions, const Dims &globalOffsets)
-{
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = m_CLDouble.size();
-    m_CLDouble.emplace(size, Variable<std::complex<long double>>(
-                                 name, dimensions, globalDimensions,
-                                 globalOffsets, m_DebugMode));
-    m_Variables.emplace(
-        name, std::make_pair(GetType<std::complex<long double>>(), size));
-    return m_CLDouble.at(size);
-}
-
-// Get template specialization
-template <>
-inline Variable<char> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_Char.at(GetVariableIndex<char>(name));
-}
-
-template <>
-inline Variable<unsigned char> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_UChar.at(GetVariableIndex<unsigned char>(name));
-}
-
-template <>
-inline Variable<short> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_Short.at(GetVariableIndex<short>(name));
-}
-
-template <>
-inline Variable<unsigned short> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_UShort.at(GetVariableIndex<unsigned short>(name));
-}
-
-template <>
-inline Variable<int> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_Int.at(GetVariableIndex<int>(name));
-}
-
-template <>
-inline Variable<unsigned int> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_UInt.at(GetVariableIndex<unsigned int>(name));
-}
-
-template <>
-inline Variable<long int> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_LInt.at(GetVariableIndex<unsigned int>(name));
-}
-
-template <>
-inline Variable<unsigned long int> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_ULInt.at(GetVariableIndex<unsigned long int>(name));
-}
-
-template <>
-inline Variable<long long int> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_LLInt.at(GetVariableIndex<long long int>(name));
-}
-
-template <>
-inline Variable<unsigned long long int> &
-ADIOS::GetVariable(const std::string &name)
-{
-    return m_ULLInt.at(GetVariableIndex<unsigned long long int>(name));
-}
-
-template <>
-inline Variable<float> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_Float.at(GetVariableIndex<float>(name));
-}
-
-template <>
-inline Variable<double> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_Double.at(GetVariableIndex<double>(name));
-}
-
-template <>
-inline Variable<long double> &ADIOS::GetVariable(const std::string &name)
-{
-    return m_LDouble.at(GetVariableIndex<long double>(name));
-}
-
-template <>
-inline Variable<std::complex<float>> &
-ADIOS::GetVariable(const std::string &name)
-{
-    return m_CFloat.at(GetVariableIndex<std::complex<float>>(name));
-}
-
-template <>
-inline Variable<std::complex<double>> &
-ADIOS::GetVariable(const std::string &name)
-{
-    return m_CDouble.at(GetVariableIndex<std::complex<double>>(name));
-}
-
-template <>
-inline Variable<std::complex<long double>> &
-ADIOS::GetVariable(const std::string &name)
-{
-    return m_CLDouble.at(GetVariableIndex<std::complex<long double>>(name));
-}
-
-} // end namespace
+} // end namespace adios
 
 #endif /* ADIOS_H_ */
