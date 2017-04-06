@@ -3,22 +3,10 @@
  * accompanying file Copyright.txt for details.
  *
  * ADIOS.tcc
- *   This contains the template specialization implementations for the ADIOS
- *   class
+ *   This contains the template specializatios for the ADIOS class
  */
 
-#ifndef ADIOS_TCC_
-#define ADIOS_TCC_
-
-#include <complex>
-#include <map>
-#include <memory> //std::shared_ptr
-#include <ostream>
-#include <set>
-#include <string>
-#include <vector>
-
-#include "ADIOS.h"
+#include "ADIOS.tcc"
 #include "ADIOSMacros.h"
 
 namespace adios
@@ -125,7 +113,7 @@ std::map<unsigned int, Variable<std::complex<long double>>> &ADIOS::GetVarMap()
 }
 
 // -----------------------------------------------------------------------------
-// template specializations of DefineVariable:
+// explicit template instantiations of DefineVariable:
 // -----------------------------------------------------------------------------
 
 template <typename T>
@@ -142,14 +130,14 @@ ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
     return varMap.at(size);
 }
 
-#define instantiate_specialization(T)                                          \
+#define define_template_instantiation(T)                                       \
     template Variable<T> &ADIOS::DefineVariable<T>(                            \
         const std::string &, const Dims, const Dims, const Dims);
-ADIOS_FOREACH_TYPE_1ARG(instantiate_specialization)
-#undef instantiate_specialization
+ADIOS_FOREACH_TYPE_1ARG(define_template_instantiation)
+#undef define_template_instatiation
 
 // -----------------------------------------------------------------------------
-// template specializations of DefineVariable:
+// template specializations of GetVariable:
 // -----------------------------------------------------------------------------
 
 template <class T>
@@ -163,18 +151,17 @@ unsigned int ADIOS::GetVariableIndex(const std::string &name)
     return itVariable->second.second;
 }
 
-// Get template specialization
 template <typename T>
 Variable<T> &ADIOS::GetVariable(const std::string &name)
 {
     return GetVarMap<T>().at(GetVariableIndex<T>(name));
 }
 
-#define instantiate_specialization(T)                                          \
+#define define_template_instatiation(T)                                        \
+    template unsigned int ADIOS::GetVariableIndex<T>(const std::string &);     \
     template Variable<T> &ADIOS::GetVariable<T>(const std::string &);
-ADIOS_FOREACH_TYPE_1ARG(instantiate_specialization)
-#undef instantiate_specialization
+ADIOS_FOREACH_TYPE_1ARG(define_template_instatiation)
+template unsigned int ADIOS::GetVariableIndex<void>(const std::string &);
+#undef define_template_instatiation
 
 } // end namespace adios
-
-#endif /* ADIOS_TCC_ */
