@@ -25,7 +25,7 @@ FStream::FStream(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void FStream::Open(const std::string name, const std::string accessMode)
+void FStream::Open(const std::string &name, const std::string accessMode)
 {
     m_Name = name;
     m_AccessMode = accessMode;

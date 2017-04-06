@@ -115,7 +115,6 @@ private:
 
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
-    void InitCapsules();
     void InitTransports(); ///< from Transports
 
     std::string

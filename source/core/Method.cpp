@@ -21,6 +21,8 @@ Method::Method(const std::string name, const bool debugMode)
 {
 }
 
+Method::~Method() {}
+
 bool Method::IsUserDefined()
 {
     return false; // TODO(wfg): check if XML has the method defined

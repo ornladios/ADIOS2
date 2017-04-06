@@ -327,14 +327,8 @@ void DataManWriter::Init()
     }
     else
     {
-        InitCapsules();
         InitTransports();
     }
-}
-
-void DataManWriter::InitCapsules()
-{
-    // here init memory capsules
 }
 
 void DataManWriter::InitTransports() // maybe move this?

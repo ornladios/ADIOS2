@@ -10,8 +10,8 @@
  *      Author: pnb
  */
 
-#ifndef BPFILEREADER_H_
-#define BPFILEREADER_H_
+#ifndef ADIOS1READER_H_
+#define ADIOS1READER_H_
 
 #include <iostream> //this must go away
 
@@ -23,7 +23,7 @@
 namespace adios
 {
 
-class BPFileReader : public Engine
+class ADIOS1Reader : public Engine
 {
 
 public:
@@ -38,48 +38,71 @@ public:
      * @param debugMode
      * @param hostLanguage
      */
-    BPFileReader(ADIOS &adios, const std::string name,
+    ADIOS1Reader(ADIOS &adios, const std::string &name,
                  const std::string accessMode, MPI_Comm mpiComm,
-                 const Method &method, const IOMode iomode,
-                 const float timeout_sec, const bool debugMode = false,
-                 const unsigned int nthreads = 1);
+                 const Method &method);
 
-    ~BPFileReader();
+    ~ADIOS1Reader();
 
-    Variable<void> *InquireVariable(const std::string name,
+    Variable<void> *InquireVariable(const std::string &variableName,
                                     const bool readIn = true);
-    Variable<char> *InquireVariableChar(const std::string name,
+
+    Variable<char> *InquireVariableChar(const std::string &variableName,
                                         const bool readIn = true);
-    Variable<unsigned char> *InquireVariableUChar(const std::string name,
-                                                  const bool readIn = true);
-    Variable<short> *InquireVariableShort(const std::string name,
+
+    Variable<unsigned char> *
+    InquireVariableUChar(const std::string &variableName,
+                         const bool readIn = true);
+
+    Variable<short> *InquireVariableShort(const std::string &variableName,
                                           const bool readIn = true);
-    Variable<unsigned short> *InquireVariableUShort(const std::string name,
-                                                    const bool readIn = true);
-    Variable<int> *InquireVariableInt(const std::string name,
+
+    Variable<unsigned short> *
+    InquireVariableUShort(const std::string &variableName,
+                          const bool readIn = true);
+
+    Variable<int> *InquireVariableInt(const std::string &variableName,
                                       const bool readIn = true);
-    Variable<unsigned int> *InquireVariableUInt(const std::string name,
+
+    Variable<unsigned int> *InquireVariableUInt(const std::string &variableName,
                                                 const bool readIn = true);
-    Variable<long int> *InquireVariableLInt(const std::string name,
+
+    Variable<long int> *InquireVariableLInt(const std::string &variableName,
                                             const bool readIn = true);
-    Variable<unsigned long int> *InquireVariableULInt(const std::string name,
-                                                      const bool readIn = true);
-    Variable<long long int> *InquireVariableLLInt(const std::string name,
-                                                  const bool readIn = true);
+
+    Variable<unsigned long int> *
+    InquireVariableULInt(const std::string &variableName,
+                         const bool readIn = true);
+
+    Variable<long long int> *
+    InquireVariableLLInt(const std::string &variableName,
+                         const bool readIn = true);
+
     Variable<unsigned long long int> *
-    InquireVariableULLInt(const std::string name, const bool readIn = true);
-    Variable<float> *InquireVariableFloat(const std::string name,
+    InquireVariableULLInt(const std::string &variableName,
+                          const bool readIn = true);
+
+    Variable<float> *InquireVariableFloat(const std::string &variableName,
                                           const bool readIn = true);
-    Variable<double> *InquireVariableDouble(const std::string name,
+
+    Variable<double> *InquireVariableDouble(const std::string &variableName,
                                             const bool readIn = true);
-    Variable<long double> *InquireVariableLDouble(const std::string name,
-                                                  const bool readIn = true);
+
+    Variable<long double> *
+    InquireVariableLDouble(const std::string &variableName,
+                           const bool readIn = true);
+
     Variable<std::complex<float>> *
-    InquireVariableCFloat(const std::string name, const bool readIn = true);
+    InquireVariableCFloat(const std::string &variableName,
+                          const bool readIn = true);
+
     Variable<std::complex<double>> *
-    InquireVariableCDouble(const std::string name, const bool readIn = true);
+    InquireVariableCDouble(const std::string &variableName,
+                           const bool readIn = true);
+
     Variable<std::complex<long double>> *
-    InquireVariableCLDouble(const std::string name, const bool readIn = true);
+    InquireVariableCLDouble(const std::string &variableName,
+                            const bool readIn = true);
 
     /**
      * Not implemented

@@ -234,14 +234,8 @@ void DataManReader::Init()
     }
     else
     {
-        InitCapsules();
         InitTransports();
     }
-}
-
-void DataManReader::InitCapsules()
-{
-    // here init memory capsules
 }
 
 void DataManReader::InitTransports() // maybe move this?

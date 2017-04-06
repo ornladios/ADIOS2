@@ -35,7 +35,7 @@ public:
      * @param debugMode
      * @param hostLanguage
      */
-    BPFileReader(ADIOS &adios, const std::string name,
+    BPFileReader(ADIOS &adios, const std::string &name,
                  const std::string accessMode, MPI_Comm mpiComm,
                  const Method &method);
 
@@ -106,7 +106,7 @@ public:
      * @param readIn
      * @return
      */
-    VariableCompound *InquireVariableCompound(const std::string &name,
+    VariableCompound *InquireVariableCompound(const std::string &variableName,
                                               const bool readIn = true);
 
     void Close(const int transportIndex = -1);

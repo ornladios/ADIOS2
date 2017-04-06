@@ -18,7 +18,7 @@
 namespace adios
 {
 
-BPFileReader::BPFileReader(ADIOS &adios, const std::string name,
+ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string &name,
                            const std::string accessMode, MPI_Comm mpiComm,
                            const Method &method)
 : Engine(adios, "BPFileReader", name, accessMode, mpiComm, method,
@@ -31,110 +31,127 @@ BPFileReader::BPFileReader(ADIOS &adios, const std::string name,
 BPFileReader::~BPFileReader() {}
 
 Variable<void> *
-BPFileReader::InquireVariable(const std::string name,
+BPFileReader::InquireVariable(const std::string &variableName,
                               const bool readIn) // not yet implemented
 {
     return nullptr;
 }
 
-Variable<char> *BPFileReader::InquireVariableChar(const std::string name,
-                                                  const bool readIn)
+Variable<char> *
+BPFileReader::InquireVariableChar(const std::string &variableName,
+                                  const bool readIn)
 {
-    return InquireVariableCommon<char>(name, readIn);
+    return InquireVariableCommon<char>(variableName, readIn);
 }
 
 Variable<unsigned char> *
-BPFileReader::InquireVariableUChar(const std::string name, const bool readIn)
+BPFileReader::InquireVariableUChar(const std::string &variableName,
+                                   const bool readIn)
 {
-    return InquireVariableCommon<unsigned char>(name, readIn);
+    return InquireVariableCommon<unsigned char>(variableName, readIn);
 }
 
-Variable<short> *BPFileReader::InquireVariableShort(const std::string name,
-                                                    const bool readIn)
+Variable<short> *
+BPFileReader::InquireVariableShort(const std::string &variableName,
+                                   const bool readIn)
 {
-    return InquireVariableCommon<short>(name, readIn);
+    return InquireVariableCommon<short>(variableName, readIn);
 }
 
 Variable<unsigned short> *
-BPFileReader::InquireVariableUShort(const std::string name, const bool readIn)
+BPFileReader::InquireVariableUShort(const std::string &variableName,
+                                    const bool readIn)
 {
-    return InquireVariableCommon<unsigned short>(name, readIn);
+    return InquireVariableCommon<unsigned short>(variableName, readIn);
 }
 
-Variable<int> *BPFileReader::InquireVariableInt(const std::string name,
+Variable<int> *BPFileReader::InquireVariableInt(const std::string &variableName,
                                                 const bool readIn)
 {
-    return InquireVariableCommon<int>(name, readIn);
+    return InquireVariableCommon<int>(variableName, readIn);
 }
 
 Variable<unsigned int> *
-BPFileReader::InquireVariableUInt(const std::string name, const bool readIn)
+BPFileReader::InquireVariableUInt(const std::string &variableName,
+                                  const bool readIn)
 {
-    return InquireVariableCommon<unsigned int>(name, readIn);
+    return InquireVariableCommon<unsigned int>(variableName, readIn);
 }
 
-Variable<long int> *BPFileReader::InquireVariableLInt(const std::string name,
-                                                      const bool readIn)
+Variable<long int> *
+BPFileReader::InquireVariableLInt(const std::string &variableName,
+                                  const bool readIn)
 {
-    return InquireVariableCommon<long int>(name, readIn);
+    return InquireVariableCommon<long int>(variableName, readIn);
 }
 
 Variable<unsigned long int> *
-BPFileReader::InquireVariableULInt(const std::string name, const bool readIn)
+BPFileReader::InquireVariableULInt(const std::string &variableName,
+                                   const bool readIn)
 {
-    return InquireVariableCommon<unsigned long int>(name, readIn);
+    return InquireVariableCommon<unsigned long int>(variableName, readIn);
 }
 
 Variable<long long int> *
-BPFileReader::InquireVariableLLInt(const std::string name, const bool readIn)
+BPFileReader::InquireVariableLLInt(const std::string &variableName,
+                                   const bool readIn)
 {
-    return InquireVariableCommon<long long int>(name, readIn);
+    return InquireVariableCommon<long long int>(variableName, readIn);
 }
 
 Variable<unsigned long long int> *
-BPFileReader::InquireVariableULLInt(const std::string name, const bool readIn)
+BPFileReader::InquireVariableULLInt(const std::string &variableName,
+                                    const bool readIn)
 {
-    return InquireVariableCommon<unsigned long long int>(name, readIn);
+    return InquireVariableCommon<unsigned long long int>(variableName, readIn);
 }
 
-Variable<float> *BPFileReader::InquireVariableFloat(const std::string name,
-                                                    const bool readIn)
+Variable<float> *
+BPFileReader::InquireVariableFloat(const std::string &variableName,
+                                   const bool readIn)
 {
-    return InquireVariableCommon<float>(name, readIn);
+    return InquireVariableCommon<float>(variableName, readIn);
 }
 
-Variable<double> *BPFileReader::InquireVariableDouble(const std::string name,
-                                                      const bool readIn)
+Variable<double> *
+BPFileReader::InquireVariableDouble(const std::string &variableName,
+                                    const bool readIn)
 {
-    return InquireVariableCommon<double>(name, readIn);
+    return InquireVariableCommon<double>(variableName, readIn);
 }
 
 Variable<long double> *
-BPFileReader::InquireVariableLDouble(const std::string name, const bool readIn)
+BPFileReader::InquireVariableLDouble(const std::string &variableName,
+                                     const bool readIn)
 {
-    return InquireVariableCommon<long double>(name, readIn);
+    return InquireVariableCommon<long double>(variableName, readIn);
 }
 
 Variable<std::complex<float>> *
-BPFileReader::InquireVariableCFloat(const std::string name, const bool readIn)
+BPFileReader::InquireVariableCFloat(const std::string &variableName,
+                                    const bool readIn)
 {
-    return InquireVariableCommon<std::complex<float>>(name, readIn);
+    return InquireVariableCommon<std::complex<float>>(variableName, readIn);
 }
 
 Variable<std::complex<double>> *
-BPFileReader::InquireVariableCDouble(const std::string name, const bool readIn)
+BPFileReader::InquireVariableCDouble(const std::string &variableName,
+                                     const bool readIn)
 {
-    return InquireVariableCommon<std::complex<double>>(name, readIn);
+    return InquireVariableCommon<std::complex<double>>(variableName, readIn);
 }
 
 Variable<std::complex<long double>> *
-BPFileReader::InquireVariableCLDouble(const std::string name, const bool readIn)
+BPFileReader::InquireVariableCLDouble(const std::string &variableName,
+                                      const bool readIn)
 {
-    return InquireVariableCommon<std::complex<long double>>(name, readIn);
+    return InquireVariableCommon<std::complex<long double>>(variableName,
+                                                            readIn);
 }
 
-VariableCompound *BPFileReader::InquireVariableCompound(const std::string name,
-                                                        const bool readIn)
+VariableCompound *
+BPFileReader::InquireVariableCompound(const std::string &variableName,
+                                      const bool readIn)
 {
     return nullptr;
 }
