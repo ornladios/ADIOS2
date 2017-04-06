@@ -23,32 +23,34 @@ namespace adios
 
 struct Support
 {
-  static const std::string Version; ///< current ADIOS version
-  static const std::set<std::string>
-      HostLanguages; ///< supported languages: C, C++, Fortran, Python, Java
-  static const std::set<std::string> Numbers;
-  static const std::set<std::string>
-      Transports; ///< supported transport methods
-  static const std::set<std::string>
-      Transforms; ///< supported data transform methods
-  static const std::map<std::string, std::set<std::string>>
-      Datatypes; ///< supported data types, key: host language, value: all
-                 /// supported types
-  static const std::map<std::string, std::set<std::string>>
-      DatatypesAliases; ///< all supported int aliases, key: C++ type (e.g.
-                        /// int), value: aliases to type in key (e.g. int,
-  /// integer)
+    static const std::string Version;                 ///< current ADIOS version
+    static const std::set<std::string> HostLanguages; ///< supported languages:
+                                                      /// C, C++, Fortran,
+    /// Python, Java
+    static const std::set<std::string> Numbers;
+    static const std::set<std::string>
+        Transports; ///< supported transport methods
+    static const std::set<std::string>
+        Transforms; ///< supported data transform methods
+    static const std::map<std::string, std::set<std::string>>
+        Datatypes; ///< supported data types, key: host language, value: all
+                   /// supported types
+    static const std::map<std::string, std::set<std::string>>
+        DatatypesAliases; ///< all supported int aliases, key: C++ type
+                          ///(e.g.
+                          /// int), value: aliases to type in key (e.g. int,
+    /// integer)
 
-  static const std::set<std::string> FileTransports; ///< file I/O transports
+    static const std::set<std::string> FileTransports; ///< file I/O transports
 
-  enum class Resolutions
-  {
-    mus,
-    ms,
-    s,
-    m,
-    h
-  };
+    enum class Resolutions
+    {
+        mus,
+        ms,
+        s,
+        m,
+        h
+    };
 };
 
 } // end namespace adios

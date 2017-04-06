@@ -15,7 +15,7 @@
 #include <vector>
 /// \endcond
 
-#include "profiling/iochrono/Timer.h"
+#include "utilities/profiling/iochrono/Timer.h"
 
 namespace adios
 {
@@ -27,11 +27,11 @@ namespace profiling
  */
 struct IOChrono
 {
-  std::vector<Timer>
-      Timers; ///< one timer for each process (open, write, buffering, etc.)
-  std::vector<unsigned long long int>
-      TotalBytes;        ///< tracks bytes for buffering
-  bool IsActive = false; ///< flag to determine if profiling is used
+    std::vector<Timer>
+        Timers; ///< one timer for each process (open, write, buffering, etc.)
+    std::vector<unsigned long long int>
+        TotalBytes;        ///< tracks bytes for buffering
+    bool IsActive = false; ///< flag to determine if profiling is used
 };
 
 } // end namespace
