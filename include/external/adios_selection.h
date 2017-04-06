@@ -1,10 +1,11 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
+ *
  */
 
 /*
- *   Selection API in C for ADIOS BP format
+ *   Streaming/Chunking/Selection Read API in C for ADIOS BP format
  *
  *   A SELECTION is the data ranges resulting from a QUERY over a file and
  * variable(s).
@@ -30,12 +31,14 @@
  *   the application does not need to retrieve the selection to work on the read
  * data.
  */
-#ifndef __ADIOS_SELECTION_H__
-#define __ADIOS_SELECTION_H__
+#ifndef __ADIOS_SELECTION_C_H__
+#define __ADIOS_SELECTION_C_H__
 
-/// \cond EXCLUDE_FROM_DOXYGEN
 #include <stdint.h>
-/// \endcond
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*************************/
 /* Types used in the API */
@@ -230,4 +233,8 @@ ADIOS_SELECTION *adios_selection_points_1DtoND(ADIOS_SELECTION *pointsinbox1D,
 
 #endif /*__INCLUDED_FROM_FORTRAN_API__*/
 
-#endif /*__ADIOS_SELECTION_H__*/
+#ifdef __cplusplus
+}
+#endif
+
+#endif /*__ADIOS_SELECTION_C_H__*/
