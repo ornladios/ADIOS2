@@ -19,9 +19,12 @@ namespace adios
 {
 
 #ifdef ADIOS_NOMPI
-#define _NOMPI 1
+#define _NOMPI
 #endif
 #include "adios.h" // this is adios 1.x header file
+#ifdef ADIOS_NOMPI
+#undef _NOMPI
+#endif
 
 class ADIOS1Writer : public Engine
 {
