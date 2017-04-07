@@ -94,7 +94,7 @@ public:
         }
 
         ConvertUint64VectorToSizetVector(sel.m_Count, m_Dimensions);
-        ConvertUint64VectorToSizetVector(sel.m_Start, m_GlobalDimensions);
+        ConvertUint64VectorToSizetVector(sel.m_Start, m_GlobalOffsets);
     }
 
     /**

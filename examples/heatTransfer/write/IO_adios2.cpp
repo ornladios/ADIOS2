@@ -84,7 +84,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     // Make a selection to describe the local dimensions of the variable we
     // write and its offsets in the global spaces. This could have been done in
     // adios.DefineVariable()
-    adios::SelectionBoundingBox sel({s.ndx, s.ndy}, {s.offsx, s.offsy});
+    adios::SelectionBoundingBox sel({s.offsx, s.offsy}, {s.ndx, s.ndy});
     varT->SetSelection(sel);
 
     /* Select the area that we want to write from the data pointer we pass to
@@ -102,7 +102,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
         adios::SelectionBoundingBox({s.ndx, s.ndy}, {1, 1});
     varT->SetMemorySelection(memspace);
 
-    bpWriter->Write<double>(*varT, ht.data_noghost().data());
+    bpWriter->Write<double>(*varT, ht.data());
     bpWriter->Advance();
 
 #else
