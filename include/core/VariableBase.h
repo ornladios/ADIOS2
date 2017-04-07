@@ -12,14 +12,16 @@
 #define VARIABLEBASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <exception>
 #include <iterator>
 #include <sstream>
 #include <string>
 #include <vector>
 /// \endcond
 
-#include "functions/adiosFunctions.h" //GetTotalSize
-#include "functions/adiosTemplates.h" //GetType<T>
+#include "functions/adiosFunctions.h" //GetTotalSize, ConvertUint64VectorToSizetVector
+#include "functions/adiosTemplates.h"       //GetType<T>
+#include "selection/SelectionBoundingBox.h" //Selection
 
 namespace adios
 {
@@ -71,11 +73,62 @@ public:
         return GetTotalSize(m_Dimensions);
     }
 
+    /**
+     * Set the local dimension and global offset of the variable using a
+     * selection
+     * Only bounding boxes are allowed
+     */
+    void SetSelection(const SelectionBoundingBox &sel)
+    {
+
+        if (m_GlobalDimensions.size() == 0)
+        {
+            throw std::invalid_argument("Variable.SetSelection() is an invalid "
+                                        "call for single value variables\n");
+        }
+        if (m_GlobalDimensions.size() != sel.m_Count.size())
+        {
+            throw std::invalid_argument("Variable.SetSelection() bounding box "
+                                        "dimension must equal the global "
+                                        "dimension of the variable\n");
+        }
+
+        ConvertUint64VectorToSizetVector(sel.m_Count, m_Dimensions);
+        ConvertUint64VectorToSizetVector(sel.m_Start, m_GlobalDimensions);
+    }
+
+    /**
+     * Set the local dimension and global offset of the variable using a
+     * selection
+     * Only bounding boxes are allowed
+     */
+    void SetMemorySelection(const SelectionBoundingBox &sel)
+    {
+        if (m_GlobalDimensions.size() == 0)
+        {
+            throw std::invalid_argument(
+                "Variable.SetMemorySelection() is an invalid "
+                "call for single value variables\n");
+        }
+        if (m_GlobalDimensions.size() != sel.m_Count.size())
+        {
+            throw std::invalid_argument(
+                "Variable.SetMemorySelection() bounding box "
+                "dimension must equal the global "
+                "dimension of the variable\n");
+        }
+
+        ConvertUint64VectorToSizetVector(sel.m_Count, m_MemoryDimensions);
+        ConvertUint64VectorToSizetVector(sel.m_Start, m_MemoryOffsets);
+    }
+
     // protected: off for now
 
     Dims m_Dimensions;       ///< array of local dimensions
     Dims m_GlobalDimensions; ///< array of global dimensions
     Dims m_GlobalOffsets;    ///< array of global offsets
+    Dims m_MemoryDimensions; ///< array of memory dimensions
+    Dims m_MemoryOffsets;    ///< array of memory offsets
     const bool m_DebugMode = false;
 
     std::string GetDimensionAsString() { return dimsToString(m_Dimensions); }

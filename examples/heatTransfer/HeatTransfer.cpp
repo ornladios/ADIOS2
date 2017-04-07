@@ -10,7 +10,6 @@
  *     Author: Norbert Podhorszki
  *
  */
-#include <mpi.h>
 
 #include <iomanip>
 #include <iostream>
