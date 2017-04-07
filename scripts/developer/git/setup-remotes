@@ -1,27 +1,50 @@
 #!/usr/bin/env bash
 
-echo "Checking GitHub username..."
-GHUSER=$(git remote show origin | grep "Fetch URL" | sed 's|.*[:/]\([^/]*\)/adios2.git|\1|')
-if [ -z "${GHUSER}" ]
+GH_UPSTREAM_URL=$(git remote show origin | grep "Fetch URL" | sed 's|.*: \(.*\)|\1|')
+BRANCH="$(git branch | sed -n 's|^\* \(.*\)|\1|p')"
+if [ "${GH_UPSTREAM_URL}" != "https://github.com/ornladios/adios2.git" ] || \
+   [ "${BRANCH}" != "master" ]
 then
-  echo "  Warning: Unable to determine GitHub username.  Are you sure you"
-  echo "  cloned your fork?"
+  echo "  Warning: This script is intended to run off of the master branch"
+  echo "           of the upstream repository.  Setup might not work as"
+  echo "           expected otherwise."
+fi
+
+read -p "Enter your GitHub username: " GH_USERNAME
+if [ -z "${GH_USERNAME}" ]
+then
+  echo "  Error: GitHub username cannot be empty."
   exit 1
 fi
-echo "Using GitHub user ${GHUSER}"
+git remote set-url origin https://github.com/${GH_USERNAME}/adios2.git
+read -p "Setup SSH push access? [(y)/n] " GH_USE_SSH
+GH_USE_SSH="${GH_USE_SSH,,}"
+if [ -z "${GH_USE_SSH}" ]
+then
+  echo "  Empty entry.  Using 'y' as default"
+  GH_USE_SSH="y"
+elif [ "${GH_USE_SSH}" != "y" ] && [ "${GH_USE_SSH}" != "n" ]
+then
+  echo "  Invalid entry.  Using 'y' by default"
+  GH_USE_SSH="y"
+fi
+if [ "${GH_USE_SSH}" == "y" ]
+then
+  git config remote.origin.pushurl "git@github.com:${GH_USERNAME}/adios2.git"
+fi
 
-echo "Adding upstream remote..."
+
 if git remote show upstream > /dev/null 2>&1
 then
-  echo "  Warning: upstream remote already exists; skipping"
-else
-  git remote add upstream https://github.com/ornladios/adios2.git
+  echo "  Warning: upstream remote already exists; replacing..."
+  git remote rm upstream
 fi
-git fetch --all -p
+git remote add upstream https://github.com/ornladios/adios2.git
 
 echo "Re-configuring local master branch to use upstream"
 git config branch.master.remote upstream
 git config branch.master.mergeOptions "--ff-only"
 git config merge.log 100
+git fetch --all -p
 
 exit 0
