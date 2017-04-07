@@ -3,25 +3,25 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-#add_executable(heatRead_adios heatRead_adios.cpp)
-#
-#if(ADIOS_USE_MPI)
-#    find_package(MPI COMPONENTS C REQUIRED)
-#    target_include_directories(heatRead_adios PRIVATE ${MPI_C_INCLUDE_PATH})
-#    target_link_libraries(heatRead_adios adios2 ${MPI_C_LIBRARIES})
-#else(ADIOS_USE_MPI) 
-#    target_link_libraries(heatRead_adios adios2)
-#endif()
-
-if(ADIOS_USE_ADIOS1)
+if(ADIOS_USE_MPI)
+  if(ADIOS_USE_ADIOS1)
     find_package(ADIOS1 REQUIRED)
-    add_executable(heatRead_adios1 heatRead_adios1.cpp PrintData.cpp)
-    if(ADIOS_USE_MPI)
-        target_include_directories(heatRead_adios1 PRIVATE ${MPI_C_INCLUDE_PATH})
-        target_link_libraries(heatRead_adios1  adios1::adios ${MPI_C_LIBRARIES})
-    else(ADIOS_USE_MPI) 
-        target_compile_definitions(heatRead_adios1 PRIVATE -D_NOMPI)
-        target_link_libraries(heatRead_adios1 adios1::adios)
+    find_package(MPI COMPONENTS C REQUIRED)
+
+    add_executable(headTransfer_read_adios1 heatRead_adios1.cpp PrintData.cpp)
+    target_include_directories(headTransfer_read_adios1
+      PRIVATE ${MPI_C_INCLUDE_PATH}
+    )
+    target_link_libraries(headTransfer_read_adios1
+      adios1::adios ${MPI_C_LIBRARIES}
+    )
+
+    if(ADIOS_BUILD_TESTING)
+      add_test(
+        NAME Example::heatTransfer::read::adios1
+        COMMAND heatRead_adios1
+      )
     endif()
+  endif()
 endif()
 

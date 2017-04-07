@@ -11,6 +11,8 @@
 #include <cstdlib>
 #include <errno.h>
 
+#include <stdexcept>
+
 #include "Settings.h"
 
 static unsigned int convertToUint(std::string varName, char *arg)
@@ -80,5 +82,3 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
     else
         rank_down = rank + npx;
 }
-
-Settings::~Settings() {}
