@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 echo "Checking GitHub username..."
-GHUSER=$(git remote get-url origin | sed 's|.*[:/]\([^/]*\)/adios2.git|\1|')
+GHUSER=$(git remote show origin | grep "Fetch URL" | sed 's|.*[:/]\([^/]*\)/adios2.git|\1|')
 if [ -z "${GHUSER}" ]
 then
   echo "  Warning: Unable to determine GitHub username.  Are you sure you"
