@@ -11,7 +11,7 @@
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
-#include <memory>
+#include <string>
 
 class Settings
 {
@@ -48,7 +48,6 @@ public:
     int rank_down;
 
     Settings(int argc, char *argv[], int rank, int nproc);
-    ~Settings();
 };
 
 #endif /* SETTINGS_H_ */
