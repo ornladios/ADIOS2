@@ -28,30 +28,29 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // 1. Get method def from config file or define new one
 
     adios::Method &bpWriterSettings = ad->DeclareMethod("output");
-    if (!bpWriterSettings.isUserDefined())
+    if (!bpWriterSettings.IsUserDefined())
     {
         // if not defined by user, we can change the default settings
         bpWriterSettings.SetEngine("BPFileWriter"); // BP is the default engine
-        bpWriterSettings.AllowThreads(
-            1); // allow 1 extra thread for data processing
+        bpWriterSettings.AllowThreads(1);           // for data processing
+
         bpWriterSettings.AddTransport(
             "File", "lucky=yes"); // ISO-POSIX file is the default transport
                                   // Passing parameters to the transport
-        bpWriterSettings.SetParameters(
-            "have_metadata_file",
-            "yes"); // Passing parameters to the engine
-        bpWriterSettings.SetParameters(
-            "Aggregation",
-            std::to_string((s.nproc + 1) / 2)); // number of aggregators
+
+        const std::string aggregatorsParam("Aggregators=" +
+                                           std::to_string((s.nproc + 1) / 2));
+        bpWriterSettings.SetParameters("have_metadata_file=yes",
+                                       aggregatorsParam);
     }
 
     // define T as 2D global array
     varT = &ad->DefineVariable<double>(
         "T",
-        // Global dimensions
-        {s.gndx, s.gndy},
         // local size, could be defined later using SetSelection()
         {s.ndx, s.ndy},
+        // Global dimensions
+        {s.gndx, s.gndy},
         // offset of the local array in the global space
         {s.offsx, s.offsy});
 
@@ -60,8 +59,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    bpWriter = ad->Open(m_outputfilename, "w", comm, bpWriterSettings,
-                        adios::IOMode::COLLECTIVE);
+    bpWriter = ad->Open(m_outputfilename, "w", comm, bpWriterSettings);
 
     if (bpWriter == nullptr)
         throw std::ios_base::failure("ERROR: failed to open ADIOS bpWriter\n");

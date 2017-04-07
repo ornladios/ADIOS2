@@ -65,7 +65,7 @@ if(ADIOS_ENABLE_PIC)
   set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 endif()
 
-option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" OFF)
+option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" ON)
 if(ADIOS_USE_MPI)
   # Workaround for OpenMPI forcing the link of C++ bindings
   add_definitions(-DOMPI_SKIP_MPICXX)
