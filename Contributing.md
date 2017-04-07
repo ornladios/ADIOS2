@@ -113,4 +113,5 @@ That will apply the formatting rules used by the ADIOS project.
 1. Lines no longer than 80 characters.
 1. Always use braces { and }, even for 1 line if blocks.
 1. Use 4 spaces for indentation.
+
 There are more formatting rules but these three should at least get you close and prevent any drastic re-writes from the re-formatting tools.  More details can be found by looking at the .clang-format config file n the root of the repository and by looking at the clang-format documentation http://releases.llvm.org/3.8.0/tools/clang/docs/ClangFormatStyleOptions.html.  While the formatting rules are a bit more involved, the main points are:
