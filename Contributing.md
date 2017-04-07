@@ -16,6 +16,13 @@ To setup your local repository for development:
 ```
 [chuck@hal9000 Code]$ mkdir adios
 [chuck@hal9000 Code]$ cd adios
+#
+# If you don't have ssh access setup to your github repository then you will
+# need to clone your fork from
+# https://github.com/<your-GitHub-username-here>/adios2.git
+# instead of
+# git@github.com:<your-GitHub-username-here>/adios2.git
+#
 [chuck@hal9000 adios]$ git clone git@github.com:<your-GitHub-username-here>/adios2.git source
 Cloning into 'source'...
 remote: Counting objects: 4535, done.
