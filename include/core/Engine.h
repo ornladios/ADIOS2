@@ -12,13 +12,13 @@
 #define ENGINE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <complex> //std::complex
+#include <complex>    //std::complex
+#include <functional> //std::function
 #include <map>
 #include <memory> //std::shared_ptr
 #include <string>
 #include <utility> //std::pair
 #include <vector>
-#include <functional> //std::function
 /// \endcond
 
 #include "ADIOS_MPI.h"

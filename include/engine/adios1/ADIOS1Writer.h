@@ -75,7 +75,8 @@ public:
     void Write(const std::string &variableName, const int *values);
     void Write(const std::string &variableName, const unsigned int *values);
     void Write(const std::string &variableName, const long int *values);
-    void Write(const std::string &variableName, const unsigned long int *values);
+    void Write(const std::string &variableName,
+               const unsigned long int *values);
     void Write(const std::string &variableName, const long long int *values);
     void Write(const std::string &variableName,
                const unsigned long long int *values);
@@ -90,7 +91,7 @@ public:
                const std::complex<long double> *values);
     void Write(const std::string &variableName, const void *values);
 
-    void Advance( const float timeout_sec = 0.  );
+    void Advance(const float timeout_sec = 0.);
 
     /**
      * Closes a single transport or all transports
