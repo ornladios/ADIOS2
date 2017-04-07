@@ -51,7 +51,7 @@ enum ADIOS_SELECTION_TYPE
 {
     ADIOS_SELECTION_BOUNDINGBOX = 0, /* Contiguous block of data defined by
                                         offsets and counts in each dimension */
-    ADIOS_SELECTION_POINTS = 1, /* List of individual points */
+    ADIOS_SELECTION_POINTS = 1,      /* List of individual points */
     ADIOS_SELECTION_WRITEBLOCK =
         2, /* Selection of an individual block written by a writer process */
     ADIOS_SELECTION_AUTO = 3 /* Let the method decide what to return */
@@ -85,7 +85,7 @@ typedef struct
     uint64_t npoints;
     uint64_t *points;
     ADIOS_SELECTION
-        *container_selection; // a writeblock, a bounding box, or NULL
+    *container_selection; // a writeblock, a bounding box, or NULL
 } ADIOS_SELECTION_POINTS_STRUCT;
 
 /* A selected block produced by a writer

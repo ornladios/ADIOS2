@@ -99,7 +99,7 @@ public:
 
 private:
     void Init(); ///< called from constructor, gets the selected ADIOS1
-                 ///transport method from settings
+                 /// transport method from settings
 
     template <class T>
     Variable<T> *InquireVariableCommon(const std::string name,
