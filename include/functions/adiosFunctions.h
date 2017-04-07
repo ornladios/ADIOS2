@@ -182,6 +182,12 @@ BuildParametersMap(const std::vector<std::string> &parameters,
  */
 std::vector<int> CSVToVectorInt(const std::string csv);
 
+/** Convert a vector of uint64_t elements to a vector of std::size_t elements
+ *  @param input vector of uint64_t elements
+ *  @param output vector of std::size_t elements
+ */
+void ConvertUint64VectorToSizetVector(const std::vector<std::uint64_t> &in,
+                                      std::vector<std::size_t> &out);
 /**
  * Converts a vector of dimensions to a CSV string
  * @param dims vector of dimensions
@@ -197,7 +203,8 @@ std::string DimsToCSV(const std::vector<std::size_t> &dims);
  * buffers ( default = 1.5 )
  * @param maxBufferSize user provided maximum buffer size
  * @param buffer to be reallocated
- * @return true: must do a transport flush, false: buffer sizes are enough to
+ * @return true: must do a transport flush, false: buffer sizes are enough
+ * to
  * contain incoming data, no need for transport flush
  */
 bool CheckBufferAllocation(const std::size_t newSize, const float growthFactor,

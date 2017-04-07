@@ -13,11 +13,11 @@
 
 #include "HeatTransfer.h"
 #include "Settings.h"
+
 #include <mpi.h>
 
 class IO
 {
-
 public:
     IO(const Settings &s, MPI_Comm comm);
     ~IO();

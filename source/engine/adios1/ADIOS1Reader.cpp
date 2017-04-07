@@ -22,8 +22,7 @@ ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string &name,
                            const std::string accessMode, MPI_Comm mpiComm,
                            const Method &method)
 : Engine(adios, "BPFileReader", name, accessMode, mpiComm, method,
-         " BPFileReader constructor (or call to ADIOS Open).\n"),
-  m_Buffer(accessMode, m_RankMPI, m_DebugMode)
+         " BPFileReader constructor (or call to ADIOS Open).\n")
 {
     Init();
 }
@@ -170,13 +169,7 @@ void BPFileReader::Init()
                 ", in call to ADIOS Open or BPFileReader constructor\n");
     }
 
-    InitCapsules();
     InitTransports();
-}
-
-void BPFileReader::InitCapsules()
-{
-    // here init memory capsules
 }
 
 void BPFileReader::InitTransports() // maybe move this?

@@ -23,6 +23,14 @@
 namespace adios
 {
 
+#ifndef ADIOS_HAVE_MPI
+#define _NOMPI 1
+#endif
+#include "adios_read_v2.h" // this is adios 1.x header file
+#ifndef ADIOS_HAVE_MPI
+#undef _NOMPI
+#endif
+
 class ADIOS1Reader : public Engine
 {
 
@@ -44,65 +52,40 @@ public:
 
     ~ADIOS1Reader();
 
-    Variable<void> *InquireVariable(const std::string &variableName,
+    Variable<void> *InquireVariable(const std::string &name,
                                     const bool readIn = true);
-
-    Variable<char> *InquireVariableChar(const std::string &variableName,
+    Variable<char> *InquireVariableChar(const std::string &name,
                                         const bool readIn = true);
-
-    Variable<unsigned char> *
-    InquireVariableUChar(const std::string &variableName,
-                         const bool readIn = true);
-
-    Variable<short> *InquireVariableShort(const std::string &variableName,
+    Variable<unsigned char> *InquireVariableUChar(const std::string &name,
+                                                  const bool readIn = true);
+    Variable<short> *InquireVariableShort(const std::string &name,
                                           const bool readIn = true);
-
-    Variable<unsigned short> *
-    InquireVariableUShort(const std::string &variableName,
-                          const bool readIn = true);
-
-    Variable<int> *InquireVariableInt(const std::string &variableName,
+    Variable<unsigned short> *InquireVariableUShort(const std::string &name,
+                                                    const bool readIn = true);
+    Variable<int> *InquireVariableInt(const std::string &name,
                                       const bool readIn = true);
-
-    Variable<unsigned int> *InquireVariableUInt(const std::string &variableName,
+    Variable<unsigned int> *InquireVariableUInt(const std::string &name,
                                                 const bool readIn = true);
-
-    Variable<long int> *InquireVariableLInt(const std::string &variableName,
+    Variable<long int> *InquireVariableLInt(const std::string &name,
                                             const bool readIn = true);
-
-    Variable<unsigned long int> *
-    InquireVariableULInt(const std::string &variableName,
-                         const bool readIn = true);
-
-    Variable<long long int> *
-    InquireVariableLLInt(const std::string &variableName,
-                         const bool readIn = true);
-
+    Variable<unsigned long int> *InquireVariableULInt(const std::string &name,
+                                                      const bool readIn = true);
+    Variable<long long int> *InquireVariableLLInt(const std::string &name,
+                                                  const bool readIn = true);
     Variable<unsigned long long int> *
-    InquireVariableULLInt(const std::string &variableName,
-                          const bool readIn = true);
-
-    Variable<float> *InquireVariableFloat(const std::string &variableName,
+    InquireVariableULLInt(const std::string &name, const bool readIn = true);
+    Variable<float> *InquireVariableFloat(const std::string &name,
                                           const bool readIn = true);
-
-    Variable<double> *InquireVariableDouble(const std::string &variableName,
+    Variable<double> *InquireVariableDouble(const std::string &name,
                                             const bool readIn = true);
-
-    Variable<long double> *
-    InquireVariableLDouble(const std::string &variableName,
-                           const bool readIn = true);
-
+    Variable<long double> *InquireVariableLDouble(const std::string &name,
+                                                  const bool readIn = true);
     Variable<std::complex<float>> *
-    InquireVariableCFloat(const std::string &variableName,
-                          const bool readIn = true);
-
+    InquireVariableCFloat(const std::string &name, const bool readIn = true);
     Variable<std::complex<double>> *
-    InquireVariableCDouble(const std::string &variableName,
-                           const bool readIn = true);
-
+    InquireVariableCDouble(const std::string &name, const bool readIn = true);
     Variable<std::complex<long double>> *
-    InquireVariableCLDouble(const std::string &variableName,
-                            const bool readIn = true);
+    InquireVariableCLDouble(const std::string &name, const bool readIn = true);
 
     /**
      * Not implemented
@@ -110,32 +93,20 @@ public:
      * @param readIn
      * @return
      */
-    VariableCompound *InquireVariableCompound(const std::string name,
+    VariableCompound *InquireVariableCompound(const std::string &name,
                                               const bool readIn = true);
 
     void Close(const int transportIndex = -1);
 
 private:
-    capsule::STLVector
-        m_Buffer; ///< heap capsule, contains data and metadata buffers
-    // format::BP1Writer m_BP1Writer; ///< format object will provide the
-    // required
-    // BP functionality to be applied on m_Buffer and m_Transports
-
-    void Init(); ///< calls InitCapsules and InitTransports based on Method,
-                 /// called from constructor
-    void InitCapsules();
-    void InitTransports(); ///< from Transports
-
-    std::string
-    GetMdtmParameter(const std::string parameter,
-                     const std::map<std::string, std::string> &mdtmParameters);
+    void Init(); ///< called from constructor, gets the selected ADIOS1
+                 /// transport method from settings
 
     template <class T>
-    Variable<T> *InquireVariableCommon(const std::string name,
+    Variable<T> *InquireVariableCommon(const std::string &name,
                                        const bool readIn)
     {
-        std::cout << "Hello BPReaderCommon\n";
+        std::cout << "Hello ADIOS1Reader::InquireVariableCommon\n";
 
         // here read variable metadata (dimensions, type, etc.)...then create a
         // Variable like below:
@@ -144,8 +115,10 @@ private:
         // return &variable; //return address if success
         return nullptr; // on failure
     }
+
+    enum ADIOS_READ_METHOD read_method = ADIOS_READ_METHOD_BP;
 };
 
 } // end namespace adios
 
-#endif /* BPFILEREADER_H_ */
+#endif /* ADIOS1READER_H_ */

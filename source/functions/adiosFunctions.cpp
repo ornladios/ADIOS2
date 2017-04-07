@@ -650,6 +650,17 @@ std::string DimsToCSV(const std::vector<std::size_t> &dims)
     return dimsCSV;
 }
 
+void ConvertUint64VectorToSizetVector(const std::vector<std::uint64_t> &in,
+                                      std::vector<std::size_t> &out)
+{
+    out.clear();
+    out.reserve(in.size());
+    for (const auto inElement : in)
+    {
+        out.push_back(static_cast<std::size_t>(inElement));
+    }
+}
+
 bool CheckBufferAllocation(const std::size_t newSize, const float growthFactor,
                            const std::size_t maxBufferSize,
                            std::vector<char> &buffer)

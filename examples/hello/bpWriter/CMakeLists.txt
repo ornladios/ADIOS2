@@ -3,6 +3,13 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+add_executable(hello_bpWriter_nompi helloBPWriter_nompi.cpp)
+target_link_libraries(hello_bpWriter_nompi adios2_nompi)
+
+if(ADIOS_BUILD_TESTING)
+  add_test( NAME Example::hello::bpWriter_nompi COMMAND hello_bpWriter_nompi)
+endif()
+
 if(ADIOS_USE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
   add_executable(hello_bpWriter helloBPWriter.cpp)
@@ -11,13 +18,6 @@ if(ADIOS_USE_MPI)
 
   if(ADIOS_BUILD_TESTING)
     add_test( NAME Example::hello::bpWriter COMMAND hello_bpWriter)
-  endif()
-else()
-  add_executable(hello_bpWriter_nompi helloBPWriter_nompi.cpp)
-  target_link_libraries(hello_bpWriter_nompi adios2)
-
-  if(ADIOS_BUILD_TESTING)
-    add_test( NAME Example::hello::bpWriter_nompi COMMAND hello_bpWriter_nompi)
   endif()
 endif()
 

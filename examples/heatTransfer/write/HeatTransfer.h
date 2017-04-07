@@ -12,6 +12,7 @@
 #define HEATTRANSFER_H_
 
 #include <mpi.h>
+
 #include <vector>
 
 #include "Settings.h"

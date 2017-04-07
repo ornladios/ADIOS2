@@ -3,5 +3,5 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(hello)
-add_subdirectory(heatTransfer)
+add_subdirectory(write)
+add_subdirectory(read)

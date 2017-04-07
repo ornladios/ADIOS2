@@ -18,11 +18,11 @@
 namespace adios
 {
 
-#ifdef ADIOS_NOMPI
+#ifndef ADIOS_HAVE_MPI
 #define _NOMPI
 #endif
 #include "adios.h" // this is adios 1.x header file
-#ifdef ADIOS_NOMPI
+#ifndef ADIOS_HAVE_MPI
 #undef _NOMPI
 #endif
 
