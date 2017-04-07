@@ -12,41 +12,38 @@ To setup your local repository for development:
   1. Fork the main repository on GitHub:
      1. Navigate to https://github.com/ornladios/adios2 in your browser.
      1. Click the `[Fork]` button in the upper right-hand side of the page.
-  2. Clone your fork to your local machine:
+  2. Clone the upstream repository to your local machine:
 ```
-[chuck@hal9000 Code]$ mkdir adios
-[chuck@hal9000 Code]$ cd adios
-#
-# If you don't have ssh access setup to your github repository then you will
-# need to clone your fork from
-# https://github.com/<your-GitHub-username-here>/adios2.git
-# instead of
-# git@github.com:<your-GitHub-username-here>/adios2.git
-#
-[chuck@hal9000 adios]$ git clone git@github.com:<your-GitHub-username-here>/adios2.git source
+$ mkdir adios
+$ cd adios
+$ git clone https://github.com/ornladios/adios2.git source
 Cloning into 'source'...
-remote: Counting objects: 4535, done.
-remote: Compressing objects: 100% (223/223), done.
-remote: Total 4535 (delta 64), reused 0 (delta 0), pack-reused 4301
-Receiving objects: 100% (4535/4535), 1.27 MiB | 0 bytes/s, done.
-Resolving deltas: 100% (2607/2607), done.
+remote: Counting objects: 4632, done.
+remote: Compressing objects: 100% (80/80), done.
+remote: Total 4632 (delta 33), reused 0 (delta 0), pack-reused 4549
+Receiving objects: 100% (4632/4632), 1.23 MiB | 224.00 KiB/s, done.
+Resolving deltas: 100% (2738/2738), done.
 Checking connectivity... done.
-[chuck.atkins@hal9000 adios]$
+$
 ```
   3. Run the `scripts/development/setup.sh` script.  The script will configure an `upstream` remote and link your local master branch to the upstream.
 ```
-[chuck.atkins@hal9000 adios]$ cd source/
-$ ./scripts/developer/setup.sh
-Checking GitHub username...
-Using GitHub user <your-GitHub-username-here>
-Adding upstream remote...
+$ cd source/
+$ ./scripts/developer/setup.sh 
+Enter your GitHub username: chuckatkins
+Setup SSH push access? [(y)/n] y
+Re-configuring local master branch to use upstream
 Fetching origin
+remote: Counting objects: 6, done.
+remote: Compressing objects: 100% (6/6), done.
+remote: Total 6 (delta 0), reused 0 (delta 0), pack-reused 0
+Unpacking objects: 100% (6/6), done.
+From https://github.com/chuckatkins/adios2
 Fetching upstream
 From https://github.com/ornladios/adios2
+ * [new branch]      master     -> upstream/master
  * [new branch]      dashboard  -> upstream/dashboard
  * [new branch]      hooks      -> upstream/hooks
- * [new branch]      master     -> upstream/master
-Re-configuring local master branch to use upstream
 Setting up git aliases...
 Setting up git hooks...
 $
