@@ -18,7 +18,7 @@
 #include <vector>
 /// \endcond
 
-#include "functions/adiosFunctions.h" //GetTotalSize
+#include "functions/adiosFunctions.h" //GetTotalSize, DimsToCSV
 #include "functions/adiosTemplates.h" //GetType<T>
 
 namespace adios
@@ -32,26 +32,35 @@ class VariableBase
 public:
     const std::string m_Name; ///< variable name
     const std::string m_Type; ///< variable type
-    const std::size_t
-        m_ElementSize; ///< Variable -> sizeof(T), VariableCompound
-                       ///-> from constructor
 
+    /**
+     * Variable -> sizeof(T),
+     * VariableCompound -> from constructor sizeof(struct)
+     */
+    const std::size_t m_ElementSize;
+
+    Dims m_LocalDimensions;  ///< dimensions per rank (MPI)
+    Dims m_GlobalDimensions; ///< total dimensions across MPI
+    Dims m_Offsets;          ///< selections offset
     bool m_IsScalar = false;
     const bool m_IsDimension = false;
 
     VariableBase(const std::string name, const std::string type,
-                 const std::size_t elementSize, const Dims dimensions,
-                 const Dims globalDimensions, const Dims globalOffsets,
+                 const std::size_t elementSize, const Dims localDimensions,
+                 const Dims globalDimensions, const Dims offsets,
                  const bool debugMode)
     : m_Name{name}, m_Type{type}, m_ElementSize{elementSize},
-      m_Dimensions{dimensions}, m_GlobalDimensions{globalDimensions},
-      m_GlobalOffsets{globalOffsets}, m_DebugMode{debugMode}
+      m_LocalDimensions{localDimensions}, m_GlobalDimensions{globalDimensions},
+      m_Offsets{offsets}, m_DebugMode{debugMode}
     {
     }
 
     virtual ~VariableBase() {}
 
-    std::size_t DimensionsSize() const noexcept { return m_Dimensions.size(); }
+    std::size_t DimensionsSize() const noexcept
+    {
+        return m_LocalDimensions.size();
+    }
 
     /**
      * Returns the payload size in bytes
@@ -59,7 +68,7 @@ public:
      */
     std::size_t PayLoadSize() const noexcept
     {
-        return GetTotalSize(m_Dimensions) * m_ElementSize;
+        return GetTotalSize(m_LocalDimensions) * m_ElementSize;
     }
 
     /**
@@ -68,37 +77,11 @@ public:
      */
     std::size_t TotalSize() const noexcept
     {
-        return GetTotalSize(m_Dimensions);
+        return GetTotalSize(m_LocalDimensions);
     }
 
     // protected: off for now
-
-    Dims m_Dimensions;       ///< array of local dimensions
-    Dims m_GlobalDimensions; ///< array of global dimensions
-    Dims m_GlobalOffsets;    ///< array of global offsets
     const bool m_DebugMode = false;
-
-    std::string GetDimensionAsString() { return dimsToString(m_Dimensions); }
-    std::string GetGlobalDimensionAsString()
-    {
-        return dimsToString(m_GlobalDimensions);
-    }
-    std::string GetOffsetsAsString() { return dimsToString(m_GlobalOffsets); }
-
-private:
-    std::string dimsToString(Dims dims)
-    {
-        std::ostringstream oss;
-        if (!dims.empty())
-        {
-            // Convert all but the last element to avoid a trailing ","
-            std::copy(dims.begin(), dims.end() - 1,
-                      std::ostream_iterator<std::size_t>(oss, ","));
-            // Now add the last element with no delimiter
-            oss << dims.back();
-        }
-        return oss.str();
-    }
 };
 }
 

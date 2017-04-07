@@ -72,8 +72,7 @@ int main(int argc, char *argv[])
 
         // adios::DataManWriter datamanWriter;
 
-        auto datamanWriter = adios.Open("myDoubles.bp", "w", datamanSettings,
-                                        adios::IOMode::INDEPENDENT);
+        auto datamanWriter = adios.Open("myDoubles.bp", "w", datamanSettings);
 
         if (datamanWriter == nullptr)
             throw std::ios_base::failure(

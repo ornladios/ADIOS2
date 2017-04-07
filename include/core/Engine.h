@@ -18,6 +18,7 @@
 #include <string>
 #include <utility> //std::pair
 #include <vector>
+#include <functional> //std::function
 /// \endcond
 
 #include "ADIOS_MPI.h"
@@ -384,7 +385,7 @@ public:
      * Indicates that a new step is going to be written as new variables come
      * in.
      */
-    virtual void Advance(float timeout_sec = 0.0);
+    virtual void Advance(const float timeout_sec = 0.0);
 
     /**
      * Indicates that a new step is going to be written as new variables come
@@ -392,7 +393,7 @@ public:
      * @param mode Advance mode, there are different options for writers and
      * readers
      */
-    virtual void Advance(AdvanceMode mode, float timeout_sec = 0.0);
+    virtual void Advance(AdvanceMode mode, const float timeout_sec = 0.0);
 
     /** @brief Advance asynchronously and get a callback when readers release
      * access to the buffered step.

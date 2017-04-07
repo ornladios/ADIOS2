@@ -50,7 +50,7 @@ public:
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
-    std::string m_HostLanguage = "C++"; ///< changed by bindings
+    std::string m_HostLanguage = "C++"; ///< changed by language bindings
 
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
@@ -91,28 +91,27 @@ public:
     void InitMPI(); ///< sets rank and size in m_rank and m_Size, respectively.
 
     /**
-     * Look for template specialization
-     * @param name
+     * Define a Variable for I/O. Default is a local scalar to be compatible
+     * with ADIOS1
+     * @param name variable name, must be unique
      * @param dimensions
-     * @param globalDimensions
-     * @param globalOffsets
-     * @return
+     * @param selections
+     * @param offsets
+     * @return reference to Variable object
      */
     template <class T>
     Variable<T> &DefineVariable(const std::string &name,
-                                const Dims dimensions = Dims{1},
-                                const Dims globalDimensions = Dims(),
-                                const Dims globalOffsets = Dims());
+                                const Dims localDimensions = Dims{1},
+                                const Dims globalDimensions = Dims{},
+                                const Dims offsets = Dims{});
 
     template <class T>
     Variable<T> &GetVariable(const std::string &name);
 
     template <class T>
-    VariableCompound &
-    DefineVariableCompound(const std::string &name,
-                           const Dims dimensions = Dims{1},
-                           const Dims globalDimensions = Dims(),
-                           const Dims globalOffsets = Dims());
+    VariableCompound &DefineVariableCompound(
+        const std::string &name, const Dims globalDimensions = Dims{},
+        const Dims localDimensions = Dims{1}, const Dims offsets = Dims{});
 
     VariableCompound &GetVariableCompound(const std::string &name);
 
@@ -341,7 +340,7 @@ protected: // no const to allow default empty and copy constructors
 
     // Helper function for DefineVariable
     template <class T>
-    std::map<unsigned int, Variable<T>> &GetVarMap();
+    std::map<unsigned int, Variable<T>> &GetVariableMap();
 };
 
 // Explicit declaration of the template methods
@@ -352,7 +351,7 @@ protected: // no const to allow default empty and copy constructors
     extern template unsigned int ADIOS::GetVariableIndex<T>(                   \
         const std::string &name);                                              \
     template <>                                                                \
-    std::map<unsigned int, Variable<T>> &ADIOS::GetVarMap<T>();
+    std::map<unsigned int, Variable<T>> &ADIOS::GetVariableMap<T>();
 ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
 extern template unsigned int ADIOS::GetVariableIndex<void>(const std::string &);
 #undef declare_template_instantiation
