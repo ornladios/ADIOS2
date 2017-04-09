@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     // Global class/object that serves for init, finalize and provides ADIOS
     // functions
-    adios::ADIOS adios("config.xml", comm, /*verbose=*/adios::INFO,
+    adios::ADIOS adios("config.xml", comm, /*verbose=*/adios::Verbose::INFO,
                        /*debugflag=*/false);
 
     /*************
@@ -83,8 +83,8 @@ int main(int argc, char *argv[])
         "Ragged", adios::Dims{nproc, adios::VARYING_DIMENSION}); // ragged array
 
     // add transform to variable
-    adios::Transform zfp = adios::transform::ZFP();
-    var2D.AddTransform(zfp, "accuracy=0.001");
+    adios::Transform compress = adios::transform::BZip2();
+    var2D.AddTransform(compress, "level=5");
 
     // open...write.write.write...advance...write.write.write...advance...
     // ...close  cycle
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
         // write and
         // its offsets in the global spaces. This could have been done in
         // adios.DefineVariable()
-        adios::Selection sel = adios.SelectionBoundingBox(
+        adios::SelectionBoundingBox sel = adios::SelectionBoundingBox(
             {1, NX}, {rank, NX}); // local dims and offsets; both as list
         var2D.SetSelection(
             sel); // Shall we call it SetSpaceSelection, SetOutputSelection?
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
         // Size of the bounding box should match the
         // "space" selection which was given above. Default memspace is the full
         // selection.
-        adios::Selection memspace = adios.SelectionBoundingBox(
+        adios::SelectionBoundingBox memspace = adios::SelectionBoundingBox(
             {1, NX}, {0, 1}); // local dims and offsets; both as list
         var2D.SetMemorySelection(memspace);
 
@@ -226,10 +226,10 @@ int main(int argc, char *argv[])
             // we
             // READ and
             // its offsets in the global spaces
-            adios::Selection bbsel = adios.SelectionBoundingBox(
+            adios::SelectionBoundingBox bbsel = adios::SelectionBoundingBox(
                 {1, NX}, {0, 0}); // local dims and offsets; both as list
             var2D.SetSelection(bbsel);
-            adios::Selection memspace = adios.SelectionBoundingBox(
+            adios::SelectionBoundingBox memspace = adios::SelectionBoundingBox(
                 {1, NX}, {0, 1}); // local dims and offsets; both as list
             var2D.SetMemorySelection(memspace);
             reader->Read<double>(var2D, *Temperature);
@@ -292,9 +292,9 @@ int main(int argc, char *argv[])
             // we
             // READ and
             // its offsets in the global spaces if we know this somehow
-            adios::Selection bbsel = adios.SelectionBoundingBox(
+            adios::SelectionBoundingBox bbsel = adios::SelectionBoundingBox(
                 {1, NX}, {0, 0}); // local dims and offsets; both as list
-            var2D->SetSelection(bbsel);
+            var2D.SetSelection(bbsel);
             reader->Read<double>(var2D, *Temperature);
 
             // Let ADIOS allocate space for the incoming (per-writer) item
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
 
         // Open a file with all steps immediately available
         std::shared_ptr<adios::Engine> reader = adios.OpenFileReader(
-            "filename.bp", comm, rmethod, adios::COLLECTIVE_IO);
+            "filename.bp", comm, rmethod, adios::IOMode::COLLECTIVE);
 
         /* NX */
         /* There is a single value for each step. We can read all into a 1D
