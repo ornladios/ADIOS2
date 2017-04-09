@@ -161,7 +161,10 @@ endif()
 # we found something in ADIOS1_ROOT_DIR and adios_config works #################
 if(ADIOS1_FOUND)
     # ADIOS headers
-    list(APPEND ADIOS1_INCLUDE_DIRS ${ADIOS1_ROOT_DIR}/include)
+    find_path(ADIOS1_INCLUDE_DIRS adios.h
+      HINTS ${ADIOS1_ROOT_DIR}/include
+      NO_DEFAULT_PATHS
+    )
 
     # check for compiled in dependencies, recomve ";" in ADIOS1_LINKFLAGS (from cmake build)
     string(REGEX REPLACE ";" " " ADIOS1_LINKFLAGS "${ADIOS1_LINKFLAGS}")
