@@ -161,7 +161,7 @@ std::string BP1Writer::GetRankProfilingLog(
     auto lf_WriterTimer = [](std::string &rankLog,
                              const profiling::Timer &timer) {
         rankLog += "'" + timer.m_Process + "_" + timer.GetUnits() + "': " +
-                   std::to_string(timer.m_ProcessTime) + ", ";
+                   std::to_string(timer.m_ProcessTime);
     };
 
     // prepare string dictionary per rank
@@ -170,20 +170,36 @@ std::string BP1Writer::GetRankProfilingLog(
     auto &profiler = metadataSet.Log;
     rankLog += "'bytes': " + std::to_string(profiler.TotalBytes[0]) + ", ";
     lf_WriterTimer(rankLog, profiler.Timers[0]);
+    rankLog += ", ";
 
     for (unsigned int t = 0; t < transports.size(); ++t)
     {
-        auto &timers = transports[t]->m_Profiler.Timers;
-
         rankLog += "'transport_" + std::to_string(t) + "': { ";
-        rankLog += "'lib': " + transports[t]->m_Type + ", ";
+        rankLog += "'lib': '" + transports[t]->m_Type + "', ";
 
         for (unsigned int i = 0; i < 3; ++i)
-            lf_WriterTimer(rankLog, timers[i]);
+        {
+            lf_WriterTimer(rankLog, transports[t]->m_Profiler.Timers[i]);
+            if (i < 2)
+            {
+                rankLog += ", ";
+            }
+            else
+            {
+                rankLog += " ";
+            }
+        }
 
-        rankLog += "}, ";
+        if (t == transports.size() - 1) // last element
+        {
+            rankLog += "}";
+        }
+        else
+        {
+            rankLog += "},";
+        }
     }
-    rankLog += "}, ";
+    rankLog += " },";
 
     return rankLog;
 }

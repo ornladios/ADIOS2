@@ -43,8 +43,10 @@ void BP1Aggregator::WriteProfilingLog(const std::string fileName,
 
         // first receive sizes
         for (unsigned int i = 1; i < sizeMPI; ++i)
+        {
             MPI_Irecv(&rankLogsSizes[i - 1], 1, MPI_INT, i, 0, m_MPIComm,
                       &requests[i]);
+        }
 
         for (unsigned int i = 1; i < sizeMPI; ++i)
         {
@@ -62,23 +64,37 @@ void BP1Aggregator::WriteProfilingLog(const std::string fileName,
 
         // receive rankLog from other ranks
         for (unsigned int i = 1; i < sizeMPI; ++i)
+        {
             MPI_Irecv(rankLogs[i - 1].data(), rankLogsSizes[i - 1], MPI_CHAR, i,
                       1, m_MPIComm, &requests[i]);
+        }
 
         for (unsigned int i = 1; i < sizeMPI; ++i)
+        {
             MPI_Wait(&requests[i], &statuses[i]);
+        }
 
         // write file
-        std::string logFile("log = { \n");
+        std::string logFile("{\n");
         logFile += rankLog + "\n";
         for (unsigned int i = 1; i < sizeMPI; ++i)
         {
-            const std::string rankLogStr(rankLogs[i - 1].data(),
-                                         rankLogs[i - 1].size());
-            logFile += rankLogStr + "\n";
+            if (i == sizeMPI - 1) // last one, eliminate trailing comma
+            {
+                const std::string rankLogStr(rankLogs[i - 1].data(),
+                                             rankLogs[i - 1].size() - 1);
+                logFile += rankLogStr + "\n";
+            }
+            else
+            {
+                const std::string rankLogStr(rankLogs[i - 1].data(),
+                                             rankLogs[i - 1].size());
+                logFile += rankLogStr + "\n";
+            }
         }
-        logFile += " }\n";
+        logFile += "}\n";
 
+        // write to file
         std::ofstream logStream(fileName);
         logStream.write(logFile.c_str(), logFile.size());
         logStream.close();
