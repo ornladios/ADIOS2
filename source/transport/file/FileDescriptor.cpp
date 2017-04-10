@@ -9,11 +9,11 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <fcntl.h>     //open
-#include <ios>         //std::ios_base::failure
+#include <fcntl.h>     // open
+#include <ios>         // std::ios_base::failure
 #include <stddef.h>    // write output
-#include <sys/stat.h>  //open
-#include <sys/types.h> //open
+#include <sys/stat.h>  // open
+#include <sys/types.h> // open
 #include <unistd.h>    // write, close
 /// \endcond
 
@@ -37,52 +37,52 @@ FileDescriptor::~FileDescriptor()
     }
 }
 
-void FileDescriptor::Open(const std::string name, const std::string accessMode)
+void FileDescriptor::Open(const std::string &name, const std::string accessMode)
 {
     m_Name = name;
     m_AccessMode = accessMode;
 
     if (accessMode == "w" || accessMode == "write")
     {
-        if (m_Profiler.m_IsActive == true)
+        if (m_Profiler.IsActive == true)
         {
-            m_Profiler.m_Timers[0].SetInitialTime();
+            m_Profiler.Timers[0].SetInitialTime();
         }
 
         m_FileDescriptor = open(m_Name.c_str(), O_WRONLY | O_CREAT, 0777);
 
-        if (m_Profiler.m_IsActive == true)
+        if (m_Profiler.IsActive == true)
         {
-            m_Profiler.m_Timers[0].SetTime();
+            m_Profiler.Timers[0].SetTime();
         }
     }
     else if (accessMode == "a" || accessMode == "append")
     {
-        if (m_Profiler.m_IsActive == true)
+        if (m_Profiler.IsActive == true)
         {
-            m_Profiler.m_Timers[0].SetInitialTime();
+            m_Profiler.Timers[0].SetInitialTime();
         }
 
         m_FileDescriptor = open(m_Name.c_str(),
                                 O_WRONLY | O_APPEND); // we need to change this
 
-        if (m_Profiler.m_IsActive == true)
+        if (m_Profiler.IsActive == true)
         {
-            m_Profiler.m_Timers[0].SetTime();
+            m_Profiler.Timers[0].SetTime();
         }
     }
     else if (accessMode == "r" || accessMode == "read")
     {
-        if (m_Profiler.m_IsActive == true)
+        if (m_Profiler.IsActive == true)
         {
-            m_Profiler.m_Timers[0].SetInitialTime();
+            m_Profiler.Timers[0].SetInitialTime();
         }
 
         m_FileDescriptor = open(m_Name.c_str(), O_RDONLY);
 
-        if (m_Profiler.m_IsActive == true)
+        if (m_Profiler.IsActive == true)
         {
-            m_Profiler.m_Timers[0].SetTime();
+            m_Profiler.Timers[0].SetTime();
         }
     }
 
@@ -100,16 +100,16 @@ void FileDescriptor::Open(const std::string name, const std::string accessMode)
 
 void FileDescriptor::Write(const char *buffer, std::size_t size)
 {
-    if (m_Profiler.m_IsActive == true)
+    if (m_Profiler.IsActive == true)
     {
-        m_Profiler.m_Timers[1].SetInitialTime();
+        m_Profiler.Timers[1].SetInitialTime();
     }
 
     auto writtenSize = write(m_FileDescriptor, buffer, size);
 
-    if (m_Profiler.m_IsActive == true)
+    if (m_Profiler.IsActive == true)
     {
-        m_Profiler.m_Timers[1].SetTime();
+        m_Profiler.Timers[1].SetTime();
     }
 
     if (m_DebugMode == true)
@@ -132,16 +132,16 @@ void FileDescriptor::Write(const char *buffer, std::size_t size)
 
 void FileDescriptor::Close()
 {
-    if (m_Profiler.m_IsActive == true)
+    if (m_Profiler.IsActive == true)
     {
-        m_Profiler.m_Timers[2].SetInitialTime();
+        m_Profiler.Timers[2].SetInitialTime();
     }
 
     int status = close(m_FileDescriptor);
 
-    if (m_Profiler.m_IsActive == true)
+    if (m_Profiler.IsActive == true)
     {
-        m_Profiler.m_Timers[2].SetTime();
+        m_Profiler.Timers[2].SetTime();
     }
 
     if (m_DebugMode == true)

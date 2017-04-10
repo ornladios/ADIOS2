@@ -16,9 +16,9 @@
 #include <vector>
 /// \endcond
 
-#include "ADIOS_MPI.h"
+#include "utilities/profiling/iochrono/IOChrono.h"
 
-#include "core/Profiler.h"
+#include "ADIOS_MPI.h"
 
 namespace adios
 {
@@ -34,10 +34,9 @@ public:
 
     MPI_Comm m_MPIComm = MPI_COMM_SELF;
 
-    int m_RankMPI = 0; ///< current MPI rank process
-    int m_SizeMPI = 1; ///< current MPI processes size
-    Profiler
-        m_Profiler; ///< collects information about Open and bytes Transport
+    int m_RankMPI = 0;              ///< current MPI rank process
+    int m_SizeMPI = 1;              ///< current MPI processes size
+    profiling::IOChrono m_Profiler; ///< profiles Open, Write/Read, Close
 
     /**
      * Base constructor that all derived classes pass
@@ -45,7 +44,7 @@ public:
      * @param mpiComm passed to m_MPIComm
      * @param debugMode passed to m_DebugMode
      */
-    Transport(std::string type, MPI_Comm mpiComm, bool debugMode);
+    Transport(const std::string type, MPI_Comm mpiComm, const bool debugMode);
 
     virtual ~Transport() = default;
 
@@ -54,7 +53,8 @@ public:
      * @param name name of stream or file
      * @param accessMode r or read, w or write, a or append
      */
-    virtual void Open(const std::string name, const std::string accessMode) = 0;
+    virtual void Open(const std::string &name,
+                      const std::string accessMode) = 0;
 
     /**
      * Set buffer and size for a particular transport
@@ -77,12 +77,16 @@ public:
     virtual void Close(); ///< closes current transport and flushes everything,
                           /// transport becomes unreachable
 
+    /**
+     * Inits the profiler
+     * @param accessMode
+     * @param resolution
+     */
     virtual void InitProfiler(const std::string accessMode,
                               const Support::Resolutions resolution);
 
 protected:
-    const bool m_DebugMode =
-        false; ///< if true: additional checks and exceptions
+    const bool m_DebugMode = false; ///< true: turn on exceptions
 };
 
 } // end namespace adios

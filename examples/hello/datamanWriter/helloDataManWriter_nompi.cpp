@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
         // Define method for engine creation, it is basically straight-forward
         // parameters
         adios::Method &datamanSettings = adios.DeclareMethod("WAN");
-        if (!datamanSettings.isUserDefined())
+        if (!datamanSettings.IsUserDefined())
         {
             // if not defined by user, we can change the default settings
             datamanSettings.SetEngine("DataManWriter");
@@ -63,8 +63,7 @@ int main(int argc, char *argv[])
         // Create engine smart pointer to DataMan Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
         // DataMan
-        auto datamanWriter = adios.Open("myDoubles.bp", "w", datamanSettings,
-                                        adios::IOMode::INDEPENDENT);
+        auto datamanWriter = adios.Open("myDoubles.bp", "w", datamanSettings);
 
         if (datamanWriter == nullptr)
             throw std::ios_base::failure(

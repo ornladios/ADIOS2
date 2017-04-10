@@ -15,12 +15,12 @@
 #include <algorithm> //std::count, std::copy, std::for_each
 #include <cmath>     //std::ceil
 #include <cstring>   //std::memcpy
+
+#include "utilities/format/bp1/BP1Base.h"
+#include "utilities/format/bp1/BP1Structs.h"
 /// \endcond
 
-#include "BP1.h"
 #include "capsule/heap/STLVector.h"
-#include "core/Capsule.h"
-#include "core/Profiler.h"
 #include "core/Variable.h"
 #include "functions/adiosFunctions.h"
 #include "functions/adiosTemplates.h"
@@ -30,16 +30,13 @@ namespace adios
 namespace format
 {
 
-class BP1Writer : public BP1
+class BP1Writer : public BP1Base
 {
 
 public:
-    unsigned int m_Threads = 1; ///< number of threads for thread operations in
-                                /// large array (min,max)
-    unsigned int m_Verbosity = 0;     ///< statistics verbosity, can change if
-                                      /// redefined in Engine method.
-    float m_GrowthFactor = 1.5;       ///< memory growth factor, can change if
-                                      /// redefined in Engine method.
+    unsigned int m_Threads = 1; ///< thread operations in large array (min,max)
+    unsigned int m_Verbosity = 0; ///< statistics verbosity, only 0 is supported
+    float m_GrowthFactor = 1.5;   ///< memory growth factor
     const std::uint8_t m_Version = 3; ///< BP format version
 
     /**
@@ -90,7 +87,7 @@ public:
 
         // characteristics 3 and 4, check variable number of dimensions
         const std::size_t dimensions =
-            variable.DimensionsSize(); // number of commas in CSV + 1
+            variable.DimensionsSize(); // commas in CSV + 1
         indexSize += 28 * dimensions;  // 28 bytes per dimension
         indexSize += 1;                // id
 
@@ -124,10 +121,9 @@ public:
      * @param metadataSet
      */
     template <class T>
-    inline void WriteVariableMetadata(const Variable<T> &variable,
-                                      capsule::STLVector &heap,
-                                      BP1MetadataSet &metadataSet) const
-        noexcept
+    void WriteVariableMetadata(const Variable<T> &variable,
+                               capsule::STLVector &heap,
+                               BP1MetadataSet &metadataSet) const noexcept
     {
         Stats<T> stats = GetStats(variable);
         WriteVariableMetadataCommon(variable, stats, heap, metadataSet);
@@ -237,7 +233,7 @@ private:
         CopyToBuffer(buffer, &no);
 
         // write variable dimensions
-        const std::uint8_t dimensions = variable.m_Dimensions.size();
+        const std::uint8_t dimensions = variable.m_LocalDimensions.size();
         CopyToBuffer(buffer, &dimensions); // count
         std::uint16_t dimensionsLength =
             27 *
@@ -245,9 +241,9 @@ private:
                         // y/n + global dimension, var y/n + global offset,
                         // changed for characteristic
         CopyToBuffer(buffer, &dimensionsLength); // length
-        WriteDimensionsRecord(buffer, variable.m_Dimensions,
-                              variable.m_GlobalDimensions,
-                              variable.m_GlobalOffsets, 18, true);
+        WriteDimensionsRecord(buffer, variable.m_LocalDimensions,
+                              variable.m_GlobalDimensions, variable.m_Offsets,
+                              18, true);
 
         // CHARACTERISTICS
         WriteVariableCharacteristics(variable, stats, buffer, true);
@@ -306,8 +302,7 @@ private:
         noexcept
     {
         const std::size_t characteristicsCountPosition =
-            buffer.size(); // very important to track as writer is going
-                           // back to
+            buffer.size(); // very important to track as writer is going back to
                            // this position
         buffer.insert(buffer.end(), 5,
                       0); // skip characteristics count(1) + length (4)
@@ -316,7 +311,7 @@ private:
         // DIMENSIONS
         std::uint8_t characteristicID = characteristic_dimensions;
         CopyToBuffer(buffer, &characteristicID);
-        const std::uint8_t dimensions = variable.m_Dimensions.size();
+        const std::uint8_t dimensions = variable.m_LocalDimensions.size();
 
         if (addLength == true)
         {
@@ -329,9 +324,9 @@ private:
         CopyToBuffer(buffer, &dimensions); // count
         const std::uint16_t dimensionsLength = 24 * dimensions;
         CopyToBuffer(buffer, &dimensionsLength); // length
-        WriteDimensionsRecord(buffer, variable.m_Dimensions,
-                              variable.m_GlobalDimensions,
-                              variable.m_GlobalOffsets, 16, addLength);
+        WriteDimensionsRecord(buffer, variable.m_LocalDimensions,
+                              variable.m_GlobalDimensions, variable.m_Offsets,
+                              16, addLength);
         ++characteristicsCounter;
 
         // VALUE for SCALAR or STAT min, max for ARRAY
@@ -356,8 +351,8 @@ private:
                      &characteristicsCounter); // count (1)
         const std::uint32_t characteristicsLength =
             buffer.size() - characteristicsCountPosition - 4 -
-            1; // remove its own length (4 bytes) + characteristic counter (
-               // 1 byte
+            1; // remove its own length (4 bytes) + characteristic counter ( 1
+               // byte
                // )
         CopyToBuffer(buffer, characteristicsCountPosition + 1,
                      &characteristicsLength); // length
@@ -381,7 +376,7 @@ private:
      * @param position
      * @param localDimensions
      * @param globalDimensions
-     * @param globalOffsets
+     * @param offsets
      * @param addType true: for data buffers, false: for metadata buffer and
      * data
      * characteristic
@@ -389,7 +384,7 @@ private:
     void WriteDimensionsRecord(std::vector<char> &buffer,
                                const std::vector<std::size_t> &localDimensions,
                                const std::vector<std::size_t> &globalDimensions,
-                               const std::vector<std::size_t> &globalOffsets,
+                               const std::vector<std::size_t> &offsets,
                                const unsigned int skip,
                                const bool addType = false) const noexcept;
 
@@ -438,8 +433,7 @@ private:
                           // //here we can make decisions for threads
                           // based on valuesSize
                 GetMinMax(variable.m_AppValues, valuesSize, stats.Min,
-                          stats.Max,
-                          m_Threads); // here we can add cores from constructor
+                          stats.Max, m_Threads);
             else
                 GetMinMax(variable.m_AppValues, valuesSize, stats.Min,
                           stats.Max);

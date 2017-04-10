@@ -12,7 +12,8 @@
 #define ENGINE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <complex> //std::complex
+#include <complex>    //std::complex
+#include <functional> //std::function
 #include <map>
 #include <memory> //std::shared_ptr
 #include <string>
@@ -26,7 +27,6 @@
 #include "ADIOSTypes.h"
 #include "core/Capsule.h"
 #include "core/Method.h"
-#include "core/Profiler.h"
 #include "core/Transform.h"
 #include "core/Transport.h"
 #include "core/Variable.h"
@@ -73,20 +73,16 @@ public:
      * @param accessMode
      * @param mpiComm
      * @param method
-     * @param debugMode
-     * @param nthreads
      * @param endMessage
      */
-    Engine(ADIOS &adios, std::string engineType, std::string name,
-           std::string accessMode, MPI_Comm mpiComm, const Method &method,
-           bool debugMode, unsigned int nthreads, std::string endMessage);
+    Engine(ADIOS &adios, const std::string engineType, const std::string &name,
+           const std::string accessMode, MPI_Comm mpiComm, const Method &method,
+           const std::string endMessage);
 
     virtual ~Engine() = default;
 
     /** @brief Let ADIOS allocate memory for a variable, which can be used by
-     * the
-     * user.
-     *
+     * the user.
      * To decrease the cost of copying memory, a user may let ADIOS allocate the
      * memory for a user-variable,
      * according to the definition of an ADIOS-variable. The memory will be part
@@ -95,11 +91,9 @@ public:
      * A variable that has been allocated this way (cannot have its local
      * dimensions changed, and AdvanceAsync() should be
      * used instead of Advance() and the user-variable must not be modified by
-     * the
-     * application until the notification arrives.
+     * the application until the notification arrives.
      * This is required so that any reader can access the written data before
-     * the
-     * application overwrites it.
+     * the application overwrites it.
      * @param var Variable with defined local dimensions and offsets in global
      * space
      * @param fillValue Fill the allocated array with this value
@@ -391,7 +385,7 @@ public:
      * Indicates that a new step is going to be written as new variables come
      * in.
      */
-    virtual void Advance(float timeout_sec = 0.0);
+    virtual void Advance(const float timeout_sec = 0.0);
 
     /**
      * Indicates that a new step is going to be written as new variables come
@@ -399,7 +393,7 @@ public:
      * @param mode Advance mode, there are different options for writers and
      * readers
      */
-    virtual void Advance(AdvanceMode mode, float timeout_sec = 0.0);
+    virtual void Advance(AdvanceMode mode, const float timeout_sec = 0.0);
 
     /** @brief Advance asynchronously and get a callback when readers release
      * access to the buffered step.
@@ -427,42 +421,70 @@ public:
      * @return success: it returns a pointer to the internal stored variable
      * object in ADIOS class, failure: nullptr
      */
-    virtual Variable<void> *InquireVariable(const std::string name,
+    virtual Variable<void> *InquireVariable(const std::string &variableName,
                                             const bool readIn = true);
-    virtual Variable<char> *InquireVariableChar(const std::string name,
+    virtual Variable<char> *InquireVariableChar(const std::string &variableName,
                                                 const bool readIn = true);
     virtual Variable<unsigned char> *
-    InquireVariableUChar(const std::string name, const bool readIn = true);
-    virtual Variable<short> *InquireVariableShort(const std::string name,
-                                                  const bool readIn = true);
+    InquireVariableUChar(const std::string &variableName,
+                         const bool readIn = true);
+    virtual Variable<short> *
+    InquireVariableShort(const std::string &variableName,
+                         const bool readIn = true);
+
     virtual Variable<unsigned short> *
-    InquireVariableUShort(const std::string name, const bool readIn = true);
-    virtual Variable<int> *InquireVariableInt(const std::string name,
+    InquireVariableUShort(const std::string &variableName,
+                          const bool readIn = true);
+
+    virtual Variable<int> *InquireVariableInt(const std::string &variableName,
                                               const bool readIn = true);
     virtual Variable<unsigned int> *
-    InquireVariableUInt(const std::string name, const bool readIn = true);
-    virtual Variable<long int> *InquireVariableLInt(const std::string name,
-                                                    const bool readIn = true);
+    InquireVariableUInt(const std::string &variableName,
+                        const bool readIn = true);
+
+    virtual Variable<long int> *
+    InquireVariableLInt(const std::string &variableName,
+                        const bool readIn = true);
+
     virtual Variable<unsigned long int> *
-    InquireVariableULInt(const std::string name, const bool readIn = true);
+    InquireVariableULInt(const std::string &variableName,
+                         const bool readIn = true);
+
     virtual Variable<long long int> *
-    InquireVariableLLInt(const std::string name, const bool readIn = true);
+    InquireVariableLLInt(const std::string &variableName,
+                         const bool readIn = true);
+
     virtual Variable<unsigned long long int> *
-    InquireVariableULLInt(const std::string name, const bool readIn = true);
-    virtual Variable<float> *InquireVariableFloat(const std::string name,
-                                                  const bool readIn = true);
-    virtual Variable<double> *InquireVariableDouble(const std::string name,
-                                                    const bool readIn = true);
+    InquireVariableULLInt(const std::string &variableName,
+                          const bool readIn = true);
+
+    virtual Variable<float> *
+    InquireVariableFloat(const std::string &variableName,
+                         const bool readIn = true);
+
+    virtual Variable<double> *
+    InquireVariableDouble(const std::string &variableName,
+                          const bool readIn = true);
+
     virtual Variable<long double> *
-    InquireVariableLDouble(const std::string name, const bool readIn = true);
+    InquireVariableLDouble(const std::string &variableName,
+                           const bool readIn = true);
+
     virtual Variable<std::complex<float>> *
-    InquireVariableCFloat(const std::string name, const bool readIn = true);
+    InquireVariableCFloat(const std::string &variableName,
+                          const bool readIn = true);
+
     virtual Variable<std::complex<double>> *
-    InquireVariableCDouble(const std::string name, const bool readIn = true);
+    InquireVariableCDouble(const std::string &variableName,
+                           const bool readIn = true);
+
     virtual Variable<std::complex<long double>> *
-    InquireVariableCLDouble(const std::string name, const bool readIn = true);
-    virtual VariableCompound *InquireVariableCompound(const std::string name,
-                                                      const bool readIn = true);
+    InquireVariableCLDouble(const std::string &variableName,
+                            const bool readIn = true);
+
+    virtual VariableCompound *
+    InquireVariableCompound(const std::string &variableName,
+                            const bool readIn = true);
 
     /** Return the names of all variables present in a stream/file opened for
      * reading
@@ -471,42 +493,36 @@ public:
      */
     std::vector<std::string> VariableNames();
 
-    virtual void
-    Close(const int transportIndex =
-              -1) = 0; ///< Closes a particular transport, or all if -1
+    /**
+     * Closes a particular transport, or all if -1
+     * @param transportIndex order from Method AddTransport
+     */
+    virtual void Close(const int transportIndex = -1) = 0;
 
 protected:
-    ADIOS
-    &m_ADIOS; ///< reference to ADIOS object that creates this Engine at Open
+    ADIOS &m_ADIOS; ///< creates Engine at Open
     std::vector<std::shared_ptr<Transport>>
-        m_Transports; ///< transports managed
-    const bool m_DebugMode =
-        false; ///< true: additional checks, false: by-pass checks
-    unsigned int m_nThreads = 0;
+        m_Transports;               ///< transports managed
+    const bool m_DebugMode = false; ///< true: additional exceptions checks
+    unsigned int m_nThreads = 0;    ///< from Method nthreads
     const std::string
         m_EndMessage; ///< added to exceptions to improve debugging
-    std::set<std::string> m_WrittenVariables; ///< contains the names of the
-    /// variables that are being written
+    std::set<std::string> m_WrittenVariables;
 
-    virtual void
-    Init(); ///< Initialize m_Capsules and m_Transports, called from constructor
-    virtual void
-    InitParameters(); ///< Initialize parameters from Method, called
-                      /// from Initi in constructor
-    virtual void
-    InitTransports(); ///< Initialize transports from Method, called
-                      /// from Init in constructor
+    virtual void Init();           ///< Initialize m_Capsules and m_Transports
+    virtual void InitParameters(); ///< Initialize parameters from Method
+    virtual void InitTransports(); ///< Initialize transports from Method
 
     /**
      * Used to verify parameters in m_Method containers
-     * @param itParam iterator to a certain parameter
+     * @param itParameter iterator to a certain parameter
      * @param parameters map of parameters, from m_Method
      * @param parameterName used if exception is thrown to provide debugging
      * information
      * @param hint used if exception is thrown to provide debugging information
      */
     void CheckParameter(
-        const std::map<std::string, std::string>::const_iterator itParam,
+        const std::map<std::string, std::string>::const_iterator itParameter,
         const std::map<std::string, std::string> &parameters,
         const std::string parameterName, const std::string hint) const;
 

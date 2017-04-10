@@ -32,7 +32,7 @@ FilePointer::~FilePointer()
     }
 }
 
-void FilePointer::Open(const std::string name, const std::string accessMode)
+void FilePointer::Open(const std::string &name, const std::string accessMode)
 {
     m_Name = name;
     m_AccessMode = accessMode;

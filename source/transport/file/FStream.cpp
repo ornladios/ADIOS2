@@ -20,12 +20,12 @@ namespace adios
 namespace transport
 {
 
-FStream::FStream(MPI_Comm mpiComm, bool debugMode)
+FStream::FStream(MPI_Comm mpiComm, const bool debugMode)
 : Transport("fstream", mpiComm, debugMode)
 {
 }
 
-void FStream::Open(const std::string name, const std::string accessMode)
+void FStream::Open(const std::string &name, const std::string accessMode)
 {
     m_Name = name;
     m_AccessMode = accessMode;

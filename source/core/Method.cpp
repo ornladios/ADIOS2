@@ -16,21 +16,21 @@
 namespace adios
 {
 
-Method::Method(std::string name, bool debugMode)
-: m_Name{std::move(name)}, m_DebugMode{debugMode}
+Method::Method(const std::string name, const bool debugMode)
+: m_Name{name}, m_DebugMode{debugMode}
 {
-    // m_Type can stay empty (forcing the choice of the default engine)
-    m_nThreads = 1;
 }
 
-bool Method::isUserDefined()
+Method::~Method() {}
+
+bool Method::IsUserDefined()
 {
     return false; // TODO(wfg): check if XML has the method defined
 }
 
 void Method::SetEngine(const std::string type) { m_Type = type; }
 
-void Method::AllowThreads(const int nThreads)
+void Method::AllowThreads(const unsigned int nThreads)
 {
     if (nThreads > 1)
     {

@@ -26,15 +26,17 @@ foreach(adios2_target IN LISTS adios2_targets)
     engine/bp/BPFileReader.cpp
     engine/bp/BPFileWriter.cpp
   
-    format/BP1.cpp
-    format/BP1Aggregator.cpp
-    format/BP1Writer.cpp
-  
     functions/adiosFunctions.cpp
   
     transport/file/FStream.cpp
     transport/file/FileDescriptor.cpp
     transport/file/FilePointer.cpp
+    
+    utilities/format/bp1/BP1Base.cpp
+    utilities/format/bp1/BP1Aggregator.cpp
+    utilities/format/bp1/BP1Writer.cpp
+    
+    utilities/profiling/iochrono/Timer.cpp
   )
   target_include_directories(${adios2_target}
     PUBLIC ${ADIOS_SOURCE_DIR}/include

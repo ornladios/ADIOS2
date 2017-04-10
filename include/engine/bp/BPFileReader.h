@@ -15,7 +15,6 @@
 
 #include "core/Engine.h"
 
-// supported capsules
 #include "capsule/heap/STLVector.h"
 
 namespace adios
@@ -36,47 +35,70 @@ public:
      * @param debugMode
      * @param hostLanguage
      */
-    BPFileReader(ADIOS &adios, std::string name, std::string accessMode,
-                 MPI_Comm mpiComm, const Method &method, IOMode iomode,
-                 float timeout_sec, bool debugMode = false,
-                 unsigned int nthreads = 1);
+    BPFileReader(ADIOS &adios, const std::string &name,
+                 const std::string accessMode, MPI_Comm mpiComm,
+                 const Method &method);
 
     virtual ~BPFileReader() = default;
 
-    Variable<void> *InquireVariable(const std::string name,
+    Variable<void> *InquireVariable(const std::string &variableName,
                                     const bool readIn = true);
-    Variable<char> *InquireVariableChar(const std::string name,
+
+    Variable<char> *InquireVariableChar(const std::string &variableName,
                                         const bool readIn = true);
-    Variable<unsigned char> *InquireVariableUChar(const std::string name,
-                                                  const bool readIn = true);
-    Variable<short> *InquireVariableShort(const std::string name,
+
+    Variable<unsigned char> *
+    InquireVariableUChar(const std::string &variableName,
+                         const bool readIn = true);
+
+    Variable<short> *InquireVariableShort(const std::string &variableName,
                                           const bool readIn = true);
-    Variable<unsigned short> *InquireVariableUShort(const std::string name,
-                                                    const bool readIn = true);
-    Variable<int> *InquireVariableInt(const std::string name,
+
+    Variable<unsigned short> *
+    InquireVariableUShort(const std::string &variableName,
+                          const bool readIn = true);
+
+    Variable<int> *InquireVariableInt(const std::string &variableName,
                                       const bool readIn = true);
-    Variable<unsigned int> *InquireVariableUInt(const std::string name,
+
+    Variable<unsigned int> *InquireVariableUInt(const std::string &variableName,
                                                 const bool readIn = true);
-    Variable<long int> *InquireVariableLInt(const std::string name,
+
+    Variable<long int> *InquireVariableLInt(const std::string &variableName,
                                             const bool readIn = true);
-    Variable<unsigned long int> *InquireVariableULInt(const std::string name,
-                                                      const bool readIn = true);
-    Variable<long long int> *InquireVariableLLInt(const std::string name,
-                                                  const bool readIn = true);
+
+    Variable<unsigned long int> *
+    InquireVariableULInt(const std::string &variableName,
+                         const bool readIn = true);
+
+    Variable<long long int> *
+    InquireVariableLLInt(const std::string &variableName,
+                         const bool readIn = true);
+
     Variable<unsigned long long int> *
-    InquireVariableULLInt(const std::string name, const bool readIn = true);
-    Variable<float> *InquireVariableFloat(const std::string name,
+    InquireVariableULLInt(const std::string &variableName,
+                          const bool readIn = true);
+
+    Variable<float> *InquireVariableFloat(const std::string &variableName,
                                           const bool readIn = true);
-    Variable<double> *InquireVariableDouble(const std::string name,
+
+    Variable<double> *InquireVariableDouble(const std::string &variableName,
                                             const bool readIn = true);
-    Variable<long double> *InquireVariableLDouble(const std::string name,
-                                                  const bool readIn = true);
+    Variable<long double> *
+    InquireVariableLDouble(const std::string &variableName,
+                           const bool readIn = true);
+
     Variable<std::complex<float>> *
-    InquireVariableCFloat(const std::string name, const bool readIn = true);
+    InquireVariableCFloat(const std::string &variableName,
+                          const bool readIn = true);
+
     Variable<std::complex<double>> *
-    InquireVariableCDouble(const std::string name, const bool readIn = true);
+    InquireVariableCDouble(const std::string &variableName,
+                           const bool readIn = true);
+
     Variable<std::complex<long double>> *
-    InquireVariableCLDouble(const std::string name, const bool readIn = true);
+    InquireVariableCLDouble(const std::string &variableName,
+                            const bool readIn = true);
 
     /**
      * Not implemented
@@ -84,7 +106,7 @@ public:
      * @param readIn
      * @return
      */
-    VariableCompound *InquireVariableCompound(const std::string name,
+    VariableCompound *InquireVariableCompound(const std::string &variableName,
                                               const bool readIn = true);
 
     void Close(const int transportIndex = -1);
@@ -98,7 +120,7 @@ private:
 
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
-    void InitCapsules();
+
     void InitTransports(); ///< from Transports
 
     std::string
@@ -106,7 +128,7 @@ private:
                      const std::map<std::string, std::string> &mdtmParameters);
 
     template <class T>
-    Variable<T> *InquireVariableCommon(const std::string name,
+    Variable<T> *InquireVariableCommon(const std::string &name,
                                        const bool readIn)
     {
         std::cout << "Hello BPReaderCommon\n";

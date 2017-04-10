@@ -11,6 +11,10 @@
 #ifndef BP1AGGREGATOR_H_
 #define BP1AGGREGATOR_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+/// \endcond
+
 #include "ADIOS_MPI.h"
 
 namespace adios
@@ -39,8 +43,7 @@ public:
 
     /**
      * Function that aggregates and writes (from rank = 0) profiling.log in
-     * python
-     * dictionary format
+     * python dictionary format
      * @param rankLog contain rank profiling info to be aggregated
      */
     void WriteProfilingLog(const std::string fileName,

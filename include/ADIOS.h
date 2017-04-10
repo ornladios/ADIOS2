@@ -2,11 +2,9 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * ADIOS.h
- *
+ * ADIOS.\ *
  *  Created on: Oct 3, 2016
- *      Author: wfg
- */
+ *      Author: wfg`123 */
 
 #ifndef ADIOS_H_
 #define ADIOS_H_
@@ -43,15 +41,16 @@ class Engine;
 class ADIOS
 {
 public:
-    MPI_Comm m_MPIComm = MPI_COMM_SELF; ///< only used as reference to MPI
-                                        /// communicator passed from parallel
-    /// constructor, MPI_Comm is a pointer
-    /// itself. Public as called from C
+    /**
+     * Passed from parallel constructor, MPI_Comm is a pointer itself.
+     *  Public as called from C
+     */
+    MPI_Comm m_MPIComm = MPI_COMM_SELF;
 
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size
 
-    std::string m_HostLanguage = "C++";
+    std::string m_HostLanguage = "C++"; ///< changed by language bindings
 
     /**
      * @brief ADIOS empty constructor. Used for non XML config file API calls.
@@ -61,21 +60,22 @@ public:
     /**
      * @brief Serial constructor for config file, only allowed and compiled in
      * libadios_nompi.a
-     * @param config XML config file
+     * @param configFile XML config file (maybe support different formats in the
+     * future?)
      * @param debugMode true: on throws exceptions and do additional checks,
      * false: off (faster, but unsafe)
      */
-    ADIOS(std::string config, const Verbose verbose = Verbose::WARN,
+    ADIOS(const std::string configFile, const Verbose verbose = Verbose::WARN,
           const bool debugMode = false);
 
     /**
      * @brief Parallel constructor for XML config file and MPI
-     * @param config XML config file
+     * @param config XML config file (maybe support different formats in the
+     * future?)
      * @param mpiComm MPI communicator ...const to be discussed
      * @param debugMode true: on, false: off (faster, but unsafe)
      */
-
-    ADIOS(std::string config, MPI_Comm mpiComm,
+    ADIOS(const std::string configFile, MPI_Comm mpiComm,
           const Verbose verbose = Verbose::WARN, const bool debugMode = false);
 
     /**
@@ -91,28 +91,27 @@ public:
     void InitMPI(); ///< sets rank and size in m_rank and m_Size, respectively.
 
     /**
-     * Look for template specialization
-     * @param name
+     * Define a Variable for I/O. Default is a local scalar to be compatible
+     * with ADIOS1
+     * @param name variable name, must be unique
      * @param dimensions
-     * @param globalDimensions
-     * @param globalOffsets
-     * @return
+     * @param selections
+     * @param offsets
+     * @return reference to Variable object
      */
     template <class T>
     Variable<T> &DefineVariable(const std::string &name,
-                                const Dims dimensions = Dims{1},
-                                const Dims globalDimensions = Dims(),
-                                const Dims globalOffsets = Dims());
+                                const Dims localDimensions = Dims{1},
+                                const Dims globalDimensions = Dims{},
+                                const Dims offsets = Dims{});
 
     template <class T>
     Variable<T> &GetVariable(const std::string &name);
 
     template <class T>
-    VariableCompound &
-    DefineVariableCompound(const std::string &name,
-                           const Dims dimensions = Dims{1},
-                           const Dims globalDimensions = Dims(),
-                           const Dims globalOffsets = Dims());
+    VariableCompound &DefineVariableCompound(
+        const std::string &name, const Dims globalDimensions = Dims{},
+        const Dims localDimensions = Dims{1}, const Dims offsets = Dims{});
 
     VariableCompound &GetVariableCompound(const std::string &name);
 
@@ -126,7 +125,7 @@ public:
      * Use method.isUserDefined() to distinguish between the two cases.
      * @param methodName must be unique
      */
-    Method &DeclareMethod(const std::string &methodName);
+    Method &DeclareMethod(const std::string methodName);
 
     /**
      * @brief Open to Write, Read. Creates a new engine from previously defined
@@ -147,10 +146,8 @@ public:
      * shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open(const std::string &streamName,
-                                 const std::string &accessMode,
-                                 MPI_Comm mpiComm, const Method &method,
-                                 const IOMode iomode = IOMode::INDEPENDENT,
-                                 const float timeout_sec = 0.0);
+                                 const std::string accessMode, MPI_Comm mpiComm,
+                                 const Method &method);
 
     /**
      * @brief Open to Write, Read. Creates a new engine from previously defined
@@ -169,10 +166,8 @@ public:
      * shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open(const std::string &streamName,
-                                 const std::string &accessMode,
-                                 const Method &method,
-                                 const IOMode iomode = IOMode::INDEPENDENT,
-                                 const float timeout_sec = 0.0);
+                                 const std::string accessMode,
+                                 const Method &method);
 
     /**
      * Version required by the XML config file implementation, searches method
@@ -190,11 +185,8 @@ public:
      * shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open(const std::string &streamName,
-                                 const std::string &accessMode,
-                                 MPI_Comm mpiComm,
-                                 const std::string &methodName,
-                                 const IOMode iomode = IOMode::INDEPENDENT,
-                                 const float timeout_sec = 0.0);
+                                 const std::string accessMode, MPI_Comm mpiComm,
+                                 const std::string methodName);
 
     /**
      * Version required by the XML config file implementation, searches method
@@ -212,10 +204,8 @@ public:
      * shared_ptr for potential flexibility
      */
     std::shared_ptr<Engine> Open(const std::string &streamName,
-                                 const std::string &accessMode,
-                                 const std::string &methodName,
-                                 const IOMode iomode = IOMode::INDEPENDENT,
-                                 const float timeout_sec = 0.0);
+                                 const std::string accessMode,
+                                 const std::string methodName);
 
     /**
      * @brief Open to Read all steps from a file. No streaming, advancing is
@@ -233,10 +223,9 @@ public:
      * @return Derived class of base Engine depending on Method parameters,
      * shared_ptr for potential flexibility
      */
-    std::shared_ptr<Engine>
-    OpenFileReader(const std::string &fileName, MPI_Comm mpiComm,
-                   const Method &method,
-                   const IOMode iomode = IOMode::INDEPENDENT);
+    std::shared_ptr<Engine> OpenFileReader(const std::string &fileName,
+                                           MPI_Comm mpiComm,
+                                           const Method &method);
 
     /**
      * @brief Open to Read all steps from a file. No streaming, advancing is
@@ -254,10 +243,9 @@ public:
      * @return Derived class of base Engine depending on Method parameters,
      * shared_ptr for potential flexibility
      */
-    std::shared_ptr<Engine>
-    OpenFileReader(const std::string &fileName, MPI_Comm mpiComm,
-                   const std::string &methodName,
-                   const IOMode iomode = IOMode::INDEPENDENT);
+    std::shared_ptr<Engine> OpenFileReader(const std::string &fileName,
+                                           MPI_Comm mpiComm,
+                                           const std::string methodName);
 
     /**
      * @brief Dumps groups information to a file stream or standard output.
@@ -334,7 +322,7 @@ protected: // no const to allow default empty and copy constructors
         std::map<std::string,
                  std::pair<std::string, unsigned int>>::const_iterator
             itVariable,
-        const std::string &name, const std::string &hint) const;
+        const std::string &name, const std::string hint) const;
 
     /**
      * @brief Checks for method existence in m_Methods, if failed throws
@@ -344,15 +332,15 @@ protected: // no const to allow default empty and copy constructors
      * @param hint adds information to thrown exception
      */
     void CheckMethod(std::map<std::string, Method>::const_iterator itMethod,
-                     const std::string &methodName,
-                     const std::string &hint) const;
+                     const std::string methodName,
+                     const std::string hint) const;
 
     template <class T>
     unsigned int GetVariableIndex(const std::string &name);
 
     // Helper function for DefineVariable
     template <class T>
-    std::map<unsigned int, Variable<T>> &GetVarMap();
+    std::map<unsigned int, Variable<T>> &GetVariableMap();
 };
 
 // Explicit declaration of the template methods
@@ -363,7 +351,7 @@ protected: // no const to allow default empty and copy constructors
     extern template unsigned int ADIOS::GetVariableIndex<T>(                   \
         const std::string &name);                                              \
     template <>                                                                \
-    std::map<unsigned int, Variable<T>> &ADIOS::GetVarMap<T>();
+    std::map<unsigned int, Variable<T>> &ADIOS::GetVariableMap<T>();
 ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
 extern template unsigned int ADIOS::GetVariableIndex<void>(const std::string &);
 #undef declare_template_instantiation

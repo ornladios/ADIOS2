@@ -49,8 +49,10 @@ int main(int argc, char *argv[])
         // Define variable and local size
         adios::Variable<double> &ioMyDoubles =
             adios.DefineVariable<double>("myDoubles", {Nx});
+
         adios::Variable<float> &ioMyMatrix =
             adios.DefineVariable<float>("myMatrix", {rows, columns});
+
         adios::Variable<float> &ioMyMatrix2 =
             adios.DefineVariable<float>("myMatrix2", {rows, columns});
 

@@ -54,8 +54,7 @@ int main(int /*argc*/, char ** /*argv*/)
         // Open returns a smart pointer to Engine containing the Derived class
         // Writer
         auto bpFileWriter =
-            adios.Open("myDoubles_nompi.bp", "w", bpWriterSettings,
-                       adios::IOMode::COLLECTIVE);
+            adios.Open("myDoubles_nompi.bp", "w", bpWriterSettings);
 
         if (bpFileWriter == nullptr)
         {
