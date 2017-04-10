@@ -43,8 +43,7 @@ public:
 
     /**
      * Function that aggregates and writes (from rank = 0) profiling.log in
-     * python
-     * dictionary format
+     * python dictionary format
      * @param rankLog contain rank profiling info to be aggregated
      */
     void WriteProfilingLog(const std::string fileName,

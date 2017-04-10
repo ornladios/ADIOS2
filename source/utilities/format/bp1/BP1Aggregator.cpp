@@ -35,7 +35,7 @@ void BP1Aggregator::WriteProfilingLog(const std::string fileName,
 {
     if (m_RankMPI == 0)
     {
-        unsigned int sizeMPI = static_cast<unsigned int>(m_SizeMPI);
+        const unsigned int sizeMPI = static_cast<const unsigned int>(m_SizeMPI);
         std::vector<std::vector<char>> rankLogs(sizeMPI - 1); // other ranks
         std::vector<int> rankLogsSizes(sizeMPI - 1, -1);      // init with -1
         std::vector<MPI_Request> requests(sizeMPI);
@@ -85,7 +85,7 @@ void BP1Aggregator::WriteProfilingLog(const std::string fileName,
     }
     else
     {
-        int rankLogSize = static_cast<int>(rankLog.size());
+        const int rankLogSize = static_cast<const int>(rankLog.size());
         MPI_Request requestSize;
         MPI_Isend(&rankLogSize, 1, MPI_INT, 0, 0, m_MPIComm, &requestSize);
 

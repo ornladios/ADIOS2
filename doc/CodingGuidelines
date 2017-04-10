@@ -27,7 +27,7 @@ Objectives:
 
 C++ coding guidelines, all mandatory in no particular order:
 
-Text style for readability (Coding format setup in Eclipse with Window > Preferences > C/C++ > CodeStyle > Formatters )
+Text style for readability ( using clang-format, 80 columns line width )
 1) Use meaningful English words (time not t, rank not r or rk), well-known acronyms (MPI, XML, CFD, GMRES, etc.) 
    or well-known short names (Config, Comm, 2D, 3D).
    Examples: timeInitial instead of tIni, or work instead of wrk
@@ -35,43 +35,26 @@ Text style for readability (Coding format setup in Eclipse with Window > Prefere
 2) Avoid "_" in names, adds unnecessary length (specially when mixed with STL containers) to the variable name and could conflict with name mangling. 
    Reserve it for prefix of special cases (see class members and lambda functions).
    Use upper case letter instead:
-   Don't: std::vector< std::vector<double> > this_is_my_very_very_long_two_dimensional_vector_name
-      Do: std::vector< std::vector<double> > thisIsMyVeryVeryLongTwoDimensionalVectorName
-
-3) Use 4 spaces instead of tab. Tab behaves different in other editors (vi, emacs, gedit, slickedit, code blocks, etc.)
-4) Use 4 spaces for nested logic structure indentation (like in Python), Eclipse has a CTRL+I option to set it automatically.
-   if( number1 < 1 )
-   {
-       if( number2 < 2 )
-       {
-           ....
-       }
-   }
-
-    
-5) Brackets: use an extra space for brackets. Only one line conditionals can skip having brackets.
-    Do: 
-    if( number < 1 )
-    {
-        number = 4;
-        ...
-    } 
-    
-    Don't:
-    if( number < 1 ){
-    number = 4;    .....
-                     .....}
-
-   It's ok to omit brackets in one line conditionals:
-   if( itMap == map.end() ) throw std::invalid_argument( "ERROR: not found in map\n" );
-    
-6) Prefer the keyword "using" over "typedef". Only rename very long complex or custom types, 
+   
+   Don't: std::vector< std::vector<double> > 
+   				this_is_my_very_very_long_two_dimensional_vector_name;
+   				
+      Do: std::vector< std::vector<double> > 
+      			thisIsMyVeryVeryLongTwoDimensionalVectorName;
+   
+3) Prefer the keyword "using" over "typedef". Only rename very long complex or custom types, 
    do not rename standard types (int, double, std::vector) 
    Don't: typedef std::vector<std::vector< std::map<std::string,double> >> MapIn2DVector;
    Do:    using std::vector<std::vector< std::map<std::string,double> >> = MapIn2DVector;
    
    See 1) for Exception: when redefining long types with the keyword "using" 
    some mnemonics and short names are allowed, document scope of using (local, class, file, etc.), though
+   
+4) The project uses ADIOS2 clang-format: http://releases.llvm.org/3.8.0/tools/clang/docs/ClangFormatStyleOptions.html
+   See Contributing.md for more information. In summary:
+	Lines no longer than 80 characters.
+	Always use braces { and }, even for 1 line "if" blocks and loops ("for", "while", etc.)
+	Use 4 spaces for indentation.
     
 
 Documentation/Comments
@@ -108,8 +91,6 @@ Classes / Structs
 1) Classes will be initialized with an upper case letter, example: ( ADIOS, NETCDF, PHDF5, Transform, Group, etc. )
 2) Class member variables will use hungarian notation "m_" prefix followed an upper case letter: m_XMLConfig, m_GlobalSize. While member functions will have the same rules as regular functions (e.g. start with an upper case letter).
 3) Reserve structs for public member variables only, Structs should not have member functions, inheritance or private members. Structs will be initialized with an upper case letter and member variables won't use hungarian notation as classes.
-   
-   
 4) Only allow one header and one source file per class ( e.g. class Transport in Transport.h and Transport.cpp), do not define several classes in the same file. 
    Structs are always define in one header file, ( e.g. Attribute in Attribute.h )
    One EXCEPTION: structs with static member variables, which must be defined in a source (*.cpp) file   
@@ -144,12 +125,12 @@ const / constexpr  correctness, macro, and include statements
 4) Use const in function arguments (value or references) if the state of the argument is not changed.
 5) Always use include guards in headers (*.h), Eclipse does it automatically at file creation 
    using the file name. 
-   (e.g. in CADIOS.h start with #ifndef CADIOS_H_ 
-                                #define CADIOS_H_ )
+   (e.g. in ADIOS.h start with #ifndef ADIOS_H_ 
+                               #define ADIOS_H_ )
 6) Only include header files at the beginning of the file (#include <cmath>). Make each *.h file self-contained.
    Don't include the same header file in *.cpp already defined in an included *.h file. 
-   Example: if cmath is included in CADIOS.h, which is included by CADIOS.cpp,
-   then don't include cmath in CADIOS.cpp     
+   Example: if cmath is included in ADIOS.h, which is included by ADIOS.cpp,
+   then don't include cmath in ADIOS.cpp     
 
 
 Avoid mixing C-like equivalents
