@@ -228,19 +228,19 @@ private:
         WriteNameRecord(variable.m_Name, buffer);       // variable name
         buffer.insert(buffer.end(), 2, 0);              // skip path
         const std::uint8_t dataType = GetDataType<T>(); // dataType
-        CopyToBuffer(buffer, &dataType);
+        InsertToBuffer(buffer, &dataType);
         constexpr char no = 'n'; // isDimension
-        CopyToBuffer(buffer, &no);
+        InsertToBuffer(buffer, &no);
 
         // write variable dimensions
         const std::uint8_t dimensions = variable.m_LocalDimensions.size();
-        CopyToBuffer(buffer, &dimensions); // count
+        InsertToBuffer(buffer, &dimensions); // count
         std::uint16_t dimensionsLength =
             27 *
             dimensions; // 27 is from 9 bytes for each: var y/n + local, var
                         // y/n + global dimension, var y/n + global offset,
                         // changed for characteristic
-        CopyToBuffer(buffer, &dimensionsLength); // length
+        InsertToBuffer(buffer, &dimensionsLength); // length
         WriteDimensionsRecord(buffer, variable.m_LocalDimensions,
                               variable.m_GlobalDimensions, variable.m_Offsets,
                               18, true);
@@ -252,7 +252,7 @@ private:
         const std::uint64_t varLength = buffer.size() - varLengthPosition +
                                         variable.PayLoadSize() -
                                         8; // remove its own size
-        CopyToBuffer(buffer, varLengthPosition, &varLength); // length
+        CopyToBufferPosition(buffer, varLengthPosition, &varLength); // length
 
         heap.m_DataAbsolutePosition +=
             buffer.size() - varLengthPosition; // update absolute position to be
@@ -276,19 +276,19 @@ private:
             buffer.insert(buffer.end(), 2, 0); // skip path
 
             const std::uint8_t dataType = GetDataType<T>();
-            CopyToBuffer(buffer, &dataType);
+            InsertToBuffer(buffer, &dataType);
 
             // Characteristics Sets Count in Metadata
             index.Count = 1;
-            CopyToBuffer(buffer, &index.Count);
+            InsertToBuffer(buffer, &index.Count);
         }
         else // update characteristics sets count
         {
             const std::size_t characteristicsSetsCountPosition =
                 15 + variable.m_Name.size();
             ++index.Count;
-            CopyToBuffer(buffer, characteristicsSetsCountPosition,
-                         &index.Count); // test
+            CopyToBufferPosition(buffer, characteristicsSetsCountPosition,
+                                 &index.Count); // test
         }
 
         WriteVariableCharacteristics(variable, stats, buffer);
@@ -310,20 +310,20 @@ private:
 
         // DIMENSIONS
         std::uint8_t characteristicID = characteristic_dimensions;
-        CopyToBuffer(buffer, &characteristicID);
+        InsertToBuffer(buffer, &characteristicID);
         const std::uint8_t dimensions = variable.m_LocalDimensions.size();
 
         if (addLength == true)
         {
             const std::int16_t lengthOfDimensionsCharacteristic =
                 24 * dimensions +
-                3; // 24 = 3 local, global, global offset x 8 bytes/each
-            CopyToBuffer(buffer, &lengthOfDimensionsCharacteristic);
+                3; // 24 = 3 local, global, offset x 8 bytes/each
+            InsertToBuffer(buffer, &lengthOfDimensionsCharacteristic);
         }
 
-        CopyToBuffer(buffer, &dimensions); // count
+        InsertToBuffer(buffer, &dimensions); // count
         const std::uint16_t dimensionsLength = 24 * dimensions;
-        CopyToBuffer(buffer, &dimensionsLength); // length
+        InsertToBuffer(buffer, &dimensionsLength); // length
         WriteDimensionsRecord(buffer, variable.m_LocalDimensions,
                               variable.m_GlobalDimensions, variable.m_Offsets,
                               16, addLength);
@@ -347,15 +347,15 @@ private:
         // END OF CHARACTERISTICS
 
         // Back to characteristics count and length
-        CopyToBuffer(buffer, characteristicsCountPosition,
-                     &characteristicsCounter); // count (1)
+        CopyToBufferPosition(buffer, characteristicsCountPosition,
+                             &characteristicsCounter); // count (1)
         const std::uint32_t characteristicsLength =
             buffer.size() - characteristicsCountPosition - 4 -
             1; // remove its own length (4 bytes) + characteristic counter ( 1
                // byte
                // )
-        CopyToBuffer(buffer, characteristicsCountPosition + 1,
-                     &characteristicsLength); // length
+        CopyToBufferPosition(buffer, characteristicsCountPosition + 1,
+                             &characteristicsLength); // length
     }
 
     /**
@@ -480,12 +480,12 @@ private:
                                    const bool addLength = false) const noexcept
     {
         const std::uint8_t id = characteristicID;
-        CopyToBuffer(buffer, &id);
+        InsertToBuffer(buffer, &id);
 
         if (addLength == true)
         {
             const std::uint16_t lengthOfCharacteristic = sizeof(T); // id
-            CopyToBuffer(buffer, &lengthOfCharacteristic);
+            InsertToBuffer(buffer, &lengthOfCharacteristic);
         }
 
         CopyToBuffer(buffer, &value);
@@ -521,9 +521,7 @@ private:
      * @param buffer
      */
     void FlattenMetadata(BP1MetadataSet &metadataSet,
-                         capsule::STLVector &buffer) const
-        noexcept; ///< sets the metadata buffer in capsule with indices and
-                  /// minifooter
+                         capsule::STLVector &buffer) const noexcept;
 };
 
 } // end namespace format
