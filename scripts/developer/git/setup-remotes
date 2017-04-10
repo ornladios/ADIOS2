@@ -17,20 +17,16 @@ then
   exit 1
 fi
 git remote set-url origin https://github.com/${GH_USERNAME}/adios2.git
-read -p "Setup SSH push access? [(y)/n] " GH_USE_SSH
-GH_USE_SSH="${GH_USE_SSH,,}"
-if [ -z "${GH_USE_SSH}" ]
+
+echo "Testing SSH access to GitHub..."
+ssh -T git@github.com 2>/dev/null
+if [ $? -eq 1 ]
 then
-  echo "  Empty entry.  Using 'y' as default"
-  GH_USE_SSH="y"
-elif [ "${GH_USE_SSH}" != "y" ] && [ "${GH_USE_SSH}" != "n" ]
-then
-  echo "  Invalid entry.  Using 'y' by default"
-  GH_USE_SSH="y"
-fi
-if [ "${GH_USE_SSH}" == "y" ]
-then
+  echo "Success!  Setting up SSH push access to your fork."
   git config remote.origin.pushurl "git@github.com:${GH_USERNAME}/adios2.git"
+else
+  echo "SSH access failed.  Setting up HTTPS push access instead"
+  git config remote.origin.pushurl https://${GH_USERNAME}@github.com/${GH_USERNAME}/adios2.git
 fi
 
 
