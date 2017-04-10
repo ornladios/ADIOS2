@@ -156,7 +156,7 @@ public:
                               const unsigned int nthreads = 1) const noexcept
     {
         // EXPENSIVE part, might want to use threads if large, serial for now
-        CopyToBuffer(heap.m_Data, variable.m_AppValues, variable.TotalSize());
+        InsertToBuffer(heap.m_Data, variable.m_AppValues, variable.TotalSize());
         heap.m_DataAbsolutePosition += variable.PayLoadSize();
     }
 
@@ -224,7 +224,7 @@ private:
         const std::size_t varLengthPosition =
             buffer.size(); // capture initial position for variable length
         buffer.insert(buffer.end(), 8, 0);              // skip var length (8)
-        CopyToBuffer(buffer, &stats.MemberID);          // memberID
+        InsertToBuffer(buffer, &stats.MemberID);        // memberID
         WriteNameRecord(variable.m_Name, buffer);       // variable name
         buffer.insert(buffer.end(), 2, 0);              // skip path
         const std::uint8_t dataType = GetDataType<T>(); // dataType
@@ -270,7 +270,7 @@ private:
                            // attributes index)
         {
             buffer.insert(buffer.end(), 4, 0); // skip var length (4)
-            CopyToBuffer(buffer, &stats.MemberID);
+            InsertToBuffer(buffer, &stats.MemberID);
             buffer.insert(buffer.end(), 2, 0); // skip group name
             WriteNameRecord(variable.m_Name, buffer);
             buffer.insert(buffer.end(), 2, 0); // skip path
@@ -488,7 +488,7 @@ private:
             InsertToBuffer(buffer, &lengthOfCharacteristic);
         }
 
-        CopyToBuffer(buffer, &value);
+        InsertToBuffer(buffer, &value);
         ++characteristicsCounter;
     }
 
