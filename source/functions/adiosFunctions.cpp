@@ -633,6 +633,23 @@ std::vector<int> CSVToVectorInt(const std::string csv)
     return numbers;
 }
 
+std::string DimsToCSV(const std::vector<std::size_t> &dims)
+{
+    std::string dimsCSV;
+
+    for (const auto dim : dims)
+    {
+        dimsCSV += std::to_string(dim) + ",";
+    }
+
+    if (dimsCSV.empty() == false)
+    {
+        dimsCSV.pop_back();
+    }
+
+    return dimsCSV;
+}
+
 void ConvertUint64VectorToSizetVector(const std::vector<std::uint64_t> &in,
                                       std::vector<std::size_t> &out)
 {

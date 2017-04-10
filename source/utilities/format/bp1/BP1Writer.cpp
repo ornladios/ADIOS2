@@ -9,12 +9,11 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include "utilities/format/bp1/BP1Writer.h"
+
 #include <string>
 #include <vector>
 /// \endcond
-
-#include "core/Profiler.h"
-#include "format/BP1Writer.h"
 
 namespace adios
 {
@@ -71,8 +70,8 @@ void BP1Writer::WriteProcessGroupIndex(
     CopyToBuffer(dataBuffer, &metadataSet.TimeStep);
 
     // offset to pg in data in metadata which is the current absolute position
-    CopyToBuffer(metadataBuffer,
-                 reinterpret_cast<uint64_t *>(&heap.m_DataAbsolutePosition));
+    CopyToBuffer(metadataBuffer, reinterpret_cast<std::uint64_t *>(
+                                     &heap.m_DataAbsolutePosition));
 
     // Back to writing metadata pg index length (length of group)
     const std::uint16_t metadataPGIndexLength =
@@ -121,24 +120,18 @@ void BP1Writer::Close(BP1MetadataSet &metadataSet, capsule::STLVector &heap,
                       Transport &transport, bool &isFirstClose,
                       const bool doAggregation) const noexcept
 {
-    if (metadataSet.Log.m_IsActive == true)
-    {
-        metadataSet.Log.m_Timers[0].SetInitialTime();
-    }
+    if (metadataSet.Log.IsActive == true)
+        metadataSet.Log.Timers[0].SetInitialTime();
 
     if (isFirstClose == true)
     {
         if (metadataSet.DataPGIsOpen == true)
-        {
             FlattenData(metadataSet, heap);
-        }
 
         FlattenMetadata(metadataSet, heap);
 
-        if (metadataSet.Log.m_IsActive == true)
-        {
-            metadataSet.Log.m_Timers[0].SetInitialTime();
-        }
+        if (metadataSet.Log.IsActive == true)
+            metadataSet.Log.Timers[0].SetInitialTime();
 
         if (doAggregation ==
             true) // N-to-M  where 1 <= M <= N-1, might need a new
@@ -165,29 +158,28 @@ std::string BP1Writer::GetRankProfilingLog(
     const int rank, const BP1MetadataSet &metadataSet,
     const std::vector<std::shared_ptr<Transport>> &transports) const noexcept
 {
-    auto lf_WriterTimer = [](std::string &rankLog, const Timer &timer) {
-        rankLog += "'" + timer.Process + "_" + timer.GetUnits() + "': " +
-                   std::to_string(timer.ProcessTime) + ", ";
+    auto lf_WriterTimer = [](std::string &rankLog,
+                             const profiling::Timer &timer) {
+        rankLog += "'" + timer.m_Process + "_" + timer.GetUnits() + "': " +
+                   std::to_string(timer.m_ProcessTime) + ", ";
     };
 
     // prepare string dictionary per rank
     std::string rankLog("'rank_" + std::to_string(rank) + "': { ");
 
     auto &profiler = metadataSet.Log;
-    rankLog += "'bytes': " + std::to_string(profiler.m_TotalBytes[0]) + ", ";
-    lf_WriterTimer(rankLog, profiler.m_Timers[0]);
+    rankLog += "'bytes': " + std::to_string(profiler.TotalBytes[0]) + ", ";
+    lf_WriterTimer(rankLog, profiler.Timers[0]);
 
     for (unsigned int t = 0; t < transports.size(); ++t)
     {
-        auto &timers = transports[t]->m_Profiler.m_Timers;
+        auto &timers = transports[t]->m_Profiler.Timers;
 
         rankLog += "'transport_" + std::to_string(t) + "': { ";
         rankLog += "'lib': " + transports[t]->m_Type + ", ";
 
         for (unsigned int i = 0; i < 3; ++i)
-        {
             lf_WriterTimer(rankLog, timers[i]);
-        }
 
         rankLog += "}, ";
     }
@@ -206,7 +198,8 @@ void BP1Writer::WriteDimensionsRecord(
     auto lf_WriteFlaggedDim = [](std::vector<char> &buffer, const char no,
                                  const std::size_t dimension) {
         CopyToBuffer(buffer, &no);
-        CopyToBuffer(buffer, reinterpret_cast<const uint64_t *>(&dimension));
+        CopyToBuffer(buffer,
+                     reinterpret_cast<const std::uint64_t *>(&dimension));
     };
 
     // BODY Starts here
@@ -227,7 +220,7 @@ void BP1Writer::WriteDimensionsRecord(
         {
             for (const auto &localDimension : localDimensions)
             {
-                CopyToBuffer(buffer, reinterpret_cast<const uint64_t *>(
+                CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(
                                          &localDimension));
                 buffer.insert(buffer.end(), skip, 0);
             }
@@ -237,8 +230,7 @@ void BP1Writer::WriteDimensionsRecord(
     {
         if (addType == true)
         {
-            constexpr char no =
-                'n'; // dimension format unsigned int value for now
+            constexpr char no = 'n';
             for (unsigned int d = 0; d < localDimensions.size(); ++d)
             {
                 lf_WriteFlaggedDim(buffer, no, localDimensions[d]);
@@ -250,11 +242,11 @@ void BP1Writer::WriteDimensionsRecord(
         {
             for (unsigned int d = 0; d < localDimensions.size(); ++d)
             {
-                CopyToBuffer(buffer, reinterpret_cast<const uint64_t *>(
+                CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(
                                          &localDimensions[d]));
-                CopyToBuffer(buffer, reinterpret_cast<const uint64_t *>(
+                CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(
                                          &globalDimensions[d]));
-                CopyToBuffer(buffer, reinterpret_cast<const uint64_t *>(
+                CopyToBuffer(buffer, reinterpret_cast<const std::uint64_t *>(
                                          &globalOffsets[d]));
             }
         }
@@ -319,6 +311,7 @@ void BP1Writer::FlattenMetadata(BP1MetadataSet &metadataSet,
     auto lf_IndexCountLength =
         [](std::unordered_map<std::string, BP1Index> &indices,
            std::uint32_t &count, std::uint64_t &length) {
+
             count = indices.size();
             length = 0;
             for (auto &indexPair : indices) // set each index length
@@ -402,10 +395,8 @@ void BP1Writer::FlattenMetadata(BP1MetadataSet &metadataSet,
 
     heap.m_DataAbsolutePosition += footerSize;
 
-    if (metadataSet.Log.m_IsActive == true)
-    {
-        metadataSet.Log.m_TotalBytes.push_back(heap.m_DataAbsolutePosition);
-    }
+    if (metadataSet.Log.IsActive == true)
+        metadataSet.Log.TotalBytes.push_back(heap.m_DataAbsolutePosition);
 }
 
 } // end namespace format

@@ -189,6 +189,13 @@ std::vector<int> CSVToVectorInt(const std::string csv);
 void ConvertUint64VectorToSizetVector(const std::vector<std::uint64_t> &in,
                                       std::vector<std::size_t> &out);
 /**
+ * Converts a vector of dimensions to a CSV string
+ * @param dims vector of dimensions
+ * @return comma separate value (CSV)
+ */
+std::string DimsToCSV(const std::vector<std::size_t> &dims);
+
+/**
  * Common strategy to check for heap buffer allocation for data and metadata
  * typically calculated in Write
  * @param newSize new data size

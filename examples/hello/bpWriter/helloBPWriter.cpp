@@ -18,8 +18,10 @@
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
-    int rank;
+    int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     const bool adiosDebug = true;
     adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::INFO, adiosDebug);
 
@@ -49,8 +51,10 @@ int main(int argc, char *argv[])
         // Define variable and local size
         adios::Variable<double> &ioMyDoubles =
             adios.DefineVariable<double>("myDoubles", {Nx});
+
         adios::Variable<float> &ioMyMatrix =
             adios.DefineVariable<float>("myMatrix", {rows, columns});
+
         adios::Variable<float> &ioMyMatrix2 =
             adios.DefineVariable<float>("myMatrix2", {rows, columns});
 
@@ -66,8 +70,7 @@ int main(int argc, char *argv[])
         // Create engine smart pointer due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
         // Writer
-        auto bpWriter = adios.Open("myDoubles.bp", "w", bpWriterSettings,
-                                   adios::IOMode::COLLECTIVE);
+        auto bpWriter = adios.Open("myDoubles.bp", "w", bpWriterSettings);
 
         if (bpWriter == nullptr)
             throw std::ios_base::failure(

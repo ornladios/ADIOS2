@@ -26,7 +26,7 @@ namespace adios
 
 struct TransformData
 {
-    Transform &Operation; ///< pointer to transform object
+    Transform &Operation; ///< from ADIOS.DefineTransform
     std::map<std::string, std::string> Parameters; ///< transforms parameters
     std::vector<std::size_t> Size; ///< vector that carries the sizes after a
                                    /// transformation is applied
@@ -51,13 +51,13 @@ public:
     /// Transforms[1]. Pointer used as
     /// reference (no memory management).
 
-    Variable<T>(const std::string name, const Dims dimensions,
-                const Dims globalDimensions, const Dims globalOffsets,
+    Variable<T>(const std::string &name, const Dims localDimensions,
+                const Dims globalDimensions, const Dims offsets,
                 const bool debugMode)
-    : VariableBase(name, GetType<T>(), sizeof(T), dimensions, globalDimensions,
-                   globalOffsets, debugMode)
+    : VariableBase(name, GetType<T>(), sizeof(T), localDimensions,
+                   globalDimensions, offsets, debugMode)
     {
-        if (m_Dimensions == Dims{1})
+        if (m_LocalDimensions == Dims{1})
             m_IsScalar = true;
     }
 

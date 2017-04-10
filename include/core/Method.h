@@ -44,10 +44,12 @@ class Method
 public:
     const std::string m_Name;       ///< Method name (as defined in XML)
     const bool m_DebugMode = false; ///< true: on, throws exceptions and do
-    /// additional checks, false: off, faster, but
+                                    /// additional checks, false: off, faster
     /// unsafe
-    int m_nThreads;
-    std::string m_Type;                              ///< Method's engine type
+    std::string m_Type; ///< Method's engine type
+    unsigned int m_nThreads = 1;
+    adios::IOMode m_IOMode = adios::IOMode::INDEPENDENT;
+
     std::map<std::string, std::string> m_Parameters; ///< method parameters
     std::vector<std::map<std::string, std::string>>
         m_TransportParameters; ///< each is a separate Transport containing
@@ -59,16 +61,16 @@ public:
      * @param name is a label that can be used in the config file to set up the
      * method at runtime
      */
-    Method(std::string name, bool debugMode = false);
+    Method(const std::string name, const bool debugMode = false);
 
-    ~Method() = default;
+    ~Method();
 
     /** Check if the method was defined by the user in the config file.
      * @return true if the method was user-defined, false otherwise when method
      * is
      * set with default parameters
      */
-    bool isUserDefined();
+    bool IsUserDefined();
 
     /**
      * Define the engine type
@@ -88,9 +90,9 @@ public:
      * Set this parameter like you set it for OpenMP, i.e. count one thread for
      * the main process that calls
      * ADIOS functions.
-     * @param number of threads, minimum 1 is required
+     * @param nThreads, minimum 1 is required
      */
-    void AllowThreads(const int nThreads);
+    void AllowThreads(const unsigned int nThreads);
 
     /**
      * Sets parameters for the method in "parameter=value" format

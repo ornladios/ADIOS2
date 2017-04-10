@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "format/BP1.h"
+#include "utilities/format/bp1/BP1Base.h"
 #include "functions/adiosFunctions.h"
 
 namespace adios
@@ -16,7 +16,7 @@ namespace adios
 namespace format
 {
 
-std::string BP1::GetDirectoryName(const std::string name) const noexcept
+std::string BP1Base::GetDirectoryName(const std::string name) const noexcept
 {
     std::string directory;
 
@@ -31,8 +31,9 @@ std::string BP1::GetDirectoryName(const std::string name) const noexcept
     return directory;
 }
 
-void BP1::OpenRankFiles(const std::string name, const std::string accessMode,
-                        Transport &file) const
+// this should go outside
+void BP1Base::OpenRankFiles(const std::string name,
+                            const std::string accessMode, Transport &file) const
 {
     const std::string directory = GetDirectoryName(name);
     CreateDirectory(
@@ -41,35 +42,25 @@ void BP1::OpenRankFiles(const std::string name, const std::string accessMode,
     std::string fileName(directory + "/" + directory + "." +
                          std::to_string(file.m_RankMPI));
     file.Open(fileName, accessMode); // opens a file transport under
-                                     // name.bp.dir/name.bp.rank reserve that
-                                     // location fro writing
+                                     // name.bp/name.bp.rank reserve that
+                                     // location for writing
 }
 
-std::vector<std::uint8_t> BP1::GetMethodIDs(
+std::vector<std::uint8_t> BP1Base::GetMethodIDs(
     const std::vector<std::shared_ptr<Transport>> &transports) const noexcept
 {
     auto lf_GetMethodID = [](const std::string method) -> std::uint8_t {
         int id = METHOD_UNKNOWN;
         if (method == "NULL")
-        {
             id = METHOD_NULL;
-        }
         else if (method == "POSIX")
-        {
             id = METHOD_POSIX;
-        }
         else if (method == "FStream")
-        {
             id = METHOD_FSTREAM;
-        }
         else if (method == "File")
-        {
             id = METHOD_FILE;
-        }
         else if (method == "MPI")
-        {
             id = METHOD_MPI;
-        }
 
         return id;
     };
@@ -78,9 +69,7 @@ std::vector<std::uint8_t> BP1::GetMethodIDs(
     methodIDs.reserve(transports.size());
 
     for (const auto &transport : transports)
-    {
         methodIDs.push_back(lf_GetMethodID(transport->m_Type));
-    }
 
     return methodIDs;
 }

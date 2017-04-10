@@ -17,13 +17,13 @@
 namespace adios
 {
 
-Engine::Engine(ADIOS &adios, std::string engineType, std::string name,
-               std::string accessMode, MPI_Comm mpiComm, const Method &method,
-               bool debugMode, unsigned int nthreads, std::string endMessage)
-: m_MPIComm(mpiComm), m_EngineType(std::move(engineType)),
-  m_Name(std::move(name)), m_AccessMode(std::move(accessMode)),
-  m_Method(method), m_ADIOS(adios), m_DebugMode(debugMode),
-  m_nThreads(nthreads), m_EndMessage(std::move(endMessage))
+Engine::Engine(ADIOS &adios, const std::string engineType,
+               const std::string &name, const std::string accessMode,
+               MPI_Comm mpiComm, const Method &method,
+               const std::string endMessage)
+: m_MPIComm(mpiComm), m_EngineType(engineType), m_Name(name),
+  m_AccessMode(accessMode), m_Method(method), m_ADIOS(adios),
+  m_DebugMode(m_Method.m_DebugMode), m_EndMessage(endMessage)
 {
     if (m_DebugMode == true)
     {
@@ -41,7 +41,7 @@ Engine::Engine(ADIOS &adios, std::string engineType, std::string name,
 
 void Engine::SetCallBack(std::function<void(const void *, std::string,
                                             std::string, std::string, Dims)>
-                         /*callback*/)
+                             callback)
 {
 }
 
@@ -178,95 +178,101 @@ void Engine::AdvanceAsync(
 void Engine::Close(const int /*transportIndex*/) {}
 
 // READ
-Variable<void> *Engine::InquireVariable(const std::string /*name*/,
+Variable<void> *Engine::InquireVariable(const std::string & /*name*/,
                                         const bool /*readIn*/)
 {
     return nullptr;
 }
-Variable<char> *Engine::InquireVariableChar(const std::string /*name*/,
+Variable<char> *Engine::InquireVariableChar(const std::string & /*name*/,
                                             const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<unsigned char> *
-Engine::InquireVariableUChar(const std::string /*name*/, const bool /*readIn*/)
+Engine::InquireVariableUChar(const std::string & /*name*/,
+                             const bool /*readIn*/)
 {
     return nullptr;
 }
-Variable<short> *Engine::InquireVariableShort(const std::string /*name*/,
+Variable<short> *Engine::InquireVariableShort(const std::string & /*name*/,
                                               const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<unsigned short> *
-Engine::InquireVariableUShort(const std::string /*name*/, const bool /*readIn*/)
+Engine::InquireVariableUShort(const std::string & /*name*/,
+                              const bool /*readIn*/)
 {
     return nullptr;
 }
-Variable<int> *Engine::InquireVariableInt(const std::string /*name*/,
+Variable<int> *Engine::InquireVariableInt(const std::string & /*name*/,
                                           const bool /*readIn*/)
 {
     return nullptr;
 }
-Variable<unsigned int> *Engine::InquireVariableUInt(const std::string /*name*/,
-                                                    const bool /*readIn*/)
+Variable<unsigned int> *
+Engine::InquireVariableUInt(const std::string & /*name*/, const bool /*readIn*/)
 {
     return nullptr;
 }
-Variable<long int> *Engine::InquireVariableLInt(const std::string /*name*/,
+Variable<long int> *Engine::InquireVariableLInt(const std::string & /*name*/,
                                                 const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<unsigned long int> *
-Engine::InquireVariableULInt(const std::string /*name*/, const bool /*readIn*/)
+Engine::InquireVariableULInt(const std::string & /*name*/,
+                             const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<long long int> *
-Engine::InquireVariableLLInt(const std::string /*name*/, const bool /*readIn*/)
+Engine::InquireVariableLLInt(const std::string & /*name*/,
+                             const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<unsigned long long int> *
-Engine::InquireVariableULLInt(const std::string /*name*/, const bool /*readIn*/)
+Engine::InquireVariableULLInt(const std::string & /*name*/,
+                              const bool /*readIn*/)
 {
     return nullptr;
 }
-Variable<float> *Engine::InquireVariableFloat(const std::string /*name*/,
+Variable<float> *Engine::InquireVariableFloat(const std::string & /*name*/,
                                               const bool /*readIn*/)
 {
     return nullptr;
 }
-Variable<double> *Engine::InquireVariableDouble(const std::string /*name*/,
+Variable<double> *Engine::InquireVariableDouble(const std::string & /*name*/,
                                                 const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<long double> *
-Engine::InquireVariableLDouble(const std::string /*name*/,
+Engine::InquireVariableLDouble(const std::string & /*name*/,
                                const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<std::complex<float>> *
-Engine::InquireVariableCFloat(const std::string /*name*/, const bool /*readIn*/)
+Engine::InquireVariableCFloat(const std::string & /*name*/,
+                              const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<std::complex<double>> *
-Engine::InquireVariableCDouble(const std::string /*name*/,
+Engine::InquireVariableCDouble(const std::string & /*name*/,
                                const bool /*readIn*/)
 {
     return nullptr;
 }
 Variable<std::complex<long double>> *
-Engine::InquireVariableCLDouble(const std::string /*name*/,
+Engine::InquireVariableCLDouble(const std::string & /*name*/,
                                 const bool /*readIn*/)
 {
     return nullptr;
 }
-VariableCompound *Engine::InquireVariableCompound(const std::string /*name*/,
+VariableCompound *Engine::InquireVariableCompound(const std::string & /*name*/,
                                                   const bool /*readIn*/)
 {
     return nullptr;
@@ -287,11 +293,11 @@ void Engine::InitParameters() {}
 void Engine::InitTransports() {}
 
 void Engine::CheckParameter(
-    const std::map<std::string, std::string>::const_iterator itParam,
+    const std::map<std::string, std::string>::const_iterator itParameter,
     const std::map<std::string, std::string> &parameters,
     const std::string parameterName, const std::string hint) const
 {
-    if (itParam == parameters.end())
+    if (itParameter == parameters.end())
     {
         {
             throw std::invalid_argument("ERROR: parameter name " +
@@ -303,7 +309,9 @@ void Engine::CheckParameter(
 bool Engine::TransportNamesUniqueness() const
 {
     auto lf_CheckTransportsType =
-        [&](const std::set<std::string> &specificType) -> bool {
+        [&](const std::set<std::string> &specificType) -> bool
+
+    {
         std::set<std::string> transportNames;
 
         for (const auto &parameters : m_Method.m_TransportParameters)

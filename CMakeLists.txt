@@ -52,20 +52,20 @@ include(CMakeDependentOption)
 # Setup shared library / -fPIC stuff
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
 cmake_dependent_option(ADIOS_BUILD_SHARED_LIBS
-  "Whether or not to build shared libraries" ON
+  "Whether or not to build shared libraries" OFF
   "SHARED_LIBS_SUPPORTED" OFF)
 if(SHARED_LIBS_SUPPORTED)
   cmake_dependent_option(ADIOS_ENABLE_PIC
-    "Build with Position Independent Code" ON
+    "Build with Position Independent Code" OFF
     "NOT ADIOS_BUILD_SHARED_LIBS" ON)
 endif()
 set(BUILD_SHARED_LIBS ${ADIOS_BUILD_SHARED_LIBS})
 
 if(ADIOS_ENABLE_PIC)
-  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 endif()
 
-option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" OFF)
+option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" ON)
 if(ADIOS_USE_MPI)
   # Workaround for OpenMPI forcing the link of C++ bindings
   add_definitions(-DOMPI_SKIP_MPICXX)

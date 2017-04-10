@@ -20,20 +20,16 @@
 namespace adios
 {
 
-BPFileWriter::BPFileWriter(ADIOS &adios, std::string name,
-                           const std::string &accessMode, MPI_Comm mpiComm,
-                           const Method &method, const IOMode /*iomode*/,
-                           const float /*timeout_sec*/, const bool debugMode,
-                           const unsigned int nthreads)
-: Engine(adios, "BPFileWriter", std::move(name), accessMode, mpiComm, method,
-         debugMode, nthreads,
+BPFileWriter::BPFileWriter(ADIOS &adios, const std::string &name,
+                           const std::string accessMode, MPI_Comm mpiComm,
+                           const Method &method)
+: Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method,
          " BPFileWriter constructor (or call to ADIOS Open).\n"),
   m_Buffer(accessMode, m_RankMPI, m_DebugMode),
-  m_BP1Aggregator(m_MPIComm, debugMode),
+  m_BP1Aggregator(m_MPIComm, m_DebugMode),
   m_MaxBufferSize(m_Buffer.m_Data.max_size())
 {
-    m_MetadataSet.TimeStep =
-        1; // starting at one to be compatible with ADIOS1.x
+    m_MetadataSet.TimeStep = 1; // to be compatible with ADIOS1.x
     Init();
 }
 
@@ -142,106 +138,107 @@ void BPFileWriter::Write(VariableCompound & /*variable*/,
 }
 
 // String version
-void BPFileWriter::Write(const std::string variableName, const char *values)
+void BPFileWriter::Write(const std::string &variableName, const char *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<char>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const unsigned char *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<unsigned char>(variableName),
                         values);
 }
 
-void BPFileWriter::Write(const std::string variableName, const short *values)
+void BPFileWriter::Write(const std::string &variableName, const short *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<short>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const unsigned short *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<unsigned short>(variableName),
                         values);
 }
 
-void BPFileWriter::Write(const std::string variableName, const int *values)
+void BPFileWriter::Write(const std::string &variableName, const int *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<int>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const unsigned int *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<unsigned int>(variableName),
                         values);
 }
 
-void BPFileWriter::Write(const std::string variableName, const long int *values)
+void BPFileWriter::Write(const std::string &variableName,
+                         const long int *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<long int>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const unsigned long int *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<unsigned long int>(variableName),
                         values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const long long int *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<long long int>(variableName),
                         values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const unsigned long long int *values)
 {
     WriteVariableCommon(
         m_ADIOS.GetVariable<unsigned long long int>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName, const float *values)
+void BPFileWriter::Write(const std::string &variableName, const float *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<float>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName, const double *values)
+void BPFileWriter::Write(const std::string &variableName, const double *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<double>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const long double *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<long double>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const std::complex<float> *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<std::complex<float>>(variableName),
                         values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const std::complex<double> *values)
 {
     WriteVariableCommon(m_ADIOS.GetVariable<std::complex<double>>(variableName),
                         values);
 }
 
-void BPFileWriter::Write(const std::string variableName,
+void BPFileWriter::Write(const std::string &variableName,
                          const std::complex<long double> *values)
 {
     WriteVariableCommon(
         m_ADIOS.GetVariable<std::complex<long double>>(variableName), values);
 }
 
-void BPFileWriter::Write(const std::string /*variableName*/,
+void BPFileWriter::Write(const std::string & /*variableName*/,
                          const void * /*values*/) // Compound type
 {
 }
@@ -270,7 +267,7 @@ void BPFileWriter::Close(const int transportIndex)
                           false); // false: not using aggregation for now
     }
 
-    if (m_MetadataSet.Log.m_IsActive == true)
+    if (m_MetadataSet.Log.IsActive == true)
     {
         bool allClose = true;
         for (auto &transport : m_Transports)
@@ -353,33 +350,28 @@ void BPFileWriter::InitParameters()
     auto itProfile = m_Method.m_Parameters.find("profile_units");
     if (itProfile != m_Method.m_Parameters.end())
     {
-        auto &profiler = m_MetadataSet.Log;
+        auto &log = m_MetadataSet.Log;
 
         if (itProfile->second == "mus" || itProfile->second == "microseconds")
         {
-            profiler.m_Timers.emplace_back("buffering",
-                                           Support::Resolutions::mus);
+            log.Timers.emplace_back("buffering", Support::Resolutions::mus);
         }
         else if (itProfile->second == "ms" ||
                  itProfile->second == "milliseconds")
         {
-            profiler.m_Timers.emplace_back("buffering",
-                                           Support::Resolutions::ms);
+            log.Timers.emplace_back("buffering", Support::Resolutions::ms);
         }
         else if (itProfile->second == "s" || itProfile->second == "seconds")
         {
-            profiler.m_Timers.emplace_back("buffering",
-                                           Support::Resolutions::s);
+            log.Timers.emplace_back("buffering", Support::Resolutions::s);
         }
         else if (itProfile->second == "min" || itProfile->second == "minutes")
         {
-            profiler.m_Timers.emplace_back("buffering",
-                                           Support::Resolutions::m);
+            log.Timers.emplace_back("buffering", Support::Resolutions::m);
         }
         else if (itProfile->second == "h" || itProfile->second == "hours")
         {
-            profiler.m_Timers.emplace_back("buffering",
-                                           Support::Resolutions::h);
+            log.Timers.emplace_back("buffering", Support::Resolutions::h);
         }
         else
         {
@@ -392,7 +384,7 @@ void BPFileWriter::InitParameters()
             }
         }
 
-        profiler.m_IsActive = true;
+        log.IsActive = true;
     }
 }
 
@@ -527,9 +519,9 @@ void BPFileWriter::InitTransports()
 
 void BPFileWriter::InitProcessGroup()
 {
-    if (m_MetadataSet.Log.m_IsActive == true)
+    if (m_MetadataSet.Log.IsActive == true)
     {
-        m_MetadataSet.Log.m_Timers[0].SetInitialTime();
+        m_MetadataSet.Log.Timers[0].SetInitialTime();
     }
 
     if (m_AccessMode == "a")
@@ -540,9 +532,9 @@ void BPFileWriter::InitProcessGroup()
 
     WriteProcessGroupIndex();
 
-    if (m_MetadataSet.Log.m_IsActive == true)
+    if (m_MetadataSet.Log.IsActive == true)
     {
-        m_MetadataSet.Log.m_Timers[0].SetTime();
+        m_MetadataSet.Log.Timers[0].SetTime();
     }
 }
 

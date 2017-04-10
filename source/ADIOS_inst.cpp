@@ -17,97 +17,99 @@ namespace adios
 // -----------------------------------------------------------------------------
 
 template <>
-std::map<unsigned int, Variable<char>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<char>> &ADIOS::GetVariableMap()
 {
     return m_Char;
 }
 
 template <>
-std::map<unsigned int, Variable<unsigned char>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<unsigned char>> &ADIOS::GetVariableMap()
 {
     return m_UChar;
 }
 
 template <>
-std::map<unsigned int, Variable<short>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<short>> &ADIOS::GetVariableMap()
 {
     return m_Short;
 }
 
 template <>
-std::map<unsigned int, Variable<unsigned short>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<unsigned short>> &ADIOS::GetVariableMap()
 {
     return m_UShort;
 }
 
 template <>
-std::map<unsigned int, Variable<int>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<int>> &ADIOS::GetVariableMap()
 {
     return m_Int;
 }
 
 template <>
-std::map<unsigned int, Variable<unsigned int>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<unsigned int>> &ADIOS::GetVariableMap()
 {
     return m_UInt;
 }
 
 template <>
-std::map<unsigned int, Variable<long int>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<long int>> &ADIOS::GetVariableMap()
 {
     return m_LInt;
 }
 
 template <>
-std::map<unsigned int, Variable<unsigned long int>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<unsigned long int>> &ADIOS::GetVariableMap()
 {
     return m_ULInt;
 }
 
 template <>
-std::map<unsigned int, Variable<long long int>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<long long int>> &ADIOS::GetVariableMap()
 {
     return m_LLInt;
 }
 
 template <>
-std::map<unsigned int, Variable<unsigned long long int>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<unsigned long long int>> &
+ADIOS::GetVariableMap()
 {
     return m_ULLInt;
 }
 
 template <>
-std::map<unsigned int, Variable<float>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<float>> &ADIOS::GetVariableMap()
 {
     return m_Float;
 }
 
 template <>
-std::map<unsigned int, Variable<double>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<double>> &ADIOS::GetVariableMap()
 {
     return m_Double;
 }
 
 template <>
-std::map<unsigned int, Variable<long double>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<long double>> &ADIOS::GetVariableMap()
 {
     return m_LDouble;
 }
 
 template <>
-std::map<unsigned int, Variable<std::complex<float>>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<std::complex<float>>> &ADIOS::GetVariableMap()
 {
     return m_CFloat;
 }
 
 template <>
-std::map<unsigned int, Variable<std::complex<double>>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<std::complex<double>>> &ADIOS::GetVariableMap()
 {
     return m_CDouble;
 }
 
 template <>
-std::map<unsigned int, Variable<std::complex<long double>>> &ADIOS::GetVarMap()
+std::map<unsigned int, Variable<std::complex<long double>>> &
+ADIOS::GetVariableMap()
 {
     return m_CLDouble;
 }
@@ -118,16 +120,17 @@ std::map<unsigned int, Variable<std::complex<long double>>> &ADIOS::GetVarMap()
 
 template <typename T>
 Variable<T> &
-ADIOS::DefineVariable(const std::string &name, const Dims dimensions,
-                      const Dims globalDimensions, const Dims globalOffsets)
+ADIOS::DefineVariable(const std::string &name, const Dims globalDimensions,
+                      const Dims localDimensions, const Dims offsets)
 {
-    auto &varMap = GetVarMap<T>();
-    CheckVariableInput(name, dimensions);
-    const unsigned int size = varMap.size();
-    varMap.emplace(size, Variable<T>(name, dimensions, globalDimensions,
-                                     globalOffsets, m_DebugMode));
+    auto &variableMap = GetVariableMap<T>();
+    CheckVariableInput(name, globalDimensions);
+    const unsigned int size = variableMap.size();
+    variableMap.emplace(size,
+                        Variable<T>(name, globalDimensions, localDimensions,
+                                    offsets, m_DebugMode));
     m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
-    return varMap.at(size);
+    return variableMap.at(size);
 }
 
 #define define_template_instantiation(T)                                       \
@@ -154,7 +157,7 @@ unsigned int ADIOS::GetVariableIndex(const std::string &name)
 template <typename T>
 Variable<T> &ADIOS::GetVariable(const std::string &name)
 {
-    return GetVarMap<T>().at(GetVariableIndex<T>(name));
+    return GetVariableMap<T>().at(GetVariableIndex<T>(name));
 }
 
 #define define_template_instatiation(T)                                        \

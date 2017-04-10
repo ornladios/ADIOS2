@@ -11,12 +11,9 @@
 #ifndef BPFILEWRITER_H_
 #define BPFILEWRITER_H_
 
-#include "core/Engine.h"
-#include "format/BP1Aggregator.h"
-#include "format/BP1Writer.h"
-
-// supported capsules
 #include "capsule/heap/STLVector.h"
+#include "core/Engine.h"
+#include "utilities/format/bp1/BP1.h"
 
 namespace adios
 {
@@ -34,12 +31,10 @@ public:
      * @param method
      * @param debugMode
      */
-    BPFileWriter(ADIOS &adios, std::string name, const std::string &accessMode,
-                 MPI_Comm mpiComm, const Method &method,
-                 const IOMode iomode = IOMode::INDEPENDENT,
-                 const float timeout_sec = 0., const bool debugMode = false,
-                 const unsigned int nthreads = 1);
 
+    BPFileWriter(ADIOS &adios, const std::string &name,
+                 const std::string accessMode, MPI_Comm mpiComm,
+                 const Method &method);
     ~BPFileWriter();
 
     void Write(Variable<char> &variable, const char *values);
@@ -66,27 +61,28 @@ public:
                const std::complex<long double> *values);
     void Write(VariableCompound &variable, const void *values);
 
-    void Write(const std::string variableName, const char *values);
-    void Write(const std::string variableName, const unsigned char *values);
-    void Write(const std::string variableName, const short *values);
-    void Write(const std::string variableName, const unsigned short *values);
-    void Write(const std::string variableName, const int *values);
-    void Write(const std::string variableName, const unsigned int *values);
-    void Write(const std::string variableName, const long int *values);
-    void Write(const std::string variableName, const unsigned long int *values);
-    void Write(const std::string variableName, const long long int *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName, const char *values);
+    void Write(const std::string &variableName, const unsigned char *values);
+    void Write(const std::string &variableName, const short *values);
+    void Write(const std::string &variableName, const unsigned short *values);
+    void Write(const std::string &variableName, const int *values);
+    void Write(const std::string &variableName, const unsigned int *values);
+    void Write(const std::string &variableName, const long int *values);
+    void Write(const std::string &variableName,
+               const unsigned long int *values);
+    void Write(const std::string &variableName, const long long int *values);
+    void Write(const std::string &variableName,
                const unsigned long long int *values);
-    void Write(const std::string variableName, const float *values);
-    void Write(const std::string variableName, const double *values);
-    void Write(const std::string variableName, const long double *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName, const float *values);
+    void Write(const std::string &variableName, const double *values);
+    void Write(const std::string &variableName, const long double *values);
+    void Write(const std::string &variableName,
                const std::complex<float> *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName,
                const std::complex<double> *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName,
                const std::complex<long double> *values);
-    void Write(const std::string variableName, const void *values);
+    void Write(const std::string &variableName, const void *values);
 
     void Advance(float timeout_sec = 0.0);
 
@@ -120,8 +116,8 @@ private:
     float m_GrowthFactor = 1.5;  ///< capsule memory growth factor, new_memory =
                                  /// m_GrowthFactor * current_memory
 
-    bool m_TransportFlush =
-        false; ///< true: transport flush happened, buffer must be reset
+    bool m_TransportFlush = false; ///< true: due to buffer overflow
+
     bool m_CloseProcessGroup =
         false; ///< set to true if advance is called, this
     /// prevents flattening the data and metadata
@@ -143,8 +139,8 @@ private:
     template <class T>
     void WriteVariableCommon(Variable<T> &variable, const T *values)
     {
-        if (m_MetadataSet.Log.m_IsActive == true)
-            m_MetadataSet.Log.m_Timers[0].SetInitialTime();
+        if (m_MetadataSet.Log.IsActive == true)
+            m_MetadataSet.Log.Timers[0].SetInitialTime();
 
         // set variable
         variable.m_AppValues = values;
@@ -181,8 +177,8 @@ private:
         variable.m_AppValues =
             nullptr; // setting pointer to null as not needed after write
 
-        if (m_MetadataSet.Log.m_IsActive == true)
-            m_MetadataSet.Log.m_Timers[0].SetTime();
+        if (m_MetadataSet.Log.IsActive == true)
+            m_MetadataSet.Log.Timers[0].SetTime();
     }
 };
 

@@ -38,11 +38,9 @@ public:
      * @param method
      * @param debugMode
      */
-    ADIOS1Writer(ADIOS &adios, const std::string name,
+    ADIOS1Writer(ADIOS &adios, const std::string &name,
                  const std::string accessMode, MPI_Comm mpiComm,
-                 const Method &method, const IOMode iomode,
-                 const float timeout_sec, const bool debugMode = false,
-                 const unsigned int nthreads = 1);
+                 const Method &method);
 
     ~ADIOS1Writer();
 
@@ -70,29 +68,30 @@ public:
                const std::complex<long double> *values);
     void Write(VariableCompound &variable, const void *values);
 
-    void Write(const std::string variableName, const char *values);
-    void Write(const std::string variableName, const unsigned char *values);
-    void Write(const std::string variableName, const short *values);
-    void Write(const std::string variableName, const unsigned short *values);
-    void Write(const std::string variableName, const int *values);
-    void Write(const std::string variableName, const unsigned int *values);
-    void Write(const std::string variableName, const long int *values);
-    void Write(const std::string variableName, const unsigned long int *values);
-    void Write(const std::string variableName, const long long int *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName, const char *values);
+    void Write(const std::string &variableName, const unsigned char *values);
+    void Write(const std::string &variableName, const short *values);
+    void Write(const std::string &variableName, const unsigned short *values);
+    void Write(const std::string &variableName, const int *values);
+    void Write(const std::string &variableName, const unsigned int *values);
+    void Write(const std::string &variableName, const long int *values);
+    void Write(const std::string &variableName,
+               const unsigned long int *values);
+    void Write(const std::string &variableName, const long long int *values);
+    void Write(const std::string &variableName,
                const unsigned long long int *values);
-    void Write(const std::string variableName, const float *values);
-    void Write(const std::string variableName, const double *values);
-    void Write(const std::string variableName, const long double *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName, const float *values);
+    void Write(const std::string &variableName, const double *values);
+    void Write(const std::string &variableName, const long double *values);
+    void Write(const std::string &variableName,
                const std::complex<float> *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName,
                const std::complex<double> *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName,
                const std::complex<long double> *values);
-    void Write(const std::string variableName, const void *values);
+    void Write(const std::string &variableName, const void *values);
 
-    void Advance();
+    void Advance(const float timeout_sec = 0.);
 
     /**
      * Closes a single transport or all transports

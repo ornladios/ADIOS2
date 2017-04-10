@@ -15,8 +15,8 @@
 namespace adios
 {
 
-Capsule::Capsule(std::string type, std::string accessMode, int rankMPI,
-                 bool debugMode)
+Capsule::Capsule(const std::string type, const std::string accessMode,
+                 int rankMPI, bool debugMode)
 : m_Type{std::move(type)}, m_AccessMode{std::move(accessMode)},
   m_RankMPI{rankMPI}, m_DebugMode{debugMode}
 {

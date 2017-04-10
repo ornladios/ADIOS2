@@ -34,7 +34,7 @@ public:
 
     ~FilePointer();
 
-    void Open(const std::string name, const std::string accessMode);
+    void Open(const std::string &name, const std::string accessMode);
 
     void SetBuffer(char *buffer, std::size_t size);
 

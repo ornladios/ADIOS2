@@ -14,7 +14,7 @@
 #include <iostream> //std::cout << Needs to go
 
 #include "core/Engine.h"
-#include "format/BP1Writer.h"
+#include "utilities/format/bp1/BP1Writer.h"
 
 // supported capsules
 #include "capsule/heap/STLVector.h"
@@ -40,9 +40,7 @@ public:
      */
     DataManReader(ADIOS &adios, const std::string name,
                   const std::string accessMode, MPI_Comm mpiComm,
-                  const Method &method, const IOMode iomode,
-                  const float timeout_sec, const bool debugMode = false,
-                  const unsigned int nthreads = 1);
+                  const Method &method);
 
     ~DataManReader();
 
@@ -117,7 +115,6 @@ private:
 
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
-    void InitCapsules();
     void InitTransports(); ///< from Transports
 
     std::string

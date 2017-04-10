@@ -12,6 +12,7 @@
 
 #include "engine/adios1/ADIOS1Writer.h"
 #include "ADIOS.h"
+#include "functions/adiosFunctions.h"
 
 extern int adios_verbose_level;
 extern int adios_errno;
@@ -19,13 +20,11 @@ extern int adios_errno;
 namespace adios
 {
 
-ADIOS1Writer::ADIOS1Writer(ADIOS &adios, const std::string name,
+ADIOS1Writer::ADIOS1Writer(ADIOS &adios, const std::string &name,
                            const std::string accessMode, MPI_Comm mpiComm,
-                           const Method &method, const IOMode iomode,
-                           const float timeout_sec, const bool debugMode,
-                           const unsigned int nthreads)
-: Engine(adios, "ADIOS1Writer", name, accessMode, mpiComm, method, debugMode,
-         nthreads, " ADIOS1Writer constructor (or call to ADIOS Open).\n"),
+                           const Method &method)
+: Engine(adios, "ADIOS1Writer", name, accessMode, mpiComm, method,
+         " ADIOS1Writer constructor (or call to ADIOS Open).\n"),
   m_groupname{method.m_Name.c_str()}, m_filename{name.c_str()}, m_comm{mpiComm}
 {
     Init();
@@ -104,52 +103,52 @@ void ADIOS1Writer::WriteVariable(std::string name, bool isScalar,
 void ADIOS1Writer::Write(Variable<char> &variable, const char *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_byte,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned char> &variable,
                          const unsigned char *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_unsigned_byte,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<short> &variable, const short *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_short,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned short> &variable,
                          const unsigned short *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_unsigned_short,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<int> &variable, const int *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_integer,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned int> &variable,
                          const unsigned int *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_unsigned_integer,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<long int> &variable, const long int *values)
@@ -161,9 +160,9 @@ void ADIOS1Writer::Write(Variable<long int> &variable, const long int *values)
         type = adios_long;
     }
     WriteVariable(variable.m_Name, variable.m_IsScalar, type,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned long int> &variable,
@@ -176,43 +175,43 @@ void ADIOS1Writer::Write(Variable<unsigned long int> &variable,
         type = adios_unsigned_long;
     }
     WriteVariable(variable.m_Name, variable.m_IsScalar, type,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<long long int> &variable,
                          const long long int *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_long,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned long long int> &variable,
                          const unsigned long long int *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_unsigned_long,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<float> &variable, const float *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_real,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<double> &variable, const double *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_double,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<long double> &variable,
@@ -222,27 +221,27 @@ void ADIOS1Writer::Write(Variable<long double> &variable,
      * but
      * long double is compiler dependent */
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_long_double,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<std::complex<float>> &variable,
                          const std::complex<float> *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_complex,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<std::complex<double>> &variable,
                          const std::complex<double> *values)
 {
     WriteVariable(variable.m_Name, variable.m_IsScalar, adios_double_complex,
-                  variable.GetDimensionAsString(),
-                  variable.GetGlobalDimensionAsString(),
-                  variable.GetOffsetsAsString(), values);
+                  DimsToCSV(variable.m_LocalDimensions),
+                  DimsToCSV(variable.m_GlobalDimensions),
+                  DimsToCSV(variable.m_Offsets), values);
 }
 
 void ADIOS1Writer::Write(Variable<std::complex<long double>> &variable,
@@ -262,97 +261,98 @@ void ADIOS1Writer::Write(VariableCompound &variable, const void *values)
 }
 
 // String version
-void ADIOS1Writer::Write(const std::string variableName, const char *values)
+void ADIOS1Writer::Write(const std::string &variableName, const char *values)
 {
     Write(m_ADIOS.GetVariable<char>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const unsigned char *values)
 {
     Write(m_ADIOS.GetVariable<unsigned char>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName, const short *values)
+void ADIOS1Writer::Write(const std::string &variableName, const short *values)
 {
     Write(m_ADIOS.GetVariable<short>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const unsigned short *values)
 {
     Write(m_ADIOS.GetVariable<unsigned short>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName, const int *values)
+void ADIOS1Writer::Write(const std::string &variableName, const int *values)
 {
     Write(m_ADIOS.GetVariable<int>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const unsigned int *values)
 {
     Write(m_ADIOS.GetVariable<unsigned int>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName, const long int *values)
+void ADIOS1Writer::Write(const std::string &variableName,
+                         const long int *values)
 {
     Write(m_ADIOS.GetVariable<long int>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const unsigned long int *values)
 {
     Write(m_ADIOS.GetVariable<unsigned long int>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const long long int *values)
 {
     Write(m_ADIOS.GetVariable<long long int>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const unsigned long long int *values)
 {
     Write(m_ADIOS.GetVariable<unsigned long long int>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName, const float *values)
+void ADIOS1Writer::Write(const std::string &variableName, const float *values)
 {
     Write(m_ADIOS.GetVariable<float>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName, const double *values)
+void ADIOS1Writer::Write(const std::string &variableName, const double *values)
 {
     Write(m_ADIOS.GetVariable<double>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const long double *values)
 {
     Write(m_ADIOS.GetVariable<long double>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const std::complex<float> *values)
 {
     Write(m_ADIOS.GetVariable<std::complex<float>>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const std::complex<double> *values)
 {
     Write(m_ADIOS.GetVariable<std::complex<double>>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const std::complex<long double> *values)
 {
     Write(m_ADIOS.GetVariable<std::complex<long double>>(variableName), values);
 }
 
-void ADIOS1Writer::Write(const std::string variableName,
+void ADIOS1Writer::Write(const std::string &variableName,
                          const void *values) // Compound type
 {
     throw std::invalid_argument("ERROR: Adios 1.x does not support compound "
@@ -360,7 +360,7 @@ void ADIOS1Writer::Write(const std::string variableName,
                                 variableName + "\n");
 }
 
-void ADIOS1Writer::Advance()
+void ADIOS1Writer::Advance(const float /*timeout_sec*/)
 {
     if (m_IsFileOpen)
     {
