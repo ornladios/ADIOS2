@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
         // Define method for engine creation, it is basically straight-forward
         // parameters
         adios::Method &datamanSettings = adios.DeclareMethod("WAN");
-        if (!datamanSettings.isUserDefined())
+        if (!datamanSettings.IsUserDefined())
         {
             // if not defined by user, we can change the default settings
             datamanSettings.SetEngine("DataManReader");
@@ -64,8 +64,7 @@ int main(int argc, char *argv[])
         // polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
         // DataManReader
-        auto datamanReader = adios.Open("myDoubles.bp", "r", datamanSettings,
-                                        adios::IOMode::INDEPENDENT);
+        auto datamanReader = adios.Open("myDoubles.bp", "r", datamanSettings);
 
         if (datamanReader == nullptr)
             throw std::ios_base::failure(
