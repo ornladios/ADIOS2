@@ -9,11 +9,11 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include "utilities/format/bp1/BP1Writer.h"
-
 #include <string>
 #include <vector>
 /// \endcond
+
+#include "utilities/format/bp1/BP1Writer.h"
 
 namespace adios
 {
