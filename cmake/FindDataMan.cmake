@@ -50,6 +50,8 @@ if(NOT DataMan_FOUND)
   endif()
   find_library(DataMan_LIBRARY dataman ${_DataMan_LIBRARY_HINT})
   unset(_DataMan_LIBRARY_HINT)
+  
+  include(FindPackageHandleStandardArgs)
 
   find_package_handle_standard_args(DataMan
     FOUND_VAR DataMan_FOUND
