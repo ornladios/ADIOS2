@@ -142,13 +142,13 @@ private:
         jmsg["doid"] = m_Name;
         jmsg["var"] = variable.m_Name;
         jmsg["dtype"] = GetType<T>();
-        jmsg["putshape"] = variable.m_Dimensions;
+        jmsg["putshape"] = variable.m_LocalDimensions;
         if (variable.m_GlobalDimensions.size() == 0)
-            variable.m_GlobalDimensions = variable.m_Dimensions;
+            variable.m_GlobalDimensions = variable.m_LocalDimensions;
         jmsg["varshape"] = variable.m_GlobalDimensions;
-        if (variable.m_GlobalOffsets.size() == 0)
-            variable.m_GlobalOffsets.assign(variable.m_Dimensions.size(), 0);
-        jmsg["offset"] = variable.m_GlobalOffsets;
+        if (variable.m_Offsets.size() == 0)
+            variable.m_Offsets.assign(variable.m_LocalDimensions.size(), 0);
+        jmsg["offset"] = variable.m_Offsets;
         jmsg["timestep"] = 0;
         m_Man.put(values, jmsg);
 
@@ -156,10 +156,11 @@ private:
         {
             MPI_Barrier(m_MPIComm);
             std::cout << "I am hooked to the DataMan library\n";
-            std::cout << "putshape " << variable.m_Dimensions.size() << endl;
+            std::cout << "putshape " << variable.m_LocalDimensions.size()
+                      << endl;
             std::cout << "varshape " << variable.m_GlobalDimensions.size()
                       << endl;
-            std::cout << "offset " << variable.m_GlobalOffsets.size() << endl;
+            std::cout << "offset " << variable.m_Offsets.size() << endl;
             for (int i = 0; i < m_SizeMPI; ++i)
             {
                 if (i == m_RankMPI)

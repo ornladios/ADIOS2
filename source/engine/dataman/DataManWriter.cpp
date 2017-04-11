@@ -353,9 +353,10 @@ void DataManWriter::InitTransports() // maybe move this?
             const std::vector<int> priorities =
                 CSVToVectorInt(GetMdtmParameter("priorities", parameters));
 
-            m_Transports.push_back(std::make_shared<transport::MdtmMan>(
-                localIP, remoteIP, m_AccessMode, prefix, numberOfPipes,
-                tolerances, priorities, m_MPIComm, m_DebugMode));
+            //            m_Transports.push_back(std::make_shared<transport::MdtmMan>(
+            //                localIP, remoteIP, m_AccessMode, prefix,
+            //                numberOfPipes,
+            //                tolerances, priorities, m_MPIComm, m_DebugMode));
         }
         else if (itTransport->second == "Zmq")
         {

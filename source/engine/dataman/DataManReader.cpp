@@ -11,6 +11,7 @@
 #include "engine/dataman/DataManReader.h"
 
 #include "core/Support.h"
+#include "external/json.hpp"
 #include "functions/adiosFunctions.h" //CSVToVector
 
 // supported transports
@@ -24,12 +25,12 @@
 namespace adios
 {
 
-DataManReader::DataManReader(ADIOS &adios, const std::string name,
+DataManReader::DataManReader(ADIOS &adios, const std::string &name,
                              const std::string accessMode, MPI_Comm mpiComm,
                              const Method &method)
 : Engine(adios, "DataManReader", name, accessMode, mpiComm, method,
-         " DataManReader constructor (or call to ADIOS Open).\n")
-// m_Buffer(accessMode, m_RankMPI, m_DebugMode)
+         " DataManReader constructor (or call to ADIOS Open).\n"),
+  m_Buffer(accessMode, m_RankMPI, m_DebugMode)
 {
     Init();
 }
@@ -46,111 +47,114 @@ void DataManReader::SetCallBack(
 }
 
 Variable<void> *
-DataManReader::InquireVariable(const std::string name,
+DataManReader::InquireVariable(const std::string &name,
                                const bool readIn) // not yet implemented
 {
     return nullptr;
 }
 
-Variable<char> *DataManReader::InquireVariableChar(const std::string name,
+Variable<char> *DataManReader::InquireVariableChar(const std::string &name,
                                                    const bool readIn)
 {
     return InquireVariableCommon<char>(name, readIn);
 }
 
 Variable<unsigned char> *
-DataManReader::InquireVariableUChar(const std::string name, const bool readIn)
+DataManReader::InquireVariableUChar(const std::string &name, const bool readIn)
 {
     return InquireVariableCommon<unsigned char>(name, readIn);
 }
 
-Variable<short> *DataManReader::InquireVariableShort(const std::string name,
+Variable<short> *DataManReader::InquireVariableShort(const std::string &name,
                                                      const bool readIn)
 {
     return InquireVariableCommon<short>(name, readIn);
 }
 
 Variable<unsigned short> *
-DataManReader::InquireVariableUShort(const std::string name, const bool readIn)
+DataManReader::InquireVariableUShort(const std::string &name, const bool readIn)
 {
     return InquireVariableCommon<unsigned short>(name, readIn);
 }
 
-Variable<int> *DataManReader::InquireVariableInt(const std::string name,
+Variable<int> *DataManReader::InquireVariableInt(const std::string &name,
                                                  const bool readIn)
 {
     return InquireVariableCommon<int>(name, readIn);
 }
 
 Variable<unsigned int> *
-DataManReader::InquireVariableUInt(const std::string name, const bool readIn)
+DataManReader::InquireVariableUInt(const std::string &name, const bool readIn)
 {
     return InquireVariableCommon<unsigned int>(name, readIn);
 }
 
-Variable<long int> *DataManReader::InquireVariableLInt(const std::string name,
+Variable<long int> *DataManReader::InquireVariableLInt(const std::string &name,
                                                        const bool readIn)
 {
     return InquireVariableCommon<long int>(name, readIn);
 }
 
 Variable<unsigned long int> *
-DataManReader::InquireVariableULInt(const std::string name, const bool readIn)
+DataManReader::InquireVariableULInt(const std::string &name, const bool readIn)
 {
     return InquireVariableCommon<unsigned long int>(name, readIn);
 }
 
 Variable<long long int> *
-DataManReader::InquireVariableLLInt(const std::string name, const bool readIn)
+DataManReader::InquireVariableLLInt(const std::string &name, const bool readIn)
 {
     return InquireVariableCommon<long long int>(name, readIn);
 }
 
 Variable<unsigned long long int> *
-DataManReader::InquireVariableULLInt(const std::string name, const bool readIn)
+DataManReader::InquireVariableULLInt(const std::string &name, const bool readIn)
 {
     return InquireVariableCommon<unsigned long long int>(name, readIn);
 }
 
-Variable<float> *DataManReader::InquireVariableFloat(const std::string name,
+Variable<float> *DataManReader::InquireVariableFloat(const std::string &name,
                                                      const bool readIn)
 {
     return InquireVariableCommon<float>(name, readIn);
 }
 
-Variable<double> *DataManReader::InquireVariableDouble(const std::string name,
+Variable<double> *DataManReader::InquireVariableDouble(const std::string &name,
                                                        const bool readIn)
 {
     return InquireVariableCommon<double>(name, readIn);
 }
 
 Variable<long double> *
-DataManReader::InquireVariableLDouble(const std::string name, const bool readIn)
+DataManReader::InquireVariableLDouble(const std::string &name,
+                                      const bool readIn)
 {
     return InquireVariableCommon<long double>(name, readIn);
 }
 
 Variable<std::complex<float>> *
-DataManReader::InquireVariableCFloat(const std::string name, const bool readIn)
+DataManReader::InquireVariableCFloat(const std::string &name, const bool readIn)
 {
     return InquireVariableCommon<std::complex<float>>(name, readIn);
 }
 
 Variable<std::complex<double>> *
-DataManReader::InquireVariableCDouble(const std::string name, const bool readIn)
+DataManReader::InquireVariableCDouble(const std::string &name,
+                                      const bool readIn)
 {
     return InquireVariableCommon<std::complex<double>>(name, readIn);
 }
 
 Variable<std::complex<long double>> *
-DataManReader::InquireVariableCLDouble(const std::string name,
+DataManReader::InquireVariableCLDouble(const std::string &name,
                                        const bool readIn)
 {
     return InquireVariableCommon<std::complex<long double>>(name, readIn);
 }
 
-VariableCompound *DataManReader::InquireVariableCompound(const std::string name,
-                                                         const bool readIn)
+VariableCompound *
+DataManReader::InquireVariableCompound(const std::string &name,
+                                       const bool readIn)
 {
     return nullptr;
 }
@@ -260,9 +264,10 @@ void DataManReader::InitTransports() // maybe move this?
             const std::vector<int> priorities =
                 CSVToVectorInt(GetMdtmParameter("priorities", parameters));
 
-            m_Transports.push_back(std::make_shared<transport::MdtmMan>(
-                localIP, remoteIP, m_AccessMode, prefix, numberOfPipes,
-                tolerances, priorities, m_MPIComm, m_DebugMode));
+            //            m_Transports.push_back(std::make_shared<transport::MdtmMan>(
+            //                localIP, remoteIP, m_AccessMode, prefix,
+            //                numberOfPipes,
+            //                tolerances, priorities, m_MPIComm, m_DebugMode));
         }
         else if (itTransport->second == "Zmq")
         {
