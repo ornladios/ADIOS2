@@ -29,6 +29,7 @@ bool Method::IsUserDefined()
 }
 
 void Method::SetEngine(const std::string type) { m_Type = type; }
+void Method::SetIOMode(const IOMode mode) { m_IOMode = mode; };
 
 void Method::AllowThreads(const unsigned int nThreads)
 {
