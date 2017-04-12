@@ -42,8 +42,8 @@ int main(int argc, char *argv[])
 
         // Define method for engine creation, it is basically straight-forward
         // parameters
-        adios::Method &bpWriterSettings = adios.DeclareMethod(
-            "SinglePOSIXFile"); // default method type is Writer
+        adios::Method &bpWriterSettings = adios.DeclareMethod("hello");
+        bpWriterSettings.SetIOMode(adios::IOMode::COLLECTIVE);
         bpWriterSettings.SetParameters("profile_units=mus");
         bpWriterSettings.AddTransport("File", "have_metadata_file=yes",
                                       "profile_units=mus");
@@ -52,8 +52,7 @@ int main(int argc, char *argv[])
         // Open returns a smart pointer to Engine containing the Derived class
         // Writer
         auto bpFileWriter =
-            adios.Open("myDoubles_nompi.bp", "w", bpWriterSettings,
-                       adios::IOMode::COLLECTIVE);
+            adios.Open("myDoubles_nompi.bp", "w", bpWriterSettings);
 
         if (bpFileWriter == nullptr)
             throw std::ios_base::failure(

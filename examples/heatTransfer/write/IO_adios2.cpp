@@ -31,12 +31,13 @@ IO::IO(const Settings &s, MPI_Comm comm)
     if (!bpWriterSettings.IsUserDefined())
     {
         // if not defined by user, we can change the default settings
-        bpWriterSettings.SetEngine("BPFileWriter"); // BP is the default engine
-        bpWriterSettings.AllowThreads(1);           // for data processing
-
-        bpWriterSettings.AddTransport(
-            "File", "lucky=yes"); // ISO-POSIX file is the default transport
-                                  // Passing parameters to the transport
+        // BPFileWriter is the default engine
+        bpWriterSettings.SetEngine("BPFileWriter");
+        // Allow an extra thread for data processing
+        bpWriterSettings.AllowThreads(1);
+        // ISO-POSIX file is the default transport
+        // Passing parameters to the transport
+        bpWriterSettings.AddTransport("File", "lucky=yes");
 
         const std::string aggregatorsParam("Aggregators=" +
                                            std::to_string((s.nproc + 1) / 2));
