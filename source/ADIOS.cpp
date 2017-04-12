@@ -25,10 +25,8 @@
 #include "engine/bp/BPFileReader.h"
 #include "engine/bp/BPFileWriter.h"
 
-#ifdef ADIOS_HAVE_DATAMAN // external dependencies
 #include "engine/dataman/DataManReader.h"
 #include "engine/dataman/DataManWriter.h"
-#endif
 
 #ifdef ADIOS_HAVE_ADIOS1 // external dependencies
 #include "engine/adios1/ADIOS1Reader.h"
@@ -148,25 +146,13 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
     }
     else if (type == "DataManWriter")
     {
-#ifdef ADIOS_HAVE_DATAMAN
         return std::make_shared<DataManWriter>(*this, name, accessMode, mpiComm,
                                                method);
-#else
-        throw std::invalid_argument(
-            "ERROR: this version didn't compile with "
-            "Dataman library, can't Open DataManWriter\n");
-#endif
     }
     else if (type == "DataManReader")
     {
-#ifdef ADIOS_HAVE_DATAMAN
         return std::make_shared<DataManReader>(*this, name, accessMode, mpiComm,
                                                method);
-#else
-        throw std::invalid_argument(
-            "ERROR: this version didn't compile with "
-            "Dataman library, can't Open DataManReader\n");
-#endif
     }
     else if (type == "ADIOS1Writer")
     {

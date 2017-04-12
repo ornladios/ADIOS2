@@ -25,6 +25,9 @@ foreach(adios2_target IN LISTS adios2_targets)
   
     engine/bp/BPFileReader.cpp
     engine/bp/BPFileWriter.cpp
+    engine/dataman/DataManReader.cpp
+    engine/dataman/DataManWriter.cpp
+
   
     functions/adiosFunctions.cpp
   
@@ -37,6 +40,8 @@ foreach(adios2_target IN LISTS adios2_targets)
     utilities/format/bp1/BP1Writer.cpp
     
     utilities/profiling/iochrono/Timer.cpp
+
+    utilities/realtime/dataman/DataManager.cpp
   )
   target_include_directories(${adios2_target}
     PUBLIC ${ADIOS_SOURCE_DIR}/include

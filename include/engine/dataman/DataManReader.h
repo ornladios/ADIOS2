@@ -19,7 +19,7 @@
 // supported capsules
 #include "capsule/heap/STLVector.h"
 
-#include "DataManager.h"
+#include "utilities/realtime/dataman/DataManager.h"
 
 namespace adios
 {
@@ -108,7 +108,7 @@ private:
     /// m_Transports
 
     bool m_DoRealTime = false;
-    DataManager m_Man;
+    realtime::DataManager m_Man;
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         m_CallBack; ///< call back function
