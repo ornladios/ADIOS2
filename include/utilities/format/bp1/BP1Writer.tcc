@@ -8,6 +8,8 @@
  *      Author: wfg
  */
 
+#include "BP1Writer.h"
+
 namespace adios
 {
 namespace format
@@ -51,15 +53,15 @@ std::size_t BP1Writer::GetVariableIndexSize(const Variable<T> &variable) const
     // need to add transform characteristics
 }
 
-template <class T>
-void BP1Writer::WriteVariableMetadata(const Variable<T> &variable,
-                                      capsule::STLVector &heap,
-                                      BP1MetadataSet &metadataSet) const
-    noexcept
-{
-    Stats<T> stats = GetStats(variable);
-    WriteVariableMetadataCommon(variable, stats, heap, metadataSet);
-}
+// template <class T>
+// void BP1Writer::WriteVariableMetadata(const Variable<T> &variable,
+//                                      capsule::STLVector &heap,
+//                                      BP1MetadataSet &metadataSet) const
+//    noexcept
+//{
+//    Stats<T> stats = GetStats(variable);
+//    WriteVariableMetadataCommon(variable, stats, heap, metadataSet);
+//}
 
 template <class T>
 void BP1Writer::WriteVariableMetadata(const Variable<std::complex<T>> &variable,
@@ -90,7 +92,6 @@ void BP1Writer::WriteVariableMetadataCommon(const Variable<T> &variable,
     noexcept
 {
     stats.TimeIndex = metadataSet.TimeStep;
-
     // Get new Index or point to existing index
     bool isNew = true; // flag to check if variable is new
     BP1Index &varIndex =
@@ -263,8 +264,8 @@ BP1Writer::Stats<T> BP1Writer::GetStats(const Variable<T> &variable) const
     if (m_Verbosity == 0)
     {
         if (valuesSize >= 10000000) // ten million? this needs actual results
-                                    // //here we can make decisions for threads
-                                    // based on valuesSize
+                                    // //here we can make decisions for
+            // based on valuesSize
             GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
                       m_Threads); // here we can add cores from constructor
         else
@@ -283,8 +284,8 @@ BP1Writer::GetStats(const Variable<std::complex<T>> &variable) const noexcept
     if (m_Verbosity == 0)
     {
         if (valuesSize >= 10000000) // ten million? this needs actual results
-                                    // //here we can make decisions for threads
-                                    // based on valuesSize
+                                    // //here we can make decisions for
+            // based on valuesSize
             GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
                       m_Threads);
         else

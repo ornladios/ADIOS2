@@ -417,5 +417,212 @@ void BP1Writer::FlattenMetadata(BP1MetadataSet &metadataSet,
         metadataSet.Log.TotalBytes.push_back(heap.m_DataAbsolutePosition);
 }
 
+// TEMPLATES
+// template <class T>
+// std::size_t BP1Writer::GetVariableIndexSize(const Variable<T> &variable)
+// const
+//    noexcept
+//{
+//    // size_t indexSize = varEntryLength + memberID + lengthGroupName +
+//    // groupName + lengthVariableName + lengthOfPath + path + datatype
+//    std::size_t indexSize = 23; // without characteristics
+//    indexSize += variable.m_Name.size();
+//
+//    // characteristics 3 and 4, check variable number of dimensions
+//    const std::size_t dimensions =
+//        variable.DimensionsSize(); // commas in CSV + 1
+//    indexSize += 28 * dimensions;  // 28 bytes per dimension
+//    indexSize += 1;                // id
+//
+//    // characteristics, offset + payload offset in data
+//    indexSize += 2 * (1 + 8);
+//    // characteristic 0, if scalar add value, for now only allowing string
+//    if (dimensions == 1)
+//    {
+//        indexSize += sizeof(T);
+//        indexSize += 1; // id
+//        // must have an if here
+//        indexSize += 2 + variable.m_Name.size();
+//        indexSize += 1; // id
+//    }
+//
+//    // characteristic statistics
+//    if (m_Verbosity == 0) // default, only min and max
+//    {
+//        indexSize += 2 * (sizeof(T) + 1);
+//        indexSize += 1 + 1; // id
+//    }
+//
+//    return indexSize + 12; // extra 12 bytes in case of attributes
+//    // need to add transform characteristics
+//}
+//#define declare_template_instantiation(T)                                      \
+//    template std::size_t BP1Writer::GetVariableIndexSize(                      \
+//        const Variable<T> &variable) const noexcept;
+// ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+//#undef declare_template_instantiation
+
+template <class T>
+void BP1Writer::WriteVariableMetadata(const Variable<T> &variable,
+                                      capsule::STLVector &heap,
+                                      BP1MetadataSet &metadataSet) const
+    noexcept
+{
+    Stats<T> stats = GetStats(variable);
+    WriteVariableMetadataCommon(variable, stats, heap, metadataSet);
+}
+#define declare_template_instantiation(T)                                      \
+    template void BP1Writer::WriteVariableMetadata(                            \
+        const Variable<T> &variable, capsule::STLVector &heap,                 \
+        BP1MetadataSet &metadataSet) const noexcept;
+ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+// template <class T>
+// void BP1Writer::WriteVariableMetadata(const Variable<std::complex<T>>
+// &variable,
+//                                      capsule::STLVector &heap,
+//                                      BP1MetadataSet &metadataSet) const
+//    noexcept
+//{
+//    Stats<T> stats = GetStats(variable);
+//    WriteVariableMetadataCommon(variable, stats, heap, metadataSet);
+//}
+//#define declare_template_instantiation(T)                                      \
+//    template void BP1Writer::WriteVariableMetadata(                            \
+//        const Variable<std::complex<T>> &variable, capsule::STLVector &heap,   \
+//        BP1MetadataSet &metadataSet) const noexcept;
+// ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+//#undef declare_template_instantiation
+//
+// template <class T>
+// void BP1Writer::WriteVariablePayload(const Variable<T> &variable,
+//                                     capsule::STLVector &heap,
+//                                     const unsigned int nthreads) const
+//                                     noexcept
+//{
+//    // EXPENSIVE part, might want to use threads if large, serial for now
+//    InsertToBuffer(heap.m_Data, variable.m_AppValues, variable.TotalSize());
+//    heap.m_DataAbsolutePosition += variable.PayLoadSize();
+//}
+//#define declare_template_instantiation(T)                                      \
+//    template void BP1Writer::WriteVariablePayload(                             \
+//        const Variable<T> &variable, capsule::STLVector &heap,                 \
+//        const unsigned int nthreads) const noexcept;
+// ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+//#undef declare_template_instantiation
+//
+//// PRIVATE
+// template <class T>
+// BP1Writer::Stats<T> BP1Writer::GetStats(const Variable<T> &variable) const
+//    noexcept
+//{
+//    Stats<T> stats;
+//    const std::size_t valuesSize = variable.TotalSize();
+//
+//    if (m_Verbosity == 0)
+//    {
+//        if (valuesSize >= 10000000) // ten million? this needs actual results
+//                                    // //here we can make decisions for
+//                                    threads
+//                                    // based on valuesSize
+//            GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
+//                      m_Threads); // here we can add cores from constructor
+//        else
+//            GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max);
+//    }
+//    return stats;
+//}
+//#define declare_template_instantiation(T)                                      \
+//    template BP1Writer::Stats<T> BP1Writer::GetStats(                          \
+//        const Variable<T> &variable) const noexcept;
+// ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+//#undef declare_template_instantiation
+//
+// template <class T>
+// BP1Writer::Stats<T>
+// BP1Writer::GetStats(const Variable<std::complex<T>> &variable) const noexcept
+//{
+//    Stats<T> stats;
+//    const std::size_t valuesSize = variable.TotalSize();
+//
+//    if (m_Verbosity == 0)
+//    {
+//        if (valuesSize >= 10000000) // ten million? this needs actual results
+//                                    // //here we can make decisions for
+//                                    threads
+//                                    // based on valuesSize
+//            GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
+//                      m_Threads);
+//        else
+//            GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max);
+//    }
+//    return stats;
+//}
+//#define declare_template_instantiation(T)                                      \
+//    template BP1Writer::Stats<T> BP1Writer::GetStats(                          \
+//        const Variable<std::complex<T>> &variable) const noexcept;
+// ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+//#undef declare_template_instantiation
+//
+// template <class T>
+// void BP1Writer::WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
+//                                  std::vector<char> &buffer,
+//                                  std::uint8_t &characteristicsCounter,
+//                                  const bool addLength) const noexcept
+//{
+//    if (isScalar == true)
+//    {
+//        WriteCharacteristicRecord(characteristic_value, stats.Min, buffer,
+//                                  characteristicsCounter,
+//                                  addLength); // stats.min = stats.max = value
+//        return;
+//    }
+//
+//    if (m_Verbosity == 0) // default verbose
+//    {
+//        WriteCharacteristicRecord(characteristic_min, stats.Min, buffer,
+//                                  characteristicsCounter, addLength);
+//        WriteCharacteristicRecord(characteristic_max, stats.Max, buffer,
+//                                  characteristicsCounter, addLength);
+//    }
+//}
+//#define declare_template_instantiation(T)                                      \
+//    template void BP1Writer::WriteBoundsRecord(                                \
+//        const bool isScalar, const Stats<T> &stats, std::vector<char> &buffer, \
+//        std::uint8_t &characteristicsCounter, const bool addLength)            \
+//        const noexcept;
+// ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+//#undef declare_template_instantiation
+//
+// template <class T>
+// void BP1Writer::WriteCharacteristicRecord(const std::uint8_t
+// characteristicID,
+//                                          const T &value,
+//                                          std::vector<char> &buffer,
+//                                          std::uint8_t
+//                                          &characteristicsCounter,
+//                                          const bool addLength) const noexcept
+//{
+//    const std::uint8_t id = characteristicID;
+//    InsertToBuffer(buffer, &id);
+//
+//    if (addLength == true)
+//    {
+//        const std::uint16_t lengthOfCharacteristic = sizeof(T); // id
+//        InsertToBuffer(buffer, &lengthOfCharacteristic);
+//    }
+//
+//    InsertToBuffer(buffer, &value);
+//    ++characteristicsCounter;
+//}
+//#define define_template_instantiation(T)                                       \
+//    template void BP1Writer::WriteCharacteristicRecord(                        \
+//        const std::uint8_t characteristicID, const T &value,                   \
+//        std::vector<char> &buffer, std::uint8_t &characteristicsCounter,       \
+//        const bool addLength) const noexcept;
+// ADIOS_FOREACH_TYPE_1ARG(define_template_instantiation)
+//#undef define_template_instatiation
+
 } // end namespace format
 } // end namespace adios
