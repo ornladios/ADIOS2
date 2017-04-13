@@ -41,7 +41,8 @@ foreach(adios2_target IN LISTS adios2_targets)
     
     utilities/profiling/iochrono/Timer.cpp
 
-    utilities/realtime/dataman/DataManager.cpp
+    utilities/realtime/dataman/DataManBase.cpp
+    utilities/realtime/dataman/DataMan.cpp
   )
   target_include_directories(${adios2_target}
     PUBLIC ${ADIOS_SOURCE_DIR}/include

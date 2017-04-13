@@ -1,37 +1,44 @@
-#include "utilities/realtime/dataman/DataManager.h"
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
+ * DataMan.cpp
+ *
+ *  Created on: Apr 12, 2017
+ *      Author: Jason Wang
+ */
+
+#include "utilities/realtime/dataman/DataMan.h"
 
 namespace adios
 {
 namespace realtime
 {
 
-DataManager::DataManager() : DataMan() {}
-DataManager::~DataManager() {}
+int DataMan::init(json p_jmsg) { return 0; }
 
-int DataManager::init(json p_jmsg) { return 0; }
-
-int DataManager::put(const void *p_data, string p_doid, string p_var,
-                     string p_dtype, vector<size_t> p_putshape,
-                     vector<size_t> p_varshape, vector<size_t> p_offset,
-                     size_t p_timestep, int p_tolerance, int p_priority)
+int DataMan::put(const void *p_data, std::string p_doid, std::string p_var,
+                 std::string p_dtype, std::vector<size_t> p_putshape,
+                 std::vector<size_t> p_varshape, std::vector<size_t> p_offset,
+                 size_t p_timestep, int p_tolerance, int p_priority)
 {
     return DataMan::put(p_data, p_doid, p_var, p_dtype, p_putshape, p_varshape,
                         p_offset, p_timestep, p_tolerance, p_priority);
 }
 
-int DataManager::put(const void *p_data, json p_jmsg)
+int DataMan::put(const void *p_data, json p_jmsg)
 {
     put_begin(p_data, p_jmsg);
     put_end(p_data, p_jmsg);
     return 0;
 }
 
-void DataManager::add_file(string p_method) {}
+void DataMan::add_file(std::string p_method) {}
 
-void DataManager::add_stream(json p_jmsg)
+void DataMan::add_stream(json p_jmsg)
 {
 
-    string method = "zmq";
+    std::string method = "zmq";
 
     if (p_jmsg["method"] != nullptr)
         method = p_jmsg["method"];
@@ -60,9 +67,9 @@ void DataManager::add_stream(json p_jmsg)
     add_man_to_path("zfp", method);
 }
 
-void DataManager::flush() { flush_next(); }
+void DataMan::flush() { flush_next(); }
 
-int DataManager::get(void *p_data, json &p_jmsg) { return 0; }
+int DataMan::get(void *p_data, json &p_jmsg) { return 0; }
 
 // end namespace realtime
 }
