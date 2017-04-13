@@ -13,6 +13,7 @@
 
 #include "utilities/format/bp1/BP1Aggregator.h"
 #include "utilities/format/bp1/BP1Structs.h"
-#include "utilities/format/bp1/BP1Writer.h"
+//#include "utilities/format/bp1/BP1Writer.h"
+#include "utilities/format/bp1/BP1Writer.tcc"
 
 #endif /* BP1_H_ */
