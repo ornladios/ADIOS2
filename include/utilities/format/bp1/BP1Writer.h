@@ -250,8 +250,7 @@ private:
 
     /**
      * Returns corresponding index of type BP1Index, if doesn't exists creates a
-     * new one.
-     * Used for variables and attributes
+     * new one. Used for variables and attributes
      * @param name variable or attribute name to look for index
      * @param indices look up hash table of indices
      * @param isNew true: index is newly created, false: index already exists in
@@ -281,10 +280,49 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
+    extern template std::size_t BP1Writer::GetVariableIndexSize(               \
+        const Variable<T> &variable) const noexcept;                           \
+                                                                               \
+    extern template void BP1Writer::WriteVariablePayload(                      \
+        const Variable<T> &variable, capsule::STLVector &heap,                 \
+        const unsigned int nthreads) const noexcept;                           \
+                                                                               \
+    extern template void BP1Writer::WriteBoundsRecord(                         \
+        const bool isScalar, const Stats<T> &stats, std::vector<char> &buffer, \
+        std::uint8_t &characteristicsCounter, const bool addLength)            \
+        const noexcept;                                                        \
+                                                                               \
+    extern template void BP1Writer::WriteCharacteristicRecord(                 \
+        const std::uint8_t characteristicID, const T &value,                   \
+        std::vector<char> &buffer, std::uint8_t &characteristicsCounter,       \
+        const bool addLength) const noexcept;
+
+ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+// SEPARATE PRIMITIVE FROM COMPLEX OVERLOADS
+// PRIMITIVE
+#define declare_template_instantiation(T)                                      \
     extern template void BP1Writer::WriteVariableMetadata(                     \
         const Variable<T> &variable, capsule::STLVector &heap,                 \
-        BP1MetadataSet &metadataSet) const noexcept;
-ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        BP1MetadataSet &metadataSet) const noexcept;                           \
+                                                                               \
+    extern template BP1Writer::Stats<T> BP1Writer::GetStats(                   \
+        const Variable<T> &variable) const noexcept;
+
+ADIOS_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+// COMPLEX
+#define declare_template_instantiation(T)                                      \
+    extern template void BP1Writer::WriteVariableMetadata(                     \
+        const Variable<std::complex<T>> &variable, capsule::STLVector &heap,   \
+        BP1MetadataSet &metadataSet) const noexcept;                           \
+                                                                               \
+    extern template BP1Writer::Stats<T> BP1Writer::GetStats(                   \
+        const Variable<std::complex<T>> &variable) const noexcept;
+
+ADIOS_FOREACH_COMPLEX_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 // Explicit declaration of the template methods
