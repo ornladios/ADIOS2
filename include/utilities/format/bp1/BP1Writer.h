@@ -279,55 +279,34 @@ private:
                          capsule::STLVector &buffer) const noexcept;
 };
 
-//#define declare_template_instantiation(T)                                      \
-//    extern template std::size_t BP1Writer::GetVariableIndexSize(               \
-//        const Variable<T> &variable) const noexcept;                           \
-//                                                                               \
-//    extern template void BP1Writer::WriteVariablePayload(                      \
-//        const Variable<T> &variable, capsule::STLVector &heap,                 \
-//        const unsigned int nthreads) const noexcept;                           \
-//                                                                               \
-//    extern template void BP1Writer::WriteBoundsRecord(                         \
-//        const bool isScalar, const Stats<T> &stats, std::vector<char> &buffer, \
-//        std::uint8_t &characteristicsCounter, const bool addLength)            \
-//        const noexcept;                                                        \
-//                                                                               \
-//    extern template void BP1Writer::WriteCharacteristicRecord(                 \
-//        const std::uint8_t characteristicID, const T &value,                   \
-//        std::vector<char> &buffer, std::uint8_t &characteristicsCounter,       \
-//        const bool addLength) const noexcept;
-//
-// ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
-//#undef declare_template_instantiation
-//
-//// SEPARATE PRIMITIVE FROM COMPLEX OVERLOADS
-//// PRIMITIVE
-//#define declare_template_instantiation(T)                                      \
-//    extern template void BP1Writer::WriteVariableMetadata(                     \
-//        const Variable<T> &variable, capsule::STLVector &heap,                 \
-//        BP1MetadataSet &metadataSet) const noexcept;                           \
-//                                                                               \
-//    extern template BP1Writer::Stats<T> BP1Writer::GetStats(                   \
-//        const Variable<T> &variable) const noexcept;
-//
-// ADIOS_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
-//#undef declare_template_instantiation
-//
-//// COMPLEX
-//#define declare_template_instantiation(T)                                      \
-//    extern template void BP1Writer::WriteVariableMetadata(                     \
-//        const Variable<std::complex<T>> &variable, capsule::STLVector &heap,   \
-//        BP1MetadataSet &metadataSet) const noexcept;                           \
-//                                                                               \
-//    extern template BP1Writer::Stats<T> BP1Writer::GetStats(                   \
-//        const Variable<std::complex<T>> &variable) const noexcept;
-//
-// ADIOS_FOREACH_COMPLEX_TYPE_1ARG(declare_template_instantiation)
-//#undef declare_template_instantiation
+#define declare_template_instantiation(T)                                      \
+    extern template void BP1Writer::WriteVariablePayload(                      \
+        const Variable<T> &variable, capsule::STLVector &heap,                 \
+        const unsigned int nthreads) const noexcept;
+
+ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+// SEPARATE PRIMITIVE FROM COMPLEX OVERLOADS
+// PRIMITIVE
+#define declare_template_instantiation(T)                                      \
+    extern template void BP1Writer::WriteVariableMetadata(                     \
+        const Variable<T> &variable, capsule::STLVector &heap,                 \
+        BP1MetadataSet &metadataSet) const noexcept;
+
+ADIOS_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+// COMPLEX
+#define declare_template_instantiation(T)                                      \
+    extern template void BP1Writer::WriteVariableMetadata(                     \
+        const Variable<std::complex<T>> &variable, capsule::STLVector &heap,   \
+        BP1MetadataSet &metadataSet) const noexcept;
+
+ADIOS_FOREACH_COMPLEX_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios
-
-//#include "utilities/format/bp1/BP1Writer.tcc"
 
 #endif /* BP1WRITER_H_ */

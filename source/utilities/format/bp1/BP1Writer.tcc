@@ -7,6 +7,8 @@
  *  Created on: Apr 11, 2017
  *      Author: wfg
  */
+#ifndef BP1WRITER_TCC_
+#define BP1WRITER_TCC_
 
 #include "utilities/format/bp1/BP1Writer.h"
 
@@ -343,4 +345,6 @@ void BP1Writer::WriteVariableCharacteristics(const Variable<T> &variable,
 }
 
 } // end namespace format
-} // end namespace
+} // end namespace adios
+
+#endif // BP1WRITER_TCC_
