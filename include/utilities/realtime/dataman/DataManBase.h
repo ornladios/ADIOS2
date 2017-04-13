@@ -87,6 +87,8 @@ protected:
 
     virtual int put_next(const void *p_data, json p_jmsg);
 
+    std::shared_ptr<DataManBase> get_man(std::string method);
+
     inline void logging(std::string p_msg, std::string p_man = "",
                         std::ostream &out = std::cout)
     {
@@ -260,32 +262,6 @@ protected:
                     dsize(p_jmsg["dtype"].get<std::string>()));
         p_jmsg["varbytes"] =
             product(varshape, dsize(p_jmsg["dtype"].get<std::string>()));
-    }
-
-    inline std::shared_ptr<DataManBase> get_man(std::string method)
-    {
-        std::string soname = "lib" + method + "man.so";
-        void *so = NULL;
-        so = dlopen(soname.c_str(), RTLD_NOW);
-        if (so)
-        {
-            std::shared_ptr<DataManBase> (*func)() = NULL;
-            func = (std::shared_ptr<DataManBase>(*)())dlsym(so, "getMan");
-            if (func)
-            {
-                return func();
-            }
-            else
-            {
-                logging("getMan() not found in " + soname);
-            }
-        }
-        else
-        {
-            logging("Dynamic library " + soname +
-                    " not found in LD_LIBRARY_PATH");
-        }
-        return nullptr;
     }
 
     std::function<void(const void *, std::string, std::string, std::string,

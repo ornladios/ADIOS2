@@ -22,12 +22,10 @@ MdtmMan::MdtmMan(const std::string localIP, const std::string remoteIP,
                  const bool debugMode)
 : Transport("File", mpiComm, debugMode), m_LocalIP{localIP},
   m_RemoteIP{remoteIP}, m_Mode{mode}, m_Prefix{prefix},
-  m_NumberOfPipes{numberOfPipes}, m_Tolerances{tolerances},
-  m_Priorities{priorities}
+  m_NumberOfPipes{numberOfPipes}, m_Tolerances{tolerances}, m_Priorities{
+                                                                priorities}
 {
 }
-
-MdtmMan::~MdtmMan() {}
 
 void MdtmMan::Open(const std::string name, const std::string accessMode) {}
 

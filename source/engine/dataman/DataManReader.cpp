@@ -20,8 +20,6 @@
 #include "transport/file/FilePointer.h"    // uses C FILE*
 #include "transport/wan/MdtmMan.h"         //uses Mdtm library
 
-#include "DataMan.h" //here comes your DataMan header from external dataman library
-
 namespace adios
 {
 
@@ -34,8 +32,6 @@ DataManReader::DataManReader(ADIOS &adios, const std::string &name,
 {
     Init();
 }
-
-DataManReader::~DataManReader() {}
 
 void DataManReader::SetCallBack(
     std::function<void(const void *, std::string, std::string, std::string,

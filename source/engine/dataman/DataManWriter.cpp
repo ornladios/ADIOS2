@@ -32,8 +32,6 @@ DataManWriter::DataManWriter(ADIOS &adios, const std::string name,
     Init();
 }
 
-DataManWriter::~DataManWriter() {}
-
 void DataManWriter::SetCallBack(
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>

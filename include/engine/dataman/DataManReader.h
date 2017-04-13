@@ -43,7 +43,7 @@ public:
                   const std::string accessMode, MPI_Comm mpiComm,
                   const Method &method);
 
-    ~DataManReader();
+    virtual ~DataManReader() = default;
 
     /**
      * Set callback function from user application

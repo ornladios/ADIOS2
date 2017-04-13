@@ -44,7 +44,7 @@ public:
                   const std::string accessMode, MPI_Comm mpiComm,
                   const Method &method);
 
-    ~DataManWriter();
+    virtual ~DataManWriter() = default;
 
     void SetCallBack(std::function<void(const void *, std::string, std::string,
                                         std::string, Dims)>

@@ -153,8 +153,8 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
                                                method);
 #else
         throw std::invalid_argument(
-                "ERROR: this version didn't compile with "
-                "Dataman library, can't Open DataManWriter\n");
+            "ERROR: this version didn't compile with "
+            "Dataman library, can't Open DataManWriter\n");
 #endif
     }
     else if (type == "DataManReader")
@@ -164,8 +164,8 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
                                                method);
 #else
         throw std::invalid_argument(
-                "ERROR: this version didn't compile with "
-                "Dataman library, can't Open DataManReader\n");
+            "ERROR: this version didn't compile with "
+            "Dataman library, can't Open DataManReader\n");
 #endif
     }
     else if (type == "ADIOS1Writer")

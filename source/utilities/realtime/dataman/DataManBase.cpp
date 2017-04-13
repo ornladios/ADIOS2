@@ -221,6 +221,44 @@ int DataManBase::put_next(const void *p_data, json p_jmsg)
     return 0;
 }
 
+std::shared_ptr<DataManBase> DataManBase::get_man(std::string method)
+{
+    void *so = NULL;
+#ifdef __APPLE__
+    std::string dylibname = "lib" + method + "man.dylib";
+    so = dlopen(dylibname.c_str(), RTLD_NOW);
+    if (so)
+    {
+        std::shared_ptr<DataManBase> (*func)() = NULL;
+        func = (std::shared_ptr<DataManBase>(*)())dlsym(so, "getMan");
+        if (func)
+        {
+            return func();
+        }
+    }
+#endif
+    std::string soname = "lib" + method + "man.so";
+    so = dlopen(soname.c_str(), RTLD_NOW);
+    if (so)
+    {
+        std::shared_ptr<DataManBase> (*func)() = NULL;
+        func = (std::shared_ptr<DataManBase>(*)())dlsym(so, "getMan");
+        if (func)
+        {
+            return func();
+        }
+        else
+        {
+            logging("getMan() not found in " + soname);
+        }
+    }
+    else
+    {
+        logging("Dynamic library " + soname + " not found in LD_LIBRARY_PATH");
+    }
+    return nullptr;
+}
+
 // end namespace realtime
 }
 // end namespace adios
