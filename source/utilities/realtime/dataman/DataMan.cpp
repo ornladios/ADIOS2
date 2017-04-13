@@ -61,9 +61,11 @@ void DataMan::add_stream(json p_jmsg)
     }
 
     auto man = get_man(method);
-    man->init(p_jmsg);
-    this->add_next(method, man);
-
+    if (man)
+    {
+        man->init(p_jmsg);
+        this->add_next(method, man);
+    }
     add_man_to_path("zfp", method);
 }
 

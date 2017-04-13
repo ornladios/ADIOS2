@@ -197,9 +197,12 @@ void DataManBase::add_man_to_path(std::string p_new, std::string p_path)
     if (m_next.count(p_path) > 0)
     {
         auto man = get_man(p_new);
-        man->add_next(p_path, m_next[p_path]);
-        this->add_next(p_new, man);
-        this->remove_next(p_path);
+        if (man)
+        {
+            man->add_next(p_path, m_next[p_path]);
+            this->add_next(p_new, man);
+            this->remove_next(p_path);
+        }
     }
 }
 
