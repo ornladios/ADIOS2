@@ -27,8 +27,6 @@ MdtmMan::MdtmMan(const std::string localIP, const std::string remoteIP,
 {
 }
 
-MdtmMan::~MdtmMan() {}
-
 void MdtmMan::Open(const std::string name, const std::string accessMode) {}
 
 void MdtmMan::SetBuffer(char *buffer, std::size_t size) {}

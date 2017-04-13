@@ -14,7 +14,7 @@
 #include "core/Transport.h"
 #include "external/json.hpp"
 
-#include "DataMan.h" //here comes your DataMan header
+#include "utilities/realtime/dataman/DataManBase.h"
 
 namespace adios
 {
@@ -43,7 +43,7 @@ public:
             const std::vector<int> priorities, MPI_Comm mpiComm,
             const bool debugMode);
 
-    ~MdtmMan();
+    virtual ~MdtmMan() = default;
 
     void Open(const std::string name, const std::string accessMode);
 

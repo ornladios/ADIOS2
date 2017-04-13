@@ -20,7 +20,7 @@
 // supported capsules
 #include "capsule/heap/STLVector.h"
 
-#include "DataManager.h" //here comes your DataMan header
+#include "utilities/realtime/dataman/DataMan.h"
 
 namespace adios
 {
@@ -29,6 +29,7 @@ class DataManWriter : public Engine
 {
 
 public:
+    using json = nlohmann::json;
     /**
      * Constructor for dataman engine Writer for WAN communications
      * @param adios
@@ -43,7 +44,7 @@ public:
                   const std::string accessMode, MPI_Comm mpiComm,
                   const Method &method);
 
-    ~DataManWriter();
+    virtual ~DataManWriter() = default;
 
     void SetCallBack(std::function<void(const void *, std::string, std::string,
                                         std::string, Dims)>
@@ -106,7 +107,7 @@ private:
 
     bool m_DoRealTime = false;
     bool m_DoMonitor = false;
-    DataManager m_Man;
+    realtime::DataMan m_Man;
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         m_CallBack; ///< call back function
@@ -157,10 +158,10 @@ private:
             MPI_Barrier(m_MPIComm);
             std::cout << "I am hooked to the DataMan library\n";
             std::cout << "putshape " << variable.m_LocalDimensions.size()
-                      << endl;
+                      << std::endl;
             std::cout << "varshape " << variable.m_GlobalDimensions.size()
-                      << endl;
-            std::cout << "offset " << variable.m_Offsets.size() << endl;
+                      << std::endl;
+            std::cout << "offset " << variable.m_Offsets.size() << std::endl;
             for (int i = 0; i < m_SizeMPI; ++i)
             {
                 if (i == m_RankMPI)

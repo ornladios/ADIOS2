@@ -72,7 +72,10 @@ if(ADIOS_USE_MPI)
 endif()
 option(ADIOS_USE_BZip2 "Enable support for BZip2 transforms" OFF)
 option(ADIOS_USE_ADIOS1 "Enable support for the ADIOS 1 engine" OFF)
-option(ADIOS_USE_DataMan "Enable support for the DataMan engine" OFF)
+
+# DataMan is not a user-settable option.  It will always be enabled if the
+# platform supports it.
+set(ADIOS_USE_DataMan ${SHARED_LIBS_SUPPORTED})
 
 #------------------------------------------------------------------------------#
 # Third party libraries

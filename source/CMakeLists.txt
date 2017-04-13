@@ -43,14 +43,15 @@ foreach(adios2_target IN LISTS adios2_targets)
   )
   
   if(ADIOS_USE_DataMan)
-    find_package(DataMan REQUIRED)
     target_sources(${adios2_target} PRIVATE
       engine/dataman/DataManReader.cpp
       engine/dataman/DataManWriter.cpp
       transport/wan/MdtmMan.cpp
+      utilities/realtime/dataman/DataManBase.cpp
+      utilities/realtime/dataman/DataMan.cpp
     )
     target_compile_definitions(${adios2_target} PRIVATE ADIOS_HAVE_DATAMAN)
-    target_link_libraries(${adios2_target} PRIVATE DataMan::DataMan)
+    target_link_libraries(${adios2_target} PRIVATE ${CMAKE_DL_LIBS})
   endif()
   
   if(ADIOS_USE_BZip2)

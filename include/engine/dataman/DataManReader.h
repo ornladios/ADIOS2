@@ -19,7 +19,7 @@
 // supported capsules
 #include "capsule/heap/STLVector.h"
 
-#include "DataManager.h"
+#include "utilities/realtime/dataman/DataMan.h"
 
 namespace adios
 {
@@ -38,11 +38,12 @@ public:
      * @param debugMode
      * @param nthreads
      */
+    using json = nlohmann::json;
     DataManReader(ADIOS &adios, const std::string &name,
                   const std::string accessMode, MPI_Comm mpiComm,
                   const Method &method);
 
-    ~DataManReader();
+    virtual ~DataManReader() = default;
 
     /**
      * Set callback function from user application
@@ -108,7 +109,7 @@ private:
     /// m_Transports
 
     bool m_DoRealTime = false;
-    DataManager m_Man;
+    realtime::DataMan m_Man;
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         m_CallBack; ///< call back function
