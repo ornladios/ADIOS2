@@ -116,6 +116,7 @@ struct TypeInfo<T, typename std::enable_if<std::is_integral<T>::value>::type>
 {
     using IOType =
         typename FixedWidthInt<sizeof(T), std::is_signed<T>::value>::Type;
+    using ValueType = T;
 };
 
 template <typename T>
@@ -123,6 +124,7 @@ struct TypeInfo<T,
                 typename std::enable_if<std::is_floating_point<T>::value>::type>
 {
     using IOType = T;
+    using ValueType = T;
 };
 
 template <typename T>
@@ -130,6 +132,7 @@ struct TypeInfo<T, typename std::enable_if<std::is_same<
                        T, std::complex<typename T::value_type>>::value>::type>
 {
     using IOType = T;
+    using ValueType = typename T::value_type;
 };
 
 } // end namespace adios
