@@ -35,6 +35,7 @@ foreach(adios2_target IN LISTS adios2_targets)
     utilities/format/bp1/BP1Base.cpp
     utilities/format/bp1/BP1Aggregator.cpp
     utilities/format/bp1/BP1Writer.cpp
+    utilities/format/bp1/BP1Writer.tcc
     
     utilities/profiling/iochrono/Timer.cpp
   )

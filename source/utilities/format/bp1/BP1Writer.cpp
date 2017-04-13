@@ -9,11 +9,12 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include "utilities/format/bp1/BP1Writer.h"
-
 #include <string>
 #include <vector>
 /// \endcond
+
+#include "BP1Writer.tcc"
+#include "utilities/format/bp1/BP1Writer.h"
 
 namespace adios
 {
@@ -416,6 +417,38 @@ void BP1Writer::FlattenMetadata(BP1MetadataSet &metadataSet,
     if (metadataSet.Log.IsActive == true)
         metadataSet.Log.TotalBytes.push_back(heap.m_DataAbsolutePosition);
 }
+
+//------------------------------------------------------------------------------
+// Explicit instantiaiton of public tempaltes
+
+#define declare_template_instantiation(T)                                      \
+    template void BP1Writer::WriteVariablePayload(                             \
+        const Variable<T> &variable, capsule::STLVector &heap,                 \
+        const unsigned int nthreads) const noexcept;
+
+ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+// SEPARATE PRIMITIVE FROM COMPLEX OVERLOADS
+// PRIMITIVE
+#define declare_template_instantiation(T)                                      \
+    template void BP1Writer::WriteVariableMetadata(                            \
+        const Variable<T> &variable, capsule::STLVector &heap,                 \
+        BP1MetadataSet &metadataSet) const noexcept;
+
+ADIOS_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+// COMPLEX
+#define declare_template_instantiation(T)                                      \
+    template void BP1Writer::WriteVariableMetadata(                            \
+        const Variable<std::complex<T>> &variable, capsule::STLVector &heap,   \
+        BP1MetadataSet &metadataSet) const noexcept;
+
+ADIOS_FOREACH_COMPLEX_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+//------------------------------------------------------------------------------
 
 } // end namespace format
 } // end namespace adios
