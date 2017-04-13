@@ -11,6 +11,10 @@
 #ifndef ADIOS_TYPES_H_
 #define ADIOS_TYPES_H_
 
+#include <complex>
+#include <cstddef>
+#include <cstdint>
+
 namespace adios
 {
 
@@ -37,6 +41,26 @@ enum class IOMode
     COLLECTIVE = 1
 };
 
-} // end namespace
+// Alias the fixed sized typed into the adios namespace to make sure we're
+// always using the right ones.
+using std::size_t;
+
+using std::int8_t;
+using std::uint8_t;
+using std::int16_t;
+using std::uint16_t;
+using std::int32_t;
+using std::uint32_t;
+using std::int64_t;
+using std::uint64_t;
+
+// Not sure if we're really use these ones but we'll round it out for
+// completion
+using real32_t = float;
+using real64_t = double;
+using complex32_t = std::complex<real32_t>;
+using complex64_t = std::complex<real64_t>;
+
+} // end namespace adios
 
 #endif /* ADIOS_TYPES_H_ */
