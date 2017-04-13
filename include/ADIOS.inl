@@ -6,10 +6,11 @@
  *   This contains the template implementations for the ADIOS class
  */
 
-#ifndef ADIOS_TCC_
-#define ADIOS_TCC_
-
-#include "ADIOS.h"
+#ifndef ADIOS_INL_
+#define ADIOS_INL_
+#ifndef ADIOS_H_
+#error "Inline file should only be included from it's header, never on it's own"
+#endif
 
 namespace adios
 {
@@ -31,4 +32,4 @@ VariableCompound &ADIOS::DefineVariableCompound(const std::string &name,
 
 } // end namespace adios
 
-#endif /* ADIOS_TCC_ */
+#endif /* ADIOS_INL_ */

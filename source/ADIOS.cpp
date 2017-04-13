@@ -18,6 +18,7 @@
 
 #include "ADIOS.h"
 #include "ADIOS.tcc"
+#include "ADIOSMacros.h"
 
 #include "functions/adiosFunctions.h"
 
@@ -378,5 +379,20 @@ void ADIOS::CheckMethod(std::map<std::string, Method>::const_iterator itMethod,
                                     " not found " + hint + "\n");
     }
 }
+
+//------------------------------------------------------------------------------
+
+// Explicitly instantiate the necessary template implementations
+#define define_template_instantiation(T)                                       \
+    template Variable<T> &ADIOS::DefineVariable<T>(                            \
+        const std::string &, const Dims, const Dims, const Dims);              \
+                                                                               \
+    template Variable<T> &ADIOS::GetVariable<T>(const std::string &);
+
+ADIOS_FOREACH_TYPE_1ARG(define_template_instantiation)
+template unsigned int ADIOS::GetVariableIndex<void>(const std::string &);
+#undef define_template_instatiation
+
+//------------------------------------------------------------------------------
 
 } // end namespace adios
