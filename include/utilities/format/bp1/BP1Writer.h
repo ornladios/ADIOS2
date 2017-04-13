@@ -18,6 +18,7 @@
 /// \endcond
 
 #include "ADIOSMacros.h"
+#include "ADIOSTypes.h"
 #include "utilities/format/bp1/BP1Base.h"
 #include "utilities/format/bp1/BP1Structs.h"
 
@@ -83,24 +84,13 @@ public:
         noexcept;
 
     /**
-     * Version for primitive types (except std::complex<T>)
+     * Write metadata for a given variable
      * @param variable
      * @param heap
      * @param metadataSet
      */
     template <class T>
     void WriteVariableMetadata(const Variable<T> &variable,
-                               capsule::STLVector &heap,
-                               BP1MetadataSet &metadataSet) const noexcept;
-
-    /**
-     * Overloaded version for std::complex<T> variables
-     * @param variable
-     * @param heap
-     * @param metadataSet
-     */
-    template <class T>
-    void WriteVariableMetadata(const Variable<std::complex<T>> &variable,
                                capsule::STLVector &heap,
                                BP1MetadataSet &metadataSet) const noexcept;
 
@@ -150,36 +140,23 @@ public:
         noexcept;
 
 private:
-    /**
-     * Common function called from WriterVariableMetadata for primitive and
-     * complex types
-     * @param variable
-     * @param stats
-     * @param heap
-     * @param metadataSet
-     */
-    template <class T, class U>
-    void WriteVariableMetadataCommon(const Variable<T> &variable,
-                                     Stats<U> &stats, capsule::STLVector &heap,
-                                     BP1MetadataSet &metadataSet) const
-        noexcept;
+    template <class T>
+    void WriteVariableMetadataInData(
+        const Variable<T> &variable,
+        const Stats<typename TypeInfo<T>::ValueType> &stats,
+        capsule::STLVector &heap) const noexcept;
 
-    template <class T, class U>
-    void WriteVariableMetadataInData(const Variable<T> &variable,
-                                     const Stats<U> &stats,
-                                     capsule::STLVector &heap) const noexcept;
+    template <class T>
+    void WriteVariableMetadataInIndex(
+        const Variable<T> &variable,
+        const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
+        BP1Index &index) const noexcept;
 
-    template <class T, class U>
-    void WriteVariableMetadataInIndex(const Variable<T> &variable,
-                                      const Stats<U> &stats, const bool isNew,
-                                      BP1Index &index) const noexcept;
-
-    template <class T, class U>
-    void WriteVariableCharacteristics(const Variable<T> &variable,
-                                      const Stats<U> &stats,
-                                      std::vector<char> &buffer,
-                                      const bool addLength = false) const
-        noexcept;
+    template <class T>
+    void WriteVariableCharacteristics(
+        const Variable<T> &variable,
+        const Stats<typename TypeInfo<T>::ValueType> &stats,
+        std::vector<char> &buffer, const bool addLength = false) const noexcept;
 
     /**
      * Writes from &buffer[position]:  [2
@@ -212,20 +189,13 @@ private:
                                const bool addType = false) const noexcept;
 
     /**
-     * GetStats for primitive types except std::complex<T> types
+     * Get variable statistics
      * @param variable
      * @return stats
      */
     template <class T>
-    Stats<T> GetStats(const Variable<T> &variable) const noexcept;
-
-    /**
-     * GetStats for std::complex<T> types
-     * @param variable
-     * @return stats
-     */
-    template <class T>
-    Stats<T> GetStats(const Variable<std::complex<T>> &variable) const noexcept;
+    Stats<typename TypeInfo<T>::ValueType>
+    GetStats(const Variable<T> &variable) const noexcept;
 
     template <class T>
     void WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
@@ -282,28 +252,13 @@ private:
 #define declare_template_instantiation(T)                                      \
     extern template void BP1Writer::WriteVariablePayload(                      \
         const Variable<T> &variable, capsule::STLVector &heap,                 \
-        const unsigned int nthreads) const noexcept;
-
-ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-// SEPARATE PRIMITIVE FROM COMPLEX OVERLOADS
-// PRIMITIVE
-#define declare_template_instantiation(T)                                      \
+        const unsigned int nthreads) const noexcept;                           \
+                                                                               \
     extern template void BP1Writer::WriteVariableMetadata(                     \
         const Variable<T> &variable, capsule::STLVector &heap,                 \
         BP1MetadataSet &metadataSet) const noexcept;
 
-ADIOS_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-// COMPLEX
-#define declare_template_instantiation(T)                                      \
-    extern template void BP1Writer::WriteVariableMetadata(                     \
-        const Variable<std::complex<T>> &variable, capsule::STLVector &heap,   \
-        BP1MetadataSet &metadataSet) const noexcept;
-
-ADIOS_FOREACH_COMPLEX_TYPE_1ARG(declare_template_instantiation)
+ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format
