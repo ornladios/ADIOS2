@@ -10,7 +10,7 @@ endif()
   
 foreach(adios2_target IN LISTS adios2_targets)
   add_library(${adios2_target}
-    ADIOS.cpp ADIOS_inst.cpp
+    ADIOS.cpp ADIOS.tcc
     #ADIOS_C.cpp
   
     capsule/heap/STLVector.cpp

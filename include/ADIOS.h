@@ -343,19 +343,22 @@ protected: // no const to allow default empty and copy constructors
     std::map<unsigned int, Variable<T>> &GetVariableMap();
 };
 
+//------------------------------------------------------------------------------
+
 // Explicit declaration of the template methods
 #define declare_template_instantiation(T)                                      \
     extern template Variable<T> &ADIOS::DefineVariable<T>(                     \
         const std::string &name, const Dims, const Dims, const Dims);          \
-    extern template Variable<T> &ADIOS::GetVariable<T>(const std::string &);   \
-    extern template unsigned int ADIOS::GetVariableIndex<T>(                   \
-        const std::string &name);                                              \
-    template <>                                                                \
-    std::map<unsigned int, Variable<T>> &ADIOS::GetVariableMap<T>();
+                                                                               \
+    extern template Variable<T> &ADIOS::GetVariable<T>(const std::string &);
+
 ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
 extern template unsigned int ADIOS::GetVariableIndex<void>(const std::string &);
 #undef declare_template_instantiation
 
 } // end namespace adios
+
+// Include the inline implementations for the public interface
+#include "ADIOS.inl"
 
 #endif /* ADIOS_H_ */
