@@ -3,6 +3,17 @@
 This guide will walk you through how to submit changes to ADIOS and interact
 with the project as a developer.
 
+Table of Contents
+=================
+
+   * [Workflow](#workflow)
+   * [Setup](#setup)
+   * [Making a change and submitting a pull request](#making-a-change-and-submitting-a-pull-request)
+      * [Create the topic branch](#create-the-topic-branch)
+         * [Do I need to merge master into my branch first?](#do-i-need-to-merge-master-into-my-branch-first)
+      * [Submit a pull request](#submit-a-pull-request)
+   * [Code formatting and style](#code-formatting-and-style)
+
 ## Workflow
 ADIOS uses the GitHub fork-and-branch model. In this, the project "lives" in it's main repository located at https://github.com/ornladios/adios2.git, while each individual developer has their own copy of the repo to work in.  Changes are then submitted to the main repository via pull-requests made with branches from your fork.
 
