@@ -3,10 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_executable(hello_hdf5Writer_nompi helloHDF5Writer_nompi.cpp)
+#add_executable(hello_hdf5Writer_nompi helloHDF5Writer_nompi.cpp)
 message("    HDF5:   ${HDF5_INCLUDE_DIRS}")
 include_directories(${HDF5_INCLUDE_DIRS})
-target_link_libraries(hello_hdf5Writer_nompi adios2_nompi)
+#target_link_libraries(hello_hdf5Writer_nompi adios2_nompi)
 
 if(ADIOS_BUILD_TESTING)
   #add_test(
