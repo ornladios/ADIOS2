@@ -62,18 +62,24 @@ void BP1Writer::WriteVariableMetadata(const Variable<T> &variable,
                                       BP1MetadataSet &metadataSet) const
     noexcept
 {
-    Stats<T> stats = GetStats(variable);
-    WriteVariableMetadataCommon(variable, stats, heap, metadataSet);
-}
+    Stats<typename TypeInfo<T>::ValueType> stats = GetStats(variable);
 
-template <class T>
-void BP1Writer::WriteVariableMetadata(const Variable<std::complex<T>> &variable,
-                                      capsule::STLVector &heap,
-                                      BP1MetadataSet &metadataSet) const
-    noexcept
-{
-    Stats<T> stats = GetStats(variable);
-    WriteVariableMetadataCommon(variable, stats, heap, metadataSet);
+    stats.TimeIndex = metadataSet.TimeStep;
+    // Get new Index or point to existing index
+    bool isNew = true; // flag to check if variable is new
+    BP1Index &varIndex =
+        GetBP1Index(variable.m_Name, metadataSet.VarsIndices, isNew);
+    stats.MemberID = varIndex.MemberID;
+
+    // write metadata header in data and extract offsets
+    stats.Offset = heap.m_DataAbsolutePosition;
+    WriteVariableMetadataInData(variable, stats, heap);
+    stats.PayloadOffset = heap.m_DataAbsolutePosition;
+
+    // write to metadata  index
+    WriteVariableMetadataInIndex(variable, stats, isNew, varIndex);
+
+    ++metadataSet.DataPGVarsCount;
 }
 
 template <class T>
@@ -88,10 +94,10 @@ void BP1Writer::WriteVariablePayload(const Variable<T> &variable,
 
 // PRIVATE
 template <class T>
-BP1Writer::Stats<T> BP1Writer::GetStats(const Variable<T> &variable) const
-    noexcept
+BP1Writer::Stats<typename TypeInfo<T>::ValueType>
+BP1Writer::GetStats(const Variable<T> &variable) const noexcept
 {
-    Stats<T> stats;
+    Stats<typename TypeInfo<T>::ValueType> stats;
     const std::size_t valuesSize = variable.TotalSize();
 
     if (m_Verbosity == 0)
@@ -103,30 +109,6 @@ BP1Writer::Stats<T> BP1Writer::GetStats(const Variable<T> &variable) const
                       m_Threads); // here we can add cores from constructor
         else
             GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max);
-    }
-    return stats;
-}
-
-template <class T>
-BP1Writer::Stats<T>
-BP1Writer::GetStats(const Variable<std::complex<T>> &variable) const noexcept
-{
-    Stats<T> stats;
-    const std::size_t valuesSize = variable.TotalSize();
-
-    if (m_Verbosity == 0)
-    {
-        // ten million? this needs actual results
-        // to make decisions for threads usage
-        if (valuesSize >= 10000000)
-        {
-            GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
-                      m_Threads);
-        }
-        else
-        {
-            GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max);
-        }
     }
     return stats;
 }
@@ -174,36 +156,11 @@ void BP1Writer::WriteCharacteristicRecord(const std::uint8_t characteristicID,
     ++characteristicsCounter;
 }
 
-template <class T, class U>
-void BP1Writer::WriteVariableMetadataCommon(const Variable<T> &variable,
-                                            Stats<U> &stats,
-                                            capsule::STLVector &heap,
-                                            BP1MetadataSet &metadataSet) const
-    noexcept
-{
-    stats.TimeIndex = metadataSet.TimeStep;
-    // Get new Index or point to existing index
-    bool isNew = true; // flag to check if variable is new
-    BP1Index &varIndex =
-        GetBP1Index(variable.m_Name, metadataSet.VarsIndices, isNew);
-    stats.MemberID = varIndex.MemberID;
-
-    // write metadata header in data and extract offsets
-    stats.Offset = heap.m_DataAbsolutePosition;
-    WriteVariableMetadataInData(variable, stats, heap);
-    stats.PayloadOffset = heap.m_DataAbsolutePosition;
-
-    // write to metadata  index
-    WriteVariableMetadataInIndex(variable, stats, isNew, varIndex);
-
-    ++metadataSet.DataPGVarsCount;
-}
-
-template <class T, class U>
-void BP1Writer::WriteVariableMetadataInData(const Variable<T> &variable,
-                                            const Stats<U> &stats,
-                                            capsule::STLVector &heap) const
-    noexcept
+template <class T>
+void BP1Writer::WriteVariableMetadataInData(
+    const Variable<T> &variable,
+    const Stats<typename TypeInfo<T>::ValueType> &stats,
+    capsule::STLVector &heap) const noexcept
 {
     auto &buffer = heap.m_Data;
 
@@ -246,11 +203,11 @@ void BP1Writer::WriteVariableMetadataInData(const Variable<T> &variable,
                                            // used as payload position
 }
 
-template <class T, class U>
-void BP1Writer::WriteVariableMetadataInIndex(const Variable<T> &variable,
-                                             const Stats<U> &stats,
-                                             const bool isNew,
-                                             BP1Index &index) const noexcept
+template <class T>
+void BP1Writer::WriteVariableMetadataInIndex(
+    const Variable<T> &variable,
+    const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
+    BP1Index &index) const noexcept
 {
     auto &buffer = index.Buffer;
 
@@ -282,12 +239,11 @@ void BP1Writer::WriteVariableMetadataInIndex(const Variable<T> &variable,
     WriteVariableCharacteristics(variable, stats, buffer);
 }
 
-template <class T, class U>
-void BP1Writer::WriteVariableCharacteristics(const Variable<T> &variable,
-                                             const Stats<U> &stats,
-                                             std::vector<char> &buffer,
-                                             const bool addLength) const
-    noexcept
+template <class T>
+void BP1Writer::WriteVariableCharacteristics(
+    const Variable<T> &variable,
+    const Stats<typename TypeInfo<T>::ValueType> &stats,
+    std::vector<char> &buffer, const bool addLength) const noexcept
 {
     const std::size_t characteristicsCountPosition =
         buffer.size(); // very important to track as writer is going back to
