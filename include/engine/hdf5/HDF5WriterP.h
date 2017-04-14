@@ -12,8 +12,6 @@
 #ifndef HDF5_WRITER_P_H_
 #define HDF5_WRITER_P_H_
 
-#include <unistd.h> //sleep must be removed
-
 #include "core/Engine.h"
 
 // supported capsules

@@ -88,18 +88,14 @@ if(ADIOS_USE_MPI)
     message("    HDF5 ROOT:   ${HDF5_ROOT}")
     message("    HDF5 include:   ${HDF5_INCLUDE_DIRS}   is paralle? ${HDF5_IS_PARALLEL}")
 
-    get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-    foreach(dir ${dirs})
-      message(STATUS "dir='${dir}'")
-    endforeach()
-    include_directories(${HDF5_INCLUDE_DIRS})
+    target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_sources(adios2 PRIVATE
       engine/hdf5/HDF5ReaderP.cpp
       engine/hdf5/HDF5WriterP.cpp
     )
     target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_PHDF5)
-    target_link_libraries(adios2 PRIVATE hdf5)
+    target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
   endif()
 
 endif()

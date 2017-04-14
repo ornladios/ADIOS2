@@ -9,10 +9,10 @@ include_directories(${HDF5_INCLUDE_DIRS})
 target_link_libraries(hello_hdf5Writer_nompi adios2_nompi)
 
 if(ADIOS_BUILD_TESTING)
-  add_test(
-    NAME Example::hello::hdf5Writer_nompi
-    COMMAND hello_hdf5Writer_nompi
-  )
+  #add_test(
+  #  NAME Example::hello::hdf5Writer_nompi
+  #  COMMAND hello_hdf5Writer_nompi
+  #)
 endif()
 
 if(ADIOS_USE_MPI)
