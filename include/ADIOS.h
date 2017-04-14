@@ -275,20 +275,19 @@ protected: // no const to allow default empty and copy constructors
     std::map<unsigned int, Variable<std::complex<long double>>> m_CLDouble;
     std::map<unsigned int, VariableCompound> m_Compound;
 
-    std::string m_ConfigFile; ///< XML File to be read containing configuration
-                              /// information
-    bool m_DebugMode = false; ///< if true will do more checks, exceptions,
-                              /// warnings, expect slower code
+    ///< XML File to be read containing configuration information
+    std::string m_ConfigFile;
+
+    ///< if true will do more checks, exceptions, warnings, expect slower code
+    bool m_DebugMode = false;
 
     // Variables
-    std::map<std::string, std::pair<std::string, unsigned int>>
-        m_Variables; ///< Makes variable name unique, key: variable name,
-                     /// value:
-    /// pair.first = type, pair.second = index in corresponding
-    /// vector of Variable
+    ///< Makes variable name unique, key: variable name,value: pair.first =
+    /// type, pair.second = index in corresponding vector of Variable
+    std::map<std::string, std::pair<std::string, unsigned int>> m_Variables;
 
-    std::vector<std::shared_ptr<Transform>>
-        m_Transforms; ///< transforms associated with ADIOS run
+    ///< transforms associated with ADIOS run
+    std::vector<std::shared_ptr<Transform>> m_Transforms;
 
     /**
      * @brief List of Methods (engine metadata) defined from either ADIOS XML
@@ -299,8 +298,9 @@ protected: // no const to allow default empty and copy constructors
      * </pre>
      */
     std::map<std::string, Method> m_Methods;
-    std::set<std::string> m_EngineNames; ///< set used to check Engine name
-                                         /// uniqueness in debug mode
+
+    ///< set used to check Engine name uniqueness in debug mode
+    std::set<std::string> m_EngineNames;
 
     /**
      * @brief Checks for group existence in m_Groups, if failed throws
