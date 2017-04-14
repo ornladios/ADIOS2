@@ -73,6 +73,7 @@ endif()
 option(ADIOS_USE_BZip2 "Enable support for BZip2 transforms" OFF)
 option(ADIOS_USE_ADIOS1 "Enable support for the ADIOS 1 engine" OFF)
 option(ADIOS_USE_DataMan "Enable support for the DataMan engine" OFF)
+option(ADIOS_USE_PHDF5 "Enable support for hdf5" OFF)
 
 #------------------------------------------------------------------------------#
 # Third party libraries
@@ -134,4 +135,5 @@ message("    MPI:     ${ADIOS_USE_MPI}")
 message("    BZip2:   ${ADIOS_USE_BZip2}")
 message("    ADIOS1:  ${ADIOS_USE_ADIOS1}")
 message("    DataMan: ${ADIOS_USE_DataMan}")
+message("    HDF5: ${ADIOS_USE_PHDF5}")
 message("")

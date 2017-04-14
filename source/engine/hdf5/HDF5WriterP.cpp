@@ -1,9 +1,13 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * HDF5WriterP.cpp
  *
- *  Created on: Mar 23, 2017
- *      Author: junmin
+ *  Created on: March 20, 2017
+ *      Author: Junmin
  */
+
 
 #include <iostream> //needs to go away, this is just for demo purposes
 
@@ -13,59 +17,34 @@
 #include "core/Support.h"
 #include "functions/adiosFunctions.h" //CSVToVector
 
-// supported transports
-//#include "transport/file/FD.h"      // uses POSIX
-//#include "transport/file/FP.h"      // uses C FILE*
-//#include "transport/file/FStream.h" // uses C++ fstream
-
 namespace adios {
 
 HDF5Writer::HDF5Writer(ADIOS &adios, const std::string name,
                        const std::string accessMode, MPI_Comm mpiComm,
-                       const Method &method, const bool debugMode,
-                       const unsigned int cores)
-    : Engine(adios, "HDF5Writer", name, accessMode, mpiComm, method, debugMode,
-             cores, " HDF5Writer constructor (or call to ADIOS Open).\n"),
-      m_Buffer(accessMode, m_RankMPI, m_DebugMode) {
-  DefH5T_COMPLEX_DOUBLE =
-      H5Tcreate(H5T_COMPOUND, sizeof(ADIOS2_Complex_Double));
-  DefH5T_COMPLEX_FLOAT = H5Tcreate(H5T_COMPOUND, sizeof(ADIOS2_Complex_Float));
-  DefH5T_COMPLEX_LongDOUBLE =
-      H5Tcreate(H5T_COMPOUND, sizeof(ADIOS2_Complex_LongDouble));
+                       const Method &method)
+    : Engine(adios, "HDF5Writer", name, accessMode, mpiComm, method, /*debugMode, cores,*/ 
+	     " HDF5Writer constructor (or call to ADIOS Open).\n"),
+      m_Buffer(accessMode, m_RankMPI, m_DebugMode) 
+{
+  //
+  //  16, 4 vs: 8
+  //std::cout<<sizeof(std::complex<double>)<<", "<<sizeof(H5T_NATIVE_DOUBLE)<<" vs: "<<H5Tget_size(H5T_NATIVE_DOUBLE)<<std::endl;
+  //  8, 4 vs: 4
+  //std::cout<<sizeof(std::complex<float>)<<", "<<sizeof(H5T_NATIVE_FLOAT)<<" vs: "<<H5Tget_size(H5T_NATIVE_FLOAT)<<std::endl;
+  //  32, 4 vs: 16
+  //std::cout<<sizeof(std::complex<long double>)<<", "<<sizeof(H5T_NATIVE_LDOUBLE)<<" vs: "<<H5Tget_size(H5T_NATIVE_LDOUBLE)<<std::endl;
 
-  // compound data type for memory
-  H5Tinsert(DefH5T_COMPLEX_DOUBLE, "double real",
-            HOFFSET(ADIOS2_Complex_Double, _re), H5T_NATIVE_DOUBLE);
-  H5Tinsert(DefH5T_COMPLEX_DOUBLE, "double img",
-            HOFFSET(ADIOS2_Complex_Double, _im), H5T_NATIVE_DOUBLE);
-  H5Tinsert(DefH5T_COMPLEX_FLOAT, "float real",
-            HOFFSET(ADIOS2_Complex_Float, _re), H5T_NATIVE_FLOAT);
-  H5Tinsert(DefH5T_COMPLEX_FLOAT, "float img",
-            HOFFSET(ADIOS2_Complex_Float, _im), H5T_NATIVE_FLOAT);
-  H5Tinsert(DefH5T_COMPLEX_LongDOUBLE, "ldouble real",
-            HOFFSET(ADIOS2_Complex_LongDouble, _re), H5T_NATIVE_LDOUBLE);
-  H5Tinsert(DefH5T_COMPLEX_LongDOUBLE, "ldouble img",
-            HOFFSET(ADIOS2_Complex_LongDouble, _im), H5T_NATIVE_LDOUBLE);
+  DefH5T_COMPLEX_FLOAT      = H5Tcreate(H5T_COMPOUND, sizeof(std::complex<float>));
+  H5Tinsert(DefH5T_COMPLEX_FLOAT, "freal", 0, H5T_NATIVE_FLOAT);
+  H5Tinsert(DefH5T_COMPLEX_FLOAT, "fimg",  H5Tget_size(H5T_NATIVE_FLOAT), H5T_NATIVE_FLOAT);
 
-  // data type for file
-  int ldsize = H5Tget_size(H5T_NATIVE_DOUBLE);
-  DefH5T_filetype_COMPLEX_DOUBLE = H5Tcreate(H5T_COMPOUND, ldsize + ldsize);
-  H5Tinsert(DefH5T_filetype_COMPLEX_DOUBLE, "double real", 0, H5T_IEEE_F64BE);
-  H5Tinsert(DefH5T_filetype_COMPLEX_DOUBLE, "double img", ldsize,
-            H5T_IEEE_F64BE);
+  DefH5T_COMPLEX_DOUBLE     = H5Tcreate(H5T_COMPOUND, sizeof(std::complex<double>));    
+  H5Tinsert(DefH5T_COMPLEX_DOUBLE, "dreal", 0, H5T_NATIVE_DOUBLE);
+  H5Tinsert(DefH5T_COMPLEX_DOUBLE, "dimg", H5Tget_size(H5T_NATIVE_DOUBLE), H5T_NATIVE_DOUBLE);
 
-  ldsize = H5Tget_size(H5T_NATIVE_FLOAT);
-  DefH5T_filetype_COMPLEX_FLOAT = H5Tcreate(H5T_COMPOUND, ldsize + ldsize);
-  H5Tinsert(DefH5T_filetype_COMPLEX_FLOAT, "float real", 0, H5T_IEEE_F32BE);
-  H5Tinsert(DefH5T_filetype_COMPLEX_FLOAT, "float img", ldsize, H5T_IEEE_F32BE);
-
-  ldsize = H5Tget_size(
-      H5T_NATIVE_LDOUBLE); // note that sizeof(H5T_NATIVE_LDOUBLE) returned 4!!
-  DefH5T_filetype_COMPLEX_LongDOUBLE = H5Tcreate(H5T_COMPOUND, ldsize + ldsize);
-  H5Tinsert(DefH5T_filetype_COMPLEX_LongDOUBLE, "ldouble real", 0,
-            H5T_NATIVE_LDOUBLE);
-  H5Tinsert(DefH5T_filetype_COMPLEX_LongDOUBLE, "ldouble img", ldsize,
-            H5T_NATIVE_LDOUBLE);
+  DefH5T_COMPLEX_LongDOUBLE = H5Tcreate(H5T_COMPOUND, sizeof(std::complex<long double>));
+  H5Tinsert(DefH5T_COMPLEX_LongDOUBLE, "ldouble real", 0, H5T_NATIVE_LDOUBLE);
+  H5Tinsert(DefH5T_COMPLEX_LongDOUBLE, "ldouble img", H5Tget_size(H5T_NATIVE_LDOUBLE), H5T_NATIVE_LDOUBLE);
 
   Init();
 }
@@ -74,20 +53,20 @@ HDF5Writer::~HDF5Writer() {}
 
 void HDF5Writer::Init() {
   if (m_AccessMode != "w" && m_AccessMode != "write" && m_AccessMode != "a" &&
-      m_AccessMode != "append") {
-    throw std::invalid_argument(
-        "ERROR: HDF5Writer doesn't support access mode " + m_AccessMode +
-        ", in call to ADIOS Open or HDF5Writer constructor\n");
+      m_AccessMode != "append") 
+  {
+    throw std::invalid_argument("ERROR: HDF5Writer doesn't support access mode " + m_AccessMode +				
+				", in call to ADIOS Open or HDF5Writer constructor\n");
   }
-  std::cout << "method: # of inputs:" << m_Method.m_Parameters.size()
-            << std::endl;
-  std::cout << "::Init hdf5 parallel writer. File name:" << m_Name << std::endl;
+  //std::cout << "method: # of inputs:" << m_Method.m_Parameters.size() << std::endl;
+            
+  //std::cout << "::Init hdf5 parallel writer. File name:" << m_Name << std::endl;
 
   _plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
-#ifdef HAVE_MPI
+
   H5Pset_fapl_mpio(_plist_id, m_MPIComm, MPI_INFO_NULL);
-#endif
+
 
   /*
    * Create a new file collectively and release property list identifier.
@@ -157,17 +136,17 @@ void HDF5Writer::Write(Variable<long double> &variable,
 
 void HDF5Writer::Write(Variable<std::complex<float>> &variable,
                        const std::complex<float> *values) {
-  UseHDFWrite(variable, values, DefH5T_filetype_COMPLEX_FLOAT);
+  UseHDFWrite(variable, values, DefH5T_COMPLEX_FLOAT);
 }
 
 void HDF5Writer::Write(Variable<std::complex<double>> &variable,
                        const std::complex<double> *values) {
-  UseHDFWrite(variable, values, DefH5T_filetype_COMPLEX_DOUBLE);
+  UseHDFWrite(variable, values, DefH5T_COMPLEX_DOUBLE);
 }
 
 void HDF5Writer::Write(Variable<std::complex<long double>> &variable,
                        const std::complex<long double> *values) {
-  UseHDFWrite(variable, values, DefH5T_filetype_COMPLEX_LongDOUBLE);
+  UseHDFWrite(variable, values, DefH5T_COMPLEX_LongDOUBLE);
 }
 
 // String version
@@ -260,7 +239,7 @@ void HDF5Writer::Write(const std::string variableName,
 }
 
 void HDF5Writer::Close(const int transportIndex) {
-  std::cout << " ===> CLOSING HDF5 <===== " << std::endl;
+  //std::cout << " ===> CLOSING HDF5 <===== " << std::endl;
   // H5Dclose(_dset_id);
   // H5Sclose(_filespace);
   // H5Sclose(_memspace);
@@ -277,21 +256,23 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
   variable.m_AppValues = values;
   m_WrittenVariables.insert(variable.m_Name);
 
+  int dimSize = variable.m_GlobalDimensions.size();
+  /*
   std::cout << "writting : " << variable.m_Name
             << " dim size:" << variable.m_GlobalDimensions.size() << std::endl;
 
-  int dimSize = variable.m_GlobalDimensions.size();
   for (int i = 0; i < dimSize; i++) {
     std::cout << " dim: " << i << ", size:" << variable.m_GlobalDimensions[i]
-              << " offset=" << variable.m_GlobalOffsets[i]
-              << " count=" << variable.m_Dimensions[i] << std::endl;
+              << " offset=" << variable.m_Offsets[i]
+              << " count=" << variable.m_LocalDimensions[i] << std::endl;
   }
+  */
   std::vector<hsize_t> dimsf, count, offset;
 
   for (int i = 0; i < dimSize; i++) {
     dimsf.push_back(variable.m_GlobalDimensions[i]);
-    count.push_back(variable.m_Dimensions[i]);
-    offset.push_back(variable.m_GlobalOffsets[i]);
+    count.push_back(variable.m_LocalDimensions[i]);
+    offset.push_back(variable.m_Offsets[i]);
   }
 
   _filespace = H5Screate_simple(dimSize, dimsf.data(), NULL);
@@ -308,60 +289,21 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
                       count.data(), NULL);
 
   //  Create property list for collective dataset write.
+
   _plist_id = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(_plist_id, H5FD_MPIO_COLLECTIVE);
 
   herr_t status;
 
-  if (h5type == DefH5T_filetype_COMPLEX_FLOAT) {
-    /*
-    ADIOS2_Complex_Float v[3];
-    v[0]._re = 1.1, v[0]._im = 1.2;
-    v[1]._re = 2.1, v[1]._im = 2.2;
-    v[2]._re = 3.1, v[2]._im = 3.2;
-    // status = H5Dwrite(_dset_id, DefH5T_COMPLEX_FLOAT, _memspace, _filespace,
-    // _plist_id, values);
-    status = H5Dwrite(_dset_id, DefH5T_COMPLEX_FLOAT, _memspace, _filespace,
-                      _plist_id, v);
-    */
-  } else if (h5type == DefH5T_filetype_COMPLEX_DOUBLE) {
-    /*
-    ADIOS2_Complex_Double v[3];
-    v[0]._re = 1.1, v[0]._im = 1.2;
-    v[1]._re = 2.1, v[1]._im = 2.2;
-    v[2]._re = 3.1, v[2]._im = 3.2;
-    status = H5Dwrite(_dset_id, DefH5T_COMPLEX_DOUBLE, _memspace, _filespace,
-                      _plist_id, v);
-    */
-  } else if (h5type == DefH5T_filetype_COMPLEX_LongDOUBLE) {
-    /*
-    ADIOS2_Complex_LongDouble v[3];
-    v[0]._re = 1.1, v[0]._im = 1.2;
-    v[1]._re = 2.1, v[1]._im = 2.2;
-    v[2]._re = 3.1, v[2]._im = 3.2;
-    status = H5Dwrite(_dset_id, DefH5T_COMPLEX_LongDOUBLE, _memspace,
-                      _filespace, _plist_id, v);
-    */
-  } else {
-    status =
-        H5Dwrite(_dset_id, h5type, _memspace, _filespace, _plist_id, values);
-  }
+  status =
+    H5Dwrite(_dset_id, h5type, _memspace, _filespace, _plist_id, values);  
 
   if (status < 0) {
     // error
     std::cerr << " Write failed. " << std::endl;
   }
 
-  std::cout << " ==> User is responsible for freeing the data " << std::endl;
-  // free(values);
-
-  // Close/release resources.
-
-  // H5Dclose(_dset_id);
-  // H5Sclose(_filespace);
-  // H5Sclose(_memspace);
-  // H5Pclose(_plist_id);
-  // H5Fclose(_file_id);
+  //std::cout << " ==> User is responsible for freeing the data " << std::endl;
 
   H5Dclose(_dset_id);
   H5Sclose(_filespace);

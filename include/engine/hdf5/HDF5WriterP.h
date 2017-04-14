@@ -1,4 +1,8 @@
+
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * HDF5WriterP.h
  *
  *  Created on: March 20, 2017
@@ -8,24 +12,23 @@
 #ifndef HDF5_WRITER_P_H_
 #define HDF5_WRITER_P_H_
 
-#include <iostream> //std::cout must be removed, only used for hello example
 #include <unistd.h> //sleep must be removed
 
 #include "core/Engine.h"
-#include "format/BP1Writer.h"
+
 
 // supported capsules
 #include "capsule/heap/STLVector.h"
 
 #include "ADIOS_MPI.h"
 
-#include "hdf5.h"
+#include <hdf5.h>
 
 namespace adios {
-
+  /*
 typedef struct {
-  double _re; /*real part*/
-  double _im; /*imaginary part*/
+  double _re; //real part
+  double _im; //imaginary part
 } ADIOS2_Complex_Double;
 
 typedef struct {
@@ -36,10 +39,10 @@ typedef struct {
 // using ADIOS2_Complex_Float = std::complex<float>;
 
 typedef struct {
-  long double _re; /*real part*/
-  long double _im; /*imaginary part*/
+  long double _re; //real part
+  long double _im; //imaginary part
 } ADIOS2_Complex_LongDouble;
-
+*/
 class HDF5Writer : public Engine {
 
 public:
@@ -52,12 +55,10 @@ public:
    * @param method
    * @param debugMode
    */
-
   HDF5Writer(ADIOS &adios, const std::string name, const std::string accessMode,
-             MPI_Comm mpiComm, const Method &method,
-             const bool debugMode = false, const unsigned int cores = 1);
+             MPI_Comm mpiComm, const Method &method);
 
-  ~HDF5Writer();
+  virtual ~HDF5Writer();
 
   void Write(Variable<char> &variable, const char *values);
   void Write(Variable<unsigned char> &variable, const unsigned char *values);
@@ -126,9 +127,9 @@ private:
   hid_t DefH5T_COMPLEX_FLOAT;
   hid_t DefH5T_COMPLEX_LongDOUBLE;
 
-  hid_t DefH5T_filetype_COMPLEX_DOUBLE;
-  hid_t DefH5T_filetype_COMPLEX_FLOAT;
-  hid_t DefH5T_filetype_COMPLEX_LongDOUBLE;
+  //hid_t DefH5T_filetype_COMPLEX_DOUBLE;
+  //hid_t DefH5T_filetype_COMPLEX_FLOAT;
+  //hid_t DefH5T_filetype_COMPLEX_LongDOUBLE;
 
   template <class T>
   void UseHDFWrite(Variable<T> &variable, const T *values, hid_t h5type);
