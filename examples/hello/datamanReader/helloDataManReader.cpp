@@ -51,11 +51,11 @@ int main(int argc, char *argv[])
             // if not defined by user, we can change the default settings
             datamanSettings.SetEngine("DataManReader");
             datamanSettings.SetParameters("peer-to-peer=yes");
-            datamanSettings.AddTransport("Mdtm", "localIP=128.0.0.0.1",
-                                         "remoteIP=128.0.0.0.2",
+            datamanSettings.AddTransport("Mdtm", "localIP=127.0.0.1",
+                                         "remoteIP=127.0.0.1",
                                          "tolerances=1,2,3");
-            // datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1",
-            // "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported
+            // datamanSettings.AddTransport( "ZeroMQ", "localIP=127.0.0.1",
+            // "remoteIP=127.0.0.1", "tolerances=1,2,3" ); not yet supported
             // ,
             // will throw an exception
         }
