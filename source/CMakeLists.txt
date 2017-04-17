@@ -10,7 +10,7 @@ endif()
   
 foreach(adios2_target IN LISTS adios2_targets)
   add_library(${adios2_target}
-    ADIOS.cpp ADIOS_inst.cpp
+    ADIOS.cpp ADIOS.tcc
     #ADIOS_C.cpp
   
     capsule/heap/STLVector.cpp
@@ -37,20 +37,28 @@ foreach(adios2_target IN LISTS adios2_targets)
     transport/file/FStream.cpp
     transport/file/FileDescriptor.cpp
     transport/file/FilePointer.cpp
+    
+    utilities/format/bp1/BP1Base.cpp
+    utilities/format/bp1/BP1Aggregator.cpp
+    utilities/format/bp1/BP1Writer.cpp
+    utilities/format/bp1/BP1Writer.tcc
+    
+    utilities/profiling/iochrono/Timer.cpp
   )
   target_include_directories(${adios2_target}
     PUBLIC ${ADIOS_SOURCE_DIR}/include
   )
   
   if(ADIOS_USE_DataMan)
-    find_package(DataMan REQUIRED)
     target_sources(${adios2_target} PRIVATE
       engine/dataman/DataManReader.cpp
       engine/dataman/DataManWriter.cpp
       transport/wan/MdtmMan.cpp
+      utilities/realtime/dataman/DataManBase.cpp
+      utilities/realtime/dataman/DataMan.cpp
     )
     target_compile_definitions(${adios2_target} PRIVATE ADIOS_HAVE_DATAMAN)
-    target_link_libraries(${adios2_target} PRIVATE DataMan::DataMan)
+    target_link_libraries(${adios2_target} PRIVATE ${CMAKE_DL_LIBS})
   endif()
 
   

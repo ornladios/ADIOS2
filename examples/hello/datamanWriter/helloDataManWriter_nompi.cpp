@@ -52,10 +52,10 @@ int main(int argc, char *argv[])
                 "real_time=yes", "method_type=stream", "method=dump",
                 "monitoring=yes", "local_ip=127.0.0.1", "remote_ip=127.0.0.1",
                 "local_port=12306", "remote_port=12307");
-            // datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1",
-            // "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
-            // datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1",
-            // "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported
+            // datamanSettings.AddTransport( "Mdtm", "localIP=127.0.0.1",
+            // "remoteIP=127.0.0.1", "tolerances=1,2,3" );
+            // datamanSettings.AddTransport( "ZeroMQ", "localIP=127.0.0.1",
+            // "remoteIP=127.0.0.1", "tolerances=1,2,3" ); not yet supported
             // ,
             // will throw an exception
         }

@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BPFileReader.cpp
+ * ADIOS1Reader.cpp
  *
  *  Created on: Feb 27, 2017
  *      Author: wfg
  */
 
+#include "engine/adios1/ADIOS1Reader.h"
 #include "core/Support.h"
-#include "engine/bp/BPFileReader.h"
 #include "functions/adiosFunctions.h"      // CSVToVector
 #include "transport/file/FStream.h"        // uses C++ fstream
 #include "transport/file/FileDescriptor.h" // uses POSIX
@@ -21,127 +21,128 @@ namespace adios
 ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string &name,
                            const std::string accessMode, MPI_Comm mpiComm,
                            const Method &method)
-: Engine(adios, "BPFileReader", name, accessMode, mpiComm, method,
-         " BPFileReader constructor (or call to ADIOS Open).\n")
+: Engine(adios, "ADIOS1Reader", name, accessMode, mpiComm, method,
+         " ADIOS1Reader constructor (or call to ADIOS Open).\n")
 {
     Init();
+    adios_read_init_method(read_method, mpiComm, "");
 }
 
-BPFileReader::~BPFileReader() {}
+ADIOS1Reader::~ADIOS1Reader() {}
 
 Variable<void> *
-BPFileReader::InquireVariable(const std::string &variableName,
+ADIOS1Reader::InquireVariable(const std::string &variableName,
                               const bool readIn) // not yet implemented
 {
     return nullptr;
 }
 
 Variable<char> *
-BPFileReader::InquireVariableChar(const std::string &variableName,
+ADIOS1Reader::InquireVariableChar(const std::string &variableName,
                                   const bool readIn)
 {
     return InquireVariableCommon<char>(variableName, readIn);
 }
 
 Variable<unsigned char> *
-BPFileReader::InquireVariableUChar(const std::string &variableName,
+ADIOS1Reader::InquireVariableUChar(const std::string &variableName,
                                    const bool readIn)
 {
     return InquireVariableCommon<unsigned char>(variableName, readIn);
 }
 
 Variable<short> *
-BPFileReader::InquireVariableShort(const std::string &variableName,
+ADIOS1Reader::InquireVariableShort(const std::string &variableName,
                                    const bool readIn)
 {
     return InquireVariableCommon<short>(variableName, readIn);
 }
 
 Variable<unsigned short> *
-BPFileReader::InquireVariableUShort(const std::string &variableName,
+ADIOS1Reader::InquireVariableUShort(const std::string &variableName,
                                     const bool readIn)
 {
     return InquireVariableCommon<unsigned short>(variableName, readIn);
 }
 
-Variable<int> *BPFileReader::InquireVariableInt(const std::string &variableName,
+Variable<int> *ADIOS1Reader::InquireVariableInt(const std::string &variableName,
                                                 const bool readIn)
 {
     return InquireVariableCommon<int>(variableName, readIn);
 }
 
 Variable<unsigned int> *
-BPFileReader::InquireVariableUInt(const std::string &variableName,
+ADIOS1Reader::InquireVariableUInt(const std::string &variableName,
                                   const bool readIn)
 {
     return InquireVariableCommon<unsigned int>(variableName, readIn);
 }
 
 Variable<long int> *
-BPFileReader::InquireVariableLInt(const std::string &variableName,
+ADIOS1Reader::InquireVariableLInt(const std::string &variableName,
                                   const bool readIn)
 {
     return InquireVariableCommon<long int>(variableName, readIn);
 }
 
 Variable<unsigned long int> *
-BPFileReader::InquireVariableULInt(const std::string &variableName,
+ADIOS1Reader::InquireVariableULInt(const std::string &variableName,
                                    const bool readIn)
 {
     return InquireVariableCommon<unsigned long int>(variableName, readIn);
 }
 
 Variable<long long int> *
-BPFileReader::InquireVariableLLInt(const std::string &variableName,
+ADIOS1Reader::InquireVariableLLInt(const std::string &variableName,
                                    const bool readIn)
 {
     return InquireVariableCommon<long long int>(variableName, readIn);
 }
 
 Variable<unsigned long long int> *
-BPFileReader::InquireVariableULLInt(const std::string &variableName,
+ADIOS1Reader::InquireVariableULLInt(const std::string &variableName,
                                     const bool readIn)
 {
     return InquireVariableCommon<unsigned long long int>(variableName, readIn);
 }
 
 Variable<float> *
-BPFileReader::InquireVariableFloat(const std::string &variableName,
+ADIOS1Reader::InquireVariableFloat(const std::string &variableName,
                                    const bool readIn)
 {
     return InquireVariableCommon<float>(variableName, readIn);
 }
 
 Variable<double> *
-BPFileReader::InquireVariableDouble(const std::string &variableName,
+ADIOS1Reader::InquireVariableDouble(const std::string &variableName,
                                     const bool readIn)
 {
     return InquireVariableCommon<double>(variableName, readIn);
 }
 
 Variable<long double> *
-BPFileReader::InquireVariableLDouble(const std::string &variableName,
+ADIOS1Reader::InquireVariableLDouble(const std::string &variableName,
                                      const bool readIn)
 {
     return InquireVariableCommon<long double>(variableName, readIn);
 }
 
 Variable<std::complex<float>> *
-BPFileReader::InquireVariableCFloat(const std::string &variableName,
+ADIOS1Reader::InquireVariableCFloat(const std::string &variableName,
                                     const bool readIn)
 {
     return InquireVariableCommon<std::complex<float>>(variableName, readIn);
 }
 
 Variable<std::complex<double>> *
-BPFileReader::InquireVariableCDouble(const std::string &variableName,
+ADIOS1Reader::InquireVariableCDouble(const std::string &variableName,
                                      const bool readIn)
 {
     return InquireVariableCommon<std::complex<double>>(variableName, readIn);
 }
 
 Variable<std::complex<long double>> *
-BPFileReader::InquireVariableCLDouble(const std::string &variableName,
+ADIOS1Reader::InquireVariableCLDouble(const std::string &variableName,
                                       const bool readIn)
 {
     return InquireVariableCommon<std::complex<long double>>(variableName,
@@ -149,31 +150,34 @@ BPFileReader::InquireVariableCLDouble(const std::string &variableName,
 }
 
 VariableCompound *
-BPFileReader::InquireVariableCompound(const std::string &variableName,
+ADIOS1Reader::InquireVariableCompound(const std::string &variableName,
                                       const bool readIn)
 {
     return nullptr;
 }
 
-void BPFileReader::Close(const int transportIndex) {}
+void ADIOS1Reader::Close(const int transportIndex) {}
 
 // PRIVATE
-void BPFileReader::Init()
+void ADIOS1Reader::Init()
 {
     if (m_DebugMode == true)
     {
         if (m_AccessMode != "r" && m_AccessMode != "read")
             throw std::invalid_argument(
-                "ERROR: BPFileReader doesn't support access mode " +
+                "ERROR: ADIOS1Reader doesn't support access mode " +
                 m_AccessMode +
-                ", in call to ADIOS Open or BPFileReader constructor\n");
+                ", in call to ADIOS Open or ADIOS1Reader constructor\n");
     }
-
+    InitParameters();
     InitTransports();
 }
 
-void BPFileReader::InitTransports() // maybe move this?
+void ADIOS1Reader::InitParameters() {}
+
+void ADIOS1Reader::InitTransports()
 {
+
     if (m_DebugMode == true)
     {
         if (TransportNamesUniqueness() == false)
@@ -188,43 +192,10 @@ void BPFileReader::InitTransports() // maybe move this?
     for (const auto &parameters : m_Method.m_TransportParameters)
     {
         auto itTransport = parameters.find("transport");
-        if (itTransport->second == "file" || itTransport->second == "File")
+        if (itTransport->second == "file" || itTransport->second == "File" ||
+            itTransport->second == "bp" || itTransport->second == "BP")
         {
-            auto itLibrary = parameters.find("library");
-            if (itLibrary == parameters.end() ||
-                itLibrary->second == "POSIX") // use default POSIX
-            {
-                auto file = std::make_shared<transport::FileDescriptor>(
-                    m_MPIComm, m_DebugMode);
-                // m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
-                m_Transports.push_back(std::move(file));
-            }
-            else if (itLibrary->second == "FILE*" ||
-                     itLibrary->second == "stdio.h")
-            {
-                auto file = std::make_shared<transport::FilePointer>(
-                    m_MPIComm, m_DebugMode);
-                // m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
-                m_Transports.push_back(std::move(file));
-            }
-            else if (itLibrary->second == "fstream" ||
-                     itLibrary->second == "std::fstream")
-            {
-                auto file = std::make_shared<transport::FStream>(m_MPIComm,
-                                                                 m_DebugMode);
-                // m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
-                m_Transports.push_back(std::move(file));
-            }
-            else if (itLibrary->second == "MPI-IO")
-            {
-            }
-            else
-            {
-                if (m_DebugMode == true)
-                    throw std::invalid_argument(
-                        "ERROR: file transport library " + itLibrary->second +
-                        " not supported, in " + m_Name + m_EndMessage);
-            }
+            read_method = ADIOS_READ_METHOD_BP;
         }
         else
         {

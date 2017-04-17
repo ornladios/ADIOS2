@@ -271,15 +271,15 @@ void MemcpyToBuffer(std::vector<char> &raw, std::size_t &position,
  * @param elements
  */
 template <class T>
-void CopyToBuffer(std::vector<char> &buffer, const T *source,
-                  const std::size_t elements = 1) noexcept
+void InsertToBuffer(std::vector<char> &buffer, const T *source,
+                    const std::size_t elements = 1) noexcept
 {
     const char *src = reinterpret_cast<const char *>(source);
     buffer.insert(buffer.end(), src, src + elements * sizeof(T));
 }
 
 /**
- * Overloaded version to copies data to a specific location in the buffer,
+ * Copies data to a specific location in the buffer,
  * doesn't update vec.size()
  * @param raw
  * @param position
@@ -287,8 +287,9 @@ void CopyToBuffer(std::vector<char> &buffer, const T *source,
  * @param elements
  */
 template <class T>
-void CopyToBuffer(std::vector<char> &buffer, const std::size_t position,
-                  const T *source, const std::size_t elements = 1) noexcept
+void CopyToBufferPosition(std::vector<char> &buffer, const std::size_t position,
+                          const T *source,
+                          const std::size_t elements = 1) noexcept
 {
     const char *src = reinterpret_cast<const char *>(source);
     std::copy(src, src + elements * sizeof(T), buffer.begin() + position);

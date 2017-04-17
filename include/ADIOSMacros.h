@@ -39,4 +39,24 @@
     MACRO(std::complex<double>)                                                \
     MACRO(std::complex<long double>)
 
+#define ADIOS_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)                               \
+    MACRO(char)                                                                \
+    MACRO(unsigned char)                                                       \
+    MACRO(short)                                                               \
+    MACRO(unsigned short)                                                      \
+    MACRO(int)                                                                 \
+    MACRO(unsigned int)                                                        \
+    MACRO(long int)                                                            \
+    MACRO(unsigned long int)                                                   \
+    MACRO(long long int)                                                       \
+    MACRO(unsigned long long int)                                              \
+    MACRO(float)                                                               \
+    MACRO(double)                                                              \
+    MACRO(long double)
+
+#define ADIOS_FOREACH_COMPLEX_TYPE_1ARG(MACRO)                                 \
+    MACRO(float)                                                               \
+    MACRO(double)                                                              \
+    MACRO(long double)
+
 #endif // ADIOSMACROS_H

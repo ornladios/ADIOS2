@@ -20,7 +20,7 @@
 // supported capsules
 #include "capsule/heap/STLVector.h"
 
-#include "DataManager.h" //here comes your DataMan header
+#include "utilities/realtime/dataman/DataMan.h"
 
 namespace adios
 {
@@ -29,6 +29,7 @@ class DataManWriter : public Engine
 {
 
 public:
+    using json = nlohmann::json;
     /**
      * Constructor for dataman engine Writer for WAN communications
      * @param adios
@@ -43,7 +44,7 @@ public:
                   const std::string accessMode, MPI_Comm mpiComm,
                   const Method &method);
 
-    ~DataManWriter();
+    virtual ~DataManWriter() = default;
 
     void SetCallBack(std::function<void(const void *, std::string, std::string,
                                         std::string, Dims)>
@@ -106,7 +107,7 @@ private:
 
     bool m_DoRealTime = false;
     bool m_DoMonitor = false;
-    DataManager m_Man;
+    realtime::DataMan m_Man;
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         m_CallBack; ///< call back function
@@ -142,13 +143,13 @@ private:
         jmsg["doid"] = m_Name;
         jmsg["var"] = variable.m_Name;
         jmsg["dtype"] = GetType<T>();
-        jmsg["putshape"] = variable.m_Dimensions;
+        jmsg["putshape"] = variable.m_LocalDimensions;
         if (variable.m_GlobalDimensions.size() == 0)
-            variable.m_GlobalDimensions = variable.m_Dimensions;
+            variable.m_GlobalDimensions = variable.m_LocalDimensions;
         jmsg["varshape"] = variable.m_GlobalDimensions;
-        if (variable.m_GlobalOffsets.size() == 0)
-            variable.m_GlobalOffsets.assign(variable.m_Dimensions.size(), 0);
-        jmsg["offset"] = variable.m_GlobalOffsets;
+        if (variable.m_Offsets.size() == 0)
+            variable.m_Offsets.assign(variable.m_LocalDimensions.size(), 0);
+        jmsg["offset"] = variable.m_Offsets;
         jmsg["timestep"] = 0;
         m_Man.put(values, jmsg);
 
@@ -156,10 +157,11 @@ private:
         {
             MPI_Barrier(m_MPIComm);
             std::cout << "I am hooked to the DataMan library\n";
-            std::cout << "putshape " << variable.m_Dimensions.size() << endl;
+            std::cout << "putshape " << variable.m_LocalDimensions.size()
+                      << std::endl;
             std::cout << "varshape " << variable.m_GlobalDimensions.size()
-                      << endl;
-            std::cout << "offset " << variable.m_GlobalOffsets.size() << endl;
+                      << std::endl;
+            std::cout << "offset " << variable.m_Offsets.size() << std::endl;
             for (int i = 0; i < m_SizeMPI; ++i)
             {
                 if (i == m_RankMPI)

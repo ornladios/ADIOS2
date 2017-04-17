@@ -6,7 +6,10 @@
  *   This contains the template specializatios for the ADIOS class
  */
 
-#include "ADIOS.tcc"
+#ifndef ADIOS_TCC_
+#define ADIOS_TCC_
+
+#include "ADIOS.h"
 #include "ADIOSMacros.h"
 
 namespace adios
@@ -115,8 +118,6 @@ ADIOS::GetVariableMap()
 }
 
 // -----------------------------------------------------------------------------
-// explicit template instantiations of DefineVariable:
-// -----------------------------------------------------------------------------
 
 template <typename T>
 Variable<T> &
@@ -133,14 +134,6 @@ ADIOS::DefineVariable(const std::string &name, const Dims globalDimensions,
     return variableMap.at(size);
 }
 
-#define define_template_instantiation(T)                                       \
-    template Variable<T> &ADIOS::DefineVariable<T>(                            \
-        const std::string &, const Dims, const Dims, const Dims);
-ADIOS_FOREACH_TYPE_1ARG(define_template_instantiation)
-#undef define_template_instatiation
-
-// -----------------------------------------------------------------------------
-// template specializations of GetVariable:
 // -----------------------------------------------------------------------------
 
 template <class T>
@@ -160,11 +153,6 @@ Variable<T> &ADIOS::GetVariable(const std::string &name)
     return GetVariableMap<T>().at(GetVariableIndex<T>(name));
 }
 
-#define define_template_instatiation(T)                                        \
-    template unsigned int ADIOS::GetVariableIndex<T>(const std::string &);     \
-    template Variable<T> &ADIOS::GetVariable<T>(const std::string &);
-ADIOS_FOREACH_TYPE_1ARG(define_template_instatiation)
-template unsigned int ADIOS::GetVariableIndex<void>(const std::string &);
-#undef define_template_instatiation
-
 } // end namespace adios
+
+#endif // ADIOS_TCC_

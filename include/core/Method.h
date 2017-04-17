@@ -48,7 +48,6 @@ public:
     /// unsafe
     std::string m_Type; ///< Method's engine type
     unsigned int m_nThreads = 1;
-    adios::IOMode m_IOMode = adios::IOMode::INDEPENDENT;
 
     std::map<std::string, std::string> m_Parameters; ///< method parameters
     std::vector<std::map<std::string, std::string>>
@@ -77,6 +76,12 @@ public:
      * @param type must be a valid engine type
      */
     void SetEngine(const std::string type);
+
+    /**
+     * Set the IO mode (collective or independent)
+     * @param IO mode
+     */
+    void SetIOMode(const IOMode mode);
 
     /**
      * Set how many threads the engine can use for its operations (e.g. file io,
@@ -135,6 +140,7 @@ public:
 
 private:
     Verbose m_Verbose = Verbose::WARN;
+    adios::IOMode m_IOMode = adios::IOMode::INDEPENDENT;
 
     void AddTransportParameters(const std::string type,
                                 const std::vector<std::string> &parameters);
