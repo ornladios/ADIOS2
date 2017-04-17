@@ -25,6 +25,12 @@ foreach(adios2_target IN LISTS adios2_targets)
   
     engine/bp/BPFileReader.cpp
     engine/bp/BPFileWriter.cpp
+
+    utilities/format/bp1/BP1Base.cpp
+    utilities/format/bp1/BP1Aggregator.cpp
+    utilities/format/bp1/BP1Writer.cpp
+    
+    utilities/profiling/iochrono/Timer.cpp
   
     functions/adiosFunctions.cpp
   
@@ -54,6 +60,7 @@ foreach(adios2_target IN LISTS adios2_targets)
     target_compile_definitions(${adios2_target} PRIVATE ADIOS_HAVE_DATAMAN)
     target_link_libraries(${adios2_target} PRIVATE ${CMAKE_DL_LIBS})
   endif()
+
   
   if(ADIOS_USE_BZip2)
     find_package(BZip2 REQUIRED)
@@ -83,4 +90,20 @@ if(ADIOS_USE_MPI)
     target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_ADIOS1)
     target_link_libraries(adios2 PRIVATE adios1::adios)
   endif()
+
+  if(ADIOS_USE_PHDF5)
+    find_package(HDF5 REQUIRED)
+    message("    HDF5 ROOT:   ${HDF5_ROOT}")
+    message("    HDF5 include:   ${HDF5_INCLUDE_DIRS}   is paralle? ${HDF5_IS_PARALLEL}")
+
+    target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
+
+    target_sources(adios2 PRIVATE
+      engine/hdf5/HDF5ReaderP.cpp
+      engine/hdf5/HDF5WriterP.cpp
+    )
+    target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_PHDF5)
+    target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
+  endif()
+
 endif()
