@@ -244,20 +244,20 @@ endif()
 # handles the REQUIRED, QUIET and version-related arguments for find_package
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ADIOS1
-    REQUIRED_VARS ADIOS1_LIBRARY_PATH ADIOS1_DEPENDENCY_LIBRARIES ADIOS1_INCLUDE_DIRS
-    VERSION_VAR ADIOS1_VERSION
+    REQUIRED_VARS
+      ADIOS1_LIBRARY_PATH ADIOS1_DEPENDENCY_LIBRARIES ADIOS1_INCLUDE_DIRS
+    VERSION_VAR
+      ADIOS1_VERSION
 )
 
 ##########################################################################
 # Add target and dependencies to ADIOS2
 ##########################################################################
-#message(STATUS "ADIOS1 Find ended with ${ADIOS1_FOUND}")
-    if(ADIOS1_FOUND AND NOT TARGET adios1::adios)
-      message(STATUS "Add library ADIOS1 to the build")
-      add_library(adios1::adios UNKNOWN IMPORTED)
-      set_target_properties(adios1::adios PROPERTIES
-        IMPORTED_LOCATION "${ADIOS1_LIBRARY_PATH}"
-        INTERFACE_LINK_LIBRARIES "${ADIOS1_DEPENDENCY_LIBRARIES}"
-        INTERFACE_INCLUDE_DIRECTORIES "${ADIOS1_INCLUDE_DIRS}"
-      )
-    endif()
+if(ADIOS1_FOUND AND NOT TARGET adios1::adios)
+  add_library(adios1::adios UNKNOWN IMPORTED)
+  set_target_properties(adios1::adios PROPERTIES
+    IMPORTED_LOCATION "${ADIOS1_LIBRARY_PATH}"
+    INTERFACE_LINK_LIBRARIES "${ADIOS1_DEPENDENCY_LIBRARIES}"
+    INTERFACE_INCLUDE_DIRECTORIES "${ADIOS1_INCLUDE_DIRS}"
+  )
+endif()
