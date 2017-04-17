@@ -90,8 +90,10 @@ endif()
 
 if(ADIOS_USE_HDF5)
   find_package(HDF5 REQUIRED)
-  if(ADIOS_USE_MPI AND NOT HDF5_IS_PARALLEL)
-    message(FATAL_ERROR "A sequential version of HDF5 was detected but the parallel version of ADIOS requires a parallel HDF5.")
+  if(ADIOS_USE_MPI AND (NOT HDF5_IS_PARALLEL))
+    message(FATAL_ERROR "A sequential version of HDF5 was detected but the parallel version of ADIOS is being built, which requires a parallel HDF5.")
+  elseif((NOT ADIOS_USE_MPI) AND HDF5_IS_PARALLEL)
+    message(FATAL_ERROR "A parallel version of HDF5 was detected but the sequential version of ADIOS is being built, which requires a sequential HDF5.")
   endif()
 
   target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})

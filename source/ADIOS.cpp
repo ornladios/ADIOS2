@@ -36,11 +36,9 @@
 #include "engine/adios1/ADIOS1Writer.h"
 #endif
 
-#ifdef ADIOS_HAVE_PHDF5 // external dependencies
-#ifdef ADIOS_HAVE_MPI
+#ifdef ADIOS_HAVE_HDF5 // external dependencies
 #include "engine/hdf5/HDF5ReaderP.h"
 #include "engine/hdf5/HDF5WriterP.h"
-#endif
 #endif
 namespace adios
 {
@@ -194,7 +192,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
     }
     else if (type == "HDF5Writer") // -junmin
     {
-#if defined(ADIOS_HAVE_PHDF5) && defined(ADIOS_HAVE_MPI)
+#ifdef ADIOS_HAVE_HDF5
         return std::make_shared<HDF5Writer>(*this, name, accessMode, mpiComm,
                                             method);
 #else
