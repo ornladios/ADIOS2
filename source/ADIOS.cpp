@@ -37,8 +37,8 @@
 
 #ifdef ADIOS_HAVE_PHDF5 // external dependencies
 #ifdef ADIOS_HAVE_MPI
-#include "engine/hdf5/HDF5WriterP.h"
 #include "engine/hdf5/HDF5ReaderP.h"
+#include "engine/hdf5/HDF5WriterP.h"
 #endif
 #endif
 namespace adios

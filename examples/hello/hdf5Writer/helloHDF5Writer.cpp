@@ -5,8 +5,8 @@
  *      Author: Junmin
  */
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
 #include <mpi.h>
 

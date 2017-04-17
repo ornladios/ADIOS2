@@ -363,5 +363,3 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
 }
 
 } // end namespace adios
-
-

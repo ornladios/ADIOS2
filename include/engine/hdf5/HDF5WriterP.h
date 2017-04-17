@@ -106,7 +106,6 @@ private:
 
     template <class T>
     void UseHDFWrite(Variable<T> &variable, const T *values, hid_t h5type);
-
 };
 
 } // end namespace adios
