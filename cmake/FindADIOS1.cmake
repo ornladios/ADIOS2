@@ -84,158 +84,104 @@
 
 
 ###############################################################################
-# Required cmake version
-###############################################################################
-
-cmake_minimum_required(VERSION 2.8.5)
-
-
-###############################################################################
 # ADIOS
 ###############################################################################
 # get flags for adios_config, -l is the default
 #-f for fortran, -r for readonly, -s for sequential (nompi)
-set(OPTLIST "-l")
 if(ADIOS1_FIND_COMPONENTS)
-    foreach(COMP ${ADIOS1_FIND_COMPONENTS})
-        string(TOLOWER ${COMP} comp)
-        if(comp STREQUAL "fortran")
-            set(OPTLIST "${OPTLIST}f")
-        elseif(comp STREQUAL "readonly")
-            set(OPTLIST "${OPTLIST}r")
-        elseif(comp STREQUAL "sequential")
-            set(OPTLIST "${OPTLIST}s")
-        else()
-            message("ADIOS 1.x component ${COMP} is not supported. Please use fortran, readonly, or sequential")
-        endif()
-    endforeach()
+  foreach(comp IN LISTS ADIOS1_FIND_COMPONENTS)
+    string(TOLOWER "${comp}" comp)
+    if(comp STREQUAL "fortran")
+      set(adios1_config_opt "-f")
+    elseif(comp STREQUAL "readonly")
+      set(adios1_config_opt "-r")
+    elseif(comp STREQUAL "sequential")
+      set(adios1_config_opt "-s")
+    else()
+      message("ADIOS 1.x component ${comp} is not supported. Please use fortran, readonly, or sequential")
+    endif()
+  endforeach()
 endif()
 
-# we start by assuming we found ADIOS and falsify it if some
-# dependencies are missing (or if we did not find ADIOS at all)
-set(ADIOS1_FOUND TRUE)
-
+set(adios1_config_hints)
+foreach(PREFIX_VAR IN ITEMS ADIOS1_ROOT ADIOS1_DIR INSTALL_PREFIX)
+  if(${PREFIX_VAR})
+    list(APPEND adios1_config_hints "${${PREFIX_VAR}}/bin")
+  elseif("$ENV{${PREFIX_VAR}}")
+    list(APPEND adios1_config_hints "$ENV{${PREFIX_VAR}}/bin")
+  endif()
+endforeach()
 
 # find `adios_config` program #################################################
-#   check the ADIOS1_ROOT and ADIOS1_DIR hint and the normal PATH
-find_file(ADIOS1_CONFIG
-    NAME adios_config
-    PATHS $ENV{ADIOS1_ROOT}/bin $ENV{ADIOS1_DIR}/bin $ENV{INSTALL_PREFIX}/bin $ENV{PATH})
-
-if(ADIOS1_CONFIG)
-    message(STATUS "Found 'adios_config': ${ADIOS1_CONFIG}")
-else(ADIOS1_CONFIG)
-    set(ADIOS1_FOUND FALSE)
-    message(STATUS "Can NOT find 'adios_config' - set ADIOS1_ROOT, ADIOS1_DIR or INSTALL_PREFIX, or check your PATH")
-endif(ADIOS1_CONFIG)
+find_program(ADIOS1_CONFIG NAME adios_config HINTS ${adios1_config_hints})
 
 # check `adios_config` program ################################################
-if(ADIOS1_FOUND)
-    execute_process(COMMAND ${ADIOS1_CONFIG} ${OPTLIST}
-                    OUTPUT_VARIABLE ADIOS1_LINKFLAGS
-                    RESULT_VARIABLE ADIOS1_CONFIG_RETURN
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(NOT ADIOS1_CONFIG_RETURN EQUAL 0)
-        set(ADIOS1_FOUND FALSE)
-        message(STATUS "Can NOT execute 'adios_config' - check file permissions")
-    endif()
+if(ADIOS1_CONFIG)
+  execute_process(COMMAND ${ADIOS1_CONFIG} ${adios1_config_opt}
+    OUTPUT_VARIABLE adios1_config_out
+    RESULT_VARIABLE adios1_config_ret
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(adios1_config_ret EQUAL 0)
+    string(REGEX MATCH "CFLAGS=([^\n]*)" adios1_match "${adios1_config_out}")
+    string(REPLACE " " ";" adios1_match "${CMAKE_MATCH_1}")
+    set(adios1_include_hints)
+    set(ADIOS1_COMPILE_OPTIONS)
+    foreach(OPT IN LISTS adios1_match)
+      if(OPT MATCHES "^-I(.*)")
+        list(APPEND adios1_include_hints "${CMAKE_MATCH_1}")
+      else()
+        list(APPEND ADIOS1_COMPILE_OPTIONS ${OPT})
+      endif()
+    endforeach()
+    string(REGEX MATCH "LDFLAGS=([^\n]*)" adios1_match "${adios1_config_out}")
+    string(REPLACE " " ";" adios1_match "${CMAKE_MATCH_1}")
+    set(adios1_libs)
+    set(adios1_lib_hints)
+    set(adios1_lib_flags)
+    foreach(OPT IN LISTS adios1_match)
+      if(OPT MATCHES "^-L(.*)")
+        list(APPEND adios1_lib_hints "${CMAKE_MATCH_1}")
+      elseif(OPT MATCHES "^-l(.*)")
+        list(APPEND adios1_libs "${CMAKE_MATCH_1}")
+      else()
+        list(APPEND adios1_lib_flags "${OPT}")
+      endif()
+    endforeach()
+  endif()
 
-    # find ADIOS1_ROOT_DIR
-    execute_process(COMMAND ${ADIOS1_CONFIG} -d
-                    OUTPUT_VARIABLE ADIOS1_ROOT_DIR
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(NOT IS_DIRECTORY "${ADIOS1_ROOT_DIR}")
-        set(ADIOS1_FOUND FALSE)
-        message(STATUS "The directory provided by 'adios_config -d' does not exist: ${ADIOS1_ROOT_DIR}")
-    endif()
-endif(ADIOS1_FOUND)
-
-# option: use only static libs ################################################
-if(ADIOS1_USE_STATIC_LIBS)
-    # carfully: we have to restore the original path in the end
-    set(_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+  # add the version string
+  execute_process(COMMAND ${ADIOS1_CONFIG} -v
+    OUTPUT_VARIABLE ADIOS1_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
 endif()
 
-
-# we found something in ADIOS1_ROOT_DIR and adios_config works #################
-if(ADIOS1_FOUND)
-    # ADIOS headers
-    find_path(ADIOS1_INCLUDE_DIRS adios.h
-      HINTS ${ADIOS1_ROOT_DIR}/include
-      NO_DEFAULT_PATHS
-    )
-
-    # check for compiled in dependencies, recomve ";" in ADIOS1_LINKFLAGS (from cmake build)
-    string(REGEX REPLACE ";" " " ADIOS1_LINKFLAGS "${ADIOS1_LINKFLAGS}")
-    message(STATUS "  ADIOS1 linker flags (unparsed): ${ADIOS1_LINKFLAGS}")
-
-    # find all library paths -L
-    #   note: this can cause trouble if some libs are specified twice from
-    #         different sources (quite unlikely)
-    #         http://www.cmake.org/pipermail/cmake/2008-November/025128.html
-    set(ADIOS1_LIBRARY_DIRS "")
-    string(REGEX MATCHALL " -L([A-Za-z_0-9/\\.-]+)" _ADIOS1_LIBDIRS " ${ADIOS1_LINKFLAGS}")
-    foreach(_LIBDIR ${_ADIOS1_LIBDIRS})
-        string(REPLACE " -L" "" _LIBDIR ${_LIBDIR})
-        list(APPEND ADIOS1_LIBRARY_DIRS ${_LIBDIR})
-    endforeach()
-    # we could append ${CMAKE_PREFIX_PATH} now but that is not really necessary
-
-    #message(STATUS "ADIOS1 DIRS to look for libs: ${ADIOS1_LIBRARY_DIRS}")
-
-    # parse all -lname libraries and find an absolute path for them
-    string(REGEX MATCHALL " -l([A-Za-z_0-9\\.-]+)" _ADIOS1_LIBS " ${ADIOS1_LINKFLAGS}")
-    foreach(_LIB ${_ADIOS1_LIBS})
-        string(REPLACE " -l" "" _LIB ${_LIB})
-
-        # find static lib: absolute path in -L then default
-        find_library(_LIB_DIR NAMES ${_LIB} PATHS ${ADIOS1_LIBRARY_DIRS} CMAKE_FIND_ROOT_PATH_BOTH)
-
-        # found?
-        if(_LIB_DIR)
-            if(_LIB STREQUAL "adios")
-                message(STATUS "  Found the main adios library in ${_LIB_DIR}")
-                set(ADIOS1_LIBRARY_PATH "${_LIB_DIR}")
-                #message(STATUS "    ADIOS1_LIBRARY_PATH set to ${ADIOS1_LIBRARY_PATH}")
-            else()
-                message(STATUS "  Found ${_LIB} in ${_LIB_DIR}")
-                list(APPEND ADIOS1_DEPENDENCY_LIBRARIES "${_LIB_DIR}")
-            endif()
-        else(_LIB_DIR)
-            set(ADIOS1_FOUND FALSE)
-            message(STATUS "ADIOS1: Could NOT find library '${_LIB}'")
-        endif(_LIB_DIR)
-
-        # clean cached var
-        unset(_LIB_DIR CACHE)
-        unset(_LIB_DIR)
-    endforeach()
-
-    #add libraries which are already using cmake format
-    string(REGEX MATCHALL "/([A-Za-z_0-9/\\.-]+)\\.([a|so]+)" _ADIOS1_LIBS_SUB "${ADIOS1_LINKFLAGS}")
-    list(APPEND ADIOS1_DEPENDENCY_LIBRARIES "${_ADIOS1_LIBS_SUB}")
-
-    # add the version string
-    execute_process(COMMAND ${ADIOS1_CONFIG} -v
-                    OUTPUT_VARIABLE ADIOS1_VERSION
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
-    
-endif(ADIOS1_FOUND)
-
-# unset checked variables if not found
-if(NOT ADIOS1_FOUND)
-    unset(ADIOS1_INCLUDE_DIRS)
-    unset(ADIOS1_DEPENDENCY_LIBRARIES)
-    unset(ADIOS1_LIBRARY_PATH)
-endif(NOT ADIOS1_FOUND)
-
-
-# restore CMAKE_FIND_LIBRARY_SUFFIXES if manipulated by this module ###########
-if(ADIOS1_USE_STATIC_LIBS)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ${_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
+# make suree at the very least we find libadios
+if(NOT adios1_libs)
+  set(adios1_libs adios)
 endif()
 
+# Search for the actual libs and headers to ue based on hints from the config
+find_path(ADIOS1_INCLUDE_DIR adios.h HINTS ${adios1_include_hints})
+
+set(ADIOS1_LIBRARY)
+set(ADIOS1_DEPENDENCIES)
+foreach(lib IN LISTS adios1_libs)
+  find_library(ADIOS1_${lib}_LIBRARY NAME ${lib} HINTS ${adios1_lib_hints})
+  if(ADIOS1_${lib}_LIBRARY)
+    if(lib MATCHES "^adios")
+      set(ADIOS1_LIBRARY ${ADIOS1_${lib}_LIBRARY})
+    else()
+      list(APPEND ADIOS1_DEPENDENCIES ${ADIOS1_${lib}_LIBRARY})
+    endif()
+  else()
+    list(APPEND ADIOS1_DEPENDENCIES ${lib})
+  endif()
+endforeach()
+
+find_package(Threads REQUIRED)
+list(APPEND ADIOS1_DEPENDENCIES ${adios1_lib_flags} ${CMAKE_THREAD_LIBS_INIT})
 
 ###############################################################################
 # FindPackage Options
@@ -244,20 +190,24 @@ endif()
 # handles the REQUIRED, QUIET and version-related arguments for find_package
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ADIOS1
-    REQUIRED_VARS
-      ADIOS1_LIBRARY_PATH ADIOS1_DEPENDENCY_LIBRARIES ADIOS1_INCLUDE_DIRS
-    VERSION_VAR
-      ADIOS1_VERSION
+  REQUIRED_VARS ADIOS1_LIBRARY ADIOS1_INCLUDE_DIR
+  VERSION_VAR ADIOS1_VERSION
 )
 
-##########################################################################
-# Add target and dependencies to ADIOS2
-##########################################################################
-if(ADIOS1_FOUND AND NOT TARGET adios1::adios)
-  add_library(adios1::adios UNKNOWN IMPORTED)
-  set_target_properties(adios1::adios PROPERTIES
-    IMPORTED_LOCATION "${ADIOS1_LIBRARY_PATH}"
-    INTERFACE_LINK_LIBRARIES "${ADIOS1_DEPENDENCY_LIBRARIES}"
-    INTERFACE_INCLUDE_DIRECTORIES "${ADIOS1_INCLUDE_DIRS}"
-  )
+if(ADIOS1_FOUND)
+  set(ADIOS1_INCLUDE_DIRS ${ADIOS1_INCLUDE_DIR})
+  set(ADIOS1_LIBRARIES ${ADIOS1_LIBRARY} ${ADIOS1_DEPENDENCIES})
+
+  ##########################################################################
+  # Add target and dependencies to ADIOS2
+  ##########################################################################
+  if(NOT TARGET adios1::adios)
+    add_library(adios1::adios UNKNOWN IMPORTED)
+    set_target_properties(adios1::adios PROPERTIES
+      IMPORTED_LOCATION "${ADIOS1_LIBRARY}"
+      INTERFACE_LINK_LIBRARIES "${ADIOS1_DEPENDENCIES}"
+      INTERFACE_INCLUDE_DIRECTORIES "${ADIOS1_INCLUDE_DIRS}"
+      INTERFACE_COMPILE_OPTIONS "${ADIOS1_COMPILE_OPTIONS}"
+    )
+  endif()
 endif()

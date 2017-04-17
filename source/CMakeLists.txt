@@ -74,7 +74,7 @@ else()
 endif()
 
 if(ADIOS_USE_ADIOS1)
-  if(ADIOS_HAVE_MPI)
+  if(ADIOS_USE_MPI)
     find_package(ADIOS1 REQUIRED)
   else()
     find_package(ADIOS1 COMPONENTS sequential REQUIRED)
