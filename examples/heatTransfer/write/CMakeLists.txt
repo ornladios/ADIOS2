@@ -17,13 +17,6 @@ if(ADIOS_USE_MPI)
   )
   target_link_libraries(heatTransfer_write_adios2 adios2 ${MPI_C_LIBRARIES})
 
-  if(ADIOS_BUILD_TESTING)
-    add_test(
-      NAME Example::heatTransfer::write::adios2
-      COMMAND heatTransfer_write_adios2
-    )
-  endif()
-
   if(ADIOS_USE_ADIOS1)
     find_package(ADIOS1 REQUIRED)
     find_package(MPI COMPONENTS C REQUIRED)
@@ -40,12 +33,5 @@ if(ADIOS_USE_MPI)
     target_link_libraries(heatTransfer_write_adios1
       adios1::adios ${MPI_C_LIBRARIES}
     )
-
-    if(ADIOS_BUILD_TESTING)
-      add_test(
-        NAME Example::heatTransfer::write::adios1
-        COMMAND heatTransfer_write_adios1
-      )
-    endif()
   endif()
 endif()

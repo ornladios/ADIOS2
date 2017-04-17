@@ -18,13 +18,7 @@
 namespace adios
 {
 
-#ifndef ADIOS_HAVE_MPI
-#define _NOMPI
-#endif
 #include "adios.h" // this is adios 1.x header file
-#ifndef ADIOS_HAVE_MPI
-#undef _NOMPI
-#endif
 
 class ADIOS1Writer : public Engine
 {

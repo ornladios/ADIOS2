@@ -15,6 +15,6 @@ if(ADIOS_USE_DataMan)
   add_subdirectory(datamanWriter)
 endif()
 
-if(ADIOS_USE_PHDF5)
+if(ADIOS_USE_HDF5)
   add_subdirectory(hdf5Writer)
 endif()
