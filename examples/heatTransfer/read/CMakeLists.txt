@@ -15,13 +15,6 @@ if(ADIOS_USE_MPI)
     target_link_libraries(heatTransfer_read_adios1
       adios1::adios ${MPI_C_LIBRARIES}
     )
-
-    if(ADIOS_BUILD_TESTING)
-      add_test(
-        NAME Example::heatTransfer::read::adios1
-        COMMAND heatRead_adios1
-      )
-    endif()
   endif()
 endif()
 
