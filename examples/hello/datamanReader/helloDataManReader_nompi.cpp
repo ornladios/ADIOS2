@@ -43,14 +43,12 @@ int main(int argc, char *argv[])
         {
             // if not defined by user, we can change the default settings
             datamanSettings.SetEngine("DataManReader");
-            datamanSettings.SetParameters(
-                "real_time=yes", "method_type=stream", "method=zmq",
-                "local_ip=127.0.0.1", "remote_ip=127.0.0.1", "local_port=12307",
-                "remote_port=12306");
-            // datamanSettings.AddTransport( "Mdtm", "localIP=128.0.0.0.1",
-            // "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
-            // datamanSettings.AddTransport( "ZeroMQ", "localIP=128.0.0.0.1.1",
-            // "remoteIP=128.0.0.0.2.1", "tolerances=1,2,3" ); not yet supported
+            datamanSettings.SetParameters("real_time=yes", "method_type=stream",
+                                          "method=dump");
+            // datamanSettings.AddTransport( "Mdtm", "localIP=127.0.0.1",
+            // "remoteIP=127.0.0.1", "tolerances=1,2,3" );
+            // datamanSettings.AddTransport( "ZeroMQ", "localIP=127.0.0.1",
+            // "remoteIP=127.0.0.1", "tolerances=1,2,3" ); not yet supported
             // ,
             // will throw an exception
         }
@@ -67,8 +65,9 @@ int main(int argc, char *argv[])
 
         datamanReader->SetCallBack(getcb);
 
-        while (1)
+        for (int i = 0; i < 3; i++)
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
 
         adios::Variable<double> *ioMyDoubles =

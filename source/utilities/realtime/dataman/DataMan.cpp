@@ -38,7 +38,7 @@ void DataMan::add_file(std::string p_method) {}
 void DataMan::add_stream(json p_jmsg)
 {
 
-    std::string method = "zmq";
+    std::string method;
 
     if (p_jmsg["method"] != nullptr)
         method = p_jmsg["method"];
