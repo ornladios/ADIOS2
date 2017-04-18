@@ -12,7 +12,7 @@
 #define MPI_FILE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <mpi.h>
+#include "ADIOS_MPI.h"
 /// \endcond
 
 namespace adios

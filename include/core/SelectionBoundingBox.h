@@ -10,7 +10,9 @@
 #include <cstdint>
 /// \endcond
 
-#include "selection/Selection.h"
+#include <vector>
+
+#include "Selection.h"
 
 namespace adios
 {
@@ -27,7 +29,8 @@ public:
     : Selection(SelectionType::BoundingBox), m_Start(start), m_Count(count)
     {
     }
-    ~SelectionBoundingBox(){};
+
+    ~SelectionBoundingBox() = default;
 
     std::vector<std::uint64_t> m_Start;
     std::vector<std::uint64_t> m_Count;

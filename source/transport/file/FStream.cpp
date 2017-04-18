@@ -13,7 +13,7 @@
 #include <stdexcept>
 /// \endcond
 
-#include "transport/file/FStream.h"
+#include "FStream.h"
 
 namespace adios
 {

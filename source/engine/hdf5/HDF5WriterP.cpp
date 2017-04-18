@@ -10,7 +10,7 @@
 
 #include <iostream> //needs to go away, this is just for demo purposes
 
-#include "engine/hdf5/HDF5WriterP.h"
+#include "HDF5WriterP.h"
 
 #include "core/Support.h"
 #include "functions/adiosFunctions.h" //CSVToVector

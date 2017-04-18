@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "utilities/format/bp1/BP1Base.h"
+#include "BP1Base.h"
 #include "functions/adiosFunctions.h"
 
 namespace adios

@@ -8,7 +8,7 @@
 #include <iostream>
 #include <vector>
 
-#include "ADIOS_CPP.h"
+#include <adios2.h>
 
 int main(int argc, char *argv[])
 {
@@ -37,45 +37,29 @@ int main(int argc, char *argv[])
     myCDoubles.emplace_back(2, 2);
     myCDoubles.emplace_back(3, 1);
 
-    std::size_t doubleVCount = Nx / size;
-    std::size_t floatCount = CFloatSize / size;
-    std::size_t intCountDim1 = intDim1 / size;
+    std::size_t doubleVCount = Nx;
+    std::size_t floatCount = CFloatSize;
+    std::size_t intCountDim1 = intDim1;
 
-    std::size_t doubleVOffset = rank * doubleVCount;
-    std::size_t floatOffset = rank * floatCount;
-    std::size_t intOffsetDim1 = rank * intCountDim1;
+    std::size_t doubleVOffset = 0;
+    std::size_t floatOffset = 0;
+    std::size_t intOffsetDim1 = 0;
     std::size_t intOffsetDim2 = 0;
-
-    if ((size > 1) && (rank == size - 1))
-    {
-        doubleVCount = Nx - rank * (Nx / size);
-        floatCount = CFloatSize - rank * (CFloatSize / size);
-        intCountDim1 = intDim1 - rank * (intDim1 / size);
-    }
 
     try
     {
         // Define variable and local size
-        // auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles", {Nx},
-        // {Nx} );
-        // auto& ioMyCFloats = adios.DefineVariable<std::complex<float>>(
-        // "myCFloats", {3}, {3} );
-        // auto& ioMyInts = adios.DefineVariable<int>( "myInts", {4,3}, {4,3} );
-
-        auto &ioMyDoubles = adios.DefineVariable<double>(
-            "myDoubles", {doubleVCount}, {Nx}, {doubleVOffset});
-        auto &ioMyCFloats = adios.DefineVariable<std::complex<float>>(
-            "myCFloats", {floatCount}, {3}, {floatOffset});
-        auto &ioMyCDoubles = adios.DefineVariable<std::complex<double>>(
-            "myCDoubles", {floatCount}, {3}, {floatOffset});
-        auto &ioMyInts =
-            adios.DefineVariable<int>("myInts", {intCountDim1, intDim2}, {4, 3},
-                                      {intOffsetDim1, intOffsetDim2});
+        auto &ioMyDoubles =
+            adios.DefineVariable<double>("myDoubles", {Nx}, {Nx});
+        auto &ioMyCFloats =
+            adios.DefineVariable<std::complex<float>>("myCFloats", {3}, {3});
+        auto &ioMyCDoubles =
+            adios.DefineVariable<std::complex<double>>("myCDoubles", {3}, {3});
+        auto &ioMyInts = adios.DefineVariable<int>("myInts", {4, 3}, {4, 3});
 
         // Define method for engine creation, it is basically straight-forward
         // parameters
-        adios::Method &HDF5Settings =
-            adios.DeclareMethod("HDF5Writer"); // default method type is Writer
+        adios::Method &HDF5Settings = adios.DeclareMethod("HDF5Writer");
         HDF5Settings.SetParameters("chunck=yes", "collectiveIO=yes");
         // HDF5Settings.AddTransport( "Mdtm", "localIP=128.0.0.0.1",
         // "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
@@ -86,44 +70,33 @@ int main(int argc, char *argv[])
         auto HDF5Writer = adios.Open("test.bp", "w", HDF5Settings);
 
         if (HDF5Writer == nullptr)
+        {
             throw std::ios_base::failure(
                 "ERROR: failed to create HDF5 I/O engine at Open\n");
+        }
 
-        HDF5Writer->Write(ioMyDoubles, myDoubles.data() +
-                                           doubleVOffset); // Base class Engine
-                                                           // own the Write<T>
-                                                           // that will call
-                                                           // overloaded Write
-                                                           // from Derived
-        HDF5Writer->Write(ioMyInts,
-                          myInts.data() + (intOffsetDim1 * intDim2 * rank));
+        // Base class Engine own the Write<T> that will call overloaded Write
+        // from Derived
+        HDF5Writer->Write(ioMyDoubles, myDoubles.data() + doubleVOffset);
+        HDF5Writer->Write(ioMyInts, myInts.data());
         HDF5Writer->Write(ioMyCFloats, myCFloats.data());
         HDF5Writer->Write(ioMyCDoubles, myCDoubles.data());
         HDF5Writer->Close();
     }
     catch (std::invalid_argument &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
+        std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "System exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "System exception, STOPPING PROGRAM\n";
+        std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "Exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "Exception, STOPPING PROGRAM\n";
+        std::cout << e.what() << "\n";
     }
 
     return 0;

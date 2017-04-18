@@ -9,7 +9,7 @@
  */
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include "utilities/format/bp1/BP1Aggregator.h"
+#include "BP1Aggregator.h"
 
 #include <fstream>
 #include <stdexcept>

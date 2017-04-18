@@ -17,7 +17,7 @@
 #include <unistd.h>    // write, close
 /// \endcond
 
-#include "transport/file/FileDescriptor.h"
+#include "FileDescriptor.h"
 
 namespace adios
 {

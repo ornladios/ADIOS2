@@ -12,7 +12,7 @@
 #include <ios> //std::ios_base::failure
 /// \endcond
 
-#include "transport/file/FilePointer.h"
+#include "FilePointer.h"
 
 namespace adios
 {

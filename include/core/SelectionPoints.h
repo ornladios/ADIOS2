@@ -10,8 +10,9 @@
 #include <cstdint>
 /// \endcond
 
-#include "selection/Selection.h"
-#include "selection/SelectionBoundingBox.h"
+#include <vector>
+
+#include "Selection.h"
 
 namespace adios
 {
@@ -40,7 +41,7 @@ public:
     {
     }
 
-    ~SelectionPoints(){};
+    virtual ~SelectionPoints() = default;
 
     const std::size_t m_Ndim;
     const std::size_t m_Npoints;

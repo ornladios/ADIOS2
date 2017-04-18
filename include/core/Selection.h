@@ -33,29 +33,24 @@
 #ifndef __ADIOS_SELECTION_H__
 #define __ADIOS_SELECTION_H__
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include "external/adios_selection.h"
-#include <stdint.h>
-/// \endcond
-
 namespace adios
 {
 
-/*************************/
-/* Types used in the API */
-/*************************/
 /* Type of selection */
 enum class SelectionType
 {
     // Contiguous block of data defined by offsets and counts in each
     // dimension
-    BoundingBox = ADIOS_SELECTION_BOUNDINGBOX,
+    BoundingBox,
+
     // List of individual points
-    Points = ADIOS_SELECTION_POINTS,
+    Points,
+
     // Selection of an individual block written by a writer process
-    WriteBlock = ADIOS_SELECTION_WRITEBLOCK,
+    WriteBlock,
+
     // Let the method decide what to return
-    Auto = ADIOS_SELECTION_AUTO
+    Auto
 };
 
 class Selection

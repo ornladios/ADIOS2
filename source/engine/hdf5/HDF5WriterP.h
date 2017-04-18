@@ -91,8 +91,8 @@ public:
     void Close(const int transportIndex = -1);
 
 private:
-    capsule::STLVector
-        m_Buffer; ///< heap capsule, contains data and metadata buffers
+    ///< heap capsule, contains data and metadata buffers
+    capsule::STLVector m_Buffer;
 
     void Init();
     void clean();

@@ -41,6 +41,7 @@ add_library(adios2
 )
 target_include_directories(adios2
   PUBLIC ${ADIOS_SOURCE_DIR}/include
+  PRIVATE ${ADIOS_SOURCE_DIR}/source
 )
   
 if(ADIOS_USE_DataMan)

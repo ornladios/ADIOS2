@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "engine/dataman/DataManReader.h"
+#include "DataManReader.h"
 
 #include "core/Support.h"
 #include "external/json.hpp"

@@ -11,7 +11,7 @@
 #include <iostream>
 #include <vector>
 
-#include "ADIOS_CPP.h"
+#include <adios2.h>
 
 int main(int /*argc*/, char ** /*argv*/)
 {
@@ -48,16 +48,16 @@ int main(int /*argc*/, char ** /*argv*/)
 
         // Define method for engine creation, it is basically straight-forward
         // parameters
-        adios::Method &bpWriterSettings = adios.DeclareMethod(
-            "SingleFile"); // default method type is BPWriter
-        bpWriterSettings.SetParameters("profile_units=mus");
-        bpWriterSettings.AddTransport(
-            "File", "profile_units=mus",
-            "have_metadata_file=no"); // uses default POSIX library
 
-        // Create object directly rather than using polymorphism with ADIOS.Open
-        adios::BPFileWriter bpWriter(adios, "time_nompi.bp", "w",
-                                     adios.m_MPIComm, bpWriterSettings);
+        // default method type is BPWriter
+        adios::Method &bpWriterSettings = adios.DeclareMethod("SingleFile");
+        bpWriterSettings.SetParameters("profile_units=mus");
+
+        // uses default POSIX library
+        bpWriterSettings.AddTransport("File", "profile_units=mus",
+                                      "have_metadata_file=no");
+
+        auto bpWriter = adios.Open("time_nompi.bp", "w", bpWriterSettings);
 
         for (unsigned int t = 0; t < 3; ++t)
         {
@@ -65,17 +65,15 @@ int main(int /*argc*/, char ** /*argv*/)
             myMatrix[0] = t;
             myMatrix2[0] = t;
 
-            bpWriter.Write(ioMyDoubles,
-                           myDoubles.data()); // Base class Engine own
-                                              // the Write<T> that will
-                                              // call overloaded Write
-                                              // from Derived
-            bpWriter.Write(ioMyMatrix, myMatrix.data());
-            bpWriter.Write(ioMyMatrix2, myMatrix2.data());
-            bpWriter.Advance();
+            // Base class Engine own the Write<T> that will call overloaded
+            // Write from Derived
+            bpWriter->Write(ioMyDoubles, myDoubles.data());
+            bpWriter->Write(ioMyMatrix, myMatrix.data());
+            bpWriter->Write(ioMyMatrix2, myMatrix2.data());
+            bpWriter->Advance();
         }
 
-        bpWriter.Close();
+        bpWriter->Close();
     }
     catch (std::invalid_argument &e)
     {

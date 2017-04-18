@@ -13,7 +13,7 @@
 #include <iostream>
 #include <vector>
 
-#include "ADIOS_CPP.h"
+#include <adios2.h>
 
 struct Particle
 {

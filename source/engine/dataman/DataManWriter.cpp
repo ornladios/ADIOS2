@@ -10,7 +10,7 @@
 
 #include <iostream> //needs to go away, this is just for demo purposes
 
-#include "engine/dataman/DataManWriter.h"
+#include "DataManWriter.h"
 
 #include "core/Support.h"
 #include "functions/adiosFunctions.h" //CSVToVector

@@ -14,7 +14,7 @@
 #include <utility>
 /// \endcond
 
-#include "capsule/shmem/ShmSystemV.h"
+#include "ShmSystemV.h"
 
 namespace adios
 {

@@ -16,7 +16,7 @@
 
 #include <mpi.h>
 
-#include "ADIOS_CPP.h"
+#include <adios2.h>
 
 void getcb(const void *data, std::string doid, std::string var,
            std::string dtype, std::vector<std::size_t> varshape)

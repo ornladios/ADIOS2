@@ -10,7 +10,7 @@
 #ifndef BP1WRITER_TCC_
 #define BP1WRITER_TCC_
 
-#include "utilities/format/bp1/BP1Writer.h"
+#include "BP1Writer.h"
 
 namespace adios
 {

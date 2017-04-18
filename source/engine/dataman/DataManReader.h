@@ -15,11 +15,10 @@
 
 #include "core/Engine.h"
 #include "utilities/format/bp1/BP1Writer.h"
+#include "utilities/realtime/dataman/DataMan.h"
 
 // supported capsules
 #include "capsule/heap/STLVector.h"
-
-#include "utilities/realtime/dataman/DataMan.h"
 
 namespace adios
 {

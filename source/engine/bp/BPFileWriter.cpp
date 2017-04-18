@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "ADIOS.h"
-#include "engine/bp/BPFileWriter.h"
+#include "BPFileWriter.h"
 
 // supported transports
 #include "transport/file/FStream.h"
