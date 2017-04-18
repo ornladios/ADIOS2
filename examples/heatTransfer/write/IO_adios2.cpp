@@ -9,7 +9,7 @@
  */
 
 #include "IO.h"
-#include "ADIOS_CPP.h"
+#include <adios2.h>
 
 #include <string>
 

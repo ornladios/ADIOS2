@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-#include "ADIOS_CPP.h"
+#include <adios2.h>
 
 using adiosFile = std::shared_ptr<adios::Engine>;
 
