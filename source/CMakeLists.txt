@@ -43,7 +43,6 @@ target_include_directories(adios2
   PUBLIC ${ADIOS_SOURCE_DIR}/include
 )
 
-
 if(ADIOS_USE_DataMan)
   target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
@@ -61,7 +60,6 @@ if(ADIOS_USE_DataMan)
   )
   target_link_libraries(adios2 PRIVATE adios2sys)
 endif()
-
   
 if(ADIOS_USE_BZip2)
   find_package(BZip2 REQUIRED)
@@ -69,7 +67,6 @@ if(ADIOS_USE_BZip2)
   target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_BZIP2)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
-
 
 if(ADIOS_USE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
@@ -98,9 +95,13 @@ endif()
 if(ADIOS_USE_HDF5)
   find_package(HDF5 REQUIRED)
   if(ADIOS_USE_MPI AND (NOT HDF5_IS_PARALLEL))
-    message(FATAL_ERROR "A sequential version of HDF5 was detected but the parallel version of ADIOS is being built, which requires a parallel HDF5.")
+    message(FATAL_ERROR
+      "A sequential version of HDF5 was detected but the parallel version "
+      "of ADIOS is being built, which requires a parallel HDF5.")
   elseif((NOT ADIOS_USE_MPI) AND HDF5_IS_PARALLEL)
-    message(FATAL_ERROR "A parallel version of HDF5 was detected but the sequential version of ADIOS is being built, which requires a sequential HDF5.")
+    message(FATAL_ERROR
+      "A parallel version of HDF5 was detected but the sequential version "
+      "of ADIOS is being built, which requires a sequential HDF5.")
   endif()
 
   target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
