@@ -10,8 +10,11 @@ add_library(dataman
 target_include_directories(dataman PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(dataman PUBLIC ${CMAKE_DL_LIBS})
 
+add_library(cacheman SHARED CacheMan.h CacheMan.cpp)
+target_link_libraries(cacheman PRIVATE dataman)
+
 install(
-  TARGETS dataman EXPORT adios2
+  TARGETS dataman cacheman EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
