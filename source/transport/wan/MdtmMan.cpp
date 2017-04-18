@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "transport/wan/MdtmMan.h"
+#include "MdtmMan.h"
 
 namespace adios
 {

@@ -8,12 +8,13 @@
  *      Author: wfg
  */
 
-#include "engine/adios1/ADIOS1Reader.h"
 #include "core/Support.h"
 #include "functions/adiosFunctions.h"      // CSVToVector
 #include "transport/file/FStream.h"        // uses C++ fstream
 #include "transport/file/FileDescriptor.h" // uses POSIX
 #include "transport/file/FilePointer.h"    // uses C FILE*
+
+#include "ADIOS1Reader.h"
 
 namespace adios
 {
@@ -27,8 +28,6 @@ ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string &name,
     Init();
     adios_read_init_method(read_method, mpiComm, "");
 }
-
-ADIOS1Reader::~ADIOS1Reader() {}
 
 Variable<void> *
 ADIOS1Reader::InquireVariable(const std::string &variableName,

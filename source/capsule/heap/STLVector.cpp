@@ -13,7 +13,7 @@
 #include <stdexcept> //std::runtime_error
 /// \endcond
 
-#include "capsule/heap/STLVector.h"
+#include "STLVector.h"
 
 namespace adios
 {

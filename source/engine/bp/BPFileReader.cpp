@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "engine/bp/BPFileReader.h"
+#include "BPFileReader.h"
 
 #include "core/Support.h"
 #include "functions/adiosFunctions.h"      // CSVToVector

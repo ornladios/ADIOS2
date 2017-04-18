@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "../../include/transform/BZip2.h"
+#include "BZip2.h"
 
 namespace adios
 {

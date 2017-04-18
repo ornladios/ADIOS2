@@ -13,8 +13,8 @@
 #include <vector>
 /// \endcond
 
+#include "BP1Writer.h"
 #include "BP1Writer.tcc"
-#include "utilities/format/bp1/BP1Writer.h"
 
 namespace adios
 {

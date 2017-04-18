@@ -10,9 +10,9 @@
  *      Author: pnb
  */
 
-#include "engine/adios1/ADIOS1Writer.h"
-#include "ADIOS.h"
 #include "functions/adiosFunctions.h"
+
+#include "ADIOS1Writer.h"
 
 extern int adios_verbose_level;
 extern int adios_errno;

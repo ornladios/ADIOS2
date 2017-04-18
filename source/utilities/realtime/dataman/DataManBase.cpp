@@ -8,7 +8,7 @@
  *      Author: Jason Wang
  */
 
-#include "utilities/realtime/dataman/DataManBase.h"
+#include "DataManBase.h"
 
 namespace adios
 {

@@ -17,16 +17,5 @@
 
 #include "core/Engine.h"
 #include "core/Transform.h"
-#include "engine/bp/BPFileWriter.h"
-
-// Will allow to create engines directly (no polymorphism)
-#ifdef ADIOS_HAVE_DATAMAN
-#include "engine/dataman/DataManReader.h"
-#include "engine/dataman/DataManWriter.h"
-#endif
-
-#ifdef ADIOS_HAVE_BZIP2
-#include "transform/BZip2.h"
-#endif
 
 #endif /* ADIOS_CPP_H_ */
