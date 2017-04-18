@@ -59,6 +59,9 @@ if(ADIOS_USE_DataMan)
     PRIVATE ${ADIOS_BINARY_DIR}/thirdparty/KWSys/adios2sys
   )
   target_link_libraries(adios2 PRIVATE adios2sys)
+
+  add_library(dumpman SHARED utilities/realtime/dataman/DumpMan.cpp)
+  target_link_libraries(dumpman PRIVATE adios2)
 endif()
   
 if(ADIOS_USE_BZip2)

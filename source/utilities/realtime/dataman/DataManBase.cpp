@@ -27,7 +27,7 @@ struct DataManBase::ManagerLibrary
     {
         std::stringstream libNameBuilder;
         libNameBuilder << adios2sys::DynamicLoader::LibPrefix() << method
-                       << adios2sys::DynamicLoader::LibExtension();
+                       << "man" << adios2sys::DynamicLoader::LibExtension();
         std::string libName = libNameBuilder.str();
 
         // Bind to the dynamic library
