@@ -8,6 +8,10 @@
  *      Author: Jason Wang
  */
 
+#include <sstream>
+
+#include <adios2sys/DynamicLoader.hxx>
+
 #include "utilities/realtime/dataman/DataManBase.h"
 
 namespace adios
@@ -15,11 +19,60 @@ namespace adios
 namespace realtime
 {
 
+struct DataManBase::ManagerLibrary
+{
+    adios2sys::DynamicLoader::LibraryHandle m_LibraryHandle;
+    std::shared_ptr<DataManBase> (*m_getManFunc)();
+    ManagerLibrary(std::string method)
+    {
+        std::stringstream libNameBuilder;
+        libNameBuilder << adios2sys::DynamicLoader::LibPrefix() << method
+                       << "man" << adios2sys::DynamicLoader::LibExtension();
+        std::string libName = libNameBuilder.str();
+
+        // Bind to the dynamic library
+        m_LibraryHandle = adios2sys::DynamicLoader::OpenLibrary(libName);
+        if (!m_LibraryHandle)
+        {
+            throw std::runtime_error("Unable to locate the " + libName +
+                                     " library.");
+        }
+
+        // Bind to the getMan symbol
+        adios2sys::DynamicLoader::SymbolPointer symbolHandle =
+            adios2sys::DynamicLoader::GetSymbolAddress(m_LibraryHandle,
+                                                       "getMan");
+        if (!symbolHandle)
+        {
+            throw std::runtime_error("Unable to locate the getMan symbol in " +
+                                     libName);
+        }
+        m_getManFunc =
+            reinterpret_cast<std::shared_ptr<DataManBase> (*)()>(symbolHandle);
+    }
+
+    ~ManagerLibrary()
+    {
+        if (m_LibraryHandle)
+        {
+            adios2sys::DynamicLoader::CloseLibrary(m_LibraryHandle);
+        }
+    }
+};
+
 DataManBase::DataManBase()
 {
     m_profiling["total_manager_time"] = 0.0f;
     m_profiling["total_mb"] = 0.0f;
     m_start_time = std::chrono::system_clock::now();
+}
+
+DataManBase::~DataManBase()
+{
+    for (auto &&lib : m_LoadedManagers)
+    {
+        delete lib.second;
+    }
 }
 
 int DataManBase::put(const void *p_data, std::string p_doid, std::string p_var,
@@ -226,43 +279,26 @@ int DataManBase::put_next(const void *p_data, json p_jmsg)
 
 std::shared_ptr<DataManBase> DataManBase::get_man(std::string method)
 {
-    void *so = NULL;
-#ifdef __APPLE__
-    std::string dylibname = "lib" + method + "man.dylib";
-    so = dlopen(dylibname.c_str(), RTLD_NOW);
-    if (so)
+    try
     {
-        std::shared_ptr<DataManBase> (*func)() = NULL;
-        func = (std::shared_ptr<DataManBase>(*)())dlsym(so, "getMan");
-        if (func)
+        // Reuse already loaded libraries if possible
+        auto libIt = m_LoadedManagers.find(method);
+        if (libIt == m_LoadedManagers.end())
         {
-            return func();
+            // This insertion will only fail if an entry for method already
+            // exists, which this if block ensures that it doesn't.
+            libIt =
+                m_LoadedManagers.insert({method, new ManagerLibrary(method)})
+                    .first;
         }
+        return libIt->second->m_getManFunc();
     }
-#endif
-    std::string soname = "lib" + method + "man.so";
-    so = dlopen(soname.c_str(), RTLD_NOW);
-    if (so)
+    catch (const std::runtime_error &ex)
     {
-        std::shared_ptr<DataManBase> (*func)() = NULL;
-        func = (std::shared_ptr<DataManBase>(*)())dlsym(so, "getMan");
-        if (func)
-        {
-            return func();
-        }
-        else
-        {
-            logging("getMan() not found in " + soname);
-        }
+        logging(ex.what());
+        return nullptr;
     }
-    else
-    {
-        logging("Dynamic library " + soname + " not found in LD_LIBRARY_PATH");
-    }
-    return nullptr;
 }
 
-// end namespace realtime
-}
-// end namespace adios
-}
+} // end namespace realtime
+} // end namespace adios
