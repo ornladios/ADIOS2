@@ -18,8 +18,8 @@
 #include <vector>
 /// \endcond
 
-#include "core/Transform.h"
-#include "core/VariableBase.h"
+#include "Transform.h"
+#include "VariableBase.h"
 
 namespace adios
 {

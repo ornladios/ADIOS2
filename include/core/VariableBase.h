@@ -19,9 +19,9 @@
 #include <vector>
 /// \endcond
 
-#include "functions/adiosFunctions.h" //GetTotalSize, DimsToCSV, ConvertUint64VectorToSizetVector
-#include "functions/adiosTemplates.h"       //GetType<T>
-#include "SelectionBoundingBox.h" //Selection
+#include "SelectionBoundingBox.h"
+#include "functions/adiosFunctions.h"
+#include "functions/adiosTemplates.h"
 
 namespace adios
 {

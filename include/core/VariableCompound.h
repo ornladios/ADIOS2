@@ -11,7 +11,7 @@
 #ifndef VARIABLECOMPOUND_H_
 #define VARIABLECOMPOUND_H_
 
-#include "core/VariableBase.h"
+#include "VariableBase.h"
 
 namespace adios
 {

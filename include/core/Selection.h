@@ -42,7 +42,7 @@ enum class SelectionType
     // Contiguous block of data defined by offsets and counts in each
     // dimension
     BoundingBox,
- 
+
     // List of individual points
     Points,
 

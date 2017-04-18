@@ -57,7 +57,7 @@ int main(int /*argc*/, char ** /*argv*/)
         bpWriterSettings.AddTransport("File", "profile_units=mus",
                                       "have_metadata_file=no");
 
-        auto bpWriter = adios.Open("time_nompi.bp", "w",bpWriterSettings);
+        auto bpWriter = adios.Open("time_nompi.bp", "w", bpWriterSettings);
 
         for (unsigned int t = 0; t < 3; ++t)
         {
@@ -65,7 +65,8 @@ int main(int /*argc*/, char ** /*argv*/)
             myMatrix[0] = t;
             myMatrix2[0] = t;
 
-            // Base class Engine own the Write<T> that will call overloaded Write from Derived
+            // Base class Engine own the Write<T> that will call overloaded
+            // Write from Derived
             bpWriter->Write(ioMyDoubles, myDoubles.data());
             bpWriter->Write(ioMyMatrix, myMatrix.data());
             bpWriter->Write(ioMyMatrix2, myMatrix2.data());
