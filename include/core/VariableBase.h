@@ -21,7 +21,7 @@
 
 #include "functions/adiosFunctions.h" //GetTotalSize, DimsToCSV, ConvertUint64VectorToSizetVector
 #include "functions/adiosTemplates.h"       //GetType<T>
-#include "selection/SelectionBoundingBox.h" //Selection
+#include "SelectionBoundingBox.h" //Selection
 
 namespace adios
 {
