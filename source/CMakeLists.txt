@@ -42,7 +42,8 @@ add_library(adios2
 target_include_directories(adios2
   PUBLIC ${ADIOS_SOURCE_DIR}/include
 )
-  
+
+
 if(ADIOS_USE_DataMan)
   target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
@@ -52,7 +53,13 @@ if(ADIOS_USE_DataMan)
     utilities/realtime/dataman/DataMan.cpp
   )
   target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_DATAMAN)
-  target_link_libraries(adios2 PRIVATE ${CMAKE_DL_LIBS})
+
+  # KWSys doesn't properly setup target include directories so we need to
+  # manually add them here
+  target_include_directories(adios2
+    PRIVATE ${ADIOS_BINARY_DIR}/thirdparty/KWSys/adios2sys
+  )
+  target_link_libraries(adios2 PRIVATE adios2sys)
 endif()
 
   
