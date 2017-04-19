@@ -27,9 +27,16 @@ ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string &name,
 {
     Init();
     adios_read_init_method(m_ReadMethod, mpiComm, "");
+    m_fh = adios_read_open(name.c_str(), m_ReadMethod, mpiComm,
+                           ADIOS_LOCKMODE_CURRENT, 0.0);
 }
 
-ADIOS1Reader::~ADIOS1Reader() { adios_read_finalize_method(m_ReadMethod); }
+ADIOS1Reader::~ADIOS1Reader()
+{
+    if (m_fh != nullptr)
+        adios_read_close(m_fh);
+    adios_read_finalize_method(m_ReadMethod);
+}
 
 Variable<void> *
 ADIOS1Reader::InquireVariable(const std::string &variableName,
@@ -157,7 +164,40 @@ ADIOS1Reader::InquireVariableCompound(const std::string &variableName,
     return nullptr;
 }
 
-void ADIOS1Reader::Close(const int transportIndex) {}
+void ADIOS1Reader::ScheduleReadCommon(const std::string &name,
+                                      const Dims &ldims, const Dims &offs,
+                                      void *data)
+{
+
+    uint64_t start[32], count[32];
+    for (int i = 0; i < ldims.size(); i++)
+    {
+        start[i] = (uint64_t)offs[i];
+        count[i] = (uint64_t)ldims[i];
+    }
+    ADIOS_SELECTION *sel =
+        adios_selection_boundingbox(ldims.size(), start, count);
+    adios_schedule_read(m_fh, sel, name.c_str(), 1, 0, data);
+    adios_selection_delete(sel);
+}
+
+void ADIOS1Reader::ScheduleRead(Variable<double> &variable, double *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_LocalDimensions,
+                       variable.m_Offsets, (void *)values);
+}
+
+void ADIOS1Reader::ScheduleRead(const std::string variableName, double *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<double>(variableName), values);
+}
+
+void ADIOS1Reader::PerformReads(PerformReadMode mode)
+{
+    adios_perform_reads(m_fh, (int)mode);
+}
+
+void ADIOS1Reader::Close(const int transportIndex) { adios_read_close(m_fh); }
 
 // PRIVATE
 void ADIOS1Reader::Init()

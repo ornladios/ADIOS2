@@ -132,6 +132,16 @@ public:
         ConvertUint64VectorToSizetVector(sel.m_Count, m_MemoryDimensions);
         ConvertUint64VectorToSizetVector(sel.m_Start, m_MemoryOffsets);
     }
+
+    /** Return the number of steps available for the variable
+     *  @return Number of steps
+     */
+    int GetNSteps() { return m_nsteps; }
+
+private:
+    /* Values filled by InquireVariable() */
+    int m_nsteps =
+        1; ///< number of steps available in a file (or 1 in staging),
 };
 
 } // end namespace
