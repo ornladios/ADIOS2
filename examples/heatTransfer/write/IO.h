@@ -11,8 +11,8 @@
 #ifndef IO_H_
 #define IO_H_
 
-#include "adios2/HeatTransfer.h"
-#include "adios2/Settings.h"
+#include "HeatTransfer.h"
+#include "Settings.h"
 
 #include <mpi.h>
 

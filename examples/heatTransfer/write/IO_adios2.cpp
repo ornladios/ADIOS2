@@ -8,10 +8,11 @@
  *      Author: Norbert Podhorszki
  */
 
-#include "adios2/IO.h"
-#include <adios2.h>
+#include "IO.h"
 
 #include <string>
+
+#include <adios2.h>
 
 static int rank_saved;
 adios::ADIOS *ad = nullptr;

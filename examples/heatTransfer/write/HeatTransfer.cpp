@@ -18,7 +18,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "adios2/HeatTransfer.h"
+#include "HeatTransfer.h"
 
 HeatTransfer::HeatTransfer(const Settings &settings) : m_s{settings}
 {
