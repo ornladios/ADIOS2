@@ -11,13 +11,7 @@
 #ifndef DATAMANAGER_H_
 #define DATAMANAGER_H_
 
-#include "ADIOSConfig.h"
-#include "utilities/realtime/dataman/DataManBase.h"
-
-namespace adios
-{
-namespace realtime
-{
+#include "DataManBase.h"
 
 class DataMan : public DataManBase
 {
@@ -48,8 +42,4 @@ private:
     std::vector<int> m_priority;
 };
 
-// end namespace realtime
-}
-// end namespace adios
-}
 #endif

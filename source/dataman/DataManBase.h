@@ -24,12 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "external/json.hpp"
-
-namespace adios
-{
-namespace realtime
-{
+#include "json.hpp"
 
 class DataManBase
 {
@@ -276,8 +271,4 @@ private:
     bool m_profiling_enabled = false;
 };
 
-// end namespace realtime
-}
-// end namespace adios
-}
 #endif

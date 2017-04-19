@@ -10,11 +10,6 @@
 
 #include "DataManBase.h"
 
-namespace adios
-{
-namespace realtime
-{
-
 DataManBase::DataManBase()
 {
     m_profiling["total_manager_time"] = 0.0f;
@@ -260,9 +255,4 @@ std::shared_ptr<DataManBase> DataManBase::get_man(std::string method)
         logging("Dynamic library " + soname + " not found in LD_LIBRARY_PATH");
     }
     return nullptr;
-}
-
-// end namespace realtime
-}
-// end namespace adios
 }

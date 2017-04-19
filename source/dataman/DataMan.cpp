@@ -10,11 +10,6 @@
 
 #include "DataMan.h"
 
-namespace adios
-{
-namespace realtime
-{
-
 int DataMan::init(json p_jmsg) { return 0; }
 
 int DataMan::put(const void *p_data, std::string p_doid, std::string p_var,
@@ -72,8 +67,3 @@ void DataMan::add_stream(json p_jmsg)
 void DataMan::flush() { flush_next(); }
 
 int DataMan::get(void *p_data, json &p_jmsg) { return 0; }
-
-// end namespace realtime
-}
-// end namespace adios
-}
