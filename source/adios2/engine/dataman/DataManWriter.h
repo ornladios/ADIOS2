@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef DATAMANWRITER_H_
-#define DATAMANWRITER_H_
+#ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
+#define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
 #include <iostream> //std::cout must be removed, only used for hello example
 #include <unistd.h> //sleep must be removed
@@ -181,4 +181,4 @@ private:
 
 } // end namespace adios
 
-#endif /* DATAMANWRITER_H_ */
+#endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */

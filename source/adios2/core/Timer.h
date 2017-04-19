@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef TIMER_H_
-#define TIMER_H_
+#ifndef ADIOS2_CORE_TIMER_H_
+#define ADIOS2_CORE_TIMER_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <chrono>
@@ -63,4 +63,4 @@ private:
 } // end namespace profiling
 } // end namespace adios
 
-#endif /* TIMER_H_ */
+#endif /* ADIOS2_CORE_TIMER_H_ */

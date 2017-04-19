@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef FILEPOINTER_H_
-#define FILEPOINTER_H_
+#ifndef ADIOS2_TRANSPORT_FILE_FILEPOINTER_H_
+#define ADIOS2_TRANSPORT_FILE_FILEPOINTER_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <stdio.h> // FILE*
@@ -52,4 +52,4 @@ private:
 } // end namespace transport
 } // end namespace
 
-#endif /* FILEPOINTER_H_ */
+#endif /* ADIOS2_TRANSPORT_FILE_FILEPOINTER_H_ */

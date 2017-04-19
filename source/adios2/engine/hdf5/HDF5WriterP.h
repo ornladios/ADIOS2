@@ -9,8 +9,8 @@
  *      Author: Junmin
  */
 
-#ifndef HDF5_WRITER_P_H_
-#define HDF5_WRITER_P_H_
+#ifndef ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__
+#define ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOS_MPI.h"
@@ -108,4 +108,4 @@ private:
 
 } // end namespace adios
 
-#endif /* HDF5_WRITER_P_H_ */
+#endif /* ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__ */

@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef BP1AGGREGATOR_H_
-#define BP1AGGREGATOR_H_
+#ifndef ADIOS2_UTILITIES_FORMAT_BP1_BP1AGGREGATOR_H_
+#define ADIOS2_UTILITIES_FORMAT_BP1_BP1AGGREGATOR_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -57,4 +57,4 @@ private:
 } // end namespace format
 } // end namespace adios
 
-#endif /* BP1AGGREGATOR_H_ */
+#endif /* ADIOS2_UTILITIES_FORMAT_BP1_BP1AGGREGATOR_H_ */

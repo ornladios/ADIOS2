@@ -1,6 +1,10 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ */
 
-#ifndef SHMSYSTEMV_H_
-#define SHMSYSTEMV_H_
+#ifndef ADIOS2_CAPSULE_SHMEM_SHMSYSTEMV_H_
+#define ADIOS2_CAPSULE_SHMEM_SHMSYSTEMV_H_
 
 #include <sys/ipc.h>
 #include <sys/types.h>
@@ -61,4 +65,4 @@ private:
 
 } // end namespace adios
 
-#endif /* SHMSYSTEMV_H_ */
+#endif /* ADIOS2_CAPSULE_SHMEM_SHMSYSTEMV_H_ */

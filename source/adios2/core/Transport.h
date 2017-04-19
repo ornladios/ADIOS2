@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef TRANSPORT_H_
-#define TRANSPORT_H_
+#ifndef ADIOS2_CORE_TRANSPORT_H_
+#define ADIOS2_CORE_TRANSPORT_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -91,4 +91,4 @@ protected:
 
 } // end namespace adios
 
-#endif /* TRANSPORT_H_ */
+#endif /* ADIOS2_CORE_TRANSPORT_H_ */

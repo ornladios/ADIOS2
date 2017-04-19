@@ -6,8 +6,8 @@
  *   This contains the template specializatios for the ADIOS class
  */
 
-#ifndef ADIOS_TCC_
-#define ADIOS_TCC_
+#ifndef ADIOS2_ADIOS_TCC_
+#define ADIOS2_ADIOS_TCC_
 
 #include "adios2/ADIOS.h"
 #include "adios2/ADIOSMacros.h"
@@ -155,4 +155,4 @@ Variable<T> &ADIOS::GetVariable(const std::string &name)
 
 } // end namespace adios
 
-#endif // ADIOS_TCC_
+#endif // ADIOS2_ADIOS_TCC_

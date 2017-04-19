@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef DATAMANREADER_H_
-#define DATAMANREADER_H_
+#ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
+#define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
 #include <iostream> //std::cout << Needs to go
 
@@ -141,4 +141,4 @@ private:
 
 } // end namespace
 
-#endif /* DATAMANREADER_H_ */
+#endif /* ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_ */

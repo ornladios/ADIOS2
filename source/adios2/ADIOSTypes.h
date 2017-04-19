@@ -8,8 +8,8 @@
  *      Author: pnb
  */
 
-#ifndef ADIOS_TYPES_H_
-#define ADIOS_TYPES_H_
+#ifndef ADIOS2_ADIOSTYPES_H_
+#define ADIOS2_ADIOSTYPES_H_
 
 #include <complex>
 #include <cstddef>
@@ -139,4 +139,4 @@ struct TypeInfo<T, typename std::enable_if<std::is_same<
 
 } // end namespace adios
 
-#endif /* ADIOS_TYPES_H_ */
+#endif /* ADIOS2_ADIOSTYPES_H_ */

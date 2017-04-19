@@ -10,8 +10,8 @@
  *      Author: pnb
  */
 
-#ifndef ADIOS1READER_H_
-#define ADIOS1READER_H_
+#ifndef ADIOS2_ENGINE_ADIOS1_ADIOS1READER_H_
+#define ADIOS2_ENGINE_ADIOS1_ADIOS1READER_H_
 
 #include <iostream> //this must go away
 
@@ -115,4 +115,4 @@ private:
 
 } // end namespace adios
 
-#endif /* ADIOS1READER_H_ */
+#endif /* ADIOS2_ENGINE_ADIOS1_ADIOS1READER_H_ */

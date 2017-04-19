@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef ENGINE_H_
-#define ENGINE_H_
+#ifndef ADIOS2_CORE_ENGINE_H_
+#define ADIOS2_CORE_ENGINE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <complex>    //std::complex
@@ -539,4 +539,4 @@ protected:
 
 } // end namespace
 
-#endif /* ENGINE_H_ */
+#endif /* ADIOS2_CORE_ENGINE_H_ */

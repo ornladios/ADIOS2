@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef CAPSULETEMPLATES_H_
-#define CAPSULETEMPLATES_H_
+#ifndef ADIOS2_CORE_CAPSULETEMPLATES_H_
+#define ADIOS2_CORE_CAPSULETEMPLATES_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstring> //std::memcpy
@@ -111,4 +111,4 @@ namespace adios
 
 } // end namespace
 
-#endif /* CAPSULETEMPLATES_H_ */
+#endif /* ADIOS2_CORE_CAPSULETEMPLATES_H_ */

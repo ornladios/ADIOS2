@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef VARIABLECOMPOUND_H_
-#define VARIABLECOMPOUND_H_
+#ifndef ADIOS2_CORE_VARIABLECOMPOUND_H_
+#define ADIOS2_CORE_VARIABLECOMPOUND_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/VariableBase.h"
@@ -62,4 +62,4 @@ private:
 
 } // end namespace
 
-#endif /* VARIABLECOMPOUND_H_ */
+#endif /* ADIOS2_CORE_VARIABLECOMPOUND_H_ */

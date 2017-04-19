@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef ADIOSTEMPLATES_H_
-#define ADIOSTEMPLATES_H_
+#ifndef ADIOS2_CORE_ADIOSTEMPLATES_H_
+#define ADIOS2_CORE_ADIOSTEMPLATES_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cmath> //std::sqrt
@@ -324,4 +324,4 @@ void PrintValues(const std::string name, const char *buffer,
 
 } // end namespace
 
-#endif /* ADIOSTEMPLATES_H_ */
+#endif /* ADIOS2_CORE_ADIOSTEMPLATES_H_ */

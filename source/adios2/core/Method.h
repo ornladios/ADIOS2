@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef METHOD_H_
-#define METHOD_H_
+#ifndef ADIOS2_CORE_METHOD_H_
+#define ADIOS2_CORE_METHOD_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
@@ -149,4 +149,4 @@ private:
 
 } // end namespace adios
 
-#endif /* METHOD_H_ */
+#endif /* ADIOS2_CORE_METHOD_H_ */

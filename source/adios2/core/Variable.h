@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef VARIABLE_H_
-#define VARIABLE_H_
+#ifndef ADIOS2_CORE_VARIABLE_H_
+#define ADIOS2_CORE_VARIABLE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
@@ -119,4 +119,4 @@ public:
 
 } // end namespace
 
-#endif /* VARIABLE_H_ */
+#endif /* ADIOS2_CORE_VARIABLE_H_ */

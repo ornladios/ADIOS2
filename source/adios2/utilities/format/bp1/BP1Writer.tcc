@@ -7,8 +7,8 @@
  *  Created on: Apr 11, 2017
  *      Author: wfg
  */
-#ifndef BP1WRITER_TCC_
-#define BP1WRITER_TCC_
+#ifndef ADIOS2_UTILITIES_FORMAT_BP1_BP1WRITER_TCC_
+#define ADIOS2_UTILITIES_FORMAT_BP1_BP1WRITER_TCC_
 
 #include "BP1Writer.h"
 
@@ -303,4 +303,4 @@ void BP1Writer::WriteVariableCharacteristics(
 } // end namespace format
 } // end namespace adios
 
-#endif // BP1WRITER_TCC_
+#endif // ADIOS2_UTILITIES_FORMAT_BP1_BP1WRITER_TCC_

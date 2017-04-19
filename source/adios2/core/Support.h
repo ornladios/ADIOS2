@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * SSupport.h
+ * Support.h
  *
  *  Created on: Oct 10, 2016
  *      Author: wfg
  */
 
-#ifndef SUPPORT_H_
-#define SUPPORT_H_
+#ifndef ADIOS2_CORE_SUPPORT_H_
+#define ADIOS2_CORE_SUPPORT_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
@@ -60,4 +60,4 @@ struct Support
 
 } // end namespace adios
 
-#endif /* SUPPORT_H_ */
+#endif /* ADIOS2_CORE_SUPPORT_H_ */

@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef MDTMMAN_H_
-#define MDTMMAN_H_
+#ifndef ADIOS2_TRANSPORT_WAN_MDTMMAN_H_
+#define ADIOS2_TRANSPORT_WAN_MDTMMAN_H_
 
 #include <json.hpp>
 
@@ -137,4 +137,4 @@ private:
 } // end namespace transport
 } // end namespace
 
-#endif /* MDTMMAN_H_ */
+#endif /* ADIOS2_TRANSPORT_WAN_MDTMMAN_H_ */

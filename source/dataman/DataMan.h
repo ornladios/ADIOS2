@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef DATAMANAGER_H_
-#define DATAMANAGER_H_
+#ifndef DATAMAN_H_
+#define DATAMAN_H_
 
 #include "DataManBase.h"
 
@@ -42,4 +42,4 @@ private:
     std::vector<int> m_priority;
 };
 
-#endif
+#endif /* DATAMAN_H_ */

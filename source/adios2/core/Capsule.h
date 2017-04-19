@@ -8,8 +8,8 @@
  *      Author: wfgtemplates and pointers
  */
 
-#ifndef CAPSULE_H_
-#define CAPSULE_H_
+#ifndef ADIOS2_CORE_CAPSULE_H_
+#define ADIOS2_CORE_CAPSULE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -67,4 +67,4 @@ protected:
 
 } // end namespace
 
-#endif /* CAPSULE_H_ */
+#endif /* ADIOS2_CORE_CAPSULE_H_ */

@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef MPI_FILE_H_
-#define MPI_FILE_H_
+#ifndef ADIOS2_TRANSPORT_FILE_MPI_FILE_H_
+#define ADIOS2_TRANSPORT_FILE_MPI_FILE_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOS_MPI.h"
@@ -47,4 +47,4 @@ private:
 } // end namespace transport
 } // end namespace
 
-#endif /* MPI_FILE_H_ */
+#endif /* ADIOS2_TRANSPORT_FILE_MPI_FILE_H_ */

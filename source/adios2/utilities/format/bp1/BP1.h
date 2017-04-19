@@ -8,12 +8,12 @@
  *      Author: wfg
  */
 
-#ifndef BP1_H_
-#define BP1_H_
+#ifndef ADIOS2_UTILITIES_FORMAT_BP1_BP1_H_
+#define ADIOS2_UTILITIES_FORMAT_BP1_BP1_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/utilities/format/bp1/BP1Aggregator.h"
 #include "adios2/utilities/format/bp1/BP1Structs.h"
 #include "adios2/utilities/format/bp1/BP1Writer.h"
 
-#endif /* BP1_H_ */
+#endif /* ADIOS2_UTILITIES_FORMAT_BP1_BP1_H_ */

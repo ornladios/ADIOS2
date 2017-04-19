@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef BPFILEREADER_H_
-#define BPFILEREADER_H_
+#ifndef ADIOS2_ENGINE_BP_BPFILEREADER_H_
+#define ADIOS2_ENGINE_BP_BPFILEREADER_H_
 
 #include <iostream> //this must go away
 
@@ -144,4 +144,4 @@ private:
 
 } // end namespace adios
 
-#endif /* BPFILEREADER_H_ */
+#endif /* ADIOS2_ENGINE_BP_BPFILEREADER_H_ */

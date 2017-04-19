@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef FSTREAM_H_
-#define FSTREAM_H_
+#ifndef ADIOS2_TRANSPORT_FILE_FSTREAM_H_
+#define ADIOS2_TRANSPORT_FILE_FSTREAM_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
@@ -51,4 +51,4 @@ private:
 } // end namespace transport
 } // end namespace adios
 
-#endif /* FSTREAM_H_ */
+#endif /* ADIOS2_TRANSPORT_FILE_FSTREAM_H_ */

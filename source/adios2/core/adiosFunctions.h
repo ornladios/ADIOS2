@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef ADIOSFUNCTIONS_H_
-#define ADIOSFUNCTIONS_H_
+#ifndef ADIOS2_CORE_ADIOSFUNCTIONS_H_
+#define ADIOS2_CORE_ADIOSFUNCTIONS_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstring> //std::size_t
@@ -231,4 +231,4 @@ bool IsLittleEndian() noexcept;
 
 } // end namespace
 
-#endif /* ADIOSFUNCTIONS_H_ */
+#endif /* ADIOS2_CORE_ADIOSFUNCTIONS_H_ */

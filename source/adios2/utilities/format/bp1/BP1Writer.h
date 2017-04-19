@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef BP1WRITER_H_
-#define BP1WRITER_H_
+#ifndef ADIOS2_UTILITIES_FORMAT_BP1_BP1WRITER_H_
+#define ADIOS2_UTILITIES_FORMAT_BP1_BP1WRITER_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::count, std::copy, std::for_each
@@ -264,4 +264,4 @@ ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
 } // end namespace format
 } // end namespace adios
 
-#endif /* BP1WRITER_H_ */
+#endif /* ADIOS2_UTILITIES_FORMAT_BP1_BP1WRITER_H_ */

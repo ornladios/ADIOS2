@@ -3,8 +3,8 @@
  * accompanying file Copyright.txt for details.
  */
 
-#ifndef ADIOS_MPI_H_
-#define ADIOS_MPI_H_
+#ifndef ADIOS2_ADIOS_MPI_H_
+#define ADIOS2_ADIOS_MPI_H_
 
 #include "adios2/ADIOSConfig.h"
 
@@ -14,4 +14,4 @@
 #include "adios2/mpidummy.h"
 #endif
 
-#endif /* ADIOS_MPI_H_ */
+#endif /* ADIOS2_ADIOS_MPI_H_ */

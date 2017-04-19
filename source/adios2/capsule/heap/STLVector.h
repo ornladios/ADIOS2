@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef STLVECTOR_H_
-#define STLVECTOR_H_
+#ifndef ADIOS2_CAPSULE_HEAP_STLVECTOR_H_
+#define ADIOS2_CAPSULE_HEAP_STLVECTOR_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
@@ -60,4 +60,4 @@ public:
 } // end namespace capsule
 } // end namespace
 
-#endif /* STLVECTOR_H_ */
+#endif /* ADIOS2_CAPSULE_HEAP_STLVECTOR_H_ */

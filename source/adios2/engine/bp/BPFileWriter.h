@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef BPFILEWRITER_H_
-#define BPFILEWRITER_H_
+#ifndef ADIOS2_ENGINE_BP_BPFILEWRITER_H_
+#define ADIOS2_ENGINE_BP_BPFILEWRITER_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/capsule/heap/STLVector.h"
@@ -185,4 +185,4 @@ private:
 
 } // end namespace adios
 
-#endif /* BPFILEWRITER_H_ */
+#endif /* ADIOS2_ENGINE_BP_BPFILEWRITER_H_ */

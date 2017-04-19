@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef BP1STRUCTS_H_
-#define BP1STRUCTS_H_
+#ifndef ADIOS2_UTILITIES_FORMAT_BP1_BP1STRUCTS_H_
+#define ADIOS2_UTILITIES_FORMAT_BP1_BP1STRUCTS_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstdint>
@@ -85,4 +85,4 @@ struct BP1MetadataSet
 } // end namespace format
 } // end namespace adios
 
-#endif /* BP1STRUCTS_H_ */
+#endif /* ADIOS2_UTILITIES_FORMAT_BP1_BP1STRUCTS_H_ */

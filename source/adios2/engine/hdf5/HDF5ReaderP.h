@@ -8,7 +8,7 @@
  *      Author: Junmin
  */
 
-#ifndef HDF5_READER_P_H
-#define HDF5_READER_P_H
+#ifndef ADIOS2_ENGINE_HDF5_HDF5READERP_H_
+#define ADIOS2_ENGINE_HDF5_HDF5READERP_H_
 
-#endif
+#endif /* ADIOS2_ENGINE_HDF5_HDF5READERP_H_ */

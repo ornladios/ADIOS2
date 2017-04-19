@@ -8,12 +8,10 @@
  *      Author: wfg
  */
 
-#ifndef ATTRIBUTE_H_
-#define ATTRIBUTE_H_
+#ifndef ADIOS2_CORE_ATTRIBUTE_H_
+#define ADIOS2_CORE_ATTRIBUTE_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
-/// \endcond
 
 #include "adios2/ADIOSConfig.h"
 
@@ -31,4 +29,4 @@ struct Attribute
 
 } // end namespace
 
-#endif /* ATTRIBUTE_H_ */
+#endif /* ADIOS2_CORE_ATTRIBUTE_H_ */

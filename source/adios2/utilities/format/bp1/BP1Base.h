@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef BP1BASE_H_
-#define BP1BASE_H_
+#ifndef ADIOS2_UTILITIES_FORMAT_BP1_BP1BASE_H_
+#define ADIOS2_UTILITIES_FORMAT_BP1_BP1BASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstdint> //std::uintX_t
@@ -277,4 +277,4 @@ inline std::int8_t BP1Base::GetDataType<long double>() const noexcept
 } // end namespace format
 } // end namespace adios
 
-#endif /* BP1BASE_H_ */
+#endif /* ADIOS2_UTILITIES_FORMAT_BP1_BP1BASE_H_ */

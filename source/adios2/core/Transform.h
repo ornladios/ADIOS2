@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef TRANSFORM_H_
-#define TRANSFORM_H_
+#ifndef ADIOS2_CORE_TRANSFORM_H_
+#define ADIOS2_CORE_TRANSFORM_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -47,4 +47,4 @@ public:
 };
 
 } // end namespace adios
-#endif /* TRANSFORM_H_ */
+#endif /* ADIOS2_CORE_TRANSFORM_H_ */

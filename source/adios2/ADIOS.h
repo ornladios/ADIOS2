@@ -7,8 +7,8 @@
  *      Author: wfg
  */
 
-#ifndef ADIOS_H_
-#define ADIOS_H_
+#ifndef ADIOS2_ADIOS_H_
+#define ADIOS2_ADIOS_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <complex>
@@ -361,4 +361,4 @@ extern template unsigned int ADIOS::GetVariableIndex<void>(const std::string &);
 // Include the inline implementations for the public interface
 #include "adios2/ADIOS.inl"
 
-#endif /* ADIOS_H_ */
+#endif /* ADIOS2_ADIOS_H_ */

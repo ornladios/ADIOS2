@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef BZIP2_H_
-#define BZIP2_H_
+#ifndef ADIOS2_TRANSFORM_BZIP2_H_
+#define ADIOS2_TRANSFORM_BZIP2_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Transform.h"
@@ -42,4 +42,4 @@ public:
 } // end namespace transform
 } // end namespace adios
 
-#endif /* BZIP2_H_ */
+#endif /* ADIOS2_TRANSFORM_BZIP2_H_ */

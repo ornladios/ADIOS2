@@ -10,8 +10,8 @@
  *      Author: pnb
  */
 
-#ifndef ADIOS1WRITER_H_
-#define ADIOS1WRITER_H_
+#ifndef ADIOS2_ENGINE_ADIOS1_ADIOS1WRITER_H_
+#define ADIOS2_ENGINE_ADIOS1_ADIOS1WRITER_H_
 
 #include <adios.h>
 
@@ -129,4 +129,4 @@ private:
 
 } // end namespace adios
 
-#endif /* ADIOS1WRITER_H_ */
+#endif /* ADIOS2_ENGINE_ADIOS1_ADIOS1WRITER_H_ */

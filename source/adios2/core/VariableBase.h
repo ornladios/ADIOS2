@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef VARIABLEBASE_H_
-#define VARIABLEBASE_H_
+#ifndef ADIOS2_CORE_VARIABLEBASE_H_
+#define ADIOS2_CORE_VARIABLEBASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <exception>
@@ -137,4 +137,4 @@ public:
 
 } // end namespace
 
-#endif /* VARIABLEBASE_H_ */
+#endif /* ADIOS2_CORE_VARIABLEBASE_H_ */

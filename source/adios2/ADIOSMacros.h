@@ -5,8 +5,8 @@
  * ADIOSMacros.h
  *   This contains a set of helper macros used internally
  */
-#ifndef ADIOSMACROS_H
-#define ADIOSMACROS_H
+#ifndef ADIOS2_ADIOSMACROS_H
+#define ADIOS2_ADIOSMACROS_H
 
 // The ADIOS_FOREACH_TYPE_1ARG macro assumes the given argument is a macro which
 // takes a single argument that is a type and then inserts the given MACRO for
@@ -59,4 +59,4 @@
     MACRO(double)                                                              \
     MACRO(long double)
 
-#endif // ADIOSMACROS_H
+#endif /* ADIOS2_ADIOSMACROS_H */

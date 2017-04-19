@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef IOCHRONO_H_
-#define IOCHRONO_H_
+#ifndef ADIOS2_CORE_IOCHRONO_H_
+#define ADIOS2_CORE_IOCHRONO_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <vector>
@@ -41,4 +41,4 @@ struct IOChrono
 } // end namespace profiling
 } // end namespace adios
 
-#endif /* IOCHRONO_H_ */
+#endif /* ADIOS2_CORE_IOCHRONO_H_ */

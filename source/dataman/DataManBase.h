@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef DATAMAN_H_
-#define DATAMAN_H_
+#ifndef DATAMANBASE_H_
+#define DATAMANBASE_H_
 
 #include <cstdint>
 
@@ -271,4 +271,4 @@ private:
     bool m_profiling_enabled = false;
 };
 
-#endif
+#endif /* DATAMANBASE_H_ */

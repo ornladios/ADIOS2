@@ -8,8 +8,8 @@
  *      Author: wfg
  */
 
-#ifndef FILEDESCRIPTOR_H_
-#define FILEDESCRIPTOR_H_
+#ifndef ADIOS2_TRANSPORT_FILE_FILEDESCRIPTOR_H_
+#define ADIOS2_TRANSPORT_FILE_FILEDESCRIPTOR_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Transport.h"
@@ -42,4 +42,4 @@ private:
 
 } // end namespace transport
 } // end namespace
-#endif /* FILEDESCRIPTOR_H_ */
+#endif /* ADIOS2_TRANSPORT_FILE_FILEDESCRIPTOR_H_ */
