@@ -8,7 +8,7 @@
  *      Author: Junmin
  */
 
-#include "adios2/HDF5WriterP.h"
+#include "HDF5WriterP.h"
 
 #include <iostream> //needs to go away, this is just for demo purposes
 
