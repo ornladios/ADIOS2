@@ -13,6 +13,7 @@
 #ifndef ADIOS1WRITER_H_
 #define ADIOS1WRITER_H_
 
+#include "ADIOSConfig.h"
 #include "core/Engine.h"
 
 namespace adios

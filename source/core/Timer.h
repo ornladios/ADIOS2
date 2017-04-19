@@ -16,7 +16,8 @@
 #include <string>
 /// \endcond
 
-#include "Support.h"
+#include "ADIOSConfig.h"
+#include "core/Support.h"
 
 namespace adios
 {

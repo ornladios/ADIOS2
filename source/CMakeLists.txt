@@ -49,21 +49,18 @@ if(ADIOS_USE_DataMan)
     utilities/realtime/dataman/DataManBase.cpp
     utilities/realtime/dataman/DataMan.cpp
   )
-  target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_DATAMAN)
   target_link_libraries(adios2 PRIVATE ${CMAKE_DL_LIBS})
 endif()
   
 if(ADIOS_USE_BZip2)
   find_package(BZip2 REQUIRED)
   target_sources(adios2 PRIVATE transform/BZip2.cpp)
-  target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_BZIP2)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
 
 if(ADIOS_USE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
   target_include_directories(adios2 PUBLIC ${MPI_C_INCLUDE_PATH})
-  target_compile_definitions(adios2 PUBLIC ADIOS_HAVE_MPI)
   target_link_libraries(adios2 PUBLIC ${MPI_C_LIBRARIES})
 else()
   target_sources(adios2 PRIVATE mpidummy.cpp)
@@ -80,7 +77,6 @@ if(ADIOS_USE_ADIOS1)
     engine/adios1/ADIOS1Reader.cpp
     engine/adios1/ADIOS1Writer.cpp
   )
-  target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_ADIOS1)
   target_link_libraries(adios2 PRIVATE adios1::adios)
 endif()
 
@@ -103,16 +99,17 @@ if(ADIOS_USE_HDF5)
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
   )
-  target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_HDF5)
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
 
 # Main header when using the build directory
 set(ADIOS_INCLUDE_DIR "${ADIOS_SOURCE_DIR}/source")
+set(ADIOS_CONFIG_DIR "${ADIOS_BINARY_DIR}")
 configure_file(adios2.h.in ${ADIOS_BINARY_DIR}/adios2.h)
 
 # Header installation
 set(ADIOS_INCLUDE_DIR "adios2")
+set(ADIOS_CONFIG_DIR "adios2")
 configure_file(adios2.h.in ${ADIOS_BINARY_DIR}/adios2.install.h)
 install(
   FILES ${ADIOS_BINARY_DIR}/adios2.install.h
@@ -120,7 +117,9 @@ install(
   RENAME adios2.h
 )
 install(
-  FILES ADIOS.h ADIOS.inl ADIOSMacros.h ADIOS_MPI.h ADIOSTypes.h mpidummy.h
+  FILES
+    ADIOS.h ADIOS.inl ADIOSMacros.h ADIOS_MPI.h ADIOSTypes.h mpidummy.h
+    ${ADIOS_BINARY_DIR}/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 install(

@@ -11,6 +11,7 @@
 #ifndef BP1_H_
 #define BP1_H_
 
+#include "ADIOSConfig.h"
 #include "utilities/format/bp1/BP1Aggregator.h"
 #include "utilities/format/bp1/BP1Structs.h"
 #include "utilities/format/bp1/BP1Writer.h"

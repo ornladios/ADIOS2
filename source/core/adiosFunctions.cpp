@@ -26,7 +26,7 @@
 #include "core/Support.h"
 #include "core/adiosFunctions.h"
 
-#ifdef ADIOS_HAVE_BZIP2
+#ifdef ADIOS2_HAVE_BZIP2
 #include "transform/BZip2.h"
 #endif
 
@@ -539,7 +539,7 @@ void SetTransformsHelper(const std::vector<std::string> &transformNames,
         {
             if (transformMethod == "bzip2")
             {
-#ifdef ADIOS_HAVE_BZIP2
+#ifdef ADIOS2_HAVE_BZIP2
                 transforms.push_back(
                     std::make_shared<adios::transform::BZip2>());
 #endif

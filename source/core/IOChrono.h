@@ -15,7 +15,8 @@
 #include <vector>
 /// \endcond
 
-#include "Timer.h"
+#include "ADIOSConfig.h"
+#include "core/Timer.h"
 
 namespace adios
 {

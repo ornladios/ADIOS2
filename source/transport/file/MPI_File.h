@@ -11,9 +11,8 @@
 #ifndef MPI_FILE_H_
 #define MPI_FILE_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
+#include "ADIOSConfig.h"
 #include "ADIOS_MPI.h"
-/// \endcond
 
 namespace adios
 {

@@ -15,6 +15,7 @@
 #include <fstream>
 /// \endcond
 
+#include "ADIOSConfig.h"
 #include "core/Transport.h"
 
 namespace adios

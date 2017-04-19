@@ -2,9 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * ADIOS.\ *
+ * ADIOS.h
  *  Created on: Oct 3, 2016
- *      Author: wfg`123 */
+ *      Author: wfg
+ */
 
 #ifndef ADIOS_H_
 #define ADIOS_H_
@@ -19,9 +20,9 @@
 #include <vector>
 /// \endcond
 
+#include "ADIOSConfig.h"
 #include "ADIOSMacros.h"
 #include "ADIOS_MPI.h"
-
 #include "ADIOSTypes.h"
 #include "core/Method.h"
 #include "core/Support.h"

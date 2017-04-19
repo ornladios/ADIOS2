@@ -16,6 +16,8 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "ADIOSConfig.h"
+
 namespace adios
 {
 

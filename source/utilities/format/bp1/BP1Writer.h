@@ -17,11 +17,11 @@
 #include <cstring>   //std::memcpy
 /// \endcond
 
+#include "ADIOSConfig.h"
 #include "ADIOSMacros.h"
 #include "ADIOSTypes.h"
 #include "utilities/format/bp1/BP1Base.h"
 #include "utilities/format/bp1/BP1Structs.h"
-
 #include "capsule/heap/STLVector.h"
 #include "core/Variable.h"
 #include "core/adiosFunctions.h"

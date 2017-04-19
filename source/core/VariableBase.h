@@ -19,9 +19,10 @@
 #include <vector>
 /// \endcond
 
-#include "SelectionBoundingBox.h"
-#include "adiosFunctions.h"
-#include "adiosTemplates.h"
+#include "ADIOSConfig.h"
+#include "core/SelectionBoundingBox.h"
+#include "core/adiosFunctions.h"
+#include "core/adiosTemplates.h"
 
 namespace adios
 {

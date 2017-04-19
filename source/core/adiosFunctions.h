@@ -19,8 +19,9 @@
 #include <vector>
 /// \endcond
 
-#include "../ADIOS_MPI.h"
-#include "Transform.h"
+#include "ADIOSConfig.h"
+#include "ADIOS_MPI.h"
+#include "core/Transform.h"
 
 namespace adios
 {

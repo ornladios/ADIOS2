@@ -78,7 +78,7 @@ void HDF5Writer::Init()
 
     _plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
-#ifdef ADIOS_HAVE_MPI
+#ifdef ADIOS2_HAVE_MPI
     H5Pset_fapl_mpio(_plist_id, m_MPIComm, MPI_INFO_NULL);
 #endif
 
@@ -342,7 +342,7 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
     //  Create property list for collective dataset write.
 
     _plist_id = H5Pcreate(H5P_DATASET_XFER);
-#ifdef ADIOS_HAVE_MPI
+#ifdef ADIOS2_HAVE_MPI
     H5Pset_dxpl_mpio(_plist_id, H5FD_MPIO_COLLECTIVE);
 #endif
     herr_t status;

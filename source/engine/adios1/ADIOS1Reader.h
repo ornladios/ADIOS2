@@ -15,21 +15,14 @@
 
 #include <iostream> //this must go away
 
+#include "ADIOSConfig.h"
 #include "core/Engine.h"
-
-// supported capsules
 #include "capsule/heap/STLVector.h"
 
 namespace adios
 {
 
-#ifndef ADIOS_HAVE_MPI
-#define _NOMPI 1
-#endif
 #include "adios_read_v2.h" // this is adios 1.x header file
-#ifndef ADIOS_HAVE_MPI
-#undef _NOMPI
-#endif
 
 class ADIOS1Reader : public Engine
 {

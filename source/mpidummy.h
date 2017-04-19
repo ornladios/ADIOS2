@@ -19,6 +19,8 @@
 #include <sys/types.h>
 /// \endcond
 
+#include "ADIOSConfig.h"
+
 namespace adios
 {
 

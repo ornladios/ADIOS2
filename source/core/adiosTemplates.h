@@ -21,6 +21,8 @@
 #include <vector>
 /// \endcond
 
+#include "ADIOSConfig.h"
+
 namespace adios
 {
 /**

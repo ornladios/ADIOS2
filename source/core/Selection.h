@@ -33,6 +33,8 @@
 #ifndef __ADIOS_SELECTION_H__
 #define __ADIOS_SELECTION_H__
 
+#include "ADIOSConfig.h"
+
 namespace adios
 {
 

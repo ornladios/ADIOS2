@@ -11,6 +11,7 @@
 #ifndef BZIP2_H_
 #define BZIP2_H_
 
+#include "ADIOSConfig.h"
 #include "core/Transform.h"
 
 namespace adios

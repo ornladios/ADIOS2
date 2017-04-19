@@ -11,6 +11,7 @@
 #ifndef DATAMANAGER_H_
 #define DATAMANAGER_H_
 
+#include "ADIOSConfig.h"
 #include "utilities/realtime/dataman/DataManBase.h"
 
 namespace adios

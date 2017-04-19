@@ -11,6 +11,7 @@
 #ifndef FILEDESCRIPTOR_H_
 #define FILEDESCRIPTOR_H_
 
+#include "ADIOSConfig.h"
 #include "core/Transport.h"
 
 namespace adios

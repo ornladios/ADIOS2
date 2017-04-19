@@ -18,7 +18,7 @@
 #include <vector>
 /// \endcond
 
-//#include <queue>  //std::priority_queue to be added later
+#include "ADIOSConfig.h"
 #include "ADIOS_MPI.h"
 #include "core/Transport.h"
 

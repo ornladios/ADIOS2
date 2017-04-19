@@ -13,8 +13,8 @@
 
 #include <iostream> //this must go away
 
+#include "ADIOSConfig.h"
 #include "core/Engine.h"
-
 #include "capsule/heap/STLVector.h"
 
 namespace adios
