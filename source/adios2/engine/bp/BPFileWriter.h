@@ -98,7 +98,7 @@ public:
     void Close(const int transportIndex = -1);
 
 private:
-    capsule::STLVector m_Buffer; ///< heap capsule using STL std::vector<char>
+    capsule::STLVector m_Heap; ///< heap capsule using STL std::vector<char>
     format::BP1Writer
         m_BP1Writer; ///< format object will provide the required BP
                      /// functionality to be applied on m_Buffer and
@@ -160,7 +160,7 @@ private:
         //                                                  m_Buffer.m_Data );
 
         // WRITE INDEX to data buffer and metadata structure (in memory)//
-        m_BP1Writer.WriteVariableMetadata(variable, m_Buffer, m_MetadataSet);
+        m_BP1Writer.WriteVariableMetadata(variable, m_Heap, m_MetadataSet);
 
         if (m_TransportFlush == true) // in batches
         {
@@ -172,7 +172,7 @@ private:
         }
         else // Write data to buffer
         {
-            m_BP1Writer.WriteVariablePayload(variable, m_Buffer, m_nThreads);
+            m_BP1Writer.WriteVariablePayload(variable, m_Heap, m_nThreads);
         }
 
         variable.m_AppValues =

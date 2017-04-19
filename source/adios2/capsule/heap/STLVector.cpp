@@ -2,37 +2,38 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Heap.cpp
+ * STLVector.cpp
  *
  *  Created on: Dec 22, 2016
  *      Author: wfg
  */
 
-#include "STLVector.h"
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <new>       //std::bad_alloc
 #include <stdexcept> //std::runtime_error
+/// \endcond
+
+#include "STLVector.h"
 
 namespace adios
 {
 namespace capsule
 {
 
-STLVector::STLVector(std::string accessMode, int rankMPI, bool debugMode)
-: Capsule{"Heap", std::move(accessMode), rankMPI, debugMode}
+STLVector::STLVector(const bool debugMode)
+: Capsule("heap/STLVector", debugMode)
 {
-    m_Data.reserve(16777216);
 }
 
 char *STLVector::GetData() { return m_Data.data(); }
 
 char *STLVector::GetMetadata() { return m_Metadata.data(); }
 
-std::size_t STLVector::GetDataSize() const { return m_Data.size(); }
+size_t STLVector::GetDataSize() const { return m_Data.size(); }
 
-std::size_t STLVector::GetMetadataSize() const { return m_Metadata.size(); }
+size_t STLVector::GetMetadataSize() const { return m_Metadata.size(); }
 
-void STLVector::ResizeData(const std::size_t size)
+void STLVector::ResizeData(const size_t size)
 {
     if (m_DebugMode == true)
     {
@@ -53,7 +54,7 @@ void STLVector::ResizeData(const std::size_t size)
     }
 }
 
-void STLVector::ResizeMetadata(const std::size_t size)
+void STLVector::ResizeMetadata(const size_t size)
 {
     if (m_DebugMode == true)
     {

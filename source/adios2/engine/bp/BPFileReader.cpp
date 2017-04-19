@@ -24,7 +24,7 @@ BPFileReader::BPFileReader(ADIOS &adios, const std::string &name,
                            const Method &method)
 : Engine(adios, "BPFileReader", name, accessMode, mpiComm, method,
          " BPFileReader constructor (or call to ADIOS Open).\n"),
-  m_Buffer(accessMode, m_RankMPI, m_DebugMode)
+  m_Heap(m_DebugMode)
 {
     Init();
 }

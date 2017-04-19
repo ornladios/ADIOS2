@@ -10,15 +10,11 @@
 
 #include "Capsule.h"
 
-#include <utility>
-
 namespace adios
 {
 
-Capsule::Capsule(const std::string type, const std::string accessMode,
-                 int rankMPI, bool debugMode)
-: m_Type{std::move(type)}, m_AccessMode{std::move(accessMode)},
-  m_RankMPI{rankMPI}, m_DebugMode{debugMode}
+Capsule::Capsule(const std::string type, const bool debugMode)
+: m_Type(type), m_DebugMode(debugMode)
 {
 }
 
