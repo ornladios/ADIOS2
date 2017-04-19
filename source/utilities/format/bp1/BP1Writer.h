@@ -24,8 +24,8 @@
 
 #include "capsule/heap/STLVector.h"
 #include "core/Variable.h"
-#include "functions/adiosFunctions.h"
-#include "functions/adiosTemplates.h"
+#include "core/adiosFunctions.h"
+#include "core/adiosTemplates.h"
 
 namespace adios
 {

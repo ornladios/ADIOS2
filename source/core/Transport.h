@@ -16,9 +16,8 @@
 #include <vector>
 /// \endcond
 
-#include "utilities/profiling/iochrono/IOChrono.h"
-
-#include "ADIOS_MPI.h"
+#include "../ADIOS_MPI.h"
+#include "IOChrono.h"
 
 namespace adios
 {

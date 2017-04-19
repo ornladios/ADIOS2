@@ -5,7 +5,6 @@
   
 add_library(adios2
   ADIOS.cpp ADIOS.tcc
-  #ADIOS_C.cpp
   
   capsule/heap/STLVector.cpp
   capsule/shmem/ShmSystemV.cpp
@@ -14,8 +13,10 @@ add_library(adios2
   core/Engine.cpp
   core/Method.cpp
   core/Support.cpp
+  core/Timer.cpp
   core/Transform.cpp
   core/Transport.cpp
+  core/adiosFunctions.cpp
   
   engine/bp/BPFileReader.cpp
   engine/bp/BPFileWriter.cpp
@@ -24,10 +25,6 @@ add_library(adios2
   utilities/format/bp1/BP1Aggregator.cpp
   utilities/format/bp1/BP1Writer.cpp
     
-  utilities/profiling/iochrono/Timer.cpp
-
-  functions/adiosFunctions.cpp
-  
   transport/file/FStream.cpp
   transport/file/FileDescriptor.cpp
   transport/file/FilePointer.cpp
@@ -36,11 +33,11 @@ add_library(adios2
   utilities/format/bp1/BP1Aggregator.cpp
   utilities/format/bp1/BP1Writer.cpp
   utilities/format/bp1/BP1Writer.tcc
-    
-  utilities/profiling/iochrono/Timer.cpp
 )
 target_include_directories(adios2
-  PUBLIC ${ADIOS_SOURCE_DIR}/include
+  PUBLIC
+    $<BUILD_INTERFACE:${ADIOS_BINARY_DIR}>
+    $<INSTALL_INTERFACE:include>
   PRIVATE ${ADIOS_SOURCE_DIR}/source
 )
   
@@ -55,7 +52,6 @@ if(ADIOS_USE_DataMan)
   target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_DATAMAN)
   target_link_libraries(adios2 PRIVATE ${CMAKE_DL_LIBS})
 endif()
-
   
 if(ADIOS_USE_BZip2)
   find_package(BZip2 REQUIRED)
@@ -63,7 +59,6 @@ if(ADIOS_USE_BZip2)
   target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_BZIP2)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
-
 
 if(ADIOS_USE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
@@ -92,9 +87,15 @@ endif()
 if(ADIOS_USE_HDF5)
   find_package(HDF5 REQUIRED)
   if(ADIOS_USE_MPI AND (NOT HDF5_IS_PARALLEL))
-    message(FATAL_ERROR "A sequential version of HDF5 was detected but the parallel version of ADIOS is being built, which requires a parallel HDF5.")
+    message(FATAL_ERROR
+      "A sequential version of HDF5 was detected but the parallel version "
+      "of ADIOS is being built, which requires a parallel HDF5."
+    )
   elseif((NOT ADIOS_USE_MPI) AND HDF5_IS_PARALLEL)
-    message(FATAL_ERROR "A parallel version of HDF5 was detected but the sequential version of ADIOS is being built, which requires a sequential HDF5.")
+    message(FATAL_ERROR
+      "A parallel version of HDF5 was detected but the sequential version "
+      "of ADIOS is being built, which requires a sequential HDF5."
+    )
   endif()
 
   target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
@@ -105,3 +106,33 @@ if(ADIOS_USE_HDF5)
   target_compile_definitions(adios2 PRIVATE ADIOS_HAVE_HDF5)
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
+
+# Main header when using the build directory
+set(ADIOS_INCLUDE_DIR "${ADIOS_SOURCE_DIR}/source")
+configure_file(adios2.h.in ${ADIOS_BINARY_DIR}/adios2.h)
+
+# Header installation
+set(ADIOS_INCLUDE_DIR "adios2")
+configure_file(adios2.h.in ${ADIOS_BINARY_DIR}/adios2.install.h)
+install(
+  FILES ${ADIOS_BINARY_DIR}/adios2.install.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  RENAME adios2.h
+)
+install(
+  FILES ADIOS.h ADIOS.inl ADIOSMacros.h ADIOS_MPI.h ADIOSTypes.h mpidummy.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+)
+install(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+  FILES_MATCHING REGEX "[^/]*\.(h|inl)$"
+)
+
+# Library installation
+install(
+  TARGETS adios2 EXPORT adios2
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

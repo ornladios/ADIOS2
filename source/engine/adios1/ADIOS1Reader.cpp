@@ -9,7 +9,7 @@
  */
 
 #include "core/Support.h"
-#include "functions/adiosFunctions.h"      // CSVToVector
+#include "core/adiosFunctions.h"           // CSVToVector
 #include "transport/file/FStream.h"        // uses C++ fstream
 #include "transport/file/FileDescriptor.h" // uses POSIX
 #include "transport/file/FilePointer.h"    // uses C FILE*

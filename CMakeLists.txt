@@ -93,13 +93,6 @@ add_subdirectory(thirdparty)
 add_subdirectory(source)
 
 #------------------------------------------------------------------------------#
-# Installation
-#------------------------------------------------------------------------------#
-install(DIRECTORY include/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  FILES_MATCHING PATTERN "*.h"
-)
-#------------------------------------------------------------------------------#
 # Examples
 #------------------------------------------------------------------------------#
 option(ADIOS_BUILD_EXAMPLES "Build ADIOS examples" ON)

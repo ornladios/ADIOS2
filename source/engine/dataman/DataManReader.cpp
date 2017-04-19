@@ -11,8 +11,8 @@
 #include "DataManReader.h"
 
 #include "core/Support.h"
+#include "core/adiosFunctions.h" //CSVToVector
 #include "external/json.hpp"
-#include "functions/adiosFunctions.h" //CSVToVector
 
 // supported transports
 #include "transport/file/FStream.h"        // uses C++ fstream

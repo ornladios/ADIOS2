@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "utilities/profiling/iochrono/Timer.h"
+#include "core/Timer.h"
 
 namespace adios
 {
@@ -20,8 +20,6 @@ Timer::Timer(const std::string process, const Support::Resolutions resolution,
 : m_Process{process}, m_Resolution{resolution}, m_DebugMode{debug}
 {
 }
-
-Timer::~Timer() {}
 
 void Timer::SetInitialTime()
 {

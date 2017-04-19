@@ -13,7 +13,7 @@
 #include "HDF5WriterP.h"
 
 #include "core/Support.h"
-#include "functions/adiosFunctions.h" //CSVToVector
+#include "core/adiosFunctions.h" //CSVToVector
 
 namespace adios
 {

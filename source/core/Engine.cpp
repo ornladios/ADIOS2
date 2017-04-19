@@ -12,7 +12,7 @@
 
 #include "core/Engine.h"
 #include "core/Support.h"
-#include "functions/adiosFunctions.h"
+#include "core/adiosFunctions.h"
 
 namespace adios
 {

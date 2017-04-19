@@ -24,7 +24,7 @@
 /// \endcond
 
 #include "core/Support.h"
-#include "functions/adiosFunctions.h"
+#include "core/adiosFunctions.h"
 
 #ifdef ADIOS_HAVE_BZIP2
 #include "transform/BZip2.h"

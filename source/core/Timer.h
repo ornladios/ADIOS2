@@ -16,7 +16,7 @@
 #include <string>
 /// \endcond
 
-#include "core/Support.h"
+#include "Support.h"
 
 namespace adios
 {
@@ -40,11 +40,14 @@ public:
     Timer(const std::string process, const Support::Resolutions resolution,
           const bool debugMode = false);
 
-    ~Timer();
+    ~Timer() = default;
 
-    void SetInitialTime(); ///< set time to start counting for a process
-    void
-    SetTime(); ///< sets time to measure, it will add to overall process time
+    ///< set time to start counting for a process
+    void SetInitialTime();
+
+    ///< sets time to measure, it will add to overall process time
+    void SetTime();
+
     std::string GetUnits() const;
 
 private:

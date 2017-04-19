@@ -9,7 +9,7 @@
  */
 
 #include "core/Support.h"
-#include "functions/adiosTemplates.h"
+#include "core/adiosTemplates.h"
 
 namespace adios
 {

@@ -17,7 +17,7 @@
 #include <vector>
 /// \endcond
 
-#include "core/Transport.h"
+#include "Transport.h"
 
 namespace adios
 {

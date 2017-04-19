@@ -28,7 +28,6 @@
 #include "core/Transform.h"
 #include "core/Variable.h"
 #include "core/VariableCompound.h"
-#include "functions/adiosTemplates.h"
 
 namespace adios
 {
