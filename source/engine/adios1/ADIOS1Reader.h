@@ -118,7 +118,7 @@ private:
         return nullptr; // on failure
     }
 
-    enum ADIOS_READ_METHOD read_method = ADIOS_READ_METHOD_BP;
+    enum ADIOS_READ_METHOD m_ReadMethod = ADIOS_READ_METHOD_BP;
 };
 
 } // end namespace adios
