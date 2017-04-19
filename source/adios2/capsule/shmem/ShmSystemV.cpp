@@ -8,35 +8,37 @@
  *      Author: wfg
  */
 
-#include "ShmSystemV.h"
-
 #include <sys/shm.h>
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
 #include <utility>
+/// \endcond
+
+#include "ShmSystemV.h"
 
 namespace adios
 {
 
-ShmSystemV::ShmSystemV(std::string accessMode, int rankMPI,
-                       const std::string &pathName, size_t dataSize,
-                       size_t metadataSize, bool debugMode)
-: Capsule{"ShmSystemV", std::move(accessMode), rankMPI, debugMode},
-  m_DataSize{dataSize}, m_MetadataSize{metadataSize}
+ShmSystemV::ShmSystemV(const std::string &pathName, const int rankMPI,
+                       const size_t dataSize, const size_t metadataSize,
+                       const bool debugMode)
+: Capsule("ShmSystemV", debugMode), m_DataSize(dataSize),
+  m_MetadataSize(metadataSize)
 {
     // Data Shared memory sector
     const std::string dataPath(pathName + "/adios.shm.data." +
-                               std::to_string(m_RankMPI));
-    m_DataKey = ftok(dataPath.c_str(), m_RankMPI + 1);
+                               std::to_string(rankMPI));
+    // 2nd field must be greater than zero and unique
+    m_DataKey = ftok(dataPath.c_str(), rankMPI + 1);
     m_DataShmID = shmget(m_DataKey, m_DataSize, IPC_CREAT | 0666);
     m_Data = static_cast<char *>(shmat(m_DataShmID, nullptr, 0));
 
     // Metadata Shared memory sector
     const std::string metadataPath(pathName + "/adios.shm.metadata." +
-                                   std::to_string(m_RankMPI));
-    m_MetadataKey =
-        ftok(metadataPath.c_str(),
-             m_RankMPI + 1); // 2nd field must be greater than zero and unique
+                                   std::to_string(rankMPI));
+    // 2nd field must be greater than zero and unique
+    m_MetadataKey = ftok(metadataPath.c_str(), rankMPI + 1);
     m_MetadataShmID = shmget(m_MetadataKey, m_MetadataSize, IPC_CREAT | 0666);
     m_Metadata = static_cast<char *>(shmat(m_MetadataShmID, nullptr, 0));
 

@@ -25,7 +25,7 @@ DataManReader::DataManReader(ADIOS &adios, const std::string &name,
                              const Method &method)
 : Engine(adios, "DataManReader", name, accessMode, mpiComm, method,
          " DataManReader constructor (or call to ADIOS Open).\n"),
-  m_Buffer(accessMode, m_RankMPI, m_DebugMode)
+  m_Heap(m_DebugMode)
 {
     Init();
 }

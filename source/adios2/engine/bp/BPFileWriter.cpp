@@ -25,9 +25,8 @@ BPFileWriter::BPFileWriter(ADIOS &adios, const std::string &name,
                            const Method &method)
 : Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method,
          " BPFileWriter constructor (or call to ADIOS Open).\n"),
-  m_Buffer(accessMode, m_RankMPI, m_DebugMode),
-  m_BP1Aggregator(m_MPIComm, m_DebugMode),
-  m_MaxBufferSize(m_Buffer.m_Data.max_size())
+  m_Heap(m_DebugMode), m_BP1Aggregator(m_MPIComm, m_DebugMode),
+  m_MaxBufferSize(m_Heap.m_Data.max_size())
 {
     m_MetadataSet.TimeStep = 1; // to be compatible with ADIOS1.x
     Init();
@@ -245,7 +244,7 @@ void BPFileWriter::Write(const std::string & /*variableName*/,
 
 void BPFileWriter::Advance(float /*timeout_sec*/)
 {
-    m_BP1Writer.Advance(m_MetadataSet, m_Buffer);
+    m_BP1Writer.Advance(m_MetadataSet, m_Heap);
 }
 
 void BPFileWriter::Close(const int transportIndex)
@@ -255,15 +254,14 @@ void BPFileWriter::Close(const int transportIndex)
     {
         for (auto &transport : m_Transports)
         { // by reference or value or it doesn't matter?
-            m_BP1Writer.Close(m_MetadataSet, m_Buffer, *transport,
-                              m_IsFirstClose,
+            m_BP1Writer.Close(m_MetadataSet, m_Heap, *transport, m_IsFirstClose,
                               false); // false: not using aggregation for now
         }
     }
     else
     {
-        m_BP1Writer.Close(m_MetadataSet, m_Buffer,
-                          *m_Transports[transportIndex], m_IsFirstClose,
+        m_BP1Writer.Close(m_MetadataSet, m_Heap, *m_Transports[transportIndex],
+                          m_IsFirstClose,
                           false); // false: not using aggregation for now
     }
 
@@ -559,7 +557,7 @@ void BPFileWriter::WriteProcessGroupIndex()
 
     m_BP1Writer.WriteProcessGroupIndex(isFortran, std::to_string(m_RankMPI),
                                        static_cast<std::uint32_t>(m_RankMPI),
-                                       m_Transports, m_Buffer, m_MetadataSet);
+                                       m_Transports, m_Heap, m_MetadataSet);
 }
 
 } // end namespace adios

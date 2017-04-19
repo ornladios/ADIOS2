@@ -30,31 +30,27 @@ class STLVector : public Capsule
 {
 
 public:
-    std::vector<char> m_Data; ///< data buffer allocated using the STL in heap
-                              /// memory, default size = 16 Mb
-    std::vector<char>
-        m_Metadata; ///< metadata buffer allocated using the STL in
-                    /// heap memory, default size = 100 Kb
+    /** data buffer allocated using the STL in heap */
+    std::vector<char> m_Data;
+    /** might be used in cases other than files */
+    std::vector<char> m_Metadata;
 
     /**
      * Unique constructor
-     * @param accessMode read, write or append
-     * @param rankMPI MPI rank
-     * @param debugMode true: extra checks, slower
+     * @param debugMode true: exceptions checks
      */
-    STLVector(const std::string accessMode, const int rankMPI,
-              const bool debugMode = false);
+    STLVector(const bool debugMode = false);
 
     ~STLVector() = default;
 
     char *GetData();
     char *GetMetadata();
 
-    std::size_t GetDataSize() const;
-    std::size_t GetMetadataSize() const;
+    size_t GetDataSize() const;
+    size_t GetMetadataSize() const;
 
-    void ResizeData(const std::size_t size);
-    void ResizeMetadata(const std::size_t size);
+    void ResizeData(const size_t size);
+    void ResizeMetadata(const size_t size);
 };
 
 } // end namespace capsule

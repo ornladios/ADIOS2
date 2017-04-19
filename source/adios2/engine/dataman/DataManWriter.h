@@ -98,7 +98,7 @@ public:
 
 private:
     capsule::STLVector
-        m_Buffer; ///< heap capsule, contains data and metadata buffers
+        m_Heap; ///< heap capsule, contains data and metadata buffers
     format::BP1Writer
         m_BP1Writer; ///< format object will provide the required BP
                      /// functionality to be applied on m_Buffer and
