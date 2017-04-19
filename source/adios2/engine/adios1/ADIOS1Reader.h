@@ -15,11 +15,11 @@
 
 #include <iostream> //this must go away
 
+#include <adios_read_v2.h>
+
 #include "adios2/ADIOSConfig.h"
 #include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Engine.h"
-
-#include <adios_read_v2.h>
 
 namespace adios
 {

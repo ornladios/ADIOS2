@@ -8,6 +8,8 @@
  *      Author: William F Godoy
  */
 
+#include <adios_read_v2.h>
+
 #include "ADIOS.h"
 #include "ADIOS.tcc"
 

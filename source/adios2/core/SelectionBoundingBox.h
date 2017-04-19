@@ -3,12 +3,10 @@
  * accompanying file Copyright.txt for details.
  */
 
-#ifndef __ADIOS_SELECTION_BOUNDINGBOX_H__
-#define __ADIOS_SELECTION_BOUNDINGBOX_H__
+#ifndef ADIOS2_CORE_SELECTIONBOUNDINGBOX_H_
+#define ADIOS2_CORE_SELECTIONBOUNDINGBOX_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstdint>
-/// \endcond
 
 #include <vector>
 
@@ -31,12 +29,10 @@ public:
     {
     }
 
-    ~SelectionBoundingBox() = default;
-
     std::vector<std::uint64_t> m_Start;
     std::vector<std::uint64_t> m_Count;
 };
 
 } // namespace adios
 
-#endif /*__ADIOS_SELECTION_BOUNDINGBOX_H__*/
+#endif /* ADIOS2_CORE_SELECTIONBOUNDINGBOX_H_ */

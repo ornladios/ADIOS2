@@ -30,8 +30,9 @@
  *   the application does not need to retrieve the selection to work on the read
  * data.
  */
-#ifndef __ADIOS_SELECTION_H__
-#define __ADIOS_SELECTION_H__
+
+#ifndef ADIOS2_CORE_SELECTION_H_
+#define ADIOS2_CORE_SELECTION_H_
 
 #include "adios2/ADIOSConfig.h"
 
@@ -64,4 +65,4 @@ public:
 
 } // namespace adios
 
-#endif /*__ADIOS_SELECTION_H__*/
+#endif /* ADIOS2_CORE_SELECTION_H_ */

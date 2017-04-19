@@ -3,8 +3,8 @@
  * accompanying file Copyright.txt for details.
  */
 
-#ifndef __MPI_DUMMY_H__
-#define __MPI_DUMMY_H__
+#ifndef ADIOS2_MPIDUMMY_H_
+#define ADIOS2_MPIDUMMY_H_
 
 /*
    A dummy MPI 'implementation' for the BP READ API, to have an MPI-free version
@@ -119,6 +119,6 @@ int MPI_Get_processor_name(char *name, int *resultlen);
 
 double MPI_Wtime();
 
-} // end namespace
+} // end namespace adios
 
-#endif
+#endif /* ADIOS2_MPIDUMMY_H_ */

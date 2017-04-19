@@ -3,8 +3,8 @@
  * accompanying file Copyright.txt for details.
  */
 
-#ifndef __ADIOS_SELECTION_POINTS_H__
-#define __ADIOS_SELECTION_POINTS_H__
+#ifndef ADIOS2_CORE_SELECTIONPOINTS_H_
+#define ADIOS2_CORE_SELECTIONPOINTS_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <cstdint>
@@ -54,4 +54,4 @@ public:
 
 } // namespace adios
 
-#endif /*__ADIOS_SELECTION_POINTS_H__*/
+#endif /* ADIOS2_CORE_SELECTIONPOINTS_H_ */
