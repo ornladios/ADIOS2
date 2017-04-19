@@ -11,7 +11,7 @@
 #include <utility>
 
 #include "core/Method.h"
-#include "functions/adiosFunctions.h"
+#include "core/adiosFunctions.h"
 
 namespace adios
 {

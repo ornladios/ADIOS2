@@ -12,7 +12,7 @@
 
 #include "core/Support.h"
 #include "external/json.hpp"
-#include "functions/adiosFunctions.h" //CSVToVector
+#include "core/adiosFunctions.h" //CSVToVector
 
 // supported transports
 #include "transport/file/FStream.h"        // uses C++ fstream

@@ -18,7 +18,7 @@
 #include <vector>
 /// \endcond
 
-#include "utilities/profiling/iochrono/IOChrono.h"
+#include "core/IOChrono.h"
 
 namespace adios
 {

@@ -20,7 +20,7 @@
 #include "ADIOS.tcc"
 #include "ADIOSMacros.h"
 
-#include "functions/adiosFunctions.h"
+#include "core/adiosFunctions.h"
 
 // Engines
 #include "engine/bp/BPFileReader.h"
@@ -40,6 +40,7 @@
 #include "engine/hdf5/HDF5ReaderP.h"
 #include "engine/hdf5/HDF5WriterP.h"
 #endif
+
 namespace adios
 {
 

@@ -14,8 +14,10 @@ add_library(adios2
   core/Engine.cpp
   core/Method.cpp
   core/Support.cpp
+  core/Timer.cpp
   core/Transform.cpp
   core/Transport.cpp
+  core/adiosFunctions.cpp
   
   engine/bp/BPFileReader.cpp
   engine/bp/BPFileWriter.cpp
@@ -24,10 +26,6 @@ add_library(adios2
   utilities/format/bp1/BP1Aggregator.cpp
   utilities/format/bp1/BP1Writer.cpp
     
-  utilities/profiling/iochrono/Timer.cpp
-
-  functions/adiosFunctions.cpp
-  
   transport/file/FStream.cpp
   transport/file/FileDescriptor.cpp
   transport/file/FilePointer.cpp
@@ -36,8 +34,6 @@ add_library(adios2
   utilities/format/bp1/BP1Aggregator.cpp
   utilities/format/bp1/BP1Writer.cpp
   utilities/format/bp1/BP1Writer.tcc
-    
-  utilities/profiling/iochrono/Timer.cpp
 )
 target_include_directories(adios2
   PUBLIC ${ADIOS_SOURCE_DIR}/include

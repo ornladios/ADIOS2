@@ -20,8 +20,8 @@
 /// \endcond
 
 #include "SelectionBoundingBox.h"
-#include "functions/adiosFunctions.h"
-#include "functions/adiosTemplates.h"
+#include "adiosFunctions.h"
+#include "adiosTemplates.h"
 
 namespace adios
 {

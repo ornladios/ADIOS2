@@ -10,7 +10,7 @@
  *      Author: pnb
  */
 
-#include "functions/adiosFunctions.h"
+#include "core/adiosFunctions.h"
 
 #include "ADIOS1Writer.h"
 

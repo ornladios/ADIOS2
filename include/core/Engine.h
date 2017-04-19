@@ -21,10 +21,10 @@
 #include <vector>
 /// \endcond
 
-#include "ADIOS_MPI.h"
+#include "../ADIOS_MPI.h"
 
-#include "ADIOS.h"
-#include "ADIOSTypes.h"
+#include "../ADIOS.h"
+#include "../ADIOSTypes.h"
 #include "Capsule.h"
 #include "Method.h"
 #include "Transform.h"

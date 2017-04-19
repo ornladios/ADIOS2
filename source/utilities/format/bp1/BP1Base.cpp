@@ -9,7 +9,7 @@
  */
 
 #include "BP1Base.h"
-#include "functions/adiosFunctions.h"
+#include "core/adiosFunctions.h"
 
 namespace adios
 {
