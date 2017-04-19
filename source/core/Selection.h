@@ -30,8 +30,8 @@
  *   the application does not need to retrieve the selection to work on the read
  * data.
  */
-#ifndef __ADIOS_SELECTION_H__
-#define __ADIOS_SELECTION_H__
+#ifndef __SELECTION_H__
+#define __SELECTION_H__
 
 namespace adios
 {
@@ -62,4 +62,4 @@ public:
 
 } // namespace adios
 
-#endif /*__ADIOS_SELECTION_H__*/
+#endif /*__SELECTION_H__*/

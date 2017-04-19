@@ -26,8 +26,10 @@ ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string &name,
          " ADIOS1Reader constructor (or call to ADIOS Open).\n")
 {
     Init();
-    adios_read_init_method(read_method, mpiComm, "");
+    adios_read_init_method(m_ReadMethod, mpiComm, "");
 }
+
+ADIOS1Reader::~ADIOS1Reader() { adios_read_finalize_method(m_ReadMethod); }
 
 Variable<void> *
 ADIOS1Reader::InquireVariable(const std::string &variableName,
@@ -194,7 +196,7 @@ void ADIOS1Reader::InitTransports()
         if (itTransport->second == "file" || itTransport->second == "File" ||
             itTransport->second == "bp" || itTransport->second == "BP")
         {
-            read_method = ADIOS_READ_METHOD_BP;
+            m_ReadMethod = ADIOS_READ_METHOD_BP;
         }
         else
         {
