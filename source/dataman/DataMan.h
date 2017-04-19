@@ -17,7 +17,6 @@ class DataMan : public DataManBase
 {
 public:
     DataMan() = default;
-    virtual ~DataMan() = default;
     virtual int init(json p_jmsg);
     virtual int put(const void *p_data, json p_jmsg);
     virtual int get(void *p_data, json &p_jmsg);

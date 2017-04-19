@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
             // if not defined by user, we can change the default settings
             datamanSettings.SetEngine("DataManWriter");
             datamanSettings.SetParameters("peer-to-peer=yes", "real_time=yes",
-                                          "compress=no");
+                                          "compress=no", "method=cache");
             datamanSettings.AddTransport("Mdtm", "localIP=128.0.0.0.1",
                                          "remoteIP=128.0.0.0.2",
                                          "tolerances=1,2,3");

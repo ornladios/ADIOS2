@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
             // if not defined by user, we can change the default settings
             datamanSettings.SetEngine("DataManWriter");
             datamanSettings.SetParameters(
-                "real_time=yes", "method_type=stream", "method=dump",
+                "real_time=yes", "method_type=stream", "method=cache",
                 "monitoring=yes", "local_ip=127.0.0.1", "remote_ip=127.0.0.1",
                 "local_port=12306", "remote_port=12307");
             // datamanSettings.AddTransport( "Mdtm", "localIP=127.0.0.1",

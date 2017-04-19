@@ -13,15 +13,13 @@
 
 #include <cstdint>
 
-#include <dlfcn.h>
-#include <unistd.h>
-
 #include <chrono>
 #include <complex>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "json.hpp"
@@ -31,7 +29,7 @@ class DataManBase
 public:
     using json = nlohmann::json;
     DataManBase();
-    virtual ~DataManBase() = default;
+
     int put(const void *p_data, std::string p_doid, std::string p_var,
             std::string p_dtype, std::vector<size_t> p_putshape,
             std::vector<size_t> p_varshape, std::vector<size_t> p_offset,
@@ -265,6 +263,9 @@ protected:
     std::map<std::string, std::shared_ptr<DataManBase>> m_next;
 
 private:
+    struct ManagerLibrary;
+    std::unordered_map<std::string, ManagerLibrary *> m_LoadedManagers;
+
     json m_profiling;
     std::chrono::time_point<std::chrono::system_clock> m_start_time;
     std::chrono::time_point<std::chrono::system_clock> m_step_time;
