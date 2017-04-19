@@ -16,13 +16,13 @@
 #include <vector>
 
 #ifdef HAVE_BOOSTPYTHON
-#include "boost/python.hpp"
-#include "boost/python/numpy.hpp"
+#include "adios2/boost/python.hpp"
+#include "adios2/boost/python/numpy.hpp"
 #endif
 
 #ifdef HAVE_PYBIND11
-#include "pybind11/numpy.h"
-#include "pybind11/pybind11.h"
+#include "adios2/pybind11/numpy.h"
+#include "adios2/pybind11/pybind11.h"
 #endif
 
 namespace adios

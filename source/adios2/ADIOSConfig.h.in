@@ -1,0 +1,18 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ */
+
+#ifndef ADIOSCONFIG_H_
+#define ADIOSCONFIG_H_
+
+/* ADIOS Version Information */
+#define ADIOS2_VERSION_MAJOR @ADIOS_VERSION_MAJOR@
+#define ADIOS2_VERSION_MINOR @ADIOS_VERSION_MINOR@
+#define ADIOS2_VERSION_PATCH @ADIOS_VERSION_PATCH@
+#define ADIOS2_VERSION       @ADIOS_VERSION@
+
+/*
+ * ADIOS Build Information:
+ *
+ * Compiler:

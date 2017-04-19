@@ -12,12 +12,12 @@
 #include <stdexcept>
 #include <string>
 
-#include "../../include/ADIOS.h"
+#include "adios2/../../include/ADIOS.h"
 
 #ifdef HAVE_MPI
 #include <mpi.h>
 #else
-#include "../../include/mpidummy.h"
+#include "adios2/../../include/mpidummy.h"
 using namespace adios;
 #endif
 

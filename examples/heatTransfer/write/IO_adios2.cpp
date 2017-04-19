@@ -9,9 +9,10 @@
  */
 
 #include "IO.h"
-#include <adios2.h>
 
 #include <string>
+
+#include <adios2.h>
 
 static int rank_saved;
 adios::ADIOS *ad = nullptr;

@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "ADIOS_OOP.h"
+#include "adios2/ADIOS_OOP.h"
 
 struct MYDATA
 {

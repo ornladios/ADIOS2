@@ -8,12 +8,13 @@
  *      Author: Norbert Podhorszki
  */
 
-#include <cstdlib>
+#include "Settings.h"
+
 #include <errno.h>
 
-#include <stdexcept>
+#include <cstdlib>
 
-#include "Settings.h"
+#include <stdexcept>
 
 static unsigned int convertToUint(std::string varName, char *arg)
 {

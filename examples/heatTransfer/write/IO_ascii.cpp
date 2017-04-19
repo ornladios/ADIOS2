@@ -8,11 +8,11 @@
  *      Author: Norbert Podhorszki
  */
 
+#include "IO.h"
+
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-
-#include "IO.h"
 
 static std::ofstream of;
 static std::streambuf *buf;

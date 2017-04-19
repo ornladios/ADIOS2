@@ -8,12 +8,13 @@
  *      Author: Norbert Podhorszki
  */
 
+#include "IO.h"
+
 #include <iomanip>
 #include <iostream>
 #include <string>
 
-#include "IO.h"
-#include "adios.h"
+#include <adios.h>
 
 static int64_t group;
 static int rank_saved;

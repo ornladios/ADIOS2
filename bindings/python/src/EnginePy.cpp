@@ -10,9 +10,9 @@
 
 #include <string>
 
-#include "EnginePy.h"
+#include "adios2/EnginePy.h"
 
-#include "adiosPyFunctions.h"
+#include "adios2/adiosPyFunctions.h"
 
 namespace adios
 {

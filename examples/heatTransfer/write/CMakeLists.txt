@@ -34,4 +34,22 @@ if(ADIOS_USE_MPI)
       adios1::adios ${MPI_C_LIBRARIES}
     )
   endif()
+
+  if(ADIOS_USE_HDF5)
+    find_package(HDF5 REQUIRED)
+    find_package(MPI COMPONENTS C REQUIRED)
+
+    add_executable(heatTransfer_write_hdf5
+      main.cpp
+      HeatTransfer.cpp
+      Settings.cpp
+      IO_hdf5_a.cpp
+    )
+    target_include_directories(heatTransfer_write_hdf5
+      PRIVATE ${MPI_C_INCLUDE_PATH} ${HDF5_INCLUDE_DIRS}
+    )
+    target_link_libraries(heatTransfer_write_hdf5
+      ${MPI_C_LIBRARIES} ${HDF5_C_LIBRARIES}
+    )
+  endif()
 endif()
