@@ -10,15 +10,12 @@
 
 #include "DataManReader.h"
 
-#include "core/Support.h"
-#include "core/adiosFunctions.h" //CSVToVector
-#include "external/json.hpp"
-
-// supported transports
-#include "transport/file/FStream.h"        // uses C++ fstream
-#include "transport/file/FileDescriptor.h" // uses POSIX
-#include "transport/file/FilePointer.h"    // uses C FILE*
-#include "transport/wan/MdtmMan.h"         //uses Mdtm library
+#include "adios2/core/Support.h"
+#include "adios2/core/adiosFunctions.h"           //CSVToVector
+#include "adios2/transport/file/FStream.h"        // uses C++ fstream
+#include "adios2/transport/file/FileDescriptor.h" // uses POSIX
+#include "adios2/transport/file/FilePointer.h"    // uses C FILE*
+#include "adios2/transport/wan/MdtmMan.h"         //uses Mdtm library
 
 namespace adios
 {

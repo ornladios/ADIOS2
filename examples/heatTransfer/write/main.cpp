@@ -17,9 +17,9 @@
 #include <stdexcept>
 #include <string>
 
-#include "HeatTransfer.h"
-#include "IO.h"
-#include "Settings.h"
+#include "adios2/HeatTransfer.h"
+#include "adios2/IO.h"
+#include "adios2/Settings.h"
 
 void printUsage()
 {

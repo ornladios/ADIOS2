@@ -16,8 +16,8 @@
 #include <iostream>
 #include <string>
 
-#include "IO.h"
-#include "hdf5.h"
+#include "adios2/IO.h"
+#include "adios2/hdf5.h"
 
 IO::IO(const Settings &s, MPI_Comm comm) : m_outputfilename{s.outputfile} {}
 

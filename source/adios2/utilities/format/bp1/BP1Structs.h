@@ -18,8 +18,8 @@
 #include <vector>
 /// \endcond
 
-#include "ADIOSConfig.h"
-#include "core/IOChrono.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/core/IOChrono.h"
 
 namespace adios
 {

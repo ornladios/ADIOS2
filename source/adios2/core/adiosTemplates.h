@@ -21,7 +21,7 @@
 #include <vector>
 /// \endcond
 
-#include "ADIOSConfig.h"
+#include "adios2/ADIOSConfig.h"
 
 namespace adios
 {

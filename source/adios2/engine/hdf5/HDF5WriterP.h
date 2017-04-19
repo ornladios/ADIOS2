@@ -12,10 +12,10 @@
 #ifndef HDF5_WRITER_P_H_
 #define HDF5_WRITER_P_H_
 
-#include "ADIOSConfig.h"
-#include "ADIOS_MPI.h"
-#include "core/Engine.h"
-#include "capsule/heap/STLVector.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOS_MPI.h"
+#include "adios2/capsule/heap/STLVector.h"
+#include "adios2/core/Engine.h"
 
 #include <hdf5.h>
 

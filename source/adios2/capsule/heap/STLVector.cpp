@@ -8,12 +8,10 @@
  *      Author: wfg
  */
 
-/// \cond EXCLUDE_FROM_DOXYGEN
+#include "STLVector.h"
+
 #include <new>       //std::bad_alloc
 #include <stdexcept> //std::runtime_error
-/// \endcond
-
-#include "STLVector.h"
 
 namespace adios
 {

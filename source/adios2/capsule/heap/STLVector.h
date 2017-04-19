@@ -15,8 +15,8 @@
 #include <vector>
 /// \endcond
 
-#include "ADIOSConfig.h"
-#include "core/Capsule.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/core/Capsule.h"
 
 namespace adios
 {

@@ -13,9 +13,9 @@
 
 #include <iostream> //this must go away
 
-#include "ADIOSConfig.h"
-#include "core/Engine.h"
-#include "capsule/heap/STLVector.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/capsule/heap/STLVector.h"
+#include "adios2/core/Engine.h"
 
 namespace adios
 {

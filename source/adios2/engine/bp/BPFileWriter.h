@@ -11,10 +11,10 @@
 #ifndef BPFILEWRITER_H_
 #define BPFILEWRITER_H_
 
-#include "ADIOSConfig.h"
-#include "core/Engine.h"
-#include "capsule/heap/STLVector.h"
-#include "utilities/format/bp1/BP1.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/capsule/heap/STLVector.h"
+#include "adios2/core/Engine.h"
+#include "adios2/utilities/format/bp1/BP1.h"
 
 namespace adios
 {

@@ -15,18 +15,17 @@
 
 #include <iostream> //this must go away
 
-#include "ADIOSConfig.h"
-#include "core/Engine.h"
-#include "capsule/heap/STLVector.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/capsule/heap/STLVector.h"
+#include "adios2/core/Engine.h"
+
+#include <adios_read_v2.h>
 
 namespace adios
 {
 
-#include "adios_read_v2.h" // this is adios 1.x header file
-
 class ADIOS1Reader : public Engine
 {
-
 public:
     /**
      * Constructor for single BP capsule engine, writes in BP format into a

@@ -11,8 +11,8 @@
 #ifndef MPI_FILE_H_
 #define MPI_FILE_H_
 
-#include "ADIOSConfig.h"
-#include "ADIOS_MPI.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOS_MPI.h"
 
 namespace adios
 {

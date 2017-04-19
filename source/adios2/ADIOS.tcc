@@ -9,8 +9,8 @@
 #ifndef ADIOS_TCC_
 #define ADIOS_TCC_
 
-#include "ADIOS.h"
-#include "ADIOSMacros.h"
+#include "adios2/ADIOS.h"
+#include "adios2/ADIOSMacros.h"
 
 namespace adios
 {

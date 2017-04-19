@@ -5,8 +5,8 @@
 #include <sys/ipc.h>
 #include <sys/types.h>
 
-#include "ADIOSConfig.h"
-#include "core/Capsule.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/core/Capsule.h"
 
 namespace adios
 {

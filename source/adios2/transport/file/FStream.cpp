@@ -8,12 +8,10 @@
  *      Author: wfg
  */
 
-/// \cond EXCLUDED_FROM_DOXYGEN
+#include "FStream.h"
+
 #include <ios> // std::ios_base::failure
 #include <stdexcept>
-/// \endcond
-
-#include "FStream.h"
 
 namespace adios
 {

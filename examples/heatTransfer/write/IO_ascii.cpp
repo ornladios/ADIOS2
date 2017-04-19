@@ -12,7 +12,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "IO.h"
+#include "adios2/IO.h"
 
 static std::ofstream of;
 static std::streambuf *buf;

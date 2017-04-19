@@ -8,16 +8,14 @@
  *      Author: wfg
  */
 
-/// \cond EXCLUDE_FROM_DOXYGEN
+#include "FileDescriptor.h"
+
 #include <fcntl.h>     // open
 #include <ios>         // std::ios_base::failure
 #include <stddef.h>    // write output
 #include <sys/stat.h>  // open
 #include <sys/types.h> // open
 #include <unistd.h>    // write, close
-/// \endcond
-
-#include "FileDescriptor.h"
 
 namespace adios
 {

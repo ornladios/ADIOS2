@@ -1,7 +1,7 @@
 
 #include <mpi.h>
 
-#include "adios_read.h"
+#include "adios2/adios_read.h"
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "PrintData.h"
+#include "adios2/PrintData.h"
 
 int main(int argc, char *argv[])
 {

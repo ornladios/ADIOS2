@@ -7,15 +7,15 @@
  *  Created on: Dec 19, 2016
  *      Author: wfg
  */
-#include <utility>
 
-#include "ADIOS.h"
 #include "BPFileWriter.h"
 
-// supported transports
-#include "transport/file/FStream.h"
-#include "transport/file/FileDescriptor.h"
-#include "transport/file/FilePointer.h"
+#include <utility>
+
+#include "adios2/ADIOS.h"
+#include "adios2/transport/file/FStream.h"
+#include "adios2/transport/file/FileDescriptor.h"
+#include "adios2/transport/file/FilePointer.h"
 
 namespace adios
 {

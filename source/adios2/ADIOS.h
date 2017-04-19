@@ -20,15 +20,15 @@
 #include <vector>
 /// \endcond
 
-#include "ADIOSConfig.h"
-#include "ADIOSMacros.h"
-#include "ADIOS_MPI.h"
-#include "ADIOSTypes.h"
-#include "core/Method.h"
-#include "core/Support.h"
-#include "core/Transform.h"
-#include "core/Variable.h"
-#include "core/VariableCompound.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMacros.h"
+#include "adios2/ADIOSTypes.h"
+#include "adios2/ADIOS_MPI.h"
+#include "adios2/core/Method.h"
+#include "adios2/core/Support.h"
+#include "adios2/core/Transform.h"
+#include "adios2/core/Variable.h"
+#include "adios2/core/VariableCompound.h"
 
 namespace adios
 {
@@ -359,6 +359,6 @@ extern template unsigned int ADIOS::GetVariableIndex<void>(const std::string &);
 } // end namespace adios
 
 // Include the inline implementations for the public interface
-#include "ADIOS.inl"
+#include "adios2/ADIOS.inl"
 
 #endif /* ADIOS_H_ */

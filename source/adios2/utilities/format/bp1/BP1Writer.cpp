@@ -8,13 +8,11 @@
  *      Author: wfg
  */
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <string>
-#include <vector>
-/// \endcond
-
 #include "BP1Writer.h"
 #include "BP1Writer.tcc"
+
+#include <string>
+#include <vector>
 
 namespace adios
 {

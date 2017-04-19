@@ -13,13 +13,13 @@
 #ifndef ADIOS1WRITER_H_
 #define ADIOS1WRITER_H_
 
-#include "ADIOSConfig.h"
-#include "core/Engine.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/core/Engine.h"
 
 namespace adios
 {
 
-#include "adios.h" // this is adios 1.x header file
+#include <adios.h> // this is adios 1.x header file
 
 class ADIOS1Writer : public Engine
 {

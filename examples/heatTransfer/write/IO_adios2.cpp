@@ -8,7 +8,7 @@
  *      Author: Norbert Podhorszki
  */
 
-#include "IO.h"
+#include "adios2/IO.h"
 #include <adios2.h>
 
 #include <string>

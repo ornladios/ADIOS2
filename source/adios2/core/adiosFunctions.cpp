@@ -8,26 +8,26 @@
  *      Author: wfg
  */
 
-/// \cond EXCLUDED_FROM_DOXYGEN
+#include "adiosFunctions.h"
+
+#include <sys/stat.h>  //stat
+#include <sys/types.h> //CreateDirectory
+#include <unistd.h>    //CreateDirectory
+
+#include <cmath>   // std::ceil, std::pow, std::log
+#include <cstring> //std::memcpy
+
 #include <algorithm> //std::count
-#include <cmath>     // std::ceil, std::pow, std::log
-#include <cstring>   //std::memcpy
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <sstream>
 #include <stdexcept>
 #include <thread> //std::thread
 
-#include <sys/stat.h>  //stat
-#include <sys/types.h> //CreateDirectory
-#include <unistd.h>    //CreateDirectory
-/// \endcond
-
-#include "core/Support.h"
-#include "core/adiosFunctions.h"
+#include "adios2/core/Support.h"
 
 #ifdef ADIOS2_HAVE_BZIP2
-#include "transform/BZip2.h"
+#include "adios2/transform/BZip2.h"
 #endif
 
 namespace adios

@@ -8,37 +8,33 @@
  *      Author: William F Godoy
  */
 
-/// \cond EXCLUDE_FROM_DOXYGEN
+#include "ADIOS.h"
+#include "ADIOS.tcc"
+
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <iostream>
 #include <sstream>
 #include <utility>
-/// \endcond
 
-#include "ADIOS.h"
-#include "ADIOS.tcc"
-#include "ADIOSMacros.h"
-
-#include "core/adiosFunctions.h"
-
-// Engines
-#include "engine/bp/BPFileReader.h"
-#include "engine/bp/BPFileWriter.h"
+#include "adios2/ADIOSMacros.h"
+#include "adios2/core/adiosFunctions.h"
+#include "adios2/engine/bp/BPFileReader.h"
+#include "adios2/engine/bp/BPFileWriter.h"
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
-#include "engine/dataman/DataManReader.h"
-#include "engine/dataman/DataManWriter.h"
+#include "adios2/engine/dataman/DataManReader.h"
+#include "adios2/engine/dataman/DataManWriter.h"
 #endif
 
 #ifdef ADIOS2_HAVE_ADIOS1 // external dependencies
-#include "engine/adios1/ADIOS1Reader.h"
-#include "engine/adios1/ADIOS1Writer.h"
+#include "adios2/engine/adios1/ADIOS1Reader.h"
+#include "adios2/engine/adios1/ADIOS1Writer.h"
 #endif
 
 #ifdef ADIOS2_HAVE_HDF5 // external dependencies
-#include "engine/hdf5/HDF5ReaderP.h"
-#include "engine/hdf5/HDF5WriterP.h"
+#include "adios2/engine/hdf5/HDF5ReaderP.h"
+#include "adios2/engine/hdf5/HDF5WriterP.h"
 #endif
 
 namespace adios

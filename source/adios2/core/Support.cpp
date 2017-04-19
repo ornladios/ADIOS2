@@ -8,8 +8,9 @@
  *      Author: wfg
  */
 
-#include "core/Support.h"
-#include "core/adiosTemplates.h"
+#include "Support.h"
+
+#include "adios2/core/adiosTemplates.h"
 
 namespace adios
 {

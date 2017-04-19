@@ -8,12 +8,12 @@
  *      Author: Junmin
  */
 
+#include "adios2/HDF5WriterP.h"
+
 #include <iostream> //needs to go away, this is just for demo purposes
 
-#include "HDF5WriterP.h"
-
-#include "core/Support.h"
-#include "core/adiosFunctions.h" //CSVToVector
+#include "adios2/core/Support.h"
+#include "adios2/core/adiosFunctions.h" //CSVToVector
 
 namespace adios
 {

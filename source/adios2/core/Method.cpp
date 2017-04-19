@@ -8,10 +8,11 @@
  *      Author: wfg
  */
 
+#include "Method.h"
+
 #include <utility>
 
-#include "core/Method.h"
-#include "core/adiosFunctions.h"
+#include "adios2/core/adiosFunctions.h"
 
 namespace adios
 {

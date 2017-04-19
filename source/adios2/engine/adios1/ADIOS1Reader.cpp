@@ -8,13 +8,13 @@
  *      Author: wfg
  */
 
-#include "core/Support.h"
-#include "core/adiosFunctions.h"           // CSVToVector
-#include "transport/file/FStream.h"        // uses C++ fstream
-#include "transport/file/FileDescriptor.h" // uses POSIX
-#include "transport/file/FilePointer.h"    // uses C FILE*
-
 #include "ADIOS1Reader.h"
+
+#include "adios2/core/Support.h"
+#include "adios2/core/adiosFunctions.h"           // CSVToVector
+#include "adios2/transport/file/FStream.h"        // uses C++ fstream
+#include "adios2/transport/file/FileDescriptor.h" // uses POSIX
+#include "adios2/transport/file/FilePointer.h"    // uses C FILE*
 
 namespace adios
 {

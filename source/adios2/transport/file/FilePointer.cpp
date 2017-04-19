@@ -8,11 +8,9 @@
  *      Author: wfg
  */
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <ios> //std::ios_base::failure
-/// \endcond
-
 #include "FilePointer.h"
+
+#include <ios> //std::ios_base::failure
 
 namespace adios
 {

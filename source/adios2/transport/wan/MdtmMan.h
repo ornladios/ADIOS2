@@ -11,10 +11,10 @@
 #ifndef MDTMMAN_H_
 #define MDTMMAN_H_
 
-#include "ADIOSConfig.h"
-#include "core/Transport.h"
-#include "external/json.hpp"
-#include "utilities/realtime/dataman/DataManBase.h"
+#include <json.hpp>
+
+#include "adios2/ADIOSConfig.h"
+#include "adios2/core/Transport.h"
 
 namespace adios
 {

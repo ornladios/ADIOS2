@@ -15,7 +15,7 @@
 
 #include <vector>
 
-#include "Settings.h"
+#include "adios2/Settings.h"
 
 class HeatTransfer
 {

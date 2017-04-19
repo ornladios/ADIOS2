@@ -9,7 +9,7 @@
  */
 #include <iostream>
 
-#include "adiosPyFunctions.h"
+#include "adios2/adiosPyFunctions.h"
 
 namespace adios
 {

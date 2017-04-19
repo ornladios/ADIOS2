@@ -12,21 +12,18 @@
    A dummy MPI implementation for the BP READ API, to have an MPI-free version
    of the API
 */
-/// \cond EXCLUDE_FROM_DOXYGEN
+
+#include "mpidummy.h"
+
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-
-//#define _LARGEFILE64_SOURCE
-#include <unistd.h>
-
-#include <sys/time.h>
-#include <sys/types.h>
-/// \endcond
-
-#include "mpidummy.h"
 
 #if defined(__APPLE__) || defined(__WIN32__) || defined(__CYGWIN__)
 #define lseek64 lseek

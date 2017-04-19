@@ -8,7 +8,7 @@
  *      Author: Norbert Podhorszki
  */
 
-#include "PrintData.h"
+#include "adios2/PrintData.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>

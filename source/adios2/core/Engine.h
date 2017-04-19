@@ -21,16 +21,16 @@
 #include <vector>
 /// \endcond
 
-#include "ADIOSConfig.h"
-#include "ADIOS_MPI.h"
-#include "ADIOS.h"
-#include "ADIOSTypes.h"
-#include "core/Capsule.h"
-#include "core/Method.h"
-#include "core/Transform.h"
-#include "core/Transport.h"
-#include "core/Variable.h"
-#include "core/VariableCompound.h"
+#include "adios2/ADIOS.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSTypes.h"
+#include "adios2/ADIOS_MPI.h"
+#include "adios2/core/Capsule.h"
+#include "adios2/core/Method.h"
+#include "adios2/core/Transform.h"
+#include "adios2/core/Transport.h"
+#include "adios2/core/Variable.h"
+#include "adios2/core/VariableCompound.h"
 
 namespace adios
 {

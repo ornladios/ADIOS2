@@ -13,7 +13,7 @@
 
 #include <stdexcept>
 
-#include "Settings.h"
+#include "adios2/Settings.h"
 
 static unsigned int convertToUint(std::string varName, char *arg)
 {

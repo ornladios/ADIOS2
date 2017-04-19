@@ -12,8 +12,8 @@
 #include <iostream>
 #include <string>
 
-#include "IO.h"
-#include "adios.h"
+#include "adios2/IO.h"
+#include "adios2/adios.h"
 
 static int64_t group;
 static int rank_saved;

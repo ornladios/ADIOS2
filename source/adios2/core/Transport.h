@@ -16,9 +16,9 @@
 #include <vector>
 /// \endcond
 
-#include "ADIOSConfig.h"
-#include "ADIOS_MPI.h"
-#include "core/IOChrono.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOS_MPI.h"
+#include "adios2/core/IOChrono.h"
 
 namespace adios
 {

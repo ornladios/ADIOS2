@@ -8,9 +8,9 @@
  *      Author: wfg
  */
 
-#include <utility>
+#include "Capsule.h"
 
-#include "core/Capsule.h"
+#include <utility>
 
 namespace adios
 {

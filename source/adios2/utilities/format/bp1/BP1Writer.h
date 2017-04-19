@@ -17,15 +17,15 @@
 #include <cstring>   //std::memcpy
 /// \endcond
 
-#include "ADIOSConfig.h"
-#include "ADIOSMacros.h"
-#include "ADIOSTypes.h"
-#include "utilities/format/bp1/BP1Base.h"
-#include "utilities/format/bp1/BP1Structs.h"
-#include "capsule/heap/STLVector.h"
-#include "core/Variable.h"
-#include "core/adiosFunctions.h"
-#include "core/adiosTemplates.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMacros.h"
+#include "adios2/ADIOSTypes.h"
+#include "adios2/capsule/heap/STLVector.h"
+#include "adios2/core/Variable.h"
+#include "adios2/core/adiosFunctions.h"
+#include "adios2/core/adiosTemplates.h"
+#include "adios2/utilities/format/bp1/BP1Base.h"
+#include "adios2/utilities/format/bp1/BP1Structs.h"
 
 namespace adios
 {

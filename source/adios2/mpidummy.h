@@ -19,7 +19,7 @@
 #include <sys/types.h>
 /// \endcond
 
-#include "ADIOSConfig.h"
+#include "adios2/ADIOSConfig.h"
 
 namespace adios
 {

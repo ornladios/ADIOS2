@@ -8,11 +8,12 @@
  *      Author: wfg
  */
 
+#include "Engine.h"
+
 #include <ios> //std::ios_base::failure
 
-#include "core/Engine.h"
-#include "core/Support.h"
-#include "core/adiosFunctions.h"
+#include "adios2/core/Support.h"
+#include "adios2/core/adiosFunctions.h"
 
 namespace adios
 {

@@ -15,8 +15,8 @@
 #include <stdio.h> // FILE*
 /// \endcond
 
-#include "ADIOSConfig.h"
-#include "core/Transport.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/core/Transport.h"
 
 namespace adios
 {

@@ -8,6 +8,6 @@
  *      Author: Junmin
  */
 
-#include <iostream> //needs to go away, this is just for demo purposes
+#include "adios2/HDF5ReaderP.h"
 
-#include "HDF5ReaderP.h"
+#include <iostream> //needs to go away, this is just for demo purposes

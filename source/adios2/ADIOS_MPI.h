@@ -6,12 +6,12 @@
 #ifndef ADIOS_MPI_H_
 #define ADIOS_MPI_H_
 
-#include "ADIOSConfig.h"
+#include "adios2/ADIOSConfig.h"
 
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #else
-#include "mpidummy.h"
+#include "adios2/mpidummy.h"
 #endif
 
 #endif /* ADIOS_MPI_H_ */

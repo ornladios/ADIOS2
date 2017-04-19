@@ -8,16 +8,14 @@
  *      Author: wfg
  */
 
-#include <iostream> //needs to go away, this is just for demo purposes
-
 #include "DataManWriter.h"
 
-#include "core/Support.h"
-#include "core/adiosFunctions.h" //CSVToVector
+#include <iostream> //needs to go away, this is just for demo purposes
 
-// supported transports
-#include "transport/file/FStream.h" // uses C++ fstream
-#include "transport/wan/MdtmMan.h"  //uses Mdtm library
+#include "adios2/core/Support.h"
+#include "adios2/core/adiosFunctions.h"    //CSVToVector
+#include "adios2/transport/file/FStream.h" // uses C++ fstream
+#include "adios2/transport/wan/MdtmMan.h"  //uses Mdtm library
 
 namespace adios
 {

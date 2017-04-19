@@ -36,6 +36,7 @@ add_library(adios2
 )
 target_include_directories(adios2
   PUBLIC
+    $<BUILD_INTERFACE:${ADIOS_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
   PRIVATE ${ADIOS_SOURCE_DIR}/source
@@ -102,7 +103,7 @@ endif()
 
 install(
   FILES
-    ADIOS.h ADIOS.inl ADIOSMacros.h ADIOS_MPI.h ADIOSTypes.h mpidummy.h adios2.h
+    ADIOS.h ADIOS.inl ADIOSMacros.h ADIOS_MPI.h ADIOSTypes.h mpidummy.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 install(

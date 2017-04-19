@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "core/Timer.h"
+#include "Timer.h"
 
 namespace adios
 {

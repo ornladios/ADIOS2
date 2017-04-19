@@ -14,11 +14,12 @@
 #include <iostream> //std::cout must be removed, only used for hello example
 #include <unistd.h> //sleep must be removed
 
-#include "ADIOSConfig.h"
-#include "core/Engine.h"
-#include "utilities/format/bp1/BP1Writer.h"
-#include "utilities/realtime/dataman/DataMan.h"
-#include "capsule/heap/STLVector.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/capsule/heap/STLVector.h"
+#include "adios2/core/Engine.h"
+#include "adios2/utilities/format/bp1/BP1Writer.h"
+
+#include <DataMan.h>
 
 namespace adios
 {
@@ -105,7 +106,7 @@ private:
 
     bool m_DoRealTime = false;
     bool m_DoMonitor = false;
-    realtime::DataMan m_Man;
+    DataMan m_Man;
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         m_CallBack; ///< call back function

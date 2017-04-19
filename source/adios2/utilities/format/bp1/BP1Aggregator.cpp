@@ -8,13 +8,11 @@
  *      Author: wfg
  */
 
-/// \cond EXCLUDE_FROM_DOXYGEN
 #include "BP1Aggregator.h"
 
 #include <fstream>
 #include <stdexcept>
 #include <vector>
-/// \endcond
 
 namespace adios
 {

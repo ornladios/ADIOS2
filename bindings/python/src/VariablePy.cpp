@@ -8,7 +8,7 @@
  *      Author: wfg
  */
 
-#include "VariablePy.h"
+#include "adios2/VariablePy.h"
 
 namespace adios
 {

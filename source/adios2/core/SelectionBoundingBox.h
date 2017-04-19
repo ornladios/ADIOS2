@@ -12,8 +12,8 @@
 
 #include <vector>
 
-#include "ADIOSConfig.h"
-#include "core/Selection.h"
+#include "adios2/ADIOSConfig.h"
+#include "adios2/core/Selection.h"
 
 namespace adios
 {
