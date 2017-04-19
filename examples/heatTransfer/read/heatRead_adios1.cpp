@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <string>
 
-#include <mpi.h>
 #include <adios_read.h>
+#include <mpi.h>
 
 #include "PrintData.h"
 
