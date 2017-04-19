@@ -4,9 +4,18 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS_USE_MPI)
+
+    find_package(MPI COMPONENTS C REQUIRED)
+    add_executable(heatTransfer_read_adios2 heatRead_adios2.cpp PrintData.cpp)
+    target_include_directories(heatTransfer_read_adios2
+      PRIVATE ${MPI_C_INCLUDE_PATH}
+    )
+    target_link_libraries(heatTransfer_read_adios2
+      adios2 ${MPI_C_LIBRARIES}
+    )
+    
   if(ADIOS_USE_ADIOS1)
     find_package(ADIOS1 REQUIRED)
-    find_package(MPI COMPONENTS C REQUIRED)
 
     add_executable(heatTransfer_read_adios1 heatRead_adios1.cpp PrintData.cpp)
     target_include_directories(heatTransfer_read_adios1
@@ -16,5 +25,6 @@ if(ADIOS_USE_MPI)
       adios1::adios ${MPI_C_LIBRARIES}
     )
   endif()
+  
 endif()
 

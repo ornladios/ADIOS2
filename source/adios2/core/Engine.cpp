@@ -280,11 +280,15 @@ VariableCompound *Engine::InquireVariableCompound(const std::string & /*name*/,
 }
 
 void Engine::Read(Variable<double> & /*variable*/, const double * /*values*/) {}
-void Engine::ScheduleRead(Variable<double> & /*variable*/,
-                          const double * /*values*/)
+void Engine::ScheduleRead(Variable<double> & /*variable*/, double * /*values*/)
+{
+}
+void Engine::ScheduleRead(const std::string /*variableName*/,
+                          double * /*values*/)
 {
 }
 void Engine::Release() {}
+void Engine::PerformReads(PerformReadMode /*mode*/){};
 
 // PROTECTED
 void Engine::Init() {}

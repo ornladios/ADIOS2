@@ -88,9 +88,14 @@ public:
     VariableCompound *InquireVariableCompound(const std::string &name,
                                               const bool readIn = true);
 
+    void ScheduleRead(Variable<double> &variable, double *values);
+    void ScheduleRead(const std::string variableName, double *values);
+
+    void PerformReads(PerformReadMode mode);
     void Close(const int transportIndex = -1);
 
 private:
+    ADIOS_FILE *m_fh = nullptr; ///< ADIOS1 file handler
     void Init(); ///< called from constructor, gets the selected ADIOS1
                  /// transport method from settings
     void InitParameters();
@@ -109,6 +114,9 @@ private:
         // return &variable; //return address if success
         return nullptr; // on failure
     }
+
+    void ScheduleReadCommon(const std::string &name, const Dims &ldims,
+                            const Dims &offs, void *data);
 
     enum ADIOS_READ_METHOD m_ReadMethod = ADIOS_READ_METHOD_BP;
 };
