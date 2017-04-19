@@ -117,6 +117,6 @@ private:
     CacheDoMap m_cache;
 };
 
-extern "C" DataManBase* getMan();
+extern "C" DataManBase *getMan();
 
 #endif

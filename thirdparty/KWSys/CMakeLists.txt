@@ -7,3 +7,8 @@ if(NOT ADIOS_BUILD_SHARED_LIBS)
 endif()
 
 add_subdirectory(adios2sys)
+
+# Add the include usage requirements for KWSys
+target_include_directories(adios2sys
+  INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/adios2sys
+)

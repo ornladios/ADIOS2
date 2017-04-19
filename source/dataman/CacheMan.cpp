@@ -181,8 +181,4 @@ std::string CacheMan::get_dtype(std::string doid, std::string var)
     return m_cache[doid][var].get_dtype();
 }
 
-DataManBase* getMan()
-{
-    return new CacheMan;
-}
-
+DataManBase *getMan() { return new CacheMan; }
