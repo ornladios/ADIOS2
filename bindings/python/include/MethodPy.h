@@ -12,15 +12,15 @@
 #define METHODPY_H_
 
 #ifdef HAVE_BOOSTPYTHON
-#include "boost/python.hpp"
+#include "adios2/boost/python.hpp"
 #endif
 
 #ifdef HAVE_PYBIND11
-#include "pybind11/cast.h"
-#include "pybind11/pybind11.h"
+#include "adios2/pybind11/cast.h"
+#include "adios2/pybind11/pybind11.h"
 #endif
 
-#include "core/Method.h"
+#include "adios2/core/Method.h"
 
 namespace adios
 {

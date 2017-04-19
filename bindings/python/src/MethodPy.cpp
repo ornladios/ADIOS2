@@ -10,8 +10,8 @@
 
 #include <iostream>
 
-#include "MethodPy.h"
-#include "adiosPyFunctions.h"
+#include "adios2/MethodPy.h"
+#include "adios2/adiosPyFunctions.h"
 
 namespace adios
 {

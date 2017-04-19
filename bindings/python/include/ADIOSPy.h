@@ -16,17 +16,17 @@
 #include <string>
 
 #ifdef HAVE_BOOSTPYTHON
-#include "boost/python.hpp"
+#include "adios2/boost/python.hpp"
 #endif
 
 #ifdef HAVE_PYBIND11
-#include "pybind11/pybind11.h"
+#include "adios2/pybind11/pybind11.h"
 #endif
 
-#include "ADIOS.h"
-#include "MethodPy.h"
-#include "VariablePy.h"
-#include "adiosPyFunctions.h" //ListToVector, VectorToList
+#include "adios2/ADIOS.h"
+#include "adios2/MethodPy.h"
+#include "adios2/VariablePy.h"
+#include "adios2/adiosPyFunctions.h" //ListToVector, VectorToList
 
 namespace adios
 {

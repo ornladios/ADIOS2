@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "../../include/ADIOS.h"
+#include "adios2/../../include/ADIOS.h"
 
 int main(int argc, char *argv[])
 {

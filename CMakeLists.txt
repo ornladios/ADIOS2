@@ -78,6 +78,13 @@ option(ADIOS_USE_HDF5 "Enable support for the HDF5 engine" OFF)
 # platform supports it.
 set(ADIOS_USE_DataMan ${SHARED_LIBS_SUPPORTED})
 
+include(GenerateADIOSConfig)
+GenerateADIOSConfig(MPI BZip2 ADIOS1 HDF5 DataMan)
+install(
+  FILES ${ADIOS_BINARY_DIR}/adios2/ADIOSConfig.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+)
+
 #------------------------------------------------------------------------------#
 # Third party libraries
 #------------------------------------------------------------------------------#

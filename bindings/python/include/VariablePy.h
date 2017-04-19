@@ -11,8 +11,8 @@
 #ifndef VARIABLEPY_H_
 #define VARIABLEPY_H_
 
-#include "adiosPyFunctions.h"
-#include "core/Variable.h"
+#include "adios2/adiosPyFunctions.h"
+#include "adios2/core/Variable.h"
 
 namespace adios
 {

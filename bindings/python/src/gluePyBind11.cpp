@@ -12,10 +12,10 @@
 
 #include <mpi4py/mpi4py.h>
 
-#include "pybind11/pybind11.h"
+#include "adios2/pybind11/pybind11.h"
 
-#include "ADIOSPy.h"
-#include "EnginePy.h"
+#include "adios2/ADIOSPy.h"
+#include "adios2/EnginePy.h"
 
 namespace py = pybind11;
 

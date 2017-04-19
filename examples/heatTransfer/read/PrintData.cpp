@@ -8,11 +8,12 @@
  *      Author: Norbert Podhorszki
  */
 
-#include "PrintData.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
+
+#include "PrintData.h"
 
 void printData(double *xy, uint64_t *size, uint64_t *offset, int rank,
                int steps)

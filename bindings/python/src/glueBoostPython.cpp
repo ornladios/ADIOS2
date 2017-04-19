@@ -10,14 +10,14 @@
 
 #include <mpi4py/mpi4py.h>
 
-#include "boost/python.hpp"
-#include "boost/python/numpy.hpp"
-#include "boost/python/raw_function.hpp"
-#include "boost/python/suite/indexing/vector_indexing_suite.hpp"
+#include "adios2/boost/python.hpp"
+#include "adios2/boost/python/numpy.hpp"
+#include "adios2/boost/python/raw_function.hpp"
+#include "adios2/boost/python/suite/indexing/vector_indexing_suite.hpp"
 
-#include "ADIOSPy.h"
-#include "EnginePy.h"
-#include "adiosPyFunctions.h"
+#include "adios2/ADIOSPy.h"
+#include "adios2/EnginePy.h"
+#include "adios2/adiosPyFunctions.h"
 
 namespace py = boost::python;
 namespace np = boost::python::numpy;
