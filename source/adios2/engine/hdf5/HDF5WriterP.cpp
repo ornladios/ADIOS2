@@ -12,9 +12,9 @@
 
 #include <iostream> //needs to go away, this is just for demo purposes
 
+#include "adios2/ADIOSMPI.h"
 #include "adios2/core/Support.h"
 #include "adios2/core/adiosFunctions.h" //CSVToVector
-#include "adiso2/ADIOSMPI.h"
 
 namespace adios
 {
@@ -25,7 +25,7 @@ HDF5Writer::HDF5Writer(ADIOS &adios, const std::string name,
 : Engine(adios, "HDF5Writer", name, accessMode, mpiComm,
          method, /*debugMode, cores,*/
          " HDF5Writer constructor (or call to ADIOS Open).\n"),
-  m_Buffer(accessMode, m_RankMPI, m_DebugMode)
+  m_Buffer(m_DebugMode)
 {
     //
     //  16, 4 vs: 8
