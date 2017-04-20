@@ -19,7 +19,7 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOS_MPI.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/Transport.h"
 
 namespace adios

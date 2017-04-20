@@ -12,6 +12,7 @@
 
 #include <iostream> //needs to go away, this is just for demo purposes
 
+#include "adiso2/ADIOSMPI.h"
 #include "adios2/core/Support.h"
 #include "adios2/core/adiosFunctions.h" //CSVToVector
 

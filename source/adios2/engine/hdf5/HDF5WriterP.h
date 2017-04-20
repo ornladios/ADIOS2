@@ -13,7 +13,7 @@
 #define ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOS_MPI.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Engine.h"
 

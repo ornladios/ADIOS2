@@ -12,6 +12,7 @@
 
 #include <ios> //std::ios_base::failure
 
+#include "adios2/ADIOSMPI.h"
 #include "adios2/core/Support.h"
 #include "adios2/core/adiosFunctions.h"
 

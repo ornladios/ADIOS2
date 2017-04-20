@@ -24,7 +24,7 @@
 #include "adios2/ADIOS.h"
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/ADIOS_MPI.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/Capsule.h"
 #include "adios2/core/Method.h"
 #include "adios2/core/Transform.h"
@@ -52,7 +52,7 @@ class Engine
 {
 
 public:
-    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+    MPI_Comm m_MPIComm;
 
     const std::string m_EngineType; ///< from derived class
     const std::string m_Name;       ///< name used for this engine

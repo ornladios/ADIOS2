@@ -3,15 +3,18 @@
  * accompanying file Copyright.txt for details.
  */
 
-#ifndef ADIOS2_ADIOS_MPI_H_
-#define ADIOS2_ADIOS_MPI_H_
+#ifndef ADIOS2_ADIOSMPICOMMONLY_H_
+#define ADIOS2_ADIOSMPICOMMONLY_H_
 
 #include "adios2/ADIOSConfig.h"
 
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #else
-#include "adios2/mpidummy.h"
+namespace adios
+{
+    using MPI_Comm = int;
+} // end namespace adios
 #endif
 
-#endif /* ADIOS2_ADIOS_MPI_H_ */
+#endif /* ADIOS2_ADIOSMPICOMMONLY_H_ */

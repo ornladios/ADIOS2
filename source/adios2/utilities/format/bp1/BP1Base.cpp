@@ -10,6 +10,7 @@
 
 #include "BP1Base.h"
 
+#include "adios2/ADIOSMPI.h"
 #include "adios2/core/adiosFunctions.h"
 
 namespace adios

@@ -14,6 +14,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "adios2/ADIOSMPI.h"
+
 namespace adios
 {
 namespace format
@@ -25,8 +27,6 @@ BP1Aggregator::BP1Aggregator(MPI_Comm mpiComm, const bool debugMode)
     MPI_Comm_rank(m_MPIComm, &m_RankMPI);
     MPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
-
-BP1Aggregator::~BP1Aggregator() {}
 
 void BP1Aggregator::WriteProfilingLog(const std::string fileName,
                                       const std::string &rankLog)

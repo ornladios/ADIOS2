@@ -12,6 +12,8 @@
 
 #include <utility>
 
+#include "adios2/ADIOSMPI.h"
+
 namespace adios
 {
 
