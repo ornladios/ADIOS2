@@ -22,11 +22,14 @@ add_library(temporalman MODULE TemporalMan.h TemporalMan.cpp)
 target_link_libraries(temporalman PRIVATE dataman)
 list(APPEND dataman_targets temporalman)
 
-add_library(streamman OBJECT StreamMan.h StreamMan.cpp)
-
 option(ADIOS_USE_DataMan_ZeroMQ "Enable ZeroMQ for DataMan" OFF)
 if(ADIOS_USE_DataMan_ZeroMQ)
   find_package(ZeroMQ REQUIRED)
+
+  # Manually add the ZeroMQ_INCLUDE_DIRS since object libs still don't support
+  # target usage requirements
+  add_library(streamman OBJECT StreamMan.h StreamMan.cpp)
+  target_include_directories(streamman PRIVATE ${ZeroMQ_INCLUDE_DIRS})
 
   add_library(zmqman MODULE
     ZmqMan.h ZmqMan.cpp
