@@ -13,10 +13,20 @@
 #ifndef ADIOS2_ENGINE_ADIOS1_ADIOS1WRITER_H_
 #define ADIOS2_ENGINE_ADIOS1_ADIOS1WRITER_H_
 
-#include <adios.h>
-
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+
+// Fake out the include guard from ADIOS1's mpidummy.h to prevent it from
+// getting included
+#ifdef _NOMPI
+#define __MPI_DUMMY_H__
+#define MPI_Comm int
+#endif
+#include <adios.h>
+#ifdef _NOMPI
+#undef MPI_Comm
+#undef __MPI_DUMMY_H__
+#endif
 
 namespace adios
 {
