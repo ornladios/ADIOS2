@@ -259,19 +259,22 @@ void BPFileWriter::Close(const int transportIndex)
         m_BP1Writer.Close(*m_Transports[transportIndex], m_IsFirstClose, false);
     }
 
-    bool allClose = true;
-    for (auto &transport : m_Transports)
+    if (m_BP1Writer.m_MetadataSet.Log.IsActive == true)
     {
-        if (transport->m_IsOpen == true)
+        bool allClose = true;
+        for (auto &transport : m_Transports)
         {
-            allClose = false;
-            break;
+            if (transport->m_IsOpen == true)
+            {
+                allClose = false;
+                break;
+            }
         }
-    }
 
-    if (allClose == true) // aggregate and write profiling.log
-    {
-        m_BP1Writer.DumpProfilingLogFile(m_Name, m_RankMPI, m_Transports);
+        if (allClose == true) // aggregate and write profiling.log
+        {
+            m_BP1Writer.DumpProfilingLogFile(m_Name, m_RankMPI, m_Transports);
+        }
     }
 }
 
