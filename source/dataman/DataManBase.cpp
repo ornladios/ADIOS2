@@ -16,6 +16,7 @@
 
 struct DataManBase::ManagerLibrary
 {
+    std::string m_LibraryName;
     adios2sys::DynamicLoader::LibraryHandle m_LibraryHandle;
     DataManBase *(*m_getManFunc)();
 
@@ -86,6 +87,7 @@ struct DataManBase::ManagerLibrary
                                      libName);
         }
         m_getManFunc = reinterpret_cast<DataManBase *(*)()>(symbolHandle);
+        m_LibraryName = libName;
     }
 
     ~ManagerLibrary()
@@ -319,6 +321,11 @@ std::shared_ptr<DataManBase> DataManBase::get_man(std::string method)
             libIt =
                 m_LoadedManagers.insert({method, new ManagerLibrary(method)})
                     .first;
+            logging("Loaded " + libIt->second->m_LibraryName);
+        }
+        else
+        {
+            logging("Using existing " + libIt->second->m_LibraryName + ".");
         }
         return std::shared_ptr<DataManBase>(libIt->second->m_getManFunc());
     }
