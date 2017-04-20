@@ -12,6 +12,7 @@
 
 #include <ios> //std::ios_base::failure
 
+#include "adios2/ADIOSMPI.h"
 #include "adios2/core/Support.h"
 #include "adios2/core/adiosFunctions.h"
 
@@ -280,11 +281,15 @@ VariableCompound *Engine::InquireVariableCompound(const std::string & /*name*/,
 }
 
 void Engine::Read(Variable<double> & /*variable*/, const double * /*values*/) {}
-void Engine::ScheduleRead(Variable<double> & /*variable*/,
-                          const double * /*values*/)
+void Engine::ScheduleRead(Variable<double> & /*variable*/, double * /*values*/)
+{
+}
+void Engine::ScheduleRead(const std::string /*variableName*/,
+                          double * /*values*/)
 {
 }
 void Engine::Release() {}
+void Engine::PerformReads(PerformReadMode /*mode*/){};
 
 // PROTECTED
 void Engine::Init() {}

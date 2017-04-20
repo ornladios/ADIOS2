@@ -21,9 +21,9 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/ADIOS_MPI.h"
 #include "adios2/core/Method.h"
 #include "adios2/core/Support.h"
 #include "adios2/core/Transform.h"
@@ -45,7 +45,7 @@ public:
      * Passed from parallel constructor, MPI_Comm is a pointer itself.
      *  Public as called from C
      */
-    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+    MPI_Comm m_MPIComm;
 
     int m_RankMPI = 0; ///< current MPI rank process
     int m_SizeMPI = 1; ///< current MPI processes size

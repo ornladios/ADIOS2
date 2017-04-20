@@ -20,8 +20,8 @@
 #include "BP1Aggregator.h"
 #include "BP1Structs.h"
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/ADIOS_MPI.h"
 #include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Transport.h"
 

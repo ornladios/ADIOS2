@@ -10,6 +10,95 @@
 
 #include "DataManBase.h"
 
+#include <sstream>
+
+#include <adios2sys/DynamicLoader.hxx>
+
+struct DataManBase::ManagerLibrary
+{
+    std::string m_LibraryName;
+    adios2sys::DynamicLoader::LibraryHandle m_LibraryHandle;
+    DataManBase *(*m_getManFunc)();
+
+    ManagerLibrary(std::string method)
+    {
+        std::vector<std::string> searchedLibs;
+        std::string libName;
+
+        std::vector<std::string> libPrefixes;
+        libPrefixes.emplace_back("");
+        libPrefixes.emplace_back("lib");
+#ifdef __CYGWIN__
+        libPrefixes.emplace_back("cyg");
+#endif
+
+        std::vector<std::string> libSuffixes;
+#ifdef __APPLE__
+        libSuffixes.emplace_back("man.dylib");
+        libSuffixes.emplace_back("man.so");
+#endif
+#ifdef __hpux
+        libSuffixes.emplace_back("man.sl");
+#endif
+#ifdef __unix__
+        libSuffixes.emplace_back("man.so");
+#endif
+#ifdef _WIN32
+        libSuffixes.emplace_back("man.dll");
+#endif
+
+        // Test the various combinations of library names
+        for (const std::string &prefix : libPrefixes)
+        {
+            for (const std::string &suffix : libSuffixes)
+            {
+                libName = prefix + method + suffix;
+                m_LibraryHandle =
+                    adios2sys::DynamicLoader::OpenLibrary(libName);
+                searchedLibs.push_back(libName);
+                if (m_LibraryHandle)
+                {
+                    break;
+                }
+            }
+            if (m_LibraryHandle)
+            {
+                break;
+            }
+        }
+        if (!m_LibraryHandle)
+        {
+            std::stringstream errString;
+            errString << "Unable to locate the " << method << " manager "
+                      << "library; searched for ";
+            std::copy(searchedLibs.begin(), searchedLibs.end(),
+                      std::ostream_iterator<std::string>(errString, " "));
+
+            throw std::runtime_error(errString.str());
+        }
+
+        // Bind to the getMan symbol
+        adios2sys::DynamicLoader::SymbolPointer symbolHandle =
+            adios2sys::DynamicLoader::GetSymbolAddress(m_LibraryHandle,
+                                                       "getMan");
+        if (!symbolHandle)
+        {
+            throw std::runtime_error("Unable to locate the getMan symbol in " +
+                                     libName);
+        }
+        m_getManFunc = reinterpret_cast<DataManBase *(*)()>(symbolHandle);
+        m_LibraryName = libName;
+    }
+
+    ~ManagerLibrary()
+    {
+        if (m_LibraryHandle)
+        {
+            adios2sys::DynamicLoader::CloseLibrary(m_LibraryHandle);
+        }
+    }
+};
+
 DataManBase::DataManBase()
 {
     m_profiling["total_manager_time"] = 0.0f;
@@ -221,38 +310,28 @@ int DataManBase::put_next(const void *p_data, json p_jmsg)
 
 std::shared_ptr<DataManBase> DataManBase::get_man(std::string method)
 {
-    void *so = NULL;
-#ifdef __APPLE__
-    std::string dylibname = "lib" + method + "man.dylib";
-    so = dlopen(dylibname.c_str(), RTLD_NOW);
-    if (so)
+    try
     {
-        std::shared_ptr<DataManBase> (*func)() = NULL;
-        func = (std::shared_ptr<DataManBase>(*)())dlsym(so, "getMan");
-        if (func)
+        // Reuse already loaded libraries if possible
+        auto libIt = m_LoadedManagers.find(method);
+        if (libIt == m_LoadedManagers.end())
         {
-            return func();
-        }
-    }
-#endif
-    std::string soname = "lib" + method + "man.so";
-    so = dlopen(soname.c_str(), RTLD_NOW);
-    if (so)
-    {
-        std::shared_ptr<DataManBase> (*func)() = NULL;
-        func = (std::shared_ptr<DataManBase>(*)())dlsym(so, "getMan");
-        if (func)
-        {
-            return func();
+            // This insertion will only fail if an entry for method already
+            // exists, which this if block ensures that it doesn't.
+            libIt =
+                m_LoadedManagers.insert({method, new ManagerLibrary(method)})
+                    .first;
+            logging("Loaded " + libIt->second->m_LibraryName);
         }
         else
         {
-            logging("getMan() not found in " + soname);
+            logging("Using existing " + libIt->second->m_LibraryName + ".");
         }
+        return std::shared_ptr<DataManBase>(libIt->second->m_getManFunc());
     }
-    else
+    catch (const std::runtime_error &ex)
     {
-        logging("Dynamic library " + soname + " not found in LD_LIBRARY_PATH");
+        logging(ex.what());
+        return nullptr;
     }
-    return nullptr;
 }

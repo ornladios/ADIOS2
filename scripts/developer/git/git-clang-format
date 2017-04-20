@@ -112,6 +112,8 @@ def main():
                  help='passed to clang-format'),
   p.add_argument('-v', '--verbose', action='count', default=0,
                  help='print extra information')
+  p.add_argument('-x', '--exclude',
+                 help='Regex to match for files to exclude from checking')
   # We gather all the remaining positional arguments into 'args' since we need
   # to use some heuristics to determine whether or not <commit> was present.
   # However, to print pretty messages, we make use of metavar and help.
@@ -134,6 +136,7 @@ def main():
   changed_lines = compute_diff_and_extract_lines(commits, files)
   if opts.verbose >= 1:
     ignored_files = set(changed_lines)
+  filter_by_exclude(changed_lines, opts.exclude)
   filter_by_extension(changed_lines, opts.extensions.lower().split(','))
   if opts.verbose >= 1:
     ignored_files.difference_update(changed_lines)
@@ -312,6 +315,16 @@ def extract_lines(patch_file):
       if line_count > 0:
         matches.setdefault(filename, []).append(Range(start_line, line_count))
   return matches
+
+
+def filter_by_exclude(dictionary, exclude_re):
+  """Delete every key in `dictionary` that matches the exclusion regex.
+
+  `exclude_re` must be a valid regex."""
+  exre = re.compile(exclude_re)
+  for filename in dictionary.keys():
+    if exre.match(filename):
+      del dictionary[filename]
 
 
 def filter_by_extension(dictionary, allowed_extensions):

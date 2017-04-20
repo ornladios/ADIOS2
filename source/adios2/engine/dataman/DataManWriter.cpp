@@ -9,6 +9,7 @@
  */
 
 #include "DataManWriter.h"
+#include "DataManWriter.tcc"
 
 #include <iostream> //needs to go away, this is just for demo purposes
 

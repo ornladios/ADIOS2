@@ -24,7 +24,10 @@
 #include <stdexcept>
 #include <thread> //std::thread
 
+
 #include "adios2/ADIOSTypes.h"
+#include "adios2/ADIOSMPI.h"
+
 #include "adios2/core/Support.h"
 
 #ifdef ADIOS2_HAVE_BZIP2

@@ -17,7 +17,7 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOS_MPI.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/IOChrono.h"
 
 namespace adios
@@ -32,7 +32,7 @@ public:
     std::string m_AccessMode; ///< from Open
     bool m_IsOpen = false;
 
-    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+    MPI_Comm m_MPIComm;
 
     int m_RankMPI = 0;              ///< current MPI rank process
     int m_SizeMPI = 1;              ///< current MPI processes size

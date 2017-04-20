@@ -16,7 +16,7 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOS_MPI.h"
+#include "adios2/ADIOSMPICommOnly.h"
 
 namespace adios
 {
@@ -30,9 +30,9 @@ class BP1Aggregator
 {
 
 public:
-    MPI_Comm m_MPIComm = MPI_COMM_SELF; ///< MPI communicator from Engine
-    int m_RankMPI = 0;                  ///< current MPI rank process
-    int m_SizeMPI = 1;                  ///< current MPI processes size
+    MPI_Comm m_MPIComm; ///< MPI communicator from Engine
+    int m_RankMPI = 0;  ///< current MPI rank process
+    int m_SizeMPI = 1;  ///< current MPI processes size
 
     /**
      * Unique constructor
@@ -40,7 +40,7 @@ public:
      */
     BP1Aggregator(MPI_Comm mpiComm, const bool debugMode = false);
 
-    ~BP1Aggregator();
+    ~BP1Aggregator() = default;
 
     /**
      * Function that aggregates and writes (from rank = 0) profiling.log in

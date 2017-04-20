@@ -23,8 +23,8 @@
 
 #include "adios2/ADIOS.h"
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/ADIOS_MPI.h"
 #include "adios2/core/Capsule.h"
 #include "adios2/core/Method.h"
 #include "adios2/core/Transform.h"
@@ -52,7 +52,7 @@ class Engine
 {
 
 public:
-    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+    MPI_Comm m_MPIComm;
 
     const std::string m_EngineType; ///< from derived class
     const std::string m_Name;       ///< name used for this engine
@@ -311,7 +311,7 @@ public:
      * @param values pointer passed from the application
      */
     template <class T>
-    void ScheduleRead(Variable<T> &variable, const T *values)
+    void ScheduleRead(Variable<T> &variable, T *values)
     {
         ScheduleRead(variable, values);
     }
@@ -322,7 +322,7 @@ public:
      * @param values
      */
     template <class T>
-    void ScheduleRead(const std::string variableName, const T *values)
+    void ScheduleRead(const std::string variableName, T *values)
     {
         ScheduleRead(variableName, values);
     }
@@ -333,7 +333,7 @@ public:
      * @param values
      */
     template <class T>
-    void ScheduleRead(Variable<T> &variable, const T &values)
+    void ScheduleRead(Variable<T> &variable, T &values)
     {
         ScheduleRead(variable, &values);
     }
@@ -344,7 +344,7 @@ public:
      * @param values
      */
     template <class T>
-    void ScheduleRead(const std::string variableName, const T &values)
+    void ScheduleRead(const std::string variableName, T &values)
     {
         ScheduleRead(variableName, &values);
     }
@@ -364,7 +364,8 @@ public:
      */
     void ScheduleRead() { ScheduleRead(nullptr, nullptr); }
 
-    virtual void ScheduleRead(Variable<double> &variable, const double *values);
+    virtual void ScheduleRead(Variable<double> &variable, double *values);
+    virtual void ScheduleRead(const std::string variableName, double *values);
 
     /**
      * Perform all scheduled reads, either blocking until all reads completed,
@@ -372,7 +373,7 @@ public:
      * return immediately.
      * @param mode Blocking or non-blocking modes
      */
-    void PerformReads(PerformReadMode mode);
+    virtual void PerformReads(PerformReadMode mode);
 
     /**
      * Reader application indicates that no more data will be read from the

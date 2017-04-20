@@ -76,11 +76,6 @@ public:
      */
     std::vector<std::size_t> GetGlobalDimensions();
 
-    /** Return the number of steps available for the variable
-     *  @return Number of steps
-     */
-    int GetSteps();
-
     void Monitor(std::ostream &logInfo) const noexcept
     {
         logInfo << "Variable: " << m_Name << "\n";

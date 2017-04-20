@@ -17,6 +17,7 @@
 #include <sstream>
 #include <utility>
 
+#include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/adiosFunctions.h"
 #include "adios2/engine/bp/BPFileReader.h"
@@ -41,17 +42,14 @@ namespace adios
 {
 
 ADIOS::ADIOS(const Verbose verbose, const bool debugMode)
-: m_DebugMode{debugMode}
+: ADIOS("", MPI_COMM_SELF, verbose, debugMode)
 {
-    InitMPI();
 }
 
 ADIOS::ADIOS(const std::string config, const Verbose verbose,
              const bool debugMode)
-: m_ConfigFile(config), m_DebugMode(debugMode)
+: ADIOS(config, MPI_COMM_SELF, verbose, debugMode)
 {
-    InitMPI();
-    // InitXML( m_ConfigFile, m_MPIComm, m_DebugMode, m_Transforms );
 }
 
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
@@ -64,9 +62,8 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
 }
 
 ADIOS::ADIOS(MPI_Comm mpiComm, const Verbose verbose, const bool debugMode)
-: m_MPIComm(mpiComm), m_DebugMode(debugMode)
+: ADIOS("", mpiComm, verbose, debugMode)
 {
-    InitMPI();
 }
 
 // ADIOS::~ADIOS() {}
