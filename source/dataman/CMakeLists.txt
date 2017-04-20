@@ -21,6 +21,16 @@ add_library(cacheman MODULE CacheMan.h CacheMan.cpp)
 target_link_libraries(cacheman PRIVATE dataman)
 list(APPEND dataman_targets cacheman)
 
+#option(ADIOS_USE_DataMan_ZeroMQ "Enable ZeroMQ for DataMan" OFF)
+#if(ADIOS_USE_DataMan_ZeroMQ)
+#  find_package(ZeroMQ REQUIRED)
+#
+#  add_library(zmqman MODULE ZmqMan.h ZmqMan.cpp)
+#  target_link_libraries(zmqman PRIVATE dataman ZeroMQ::ZMQ)
+#
+#  list(APPEND dataman_targets zmqman)
+#endif()
+
 install(
   TARGETS ${dataman_targets} EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
