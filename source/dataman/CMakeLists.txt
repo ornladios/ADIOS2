@@ -3,18 +3,26 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+set(dataman_targets)
+
 add_library(dataman
   DataManBase.h DataManBase.cpp
   DataMan.h DataMan.cpp
 )
 target_include_directories(dataman PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(dataman PRIVATE adios2sys)
+list(APPEND dataman_targets dataman)
 
-add_library(cacheman SHARED CacheMan.h CacheMan.cpp)
+# Add the dataman plugins as MODULE libraries instead of SHARED libraries.
+# MODULE libraries are designed to be plugins, i.e. shared libs that nobody
+# else links to.
+
+add_library(cacheman MODULE CacheMan.h CacheMan.cpp)
 target_link_libraries(cacheman PRIVATE dataman)
+list(APPEND dataman_targets cacheman)
 
 install(
-  TARGETS dataman cacheman EXPORT adios2
+  TARGETS ${dataman_targets} EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
