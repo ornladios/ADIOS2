@@ -18,19 +18,62 @@ struct DataManBase::ManagerLibrary
 {
     adios2sys::DynamicLoader::LibraryHandle m_LibraryHandle;
     DataManBase *(*m_getManFunc)();
+
     ManagerLibrary(std::string method)
     {
-        std::stringstream libNameBuilder;
-        libNameBuilder << adios2sys::DynamicLoader::LibPrefix() << method
-                       << "man" << adios2sys::DynamicLoader::LibExtension();
-        std::string libName = libNameBuilder.str();
+        std::vector<std::string> searchedLibs;
+        std::string libName;
 
-        // Bind to the dynamic library
-        m_LibraryHandle = adios2sys::DynamicLoader::OpenLibrary(libName);
+        std::vector<std::string> libPrefixes;
+        libPrefixes.emplace_back("");
+        libPrefixes.emplace_back("lib");
+#ifdef __CYGWIN__
+        libPrefixes.emplace_back("cyg");
+#endif
+
+        std::vector<std::string> libSuffixes;
+#ifdef __APPLE__
+        libSuffixes.emplace_back("man.dylib");
+        libSuffixes.emplace_back("man.so");
+#endif
+#ifdef __hpux
+        libSuffixes.emplace_back("man.sl");
+#endif
+#ifdef __unix__
+        libSuffixes.emplace_back("man.so");
+#endif
+#ifdef _WIN32
+        libSuffixes.emplace_back("man.dll");
+#endif
+
+        // Test the various combinations of library names
+        for (const std::string &prefix : libPrefixes)
+        {
+            for (const std::string &suffix : libSuffixes)
+            {
+                libName = prefix + method + suffix;
+                m_LibraryHandle =
+                    adios2sys::DynamicLoader::OpenLibrary(libName);
+                searchedLibs.push_back(libName);
+                if (m_LibraryHandle)
+                {
+                    break;
+                }
+            }
+            if (m_LibraryHandle)
+            {
+                break;
+            }
+        }
         if (!m_LibraryHandle)
         {
-            throw std::runtime_error("Unable to locate the " + libName +
-                                     " library.");
+            std::stringstream errString;
+            errString << "Unable to locate the " << method << " manager "
+                      << "library; searched for ";
+            std::copy(searchedLibs.begin(), searchedLibs.end(),
+                      std::ostream_iterator<std::string>(errString, " "));
+
+            throw std::runtime_error(errString.str());
         }
 
         // Bind to the getMan symbol
