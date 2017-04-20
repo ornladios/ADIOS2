@@ -57,6 +57,13 @@ if(ADIOS_USE_BZip2)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
 
+if(ADIOS_USE_ZFP)
+  find_package(ZFP REQUIRED)
+  message("ADIOS ZFP support not yet implemented")
+#  target_sources(adios2 PRIVATE transform/ZFP.cpp)
+#  target_link_libraries(adios2 PRIVATE zfp::zfp)
+endif()
+
 if(ADIOS_USE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
   target_include_directories(adios2 PUBLIC ${MPI_C_INCLUDE_PATH})
