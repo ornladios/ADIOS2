@@ -32,7 +32,6 @@ public:
      * @param method
      * @param debugMode
      */
-
     BPFileWriter(ADIOS &adios, const std::string &name,
                  const std::string accessMode, MPI_Comm mpiComm,
                  const Method &method);
@@ -98,31 +97,21 @@ public:
     void Close(const int transportIndex = -1);
 
 private:
-    capsule::STLVector m_Heap; ///< heap capsule using STL std::vector<char>
-    format::BP1Writer
-        m_BP1Writer; ///< format object will provide the required BP
-                     /// functionality to be applied on m_Buffer and
-    /// m_Transports
-    format::BP1MetadataSet
-        m_MetadataSet; ///< metadata set accompanying the heap
-                       /// buffer data in bp format. Needed by
-    /// m_BP1Writer
-    format::BP1Aggregator m_BP1Aggregator;
+    format::BP1Writer m_BP1Writer;
 
-    bool m_IsFirstClose =
-        true; ///< set to false after first Close is reached so
-              /// metadata doesn't have to be accommodated for a
-    /// subsequent Close
-    std::size_t m_MaxBufferSize; ///< maximum allowed memory to be allocated
-    float m_GrowthFactor = 1.5;  ///< capsule memory growth factor, new_memory =
-                                 /// m_GrowthFactor * current_memory
+    /** set to false after first Close is reached so metadata
+        doesn't have to be accommodated for a subsequent Close */
+    bool m_IsFirstClose = true;
 
-    bool m_TransportFlush = false; ///< true: due to buffer overflow
+    /** data buffer exponential growth factor */
+    float m_GrowthFactor = 1.5;
 
-    bool m_CloseProcessGroup =
-        false; ///< set to true if advance is called, this
-    /// prevents flattening the data and metadata
-    /// in Close
+    ///< true: due to buffer overflow
+    bool m_TransportFlush = false;
+
+    /** set to true if advance is called, this
+        prevents flattening the data and metadata in Close*/
+    bool m_CloseProcessGroup = false;
 
     void Init();
     void InitParameters();
@@ -140,16 +129,20 @@ private:
     template <class T>
     void WriteVariableCommon(Variable<T> &variable, const T *values)
     {
-        if (m_MetadataSet.Log.IsActive == true)
-            m_MetadataSet.Log.Timers[0].SetInitialTime();
+        if (m_BP1Writer.m_MetadataSet.Log.IsActive == true)
+        {
+            m_BP1Writer.m_MetadataSet.Log.Timers[0].SetInitialTime();
+        }
 
         // set variable
         variable.m_AppValues = values;
         m_WrittenVariables.insert(variable.m_Name);
 
-        // if first timestep Write
-        if (m_MetadataSet.DataPGIsOpen == false) // create a new pg index
+        // if first timestep Write create a new pg index
+        if (m_BP1Writer.m_MetadataSet.DataPGIsOpen == false)
+        {
             WriteProcessGroupIndex();
+        }
 
         // pre-calculate new metadata and payload sizes
         //        m_TransportFlush = CheckBufferAllocation(
@@ -160,7 +153,7 @@ private:
         //                                                  m_Buffer.m_Data );
 
         // WRITE INDEX to data buffer and metadata structure (in memory)//
-        m_BP1Writer.WriteVariableMetadata(variable, m_Heap, m_MetadataSet);
+        m_BP1Writer.WriteVariableMetadata(variable);
 
         if (m_TransportFlush == true) // in batches
         {
@@ -172,14 +165,16 @@ private:
         }
         else // Write data to buffer
         {
-            m_BP1Writer.WriteVariablePayload(variable, m_Heap, m_nThreads);
+            m_BP1Writer.WriteVariablePayload(variable);
         }
 
-        variable.m_AppValues =
-            nullptr; // setting pointer to null as not needed after write
+        // not needed after write
+        variable.m_AppValues = nullptr;
 
-        if (m_MetadataSet.Log.IsActive == true)
-            m_MetadataSet.Log.Timers[0].SetTime();
+        if (m_BP1Writer.m_MetadataSet.Log.IsActive == true)
+        {
+            m_BP1Writer.m_MetadataSet.Log.Timers[0].SetTime();
+        }
     }
 };
 

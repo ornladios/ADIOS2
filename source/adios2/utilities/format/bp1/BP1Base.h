@@ -12,14 +12,17 @@
 #define ADIOS2_UTILITIES_FORMAT_BP1_BP1BASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <cstdint> //std::uintX_t
-#include <memory>  //std::shared_ptr
+#include <memory> //std::shared_ptr
 #include <unordered_map>
 #include <vector>
 /// \endcond
 
+#include "BP1Aggregator.h"
+#include "BP1Structs.h"
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSTypes.h"
 #include "adios2/ADIOS_MPI.h"
+#include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Transport.h"
 
 namespace adios
@@ -34,6 +37,31 @@ class BP1Base
 {
 
 public:
+    /** statistics verbosity, only 0 is supported */
+    unsigned int m_Verbosity = 0;
+
+    /** contains data buffer and position */
+    capsule::STLVector m_Heap = capsule::STLVector(true);
+
+    /** memory growth factor */
+    float m_GrowthFactor = 1.5;
+
+    /** max buffer size */
+    size_t m_MaxBufferSize = 0;
+
+    /** contains bp1 format metadata */
+    BP1MetadataSet m_MetadataSet;
+
+    /** aggregation tasks */
+    BP1Aggregator m_BP1Aggregator;
+
+    /**
+     * Unique constructor
+     * @param mpiComm for m_BP1Aggregator
+     * @param debugMode true: exceptions checks
+     */
+    BP1Base(MPI_Comm mpiComm, const bool debugMode);
+
     /**
      * Checks if input name has .bp extension and returns a .bp directory name
      * @param name input (might or not have .bp)
@@ -53,37 +81,31 @@ public:
                        Transport &file) const;
 
 protected:
-    /**
-     * method type for file I/O
-     */
+    /** might be used in large payload copies to buffer */
+    unsigned int m_Threads = 1;
+
+    /** method type for file I/O */
     enum IO_METHOD
     {
-        METHOD_UNKNOWN = -2 //!< ADIOS_METHOD_UNKNOWN
-        ,
-        METHOD_NULL = -1 //!< ADIOS_METHOD_NULL
-        ,
-        METHOD_MPI = 0 //!< METHOD_MPI
-        ,
+        METHOD_UNKNOWN = -2,
+        METHOD_NULL = -1,
+        METHOD_MPI = 0,
         METHOD_DATATAP = 1 // OBSOLETE
         ,
-        METHOD_POSIX = 2 //!< METHOD_POSIX
-        ,
-        METHOD_DATASPACES = 3 //!< METHOD_DATASPACES
-        ,
+        METHOD_POSIX = 2,
+        METHOD_DATASPACES = 3,
         METHOD_VTK = 4 // non-existent
         ,
         METHOD_POSIX_ASCII = 5 // non-existent
         ,
         METHOD_MPI_CIO = 6 // OBSOLETE
         ,
-        METHOD_PHDF5 = 7 //!< METHOD_PHDF5
-        ,
+        METHOD_PHDF5 = 7,
         METHOD_PROVENANCE = 8 // OBSOLETE
         ,
         METHOD_MPI_STRIPE = 9 // OBSOLETE
         ,
-        METHOD_MPI_LUSTRE = 10 //!< METHOD_MPI_LUSTRE
-        ,
+        METHOD_MPI_LUSTRE = 10,
         METHOD_MPI_STAGGER = 11 // OBSOLETE
         ,
         METHOD_MPI_AGG = 12 // OBSOLETE
@@ -92,28 +114,18 @@ protected:
         ,
         METHOD_POSIX1 = 14 // OBSOLETE
         ,
-        METHOD_NC4 = 15 //!< METHOD_NC4
-        ,
-        METHOD_MPI_AMR = 16 //!< METHOD_MPI_AMR
-        ,
+        METHOD_NC4 = 15,
+        METHOD_MPI_AMR = 16,
         METHOD_MPI_AMR1 = 17 // OBSOLETE
         ,
-        METHOD_FLEXPATH = 18 //!< METHOD_FLEXPATH
-        ,
-        METHOD_NSSI_STAGING = 19 //!< METHOD_NSSI_STAGING
-        ,
-        METHOD_NSSI_FILTER = 20 //!< METHOD_NSSI_FILTER
-        ,
-        METHOD_DIMES = 21 //!< METHOD_DIMES
-        ,
-        METHOD_VAR_MERGE = 22 //!< METHOD_VAR_MERGE
-        ,
-        METHOD_MPI_BGQ = 23 //!< METHOD_MPI_BGQ
-        ,
-        METHOD_ICEE = 24 //!< METHOD_ICEE
-        ,
-        METHOD_COUNT = 25 //!< METHOD_COUNT
-        ,
+        METHOD_FLEXPATH = 18,
+        METHOD_NSSI_STAGING = 19,
+        METHOD_NSSI_FILTER = 20,
+        METHOD_DIMES = 21,
+        METHOD_VAR_MERGE = 22,
+        METHOD_MPI_BGQ = 23,
+        METHOD_ICEE = 24,
+        METHOD_COUNT = 25,
         METHOD_FSTREAM = 26,
         METHOD_FILE = 27,
         METHOD_ZMQ = 28,
@@ -182,14 +194,14 @@ protected:
     {
         T Min;
         T Max;
-        std::uint64_t Offset;
-        std::uint64_t PayloadOffset;
-        std::uint32_t TimeIndex;
-        std::uint32_t MemberID;
+        uint64_t Offset;
+        uint64_t PayloadOffset;
+        uint32_t TimeIndex;
+        uint32_t MemberID;
 
-        //		unsigned long int count;
-        //		long double sum;
-        //		long double sumSquare;
+        //      unsigned long int count;
+        //      long double sum;
+        //      long double sumSquare;
         // unsigned long int histogram
         // bool finite??
     };
@@ -200,12 +212,12 @@ protected:
      * @return data type
      */
     template <class T>
-    inline std::int8_t GetDataType() const noexcept
+    inline int8_t GetDataType() const noexcept
     {
         return type_unknown;
     }
 
-    std::vector<std::uint8_t> GetMethodIDs(
+    std::vector<uint8_t> GetMethodIDs(
         const std::vector<std::shared_ptr<Transport>> &transports) const
         noexcept;
 };
@@ -213,63 +225,63 @@ protected:
 // Moving template BP1Writer::GetDataType template specializations outside of
 // the class
 template <>
-inline std::int8_t BP1Base::GetDataType<char>() const noexcept
+inline int8_t BP1Base::GetDataType<char>() const noexcept
 {
     return type_byte;
 }
 
 template <>
-inline std::int8_t BP1Base::GetDataType<short>() const noexcept
+inline int8_t BP1Base::GetDataType<short>() const noexcept
 {
     return type_short;
 }
 
 template <>
-inline std::int8_t BP1Base::GetDataType<int>() const noexcept
+inline int8_t BP1Base::GetDataType<int>() const noexcept
 {
     return type_integer;
 }
 template <>
-inline std::int8_t BP1Base::GetDataType<long int>() const noexcept
+inline int8_t BP1Base::GetDataType<long int>() const noexcept
 {
     return type_long;
 }
 
 template <>
-inline std::int8_t BP1Base::GetDataType<unsigned char>() const noexcept
+inline int8_t BP1Base::GetDataType<unsigned char>() const noexcept
 {
     return type_unsigned_byte;
 }
 template <>
-inline std::int8_t BP1Base::GetDataType<unsigned short>() const noexcept
+inline int8_t BP1Base::GetDataType<unsigned short>() const noexcept
 {
     return type_unsigned_short;
 }
 template <>
-inline std::int8_t BP1Base::GetDataType<unsigned int>() const noexcept
+inline int8_t BP1Base::GetDataType<unsigned int>() const noexcept
 {
     return type_unsigned_integer;
 }
 template <>
-inline std::int8_t BP1Base::GetDataType<unsigned long int>() const noexcept
+inline int8_t BP1Base::GetDataType<unsigned long int>() const noexcept
 {
     return type_unsigned_long;
 }
 
 template <>
-inline std::int8_t BP1Base::GetDataType<float>() const noexcept
+inline int8_t BP1Base::GetDataType<float>() const noexcept
 {
     return type_real;
 }
 
 template <>
-inline std::int8_t BP1Base::GetDataType<double>() const noexcept
+inline int8_t BP1Base::GetDataType<double>() const noexcept
 {
     return type_double;
 }
 
 template <>
-inline std::int8_t BP1Base::GetDataType<long double>() const noexcept
+inline int8_t BP1Base::GetDataType<long double>() const noexcept
 {
     return type_long_double;
 }

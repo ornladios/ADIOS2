@@ -24,8 +24,7 @@ DataManWriter::DataManWriter(ADIOS &adios, const std::string name,
                              const std::string accessMode, MPI_Comm mpiComm,
                              const Method &method)
 : Engine(adios, "DataManWriter", name, accessMode, mpiComm, method,
-         " DataManWriter constructor (or call to ADIOS Open).\n"),
-  m_Heap(m_DebugMode)
+         " DataManWriter constructor (or call to ADIOS Open).\n")
 {
     Init();
 }

@@ -19,19 +19,18 @@ namespace format
 
 // PUBLIC
 template <class T>
-std::size_t BP1Writer::GetVariableIndexSize(const Variable<T> &variable) const
+size_t BP1Writer::GetVariableIndexSize(const Variable<T> &variable) const
     noexcept
 {
     // size_t indexSize = varEntryLength + memberID + lengthGroupName +
     // groupName + lengthVariableName + lengthOfPath + path + datatype
-    std::size_t indexSize = 23; // without characteristics
+    size_t indexSize = 23; // without characteristics
     indexSize += variable.m_Name.size();
 
     // characteristics 3 and 4, check variable number of dimensions
-    const std::size_t dimensions =
-        variable.DimensionsSize(); // commas in CSV + 1
-    indexSize += 28 * dimensions;  // 28 bytes per dimension
-    indexSize += 1;                // id
+    const size_t dimensions = variable.DimensionsSize();
+    indexSize += 28 * dimensions; // 28 bytes per dimension
+    indexSize += 1;               // id
 
     // characteristics, offset + payload offset in data
     indexSize += 2 * (1 + 8);
@@ -57,39 +56,35 @@ std::size_t BP1Writer::GetVariableIndexSize(const Variable<T> &variable) const
 }
 
 template <class T>
-void BP1Writer::WriteVariableMetadata(const Variable<T> &variable,
-                                      capsule::STLVector &heap,
-                                      BP1MetadataSet &metadataSet) const
-    noexcept
+void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
 {
     Stats<typename TypeInfo<T>::ValueType> stats = GetStats(variable);
 
-    stats.TimeIndex = metadataSet.TimeStep;
+    stats.TimeIndex = m_MetadataSet.TimeStep;
     // Get new Index or point to existing index
     bool isNew = true; // flag to check if variable is new
-    BP1Index &varIndex =
-        GetBP1Index(variable.m_Name, metadataSet.VarsIndices, isNew);
-    stats.MemberID = varIndex.MemberID;
+    BP1Index &variableIndex =
+        GetBP1Index(variable.m_Name, m_MetadataSet.VarsIndices, isNew);
+    stats.MemberID = variableIndex.MemberID;
 
     // write metadata header in data and extract offsets
-    stats.Offset = heap.m_DataAbsolutePosition;
-    WriteVariableMetadataInData(variable, stats, heap);
-    stats.PayloadOffset = heap.m_DataAbsolutePosition;
+    stats.Offset = m_Heap.m_DataAbsolutePosition;
+    WriteVariableMetadataInData(variable, stats);
+    stats.PayloadOffset = m_Heap.m_DataAbsolutePosition;
 
     // write to metadata  index
-    WriteVariableMetadataInIndex(variable, stats, isNew, varIndex);
+    WriteVariableMetadataInIndex(variable, stats, isNew, variableIndex);
 
-    ++metadataSet.DataPGVarsCount;
+    ++m_MetadataSet.DataPGVarsCount;
 }
 
 template <class T>
-void BP1Writer::WriteVariablePayload(const Variable<T> &variable,
-                                     capsule::STLVector &heap,
-                                     const unsigned int nthreads) const noexcept
+void BP1Writer::WriteVariablePayload(const Variable<T> &variable) noexcept
 {
     // EXPENSIVE part, might want to use threads if large, serial for now
-    InsertToBuffer(heap.m_Data, variable.m_AppValues, variable.TotalSize());
-    heap.m_DataAbsolutePosition += variable.PayLoadSize();
+    CopyToBufferThreads(m_Heap.m_Data, m_Heap.m_DataPosition,
+                        variable.m_AppValues, variable.TotalSize(), m_Threads);
+    m_Heap.m_DataAbsolutePosition += variable.PayLoadSize();
 }
 
 // PRIVATE
@@ -102,112 +97,67 @@ BP1Writer::GetStats(const Variable<T> &variable) const noexcept
 
     if (m_Verbosity == 0)
     {
-        if (valuesSize >= 10000000) // ten million? this needs actual results
-                                    // //we can make decisions for threads
-            // based on valuesSize
-            GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
-                      m_Threads); // here we can add cores from constructor
-        else
-            GetMinMax(variable.m_AppValues, valuesSize, stats.Min, stats.Max);
+        GetMinMaxThreads(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
+                         m_Threads);
     }
     return stats;
 }
 
 template <class T>
-void BP1Writer::WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
-                                  std::vector<char> &buffer,
-                                  std::uint8_t &characteristicsCounter,
-                                  const bool addLength) const noexcept
-{
-    if (isScalar == true)
-    {
-        WriteCharacteristicRecord(characteristic_value, stats.Min, buffer,
-                                  characteristicsCounter,
-                                  addLength); // stats.min = stats.max = value
-        return;
-    }
-
-    if (m_Verbosity == 0) // default verbose
-    {
-        WriteCharacteristicRecord(characteristic_min, stats.Min, buffer,
-                                  characteristicsCounter, addLength);
-        WriteCharacteristicRecord(characteristic_max, stats.Max, buffer,
-                                  characteristicsCounter, addLength);
-    }
-}
-
-template <class T>
-void BP1Writer::WriteCharacteristicRecord(const std::uint8_t characteristicID,
-                                          const T &value,
-                                          std::vector<char> &buffer,
-                                          std::uint8_t &characteristicsCounter,
-                                          const bool addLength) const noexcept
-{
-    const std::uint8_t id = characteristicID;
-    InsertToBuffer(buffer, &id);
-
-    if (addLength == true)
-    {
-        const std::uint16_t lengthOfCharacteristic = sizeof(T); // id
-        InsertToBuffer(buffer, &lengthOfCharacteristic);
-    }
-
-    InsertToBuffer(buffer, &value);
-    ++characteristicsCounter;
-}
-
-template <class T>
 void BP1Writer::WriteVariableMetadataInData(
     const Variable<T> &variable,
-    const Stats<typename TypeInfo<T>::ValueType> &stats,
-    capsule::STLVector &heap) const noexcept
+    const Stats<typename TypeInfo<T>::ValueType> &stats) noexcept
 {
-    auto &buffer = heap.m_Data;
+    auto &buffer = m_Heap.m_Data;
+    auto &position = m_Heap.m_DataPosition;
 
     // for writing length at the end
-    const std::size_t varLengthPosition = buffer.size();
+    const size_t varLengthPosition = position;
+    position += 8; // skip var length (8)
 
-    buffer.insert(buffer.end(), 8, 0);              // skip var length (8)
-    InsertToBuffer(buffer, &stats.MemberID);        // memberID
-    WriteNameRecord(variable.m_Name, buffer);       // variable name
-    buffer.insert(buffer.end(), 2, 0);              // skip path
-    const std::uint8_t dataType = GetDataType<T>(); // dataType
-    InsertToBuffer(buffer, &dataType);
+    CopyToBuffer(buffer, position, &stats.MemberID);
+
+    WriteNameRecord(variable.m_Name, buffer, position);
+    position += 2; // skip path
+
+    const uint8_t dataType = GetDataType<T>(); // dataType
+    CopyToBuffer(buffer, position, &dataType);
+
     constexpr char no = 'n'; // isDimension
-    InsertToBuffer(buffer, &no);
+    CopyToBuffer(buffer, position, &no);
 
-    // write variable dimensions
-    const std::uint8_t dimensions = variable.m_LocalDimensions.size();
-    InsertToBuffer(buffer, &dimensions); // count
+    const uint8_t dimensions = variable.m_LocalDimensions.size();
+    CopyToBuffer(buffer, position, &dimensions); // count
 
     // 27 is from 9 bytes for each: var y/n + local, var y/n + global dimension,
     // var y/n + global offset, changed for characteristic
-    std::uint16_t dimensionsLength = 27 * dimensions;
-    InsertToBuffer(buffer, &dimensionsLength); // length
-    WriteDimensionsRecord(buffer, variable.m_LocalDimensions,
+    uint16_t dimensionsLength = 27 * dimensions;
+    CopyToBuffer(buffer, position, &dimensionsLength); // length
+
+    WriteDimensionsRecord(variable.m_LocalDimensions,
                           variable.m_GlobalDimensions, variable.m_Offsets, 18,
-                          true);
+                          buffer, position);
 
     // CHARACTERISTICS
-    WriteVariableCharacteristics(variable, stats, buffer, true);
+    // FIX
+    WriteVariableCharacteristics(variable, stats, buffer, position);
 
     // Back to varLength including payload size
-    const std::uint64_t varLength = buffer.size() - varLengthPosition +
-                                    variable.PayLoadSize() -
-                                    8; // remove its own size
+    // remove its own size (8) from length
+    const uint64_t varLength =
+        position - varLengthPosition + variable.PayLoadSize() - 8;
 
-    CopyToBufferPosition(buffer, varLengthPosition, &varLength); // length
+    size_t backPosition = varLengthPosition;
+    CopyToBuffer(buffer, backPosition, &varLength);
 
-    heap.m_DataAbsolutePosition +=
-        buffer.size() - varLengthPosition; // update absolute position to be
-                                           // used as payload position
+    m_Heap.m_DataAbsolutePosition += position - varLengthPosition;
 }
 
 template <class T>
 void BP1Writer::WriteVariableMetadataInIndex(
     const Variable<T> &variable,
     const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
-    BP1Index &index) const noexcept
+    BP1Index &index) noexcept
 {
     auto &buffer = index.Buffer;
 
@@ -229,75 +179,191 @@ void BP1Writer::WriteVariableMetadataInIndex(
     }
     else // update characteristics sets count
     {
-        const std::size_t characteristicsSetsCountPosition =
-            15 + variable.m_Name.size();
-        ++index.Count;
-        CopyToBufferPosition(buffer, characteristicsSetsCountPosition,
-                             &index.Count); // test
+        if (m_Verbosity == 0)
+        {
+            ++index.Count;
+            size_t setsCountPosition = 15 + variable.m_Name.size();
+            CopyToBuffer(buffer, setsCountPosition, &index.Count);
+        }
     }
 
     WriteVariableCharacteristics(variable, stats, buffer);
 }
 
 template <class T>
+void BP1Writer::WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
+                                  std::uint8_t &characteristicsCounter,
+                                  std::vector<char> &buffer) noexcept
+{
+    if (isScalar == true)
+    {
+        // stats.min = stats.max = value, need to test
+        WriteCharacteristicRecord(characteristic_value, characteristicsCounter,
+                                  stats.Min, buffer);
+    }
+    else
+    {
+        if (m_Verbosity == 0) // default verbose
+        {
+            WriteCharacteristicRecord(
+                characteristic_min, characteristicsCounter, stats.Min, buffer);
+
+            WriteCharacteristicRecord(
+                characteristic_max, characteristicsCounter, stats.Max, buffer);
+        }
+    }
+}
+
+template <class T>
+void BP1Writer::WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
+                                  std::uint8_t &characteristicsCounter,
+                                  std::vector<char> &buffer,
+                                  size_t &position) noexcept
+{
+    if (isScalar == true)
+    {
+        // stats.min = stats.max = value, need to test
+        WriteCharacteristicRecord(characteristic_value, characteristicsCounter,
+                                  stats.Min, buffer, position);
+    }
+    else
+    {
+        if (m_Verbosity == 0) // default min and max only
+        {
+            WriteCharacteristicRecord(characteristic_min,
+                                      characteristicsCounter, stats.Min, buffer,
+                                      position);
+
+            WriteCharacteristicRecord(characteristic_max,
+                                      characteristicsCounter, stats.Max, buffer,
+                                      position);
+        }
+    }
+}
+
+template <class T>
+void BP1Writer::WriteCharacteristicRecord(const std::uint8_t characteristicID,
+                                          std::uint8_t &characteristicsCounter,
+                                          const T &value,
+                                          std::vector<char> &buffer) noexcept
+{
+    const std::uint8_t id = characteristicID;
+    InsertToBuffer(buffer, &id);
+    InsertToBuffer(buffer, &value);
+    ++characteristicsCounter;
+}
+
+template <class T>
+void BP1Writer::WriteCharacteristicRecord(const uint8_t characteristicID,
+                                          uint8_t &characteristicsCounter,
+                                          const T &value,
+                                          std::vector<char> &buffer,
+                                          size_t &position) noexcept
+{
+    const std::uint8_t id = characteristicID;
+    CopyToBuffer(buffer, position, &id);
+
+    const std::uint16_t lengthOfCharacteristic = sizeof(T);
+    CopyToBuffer(buffer, position, &lengthOfCharacteristic);
+
+    CopyToBuffer(buffer, position, &value);
+    ++characteristicsCounter;
+}
+
+template <class T>
 void BP1Writer::WriteVariableCharacteristics(
     const Variable<T> &variable,
     const Stats<typename TypeInfo<T>::ValueType> &stats,
-    std::vector<char> &buffer, const bool addLength) const noexcept
+    std::vector<char> &buffer) noexcept
 {
-    const std::size_t characteristicsCountPosition =
-        buffer.size(); // very important to track as writer is going back to
-                       // this position
-    buffer.insert(buffer.end(), 5,
-                  0); // skip characteristics count(1) + length (4)
-    std::uint8_t characteristicsCounter = 0;
+    // going back at the end
+    const size_t characteristicsCountPosition = buffer.size();
+    // skip characteristics count(1) + length (4)
+    buffer.insert(buffer.end(), 5, 0);
+    uint8_t characteristicsCounter = 0;
 
     // DIMENSIONS
-    std::uint8_t characteristicID = characteristic_dimensions;
+    uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
-    const std::uint8_t dimensions = variable.m_LocalDimensions.size();
-
-    if (addLength == true)
-    {
-        const std::int16_t lengthOfDimensionsCharacteristic =
-            24 * dimensions + 3; // 24 = 3 local, global, offset x 8 bytes/each
-        InsertToBuffer(buffer, &lengthOfDimensionsCharacteristic);
-    }
-
+    const uint8_t dimensions = variable.m_LocalDimensions.size();
     InsertToBuffer(buffer, &dimensions); // count
-    const std::uint16_t dimensionsLength = 24 * dimensions;
+    const uint16_t dimensionsLength = 24 * dimensions;
     InsertToBuffer(buffer, &dimensionsLength); // length
-    WriteDimensionsRecord(buffer, variable.m_LocalDimensions,
-                          variable.m_GlobalDimensions, variable.m_Offsets, 16,
-                          addLength);
+    WriteDimensionsRecord(variable.m_LocalDimensions,
+                          variable.m_GlobalDimensions, variable.m_Offsets,
+                          buffer);
     ++characteristicsCounter;
 
-    // VALUE for SCALAR or STAT min, max for ARRAY
-    WriteBoundsRecord(variable.m_IsScalar, stats, buffer,
-                      characteristicsCounter, addLength);
-    // TIME INDEX
-    WriteCharacteristicRecord(characteristic_time_index, stats.TimeIndex,
-                              buffer, characteristicsCounter, addLength);
+    WriteBoundsRecord(variable.m_IsScalar, stats, characteristicsCounter,
+                      buffer);
 
-    if (addLength == false) // only in metadata offset and payload offset
-    {
-        WriteCharacteristicRecord(characteristic_offset, stats.Offset, buffer,
-                                  characteristicsCounter);
-        WriteCharacteristicRecord(characteristic_payload_offset,
-                                  stats.PayloadOffset, buffer,
-                                  characteristicsCounter);
-    }
+    WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
+                              stats.TimeIndex, buffer);
+
+    WriteCharacteristicRecord(characteristic_offset, characteristicsCounter,
+                              stats.Offset, buffer);
+
+    WriteCharacteristicRecord(characteristic_payload_offset,
+                              characteristicsCounter, stats.PayloadOffset,
+                              buffer);
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
-    CopyToBufferPosition(buffer, characteristicsCountPosition,
-                         &characteristicsCounter); // count (1)
-    const std::uint32_t characteristicsLength =
-        buffer.size() - characteristicsCountPosition - 4 -
-        1; // remove its own length (4) + characteristic counter (1)
+    size_t backPosition = characteristicsCountPosition;
+    CopyToBuffer(buffer, backPosition, &characteristicsCounter); // count (1)
 
-    CopyToBufferPosition(buffer, characteristicsCountPosition + 1,
-                         &characteristicsLength); // length
+    // remove its own length (4) + characteristic counter (1)
+    const uint32_t characteristicsLength =
+        buffer.size() - characteristicsCountPosition - 4 - 1;
+
+    CopyToBuffer(buffer, backPosition, &characteristicsLength); // length
+}
+
+template <class T>
+void BP1Writer::WriteVariableCharacteristics(
+    const Variable<T> &variable,
+    const Stats<typename TypeInfo<T>::ValueType> &stats,
+    std::vector<char> &buffer, size_t &position) noexcept
+{
+    // going back at the end
+    const size_t characteristicsCountPosition = position;
+    // skip characteristics count(1) + length (4)
+    position += 5;
+    uint8_t characteristicsCounter = 0;
+
+    // DIMENSIONS
+    uint8_t characteristicID = characteristic_dimensions;
+    CopyToBuffer(buffer, position, &characteristicID);
+    const uint8_t dimensions = variable.m_LocalDimensions.size();
+
+    // 24 = 3 local, global, offset x 8 bytes/each
+    const int16_t lengthOfDimensionsCharacteristic = 24 * dimensions + 3;
+    CopyToBuffer(buffer, position, &lengthOfDimensionsCharacteristic);
+
+    CopyToBuffer(buffer, position, &dimensions); // count
+    const uint16_t dimensionsLength = 24 * dimensions;
+    CopyToBuffer(buffer, position, &dimensionsLength); // length
+    WriteDimensionsRecord(variable.m_LocalDimensions,
+                          variable.m_GlobalDimensions, variable.m_Offsets, 16,
+                          buffer, position);
+    ++characteristicsCounter;
+
+    // VALUE for SCALAR or STAT min, max for ARRAY
+    WriteBoundsRecord(variable.m_IsScalar, stats, characteristicsCounter,
+                      buffer, position);
+    // TIME INDEX
+    WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
+                              stats.TimeIndex, buffer, position);
+    // END OF CHARACTERISTICS
+
+    // Back to characteristics count and length
+    size_t backPosition = characteristicsCountPosition;
+    CopyToBuffer(buffer, backPosition, &characteristicsCounter);
+
+    // remove its own length (4) + characteristic counter (1)
+    const uint32_t characteristicsLength =
+        position - characteristicsCountPosition - 4 - 1;
+    CopyToBuffer(buffer, backPosition, &characteristicsLength);
 }
 
 } // end namespace format

@@ -10,12 +10,17 @@
 
 #include "BP1Base.h"
 
-#include "adios2/core/adiosFunctions.h"
+#include "adios2/core/adiosFunctions.h" //CreateDirectory
 
 namespace adios
 {
 namespace format
 {
+
+BP1Base::BP1Base(MPI_Comm mpiComm, const bool debugMode)
+: m_BP1Aggregator(mpiComm, debugMode)
+{
+}
 
 std::string BP1Base::GetDirectoryName(const std::string name) const noexcept
 {
@@ -37,20 +42,19 @@ void BP1Base::OpenRankFiles(const std::string name,
                             const std::string accessMode, Transport &file) const
 {
     const std::string directory = GetDirectoryName(name);
-    CreateDirectory(
-        directory); // creates a directory and sub-directories recursively
+    // creates a directory and sub-directories recursively
+    CreateDirectory(directory);
 
-    std::string fileName(directory + "/" + directory + "." +
-                         std::to_string(file.m_RankMPI));
-    file.Open(fileName, accessMode); // opens a file transport under
-                                     // name.bp/name.bp.rank reserve that
-                                     // location for writing
+    // opens a file transport under name.bp/name.bp.rank
+    const std::string fileName(directory + "/" + directory + "." +
+                               std::to_string(file.m_RankMPI));
+    file.Open(fileName, accessMode);
 }
 
-std::vector<std::uint8_t> BP1Base::GetMethodIDs(
+std::vector<uint8_t> BP1Base::GetMethodIDs(
     const std::vector<std::shared_ptr<Transport>> &transports) const noexcept
 {
-    auto lf_GetMethodID = [](const std::string method) -> std::uint8_t {
+    auto lf_GetMethodID = [](const std::string method) -> uint8_t {
         int id = METHOD_UNKNOWN;
         if (method == "NULL")
             id = METHOD_NULL;
@@ -66,7 +70,7 @@ std::vector<std::uint8_t> BP1Base::GetMethodIDs(
         return id;
     };
 
-    std::vector<std::uint8_t> methodIDs;
+    std::vector<uint8_t> methodIDs;
     methodIDs.reserve(transports.size());
 
     for (const auto &transport : transports)
