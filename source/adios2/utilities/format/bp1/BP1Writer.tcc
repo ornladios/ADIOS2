@@ -33,6 +33,8 @@ BP1Writer::ResizeResult BP1Writer::ResizeBuffer(const Variable<T> &variable)
             return ResizeResult::FLUSH;
         }
     }
+    
+    return ResizeResult::SUCCESS;
 }
 
 template <class T>

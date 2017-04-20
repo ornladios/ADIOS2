@@ -9,25 +9,23 @@
  */
 
 #include "adiosFunctions.h"
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <sys/stat.h>  //stat
 #include <sys/types.h> //CreateDirectory
 #include <unistd.h>    //CreateDirectory
 
-#include <cmath>   // std::ceil, std::pow, std::log
-#include <cstring> //std::memcpy
-
 #include <algorithm> //std::count
+#include <cmath>     // std::ceil, std::pow, std::log
+#include <cstring>   //std::memcpy
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <sstream>
 #include <stdexcept>
 #include <thread> //std::thread
+/// \endcond
 
-
-#include "adios2/ADIOSTypes.h"
 #include "adios2/ADIOSMPI.h"
-
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/Support.h"
 
 #ifdef ADIOS2_HAVE_BZIP2

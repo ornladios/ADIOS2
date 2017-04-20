@@ -277,7 +277,7 @@ private:
 
 #define declare_template_instantiation(T)                                      \
     extern template BP1Writer::ResizeResult BP1Writer::ResizeBuffer(           \
-        const Variable<T> &variable) noexcept;                                 \
+        const Variable<T> &variable);                                          \
                                                                                \
     extern template void BP1Writer::WriteVariablePayload(                      \
         const Variable<T> &variable) noexcept;                                 \
