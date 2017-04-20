@@ -14,6 +14,7 @@
 
 #include "adios2/core/Support.h"
 #include "adios2/core/adiosFunctions.h" //CSVToVector
+#include "adiso2/ADIOSMPI.h"
 
 namespace adios
 {

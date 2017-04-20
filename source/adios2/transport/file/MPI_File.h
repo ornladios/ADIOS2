@@ -12,7 +12,7 @@
 #define ADIOS2_TRANSPORT_FILE_MPI_FILE_H_
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOS_MPI.h"
+#include "adios2/ADIOSMPICommOnly.h"
 
 namespace adios
 {
