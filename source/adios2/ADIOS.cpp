@@ -17,8 +17,8 @@
 #include <sstream>
 #include <utility>
 
-#include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSMPI.h"
+#include "adios2/ADIOSMacros.h"
 #include "adios2/core/adiosFunctions.h"
 #include "adios2/engine/bp/BPFileReader.h"
 #include "adios2/engine/bp/BPFileWriter.h"

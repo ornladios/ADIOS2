@@ -13,7 +13,7 @@
 #else
 namespace adios
 {
-    using MPI_Comm = int;
+using MPI_Comm = int;
 } // end namespace adios
 #endif
 

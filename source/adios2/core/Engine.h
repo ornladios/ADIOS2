@@ -23,8 +23,8 @@
 
 #include "adios2/ADIOS.h"
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSTypes.h"
 #include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/Capsule.h"
 #include "adios2/core/Method.h"
 #include "adios2/core/Transform.h"
