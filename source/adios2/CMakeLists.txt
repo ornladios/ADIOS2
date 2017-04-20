@@ -102,8 +102,7 @@ if(ADIOS_USE_HDF5)
 endif()
 
 install(
-  FILES
-    ADIOS.h ADIOS.inl ADIOSMacros.h ADIOS_MPI.h ADIOSTypes.h ADIOSMPICommOnly.h
+  FILES ADIOS.h ADIOS.inl ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 install(
