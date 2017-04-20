@@ -31,6 +31,15 @@ list(APPEND dataman_targets cacheman)
 #  list(APPEND dataman_targets zmqman)
 #endif()
 
+#if(ADIOS_USE_ZFP)
+#  find_package(ZFP REQUIRED)
+#
+#  add_library(zfpman MODULE ZfpMan.h ZfpMan.cpp)
+#  target_link_libraries(zfpman PRIVATE dataman zfp::zfp)
+#
+#  list(APPEND dataman_targets zfpman)
+#endif()
+
 install(
   TARGETS ${dataman_targets} EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
