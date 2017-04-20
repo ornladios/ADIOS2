@@ -8,14 +8,14 @@
  *      Author: wfg
  */
 
+#include "ShmSystemV.h"
+
 #include <sys/shm.h>
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
 #include <utility>
 /// \endcond
-
-#include "ShmSystemV.h"
 
 namespace adios
 {
