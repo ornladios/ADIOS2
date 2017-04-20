@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 2.6.2)
 
+# CMake 3.0, Let the project command manage version variables.
+if(POLICY CMP0048)
+  cmake_policy(SET CMP0048 NEW)
+endif()
+
 project( googletest-distribution )
 
 enable_testing()
