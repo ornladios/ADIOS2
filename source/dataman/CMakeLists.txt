@@ -43,21 +43,27 @@ endif()
 
 add_library(dumpman SHARED DumpMan.cpp)
 target_link_libraries(dumpman PRIVATE dataman)
+list(APPEND dataman_targets dumpman)
 
 add_library(streamman SHARED StreamMan.cpp)
 target_link_libraries(streamman PRIVATE dataman cacheman zmq)
+list(APPEND dataman_targets streamman)
 
 add_library(mdtmman SHARED MdtmMan.cpp)
 target_link_libraries(mdtmman PRIVATE dataman cacheman streamman zmq)
+list(APPEND dataman_targets mdtmman)
 
 add_library(zmqman SHARED ZmqMan.cpp)
 target_link_libraries(zmqman PRIVATE dataman cacheman streamman zmq)
+list(APPEND dataman_targets zmqman)
 
 add_library(zfpman SHARED ZfpMan.cpp)
 target_link_libraries(zfpman PRIVATE dataman zfp)
+list(APPEND dataman_targets zfpman)
 
 add_library(temporalman SHARED TemporalMan.cpp)
 target_link_libraries(temporalman PRIVATE dataman)
+list(APPEND dataman_targets temporalman)
 
 install(
 <<<<<<< 3cc571b50c67adec8a481ab201f5437f1a8d923b
