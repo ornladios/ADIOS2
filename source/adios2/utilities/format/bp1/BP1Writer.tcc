@@ -19,6 +19,56 @@ namespace format
 
 // PUBLIC
 template <class T>
+BP1Writer::ResizeResult BP1Writer::ResizeBuffer(const Variable<T> &variable)
+{
+    size_t variableData =
+        GetVariableIndexSize(variable) + variable.PayLoadSize();
+    size_t requiredCapacity = variableData + m_Heap.m_DataPosition;
+
+    if (requiredCapacity > m_MaxBufferSize && m_MaxBufferSize > 0) // is set
+    {
+        if (m_Heap.GetDataSize() < m_MaxBufferSize)
+        {
+            m_Heap.ResizeData(m_MaxBufferSize);
+            return ResizeResult::FLUSH;
+        }
+    }
+}
+
+template <class T>
+void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
+{
+    Stats<typename TypeInfo<T>::ValueType> stats = GetStats(variable);
+
+    stats.TimeIndex = m_MetadataSet.TimeStep;
+    // Get new Index or point to existing index
+    bool isNew = true; // flag to check if variable is new
+    BP1Index &variableIndex =
+        GetBP1Index(variable.m_Name, m_MetadataSet.VarsIndices, isNew);
+    stats.MemberID = variableIndex.MemberID;
+
+    // write metadata header in data and extract offsets
+    stats.Offset = m_Heap.m_DataAbsolutePosition;
+    WriteVariableMetadataInData(variable, stats);
+    stats.PayloadOffset = m_Heap.m_DataAbsolutePosition;
+
+    // write to metadata  index
+    WriteVariableMetadataInIndex(variable, stats, isNew, variableIndex);
+
+    ++m_MetadataSet.DataPGVarsCount;
+}
+
+template <class T>
+void BP1Writer::WriteVariablePayload(const Variable<T> &variable) noexcept
+{
+    // EXPENSIVE part, might want to use threads if large, serial for now
+    CopyToBufferThreads(m_Heap.m_Data, m_Heap.m_DataPosition,
+                        variable.m_AppValues, variable.TotalSize(), m_Threads);
+    m_Heap.m_DataAbsolutePosition += variable.PayLoadSize();
+}
+
+// PRIVATE
+template <class T>
 size_t BP1Writer::GetVariableIndexSize(const Variable<T> &variable) const
     noexcept
 {
@@ -55,39 +105,6 @@ size_t BP1Writer::GetVariableIndexSize(const Variable<T> &variable) const
     // need to add transform characteristics
 }
 
-template <class T>
-void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
-{
-    Stats<typename TypeInfo<T>::ValueType> stats = GetStats(variable);
-
-    stats.TimeIndex = m_MetadataSet.TimeStep;
-    // Get new Index or point to existing index
-    bool isNew = true; // flag to check if variable is new
-    BP1Index &variableIndex =
-        GetBP1Index(variable.m_Name, m_MetadataSet.VarsIndices, isNew);
-    stats.MemberID = variableIndex.MemberID;
-
-    // write metadata header in data and extract offsets
-    stats.Offset = m_Heap.m_DataAbsolutePosition;
-    WriteVariableMetadataInData(variable, stats);
-    stats.PayloadOffset = m_Heap.m_DataAbsolutePosition;
-
-    // write to metadata  index
-    WriteVariableMetadataInIndex(variable, stats, isNew, variableIndex);
-
-    ++m_MetadataSet.DataPGVarsCount;
-}
-
-template <class T>
-void BP1Writer::WriteVariablePayload(const Variable<T> &variable) noexcept
-{
-    // EXPENSIVE part, might want to use threads if large, serial for now
-    CopyToBufferThreads(m_Heap.m_Data, m_Heap.m_DataPosition,
-                        variable.m_AppValues, variable.TotalSize(), m_Threads);
-    m_Heap.m_DataAbsolutePosition += variable.PayLoadSize();
-}
-
-// PRIVATE
 template <class T>
 BP1Writer::Stats<typename TypeInfo<T>::ValueType>
 BP1Writer::GetStats(const Variable<T> &variable) const noexcept

@@ -62,6 +62,8 @@ public:
      */
     BP1Base(MPI_Comm mpiComm, const bool debugMode);
 
+    virtual ~BP1Base() = default;
+
     /**
      * Checks if input name has .bp extension and returns a .bp directory name
      * @param name input (might or not have .bp)
@@ -79,6 +81,17 @@ public:
      */
     void OpenRankFiles(const std::string name, const std::string accessMode,
                        Transport &file) const;
+
+    /**
+     * Return type of the CheckAllocation function.
+     */
+    enum class ResizeResult
+    {
+        FAILURE,   //!< FAILURE, caught a std::bad_alloc
+        UNCHANGED, //!< UNCHANGED, no need to resize (sufficient capacity)
+        SUCCESS,   //!< SUCCESS, resize was successful
+        FLUSH      //!< FLUSH, need to flush to transports for current variable
+    };
 
 protected:
     /** might be used in large payload copies to buffer */

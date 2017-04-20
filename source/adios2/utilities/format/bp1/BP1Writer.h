@@ -43,51 +43,35 @@ public:
      */
     BP1Writer(MPI_Comm mpiComm, const bool debugMode = false);
 
-    /**
-     * Calculates the Process Index size in bytes according to the BP format,
-     * including list of method with no parameters (for now)
-     * @param name
-     * @param timeStepName
-     * @param numberOfTransports
-     * @return size of pg index
-     */
-    size_t GetProcessGroupIndexSize(const std::string name,
-                                    const std::string timeStepName,
-                                    const size_t numberOfTransports) const
-        noexcept;
+    virtual ~BP1Writer() = default;
 
     /**
      * Writes a process group index PGIndex and list of methods (from
-     * transports),
-     * done at Open or aggregation of new time step
-     * Version that operates on a single heap buffer and metadataset.
+     * transports). Done at Open or Advance.
      * @param isFortran
-     * @param name
+     * @param name group name, taking the rank
      * @param processID
      * @param transports
-     * @param buffer
-     * @param metadataSet
      */
     void WriteProcessGroupIndex(
         const bool isFortran, const std::string name, const uint32_t processID,
         const std::vector<std::shared_ptr<Transport>> &transports) noexcept;
 
     /**
-     * Returns the estimated variable index size
-     * @param group
-     * @param variableName
+     *
      * @param variable
-     * @param verbosity
-     * @return variable index size
+     * @return
+     * -1: allocation failed,
+     *  0: no allocation needed,
+     *  1: reallocation is sucessful
+     *  2: need a transport flush
      */
     template <class T>
-    size_t GetVariableIndexSize(const Variable<T> &variable) const noexcept;
+    ResizeResult ResizeBuffer(const Variable<T> &variable);
 
     /**
      * Write metadata for a given variable
      * @param variable
-     * @param heap
-     * @param metadataSet
      */
     template <class T>
     void WriteVariableMetadata(const Variable<T> &variable) noexcept;
@@ -96,16 +80,11 @@ public:
      * Expensive part this is only for heap buffers need to adapt to vector of
      * capsules
      * @param variable
-     * @param buffer
      */
     template <class T>
     void WriteVariablePayload(const Variable<T> &variable) noexcept;
 
-    /**
-     * Flattens data
-     * @param metadataSet
-     * @param buffer
-     */
+    /** Flattens data buffer */
     void Advance();
 
     /**
@@ -120,13 +99,33 @@ public:
     void Close(Transport &transport, bool &isFirstClose,
                const bool doAggregation) noexcept;
 
-    void DumpProfilingLogFile(
-        const std::string name, const unsigned int rank,
+    void WriteProfilingLogFile(
+        const std::string &name, const unsigned int rank,
         const std::vector<std::shared_ptr<Transport>> &transports) noexcept;
 
 private:
     /** BP format version */
     const std::uint8_t m_Version = 3;
+
+    /**
+     * Calculates the Process Index size in bytes according to the BP format,
+     * including list of method with no parameters (for now)
+     * @param name
+     * @param timeStepName
+     * @param numberOfTransports
+     * @return size of pg index
+     */
+    size_t GetProcessGroupIndexSize(const std::string name,
+                                    const std::string timeStepName,
+                                    const size_t numberOfTransports) const
+        noexcept;
+
+    /**
+     * Returns the estimated variable index size
+     * @param variable
+     */
+    template <class T>
+    size_t GetVariableIndexSize(const Variable<T> &variable) const noexcept;
 
     /**
      * Get variable statistics
@@ -277,6 +276,9 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
+    extern template BP1Writer::ResizeResult BP1Writer::ResizeBuffer(           \
+        const Variable<T> &variable) noexcept;                                 \
+                                                                               \
     extern template void BP1Writer::WriteVariablePayload(                      \
         const Variable<T> &variable) noexcept;                                 \
                                                                                \

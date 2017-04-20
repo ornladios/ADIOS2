@@ -156,12 +156,12 @@ void BP1Writer::Close(Transport &transport, bool &isFirstClose,
     }
 }
 
-void BP1Writer::DumpProfilingLogFile(
-    const std::string name, const unsigned int rank,
+void BP1Writer::WriteProfilingLogFile(
+    const std::string &name, const unsigned int rank,
     const std::vector<std::shared_ptr<Transport>> &transports) noexcept
 {
     const std::string fileName(GetDirectoryName(name) + "/profiling.log");
-    const std::string rankLog = GetRankProfilingLog(rank, transports);
+    const std::string rankLog(GetRankProfilingLog(rank, transports));
     m_BP1Aggregator.WriteProfilingLog(fileName, rankLog);
 }
 
@@ -447,6 +447,9 @@ std::string BP1Writer::GetRankProfilingLog(
 // Explicit instantiation of only public templates
 
 #define declare_template_instantiation(T)                                      \
+    template BP1Writer::ResizeResult BP1Writer::ResizeBuffer(                  \
+        const Variable<T> &variable);                                          \
+                                                                               \
     template void BP1Writer::WriteVariablePayload(                             \
         const Variable<T> &variable) noexcept;                                 \
                                                                                \

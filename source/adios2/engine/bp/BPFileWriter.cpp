@@ -273,7 +273,7 @@ void BPFileWriter::Close(const int transportIndex)
 
         if (allClose == true) // aggregate and write profiling.log
         {
-            m_BP1Writer.DumpProfilingLogFile(m_Name, m_RankMPI, m_Transports);
+            m_BP1Writer.WriteProfilingLogFile(m_Name, m_RankMPI, m_Transports);
         }
     }
 }
@@ -395,8 +395,8 @@ void BPFileWriter::InitTransports()
     {
         auto itProfile = parameters.find("profile_units");
         bool doProfiling = false;
-        Support::Resolutions resolution =
-            Support::Resolutions::s; // default is seconds
+        // default is seconds for this engine
+        Support::Resolutions resolution = Support::Resolutions::s;
         if (itProfile != parameters.end())
         {
             if (itProfile->second == "mus" ||
