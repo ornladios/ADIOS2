@@ -41,7 +41,10 @@ target_include_directories(adios2
     $<INSTALL_INTERFACE:include>
   PRIVATE ${ADIOS_SOURCE_DIR}/source
 )
-  
+
+find_package(Threads REQUIRED)
+target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+
 if(ADIOS_USE_DataMan)
   target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
