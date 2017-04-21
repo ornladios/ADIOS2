@@ -152,8 +152,10 @@ int DataManBase::put_end(const void *p_data, json &p_jmsg)
     m_profiling["manager_mbs"] =
         m_profiling["total_mb"].get<double>() /
         m_profiling["total_manager_time"].get<double>();
-    if (p_jmsg["compressed_size"] != nullptr)
+    if (p_jmsg["compressed_size"].is_number())
         p_jmsg["putbytes"] = p_jmsg["compressed_size"].get<size_t>();
+    else
+        p_jmsg.erase("compressed_size");
     put_next(p_data, p_jmsg);
     return 0;
 }
