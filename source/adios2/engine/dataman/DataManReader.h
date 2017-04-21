@@ -13,12 +13,12 @@
 
 #include <iostream> //std::cout << Needs to go
 
+#include <DataMan.h>
+
 #include "adios2/ADIOSConfig.h"
 #include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Engine.h"
 #include "adios2/utilities/format/bp1/BP1Writer.h"
-
-#include <DataMan.h>
 
 namespace adios
 {
@@ -100,13 +100,6 @@ public:
     void Close(const int transportIndex = -1);
 
 private:
-    capsule::STLVector
-        m_Heap; ///< heap capsule, contains data and metadata buffers
-    format::BP1Writer
-        m_BP1Writer; ///< format object will provide the required BP
-                     /// functionality to be applied on m_Buffer and
-    /// m_Transports
-
     bool m_DoRealTime = false;
     DataMan m_Man;
     std::function<void(const void *, std::string, std::string, std::string,

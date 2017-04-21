@@ -19,6 +19,7 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/IOChrono.h"
 
 namespace adios
@@ -34,11 +35,12 @@ namespace format
 struct BP1Index
 {
     std::vector<char> Buffer; ///< metadata variable index, start with 100Kb
-    std::uint64_t Count =
-        0; ///< number of characteristics sets (time and spatial aggregation)
-    const std::uint32_t MemberID;
+    /** number of characteristics sets (time and spatial aggregation) */
+    uint64_t Count = 0;
+    /** unique ID assigned to each variable for counter */
+    const uint32_t MemberID;
 
-    BP1Index(const std::uint32_t memberID) : MemberID{memberID}
+    BP1Index(const uint32_t memberID) : MemberID(memberID)
     {
         Buffer.reserve(500);
     }
@@ -49,9 +51,11 @@ struct BP1Index
  */
 struct BP1MetadataSet
 {
-    std::uint32_t
-        TimeStep; ///< current time step, updated with advance step, if
-    /// append it will be updated to last, starts with one in ADIOS1
+    /**
+     * updated with advance step, if append it will be updated to last,
+     * starts with one in ADIOS1
+     */
+    uint32_t TimeStep = 1;
 
     BP1Index PGIndex = BP1Index(0); ///< single buffer for PGIndex
 
@@ -59,24 +63,23 @@ struct BP1MetadataSet
     /** @brief key: variable name, value: bp metadata variable index */
     std::unordered_map<std::string, BP1Index> VarsIndices;
 
-    std::unordered_map<std::string, BP1Index>
-        AttributesIndices; ///< key: name, value: attribute bp index
+    /** @brief key: attribute name, value: bp metadata attribute index */
+    std::unordered_map<std::string, BP1Index> AttributesIndices;
 
     const unsigned int MiniFooterSize = 28; ///< from bpls reader
 
-    // PG (relative) positions in Data buffer to be updated
-    std::uint64_t DataPGCount = 0;
-    std::size_t DataPGLengthPosition = 0; ///< current PG initial ( relative )
-                                          /// position, needs to be updated in
-    /// every advance step or init
-    std::uint32_t DataPGVarsCount = 0; ///< variables in current PG
+    // PG (relative) positions in Data buffer, to be updated every advance step
+    // or init
+    /** number of current PGs */
+    uint64_t DataPGCount = 0;
+    /** current PG initial ( relative ) position in data buffer */
+    size_t DataPGLengthPosition = 0;
+    /** number of variables in current PG */
+    uint32_t DataPGVarsCount = 0;
+    /** current PG variable count ( relative ) position */
+    size_t DataPGVarsCountPosition = 0;
 
-    /**
-     * current PG variable count ( relative ) position, needs to be
-     * updated in very Advance
-     */
-    std::size_t DataPGVarsCountPosition = 0;
-
+    /** true: currently writing to a pg, false: no current pg */
     bool DataPGIsOpen = false;
 
     profiling::IOChrono Log; ///< object that takes buffering profiling info

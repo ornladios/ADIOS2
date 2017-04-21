@@ -25,10 +25,8 @@ BPFileWriter::BPFileWriter(ADIOS &adios, const std::string &name,
                            const Method &method)
 : Engine(adios, "BPFileWriter", name, accessMode, mpiComm, method,
          " BPFileWriter constructor (or call to ADIOS Open).\n"),
-  m_Heap(m_DebugMode), m_BP1Aggregator(m_MPIComm, m_DebugMode),
-  m_MaxBufferSize(m_Heap.m_Data.max_size())
+  m_BP1Writer(mpiComm, m_DebugMode)
 {
-    m_MetadataSet.TimeStep = 1; // to be compatible with ADIOS1.x
     Init();
 }
 
@@ -242,10 +240,7 @@ void BPFileWriter::Write(const std::string & /*variableName*/,
 {
 }
 
-void BPFileWriter::Advance(float /*timeout_sec*/)
-{
-    m_BP1Writer.Advance(m_MetadataSet, m_Heap);
-}
+void BPFileWriter::Advance(float /*timeout_sec*/) { m_BP1Writer.Advance(); }
 
 void BPFileWriter::Close(const int transportIndex)
 {
@@ -253,19 +248,18 @@ void BPFileWriter::Close(const int transportIndex)
     if (transportIndex == -1)
     {
         for (auto &transport : m_Transports)
-        { // by reference or value or it doesn't matter?
-            m_BP1Writer.Close(m_MetadataSet, m_Heap, *transport, m_IsFirstClose,
-                              false); // false: not using aggregation for now
+        {
+            // false: not using aggregation for now
+            m_BP1Writer.Close(*transport, m_IsFirstClose, false);
         }
     }
     else
     {
-        m_BP1Writer.Close(m_MetadataSet, m_Heap, *m_Transports[transportIndex],
-                          m_IsFirstClose,
-                          false); // false: not using aggregation for now
+        // false: not using aggregation for now
+        m_BP1Writer.Close(*m_Transports[transportIndex], m_IsFirstClose, false);
     }
 
-    if (m_MetadataSet.Log.IsActive == true)
+    if (m_BP1Writer.m_MetadataSet.Log.IsActive == true)
     {
         bool allClose = true;
         for (auto &transport : m_Transports)
@@ -276,14 +270,10 @@ void BPFileWriter::Close(const int transportIndex)
                 break;
             }
         }
+
         if (allClose == true) // aggregate and write profiling.log
         {
-            const std::string rankLog = m_BP1Writer.GetRankProfilingLog(
-                m_RankMPI, m_MetadataSet, m_Transports);
-
-            const std::string fileName(m_BP1Writer.GetDirectoryName(m_Name) +
-                                       "/profiling.log");
-            m_BP1Aggregator.WriteProfilingLog(fileName, rankLog);
+            m_BP1Writer.WriteProfilingLogFile(m_Name, m_RankMPI, m_Transports);
         }
     }
 }
@@ -291,64 +281,10 @@ void BPFileWriter::Close(const int transportIndex)
 // PRIVATE FUNCTIONS
 void BPFileWriter::InitParameters()
 {
-    auto itGrowthFactor = m_Method.m_Parameters.find("buffer_growth");
-    if (itGrowthFactor != m_Method.m_Parameters.end())
-    {
-        const float growthFactor = std::stof(itGrowthFactor->second);
-        if (m_DebugMode == true)
-        {
-            if (growthFactor == 1.f)
-            {
-                throw std::invalid_argument("ERROR: buffer_growth argument "
-                                            "can't be less of equal than 1, "
-                                            "in " +
-                                            m_EndMessage + "\n");
-            }
-        }
-
-        m_BP1Writer.m_GrowthFactor = growthFactor;
-        m_GrowthFactor = growthFactor; // float
-    }
-
-    auto itMaxBufferSize = m_Method.m_Parameters.find("max_size_MB");
-    if (itMaxBufferSize != m_Method.m_Parameters.end())
-    {
-        if (m_DebugMode == true)
-        {
-            if (m_GrowthFactor <= 1.f)
-            {
-                throw std::invalid_argument(
-                    "ERROR: Method buffer_growth argument "
-                    "can't be less of equal than 1, in " +
-                    m_EndMessage + "\n");
-            }
-        }
-
-        m_MaxBufferSize = std::stoul(itMaxBufferSize->second) *
-                          1048576; // convert from MB to bytes
-    }
-
-    auto itVerbosity = m_Method.m_Parameters.find("verbose");
-    if (itVerbosity != m_Method.m_Parameters.end())
-    {
-        int verbosity = std::stoi(itVerbosity->second);
-        if (m_DebugMode == true)
-        {
-            if (verbosity < 0 || verbosity > 5)
-            {
-                throw std::invalid_argument(
-                    "ERROR: Method verbose argument must be an "
-                    "integer in the range [0,5], in call to "
-                    "Open or Engine constructor\n");
-            }
-        }
-        m_BP1Writer.m_Verbosity = verbosity;
-    }
-
     auto itProfile = m_Method.m_Parameters.find("profile_units");
     if (itProfile != m_Method.m_Parameters.end())
     {
-        auto &log = m_MetadataSet.Log;
+        auto &log = m_BP1Writer.m_MetadataSet.Log;
 
         if (itProfile->second == "mus" || itProfile->second == "microseconds")
         {
@@ -384,6 +320,60 @@ void BPFileWriter::InitParameters()
 
         log.IsActive = true;
     }
+
+    auto itGrowthFactor = m_Method.m_Parameters.find("buffer_growth");
+    if (itGrowthFactor != m_Method.m_Parameters.end())
+    {
+        const float growthFactor = std::stof(itGrowthFactor->second);
+        if (m_DebugMode == true)
+        {
+            if (growthFactor == 1.f)
+            {
+                throw std::invalid_argument("ERROR: buffer_growth argument "
+                                            "can't be less of equal than 1, "
+                                            "in " +
+                                            m_EndMessage + "\n");
+            }
+        }
+
+        m_BP1Writer.m_GrowthFactor = growthFactor;
+    }
+
+    auto itMaxBufferSize = m_Method.m_Parameters.find("max_size_MB");
+    if (itMaxBufferSize != m_Method.m_Parameters.end())
+    {
+        if (m_DebugMode == true)
+        {
+            if (m_GrowthFactor <= 1.f)
+            {
+                throw std::invalid_argument(
+                    "ERROR: Method buffer_growth argument "
+                    "can't be less of equal than 1, in " +
+                    m_EndMessage + "\n");
+            }
+        }
+
+        // convert from MB to bytes
+        m_BP1Writer.m_MaxBufferSize =
+            std::stoul(itMaxBufferSize->second) * 1048576;
+    }
+
+    auto itVerbosity = m_Method.m_Parameters.find("verbose");
+    if (itVerbosity != m_Method.m_Parameters.end())
+    {
+        int verbosity = std::stoi(itVerbosity->second);
+        if (m_DebugMode == true)
+        {
+            if (verbosity < 0 || verbosity > 5)
+            {
+                throw std::invalid_argument(
+                    "ERROR: Method verbose argument must be an "
+                    "integer in the range [0,5], in call to "
+                    "Open or Engine constructor\n");
+            }
+        }
+        m_BP1Writer.m_Verbosity = verbosity;
+    }
 }
 
 void BPFileWriter::InitTransports()
@@ -399,12 +389,14 @@ void BPFileWriter::InitTransports()
         }
     }
 
+    bool setBuffer = false;
+
     for (const auto &parameters : m_Method.m_TransportParameters)
     {
         auto itProfile = parameters.find("profile_units");
         bool doProfiling = false;
-        Support::Resolutions resolution =
-            Support::Resolutions::s; // default is seconds
+        // default is seconds for this engine
+        Support::Resolutions resolution = Support::Resolutions::s;
         if (itProfile != parameters.end())
         {
             if (itProfile->second == "mus" ||
@@ -460,6 +452,7 @@ void BPFileWriter::InitTransports()
 
                 m_BP1Writer.OpenRankFiles(m_Name, m_AccessMode, *file);
                 m_Transports.push_back(std::move(file));
+                setBuffer = true;
             }
             else if (itLibrary->second == "FILE*" ||
                      itLibrary->second == "stdio")
@@ -473,6 +466,7 @@ void BPFileWriter::InitTransports()
 
                 m_BP1Writer.OpenRankFiles(m_Name, m_AccessMode, *file);
                 m_Transports.push_back(std::move(file));
+                setBuffer = true;
             }
             else if (itLibrary->second == "fstream" ||
                      itLibrary->second == "std::fstream")
@@ -487,6 +481,7 @@ void BPFileWriter::InitTransports()
 
                 m_BP1Writer.OpenRankFiles(m_Name, m_AccessMode, *file);
                 m_Transports.push_back(std::move(file));
+                setBuffer = true;
             }
             else if (itLibrary->second == "MPI_File" ||
                      itLibrary->second == "MPI-IO")
@@ -513,13 +508,27 @@ void BPFileWriter::InitTransports()
             }
         }
     }
+
+    if (setBuffer == false)
+    {
+        if (m_DebugMode == true)
+        {
+            throw std::invalid_argument(
+                "ERROR: file transport not declared in Method "
+                "need call to Method.AddTransport, in " +
+                m_Name + m_EndMessage);
+        }
+    }
+
+    // initial size is 16KB, memory is initialized to zero
+    m_BP1Writer.m_Heap.ResizeData(16777216);
 }
 
 void BPFileWriter::InitProcessGroup()
 {
-    if (m_MetadataSet.Log.IsActive == true)
+    if (m_BP1Writer.m_MetadataSet.Log.IsActive == true)
     {
-        m_MetadataSet.Log.Timers[0].SetInitialTime();
+        m_BP1Writer.m_MetadataSet.Log.Timers[0].SetInitialTime();
     }
 
     if (m_AccessMode == "a")
@@ -530,34 +539,19 @@ void BPFileWriter::InitProcessGroup()
 
     WriteProcessGroupIndex();
 
-    if (m_MetadataSet.Log.IsActive == true)
+    if (m_BP1Writer.m_MetadataSet.Log.IsActive == true)
     {
-        m_MetadataSet.Log.Timers[0].SetTime();
+        m_BP1Writer.m_MetadataSet.Log.Timers[0].SetTime();
     }
 }
 
 void BPFileWriter::WriteProcessGroupIndex()
 {
-    // pg = process group
-    //    const std::size_t pgIndexSize = m_BP1Writer.GetProcessGroupIndexSize(
-    //    std::to_string( m_RankMPI ),
-    //                                                                          std::to_string(
-    //                                                                          m_MetadataSet.TimeStep
-    //                                                                          ),
-    //                                                                          m_Transports.size()
-    //                                                                          );
-    // metadata
-    // GrowBuffer( pgIndexSize, m_GrowthFactor, m_MetadataSet.PGIndex );
-
-    // data? Need to be careful, maybe add some trailing tolerance in variable
-    // ????
-    // GrowBuffer( pgIndexSize, m_GrowthFactor, m_Buffer.m_Data );
-
     const bool isFortran = (m_HostLanguage == "Fortran") ? true : false;
 
     m_BP1Writer.WriteProcessGroupIndex(isFortran, std::to_string(m_RankMPI),
-                                       static_cast<std::uint32_t>(m_RankMPI),
-                                       m_Transports, m_Heap, m_MetadataSet);
+                                       static_cast<uint32_t>(m_RankMPI),
+                                       m_Transports);
 }
 
 } // end namespace adios
