@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef COMPRESSMAN_H_
-#define COMPRESSMAN_H_
+#ifndef DATAMAN_COMPRESSMAN_H_
+#define DATAMAN_COMPRESSMAN_H_
 
 #include "DataMan.h"
 
@@ -17,7 +17,7 @@ class CompressMan : public DataManBase
 {
 public:
     CompressMan() = default;
-    ~CompressMan() = default;
+    virtual ~CompressMan() = default;
     virtual std::string type() { return "Compress"; }
 };
 

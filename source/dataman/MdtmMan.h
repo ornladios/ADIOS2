@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef MDTMMAN_H_
-#define MDTMMAN_H_
+#ifndef DATAMAN_MDTMMAN_H_
+#define DATAMAN_MDTMMAN_H_
 
 #include "StreamMan.h"
 

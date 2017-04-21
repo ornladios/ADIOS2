@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef DUMPMAN_H_
-#define DUMPMAN_H_
+#ifndef DATAMAN_DUMPMAN_H_
+#define DATAMAN_DUMPMAN_H_
 
 #include "DataMan.h"
 

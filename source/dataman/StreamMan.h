@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef STREAMMAN_H_
-#define STREAMMAN_H_
+#ifndef DATAMAN_STREAMMAN_H_
+#define DATAMAN_STREAMMAN_H_
 
 #include "CacheMan.h"
 

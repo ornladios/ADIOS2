@@ -30,9 +30,8 @@ StreamMan::~StreamMan()
 
 int StreamMan::init(json p_jmsg)
 {
-    if (check_json(p_jmsg,
-                   {"stream_mode", "remote_ip", "local_ip", "remote_port",
-                    "local_port"},
+    if (check_json(p_jmsg, {"stream_mode", "remote_ip", "local_ip",
+                            "remote_port", "local_port"},
                    "StreamMan"))
     {
         m_stream_mode = p_jmsg["stream_mode"];

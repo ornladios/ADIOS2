@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef TEMPORALMAN_H_
-#define TEMPORALMAN_H_
+#ifndef DATAMAN_TEMPORALMAN_H_
+#define DATAMAN_TEMPORALMAN_H_
 
 #include "CompressMan.h"
 

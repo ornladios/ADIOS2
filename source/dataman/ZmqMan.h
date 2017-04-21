@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef ZMQMAN_H_
-#define ZMQMAN_H_
+#ifndef DATAMAN_ZMQMAN_H_
+#define DATAMAN_ZMQMAN_H_
 
 #include "StreamMan.h"
 

@@ -14,12 +14,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "zmq.h"
+#include <zmq.h>
 
 MdtmMan::~MdtmMan()
 {
     if (zmq_ipc_req)
+    {
         zmq_close(zmq_ipc_req);
+    }
 }
 
 int MdtmMan::init(json p_jmsg)
@@ -27,13 +29,13 @@ int MdtmMan::init(json p_jmsg)
 
     StreamMan::init(p_jmsg);
 
-    if (p_jmsg["pipe_prefix"] == nullptr)
+    if (p_jmsg["pipe_prefix"].is_string())
     {
-        pipe_desc["pipe_prefix"] = "/tmp/MdtmManPipes/";
+        pipe_desc["pipe_prefix"] = p_jmsg["pipe_prefix"].get<std::string>();
     }
     else
     {
-        pipe_desc["pipe_prefix"] = p_jmsg["pipe_prefix"];
+        pipe_desc["pipe_prefix"] = "/tmp/MdtmManPipes/";
     }
 
     pipe_desc["operation"] = "init";
@@ -69,15 +71,14 @@ int MdtmMan::init(json p_jmsg)
         char buffer_return[10];
         zmq_send(zmq_ipc_req, pipe_desc.dump().c_str(),
                  pipe_desc.dump().length(), 0);
-        zmq_recv(zmq_ipc_req, buffer_return, 10, 0);
+        zmq_recv(zmq_ipc_req, buffer_return, sizeof(buffer_return), 0);
     }
 
     // Pipes
     mkdir(pipe_desc["pipe_prefix"].get<std::string>().c_str(), 0755);
-    for (int i = 0; i < pipe_desc["pipe_names"].size(); i++)
+    for (auto i : pipe_desc["pipe_names"].get<std::vector<std::string>>())
     {
-        std::string filename = pipe_desc["pipe_prefix"].get<std::string>() +
-                               pipe_desc["pipe_names"][i].get<std::string>();
+        std::string filename = pipe_desc["pipe_prefix"].get<std::string>() + i;
         mkfifo(filename.c_str(), 0666);
     }
 
@@ -113,7 +114,7 @@ int MdtmMan::put(const void *p_data, json p_jmsg)
     std::string dtype = p_jmsg["dtype"];
 
     int priority = 100;
-    if (p_jmsg["priority"] != nullptr)
+    if (p_jmsg["priority"].is_number_integer())
     {
         priority = p_jmsg["priority"].get<int>();
     }
@@ -167,7 +168,7 @@ void MdtmMan::on_recv(json jmsg)
 
     // push new request
     jqueue.push(jmsg);
-    bqueue.push(NULL);
+    bqueue.push(nullptr);
     iqueue.push(0);
 
     // for flush
@@ -192,12 +193,12 @@ void MdtmMan::on_recv(json jmsg)
         {
             // allocate buffer
             size_t putbytes = jqueue.front()["putbytes"].get<size_t>();
-            if (bqueue.front() == NULL)
+            if (!bqueue.front())
                 bqueue.front() = malloc(putbytes);
 
             // determine the pipe for the head request
             json msg = jqueue.front();
-            if (msg == nullptr)
+            if (!msg)
                 break;
             int pipeindex = 0;
             for (int i = 0; i < pipenames.size(); i++)
@@ -214,8 +215,9 @@ void MdtmMan::on_recv(json jmsg)
             putbytes = msg["putbytes"].get<int>();
             while (s < putbytes)
             {
-                int ret = read(pipes[pipeindex], ((char *)bqueue.front()) + s,
-                               putbytes - s);
+                int ret =
+                    read(pipes[pipeindex],
+                         static_cast<char *>(bqueue.front()) + s, putbytes - s);
                 if (ret > 0)
                 {
                     s += ret;

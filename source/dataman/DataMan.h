@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef DATAMAN_H_
-#define DATAMAN_H_
+#ifndef DATAMAN_DATAMAN_H_
+#define DATAMAN_DATAMAN_H_
 
 #include "DataManBase.h"
 
@@ -17,6 +17,7 @@ class DataMan : public DataManBase
 {
 public:
     DataMan() = default;
+    virtual ~DataMan() = default;
     virtual int init(json p_jmsg);
     virtual int put(const void *p_data, json p_jmsg);
     virtual int get(void *p_data, json &p_jmsg);

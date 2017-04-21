@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef ZFPMAN_H_
-#define ZFPMAN_H_
+#ifndef DATAMAN_ZFPMAN_H_
+#define DATAMAN_ZFPMAN_H_
 
 #include "CompressMan.h"
 

@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#ifndef CACHEMAN_H_
-#define CACHEMAN_H_
+#ifndef DATAMAN_CACHEMAN_H_
+#define DATAMAN_CACHEMAN_H_
 
 #include "DataMan.h"
 

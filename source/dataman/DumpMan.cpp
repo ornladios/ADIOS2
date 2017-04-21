@@ -12,7 +12,7 @@
 
 int DumpMan::init(json p_jmsg)
 {
-    if (p_jmsg["dumping"] != nullptr)
+    if (p_jmsg["dumping"].is_boolean())
     {
         m_dumping = p_jmsg["dumping"].get<bool>();
     }
@@ -26,7 +26,11 @@ int DumpMan::put(const void *p_data, json p_jmsg)
 
     if (!m_dumping)
     {
-        return 0;
+        return 1;
+    }
+    if (!check_json(p_jmsg, {"doid", "var", "dtype", "putshape"}))
+    {
+        return -1;
     }
 
     std::string doid = p_jmsg["doid"];
@@ -50,8 +54,7 @@ int DumpMan::put(const void *p_data, json p_jmsg)
 
     const void *data_to_dump;
 
-    std::vector<char> data;
-    data.resize(putbytes);
+    std::vector<char> data(putbytes);
 
     if (auto_transform(p_data, data.data(), p_jmsg))
     {
@@ -62,12 +65,17 @@ int DumpMan::put(const void *p_data, json p_jmsg)
         data_to_dump = p_data;
     }
 
-    if (dtype == "float")
-        for (size_t i = 0; i < numbers_to_print; i++)
-            std::cout << ((float *)data_to_dump)[i] << " ";
-    if (dtype == "double")
-        for (size_t i = 0; i < numbers_to_print; i++)
-            std::cout << ((double *)data_to_dump)[i] << " ";
+    for (size_t i = 0; i < numbers_to_print; i++)
+    {
+        if (dtype == "float")
+        {
+            std::cout << static_cast<const float *>(data_to_dump)[i] << " ";
+        }
+        if (dtype == "double")
+        {
+            std::cout << static_cast<const double *>(data_to_dump)[i] << " ";
+        }
+    }
 
     std::cout << std::endl;
     put_end(p_data, p_jmsg);

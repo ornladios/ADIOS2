@@ -153,9 +153,13 @@ int DataManBase::put_end(const void *p_data, json &p_jmsg)
         m_profiling["total_mb"].get<double>() /
         m_profiling["total_manager_time"].get<double>();
     if (p_jmsg["compressed_size"].is_number())
+    {
         p_jmsg["putbytes"] = p_jmsg["compressed_size"].get<size_t>();
+    }
     else
+    {
         p_jmsg.erase("compressed_size");
+    }
     put_next(p_data, p_jmsg);
     return 0;
 }
@@ -336,4 +340,163 @@ std::shared_ptr<DataManBase> DataManBase::get_man(std::string method)
         logging(ex.what());
         return nullptr;
     }
+}
+
+void DataManBase::logging(std::string p_msg, std::string p_man,
+                          std::ostream &out)
+{
+    if (p_man == "")
+        p_man = name();
+    out << "[";
+    out << p_man;
+    out << "]";
+    out << " ";
+    out << p_msg;
+    out << std::endl;
+}
+
+bool DataManBase::check_json(json p_jmsg, std::vector<std::string> p_strings,
+                             std::string p_man)
+{
+    if (p_man == "")
+        p_man = name();
+    for (auto i : p_strings)
+    {
+        if (p_jmsg[i] == nullptr)
+        {
+            if (p_man != "")
+            {
+                logging("JSON key " + i + " not found!", p_man);
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
+size_t DataManBase::product(size_t *shape)
+{
+    size_t s = 1;
+    if (shape)
+    {
+        for (size_t i = 1; i <= shape[0]; i++)
+        {
+            s *= shape[i];
+        }
+    }
+    return s;
+}
+
+size_t DataManBase::product(std::vector<size_t> shape, size_t size)
+{
+    return accumulate(shape.begin(), shape.end(), size,
+                      std::multiplies<size_t>());
+}
+
+size_t DataManBase::dsize(std::string dtype)
+{
+    if (dtype == "char")
+        return sizeof(char);
+    if (dtype == "short")
+        return sizeof(short);
+    if (dtype == "int")
+        return sizeof(int);
+    if (dtype == "long")
+        return sizeof(long);
+    if (dtype == "unsigned char")
+        return sizeof(unsigned char);
+    if (dtype == "unsigned short")
+        return sizeof(unsigned short);
+    if (dtype == "unsigned int")
+        return sizeof(unsigned int);
+    if (dtype == "unsigned long")
+        return sizeof(unsigned long);
+    if (dtype == "float")
+        return sizeof(float);
+    if (dtype == "double")
+        return sizeof(double);
+    if (dtype == "long double")
+        return sizeof(long double);
+    if (dtype == "std::complex<float>" or dtype == "complex<float>")
+        return sizeof(std::complex<float>);
+    if (dtype == "std::complex<double>")
+        return sizeof(std::complex<double>);
+
+    if (dtype == "int8_t")
+        return sizeof(int8_t);
+    if (dtype == "uint8_t")
+        return sizeof(uint8_t);
+    if (dtype == "int16_t")
+        return sizeof(int16_t);
+    if (dtype == "uint16_t")
+        return sizeof(uint16_t);
+    if (dtype == "int32_t")
+        return sizeof(int32_t);
+    if (dtype == "uint32_t")
+        return sizeof(uint32_t);
+    if (dtype == "int64_t")
+        return sizeof(int64_t);
+    if (dtype == "uint64_t")
+        return sizeof(uint64_t);
+    return 0;
+}
+
+nlohmann::json DataManBase::atoj(unsigned int *array)
+{
+    json j;
+    if (array)
+    {
+        if (array[0] > 0)
+        {
+            j = {array[1]};
+            for (unsigned int i = 2; i <= array[0]; i++)
+            {
+                j.insert(j.end(), array[i]);
+            }
+        }
+    }
+    return j;
+}
+
+int DataManBase::closest(int v, json j, bool up)
+{
+    int s = 100, k = 0, t;
+    for (unsigned int i = 0; i < j.size(); i++)
+    {
+        if (up)
+            t = j[i].get<int>() - v;
+        else
+            t = v - j[i].get<int>();
+        if (t >= 0 && t < s)
+        {
+            s = t;
+            k = i;
+        }
+    }
+    return k;
+}
+
+void DataManBase::check_shape(json &p_jmsg)
+{
+    std::vector<size_t> varshape;
+    if (check_json(p_jmsg, {"varshape"}))
+    {
+        varshape = p_jmsg["varshape"].get<std::vector<size_t>>();
+    }
+    else
+    {
+        return;
+    }
+    if (p_jmsg["putshape"] == nullptr)
+    {
+        p_jmsg["putshape"] = varshape;
+    }
+    if (p_jmsg["offset"] == nullptr)
+    {
+        p_jmsg["offset"] = std::vector<size_t>(varshape.size(), 0);
+    }
+    p_jmsg["putbytes"] = product(p_jmsg["putshape"].get<std::vector<size_t>>(),
+                                 dsize(p_jmsg["dtype"].get<std::string>()));
+    p_jmsg["varbytes"] =
+        product(varshape, dsize(p_jmsg["dtype"].get<std::string>()));
 }
