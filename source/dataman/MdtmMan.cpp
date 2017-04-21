@@ -194,12 +194,16 @@ void MdtmMan::on_recv(json jmsg)
             // allocate buffer
             size_t putbytes = jqueue.front()["putbytes"].get<size_t>();
             if (!bqueue.front())
+            {
                 bqueue.front() = malloc(putbytes);
+            }
 
             // determine the pipe for the head request
             json msg = jqueue.front();
-            if (!msg)
+            if (msg == nullptr)
+            {
                 break;
+            }
             int pipeindex = 0;
             for (int i = 0; i < pipenames.size(); i++)
             {
@@ -237,7 +241,9 @@ void MdtmMan::on_recv(json jmsg)
             {
                 m_cache.put(bqueue.front(), msg);
                 if (bqueue.front())
+                {
                     free(bqueue.front());
+                }
                 bqueue.pop();
                 iqueue.pop();
                 jqueue.pop();

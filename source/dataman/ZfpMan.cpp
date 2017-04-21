@@ -30,7 +30,9 @@ int ZfpMan::put(const void *p_data, json p_jmsg)
 
     put_end(compressed_data, p_jmsg);
     if (compressed_data)
+    {
         free(compressed_data);
+    }
     return 0;
 }
 

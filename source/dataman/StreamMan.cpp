@@ -20,12 +20,18 @@
 StreamMan::~StreamMan()
 {
     if (zmq_meta)
+    {
         zmq_close(zmq_meta);
+    }
     if (zmq_context)
+    {
         zmq_ctx_destroy(zmq_context);
+    }
     zmq_meta_rep_thread_active = false;
     if (zmq_meta_rep_thread.joinable())
+    {
         zmq_meta_rep_thread.join();
+    }
 }
 
 int StreamMan::init(json p_jmsg)
@@ -46,12 +52,18 @@ int StreamMan::init(json p_jmsg)
 
         m_tolerance.assign(m_num_channels, 0);
         m_priority.assign(m_num_channels, 100);
-        if (p_jmsg["num_channels"] != nullptr)
-            m_num_channels = p_jmsg["num_channels"];
+        if (p_jmsg["num_channels"].is_number_integer)
+        {
+            m_num_channels = p_jmsg["num_channels"].get<int>();
+        }
         if (p_jmsg["tolerance"] != nullptr)
+        {
             m_tolerance = p_jmsg["tolerance"].get<std::vector<int>>();
+        }
         if (p_jmsg["priority"] != nullptr)
+        {
             m_priority = p_jmsg["priority"].get<std::vector<int>>();
+        }
 
         if (!zmq_context)
         {

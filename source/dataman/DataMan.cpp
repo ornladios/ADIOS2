@@ -36,7 +36,9 @@ void DataMan::add_stream(json p_jmsg)
     std::string method;
 
     if (p_jmsg["method"].is_string())
+    {
         method = p_jmsg["method"];
+    }
 
     logging("Streaming method " + method + " added");
 

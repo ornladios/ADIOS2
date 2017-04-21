@@ -346,7 +346,9 @@ void DataManBase::logging(std::string p_msg, std::string p_man,
                           std::ostream &out)
 {
     if (p_man == "")
+    {
         p_man = name();
+    }
     out << "[";
     out << p_man;
     out << "]";
@@ -359,7 +361,9 @@ bool DataManBase::check_json(json p_jmsg, std::vector<std::string> p_strings,
                              std::string p_man)
 {
     if (p_man == "")
+    {
         p_man = name();
+    }
     for (auto i : p_strings)
     {
         if (p_jmsg[i] == nullptr)
@@ -396,48 +400,90 @@ size_t DataManBase::product(std::vector<size_t> shape, size_t size)
 size_t DataManBase::dsize(std::string dtype)
 {
     if (dtype == "char")
+    {
         return sizeof(char);
+    }
     if (dtype == "short")
+    {
         return sizeof(short);
+    }
     if (dtype == "int")
+    {
         return sizeof(int);
+    }
     if (dtype == "long")
+    {
         return sizeof(long);
+    }
     if (dtype == "unsigned char")
+    {
         return sizeof(unsigned char);
+    }
     if (dtype == "unsigned short")
+    {
         return sizeof(unsigned short);
+    }
     if (dtype == "unsigned int")
+    {
         return sizeof(unsigned int);
+    }
     if (dtype == "unsigned long")
+    {
         return sizeof(unsigned long);
+    }
     if (dtype == "float")
+    {
         return sizeof(float);
+    }
     if (dtype == "double")
+    {
         return sizeof(double);
+    }
     if (dtype == "long double")
+    {
         return sizeof(long double);
+    }
     if (dtype == "std::complex<float>" or dtype == "complex<float>")
+    {
         return sizeof(std::complex<float>);
+    }
     if (dtype == "std::complex<double>")
+    {
         return sizeof(std::complex<double>);
+    }
 
     if (dtype == "int8_t")
+    {
         return sizeof(int8_t);
+    }
     if (dtype == "uint8_t")
+    {
         return sizeof(uint8_t);
+    }
     if (dtype == "int16_t")
+    {
         return sizeof(int16_t);
+    }
     if (dtype == "uint16_t")
+    {
         return sizeof(uint16_t);
+    }
     if (dtype == "int32_t")
+    {
         return sizeof(int32_t);
+    }
     if (dtype == "uint32_t")
+    {
         return sizeof(uint32_t);
+    }
     if (dtype == "int64_t")
+    {
         return sizeof(int64_t);
+    }
     if (dtype == "uint64_t")
+    {
         return sizeof(uint64_t);
+    }
     return 0;
 }
 
@@ -464,9 +510,13 @@ int DataManBase::closest(int v, json j, bool up)
     for (unsigned int i = 0; i < j.size(); i++)
     {
         if (up)
+        {
             t = j[i].get<int>() - v;
+        }
         else
+        {
             t = v - j[i].get<int>();
+        }
         if (t >= 0 && t < s)
         {
             s = t;
