@@ -3,4 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(adios2)
+add_executable(TestBPWrite TestBPWrite.cpp)
+target_link_libraries(TestBPWrite adios2 gtest gtest_main)
+add_test(NAME adios2::engine::bp::write COMMAND TestBPWrite)
