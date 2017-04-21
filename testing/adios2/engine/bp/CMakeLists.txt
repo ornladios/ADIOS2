@@ -3,6 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_executable(TestBPWrite TestBPWrite.cpp)
-target_link_libraries(TestBPWrite adios2 gtest gtest_main)
-add_test(NAME adios2::engine::bp::write COMMAND TestBPWrite)
+add_executable(TestBPWriteRead TestBPWriteRead.cpp)
+target_link_libraries(TestBPWriteRead adios2 gtest gtest_main)
+add_test(NAME adios2::engine::bp::write_read COMMAND TestBPWriteRead)
