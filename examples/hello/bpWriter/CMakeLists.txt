@@ -13,7 +13,3 @@ else()
   add_executable(hello_bpWriter helloBPWriter_nompi.cpp)
 endif()
 target_link_libraries(hello_bpWriter adios2)
-
-if(ADIOS_BUILD_TESTING)
-  add_test( NAME Example::hello::bp::write COMMAND hello_bpWriter)
-endif()

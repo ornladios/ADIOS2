@@ -13,7 +13,3 @@ else()
   add_executable(hello_datamanWriter helloDataManWriter_nompi.cpp)
 endif()
 target_link_libraries(hello_datamanWriter adios2)
-
-if(ADIOS_BUILD_TESTING)
-  add_test(NAME Example::hello::dataman::write COMMAND hello_datamanWriter)
-endif()

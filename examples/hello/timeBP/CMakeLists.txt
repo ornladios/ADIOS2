@@ -13,7 +13,3 @@ else()
   add_executable(hello_timeBPWriter timeBPWriter_nompi.cpp)
 endif()
 target_link_libraries(hello_timeBPWriter adios2)
-
-if(ADIOS_BUILD_TESTING)
-  add_test(NAME Example::hello::timeBP::write COMMAND hello_timeBPWriter)
-endif()
