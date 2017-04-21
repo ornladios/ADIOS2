@@ -5,7 +5,11 @@
 
 set(dataman_targets)
 
-add_library(dataman DataMan.cpp DataManBase.cpp)
+add_library(dataman
+  DataManBase.cpp DataManBase.h
+  DataMan.cpp DataMan.h
+  CacheMan.cpp CacheMan.h
+)
 target_include_directories(dataman PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(dataman PRIVATE adios2sys)
 list(APPEND dataman_targets dataman)
