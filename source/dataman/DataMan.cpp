@@ -35,8 +35,10 @@ void DataMan::add_stream(json p_jmsg)
 
     std::string method;
 
-    if (p_jmsg["method"] != nullptr)
+    if (p_jmsg["method"].is_string())
+    {
         method = p_jmsg["method"];
+    }
 
     logging("Streaming method " + method + " added");
 
@@ -61,7 +63,10 @@ void DataMan::add_stream(json p_jmsg)
         man->init(p_jmsg);
         this->add_next(method, man);
     }
-    add_man_to_path("zfp", method);
+    if (p_jmsg["compression_method"].is_string())
+    {
+        add_man_to_path(p_jmsg["compression_method"], method, p_jmsg);
+    }
 }
 
 void DataMan::flush() { flush_next(); }
