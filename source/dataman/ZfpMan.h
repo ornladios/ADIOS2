@@ -26,6 +26,8 @@ public:
     void *decompress(void *p_data, json p_jmsg);
     virtual void transform(const void *p_in, void *p_out, json &p_jmsg);
     std::string name() { return "ZfpMan"; }
+private:
+    double m_compression_rate = 8;
 };
 
 extern "C" DataManBase *getMan() { return new ZfpMan; }

@@ -12,7 +12,14 @@
 
 #include <zfp.h>
 
-int ZfpMan::init(json p_jmsg) { return 0; }
+int ZfpMan::init(json p_jmsg)
+{
+    if (p_jmsg["compression_rate"].is_number())
+    {
+        m_compression_rate = p_jmsg["compression_rate"].get<double>();
+    }
+    return 0;
+}
 
 int ZfpMan::put(const void *p_data, json p_jmsg)
 {
@@ -21,9 +28,9 @@ int ZfpMan::put(const void *p_data, json p_jmsg)
     void *compressed_data = NULL;
     if (check_json(p_jmsg, {"doid", "var", "dtype", "putshape"}, "ZfpMan"))
     {
-        if (p_jmsg["compression_rate"] == nullptr)
+        if (not p_jmsg["compression_rate"].is_number())
         {
-            p_jmsg["compression_rate"] = 4;
+            p_jmsg["compression_rate"] = m_compression_rate;
         }
         compressed_data = compress(const_cast<void *>(p_data), p_jmsg);
     }

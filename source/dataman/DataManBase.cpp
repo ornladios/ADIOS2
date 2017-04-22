@@ -282,13 +282,15 @@ bool DataManBase::auto_transform(const void *p_in, void *p_out, json &p_jmsg)
     }
 }
 
-void DataManBase::add_man_to_path(std::string p_new, std::string p_path)
+void DataManBase::add_man_to_path(std::string p_new, std::string p_path,
+                                  json p_jmsg)
 {
     if (m_next.count(p_path) > 0)
     {
         auto man = get_man(p_new);
         if (man)
         {
+            man->init(p_jmsg);
             man->add_next(p_path, m_next[p_path]);
             this->add_next(p_new, man);
             this->remove_next(p_path);

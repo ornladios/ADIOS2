@@ -52,7 +52,7 @@ int StreamMan::init(json p_jmsg)
 
         m_tolerance.assign(m_num_channels, 0);
         m_priority.assign(m_num_channels, 100);
-        if (p_jmsg["num_channels"].is_number_integer)
+        if (p_jmsg["num_channels"].is_number_integer())
         {
             m_num_channels = p_jmsg["num_channels"].get<int>();
         }

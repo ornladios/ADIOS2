@@ -63,9 +63,9 @@ void DataMan::add_stream(json p_jmsg)
         man->init(p_jmsg);
         this->add_next(method, man);
     }
-    if (p_jmsg["compress_method"].is_string())
+    if (p_jmsg["compression_method"].is_string())
     {
-        add_man_to_path(p_jmsg["compress_method"], method);
+        add_man_to_path(p_jmsg["compression_method"], method, p_jmsg);
     }
 }
 
