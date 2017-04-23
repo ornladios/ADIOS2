@@ -130,6 +130,14 @@ int DataManBase::put(const void *p_data, std::string p_doid, std::string p_var,
 int DataManBase::put_begin(const void *p_data, json &p_jmsg)
 {
     check_shape(p_jmsg);
+    if (p_jmsg["compressed_size"].is_number())
+    {
+        p_jmsg["sendbytes"] = p_jmsg["compressed_size"].get<size_t>();
+    }
+    else
+    {
+        p_jmsg["sendbytes"] = p_jmsg["putbytes"].get<size_t>();
+    }
     p_jmsg["profiling"] = m_profiling;
     m_step_time = std::chrono::system_clock::now();
     return 0;
@@ -152,14 +160,6 @@ int DataManBase::put_end(const void *p_data, json &p_jmsg)
     m_profiling["manager_mbs"] =
         m_profiling["total_mb"].get<double>() /
         m_profiling["total_manager_time"].get<double>();
-    if (p_jmsg["compressed_size"].is_number())
-    {
-        p_jmsg["putbytes"] = p_jmsg["compressed_size"].get<size_t>();
-    }
-    else
-    {
-        p_jmsg.erase("compressed_size");
-    }
     put_next(p_data, p_jmsg);
     return 0;
 }
@@ -258,22 +258,23 @@ void DataManBase::print_next(std::ostream &out)
     }
 }
 
-bool DataManBase::auto_transform(const void *p_in, void *p_out, json &p_jmsg)
+bool DataManBase::auto_transform(std::vector<char> &a_data, json &a_jmsg)
 {
-    if (p_jmsg["compression_method"] != nullptr)
+    if (a_jmsg["compression_method"].is_string() and
+        a_jmsg["compression_method"].get<std::string>() != "null")
     {
-        auto method = p_jmsg["compression_method"];
+        auto method = a_jmsg["compression_method"].get<std::string>();
         auto man = get_man(method);
-        if (man == nullptr)
+        if (not man)
         {
-            logging("Library file for compression method " +
-                    p_jmsg["compression_method"].dump() + " not found!");
+            logging("Library file for compression method " + method +
+                    " not found!");
             return false;
         }
-        man->transform(p_in, p_out, p_jmsg);
-        p_jmsg.erase("compression_method");
-        p_jmsg.erase("compression_rate");
-        p_jmsg.erase("compressed_size");
+        man->transform(a_data, a_jmsg);
+        a_jmsg.erase("compression_method");
+        a_jmsg.erase("compression_rate");
+        a_jmsg.erase("compressed_size");
         return true;
     }
     else
@@ -539,11 +540,11 @@ void DataManBase::check_shape(json &p_jmsg)
     {
         return;
     }
-    if (p_jmsg["putshape"] == nullptr)
+    if (not p_jmsg["putshape"].is_array())
     {
         p_jmsg["putshape"] = varshape;
     }
-    if (p_jmsg["offset"] == nullptr)
+    if (not p_jmsg["offset"].is_array())
     {
         p_jmsg["offset"] = std::vector<size_t>(varshape.size(), 0);
     }

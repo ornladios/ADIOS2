@@ -25,7 +25,7 @@ int ZfpMan::put(const void *p_data, json p_jmsg)
 {
     put_begin(p_data, p_jmsg);
 
-    void *compressed_data = NULL;
+    void *compressed_data = nullptr;
     if (check_json(p_jmsg, {"doid", "var", "dtype", "putshape"}, "ZfpMan"))
     {
         if (not p_jmsg["compression_rate"].is_number())
@@ -171,8 +171,7 @@ void *ZfpMan::decompress(void *p_data, json p_jmsg)
         type = zfp_type_double;
     }
 
-    void *data;
-    data = malloc(product(shape, dsize(dtype)));
+    void *data = malloc(product(shape, dsize(dtype)));
 
     switch (shape.size())
     {
@@ -208,19 +207,20 @@ void *ZfpMan::decompress(void *p_data, json p_jmsg)
     return data;
 }
 
-void ZfpMan::transform(const void *p_in, void *p_out, json &p_jmsg)
+void ZfpMan::transform(std::vector<char> &a_data, json &a_jmsg)
 {
-
-    std::string dtype = p_jmsg["dtype"];
-    std::vector<size_t> shape = p_jmsg["putshape"].get<std::vector<size_t>>();
-    int compression_rate = p_jmsg["compression_rate"].get<int>();
+    std::string dtype = a_jmsg["dtype"];
+    std::vector<size_t> shape = a_jmsg["putshape"].get<std::vector<size_t>>();
+    int compression_rate = a_jmsg["compression_rate"].get<int>();
+    size_t putbytes = a_jmsg["putbytes"].get<size_t>();
+    std::vector<char> output(putbytes);
 
     int status = 0; // return value: 0 = success
     uint dim = 1;
     zfp_type type = zfp_type_none; // array scalar type
     zfp_field *field;              // array meta data
     zfp_stream *zfp;               // compressed stream
-    size_t bufsize = p_jmsg["compressed_size"]
+    size_t bufsize = a_jmsg["compressed_size"]
                          .get<size_t>(); // byte size of compressed buffer
     bitstream *stream;                   // bit stream to write to or read from
     size_t zfpsize;                      // byte size of compressed stream
@@ -246,23 +246,23 @@ void ZfpMan::transform(const void *p_in, void *p_out, json &p_jmsg)
     switch (shape.size())
     {
     case 3:
-        field = zfp_field_3d(p_out, type, shape[0], shape[1], shape[2]);
+        field = zfp_field_3d(output.data(), type, shape[0], shape[1], shape[2]);
         dim = 3;
         break;
     case 2:
-        field = zfp_field_2d(p_out, type, shape[0], shape[1]);
+        field = zfp_field_2d(output.data(), type, shape[0], shape[1]);
         dim = 2;
         break;
     case 1:
-        field = zfp_field_1d(p_out, type, shape[0]);
+        field = zfp_field_1d(output.data(), type, shape[0]);
         break;
     default:
-        field = zfp_field_1d(p_out, type, product(shape));
+        field = zfp_field_1d(output.data(), type, product(shape));
     }
 
     zfp = zfp_stream_open(NULL);
     zfp_stream_set_rate(zfp, compression_rate, type, dim, 0);
-    stream = stream_open(const_cast<void *>(p_in), bufsize);
+    stream = stream_open(a_data.data(), bufsize);
     zfp_stream_set_bit_stream(zfp, stream);
     zfp_stream_rewind(zfp);
     if (!zfp_decompress(zfp, field))
@@ -274,7 +274,5 @@ void ZfpMan::transform(const void *p_in, void *p_out, json &p_jmsg)
     zfp_stream_close(zfp);
     stream_close(stream);
 
-    p_jmsg.erase("compression_rate");
-    p_jmsg.erase("compression_method");
-    p_jmsg.erase("compressed_size");
+    a_data = output;
 }

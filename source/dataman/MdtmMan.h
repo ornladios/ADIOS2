@@ -24,21 +24,21 @@ public:
     virtual int init(json p_jmsg);
     virtual int put(const void *p_data, json p_jmsg);
     virtual int get(void *p_data, json &p_jmsg);
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg){};
+    virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
     void on_recv(json msg);
     std::string name() { return "MdtmMan"; }
 
 private:
-    void *zmq_ipc_req = NULL;
+    void *zmq_ipc_req = nullptr;
     int zmq_msg_size = 1024;
+    json pipe_desc;
     std::string getmode = "callback";
     std::vector<int> pipes;
     std::vector<std::string> pipenames;
     std::queue<json> jqueue;
-    std::queue<void *> bqueue;
+    std::queue<std::vector<char>> vqueue;
     std::queue<int> iqueue;
-    json pipe_desc;
 
 }; // end of class MdtmMan
 

@@ -23,4 +23,4 @@ int TemporalMan::get(void *p_data, json &p_jmsg) { return 0; }
 
 void TemporalMan::flush() {}
 
-void TemporalMan::transform(const void *p_in, void *p_out, json &p_jmsg) {}
+void TemporalMan::transform(std::vector<char> &a_data, json &a_jmsg) {}

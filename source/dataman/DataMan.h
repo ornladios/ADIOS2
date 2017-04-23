@@ -30,7 +30,7 @@ public:
     void add_file(std::string p_method);
     std::string name() { return "DataManager"; }
     std::string type() { return "Manager"; }
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg){};
+    virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
 private:
     std::string m_local_ip = "";

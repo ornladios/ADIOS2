@@ -65,7 +65,10 @@ void DataMan::add_stream(json p_jmsg)
     }
     if (p_jmsg["compression_method"].is_string())
     {
-        add_man_to_path(p_jmsg["compression_method"], method, p_jmsg);
+        if (p_jmsg["compression_method"] != "null")
+        {
+            add_man_to_path(p_jmsg["compression_method"], method, p_jmsg);
+        }
     }
 }
 
