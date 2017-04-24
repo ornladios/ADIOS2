@@ -3,4 +3,9 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(adios2)
+add_executable(TestBPWriteRead
+  TestBPWriteRead.cpp
+  ../EngineWriteReadTestBase.cpp
+)
+target_link_libraries(TestBPWriteRead adios2 gtest gtest_main)
+add_test(NAME adios2::engine::bp::write_read COMMAND TestBPWriteRead)

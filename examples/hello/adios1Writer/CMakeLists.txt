@@ -13,8 +13,3 @@ else()
   add_executable(hello_adios1Writer helloADIOS1Writer_nompi.cpp)
 endif()
 target_link_libraries(hello_adios1Writer adios2)
-
-if(ADIOS_BUILD_TESTING)
-  add_test( NAME Example::hello::adios1::write COMMAND hello_adios1Writer)
-endif()
-

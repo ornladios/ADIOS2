@@ -13,7 +13,3 @@ else()
   add_executable(hello_datamanReader helloDataManReader_nompi.cpp)
 endif()
 target_link_libraries(hello_datamanReader adios2)
-
-if(ADIOS_BUILD_TESTING)
-  add_test(NAME Example::hello::dataman::read COMMAND hello_datamanReader)
-endif()
