@@ -11,11 +11,14 @@
 #ifndef DATAMAN_CACHEMAN_H_
 #define DATAMAN_CACHEMAN_H_
 
-#include "DataMan.h"
+#include <queue>
 
-class CacheItem : public DataManBase
+#include "json.hpp"
+
+class CacheItem
 {
 public:
+    using json = nlohmann::json;
     CacheItem() = default;
     virtual ~CacheItem() = default;
 
@@ -24,12 +27,9 @@ public:
 
     virtual int init(json p_jmsg);
     virtual int put(const void *p_data, json p_jmsg);
-    virtual int get(void *p_data, json &p_jmsg);
     virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
     void flush();
-    std::string name() { return "CacheItem"; }
-    std::string type() { return "Cache"; }
     const void *get_buffer();
     void clean(const std::string mode);
     void remove(size_t timestep);
@@ -41,7 +41,7 @@ private:
     std::string m_doid;
     std::string m_var;
     std::string m_dtype;
-    size_t m_bytes;
+    size_t m_dsize;
     size_t m_varsize;
     size_t m_varbytes;
     std::vector<size_t> m_varshape;
@@ -87,21 +87,15 @@ private:
     }
 };
 
-class CacheMan : public DataManBase
+class CacheMan
 {
 
 public:
+    using json = nlohmann::json;
     CacheMan() = default;
     virtual ~CacheMan() = default;
-
-    virtual int init(json p_jmsg);
     virtual int put(const void *p_data, json p_jmsg);
-    virtual int get(void *p_data, json &p_jmsg);
-    virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
-
     void flush();
-    std::string name() { return "CacheMan"; }
-    std::string type() { return "Cache"; }
     const void *get_buffer(std::string doid, std::string var);
     void clean(std::string doid, std::string var, std::string mode);
     void clean_all(std::string mode);
@@ -117,7 +111,5 @@ private:
     typedef std::map<std::string, CacheVarMap> CacheDoMap;
     CacheDoMap m_cache;
 };
-
-extern "C" DataManBase *getMan();
 
 #endif

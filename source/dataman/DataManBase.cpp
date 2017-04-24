@@ -260,12 +260,12 @@ void DataManBase::print_next(std::ostream &out)
 
 bool DataManBase::auto_transform(std::vector<char> &a_data, json &a_jmsg)
 {
-    if (a_jmsg["compression_method"].is_string() and
+    if (a_jmsg["compression_method"].is_string() &&
         a_jmsg["compression_method"].get<std::string>() != "null")
     {
         auto method = a_jmsg["compression_method"].get<std::string>();
         auto man = get_man(method);
-        if (not man)
+        if (!man)
         {
             logging("Library file for compression method " + method +
                     " not found!");
@@ -548,6 +548,11 @@ void DataManBase::check_shape(json &p_jmsg)
     {
         p_jmsg["offset"] = std::vector<size_t>(varshape.size(), 0);
     }
+    p_jmsg["dsize"] = dsize(p_jmsg["dtype"].get<std::string>());
+
+    p_jmsg["putsize"] = product(p_jmsg["putshape"].get<std::vector<size_t>>());
+    p_jmsg["varsize"] = product(varshape);
+
     p_jmsg["putbytes"] = product(p_jmsg["putshape"].get<std::vector<size_t>>(),
                                  dsize(p_jmsg["dtype"].get<std::string>()));
     p_jmsg["varbytes"] =

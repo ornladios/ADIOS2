@@ -11,6 +11,7 @@
 #ifndef DATAMAN_DATAMAN_H_
 #define DATAMAN_DATAMAN_H_
 
+#include "CacheMan.h"
 #include "DataManBase.h"
 
 class DataMan : public DataManBase
@@ -33,13 +34,16 @@ public:
     virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
 private:
-    std::string m_local_ip = "";
-    std::string m_remote_ip = "";
+    std::string m_local_ip;
+    std::string m_remote_ip;
     int m_local_port = 0;
     int m_remote_port = 0;
     int m_num_channels = 0;
     std::vector<int> m_tolerance;
     std::vector<int> m_priority;
+    std::queue<CacheMan> m_cache_q;
+    size_t m_cache_size = 0;
+    size_t m_timestep = 0;
 };
 
 #endif /* DATAMAN_H_ */
