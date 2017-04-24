@@ -280,14 +280,23 @@ VariableCompound *Engine::InquireVariableCompound(const std::string & /*name*/,
     return nullptr;
 }
 
-void Engine::Read(Variable<double> & /*variable*/, const double * /*values*/) {}
+void Engine::ScheduleRead(Variable<unsigned int> & /*variable*/,
+                          unsigned int * /*values*/)
+{
+}
 void Engine::ScheduleRead(Variable<double> & /*variable*/, double * /*values*/)
 {
 }
-void Engine::ScheduleRead(const std::string /*variableName*/,
+void Engine::ScheduleRead(const std::string & /*variableName*/,
+                          unsigned int * /*values*/)
+{
+}
+void Engine::ScheduleRead(const std::string & /*variableName*/,
                           double * /*values*/)
 {
 }
+void Engine::ScheduleRead(const std::string & /*variableName*/) {}
+void Engine::ScheduleRead() {}
 void Engine::Release() {}
 void Engine::PerformReads(PerformReadMode /*mode*/){};
 

@@ -242,9 +242,10 @@ public:
      * must use Read(variable) instead intentionally
      */
     template <class T>
-    void Read(Variable<T> &variable, const T *values)
+    void Read(Variable<T> &variable, T *values)
     {
-        Read(variable, values);
+        ScheduleRead(variable, values);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -253,9 +254,10 @@ public:
      * @param values
      */
     template <class T>
-    void Read(const std::string variableName, const T *values)
+    void Read(const std::string &variableName, T *values)
     {
-        Read(variableName, values);
+        ScheduleRead(variableName, values);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -264,9 +266,10 @@ public:
      * @param values
      */
     template <class T>
-    void Read(Variable<T> &variable, const T &values)
+    void Read(Variable<T> &variable, T &values)
     {
-        Read(variable, &values);
+        ScheduleRead(variable, &values);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -275,9 +278,10 @@ public:
      * @param values
      */
     template <class T>
-    void Read(const std::string variableName, const T &values)
+    void Read(const std::string &variableName, T &values)
     {
-        Read(variableName, &values);
+        ScheduleRead(variableName, &values);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -287,7 +291,8 @@ public:
     template <class T>
     void Read(Variable<T> &variable)
     {
-        Read(variable, nullptr);
+        ScheduleRead(variable);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -295,12 +300,11 @@ public:
      * @param variableName
      */
     template <class T>
-    void Read(const std::string variableName)
+    void Read(const std::string &variableName)
     {
-        Read(variableName, nullptr);
+        ScheduleRead(variableName);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
-
-    virtual void Read(Variable<double> &variable, const double *values);
 
     /**
      * Read function that adds static checking on the variable to be passed by
@@ -322,7 +326,7 @@ public:
      * @param values
      */
     template <class T>
-    void ScheduleRead(const std::string variableName, T *values)
+    void ScheduleRead(const std::string &variableName, T *values)
     {
         ScheduleRead(variableName, values);
     }
@@ -344,7 +348,7 @@ public:
      * @param values
      */
     template <class T>
-    void ScheduleRead(const std::string variableName, T &values)
+    void ScheduleRead(const std::string &variableName, T &values)
     {
         ScheduleRead(variableName, &values);
     }
@@ -353,19 +357,13 @@ public:
      * Unallocated version, ADIOS will allocate space for incoming data
      * @param variableName
      */
-    void ScheduleRead(const std::string variableName)
-    {
-        ScheduleRead(variableName, nullptr);
-    }
+    virtual void ScheduleRead(const std::string &variableName);
 
     /**
      * Unallocated unspecified version, ADIOS will receive any variable and will
      * allocate space for incoming data
      */
-    void ScheduleRead() { ScheduleRead(nullptr, nullptr); }
-
-    virtual void ScheduleRead(Variable<double> &variable, double *values);
-    virtual void ScheduleRead(const std::string variableName, double *values);
+    virtual void ScheduleRead();
 
     /**
      * Perform all scheduled reads, either blocking until all reads completed,
@@ -536,6 +534,13 @@ protected:
      * @param transportIndex must be in the range [ -1 , m_Transports.size()-1 ]
      */
     void CheckTransportIndex(const int transportIndex);
+
+    virtual void ScheduleRead(Variable<unsigned int> &variable,
+                              unsigned int *values);
+    virtual void ScheduleRead(Variable<double> &variable, double *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned int *values);
+    virtual void ScheduleRead(const std::string &variableName, double *values);
 };
 
 } // end namespace
