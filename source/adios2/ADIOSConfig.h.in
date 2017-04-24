@@ -16,3 +16,30 @@
  * ADIOS Build Information:
  *
  * Compiler:
+ *   C: @CMAKE_C_COMPILER@
+ *     Id: @CMAKE_C_COMPILER_ID@ @CMAKE_C_COMPILER_VERSION@
+ *   CXX: @CMAKE_CXX_COMPILER@
+ *     Id: @CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@
+ *   Fortran: @CMAKE_CXX_COMPILER@
+ *     Id: @CMAKE_Fortran_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@
+ */
+
+/* CMake Option: ADIOS_USE_MPI=OFF */
+#cmakedefine ADIOS2_HAVE_MPI
+
+/* CMake Option: ADIOS_USE_ZFP=OFF */
+#cmakedefine ADIOS2_HAVE_ZFP
+
+/* CMake Option: ADIOS_USE_BZip2=OFF */
+#cmakedefine ADIOS2_HAVE_BZIP2
+
+/* CMake Option: ADIOS_USE_ADIOS1=ON */
+#cmakedefine ADIOS2_HAVE_ADIOS1
+
+/* CMake Option: ADIOS_USE_HDF5=On */
+#cmakedefine ADIOS2_HAVE_HDF5
+
+/* CMake Option: ADIOS_USE_DataMan=TRUE */
+#cmakedefine ADIOS2_HAVE_DATAMAN
+
+#endif /* ADIOSCONFIG_H_ */
