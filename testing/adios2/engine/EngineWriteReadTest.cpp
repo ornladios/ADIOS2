@@ -16,20 +16,6 @@ EngineWriteReadTestBase::EngineWriteReadTestBase(std::string engineName,
 {
 }
 
-void EngineWriteReadTestBase::SetUpTestCase()
-{
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Init(nullptr, nullptr);
-#endif
-}
-
-void EngineWriteReadTestBase::TearDownTestCase()
-{
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Finalize();
-#endif
-}
-
 void EngineWriteReadTestBase::SetUp()
 {
     m_adios = std::unique_ptr<adios::ADIOS>(
@@ -159,4 +145,24 @@ void EngineWriteRead2D4x2Test::Declare()
         m_adios->DefineVariable<unsigned long>("u64", adios::Dims{4, 2});
     auto &var_r32 = m_adios->DefineVariable<float>("r32", adios::Dims{4, 2});
     auto &var_r64 = m_adios->DefineVariable<double>("r64", adios::Dims{4, 2});
+}
+
+//******************************************************************************
+// main
+//******************************************************************************
+
+int main(int argc, char **argv)
+{
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(nullptr, nullptr);
+#endif
+
+    ::testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Finalize();
+#endif
+
+    return result;
 }

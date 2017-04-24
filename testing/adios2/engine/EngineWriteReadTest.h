@@ -22,14 +22,11 @@ protected:
     adios::Method *m_Method;
     std::shared_ptr<adios::Engine> m_Engine;
 
-    // Handle MPI things if necessary
-    static void SetUpTestCase();
-    static void TearDownTestCase();
-
     // Create and destroy the manager class
     virtual void SetUp();
     virtual void TearDown();
 
+    // Open and close files
     virtual void SetUpWrite();
     virtual void TearDownWrite();
 
