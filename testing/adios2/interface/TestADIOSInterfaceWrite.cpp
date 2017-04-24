@@ -352,3 +352,19 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarDouble2x5)
     EXPECT_EQ(var_r64.m_Name, "r64");
     EXPECT_EQ(var_r64.m_Type, "double");
 }
+
+int main(int argc, char **argv)
+{
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(nullptr, nullptr);
+#endif
+
+    ::testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Finalize();
+#endif
+
+    return result;
+}

@@ -7,41 +7,45 @@
 
 #include <gtest/gtest.h>
 
-#include "../EngineWriteReadTestBase.h"
+#include "../EngineWriteReadTest.h"
 
-class BPWriteReadTest : public EngineWriteReadTestBase
+class BPWriteRead1DTest : public EngineWriteRead1DTest
 {
 public:
-    BPWriteReadTest() : EngineWriteReadTestBase() {}
-
-protected:
-    virtual void OpenWrite(std::string fname)
+    BPWriteRead1DTest()
+    : EngineWriteRead1DTest("BPFileWriter", "BPWriteRead1DTest.bp")
     {
-        auto &m_EngineSettings = m_adios.DeclareMethod("TestMethod");
-        m_EngineSettings.SetEngine("BPFileWriter");
-        m_EngineSettings.SetParameters("profile_units=mus");
-        m_EngineSettings.AddTransport("File", "profile_units=mus",
-                                      "have_metadata_file=no");
-
-        m_Engine = m_adios.Open(fname, "w", m_EngineSettings);
-        ASSERT_NE(m_Engine, nullptr);
     }
 };
 
-TEST_F(BPWriteReadTest, WriteRead_1D_8)
-{
-    EngineWriteReadTestBase::Declare1D_8();
-    EngineWriteReadTestBase::OpenWriteClose("BPWriteReadTest_1D_8.bp");
-}
+TEST_F(BPWriteRead1DTest, WriteReadTest) { WriteRead(); }
 
-TEST_F(BPWriteReadTest, WriteRead_2D_2x4)
-{
-    EngineWriteReadTestBase::Declare2D_2x4();
-    EngineWriteReadTestBase::OpenWriteClose("BPWriteReadTest_2D_2x4.bp");
-}
+//******************************************************************************
+// 2D 2x4 test data
+//******************************************************************************
 
-TEST_F(BPWriteReadTest, WriteRead_2D_4x2)
+class BPWriteRead2D2x4Test : public EngineWriteRead2D2x4Test
 {
-    EngineWriteReadTestBase::Declare2D_4x2();
-    EngineWriteReadTestBase::OpenWriteClose("BPWriteReadTest_2D_4x2.bp");
-}
+public:
+    BPWriteRead2D2x4Test()
+    : EngineWriteRead2D2x4Test("BPFileWriter", "BPWriteRead2D2x4Test.bp")
+    {
+    }
+};
+
+TEST_F(BPWriteRead2D2x4Test, WriteReadTest) { WriteRead(); }
+
+//******************************************************************************
+// 2D 4x2 test data
+//******************************************************************************
+
+class BPWriteRead2D4x2Test : public EngineWriteRead2D4x2Test
+{
+public:
+    BPWriteRead2D4x2Test()
+    : EngineWriteRead2D4x2Test("BPFileWriter", "BPWriteRead2D4x2Test.bp")
+    {
+    }
+};
+
+TEST_F(BPWriteRead2D4x2Test, WriteReadTest) { WriteRead(); }

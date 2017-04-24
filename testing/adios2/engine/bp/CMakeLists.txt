@@ -5,7 +5,7 @@
 
 add_executable(TestBPWriteRead
   TestBPWriteRead.cpp
-  ../EngineWriteReadTestBase.cpp
+  ../EngineWriteReadTest.cpp
 )
-target_link_libraries(TestBPWriteRead adios2 gtest gtest_main)
+target_link_libraries(TestBPWriteRead adios2 gtest)
 add_test(NAME adios2::engine::bp::write_read COMMAND TestBPWriteRead)
