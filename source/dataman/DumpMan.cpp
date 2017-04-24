@@ -47,33 +47,27 @@ int DumpMan::put(const void *p_data, json p_jmsg)
         numbers_to_print = product(putshape, 1);
     }
     size_t putbytes = product(putshape, dsize(dtype));
+    size_t sendbytes = p_jmsg["sendbytes"].get<size_t>();
 
     std::cout << p_jmsg.dump(4) << std::endl;
     std::cout << "total MBs = " << product(putshape, dsize(dtype)) / 1000000
               << std::endl;
 
-    const void *data_to_dump;
+    std::vector<char> data(static_cast<const char *>(p_data),
+                           static_cast<const char *>(p_data) + sendbytes);
 
-    std::vector<char> data(putbytes);
+    auto_transform(data, p_jmsg);
 
-    if (auto_transform(p_data, data.data(), p_jmsg))
-    {
-        data_to_dump = data.data();
-    }
-    else
-    {
-        data_to_dump = p_data;
-    }
-
+    void *data_to_print = data.data();
     for (size_t i = 0; i < numbers_to_print; i++)
     {
         if (dtype == "float")
         {
-            std::cout << static_cast<const float *>(data_to_dump)[i] << " ";
+            std::cout << static_cast<float *>(data_to_print)[i] << " ";
         }
         if (dtype == "double")
         {
-            std::cout << static_cast<const double *>(data_to_dump)[i] << " ";
+            std::cout << static_cast<double *>(data_to_print)[i] << " ";
         }
     }
 

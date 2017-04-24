@@ -103,22 +103,16 @@ int MdtmMan::init(json p_jmsg)
     return 0;
 }
 
-int MdtmMan::put(const void *p_data, json p_jmsg)
+int MdtmMan::put(const void *a_data, json a_jmsg)
 {
-    put_begin(p_data, p_jmsg);
+    put_begin(a_data, a_jmsg);
 
-    std::vector<size_t> putshape =
-        p_jmsg["putshape"].get<std::vector<size_t>>();
-    std::vector<size_t> varshape =
-        p_jmsg["varshape"].get<std::vector<size_t>>();
-    std::string dtype = p_jmsg["dtype"];
-
+    // determine pipe to use
     int priority = 100;
-    if (p_jmsg["priority"].is_number_integer())
+    if (a_jmsg["priority"].is_number_integer())
     {
-        priority = p_jmsg["priority"].get<int>();
+        priority = a_jmsg["priority"].get<int>();
     }
-
     int index;
     if (m_parallel_mode == "round")
     {
@@ -137,38 +131,23 @@ int MdtmMan::put(const void *p_data, json p_jmsg)
     {
         index = closest(priority, pipe_desc["priority"], true);
     }
+    a_jmsg["pipe"] = pipe_desc["pipe_names"][index];
 
-    p_jmsg["pipe"] = pipe_desc["pipe_names"][index];
-    size_t putbytes = product(putshape, dsize(dtype));
-    p_jmsg["putbytes"] = putbytes;
-    size_t varbytes = product(varshape, dsize(dtype));
-    p_jmsg["varbytes"] = varbytes;
-
-    StreamMan::put(p_data, p_jmsg);
-
-    index = 0;
-    for (int i = 0; i < pipenames.size(); i++)
-    {
-        if (p_jmsg["pipe"].get<std::string>() == pipenames[i])
-        {
-            index = i;
-        }
-    }
-    std::string pipename = pipe_desc["pipe_prefix"].get<std::string>() +
-                           p_jmsg["pipe"].get<std::string>();
-    write(pipes[index], p_data, putbytes);
-    put_end(p_data, p_jmsg);
+    StreamMan::put(a_data, a_jmsg);
+    size_t sendbytes = a_jmsg["sendbytes"].get<size_t>();
+    write(pipes[index], a_data, sendbytes);
+    put_end(a_data, a_jmsg);
     return 0;
 }
 
 int MdtmMan::get(void *p_data, json &p_jmsg) { return 0; }
 
-void MdtmMan::on_recv(json jmsg)
+void MdtmMan::on_recv(json a_jmsg)
 {
 
     // push new request
-    jqueue.push(jmsg);
-    bqueue.push(nullptr);
+    jqueue.push(a_jmsg);
+    vqueue.push(std::vector<char>());
     iqueue.push(0);
 
     // for flush
@@ -176,12 +155,12 @@ void MdtmMan::on_recv(json jmsg)
     {
         callback();
         m_cache.clean_all("nan");
-        bqueue.pop();
-        iqueue.pop();
         jqueue.pop();
+        vqueue.pop();
+        iqueue.pop();
     }
 
-    if (jqueue.size() == 0)
+    if (jqueue.empty())
     {
         return;
     }
@@ -191,23 +170,21 @@ void MdtmMan::on_recv(json jmsg)
     {
         if (jqueue.front()["operation"] == "put")
         {
+            json &jmsg = jqueue.front();
+
             // allocate buffer
-            size_t putbytes = jqueue.front()["putbytes"].get<size_t>();
-            if (!bqueue.front())
-            {
-                bqueue.front() = malloc(putbytes);
-            }
+            size_t sendbytes = jmsg["sendbytes"].get<size_t>();
+            vqueue.front() = std::vector<char>(sendbytes);
 
             // determine the pipe for the head request
-            json msg = jqueue.front();
-            if (msg == nullptr)
+            if (jmsg == nullptr)
             {
                 break;
             }
             int pipeindex = 0;
             for (int i = 0; i < pipenames.size(); i++)
             {
-                if (msg["pipe"].get<std::string>() == pipenames[i])
+                if (jmsg["pipe"].get<std::string>() == pipenames[i])
                 {
                     pipeindex = i;
                 }
@@ -215,16 +192,14 @@ void MdtmMan::on_recv(json jmsg)
 
             // read the head request
             int error_times = 0;
-            int s = iqueue.front();
-            putbytes = msg["putbytes"].get<int>();
-            while (s < putbytes)
+            while (iqueue.front() < sendbytes)
             {
-                int ret =
-                    read(pipes[pipeindex],
-                         static_cast<char *>(bqueue.front()) + s, putbytes - s);
+                int ret = read(pipes[pipeindex],
+                               vqueue.front().data() + iqueue.front(),
+                               sendbytes - iqueue.front());
                 if (ret > 0)
                 {
-                    s += ret;
+                    iqueue.front() += ret;
                 }
                 else
                 {
@@ -237,21 +212,21 @@ void MdtmMan::on_recv(json jmsg)
                 }
             }
 
-            if (s == putbytes)
+            if (iqueue.front() == sendbytes)
             {
-                m_cache.put(bqueue.front(), msg);
-                if (bqueue.front())
+                if (a_jmsg["compression_method"].is_string())
                 {
-                    free(bqueue.front());
+                    if (a_jmsg["compression_method"].get<std::string>() !=
+                        "null")
+                    {
+                        auto_transform(vqueue.front(), a_jmsg);
+                    }
                 }
-                bqueue.pop();
-                iqueue.pop();
+                m_cache.put(vqueue.front().data(), jmsg);
                 jqueue.pop();
+                vqueue.pop();
+                iqueue.pop();
                 break;
-            }
-            else
-            {
-                iqueue.front() = s;
             }
         }
     }

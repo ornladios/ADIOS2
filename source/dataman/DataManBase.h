@@ -69,10 +69,10 @@ public:
 
     void print_next(std::ostream &out = std::cout);
 
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg) = 0;
+    virtual void transform(std::vector<char> &a_data, json &a_jmsg) = 0;
 
 protected:
-    bool auto_transform(const void *p_in, void *p_out, json &p_jmsg);
+    bool auto_transform(std::vector<char> &a_data, json &a_jmsg);
 
     void add_man_to_path(std::string p_new, std::string p_path, json p_jmsg);
 

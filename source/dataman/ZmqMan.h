@@ -22,7 +22,7 @@ public:
     virtual int init(json p_jmsg);
     virtual int put(const void *p_data, json p_jmsg);
     virtual int get(void *p_data, json &p_jmsg);
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg){};
+    virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
     virtual void on_recv(json msg);
     std::string name() { return "ZmqMan"; }

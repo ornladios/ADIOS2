@@ -12,6 +12,7 @@
 #define DATAMAN_STREAMMAN_H_
 
 #include "CacheMan.h"
+#include "DataManBase.h"
 
 #include <thread>
 

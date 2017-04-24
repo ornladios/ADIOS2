@@ -18,13 +18,13 @@ class ZfpMan : public CompressMan
 public:
     ZfpMan() = default;
     virtual ~ZfpMan() = default;
-    virtual int init(json p_jmsg);
-    virtual int put(const void *p_data, json p_jmsg);
-    virtual int get(void *p_data, json &p_jmsg);
+    virtual int init(json a_jmsg);
+    virtual int put(const void *a_data, json a_jmsg);
+    virtual int get(void *a_data, json &a_jmsg);
+    virtual void transform(std::vector<char> &a_data, json &a_jmsg);
     virtual void flush();
-    void *compress(void *p_data, json &p_jmsg);
-    void *decompress(void *p_data, json p_jmsg);
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg);
+    int compress(void *a_input, std::vector<char> &a_output, json &a_jmsg);
+    int decompress(void *a_input, std::vector<char> &a_output, json &a_jmsg);
     std::string name() { return "ZfpMan"; }
 private:
     double m_compression_rate = 8;

@@ -25,7 +25,7 @@ public:
     void flush();
     std::string name() { return "DumpMan"; }
     std::string type() { return "Dump"; }
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg){};
+    virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
 private:
     bool m_dumping = true;

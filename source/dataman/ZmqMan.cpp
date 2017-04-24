@@ -21,9 +21,9 @@ ZmqMan::~ZmqMan()
         zmq_close(zmq_data);
 }
 
-int ZmqMan::init(json p_jmsg)
+int ZmqMan::init(json a_jmsg)
 {
-    StreamMan::init(p_jmsg);
+    StreamMan::init(a_jmsg);
     zmq_data = zmq_socket(zmq_context, ZMQ_PAIR);
     std::string local_address =
         make_address(m_local_ip, m_local_port + 1, "tcp");
@@ -42,44 +42,33 @@ int ZmqMan::init(json p_jmsg)
     return 0;
 }
 
-int ZmqMan::put(const void *p_data, json p_jmsg)
+int ZmqMan::put(const void *a_data, json a_jmsg)
 {
-    put_begin(p_data, p_jmsg);
-    StreamMan::put(p_data, p_jmsg);
-    zmq_send(zmq_data, p_data, p_jmsg["putbytes"], 0);
-    put_end(p_data, p_jmsg);
+    put_begin(a_data, a_jmsg);
+    StreamMan::put(a_data, a_jmsg);
+    zmq_send(zmq_data, a_data, a_jmsg["sendbytes"].get<size_t>(), 0);
+    put_end(a_data, a_jmsg);
     return 0;
 }
 
-int ZmqMan::get(void *p_data, json &p_jmsg) { return 0; }
+int ZmqMan::get(void *a_data, json &a_jmsg) { return 0; }
 
-void ZmqMan::on_recv(json msg)
+void ZmqMan::on_recv(json a_jmsg)
 {
-    if (msg["operation"] == "put")
+    if (a_jmsg["operation"].get<std::string>() == "put")
     {
-        if (msg["compression_method"] == nullptr)
+        size_t sendbytes = a_jmsg["sendbytes"].get<size_t>();
+        std::vector<char> data(sendbytes);
+        int ret = zmq_recv(zmq_data, data.data(), sendbytes, 0);
+
+        if (a_jmsg["compression_method"].is_string() and
+            a_jmsg["compression_method"].get<std::string>() != "null")
         {
-            size_t putbytes = msg["putbytes"].get<size_t>();
-            std::vector<char> data;
-            data.resize(putbytes);
-            int err = zmq_recv(zmq_data, data.data(), putbytes, 0);
-            m_cache.put(data.data(), msg);
+            auto_transform(data, a_jmsg);
         }
-        else
-        {
-            size_t putbytes = msg["putbytes"].get<size_t>();
-            size_t compressed_size = msg["compressed_size"].get<size_t>();
-            std::vector<char> compressed_data;
-            compressed_data.resize(compressed_size);
-            std::vector<char> data;
-            data.resize(putbytes);
-            int err =
-                zmq_recv(zmq_data, compressed_data.data(), compressed_size, 0);
-            auto_transform(compressed_data.data(), data.data(), msg);
-            m_cache.put(data.data(), msg);
-        }
+        m_cache.put(data.data(), a_jmsg);
     }
-    else if (msg["operation"] == "flush")
+    else if (a_jmsg["operation"].get<std::string>() == "flush")
     {
         callback();
         m_cache.flush();

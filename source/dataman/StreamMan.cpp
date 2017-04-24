@@ -124,12 +124,12 @@ void StreamMan::zmq_meta_rep_thread_func()
     while (zmq_meta_rep_thread_active)
     {
         char msg[1024] = "";
-        int err = zmq_recv(zmq_meta, msg, 1024, ZMQ_NOBLOCK);
+        int ret = zmq_recv(zmq_meta, msg, 1024, ZMQ_NOBLOCK);
         std::string smsg = msg;
-        if (err >= 0)
+        if (ret >= 0)
         {
-            logging("StreamMan::zmq_meta_rep_thread_func: " + smsg);
             json j = json::parse(msg);
+            logging("StreamMan::zmq_meta_rep_thread_func: \n" + j.dump(4));
             on_recv(j);
         }
         usleep(10);
