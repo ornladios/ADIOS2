@@ -41,7 +41,7 @@ private:
     int m_num_channels = 0;
     std::vector<int> m_tolerance;
     std::vector<int> m_priority;
-    std::queue<CacheMan> m_cache_q;
+    CacheMan m_cache;
     size_t m_cache_size = 0;
     size_t m_timestep = 0;
 };

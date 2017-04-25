@@ -71,7 +71,5 @@ void ZmqMan::on_recv(json a_jmsg)
     else if (a_jmsg["operation"].get<std::string>() == "flush")
     {
         callback();
-        m_cache.flush();
-        m_cache.clean_all("nan");
     }
 }

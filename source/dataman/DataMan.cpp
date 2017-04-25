@@ -25,7 +25,8 @@ int DataMan::put(const void *a_data, json a_jmsg)
 {
     if (m_cache_size > 0)
     {
-        // to be implemented
+        check_shape(a_jmsg);
+        m_cache.put(a_data, a_jmsg);
     }
     else
     {
@@ -85,6 +86,39 @@ void DataMan::add_stream(json a_jmsg)
     }
 }
 
-void DataMan::flush() { flush_next(); }
+void DataMan::flush()
+{
+    m_timestep++;
+    if (m_cache_size > 0)
+    {
+        if (m_cache_size == m_cache.get_timesteps_cached())
+        {
+            for (int i = 0; i < m_cache_size; i++)
+            {
+                std::vector<std::string> do_list = m_cache.get_do_list();
+                for (auto j : do_list)
+                {
+                    std::vector<std::string> var_list = m_cache.get_var_list(j);
+                    for (auto k : var_list)
+                    {
+                        json jmsg = m_cache.get_jmsg(j, k);
+                        put_begin(m_cache.get(j, k), jmsg);
+                        put_end(m_cache.get(j, k), jmsg);
+                    }
+                }
+                flush_next();
+                m_cache.pop();
+            }
+        }
+        else
+        {
+            m_cache.push();
+        }
+    }
+    else
+    {
+        flush_next();
+    }
+}
 
 int DataMan::get(void *a_data, json &a_jmsg) { return 0; }

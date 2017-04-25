@@ -50,6 +50,10 @@ int StreamMan::init(json p_jmsg)
         std::string local_address =
             make_address(m_local_ip, m_local_port, "tcp");
 
+        if (p_jmsg["clean_mode"].is_string())
+        {
+            m_clean_mode = p_jmsg["clean_mode"];
+        }
         m_tolerance.assign(m_num_channels, 0);
         m_priority.assign(m_num_channels, 100);
         if (p_jmsg["num_channels"].is_number_integer())
@@ -91,25 +95,28 @@ int StreamMan::init(json p_jmsg)
     }
 }
 
-void StreamMan::callback()
+int StreamMan::callback()
 {
-    if (m_callback)
-    {
-        std::vector<std::string> do_list = m_cache.get_do_list();
-        for (std::string i : do_list)
-        {
-            std::vector<std::string> var_list = m_cache.get_var_list(i);
-            for (std::string j : var_list)
-            {
-                m_callback(m_cache.get_buffer(i, j), i, j,
-                           m_cache.get_dtype(i, j), m_cache.get_shape(i, j));
-            }
-        }
-    }
-    else
+    if (!m_callback)
     {
         logging("callback called but callback function not registered!");
+        return -1;
     }
+
+    std::vector<std::string> do_list = m_cache.get_do_list();
+    for (std::string i : do_list)
+    {
+        std::vector<std::string> var_list = m_cache.get_var_list(i);
+        for (std::string j : var_list)
+        {
+            m_callback(
+                m_cache.get(i, j), i, j,
+                m_cache.get_jmsg(i, j)["dtype"].get<std::string>(),
+                m_cache.get_jmsg(i, j)["varshape"].get<std::vector<size_t>>());
+        }
+    }
+
+    return 0;
 }
 
 void StreamMan::flush()

@@ -31,7 +31,7 @@ public:
 protected:
     void *zmq_context = NULL;
     CacheMan m_cache;
-    void callback();
+    int callback();
 
     std::string m_get_mode = "callback";
     std::string m_stream_mode;
@@ -39,9 +39,10 @@ protected:
     std::string m_remote_ip;
     int m_local_port;
     int m_remote_port;
-    int m_num_channels = 1;
+    int m_num_channels = 10;
     std::vector<int> m_tolerance;
     std::vector<int> m_priority;
+    std::string m_clean_mode = "nan";
 
     // parallel
     std::string m_parallel_mode = "round"; // round, priority
