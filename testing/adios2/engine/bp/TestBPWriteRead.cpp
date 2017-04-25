@@ -1,3 +1,7 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ */
 #include <cstdint>
 
 #include <iostream>
@@ -20,7 +24,7 @@ public:
 //******************************************************************************
 // 1D 1x8 test data
 //******************************************************************************
-TEST_F(BPWriteReadTest, ADIOS2ADIOS2WriteADIOS1Read1D8)
+TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
 {
     {
         adios::ADIOS adios(adios::Verbose::WARN, true);
@@ -48,8 +52,7 @@ TEST_F(BPWriteReadTest, ADIOS2ADIOS2WriteADIOS1Read1D8)
         method.SetEngine("BPFileWriter");
         method.AddTransport("File");
 
-        auto engine =
-            adios.Open("ADIOS2ADIOS2WriteADIOS1Read1D8.bp", "w", method);
+        auto engine = adios.Open("ADIOS2BPWriteADIOS1Read1D8.bp", "w", method);
         ASSERT_NE(engine, nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -90,7 +93,7 @@ TEST_F(BPWriteReadTest, ADIOS2ADIOS2WriteADIOS1Read1D8)
 //******************************************************************************
 // 2D 2x4 test data
 //******************************************************************************
-TEST_F(BPWriteReadTest, ADIOS2ADIOS2WriteADIOS1Read2D2x4)
+TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
 {
     {
         adios::ADIOS adios(adios::Verbose::WARN, true);
@@ -164,7 +167,7 @@ TEST_F(BPWriteReadTest, ADIOS2ADIOS2WriteADIOS1Read2D2x4)
 //******************************************************************************
 // 2D 4x2 test data
 //******************************************************************************
-TEST_F(BPWriteReadTest, ADIOS2ADIOS2WriteADIOS1Read2D4x2)
+TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
 {
     {
         adios::ADIOS adios(adios::Verbose::WARN, true);
