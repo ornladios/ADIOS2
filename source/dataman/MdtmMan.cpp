@@ -154,7 +154,6 @@ void MdtmMan::on_recv(json a_jmsg)
     if (jqueue.front()["operation"] == "flush")
     {
         callback();
-        m_cache.clean_all("nan");
         jqueue.pop();
         vqueue.pop();
         iqueue.pop();

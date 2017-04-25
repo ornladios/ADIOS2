@@ -19,34 +19,23 @@ class CacheItem
 {
 public:
     using json = nlohmann::json;
-    CacheItem() = default;
-    virtual ~CacheItem() = default;
 
-    void init(std::string doid, std::string var, std::string dtype,
-              std::vector<size_t> varshape);
-
-    virtual int init(json p_jmsg);
-    virtual int put(const void *p_data, json p_jmsg);
+    int init(json a_jmsg);
+    virtual int put(const void *a_data, json a_jmsg);
     virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
-    void flush();
-    const void *get_buffer();
-    void clean(const std::string mode);
-    void remove(size_t timestep);
-    std::vector<size_t> get_shape();
-    std::string get_dtype();
+    void *get();
+    void clean(const std::string a_mode);
+    void pop();
+    void push();
+    json get_jmsg();
+    void clean(std::vector<char> &a_data, std::string a_mode);
+    std::string m_clean_mode = "nan";
 
 private:
-    std::map<size_t, std::vector<char>> m_buffer;
-    std::string m_doid;
-    std::string m_var;
-    std::string m_dtype;
-    size_t m_dsize;
-    size_t m_varsize;
-    size_t m_varbytes;
-    std::vector<size_t> m_varshape;
-    bool m_completed;
-    size_t m_timestep = 0;
+    std::queue<std::vector<char>> m_cache;
+    json m_jmsg;
+    bool m_initialized = false;
 
     inline std::vector<size_t> apply_offset(const std::vector<size_t> &p,
                                             const std::vector<size_t> &o)
@@ -92,24 +81,22 @@ class CacheMan
 
 public:
     using json = nlohmann::json;
-    CacheMan() = default;
-    virtual ~CacheMan() = default;
-    virtual int put(const void *p_data, json p_jmsg);
-    void flush();
-    const void *get_buffer(std::string doid, std::string var);
-    void clean(std::string doid, std::string var, std::string mode);
-    void clean_all(std::string mode);
-    void remove(std::string doid, std::string var, size_t timestep);
-    void remove_all(size_t timestep);
+    int put(const void *a_data, json a_jmsg);
+    void *get(std::string doid, std::string var);
+    void pop();
+    void push();
     std::vector<std::string> get_do_list();
     std::vector<std::string> get_var_list(std::string doid);
-    std::vector<size_t> get_shape(std::string doid, std::string var);
-    std::string get_dtype(std::string doid, std::string var);
+    size_t get_timesteps_cached();
+    json get_jmsg(std::string doid, std::string var);
+    void clean(std::string a_mode);
 
 private:
     typedef std::map<std::string, CacheItem> CacheVarMap;
     typedef std::map<std::string, CacheVarMap> CacheDoMap;
     CacheDoMap m_cache;
+    size_t m_timesteps_cached = 0;
+    size_t m_timestep_first = 0;
 };
 
 #endif

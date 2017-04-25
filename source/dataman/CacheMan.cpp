@@ -13,128 +13,151 @@
 #include <algorithm>
 #include <limits>
 
-int CacheItem::init(json p_jmsg)
+int CacheItem::init(json a_jmsg)
 {
-    m_doid = p_jmsg["doid"].get<std::string>();
-    m_var = p_jmsg["var"].get<std::string>();
-    m_dtype = p_jmsg["dtype"].get<std::string>();
-    m_varshape = p_jmsg["varshape"].get<std::vector<size_t>>();
-    m_dsize = p_jmsg["dsize"].get<size_t>();
-    m_varsize = p_jmsg["varsize"].get<size_t>();
-    m_varbytes = p_jmsg["varbytes"].get<size_t>();
-
-    if (m_buffer[m_timestep].size() != m_varbytes)
-    {
-        m_buffer[m_timestep].resize(m_varbytes);
-    }
+    m_jmsg = a_jmsg;
     return 0;
 }
 
-int CacheItem::put(const void *p_data, json p_jmsg)
+int CacheMan::put(const void *a_data, json a_jmsg)
 {
-    init(p_jmsg);
-    std::vector<size_t> p_putshape =
-        p_jmsg["putshape"].get<std::vector<size_t>>();
-    std::vector<size_t> p_varshape =
-        p_jmsg["varshape"].get<std::vector<size_t>>();
-    std::vector<size_t> p_offset = p_jmsg["offset"].get<std::vector<size_t>>();
+    std::string doid = a_jmsg["doid"].get<std::string>();
+    std::string var = a_jmsg["var"].get<std::string>();
+    return m_cache[doid][var].put(a_data, a_jmsg);
+}
 
-    size_t putsize = p_jmsg["putsize"].get<size_t>();
-    size_t chunksize = p_putshape.back();
+int CacheItem::put(const void *a_data, json a_jmsg)
+{
+    if (!m_initialized)
+    {
+        init(a_jmsg);
+        m_initialized = true;
+    }
+
+    std::vector<size_t> varshape =
+        a_jmsg["varshape"].get<std::vector<size_t>>();
+    std::vector<size_t> putshape =
+        a_jmsg["putshape"].get<std::vector<size_t>>();
+    std::vector<size_t> offset = a_jmsg["offset"].get<std::vector<size_t>>();
+    size_t putsize = a_jmsg["putsize"].get<size_t>();
+    size_t chunksize = putshape.back();
+    size_t varbytes = a_jmsg["varbytes"].get<size_t>();
+    size_t dsize = a_jmsg["dsize"].get<size_t>();
+
+    size_t timestep = 0;
+
+    if (m_cache.empty())
+    {
+        push();
+    }
+
+    if (a_jmsg["timestep"].is_number())
+    {
+        timestep = a_jmsg["timestep"].get<size_t>();
+    }
+
     for (size_t i = 0; i < putsize; i += chunksize)
     {
-        std::vector<size_t> p = one2multi(p_putshape, i);
-        p = apply_offset(p, p_offset);
-        size_t ig = multi2one(p_varshape, p);
-        std::copy((char *)p_data + i * m_dsize,
-                  (char *)p_data + i * m_dsize + chunksize * m_dsize,
-                  m_buffer[m_timestep].data() + ig * m_dsize);
+        std::vector<size_t> p = one2multi(putshape, i);
+        p = apply_offset(p, offset);
+        size_t ig = multi2one(varshape, p);
+        std::copy((char *)a_data + i * dsize,
+                  (char *)a_data + i * dsize + chunksize * dsize,
+                  m_cache.back().data() + ig * dsize);
     }
 
     return 0;
 }
 
-std::vector<size_t> CacheItem::get_shape() { return m_varshape; }
+void *CacheItem::get() { return m_cache.front().data(); }
 
-std::string CacheItem::get_dtype() { return m_dtype; }
-
-void CacheItem::flush() { m_timestep++; }
-
-void CacheMan::remove(std::string doid, std::string var, size_t timestep)
+void *CacheMan::get(std::string doid, std::string var)
 {
-    m_cache[doid][var].remove(timestep);
+    return m_cache[doid][var].get();
 }
 
-void CacheMan::remove_all(size_t timestep)
+void CacheMan::pop()
 {
     for (auto i : m_cache)
     {
-        for (auto j : m_cache[i.first])
+        for (auto j : i.second)
         {
-            j.second.remove(timestep);
+            j.second.pop();
+        }
+    }
+    m_timesteps_cached--;
+    m_timestep_first++;
+}
+
+void CacheItem::pop() { m_cache.pop(); }
+
+void CacheMan::push()
+{
+    for (auto i : m_cache)
+    {
+        for (auto j : i.second)
+        {
+            j.second.push();
+        }
+    }
+    m_timesteps_cached++;
+}
+
+void CacheItem::push()
+{
+    size_t varbytes = m_jmsg["varbytes"].get<size_t>();
+    std::vector<char> buff(varbytes);
+    clean(buff, m_clean_mode);
+    m_cache.push(buff);
+}
+
+void CacheItem::clean(std::string a_mode) { clean(m_cache.front(), a_mode); }
+void CacheMan::clean(std::string a_mode)
+{
+    for (auto i : m_cache)
+    {
+        for (auto j : i.second)
+        {
+            j.second.clean(a_mode);
         }
     }
 }
 
-void CacheItem::remove(size_t timestep) { m_buffer.erase(timestep); }
-
-void CacheItem::clean(const std::string mode)
+void CacheItem::clean(std::vector<char> &a_data, std::string a_mode)
 {
-    if (mode == "zero")
+    size_t varbytes = m_jmsg["varbytes"].get<size_t>();
+    size_t varsize = m_jmsg["varsize"].get<size_t>();
+    std::string dtype = m_jmsg["dtype"].get<std::string>();
+    if (a_mode == "zero")
     {
-        std::memset(m_buffer[m_timestep].data(), 0, m_varbytes);
+        std::memset(a_data.data(), 0, varbytes);
         return;
     }
-    if (mode == "nan")
+    else if (a_mode == "nan")
     {
-        for (size_t i = 0; i < m_varsize; i++)
+        if (dtype == "float")
         {
-            if (m_dtype == "float")
-                ((float *)m_buffer[m_timestep].data())[i] =
+            for (size_t j = 0; j < varsize; j++)
+            {
+                ((float *)a_data.data())[j] =
                     std::numeric_limits<float>::quiet_NaN();
+            }
         }
-        return;
-    }
-}
-
-const void *CacheItem::get_buffer() { return m_buffer[m_timestep].data(); }
-
-int CacheMan::put(const void *p_data, json p_jmsg)
-{
-    std::string doid = p_jmsg["doid"].get<std::string>();
-    std::string var = p_jmsg["var"].get<std::string>();
-    return m_cache[doid][var].put(p_data, p_jmsg);
-}
-
-void CacheMan::flush()
-{
-    for (auto i : m_cache)
-    {
-        for (auto j : m_cache[i.first])
+        else if (dtype == "double")
         {
-            j.second.flush();
+            for (size_t j = 0; j < varsize; j++)
+            {
+                ((double *)a_data.data())[j] =
+                    std::numeric_limits<double>::quiet_NaN();
+            }
         }
-    }
-}
-
-const void *CacheMan::get_buffer(std::string doid, std::string var)
-{
-    return m_cache[doid][var].get_buffer();
-}
-
-void CacheMan::clean(std::string doid, std::string var, std::string mode)
-{
-    m_cache[doid][var].clean(mode);
-}
-
-void CacheMan::clean_all(std::string mode)
-{
-    for (auto i = m_cache.begin(); i != m_cache.end(); ++i)
-    {
-        for (auto j = m_cache[i->first].begin(); j != m_cache[i->first].end();
-             ++j)
+        else if (dtype == "int")
         {
-            j->second.clean(mode);
+            for (size_t j = 0; j < varsize; j++)
+            {
+                ((int *)a_data.data())[j] =
+                    std::numeric_limits<int>::quiet_NaN();
+            }
         }
     }
 }
@@ -155,12 +178,18 @@ std::vector<std::string> CacheMan::get_var_list(std::string doid)
     return var_list;
 }
 
-std::vector<size_t> CacheMan::get_shape(std::string doid, std::string var)
+size_t CacheMan::get_timesteps_cached() { return m_timesteps_cached; }
+
+nlohmann::json CacheMan::get_jmsg(std::string a_doid, std::string a_var)
 {
-    return m_cache[doid][var].get_shape();
+    return m_cache[a_doid][a_var].get_jmsg();
 }
 
-std::string CacheMan::get_dtype(std::string doid, std::string var)
+nlohmann::json CacheItem::get_jmsg()
 {
-    return m_cache[doid][var].get_dtype();
+    m_jmsg.erase("putsize");
+    m_jmsg.erase("putshape");
+    m_jmsg.erase("putbytes");
+    m_jmsg.erase("offset");
+    return m_jmsg;
 }
