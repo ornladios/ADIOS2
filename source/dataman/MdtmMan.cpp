@@ -42,7 +42,7 @@ int MdtmMan::init(json p_jmsg)
     pipe_desc["mode"] = m_stream_mode;
 
     std::string pipename_prefix = "MdtmManPipe";
-    for (int i = 0; i < m_num_channels; i++)
+    for (int i = 0; i < m_num_channels; ++i)
     {
         std::stringstream pipename;
         pipename << pipename_prefix << i;
@@ -76,13 +76,14 @@ int MdtmMan::init(json p_jmsg)
 
     // Pipes
     mkdir(pipe_desc["pipe_prefix"].get<std::string>().c_str(), 0755);
-    for (auto i : pipe_desc["pipe_names"].get<std::vector<std::string>>())
+    for (const auto &i :
+         pipe_desc["pipe_names"].get<std::vector<std::string>>())
     {
         std::string filename = pipe_desc["pipe_prefix"].get<std::string>() + i;
         mkfifo(filename.c_str(), 0666);
     }
 
-    for (int i = 0; i < m_num_channels; i++)
+    for (int i = 0; i < m_num_channels; ++i)
     {
         std::stringstream pipename;
         pipename << pipename_prefix << i;
@@ -181,7 +182,7 @@ void MdtmMan::on_recv(json a_jmsg)
                 break;
             }
             int pipeindex = 0;
-            for (int i = 0; i < pipenames.size(); i++)
+            for (int i = 0; i < pipenames.size(); ++i)
             {
                 if (jmsg["pipe"].get<std::string>() == pipenames[i])
                 {

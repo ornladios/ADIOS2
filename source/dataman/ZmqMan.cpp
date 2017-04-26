@@ -73,7 +73,3 @@ void ZmqMan::on_recv(json a_jmsg)
         callback();
     }
 }
-
-
-
-

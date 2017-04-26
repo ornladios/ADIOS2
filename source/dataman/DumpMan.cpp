@@ -59,7 +59,7 @@ int DumpMan::put(const void *p_data, json p_jmsg)
     auto_transform(data, p_jmsg);
 
     void *data_to_print = data.data();
-    for (size_t i = 0; i < numbers_to_print; i++)
+    for (size_t i = 0; i < numbers_to_print; ++i)
     {
         if (dtype == "float")
         {

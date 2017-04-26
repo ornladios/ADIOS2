@@ -49,29 +49,22 @@ int CacheItem::put(const void *a_data, json a_jmsg)
         push();
     }
 
-    printf("put begin front, pointer=%d\n", m_cache.front().data());
-    printf("put begin back, pointer=%d\n", m_cache.back().data());
-
     for (size_t i = 0; i < putsize; i += chunksize)
     {
         std::vector<size_t> p = one2multi(putshape, i);
         p = apply_offset(p, offset);
         size_t ig = multi2one(varshape, p);
-        std::copy((char *)a_data + i * dsize,
-                  (char *)a_data + i * dsize + chunksize * dsize,
+        std::copy(const_cast<char *>(static_cast<const char *>(a_data)) +
+                      i * dsize,
+                  const_cast<char *>(static_cast<const char *>(a_data)) +
+                      i * dsize + chunksize * dsize,
                   m_cache.back().data() + ig * dsize);
     }
 
-    printf("put end front, pointer=%d\n", m_cache.front().data());
-    printf("put end back, pointer=%d\n", m_cache.back().data());
     return 0;
 }
 
-void *CacheItem::get() {
-
-    printf("get, pointer=%d\n", m_cache.front().data());
-    return m_cache.front().data();
-}
+void *CacheItem::get() { return m_cache.front().data(); }
 
 void *CacheMan::get(std::string doid, std::string var)
 {
@@ -80,9 +73,9 @@ void *CacheMan::get(std::string doid, std::string var)
 
 void CacheMan::pop()
 {
-    for (auto i : m_cache)
+    for (auto &i : m_cache)
     {
-        for (auto j : i.second)
+        for (auto &j : i.second)
         {
             j.second.pop();
         }
@@ -91,17 +84,13 @@ void CacheMan::pop()
     m_timestep_first++;
 }
 
-void CacheItem::pop()
-{
-    std::cout << "CacheItem::pop() ---------------------------" << std::endl;
-    m_cache.pop();
-}
+void CacheItem::pop() { m_cache.pop(); }
 
 void CacheMan::push()
 {
-    for (auto i : m_cache)
+    for (auto &i : m_cache)
     {
-        for (auto j : i.second)
+        for (auto &j : i.second)
         {
             j.second.push();
         }
@@ -111,11 +100,9 @@ void CacheMan::push()
 
 void CacheItem::push()
 {
-    std::cout << "CacheItem::push() ---------------------------" << std::endl;
     size_t varbytes = m_jmsg["varbytes"].get<size_t>();
-    std::vector<char> buff(varbytes);
-    m_cache.push(buff);
-    clean(m_cache.front(), "nan");
+    m_cache.push(std::vector<char>(varbytes));
+    clean("nan");
 }
 
 void CacheItem::clean(std::string a_mode)
@@ -125,7 +112,6 @@ void CacheItem::clean(std::string a_mode)
     std::string dtype = m_jmsg["dtype"].get<std::string>();
     if (a_mode == "zero")
     {
-        printf("zero, pointer=%d\n", m_cache.front().data());
         std::memset(m_cache.front().data(), 0, varbytes);
         return;
     }
@@ -133,81 +119,38 @@ void CacheItem::clean(std::string a_mode)
     {
         if (dtype == "float")
         {
-            printf("nan, pointer=%d\n", m_cache.front().data());
-            for (size_t j = 0; j < varsize; j++)
+            for (size_t j = 0; j < varsize; ++j)
             {
-                ((float*)(m_cache.front().data()))[j] =
+                (reinterpret_cast<float *>(m_cache.front().data()))[j] =
                     std::numeric_limits<float>::quiet_NaN();
             }
         }
         else if (dtype == "double")
         {
-            for (size_t j = 0; j < varsize; j++)
+            for (size_t j = 0; j < varsize; ++j)
             {
-                ((double *)m_cache.front().data())[j] =
+                (reinterpret_cast<double *>(m_cache.front().data()))[j] =
                     std::numeric_limits<double>::quiet_NaN();
             }
         }
         else if (dtype == "int")
         {
-            for (size_t j = 0; j < varsize; j++)
+            for (size_t j = 0; j < varsize; ++j)
             {
-                ((int *)m_cache.front().data())[j] =
+                (reinterpret_cast<int *>(m_cache.front().data()))[j] =
                     std::numeric_limits<int>::quiet_NaN();
             }
         }
     }
-//    clean(m_cache.front(), a_mode);
 }
 
 void CacheMan::clean(std::string a_mode)
 {
-    for (auto i : m_cache)
+    for (auto &i : m_cache)
     {
-        for (auto j : i.second)
+        for (auto &j : i.second)
         {
             j.second.clean(a_mode);
-        }
-    }
-}
-
-void CacheItem::clean(std::vector<char> &a_data, std::string a_mode)
-{
-    size_t varbytes = m_jmsg["varbytes"].get<size_t>();
-    size_t varsize = m_jmsg["varsize"].get<size_t>();
-    std::string dtype = m_jmsg["dtype"].get<std::string>();
-    if (a_mode == "zero")
-    {
-        printf("zero, pointer=%d\n", a_data.data());
-        std::memset(a_data.data(), 0, varbytes);
-        return;
-    }
-    else if (a_mode == "nan")
-    {
-        if (dtype == "float")
-        {
-            printf("nan, pointer=%d\n", a_data.data());
-            for (size_t j = 0; j < varsize; j++)
-            {
-                ((float*)(a_data.data()))[j] =
-                    std::numeric_limits<float>::quiet_NaN();
-            }
-        }
-        else if (dtype == "double")
-        {
-            for (size_t j = 0; j < varsize; j++)
-            {
-                ((double *)a_data.data())[j] =
-                    std::numeric_limits<double>::quiet_NaN();
-            }
-        }
-        else if (dtype == "int")
-        {
-            for (size_t j = 0; j < varsize; j++)
-            {
-                ((int *)a_data.data())[j] =
-                    std::numeric_limits<int>::quiet_NaN();
-            }
         }
     }
 }
@@ -215,16 +158,16 @@ void CacheItem::clean(std::vector<char> &a_data, std::string a_mode)
 std::vector<std::string> CacheMan::get_do_list()
 {
     std::vector<std::string> do_list;
-    for (auto it = m_cache.begin(); it != m_cache.end(); ++it)
-        do_list.push_back(it->first);
+    for (const auto &i : m_cache)
+        do_list.push_back(i.first);
     return do_list;
 }
 
 std::vector<std::string> CacheMan::get_var_list(std::string doid)
 {
     std::vector<std::string> var_list;
-    for (auto it = m_cache[doid].begin(); it != m_cache[doid].end(); ++it)
-        var_list.push_back(it->first);
+    for (const auto &i : m_cache[doid])
+        var_list.push_back(i.first);
     return var_list;
 }
 
@@ -243,5 +186,3 @@ nlohmann::json CacheItem::get_jmsg()
     m_jmsg.erase("offset");
     return m_jmsg;
 }
-
-

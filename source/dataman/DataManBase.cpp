@@ -195,13 +195,13 @@ void DataManBase::reg_callback(
                        std::vector<size_t>)>
         cb)
 {
-    if (m_next.size() == 0)
+    if (m_next.empty())
     {
         m_callback = cb;
     }
     else
     {
-        for (auto i : m_next)
+        for (const auto &i : m_next)
         {
             i.second->reg_callback(cb);
         }
@@ -215,10 +215,10 @@ void DataManBase::dump(const void *p_data, json p_jmsg, std::ostream &out)
     std::string dtype = p_jmsg["dtype"];
     size_t length = p_jmsg["dumplength"].get<size_t>();
     size_t s = 0;
-    for (size_t i = 0; i < product(p_varshape, 1); i++)
+    for (size_t i = 0; i < product(p_varshape, 1); ++i)
     {
         s++;
-        out << ((float *)p_data)[i] << " ";
+        out << (static_cast<const float *>(p_data))[i] << " ";
         if (s == length)
         {
             out << std::endl;
@@ -238,7 +238,7 @@ void DataManBase::remove_next(std::string p_name) { m_next.erase(p_name); }
 
 bool DataManBase::have_next()
 {
-    if (m_next.size() == 0)
+    if (m_next.empty())
     {
         return false;
     }
@@ -250,7 +250,7 @@ bool DataManBase::have_next()
 
 void DataManBase::print_next(std::ostream &out)
 {
-    for (auto i : m_next)
+    for (const auto &i : m_next)
     {
         out << i.second->name() << " -> ";
         i.second->print_next();
@@ -301,7 +301,7 @@ void DataManBase::add_man_to_path(std::string p_new, std::string p_path,
 
 int DataManBase::flush_next()
 {
-    for (auto i : m_next)
+    for (const auto &i : m_next)
     {
         i.second->flush();
     }
@@ -310,7 +310,7 @@ int DataManBase::flush_next()
 
 int DataManBase::put_next(const void *p_data, json p_jmsg)
 {
-    for (auto i : m_next)
+    for (const auto &i : m_next)
     {
         i.second->put(p_data, p_jmsg);
     }
@@ -367,7 +367,7 @@ bool DataManBase::check_json(json p_jmsg, std::vector<std::string> p_strings,
     {
         p_man = name();
     }
-    for (auto i : p_strings)
+    for (const auto &i : p_strings)
     {
         if (p_jmsg[i] == nullptr)
         {
@@ -386,7 +386,7 @@ size_t DataManBase::product(size_t *shape)
     size_t s = 1;
     if (shape)
     {
-        for (size_t i = 1; i <= shape[0]; i++)
+        for (size_t i = 1; i <= shape[0]; ++i)
         {
             s *= shape[i];
         }
@@ -498,7 +498,7 @@ nlohmann::json DataManBase::atoj(unsigned int *array)
         if (array[0] > 0)
         {
             j = {array[1]};
-            for (unsigned int i = 2; i <= array[0]; i++)
+            for (unsigned int i = 2; i <= array[0]; ++i)
             {
                 j.insert(j.end(), array[i]);
             }
@@ -510,7 +510,7 @@ nlohmann::json DataManBase::atoj(unsigned int *array)
 int DataManBase::closest(int v, json j, bool up)
 {
     int s = 100, k = 0, t;
-    for (unsigned int i = 0; i < j.size(); i++)
+    for (unsigned int i = 0; i < j.size(); ++i)
     {
         if (up)
         {
