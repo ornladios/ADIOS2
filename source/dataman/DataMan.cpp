@@ -23,6 +23,7 @@ int DataMan::put(const void *a_data, std::string p_doid, std::string p_var,
 
 int DataMan::put(const void *a_data, json a_jmsg)
 {
+    a_jmsg["timestep"] = m_timestep;
     if (m_cache_size > 0)
     {
         check_shape(a_jmsg);
@@ -58,14 +59,14 @@ void DataMan::add_stream(json a_jmsg)
 
     if (m_tolerance.size() < m_num_channels)
     {
-        for (int i = 0; i < m_num_channels; i++)
+        for (int i = 0; i < m_num_channels; ++i)
         {
             m_tolerance.push_back(0);
         }
     }
     if (m_priority.size() < m_num_channels)
     {
-        for (int i = 0; i < m_num_channels; i++)
+        for (int i = 0; i < m_num_channels; ++i)
         {
             m_priority.push_back(100 / (i + 1));
         }
@@ -93,13 +94,13 @@ void DataMan::flush()
     {
         if (m_cache_size == m_cache.get_timesteps_cached())
         {
-            for (int i = 0; i < m_cache_size; i++)
+            for (int i = 0; i < m_cache_size; ++i)
             {
                 std::vector<std::string> do_list = m_cache.get_do_list();
-                for (auto j : do_list)
+                for (const auto &j : do_list)
                 {
                     std::vector<std::string> var_list = m_cache.get_var_list(j);
-                    for (auto k : var_list)
+                    for (const auto &k : var_list)
                     {
                         json jmsg = m_cache.get_jmsg(j, k);
                         put_begin(m_cache.get(j, k), jmsg);

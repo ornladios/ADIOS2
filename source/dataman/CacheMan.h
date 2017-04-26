@@ -30,7 +30,7 @@ public:
     void push();
     json get_jmsg();
     void clean(std::vector<char> &a_data, std::string a_mode);
-    std::string m_clean_mode = "nan";
+    std::string m_clean_mode;
 
 private:
     std::queue<std::vector<char>> m_cache;
@@ -41,7 +41,7 @@ private:
                                             const std::vector<size_t> &o)
     {
         std::vector<size_t> g;
-        for (int i = 0; i < p.size(); i++)
+        for (int i = 0; i < p.size(); ++i)
         {
             g.push_back(p[i] + o[i]);
         }
@@ -52,7 +52,7 @@ private:
                             const std::vector<size_t> &p)
     {
         size_t index = 0;
-        for (int i = 1; i < v.size(); i++)
+        for (int i = 1; i < v.size(); ++i)
         {
             index += std::accumulate(v.begin() + i, v.end(), p[i - 1],
                                      std::multiplies<size_t>());
@@ -64,7 +64,7 @@ private:
     inline std::vector<size_t> one2multi(const std::vector<size_t> &v, size_t p)
     {
         std::vector<size_t> index(v.size());
-        for (int i = 1; i < v.size(); i++)
+        for (int i = 1; i < v.size(); ++i)
         {
             size_t s = std::accumulate(v.begin() + i, v.end(), 1,
                                        std::multiplies<size_t>());
