@@ -23,6 +23,7 @@ int DataMan::put(const void *a_data, std::string p_doid, std::string p_var,
 
 int DataMan::put(const void *a_data, json a_jmsg)
 {
+    a_jmsg["timestep"] = m_timestep;
     if (m_cache_size > 0)
     {
         check_shape(a_jmsg);

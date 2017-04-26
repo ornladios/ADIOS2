@@ -115,7 +115,7 @@ int StreamMan::callback()
                 m_cache.get_jmsg(i, j)["varshape"].get<std::vector<size_t>>());
         }
     }
-
+    m_cache.clean("nan");
     return 0;
 }
 
@@ -135,9 +135,9 @@ void StreamMan::zmq_meta_rep_thread_func()
         std::string smsg = msg;
         if (ret >= 0)
         {
-            json j = json::parse(msg);
-            logging("StreamMan::zmq_meta_rep_thread_func: \n" + j.dump(4));
-            on_recv(j);
+            json jmsg = json::parse(msg);
+            logging("StreamMan::zmq_meta_rep_thread_func: \n" + jmsg.dump(4));
+            on_recv(jmsg);
         }
         usleep(10);
     }
@@ -149,3 +149,6 @@ int StreamMan::put(const void *p_data, json p_jmsg)
     zmq_send(zmq_meta, p_jmsg.dump().c_str(), p_jmsg.dump().length(), 0);
     return 0;
 }
+
+
+

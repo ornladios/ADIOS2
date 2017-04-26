@@ -30,7 +30,7 @@ public:
     void push();
     json get_jmsg();
     void clean(std::vector<char> &a_data, std::string a_mode);
-    std::string m_clean_mode = "nan";
+    std::string m_clean_mode;
 
 private:
     std::queue<std::vector<char>> m_cache;
