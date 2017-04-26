@@ -3,11 +3,13 @@
  * accompanying file Copyright.txt for details.
  */
 #include <cstdint>
+#include <cstring>
 
 #include <iostream>
 #include <stdexcept>
 
 #include <adios2.h>
+#include <hdf5.h>
 
 #include <gtest/gtest.h>
 
@@ -24,8 +26,13 @@ public:
 //******************************************************************************
 // 1D 1x8 test data
 //******************************************************************************
+
+// ADIOS2 write, native HDF5 read
 TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
 {
+    std::string fname = "ADIOS2HDF5WriteHDF5Read1D8.h5";
+
+    // Write test data using ADIOS2
     {
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
@@ -47,12 +54,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
             auto &var_r64 = adios.DefineVariable<double>("r64", adios::Dims{8});
         }
 
-        // Create the ADIOS 1 Engine
+        // Create the HDF5 Engine
         auto method = adios.DeclareMethod("TestMethod");
         method.SetEngine("HDF5Writer");
         method.AddTransport("File");
 
-        auto engine = adios.Open("ADIOS2HDF5WriteHDF5Read1D8.h5", "w", method);
+        auto engine = adios.Open(fname, "w", method);
         ASSERT_NE(engine, nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -70,16 +77,16 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
             auto &var_r64 = adios.GetVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.cbegin() + step);
-            engine->Write(var_i16, m_TestData.I16.cbegin() + step);
-            engine->Write(var_i32, m_TestData.I32.cbegin() + step);
-            engine->Write(var_i64, m_TestData.I64.cbegin() + step);
-            engine->Write(var_u8, m_TestData.U8.cbegin() + step);
-            engine->Write(var_u16, m_TestData.U16.cbegin() + step);
-            engine->Write(var_u32, m_TestData.U32.cbegin() + step);
-            engine->Write(var_u64, m_TestData.U64.cbegin() + step);
-            engine->Write(var_r32, m_TestData.R32.cbegin() + step);
-            engine->Write(var_r64, m_TestData.R64.cbegin() + step);
+            engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_i16, m_TestData.I16.data() + step);
+            engine->Write(var_i32, m_TestData.I32.data() + step);
+            engine->Write(var_i64, m_TestData.I64.data() + step);
+            engine->Write(var_u8, m_TestData.U8.data() + step);
+            engine->Write(var_u16, m_TestData.U16.data() + step);
+            engine->Write(var_u32, m_TestData.U32.data() + step);
+            engine->Write(var_u64, m_TestData.U64.data() + step);
+            engine->Write(var_r32, m_TestData.R32.data() + step);
+            engine->Write(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
             engine->Advance();
@@ -89,16 +96,37 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
         engine->Close();
     }
 
-    // Read data back with HDF5 natively
+    // Read test data using HDF5
     {
     }
+}
+
+// ADIOS2 write, ADIOS2 read
+TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read1D8)
+{
+    std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read1D8.h5";
+
+    // Not yet implemented since read API is not ready
+}
+
+// Native HDF5 write, ADIOS2 read
+TEST_F(HDF5WriteReadTest, DISABLED_HDF5WriteADIOS2HDF5Read1D8)
+{
+    std::string fname = "HDF5WriteADIOS2HDF5Read1D8.h5";
+
+    // Not yet implemented since read API is not ready
 }
 
 //******************************************************************************
 // 2D 2x4 test data
 //******************************************************************************
+
+// ADIOS2 write, native HDF5 read
 TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
 {
+    std::string fname = "ADIOS2HDF5WriteHDF5Read2D2x4Test.h5";
+
+    // Write test data using ADIOS2
     {
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
@@ -124,13 +152,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
                 adios.DefineVariable<double>("r64", adios::Dims{2, 4});
         }
 
-        // Create the ADIOS 1 Engine
+        // Create the HDF5 Engine
         auto method = adios.DeclareMethod("TestMethod");
         method.SetEngine("HDF5Writer");
         method.AddTransport("File");
 
-        auto engine =
-            adios.Open("ADIOS2HDF5WriteADIOS1Read2D2x4Test.h5", "w", method);
+        auto engine = adios.Open(fname, "w", method);
         ASSERT_NE(engine, nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -148,16 +175,16 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
             auto &var_r64 = adios.GetVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.cbegin() + step);
-            engine->Write(var_i16, m_TestData.I16.cbegin() + step);
-            engine->Write(var_i32, m_TestData.I32.cbegin() + step);
-            engine->Write(var_i64, m_TestData.I64.cbegin() + step);
-            engine->Write(var_u8, m_TestData.U8.cbegin() + step);
-            engine->Write(var_u16, m_TestData.U16.cbegin() + step);
-            engine->Write(var_u32, m_TestData.U32.cbegin() + step);
-            engine->Write(var_u64, m_TestData.U64.cbegin() + step);
-            engine->Write(var_r32, m_TestData.R32.cbegin() + step);
-            engine->Write(var_r64, m_TestData.R64.cbegin() + step);
+            engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_i16, m_TestData.I16.data() + step);
+            engine->Write(var_i32, m_TestData.I32.data() + step);
+            engine->Write(var_i64, m_TestData.I64.data() + step);
+            engine->Write(var_u8, m_TestData.U8.data() + step);
+            engine->Write(var_u16, m_TestData.U16.data() + step);
+            engine->Write(var_u32, m_TestData.U32.data() + step);
+            engine->Write(var_u64, m_TestData.U64.data() + step);
+            engine->Write(var_r32, m_TestData.R32.data() + step);
+            engine->Write(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
             engine->Advance();
@@ -167,16 +194,37 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
         engine->Close();
     }
 
-    // Read data back with HDF5 natively
+    // Read test data using HDF5
     {
     }
+}
+
+// ADIOS2 write, ADIOS2 read
+TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
+{
+    std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read2D2x4Test.h5";
+
+    // Not yet implemented since read API is not ready
+}
+
+// Native HDF5 write, ADIOS2 read
+TEST_F(HDF5WriteReadTest, DISABLED_HDF5WriteADIOS2HDF5Read2D2x4)
+{
+    std::string fname = "HDF5WriteADIOS2HDF5Read2D2x4Test.h5";
+
+    // Not yet implemented since read API is not ready
 }
 
 //******************************************************************************
 // 2D 4x2 test data
 //******************************************************************************
+
+// ADIOS2 write, native HDF5 read
 TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
 {
+    std::string fname = "ADIOS2HDF5WriteHDF5Read2D4x2Test.h5";
+
+    // Write test data using ADIOS2
     {
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
@@ -202,13 +250,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
                 adios.DefineVariable<double>("r64", adios::Dims{4, 2});
         }
 
-        // Create the ADIOS 1 Engine
+        // Create the HDF5 Engine
         auto method = adios.DeclareMethod("TestMethod");
         method.SetEngine("HDF5Writer");
         method.AddTransport("File");
 
-        auto engine =
-            adios.Open("ADIOS2HDF5WriteADIOS1Read2D4x2Test.h5", "w", method);
+        auto engine = adios.Open(fname, "w", method);
         ASSERT_NE(engine, nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -226,16 +273,16 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
             auto &var_r64 = adios.GetVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.cbegin() + step);
-            engine->Write(var_i16, m_TestData.I16.cbegin() + step);
-            engine->Write(var_i32, m_TestData.I32.cbegin() + step);
-            engine->Write(var_i64, m_TestData.I64.cbegin() + step);
-            engine->Write(var_u8, m_TestData.U8.cbegin() + step);
-            engine->Write(var_u16, m_TestData.U16.cbegin() + step);
-            engine->Write(var_u32, m_TestData.U32.cbegin() + step);
-            engine->Write(var_u64, m_TestData.U64.cbegin() + step);
-            engine->Write(var_r32, m_TestData.R32.cbegin() + step);
-            engine->Write(var_r64, m_TestData.R64.cbegin() + step);
+            engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_i16, m_TestData.I16.data() + step);
+            engine->Write(var_i32, m_TestData.I32.data() + step);
+            engine->Write(var_i64, m_TestData.I64.data() + step);
+            engine->Write(var_u8, m_TestData.U8.data() + step);
+            engine->Write(var_u16, m_TestData.U16.data() + step);
+            engine->Write(var_u32, m_TestData.U32.data() + step);
+            engine->Write(var_u64, m_TestData.U64.data() + step);
+            engine->Write(var_r32, m_TestData.R32.data() + step);
+            engine->Write(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
             engine->Advance();
@@ -245,9 +292,25 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
         engine->Close();
     }
 
-    // Read data back with HDF5 natively
+    // Read test data using HDF5
     {
     }
+}
+
+// ADIOS2 write, ADIOS2 read
+TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
+{
+    std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read2D4x2Test.h5";
+
+    // Not yet implemented since read API is not ready
+}
+
+// Native HDF5 write, ADIOS2 read
+TEST_F(HDF5WriteReadTest, DISABLED_HDF5WriteADIOS2HDF5Read2D4x2)
+{
+    std::string fname = "HDF5WriteADIOS2HDF5Read2D4x2Test.h5";
+
+    // Not yet implemented since read API is not ready
 }
 
 //******************************************************************************
