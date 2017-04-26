@@ -236,7 +236,7 @@ TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read1D8)
 {
     std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read1D8.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 // Native ADIOS1 write, ADIOS2 read
@@ -244,7 +244,7 @@ TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read1D8)
 {
     std::string fname = "ADIOS1WriteADIOS2ADIOS1Read1D8.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 //******************************************************************************
@@ -473,7 +473,7 @@ TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D2x4)
 {
     std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D2x4Test.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 // Native ADIOS1 write, ADIOS2 read
@@ -481,7 +481,7 @@ TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read2D2x4)
 {
     std::string fname = "ADIOS1WriteADIOS2ADIOS1Read2D2x4Test.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 //******************************************************************************
@@ -710,7 +710,7 @@ TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D4x2)
 {
     std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D4x2Test.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 // Native ADIOS1 write, ADIOS2 read
@@ -718,7 +718,7 @@ TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read2D4x2)
 {
     std::string fname = "ADIOS1WriteADIOS2ADIOS1Read2D4x2Test.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 //******************************************************************************
