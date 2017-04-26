@@ -113,24 +113,44 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         // Check the variables exist
         ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
         ASSERT_NE(var_i8, nullptr);
+        ASSERT_EQ(var_i8->ndim, 1);
+        ASSERT_EQ(var_i8->dims[0], 8);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
+        ASSERT_EQ(var_i16->ndim, 1);
+        ASSERT_EQ(var_i16->dims[0], 8);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
         ASSERT_NE(var_i32, nullptr);
+        ASSERT_EQ(var_i32->ndim, 1);
+        ASSERT_EQ(var_i32->dims[0], 8);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
         ASSERT_NE(var_i64, nullptr);
+        ASSERT_EQ(var_i64->ndim, 1);
+        ASSERT_EQ(var_i64->dims[0], 8);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
         ASSERT_NE(var_u8, nullptr);
+        ASSERT_EQ(var_u8->ndim, 1);
+        ASSERT_EQ(var_u8->dims[0], 8);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
         ASSERT_NE(var_u16, nullptr);
+        ASSERT_EQ(var_u16->ndim, 1);
+        ASSERT_EQ(var_u16->dims[0], 8);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
         ASSERT_NE(var_u32, nullptr);
+        ASSERT_EQ(var_u32->ndim, 1);
+        ASSERT_EQ(var_u32->dims[0], 8);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
         ASSERT_NE(var_u64, nullptr);
+        ASSERT_EQ(var_u64->ndim, 1);
+        ASSERT_EQ(var_u64->dims[0], 8);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
         ASSERT_NE(var_r32, nullptr);
+        ASSERT_EQ(var_r32->ndim, 1);
+        ASSERT_EQ(var_r32->dims[0], 8);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
         ASSERT_NE(var_r64, nullptr);
+        ASSERT_EQ(var_r64->ndim, 1);
+        ASSERT_EQ(var_r64->dims[0], 8);
 
         std::array<char, 8> I8;
         std::array<int16_t, 8> I16;
@@ -296,24 +316,54 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         // Check the variables exist
         ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
         ASSERT_NE(var_i8, nullptr);
+        ASSERT_EQ(var_i8->ndim, 2);
+        ASSERT_EQ(var_i8->dims[0], 2);
+        ASSERT_EQ(var_i8->dims[1], 4);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
+        ASSERT_EQ(var_i16->ndim, 2);
+        ASSERT_EQ(var_i16->dims[0], 2);
+        ASSERT_EQ(var_i16->dims[1], 4);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
         ASSERT_NE(var_i32, nullptr);
+        ASSERT_EQ(var_i32->ndim, 2);
+        ASSERT_EQ(var_i32->dims[0], 2);
+        ASSERT_EQ(var_i32->dims[1], 4);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
         ASSERT_NE(var_i64, nullptr);
+        ASSERT_EQ(var_i64->ndim, 2);
+        ASSERT_EQ(var_i64->dims[0], 2);
+        ASSERT_EQ(var_i64->dims[1], 4);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
         ASSERT_NE(var_u8, nullptr);
+        ASSERT_EQ(var_u8->ndim, 2);
+        ASSERT_EQ(var_u8->dims[0], 2);
+        ASSERT_EQ(var_u8->dims[1], 4);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
         ASSERT_NE(var_u16, nullptr);
+        ASSERT_EQ(var_u16->ndim, 2);
+        ASSERT_EQ(var_u16->dims[0], 2);
+        ASSERT_EQ(var_u16->dims[1], 4);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
         ASSERT_NE(var_u32, nullptr);
+        ASSERT_EQ(var_u32->ndim, 2);
+        ASSERT_EQ(var_u32->dims[0], 2);
+        ASSERT_EQ(var_u32->dims[1], 4);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
         ASSERT_NE(var_u64, nullptr);
+        ASSERT_EQ(var_u64->ndim, 2);
+        ASSERT_EQ(var_u64->dims[0], 2);
+        ASSERT_EQ(var_u64->dims[1], 4);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
         ASSERT_NE(var_r32, nullptr);
+        ASSERT_EQ(var_r32->ndim, 2);
+        ASSERT_EQ(var_r32->dims[0], 2);
+        ASSERT_EQ(var_r32->dims[1], 4);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
         ASSERT_NE(var_r64, nullptr);
+        ASSERT_EQ(var_r64->ndim, 2);
+        ASSERT_EQ(var_r64->dims[0], 2);
+        ASSERT_EQ(var_r64->dims[1], 4);
 
         std::array<char, 8> I8;
         std::array<int16_t, 8> I16;
@@ -326,9 +376,9 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         std::array<float, 8> R32;
         std::array<double, 8> R64;
 
-        uint64_t start[1] = {0};
-        uint64_t count[1] = {8};
-        ADIOS_SELECTION *sel = adios_selection_boundingbox(1, start, count);
+        uint64_t start[2] = {0, 0};
+        uint64_t count[2] = {2, 4};
+        ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
 
         // Read stuff
         for (size_t t = 0; t < 3; ++t)
@@ -479,24 +529,54 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         // Check the variables exist
         ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
         ASSERT_NE(var_i8, nullptr);
+        ASSERT_EQ(var_i8->ndim, 2);
+        ASSERT_EQ(var_i8->dims[0], 4);
+        ASSERT_EQ(var_i8->dims[1], 2);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
+        ASSERT_EQ(var_i16->ndim, 2);
+        ASSERT_EQ(var_i16->dims[0], 4);
+        ASSERT_EQ(var_i16->dims[1], 2);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
         ASSERT_NE(var_i32, nullptr);
+        ASSERT_EQ(var_i32->ndim, 2);
+        ASSERT_EQ(var_i32->dims[0], 4);
+        ASSERT_EQ(var_i32->dims[1], 2);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
         ASSERT_NE(var_i64, nullptr);
+        ASSERT_EQ(var_i64->ndim, 2);
+        ASSERT_EQ(var_i64->dims[0], 4);
+        ASSERT_EQ(var_i64->dims[1], 2);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
         ASSERT_NE(var_u8, nullptr);
+        ASSERT_EQ(var_u8->ndim, 2);
+        ASSERT_EQ(var_u8->dims[0], 4);
+        ASSERT_EQ(var_u8->dims[1], 2);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
         ASSERT_NE(var_u16, nullptr);
+        ASSERT_EQ(var_u16->ndim, 2);
+        ASSERT_EQ(var_u16->dims[0], 4);
+        ASSERT_EQ(var_u16->dims[1], 2);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
         ASSERT_NE(var_u32, nullptr);
+        ASSERT_EQ(var_u32->ndim, 2);
+        ASSERT_EQ(var_u32->dims[0], 4);
+        ASSERT_EQ(var_u32->dims[1], 2);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
         ASSERT_NE(var_u64, nullptr);
+        ASSERT_EQ(var_u64->ndim, 2);
+        ASSERT_EQ(var_u64->dims[0], 4);
+        ASSERT_EQ(var_u64->dims[1], 2);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
         ASSERT_NE(var_r32, nullptr);
+        ASSERT_EQ(var_r32->ndim, 2);
+        ASSERT_EQ(var_r32->dims[0], 4);
+        ASSERT_EQ(var_r32->dims[1], 2);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
         ASSERT_NE(var_r64, nullptr);
+        ASSERT_EQ(var_r64->ndim, 2);
+        ASSERT_EQ(var_r64->dims[0], 4);
+        ASSERT_EQ(var_r64->dims[1], 2);
 
         std::array<char, 8> I8;
         std::array<int16_t, 8> I16;
@@ -509,9 +589,9 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         std::array<float, 8> R32;
         std::array<double, 8> R64;
 
-        uint64_t start[1] = {0};
-        uint64_t count[1] = {8};
-        ADIOS_SELECTION *sel = adios_selection_boundingbox(1, start, count);
+        uint64_t start[2] = {0, 0};
+        uint64_t count[2] = {4, 2};
+        ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
 
         // Read stuff
         for (size_t t = 0; t < 3; ++t)
