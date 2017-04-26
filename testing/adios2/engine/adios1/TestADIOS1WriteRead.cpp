@@ -8,8 +8,8 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <adios2.h>
 #include <adios.h>
+#include <adios2.h>
 #include <adios_read.h>
 
 #include <gtest/gtest.h>
@@ -101,12 +101,12 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         adios_finalize(0);
     }
 
-    // Read test data using ADIOS1
+// Read test data using ADIOS1
 #ifdef ADIOS2_HAVE_MPI
     // Read everything from rank 0
     int rank;
     MPI_Comm_rank();
-    if(rank == 0)
+    if (rank == 0)
 #endif
     {
         adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
@@ -328,12 +328,12 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         adios_finalize(0);
     }
 
-    // Read test data using ADIOS1
+// Read test data using ADIOS1
 #ifdef ADIOS2_HAVE_MPI
     // Read everything from rank 0
     int rank;
     MPI_Comm_rank();
-    if(rank == 0)
+    if (rank == 0)
 #endif
     {
         adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
@@ -565,12 +565,12 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         adios_finalize(0);
     }
 
-    // Read test data using ADIOS1
+// Read test data using ADIOS1
 #ifdef ADIOS2_HAVE_MPI
     // Read everything from rank 0
     int rank;
     MPI_Comm_rank();
-    if(rank == 0)
+    if (rank == 0)
 #endif
     {
         adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
