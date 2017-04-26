@@ -88,6 +88,10 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
         // Close the file
         engine->Close();
     }
+
+    // Read data back with HDF5 natively
+    {
+    }
 }
 
 //******************************************************************************
@@ -162,6 +166,10 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
         // Close the file
         engine->Close();
     }
+
+    // Read data back with HDF5 natively
+    {
+    }
 }
 
 //******************************************************************************
@@ -235,6 +243,10 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
 
         // Close the file
         engine->Close();
+    }
+
+    // Read data back with HDF5 natively
+    {
     }
 }
 
