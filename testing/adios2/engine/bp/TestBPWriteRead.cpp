@@ -230,7 +230,7 @@ TEST_F(BPWriteReadTest, DISABLED_ADIOS2BPWriteADIOS2BPRead1D8)
 {
     std::string fname = "ADIOS2BPWriteADIOS2BPRead1D8.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 //******************************************************************************
@@ -454,7 +454,7 @@ TEST_F(BPWriteReadTest, DISABLED_ADIOS2BPWriteADIOS2BPRead2D2x4)
 {
     std::string fname = "ADIOS2BPWriteADIOS2BPRead2D2x4Test.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 //******************************************************************************
@@ -678,7 +678,7 @@ TEST_F(BPWriteReadTest, DISABLED_ADIOS2BPWriteADIOS2BPRead2D4x2)
 {
     std::string fname = "ADIOS2BPWriteADIOS2BPRead2D4x2Test.bp";
 
-    // Not yet implemented since read API is not ready
+    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
 
 //******************************************************************************
