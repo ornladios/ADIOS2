@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include <adios2.h>
+#include <adios.h>
 #include <adios_read.h>
 
 #include <gtest/gtest.h>
@@ -34,6 +35,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
 
     // Write test data using ADIOS2
     {
+        adios_init_noxml(MPI_COMM_WORLD);
+
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
         // Declare 1D variables
@@ -94,6 +97,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
 
         // Close the file
         engine->Close();
+
+        adios_finalize(0);
     }
 
     // Read test data using ADIOS1
@@ -221,6 +226,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
 
         // Cleanup file
         adios_read_close(f);
+
+        adios_read_finalize_method(ADIOS_READ_METHOD_BP);
     }
 }
 
@@ -251,6 +258,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 
     // Write test data using ADIOS2
     {
+        adios_init_noxml(MPI_COMM_WORLD);
+
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
         // Declare 1D variables
@@ -315,6 +324,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 
         // Close the file
         engine->Close();
+
+        adios_finalize(0);
     }
 
     // Read test data using ADIOS1
@@ -452,6 +463,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 
         // Cleanup file
         adios_read_close(f);
+
+        adios_read_finalize_method(ADIOS_READ_METHOD_BP);
     }
 }
 
@@ -482,6 +495,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 
     // Write test data using ADIOS2
     {
+        adios_init_noxml(MPI_COMM_WORLD);
+
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
         // Declare 1D variables
@@ -546,6 +561,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 
         // Close the file
         engine->Close();
+
+        adios_finalize(0);
     }
 
     // Read test data using ADIOS1
@@ -683,6 +700,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 
         // Cleanup file
         adios_read_close(f);
+
+        adios_read_finalize_method(ADIOS_READ_METHOD_BP);
     }
 }
 
