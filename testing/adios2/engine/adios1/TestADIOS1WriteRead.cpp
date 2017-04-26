@@ -3,11 +3,14 @@
  * accompanying file Copyright.txt for details.
  */
 #include <cstdint>
+#include <cstring>
 
 #include <iostream>
 #include <stdexcept>
 
+#include <adios.h>
 #include <adios2.h>
+#include <adios_read.h>
 
 #include <gtest/gtest.h>
 
@@ -24,9 +27,16 @@ public:
 //******************************************************************************
 // 1D 1x8 test data
 //******************************************************************************
+
+// ADIOS2 write, native ADIOS1 read
 TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
 {
+    std::string fname = "ADIOS2ADIOS1WriteADIOS1Read1D8.bp";
+
+    // Write test data using ADIOS2
     {
+        adios_init_noxml(MPI_COMM_WORLD);
+
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
         // Declare 1D variables
@@ -52,8 +62,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         method.SetEngine("ADIOS1Writer");
         method.AddTransport("File");
 
-        auto engine =
-            adios.Open("ADIOS2ADIOS1WriteADIOS1Read1D8.bp", "w", method);
+        auto engine = adios.Open(fname, "w", method);
         ASSERT_NE(engine, nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -71,16 +80,16 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
             auto &var_r64 = adios.GetVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.cbegin() + step);
-            engine->Write(var_i16, m_TestData.I16.cbegin() + step);
-            engine->Write(var_i32, m_TestData.I32.cbegin() + step);
-            engine->Write(var_i64, m_TestData.I64.cbegin() + step);
-            engine->Write(var_u8, m_TestData.U8.cbegin() + step);
-            engine->Write(var_u16, m_TestData.U16.cbegin() + step);
-            engine->Write(var_u32, m_TestData.U32.cbegin() + step);
-            engine->Write(var_u64, m_TestData.U64.cbegin() + step);
-            engine->Write(var_r32, m_TestData.R32.cbegin() + step);
-            engine->Write(var_r64, m_TestData.R64.cbegin() + step);
+            engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_i16, m_TestData.I16.data() + step);
+            engine->Write(var_i32, m_TestData.I32.data() + step);
+            engine->Write(var_i64, m_TestData.I64.data() + step);
+            engine->Write(var_u8, m_TestData.U8.data() + step);
+            engine->Write(var_u16, m_TestData.U16.data() + step);
+            engine->Write(var_u32, m_TestData.U32.data() + step);
+            engine->Write(var_u64, m_TestData.U64.data() + step);
+            engine->Write(var_r32, m_TestData.R32.data() + step);
+            engine->Write(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
             engine->Advance();
@@ -88,15 +97,169 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
 
         // Close the file
         engine->Close();
+
+        adios_finalize(0);
     }
+
+// Read test data using ADIOS1
+#ifdef ADIOS2_HAVE_MPI
+    // Read everything from rank 0
+    int rank;
+    MPI_Comm_rank();
+    if (rank == 0)
+#endif
+    {
+        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
+                               "verbose=3");
+
+        // Open the file for reading
+        ADIOS_FILE *f = adios_read_open_file(
+            fname.c_str(), ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
+        ASSERT_NE(f, nullptr);
+
+        // Check the variables exist
+        ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
+        ASSERT_NE(var_i8, nullptr);
+        ASSERT_EQ(var_i8->ndim, 1);
+        ASSERT_EQ(var_i8->dims[0], 8);
+        ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
+        ASSERT_NE(var_i16, nullptr);
+        ASSERT_EQ(var_i16->ndim, 1);
+        ASSERT_EQ(var_i16->dims[0], 8);
+        ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
+        ASSERT_NE(var_i32, nullptr);
+        ASSERT_EQ(var_i32->ndim, 1);
+        ASSERT_EQ(var_i32->dims[0], 8);
+        ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
+        ASSERT_NE(var_i64, nullptr);
+        ASSERT_EQ(var_i64->ndim, 1);
+        ASSERT_EQ(var_i64->dims[0], 8);
+        ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
+        ASSERT_NE(var_u8, nullptr);
+        ASSERT_EQ(var_u8->ndim, 1);
+        ASSERT_EQ(var_u8->dims[0], 8);
+        ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
+        ASSERT_NE(var_u16, nullptr);
+        ASSERT_EQ(var_u16->ndim, 1);
+        ASSERT_EQ(var_u16->dims[0], 8);
+        ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
+        ASSERT_NE(var_u32, nullptr);
+        ASSERT_EQ(var_u32->ndim, 1);
+        ASSERT_EQ(var_u32->dims[0], 8);
+        ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
+        ASSERT_NE(var_u64, nullptr);
+        ASSERT_EQ(var_u64->ndim, 1);
+        ASSERT_EQ(var_u64->dims[0], 8);
+        ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
+        ASSERT_NE(var_r32, nullptr);
+        ASSERT_EQ(var_r32->ndim, 1);
+        ASSERT_EQ(var_r32->dims[0], 8);
+        ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
+        ASSERT_NE(var_r64, nullptr);
+        ASSERT_EQ(var_r64->ndim, 1);
+        ASSERT_EQ(var_r64->dims[0], 8);
+
+        std::array<char, 8> I8;
+        std::array<int16_t, 8> I16;
+        std::array<int32_t, 8> I32;
+        std::array<int64_t, 8> I64;
+        std::array<unsigned char, 8> U8;
+        std::array<uint16_t, 8> U16;
+        std::array<uint32_t, 8> U32;
+        std::array<uint64_t, 8> U64;
+        std::array<float, 8> R32;
+        std::array<double, 8> R64;
+
+        uint64_t start[1] = {0};
+        uint64_t count[1] = {8};
+        ADIOS_SELECTION *sel = adios_selection_boundingbox(1, start, count);
+
+        // Read stuff
+        for (size_t t = 0; t < 3; ++t)
+        {
+            // Read the current step
+            adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
+            adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
+            adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
+            adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
+            adios_schedule_read_byid(f, sel, var_u8->varid, t, 1, U8.data());
+            adios_schedule_read_byid(f, sel, var_u16->varid, t, 1, U16.data());
+            adios_schedule_read_byid(f, sel, var_u32->varid, t, 1, U32.data());
+            adios_schedule_read_byid(f, sel, var_u64->varid, t, 1, U64.data());
+            adios_schedule_read_byid(f, sel, var_r32->varid, t, 1, R32.data());
+            adios_schedule_read_byid(f, sel, var_r64->varid, t, 1, R64.data());
+            adios_perform_reads(f, 1);
+
+            // Check if it's correct
+            for (size_t i = 0; i < 8; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
+                EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
+                EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
+                EXPECT_EQ(U8[i], m_TestData.U8[i + t]) << msg;
+                EXPECT_EQ(U16[i], m_TestData.U16[i + t]) << msg;
+                EXPECT_EQ(U32[i], m_TestData.U32[i + t]) << msg;
+                EXPECT_EQ(U64[i], m_TestData.U64[i + t]) << msg;
+                EXPECT_EQ(R32[i], m_TestData.R32[i + t]) << msg;
+                EXPECT_EQ(R64[i], m_TestData.R64[i + t]) << msg;
+            }
+        }
+
+        adios_selection_delete(sel);
+
+        // Cleanup variable structures
+        adios_free_varinfo(var_i8);
+        adios_free_varinfo(var_i16);
+        adios_free_varinfo(var_i32);
+        adios_free_varinfo(var_i64);
+        adios_free_varinfo(var_u8);
+        adios_free_varinfo(var_u16);
+        adios_free_varinfo(var_u32);
+        adios_free_varinfo(var_u64);
+        adios_free_varinfo(var_r32);
+        adios_free_varinfo(var_r64);
+
+        // Cleanup file
+        adios_read_close(f);
+
+        adios_read_finalize_method(ADIOS_READ_METHOD_BP);
+    }
+}
+
+// ADIOS2 write, ADIOS2 read
+TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read1D8)
+{
+    std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read1D8.bp";
+
+    // Not yet implemented since read API is not ready
+}
+
+// Native ADIOS1 write, ADIOS2 read
+TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read1D8)
+{
+    std::string fname = "ADIOS1WriteADIOS2ADIOS1Read1D8.bp";
+
+    // Not yet implemented since read API is not ready
 }
 
 //******************************************************************************
 // 2D 2x4 test data
 //******************************************************************************
+
+// ADIOS2 write, native ADIOS1 read
 TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 {
+    std::string fname = "ADIOS2ADIOS1WriteADIOS1Read2D2x4Test.bp";
+
+    // Write test data using ADIOS2
     {
+        adios_init_noxml(MPI_COMM_WORLD);
+
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
         // Declare 1D variables
@@ -126,8 +289,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         method.SetEngine("ADIOS1Writer");
         method.AddTransport("File");
 
-        auto engine =
-            adios.Open("ADIOS2ADIOS1WriteADIOS1Read2D2x4Test.bp", "w", method);
+        auto engine = adios.Open(fname, "w", method);
         ASSERT_NE(engine, nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -145,16 +307,16 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
             auto &var_r64 = adios.GetVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.cbegin() + step);
-            engine->Write(var_i16, m_TestData.I16.cbegin() + step);
-            engine->Write(var_i32, m_TestData.I32.cbegin() + step);
-            engine->Write(var_i64, m_TestData.I64.cbegin() + step);
-            engine->Write(var_u8, m_TestData.U8.cbegin() + step);
-            engine->Write(var_u16, m_TestData.U16.cbegin() + step);
-            engine->Write(var_u32, m_TestData.U32.cbegin() + step);
-            engine->Write(var_u64, m_TestData.U64.cbegin() + step);
-            engine->Write(var_r32, m_TestData.R32.cbegin() + step);
-            engine->Write(var_r64, m_TestData.R64.cbegin() + step);
+            engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_i16, m_TestData.I16.data() + step);
+            engine->Write(var_i32, m_TestData.I32.data() + step);
+            engine->Write(var_i64, m_TestData.I64.data() + step);
+            engine->Write(var_u8, m_TestData.U8.data() + step);
+            engine->Write(var_u16, m_TestData.U16.data() + step);
+            engine->Write(var_u32, m_TestData.U32.data() + step);
+            engine->Write(var_u64, m_TestData.U64.data() + step);
+            engine->Write(var_r32, m_TestData.R32.data() + step);
+            engine->Write(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
             engine->Advance();
@@ -162,15 +324,179 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 
         // Close the file
         engine->Close();
+
+        adios_finalize(0);
     }
+
+// Read test data using ADIOS1
+#ifdef ADIOS2_HAVE_MPI
+    // Read everything from rank 0
+    int rank;
+    MPI_Comm_rank();
+    if (rank == 0)
+#endif
+    {
+        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
+                               "verbose=3");
+
+        // Open the file for reading
+        ADIOS_FILE *f = adios_read_open_file(
+            fname.c_str(), ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
+        ASSERT_NE(f, nullptr);
+
+        // Check the variables exist
+        ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
+        ASSERT_NE(var_i8, nullptr);
+        ASSERT_EQ(var_i8->ndim, 2);
+        ASSERT_EQ(var_i8->dims[0], 2);
+        ASSERT_EQ(var_i8->dims[1], 4);
+        ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
+        ASSERT_NE(var_i16, nullptr);
+        ASSERT_EQ(var_i16->ndim, 2);
+        ASSERT_EQ(var_i16->dims[0], 2);
+        ASSERT_EQ(var_i16->dims[1], 4);
+        ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
+        ASSERT_NE(var_i32, nullptr);
+        ASSERT_EQ(var_i32->ndim, 2);
+        ASSERT_EQ(var_i32->dims[0], 2);
+        ASSERT_EQ(var_i32->dims[1], 4);
+        ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
+        ASSERT_NE(var_i64, nullptr);
+        ASSERT_EQ(var_i64->ndim, 2);
+        ASSERT_EQ(var_i64->dims[0], 2);
+        ASSERT_EQ(var_i64->dims[1], 4);
+        ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
+        ASSERT_NE(var_u8, nullptr);
+        ASSERT_EQ(var_u8->ndim, 2);
+        ASSERT_EQ(var_u8->dims[0], 2);
+        ASSERT_EQ(var_u8->dims[1], 4);
+        ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
+        ASSERT_NE(var_u16, nullptr);
+        ASSERT_EQ(var_u16->ndim, 2);
+        ASSERT_EQ(var_u16->dims[0], 2);
+        ASSERT_EQ(var_u16->dims[1], 4);
+        ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
+        ASSERT_NE(var_u32, nullptr);
+        ASSERT_EQ(var_u32->ndim, 2);
+        ASSERT_EQ(var_u32->dims[0], 2);
+        ASSERT_EQ(var_u32->dims[1], 4);
+        ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
+        ASSERT_NE(var_u64, nullptr);
+        ASSERT_EQ(var_u64->ndim, 2);
+        ASSERT_EQ(var_u64->dims[0], 2);
+        ASSERT_EQ(var_u64->dims[1], 4);
+        ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
+        ASSERT_NE(var_r32, nullptr);
+        ASSERT_EQ(var_r32->ndim, 2);
+        ASSERT_EQ(var_r32->dims[0], 2);
+        ASSERT_EQ(var_r32->dims[1], 4);
+        ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
+        ASSERT_NE(var_r64, nullptr);
+        ASSERT_EQ(var_r64->ndim, 2);
+        ASSERT_EQ(var_r64->dims[0], 2);
+        ASSERT_EQ(var_r64->dims[1], 4);
+
+        std::array<char, 8> I8;
+        std::array<int16_t, 8> I16;
+        std::array<int32_t, 8> I32;
+        std::array<int64_t, 8> I64;
+        std::array<unsigned char, 8> U8;
+        std::array<uint16_t, 8> U16;
+        std::array<uint32_t, 8> U32;
+        std::array<uint64_t, 8> U64;
+        std::array<float, 8> R32;
+        std::array<double, 8> R64;
+
+        uint64_t start[2] = {0, 0};
+        uint64_t count[2] = {2, 4};
+        ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
+
+        // Read stuff
+        for (size_t t = 0; t < 3; ++t)
+        {
+            // Read the current step
+            adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
+            adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
+            adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
+            adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
+            adios_schedule_read_byid(f, sel, var_u8->varid, t, 1, U8.data());
+            adios_schedule_read_byid(f, sel, var_u16->varid, t, 1, U16.data());
+            adios_schedule_read_byid(f, sel, var_u32->varid, t, 1, U32.data());
+            adios_schedule_read_byid(f, sel, var_u64->varid, t, 1, U64.data());
+            adios_schedule_read_byid(f, sel, var_r32->varid, t, 1, R32.data());
+            adios_schedule_read_byid(f, sel, var_r64->varid, t, 1, R64.data());
+            adios_perform_reads(f, 1);
+
+            // Check if it's correct
+            for (size_t i = 0; i < 8; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
+                EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
+                EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
+                EXPECT_EQ(U8[i], m_TestData.U8[i + t]) << msg;
+                EXPECT_EQ(U16[i], m_TestData.U16[i + t]) << msg;
+                EXPECT_EQ(U32[i], m_TestData.U32[i + t]) << msg;
+                EXPECT_EQ(U64[i], m_TestData.U64[i + t]) << msg;
+                EXPECT_EQ(R32[i], m_TestData.R32[i + t]) << msg;
+                EXPECT_EQ(R64[i], m_TestData.R64[i + t]) << msg;
+            }
+        }
+
+        adios_selection_delete(sel);
+
+        // Cleanup variable structures
+        adios_free_varinfo(var_i8);
+        adios_free_varinfo(var_i16);
+        adios_free_varinfo(var_i32);
+        adios_free_varinfo(var_i64);
+        adios_free_varinfo(var_u8);
+        adios_free_varinfo(var_u16);
+        adios_free_varinfo(var_u32);
+        adios_free_varinfo(var_u64);
+        adios_free_varinfo(var_r32);
+        adios_free_varinfo(var_r64);
+
+        // Cleanup file
+        adios_read_close(f);
+
+        adios_read_finalize_method(ADIOS_READ_METHOD_BP);
+    }
+}
+
+// ADIOS2 write, ADIOS2 read
+TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D2x4)
+{
+    std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D2x4Test.bp";
+
+    // Not yet implemented since read API is not ready
+}
+
+// Native ADIOS1 write, ADIOS2 read
+TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read2D2x4)
+{
+    std::string fname = "ADIOS1WriteADIOS2ADIOS1Read2D2x4Test.bp";
+
+    // Not yet implemented since read API is not ready
 }
 
 //******************************************************************************
 // 2D 4x2 test data
 //******************************************************************************
+
+// ADIOS2 write, native ADIOS1 read
 TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 {
+    std::string fname = "ADIOS2ADIOS1WriteADIOS1Read2D4x2Test.bp";
+
+    // Write test data using ADIOS2
     {
+        adios_init_noxml(MPI_COMM_WORLD);
+
         adios::ADIOS adios(adios::Verbose::WARN, true);
 
         // Declare 1D variables
@@ -200,8 +526,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         method.SetEngine("ADIOS1Writer");
         method.AddTransport("File");
 
-        auto engine =
-            adios.Open("ADIOS2ADIOS1WriteADIOS1Read2D4x2Test.bp", "w", method);
+        auto engine = adios.Open(fname, "w", method);
         ASSERT_NE(engine, nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -219,16 +544,16 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
             auto &var_r64 = adios.GetVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.cbegin() + step);
-            engine->Write(var_i16, m_TestData.I16.cbegin() + step);
-            engine->Write(var_i32, m_TestData.I32.cbegin() + step);
-            engine->Write(var_i64, m_TestData.I64.cbegin() + step);
-            engine->Write(var_u8, m_TestData.U8.cbegin() + step);
-            engine->Write(var_u16, m_TestData.U16.cbegin() + step);
-            engine->Write(var_u32, m_TestData.U32.cbegin() + step);
-            engine->Write(var_u64, m_TestData.U64.cbegin() + step);
-            engine->Write(var_r32, m_TestData.R32.cbegin() + step);
-            engine->Write(var_r64, m_TestData.R64.cbegin() + step);
+            engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_i16, m_TestData.I16.data() + step);
+            engine->Write(var_i32, m_TestData.I32.data() + step);
+            engine->Write(var_i64, m_TestData.I64.data() + step);
+            engine->Write(var_u8, m_TestData.U8.data() + step);
+            engine->Write(var_u16, m_TestData.U16.data() + step);
+            engine->Write(var_u32, m_TestData.U32.data() + step);
+            engine->Write(var_u64, m_TestData.U64.data() + step);
+            engine->Write(var_r32, m_TestData.R32.data() + step);
+            engine->Write(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
             engine->Advance();
@@ -236,7 +561,164 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 
         // Close the file
         engine->Close();
+
+        adios_finalize(0);
     }
+
+// Read test data using ADIOS1
+#ifdef ADIOS2_HAVE_MPI
+    // Read everything from rank 0
+    int rank;
+    MPI_Comm_rank();
+    if (rank == 0)
+#endif
+    {
+        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
+                               "verbose=3");
+
+        // Open the file for reading
+        ADIOS_FILE *f = adios_read_open_file(
+            fname.c_str(), ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
+        ASSERT_NE(f, nullptr);
+
+        // Check the variables exist
+        ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
+        ASSERT_NE(var_i8, nullptr);
+        ASSERT_EQ(var_i8->ndim, 2);
+        ASSERT_EQ(var_i8->dims[0], 4);
+        ASSERT_EQ(var_i8->dims[1], 2);
+        ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
+        ASSERT_NE(var_i16, nullptr);
+        ASSERT_EQ(var_i16->ndim, 2);
+        ASSERT_EQ(var_i16->dims[0], 4);
+        ASSERT_EQ(var_i16->dims[1], 2);
+        ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
+        ASSERT_NE(var_i32, nullptr);
+        ASSERT_EQ(var_i32->ndim, 2);
+        ASSERT_EQ(var_i32->dims[0], 4);
+        ASSERT_EQ(var_i32->dims[1], 2);
+        ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
+        ASSERT_NE(var_i64, nullptr);
+        ASSERT_EQ(var_i64->ndim, 2);
+        ASSERT_EQ(var_i64->dims[0], 4);
+        ASSERT_EQ(var_i64->dims[1], 2);
+        ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
+        ASSERT_NE(var_u8, nullptr);
+        ASSERT_EQ(var_u8->ndim, 2);
+        ASSERT_EQ(var_u8->dims[0], 4);
+        ASSERT_EQ(var_u8->dims[1], 2);
+        ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
+        ASSERT_NE(var_u16, nullptr);
+        ASSERT_EQ(var_u16->ndim, 2);
+        ASSERT_EQ(var_u16->dims[0], 4);
+        ASSERT_EQ(var_u16->dims[1], 2);
+        ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
+        ASSERT_NE(var_u32, nullptr);
+        ASSERT_EQ(var_u32->ndim, 2);
+        ASSERT_EQ(var_u32->dims[0], 4);
+        ASSERT_EQ(var_u32->dims[1], 2);
+        ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
+        ASSERT_NE(var_u64, nullptr);
+        ASSERT_EQ(var_u64->ndim, 2);
+        ASSERT_EQ(var_u64->dims[0], 4);
+        ASSERT_EQ(var_u64->dims[1], 2);
+        ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
+        ASSERT_NE(var_r32, nullptr);
+        ASSERT_EQ(var_r32->ndim, 2);
+        ASSERT_EQ(var_r32->dims[0], 4);
+        ASSERT_EQ(var_r32->dims[1], 2);
+        ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
+        ASSERT_NE(var_r64, nullptr);
+        ASSERT_EQ(var_r64->ndim, 2);
+        ASSERT_EQ(var_r64->dims[0], 4);
+        ASSERT_EQ(var_r64->dims[1], 2);
+
+        std::array<char, 8> I8;
+        std::array<int16_t, 8> I16;
+        std::array<int32_t, 8> I32;
+        std::array<int64_t, 8> I64;
+        std::array<unsigned char, 8> U8;
+        std::array<uint16_t, 8> U16;
+        std::array<uint32_t, 8> U32;
+        std::array<uint64_t, 8> U64;
+        std::array<float, 8> R32;
+        std::array<double, 8> R64;
+
+        uint64_t start[2] = {0, 0};
+        uint64_t count[2] = {4, 2};
+        ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
+
+        // Read stuff
+        for (size_t t = 0; t < 3; ++t)
+        {
+            // Read the current step
+            adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
+            adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
+            adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
+            adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
+            adios_schedule_read_byid(f, sel, var_u8->varid, t, 1, U8.data());
+            adios_schedule_read_byid(f, sel, var_u16->varid, t, 1, U16.data());
+            adios_schedule_read_byid(f, sel, var_u32->varid, t, 1, U32.data());
+            adios_schedule_read_byid(f, sel, var_u64->varid, t, 1, U64.data());
+            adios_schedule_read_byid(f, sel, var_r32->varid, t, 1, R32.data());
+            adios_schedule_read_byid(f, sel, var_r64->varid, t, 1, R64.data());
+            adios_perform_reads(f, 1);
+
+            // Check if it's correct
+            for (size_t i = 0; i < 8; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
+                EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
+                EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
+                EXPECT_EQ(U8[i], m_TestData.U8[i + t]) << msg;
+                EXPECT_EQ(U16[i], m_TestData.U16[i + t]) << msg;
+                EXPECT_EQ(U32[i], m_TestData.U32[i + t]) << msg;
+                EXPECT_EQ(U64[i], m_TestData.U64[i + t]) << msg;
+                EXPECT_EQ(R32[i], m_TestData.R32[i + t]) << msg;
+                EXPECT_EQ(R64[i], m_TestData.R64[i + t]) << msg;
+            }
+        }
+
+        adios_selection_delete(sel);
+
+        // Cleanup variable structures
+        adios_free_varinfo(var_i8);
+        adios_free_varinfo(var_i16);
+        adios_free_varinfo(var_i32);
+        adios_free_varinfo(var_i64);
+        adios_free_varinfo(var_u8);
+        adios_free_varinfo(var_u16);
+        adios_free_varinfo(var_u32);
+        adios_free_varinfo(var_u64);
+        adios_free_varinfo(var_r32);
+        adios_free_varinfo(var_r64);
+
+        // Cleanup file
+        adios_read_close(f);
+
+        adios_read_finalize_method(ADIOS_READ_METHOD_BP);
+    }
+}
+
+// ADIOS2 write, ADIOS2 read
+TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D4x2)
+{
+    std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D4x2Test.bp";
+
+    // Not yet implemented since read API is not ready
+}
+
+// Native ADIOS1 write, ADIOS2 read
+TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read2D4x2)
+{
+    std::string fname = "ADIOS1WriteADIOS2ADIOS1Read2D4x2Test.bp";
+
+    // Not yet implemented since read API is not ready
 }
 
 //******************************************************************************
