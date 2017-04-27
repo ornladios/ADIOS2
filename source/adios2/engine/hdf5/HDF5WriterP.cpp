@@ -306,7 +306,7 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
     variable.m_AppValues = values;
     m_WrittenVariables.insert(variable.m_Name);
 
-    int dimSize = variable.m_GlobalDimensions.size();
+    int dimSize = variable.m_Shape.size();
     /*
     std::cout << "writting : " << variable.m_Name
               << " dim size:" << variable.m_GlobalDimensions.size() <<
@@ -322,9 +322,9 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
 
     for (int i = 0; i < dimSize; i++)
     {
-        dimsf.push_back(variable.m_GlobalDimensions[i]);
-        count.push_back(variable.m_LocalDimensions[i]);
-        offset.push_back(variable.m_Offsets[i]);
+        dimsf.push_back(variable.m_Shape[i]);
+        count.push_back(variable.m_Count[i]);
+        offset.push_back(variable.m_Start[i]);
     }
 
     _filespace = H5Screate_simple(dimSize, dimsf.data(), NULL);

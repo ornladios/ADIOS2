@@ -178,6 +178,17 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
             "1.x library, can't Open ADIOS1Writer\n");
 #endif
     }
+    else if (type == "ADIOS1Reader")
+    {
+#ifdef ADIOS2_HAVE_ADIOS1
+        return std::make_shared<ADIOS1Reader>(*this, name, accessMode, mpiComm,
+                                              method);
+#else
+        throw std::invalid_argument(
+            "ERROR: this version didn't compile with ADIOS "
+            "1.x library, can't Open ADIOS1Reader\n");
+#endif
+    }
     else if (type == "Vis")
     {
         // return std::make_shared<Vis>( *this, name, accessMode, mpiComm,
@@ -394,7 +405,8 @@ void ADIOS::CheckMethod(std::map<std::string, Method>::const_iterator itMethod,
 // Explicitly instantiate the necessary template implementations
 #define define_template_instantiation(T)                                       \
     template Variable<T> &ADIOS::DefineVariable<T>(                            \
-        const std::string &, const Dims, const Dims, const Dims);              \
+        const std::string &, const Dims, const Dims, const Dims,               \
+        bool constantShape);                                                   \
                                                                                \
     template Variable<T> &ADIOS::GetVariable<T>(const std::string &);
 

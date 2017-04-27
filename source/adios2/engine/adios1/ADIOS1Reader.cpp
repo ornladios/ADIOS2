@@ -181,15 +181,175 @@ void ADIOS1Reader::ScheduleReadCommon(const std::string &name,
     adios_selection_delete(sel);
 }
 
+void ADIOS1Reader::ScheduleRead(Variable<char> &variable, char *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<unsigned char> &variable,
+                                unsigned char *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<short> &variable, short *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<unsigned short> &variable,
+                                unsigned short *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<int> &variable, int *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<unsigned int> &variable,
+                                unsigned int *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<long int> &variable, long int *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<unsigned long int> &variable,
+                                unsigned long int *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<long long int> &variable,
+                                long long int *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<unsigned long long int> &variable,
+                                unsigned long long int *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<float> &variable, float *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
 void ADIOS1Reader::ScheduleRead(Variable<double> &variable, double *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_LocalDimensions,
-                       variable.m_Offsets, (void *)values);
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<long double> &variable,
+                                long double *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<std::complex<float>> &variable,
+                                std::complex<float> *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<std::complex<double>> &variable,
+                                std::complex<double> *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
+}
+void ADIOS1Reader::ScheduleRead(Variable<std::complex<long double>> &variable,
+                                std::complex<long double> *values)
+{
+    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+                       (void *)values);
 }
 
-void ADIOS1Reader::ScheduleRead(const std::string variableName, double *values)
+void ADIOS1Reader::ScheduleRead(const std::string &variableName, char *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<char>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                unsigned char *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<unsigned char>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName, short *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<short>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                unsigned short *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<unsigned short>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName, int *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<int>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                unsigned int *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<unsigned int>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                long int *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<long int>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                unsigned long int *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<unsigned long int>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                long long int *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<long long int>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                unsigned long long int *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<unsigned long long int>(variableName),
+                 values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName, float *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<float>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName, double *values)
 {
     ScheduleRead(m_ADIOS.GetVariable<double>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                long double *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<long double>(variableName), values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                std::complex<float> *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<std::complex<float>>(variableName),
+                 values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                std::complex<double> *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<std::complex<double>>(variableName),
+                 values);
+}
+void ADIOS1Reader::ScheduleRead(const std::string &variableName,
+                                std::complex<long double> *values)
+{
+    ScheduleRead(m_ADIOS.GetVariable<std::complex<long double>>(variableName),
+                 values);
 }
 
 void ADIOS1Reader::PerformReads(PerformReadMode mode)
@@ -247,6 +407,75 @@ void ADIOS1Reader::InitTransports()
                     m_EndMessage);
         }
     }
+}
+
+bool ADIOS1Reader::CheckADIOS1TypeCompatibility(std::string adios2Type,
+                                                enum ADIOS_DATATYPES adios1Type)
+{
+    bool compatible = false;
+    switch (adios1Type)
+    {
+    case adios_unsigned_byte:
+        compatible = (adios2Type == "unsigned char");
+        break;
+    case adios_unsigned_short:
+        compatible = (adios2Type == "unsigned short");
+        break;
+    case adios_unsigned_integer:
+        compatible = (adios2Type == "unsigned int");
+        break;
+    case adios_unsigned_long:
+        compatible = (adios2Type == "unsigned long long int");
+        break;
+
+    case adios_byte:
+        compatible = (adios2Type == "char");
+        break;
+    case adios_short:
+        compatible = (adios2Type == "short");
+        break;
+    case adios_integer:
+        compatible = (adios2Type == "int");
+        break;
+    case adios_long:
+        compatible = (adios2Type == "long long int");
+        break;
+
+    case adios_real:
+        compatible = (adios2Type == "float");
+        break;
+    case adios_double:
+        compatible = (adios2Type == "double");
+        break;
+    case adios_long_double:
+        compatible = (adios2Type == "long double");
+        break;
+
+    case adios_string:
+        compatible = (adios2Type == "string");
+        break;
+    case adios_complex:
+        compatible = (adios2Type == "float complex");
+        break;
+    case adios_double_complex:
+        compatible = (adios2Type == "double complex");
+        break;
+
+    case adios_string_array:
+        compatible = false;
+        break;
+    default:
+        compatible = false;
+    }
+    if (!compatible)
+    {
+        std::string typeStr(adios_type_to_string(adios1Type));
+        throw std::invalid_argument("Type mismatch. The expected ADIOS2 type " +
+                                    adios2Type +
+                                    " is not compatible with ADIOS1 type " +
+                                    typeStr + " of the requested variable\n");
+    }
+    return true;
 }
 
 } // end namespace

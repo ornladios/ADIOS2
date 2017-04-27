@@ -21,29 +21,6 @@
 namespace adios
 {
 
-/** Use these values in Dims() when defining variables
- */
-enum
-{
-    VARYING_DIMENSION = -1, //!< VARYING_DIMENSION
-    LOCAL_VALUE = 0,        //!< LOCAL_VALUE
-    GLOBAL_VALUE = 1        //!< GLOBAL_VALUE
-};
-
-enum class Verbose
-{
-    ERROR = 0,
-    WARN = 1,
-    INFO = 2,
-    DEBUG = 3
-};
-
-enum class IOMode
-{
-    INDEPENDENT = 0,
-    COLLECTIVE = 1
-};
-
 // Alias the fixed sized typed into the adios namespace to make sure we're
 // always using the right ones.
 using std::size_t;
@@ -135,6 +112,25 @@ struct TypeInfo<T, typename std::enable_if<std::is_same<
 {
     using IOType = T;
     using ValueType = typename T::value_type;
+};
+
+const size_t UnknownDim = 0;
+const size_t JoinedDim = SIZE_MAX;
+const size_t VarDim = JoinedDim - 1;
+const bool ConstantShape = true;
+
+enum class Verbose
+{
+    ERROR = 0,
+    WARN = 1,
+    INFO = 2,
+    DEBUG = 3
+};
+
+enum class IOMode
+{
+    INDEPENDENT = 0,
+    COLLECTIVE = 1
 };
 
 } // end namespace adios

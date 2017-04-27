@@ -365,6 +365,61 @@ public:
      */
     virtual void ScheduleRead();
 
+    virtual void ScheduleRead(Variable<char> &variable, char *values);
+    virtual void ScheduleRead(Variable<unsigned char> &variable,
+                              unsigned char *values);
+    virtual void ScheduleRead(Variable<short> &variable, short *values);
+    virtual void ScheduleRead(Variable<unsigned short> &variable,
+                              unsigned short *values);
+    virtual void ScheduleRead(Variable<int> &variable, int *values);
+    virtual void ScheduleRead(Variable<unsigned int> &variable,
+                              unsigned int *values);
+    virtual void ScheduleRead(Variable<long int> &variable, long int *values);
+    virtual void ScheduleRead(Variable<unsigned long int> &variable,
+                              unsigned long int *values);
+    virtual void ScheduleRead(Variable<long long int> &variable,
+                              long long int *values);
+    virtual void ScheduleRead(Variable<unsigned long long int> &variable,
+                              unsigned long long int *values);
+    virtual void ScheduleRead(Variable<float> &variable, float *values);
+    virtual void ScheduleRead(Variable<double> &variable, double *values);
+    virtual void ScheduleRead(Variable<long double> &variable,
+                              long double *values);
+    virtual void ScheduleRead(Variable<std::complex<float>> &variable,
+                              std::complex<float> *values);
+    virtual void ScheduleRead(Variable<std::complex<double>> &variable,
+                              std::complex<double> *values);
+    virtual void ScheduleRead(Variable<std::complex<long double>> &variable,
+                              std::complex<long double> *values);
+
+    virtual void ScheduleRead(const std::string &variableName, char *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned char *values);
+    virtual void ScheduleRead(const std::string &variableName, short *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned short *values);
+    virtual void ScheduleRead(const std::string &variableName, int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              long int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned long int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              long long int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned long long int *values);
+    virtual void ScheduleRead(const std::string &variableName, float *values);
+    virtual void ScheduleRead(const std::string &variableName, double *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              long double *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              std::complex<float> *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              std::complex<double> *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              std::complex<long double> *values);
+
     /**
      * Perform all scheduled reads, either blocking until all reads completed,
      * or
@@ -534,13 +589,6 @@ protected:
      * @param transportIndex must be in the range [ -1 , m_Transports.size()-1 ]
      */
     void CheckTransportIndex(const int transportIndex);
-
-    virtual void ScheduleRead(Variable<unsigned int> &variable,
-                              unsigned int *values);
-    virtual void ScheduleRead(Variable<double> &variable, double *values);
-    virtual void ScheduleRead(const std::string &variableName,
-                              unsigned int *values);
-    virtual void ScheduleRead(const std::string &variableName, double *values);
 };
 
 } // end namespace

@@ -15,9 +15,11 @@
 
 #include <iostream> //this must go away
 
+#include "adios2/ADIOS.h"
 #include "adios2/ADIOSConfig.h"
 #include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Engine.h"
+#include "adios2/core/adiosFunctions.h"
 
 // Fake out the include guard from ADIOS1's mpidummy.h to prevent it from
 // getting included
@@ -98,8 +100,50 @@ public:
     VariableCompound *InquireVariableCompound(const std::string &name,
                                               const bool readIn = true);
 
+    void ScheduleRead(Variable<char> &variable, char *values);
+    void ScheduleRead(Variable<unsigned char> &variable, unsigned char *values);
+    void ScheduleRead(Variable<short> &variable, short *values);
+    void ScheduleRead(Variable<unsigned short> &variable,
+                      unsigned short *values);
+    void ScheduleRead(Variable<int> &variable, int *values);
+    void ScheduleRead(Variable<unsigned int> &variable, unsigned int *values);
+    void ScheduleRead(Variable<long int> &variable, long int *values);
+    void ScheduleRead(Variable<unsigned long int> &variable,
+                      unsigned long int *values);
+    void ScheduleRead(Variable<long long int> &variable, long long int *values);
+    void ScheduleRead(Variable<unsigned long long int> &variable,
+                      unsigned long long int *values);
+    void ScheduleRead(Variable<float> &variable, float *values);
     void ScheduleRead(Variable<double> &variable, double *values);
-    void ScheduleRead(const std::string variableName, double *values);
+    void ScheduleRead(Variable<long double> &variable, long double *values);
+    void ScheduleRead(Variable<std::complex<float>> &variable,
+                      std::complex<float> *values);
+    void ScheduleRead(Variable<std::complex<double>> &variable,
+                      std::complex<double> *values);
+    void ScheduleRead(Variable<std::complex<long double>> &variable,
+                      std::complex<long double> *values);
+
+    void ScheduleRead(const std::string &variableName, char *values);
+    void ScheduleRead(const std::string &variableName, unsigned char *values);
+    void ScheduleRead(const std::string &variableName, short *values);
+    void ScheduleRead(const std::string &variableName, unsigned short *values);
+    void ScheduleRead(const std::string &variableName, int *values);
+    void ScheduleRead(const std::string &variableName, unsigned int *values);
+    void ScheduleRead(const std::string &variableName, long int *values);
+    void ScheduleRead(const std::string &variableName,
+                      unsigned long int *values);
+    void ScheduleRead(const std::string &variableName, long long int *values);
+    void ScheduleRead(const std::string &variableName,
+                      unsigned long long int *values);
+    void ScheduleRead(const std::string &variableName, float *values);
+    void ScheduleRead(const std::string &variableName, double *values);
+    void ScheduleRead(const std::string &variableName, long double *values);
+    void ScheduleRead(const std::string &variableName,
+                      std::complex<float> *values);
+    void ScheduleRead(const std::string &variableName,
+                      std::complex<double> *values);
+    void ScheduleRead(const std::string &variableName,
+                      std::complex<long double> *values);
 
     void PerformReads(PerformReadMode mode);
     void Close(const int transportIndex = -1);
@@ -122,11 +166,35 @@ private:
         // Variable<T>& variable = m_ADIOS.DefineVariable<T>( m_Name + "/" +
         // name, )
         // return &variable; //return address if success
-        return nullptr; // on failure
+        ADIOS_VARINFO *vi = adios_inq_var(m_fh, name.c_str());
+        adios::Variable<T> *var = nullptr;
+        if (vi != nullptr)
+        {
+            CheckADIOS1TypeCompatibility(GetType<T>(), vi->type); // throws
+            if (vi->ndim > 0)
+            {
+                Dims gdims = Uint64ArrayToSizetVector(vi->ndim, vi->dims);
+                var = &m_ADIOS.DefineArray<T>(name, gdims);
+            }
+            else /* scalar variable */
+            {
+                var = &m_ADIOS.DefineVariable<T>(name);
+                if (var && readIn)
+                {
+                    var->m_Data = std::vector<T>(1);
+                    var->m_Data[0] = *static_cast<T *>(vi->value);
+                }
+            }
+            adios_free_varinfo(vi);
+        }
+        return var;
     }
 
     void ScheduleReadCommon(const std::string &name, const Dims &ldims,
                             const Dims &offs, void *data);
+
+    bool CheckADIOS1TypeCompatibility(std::string adios2Type,
+                                      enum ADIOS_DATATYPES adios1Type);
 
     enum ADIOS_READ_METHOD m_ReadMethod = ADIOS_READ_METHOD_BP;
 };

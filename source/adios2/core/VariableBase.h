@@ -20,6 +20,7 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/SelectionBoundingBox.h"
 #include "adios2/core/adiosFunctions.h"
 #include "adios2/core/adiosTemplates.h"
@@ -33,8 +34,10 @@ class VariableBase
 {
 
 public:
-    const std::string m_Name; ///< variable name
-    const std::string m_Type; ///< variable type
+    const std::string m_Name;   ///< variable name
+    const std::string m_Type;   ///< variable type
+    const bool m_ConstantShape; ///< dimensions and offsets cannot change after
+                                /// declaration
 
     /**
      * Variable -> sizeof(T),
@@ -42,9 +45,9 @@ public:
      */
     const std::size_t m_ElementSize;
 
-    Dims m_LocalDimensions;  ///< dimensions per rank (MPI)
-    Dims m_GlobalDimensions; ///< total dimensions across MPI
-    Dims m_Offsets;          ///< selections offset
+    Dims m_Shape;            ///< total dimensions across MPI
+    Dims m_Start;            ///< offsets of local writer in global shape
+    Dims m_Count;            ///< dimensions of the local writer in global shape
     Dims m_MemoryDimensions; ///< array of memory dimensions
     Dims m_MemoryOffsets;    ///< array of memory offsets
     bool m_IsScalar = false;
@@ -52,21 +55,20 @@ public:
     const bool m_DebugMode = false;
 
     VariableBase(const std::string &name, const std::string type,
-                 const std::size_t elementSize, const Dims localDimensions,
-                 const Dims globalDimensions, const Dims offsets,
+                 const std::size_t elementSize, const Dims shape,
+                 const Dims start, const Dims count, const bool constantShape,
                  const bool debugMode)
-    : m_Name{name}, m_Type{type}, m_ElementSize{elementSize},
-      m_LocalDimensions{localDimensions}, m_GlobalDimensions{globalDimensions},
-      m_Offsets{offsets}, m_DebugMode{debugMode}
+    : m_Name{name}, m_Type{type}, m_ConstantShape{constantShape},
+      m_ElementSize{elementSize}, m_Count{count}, m_Shape{shape},
+      m_Start{start}, m_DebugMode{debugMode}
     {
+        if (shape.empty())
+            m_IsScalar = true;
     }
 
     virtual ~VariableBase() {}
 
-    std::size_t DimensionsSize() const noexcept
-    {
-        return m_LocalDimensions.size();
-    }
+    std::size_t DimensionsSize() const noexcept { return m_Count.size(); }
 
     /**
      * Returns the payload size in bytes
@@ -74,39 +76,48 @@ public:
      */
     std::size_t PayLoadSize() const noexcept
     {
-        return GetTotalSize(m_LocalDimensions) * m_ElementSize;
+        return GetTotalSize(m_Count) * m_ElementSize;
     }
 
     /**
      * Returns the total size
      * @return number of elements
      */
-    std::size_t TotalSize() const noexcept
-    {
-        return GetTotalSize(m_LocalDimensions);
-    }
+    std::size_t TotalSize() const noexcept { return GetTotalSize(m_Count); }
 
     /**
-     * Set the local dimension and global offset of the variable using a
-     * selection
-     * Only bounding boxes are allowed
+     * Set the local dimension and global offset of the variable
      */
-    void SetSelection(const SelectionBoundingBox &sel)
+    void SetSelection(const Dims start, const Dims count)
     {
-        if (m_GlobalDimensions.size() == 0)
+        if (m_IsScalar)
         {
             throw std::invalid_argument("Variable.SetSelection() is an invalid "
                                         "call for single value variables\n");
         }
-        if (m_GlobalDimensions.size() != sel.m_Count.size())
+        if (m_ConstantShape)
+        {
+            throw std::invalid_argument(
+                "Variable.SetSelection() is not allowed "
+                "for arrays with a constant shape\n");
+        }
+        if (m_Shape.size() != count.size())
         {
             throw std::invalid_argument("Variable.SetSelection() bounding box "
                                         "dimension must equal the global "
                                         "dimension of the variable\n");
         }
+        ConvertUint64VectorToSizetVector(count, m_Count);
+        ConvertUint64VectorToSizetVector(start, m_Start);
+    }
 
-        ConvertUint64VectorToSizetVector(sel.m_Count, m_LocalDimensions);
-        ConvertUint64VectorToSizetVector(sel.m_Start, m_Offsets);
+    /**
+     * Set the local dimension and global offset of the variable using a
+     * selection
+     */
+    void SetSelection(const SelectionBoundingBox &sel)
+    {
+        SetSelection(sel.m_Start, sel.m_Count);
     }
 
     /**
@@ -116,13 +127,13 @@ public:
      */
     void SetMemorySelection(const SelectionBoundingBox &sel)
     {
-        if (m_GlobalDimensions.size() == 0)
+        if (m_Shape.size() == 0)
         {
             throw std::invalid_argument(
                 "Variable.SetMemorySelection() is an invalid "
                 "call for single value variables\n");
         }
-        if (m_GlobalDimensions.size() != sel.m_Count.size())
+        if (m_Shape.size() != sel.m_Count.size())
         {
             throw std::invalid_argument(
                 "Variable.SetMemorySelection() bounding box "

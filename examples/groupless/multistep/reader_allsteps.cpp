@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
         // ? how do we know about the type? std::string varNice->m_Type
         unsigned long long int gdim =
-            varMyDoubles->m_GlobalDimensions[0]; // ?member var or member func?
+            varMyDoubles->m_Shape[0]; // ?member var or member func?
         unsigned long long int ldim = gdim / nproc;
         unsigned long long int offs = rank * ldim;
         if (rank == nproc - 1)
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
         // inquiry about a variable, whose name we know
         std::shared_ptr<adios::Variable<void>> varRagged =
             bpReader.InquiryVariable("Ragged");
-        if (varRagged->m_GlobalDimensions[1] != adios::VARYING_DIMENSION)
+        if (varRagged->m_Shape[1] != adios::VARYING_DIMENSION)
         {
             throw std::ios_base::failure(
                 "Unexpected condition: Ragged array's fast dimension "

@@ -177,16 +177,15 @@ void BP1Writer::WriteVariableMetadataInData(
     InsertToBuffer(buffer, &no);
 
     // write variable dimensions
-    const std::uint8_t dimensions = variable.m_LocalDimensions.size();
+    const std::uint8_t dimensions = variable.m_Count.size();
     InsertToBuffer(buffer, &dimensions); // count
 
     // 27 is from 9 bytes for each: var y/n + local, var y/n + global dimension,
     // var y/n + global offset, changed for characteristic
     std::uint16_t dimensionsLength = 27 * dimensions;
     InsertToBuffer(buffer, &dimensionsLength); // length
-    WriteDimensionsRecord(buffer, variable.m_LocalDimensions,
-                          variable.m_GlobalDimensions, variable.m_Offsets, 18,
-                          true);
+    WriteDimensionsRecord(buffer, variable.m_Count, variable.m_Shape,
+                          variable.m_Start, 18, true);
 
     // CHARACTERISTICS
     WriteVariableCharacteristics(variable, stats, buffer, true);
@@ -255,7 +254,7 @@ void BP1Writer::WriteVariableCharacteristics(
     // DIMENSIONS
     std::uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
-    const std::uint8_t dimensions = variable.m_LocalDimensions.size();
+    const std::uint8_t dimensions = variable.m_Count.size();
 
     if (addLength == true)
     {
@@ -267,9 +266,8 @@ void BP1Writer::WriteVariableCharacteristics(
     InsertToBuffer(buffer, &dimensions); // count
     const std::uint16_t dimensionsLength = 24 * dimensions;
     InsertToBuffer(buffer, &dimensionsLength); // length
-    WriteDimensionsRecord(buffer, variable.m_LocalDimensions,
-                          variable.m_GlobalDimensions, variable.m_Offsets, 16,
-                          addLength);
+    WriteDimensionsRecord(buffer, variable.m_Count, variable.m_Shape,
+                          variable.m_Start, 16, addLength);
     ++characteristicsCounter;
 
     // VALUE for SCALAR or STAT min, max for ARRAY

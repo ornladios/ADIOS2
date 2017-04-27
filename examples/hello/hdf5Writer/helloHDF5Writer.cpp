@@ -69,17 +69,16 @@ int main(int argc, char *argv[])
     {
         // Define variable and local size
         auto &ioMyInts =
-            adios.DefineVariable<int>("myInts", {intCountDim1, intDim2}, {4, 3},
-                                      {intOffsetDim1, intOffsetDim2});
-        auto &ioMyDoubles = adios.DefineVariable<double>(
+            adios.DefineArray<int>("myInts", {intCountDim1, intDim2}, {4, 3},
+                                   {intOffsetDim1, intOffsetDim2});
+        auto &ioMyDoubles = adios.DefineArray<double>(
             "myDoubles", {doubleVCount}, {Nx}, {doubleVOffset});
-        auto &ioMyCFloats = adios.DefineVariable<std::complex<float>>(
+        auto &ioMyCFloats = adios.DefineArray<std::complex<float>>(
             "myCFloats", {complexCount}, {3}, {complexOffset});
-        auto &ioMyCDoubles = adios.DefineVariable<std::complex<double>>(
+        auto &ioMyCDoubles = adios.DefineArray<std::complex<double>>(
             "myCDoubles", {complexCount}, {3}, {complexOffset});
-        auto &ioMyCLongDoubles =
-            adios.DefineVariable<std::complex<long double>>(
-                "myCLongDoubles", {complexCount}, {3}, {complexOffset});
+        auto &ioMyCLongDoubles = adios.DefineArray<std::complex<long double>>(
+            "myCLongDoubles", {complexCount}, {3}, {complexOffset});
 
         // Define method for engine creation, it is basically straight-forward
         // parameters

@@ -43,7 +43,10 @@ class Variable : public VariableBase
 
 public:
     const T *m_AppValues = nullptr; ///< pointer to values passed from user in
-    /// ADIOS Write, it might change in ADIOS Read
+    /// ADIOS Write
+
+    ///< vector of values as a possible result of ADIOS Read or InquireVariable
+    std::vector<T> m_Data;
 
     std::vector<TransformData>
         m_Transforms; ///< associated transforms, sequence
@@ -52,14 +55,12 @@ public:
     /// Transforms[1]. Pointer used as
     /// reference (no memory management).
 
-    Variable<T>(const std::string &name, const Dims localDimensions,
-                const Dims globalDimensions, const Dims offsets,
+    Variable<T>(const std::string &name, const Dims shape, const Dims start,
+                const Dims count, const bool constantShape,
                 const bool debugMode)
-    : VariableBase(name, GetType<T>(), sizeof(T), localDimensions,
-                   globalDimensions, offsets, debugMode)
+    : VariableBase(name, GetType<T>(), sizeof(T), shape, start, count,
+                   constantShape, debugMode)
     {
-        if (m_LocalDimensions == Dims{1})
-            m_IsScalar = true;
     }
 
     template <class... Args>

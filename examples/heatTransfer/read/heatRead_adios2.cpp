@@ -69,8 +69,15 @@ int main(int argc, char *argv[])
 
     unsigned int gndx;
     unsigned int gndy;
-    bpReader->Read<unsigned int>("gndx", &gndx);
-    bpReader->Read<unsigned int>("gndy", &gndy);
+    // bpReader->Read<unsigned int>("gndx", &gndx);
+    // bpReader->Read<unsigned int>("gndy", &gndy);
+
+    adios::Variable<unsigned int> *vgndx =
+        bpReader->InquireVariableUInt("gndx");
+    gndx = vgndx->m_Data[0];
+    adios::Variable<unsigned int> *vgndy =
+        bpReader->InquireVariableUInt("gndy");
+    gndy = vgndy->m_Data[0];
 
     if (rank == 0)
     {
@@ -100,7 +107,7 @@ int main(int argc, char *argv[])
 
     // Arrays are read by scheduling one or more of them
     // and performing the reads at once
-    bpReader->ScheduleRead(*vT, T);
+    bpReader->ScheduleRead<double>(*vT, T);
     bpReader->PerformReads(adios::PerformReadMode::BLOCKINGREAD);
 
     printData(T, readsize.data(), offset.data(), rank, vT->GetNSteps());

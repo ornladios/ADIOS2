@@ -36,9 +36,10 @@ int main(int argc, char *argv[])
     try
     {
         // Define variable and local size
-        auto ioMyDoubles = adios.DefineVariable<double>("myDoubles", {Nx});
-        auto ioMyCFloats =
-            adios.DefineVariable<std::complex<float>>("myCFloats", {3});
+        auto ioMyDoubles =
+            adios.DefineLocalArray<double>("myDoubles", false, {Nx});
+        auto ioMyCFloats = adios.DefineLocalArray<std::complex<float>>(
+            "myCFloats", false, {3});
 
         // Define method for engine creation, it is basically straight-forward
         // parameters

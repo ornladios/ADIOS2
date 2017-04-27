@@ -662,6 +662,17 @@ void ConvertUint64VectorToSizetVector(const std::vector<std::uint64_t> &in,
     }
 }
 
+std::vector<std::size_t> Uint64ArrayToSizetVector(const std::size_t nElements,
+                                                  const uint64_t *in)
+{
+    std::vector<std::size_t> out(nElements);
+    for (std::size_t i = 0; i < nElements; i++)
+    {
+        out[i] = static_cast<std::size_t>(in[i]);
+    }
+    return out;
+}
+
 bool CheckBufferAllocation(const std::size_t newSize, const float growthFactor,
                            const std::size_t maxBufferSize,
                            std::vector<char> &buffer)

@@ -3,6 +3,4 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(hello)
-add_subdirectory(heatTransfer)
-add_subdirectory(groupless)
+add_subdirectory(multistep)
