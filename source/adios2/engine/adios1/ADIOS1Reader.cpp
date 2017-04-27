@@ -16,6 +16,8 @@
 #include "adios2/transport/file/FileDescriptor.h" // uses POSIX
 #include "adios2/transport/file/FilePointer.h"    // uses C FILE*
 
+#include <adios_error.h>
+
 namespace adios
 {
 
@@ -27,8 +29,15 @@ ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string &name,
 {
     Init();
     adios_read_init_method(m_ReadMethod, mpiComm, "");
-    m_fh = adios_read_open(name.c_str(), m_ReadMethod, mpiComm,
-                           ADIOS_LOCKMODE_CURRENT, 0.0);
+    if (m_OpenAsFile)
+    {
+        m_fh = adios_read_open_file(name.c_str(), m_ReadMethod, mpiComm);
+    }
+    else
+    {
+        m_fh = adios_read_open(name.c_str(), m_ReadMethod, mpiComm,
+                               ADIOS_LOCKMODE_CURRENT, 0.0);
+    }
 }
 
 ADIOS1Reader::~ADIOS1Reader()
@@ -357,7 +366,55 @@ void ADIOS1Reader::PerformReads(PerformReadMode mode)
     adios_perform_reads(m_fh, (int)mode);
 }
 
-void ADIOS1Reader::Close(const int transportIndex) { adios_read_close(m_fh); }
+void ADIOS1Reader::Release() { adios_release_step(m_fh); }
+
+void ADIOS1Reader::Advance(const float timeout_sec)
+{
+    Advance(AdvanceMode::NEXT_AVAILABLE, timeout_sec);
+}
+
+void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
+{
+    if (m_OpenAsFile)
+    {
+        throw std::invalid_argument("ERROR: ADIOS1Reader does not allow "
+                                    "Advance() on a file which was opened for "
+                                    "read as File\n");
+    }
+    int last = (mode == AdvanceMode::NEXT_AVAILABLE ? 0 : 1);
+    float *to = const_cast<float *>(&timeout_sec);
+    adios_advance_step(m_fh, last, *to);
+
+    switch (adios_errno)
+    {
+    case err_no_error:
+        m_AdvanceStatus = AdvanceStatus::OK;
+        break;
+    case err_end_of_stream:
+        m_AdvanceStatus = AdvanceStatus::END_OF_STREAM;
+        break;
+    case err_step_notready:
+        m_AdvanceStatus = AdvanceStatus::STEP_NOT_READY;
+        break;
+    default:
+        m_AdvanceStatus = AdvanceStatus::OTHER_ERROR;
+        break;
+    }
+}
+
+void ADIOS1Reader::AdvanceAsync(
+    AdvanceMode mode,
+    std::function<void(std::shared_ptr<adios::Engine>)> callback)
+{
+    throw std::invalid_argument(
+        "ERROR: ADIOS1Reader doesn't support AdvanceSync()\n");
+}
+
+void ADIOS1Reader::Close(const int transportIndex)
+{
+    adios_read_close(m_fh);
+    m_fh = nullptr;
+}
 
 // PRIVATE
 void ADIOS1Reader::Init()
@@ -374,7 +431,14 @@ void ADIOS1Reader::Init()
     InitTransports();
 }
 
-void ADIOS1Reader::InitParameters() {}
+void ADIOS1Reader::InitParameters()
+{
+    auto itOpenAsFile = m_Method.m_Parameters.find("OpenAsFile");
+    if (itOpenAsFile != m_Method.m_Parameters.end())
+    {
+        m_OpenAsFile = true;
+    }
+}
 
 void ADIOS1Reader::InitTransports()
 {
@@ -409,56 +473,69 @@ void ADIOS1Reader::InitTransports()
     }
 }
 
-bool ADIOS1Reader::CheckADIOS1TypeCompatibility(std::string adios2Type,
+static void CheckADIOS1Type(const std::string &name, std::string adios2Type,
+                            std::string adios1Type)
+{
+    if (adios1Type != adios2Type)
+    {
+        throw std::invalid_argument(
+            "Type mismatch. The expected ADIOS2 type <" + adios2Type +
+            "> is not compatible with ADIOS1 type <" + adios1Type +
+            "> of the requested variable '" + name + "'\n");
+    }
+}
+
+bool ADIOS1Reader::CheckADIOS1TypeCompatibility(const std::string &name,
+                                                std::string adios2Type,
                                                 enum ADIOS_DATATYPES adios1Type)
 {
     bool compatible = false;
     switch (adios1Type)
     {
     case adios_unsigned_byte:
-        compatible = (adios2Type == "unsigned char");
+        CheckADIOS1Type(name, adios2Type, "unsigned char");
         break;
     case adios_unsigned_short:
-        compatible = (adios2Type == "unsigned short");
+        CheckADIOS1Type(name, adios2Type, "unsigned short");
         break;
     case adios_unsigned_integer:
-        compatible = (adios2Type == "unsigned int");
+        CheckADIOS1Type(name, adios2Type, "unsigned int");
         break;
     case adios_unsigned_long:
-        compatible = (adios2Type == "unsigned long long int");
+        CheckADIOS1Type(name, adios2Type, "unsigned long long int");
         break;
 
     case adios_byte:
-        compatible = (adios2Type == "char");
+        CheckADIOS1Type(name, adios2Type, "char");
         break;
     case adios_short:
-        compatible = (adios2Type == "short");
+        CheckADIOS1Type(name, adios2Type, "short");
         break;
     case adios_integer:
-        compatible = (adios2Type == "int");
+        CheckADIOS1Type(name, adios2Type, "int");
         break;
     case adios_long:
-        compatible = (adios2Type == "long long int");
+        CheckADIOS1Type(name, adios2Type, "long long int");
         break;
 
     case adios_real:
-        compatible = (adios2Type == "float");
+        CheckADIOS1Type(name, adios2Type, "float");
         break;
     case adios_double:
-        compatible = (adios2Type == "double");
+        CheckADIOS1Type(name, adios2Type, "double");
         break;
     case adios_long_double:
-        compatible = (adios2Type == "long double");
+        CheckADIOS1Type(name, adios2Type, "long double");
         break;
 
     case adios_string:
-        compatible = (adios2Type == "string");
+        CheckADIOS1Type(name, adios2Type, "string");
         break;
     case adios_complex:
-        compatible = (adios2Type == "float complex");
+        CheckADIOS1Type(name, adios2Type, "float complex");
         break;
     case adios_double_complex:
-        compatible = (adios2Type == "double complex");
+        CheckADIOS1Type(name, adios2Type, "double complex");
         break;
 
     case adios_string_array:
@@ -466,14 +543,6 @@ bool ADIOS1Reader::CheckADIOS1TypeCompatibility(std::string adios2Type,
         break;
     default:
         compatible = false;
-    }
-    if (!compatible)
-    {
-        std::string typeStr(adios_type_to_string(adios1Type));
-        throw std::invalid_argument("Type mismatch. The expected ADIOS2 type " +
-                                    adios2Type +
-                                    " is not compatible with ADIOS1 type " +
-                                    typeStr + " of the requested variable\n");
     }
     return true;
 }

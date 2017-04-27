@@ -44,6 +44,14 @@ typedef enum {
     LATEST_AVAILABLE = 3, // reader advance modes
 } AdvanceMode;
 
+enum class AdvanceStatus
+{
+    OK = 0,
+    STEP_NOT_READY = 1,
+    END_OF_STREAM = 2,
+    OTHER_ERROR = 3
+};
+
 /**
  * Base class for Engine operations managing shared-memory, and buffer and
  * variables transform and transport operations
@@ -462,6 +470,8 @@ public:
     AdvanceAsync(AdvanceMode mode,
                  std::function<void(std::shared_ptr<adios::Engine>)> callback);
 
+    AdvanceStatus GetAdvanceStatus() { return m_AdvanceStatus; }
+
     // Read API
     /**
      * Inquires and (optionally) allocates and copies the contents of a variable
@@ -562,6 +572,7 @@ protected:
     const std::string
         m_EndMessage; ///< added to exceptions to improve debugging
     std::set<std::string> m_WrittenVariables;
+    AdvanceStatus m_AdvanceStatus = AdvanceStatus::OK;
 
     virtual void Init();           ///< Initialize m_Capsules and m_Transports
     virtual void InitParameters(); ///< Initialize parameters from Method

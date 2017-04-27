@@ -146,10 +146,20 @@ public:
                       std::complex<long double> *values);
 
     void PerformReads(PerformReadMode mode);
+
+    void Release();
+    void Advance(const float timeout_sec = 0.0);
+    void Advance(AdvanceMode mode, const float timeout_sec = 0.0);
+    void
+    AdvanceAsync(AdvanceMode mode,
+                 std::function<void(std::shared_ptr<adios::Engine>)> callback);
+
     void Close(const int transportIndex = -1);
 
 private:
     ADIOS_FILE *m_fh = nullptr; ///< ADIOS1 file handler
+    bool m_OpenAsFile = false;
+
     void Init(); ///< called from constructor, gets the selected ADIOS1
                  /// transport method from settings
     void InitParameters();
@@ -170,7 +180,8 @@ private:
         adios::Variable<T> *var = nullptr;
         if (vi != nullptr)
         {
-            CheckADIOS1TypeCompatibility(GetType<T>(), vi->type); // throws
+            CheckADIOS1TypeCompatibility(name, GetType<T>(),
+                                         vi->type); // throws
             if (vi->ndim > 0)
             {
                 Dims gdims = Uint64ArrayToSizetVector(vi->ndim, vi->dims);
@@ -185,6 +196,7 @@ private:
                     var->m_Data[0] = *static_cast<T *>(vi->value);
                 }
             }
+            var->SetNSteps(vi->nsteps);
             adios_free_varinfo(vi);
         }
         return var;
@@ -193,7 +205,8 @@ private:
     void ScheduleReadCommon(const std::string &name, const Dims &ldims,
                             const Dims &offs, void *data);
 
-    bool CheckADIOS1TypeCompatibility(std::string adios2Type,
+    bool CheckADIOS1TypeCompatibility(const std::string &name,
+                                      std::string adios2Type,
                                       enum ADIOS_DATATYPES adios1Type);
 
     enum ADIOS_READ_METHOD m_ReadMethod = ADIOS_READ_METHOD_BP;

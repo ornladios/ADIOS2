@@ -148,11 +148,14 @@ public:
     /** Return the number of steps available for the variable
      *  @return Number of steps
      */
-    int GetNSteps() { return m_nsteps; }
+    unsigned int GetNSteps() { return m_nsteps; }
+
+    ///< Should only be called by read engines
+    void SetNSteps(unsigned int steps) { m_nsteps = steps; }
 
 private:
     /* Values filled by InquireVariable() */
-    int m_nsteps =
+    unsigned int m_nsteps =
         1; ///< number of steps available in a file (or 1 in staging),
 };
 

@@ -60,12 +60,14 @@ int main(int argc, char *argv[])
         // ISO-POSIX file is the default transport
         // Passing parameters to the transport
         bpReaderSettings.AddTransport("File", "verbose=4");
+        bpReaderSettings.SetParameters("OpenAsFile");
     }
 
     auto bpReader = ad.Open(inputfile, "r", mpiReaderComm, bpReaderSettings);
 
     if (bpReader == nullptr)
-        throw std::ios_base::failure("ERROR: failed to open ADIOS bpReader\n");
+        throw std::ios_base::failure("ERROR: failed to open " +
+                                     std::string(inputfile) + "\n");
 
     unsigned int gndx;
     unsigned int gndy;
@@ -81,8 +83,9 @@ int main(int argc, char *argv[])
 
     if (rank == 0)
     {
-        std::cout << "gndx = " << gndx << std::endl;
-        std::cout << "gndy = " << gndy << std::endl;
+        std::cout << "gndx       = " << gndx << std::endl;
+        std::cout << "gndy       = " << gndy << std::endl;
+        std::cout << "# of steps = " << vgndy->GetNSteps() << std::endl;
     }
 
     // 1D decomposition of the columns, which is inefficient for reading!
