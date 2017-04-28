@@ -145,18 +145,40 @@ public:
         ConvertUint64VectorToSizetVector(sel.m_Start, m_MemoryOffsets);
     }
 
+    /**
+     * Set the steps for the variable to read from. The pointer passed at
+     * reading must be able to hold enough memory to store multiple steps in a
+     * single read.
+     * @param fromStep  The first step to read. Steps start from 0
+     * @param nSteps    Number of consecutive steps to read at once.
+     *
+     */
+    void SetStepSelection(const unsigned int fromStep,
+                          const unsigned int nSteps)
+    {
+        m_ReadFromStep = fromStep;
+        m_ReadNSteps = nSteps;
+    }
+
     /** Return the number of steps available for the variable
      *  @return Number of steps
      */
-    unsigned int GetNSteps() { return m_nsteps; }
+    unsigned int GetNSteps() { return m_NStepsAvailable; }
 
     ///< Should only be called by read engines
-    void SetNSteps(unsigned int steps) { m_nsteps = steps; }
+    void SetNSteps(unsigned int steps) { m_NStepsAvailable = steps; }
+    unsigned int GetReadFromStep() { return m_ReadFromStep; }
+    unsigned int GetReadNSteps() { return m_ReadNSteps; }
 
 private:
+    ///< Read from this step (must be 0 in staging)
+    unsigned int m_ReadFromStep = 0;
+    ///< Read this many steps at once (must be 1 in staging)
+    unsigned int m_ReadNSteps = 1;
+
     /* Values filled by InquireVariable() */
-    unsigned int m_nsteps =
-        1; ///< number of steps available in a file (or 1 in staging),
+    ///< number of steps available in a file (or 1 in staging),
+    unsigned int m_NStepsAvailable = 1;
 };
 
 } // end namespace

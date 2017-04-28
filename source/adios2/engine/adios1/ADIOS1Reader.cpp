@@ -173,9 +173,9 @@ ADIOS1Reader::InquireVariableCompound(const std::string &variableName,
     return nullptr;
 }
 
-void ADIOS1Reader::ScheduleReadCommon(const std::string &name,
-                                      const Dims &ldims, const Dims &offs,
-                                      void *data)
+void ADIOS1Reader::ScheduleReadCommon(const std::string &name, const Dims &offs,
+                                      const Dims &ldims, const int fromStep,
+                                      const int nSteps, void *data)
 {
 
     uint64_t start[32], count[32];
@@ -184,100 +184,120 @@ void ADIOS1Reader::ScheduleReadCommon(const std::string &name,
         start[i] = (uint64_t)offs[i];
         count[i] = (uint64_t)ldims[i];
     }
-    ADIOS_SELECTION *sel =
+    ADIOS_SELECTION *sel = nullptr;
+    if (ldims.size() > 0)
+    {
         adios_selection_boundingbox(ldims.size(), start, count);
-    adios_schedule_read(m_fh, sel, name.c_str(), 1, 0, data);
+    }
+    adios_schedule_read(m_fh, sel, name.c_str(), (int)fromStep, (int)nSteps,
+                        data);
     adios_selection_delete(sel);
 }
 
 void ADIOS1Reader::ScheduleRead(Variable<char> &variable, char *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<unsigned char> &variable,
                                 unsigned char *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<short> &variable, short *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<unsigned short> &variable,
                                 unsigned short *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<int> &variable, int *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<unsigned int> &variable,
                                 unsigned int *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<long int> &variable, long int *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<unsigned long int> &variable,
                                 unsigned long int *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<long long int> &variable,
                                 long long int *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<unsigned long long int> &variable,
                                 unsigned long long int *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<float> &variable, float *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<double> &variable, double *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<long double> &variable,
                                 long double *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<std::complex<float>> &variable,
                                 std::complex<float> *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<std::complex<double>> &variable,
                                 std::complex<double> *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 void ADIOS1Reader::ScheduleRead(Variable<std::complex<long double>> &variable,
                                 std::complex<long double> *values)
 {
-    ScheduleReadCommon(variable.m_Name, variable.m_Count, variable.m_Start,
+    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
+                       variable.GetReadFromStep(), variable.GetReadNSteps(),
                        (void *)values);
 }
 

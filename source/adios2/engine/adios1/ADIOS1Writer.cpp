@@ -117,10 +117,10 @@ static std::string DimsToCSV_LocalAware(const std::vector<std::size_t> &dims)
         dimsCSV.pop_back();
     }
 
-    if (localVar)
+    /*if (localVar)
     {
         dimsCSV.clear();
-    }
+    }*/
 
     return dimsCSV;
 }

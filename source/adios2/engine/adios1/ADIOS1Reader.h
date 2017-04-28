@@ -169,8 +169,6 @@ private:
     Variable<T> *InquireVariableCommon(const std::string &name,
                                        const bool readIn)
     {
-        std::cout << "Hello ADIOS1Reader::InquireVariableCommon\n";
-
         // here read variable metadata (dimensions, type, etc.)...then create a
         // Variable like below:
         // Variable<T>& variable = m_ADIOS.DefineVariable<T>( m_Name + "/" +
@@ -202,8 +200,9 @@ private:
         return var;
     }
 
-    void ScheduleReadCommon(const std::string &name, const Dims &ldims,
-                            const Dims &offs, void *data);
+    void ScheduleReadCommon(const std::string &name, const Dims &offs,
+                            const Dims &ldims, const int fromStep,
+                            const int nSteps, void *data);
 
     bool CheckADIOS1TypeCompatibility(const std::string &name,
                                       std::string adios2Type,
