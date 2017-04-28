@@ -14,6 +14,41 @@
 #include <adios2.h>
 #include <mpi.h>
 
+template <class T>
+T **Make2DArray(int nRows, int nCols)
+{
+    T **ptr = new T *[nRows];
+    ptr[0] = new T[nRows * nCols];
+    for (int i = 1; i < nRows; i++)
+    {
+        ptr[i] = ptr[i - 1] + nCols;
+    }
+    return ptr;
+}
+
+template <class T>
+void Delete2DArray(T **ptr)
+{
+    delete[] ptr[0];
+    delete[] ptr;
+}
+
+template <class T>
+void Print2DArray(T **ptr, int nRows, int nCols, std::string name)
+{
+    std::cout << name << " = { \n";
+    for (int step = 0; step < nRows; step++)
+    {
+        std::cout << "    { ";
+        for (int col = 0; col < nCols; col++)
+        {
+            std::cout << ptr[step][col] << " ";
+        }
+        std::cout << "}\n";
+    }
+    std::cout << "}\n";
+}
+
 int main(int argc, char *argv[])
 {
     int rank, nproc;
@@ -22,29 +57,46 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     const bool adiosDebug = true;
 
-    adios::ADIOS adios(MPI_COMM_WORLD, adiosDebug);
+    adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
 
-    // Application variable
-    std::vector<double> NiceArray;
-    std::vector<float> RaggedArray;
-
-    int Nparts;
+    // Info variables from the file
     int Nwriters;
     int Nsteps;
+    // Data variables from the file
+    // 1. Global value, constant across processes, constant over time
+    unsigned int Nx;
+    // 2. Local value, varying across processes, constant over time
+    std::vector<int> ProcessID;
+    // 3. Global array, global dimensions, local dimensions and offsets are
+    // constant over time
+    std::vector<double> GlobalArrayFixedDims;
+
+    // 4. Local array, local dimensions are
+    // constant over time (but different across processors here)
+    std::vector<float> LocalArrayFixedDims;
+
+    // 5. Global value, constant across processes, VARYING value over time
+    std::vector<unsigned int> Nys;
+    // 6. Local value, varying across processes, VARYING over time
+    // Read as a 2D array, time as first dimension
+
+    // 7. Global array, dimensions and offsets are VARYING over time
+    std::vector<double> GlobalArray;
+    // 8. Local array, dimensions and offsets are VARYING over time
+    std::vector<float> IrregularArray;
 
     try
     {
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios::Method &bpReaderSettings = adios.GetMethod("input");
-        if (bpReaderSettings.undeclared())
+        adios::Method &bpReaderSettings = adios.DeclareMethod("input");
+        if (!bpReaderSettings.IsUserDefined())
         {
             // if not defined by user, we can change the default settings
-            bpReaderSettings.SetEngine("BP"); // BP is the default engine
-            // By default we see all steps available in a file, so the next line
-            // is
-            // not needed
-            bpReaderSettings.SetParameters("Stepping", false);
+            bpReaderSettings.SetEngine(
+                "ADIOS1Reader"); // BP is the default engine
+            // see only one step at a time
+            bpReaderSettings.SetParameters("OpenAsFile");
         }
 
         // Create engine smart pointer due to polymorphism,
@@ -53,97 +105,93 @@ int main(int argc, char *argv[])
         // this would just open with a default transport, which is "BP"
         auto bpReader = adios.Open("myNumbers.bp", "r", bpReaderSettings);
 
-        // All the above is same as default use:
-        // auto bpReader = adios.Open( "myNumbers.bp", "r");
-
         if (bpReader == nullptr)
             throw std::ios_base::failure(
                 "ERROR: failed to open ADIOS bpReader\n");
 
-        /* Note: there is no global number of steps. Each variable has its own
+        /* Note: there is no global number of steps. Each variable has its
+         * own
          * number of steps */
 
-        /* NX */
-        /* There is a single value for each step. We can read all into a 1D
-         * array
-         * with a step selection.
-         * We can also just conveniently get the first with a simple read
-         * statement.
-         * Steps are not automatically presented as an array dimension and read
-         * does
-         * not read it as array.
-         */
-        unsigned int Nx;
-        bpReader->Read<unsigned int>(
-            "NX",
-            &Nx); // read a Global scalar which has a single value in a step
+        adios::Variable<int> *vNproc = bpReader->InquireVariableInt("Nproc");
+        Nwriters = vNproc->m_Data[0];
+        std::cout << "# of writers = " << Nwriters << std::endl;
 
-        std::shared_ptr<adios::Variable<void>> varNx =
-            bpReader.InquiryVariable("Nx");
-        std::vector<int> Nxs(varNx->nsteps()); // number of steps available
+        /* NX */
+        /* There is a single value written once.
+         */
+        // read a Global scalar which has a single value in a step
+        adios::Variable<unsigned int> *vNX =
+            bpReader->InquireVariableUInt("NX");
+        Nx = vNX->m_Data[0];
+        // bpReader->Read<unsigned int>("NX", &Nx);
+        std::cout << "NX = " << Nx << std::endl;
+
+        /* NY */
+        /* We can read all into a 1D array with a step selection.
+           Steps are not automatically presented as an array dimension
+           and read does not read it as array by default.
+        */
+        adios::Variable<unsigned int> *vNY =
+            bpReader->InquireVariableUInt("NY");
+        Nys.resize(vNY->GetNSteps()); // number of steps available
         // make a StepSelection to select multiple steps. Args: From, #of
         // consecutive steps
-        std::unique_ptr<adios::StepSelection> stepsNx =
-            adios.StepSelection(0, varNx->nsteps());
         // ? How do we make a selection for an arbitrary list of steps ?
-        varNX.SetStepSelection(stepsNx);
-        bpReader->Read<unsigned int>(varNx, Nxs.data());
+        vNY->SetStepSelection(0, vNY->GetNSteps());
+        bpReader->Read<unsigned int>(*vNY, Nys.data());
 
-        auto itmax = std::max_element(std::begin(Nxs), std::end(Nxs));
-        auto itmin = std::min_element(std::begin(Nxs), std::end(Nxs));
-        if (*itmin != *itmax)
+        std::cout << "NY = { ";
+        for (const auto &it : Nys)
         {
-            throw std::ios_base::failure(
-                "ERROR: NX is not the same at all steps!\n");
+            std::cout << it << " ";
         }
-
-        /* nproc */
-        bpReader->Read<int>("nproc", &Nwriters); // also a global scalar
+        std::cout << "}\n";
 
         /* Nparts */
-        // Nparts local scalar is presented as a 1D array of Nwriters elements.
+        // Nparts local scalar is presented as a 1D array of Nwriters
+        // elements.
         // We can read all steps into a 2D array of nproc * Nwriters
-        std::shared_ptr<adios::Variable<void>> varNparts =
-            bpReader.InquiryVariable("Nparts");
-        std::vector<int> partsV(Nproc * Nwriters);
-        varNparts->SetStepSelection(
-            adios.StepSelection(0, varNparts->nsteps()));
-        bpReader->Read<int>(varNparts,
-                            partsV.data()); // missing spatial selection = whole
-                                            // array at each step
+        adios::Variable<unsigned int> *vNparts =
+            bpReader->InquireVariableUInt("Nparts");
+        unsigned int **Nparts =
+            Make2DArray<unsigned int>(vNparts->GetNSteps(), Nwriters);
+        vNparts->SetStepSelection(0, vNparts->GetNSteps());
+        bpReader->Read<unsigned int>(*vNparts, Nparts[0]);
+        Print2DArray(Nparts, vNparts->GetNSteps(), Nwriters, "Nparts");
+        Delete2DArray(Nparts);
 
-        /* Nice */
+        /* GlobalArrayFixedDims */
         // inquiry about a variable, whose name we know
-        std::shared_ptr<adios::Variable<void>> varNice =
-            bpReader.InquiryVariable("Nice");
+        std::shared_ptr<adios::Variable<void *>> vGlobalArrayFixedDims =
+            bpReader->InquireVariable("GlobalArrayFixedDims");
 
-        if (varNice == nullptr)
-            throw std::ios_base::failure("ERROR: failed to find variable "
-                                         "'myDoubles' in input file\n");
+        if (vGlobalArrayFixedDims == nullptr)
+            throw std::ios_base::failure(
+                "ERROR: failed to find variable "
+                "'GlobalArrayFixedDims' in input file\n");
 
         // ? how do we know about the type? std::string varNice->m_Type
-        unsigned long long int gdim =
-            varMyDoubles->m_Shape[0]; // ?member var or member func?
-        unsigned long long int ldim = gdim / nproc;
-        unsigned long long int offs = rank * ldim;
+        std::size_t gdim =
+            vGlobalArrayFixedDims->m_Shape[0]; // ?member var or member func?
+        std::size_t count = gdim / nproc;
+        std::size_t start = rank * count;
         if (rank == nproc - 1)
         {
-            ldim = gdim - (ldim * gdim);
+            count = gdim - (count * gdim);
         }
 
-        NiceArray.reserve(ldim);
+        GlobalArrayFixedDims.resize(count);
 
         // Make a 1D selection to describe the local dimensions of the variable
-        // we
-        // READ and
-        // its offsets in the global spaces
-        std::unique_ptr<adios::Selection> bbsel = adios.SelectionBoundingBox(
-            {ldim}, {offs}); // local dims and offsets; both as list
-        bpReader->Read<double>("Nice", bbsel,
-                               NiceArray.data()); // Base class Engine own the
-                                                  // Read<T> that will call
-        // overloaded Read from Derived
+        // we READ and its offsets in the global spaces
+        vGlobalArrayFixedDims->SetSelection({start}, {count});
+        bpReader->ScheduleRead<void>(vGlobalArrayFixedDims,
+                                     GlobalArrayFixedDims.data());
+        bpReader->PerformReads(adios::PerformReadMode::BLOCKINGREAD);
 
+// overloaded Read from Derived
+#if 0
         /* Ragged */
         // inquiry about a variable, whose name we know
         std::shared_ptr<adios::Variable<void>> varRagged =
@@ -162,9 +210,9 @@ int main(int argc, char *argv[])
             varRagged->InquiryBlocks();
             // now we have the dimensions per block
 
-            unsigned long long int ldim =
+            unsigned long long int count =
                 varRagged->blockinfo[rank].m_Dimensions[0];
-            RaggedArray.resize(ldim);
+            RaggedArray.resize(count);
 
             std::unique_ptr<adios::Selection> wbsel =
                 adios.SelectionWriteblock(rank);
@@ -172,7 +220,7 @@ int main(int argc, char *argv[])
 
             // We can use bounding box selection as well
             std::unique_ptr<adios::Selection> rbbsel =
-                adios.SelectionBoundingBox({1, ldim}, {rank, 0});
+                adios.SelectionBoundingBox({1, count}, {rank, 0});
             bpReader->Read<float>("Ragged", rbbsel, RaggedArray.data());
         }
 
@@ -181,6 +229,8 @@ int main(int argc, char *argv[])
             varRagged->GetMaxGlobalDimensions(1); // contains the largest
         std::vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(
             1); // contains all individual sizes in that dimension
+
+#endif
 
         // Close file/stream
         bpReader->Close();

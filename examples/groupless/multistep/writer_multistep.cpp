@@ -23,6 +23,10 @@ int main(int argc, char *argv[])
     const bool adiosDebug = true;
     const int NSTEPS = 5;
 
+    // generate different random numbers on each process,
+    // but always the same sequence at each run
+    srand(rank * 32767);
+
     adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
 
     // Application variables for output
@@ -58,10 +62,11 @@ int main(int argc, char *argv[])
         // 1. Global value, constant across processes, constant over time
         adios::Variable<unsigned int> &varNX =
             adios.DefineVariable<unsigned int>("NX");
+        adios::Variable<int> &varNproc = adios.DefineVariable<int>("Nproc");
 
         // 2. Local value, varying across processes, constant over time
         adios::Variable<int> &varProcessID = adios.DefineVariable<int>(
-            "processid", {nproc}, {rank}, {1}, adios::ConstantShape);
+            "ProcessID", {nproc}, {rank}, {1}, adios::ConstantShape);
 
         // 3. Global array, global dimensions (shape), offsets (start) and local
         // dimensions (count)  are  constant over time
@@ -98,8 +103,9 @@ int main(int argc, char *argv[])
         adios::Variable<double> &varGlobalArray =
             adios.DefineVariable<double>("GlobalArray", {adios::UnknownDim});
 
-        // 8. Ragged array, dimensions and offsets are VARYING over time
-        // Want to see this at reading as a ragged 2D array with rank serving as
+        // 8. Local array, dimensions and offsets are VARYING over time
+        // Want to see this at reading as an irregular 2D array with rank
+        // serving as
         // offset in the slow dimension
         adios::Variable<float> &varIrregularArray =
             adios.DefineVariable<float>("Irregular", {nproc, adios::VarDim});
@@ -145,7 +151,8 @@ int main(int argc, char *argv[])
                 GlobalArray[i] = rank * Ny + (double)i;
             }
 
-            Nparts = rand() % 6 + 5; // random size per process, 5..10 each
+            // random size per process, 5..10 each
+            Nparts = rand() % 6 + 5;
             IrregularArray.reserve(Nparts);
             for (int i = 0; i < Nparts; i++)
             {
@@ -159,13 +166,17 @@ int main(int argc, char *argv[])
                 if (step == 0)
                 {
                     bpWriter->Write<unsigned int>(varNX, Nx);
+                    bpWriter->Write<int>("Nproc", nproc);
                 }
                 bpWriter->Write<unsigned int>(varNY, Ny);
             }
 
             // 2. and 6. Writing a local scalar on every process. Will be shown
             // at reading as a 1D array
-            bpWriter->Write<int>(varProcessID, ProcessID);
+            if (step == 0)
+            {
+                bpWriter->Write<int>(varProcessID, ProcessID);
+            }
             bpWriter->Write<unsigned int>(varNparts, Nparts);
 
             // 3.
