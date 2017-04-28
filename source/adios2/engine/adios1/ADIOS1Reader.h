@@ -183,6 +183,18 @@ private:
             if (vi->ndim > 0)
             {
                 Dims gdims = Uint64ArrayToSizetVector(vi->ndim, vi->dims);
+                if (gdims[0] == JoinedDim)
+                {
+                    adios_inq_var_blockinfo(m_fh, vi);
+                    size_t joined_size = 0;
+                    // TODO: This just looks at the first step. What's with
+                    // arrays changing over time?
+                    for (int i = 0; i < *vi->nblocks; i++)
+                    {
+                        joined_size += vi->blockinfo[i].count[0];
+                    }
+                    gdims[0] = joined_size;
+                }
                 var = &m_ADIOS.DefineArray<T>(name, gdims);
             }
             else /* scalar variable */

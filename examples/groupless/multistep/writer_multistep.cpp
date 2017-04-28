@@ -37,10 +37,7 @@ int main(int argc, char *argv[])
     // 3. Global array, global dimensions, local dimensions and offsets are
     // constant over time
     std::vector<double> GlobalArrayFixedDims(Nx);
-    for (int i = 0; i < Nx; i++)
-    {
-        GlobalArrayFixedDims[i] = rank * Nx + (double)i;
-    }
+
     // 4. Local array, local dimensions are
     // constant over time (but different across processors here)
     std::vector<float> LocalArrayFixedDims(nproc - rank + 1, rank);
@@ -81,7 +78,7 @@ int main(int argc, char *argv[])
         // offset in the slow dimension
         adios::Variable<float> &varLocalArrayFixedDims2D =
             adios.DefineVariable<float>("LocalArrayFixedDims2D",
-                                        {nproc, adios::VarDim}, {rank, 0},
+                                        {nproc, adios::IrregularDim}, {rank, 0},
                                         {1, LocalArrayFixedDims.size()});
         // 4.b. Joined array, a 1D array, with global dimension and offsets
         // calculated at read time
@@ -107,8 +104,8 @@ int main(int argc, char *argv[])
         // Want to see this at reading as an irregular 2D array with rank
         // serving as
         // offset in the slow dimension
-        adios::Variable<float> &varIrregularArray =
-            adios.DefineVariable<float>("Irregular", {nproc, adios::VarDim});
+        adios::Variable<float> &varIrregularArray = adios.DefineVariable<float>(
+            "Irregular", {nproc, adios::IrregularDim});
 
         // add transform to variable in group...not executed (just testing API)
         // adios::Transform bzip2 = adios::transform::BZIP2();
@@ -143,6 +140,12 @@ int main(int argc, char *argv[])
 
         for (int step = 0; step < NSTEPS; step++)
         {
+            for (int i = 0; i < Nx; i++)
+            {
+                GlobalArrayFixedDims[i] =
+                    step * Nx * nproc * 1.0 + rank * Nx * 1.0 + (double)i;
+            }
+
             // Create and fill the arrays whose dimensions change over time
             Ny = Nx + step;
             GlobalArray.reserve(Ny);

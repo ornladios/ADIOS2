@@ -108,7 +108,7 @@ static std::string DimsToCSV_LocalAware(const std::vector<std::size_t> &dims)
     for (const auto dim : dims)
     {
         dimsCSV += std::to_string(dim) + ",";
-        if (dim == JoinedDim || dim == VarDim)
+        if (dim == JoinedDim || dim == IrregularDim)
             localVar = true;
     }
 

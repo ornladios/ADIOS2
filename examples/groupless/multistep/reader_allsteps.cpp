@@ -34,6 +34,17 @@ void Delete2DArray(T **ptr)
 }
 
 template <class T>
+void Print1DArray(T *ptr, int nElems, std::string name)
+{
+    std::cout << name << " = { ";
+    for (int i = 0; i < nElems; i++)
+    {
+        std::cout << ptr[i] << " ";
+    }
+    std::cout << "}\n";
+}
+
+template <class T>
 void Print2DArray(T **ptr, int nRows, int nCols, std::string name)
 {
     std::cout << name << " = { \n";
@@ -69,7 +80,7 @@ int main(int argc, char *argv[])
     std::vector<int> ProcessID;
     // 3. Global array, global dimensions, local dimensions and offsets are
     // constant over time
-    std::vector<double> GlobalArrayFixedDims;
+    // std::vector<double> GlobalArrayFixedDims;
 
     // 4. Local array, local dimensions are
     // constant over time (but different across processors here)
@@ -140,13 +151,20 @@ int main(int argc, char *argv[])
         // ? How do we make a selection for an arbitrary list of steps ?
         vNY->SetStepSelection(0, vNY->GetNSteps());
         bpReader->Read<unsigned int>(*vNY, Nys.data());
+        Print1DArray(Nys.data(), Nys.size(), "NY");
 
-        std::cout << "NY = { ";
-        for (const auto &it : Nys)
+        /* ProcessID */
+        adios::Variable<int> *vProcessID =
+            bpReader->InquireVariableInt("ProcessID");
+        if (vProcessID->m_Shape[0] != Nwriters)
         {
-            std::cout << it << " ";
+            std::cout << "ERROR: Unexpected array size of ProcessID = "
+                      << vProcessID->m_Shape[0] << " != # of writers"
+                      << std::endl;
         }
-        std::cout << "}\n";
+        ProcessID.resize(vProcessID->m_Shape[0]);
+        bpReader->Read<int>(*vProcessID, ProcessID.data());
+        Print1DArray(ProcessID.data(), ProcessID.size(), "ProcessID");
 
         /* Nparts */
         // Nparts local scalar is presented as a 1D array of Nwriters
@@ -163,8 +181,8 @@ int main(int argc, char *argv[])
 
         /* GlobalArrayFixedDims */
         // inquiry about a variable, whose name we know
-        std::shared_ptr<adios::Variable<void *>> vGlobalArrayFixedDims =
-            bpReader->InquireVariable("GlobalArrayFixedDims");
+        adios::Variable<double> *vGlobalArrayFixedDims =
+            bpReader->InquireVariableDouble("GlobalArrayFixedDims");
 
         if (vGlobalArrayFixedDims == nullptr)
             throw std::ios_base::failure(
@@ -178,17 +196,39 @@ int main(int argc, char *argv[])
         std::size_t start = rank * count;
         if (rank == nproc - 1)
         {
-            count = gdim - (count * gdim);
+            count = gdim - (count * (nproc - 1));
         }
 
-        GlobalArrayFixedDims.resize(count);
+        double **GlobalArrayFixedDims =
+            Make2DArray<double>(vGlobalArrayFixedDims->GetNSteps(), count);
 
         // Make a 1D selection to describe the local dimensions of the variable
         // we READ and its offsets in the global spaces
         vGlobalArrayFixedDims->SetSelection({start}, {count});
-        bpReader->ScheduleRead<void>(vGlobalArrayFixedDims,
-                                     GlobalArrayFixedDims.data());
-        bpReader->PerformReads(adios::PerformReadMode::BLOCKINGREAD);
+        vGlobalArrayFixedDims->SetStepSelection(
+            0, vGlobalArrayFixedDims->GetNSteps());
+        bpReader->Read<double>(*vGlobalArrayFixedDims, GlobalArrayFixedDims[0]);
+        Print2DArray(GlobalArrayFixedDims, vGlobalArrayFixedDims->GetNSteps(),
+                     count, "GlobalArrayFixedDims");
+
+        /* LocalArrayFixedDims2D */
+        // inquiry about a variable, whose name we know
+        adios::Variable<float> *vLocalArrayFixedDims2D =
+            bpReader->InquireVariableFloat("LocalArrayFixedDims2D");
+        if (vLocalArrayFixedDims2D->m_Shape[1] != adios::IrregularDim)
+        {
+            throw std::ios_base::failure(
+                "Unexpected condition: LocalArrayFixedDims2D array's fast "
+                "dimension is supposed to be adios::IrregularDim indicating an "
+                "Irregular array\n");
+        }
+
+        /* LocalArrayFixedDims1D */
+        // inquiry about a variable, whose name we know
+        adios::Variable<float> *vLocalArrayFixedDims1D =
+            bpReader->InquireVariableFloat("LocalArrayFixedDims1D");
+        std::cout << "LocalArrayFixedDims1D ["
+                  << vLocalArrayFixedDims1D->m_Shape[0] << "]" << std::endl;
 
 // overloaded Read from Derived
 #if 0

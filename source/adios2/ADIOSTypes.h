@@ -115,8 +115,8 @@ struct TypeInfo<T, typename std::enable_if<std::is_same<
 };
 
 const size_t UnknownDim = 0;
-const size_t JoinedDim = SIZE_MAX;
-const size_t VarDim = JoinedDim - 1;
+const size_t JoinedDim = SIZE_MAX - 1;
+const size_t IrregularDim = JoinedDim - 1;
 const bool ConstantShape = true;
 
 enum class Verbose
