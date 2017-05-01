@@ -188,6 +188,13 @@ std::vector<int> CSVToVectorInt(const std::string csv);
  */
 void ConvertUint64VectorToSizetVector(const std::vector<std::uint64_t> &in,
                                       std::vector<std::size_t> &out);
+/** Convert a C array of uint64_t elements to a vector of std::size_t elements
+ *  @param number of elements
+ *  @param input array of uint64_t elements
+ *  @param vector of std::size_t elements. It will be resized to nElements.
+ */
+void Uint64ArrayToSizetVector(const std::size_t nElements, const uint64_t *in,
+                              std::vector<std::size_t> &out);
 
 /** Convert a C array of uint64_t elements to a vector of std::size_t elements
  *  @param number of elements
@@ -196,7 +203,6 @@ void ConvertUint64VectorToSizetVector(const std::vector<std::uint64_t> &in,
  */
 std::vector<std::size_t> Uint64ArrayToSizetVector(const std::size_t nElements,
                                                   const uint64_t *in);
-
 /**
  * Converts a vector of dimensions to a CSV string
  * @param dims vector of dimensions
