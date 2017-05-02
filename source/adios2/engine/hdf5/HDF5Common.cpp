@@ -8,9 +8,11 @@
  *      Author: Junmin
  */
 
+#include "HDF5Common.h"
+
 #include <iostream> //needs to go away, this is just for demo purposes
 
-#include "engine/hdf5/HDF5Common.h"
+#include "adios2/ADIOSMPI.h"
 
 namespace adios
 {

@@ -1,4 +1,3 @@
-
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
@@ -12,8 +11,8 @@
 #ifndef HDF5_COMMON_P_H_
 #define HDF5_COMMON_P_H_
 
-#include "core/Engine.h"
-#include "ADIOS_MPI.h"
+#include "adios2/core/Engine.h"
+#include "adios2/ADIOSMPICommOnly.h"
 
 #include <hdf5.h>
 
