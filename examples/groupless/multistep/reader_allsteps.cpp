@@ -179,7 +179,9 @@ int main(int argc, char *argv[])
         Print2DArray(Nparts, vNparts->GetNSteps(), Nwriters, "Nparts");
         Delete2DArray(Nparts);
 
-        /* GlobalArrayFixedDims */
+        /*
+         * GlobalArrayFixedDims
+         */
         // inquiry about a variable, whose name we know
         adios::Variable<double> *vGlobalArrayFixedDims =
             bpReader->InquireVariableDouble("GlobalArrayFixedDims");
@@ -211,24 +213,47 @@ int main(int argc, char *argv[])
         Print2DArray(GlobalArrayFixedDims, vGlobalArrayFixedDims->GetNSteps(),
                      count, "GlobalArrayFixedDims");
 
-        /* LocalArrayFixedDims2D */
+        /*
+         * LocalArrayFixedDims
+         */
         // inquiry about a variable, whose name we know
-        adios::Variable<float> *vLocalArrayFixedDims2D =
-            bpReader->InquireVariableFloat("LocalArrayFixedDims2D");
-        if (vLocalArrayFixedDims2D->m_Shape[1] != adios::IrregularDim)
+        adios::Variable<float> *vLocalArrayFixedDims =
+            bpReader->InquireVariableFloat("LocalArrayFixedDims");
+        if (vLocalArrayFixedDims->m_Shape[0] != adios::IrregularDim)
         {
             throw std::ios_base::failure(
-                "Unexpected condition: LocalArrayFixedDims2D array's fast "
+                "Unexpected condition: LocalArrayFixedDims array's fast "
                 "dimension is supposed to be adios::IrregularDim indicating an "
                 "Irregular array\n");
         }
+        std::cout << "LocalArrayFixedDims is irregular. Cannot read this "
+                     "variable yet...\n";
 
-        /* LocalArrayFixedDims1D */
+        /*
+         * LocalArrayFixedDimsJoined
+         */
         // inquiry about a variable, whose name we know
-        adios::Variable<float> *vLocalArrayFixedDims1D =
-            bpReader->InquireVariableFloat("LocalArrayFixedDims1D");
-        std::cout << "LocalArrayFixedDims1D ["
-                  << vLocalArrayFixedDims1D->m_Shape[0] << "]" << std::endl;
+        adios::Variable<float> *vLocalArrayFixedDimsJoined =
+            bpReader->InquireVariableFloat("LocalArrayFixedDimsJoined");
+        std::cout << "LocalArrayFixedDimsJoined ["
+                  << vLocalArrayFixedDimsJoined->m_Shape[0] << "]";
+        std::cout << " = Cannot read this variable yet...\n";
+
+        /*
+         * GlobalArray which changes size over time
+         */
+        // inquiry about a variable, whose name we know
+        adios::Variable<double> *vGlobalArray =
+            bpReader->InquireVariableDouble("GlobalArray");
+        std::cout << "GlobalArray [" << vGlobalArray->m_Shape[0] << "]";
+        std::cout << " = Cannot read this variable yet...\n";
+        if (vGlobalArray->m_Shape[0] != adios::IrregularDim)
+        {
+            throw std::ios_base::failure(
+                "Unexpected condition: GlobalArray array's  "
+                "dimension is supposed to be adios::IrregularDim indicating an "
+                "Irregular array\n");
+        }
 
 // overloaded Read from Derived
 #if 0

@@ -107,9 +107,9 @@ public:
                                 bool constantShape = false);
 
     template <class T>
-    Variable<T> &DefineScalar(const std::string &name)
+    Variable<T> &DefineLocalValue(const std::string &name)
     {
-        return DefineVariable<T>(name, {}, {}, {}, false);
+        return DefineVariable<T>(name, {LocalValueDim}, {}, {}, false);
     }
 
     template <class T>
