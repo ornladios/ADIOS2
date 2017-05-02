@@ -29,7 +29,7 @@ class HDF5Writer : public Engine
 
 public:
     /**
-     * Constructor for HDF5 writer engine, writes in hdf5 format 
+     * Constructor for HDF5 writer engine, writes in hdf5 format
      * @param name unique name given to the engine
      * @param accessMode
      * @param mpiComm
@@ -94,7 +94,7 @@ private:
     capsule::STLVector m_Buffer;
 
     void Init();
-    
+
     HDF5Common _H5File;
 
     /*
@@ -102,11 +102,11 @@ private:
     hid_t _memspace, _filespace;
 
     hid_t _group_id;
-   
+
     hid_t DefH5T_COMPLEX_DOUBLE;
     hid_t DefH5T_COMPLEX_FLOAT;
     hid_t DefH5T_COMPLEX_LongDOUBLE;
-    
+
     int   _currentTimeStep;
     */
     template <class T>

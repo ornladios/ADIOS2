@@ -25,7 +25,7 @@ HDF5Writer::HDF5Writer(ADIOS &adios, const std::string name,
          " HDF5Writer constructor (or call to ADIOS Open).\n"),
   m_Buffer(m_DebugMode)
 {
-  Init();
+    Init();
 }
 
 HDF5Writer::~HDF5Writer() {}
@@ -239,26 +239,25 @@ void HDF5Writer::Write(const std::string variableName,
                 values, _H5File.DefH5T_COMPLEX_LongDOUBLE);
 }
 
-void HDF5Writer::Advance(float timeout_sec)
-{
-  _H5File.H5_Advance(0);
-}
+void HDF5Writer::Advance(float timeout_sec) { _H5File.H5_Advance(0); }
 
 void HDF5Writer::Close(const int transportIndex)
 {
-  /*
-  //void* hi = H5Iobject_verify(H5S_SCALAR, H5I_DATASPACE);
+    /*
+    //void* hi = H5Iobject_verify(H5S_SCALAR, H5I_DATASPACE);
 
-  hid_t s = H5Screate(H5S_SCALAR);
-  //hid_t attr = H5Acreate(_H5File._group_id, "NumTimeSteps", H5T_NATIVE_UINT, s, H5P_DEFAULT, H5P_DEFAULT);
-  hid_t attr = H5Acreate(_H5File._file_id, "NumTimeSteps", H5T_NATIVE_UINT, s, H5P_DEFAULT, H5P_DEFAULT);
-  uint  totalts = _H5File._currentTimeStep+1;
-  H5Awrite(attr,H5T_NATIVE_UINT,&totalts);
+    hid_t s = H5Screate(H5S_SCALAR);
+    //hid_t attr = H5Acreate(_H5File._group_id, "NumTimeSteps", H5T_NATIVE_UINT,
+    s, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t attr = H5Acreate(_H5File._file_id, "NumTimeSteps", H5T_NATIVE_UINT, s,
+    H5P_DEFAULT, H5P_DEFAULT);
+    uint  totalts = _H5File._currentTimeStep+1;
+    H5Awrite(attr,H5T_NATIVE_UINT,&totalts);
 
-  H5Sclose(s);
-  H5Aclose(attr);
-  */
-  _H5File.H5_Close();
+    H5Sclose(s);
+    H5Aclose(attr);
+    */
+    _H5File.H5_Close();
 }
 
 template <class T>
@@ -294,8 +293,9 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
 
     hid_t _filespace = H5Screate_simple(dimSize, dimsf.data(), NULL);
 
-    hid_t _dset_id = H5Dcreate(_H5File._group_id, variable.m_Name.c_str(), h5type, _filespace,
-                         H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t _dset_id =
+        H5Dcreate(_H5File._group_id, variable.m_Name.c_str(), h5type,
+                  _filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     // H5Sclose(_filespace);
 
     hid_t _memspace = H5Screate_simple(dimSize, count.data(), NULL);

@@ -11,23 +11,23 @@
 #ifndef HDF5_COMMON_P_H_
 #define HDF5_COMMON_P_H_
 
-#include "adios2/core/Engine.h"
 #include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/core/Engine.h"
 
 #include <hdf5.h>
 
 namespace adios
 {
 
-class HDF5Common 
+class HDF5Common
 {
 
 public:
     /**
-     * Constructor for HDF5 file 
+     * Constructor for HDF5 file
      * @param file name
      */
-    HDF5Common();  
+    HDF5Common();
 
     virtual ~HDF5Common();
 
@@ -35,19 +35,20 @@ public:
     void H5_Close();
     void H5_Advance(int totalts);
 
-    int GetNumTimeSteps();    
+    int GetNumTimeSteps();
     void WriteTimeSteps();
 
-    hid_t _plist_id, _file_id; 
+    hid_t _plist_id, _file_id;
     hid_t _group_id;
-   
+
     hid_t DefH5T_COMPLEX_DOUBLE;
     hid_t DefH5T_COMPLEX_FLOAT;
     hid_t DefH5T_COMPLEX_LongDOUBLE;
 
-    int   _currentTimeStep;
- private:
-    void H5_AdvanceWrite();    
+    int _currentTimeStep;
+
+private:
+    void H5_AdvanceWrite();
     bool _writeMode;
     int _total_timestep;
 };

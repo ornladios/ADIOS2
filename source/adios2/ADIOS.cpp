@@ -202,7 +202,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5\n");
-#endif      
+#endif
     }
     else
     {

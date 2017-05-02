@@ -13,8 +13,8 @@
 
 #include "HDF5Common.h"
 
-#include "adios2/core/Engine.h"
 #include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/core/Engine.h"
 
 namespace adios
 {
@@ -24,15 +24,15 @@ class HDF5Reader : public Engine
 
 public:
     /**
-     * Constructor for single HDF5 reader engine, reads from HDF5 format 
+     * Constructor for single HDF5 reader engine, reads from HDF5 format
      * @param name unique name given to the engine
      * @param accessMode
      * @param mpiComm
      * @param method
      */
     HDF5Reader(ADIOS &adios, const std::string name,
-	       const std::string accessMode, MPI_Comm mpiComm,
-	       const Method &method);
+               const std::string accessMode, MPI_Comm mpiComm,
+               const Method &method);
 
     virtual ~HDF5Reader();
 
@@ -40,7 +40,7 @@ public:
                                     const bool readIn = true);
 
     Variable<char> *InquireVariableChar(const std::string &variableName,
-                                        const bool readIn = true);     
+                                        const bool readIn = true);
 
     Variable<unsigned char> *
     InquireVariableUChar(const std::string &variableName,
@@ -108,13 +108,11 @@ public:
 
     void Close(const int transportIndex = -1);
 
-    
     template <class T>
-      void UseHDFRead(const std::string& variableName, T *values, hid_t h5type);
-    
-    template <class T>
-      void ReadMe(Variable<T> variable, T *values, hid_t h5type);
+    void UseHDFRead(const std::string &variableName, T *values, hid_t h5type);
 
+    template <class T>
+    void ReadMe(Variable<T> variable, T *values, hid_t h5type);
 
 private:
     HDF5Common _H5File;
