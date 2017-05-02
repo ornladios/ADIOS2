@@ -7,51 +7,41 @@
  *  Created on: Apr 18, 2017
  *      Author: Jason Wang
  */
-#ifndef CACHEMAN_H_
-#define CACHEMAN_H_
 
-#include "DataMan.h"
+#ifndef DATAMAN_CACHEMAN_H_
+#define DATAMAN_CACHEMAN_H_
 
-class CacheItem : public DataManBase
+#include <queue>
+
+#include "json.hpp"
+
+class CacheItem
 {
 public:
-    CacheItem() = default;
-    virtual ~CacheItem() = default;
+    using json = nlohmann::json;
 
-    void init(std::string doid, std::string var, std::string dtype,
-              std::vector<size_t> varshape);
+    int init(json a_jmsg);
+    virtual int put(const void *a_data, json a_jmsg);
+    virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
-    virtual int init(json p_jmsg);
-    virtual int put(const void *p_data, json p_jmsg);
-    virtual int get(void *p_data, json &p_jmsg);
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg){};
-
-    void flush();
-    std::string name() { return "CacheItem"; }
-    std::string type() { return "Cache"; }
-    const void *get_buffer();
-    void clean(const std::string mode);
-    void remove(size_t timestep);
-    std::vector<size_t> get_shape();
-    std::string get_dtype();
+    void *get();
+    void clean(const std::string a_mode);
+    void pop();
+    void push();
+    json get_jmsg();
+    void clean(std::vector<char> &a_data, std::string a_mode);
+    std::string m_clean_mode;
 
 private:
-    std::map<size_t, std::vector<char>> m_buffer;
-    std::string m_doid;
-    std::string m_var;
-    std::string m_dtype;
-    size_t m_bytes;
-    size_t m_varsize;
-    size_t m_varbytes;
-    std::vector<size_t> m_varshape;
-    bool m_completed;
-    size_t m_timestep = 0;
+    std::queue<std::vector<char>> m_cache;
+    json m_jmsg;
+    bool m_initialized = false;
 
     inline std::vector<size_t> apply_offset(const std::vector<size_t> &p,
                                             const std::vector<size_t> &o)
     {
         std::vector<size_t> g;
-        for (int i = 0; i < p.size(); i++)
+        for (int i = 0; i < p.size(); ++i)
         {
             g.push_back(p[i] + o[i]);
         }
@@ -62,7 +52,7 @@ private:
                             const std::vector<size_t> &p)
     {
         size_t index = 0;
-        for (int i = 1; i < v.size(); i++)
+        for (int i = 1; i < v.size(); ++i)
         {
             index += std::accumulate(v.begin() + i, v.end(), p[i - 1],
                                      std::multiplies<size_t>());
@@ -74,7 +64,7 @@ private:
     inline std::vector<size_t> one2multi(const std::vector<size_t> &v, size_t p)
     {
         std::vector<size_t> index(v.size());
-        for (int i = 1; i < v.size(); i++)
+        for (int i = 1; i < v.size(); ++i)
         {
             size_t s = std::accumulate(v.begin() + i, v.end(), 1,
                                        std::multiplies<size_t>());
@@ -86,37 +76,27 @@ private:
     }
 };
 
-class CacheMan : public DataManBase
+class CacheMan
 {
 
 public:
-    CacheMan() = default;
-    virtual ~CacheMan() = default;
-
-    virtual int init(json p_jmsg);
-    virtual int put(const void *p_data, json p_jmsg);
-    virtual int get(void *p_data, json &p_jmsg);
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg){};
-
-    void flush();
-    std::string name() { return "CacheMan"; }
-    std::string type() { return "Cache"; }
-    const void *get_buffer(std::string doid, std::string var);
-    void clean(std::string doid, std::string var, std::string mode);
-    void clean_all(std::string mode);
-    void remove(std::string doid, std::string var, size_t timestep);
-    void remove_all(size_t timestep);
+    using json = nlohmann::json;
+    int put(const void *a_data, json a_jmsg);
+    void *get(std::string doid, std::string var);
+    void pop();
+    void push();
     std::vector<std::string> get_do_list();
     std::vector<std::string> get_var_list(std::string doid);
-    std::vector<size_t> get_shape(std::string doid, std::string var);
-    std::string get_dtype(std::string doid, std::string var);
+    size_t get_timesteps_cached();
+    json get_jmsg(std::string doid, std::string var);
+    void clean(std::string a_mode);
 
 private:
     typedef std::map<std::string, CacheItem> CacheVarMap;
     typedef std::map<std::string, CacheVarMap> CacheDoMap;
     CacheDoMap m_cache;
+    size_t m_timesteps_cached = 0;
+    size_t m_timestep_first = 0;
 };
-
-extern "C" DataManBase *getMan();
 
 #endif

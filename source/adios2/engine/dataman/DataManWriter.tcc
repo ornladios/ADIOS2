@@ -30,16 +30,21 @@ void DataManWriter::WriteVariableCommon(Variable<T> &variable, const T *values)
 
     // This part will go away, this is just to monitor variables per rank
 
+    if (variable.m_Shape.empty())
+    {
+        variable.m_Shape = variable.m_Count;
+    }
+    if (variable.m_Start.empty())
+    {
+        variable.m_Start.assign(variable.m_Count.size(), 0);
+    }
+
     json jmsg;
     jmsg["doid"] = m_Name;
     jmsg["var"] = variable.m_Name;
     jmsg["dtype"] = GetType<T>();
     jmsg["putshape"] = variable.m_Count;
-    if (variable.m_Shape.size() == 0)
-        variable.m_Shape = variable.m_Count;
     jmsg["varshape"] = variable.m_Shape;
-    if (variable.m_Start.size() == 0)
-        variable.m_Start.assign(variable.m_Count.size(), 0);
     jmsg["offset"] = variable.m_Start;
     jmsg["timestep"] = 0;
     m_Man.put(values, jmsg);

@@ -36,81 +36,56 @@ class BP1Writer : public BP1Base
 {
 
 public:
-    unsigned int m_Threads = 1; ///< thread operations in large array (min,max)
-    unsigned int m_Verbosity = 0; ///< statistics verbosity, only 0 is supported
-    float m_GrowthFactor = 1.5;   ///< memory growth factor
-    const std::uint8_t m_Version = 3; ///< BP format version
-
     /**
-     * Calculates the Process Index size in bytes according to the BP format,
-     * including list of method with no parameters (for now)
-     * @param name
-     * @param timeStepName
-     * @param numberOfTransports
-     * @return size of pg index
+     * Unique constructor
+     * @param mpiComm MPI communicator for BP1 Aggregator
+     * @param debug true: extra checks
      */
-    std::size_t GetProcessGroupIndexSize(
-        const std::string name, const std::string timeStepName,
-        const std::size_t numberOfTransports) const noexcept;
+    BP1Writer(MPI_Comm mpiComm, const bool debugMode = false);
+
+    virtual ~BP1Writer() = default;
 
     /**
      * Writes a process group index PGIndex and list of methods (from
-     * transports),
-     * done at Open or aggregation of new time step
-     * Version that operates on a single heap buffer and metadataset.
+     * transports). Done at Open or Advance.
      * @param isFortran
-     * @param name
+     * @param name group name, taking the rank
      * @param processID
      * @param transports
-     * @param buffer
-     * @param metadataSet
      */
     void WriteProcessGroupIndex(
-        const bool isFortran, const std::string name,
-        const std::uint32_t processID,
-        const std::vector<std::shared_ptr<Transport>> &transports,
-        capsule::STLVector &heap, BP1MetadataSet &metadataSet) const noexcept;
+        const bool isFortran, const std::string name, const uint32_t processID,
+        const std::vector<std::shared_ptr<Transport>> &transports) noexcept;
 
     /**
-     * Returns the estimated variable index size
-     * @param group
-     * @param variableName
+     *
      * @param variable
-     * @param verbosity
-     * @return variable index size
+     * @return
+     * -1: allocation failed,
+     *  0: no allocation needed,
+     *  1: reallocation is sucessful
+     *  2: need a transport flush
      */
     template <class T>
-    std::size_t GetVariableIndexSize(const Variable<T> &variable) const
-        noexcept;
+    ResizeResult ResizeBuffer(const Variable<T> &variable);
 
     /**
      * Write metadata for a given variable
      * @param variable
-     * @param heap
-     * @param metadataSet
      */
     template <class T>
-    void WriteVariableMetadata(const Variable<T> &variable,
-                               capsule::STLVector &heap,
-                               BP1MetadataSet &metadataSet) const noexcept;
+    void WriteVariableMetadata(const Variable<T> &variable) noexcept;
 
     /**
      * Expensive part this is only for heap buffers need to adapt to vector of
      * capsules
      * @param variable
-     * @param buffer
      */
     template <class T>
-    void WriteVariablePayload(const Variable<T> &variable,
-                              capsule::STLVector &heap,
-                              const unsigned int nthreads = 1) const noexcept;
+    void WriteVariablePayload(const Variable<T> &variable) noexcept;
 
-    /**
-     * Flattens data
-     * @param metadataSet
-     * @param buffer
-     */
-    void Advance(BP1MetadataSet &metadataSet, capsule::STLVector &buffer);
+    /** Flattens data buffer */
+    void Advance();
 
     /**
      * Function that sets metadata (if first close) and writes to a single
@@ -121,53 +96,82 @@ public:
      * @param isFirstClose true: metadata has been set and aggregated
      * @param doAggregation true: for N-to-M, false: for N-to-N
      */
-    void Close(BP1MetadataSet &metadataSet, capsule::STLVector &heap,
-               Transport &transport, bool &isFirstClose,
-               const bool doAggregation) const noexcept;
+    void Close(Transport &transport, bool &isFirstClose,
+               const bool doAggregation) noexcept;
 
-    /**
-     * Writes the ADIOS log information (buffering, open, write and close) for a
-     * rank process
-     * @param rank current rank
-     * @param metadataSet contains Profile info for buffering
-     * @param transports  contains Profile info for transport open, writes and
-     * close
-     * @return string for this rank that will be aggregated into profiling.log
-     */
-    std::string GetRankProfilingLog(
-        const int rank, const BP1MetadataSet &metadataSet,
-        const std::vector<std::shared_ptr<Transport>> &transports) const
-        noexcept;
+    void WriteProfilingLogFile(
+        const std::string &name, const unsigned int rank,
+        const std::vector<std::shared_ptr<Transport>> &transports) noexcept;
 
 private:
+    /** BP format version */
+    const std::uint8_t m_Version = 3;
+
+    /**
+     * Calculates the Process Index size in bytes according to the BP format,
+     * including list of method with no parameters (for now)
+     * @param name
+     * @param timeStepName
+     * @param numberOfTransports
+     * @return size of pg index
+     */
+    size_t GetProcessGroupIndexSize(const std::string name,
+                                    const std::string timeStepName,
+                                    const size_t numberOfTransports) const
+        noexcept;
+
+    /**
+     * Returns the estimated variable index size
+     * @param variable
+     */
+    template <class T>
+    size_t GetVariableIndexSize(const Variable<T> &variable) const noexcept;
+
+    /**
+     * Get variable statistics
+     * @param variable
+     * @return stats
+     */
+    template <class T>
+    Stats<typename TypeInfo<T>::ValueType>
+    GetStats(const Variable<T> &variable) const noexcept;
+
     template <class T>
     void WriteVariableMetadataInData(
         const Variable<T> &variable,
-        const Stats<typename TypeInfo<T>::ValueType> &stats,
-        capsule::STLVector &heap) const noexcept;
+        const Stats<typename TypeInfo<T>::ValueType> &stats) noexcept;
 
     template <class T>
     void WriteVariableMetadataInIndex(
         const Variable<T> &variable,
         const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
-        BP1Index &index) const noexcept;
+        BP1Index &index) noexcept;
 
     template <class T>
     void WriteVariableCharacteristics(
         const Variable<T> &variable,
         const Stats<typename TypeInfo<T>::ValueType> &stats,
-        std::vector<char> &buffer, const bool addLength = false) const noexcept;
+        std::vector<char> &buffer) noexcept;
+
+    template <class T>
+    void WriteVariableCharacteristics(
+        const Variable<T> &variable,
+        const Stats<typename TypeInfo<T>::ValueType> &stats,
+        std::vector<char> &buffer, size_t &position) noexcept;
 
     /**
      * Writes from &buffer[position]:  [2
      * bytes:string.length()][string.length():
      * string.c_str()]
-     * @param name
-     * @param buffer
-     * @param position
+     * @param name to be written in bp file
+     * @param buffer metadata buffer
      */
     void WriteNameRecord(const std::string name,
-                         std::vector<char> &buffer) const noexcept;
+                         std::vector<char> &buffer) noexcept;
+
+    /** Overloaded version for data buffer */
+    void WriteNameRecord(const std::string name, std::vector<char> &buffer,
+                         size_t &position) noexcept;
 
     /**
      * Write a dimension record for a global variable used by
@@ -181,27 +185,31 @@ private:
      * data
      * characteristic
      */
-    void WriteDimensionsRecord(std::vector<char> &buffer,
-                               const std::vector<std::size_t> &localDimensions,
-                               const std::vector<std::size_t> &globalDimensions,
-                               const std::vector<std::size_t> &offsets,
+    void WriteDimensionsRecord(const std::vector<size_t> &localDimensions,
+                               const std::vector<size_t> &globalDimensions,
+                               const std::vector<size_t> &offsets,
+                               std::vector<char> &buffer) noexcept;
+
+    /** Overloaded version for data buffer */
+    void WriteDimensionsRecord(const std::vector<size_t> &localDimensions,
+                               const std::vector<size_t> &globalDimensions,
+                               const std::vector<size_t> &offsets,
                                const unsigned int skip,
-                               const bool addType = false) const noexcept;
+                               std::vector<char> &buffer,
+                               size_t &position) noexcept;
 
-    /**
-     * Get variable statistics
-     * @param variable
-     * @return stats
-     */
-    template <class T>
-    Stats<typename TypeInfo<T>::ValueType>
-    GetStats(const Variable<T> &variable) const noexcept;
-
+    /** Writes min max */
     template <class T>
     void WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
+                           uint8_t &characteristicsCounter,
+                           std::vector<char> &buffer) noexcept;
+
+    /** Overloaded version for data buffer */
+    template <class T>
+    void WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
+                           uint8_t &characteristicsCounter,
                            std::vector<char> &buffer,
-                           std::uint8_t &characteristicsCounter,
-                           const bool addLength) const noexcept;
+                           size_t &position) noexcept;
 
     /**
      * Write a characteristic value record to buffer
@@ -213,10 +221,17 @@ private:
      * @param addLength true for data, false for metadata
      */
     template <class T>
-    void WriteCharacteristicRecord(const std::uint8_t characteristicID,
+    void WriteCharacteristicRecord(const uint8_t characteristicID,
+                                   uint8_t &characteristicsCounter,
+                                   const T &value,
+                                   std::vector<char> &buffer) noexcept;
+
+    /** Overloaded version for data buffer */
+    template <class T>
+    void WriteCharacteristicRecord(const uint8_t characteristicID,
+                                   uint8_t &characteristicsCounter,
                                    const T &value, std::vector<char> &buffer,
-                                   std::uint8_t &characteristicsCounter,
-                                   const bool addLength = false) const noexcept;
+                                   size_t &position) noexcept;
 
     /**
      * Returns corresponding index of type BP1Index, if doesn't exists creates a
@@ -237,26 +252,38 @@ private:
      * @param metadataSet
      * @param buffer
      */
-    void FlattenData(BP1MetadataSet &metadataSet,
-                     capsule::STLVector &buffer) const noexcept;
+    void FlattenData() noexcept;
 
     /**
      * Flattens the metadata indices into a single metadata buffer in capsule
      * @param metadataSet
      * @param buffer
      */
-    void FlattenMetadata(BP1MetadataSet &metadataSet,
-                         capsule::STLVector &buffer) const noexcept;
+    void FlattenMetadata() noexcept;
+
+    /**
+     * Writes the ADIOS log information (buffering, open, write and close) for a
+     * rank process
+     * @param rank current rank
+     * @param metadataSet contains Profile info for buffering
+     * @param transports  contains Profile info for transport open, writes and
+     * close
+     * @return string for this rank that will be aggregated into profiling.log
+     */
+    std::string GetRankProfilingLog(
+        const unsigned int rank,
+        const std::vector<std::shared_ptr<Transport>> &transports) noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \
+    extern template BP1Writer::ResizeResult BP1Writer::ResizeBuffer(           \
+        const Variable<T> &variable);                                          \
+                                                                               \
     extern template void BP1Writer::WriteVariablePayload(                      \
-        const Variable<T> &variable, capsule::STLVector &heap,                 \
-        const unsigned int nthreads) const noexcept;                           \
+        const Variable<T> &variable) noexcept;                                 \
                                                                                \
     extern template void BP1Writer::WriteVariableMetadata(                     \
-        const Variable<T> &variable, capsule::STLVector &heap,                 \
-        BP1MetadataSet &metadataSet) const noexcept;
+        const Variable<T> &variable) noexcept;
 
 ADIOS_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

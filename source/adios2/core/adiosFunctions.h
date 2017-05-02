@@ -211,32 +211,17 @@ std::vector<std::size_t> Uint64ArrayToSizetVector(const std::size_t nElements,
 std::string DimsToCSV(const std::vector<std::size_t> &dims);
 
 /**
- * Common strategy to check for heap buffer allocation for data and metadata
- * typically calculated in Write
- * @param newSize new data size
- * @param growthFactor user provided growth factor for index and data memory
- * buffers ( default = 1.5 )
- * @param maxBufferSize user provided maximum buffer size
- * @param buffer to be reallocated
- * @return true: must do a transport flush, false: buffer sizes are enough
- * to
- * contain incoming data, no need for transport flush
- */
-bool CheckBufferAllocation(const std::size_t newSize, const float growthFactor,
-                           const std::size_t maxBufferSize,
-                           std::vector<char> &buffer);
-
-/**
  * Grows a buffer by a factor of  n . growthFactor . currentCapacity to
  * accommodate for incomingDataSize
  * @param incomingDataSize size of new data required to be stored in buffer
  * @param growthFactor buffer grows in multiples of the growth buffer
  * @param buffer to be resized
+ * @param position, current buffer position
  * @return -1: failed to allocate (bad_alloc), 0: didn't have to allocate
  * (enough space), 1: successful allocation
  */
-int GrowBuffer(const std::size_t incomingDataSize, const float growthFactor,
-               std::vector<char> &buffer);
+int GrowBuffer(const size_t incomingDataSize, const float growthFactor,
+               std::vector<char> &buffer, const size_t position);
 
 /**
  * Check if system is little endian

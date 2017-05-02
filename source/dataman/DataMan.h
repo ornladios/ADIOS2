@@ -8,15 +8,17 @@
  *      Author: Jason Wang
  */
 
-#ifndef DATAMAN_H_
-#define DATAMAN_H_
+#ifndef DATAMAN_DATAMAN_H_
+#define DATAMAN_DATAMAN_H_
 
+#include "CacheMan.h"
 #include "DataManBase.h"
 
 class DataMan : public DataManBase
 {
 public:
     DataMan() = default;
+    virtual ~DataMan() = default;
     virtual int init(json p_jmsg);
     virtual int put(const void *p_data, json p_jmsg);
     virtual int get(void *p_data, json &p_jmsg);
@@ -29,16 +31,19 @@ public:
     void add_file(std::string p_method);
     std::string name() { return "DataManager"; }
     std::string type() { return "Manager"; }
-    virtual void transform(const void *p_in, void *p_out, json &p_jmsg){};
+    virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
 private:
-    std::string m_local_ip = "";
-    std::string m_remote_ip = "";
+    std::string m_local_ip;
+    std::string m_remote_ip;
     int m_local_port = 0;
     int m_remote_port = 0;
     int m_num_channels = 0;
     std::vector<int> m_tolerance;
     std::vector<int> m_priority;
+    CacheMan m_cache;
+    size_t m_cache_size = 0;
+    size_t m_timestep = 0;
 };
 
 #endif /* DATAMAN_H_ */

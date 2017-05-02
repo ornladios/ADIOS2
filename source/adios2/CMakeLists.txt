@@ -41,7 +41,10 @@ target_include_directories(adios2
     $<INSTALL_INTERFACE:include>
   PRIVATE ${ADIOS_SOURCE_DIR}/source
 )
-  
+
+find_package(Threads REQUIRED)
+target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+
 if(ADIOS_USE_DataMan)
   target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
@@ -55,6 +58,13 @@ if(ADIOS_USE_BZip2)
   find_package(BZip2 REQUIRED)
   target_sources(adios2 PRIVATE transform/BZip2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
+endif()
+
+if(ADIOS_USE_ZFP)
+  find_package(ZFP REQUIRED)
+  message("ADIOS ZFP support not yet implemented")
+#  target_sources(adios2 PRIVATE transform/ZFP.cpp)
+#  target_link_libraries(adios2 PRIVATE zfp::zfp)
 endif()
 
 if(ADIOS_USE_MPI)
@@ -92,8 +102,7 @@ if(ADIOS_USE_HDF5)
       "of ADIOS is being built, which requires a sequential HDF5."
     )
   endif()
-
-  target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
+  target_include_directories(adios2 PRIVATE ${HDF5_C_INCLUDE_DIRS})
   target_sources(adios2 PRIVATE
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
@@ -102,8 +111,7 @@ if(ADIOS_USE_HDF5)
 endif()
 
 install(
-  FILES
-    ADIOS.h ADIOS.inl ADIOSMacros.h ADIOS_MPI.h ADIOSTypes.h ADIOSMPICommOnly.h
+  FILES ADIOS.h ADIOS.inl ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 install(

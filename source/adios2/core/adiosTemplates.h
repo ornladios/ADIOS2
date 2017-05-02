@@ -12,7 +12,8 @@
 #define ADIOS2_CORE_ADIOSTEMPLATES_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <cmath> //std::sqrt
+#include <algorithm> //std::minmax_element
+#include <cmath>     //std::sqrt
 #include <complex>
 #include <cstring> //std::memcpy
 #include <iostream>
@@ -22,6 +23,7 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSTypes.h"
 
 namespace adios
 {
@@ -144,32 +146,69 @@ bool IsTypeAlias(
     return isAlias;
 }
 
+template <class T>
+void GetMinMax(const T *values, const size_t size, T &min, T &max) noexcept
+{
+    auto bounds = std::minmax_element(values, values + size);
+    min = *bounds.first;
+    max = *bounds.second;
+}
+
 /**
  * Get the minimum and maximum values in one loop
  * @param values array of primitives
  * @param size of the values array
  * @param min from values
  * @param max from values
- * @param nthreads threaded version not yet implemented
  */
 template <class T>
-inline void GetMinMax(const T *values, const std::size_t size, T &min, T &max,
-                      const unsigned int nthreads = 1) noexcept
+void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
+                      const unsigned int threads = 1) noexcept
 {
-    min = values[0];
-    max = min;
-
-    for (std::size_t i = 1; i < size; ++i)
+    if (threads == 1)
     {
-        if (values[i] < min)
-        {
-            min = values[i];
-            continue;
-        }
-
-        if (values[i] > max)
-            max = values[i];
+        GetMinMax(values, size, min, max);
+        return;
     }
+
+    const size_t stride = size / threads;    // elements per thread
+    const size_t remainder = size % threads; // remainder if not aligned
+    const size_t last = stride + remainder;
+
+    std::vector<T> mins(threads); // zero init
+    std::vector<T> maxs(threads); // zero init
+
+    std::vector<std::thread> getMinMaxThreads;
+    getMinMaxThreads.reserve(threads);
+
+    for (unsigned int t = 0; t < threads; ++t)
+    {
+        const size_t position = stride * t;
+
+        if (t == threads - 1)
+        {
+            getMinMaxThreads.push_back(
+                std::thread(adios::GetMinMax<T>, &values[position], last,
+                            std::ref(mins[t]), std::ref(maxs[t])));
+        }
+        else
+        {
+            getMinMaxThreads.push_back(
+                std::thread(adios::GetMinMax<T>, &values[position], stride,
+                            std::ref(mins[t]), std::ref(maxs[t])));
+        }
+    }
+
+    for (auto &getMinMaxThread : getMinMaxThreads)
+    {
+        getMinMaxThread.join();
+    }
+
+    auto itMin = std::min_element(mins.begin(), mins.end());
+    min = *itMin;
+
+    auto itMax = std::max_element(maxs.begin(), maxs.end());
+    max = *itMax;
 }
 
 /**
@@ -179,17 +218,16 @@ inline void GetMinMax(const T *values, const std::size_t size, T &min, T &max,
  * @param size of the values array
  * @param min modulus from values
  * @param max modulus from values
- * @param nthreads
  */
 template <class T>
-inline void GetMinMax(const std::complex<T> *values, const std::size_t size,
-                      T &min, T &max, const unsigned int nthreads = 1) noexcept
+void GetMinMaxComplex(const std::complex<T> *values, const size_t size, T &min,
+                      T &max) noexcept
 {
 
     min = std::norm(values[0]);
     max = min;
 
-    for (std::size_t i = 1; i < size; ++i)
+    for (size_t i = 1; i < size; ++i)
     {
         T norm = std::norm(values[i]);
 
@@ -209,6 +247,56 @@ inline void GetMinMax(const std::complex<T> *values, const std::size_t size,
     max = std::sqrt(max);
 }
 
+template <class T>
+void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
+                      T &max, const unsigned int threads = 1) noexcept
+{
+    if (threads == 1)
+    {
+        GetMinMaxComplex(values, size, min, max);
+        return;
+    }
+
+    const size_t stride = size / threads;    // elements per thread
+    const size_t remainder = size % threads; // remainder if not aligned
+    const size_t last = stride + remainder;
+
+    std::vector<T> mins(threads); // zero init
+    std::vector<T> maxs(threads); // zero init
+
+    std::vector<std::thread> getMinMaxThreads;
+    getMinMaxThreads.reserve(threads);
+
+    for (unsigned int t = 0; t < threads; ++t)
+    {
+        const size_t position = stride * t;
+
+        if (t == threads - 1)
+        {
+            getMinMaxThreads.push_back(
+                std::thread(GetMinMaxComplex<T>, &values[position], last,
+                            std::ref(mins[t]), std::ref(maxs[t])));
+        }
+        else
+        {
+            getMinMaxThreads.push_back(
+                std::thread(GetMinMaxComplex<T>, &values[position], stride,
+                            std::ref(mins[t]), std::ref(maxs[t])));
+        }
+    }
+
+    for (auto &getMinMaxThread : getMinMaxThreads)
+    {
+        getMinMaxThread.join();
+    }
+
+    auto itMin = std::min_element(mins.begin(), mins.end());
+    min = *itMin;
+
+    auto itMax = std::max_element(maxs.begin(), maxs.end());
+    max = *itMax;
+}
+
 /**
  * threaded version of std::memcpy
  * @param dest
@@ -217,13 +305,12 @@ inline void GetMinMax(const std::complex<T> *values, const std::size_t size,
  * @param nthreads
  */
 template <class T, class U>
-void MemcpyThreads(T *destination, const U *source, std::size_t count,
-                   const unsigned int nthreads = 1)
+void MemcpyThreads(T *destination, const U *source, size_t count,
+                   const unsigned int threads = 1)
 {
     // do not decompose tasks to less than 4MB pieces
-    const std::size_t minBlockSize = 4194304;
-    const std::size_t maxNThreads =
-        std::max((std::size_t)nthreads, count / minBlockSize);
+    const size_t minBlockSize = 4194304;
+    const size_t maxNThreads = std::max((size_t)threads, count / minBlockSize);
 
     if (maxNThreads == 1)
     {
@@ -281,20 +368,65 @@ void InsertToBuffer(std::vector<char> &buffer, const T *source,
 }
 
 /**
- * Copies data to a specific location in the buffer,
- * doesn't update vec.size()
+ * Copies data to a specific location in the buffer.
+ * Updates position.
+ * Does not update vec.size().
  * @param raw
  * @param position
  * @param source
  * @param elements
  */
 template <class T>
-void CopyToBufferPosition(std::vector<char> &buffer, const std::size_t position,
-                          const T *source,
-                          const std::size_t elements = 1) noexcept
+void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
+                  const size_t elements = 1) noexcept
 {
     const char *src = reinterpret_cast<const char *>(source);
     std::copy(src, src + elements * sizeof(T), buffer.begin() + position);
+    position += elements * sizeof(T);
+}
+
+template <class T>
+void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
+                         const T *source, const size_t elements = 1,
+                         const unsigned int threads = 1) noexcept
+{
+    if (threads == 1)
+    {
+        CopyToBuffer(buffer, position, source, elements);
+        return;
+    }
+
+    const size_t stride = elements / threads;    // elements per thread
+    const size_t remainder = elements % threads; // remainder if not aligned
+    const size_t last = stride + remainder;
+
+    std::vector<std::thread> copyThreads;
+    copyThreads.reserve(threads);
+
+    for (unsigned int t = 0; t < threads; ++t)
+    {
+        size_t bufferPosition = stride * t * sizeof(T);
+        const size_t sourcePosition = stride * t;
+
+        if (t == threads - 1) // last thread takes stride + remainder
+        {
+            copyThreads.push_back(std::thread(CopyToBuffer<T>, std::ref(buffer),
+                                              std::ref(bufferPosition),
+                                              &source[sourcePosition], last));
+            position = bufferPosition; // last position
+        }
+        else
+        {
+            copyThreads.push_back(std::thread(CopyToBuffer<T>, std::ref(buffer),
+                                              std::ref(bufferPosition),
+                                              &source[sourcePosition], stride));
+        }
+    }
+
+    for (auto &copyThread : copyThreads)
+    {
+        copyThread.join();
+    }
 }
 
 template <class T>

@@ -46,7 +46,7 @@ if(ADIOS_USE_MPI)
       IO_hdf5_a.cpp
     )
     target_include_directories(heatTransfer_write_hdf5
-      PRIVATE ${MPI_C_INCLUDE_PATH} ${HDF5_INCLUDE_DIRS}
+      PRIVATE ${MPI_C_INCLUDE_PATH} ${HDF5_C_INCLUDE_DIRS}
     )
     target_link_libraries(heatTransfer_write_hdf5
       ${MPI_C_LIBRARIES} ${HDF5_C_LIBRARIES}

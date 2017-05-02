@@ -9,22 +9,23 @@
  */
 
 #include "adiosFunctions.h"
-
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <sys/stat.h>  //stat
 #include <sys/types.h> //CreateDirectory
 #include <unistd.h>    //CreateDirectory
 
-#include <cmath>   // std::ceil, std::pow, std::log
-#include <cstring> //std::memcpy
-
 #include <algorithm> //std::count
+#include <cmath>     // std::ceil, std::pow, std::log
+#include <cstring>   //std::memcpy
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <sstream>
 #include <stdexcept>
 #include <thread> //std::thread
+/// \endcond
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/Support.h"
 
 #ifdef ADIOS2_HAVE_BZIP2
@@ -683,54 +684,37 @@ std::vector<std::size_t> Uint64ArrayToSizetVector(const std::size_t nElements,
     return out;
 }
 
-bool CheckBufferAllocation(const std::size_t newSize, const float growthFactor,
-                           const std::size_t maxBufferSize,
-                           std::vector<char> &buffer)
+int GrowBuffer(const size_t incomingDataSize, const float growthFactor,
+               std::vector<char> &buffer, const size_t position)
 {
-    // Check if data in buffer needs to be reallocated
-    const std::size_t requiredDataSize =
-        buffer.size() + newSize + 100; // adding some bytes for tolerance
-    // might need to write payload in batches
-    bool doTransportsFlush = (requiredDataSize > maxBufferSize) ? true : false;
-
-    if (GrowBuffer(requiredDataSize, growthFactor, buffer) == -1)
-    {
-        doTransportsFlush = true;
-    }
-
-    return doTransportsFlush;
-}
-
-int GrowBuffer(const std::size_t incomingDataSize, const float growthFactor,
-               std::vector<char> &buffer)
-{
-    const std::size_t currentCapacity = buffer.capacity();
-    const std::size_t availableSpace = currentCapacity - buffer.size();
+    const size_t currentCapacity = buffer.capacity();
+    const size_t availableSpace = currentCapacity - position;
     const double gf = static_cast<double>(growthFactor);
 
-    if (incomingDataSize > availableSpace)
+    if (incomingDataSize < availableSpace)
     {
-        const std::size_t neededCapacity = incomingDataSize + buffer.size();
-        const double numerator = std::log(static_cast<double>(neededCapacity) /
-                                          static_cast<double>(currentCapacity));
-        const double denominator = std::log(gf);
-
-        double n = std::ceil(numerator / denominator);
-        const std::size_t newSize = static_cast<std::size_t>(
-            std::ceil(std::pow(gf, n) * currentCapacity));
-
-        try
-        {
-            buffer.reserve(newSize);
-        }
-        catch (std::bad_alloc &e)
-        {
-            return -1;
-        }
-
-        return 1;
+        return 0;
     }
-    return 0;
+
+    const size_t neededCapacity = incomingDataSize + position;
+    const double numerator = std::log(static_cast<double>(neededCapacity) /
+                                      static_cast<double>(currentCapacity));
+    const double denominator = std::log(gf);
+
+    const double n = std::ceil(numerator / denominator);
+    const size_t newSize =
+        static_cast<size_t>(std::ceil(std::pow(gf, n) * currentCapacity));
+
+    try
+    {
+        buffer.resize(newSize);
+    }
+    catch (std::bad_alloc &e)
+    {
+        return -1;
+    }
+
+    return 1;
 }
 
 bool IsLittleEndian() noexcept
