@@ -12,6 +12,8 @@
 #ifndef ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__
 #define ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__
 
+#include "HDF5Common.h"
+
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/capsule/heap/STLVector.h"
@@ -27,14 +29,11 @@ class HDF5Writer : public Engine
 
 public:
     /**
-     * Constructor for single BP capsule engine, writes in BP format into a
-     * single
-     * heap capsule
+     * Constructor for HDF5 writer engine, writes in hdf5 format 
      * @param name unique name given to the engine
      * @param accessMode
      * @param mpiComm
      * @param method
-     * @param debugMode
      */
     HDF5Writer(ADIOS &adios, const std::string name,
                const std::string accessMode, MPI_Comm mpiComm,
@@ -86,6 +85,8 @@ public:
     void Write(const std::string variableName,
                const std::complex<long double> *values);
 
+    void Advance(float timeout_sec = 0.0);
+
     void Close(const int transportIndex = -1);
 
 private:
@@ -93,15 +94,21 @@ private:
     capsule::STLVector m_Buffer;
 
     void Init();
-    void clean();
+    
+    HDF5Common _H5File;
 
+    /*
     hid_t _plist_id, _file_id, _dset_id;
     hid_t _memspace, _filespace;
 
+    hid_t _group_id;
+   
     hid_t DefH5T_COMPLEX_DOUBLE;
     hid_t DefH5T_COMPLEX_FLOAT;
     hid_t DefH5T_COMPLEX_LongDOUBLE;
-
+    
+    int   _currentTimeStep;
+    */
     template <class T>
     void UseHDFWrite(Variable<T> &variable, const T *values, hid_t h5type);
 };
