@@ -20,7 +20,7 @@ namespace adios
 #define H5_ERROR std::cout << "[ADIOS H5 ERROR] "
 
 HDF5Common::HDF5Common()
-  : _writeMode(false), _total_timestep(0), _currentTimeStep(0)
+: m_WriteMode(false), m_Total_timestep(0), m_CurrentTimeStep(0)
 {
     DefH5T_COMPLEX_FLOAT = H5Tcreate(H5T_COMPOUND, sizeof(std::complex<float>));
     H5Tinsert(DefH5T_COMPLEX_FLOAT, "freal", 0, H5T_NATIVE_FLOAT);
@@ -43,13 +43,13 @@ HDF5Common::HDF5Common()
 void HDF5Common::H5_Init(const std::string name, MPI_Comm m_MPIComm,
                          bool toWrite)
 {
-    _writeMode = toWrite;
+    m_WriteMode = toWrite;
 
     //
-    _plist_id = H5Pcreate(H5P_FILE_ACCESS);
+    m_Plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
 #ifdef ADIOS2_HAVE_MPI
-    H5Pset_fapl_mpio(_plist_id, m_MPIComm, MPI_INFO_NULL);
+    H5Pset_fapl_mpio(m_Plist_id, m_MPIComm, MPI_INFO_NULL);
 #endif
 
     std::string ts0 = "/TimeStep0";
@@ -59,32 +59,32 @@ void HDF5Common::H5_Init(const std::string name, MPI_Comm m_MPIComm,
         /*
          * Create a new file collectively and release property list identifier.
          */
-        _file_id =
-            H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, _plist_id);
-        if (_file_id >= 0)
+        m_File_id =
+            H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, m_Plist_id);
+        if (m_File_id >= 0)
         {
-            _group_id = H5Gcreate2(_file_id, ts0.c_str(), H5P_DEFAULT,
-                                   H5P_DEFAULT, H5P_DEFAULT);
+            m_Group_id = H5Gcreate2(m_File_id, ts0.c_str(), H5P_DEFAULT,
+                                    H5P_DEFAULT, H5P_DEFAULT);
         }
     }
     else
     {
         // read a file collectively
-        _file_id = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-        if (_file_id >= 0)
+        m_File_id = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+        if (m_File_id >= 0)
         {
-            _group_id = H5Gopen(_file_id, ts0.c_str(), H5P_DEFAULT);
+            m_Group_id = H5Gopen(m_File_id, ts0.c_str(), H5P_DEFAULT);
         }
     }
 
-    H5Pclose(_plist_id);
+    H5Pclose(m_Plist_id);
 }
 
-HDF5Common::~HDF5Common() {}
+// HDF5Common::~HDF5Common() {}
 
 void HDF5Common::WriteTimeSteps()
 {
-    if (_file_id < 0)
+    if (m_File_id < 0)
     {
         // std::cerr<<"[ADIOS HDF5Error]: Invalid file to record timestep
         // to."<<std::endl;
@@ -92,19 +92,20 @@ void HDF5Common::WriteTimeSteps()
         return;
     }
 
-    if (!_writeMode) {
-      return;
+    if (!m_WriteMode)
+    {
+        return;
     }
 
     hid_t s = H5Screate(H5S_SCALAR);
 
-    hid_t attr = H5Acreate(_file_id, "NumTimeSteps", H5T_NATIVE_UINT, s,
+    hid_t attr = H5Acreate(m_File_id, "NumTimeSteps", H5T_NATIVE_UINT, s,
                            H5P_DEFAULT, H5P_DEFAULT);
-    uint totalts = _currentTimeStep + 1;
+    uint totalts = m_CurrentTimeStep + 1;
 
-    if (_group_id < 0) 
-    { 
-      totalts = _currentTimeStep;
+    if (m_Group_id < 0)
+    {
+        totalts = m_CurrentTimeStep;
     }
 
     H5Awrite(attr, H5T_NATIVE_UINT, &totalts);
@@ -115,11 +116,12 @@ void HDF5Common::WriteTimeSteps()
 
 int HDF5Common::GetNumTimeSteps()
 {
-    if (_writeMode) {
+    if (m_WriteMode)
+    {
         return -1;
     }
 
-    if (_file_id < 0)
+    if (m_File_id < 0)
     {
         std::cerr
             << "[ADIOS HDF5Error]: Invalid file to read timestep attribute."
@@ -127,70 +129,72 @@ int HDF5Common::GetNumTimeSteps()
         return -1;
     }
 
-    if (_total_timestep <= 0)
+    if (m_Total_timestep <= 0)
     {
-        hid_t attr = H5Aopen(_file_id, "NumTimeSteps", H5P_DEFAULT);
+        hid_t attr = H5Aopen(m_File_id, "NumTimeSteps", H5P_DEFAULT);
 
-        H5Aread(attr, H5T_NATIVE_UINT, &_total_timestep);
+        H5Aread(attr, H5T_NATIVE_UINT, &m_Total_timestep);
         H5Aclose(attr);
     }
 
-    return _total_timestep;
+    return m_Total_timestep;
 }
 
 void HDF5Common::H5_Close()
 {
     WriteTimeSteps();
 
-    if (_group_id >= 0) {
-      H5Gclose(_group_id);
+    if (m_Group_id >= 0)
+    {
+        H5Gclose(m_Group_id);
     }
 
-    H5Fclose(_file_id);
+    H5Fclose(m_File_id);
 }
 
 void HDF5Common::H5_Advance(int totalts)
 {
-    _currentTimeStep++;
-    if (_currentTimeStep > 0)
+    m_CurrentTimeStep++;
+    if (m_CurrentTimeStep > 0)
     {
-        H5Gclose(_group_id);
-	_group_id = -1;
+        H5Gclose(m_Group_id);
+        m_Group_id = -1;
     }
 
     std::string tsname = "/TimeStep";
-    tsname.append(std::to_string(_currentTimeStep));
+    tsname.append(std::to_string(m_CurrentTimeStep));
 
-    if (_writeMode)
+    if (m_WriteMode)
     {
-      //_group_id = H5Gcreate2(_file_id, tsname.c_str(), H5P_DEFAULT,
-      //                       H5P_DEFAULT, H5P_DEFAULT);
+        // m_Group_id = H5Gcreate2(m_File_id, tsname.c_str(), H5P_DEFAULT,
+        //                       H5P_DEFAULT, H5P_DEFAULT);
     }
     else
     {
-        if ((totalts > 0) && (totalts <= _currentTimeStep))
+        if ((totalts > 0) && (totalts <= m_CurrentTimeStep))
         {
             return;
         }
         // std::cout<<" ... current  group "<<tsname.c_str()<<std::endl;
-        _group_id = H5Gopen(_file_id, tsname.c_str(), H5P_DEFAULT);
+        m_Group_id = H5Gopen(m_File_id, tsname.c_str(), H5P_DEFAULT);
     }
 }
 
 void HDF5Common::CheckWriteGroup()
 {
-    if (!_writeMode) {
+    if (!m_WriteMode)
+    {
         return;
     }
 
-    if (_group_id >= 0) {
-      return;
+    if (m_Group_id >= 0)
+    {
+        return;
     }
     std::string tsname = "/TimeStep";
-    tsname.append(std::to_string(_currentTimeStep));
+    tsname.append(std::to_string(m_CurrentTimeStep));
 
-    _group_id = H5Gcreate2(_file_id, tsname.c_str(), H5P_DEFAULT,
-			   H5P_DEFAULT, H5P_DEFAULT);
+    m_Group_id = H5Gcreate2(m_File_id, tsname.c_str(), H5P_DEFAULT, H5P_DEFAULT,
+                            H5P_DEFAULT);
 }
-
 }

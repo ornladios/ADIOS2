@@ -247,11 +247,13 @@ void HDF5Writer::Close(const int transportIndex)
     //void* hi = H5Iobject_verify(H5S_SCALAR, H5I_DATASPACE);
 
     hid_t s = H5Screate(H5S_SCALAR);
-    //hid_t attr = H5Acreate(_H5File._group_id, "NumTimeSteps", H5T_NATIVE_UINT,
+    //hid_t attr = H5Acreate(_H5File.m_Group_id, "NumTimeSteps",
+    H5T_NATIVE_UINT,
     s, H5P_DEFAULT, H5P_DEFAULT);
-    hid_t attr = H5Acreate(_H5File._file_id, "NumTimeSteps", H5T_NATIVE_UINT, s,
+    hid_t attr = H5Acreate(_H5File.m_File_id, "NumTimeSteps", H5T_NATIVE_UINT,
+    s,
     H5P_DEFAULT, H5P_DEFAULT);
-    uint  totalts = _H5File._currentTimeStep+1;
+    uint  totalts = _H5File.m_CurrentTimeStep+1;
     H5Awrite(attr,H5T_NATIVE_UINT,&totalts);
 
     H5Sclose(s);
@@ -272,28 +274,28 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
     m_WrittenVariables.insert(variable.m_Name);
 
     int dimSize = variable.m_GlobalDimensions.size();
-    
-
-
 
     std::vector<hsize_t> dimsf, count, offset;
 
     for (int i = 0; i < dimSize; i++)
     {
         dimsf.push_back(variable.m_GlobalDimensions[i]);
-	if (variable.m_LocalDimensions.size() == dimSize) {
-	  count.push_back(variable.m_LocalDimensions[i]);
-	  offset.push_back(variable.m_Offsets[i]);
-	} else {
-	  count.push_back(variable.m_GlobalDimensions[i]);
-	  offset.push_back(0);
-	}
+        if (variable.m_LocalDimensions.size() == dimSize)
+        {
+            count.push_back(variable.m_LocalDimensions[i]);
+            offset.push_back(variable.m_Offsets[i]);
+        }
+        else
+        {
+            count.push_back(variable.m_GlobalDimensions[i]);
+            offset.push_back(0);
+        }
     }
 
     hid_t _filespace = H5Screate_simple(dimSize, dimsf.data(), NULL);
 
     hid_t _dset_id =
-        H5Dcreate(_H5File._group_id, variable.m_Name.c_str(), h5type,
+        H5Dcreate(_H5File.m_Group_id, variable.m_Name.c_str(), h5type,
                   _filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     // H5Sclose(_filespace);
 

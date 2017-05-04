@@ -29,7 +29,7 @@ public:
      */
     HDF5Common();
 
-    virtual ~HDF5Common();
+    // virtual ~HDF5Common();
 
     void H5_Init(const std::string name, MPI_Comm m_MPIComm, bool toWrite);
     void H5_Close();
@@ -38,20 +38,21 @@ public:
     int GetNumTimeSteps();
     void WriteTimeSteps();
 
-    hid_t _plist_id, _file_id;
-    hid_t _group_id;
+    hid_t m_Plist_id, m_File_id;
+    hid_t m_Group_id;
 
     hid_t DefH5T_COMPLEX_DOUBLE;
     hid_t DefH5T_COMPLEX_FLOAT;
     hid_t DefH5T_COMPLEX_LongDOUBLE;
 
-    int _currentTimeStep;
+    int m_CurrentTimeStep;
 
-    void CheckWriteGroup(); 
+    void CheckWriteGroup();
+
 private:
     void H5_AdvanceWrite();
-    bool _writeMode;
-    int _total_timestep;
+    bool m_WriteMode;
+    int m_Total_timestep;
 };
 
 } // end namespace adios
