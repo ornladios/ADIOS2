@@ -36,6 +36,8 @@ public:
 
     virtual ~HDF5Reader();
 
+    bool isValid();
+
     Variable<void> *InquireVariable(const std::string &variableName,
                                     const bool readIn = true);
 
@@ -112,7 +114,7 @@ public:
     void UseHDFRead(const std::string &variableName, T *values, hid_t h5type);
 
     template <class T>
-    void ReadMe(Variable<T> variable, T *values, hid_t h5type);
+    void ReadMe(Variable<T>& variable, T *values, hid_t h5type);
 
 private:
     HDF5Common _H5File;

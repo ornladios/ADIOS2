@@ -20,7 +20,7 @@ namespace adios
 #define H5_ERROR std::cout << "[ADIOS H5 ERROR] "
 
 HDF5Common::HDF5Common()
-: _writeMode(false), _total_timestep(0), _currentTimeStep(0)
+  : _writeMode(false), _total_timestep(0), _currentTimeStep(0)
 {
     DefH5T_COMPLEX_FLOAT = H5Tcreate(H5T_COMPOUND, sizeof(std::complex<float>));
     H5Tinsert(DefH5T_COMPLEX_FLOAT, "freal", 0, H5T_NATIVE_FLOAT);
@@ -92,11 +92,21 @@ void HDF5Common::WriteTimeSteps()
         return;
     }
 
+    if (!_writeMode) {
+      return;
+    }
+
     hid_t s = H5Screate(H5S_SCALAR);
 
     hid_t attr = H5Acreate(_file_id, "NumTimeSteps", H5T_NATIVE_UINT, s,
                            H5P_DEFAULT, H5P_DEFAULT);
     uint totalts = _currentTimeStep + 1;
+
+    if (_group_id < 0) 
+    { 
+      totalts = _currentTimeStep;
+    }
+
     H5Awrite(attr, H5T_NATIVE_UINT, &totalts);
 
     H5Sclose(s);
@@ -105,6 +115,10 @@ void HDF5Common::WriteTimeSteps()
 
 int HDF5Common::GetNumTimeSteps()
 {
+    if (_writeMode) {
+        return -1;
+    }
+
     if (_file_id < 0)
     {
         std::cerr
@@ -128,7 +142,10 @@ void HDF5Common::H5_Close()
 {
     WriteTimeSteps();
 
-    H5Gclose(_group_id);
+    if (_group_id >= 0) {
+      H5Gclose(_group_id);
+    }
+
     H5Fclose(_file_id);
 }
 
@@ -138,6 +155,7 @@ void HDF5Common::H5_Advance(int totalts)
     if (_currentTimeStep > 0)
     {
         H5Gclose(_group_id);
+	_group_id = -1;
     }
 
     std::string tsname = "/TimeStep";
@@ -145,8 +163,8 @@ void HDF5Common::H5_Advance(int totalts)
 
     if (_writeMode)
     {
-        _group_id = H5Gcreate2(_file_id, tsname.c_str(), H5P_DEFAULT,
-                               H5P_DEFAULT, H5P_DEFAULT);
+      //_group_id = H5Gcreate2(_file_id, tsname.c_str(), H5P_DEFAULT,
+      //                       H5P_DEFAULT, H5P_DEFAULT);
     }
     else
     {
@@ -158,4 +176,21 @@ void HDF5Common::H5_Advance(int totalts)
         _group_id = H5Gopen(_file_id, tsname.c_str(), H5P_DEFAULT);
     }
 }
+
+void HDF5Common::CheckWriteGroup()
+{
+    if (!_writeMode) {
+        return;
+    }
+
+    if (_group_id >= 0) {
+      return;
+    }
+    std::string tsname = "/TimeStep";
+    tsname.append(std::to_string(_currentTimeStep));
+
+    _group_id = H5Gcreate2(_file_id, tsname.c_str(), H5P_DEFAULT,
+			   H5P_DEFAULT, H5P_DEFAULT);
+}
+
 }

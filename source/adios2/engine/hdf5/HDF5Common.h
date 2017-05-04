@@ -47,6 +47,7 @@ public:
 
     int _currentTimeStep;
 
+    void CheckWriteGroup(); 
 private:
     void H5_AdvanceWrite();
     bool _writeMode;

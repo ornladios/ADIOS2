@@ -264,6 +264,7 @@ template <class T>
 void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
                              hid_t h5type)
 {
+    _H5File.CheckWriteGroup();
     // here comes your magic at Writing now variable.m_UserValues has the data
     // passed by the user
     // set variable
@@ -271,24 +272,22 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
     m_WrittenVariables.insert(variable.m_Name);
 
     int dimSize = variable.m_GlobalDimensions.size();
-    /*
-    std::cout << "writting : " << variable.m_Name
-              << " dim size:" << variable.m_GlobalDimensions.size() <<
-    std::endl;
+    
 
-    for (int i = 0; i < dimSize; i++) {
-      std::cout << " dim: " << i << ", size:" << variable.m_GlobalDimensions[i]
-                << " offset=" << variable.m_Offsets[i]
-                << " count=" << variable.m_LocalDimensions[i] << std::endl;
-    }
-    */
+
+
     std::vector<hsize_t> dimsf, count, offset;
 
     for (int i = 0; i < dimSize; i++)
     {
         dimsf.push_back(variable.m_GlobalDimensions[i]);
-        count.push_back(variable.m_LocalDimensions[i]);
-        offset.push_back(variable.m_Offsets[i]);
+	if (variable.m_LocalDimensions.size() == dimSize) {
+	  count.push_back(variable.m_LocalDimensions[i]);
+	  offset.push_back(variable.m_Offsets[i]);
+	} else {
+	  count.push_back(variable.m_GlobalDimensions[i]);
+	  offset.push_back(0);
+	}
     }
 
     hid_t _filespace = H5Screate_simple(dimSize, dimsf.data(), NULL);
