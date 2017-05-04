@@ -52,8 +52,8 @@ public:
     const bool m_DebugMode = false;
 
     VariableBase(const std::string &name, const std::string type,
-                 const std::size_t elementSize, const Dims localDimensions,
-                 const Dims globalDimensions, const Dims offsets,
+                 const std::size_t elementSize, const Dims globalDimensions,
+                 const Dims localDimensions, const Dims offsets,
                  const bool debugMode)
     : m_Name{name}, m_Type{type}, m_ElementSize{elementSize},
       m_LocalDimensions{localDimensions}, m_GlobalDimensions{globalDimensions},
