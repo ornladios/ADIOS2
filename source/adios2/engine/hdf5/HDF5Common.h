@@ -39,9 +39,9 @@ public:
     void WriteTimeSteps();
 
     template <class T>
-      void ReadMe(Variable<T> &variable, T *data_array, hid_t h5type);
-    
-    //void ReadFromHDF5(const char* name, void* data_array);
+    void ReadMe(Variable<T> &variable, T *data_array, hid_t h5type);
+
+    // void ReadFromHDF5(const char* name, void* data_array);
 
     hid_t m_Plist_id, m_File_id;
     hid_t m_Group_id;
@@ -55,7 +55,7 @@ public:
     void CheckWriteGroup();
 
 private:
-    //void H5_AdvanceWrite();
+    // void H5_AdvanceWrite();
     bool m_WriteMode;
     int m_Total_timestep;
 };

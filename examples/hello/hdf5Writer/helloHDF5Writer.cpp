@@ -68,8 +68,11 @@ int main(int argc, char *argv[])
         intCountDim1 = intDim1 - rank * (intDim1 / size);
     }
 
-    std::cout<<" rank="<<rank<<" of "<<size<<",  dim1 count: "<<intCountDim1<<", offset: "<<intOffsetDim1<<std::endl;
-    std::cout<<" intOffsetDim2="<<intOffsetDim2<<" "<<intDim2<<std::endl;
+    std::cout << " rank=" << rank << " of " << size
+              << ",  dim1 count: " << intCountDim1
+              << ", offset: " << intOffsetDim1 << std::endl;
+    std::cout << " intOffsetDim2=" << intOffsetDim2 << " " << intDim2
+              << std::endl;
     try
     {
         // Define variable and local size
@@ -103,66 +106,72 @@ int main(int argc, char *argv[])
             throw std::ios_base::failure(
                 "ERROR: failed to create HDF5 I/O engine at Open\n");
 
-	int ts = 0;
-	int totalts = 3;
-	while (true) {
-	  if (rank == 0) {
-	    std::cout<<" total timesteps: "<<totalts<<" curr: "<<ts<<" th"<<std::endl;
-	  }
-	  HDF5Writer->Write(ioMyDoubles, myDoubles.data() +
-			    doubleVOffset); // Base class Engine
-	  // own the Write<T>
-	  // that will call
-	  // overloaded Write
-	  // from Derived
-	  HDF5Writer->Write(ioMyInts,
-			    myInts.data() + (intOffsetDim1 * intDim2 ));
-	  
-	  HDF5Writer->Write(ioMyCFloats, myCFloats.data() + complexOffset);
-	  HDF5Writer->Write(ioMyCDoubles, myCDoubles.data() + complexOffset);
-	  HDF5Writer->Write(ioMyCLongDoubles,
-			    myCLongDoubles.data() + complexOffset);
-	  ts++;
-	  if (ts >= totalts) {
-	    break;
-	  }
-	  HDF5Writer->Advance();
-	}
-	HDF5Writer->Close();
+        int ts = 0;
+        int totalts = 3;
+        while (true)
+        {
+            if (rank == 0)
+            {
+                std::cout << " total timesteps: " << totalts << " curr: " << ts
+                          << " th" << std::endl;
+            }
+            HDF5Writer->Write(ioMyDoubles,
+                              myDoubles.data() +
+                                  doubleVOffset); // Base class Engine
+            // own the Write<T>
+            // that will call
+            // overloaded Write
+            // from Derived
+            HDF5Writer->Write(ioMyInts,
+                              myInts.data() + (intOffsetDim1 * intDim2));
 
-	// now read out:
-	/*
-        HDF5Settings.SetEngine("HDF5Reader");
-	std::cout<<"... Testing a copy of test.h5, [test1.h5] , b/c engine does not decrease name count !! "<<std::endl;
-	auto HDF5Reader = adios.Open("test1.h5", "r", HDF5Settings);
+            HDF5Writer->Write(ioMyCFloats, myCFloats.data() + complexOffset);
+            HDF5Writer->Write(ioMyCDoubles, myCDoubles.data() + complexOffset);
+            HDF5Writer->Write(ioMyCLongDoubles,
+                              myCLongDoubles.data() + complexOffset);
+            ts++;
+            if (ts >= totalts)
+            {
+                break;
+            }
+            HDF5Writer->Advance();
+        }
+        HDF5Writer->Close();
 
-	//int findts = HDF5Reader->getNumTimeSteps();
-	//HDF5Reader->InquireVariableDouble("wrongMyDoubles", true);
-	HDF5Reader->InquireVariableDouble(ioMyDoubles.m_Name, true);
-	*/
+// now read out:
+/*
+HDF5Settings.SetEngine("HDF5Reader");
+std::cout<<"... Testing a copy of test.h5, [test1.h5] , b/c engine does not
+decrease name count !! "<<std::endl;
+auto HDF5Reader = adios.Open("test1.h5", "r", HDF5Settings);
 
-#ifndef NEVER	
-	adios::HDF5Common myReader;
-	myReader.H5_Init("test.h5", MPI_COMM_WORLD, false);
-	double values[15];
-	ts = 0;
+//int findts = HDF5Reader->getNumTimeSteps();
+//HDF5Reader->InquireVariableDouble("wrongMyDoubles", true);
+HDF5Reader->InquireVariableDouble(ioMyDoubles.m_Name, true);
+*/
 
-	while (ts < totalts) {    
-	  //myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);    
-	  myReader.H5_Advance(totalts);
-	  ts++;
-	}
+#ifndef NEVER
+        adios::HDF5Common myReader;
+        myReader.H5_Init("test.h5", MPI_COMM_WORLD, false);
+        double values[15];
+        ts = 0;
+
+        while (ts < totalts)
+        {
+            // myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);
+            myReader.H5_Advance(totalts);
+            ts++;
+        }
 
 #else
-	/*
-	adios::HDF5Reader myReader(adios, "test.h5", "r", MPI_COMM_WORLD, HDF5Settings);
-	double values[15];
+/*
+adios::HDF5Reader myReader(adios, "test.h5", "r", MPI_COMM_WORLD, HDF5Settings);
+double values[15];
 
-	myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);
-	myReader.Close();
-	*/
+myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);
+myReader.Close();
+*/
 #endif
-
     }
     catch (std::invalid_argument &e)
     {

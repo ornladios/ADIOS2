@@ -198,13 +198,10 @@ void HDF5Common::CheckWriteGroup()
                             H5P_DEFAULT);
 }
 
-
-
 template <class T>
 void HDF5Common::ReadMe(Variable<T> &variable, T *data_array, hid_t h5type)
 {
-    hid_t datasetID =
-        H5Dopen(m_Group_id, variable.m_Name.c_str(), H5P_DEFAULT);
+    hid_t datasetID = H5Dopen(m_Group_id, variable.m_Name.c_str(), H5P_DEFAULT);
 
 #ifdef NEVER
     if (_mpi_rank == 0)

@@ -9,7 +9,6 @@
 #include <stdexcept>
 
 #include <adios2.h>
-#include "adios2/engine/hdf5/HDF5ReaderP.h"
 #include <hdf5.h>
 
 #include <gtest/gtest.h>

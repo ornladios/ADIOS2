@@ -236,7 +236,6 @@ HDF5Reader::InquireVariableCompound(const std::string &variableName,
     return NULL;
 }
 
-
 template <class T>
 void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
                             hid_t h5type)
