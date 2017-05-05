@@ -241,26 +241,7 @@ void HDF5Writer::Write(const std::string variableName,
 
 void HDF5Writer::Advance(float timeoutSec) { m_H5File.H5_Advance(0); }
 
-void HDF5Writer::Close(const int transportIndex)
-{
-    /*
-    //void* hi = H5Iobject_verify(H5S_SCALAR, H5I_DATASPACE);
-
-    hid_t s = H5Screate(H5S_SCALAR);
-    //hid_t attr = H5Acreate(m_H5File.m_Group_id, "NumTimeSteps",
-    H5T_NATIVE_UINT,
-    s, H5P_DEFAULT, H5P_DEFAULT);
-    hid_t attr = H5Acreate(m_H5File.m_File_id, "NumTimeSteps", H5T_NATIVE_UINT,
-    s,
-    H5P_DEFAULT, H5P_DEFAULT);
-    uint  totalts = m_H5File.m_CurrentTimeStep+1;
-    H5Awrite(attr,H5T_NATIVE_UINT,&totalts);
-
-    H5Sclose(s);
-    H5Aclose(attr);
-    */
-    m_H5File.H5_Close();
-}
+void HDF5Writer::Close(const int transportIndex) { m_H5File.H5_Close(); }
 
 template <class T>
 void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
