@@ -38,8 +38,8 @@ public:
     int GetNumTimeSteps();
     void WriteTimeSteps();
 
-    template <class T>
-    void ReadMe(Variable<T> &variable, T *data_array, hid_t h5type);
+    //template <class T>
+    //void ReadMe(Variable<T> &variable, T *data_array, hid_t h5type);
 
     // void ReadFromHDF5(const char* name, void* data_array);
 

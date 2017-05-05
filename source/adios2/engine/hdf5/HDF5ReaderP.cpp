@@ -143,65 +143,6 @@ HDF5Reader::InquireVariableDouble(const std::string &variableName, const bool)
         std::cout << " ... I saw total timesteps: " << totalts << std::endl;
     }
 
-    while (true)
-    {
-        double values[1];
-        UseHDFRead(variableName, values, H5T_NATIVE_DOUBLE);
-        Variable<double> v =
-            m_ADIOS.DefineVariable<double>("junk", adios::Dims{8});
-        _H5File.ReadMe(v, values, H5T_NATIVE_DOUBLE);
-
-        Variable<char> v1 =
-            m_ADIOS.DefineVariable<char>("junk1", adios::Dims{8});
-
-        char vv1[1];
-        _H5File.ReadMe(v1, vv1, H5T_NATIVE_CHAR);
-
-        Variable<unsigned char> v2 =
-            m_ADIOS.DefineVariable<unsigned char>("junk2", adios::Dims{8});
-        unsigned char vv2[1];
-        _H5File.ReadMe(v2, vv2, H5T_NATIVE_UCHAR);
-
-        Variable<unsigned int> v3 =
-            m_ADIOS.DefineVariable<unsigned int>("junk3", adios::Dims{8});
-        unsigned int vv3[1];
-        _H5File.ReadMe(v3, vv3, H5T_NATIVE_UINT);
-
-        Variable<int> v4 = m_ADIOS.DefineVariable<int>("junk4", adios::Dims{8});
-        int vv4[1];
-        _H5File.ReadMe(v4, vv4, H5T_NATIVE_INT);
-
-        Variable<float> v5 =
-            m_ADIOS.DefineVariable<float>("junk5", adios::Dims{8});
-        float vv5[1];
-        _H5File.ReadMe(v5, vv5, H5T_NATIVE_FLOAT);
-
-        Variable<short> v6 =
-            m_ADIOS.DefineVariable<short>("junk6", adios::Dims{8});
-        short vv6[1];
-        _H5File.ReadMe(v6, vv6, H5T_NATIVE_SHORT);
-
-        Variable<unsigned short> v7 =
-            m_ADIOS.DefineVariable<unsigned short>("junk7", adios::Dims{8});
-        unsigned short vv7[1];
-        _H5File.ReadMe(v7, vv7, H5T_NATIVE_USHORT);
-
-        Variable<long> v8 =
-            m_ADIOS.DefineVariable<long>("junk8", adios::Dims{8});
-        long vv8[1];
-        _H5File.ReadMe(v8, vv8, H5T_NATIVE_LONG);
-
-        Variable<unsigned long> v9 =
-            m_ADIOS.DefineVariable<unsigned long>("junk9", adios::Dims{8});
-        unsigned long vv9[1];
-        _H5File.ReadMe(v9, vv9, H5T_NATIVE_ULONG);
-
-        if (_H5File.m_CurrentTimeStep >= totalts - 1)
-        {
-            break;
-        }
-        _H5File.H5_Advance(totalts);
-    }
     return NULL;
 }
 
