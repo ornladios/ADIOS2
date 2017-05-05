@@ -197,7 +197,7 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
     else if (type == "HDF5Reader") // -Junmin
     {
 //#if defined(ADIOS_HAVE_PHDF5) && defined(ADIOS_HAVE_MPI)
-#ifdef ADIOS_HAVE_PHDF5
+#ifdef ADIOS_HAVE_HDF5
         //#ifdef ADIOS_HAVE_MPI
         return std::make_shared<HDF5Reader>(*this, name, accessMode, mpiComm,
                                             method);

@@ -106,23 +106,20 @@ public:
     VariableCompound *InquireVariableCompound(const std::string &variableName,
                                               const bool readIn = true);
 
-    void Advance(float timeout_sec = 0.0);
+    void Advance(float timeoutSecc = 0.0);
 
     void Close(const int transportIndex = -1);
 
     template <typename T>
-    void UseHDFRead(const std::string &variableName, T *values, hid_t h5type);
+    void UseHDFRead(const std::string &variableName, T *values, hid_t h5Type);
 
     /*
     template <class T>
     void ReadMe(Variable<T> &variable, T *values, hid_t h5type);
     */
 private:
-    HDF5Common _H5File;
+    HDF5Common m_H5File;
     void Init();
-
-    int _mpi_rank;
-    int _mpi_size;
 };
 };
 #endif /* ADIOS2_ENGINE_HDF5_HDF5READERP_H_ */

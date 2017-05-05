@@ -85,7 +85,7 @@ public:
     void Write(const std::string variableName,
                const std::complex<long double> *values);
 
-    void Advance(float timeout_sec = 0.0);
+    void Advance(float timeoutSec = 0.0);
 
     void Close(const int transportIndex = -1);
 
@@ -95,20 +95,8 @@ private:
 
     void Init();
 
-    HDF5Common _H5File;
+    HDF5Common m_H5File;
 
-    /*
-    hid_t _plist_id, _file_id, _dset_id;
-    hid_t _memspace, _filespace;
-
-    hid_t _group_id;
-
-    hid_t DefH5T_COMPLEX_DOUBLE;
-    hid_t DefH5T_COMPLEX_FLOAT;
-    hid_t DefH5T_COMPLEX_LongDOUBLE;
-
-    int   _currentTimeStep;
-    */
     template <class T>
     void UseHDFWrite(Variable<T> &variable, const T *values, hid_t h5type);
 };

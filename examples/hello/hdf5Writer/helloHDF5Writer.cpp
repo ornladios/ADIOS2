@@ -13,7 +13,6 @@
 #define ADIOS_HAVE_PHDF5 // so hdf5 related items are loaded in ADIOS_CPP.h
 //#include "ADIOS_CPP.h"
 #include "adios2.h"
-#include "adios2/engine/hdf5/HDF5ReaderP.h"
 
 int main(int argc, char *argv[])
 {
@@ -137,41 +136,6 @@ int main(int argc, char *argv[])
             HDF5Writer->Advance();
         }
         HDF5Writer->Close();
-
-// now read out:
-/*
-HDF5Settings.SetEngine("HDF5Reader");
-std::cout<<"... Testing a copy of test.h5, [test1.h5] , b/c engine does not
-decrease name count !! "<<std::endl;
-auto HDF5Reader = adios.Open("test1.h5", "r", HDF5Settings);
-
-//int findts = HDF5Reader->getNumTimeSteps();
-//HDF5Reader->InquireVariableDouble("wrongMyDoubles", true);
-HDF5Reader->InquireVariableDouble(ioMyDoubles.m_Name, true);
-*/
-
-#ifndef NEVER
-        adios::HDF5Common myReader;
-        myReader.H5_Init("test.h5", MPI_COMM_WORLD, false);
-        double values[15];
-        ts = 0;
-
-        while (ts < totalts)
-        {
-            // myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);
-            myReader.H5_Advance(totalts);
-            ts++;
-        }
-
-#else
-/*
-adios::HDF5Reader myReader(adios, "test.h5", "r", MPI_COMM_WORLD, HDF5Settings);
-double values[15];
-
-myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);
-myReader.Close();
-*/
-#endif
     }
     catch (std::invalid_argument &e)
     {

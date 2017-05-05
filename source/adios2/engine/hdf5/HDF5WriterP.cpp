@@ -28,7 +28,7 @@ HDF5Writer::HDF5Writer(ADIOS &adios, const std::string name,
     Init();
 }
 
-HDF5Writer::~HDF5Writer() {}
+HDF5Writer::~HDF5Writer() { Close(); }
 
 void HDF5Writer::Init()
 {
@@ -40,7 +40,7 @@ void HDF5Writer::Init()
             ", in call to ADIOS Open or HDF5Writer constructor\n");
     }
 
-    _H5File.H5_Init(m_Name, m_MPIComm, true);
+    m_H5File.H5_Init(m_Name, m_MPIComm, true);
 }
 
 void HDF5Writer::Write(Variable<char> &variable, const char *values)
@@ -118,19 +118,19 @@ void HDF5Writer::Write(Variable<long double> &variable,
 void HDF5Writer::Write(Variable<std::complex<float>> &variable,
                        const std::complex<float> *values)
 {
-    UseHDFWrite(variable, values, _H5File.DefH5T_COMPLEX_FLOAT);
+    UseHDFWrite(variable, values, m_H5File.m_DefH5T_COMPLEX_FLOAT);
 }
 
 void HDF5Writer::Write(Variable<std::complex<double>> &variable,
                        const std::complex<double> *values)
 {
-    UseHDFWrite(variable, values, _H5File.DefH5T_COMPLEX_DOUBLE);
+    UseHDFWrite(variable, values, m_H5File.m_DefH5T_COMPLEX_DOUBLE);
 }
 
 void HDF5Writer::Write(Variable<std::complex<long double>> &variable,
                        const std::complex<long double> *values)
 {
-    UseHDFWrite(variable, values, _H5File.DefH5T_COMPLEX_LongDOUBLE);
+    UseHDFWrite(variable, values, m_H5File.m_DefH5T_COMPLEX_LongDOUBLE);
 }
 
 // String version
@@ -222,24 +222,24 @@ void HDF5Writer::Write(const std::string variableName,
                        const std::complex<float> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<float>>(variableName), values,
-                _H5File.DefH5T_COMPLEX_FLOAT);
+                m_H5File.m_DefH5T_COMPLEX_FLOAT);
 }
 
 void HDF5Writer::Write(const std::string variableName,
                        const std::complex<double> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<double>>(variableName), values,
-                _H5File.DefH5T_COMPLEX_DOUBLE);
+                m_H5File.m_DefH5T_COMPLEX_DOUBLE);
 }
 
 void HDF5Writer::Write(const std::string variableName,
                        const std::complex<long double> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<long double>>(variableName),
-                values, _H5File.DefH5T_COMPLEX_LongDOUBLE);
+                values, m_H5File.m_DefH5T_COMPLEX_LongDOUBLE);
 }
 
-void HDF5Writer::Advance(float timeout_sec) { _H5File.H5_Advance(0); }
+void HDF5Writer::Advance(float timeoutSec) { m_H5File.H5_Advance(0); }
 
 void HDF5Writer::Close(const int transportIndex)
 {
@@ -247,26 +247,26 @@ void HDF5Writer::Close(const int transportIndex)
     //void* hi = H5Iobject_verify(H5S_SCALAR, H5I_DATASPACE);
 
     hid_t s = H5Screate(H5S_SCALAR);
-    //hid_t attr = H5Acreate(_H5File.m_Group_id, "NumTimeSteps",
+    //hid_t attr = H5Acreate(m_H5File.m_Group_id, "NumTimeSteps",
     H5T_NATIVE_UINT,
     s, H5P_DEFAULT, H5P_DEFAULT);
-    hid_t attr = H5Acreate(_H5File.m_File_id, "NumTimeSteps", H5T_NATIVE_UINT,
+    hid_t attr = H5Acreate(m_H5File.m_File_id, "NumTimeSteps", H5T_NATIVE_UINT,
     s,
     H5P_DEFAULT, H5P_DEFAULT);
-    uint  totalts = _H5File.m_CurrentTimeStep+1;
+    uint  totalts = m_H5File.m_CurrentTimeStep+1;
     H5Awrite(attr,H5T_NATIVE_UINT,&totalts);
 
     H5Sclose(s);
     H5Aclose(attr);
     */
-    _H5File.H5_Close();
+    m_H5File.H5_Close();
 }
 
 template <class T>
 void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
                              hid_t h5type)
 {
-    _H5File.CheckWriteGroup();
+    m_H5File.CheckWriteGroup();
     // here comes your magic at Writing now variable.m_UserValues has the data
     // passed by the user
     // set variable
@@ -308,30 +308,29 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
         }
     }
 
-    hid_t _filespace = H5Screate_simple(dimSize, dimsf.data(), NULL);
+    hid_t fileSpace = H5Screate_simple(dimSize, dimsf.data(), NULL);
 
-    hid_t _dset_id =
-        H5Dcreate(_H5File.m_Group_id, variable.m_Name.c_str(), h5type,
-                  _filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    // H5Sclose(_filespace);
+    hid_t dsetID =
+        H5Dcreate(m_H5File.m_Group_id, variable.m_Name.c_str(), h5type,
+                  fileSpace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    // H5Sclose(fileSpace);
 
-    hid_t _memspace = H5Screate_simple(dimSize, count.data(), NULL);
+    hid_t memSpace = H5Screate_simple(dimSize, count.data(), NULL);
 
     // Select hyperslab
-    _filespace = H5Dget_space(_dset_id);
-    H5Sselect_hyperslab(_filespace, H5S_SELECT_SET, offset.data(), NULL,
+    fileSpace = H5Dget_space(dsetID);
+    H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, offset.data(), NULL,
                         count.data(), NULL);
 
     //  Create property list for collective dataset write.
 
-    hid_t _plist_id = H5Pcreate(H5P_DATASET_XFER);
+    hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
 #ifdef ADIOS2_HAVE_MPI
-    H5Pset_dxpl_mpio(_plist_id, H5FD_MPIO_COLLECTIVE);
+    H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
 #endif
     herr_t status;
 
-    status =
-        H5Dwrite(_dset_id, h5type, _memspace, _filespace, _plist_id, values);
+    status = H5Dwrite(dsetID, h5type, memSpace, fileSpace, plistID, values);
 
     if (status < 0)
     {
@@ -339,13 +338,10 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
         std::cerr << " Write failed. " << std::endl;
     }
 
-    // std::cout << " ==> User is responsible for freeing the data " <<
-    // std::endl;
-
-    H5Dclose(_dset_id);
-    H5Sclose(_filespace);
-    H5Sclose(_memspace);
-    H5Pclose(_plist_id);
+    H5Dclose(dsetID);
+    H5Sclose(fileSpace);
+    H5Sclose(memSpace);
+    H5Pclose(plistID);
 }
 
 } // end namespace adios

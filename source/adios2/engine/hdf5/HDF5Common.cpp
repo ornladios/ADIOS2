@@ -10,9 +10,9 @@
 
 #include "HDF5Common.h"
 
-#include <iostream> //needs to go away, this is just for demo purposes
+#include <iostream>
 
-//#include "adios2/ADIOSMPI.h"
+#include "adios2/ADIOSMPI.h"
 
 namespace adios
 {
@@ -22,21 +22,23 @@ namespace adios
 HDF5Common::HDF5Common()
 : m_WriteMode(false), m_Total_timestep(0), m_CurrentTimeStep(0)
 {
-    DefH5T_COMPLEX_FLOAT = H5Tcreate(H5T_COMPOUND, sizeof(std::complex<float>));
-    H5Tinsert(DefH5T_COMPLEX_FLOAT, "freal", 0, H5T_NATIVE_FLOAT);
-    H5Tinsert(DefH5T_COMPLEX_FLOAT, "fimg", H5Tget_size(H5T_NATIVE_FLOAT),
+    m_DefH5T_COMPLEX_FLOAT =
+        H5Tcreate(H5T_COMPOUND, sizeof(std::complex<float>));
+    H5Tinsert(m_DefH5T_COMPLEX_FLOAT, "freal", 0, H5T_NATIVE_FLOAT);
+    H5Tinsert(m_DefH5T_COMPLEX_FLOAT, "fimg", H5Tget_size(H5T_NATIVE_FLOAT),
               H5T_NATIVE_FLOAT);
 
-    DefH5T_COMPLEX_DOUBLE =
+    m_DefH5T_COMPLEX_DOUBLE =
         H5Tcreate(H5T_COMPOUND, sizeof(std::complex<double>));
-    H5Tinsert(DefH5T_COMPLEX_DOUBLE, "dreal", 0, H5T_NATIVE_DOUBLE);
-    H5Tinsert(DefH5T_COMPLEX_DOUBLE, "dimg", H5Tget_size(H5T_NATIVE_DOUBLE),
+    H5Tinsert(m_DefH5T_COMPLEX_DOUBLE, "dreal", 0, H5T_NATIVE_DOUBLE);
+    H5Tinsert(m_DefH5T_COMPLEX_DOUBLE, "dimg", H5Tget_size(H5T_NATIVE_DOUBLE),
               H5T_NATIVE_DOUBLE);
 
-    DefH5T_COMPLEX_LongDOUBLE =
+    m_DefH5T_COMPLEX_LongDOUBLE =
         H5Tcreate(H5T_COMPOUND, sizeof(std::complex<long double>));
-    H5Tinsert(DefH5T_COMPLEX_LongDOUBLE, "ldouble real", 0, H5T_NATIVE_LDOUBLE);
-    H5Tinsert(DefH5T_COMPLEX_LongDOUBLE, "ldouble img",
+    H5Tinsert(m_DefH5T_COMPLEX_LongDOUBLE, "ldouble real", 0,
+              H5T_NATIVE_LDOUBLE);
+    H5Tinsert(m_DefH5T_COMPLEX_LongDOUBLE, "ldouble img",
               H5Tget_size(H5T_NATIVE_LDOUBLE), H5T_NATIVE_LDOUBLE);
 }
 
@@ -142,6 +144,11 @@ int HDF5Common::GetNumTimeSteps()
 
 void HDF5Common::H5_Close()
 {
+    if (m_File_id < 0)
+    {
+        return;
+    }
+
     WriteTimeSteps();
 
     if (m_Group_id >= 0)
@@ -150,6 +157,8 @@ void HDF5Common::H5_Close()
     }
 
     H5Fclose(m_File_id);
+    m_File_id = -1;
+    m_Group_id = -1;
 }
 
 void HDF5Common::H5_Advance(int totalts)
@@ -197,87 +206,4 @@ void HDF5Common::CheckWriteGroup()
     m_Group_id = H5Gcreate2(m_File_id, tsname.c_str(), H5P_DEFAULT, H5P_DEFAULT,
                             H5P_DEFAULT);
 }
-
-#ifdef NEVER
-template <class T>
-void HDF5Common::ReadMe(Variable<T> &variable, T *data_array, hid_t h5type)
-{
-    hid_t datasetID = H5Dopen(m_Group_id, variable.m_Name.c_str(), H5P_DEFAULT);
-
-    if (datasetID < 0)
-    {
-        return;
-    }
-
-    hid_t filespace = H5Dget_space(datasetID);
-
-    if (filespace < 0)
-    {
-        return;
-    }
-
-    const int ndims = H5Sget_simple_extent_ndims(filespace);
-    hsize_t dims[ndims];
-    H5Sget_simple_extent_dims(filespace, dims, NULL);
-
-    // int dims_in = variable.m_GlobalDimensions.size();
-    variable.m_GlobalDimensions.clear();
-    for (int i = 0; i < ndims; i++)
-    {
-        variable.m_GlobalDimensions.push_back(dims[i]);
-    }
-
-    std::vector<hsize_t> count, offset, stride;
-
-    int elementsRead = 1;
-    for (int i = 0; i < ndims; i++)
-    {
-        if (variable.m_LocalDimensions.size() == ndims)
-        {
-            count.push_back(variable.m_LocalDimensions[i]);
-            elementsRead *= variable.m_LocalDimensions[i];
-        }
-        else
-        {
-            count.push_back(variable.m_GlobalDimensions[i]);
-            elementsRead *= variable.m_GlobalDimensions[i];
-        }
-
-        if (variable.m_Offsets.size() == ndims)
-        {
-            offset.push_back(variable.m_Offsets[i]);
-        }
-        else
-        {
-            offset.push_back(0);
-        }
-
-        stride.push_back(1);
-    }
-
-    hid_t ret = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset.data(),
-                                    stride.data(), count.data(), NULL);
-    if (ret < 0)
-    {
-        return;
-    }
-
-    hid_t mem_dataspace = H5Screate_simple(ndims, count.data(), NULL);
-
-    // T  data_array[elementsRead];
-    ret = H5Dread(datasetID, h5type, mem_dataspace, filespace, H5P_DEFAULT,
-                  data_array);
-
-    /* for (int i = 0; i < elementsRead; i++)
-    {
-        std::cout << "... ts " << m_CurrentTimeStep << ", "
-                  << data_array[i] << std::endl;
-    }
-    */
-    H5Sclose(mem_dataspace);
-
-    H5Sclose(filespace);
-    H5Dclose(datasetID);
-}
-#endif
 }
