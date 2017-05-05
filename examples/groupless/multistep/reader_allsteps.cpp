@@ -12,7 +12,9 @@
 #include <vector>
 
 #include <adios2.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#endif
 
 template <class T>
 T **Make2DArray(int nRows, int nCols)
@@ -62,13 +64,19 @@ void Print2DArray(T **ptr, int nRows, int nCols, std::string name)
 
 int main(int argc, char *argv[])
 {
-    int rank, nproc;
+    int rank = 0, nproc = 1;
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+#endif
     const bool adiosDebug = true;
 
+#ifdef ADIOS2_HAVE_MPI
     adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
+#else
+    adios::ADIOS adios(adios::Verbose::WARN);
+#endif
 
     // Info variables from the file
     int Nwriters;
@@ -255,48 +263,6 @@ int main(int argc, char *argv[])
                 "Irregular array\n");
         }
 
-// overloaded Read from Derived
-#if 0
-        /* Ragged */
-        // inquiry about a variable, whose name we know
-        std::shared_ptr<adios::Variable<void>> varRagged =
-            bpReader.InquiryVariable("Ragged");
-        if (varRagged->m_Shape[1] != adios::VARYING_DIMENSION)
-        {
-            throw std::ios_base::failure(
-                "Unexpected condition: Ragged array's fast dimension "
-                "is supposed to be VARYING_DIMENSION\n");
-        }
-        // We have here varRagged->sum_nblocks, nsteps, nblocks[], global
-        if (rank <
-            varRagged->nblocks[0]) // same as rank < Nwriters in this example
-        {
-            // get per-writer size information
-            varRagged->InquiryBlocks();
-            // now we have the dimensions per block
-
-            unsigned long long int count =
-                varRagged->blockinfo[rank].m_Dimensions[0];
-            RaggedArray.resize(count);
-
-            std::unique_ptr<adios::Selection> wbsel =
-                adios.SelectionWriteblock(rank);
-            bpReader->Read<float>("Ragged", wbsel, RaggedArray.data());
-
-            // We can use bounding box selection as well
-            std::unique_ptr<adios::Selection> rbbsel =
-                adios.SelectionBoundingBox({1, count}, {rank, 0});
-            bpReader->Read<float>("Ragged", rbbsel, RaggedArray.data());
-        }
-
-        /* Extra help to process Ragged */
-        int maxRaggedDim =
-            varRagged->GetMaxGlobalDimensions(1); // contains the largest
-        std::vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(
-            1); // contains all individual sizes in that dimension
-
-#endif
-
         // Close file/stream
         bpReader->Close();
     }
@@ -325,7 +291,8 @@ int main(int argc, char *argv[])
         }
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
-
+#endif
     return 0;
 }

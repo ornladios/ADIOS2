@@ -12,17 +12,24 @@
 #include <vector>
 
 #include <adios2.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
-
+#endif
 int main(int argc, char *argv[])
 {
-    int rank, nproc;
+    int rank = 0, nproc = 1;
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+#endif
     const bool adiosDebug = true;
 
-    adios::ADIOS adios(MPI_COMM_WORLD);
+#ifdef ADIOS2_HAVE_MPI
+    adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
+#else
+    adios::ADIOS adios(adios::Verbose::WARN);
+#endif
 
     // Info variables from the file
     int Nwriters;
@@ -92,96 +99,6 @@ int main(int argc, char *argv[])
                 Ny = vNY->m_Data[0];
                 std::cout << "NY = " << Ny << std::endl;
 
-#if 0
-                /* Nparts */
-                // Nparts local scalar is presented as a 1D array of Nwriters
-                // elements.
-                // We can read all as a 1D array
-                std::vector<int> partsV(Nwriters);
-                adios::Variable<unsigned int> *vNproc =
-                    bpReader->InquireVariableUInt("Nproc");
-                bpReader->Read<int>("Nparts",
-                                    &partsV); // read with string name, no
-                                              // selection => read whole array
-
-                /* Nice */
-                // inquiry about a variable, whose name we know
-                std::shared_ptr<adios::Variable<void>> varNice =
-                    bpReader.InquiryVariable("Nice");
-
-                if (varNice == nullptr)
-                    throw std::ios_base::failure("ERROR: failed to find "
-                                                 "variable 'myDoubles' in "
-                                                 "input file\n");
-
-                // ? how do we know about the type? std::string varNice->m_Type
-                unsigned long long int gdim =
-                    varMyDoubles->m_Shape[0]; // ?member var or
-                                              // member func?
-                unsigned long long int ldim = gdim / nproc;
-                unsigned long long int offs = rank * ldim;
-                if (rank == nproc - 1)
-                {
-                    ldim = gdim - (ldim * gdim);
-                }
-
-                NiceArray.reserve(ldim);
-
-                // Make a 1D selection to describe the local dimensions of the
-                // variable
-                // we READ and
-                // its offsets in the global spaces
-                std::unique_ptr<adios::Selection> bbsel =
-                    adios.SelectionBoundingBox(
-                        {ldim}, {offs}); // local dims and offsets; both as list
-                varNice->SetSelection(bbsel);
-                bpReader->Read<double>(varNice, NiceArray.data());
-
-                /* Ragged */
-                // inquiry about a variable, whose name we know
-                std::shared_ptr<adios::Variable<void>> varRagged =
-                    bpReader.InquiryVariable("Ragged");
-                if (varRagged->m_Shape[1] != adios::VARYING_DIMENSION)
-                {
-                    throw std::ios_base::failure(
-                        "Unexpected condition: Ragged array's fast "
-                        "dimension "
-                        "is supposed to be VARYING_DIMENSION\n");
-                }
-                // We have here varRagged->sum_nblocks, nsteps, nblocks[],
-                // global
-                if (rank < varRagged->nblocks[0]) // same as rank < Nwriters in
-                                                  // this example
-                {
-                    // get per-writer size information
-                    varRagged->InquiryBlocks();
-                    // now we have the dimensions per block
-
-                    unsigned long long int ldim =
-                        varRagged->blockinfo[rank].m_Dimensions[0];
-                    RaggedArray.resize(ldim);
-
-                    std::unique_ptr<adios::Selection> wbsel =
-                        adios.SelectionWriteblock(rank);
-                    varRagged->SetSelection(wbsel);
-                    bpReader->Read<float>(varRagged, RaggedArray.data());
-
-                    // We can use bounding box selection as well
-                    std::unique_ptr<adios::Selection> rbbsel =
-                        adios.SelectionBoundingBox({1, ldim}, {rank, 0});
-                    varRagged->SetSelection(rbbsel);
-                    bpReader->Read<float>(varRagged, RaggedArray.data());
-                }
-
-                /* Extra help to process Ragged */
-                int maxRaggedDim = varRagged->GetMaxGlobalDimensions(
-                    1); // contains the largest
-                std::vector<int> raggedDims =
-                    varRagged->GetVaryingGlobalDimensions(
-                        1); // contains all individual sizes in that
-                            // dimension
-#endif
-
                 // promise to not read more from this step
                 bpReader->Release();
 
@@ -221,7 +138,9 @@ int main(int argc, char *argv[])
         }
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }

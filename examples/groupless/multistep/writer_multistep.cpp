@@ -12,14 +12,18 @@
 #include <vector>
 
 #include <adios2.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#endif
 
 int main(int argc, char *argv[])
 {
-    int rank, nproc;
+    int rank = 0, nproc = 1;
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+#endif
     const bool adiosDebug = true;
     const int NSTEPS = 5;
 
@@ -27,7 +31,11 @@ int main(int argc, char *argv[])
     // but always the same sequence at each run
     srand(rank * 32767);
 
+#ifdef ADIOS2_HAVE_MPI
     adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
+#else
+    adios::ADIOS adios(adios::Verbose::WARN);
+#endif
 
     // Application variables for output
     // 1. Global value, constant across processes, constant over time
@@ -113,7 +121,12 @@ int main(int argc, char *argv[])
             bpWriterSettings.SetEngine("ADIOS1Writer");
             // ISO-POSIX file is the default transport
             // Passing parameters to the transport
-            bpWriterSettings.AddTransport("File", "library=MPI-IO");
+            bpWriterSettings.AddTransport("File"
+#ifdef ADIOS2_HAVE_MPI
+                                          ,
+                                          "library=MPI-IO"
+#endif
+                                          );
             // Passing parameters to the engine
             bpWriterSettings.SetParameters("have_metadata_file", "yes");
             // number of aggregators
@@ -242,7 +255,9 @@ int main(int argc, char *argv[])
         }
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }
