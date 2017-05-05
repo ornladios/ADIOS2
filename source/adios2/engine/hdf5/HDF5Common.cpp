@@ -204,7 +204,6 @@ void HDF5Common::ReadMe(Variable<T> &variable, T *data_array, hid_t h5type)
 {
     hid_t datasetID = H5Dopen(m_Group_id, variable.m_Name.c_str(), H5P_DEFAULT);
 
-
     if (datasetID < 0)
     {
         return;
