@@ -9,9 +9,6 @@
 #include <vector>
 
 #include <mpi.h>
-
-#define ADIOS_HAVE_PHDF5 // so hdf5 related items are loaded in ADIOS_CPP.h
-//#include "ADIOS_CPP.h"
 #include "adios2.h"
 
 int main(int argc, char *argv[])

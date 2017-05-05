@@ -131,6 +131,7 @@ bool HDF5NativeReader::Advance()
     if (m_GroupId >= 0)
     {
         H5Gclose(m_GroupId);
+        m_GroupId = -1;
     }
 
     if (m_CurrentTimeStep + 1 >= m_TotalTimeSteps)
@@ -279,61 +280,62 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
             hid_t h5Type;
 
             hdf5Reader.GetVarInfo("i8", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_CHAR);
+
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_CHAR), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("i8", I8.data());
 
             hdf5Reader.GetVarInfo("i16", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_SHORT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_SHORT), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("i16", I16.data());
 
             hdf5Reader.GetVarInfo("i32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_INT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_INT), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("i32", I32.data());
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_LONG);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("i64", I64.data());
 
             hdf5Reader.GetVarInfo("u8", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_UCHAR);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UCHAR), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("u8", U8.data());
 
             hdf5Reader.GetVarInfo("u16", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_USHORT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_USHORT), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("u16", U16.data());
 
             hdf5Reader.GetVarInfo("u32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_UINT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UINT), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("u32", U32.data());
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_ULONG);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("u64", U64.data());
 
             hdf5Reader.GetVarInfo("r32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_FLOAT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_FLOAT), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("r32", R32.data());
 
             hdf5Reader.GetVarInfo("r64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_DOUBLE);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_DOUBLE), 1);
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], 8);
             hdf5Reader.ReadVar("r64", R64.data());
@@ -483,70 +485,70 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
             hid_t h5Type;
 
             hdf5Reader.GetVarInfo("i8", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_CHAR);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_CHAR), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("i8", I8.data());
 
             hdf5Reader.GetVarInfo("i16", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_SHORT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_SHORT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("i16", I16.data());
 
             hdf5Reader.GetVarInfo("i32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_INT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_INT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("i32", I32.data());
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_LONG);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("i64", I64.data());
 
             hdf5Reader.GetVarInfo("u8", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_UCHAR);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UCHAR), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("u8", U8.data());
 
             hdf5Reader.GetVarInfo("u16", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_USHORT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_USHORT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("u16", U16.data());
 
             hdf5Reader.GetVarInfo("u32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_UINT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UINT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("u32", U32.data());
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_ULONG);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("u64", U64.data());
 
             hdf5Reader.GetVarInfo("r32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_FLOAT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_FLOAT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
             hdf5Reader.ReadVar("r32", R32.data());
 
             hdf5Reader.GetVarInfo("r64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_DOUBLE);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_DOUBLE), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], 4);
@@ -697,70 +699,70 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
             hid_t h5Type;
 
             hdf5Reader.GetVarInfo("i8", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_CHAR);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_CHAR), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("i8", I8.data());
 
             hdf5Reader.GetVarInfo("i16", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_SHORT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_SHORT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("i16", I16.data());
 
             hdf5Reader.GetVarInfo("i32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_INT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_INT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("i32", I32.data());
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_LONG);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("i64", I64.data());
 
             hdf5Reader.GetVarInfo("u8", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_UCHAR);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UCHAR), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("u8", U8.data());
 
             hdf5Reader.GetVarInfo("u16", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_USHORT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_USHORT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("u16", U16.data());
 
             hdf5Reader.GetVarInfo("u32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_UINT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UINT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("u32", U32.data());
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_ULONG);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("u64", U64.data());
 
             hdf5Reader.GetVarInfo("r32", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_FLOAT);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_FLOAT), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
             hdf5Reader.ReadVar("r32", R32.data());
 
             hdf5Reader.GetVarInfo("r64", gDims, h5Type);
-            ASSERT_EQ(h5Type, H5T_NATIVE_DOUBLE);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_DOUBLE), 1);
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], 2);
