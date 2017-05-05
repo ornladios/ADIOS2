@@ -110,12 +110,13 @@ public:
 
     void Close(const int transportIndex = -1);
 
-    template <class T>
+    template <typename T>
     void UseHDFRead(const std::string &variableName, T *values, hid_t h5type);
 
+    /*
     template <class T>
     void ReadMe(Variable<T> &variable, T *values, hid_t h5type);
-
+    */
 private:
     HDF5Common _H5File;
     void Init();

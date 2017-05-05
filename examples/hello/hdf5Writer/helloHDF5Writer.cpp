@@ -140,20 +140,27 @@ int main(int argc, char *argv[])
 	//HDF5Reader->InquireVariableDouble("wrongMyDoubles", true);
 	HDF5Reader->InquireVariableDouble(ioMyDoubles.m_Name, true);
 	*/
-	adios::HDF5Reader myReader(adios, "test.h5", "r", MPI_COMM_WORLD, HDF5Settings);
-	double values[15];
 
 #ifndef NEVER	
+	adios::HDF5Common myReader;
+	myReader.H5_Init("test.h5", MPI_COMM_WORLD, false);
+	double values[15];
 	ts = 0;
+
 	while (ts < totalts) {    
-	  myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);    
-	  myReader.Advance();
+	  //myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);    
+	  myReader.H5_Advance(totalts);
 	  ts++;
 	}
 
 #else
+	/*
+	adios::HDF5Reader myReader(adios, "test.h5", "r", MPI_COMM_WORLD, HDF5Settings);
+	double values[15];
+
 	myReader.ReadMe(ioMyDoubles, values, H5T_NATIVE_DOUBLE);
 	myReader.Close();
+	*/
 #endif
 
     }

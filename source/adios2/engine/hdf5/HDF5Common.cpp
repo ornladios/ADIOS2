@@ -12,7 +12,7 @@
 
 #include <iostream> //needs to go away, this is just for demo purposes
 
-#include "adios2/ADIOSMPI.h"
+//#include "adios2/ADIOSMPI.h"
 
 namespace adios
 {
@@ -196,5 +196,97 @@ void HDF5Common::CheckWriteGroup()
 
     m_Group_id = H5Gcreate2(m_File_id, tsname.c_str(), H5P_DEFAULT, H5P_DEFAULT,
                             H5P_DEFAULT);
+}
+
+
+
+template <class T>
+void HDF5Common::ReadMe(Variable<T> &variable, T *data_array, hid_t h5type)
+{
+    hid_t datasetID =
+        H5Dopen(m_Group_id, variable.m_Name.c_str(), H5P_DEFAULT);
+
+#ifdef NEVER
+    if (_mpi_rank == 0)
+    {
+        std::cout << " hdf5 reading variable: " << variable.m_Name
+                  << " timestep: " << m_CurrentTimeStep << std::endl;
+    }
+#endif
+
+    if (datasetID < 0)
+    {
+        return;
+    }
+
+    hid_t filespace = H5Dget_space(datasetID);
+
+    if (filespace < 0)
+    {
+        return;
+    }
+
+    const int ndims = H5Sget_simple_extent_ndims(filespace);
+    hsize_t dims[ndims];
+    H5Sget_simple_extent_dims(filespace, dims, NULL);
+
+    // int dims_in = variable.m_GlobalDimensions.size();
+    variable.m_GlobalDimensions.clear();
+    for (int i = 0; i < ndims; i++)
+    {
+        variable.m_GlobalDimensions.push_back(dims[i]);
+    }
+
+    std::vector<hsize_t> count, offset, stride;
+
+    int elementsRead = 1;
+    for (int i = 0; i < ndims; i++)
+    {
+        if (variable.m_LocalDimensions.size() == ndims)
+        {
+            count.push_back(variable.m_LocalDimensions[i]);
+            elementsRead *= variable.m_LocalDimensions[i];
+        }
+        else
+        {
+            count.push_back(variable.m_GlobalDimensions[i]);
+            elementsRead *= variable.m_GlobalDimensions[i];
+        }
+
+        if (variable.m_Offsets.size() == ndims)
+        {
+            offset.push_back(variable.m_Offsets[i]);
+        }
+        else
+        {
+            offset.push_back(0);
+        }
+
+        stride.push_back(1);
+    }
+
+    hid_t ret = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset.data(),
+                                    stride.data(), count.data(), NULL);
+    if (ret < 0)
+    {
+        return;
+    }
+
+    hid_t mem_dataspace = H5Screate_simple(ndims, count.data(), NULL);
+
+    // T  data_array[elementsRead];
+    ret = H5Dread(datasetID, h5type, mem_dataspace, filespace, H5P_DEFAULT,
+                  data_array);
+
+    /* for (int i = 0; i < elementsRead; i++)
+    {
+        std::cout << "... ts " << m_CurrentTimeStep << ", "
+                  << data_array[i] << std::endl;
+    }
+    */
+    H5Sclose(mem_dataspace);
+
+    H5Sclose(filespace);
+    H5Dclose(datasetID);
 }
 }

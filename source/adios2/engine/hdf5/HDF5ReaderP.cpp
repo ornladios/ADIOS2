@@ -149,52 +149,52 @@ HDF5Reader::InquireVariableDouble(const std::string &variableName, const bool)
         UseHDFRead(variableName, values, H5T_NATIVE_DOUBLE);
         Variable<double> v =
             m_ADIOS.DefineVariable<double>("junk", adios::Dims{8});
-        ReadMe(v, values, H5T_NATIVE_DOUBLE);
+        _H5File.ReadMe(v, values, H5T_NATIVE_DOUBLE);
 
         Variable<char> v1 =
             m_ADIOS.DefineVariable<char>("junk1", adios::Dims{8});
 
         char vv1[1];
-        ReadMe(v1, vv1, H5T_NATIVE_CHAR);
+        _H5File.ReadMe(v1, vv1, H5T_NATIVE_CHAR);
 
         Variable<unsigned char> v2 =
             m_ADIOS.DefineVariable<unsigned char>("junk2", adios::Dims{8});
         unsigned char vv2[1];
-        ReadMe(v2, vv2, H5T_NATIVE_UCHAR);
+        _H5File.ReadMe(v2, vv2, H5T_NATIVE_UCHAR);
 
         Variable<unsigned int> v3 =
             m_ADIOS.DefineVariable<unsigned int>("junk3", adios::Dims{8});
         unsigned int vv3[1];
-        ReadMe(v3, vv3, H5T_NATIVE_UINT);
+        _H5File.ReadMe(v3, vv3, H5T_NATIVE_UINT);
 
         Variable<int> v4 = m_ADIOS.DefineVariable<int>("junk4", adios::Dims{8});
         int vv4[1];
-        ReadMe(v4, vv4, H5T_NATIVE_INT);
+        _H5File.ReadMe(v4, vv4, H5T_NATIVE_INT);
 
         Variable<float> v5 =
             m_ADIOS.DefineVariable<float>("junk5", adios::Dims{8});
         float vv5[1];
-        ReadMe(v5, vv5, H5T_NATIVE_FLOAT);
+        _H5File.ReadMe(v5, vv5, H5T_NATIVE_FLOAT);
 
         Variable<short> v6 =
             m_ADIOS.DefineVariable<short>("junk6", adios::Dims{8});
         short vv6[1];
-        ReadMe(v6, vv6, H5T_NATIVE_SHORT);
+        _H5File.ReadMe(v6, vv6, H5T_NATIVE_SHORT);
 
         Variable<unsigned short> v7 =
             m_ADIOS.DefineVariable<unsigned short>("junk7", adios::Dims{8});
         unsigned short vv7[1];
-        ReadMe(v7, vv7, H5T_NATIVE_USHORT);
+        _H5File.ReadMe(v7, vv7, H5T_NATIVE_USHORT);
 
         Variable<long> v8 =
             m_ADIOS.DefineVariable<long>("junk8", adios::Dims{8});
         long vv8[1];
-        ReadMe(v8, vv8, H5T_NATIVE_LONG);
+        _H5File.ReadMe(v8, vv8, H5T_NATIVE_LONG);
 
         Variable<unsigned long> v9 =
             m_ADIOS.DefineVariable<unsigned long>("junk9", adios::Dims{8});
         unsigned long vv9[1];
-        ReadMe(v9, vv9, H5T_NATIVE_ULONG);
+        _H5File.ReadMe(v9, vv9, H5T_NATIVE_ULONG);
 
         if (_H5File.m_CurrentTimeStep >= totalts - 1)
         {
@@ -236,95 +236,6 @@ HDF5Reader::InquireVariableCompound(const std::string &variableName,
     return NULL;
 }
 
-template <class T>
-void HDF5Reader::ReadMe(Variable<T> &variable, T *data_array, hid_t h5type)
-{
-    hid_t datasetID =
-        H5Dopen(_H5File.m_Group_id, variable.m_Name.c_str(), H5P_DEFAULT);
-
-#ifdef NEVER
-    if (_mpi_rank == 0)
-    {
-        std::cout << " hdf5 reading variable: " << variable.m_Name
-                  << " timestep: " << _H5File.m_CurrentTimeStep << std::endl;
-    }
-#endif
-
-    if (datasetID < 0)
-    {
-        return;
-    }
-
-    hid_t filespace = H5Dget_space(datasetID);
-
-    if (filespace < 0)
-    {
-        return;
-    }
-
-    const int ndims = H5Sget_simple_extent_ndims(filespace);
-    hsize_t dims[ndims];
-    H5Sget_simple_extent_dims(filespace, dims, NULL);
-
-    // int dims_in = variable.m_GlobalDimensions.size();
-    variable.m_GlobalDimensions.clear();
-    for (int i = 0; i < ndims; i++)
-    {
-        variable.m_GlobalDimensions.push_back(dims[i]);
-    }
-
-    std::vector<hsize_t> count, offset, stride;
-
-    int elementsRead = 1;
-    for (int i = 0; i < ndims; i++)
-    {
-        if (variable.m_LocalDimensions.size() == ndims)
-        {
-            count.push_back(variable.m_LocalDimensions[i]);
-            elementsRead *= variable.m_LocalDimensions[i];
-        }
-        else
-        {
-            count.push_back(variable.m_GlobalDimensions[i]);
-            elementsRead *= variable.m_GlobalDimensions[i];
-        }
-
-        if (variable.m_Offsets.size() == ndims)
-        {
-            offset.push_back(variable.m_Offsets[i]);
-        }
-        else
-        {
-            offset.push_back(0);
-        }
-
-        stride.push_back(1);
-    }
-
-    hid_t ret = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offset.data(),
-                                    stride.data(), count.data(), NULL);
-    if (ret < 0)
-    {
-        return;
-    }
-
-    hid_t mem_dataspace = H5Screate_simple(ndims, count.data(), NULL);
-
-    // T  data_array[elementsRead];
-    ret = H5Dread(datasetID, h5type, mem_dataspace, filespace, H5P_DEFAULT,
-                  data_array);
-
-    /* for (int i = 0; i < elementsRead; i++)
-    {
-        std::cout << "... ts " << _H5File.m_CurrentTimeStep << ", "
-                  << data_array[i] << std::endl;
-    }
-    */
-    H5Sclose(mem_dataspace);
-
-    H5Sclose(filespace);
-    H5Dclose(datasetID);
-}
 
 template <class T>
 void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
