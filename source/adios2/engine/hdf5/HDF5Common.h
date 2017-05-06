@@ -11,7 +11,8 @@
 #ifndef ADIOS2_ENGINE_HDF5_HDF5COMMON_P_H_
 #define ADIOS2_ENGINE_HDF5_HDF5COMMON_P_H_
 
-#include "adios2.h"
+#include <string>
+
 #include "adios2/ADIOSMPICommOnly.h"
 
 #include <hdf5.h>
@@ -28,29 +29,29 @@ public:
      */
     HDF5Common();
 
-    void H5_Init(const std::string name, MPI_Comm m_MPIComm, bool toWrite);
-    void H5_Close();
-    void H5_Advance(int totalts);
+    void Init(const std::string name, MPI_Comm comm, bool toWrite);
+    void Close();
+    void Advance();
 
-    int GetNumTimeSteps();
+    unsigned int GetNumTimeSteps();
     void WriteTimeSteps();
 
-    hid_t m_Plist_id, m_File_id;
-    hid_t m_Group_id;
+    hid_t m_PropertyListId, m_FileId;
+    hid_t m_GroupId;
 
-    hid_t m_DefH5T_COMPLEX_DOUBLE;
-    hid_t m_DefH5T_COMPLEX_FLOAT;
-    hid_t m_DefH5T_COMPLEX_LongDOUBLE;
+    hid_t m_DefH5TypeComplexDouble;
+    hid_t m_DefH5TypeComplexFloat;
+    hid_t m_DefH5TypeComplexLongDouble;
 
-    int m_CurrentTimeStep;
+    unsigned int m_CurrentTimeStep;
 
     void CheckWriteGroup();
 
 private:
     bool m_WriteMode;
-    int m_Total_timestep;
+    unsigned int m_NumTimeSteps;
 };
 
 } // end namespace adios
 
-#endif /* HDF5_COMMON_P_H_ */
+#endif /* ADIOS2_ENGINE_HDF5_HDF5COMMON_P_H_ */

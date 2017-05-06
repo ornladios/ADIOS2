@@ -98,7 +98,7 @@ private:
     HDF5Common m_H5File;
 
     template <class T>
-    void UseHDFWrite(Variable<T> &variable, const T *values, hid_t h5type);
+    void UseHDFWrite(Variable<T> &variable, const T *values, hid_t h5Type);
 };
 
 } // end namespace adios

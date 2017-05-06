@@ -33,7 +33,7 @@ bool HDF5Reader::isValid()
     {
         return false;
     }
-    if (m_H5File.m_File_id >= 0)
+    if (m_H5File.m_FileId >= 0)
     {
         return true;
     }
@@ -47,7 +47,7 @@ void HDF5Reader::Init()
             ", in call to ADIOS Open or HDF5Reader constructor\n");
     }
 
-    m_H5File.H5_Init(m_Name, m_MPIComm, false);
+    m_H5File.Init(m_Name, m_MPIComm, false);
     m_H5File.GetNumTimeSteps();
 }
 
@@ -180,26 +180,26 @@ template <class T>
 void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
                             hid_t h5Type)
 {
-    hid_t datasetID =
-        H5Dopen(m_H5File.m_Group_id, variableName.c_str(), H5P_DEFAULT);
+    hid_t dataSetId =
+        H5Dopen(m_H5File.m_GroupId, variableName.c_str(), H5P_DEFAULT);
     if (m_RankMPI == 0)
     {
         std::cout << " opened to read: " << variableName << std::endl;
     }
 
-    if (datasetID < 0)
+    if (dataSetId < 0)
     {
         return;
     }
-    hid_t filespace = H5Dget_space(datasetID);
+    hid_t fileSpace = H5Dget_space(dataSetId);
 
-    if (filespace < 0)
+    if (fileSpace < 0)
     {
         return;
     }
-    int ndims = H5Sget_simple_extent_ndims(filespace);
+    int ndims = H5Sget_simple_extent_ndims(fileSpace);
     hsize_t dims[ndims];
-    herr_t status_n = H5Sget_simple_extent_dims(filespace, dims, NULL);
+    herr_t status_n = H5Sget_simple_extent_dims(fileSpace, dims, NULL);
 
     hsize_t start[ndims] = {0}, count[ndims] = {0}, stride[ndims] = {1};
 
@@ -220,14 +220,14 @@ void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
                   << std::endl;
     }
 
-    hid_t ret = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, stride,
+    hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start, stride,
                                     count, NULL);
     if (ret < 0)
     {
         return;
     }
 
-    hid_t mem_dataspace = H5Screate_simple(ndims, count, NULL);
+    hid_t memDataSpace = H5Screate_simple(ndims, count, NULL);
 
     int elementsRead = 1;
     for (int i = 0; i < ndims; i++)
@@ -236,7 +236,7 @@ void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
     }
 
     T data_array[elementsRead];
-    ret = H5Dread(datasetID, h5Type, mem_dataspace, filespace, H5P_DEFAULT,
+    ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
                   data_array);
 
     for (int i = 0; i < elementsRead; i++)
@@ -245,18 +245,14 @@ void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
                   << std::endl;
     }
 
-    H5Sclose(mem_dataspace);
+    H5Sclose(memDataSpace);
 
-    H5Sclose(filespace);
-    H5Dclose(datasetID);
+    H5Sclose(fileSpace);
+    H5Dclose(dataSetId);
 }
 
-void HDF5Reader::Advance(float timeoutSec)
-{
-    int totalts = m_H5File.GetNumTimeSteps();
-    m_H5File.H5_Advance(totalts);
-}
+void HDF5Reader::Advance(float timeoutSec) { m_H5File.Advance(); }
 
-void HDF5Reader::Close(const int transportIndex) { m_H5File.H5_Close(); }
+void HDF5Reader::Close(const int transportIndex) { m_H5File.Close(); }
 
 } // end namespace adios

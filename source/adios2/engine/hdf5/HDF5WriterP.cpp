@@ -40,7 +40,7 @@ void HDF5Writer::Init()
             ", in call to ADIOS Open or HDF5Writer constructor\n");
     }
 
-    m_H5File.H5_Init(m_Name, m_MPIComm, true);
+    m_H5File.Init(m_Name, m_MPIComm, true);
 }
 
 void HDF5Writer::Write(Variable<char> &variable, const char *values)
@@ -118,19 +118,19 @@ void HDF5Writer::Write(Variable<long double> &variable,
 void HDF5Writer::Write(Variable<std::complex<float>> &variable,
                        const std::complex<float> *values)
 {
-    UseHDFWrite(variable, values, m_H5File.m_DefH5T_COMPLEX_FLOAT);
+    UseHDFWrite(variable, values, m_H5File.m_DefH5TypeComplexFloat);
 }
 
 void HDF5Writer::Write(Variable<std::complex<double>> &variable,
                        const std::complex<double> *values)
 {
-    UseHDFWrite(variable, values, m_H5File.m_DefH5T_COMPLEX_DOUBLE);
+    UseHDFWrite(variable, values, m_H5File.m_DefH5TypeComplexDouble);
 }
 
 void HDF5Writer::Write(Variable<std::complex<long double>> &variable,
                        const std::complex<long double> *values)
 {
-    UseHDFWrite(variable, values, m_H5File.m_DefH5T_COMPLEX_LongDOUBLE);
+    UseHDFWrite(variable, values, m_H5File.m_DefH5TypeComplexLongDouble);
 }
 
 // String version
@@ -222,30 +222,30 @@ void HDF5Writer::Write(const std::string variableName,
                        const std::complex<float> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<float>>(variableName), values,
-                m_H5File.m_DefH5T_COMPLEX_FLOAT);
+                m_H5File.m_DefH5TypeComplexFloat);
 }
 
 void HDF5Writer::Write(const std::string variableName,
                        const std::complex<double> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<double>>(variableName), values,
-                m_H5File.m_DefH5T_COMPLEX_DOUBLE);
+                m_H5File.m_DefH5TypeComplexDouble);
 }
 
 void HDF5Writer::Write(const std::string variableName,
                        const std::complex<long double> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<long double>>(variableName),
-                values, m_H5File.m_DefH5T_COMPLEX_LongDOUBLE);
+                values, m_H5File.m_DefH5TypeComplexLongDouble);
 }
 
-void HDF5Writer::Advance(float timeoutSec) { m_H5File.H5_Advance(0); }
+void HDF5Writer::Advance(float timeoutSec) { m_H5File.Advance(); }
 
-void HDF5Writer::Close(const int transportIndex) { m_H5File.H5_Close(); }
+void HDF5Writer::Close(const int transportIndex) { m_H5File.Close(); }
 
 template <class T>
 void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
-                             hid_t h5type)
+                             hid_t h5Type)
 {
     m_H5File.CheckWriteGroup();
     // here comes your magic at Writing now variable.m_UserValues has the data
@@ -292,7 +292,7 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
     hid_t fileSpace = H5Screate_simple(dimSize, dimsf.data(), NULL);
 
     hid_t dsetID =
-        H5Dcreate(m_H5File.m_Group_id, variable.m_Name.c_str(), h5type,
+        H5Dcreate(m_H5File.m_GroupId, variable.m_Name.c_str(), h5Type,
                   fileSpace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     // H5Sclose(fileSpace);
 
@@ -311,7 +311,7 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
 #endif
     herr_t status;
 
-    status = H5Dwrite(dsetID, h5type, memSpace, fileSpace, plistID, values);
+    status = H5Dwrite(dsetID, h5Type, memSpace, fileSpace, plistID, values);
 
     if (status < 0)
     {
