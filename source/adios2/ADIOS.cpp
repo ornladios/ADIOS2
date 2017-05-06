@@ -194,7 +194,16 @@ std::shared_ptr<Engine> ADIOS::Open(const std::string &name,
                                     "HDF5 library, can't use HDF5\n");
 #endif
     }
-
+    else if (type == "HDF5Reader") // -Junmin
+    {
+#ifdef ADIOS2_HAVE_HDF5
+        return std::make_shared<HDF5Reader>(*this, name, accessMode, mpiComm,
+                                            method);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "HDF5 library, can't use HDF5\n");
+#endif
+    }
     else
     {
         if (m_DebugMode == true)
