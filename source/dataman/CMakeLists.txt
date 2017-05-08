@@ -11,7 +11,10 @@ add_library(dataman
   CacheMan.cpp CacheMan.h
 )
 target_include_directories(dataman PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(dataman PRIVATE adios2sys)
+target_link_libraries(dataman
+  PRIVATE adios2sys
+  PUBLIC NLohmannJson
+)
 list(APPEND dataman_targets dataman)
 
 # Add the dataman plugins as MODULE libraries instead of SHARED libraries.

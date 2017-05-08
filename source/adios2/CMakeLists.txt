@@ -106,6 +106,7 @@ if(ADIOS_USE_HDF5)
   target_sources(adios2 PRIVATE
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
+    engine/hdf5/HDF5Common.cpp
   )
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
