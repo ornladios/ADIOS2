@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include <adios2.h>
+
 #include <hdf5.h>
 
 #include <gtest/gtest.h>
@@ -23,6 +24,162 @@ public:
     SmallTestData m_TestData;
 };
 
+class HDF5NativeReader
+{
+
+public:
+    HDF5NativeReader(const std::string fileName);
+    ~HDF5NativeReader();
+
+    bool Advance();
+
+    void GetVarInfo(const std::string varName, std::vector<hsize_t> &dims,
+                    hid_t &h5Type);
+    void ReadVar(const std::string varName, void *dataArray);
+
+    int m_CurrentTimeStep;
+    unsigned int m_TotalTimeSteps;
+
+private:
+    hid_t m_FilePropertyListId;
+    hid_t m_FileId;
+    hid_t m_GroupId;
+};
+
+HDF5NativeReader::HDF5NativeReader(const std::string fileName)
+: m_CurrentTimeStep(0), m_TotalTimeSteps(0)
+{
+    m_FilePropertyListId = H5Pcreate(H5P_FILE_ACCESS);
+
+#ifdef ADIOS2_HAVE_MPI
+    // read a file collectively
+    H5Pset_fapl_mpio(m_FilePropertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+#endif
+
+    m_FileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, m_FilePropertyListId);
+    if (m_FileId < 0)
+    {
+        throw std::runtime_error("Unable to open " + fileName + " for reading");
+    }
+
+    std::string ts0 = "/TimeStep0";
+    m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
+    if (m_GroupId < 0)
+    {
+        throw std::runtime_error("Unable to open group " + ts0 +
+                                 " for reading");
+    }
+
+    hid_t attrId = H5Aopen(m_FileId, "NumTimeSteps", H5P_DEFAULT);
+    if (attrId < 0)
+    {
+        throw std::runtime_error("Unable to open attribute NumTimeSteps");
+    }
+    H5Aread(attrId, H5T_NATIVE_UINT, &m_TotalTimeSteps);
+    H5Aclose(attrId);
+}
+
+HDF5NativeReader::~HDF5NativeReader()
+{
+    if (m_GroupId >= 0)
+    {
+        H5Gclose(m_GroupId);
+    }
+
+    H5Fclose(m_FileId);
+    H5Pclose(m_FilePropertyListId);
+}
+
+void HDF5NativeReader::GetVarInfo(const std::string varName,
+                                  std::vector<hsize_t> &dims, hid_t &h5Type)
+{
+    hid_t dataSetId = H5Dopen(m_GroupId, varName.c_str(), H5P_DEFAULT);
+    if (dataSetId < 0)
+    {
+        throw std::runtime_error("Unable to open dataset " + varName);
+    }
+
+    hid_t fileSpaceId = H5Dget_space(dataSetId);
+    if (fileSpaceId < 0)
+    {
+        throw std::runtime_error("Unable to get filespace for dataset " +
+                                 varName);
+    }
+
+    const int ndims = H5Sget_simple_extent_ndims(fileSpaceId);
+    if (ndims < 0)
+    {
+        throw std::runtime_error(
+            "Unable to get number of dimensions for dataset " + varName);
+    }
+
+    dims.resize(ndims);
+    if (H5Sget_simple_extent_dims(fileSpaceId, dims.data(), NULL) != ndims)
+    {
+        throw std::runtime_error("Unable to get dimensions for dataset " +
+                                 varName);
+    }
+
+    h5Type = H5Dget_type(dataSetId);
+
+    H5Sclose(fileSpaceId);
+    H5Dclose(dataSetId);
+}
+
+bool HDF5NativeReader::Advance()
+{
+    if (m_GroupId >= 0)
+    {
+        H5Gclose(m_GroupId);
+        m_GroupId = -1;
+    }
+
+    if (m_CurrentTimeStep + 1 >= m_TotalTimeSteps)
+    {
+        return false;
+    }
+
+    std::string tsName = "/TimeStep" + std::to_string(m_CurrentTimeStep + 1);
+    m_GroupId = H5Gopen(m_FileId, tsName.c_str(), H5P_DEFAULT);
+    if (m_GroupId < 0)
+    {
+        throw std::runtime_error("Unable to open group " + tsName +
+                                 " for reading");
+    }
+    ++m_CurrentTimeStep;
+
+    return true;
+}
+
+void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray)
+{
+    if (m_GroupId < 0)
+    {
+        throw std::runtime_error("Can't read variable " + varName +
+                                 " since a group is not currently open");
+    }
+
+    hid_t dataSetId = H5Dopen(m_GroupId, varName.c_str(), H5P_DEFAULT);
+    if (dataSetId < 0)
+    {
+        throw std::runtime_error("Unable to open dataset " + varName);
+    }
+
+    hid_t fileSpace = H5Dget_space(dataSetId);
+    if (fileSpace < 0)
+    {
+        throw std::runtime_error("Unable to get filespace for dataset " +
+                                 varName);
+    }
+
+    hid_t h5type = H5Dget_type(dataSetId);
+    hid_t ret =
+        H5Dread(dataSetId, h5type, H5S_ALL, H5S_ALL, H5P_DEFAULT, dataArray);
+
+    H5Sclose(fileSpace);
+    H5Dclose(dataSetId);
+}
+
 //******************************************************************************
 // 1D 1x8 test data
 //******************************************************************************
@@ -34,8 +191,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
 
     // Write test data using ADIOS2
     {
-        adios::ADIOS adios(adios::Verbose::WARN, true);
-
+        adios::ADIOS adios(adios::Verbose::WARN, true); // moved up
         // Declare 1D variables
         {
             auto &var_i8 = adios.DefineVariable<char>("i8", adios::Dims{8});
@@ -96,10 +252,115 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
         engine->Close();
     }
 
-    // Read test data using HDF5
+// Read test data using HDF5
+#ifdef ADIOS2_HAVE_MPI
+    // Read everything from rank 0
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0)
+#endif
     {
-        ASSERT_TRUE(false)
-            << "Native HDF5 read validation is not yet implemented";
+        std::array<char, 8> I8;
+        std::array<int16_t, 8> I16;
+        std::array<int32_t, 8> I32;
+        std::array<int64_t, 8> I64;
+        std::array<unsigned char, 8> U8;
+        std::array<uint16_t, 8> U16;
+        std::array<uint32_t, 8> U32;
+        std::array<uint64_t, 8> U64;
+        std::array<float, 8> R32;
+        std::array<double, 8> R64;
+
+        HDF5NativeReader hdf5Reader(fname);
+
+        // Read stuff
+        for (size_t t = 0; t < 3; ++t)
+        {
+            std::vector<hsize_t> gDims;
+            hid_t h5Type;
+
+            hdf5Reader.GetVarInfo("i8", gDims, h5Type);
+
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_CHAR), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("i8", I8.data());
+
+            hdf5Reader.GetVarInfo("i16", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_SHORT), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("i16", I16.data());
+
+            hdf5Reader.GetVarInfo("i32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_INT), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("i32", I32.data());
+
+            hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("i64", I64.data());
+
+            hdf5Reader.GetVarInfo("u8", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UCHAR), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("u8", U8.data());
+
+            hdf5Reader.GetVarInfo("u16", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_USHORT), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("u16", U16.data());
+
+            hdf5Reader.GetVarInfo("u32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UINT), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("u32", U32.data());
+
+            hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("u64", U64.data());
+
+            hdf5Reader.GetVarInfo("r32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_FLOAT), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("r32", R32.data());
+
+            hdf5Reader.GetVarInfo("r64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_DOUBLE), 1);
+            ASSERT_EQ(gDims.size(), 1);
+            ASSERT_EQ(gDims[0], 8);
+            hdf5Reader.ReadVar("r64", R64.data());
+
+            // Check if it's correct
+            for (size_t i = 0; i < 8; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
+                EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
+                EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
+                EXPECT_EQ(U8[i], m_TestData.U8[i + t]) << msg;
+                EXPECT_EQ(U16[i], m_TestData.U16[i + t]) << msg;
+                EXPECT_EQ(U32[i], m_TestData.U32[i + t]) << msg;
+                EXPECT_EQ(U64[i], m_TestData.U64[i + t]) << msg;
+                EXPECT_EQ(R32[i], m_TestData.R32[i + t]) << msg;
+                EXPECT_EQ(R64[i], m_TestData.R64[i + t]) << msg;
+            }
+
+            hdf5Reader.Advance();
+        }
     }
 }
 
@@ -196,10 +457,123 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
         engine->Close();
     }
 
-    // Read test data using HDF5
+// Read test data using HDF5
+#ifdef ADIOS2_HAVE_MPI
+    // Read everything from rank 0
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0)
+#endif
     {
-        ASSERT_TRUE(false)
-            << "Native HDF5 read validation is not yet implemented";
+        HDF5NativeReader hdf5Reader(fname);
+
+        std::array<char, 8> I8;
+        std::array<int16_t, 8> I16;
+        std::array<int32_t, 8> I32;
+        std::array<int64_t, 8> I64;
+        std::array<unsigned char, 8> U8;
+        std::array<uint16_t, 8> U16;
+        std::array<uint32_t, 8> U32;
+        std::array<uint64_t, 8> U64;
+        std::array<float, 8> R32;
+        std::array<double, 8> R64;
+
+        // Read stuff
+        for (size_t t = 0; t < 3; ++t)
+        {
+            std::vector<hsize_t> gDims;
+            hid_t h5Type;
+
+            hdf5Reader.GetVarInfo("i8", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_CHAR), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("i8", I8.data());
+
+            hdf5Reader.GetVarInfo("i16", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_SHORT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("i16", I16.data());
+
+            hdf5Reader.GetVarInfo("i32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_INT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("i32", I32.data());
+
+            hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("i64", I64.data());
+
+            hdf5Reader.GetVarInfo("u8", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UCHAR), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("u8", U8.data());
+
+            hdf5Reader.GetVarInfo("u16", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_USHORT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("u16", U16.data());
+
+            hdf5Reader.GetVarInfo("u32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UINT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("u32", U32.data());
+
+            hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("u64", U64.data());
+
+            hdf5Reader.GetVarInfo("r32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_FLOAT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("r32", R32.data());
+
+            hdf5Reader.GetVarInfo("r64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_DOUBLE), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 2);
+            ASSERT_EQ(gDims[1], 4);
+            hdf5Reader.ReadVar("r64", R64.data());
+
+            // Check if it's correct
+            for (size_t i = 0; i < 8; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
+                EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
+                EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
+                EXPECT_EQ(U8[i], m_TestData.U8[i + t]) << msg;
+                EXPECT_EQ(U16[i], m_TestData.U16[i + t]) << msg;
+                EXPECT_EQ(U32[i], m_TestData.U32[i + t]) << msg;
+                EXPECT_EQ(U64[i], m_TestData.U64[i + t]) << msg;
+                EXPECT_EQ(R32[i], m_TestData.R32[i + t]) << msg;
+                EXPECT_EQ(R64[i], m_TestData.R64[i + t]) << msg;
+            }
+            hdf5Reader.Advance();
+        }
     }
 }
 
@@ -296,10 +670,123 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
         engine->Close();
     }
 
-    // Read test data using HDF5
+// Read test data using HDF5
+#ifdef ADIOS2_HAVE_MPI
+    // Read everything from rank 0
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0)
+#endif
     {
-        ASSERT_TRUE(false)
-            << "Native HDF5 read validation is not yet implemented";
+
+        HDF5NativeReader hdf5Reader(fname);
+
+        std::array<char, 8> I8;
+        std::array<int16_t, 8> I16;
+        std::array<int32_t, 8> I32;
+        std::array<int64_t, 8> I64;
+        std::array<unsigned char, 8> U8;
+        std::array<uint16_t, 8> U16;
+        std::array<uint32_t, 8> U32;
+        std::array<uint64_t, 8> U64;
+        std::array<float, 8> R32;
+        std::array<double, 8> R64;
+
+        // Read stuff
+        for (size_t t = 0; t < 3; ++t)
+        {
+            std::vector<hsize_t> gDims;
+            hid_t h5Type;
+
+            hdf5Reader.GetVarInfo("i8", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_CHAR), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("i8", I8.data());
+
+            hdf5Reader.GetVarInfo("i16", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_SHORT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("i16", I16.data());
+
+            hdf5Reader.GetVarInfo("i32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_INT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("i32", I32.data());
+
+            hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("i64", I64.data());
+
+            hdf5Reader.GetVarInfo("u8", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UCHAR), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("u8", U8.data());
+
+            hdf5Reader.GetVarInfo("u16", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_USHORT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("u16", U16.data());
+
+            hdf5Reader.GetVarInfo("u32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_UINT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("u32", U32.data());
+
+            hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("u64", U64.data());
+
+            hdf5Reader.GetVarInfo("r32", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_FLOAT), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("r32", R32.data());
+
+            hdf5Reader.GetVarInfo("r64", gDims, h5Type);
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_DOUBLE), 1);
+            ASSERT_EQ(gDims.size(), 2);
+            ASSERT_EQ(gDims[0], 4);
+            ASSERT_EQ(gDims[1], 2);
+            hdf5Reader.ReadVar("r64", R64.data());
+
+            for (size_t i = 0; i < 8; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
+                EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
+                EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
+                EXPECT_EQ(U8[i], m_TestData.U8[i + t]) << msg;
+                EXPECT_EQ(U16[i], m_TestData.U16[i + t]) << msg;
+                EXPECT_EQ(U32[i], m_TestData.U32[i + t]) << msg;
+                EXPECT_EQ(U64[i], m_TestData.U64[i + t]) << msg;
+                EXPECT_EQ(R32[i], m_TestData.R32[i + t]) << msg;
+                EXPECT_EQ(R64[i], m_TestData.R64[i + t]) << msg;
+            }
+            hdf5Reader.Advance();
+        }
     }
 }
 

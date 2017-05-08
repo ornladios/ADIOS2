@@ -8,9 +8,9 @@
 #include <iostream>
 #include <vector>
 
-#include <mpi.h>
-
 #include <adios2.h>
+
+#include <mpi.h>
 
 int main(int argc, char *argv[])
 {
@@ -65,6 +65,11 @@ int main(int argc, char *argv[])
         intCountDim1 = intDim1 - rank * (intDim1 / size);
     }
 
+    std::cout << " rank=" << rank << " of " << size
+              << ",  dim1 count: " << intCountDim1
+              << ", offset: " << intOffsetDim1 << std::endl;
+    std::cout << " intOffsetDim2=" << intOffsetDim2 << " " << intDim2
+              << std::endl;
     try
     {
         // Define variable and local size
@@ -82,7 +87,7 @@ int main(int argc, char *argv[])
 
         // Define method for engine creation, it is basically straight-forward
         // parameters
-        adios::Method &HDF5Settings = adios.DeclareMethod("w");
+        adios::Method &HDF5Settings = adios.DeclareMethod("hdf5");
         HDF5Settings.SetEngine("HDF5Writer");
         HDF5Settings.SetParameters("chunck=yes", "collectiveIO=yes");
         // HDF5Settings.AddTransport( "Mdtm", "localIP=128.0.0.0.1",
@@ -97,19 +102,36 @@ int main(int argc, char *argv[])
             throw std::ios_base::failure(
                 "ERROR: failed to create HDF5 I/O engine at Open\n");
 
-        HDF5Writer->Write(ioMyDoubles, myDoubles.data() +
-                                           doubleVOffset); // Base class Engine
-                                                           // own the Write<T>
-                                                           // that will call
-                                                           // overloaded Write
-                                                           // from Derived
-        HDF5Writer->Write(ioMyInts,
-                          myInts.data() + (intOffsetDim1 * intDim2 * rank));
+        int ts = 0;
+        int totalts = 3;
+        while (true)
+        {
+            if (rank == 0)
+            {
+                std::cout << " total timesteps: " << totalts << " curr: " << ts
+                          << " th" << std::endl;
+            }
+            HDF5Writer->Write(ioMyDoubles,
+                              myDoubles.data() +
+                                  doubleVOffset); // Base class Engine
+            // own the Write<T>
+            // that will call
+            // overloaded Write
+            // from Derived
+            HDF5Writer->Write(ioMyInts,
+                              myInts.data() + (intOffsetDim1 * intDim2));
 
-        HDF5Writer->Write(ioMyCFloats, myCFloats.data() + complexOffset);
-        HDF5Writer->Write(ioMyCDoubles, myCDoubles.data() + complexOffset);
-        HDF5Writer->Write(ioMyCLongDoubles,
-                          myCLongDoubles.data() + complexOffset);
+            HDF5Writer->Write(ioMyCFloats, myCFloats.data() + complexOffset);
+            HDF5Writer->Write(ioMyCDoubles, myCDoubles.data() + complexOffset);
+            HDF5Writer->Write(ioMyCLongDoubles,
+                              myCLongDoubles.data() + complexOffset);
+            ts++;
+            if (ts >= totalts)
+            {
+                break;
+            }
+            HDF5Writer->Advance();
+        }
         HDF5Writer->Close();
     }
     catch (std::invalid_argument &e)
