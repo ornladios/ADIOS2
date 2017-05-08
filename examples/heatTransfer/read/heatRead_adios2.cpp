@@ -105,8 +105,8 @@ int main(int argc, char *argv[])
     double *T = new double[vT->GetNSteps() * readsize[0] * readsize[1]];
 
     // Create a 2D selection for the subset
-    adios::SelectionBoundingBox sel(offset, readsize);
-    vT->SetSelection(sel);
+    vT->SetSelection(offset, readsize);
+    vT->SetStepSelection(0, vT->GetNSteps());
 
     // Arrays are read by scheduling one or more of them
     // and performing the reads at once
