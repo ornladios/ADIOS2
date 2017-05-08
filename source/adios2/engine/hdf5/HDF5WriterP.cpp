@@ -254,8 +254,7 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
     variable.m_AppValues = values;
     m_WrittenVariables.insert(variable.m_Name);
 
-    int dimSize = std::max(variable.m_Shape.size(),
-                           variable.m_Count.size());
+    int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
 
     std::vector<hsize_t> dimsf, count, offset;
 
@@ -287,7 +286,6 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
             count.push_back(variable.m_Shape[i]);
             offset.push_back(0);
         }
-
     }
 
     hid_t fileSpace = H5Screate_simple(dimSize, dimsf.data(), NULL);
