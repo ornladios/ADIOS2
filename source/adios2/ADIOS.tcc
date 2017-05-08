@@ -122,7 +122,7 @@ ADIOS::GetVariableMap()
 template <typename T>
 Variable<T> &ADIOS::DefineVariable(const std::string &name, const Dims shape,
                                    const Dims start, const Dims count,
-                                   bool constantShape)
+                                   const bool constantShape)
 {
     auto &variableMap = GetVariableMap<T>();
     CheckVariableInput(name, shape);

@@ -47,7 +47,7 @@ void Engine::SetCallBack(std::function<void(const void *, std::string,
 {
 }
 
-static void engineThrowUp(const std::string &engineType,
+static void EngineThrowUp(const std::string &engineType,
                           const std::string &func)
 {
     throw std::invalid_argument(
@@ -223,7 +223,7 @@ Variable<int> *Engine::InquireVariableInt(const std::string & /*name*/,
 Variable<unsigned int> *
 Engine::InquireVariableUInt(const std::string & /*name*/, const bool /*readIn*/)
 {
-    engineThrowUp(m_EngineType, "InquireVariableUInt");
+    EngineThrowUp(m_EngineType, "InquireVariableUInt");
 }
 Variable<long int> *Engine::InquireVariableLInt(const std::string & /*name*/,
                                                 const bool /*readIn*/)
@@ -290,156 +290,156 @@ VariableCompound *Engine::InquireVariableCompound(const std::string & /*name*/,
 
 void Engine::ScheduleRead(Variable<char> &variable, char *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<unsigned char> &variable,
                           unsigned char *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<short> &variable, short *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<unsigned short> &variable,
                           unsigned short *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<int> &variable, int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<unsigned int> &variable,
                           unsigned int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<long int> &variable, long int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<unsigned long int> &variable,
                           unsigned long int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<long long int> &variable,
                           long long int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<unsigned long long int> &variable,
                           unsigned long long int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<float> &variable, float *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<double> &variable, double *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<long double> &variable, long double *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<std::complex<float>> &variable,
                           std::complex<float> *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<std::complex<double>> &variable,
                           std::complex<double> *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(Variable<std::complex<long double>> &variable,
                           std::complex<long double> *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 
 void Engine::ScheduleRead(const std::string &variableName, char *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName,
                           unsigned char *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName, short *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName,
                           unsigned short *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName, int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName, unsigned int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName, long int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName,
                           unsigned long int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName,
                           long long int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName,
                           unsigned long long int *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName, float *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName, double *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName, long double *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName,
                           std::complex<float> *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName,
                           std::complex<double> *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 void Engine::ScheduleRead(const std::string &variableName,
                           std::complex<long double> *values)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
 
 void Engine::ScheduleRead(const std::string & /*variableName*/)
 {
-    engineThrowUp(m_EngineType, "ScheduleRead");
+    EngineThrowUp(m_EngineType, "ScheduleRead");
 }
-void Engine::ScheduleRead() { engineThrowUp(m_EngineType, "ScheduleRead"); }
+void Engine::ScheduleRead() { EngineThrowUp(m_EngineType, "ScheduleRead"); }
 void Engine::Release() {}
 void Engine::PerformReads(PerformReadMode /*mode*/){};
 

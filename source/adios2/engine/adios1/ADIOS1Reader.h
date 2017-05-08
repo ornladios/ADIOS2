@@ -180,30 +180,93 @@ private:
         {
             CheckADIOS1TypeCompatibility(name, GetType<T>(),
                                          vi->type); // throws
+
             if (vi->ndim > 0)
             {
                 Dims gdims = Uint64ArrayToSizetVector(vi->ndim, vi->dims);
+
+                bool joinedread = false;
                 if (gdims[0] == JoinedDim)
                 {
+                    /* Joined Array */
                     adios_inq_var_blockinfo(m_fh, vi);
                     size_t joined_size = 0;
-                    // TODO: This just looks at the first step. What's with
-                    // arrays changing over time?
                     for (int i = 0; i < *vi->nblocks; i++)
                     {
                         joined_size += vi->blockinfo[i].count[0];
                     }
                     gdims[0] = joined_size;
+                    joinedread = true;
+                }
+
+                if (!vi->global)
+                {
+                    /* Local array */
+                    for (int j = 0; j < vi->ndim; ++j)
+                    {
+                        gdims[j] = IrregularDim;
+                    }
+                }
+                else
+                {
+                    /* Check if dimensions change in time */
+                    for (int step = 1; step < vi->nsteps; ++step)
+                    {
+                        Dims dims =
+                            gdims; // GetGlobalDimsAtStep(vi, step, joinedread);
+                        for (int j = 0; j < vi->ndim; ++j)
+                        {
+                            if (dims[j] != gdims[j])
+                                gdims[j] = IrregularDim;
+                        }
+                    }
                 }
                 var = &m_ADIOS.DefineArray<T>(name, gdims);
+                if (joinedread)
+                    var->SetReadAsJoinedArray();
             }
-            else /* scalar variable */
+            else /* Scalars */
             {
-                var = &m_ADIOS.DefineVariable<T>(name);
-                if (var && readIn)
+                /* scalar variable but global value or local value*/
+                std::string aname = name + "/ReadAsArray";
+                bool isLocalValue = false;
+                for (int i = 0; i < vi->nattrs; ++i)
                 {
-                    var->m_Data = std::vector<T>(1);
-                    var->m_Data[0] = *static_cast<T *>(vi->value);
+                    if (!strcmp(m_fh->attr_namelist[vi->attr_ids[i]],
+                                aname.c_str()))
+                    {
+                        isLocalValue = true;
+                    }
+                }
+                if (isLocalValue)
+                {
+                    /* Local Value */
+                    bool changingDims = false;
+                    for (int step = 1; step < vi->nsteps; ++step)
+                    {
+                        if (vi->nblocks[step] != vi->nblocks[0])
+                            changingDims = true;
+                    }
+                    if (changingDims)
+                    {
+                        var = &m_ADIOS.DefineVariable<T>(name, {IrregularDim});
+                    }
+                    else
+                    {
+                        var = &m_ADIOS.DefineVariable<T>(
+                            name, {(unsigned int)vi->nblocks[0]});
+                    }
+                    var->SetReadAsLocalValue();
+                }
+                else
+                {
+                    /* Global value: store only one value */
+                    var = &m_ADIOS.DefineVariable<T>(name);
+                    if (var)
+                    {
+                        var->m_Data = std::vector<T>(1);
+                        var->m_Data[0] = *static_cast<T *>(vi->value);
+                    }
                 }
             }
             var->SetNSteps(vi->nsteps);
@@ -214,7 +277,12 @@ private:
 
     void ScheduleReadCommon(const std::string &name, const Dims &offs,
                             const Dims &ldims, const int fromStep,
-                            const int nSteps, void *data);
+                            const int nSteps, const bool readAsLocalValue,
+                            const bool readAsJoinedArray, void *data);
+
+    void ReadJoinedArray(const std::string &name, const Dims &offs,
+                         const Dims &ldims, const int fromStep,
+                         const int nSteps, void *data);
 
     bool CheckADIOS1TypeCompatibility(const std::string &name,
                                       std::string adios2Type,

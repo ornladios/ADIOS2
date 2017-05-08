@@ -129,10 +129,10 @@ private:
     void InitProcessGroup();
 
     bool ReOpenAsNeeded(); // return true if file is open or reopened
-    void DefineVariable(std::string name, bool isScalar,
+    void DefineVariable(std::string name, VarClass varclass,
                         enum ADIOS_DATATYPES vartype, std::string ldims,
                         std::string gdims, std::string offs);
-    void WriteVariable(std::string name, bool isScalar,
+    void WriteVariable(std::string name, VarClass varclass,
                        enum ADIOS_DATATYPES vartype, std::string ldims,
                        std::string gdims, std::string offs, const void *values);
 };

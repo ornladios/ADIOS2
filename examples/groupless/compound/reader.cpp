@@ -127,8 +127,7 @@ int main(int argc, char *argv[])
                                          "'myDoubles' in input file\n");
 
         // ? how do we know about the type? std::string varNice->m_Type
-        uint64_t gdim =
-            varNice->m_Shape[0]; // ?member var or member func?
+        uint64_t gdim = varNice->m_Shape[0]; // ?member var or member func?
         uint64_t ldim = gdim / nproc;
         uint64_t offs = rank * ldim;
         if (rank == nproc - 1)

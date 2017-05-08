@@ -12,7 +12,9 @@
 #include <vector>
 
 #include <adios2.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#endif
 
 template <class T>
 T **Make2DArray(int nRows, int nCols)
@@ -62,13 +64,19 @@ void Print2DArray(T **ptr, int nRows, int nCols, std::string name)
 
 int main(int argc, char *argv[])
 {
-    int rank, nproc;
+    int rank = 0, nproc = 1;
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+#endif
     const bool adiosDebug = true;
 
+#ifdef ADIOS2_HAVE_MPI
     adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
+#else
+    adios::ADIOS adios(adios::Verbose::WARN);
+#endif
 
     // Info variables from the file
     int Nwriters;
@@ -179,7 +187,9 @@ int main(int argc, char *argv[])
         Print2DArray(Nparts, vNparts->GetNSteps(), Nwriters, "Nparts");
         Delete2DArray(Nparts);
 
-        /* GlobalArrayFixedDims */
+        /*
+         * GlobalArrayFixedDims
+         */
         // inquiry about a variable, whose name we know
         adios::Variable<double> *vGlobalArrayFixedDims =
             bpReader->InquireVariableDouble("GlobalArrayFixedDims");
@@ -211,66 +221,47 @@ int main(int argc, char *argv[])
         Print2DArray(GlobalArrayFixedDims, vGlobalArrayFixedDims->GetNSteps(),
                      count, "GlobalArrayFixedDims");
 
-        /* LocalArrayFixedDims2D */
+        /*
+         * LocalArrayFixedDims
+         */
         // inquiry about a variable, whose name we know
-        adios::Variable<float> *vLocalArrayFixedDims2D =
-            bpReader->InquireVariableFloat("LocalArrayFixedDims2D");
-        if (vLocalArrayFixedDims2D->m_Shape[1] != adios::IrregularDim)
+        adios::Variable<float> *vLocalArrayFixedDims =
+            bpReader->InquireVariableFloat("LocalArrayFixedDims");
+        if (vLocalArrayFixedDims->m_Shape[0] != adios::IrregularDim)
         {
             throw std::ios_base::failure(
-                "Unexpected condition: LocalArrayFixedDims2D array's fast "
+                "Unexpected condition: LocalArrayFixedDims array's fast "
                 "dimension is supposed to be adios::IrregularDim indicating an "
                 "Irregular array\n");
         }
+        std::cout << "LocalArrayFixedDims is irregular. Cannot read this "
+                     "variable yet...\n";
 
-        /* LocalArrayFixedDims1D */
+        /*
+         * LocalArrayFixedDimsJoined
+         */
         // inquiry about a variable, whose name we know
-        adios::Variable<float> *vLocalArrayFixedDims1D =
-            bpReader->InquireVariableFloat("LocalArrayFixedDims1D");
-        std::cout << "LocalArrayFixedDims1D ["
-                  << vLocalArrayFixedDims1D->m_Shape[0] << "]" << std::endl;
+        adios::Variable<float> *vLocalArrayFixedDimsJoined =
+            bpReader->InquireVariableFloat("LocalArrayFixedDimsJoined");
+        std::cout << "LocalArrayFixedDimsJoined ["
+                  << vLocalArrayFixedDimsJoined->m_Shape[0] << "]";
+        std::cout << " = Cannot read this variable yet...\n";
 
-// overloaded Read from Derived
-#if 0
-        /* Ragged */
+        /*
+         * GlobalArray which changes size over time
+         */
         // inquiry about a variable, whose name we know
-        std::shared_ptr<adios::Variable<void>> varRagged =
-            bpReader.InquiryVariable("Ragged");
-        if (varRagged->m_Shape[1] != adios::VARYING_DIMENSION)
+        adios::Variable<double> *vGlobalArray =
+            bpReader->InquireVariableDouble("GlobalArray");
+        std::cout << "GlobalArray [" << vGlobalArray->m_Shape[0] << "]";
+        std::cout << " = Cannot read this variable yet...\n";
+        if (vGlobalArray->m_Shape[0] != adios::IrregularDim)
         {
             throw std::ios_base::failure(
-                "Unexpected condition: Ragged array's fast dimension "
-                "is supposed to be VARYING_DIMENSION\n");
+                "Unexpected condition: GlobalArray array's  "
+                "dimension is supposed to be adios::IrregularDim indicating an "
+                "Irregular array\n");
         }
-        // We have here varRagged->sum_nblocks, nsteps, nblocks[], global
-        if (rank <
-            varRagged->nblocks[0]) // same as rank < Nwriters in this example
-        {
-            // get per-writer size information
-            varRagged->InquiryBlocks();
-            // now we have the dimensions per block
-
-            unsigned long long int count =
-                varRagged->blockinfo[rank].m_Dimensions[0];
-            RaggedArray.resize(count);
-
-            std::unique_ptr<adios::Selection> wbsel =
-                adios.SelectionWriteblock(rank);
-            bpReader->Read<float>("Ragged", wbsel, RaggedArray.data());
-
-            // We can use bounding box selection as well
-            std::unique_ptr<adios::Selection> rbbsel =
-                adios.SelectionBoundingBox({1, count}, {rank, 0});
-            bpReader->Read<float>("Ragged", rbbsel, RaggedArray.data());
-        }
-
-        /* Extra help to process Ragged */
-        int maxRaggedDim =
-            varRagged->GetMaxGlobalDimensions(1); // contains the largest
-        std::vector<int> raggedDims = varRagged->GetVaryingGlobalDimensions(
-            1); // contains all individual sizes in that dimension
-
-#endif
 
         // Close file/stream
         bpReader->Close();
@@ -300,7 +291,8 @@ int main(int argc, char *argv[])
         }
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
-
+#endif
     return 0;
 }

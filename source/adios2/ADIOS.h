@@ -104,12 +104,12 @@ public:
     template <class T>
     Variable<T> &DefineVariable(const std::string &name, const Dims shape = {},
                                 const Dims start = {}, const Dims count = {},
-                                bool constantShape = false);
+                                const bool constantShape = false);
 
     template <class T>
-    Variable<T> &DefineScalar(const std::string &name)
+    Variable<T> &DefineLocalValue(const std::string &name)
     {
-        return DefineVariable<T>(name, {}, {}, {}, false);
+        return DefineVariable<T>(name, {LocalValueDim}, {}, {}, false);
     }
 
     template <class T>
@@ -370,7 +370,7 @@ protected: // no const to allow default empty and copy constructors
 #define declare_template_instantiation(T)                                      \
     extern template Variable<T> &ADIOS::DefineVariable<T>(                     \
         const std::string &name, const Dims, const Dims, const Dims,           \
-        bool constantShape);                                                   \
+        const bool constantShape);                                             \
                                                                                \
     extern template Variable<T> &ADIOS::GetVariable<T>(const std::string &);
 
