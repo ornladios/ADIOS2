@@ -14,6 +14,7 @@
 #include <complex>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <type_traits>
 
 #include "adios2/ADIOSConfig.h"
@@ -115,9 +116,9 @@ struct TypeInfo<T, typename std::enable_if<std::is_same<
 };
 
 const size_t UnknownDim = 0;
-const size_t JoinedDim = SIZE_MAX - 1;
-const size_t IrregularDim = JoinedDim - 1;
+const size_t JoinedDim = std::numeric_limits<size_t>::max() - 1;
 const size_t LocalValueDim = JoinedDim - 1;
+const size_t IrregularDim = JoinedDim - 2;
 const bool ConstantShape = true;
 
 enum class VarClass
