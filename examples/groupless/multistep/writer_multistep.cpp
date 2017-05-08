@@ -12,76 +12,125 @@
 #include <vector>
 
 #include <adios2.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
-
-namespace adios
-{
-typedef enum { VARYING_DIMENSION = -1, LOCAL_VALUE = 0, GLOBAL_VALUE = 1 };
-}
+#endif
 
 int main(int argc, char *argv[])
 {
-    int rank, nproc;
+    int rank = 0, nproc = 1;
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+#endif
     const bool adiosDebug = true;
     const int NSTEPS = 5;
 
-    adios::ADIOS adios(MPI_COMM_WORLD, adiosDebug);
+    // generate different random numbers on each process,
+    // but always the same sequence at each run
+    srand(rank * 32767);
 
-    // Application variable
+#ifdef ADIOS2_HAVE_MPI
+    adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
+#else
+    adios::ADIOS adios(adios::Verbose::WARN);
+#endif
+
+    // Application variables for output
+    // 1. Global value, constant across processes, constant over time
     const unsigned int Nx = 10;
-    int Nparts; // random size per process, 5..10 each
+    // 2. Local value, varying across processes, constant over time
+    const int ProcessID = rank; // = rank
+    // 3. Global array, global dimensions, local dimensions and offsets are
+    // constant over time
+    std::vector<double> GlobalArrayFixedDims(Nx);
 
-    std::vector<double> NiceArray(Nx);
-    for (int i = 0; i < Nx; i++)
-    {
-        NiceArray[i] = rank * Nx + (double)i;
-    }
+    // 4. Local array, local dimensions are
+    // constant over time (but different across processors here)
+    std::vector<float> LocalArrayFixedDims(nproc - rank + 1, rank);
 
-    std::vector<float> RaggedArray;
+    // 5. Global value, constant across processes, VARYING value over time
+    unsigned int Ny = 0;
+    // 6. Local value, varying across processes, VARYING over time
+    unsigned int Nparts; // random size per process, 5..10 each
+    // 7. Global array, dimensions and offsets are VARYING over time
+    std::vector<double> GlobalArray;
+    // 8. Local array, dimensions and offsets are VARYING over time
+    std::vector<float> IrregularArray;
 
     try
     {
-        // Define group and variables with transforms, variables don't have
-        // functions, only group can access variables
+        /*
+         * Define variables
+         */
+        // 1. Global value, constant across processes, constant over time
         adios::Variable<unsigned int> &varNX =
-            adios.DefineVariable<unsigned int>(
-                "NX"); // global single-value across processes
-        adios::Variable<int> &varNproc = adios.DefineVariable<int>(
-            "nproc", adios::GLOBAL_VALUE); // same def for global value
-        adios::Variable<int> &varNparts =
-            adios.DefineVariable<int>("Nparts",
-                                      adios::LOCAL_VALUE); // a single-value
-                                                           // different on
-                                                           // every process
-        adios::Variable<double> &varNice = adios.DefineVariable<double>(
-            "Nice", {nproc * Nx}); // 1D global array
-        adios::Variable<float> &varRagged = adios.DefineVariable<float>(
-            "Ragged", {nproc, adios::VARYING_DIMENSION}); // ragged array
+            adios.DefineVariable<unsigned int>("NX");
+        adios::Variable<int> &varNproc = adios.DefineVariable<int>("Nproc");
+
+        // 2. Local value, varying across processes, constant over time
+        adios::Variable<int> &varProcessID =
+            adios.DefineVariable<int>("ProcessID", {adios::LocalValueDim});
+
+        // 3. Global array, global dimensions (shape), offsets (start) and local
+        // dimensions (count)  are  constant over time
+        adios::Variable<double> &varGlobalArrayFixedDims =
+            adios.DefineVariable<double>("GlobalArrayFixedDims", {nproc * Nx});
+
+        // 4. Local array, local dimensions and offsets are
+        // constant over time.
+        // 4.a. Want to see this at reading as a bunch of local arrays
+        adios::Variable<float> &varLocalArrayFixedDims =
+            adios.DefineVariable<float>("LocalArrayFixedDims", {}, {},
+                                        {LocalArrayFixedDims.size()});
+        // 4.b. Joined array, a 1D array, with global dimension and offsets
+        // calculated at read time
+        adios::Variable<float> &varLocalArrayFixedDimsJoined =
+            adios.DefineVariable<float>("LocalArrayFixedDimsJoined",
+                                        {adios::JoinedDim}, {},
+                                        {LocalArrayFixedDims.size()});
+
+        // 5. Global value, constant across processes, VARYING value over time
+        adios::Variable<unsigned int> &varNY =
+            adios.DefineVariable<unsigned int>("NY");
+
+        // 6. Local value, varying across processes, VARYING over time
+        adios::Variable<unsigned int> &varNparts =
+            adios.DefineVariable<unsigned int>("Nparts",
+                                               {adios::LocalValueDim});
+
+        // 7. Global array, dimensions and offsets are VARYING over time
+        adios::Variable<double> &varGlobalArray =
+            adios.DefineVariable<double>("GlobalArray", {adios::UnknownDim});
+
+        // 8. Local array, dimensions and offsets are VARYING over time
+        adios::Variable<float> &varIrregularArray = adios.DefineVariable<float>(
+            "Irregular", {}, {}, {adios::UnknownDim});
 
         // add transform to variable in group...not executed (just testing API)
-        adios::Transform bzip2 = adios::transform::BZIP2();
-        varNice->AddTransform(bzip2, 1);
+        // adios::Transform bzip2 = adios::transform::BZIP2();
+        // varNice->AddTransform(bzip2, 1);
 
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios::Method &bpWriterSettings = adios.GetMethod("output");
-        if (bpWriterSettings.undeclared())
+        adios::Method &bpWriterSettings = adios.DeclareMethod("output");
+        if (!bpWriterSettings.IsUserDefined())
         {
             // if not defined by user, we can change the default settings
-            bpWriterSettings.SetEngine("BP"); // BP is the default engine
-            bpWriterSettings.AddTransport(
-                "File",
-                "lucky=yes"); // ISO-POSIX file is the default transport
-                              // Passing parameters to the transport
-            bpWriterSettings.SetParameters(
-                "have_metadata_file",
-                "yes"); // Passing parameters to the engine
-            bpWriterSettings.SetParameters("Aggregation",
-                                           (nproc + 1) /
-                                               2); // number of aggregators
+            bpWriterSettings.SetEngine("ADIOS1Writer");
+            // ISO-POSIX file is the default transport
+            // Passing parameters to the transport
+            bpWriterSettings.AddTransport("File"
+#ifdef ADIOS2_HAVE_MPI
+                                          ,
+                                          "library=MPI-IO"
+#endif
+                                          );
+            // Passing parameters to the engine
+            bpWriterSettings.SetParameters("have_metadata_file", "yes");
+            // number of aggregators
+            // bpWriterSettings.SetParameters("Aggregation", (nproc + 1) / 2);
         }
 
         // Open returns a smart pointer to Engine containing the Derived class
@@ -95,54 +144,81 @@ int main(int argc, char *argv[])
             throw std::ios_base::failure(
                 "ERROR: failed to open ADIOS bpWriter\n");
 
-        for (int step; step < NSTEPS; step++)
+        for (int step = 0; step < NSTEPS; step++)
         {
-            int Nparts = rand() % 6 + 5; // random size per process, 5..10 each
-            RaggedArray.reserve(Nparts);
+            for (int i = 0; i < Nx; i++)
+            {
+                GlobalArrayFixedDims[i] =
+                    step * Nx * nproc * 1.0 + rank * Nx * 1.0 + (double)i;
+            }
+
+            // Create and fill the arrays whose dimensions change over time
+            Ny = Nx + step;
+            GlobalArray.reserve(Ny);
+            for (int i = 0; i < Ny; i++)
+            {
+                GlobalArray[i] = rank * Ny + (double)i;
+            }
+
+            // random size per process, 5..10 each
+            Nparts = rand() % 6 + 5;
+            IrregularArray.reserve(Nparts);
             for (int i = 0; i < Nparts; i++)
             {
-                RaggedArray[i] = rank * Nx + (float)i;
+                IrregularArray[i] = rank * Nx + (float)i;
             }
 
+            // 1. and 5. Writing a global scalar from only one process
             if (rank == 0)
             {
-                // Writing a global scalar from only one process
-                bpWriter->Write<unsigned int>(varNX, &Nx);
+                // 5. Writing a global constant scalar only once
+                if (step == 0)
+                {
+                    bpWriter->Write<unsigned int>(varNX, Nx);
+                    bpWriter->Write<int>("Nproc", nproc);
+                }
+                bpWriter->Write<unsigned int>(varNY, Ny);
             }
-            // Writing a local scalar on every process. Will be shown at reading
-            // as a
-            // 1D array
-            bpWriter->Write<int>(varNparts, &Nparts);
 
-            // Writing a global scalar on every process is useless. Information
-            // will
-            // be thrown away
-            // and only rank 0's data will be in the output
-            bpWriter->Write<int>(varNproc, &nproc);
+            // 2. and 6. Writing a local scalar on every process. Will be shown
+            // at reading as a 1D array
+            if (step == 0)
+            {
+                bpWriter->Write<int>(varProcessID, ProcessID);
+            }
+            bpWriter->Write<unsigned int>(varNparts, Nparts);
 
+            // 3.
             // Make a 1D selection to describe the local dimensions of the
-            // variable we
-            // write and
-            // its offsets in the global spaces
-            adios::Selection &sel = adios.SelectionBoundingBox(
-                {Nx}, {rank * Nx}); // local dims and offsets; both as list
-            NiceArray.SetSelection(sel);
-            bpWriter->Write<double>(varNice,
-                                    NiceArray.data()); // Base class Engine
-                                                       // own the Write<T>
-                                                       // that will call
-                                                       // overloaded Write
-                                                       // from Derived
+            // variable we write and its offsets in the global spaces
+            adios::SelectionBoundingBox sel({rank * Nx}, {Nx});
+            varGlobalArrayFixedDims.SetSelection(sel);
+            bpWriter->Write<double>(varGlobalArrayFixedDims,
+                                    GlobalArrayFixedDims.data());
 
-            adios::Selection &lsel =
-                adios.SelectionBoundingBox({1, Nparts}, {rank, 0});
-            RaggedArray.SetSelection(sel);
-            bpWriter->Write<float>(varRagged, RaggedArray.data()); // Base class
-            // Engine own the
-            // Write<T> that
-            // will call
-            // overloaded Write
-            // from Derived
+            // 4.a Local array that will be shown at read as an irregular 2D
+            // global array
+            bpWriter->Write<float>(varLocalArrayFixedDims,
+                                   LocalArrayFixedDims.data());
+            // 4.b Local array that will be shown at read as a joined 1D
+            // global array
+            bpWriter->Write<float>(varLocalArrayFixedDimsJoined,
+                                   LocalArrayFixedDims.data());
+
+            // 7.
+            // Make a 1D selection to describe the local dimensions of the
+            // variable we write and its offsets in the global spaces
+            // Also set the global dimension of the array now
+
+            // TODO: varGlobalArray.SetGlobalDimension({nproc * Ny});
+            varGlobalArray.m_Shape = adios::Dims({nproc * Ny});
+            varGlobalArray.SetSelection({rank * Ny}, {Ny});
+            bpWriter->Write<double>(varGlobalArray, GlobalArray.data());
+
+            // 8. Local array that will be shown at read as a ragged 2D global
+            // array with ranks in slow dimension
+            varIrregularArray.SetSelection({}, {1, Nparts});
+            bpWriter->Write<float>(varIrregularArray, IrregularArray.data());
 
             // Indicate we are done for this step
             // N-to-M Aggregation, disk I/O will be performed during this call,
@@ -179,7 +255,9 @@ int main(int argc, char *argv[])
         }
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }

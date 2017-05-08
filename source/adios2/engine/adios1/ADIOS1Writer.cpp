@@ -72,83 +72,116 @@ bool ADIOS1Writer::ReOpenAsNeeded()
     return m_IsFileOpen;
 }
 
-void ADIOS1Writer::DefineVariable(std::string name, bool isScalar,
+void ADIOS1Writer::DefineVariable(std::string name, VarClass varclass,
                                   enum ADIOS_DATATYPES vartype,
                                   std::string ldims, std::string gdims,
                                   std::string offs)
 {
-    if (isScalar)
+    switch (varclass)
     {
+    case VarClass::GlobalValue:
         adios_define_var(m_adios_group, name.c_str(), "", vartype, "", "", "");
-    }
-    else
-    {
+        break;
+    case VarClass::LocalValue:
+        adios_define_var(m_adios_group, name.c_str(), "", vartype, "", "", "");
+        adios_define_attribute(m_adios_group, "ReadAsArray", name.c_str(),
+                               adios_byte, "1", nullptr);
+        break;
+    case VarClass::GlobalArray:
+    case VarClass::LocalArray:
+    case VarClass::JoinedArray:
         adios_define_var(m_adios_group, name.c_str(), "", vartype,
                          ldims.c_str(), gdims.c_str(), offs.c_str());
+        break;
     }
 }
 
-void ADIOS1Writer::WriteVariable(std::string name, bool isScalar,
+void ADIOS1Writer::WriteVariable(std::string name, VarClass varclass,
                                  enum ADIOS_DATATYPES vartype,
                                  std::string ldims, std::string gdims,
                                  std::string offs, const void *values)
 {
     if (ReOpenAsNeeded())
     {
-        DefineVariable(name, isScalar, vartype, ldims, gdims, offs);
+        DefineVariable(name, varclass, vartype, ldims, gdims, offs);
         adios_write(m_adios_file, name.c_str(), values);
     }
 }
 
+static std::string DimsToCSV_LocalAware(const std::vector<std::size_t> &dims)
+{
+    std::string dimsCSV;
+    bool localVar = false;
+
+    for (const auto dim : dims)
+    {
+        dimsCSV += std::to_string(dim) + ",";
+        if (dim == JoinedDim || dim == IrregularDim)
+            localVar = true;
+    }
+
+    if (dimsCSV.empty() == false)
+    {
+        dimsCSV.pop_back();
+    }
+
+    /*if (localVar)
+    {
+        dimsCSV.clear();
+    }*/
+
+    return dimsCSV;
+}
+
 void ADIOS1Writer::Write(Variable<char> &variable, const char *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_byte,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_byte,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned char> &variable,
                          const unsigned char *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_unsigned_byte,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_unsigned_byte,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<short> &variable, const short *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_short,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_short,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned short> &variable,
                          const unsigned short *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_unsigned_short,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_unsigned_short,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<int> &variable, const int *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_integer,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_integer,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned int> &variable,
                          const unsigned int *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_unsigned_integer,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_unsigned_integer,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<long int> &variable, const long int *values)
@@ -159,10 +192,10 @@ void ADIOS1Writer::Write(Variable<long int> &variable, const long int *values)
     {
         type = adios_long;
     }
-    WriteVariable(variable.m_Name, variable.m_IsScalar, type,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, type,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned long int> &variable,
@@ -174,44 +207,44 @@ void ADIOS1Writer::Write(Variable<unsigned long int> &variable,
     {
         type = adios_unsigned_long;
     }
-    WriteVariable(variable.m_Name, variable.m_IsScalar, type,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, type,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<long long int> &variable,
                          const long long int *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_long,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_long,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<unsigned long long int> &variable,
                          const unsigned long long int *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_unsigned_long,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_unsigned_long,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<float> &variable, const float *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_real,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_real,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<double> &variable, const double *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_double,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_double,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<long double> &variable,
@@ -220,28 +253,28 @@ void ADIOS1Writer::Write(Variable<long double> &variable,
     /* TODO: This is faulty: adios_long_double expects 16 bytes per elements,
      * but
      * long double is compiler dependent */
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_long_double,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_long_double,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<std::complex<float>> &variable,
                          const std::complex<float> *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_complex,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_complex,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<std::complex<double>> &variable,
                          const std::complex<double> *values)
 {
-    WriteVariable(variable.m_Name, variable.m_IsScalar, adios_double_complex,
-                  DimsToCSV(variable.m_LocalDimensions),
-                  DimsToCSV(variable.m_GlobalDimensions),
-                  DimsToCSV(variable.m_Offsets), values);
+    WriteVariable(variable.m_Name, variable.m_VarClass, adios_double_complex,
+                  DimsToCSV_LocalAware(variable.m_Count),
+                  DimsToCSV_LocalAware(variable.m_Shape),
+                  DimsToCSV_LocalAware(variable.m_Start), values);
 }
 
 void ADIOS1Writer::Write(Variable<std::complex<long double>> &variable,

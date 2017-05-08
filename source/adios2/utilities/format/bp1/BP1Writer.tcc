@@ -33,7 +33,7 @@ BP1Writer::ResizeResult BP1Writer::ResizeBuffer(const Variable<T> &variable)
             return ResizeResult::FLUSH;
         }
     }
-    
+
     return ResizeResult::SUCCESS;
 }
 
@@ -145,7 +145,7 @@ void BP1Writer::WriteVariableMetadataInData(
     constexpr char no = 'n'; // isDimension
     CopyToBuffer(buffer, position, &no);
 
-    const uint8_t dimensions = variable.m_LocalDimensions.size();
+    const uint8_t dimensions = variable.m_Count.size();
     CopyToBuffer(buffer, position, &dimensions); // count
 
     // 27 is from 9 bytes for each: var y/n + local, var y/n + global dimension,
@@ -153,9 +153,8 @@ void BP1Writer::WriteVariableMetadataInData(
     uint16_t dimensionsLength = 27 * dimensions;
     CopyToBuffer(buffer, position, &dimensionsLength); // length
 
-    WriteDimensionsRecord(variable.m_LocalDimensions,
-                          variable.m_GlobalDimensions, variable.m_Offsets, 18,
-                          buffer, position);
+    WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
+                          18, buffer, position);
 
     // CHARACTERISTICS
     // FIX
@@ -304,12 +303,11 @@ void BP1Writer::WriteVariableCharacteristics(
     // DIMENSIONS
     uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
-    const uint8_t dimensions = variable.m_LocalDimensions.size();
+    const uint8_t dimensions = variable.m_Count.size();
     InsertToBuffer(buffer, &dimensions); // count
     const uint16_t dimensionsLength = 24 * dimensions;
     InsertToBuffer(buffer, &dimensionsLength); // length
-    WriteDimensionsRecord(variable.m_LocalDimensions,
-                          variable.m_GlobalDimensions, variable.m_Offsets,
+    WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
                           buffer);
     ++characteristicsCounter;
 
@@ -353,7 +351,7 @@ void BP1Writer::WriteVariableCharacteristics(
     // DIMENSIONS
     uint8_t characteristicID = characteristic_dimensions;
     CopyToBuffer(buffer, position, &characteristicID);
-    const uint8_t dimensions = variable.m_LocalDimensions.size();
+    const uint8_t dimensions = variable.m_Count.size();
 
     // 24 = 3 local, global, offset x 8 bytes/each
     const int16_t lengthOfDimensionsCharacteristic = 24 * dimensions + 3;
@@ -362,9 +360,8 @@ void BP1Writer::WriteVariableCharacteristics(
     CopyToBuffer(buffer, position, &dimensions); // count
     const uint16_t dimensionsLength = 24 * dimensions;
     CopyToBuffer(buffer, position, &dimensionsLength); // length
-    WriteDimensionsRecord(variable.m_LocalDimensions,
-                          variable.m_GlobalDimensions, variable.m_Offsets, 16,
-                          buffer, position);
+    WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
+                          16, buffer, position);
     ++characteristicsCounter;
 
     // VALUE for SCALAR or STAT min, max for ARRAY

@@ -14,35 +14,13 @@
 #include <complex>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <type_traits>
 
 #include "adios2/ADIOSConfig.h"
 
 namespace adios
 {
-
-/** Use these values in Dims() when defining variables
- */
-enum
-{
-    VARYING_DIMENSION = -1, //!< VARYING_DIMENSION
-    LOCAL_VALUE = 0,        //!< LOCAL_VALUE
-    GLOBAL_VALUE = 1        //!< GLOBAL_VALUE
-};
-
-enum class Verbose
-{
-    ERROR = 0,
-    WARN = 1,
-    INFO = 2,
-    DEBUG = 3
-};
-
-enum class IOMode
-{
-    INDEPENDENT = 0,
-    COLLECTIVE = 1
-};
 
 // Alias the fixed sized typed into the adios namespace to make sure we're
 // always using the right ones.
@@ -135,6 +113,35 @@ struct TypeInfo<T, typename std::enable_if<std::is_same<
 {
     using IOType = T;
     using ValueType = typename T::value_type;
+};
+
+const size_t UnknownDim = 0;
+const size_t JoinedDim = std::numeric_limits<size_t>::max() - 1;
+const size_t LocalValueDim = JoinedDim - 1;
+const size_t IrregularDim = JoinedDim - 2;
+const bool ConstantShape = true;
+
+enum class VarClass
+{
+    GlobalValue,
+    LocalValue,
+    GlobalArray,
+    JoinedArray,
+    LocalArray
+};
+
+enum class Verbose
+{
+    ERROR = 0,
+    WARN = 1,
+    INFO = 2,
+    DEBUG = 3
+};
+
+enum class IOMode
+{
+    INDEPENDENT = 0,
+    COLLECTIVE = 1
 };
 
 } // end namespace adios

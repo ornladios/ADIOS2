@@ -97,13 +97,34 @@ public:
      * @param dimensions
      * @param selections
      * @param offsets
+     * @constantShape true if dimensions, offsets and local sizes don't change
+     * over time
      * @return reference to Variable object
      */
     template <class T>
-    Variable<T> &DefineVariable(const std::string &name,
-                                const Dims localDimensions = Dims{1},
-                                const Dims globalDimensions = Dims{},
-                                const Dims offsets = Dims{});
+    Variable<T> &DefineVariable(const std::string &name, const Dims shape = {},
+                                const Dims start = {}, const Dims count = {},
+                                const bool constantShape = false);
+
+    template <class T>
+    Variable<T> &DefineLocalValue(const std::string &name)
+    {
+        return DefineVariable<T>(name, {LocalValueDim}, {}, {}, false);
+    }
+
+    template <class T>
+    Variable<T> &DefineLocalArray(const std::string &name, bool isJoined,
+                                  Dims shape = {})
+    {
+        return DefineVariable<T>(name, shape, {}, {}, false);
+    }
+
+    template <class T>
+    Variable<T> &DefineArray(const std::string &name, Dims shape = {},
+                             Dims start = {}, Dims count = {})
+    {
+        return DefineVariable<T>(name, shape, start, count, false);
+    }
 
     template <class T>
     Variable<T> &GetVariable(const std::string &name);
@@ -348,7 +369,8 @@ protected: // no const to allow default empty and copy constructors
 // Explicit declaration of the template methods
 #define declare_template_instantiation(T)                                      \
     extern template Variable<T> &ADIOS::DefineVariable<T>(                     \
-        const std::string &name, const Dims, const Dims, const Dims);          \
+        const std::string &name, const Dims, const Dims, const Dims,           \
+        const bool constantShape);                                             \
                                                                                \
     extern template Variable<T> &ADIOS::GetVariable<T>(const std::string &);
 

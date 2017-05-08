@@ -254,28 +254,27 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
     variable.m_AppValues = values;
     m_WrittenVariables.insert(variable.m_Name);
 
-    int dimSize = std::max(variable.m_GlobalDimensions.size(),
-                           variable.m_LocalDimensions.size());
+    int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
 
     std::vector<hsize_t> dimsf, count, offset;
 
     for (int i = 0; i < dimSize; i++)
     {
-        if (variable.m_GlobalDimensions.size() == dimSize)
+        if (variable.m_Shape.size() == dimSize)
         {
-            dimsf.push_back(variable.m_GlobalDimensions[i]);
+            dimsf.push_back(variable.m_Shape[i]);
         }
         else
         {
-            dimsf.push_back(variable.m_LocalDimensions[i]);
+            dimsf.push_back(variable.m_Count[i]);
         }
 
-        if (variable.m_LocalDimensions.size() == dimSize)
+        if (variable.m_Count.size() == dimSize)
         {
-            count.push_back(variable.m_LocalDimensions[i]);
-            if (variable.m_Offsets.size() == dimSize)
+            count.push_back(variable.m_Count[i]);
+            if (variable.m_Start.size() == dimSize)
             {
-                offset.push_back(variable.m_Offsets[i]);
+                offset.push_back(variable.m_Start[i]);
             }
             else
             {
@@ -284,7 +283,7 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
         }
         else
         {
-            count.push_back(variable.m_GlobalDimensions[i]);
+            count.push_back(variable.m_Shape[i]);
             offset.push_back(0);
         }
     }

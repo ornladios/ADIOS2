@@ -44,6 +44,14 @@ typedef enum {
     LATEST_AVAILABLE = 3, // reader advance modes
 } AdvanceMode;
 
+enum class AdvanceStatus
+{
+    OK = 0,
+    STEP_NOT_READY = 1,
+    END_OF_STREAM = 2,
+    OTHER_ERROR = 3
+};
+
 /**
  * Base class for Engine operations managing shared-memory, and buffer and
  * variables transform and transport operations
@@ -242,9 +250,10 @@ public:
      * must use Read(variable) instead intentionally
      */
     template <class T>
-    void Read(Variable<T> &variable, const T *values)
+    void Read(Variable<T> &variable, T *values)
     {
-        Read(variable, values);
+        ScheduleRead(variable, values);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -253,9 +262,10 @@ public:
      * @param values
      */
     template <class T>
-    void Read(const std::string variableName, const T *values)
+    void Read(const std::string &variableName, T *values)
     {
-        Read(variableName, values);
+        ScheduleRead(variableName, values);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -264,9 +274,10 @@ public:
      * @param values
      */
     template <class T>
-    void Read(Variable<T> &variable, const T &values)
+    void Read(Variable<T> &variable, T &values)
     {
-        Read(variable, &values);
+        ScheduleRead(variable, &values);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -275,9 +286,10 @@ public:
      * @param values
      */
     template <class T>
-    void Read(const std::string variableName, const T &values)
+    void Read(const std::string &variableName, T &values)
     {
-        Read(variableName, &values);
+        ScheduleRead(variableName, &values);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -287,7 +299,8 @@ public:
     template <class T>
     void Read(Variable<T> &variable)
     {
-        Read(variable, nullptr);
+        ScheduleRead(variable);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
 
     /**
@@ -295,12 +308,11 @@ public:
      * @param variableName
      */
     template <class T>
-    void Read(const std::string variableName)
+    void Read(const std::string &variableName)
     {
-        Read(variableName, nullptr);
+        ScheduleRead(variableName);
+        PerformReads(PerformReadMode::BLOCKINGREAD);
     }
-
-    virtual void Read(Variable<double> &variable, const double *values);
 
     /**
      * Read function that adds static checking on the variable to be passed by
@@ -322,7 +334,7 @@ public:
      * @param values
      */
     template <class T>
-    void ScheduleRead(const std::string variableName, T *values)
+    void ScheduleRead(const std::string &variableName, T *values)
     {
         ScheduleRead(variableName, values);
     }
@@ -344,7 +356,7 @@ public:
      * @param values
      */
     template <class T>
-    void ScheduleRead(const std::string variableName, T &values)
+    void ScheduleRead(const std::string &variableName, T &values)
     {
         ScheduleRead(variableName, &values);
     }
@@ -353,19 +365,68 @@ public:
      * Unallocated version, ADIOS will allocate space for incoming data
      * @param variableName
      */
-    void ScheduleRead(const std::string variableName)
-    {
-        ScheduleRead(variableName, nullptr);
-    }
+    virtual void ScheduleRead(const std::string &variableName);
 
     /**
      * Unallocated unspecified version, ADIOS will receive any variable and will
      * allocate space for incoming data
      */
-    void ScheduleRead() { ScheduleRead(nullptr, nullptr); }
+    virtual void ScheduleRead();
 
+    virtual void ScheduleRead(Variable<char> &variable, char *values);
+    virtual void ScheduleRead(Variable<unsigned char> &variable,
+                              unsigned char *values);
+    virtual void ScheduleRead(Variable<short> &variable, short *values);
+    virtual void ScheduleRead(Variable<unsigned short> &variable,
+                              unsigned short *values);
+    virtual void ScheduleRead(Variable<int> &variable, int *values);
+    virtual void ScheduleRead(Variable<unsigned int> &variable,
+                              unsigned int *values);
+    virtual void ScheduleRead(Variable<long int> &variable, long int *values);
+    virtual void ScheduleRead(Variable<unsigned long int> &variable,
+                              unsigned long int *values);
+    virtual void ScheduleRead(Variable<long long int> &variable,
+                              long long int *values);
+    virtual void ScheduleRead(Variable<unsigned long long int> &variable,
+                              unsigned long long int *values);
+    virtual void ScheduleRead(Variable<float> &variable, float *values);
     virtual void ScheduleRead(Variable<double> &variable, double *values);
-    virtual void ScheduleRead(const std::string variableName, double *values);
+    virtual void ScheduleRead(Variable<long double> &variable,
+                              long double *values);
+    virtual void ScheduleRead(Variable<std::complex<float>> &variable,
+                              std::complex<float> *values);
+    virtual void ScheduleRead(Variable<std::complex<double>> &variable,
+                              std::complex<double> *values);
+    virtual void ScheduleRead(Variable<std::complex<long double>> &variable,
+                              std::complex<long double> *values);
+
+    virtual void ScheduleRead(const std::string &variableName, char *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned char *values);
+    virtual void ScheduleRead(const std::string &variableName, short *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned short *values);
+    virtual void ScheduleRead(const std::string &variableName, int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              long int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned long int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              long long int *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              unsigned long long int *values);
+    virtual void ScheduleRead(const std::string &variableName, float *values);
+    virtual void ScheduleRead(const std::string &variableName, double *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              long double *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              std::complex<float> *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              std::complex<double> *values);
+    virtual void ScheduleRead(const std::string &variableName,
+                              std::complex<long double> *values);
 
     /**
      * Perform all scheduled reads, either blocking until all reads completed,
@@ -408,6 +469,8 @@ public:
     virtual void
     AdvanceAsync(AdvanceMode mode,
                  std::function<void(std::shared_ptr<adios::Engine>)> callback);
+
+    AdvanceStatus GetAdvanceStatus() { return m_AdvanceStatus; }
 
     // Read API
     /**
@@ -509,6 +572,7 @@ protected:
     const std::string
         m_EndMessage; ///< added to exceptions to improve debugging
     std::set<std::string> m_WrittenVariables;
+    AdvanceStatus m_AdvanceStatus = AdvanceStatus::OK;
 
     virtual void Init();           ///< Initialize m_Capsules and m_Transports
     virtual void InitParameters(); ///< Initialize parameters from Method

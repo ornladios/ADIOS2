@@ -18,6 +18,7 @@ static int rank_saved;
 adios::ADIOS *ad = nullptr;
 std::shared_ptr<adios::Engine> bpWriter;
 adios::Variable<double> *varT = nullptr;
+adios::Variable<unsigned int> *varGndx = nullptr;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
@@ -33,12 +34,12 @@ IO::IO(const Settings &s, MPI_Comm comm)
     {
         // if not defined by user, we can change the default settings
         // BPFileWriter is the default engine
-        bpWriterSettings.SetEngine("BPFileWriter");
+        bpWriterSettings.SetEngine("ADIOS1Writer");
         // Allow an extra thread for data processing
         bpWriterSettings.AllowThreads(1);
         // ISO-POSIX file is the default transport
         // Passing parameters to the transport
-        bpWriterSettings.AddTransport("File", "lucky=yes");
+        bpWriterSettings.AddTransport("File", "library=MPI-IO");
 
         const std::string aggregatorsParam("Aggregators=" +
                                            std::to_string((s.nproc + 1) / 2));
@@ -46,15 +47,19 @@ IO::IO(const Settings &s, MPI_Comm comm)
                                        aggregatorsParam);
     }
 
+    //    ad->DefineScalar<unsigned int>("gndx", true);
+    varGndx = &ad->DefineVariable<unsigned int>("gndx");
+    ad->DefineVariable<unsigned int>("gndy");
+
     // define T as 2D global array
-    varT = &ad->DefineVariable<double>(
+    varT = &ad->DefineArray<double>(
         "T",
-        // local size, could be defined later using SetSelection()
-        {s.ndx, s.ndy},
         // Global dimensions
         {s.gndx, s.gndy},
-        // offset of the local array in the global space
-        {s.offsx, s.offsy});
+        // starting offset of the local array in the global space
+        {s.offsx, s.offsy},
+        // local size, could be defined later using SetSelection()
+        {s.ndx, s.ndy});
 
     // add transform to variable
     // adios::Transform tr = adios::transform::BZIP2( );
@@ -99,10 +104,12 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
        Default memspace is always the full selection.
     */
     adios::SelectionBoundingBox memspace =
-        adios::SelectionBoundingBox({s.ndx, s.ndy}, {1, 1});
+        adios::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
     varT->SetMemorySelection(memspace);
 
-    bpWriter->Write<double>(*varT, ht.data());
+    bpWriter->Write<unsigned int>(*varGndx, s.gndx);
+    bpWriter->Write<unsigned int>("gndy", s.gndy);
+    bpWriter->Write<double>(*varT, ht.data_noghost().data());
     bpWriter->Advance();
 
 #else

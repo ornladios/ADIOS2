@@ -120,16 +120,15 @@ ADIOS::GetVariableMap()
 // -----------------------------------------------------------------------------
 
 template <typename T>
-Variable<T> &
-ADIOS::DefineVariable(const std::string &name, const Dims globalDimensions,
-                      const Dims localDimensions, const Dims offsets)
+Variable<T> &ADIOS::DefineVariable(const std::string &name, const Dims shape,
+                                   const Dims start, const Dims count,
+                                   const bool constantShape)
 {
     auto &variableMap = GetVariableMap<T>();
-    CheckVariableInput(name, globalDimensions);
+    CheckVariableInput(name, shape);
     const unsigned int size = variableMap.size();
-    variableMap.emplace(size,
-                        Variable<T>(name, globalDimensions, localDimensions,
-                                    offsets, m_DebugMode));
+    variableMap.emplace(size, Variable<T>(name, shape, start, count,
+                                          constantShape, m_DebugMode));
     m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
     return variableMap.at(size);
 }

@@ -60,22 +60,32 @@ int main(int argc, char *argv[])
         // ISO-POSIX file is the default transport
         // Passing parameters to the transport
         bpReaderSettings.AddTransport("File", "verbose=4");
+        bpReaderSettings.SetParameters("OpenAsFile");
     }
 
     auto bpReader = ad.Open(inputfile, "r", mpiReaderComm, bpReaderSettings);
 
     if (bpReader == nullptr)
-        throw std::ios_base::failure("ERROR: failed to open ADIOS bpReader\n");
+        throw std::ios_base::failure("ERROR: failed to open " +
+                                     std::string(inputfile) + "\n");
 
     unsigned int gndx;
     unsigned int gndy;
-    bpReader->Read<unsigned int>("gndx", &gndx);
-    bpReader->Read<unsigned int>("gndy", &gndy);
+    // bpReader->Read<unsigned int>("gndx", &gndx);
+    // bpReader->Read<unsigned int>("gndy", &gndy);
+
+    adios::Variable<unsigned int> *vgndx =
+        bpReader->InquireVariableUInt("gndx");
+    gndx = vgndx->m_Data[0];
+    adios::Variable<unsigned int> *vgndy =
+        bpReader->InquireVariableUInt("gndy");
+    gndy = vgndy->m_Data[0];
 
     if (rank == 0)
     {
-        std::cout << "gndx = " << gndx << std::endl;
-        std::cout << "gndy = " << gndy << std::endl;
+        std::cout << "gndx       = " << gndx << std::endl;
+        std::cout << "gndy       = " << gndy << std::endl;
+        std::cout << "# of steps = " << vgndy->GetNSteps() << std::endl;
     }
 
     // 1D decomposition of the columns, which is inefficient for reading!
@@ -95,12 +105,12 @@ int main(int argc, char *argv[])
     double *T = new double[vT->GetNSteps() * readsize[0] * readsize[1]];
 
     // Create a 2D selection for the subset
-    adios::SelectionBoundingBox sel(offset, readsize);
-    vT->SetSelection(sel);
+    vT->SetSelection(offset, readsize);
+    vT->SetStepSelection(0, vT->GetNSteps());
 
     // Arrays are read by scheduling one or more of them
     // and performing the reads at once
-    bpReader->ScheduleRead(*vT, T);
+    bpReader->ScheduleRead<double>(*vT, T);
     bpReader->PerformReads(adios::PerformReadMode::BLOCKINGREAD);
 
     printData(T, readsize.data(), offset.data(), rank, vT->GetNSteps());
