@@ -40,11 +40,11 @@ int main(int /*argc*/, char ** /*argv*/)
     {
         // Define variable and local size
         adios::Variable<double> &ioMyDoubles =
-            adios.DefineVariable<double>("myDoubles", {}, {}, {Nx});
+            adios.DefineVariable<double>("myDoubles", {Nx}, {0}, {Nx});
         adios::Variable<float> &ioMyMatrix = adios.DefineVariable<float>(
-            "myMatrix", {adios::JoinedDim, columns}, {}, {rows, columns});
-        adios::Variable<float> &ioMyMatrix2 =
-            adios.DefineVariable<float>("myMatrix2", {}, {}, {rows, columns});
+            "myMatrix", {rows, columns}, {0, 0}, {rows, columns});
+        adios::Variable<float> &ioMyMatrix2 = adios.DefineVariable<float>(
+            "myMatrix2", {rows, columns}, {0, 0}, {rows, columns});
 
         // Define method for engine creation, it is basically straight-forward
         // parameters
