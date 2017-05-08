@@ -18,9 +18,9 @@
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
-    int rank, size;
+    int rank, nproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
     const bool adiosDebug = true;
     adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::INFO, adiosDebug);
@@ -49,14 +49,14 @@ int main(int argc, char *argv[])
     try
     {
         // Define variable and local size
-        adios::Variable<double> &ioMyDoubles =
-            adios.DefineLocalArray<double>("myDoubles", true, {Nx});
-
+        adios::Variable<double> &ioMyDoubles = adios.DefineVariable<double>(
+            "myDoubles", {nproc, Nx}, {rank, 0}, {1, Nx});
         adios::Variable<float> &ioMyMatrix =
-            adios.DefineLocalArray<float>("myMatrix", true, {rows, columns});
-
+            adios.DefineVariable<float>("myMatrix", {nproc * rows, columns},
+                                        {rank * rows, 0}, {rows, columns});
         adios::Variable<float> &ioMyMatrix2 =
-            adios.DefineLocalArray<float>("myMatrix2", false, {rows, columns});
+            adios.DefineVariable<float>("myMatrix2", {rows, nproc * columns},
+                                        {0, rank * columns}, {rows, columns});
 
         // Define method for engine creation, it is basically straight-forward
         // parameters

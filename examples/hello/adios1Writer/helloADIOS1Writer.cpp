@@ -52,13 +52,13 @@ int main(int argc, char *argv[])
     {
         // Define variable and local size
         adios::Variable<double> &ioMyDoubles = adios.DefineVariable<double>(
-            "myDoubles", {1, Nx}, {nproc, Nx}, {rank, 0});
-        adios::Variable<float> &ioMyMatrix = adios.DefineVariable<float>(
-            "myMatrix", {rows, columns}, {nproc * rows, columns},
-            {rank * rows, 0});
-        adios::Variable<float> &ioMyMatrix2 = adios.DefineVariable<float>(
-            "myMatrix2", {rows, columns}, {rows, nproc * columns},
-            {0, rank * columns});
+            "myDoubles", {nproc, Nx}, {rank, 0}, {1, Nx});
+        adios::Variable<float> &ioMyMatrix =
+            adios.DefineVariable<float>("myMatrix", {nproc * rows, columns},
+                                        {rank * rows, 0}, {rows, columns});
+        adios::Variable<float> &ioMyMatrix2 =
+            adios.DefineVariable<float>("myMatrix2", {rows, nproc * columns},
+                                        {0, rank * columns}, {rows, columns});
 
         // Define method for engine creation, it is basically straight-forward
         // parameters
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         // Create engine smart pointer due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
         // Writer
-        auto bpWriter = adios.Open("myDoubles.bp", "w", bpWriterSettings);
+        auto bpWriter = adios.Open("hello_adios1.bp", "w", bpWriterSettings);
 
         if (bpWriter == nullptr)
             throw std::ios_base::failure(

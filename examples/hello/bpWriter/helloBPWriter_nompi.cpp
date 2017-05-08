@@ -62,6 +62,12 @@ int main(int /*argc*/, char ** /*argv*/)
                 "ERROR: couldn't create bpWriter at Open\n");
         }
 
+        ioMyDoubles.SetSelection({0}, {Nx});
+        adios::SelectionBoundingBox box({0, 0}, {rows, columns});
+        ioMyMatrix.SetSelection(box);
+        ioMyMatrix2.SetSelection(box);
+        ioMyMatrix3.SetSelection(box);
+
         bpFileWriter->Write<double>(
             ioMyDoubles,
             myDoubles.data()); // Base class Engine own the Write<T>

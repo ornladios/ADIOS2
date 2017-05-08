@@ -52,11 +52,17 @@ int main(int argc, char *argv[])
         // Open returns a smart pointer to Engine containing the Derived class
         // Writer
         auto bpFileWriter =
-            adios.Open("myDoubles_nompi.bp", "w", bpWriterSettings);
+            adios.Open("hello_adios1_nompi.bp", "w", bpWriterSettings);
 
         if (bpFileWriter == nullptr)
             throw std::ios_base::failure(
                 "ERROR: couldn't create bpWriter at Open\n");
+
+        ioMyDoubles.SetSelection({0}, {Nx});
+        adios::SelectionBoundingBox box({0, 0}, {rows, columns});
+        ioMyMatrix.SetSelection(box);
+        ioMyMatrix2.SetSelection(box);
+        ioMyMatrix3.SetSelection(box);
 
         bpFileWriter->Write<double>(
             ioMyDoubles,
