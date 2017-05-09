@@ -24,8 +24,8 @@ VariableCompound &ADIOS::DefineVariableCompound(const std::string &name,
     CheckVariableInput(name, dimensions);
     const unsigned int size = m_Compound.size();
     m_Compound.emplace(size, VariableCompound(name, sizeof(T), dimensions,
-                                              globalDimensions, globalOffsets, false,
-                                              m_DebugMode));
+                                              globalDimensions, globalOffsets,
+                                              false, m_DebugMode));
     m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
     return m_Compound.at(size);
 }
