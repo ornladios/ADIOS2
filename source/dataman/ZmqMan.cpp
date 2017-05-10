@@ -24,18 +24,19 @@ ZmqMan::~ZmqMan()
 int ZmqMan::init(json a_jmsg)
 {
     StreamMan::init(a_jmsg);
-    zmq_data = zmq_socket(zmq_context, ZMQ_PAIR);
-    std::string local_address =
-        make_address(m_local_ip, m_local_port + 1, "tcp");
-    std::string remote_address =
-        make_address(m_remote_ip, m_remote_port + 1, "tcp");
     if (m_stream_mode == "sender")
     {
+        zmq_data = zmq_socket(zmq_context, ZMQ_REQ);
+        std::string remote_address =
+            make_address(m_remote_ip, m_remote_port + 1, "tcp");
         zmq_connect(zmq_data, remote_address.c_str());
         logging("ZmqMan::init " + remote_address + " connected");
     }
     else if (m_stream_mode == "receiver")
     {
+        zmq_data = zmq_socket(zmq_context, ZMQ_REP);
+        std::string local_address =
+            make_address(m_local_ip, m_local_port + 1, "tcp");
         zmq_bind(zmq_data, local_address.c_str());
         logging("ZmqMan::init " + local_address + " bound");
     }
@@ -44,10 +45,12 @@ int ZmqMan::init(json a_jmsg)
 
 int ZmqMan::put(const void *a_data, json a_jmsg)
 {
-    put_begin(a_data, a_jmsg);
+    char ret[10];
+    DataManBase::put_begin(a_data, a_jmsg);
     StreamMan::put(a_data, a_jmsg);
     zmq_send(zmq_data, a_data, a_jmsg["sendbytes"].get<size_t>(), 0);
-    put_end(a_data, a_jmsg);
+    zmq_recv(zmq_data, ret, 10, 0);
+    DataManBase::put_end(a_data, a_jmsg);
     return 0;
 }
 
@@ -60,6 +63,7 @@ void ZmqMan::on_recv(json a_jmsg)
         size_t sendbytes = a_jmsg["sendbytes"].get<size_t>();
         std::vector<char> data(sendbytes);
         int ret = zmq_recv(zmq_data, data.data(), sendbytes, 0);
+        zmq_send(zmq_data, "OK", 10, 0);
 
         if (a_jmsg["compression_method"].is_string() and
             a_jmsg["compression_method"].get<std::string>() != "null")

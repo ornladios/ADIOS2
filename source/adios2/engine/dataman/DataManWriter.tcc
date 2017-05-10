@@ -30,9 +30,9 @@ void DataManWriter::WriteVariableCommon(Variable<T> &variable, const T *values)
 
     // This part will go away, this is just to monitor variables per rank
 
-    if (variable.m_Shape.empty())
+    if (variable.m_Count.empty())
     {
-        variable.m_Shape = variable.m_Count;
+        variable.m_Count = variable.m_Shape;
     }
     if (variable.m_Start.empty())
     {

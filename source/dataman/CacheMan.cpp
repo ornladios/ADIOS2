@@ -28,6 +28,7 @@ int CacheMan::put(const void *a_data, json a_jmsg)
 
 int CacheItem::put(const void *a_data, json a_jmsg)
 {
+
     if (!m_initialized)
     {
         init(a_jmsg);
