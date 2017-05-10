@@ -173,99 +173,6 @@ ADIOS1Reader::InquireVariableCompound(const std::string &variableName,
     return nullptr;
 }
 
-//#include "core/adios_selection_util.h"
-//#include "core/util.h"
-void ADIOS1Reader::ReadJoinedArray(const std::string &name, const Dims &offs,
-                                   const Dims &ldims, const int fromStep,
-                                   const int nSteps, void *data)
-{
-#if 0
-    ADIOS_VARINFO *vi = adios_inq_var(m_fh, name.c_str());
-    if (vi)
-    {
-        /* Update blockinfo: calculate start offsets now */
-        adios_inq_var_blockinfo(m_fh, vi);
-        int block = 0;
-        int firstblock = 0; // first block in fromStep
-        for (int step = 0; step < vi->nsteps; step++)
-        {
-            uint64_t offs = 0;
-            if (step == fromStep)
-                firstblock = block;
-            for (int j = 0; j < vi->nblocks[step]; j++)
-            {
-                vi->blockinfo[block].start[0] = offs;
-                offs += vi->blockinfo[block].count[0];
-                ++block;
-            }
-        }
-        ADIOS_SELECTION *bb =
-            adios_selection_boundingbox(vi->ndim, offs.data(), ldims.data());
-        /* Implement block-based reading here and now */
-        for (int step = fromStep; step < fromStep + nSteps && step < vi->nsteps;
-             step++)
-        {
-            /* read blocks that intersect with the selection */
-            block = firstblock;
-            for (int j = 0; j < vi->nblocks[step]; j++)
-            {
-                ADIOS_SELECTION *blockbb = adios_selection_boundingbox(
-                    vi->ndim, vi->blockinfo[block].start,
-                    vi->blockinfo[block].count);
-                ADIOS_SELECTION *intersectbb =
-                    adios_selection_intersect_global(bb, blockbb);
-                if (intersectbb)
-                {
-                    size_t ele_num = 0;
-                    for (int i = 0; i < vi->ndim; i++)
-                        ele_num += vi->blockinfo[block].count[i];
-                    int size_of_type = adios_type_size(vi->type, nullptr);
-                    char *blockdata = malloc(ele_num * size_of_type);
-                    ADIOS_SELECTION *wb = adios_selection_writeblock(j);
-                    adios_schedule_read(m_fh, wb, name.c_str(), step, 1,
-                                        blockdata);
-                    adios_perform_reads(m_fh, 1);
-
-                    /* Copy data into place */
-                    uint64_t dst_stride;
-                    uint64_t src_stride;
-                    uint64_t dst_offset;
-                    uint64_t src_offset;
-                    std::vector<uint64_t> size_in_dset[32];
-
-                    /* determine how many (fastest changing) dimensions can we
-                     * copy in one swoop */
-                    int i;
-                    for (i = vi->ndim - 1; i > -1; i--)
-                    {
-                        if (blockbb->u.bb.start[i] == offs[i] &&
-                            blockbb->u.bb.count[i] == ldims[i])
-                        {
-                            datasize *= ldims[i];
-                        }
-                        else
-                            break;
-                    }
-
-                    adios_util_copy_data(data, blockdata, 0, vi->ndim,
-                                         size_in_dset.data(), bbsize,
-                                         ldims.data(), dst_stride, src_stride,
-                                         dst_offset, src_offset, ele_num,
-                                         size_of_type, adios_flag_no, vi->type);
-
-                    adios_selection_delete(intersectbb);
-                    free(blockdata);
-                }
-                adios_selection_delete(blockbb);
-                block++;
-            }
-        }
-        adios_selection_delete(bb);
-    }
-    adios_free_varinfo(vi);
-#endif
-}
-
 void ADIOS1Reader::ScheduleReadCommon(const std::string &name, const Dims &offs,
                                       const Dims &ldims, const int fromStep,
                                       const int nSteps,
@@ -298,10 +205,6 @@ void ADIOS1Reader::ScheduleReadCommon(const std::string &name, const Dims &offs,
             }
         }
     }
-    else if (readAsJoinedArray)
-    {
-        ReadJoinedArray(name, offs, ldims, fromStep, nSteps, data);
-    }
     else
     {
         uint64_t start[32], count[32];
@@ -313,7 +216,7 @@ void ADIOS1Reader::ScheduleReadCommon(const std::string &name, const Dims &offs,
         ADIOS_SELECTION *sel = nullptr;
         if (ldims.size() > 0)
         {
-            adios_selection_boundingbox(ldims.size(), start, count);
+            sel = adios_selection_boundingbox(ldims.size(), start, count);
         }
         adios_schedule_read(m_fh, sel, name.c_str(), (int)fromStep, (int)nSteps,
                             data);

@@ -134,7 +134,8 @@ int main(int argc, char *argv[])
 
         adios::Variable<int> *vNproc = bpReader->InquireVariableInt("Nproc");
         Nwriters = vNproc->m_Data[0];
-        std::cout << "# of writers = " << Nwriters << std::endl;
+        if (rank == 0)
+            std::cout << "# of writers = " << Nwriters << std::endl;
 
         /* NX */
         /* There is a single value written once.
@@ -144,7 +145,8 @@ int main(int argc, char *argv[])
             bpReader->InquireVariableUInt("NX");
         Nx = vNX->m_Data[0];
         // bpReader->Read<unsigned int>("NX", &Nx);
-        std::cout << "NX = " << Nx << std::endl;
+        if (rank == 0)
+            std::cout << "NX = " << Nx << std::endl;
 
         /* NY */
         /* We can read all into a 1D array with a step selection.
@@ -159,7 +161,8 @@ int main(int argc, char *argv[])
         // ? How do we make a selection for an arbitrary list of steps ?
         vNY->SetStepSelection(0, vNY->GetNSteps());
         bpReader->Read<unsigned int>(*vNY, Nys.data());
-        Print1DArray(Nys.data(), Nys.size(), "NY");
+        if (rank == 0)
+            Print1DArray(Nys.data(), Nys.size(), "NY");
 
         /* ProcessID */
         adios::Variable<int> *vProcessID =
@@ -172,7 +175,8 @@ int main(int argc, char *argv[])
         }
         ProcessID.resize(vProcessID->m_Shape[0]);
         bpReader->Read<int>(*vProcessID, ProcessID.data());
-        Print1DArray(ProcessID.data(), ProcessID.size(), "ProcessID");
+        if (rank == 0)
+            Print1DArray(ProcessID.data(), ProcessID.size(), "ProcessID");
 
         /* Nparts */
         // Nparts local scalar is presented as a 1D array of Nwriters
@@ -184,8 +188,10 @@ int main(int argc, char *argv[])
             Make2DArray<unsigned int>(vNparts->GetNSteps(), Nwriters);
         vNparts->SetStepSelection(0, vNparts->GetNSteps());
         bpReader->Read<unsigned int>(*vNparts, Nparts[0]);
-        Print2DArray(Nparts, vNparts->GetNSteps(), Nwriters, "Nparts");
+        if (rank == 0)
+            Print2DArray(Nparts, vNparts->GetNSteps(), Nwriters, "Nparts");
         Delete2DArray(Nparts);
+        MPI_Barrier(MPI_COMM_WORLD);
 
         /*
          * GlobalArrayFixedDims
@@ -209,6 +215,9 @@ int main(int argc, char *argv[])
             count = gdim - (count * (nproc - 1));
         }
 
+        if (rank == 0)
+            std::cout << "GlobalArrayFixedDims parallel read" << std::endl;
+
         double **GlobalArrayFixedDims =
             Make2DArray<double>(vGlobalArrayFixedDims->GetNSteps(), count);
 
@@ -218,8 +227,19 @@ int main(int argc, char *argv[])
         vGlobalArrayFixedDims->SetStepSelection(
             0, vGlobalArrayFixedDims->GetNSteps());
         bpReader->Read<double>(*vGlobalArrayFixedDims, GlobalArrayFixedDims[0]);
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Status status;
+        int token = 0;
+        if (rank > 0)
+            MPI_Recv(&token, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, &status);
+        std::cout << "Rank " << rank << " read start = " << start
+                  << " count = " << count << std::endl;
         Print2DArray(GlobalArrayFixedDims, vGlobalArrayFixedDims->GetNSteps(),
                      count, "GlobalArrayFixedDims");
+        if (rank < nproc - 1)
+            MPI_Send(&token, 1, MPI_INT, rank + 1, 0, MPI_COMM_WORLD);
+        Delete2DArray(GlobalArrayFixedDims);
+        MPI_Barrier(MPI_COMM_WORLD);
 
         /*
          * LocalArrayFixedDims
@@ -236,6 +256,7 @@ int main(int argc, char *argv[])
         }
         std::cout << "LocalArrayFixedDims is irregular. Cannot read this "
                      "variable yet...\n";
+        MPI_Barrier(MPI_COMM_WORLD);
 
         /*
          * LocalArrayFixedDimsJoined
@@ -243,9 +264,25 @@ int main(int argc, char *argv[])
         // inquiry about a variable, whose name we know
         adios::Variable<float> *vLocalArrayFixedDimsJoined =
             bpReader->InquireVariableFloat("LocalArrayFixedDimsJoined");
-        std::cout << "LocalArrayFixedDimsJoined ["
-                  << vLocalArrayFixedDimsJoined->m_Shape[0] << "]";
-        std::cout << " = Cannot read this variable yet...\n";
+        float **LocalArrayFixedDimsJoined =
+            Make2DArray<float>(vLocalArrayFixedDimsJoined->GetNSteps(),
+                               vLocalArrayFixedDimsJoined->m_Shape[0]);
+
+        // Make a 1D selection to describe the local dimensions of the variable
+        // we READ and its offsets in the global spaces
+        vLocalArrayFixedDimsJoined->SetSelection(
+            {0}, {vLocalArrayFixedDimsJoined->m_Shape[0]});
+        vLocalArrayFixedDimsJoined->SetStepSelection(
+            0, vLocalArrayFixedDimsJoined->GetNSteps());
+        bpReader->Read<float>(*vLocalArrayFixedDimsJoined,
+                              LocalArrayFixedDimsJoined[0]);
+        if (rank == 0)
+            Print2DArray(LocalArrayFixedDimsJoined,
+                         vLocalArrayFixedDimsJoined->GetNSteps(),
+                         vLocalArrayFixedDimsJoined->m_Shape[0],
+                         "LocalArrayFixedDimsJoined");
+        Delete2DArray(LocalArrayFixedDimsJoined);
+        MPI_Barrier(MPI_COMM_WORLD);
 
         /*
          * GlobalArray which changes size over time
@@ -262,6 +299,7 @@ int main(int argc, char *argv[])
                 "dimension is supposed to be adios::IrregularDim indicating an "
                 "Irregular array\n");
         }
+        MPI_Barrier(MPI_COMM_WORLD);
 
         // Close file/stream
         bpReader->Close();
@@ -292,6 +330,7 @@ int main(int argc, char *argv[])
     }
 
 #ifdef ADIOS2_HAVE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 #endif
     return 0;
