@@ -155,8 +155,8 @@ public:
                 "Variable.SetSelection() for local or joined array '" + m_Name +
                 "' should pass an empty 'start' argument\n");
         }
-        ConvertUint64VectorToSizetVector(count, m_Count);
-        ConvertUint64VectorToSizetVector(start, m_Start);
+        m_Count = count;
+        m_Start = start;
     }
 
     /**
@@ -165,7 +165,10 @@ public:
      */
     void SetSelection(const SelectionBoundingBox &sel)
     {
-        SetSelection(sel.m_Start, sel.m_Count);
+        Dims start, count;
+        ConvertUint64VectorToSizetVector(sel.m_Start, start);
+        ConvertUint64VectorToSizetVector(sel.m_Count, count);
+        SetSelection(start, count);
     }
 
     /**

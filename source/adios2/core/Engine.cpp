@@ -224,6 +224,7 @@ Variable<unsigned int> *
 Engine::InquireVariableUInt(const std::string & /*name*/, const bool /*readIn*/)
 {
     EngineThrowUp(m_EngineType, "InquireVariableUInt");
+    return nullptr;
 }
 Variable<long int> *Engine::InquireVariableLInt(const std::string & /*name*/,
                                                 const bool /*readIn*/)
