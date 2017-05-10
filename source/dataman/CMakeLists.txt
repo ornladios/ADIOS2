@@ -33,21 +33,16 @@ option(ADIOS_USE_DataMan_ZeroMQ "Enable ZeroMQ for DataMan" OFF)
 if(ADIOS_USE_DataMan_ZeroMQ)
   find_package(ZeroMQ REQUIRED)
 
-  # Manually add the ZeroMQ_INCLUDE_DIRS since object libs still don't support
-  # target usage requirements
-  add_library(streamman OBJECT StreamMan.h StreamMan.cpp)
-  target_include_directories(streamman PRIVATE ${ZeroMQ_INCLUDE_DIRS})
-
   add_library(zmqman MODULE
+    StreamMan.h StreamMan.cpp
     ZmqMan.h ZmqMan.cpp
-    $<TARGET_OBJECTS:streamman>
   )
   target_link_libraries(zmqman PRIVATE dataman ZeroMQ::ZMQ)
   list(APPEND dataman_targets zmqman)
 
   add_library(mdtmman MODULE
+    StreamMan.h StreamMan.cpp
     MdtmMan.h MdtmMan.cpp
-    $<TARGET_OBJECTS:streamman>
   )
   target_link_libraries(mdtmman PRIVATE dataman ZeroMQ::ZMQ)
   list(APPEND dataman_targets mdtmman)
