@@ -150,8 +150,9 @@ int DataManBase::put_end(const void *p_data, json &p_jmsg)
     m_profiling["total_manager_time"] =
         m_profiling["total_manager_time"].get<double>() + duration.count();
     m_profiling["total_mb"] =
-        m_profiling["total_mb"].get<size_t>() +
+        m_profiling["total_mb"].get<double>() +
         product(p_jmsg["varshape"], dsize(p_jmsg["dtype"])) / 1000000.0f;
+    std::cout << product(p_jmsg["varshape"], dsize(p_jmsg["dtype"])) << "\n";
     duration = end - m_start_time;
     m_profiling["total_workflow_time"] = duration.count();
     m_profiling["workflow_mbs"] =
