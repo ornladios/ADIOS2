@@ -1,18 +1,23 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
+ *
+ * SelectionPoints.h
+ *
+ *  Created on: May 17, 2017
+ *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ *              William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_CORE_SELECTIONPOINTS_H_
 #define ADIOS2_CORE_SELECTIONPOINTS_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <cstdint>
+#include <vector>
 /// \endcond
 
-#include <vector>
-
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/Selection.h"
 
 namespace adios
@@ -28,30 +33,31 @@ namespace adios
 class SelectionPoints : public Selection
 {
 public:
-    SelectionPoints(std::size_t ndim, std::size_t npoints,
-                    std::vector<std::uint64_t> &points)
-    : Selection(SelectionType::Points), m_Ndim(ndim), m_Npoints(npoints),
-      m_Points(points)
-    {
-    }
+    /** number of dimensions from constructor */
+    const size_t m_DimensionsSize;
 
-    ///< C-style constructor to be used in the C-to-C++ wrapper
-    SelectionPoints(std::size_t ndim, std::size_t npoints, uint64_t *points)
-    : Selection(SelectionType::Points), m_Ndim(ndim), m_Npoints(npoints),
-      m_Points(std::vector<std::uint64_t>()), m_PointsC(points)
-    {
-    }
+    /** reference to points in constructor, must use a pointer as nullptr is
+     * valid if an array is passed in the constructor instead */
+    std::vector<uint64_t> *m_PointsVec = nullptr;
+
+    /** pointer based applications needed size*/
+    const size_t m_PointsSize;
+    /** pointer based applications needed array*/
+    uint64_t *m_PointsPtr = nullptr;
+
+    /**
+     * Constructor that takes a vector<uint64_t> for points
+     * @param dimensionsSize
+     * @param pointsSize
+     * @param points
+     */
+    SelectionPoints(size_t dimensionsSize, std::vector<uint64_t> &points);
+
+    SelectionPoints(size_t dimensionsSize, size_t pointsSize, uint64_t *points);
 
     virtual ~SelectionPoints() = default;
-
-    const std::size_t m_Ndim;
-    const std::size_t m_Npoints;
-    std::vector<std::uint64_t> &m_Points;
-    ///< C-to-C++ wrapper needs a pointer to hold the points created by the C
-    /// application
-    std::uint64_t *m_PointsC = nullptr;
 };
 
-} // namespace adios
+} // end namespace adios
 
 #endif /* ADIOS2_CORE_SELECTIONPOINTS_H_ */

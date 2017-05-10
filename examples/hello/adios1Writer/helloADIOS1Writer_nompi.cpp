@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloADIOSNoXML_OOP.cpp
+ * helloADIOS1Writer_nompi.cpp : non mpi version of helloADIOS1Writer
  *
  *  Created on: Jan 9, 2017
- *      Author: wfg
+ *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
 #include <iostream>
@@ -15,65 +15,40 @@
 
 int main(int argc, char *argv[])
 {
-    const bool adiosDebug = true;
-    adios::ADIOS adios(adios::Verbose::INFO, adiosDebug);
-
-    // Application variable
-    std::vector<double> myDoubles = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    const std::size_t Nx = myDoubles.size();
-
-    const std::size_t rows = 3;
-    const std::size_t columns = 3;
-    std::vector<float> myMatrix = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-
-    std::vector<float> myMatrix2 = {-1, -2, -3, -4, -5, -6, -7, -8, -9};
+    /** Application variable */
+    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    const std::size_t Nx = myFloats.size();
 
     try
     {
-        // Define variable and local size
-        adios::Variable<double> &ioMyDoubles =
-            adios.DefineVariable<double>("myDoubles", adios::Dims{Nx});
-        adios::Variable<float> &ioMyMatrix =
-            adios.DefineVariable<float>("myMatrix", adios::Dims{rows, columns});
-        adios::Variable<float> &ioMyMatrix2 = adios.DefineVariable<float>(
-            "myMatrix2", adios::Dims{rows, columns});
-        adios::Variable<float> &ioMyMatrix3 = adios.DefineVariable<float>(
-            "myMatrix3", adios::Dims{rows, columns});
+        /** ADIOS class factory of IO class objects, DebugON is recommended */
+        adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
 
-        // Define method for engine creation, it is basically straight-forward
-        // parameters
-        adios::Method &bpWriterSettings = adios.DeclareMethod("hello");
-        bpWriterSettings.SetIOMode(adios::IOMode::COLLECTIVE);
-        bpWriterSettings.SetParameters("profile_units=mus");
-        bpWriterSettings.AddTransport("File", "have_metadata_file=yes",
-                                      "profile_units=mus");
+        /*** IO class object: settings and factory of Settings: Variables,
+         * Parameters, Transports, and Execution: Engines */
+        adios::IO &adios1IO = adios.DeclareIO("ADIOS1IO");
+        adios1IO.SetEngine("ADIOS1Writer");
+        adios1IO.AddTransport("file");
 
-        // Create engine smart pointer due to polymorphism,
-        // Open returns a smart pointer to Engine containing the Derived class
-        // Writer
-        auto bpFileWriter =
-            adios.Open("hello_adios1_nompi.bp", "w", bpWriterSettings);
+        /** global array : name, { shape (total) }, { start (local) }, { count
+         * (local) }, all are constant dimensions */
+        adios::Variable<float> &bpFloats = adios1IO.DefineVariable<float>(
+            "bpFloats", {}, {}, {Nx}, adios::ConstantDims);
 
-        if (bpFileWriter == nullptr)
+        /** Engine derived class, spawned to start IO operations */
+        auto adios1Writer = adios1IO.Open("myVector.bp", adios::OpenMode::w);
+
+        if (!adios1Writer)
+        {
             throw std::ios_base::failure(
-                "ERROR: couldn't create bpWriter at Open\n");
+                "ERROR: hdf5Writer not created at Open\n");
+        }
 
-        ioMyDoubles.SetSelection({0}, {Nx});
-        adios::SelectionBoundingBox box({0, 0}, {rows, columns});
-        ioMyMatrix.SetSelection(box);
-        ioMyMatrix2.SetSelection(box);
-        ioMyMatrix3.SetSelection(box);
+        /** Write variable for buffering */
+        adios1Writer->Write<float>(bpFloats, myFloats.data());
 
-        bpFileWriter->Write<double>(
-            ioMyDoubles,
-            myDoubles.data()); // Base class Engine own the Write<T>
-                               // that will call overloaded Write from
-                               // Derived
-        bpFileWriter->Write<float>(ioMyMatrix, myMatrix.data());   // 2d Example
-        bpFileWriter->Write<float>(ioMyMatrix2, myMatrix2.data()); // 2d Example
-        bpFileWriter->Write<float>(ioMyMatrix3, myMatrix2.data()); // 2d Example
-        bpFileWriter->Close();
-        //
+        /** Create bp file, engine becomes unreachable after this*/
+        adios1Writer->Close();
     }
     catch (std::invalid_argument &e)
     {

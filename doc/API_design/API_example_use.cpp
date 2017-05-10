@@ -2,7 +2,7 @@
  * of the ideas */
 #include <mpi.h>
 
-#include "adios2/ADIOS.h"
+#include "../../source/adios2/core/ADIOS.h"
 
 void cb_AsyncWriteAdvanceCompleted(std::shared_ptr<adios::Engine> writer)
 {

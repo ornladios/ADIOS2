@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Variable.h
+ * Variable.h : template class for self-describing primitive variables
  *
  *  Created on: Oct 6, 2016
- *      Author: wfg
+ *      Author: William F Godoy
  */
 
 #ifndef ADIOS2_CORE_VARIABLE_H_
@@ -18,101 +18,50 @@
 #include <vector>
 /// \endcond
 
+#include "VariableBase.h"
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMacros.h"
 #include "adios2/core/Transform.h"
-#include "adios2/core/VariableBase.h"
 
 namespace adios
 {
 
-struct TransformData
-{
-    Transform &Operation; ///< from ADIOS.DefineTransform
-    std::map<std::string, std::string> Parameters; ///< transforms parameters
-    std::vector<std::size_t> Size; ///< vector that carries the sizes after a
-                                   /// transformation is applied
-};
-
 /**
- * @param Base (parent) class for template derived (child) class CVariable.
- * Required to put CVariable objects in STL containers.
+ * @param Base (parent) class for template derived (child) class Variable.
  */
 template <class T>
 class Variable : public VariableBase
 {
 
 public:
-    const T *m_AppValues = nullptr; ///< pointer to values passed from user in
-    /// ADIOS Write
+    /** pointer to values passed from application in Engine Write*/
+    const T *m_AppValues = nullptr;
 
-    ///< vector of values as a possible result of ADIOS Read or InquireVariable
+    /** reference to non-const data, mostly used for reading */
+    T *m_AppPointer = nullptr;
+
     std::vector<T> m_Data;
 
-    std::vector<TransformData>
-        m_Transforms; ///< associated transforms, sequence
-    /// determines application order, e.g.
-    /// first Transforms[0] then
-    /// Transforms[1]. Pointer used as
-    /// reference (no memory management).
-
+    /**
+     * Unique constructor
+     * @param name
+     * @param shape
+     * @param start
+     * @param count
+     * @param constantShape
+     * @param debugMode
+     */
     Variable<T>(const std::string &name, const Dims shape, const Dims start,
                 const Dims count, const bool constantShape,
-                const bool debugMode)
-    : VariableBase(name, GetType<T>(), sizeof(T), shape, start, count,
-                   constantShape, debugMode)
-    {
-    }
+                const bool debugMode);
 
-    template <class... Args>
-    void AddTransform(Transform &transform, Args... args)
-    {
-        std::vector<std::string> parameters = {args...};
-        m_Transforms.emplace_back(
-            transform,
-            BuildParametersMap(parameters, m_DebugMode)); // need to check
-    }
+    virtual ~Variable<T>() = default;
 
-    /** Return the global dimensions of the variable
-     *  @return vector of std::size_t values
-     */
-    std::vector<std::size_t> GetGlobalDimensions();
-
-    void Monitor(std::ostream &logInfo) const noexcept
-    {
-        logInfo << "Variable: " << m_Name << "\n";
-        logInfo << "Type: " << m_Type << "\n";
-        logInfo << "Size: " << TotalSize() << " elements\n";
-        logInfo << "Payload: " << PayLoadSize() << " bytes\n";
-
-        if (m_AppValues != nullptr)
-        {
-            logInfo << "Values (first 10 or max_size): \n";
-            std::size_t size = TotalSize();
-            if (size > 10)
-                size = 10;
-
-            if (m_Type.find("complex") != m_Type.npos) // it's complex
-            {
-                for (unsigned int i = 0; i < size; ++i)
-                {
-                    logInfo << "( " << std::real(m_AppValues[i]) << " , "
-                            << std::imag(m_AppValues[i]) << " )  ";
-                }
-            }
-            else
-            {
-                for (unsigned int i = 0; i < size; ++i)
-                {
-                    logInfo << m_AppValues[i] << " ";
-                }
-            }
-
-            logInfo << " ...";
-        }
-        logInfo << "\n";
-    }
+    void ApplyTransforms() final;
 };
 
-} // end namespace
+} // end namespace adios
+
+#include "Variable.inl"
 
 #endif /* ADIOS2_CORE_VARIABLE_H_ */

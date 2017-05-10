@@ -10,11 +10,11 @@
 
 #include "BPFileReader.h"
 
+#include "../../helper/adiosFunctions.h"           // CSVToVector
+#include "../../toolkit/transport/file/FileDescriptor.h" // uses POSIX
+#include "../../toolkit/transport/file/FilePointer.h"    // uses C FILE*
+#include "../../toolkit/transport/file/FileStream.h"        // uses C++ fstream
 #include "adios2/core/Support.h"
-#include "adios2/core/adiosFunctions.h"           // CSVToVector
-#include "adios2/transport/file/FStream.h"        // uses C++ fstream
-#include "adios2/transport/file/FileDescriptor.h" // uses POSIX
-#include "adios2/transport/file/FilePointer.h"    // uses C FILE*
 
 namespace adios
 {

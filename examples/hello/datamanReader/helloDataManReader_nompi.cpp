@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloADIOSNoXML_OOP.cpp
+ * helloDataManReader_nompi.cpp
  *
  *  Created on: Jan 9, 2017
- *      Author: wfg
+ *      Author: Jason Wang
  */
 
 #include <iostream>
@@ -14,10 +14,10 @@
 
 #include <adios2.h>
 
-void getcb(const void *data, std::string doid, std::string var,
-           std::string dtype, std::vector<std::size_t> varshape)
+void UserCallBack(const void *data, std::string doid, std::string var,
+                  std::string dtype, std::vector<std::size_t> varshape)
 {
-    std::cout << "data object ID = " << doid << "\n"; // do you need to flush?
+    std::cout << "data object ID = " << doid << "\n";
     std::cout << "variable name = " << var << "\n";
     std::cout << "data type = " << dtype << "\n";
 
@@ -31,51 +31,39 @@ void getcb(const void *data, std::string doid, std::string var,
 
 int main(int argc, char *argv[])
 {
-    const bool adiosDebug = true;
-    adios::ADIOS adios(adios::Verbose::WARN, adiosDebug);
 
     try
     {
-        // Define method for engine creation, it is basically straight-forward
-        // parameters
-        adios::Method &datamanSettings = adios.DeclareMethod("WAN");
-        if (!datamanSettings.IsUserDefined())
+        adios::ADIOS adios(adios::DebugON);
+
+        adios::IO &dataManIO = adios.DeclareIO("WAN");
+        dataManIO.SetEngine("DataMan");
+        dataManIO.SetParameters("real_time=yes", "method_type=stream",
+                                "method=dump");
+        auto dataManReader = dataManIO.Open("myDoubles.bp", adios::OpenMode::r);
+
+        if (dataManReader == nullptr)
         {
-            // if not defined by user, we can change the default settings
-            datamanSettings.SetEngine("DataManReader");
-            datamanSettings.SetParameters("real_time=yes", "method_type=stream",
-                                          "method=dump");
-            // datamanSettings.AddTransport( "Mdtm", "localIP=127.0.0.1",
-            // "remoteIP=127.0.0.1", "tolerances=1,2,3" );
-            // datamanSettings.AddTransport( "ZeroMQ", "localIP=127.0.0.1",
-            // "remoteIP=127.0.0.1", "tolerances=1,2,3" ); not yet supported
-            // ,
-            // will throw an exception
-        }
-
-        // Create engine smart pointer to DataManReader Engine due to
-        // polymorphism,
-        // Open returns a smart pointer to Engine containing the Derived class
-        // DataManReader
-        auto datamanReader = adios.Open("myDoubles.bp", "r", datamanSettings);
-
-        if (datamanReader == nullptr)
             throw std::ios_base::failure(
                 "ERROR: failed to create DataMan I/O engine at Open\n");
+        }
 
-        datamanReader->SetCallBack(getcb);
+        dataManReader->SetCallBack(UserCallBack);
 
-        for (int i = 0; i < 3; i++)
+        for (unsigned int i = 0; i < 3; ++i)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
 
         adios::Variable<double> *ioMyDoubles =
-            datamanReader->InquireVariableDouble("ioMyDoubles");
-        if (ioMyDoubles == nullptr)
-            std::cout << "Variable ioMyDoubles not read...yet\n";
+            dataManReader->InquireVariable<double>("ioMyDoubles");
 
-        datamanReader->Close();
+        if (ioMyDoubles == nullptr)
+        {
+            std::cout << "Variable ioMyDoubles not read...yet\n";
+        }
+
+        dataManReader->Close();
     }
     catch (std::invalid_argument &e)
     {

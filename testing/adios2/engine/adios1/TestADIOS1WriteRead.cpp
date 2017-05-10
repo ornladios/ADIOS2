@@ -37,47 +37,47 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
     {
         adios_init_noxml(MPI_COMM_WORLD);
 
-        adios::ADIOS adios(adios::Verbose::WARN, true);
+        adios::ADIOS adios(true);
+        adios::IO &io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables
         {
-            auto &var_i8 = adios.DefineVariable<char>("i8", adios::Dims{8});
-            auto &var_i16 = adios.DefineVariable<short>("i16", adios::Dims{8});
-            auto &var_i32 = adios.DefineVariable<int>("i32", adios::Dims{8});
-            auto &var_i64 = adios.DefineVariable<long>("i64", adios::Dims{8});
+            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{8});
+            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{8});
+            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{8});
+            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{8});
             auto &var_u8 =
-                adios.DefineVariable<unsigned char>("u8", adios::Dims{8});
+                io.DefineVariable<unsigned char>("u8", adios::Dims{8});
             auto &var_u16 =
-                adios.DefineVariable<unsigned short>("u16", adios::Dims{8});
+                io.DefineVariable<unsigned short>("u16", adios::Dims{8});
             auto &var_u32 =
-                adios.DefineVariable<unsigned int>("u32", adios::Dims{8});
+                io.DefineVariable<unsigned int>("u32", adios::Dims{8});
             auto &var_u64 =
-                adios.DefineVariable<unsigned long>("u64", adios::Dims{8});
-            auto &var_r32 = adios.DefineVariable<float>("r32", adios::Dims{8});
-            auto &var_r64 = adios.DefineVariable<double>("r64", adios::Dims{8});
+                io.DefineVariable<unsigned long>("u64", adios::Dims{8});
+            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{8});
+            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{8});
         }
 
         // Create the ADIOS 1 Engine
-        auto method = adios.DeclareMethod("TestMethod");
-        method.SetEngine("ADIOS1Writer");
-        method.AddTransport("File");
+        io.SetEngine("ADIOS1Writer");
+        io.AddTransport("file");
 
-        auto engine = adios.Open(fname, "w", method);
-        ASSERT_NE(engine, nullptr);
+        auto engine = io.Open(fname, adios::OpenMode::w);
+        ASSERT_NE(engine, false);
 
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = adios.GetVariable<char>("i8");
-            auto &var_i16 = adios.GetVariable<short>("i16");
-            auto &var_i32 = adios.GetVariable<int>("i32");
-            auto &var_i64 = adios.GetVariable<long>("i64");
-            auto &var_u8 = adios.GetVariable<unsigned char>("u8");
-            auto &var_u16 = adios.GetVariable<unsigned short>("u16");
-            auto &var_u32 = adios.GetVariable<unsigned int>("u32");
-            auto &var_u64 = adios.GetVariable<unsigned long>("u64");
-            auto &var_r32 = adios.GetVariable<float>("r32");
-            auto &var_r64 = adios.GetVariable<double>("r64");
+            auto &var_i8 = io.GetVariable<char>("i8");
+            auto &var_i16 = io.GetVariable<short>("i16");
+            auto &var_i32 = io.GetVariable<int>("i32");
+            auto &var_i64 = io.GetVariable<long>("i64");
+            auto &var_u8 = io.GetVariable<unsigned char>("u8");
+            auto &var_u16 = io.GetVariable<unsigned short>("u16");
+            auto &var_u32 = io.GetVariable<unsigned int>("u32");
+            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_r32 = io.GetVariable<float>("r32");
+            auto &var_r64 = io.GetVariable<double>("r64");
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);
@@ -260,51 +260,47 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
     {
         adios_init_noxml(MPI_COMM_WORLD);
 
-        adios::ADIOS adios(adios::Verbose::WARN, true);
+        adios::ADIOS adios(true);
+        adios::IO &io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables
         {
-            auto &var_i8 = adios.DefineVariable<char>("i8", adios::Dims{2, 4});
-            auto &var_i16 =
-                adios.DefineVariable<short>("i16", adios::Dims{2, 4});
-            auto &var_i32 = adios.DefineVariable<int>("i32", adios::Dims{2, 4});
-            auto &var_i64 =
-                adios.DefineVariable<long>("i64", adios::Dims{2, 4});
+            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{2, 4});
+            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{2, 4});
+            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{2, 4});
+            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{2, 4});
             auto &var_u8 =
-                adios.DefineVariable<unsigned char>("u8", adios::Dims{2, 4});
+                io.DefineVariable<unsigned char>("u8", adios::Dims{2, 4});
             auto &var_u16 =
-                adios.DefineVariable<unsigned short>("u16", adios::Dims{2, 4});
+                io.DefineVariable<unsigned short>("u16", adios::Dims{2, 4});
             auto &var_u32 =
-                adios.DefineVariable<unsigned int>("u32", adios::Dims{2, 4});
+                io.DefineVariable<unsigned int>("u32", adios::Dims{2, 4});
             auto &var_u64 =
-                adios.DefineVariable<unsigned long>("u64", adios::Dims{2, 4});
-            auto &var_r32 =
-                adios.DefineVariable<float>("r32", adios::Dims{2, 4});
-            auto &var_r64 =
-                adios.DefineVariable<double>("r64", adios::Dims{2, 4});
+                io.DefineVariable<unsigned long>("u64", adios::Dims{2, 4});
+            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{2, 4});
+            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{2, 4});
         }
 
         // Create the ADIOS 1 Engine
-        auto method = adios.DeclareMethod("TestMethod");
-        method.SetEngine("ADIOS1Writer");
-        method.AddTransport("File");
+        io.SetEngine("ADIOS1Writer");
+        io.AddTransport("file");
 
-        auto engine = adios.Open(fname, "w", method);
-        ASSERT_NE(engine, nullptr);
+        auto engine = io.Open(fname, adios::OpenMode::w);
+        ASSERT_NE(engine, false);
 
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = adios.GetVariable<char>("i8");
-            auto &var_i16 = adios.GetVariable<short>("i16");
-            auto &var_i32 = adios.GetVariable<int>("i32");
-            auto &var_i64 = adios.GetVariable<long>("i64");
-            auto &var_u8 = adios.GetVariable<unsigned char>("u8");
-            auto &var_u16 = adios.GetVariable<unsigned short>("u16");
-            auto &var_u32 = adios.GetVariable<unsigned int>("u32");
-            auto &var_u64 = adios.GetVariable<unsigned long>("u64");
-            auto &var_r32 = adios.GetVariable<float>("r32");
-            auto &var_r64 = adios.GetVariable<double>("r64");
+            auto &var_i8 = io.GetVariable<char>("i8");
+            auto &var_i16 = io.GetVariable<short>("i16");
+            auto &var_i32 = io.GetVariable<int>("i32");
+            auto &var_i64 = io.GetVariable<long>("i64");
+            auto &var_u8 = io.GetVariable<unsigned char>("u8");
+            auto &var_u16 = io.GetVariable<unsigned short>("u16");
+            auto &var_u32 = io.GetVariable<unsigned int>("u32");
+            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_r32 = io.GetVariable<float>("r32");
+            auto &var_r64 = io.GetVariable<double>("r64");
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);
@@ -497,51 +493,47 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
     {
         adios_init_noxml(MPI_COMM_WORLD);
 
-        adios::ADIOS adios(adios::Verbose::WARN, true);
+        adios::ADIOS adios(true);
+        adios::IO &io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables
         {
-            auto &var_i8 = adios.DefineVariable<char>("i8", adios::Dims{4, 2});
-            auto &var_i16 =
-                adios.DefineVariable<short>("i16", adios::Dims{4, 2});
-            auto &var_i32 = adios.DefineVariable<int>("i32", adios::Dims{4, 2});
-            auto &var_i64 =
-                adios.DefineVariable<long>("i64", adios::Dims{4, 2});
+            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{4, 2});
+            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{4, 2});
+            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{4, 2});
+            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{4, 2});
             auto &var_u8 =
-                adios.DefineVariable<unsigned char>("u8", adios::Dims{4, 2});
+                io.DefineVariable<unsigned char>("u8", adios::Dims{4, 2});
             auto &var_u16 =
-                adios.DefineVariable<unsigned short>("u16", adios::Dims{4, 2});
+                io.DefineVariable<unsigned short>("u16", adios::Dims{4, 2});
             auto &var_u32 =
-                adios.DefineVariable<unsigned int>("u32", adios::Dims{4, 2});
+                io.DefineVariable<unsigned int>("u32", adios::Dims{4, 2});
             auto &var_u64 =
-                adios.DefineVariable<unsigned long>("u64", adios::Dims{4, 2});
-            auto &var_r32 =
-                adios.DefineVariable<float>("r32", adios::Dims{4, 2});
-            auto &var_r64 =
-                adios.DefineVariable<double>("r64", adios::Dims{4, 2});
+                io.DefineVariable<unsigned long>("u64", adios::Dims{4, 2});
+            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{4, 2});
+            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{4, 2});
         }
 
         // Create the ADIOS 1 Engine
-        auto method = adios.DeclareMethod("TestMethod");
-        method.SetEngine("ADIOS1Writer");
-        method.AddTransport("File");
+        io.SetEngine("ADIOS1Writer");
+        io.AddTransport("file");
 
-        auto engine = adios.Open(fname, "w", method);
-        ASSERT_NE(engine, nullptr);
+        auto engine = io.Open(fname, adios::OpenMode::w);
+        ASSERT_NE(engine, false);
 
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = adios.GetVariable<char>("i8");
-            auto &var_i16 = adios.GetVariable<short>("i16");
-            auto &var_i32 = adios.GetVariable<int>("i32");
-            auto &var_i64 = adios.GetVariable<long>("i64");
-            auto &var_u8 = adios.GetVariable<unsigned char>("u8");
-            auto &var_u16 = adios.GetVariable<unsigned short>("u16");
-            auto &var_u32 = adios.GetVariable<unsigned int>("u32");
-            auto &var_u64 = adios.GetVariable<unsigned long>("u64");
-            auto &var_r32 = adios.GetVariable<float>("r32");
-            auto &var_r64 = adios.GetVariable<double>("r64");
+            auto &var_i8 = io.GetVariable<char>("i8");
+            auto &var_i16 = io.GetVariable<short>("i16");
+            auto &var_i32 = io.GetVariable<int>("i32");
+            auto &var_i64 = io.GetVariable<long>("i64");
+            auto &var_u8 = io.GetVariable<unsigned char>("u8");
+            auto &var_u16 = io.GetVariable<unsigned short>("u16");
+            auto &var_u32 = io.GetVariable<unsigned int>("u32");
+            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_r32 = io.GetVariable<float>("r32");
+            auto &var_r64 = io.GetVariable<double>("r64");
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);

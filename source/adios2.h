@@ -8,10 +8,12 @@
 
 #include "adios2/ADIOSConfig.h"
 
-#include "adios2/ADIOS.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
-#include "adios2/core/Method.h"
+#include "adios2/core/IO.h"
+#include "adios2/core/SelectionBoundingBox.h"
+#include "adios2/core/SelectionPoints.h"
 #include "adios2/core/Transform.h"
 
 #endif /* ADIOS2_H_ */

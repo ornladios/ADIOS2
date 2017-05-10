@@ -1,6 +1,10 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
+ *
+ *  Created on: May 17, 2017
+ *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ *              William F Godoy godoywf@ornl.gov
  */
 
 /*
@@ -35,32 +39,28 @@
 #define ADIOS2_CORE_SELECTION_H_
 
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSTypes.h"
 
 namespace adios
 {
-
-/* Type of selection */
-enum class SelectionType
-{
-    // Contiguous block of data defined by offsets and counts in each
-    // dimension
-    BoundingBox,
-
-    // List of individual points
-    Points,
-
-    // Selection of an individual block written by a writer process
-    WriteBlock,
-
-    // Let the method decide what to return
-    Auto
-};
-
+/** Base class for Selection (query) types */
 class Selection
 {
 public:
-    Selection(const SelectionType t) : m_Type(t){};
+    /** from derived class */
     const SelectionType m_Type;
+
+    /**
+     * Unique constructor
+     * @param type derived class type
+     */
+    Selection(const SelectionType type, const bool debugMode = false);
+
+    virtual ~Selection() = default;
+
+protected:
+    /** true: extra checks (recommended) */
+    const bool m_DebugMode;
 };
 
 } // namespace adios

@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_subdirectory(bpWriter)
-add_subdirectory(timeBP)
+add_subdirectory(bpTimeWriter)
 
 if(ADIOS_USE_ADIOS1)
   add_subdirectory(adios1Writer)

@@ -20,7 +20,7 @@
 #include "adios2/pybind11/pybind11.h"
 #endif
 
-#include "adios2/core/Method.h"
+#include "../../../source/adios2/core/IO.h"
 
 namespace adios
 {

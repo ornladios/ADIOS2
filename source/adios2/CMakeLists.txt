@@ -4,35 +4,44 @@
 #------------------------------------------------------------------------------#
   
 add_library(adios2
-  ADIOS.cpp ADIOS.tcc
-  
-  capsule/heap/STLVector.cpp
-  capsule/shmem/ShmSystemV.cpp
-  
-  core/Capsule.cpp
+  core/ADIOS.cpp
   core/Engine.cpp
-  core/Method.cpp
-  core/Support.cpp
-  core/Timer.cpp
+  core/IO.cpp core/IO.tcc
+  core/Selection.cpp
+  core/SelectionBoundingBox.cpp
+  core/SelectionPoints.cpp
   core/Transform.cpp
-  core/Transport.cpp
-  core/adiosFunctions.cpp
+  core/VariableBase.cpp
+  core/VariableCompound.cpp core/VariableCompound.tcc
   
-  engine/bp/BPFileReader.cpp
-  engine/bp/BPFileWriter.cpp
+#helper
+  helper/adiosMath.cpp
+  helper/adiosMemory.cpp
+  helper/adiosString.cpp
+  helper/adiosSystem.cpp
+  helper/adiosType.cpp
+  helper/adiosXML.cpp
+  
+#  engine/bp/BPFileReader.cpp
+  engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
 
-  utilities/format/bp1/BP1Base.cpp
-  utilities/format/bp1/BP1Aggregator.cpp
-  utilities/format/bp1/BP1Writer.cpp
-    
-  transport/file/FStream.cpp
-  transport/file/FileDescriptor.cpp
-  transport/file/FilePointer.cpp
-    
-  utilities/format/bp1/BP1Base.cpp
-  utilities/format/bp1/BP1Aggregator.cpp
-  utilities/format/bp1/BP1Writer.cpp
-  utilities/format/bp1/BP1Writer.tcc
+  toolkit/capsule/Capsule.cpp
+  toolkit/capsule/heap/STLVector.cpp 
+  toolkit/capsule/shmem/ShmSystemV.cpp
+
+  toolkit/format/bp1/BP1Base.cpp toolkit/format/bp1/BP1Base.tcc
+  toolkit/format/bp1/BP1Aggregator.cpp
+  toolkit/format/bp1/BP1Writer.cpp toolkit/format/bp1/BP1Writer.tcc
+
+  toolkit/profiling/iochrono/Timer.cpp
+
+  toolkit/transport/Transport.cpp
+  toolkit/transport/file/FileDescriptor.cpp
+  toolkit/transport/file/FilePointer.cpp
+  toolkit/transport/file/FileStream.cpp
+  
+  toolkit/transportman/TransportMan.cpp
+  
 )
 target_include_directories(adios2
   PUBLIC
@@ -49,7 +58,6 @@ if(ADIOS_USE_DataMan)
   target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
     engine/dataman/DataManWriter.cpp
-    transport/wan/MdtmMan.cpp
   )
   target_link_libraries(adios2 PRIVATE dataman)
 endif()
@@ -85,6 +93,9 @@ if(ADIOS_USE_ADIOS1)
   target_sources(adios2 PRIVATE
     engine/adios1/ADIOS1Reader.cpp
     engine/adios1/ADIOS1Writer.cpp
+    
+    toolkit/interop/adios1/ADIOS1Common.cpp toolkit/interop/adios1/ADIOS1Common.tcc
+    
   )
   target_link_libraries(adios2 PRIVATE adios1::adios)
 endif()
@@ -106,13 +117,13 @@ if(ADIOS_USE_HDF5)
   target_sources(adios2 PRIVATE
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
-    engine/hdf5/HDF5Common.cpp
+    toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
   )
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
 
 install(
-  FILES ADIOS.h ADIOS.inl ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
+  FILES ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 install(

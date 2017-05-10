@@ -2,118 +2,81 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloWriter.cpp
+ * helloADIOS1Writer.cpp : Simple self-descriptive example of how to write a
+ * variable to a ADIOS1 BP File that lives in several MPI processes. Test runs
+ * when ADIOS2 is linked with ADIOS1 library
  *
  *  Created on: Feb 16, 2017
- *      Author: wfg
+ *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
-#include <iostream>
-#include <vector>
-
+#include <ios>      //std::ios_base::failure
+#include <iostream> //std::cout
 #include <mpi.h>
+#include <stdexcept> //std::invalid_argument std::exception
+#include <vector>
 
 #include <adios2.h>
 
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
-    int rank, nproc;
+    int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    const bool adiosDebug = true;
-    adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::INFO, adiosDebug);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Application variable
-    float frank = (float)rank;
-    std::vector<double> myDoubles = {
-        frank,        frank + 0.1f, frank + 0.2f, frank + 0.3f, frank + 0.4f,
-        frank + 0.5f, frank + 0.6f, frank + 0.7f, frank + 0.8f, frank + 0.9f};
-    const std::size_t Nx = myDoubles.size();
-
-    const std::size_t rows = 3;
-    const std::size_t columns = 3;
-
-    std::vector<float> myMatrix;
-    myMatrix.reserve(rows * columns);
-    myMatrix.push_back(frank + 0.0);
-    myMatrix.push_back(frank + 0.1), myMatrix.push_back(frank + 0.2);
-    myMatrix.push_back(frank + 0.3);
-    myMatrix.push_back(frank + 0.4), myMatrix.push_back(frank + 0.5);
-    myMatrix.push_back(frank + 0.6);
-    myMatrix.push_back(frank + 0.7), myMatrix.push_back(frank + 0.8);
-
-    frank = -(float)rank;
-    std::vector<float> myMatrix2 = {frank - 0.1f, frank - 0.2f, frank - 0.3f,
-                                    frank - 0.4f, frank - 0.5f, frank - 0.6f,
-                                    frank - 0.7f, frank - 0.8f, frank - 0.9f};
+    /** Application variable */
+    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    const std::size_t Nx = myFloats.size();
 
     try
     {
-        // Define variable and local size
-        adios::Variable<double> &ioMyDoubles = adios.DefineVariable<double>(
-            "myDoubles", {nproc, Nx}, {rank, 0}, {1, Nx});
-        adios::Variable<float> &ioMyMatrix =
-            adios.DefineVariable<float>("myMatrix", {nproc * rows, columns},
-                                        {rank * rows, 0}, {rows, columns});
-        adios::Variable<float> &ioMyMatrix2 =
-            adios.DefineVariable<float>("myMatrix2", {rows, nproc * columns},
-                                        {0, rank * columns}, {rows, columns});
+        /** ADIOS class factory of IO class objects, DebugON is recommended */
+        adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
 
-        // Define method for engine creation, it is basically straight-forward
-        // parameters
-        adios::Method &bpWriterSettings = adios.DeclareMethod("hello");
-        bpWriterSettings.SetEngine("ADIOS1Writer");
-        bpWriterSettings.SetParameters("profile_units=mus");
-        bpWriterSettings.SetIOMode(adios::IOMode::COLLECTIVE);
-        bpWriterSettings.AddTransport(
-            "File", "profile_units=mus",
-            "have_metadata_file=no"); // uses default POSIX library
+        /*** IO class object: settings and factory of Settings: Variables,
+         * Parameters, Transports, and Execution: Engines */
+        adios::IO &adios1IO = adios.DeclareIO("ADIOS1IO");
+        adios1IO.SetEngine("ADIOS1Writer");
+        adios1IO.AddTransport("file");
 
-        // Create engine smart pointer due to polymorphism,
-        // Open returns a smart pointer to Engine containing the Derived class
-        // Writer
-        auto bpWriter = adios.Open("hello_adios1.bp", "w", bpWriterSettings);
+        /** global array : name, { shape (total) }, { start (local) }, { count
+         * (local) }, all are constant dimensions */
+        adios::Variable<float> &bpFloats = adios1IO.DefineVariable<float>(
+            "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios::ConstantDims);
 
-        if (bpWriter == nullptr)
+        /** Engine derived class, spawned to start IO operations */
+        auto adios1Writer = adios1IO.Open("myVector.bp", adios::OpenMode::w);
+
+        if (!adios1Writer)
+        {
             throw std::ios_base::failure(
-                "ERROR: couldn't create bpWriter at Open\n");
+                "ERROR: adios1Writer not created at Open\n");
+        }
 
-        bpWriter->Write<double>(ioMyDoubles,
-                                myDoubles.data()); // Base class Engine
-                                                   // own the Write<T>
-                                                   // that will call
-                                                   // overloaded Write
-                                                   // from Derived
+        /** Write variable for buffering */
+        adios1Writer->Write<float>(bpFloats, myFloats.data());
 
-        bpWriter->Write<float>(ioMyMatrix, myMatrix.data());
-        bpWriter->Write<float>(ioMyMatrix2, myMatrix2.data());
-
-        bpWriter->Close();
+        /** Create bp file, engine becomes unreachable after this*/
+        adios1Writer->Close();
     }
     catch (std::invalid_argument &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
+                  << rank << "\n";
+        std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "System exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout
+            << "IO System base failure exception, STOPPING PROGRAM from rank "
+            << rank << "\n";
+        std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "Exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
+        std::cout << e.what() << "\n";
     }
 
     MPI_Finalize();
