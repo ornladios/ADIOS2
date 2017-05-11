@@ -31,7 +31,8 @@ public:
 protected:
     void *zmq_context = NULL;
     CacheMan m_cache;
-    int callback();
+    int callback_direct(const void *a_data, json &a_jmsg);
+    int callback_cache();
 
     std::string m_get_mode = "callback";
     std::string m_stream_mode;
