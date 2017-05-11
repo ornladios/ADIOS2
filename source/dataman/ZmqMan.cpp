@@ -65,15 +65,26 @@ void ZmqMan::on_recv(json a_jmsg)
         int ret = zmq_recv(zmq_data, data.data(), sendbytes, 0);
         zmq_send(zmq_data, "OK", 10, 0);
 
-        if (a_jmsg["compression_method"].is_string() and
-            a_jmsg["compression_method"].get<std::string>() != "null")
+        // if data is compressed then call auto_transform to decompress
+        if (a_jmsg["compression_method"].is_string())
         {
-            auto_transform(data, a_jmsg);
+            if (a_jmsg["compression_method"].get<std::string>() != "null")
+            {
+                auto_transform(data, a_jmsg);
+            }
         }
-        m_cache.put(data.data(), a_jmsg);
+
+        if (a_jmsg["varshape"] == a_jmsg["putshape"])
+        {
+            callback_direct(data.data(), a_jmsg);
+        }
+        else
+        {
+            m_cache.put(data.data(), a_jmsg);
+        }
     }
     else if (a_jmsg["operation"].get<std::string>() == "flush")
     {
-        callback();
+        callback_cache();
     }
 }

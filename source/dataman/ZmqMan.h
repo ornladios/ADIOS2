@@ -28,7 +28,7 @@ public:
     std::string name() { return "ZmqMan"; }
 
 private:
-    void *zmq_data = NULL;
+    void *zmq_data = nullptr;
 };
 
 extern "C" DataManBase *getMan() { return new ZmqMan; }
