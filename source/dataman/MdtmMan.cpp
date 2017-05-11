@@ -154,7 +154,7 @@ void MdtmMan::on_recv(json a_jmsg)
     // for flush
     if (jqueue.front()["operation"] == "flush")
     {
-        callback();
+        callback_cache();
         jqueue.pop();
         vqueue.pop();
         iqueue.pop();
@@ -222,7 +222,17 @@ void MdtmMan::on_recv(json a_jmsg)
                         auto_transform(vqueue.front(), a_jmsg);
                     }
                 }
-                m_cache.put(vqueue.front().data(), jmsg);
+
+                if (a_jmsg["varshape"] == a_jmsg["putshape"])
+                {
+                    std::cout << "callback_direct \n";
+                    callback_direct(vqueue.front().data(), jmsg);
+                }
+                else
+                {
+                    m_cache.put(vqueue.front().data(), jmsg);
+                }
+
                 jqueue.pop();
                 vqueue.pop();
                 iqueue.pop();

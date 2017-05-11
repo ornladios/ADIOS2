@@ -95,7 +95,21 @@ int StreamMan::init(json p_jmsg)
     }
 }
 
-int StreamMan::callback()
+int StreamMan::callback_direct(const void *a_data, json &a_jmsg)
+{
+    if (!m_callback)
+    {
+        logging("callback called but callback function not registered!");
+        return -1;
+    }
+
+    m_callback(a_data, a_jmsg["doid"], a_jmsg["var"],
+               a_jmsg["dtype"].get<std::string>(),
+               a_jmsg["varshape"].get<std::vector<size_t>>());
+    return 0;
+}
+
+int StreamMan::callback_cache()
 {
     if (!m_callback)
     {
@@ -104,10 +118,10 @@ int StreamMan::callback()
     }
 
     std::vector<std::string> do_list = m_cache.get_do_list();
-    for (std::string i : do_list)
+    for (const std::string &i : do_list)
     {
         std::vector<std::string> var_list = m_cache.get_var_list(i);
-        for (std::string j : var_list)
+        for (const std::string &j : var_list)
         {
             m_callback(
                 m_cache.get(i, j), i, j,
@@ -116,6 +130,7 @@ int StreamMan::callback()
         }
     }
     m_cache.clean("nan");
+
     return 0;
 }
 
@@ -139,7 +154,7 @@ void StreamMan::zmq_meta_rep_thread_func()
             logging("StreamMan::zmq_meta_rep_thread_func: \n" + jmsg.dump(4));
             on_recv(jmsg);
         }
-        usleep(10);
+        usleep(1);
     }
 }
 
