@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
                                                 {intOffsetDim1, intOffsetDim2},
                                                 {intCountDim1, intDim2});
         auto &ioMyDoubles = adios.DefineArray<double>(
-	    "myDoubles", {Nx}, {doubleVOffset}, {doubleVCount});
+            "myDoubles", {Nx}, {doubleVOffset}, {doubleVCount});
         auto &ioMyCFloats = adios.DefineArray<std::complex<float>>(
             "myCFloats", {3}, {complexOffset}, {complexCount});
         auto &ioMyCDoubles = adios.DefineArray<std::complex<double>>(
