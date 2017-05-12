@@ -91,7 +91,7 @@ public:
 
 private:
     ///< heap capsule, contains data and metadata buffers
-    capsule::STLVector m_Buffer;
+    //capsule::STLVector m_Buffer;
 
     void Init();
 
