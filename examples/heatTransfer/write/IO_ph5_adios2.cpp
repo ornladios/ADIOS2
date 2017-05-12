@@ -24,7 +24,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     rank_saved = s.rank;
     m_outputfilename = s.outputfile + ".h5";
-    //adios::ADIOS adios(comm, adios::Verbose::INFO, false);
+    // adios::ADIOS adios(comm, adios::Verbose::INFO, false);
     ad = new adios::ADIOS(comm, adios::Verbose::INFO, false);
 
     // Define method for engine creation
@@ -36,7 +36,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
         // if not defined by user, we can change the default settings
         // BPFileWriter is the default engine
         h5writerSettings.SetEngine("HDF5Writer");
-        // Allow an extra thread for data processing       
+        // Allow an extra thread for data processing
 
         const std::string aggregatorsParam("Aggregators=" +
                                            std::to_string((s.nproc + 1) / 2));
@@ -56,7 +56,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
         // starting offset of the local array in the global space
         {s.offsx, s.offsy},
         // local size, could be defined later using SetSelection()
-      {s.ndx, s.ndy}));
+        {s.ndx, s.ndy}));
 
     // add transform to variable
     // adios::Transform tr = adios::transform::BZIP2( );
@@ -72,7 +72,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 IO::~IO()
 {
     h5writer->Close();
-    //delete ad;
+    // delete ad;
 }
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
@@ -86,8 +86,8 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     // Make a selection to describe the local dimensions of the variable we
     // write and its offsets in the global spaces. This could have been done in
     // adios.DefineVariable()
-    //adios::SelectionBoundingBox sel({s.offsx, s.offsy}, {s.ndx, s.ndy});
-    //varT->SetSelection(sel);
+    // adios::SelectionBoundingBox sel({s.offsx, s.offsy}, {s.ndx, s.ndy});
+    // varT->SetSelection(sel);
 
     /* Select the area that we want to write from the data pointer we pass to
        the
@@ -100,12 +100,12 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
        above.
        Default memspace is always the full selection.
     */
-    //adios::SelectionBoundingBox memspace =
+    // adios::SelectionBoundingBox memspace =
     //    adios::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
-    //varT->SetMemorySelection(memspace);
+    // varT->SetMemorySelection(memspace);
 
     h5writer->Write<double>(*varT, ht.data_noghost().data());
-    //h5writer->Write(*varT, ht.data_noghost().data());
+    // h5writer->Write(*varT, ht.data_noghost().data());
     h5writer->Write<unsigned int>(*varGndx, s.gndx);
     h5writer->Write<unsigned int>("gndy", s.gndy);
 

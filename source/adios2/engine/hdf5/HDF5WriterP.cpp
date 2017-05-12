@@ -23,7 +23,7 @@ HDF5Writer::HDF5Writer(ADIOS &adios, const std::string name,
 : Engine(adios, "HDF5Writer", name, accessMode, mpiComm,
          method, /*debugMode, cores,*/
          " HDF5Writer constructor (or call to ADIOS Open).\n")
-  //m_Buffer(m_DebugMode)
+// m_Buffer(m_DebugMode)
 {
     Init();
 }
@@ -256,17 +256,20 @@ void HDF5Writer::UseHDFWrite(Variable<T> &variable, const T *values,
 
     int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
 
-    if (dimSize == 0) {
-      // scalar
-      hid_t filespaceID = H5Screate(H5S_SCALAR);
-      hid_t dsetID   = H5Dcreate(m_H5File.m_GroupId, variable.m_Name.c_str(), h5Type, filespaceID, 
-				    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, values);
+    if (dimSize == 0)
+    {
+        // scalar
+        hid_t filespaceID = H5Screate(H5S_SCALAR);
+        hid_t dsetID =
+            H5Dcreate(m_H5File.m_GroupId, variable.m_Name.c_str(), h5Type,
+                      filespaceID, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        herr_t status =
+            H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, values);
 
-      H5Sclose (filespaceID);
-      H5Dclose (dsetID);
+        H5Sclose(filespaceID);
+        H5Dclose(dsetID);
 
-      return;
+        return;
     }
 
     std::vector<hsize_t> dimsf, count, offset;
