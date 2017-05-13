@@ -19,9 +19,9 @@ public:
     DumpMan() = default;
     virtual ~DumpMan() = default;
 
-    virtual int init(json p_jmsg);
-    virtual int put(const void *p_data, json p_jmsg);
-    virtual int get(void *p_data, json &p_jmsg);
+    virtual int init(json a_jmsg);
+    virtual int put(const void *a_data, json &a_jmsg);
+    virtual int get(void *a_data, json &a_jmsg);
     void flush();
     std::string name() { return "DumpMan"; }
     std::string type() { return "Dump"; }

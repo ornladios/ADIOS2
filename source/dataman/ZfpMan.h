@@ -19,7 +19,7 @@ public:
     ZfpMan() = default;
     virtual ~ZfpMan() = default;
     virtual int init(json a_jmsg);
-    virtual int put(const void *a_data, json a_jmsg);
+    virtual int put(const void *a_data, json &a_jmsg);
     virtual int get(void *a_data, json &a_jmsg);
     virtual void transform(std::vector<char> &a_data, json &a_jmsg);
     virtual void flush();

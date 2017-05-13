@@ -12,7 +12,7 @@
 
 int TemporalMan::init(json p_jmsg) { return 0; }
 
-int TemporalMan::put(const void *p_data, json p_jmsg)
+int TemporalMan::put(const void *p_data, json &p_jmsg)
 {
     put_begin(p_data, p_jmsg);
     put_end(p_data, p_jmsg);

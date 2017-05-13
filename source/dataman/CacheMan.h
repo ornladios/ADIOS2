@@ -21,7 +21,7 @@ public:
     using json = nlohmann::json;
 
     int init(json a_jmsg);
-    virtual int put(const void *a_data, json a_jmsg);
+    virtual int put(const void *a_data, json &a_jmsg);
     virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
     void *get();
@@ -81,7 +81,7 @@ class CacheMan
 
 public:
     using json = nlohmann::json;
-    int put(const void *a_data, json a_jmsg);
+    int put(const void *a_data, json &a_jmsg);
     void *get(std::string doid, std::string var);
     void pop();
     void push();
