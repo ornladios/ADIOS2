@@ -68,15 +68,15 @@ int MdtmMan::init(json a_jmsg)
 
     // Make pipes
     mkdir(m_pipepath.c_str(), 0755);
-    mkfifo(m_pipename.c_str(), 0666);
+    mkfifo(m_full_pipename.c_str(), 0666);
 
     if (m_stream_mode == "sender")
     {
-        m_pipe_handler = open(m_pipename.c_str(), O_WRONLY);
+        m_pipe_handler = open(m_full_pipename.c_str(), O_WRONLY);
     }
     if (m_stream_mode == "receiver")
     {
-        m_pipe_handler = open(m_pipename.c_str(), O_RDONLY | O_NONBLOCK);
+        m_pipe_handler = open(m_full_pipename.c_str(), O_RDONLY | O_NONBLOCK);
     }
     return 0;
 }
