@@ -162,6 +162,10 @@ void HDF5Common::Close()
     H5Fclose(m_FileId);
     m_FileId = -1;
     m_GroupId = -1;
+
+    H5Tclose(m_DefH5TypeComplexFloat);
+    H5Tclose(m_DefH5TypeComplexDouble);
+    H5Tclose(m_DefH5TypeComplexLongDouble);
 }
 
 void HDF5Common::Advance()

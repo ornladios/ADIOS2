@@ -52,4 +52,25 @@ if(ADIOS_USE_MPI)
       ${MPI_C_LIBRARIES} ${HDF5_C_LIBRARIES}
     )
   endif()
+
+  if(ADIOS_USE_HDF5)
+     find_package(MPI COMPONENTS C REQUIRED)
+
+     add_executable(heatTransfer_write_a2h5
+      main.cpp
+      HeatTransfer.cpp
+      Settings.cpp
+      IO_ph5_adios2.cpp
+    )
+
+    target_include_directories(heatTransfer_write_a2h5
+      PRIVATE ${MPI_C_INCLUDE_PATH}
+    )
+    #target_link_libraries(heatTransfer_write_a2h5
+    #  ${MPI_C_LIBRARIES} 
+    #)
+    target_link_libraries(heatTransfer_write_a2h5 PUBLIC adios2)
+
+  endif()
+
 endif()
