@@ -22,32 +22,30 @@ public:
     StreamMan() = default;
     virtual ~StreamMan();
 
-    virtual int init(json p_jmsg);
-    virtual int put(const void *p_data, json p_jmsg);
-    virtual void on_recv(json msg) = 0;
+    virtual int init(json a_jmsg);
+    virtual void on_recv(json &a_msg) = 0;
+    virtual void on_put(std::shared_ptr<std::vector<char>> a_data) = 0;
     void flush();
     virtual std::string type() { return "Stream"; }
 
 protected:
-    void *zmq_context = NULL;
-    CacheMan m_cache;
     int callback_direct(const void *a_data, json &a_jmsg);
     int callback_cache();
+    int put_stream(const void *a_data, json a_jmsg);
 
+    void *m_zmq_context = nullptr;
+    CacheMan m_cache;
     std::string m_get_mode = "callback";
     std::string m_stream_mode;
     std::string m_local_ip;
     std::string m_remote_ip;
     int m_local_port;
     int m_remote_port;
-    int m_num_channels = 10;
-    std::vector<int> m_tolerance;
-    std::vector<int> m_priority;
+    int m_tolerance = 0;
+    int m_priority = 100;
+    int m_channel_id = 0;
+    int m_num_channels = 1;
     std::string m_clean_mode = "nan";
-
-    // parallel
-    std::string m_parallel_mode = "round"; // round, priority
-    int m_current_channel = 0;
 
     inline std::string make_address(std::string ip, int port,
                                     std::string protocol)
@@ -58,10 +56,15 @@ protected:
     }
 
 private:
-    void *zmq_meta = NULL;
-    void zmq_meta_rep_thread_func();
-    bool zmq_meta_rep_thread_active;
-    std::thread zmq_meta_rep_thread;
+    void zmq_rep_thread_func();
+    std::thread m_zmq_rep_thread;
+    void *m_zmq_rep = nullptr;
+    bool m_zmq_rep_thread_active = false;
+
+    void zmq_req_thread_func(std::shared_ptr<std::vector<char>> a_data);
+    std::thread m_zmq_req_thread;
+    void *m_zmq_req = nullptr;
+    bool m_zmq_req_thread_active = false;
 };
 
 #endif

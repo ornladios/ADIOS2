@@ -21,30 +21,28 @@ int ZfpMan::init(json a_jmsg)
     return 0;
 }
 
-int ZfpMan::put(const void *a_data, json a_jmsg)
+int ZfpMan::put(const void *a_data, json &a_jmsg)
 {
     put_begin(a_data, a_jmsg);
-
     std::vector<char> compressed_data;
     if (check_json(a_jmsg, {"doid", "var", "dtype", "putshape"}, "ZfpMan"))
     {
-        if (not a_jmsg["compression_rate"].is_number())
-        {
-            a_jmsg["compression_rate"] = m_compression_rate;
-        }
         compress(const_cast<void *>(a_data), compressed_data, a_jmsg);
     }
-
     put_end(compressed_data.data(), a_jmsg);
     return 0;
 }
 
 int ZfpMan::get(void *a_data, json &a_jmsg) { return 0; }
 
-void ZfpMan::flush() { flush_next(); }
+void ZfpMan::flush() {}
 
 int ZfpMan::compress(void *a_input, std::vector<char> &a_output, json &a_jmsg)
 {
+    if (!a_jmsg["compression_rate"].is_number())
+    {
+        a_jmsg["compression_rate"] = m_compression_rate;
+    }
     std::string dtype = a_jmsg["dtype"];
     std::vector<size_t> shape = a_jmsg["putshape"].get<std::vector<size_t>>();
     int compression_rate = a_jmsg["compression_rate"].get<int>();

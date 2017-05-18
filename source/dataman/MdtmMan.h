@@ -19,23 +19,25 @@ class MdtmMan : public StreamMan
 {
 public:
     MdtmMan() = default;
-    virtual ~MdtmMan();
+    virtual ~MdtmMan() = default;
 
-    virtual int init(json p_jmsg);
-    virtual int put(const void *p_data, json p_jmsg);
-    virtual int get(void *p_data, json &p_jmsg);
+    virtual int init(json a_jmsg);
+    virtual int put(const void *a_data, json &a_jmsg);
+    virtual int get(void *a_data, json &a_jmsg);
     virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
-    void on_recv(json msg);
+    virtual void on_recv(json &a_msg);
+    virtual void on_put(std::shared_ptr<std::vector<char>> a_data);
     std::string name() { return "MdtmMan"; }
 
 private:
-    void *zmq_ipc_req = nullptr;
     int zmq_msg_size = 1024;
-    json pipe_desc;
+    std::string m_pipepath = "/tmp/MdtmManPipes/";
+    std::string m_pipename_prefix = "MdtmManPipe";
+    std::string m_pipename;
+    std::string m_full_pipename;
+    int m_pipe_handler;
     std::string getmode = "callback";
-    std::vector<int> pipes;
-    std::vector<std::string> pipenames;
     std::queue<json> jqueue;
     std::queue<std::vector<char>> vqueue;
     std::queue<int> iqueue;

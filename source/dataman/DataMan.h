@@ -19,31 +19,22 @@ class DataMan : public DataManBase
 public:
     DataMan() = default;
     virtual ~DataMan() = default;
-    virtual int init(json p_jmsg);
-    virtual int put(const void *p_data, json p_jmsg);
-    virtual int get(void *p_data, json &p_jmsg);
+    virtual int init(json a_jmsg);
+    virtual int put(const void *a_data, json &a_jmsg);
+    virtual int get(void *a_data, json &a_jmsg);
+    int put_streams(const void *a_data, json &a_jmsg);
     void flush();
-    void add_stream(json p_jmsg);
-    int put(const void *p_data, std::string p_doid, std::string p_var,
-            std::string p_dtype, std::vector<size_t> p_putshape,
-            std::vector<size_t> p_varshape, std::vector<size_t> p_offset,
-            size_t p_timestep, int p_tolerance = 0, int p_priority = 100);
+    void add_stream(json a_jmsg);
     void add_file(std::string p_method);
     std::string name() { return "DataManager"; }
     std::string type() { return "Manager"; }
     virtual void transform(std::vector<char> &a_data, json &a_jmsg) {}
 
 private:
-    std::string m_local_ip;
-    std::string m_remote_ip;
-    int m_local_port = 0;
-    int m_remote_port = 0;
-    int m_num_channels = 0;
-    std::vector<int> m_tolerance;
-    std::vector<int> m_priority;
     CacheMan m_cache;
     size_t m_cache_size = 0;
     size_t m_timestep = 0;
+    int m_stream_index = 0;
 };
 
-#endif /* DATAMAN_H_ */
+#endif // DATAMAN_DATAMAN_H_
