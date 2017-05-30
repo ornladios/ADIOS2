@@ -8,54 +8,11 @@ git pull --ff-only
 cd ${HOME}
 mkdir -p ${BASEDIR}/../Logs
 
+DASHBOARD_CONFIGS="System GCC_IMPI GCC_MPICH GCC_MVAPICH2 GCC_NoMPI GCC_OpenMPI Intel_IMPI Intel_MPICH Intel_MVAPICH2 Intel_NoMPI Intel_OpenMPI"
 
-for COMP_ID in Intel GCC
+for CONFIG in ${DASHBOARD_CONFIGS}
 do
-  for MPI_ID in OpenMPI MPICH MVAPICH2 NoMPI
-  do
-    module purge
-    module load ohpc
-
-    case ${MPI_ID} in
-      OpenMPI)  ;;
-      MPICH)    module swap openmpi mpich ;;
-      MVAPICH2) module swap openmpi mvapich2 ;;
-      *) ;;
-    esac
-
-    case ${COMP_ID} in
-      Intel)
-        COMP_VER=$(module list | sed -n 's|.* intel\/\([^ ]*\) .*|\1|p')
-        export CC=$(which icc) CXX=$(which icpc) FC=$(which ifort)
-        ;;
-      GCC)
-        module -q swap intel gnu
-        COMP_VER=$(module list | sed -n 's|.* gnu\/\([^ ]*\) .*|\1|p')
-        export CC=$(which gcc) CXX=$(which g++) FC=$(which gfortran)
-        ;;
-      *) ;;
-    esac
-
-    echo "Building ${COMP_ID}-${COMP_VER} ${MPI_ID}"
-
-    LOGBASE=${BASEDIR}/../Logs/${COMP_ID}-${COMP_VER}_${MPI_ID}
-    ctest -DCOMP_ID=${COMP_ID} -DCOMP_VER=${COMP_VER} -DMPI_ID=${MPI_ID} \
-      -S ${BASEDIR}/aaargh.cmake -VV 1>${LOGBASE}.out 2>${LOGBASE}.err
-  done
+  echo ${CONFIG}
+  LOG=${BASEDIR}/../Logs/${CONFIG}
+  ctest -S ${BASEDIR}/aaargh_${CONFIG}.cmake -VV 1>${LOG}.out 2>${LOG}.err
 done
-
-module purge
-COMP_ID=GCC
-COMP_VER=$(gcc --version | head -1 | awk '{print $3}')
-MPI_ID=NoMPI
-
-export CC=$(which gcc) CXX=$(which g++) FC=$(which gfortran)
-echo "Building ${COMP_ID}-${COMP_VER} ${MPI_ID}"
-LOGBASE=${BASEDIR}/../Logs/${COMP_ID}-${COMP_VER}_${MPI_ID}
-ctest -DCOMP_ID=${COMP_ID} -DCOMP_VER=${COMP_VER} -DMPI_ID=${MPI_ID} \
-  -S ${BASEDIR}/aaargh.cmake -VV 1>${LOGBASE}.out 2>${LOGBASE}.err
-
-echo "Building ${COMP_ID}-${COMP_VER} ${MPI_ID} ClangTidy"
-LOGBASE=${BASEDIR}/../Logs/${COMP_ID}-${COMP_VER}_${MPI_ID}_ClangTidy
-ctest -DCOMP_ID=${COMP_ID} -DCOMP_VER=${COMP_VER} -DMPI_ID=${MPI_ID} \
-  -S ${BASEDIR}/aaargh.cmake -VV 1>${LOGBASE}.out 2>${LOGBASE}.err

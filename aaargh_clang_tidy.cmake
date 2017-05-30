@@ -5,7 +5,7 @@ set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j72")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 18)
 #set(dashboard_model Nightly)
-set(dashboard_root_name "Builds/${COMP_ID} ${COMP_VER} ${MPI_ID} ClangTidy")
+set(dashboard_root_name "Builds/${COMP_ID}_${COMP_VER}_${MPI_ID}_ClangTidy")
 
 if(MPI_ID STREQUAL "NoMPI")
   set(MPI_CACHE "ADIOS_USE_MPI:BOOL=OFF")
