@@ -10,12 +10,12 @@
 
 #include "IO.h"
 
-#include <string>
-#include <stdexcept>
 #include <hdf5.h>
-#include <memory>
 #include <ios>
 #include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
 
 class HDF5NativeWriter
 {
