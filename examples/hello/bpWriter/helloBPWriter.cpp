@@ -23,7 +23,8 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
     const bool adiosDebug = true;
-    adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::INFO, adiosDebug);
+    adios::ADIOS adios("config.xml", MPI_COMM_WORLD, adios::Verbose::INFO,
+                       adiosDebug);
 
     // Application variable
     std::vector<double> myDoubles = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -60,12 +61,15 @@ int main(int argc, char *argv[])
 
         // Define method for engine creation, it is basically straight-forward
         // parameters
-        adios::Method &bpWriterSettings = adios.DeclareMethod(
-            "SingleFile"); // default method type is BPWriter
-        bpWriterSettings.SetParameters("profile_units=mus");
-        bpWriterSettings.AddTransport(
-            "File", "profile_units=mus",
-            "have_metadata_file=no"); // uses default POSIX library
+        adios::Method &bpWriterSettings =
+            adios.DeclareMethod("Output"); // Output is defined in config.xml
+        if (!bpWriterSettings.IsUserDefined())
+        {
+            bpWriterSettings.SetParameters("profile_units=mus");
+            bpWriterSettings.AddTransport(
+                "File", "profile_units=mus",
+                "have_metadata_file=no"); // uses default POSIX library
+        }
 
         // Create engine smart pointer due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
