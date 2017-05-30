@@ -48,10 +48,9 @@ HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
 {
     m_FilePropertyListId = H5Pcreate(H5P_FILE_ACCESS);
 
-#ifdef ADIOS2_HAVE_MPI
     // read a file collectively
     H5Pset_fapl_mpio(m_FilePropertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
-#endif
+
 
     m_FileId = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
                          m_FilePropertyListId);
@@ -167,9 +166,8 @@ void HDF5NativeWriter::WriteSimple(const std::string &varName, int dimSize,
     //  Create property list for collective dataset write.
 
     hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
-#ifdef ADIOS2_HAVE_MPI
     H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
-#endif
+
     herr_t status;
 
     status = H5Dwrite(dsetID, h5Type, memSpace, fileSpace, plistID, data);
@@ -195,6 +193,11 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     m_outputfilename = s.outputfile + ".h5";
 
+    if (s.outputfile[0]=='0') {
+      std::cout<<" no writer. "<<std::endl;
+      h5writer = nullptr;
+      return;
+    }
     h5writer = std::make_shared<HDF5NativeWriter>(m_outputfilename);
 
     if (h5writer == nullptr)
@@ -203,13 +206,18 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
 IO::~IO()
 {
-    h5writer->Close();
+    if (h5writer != nullptr) {
+      h5writer->Close();
+    }
     // delete h5writer;
 }
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
+    if (h5writer == nullptr) {
+        return;
+    }
     std::vector<hsize_t> dims = {s.gndx, s.gndy};
     std::vector<hsize_t> offset = {s.offsx, s.offsy};
     std::vector<hsize_t> count = {s.ndx, s.ndy};
@@ -217,6 +225,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     h5writer->WriteSimple("T", 2, ht.data_noghost().data(), H5T_NATIVE_DOUBLE,
                           dims.data(), offset.data(), count.data());
     h5writer->WriteScalar("gndy", &(s.gndy), H5T_NATIVE_UINT);
+    h5writer->WriteScalar("gndx", &(s.gndx), H5T_NATIVE_UINT);
 
     h5writer->Advance();
 }
