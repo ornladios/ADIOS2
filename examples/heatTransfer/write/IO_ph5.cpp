@@ -51,7 +51,6 @@ HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
     // read a file collectively
     H5Pset_fapl_mpio(m_FilePropertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
 
-
     m_FileId = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
                          m_FilePropertyListId);
 
@@ -193,10 +192,11 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     m_outputfilename = s.outputfile + ".h5";
 
-    if (s.outputfile[0]=='0') {
-      std::cout<<" no writer. "<<std::endl;
-      h5writer = nullptr;
-      return;
+    if (s.outputfile[0] == '0')
+    {
+        std::cout << " no writer. " << std::endl;
+        h5writer = nullptr;
+        return;
     }
     h5writer = std::make_shared<HDF5NativeWriter>(m_outputfilename);
 
@@ -206,8 +206,9 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
 IO::~IO()
 {
-    if (h5writer != nullptr) {
-      h5writer->Close();
+    if (h5writer != nullptr)
+    {
+        h5writer->Close();
     }
     // delete h5writer;
 }
@@ -215,7 +216,8 @@ IO::~IO()
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    if (h5writer == nullptr) {
+    if (h5writer == nullptr)
+    {
         return;
     }
     std::vector<hsize_t> dims = {s.gndx, s.gndy};
