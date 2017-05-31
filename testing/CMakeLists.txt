@@ -3,4 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+include(GoogleTest)
+
 add_subdirectory(adios2)
