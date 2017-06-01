@@ -3,6 +3,9 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-include(GoogleTest)
-
-add_subdirectory(adios2)
+# This module is already included in new versions of CMake
+if(CMAKE_VERSION VERSION_LESS 3.10)
+  include(${CMAKE_CURRENT_LIST_DIR}/upstream/GoogleTest.cmake)
+else()
+  include(GoogleTest)
+endif()
