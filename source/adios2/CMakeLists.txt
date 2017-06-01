@@ -77,9 +77,9 @@ endif()
 
 if(ADIOS_USE_ADIOS1)
   if(ADIOS_USE_MPI)
-    find_package(ADIOS1 REQUIRED)
+    find_package(ADIOS1 1.12.0 REQUIRED)
   else()
-    find_package(ADIOS1 COMPONENTS sequential REQUIRED)
+    find_package(ADIOS1 1.12.0 COMPONENTS sequential REQUIRED)
   endif()
 
   target_sources(adios2 PRIVATE
