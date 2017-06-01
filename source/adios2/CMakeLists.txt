@@ -102,10 +102,11 @@ if(ADIOS_USE_HDF5)
       "of ADIOS is being built, which requires a sequential HDF5."
     )
   endif()
-  message("DEBUG: HDF5_INCLUDE_DIRS: ${HDF5_INCLUDE_DIRS}")
-  message("DEBUG: HDF5_C_INCLUDE_DIRS: ${HDF5_C_INCLUDE_DIRS}")
-  message("DEBUG: HDF5_C_LIBRARIES: ${HDF5_C_LIBRARIES}")
-  target_include_directories(adios2 PRIVATE ${HDF5_C_INCLUDE_DIRS})
+  if(HDF5_C_INCLUDE_DIRS)
+    target_include_directories(adios2 PRIVATE ${HDF5_C_INCLUDE_DIRS})
+  else()
+    target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
+  endif()
   target_sources(adios2 PRIVATE
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
