@@ -19,6 +19,7 @@ This module defines functions to help use the Google Test infrastructure.
                     [TEST_PREFIX prefix]
                     [TEST_SUFFIX suffix]
                     [SKIP_DEPENDENCY]
+                    [INCLUDE_DISABLED]
                     [TEST_LIST outVar]
     )
 
@@ -55,6 +56,13 @@ This module defines functions to help use the Google Test infrastructure.
     that the list of discovered tests is updated. If this behavior is not
     desired (as may be the case while actually writing the test cases), this
     option can be used to prevent the dependency from being added.
+
+  ``INCLUDE_DISABLED``
+    Normally disabled tests will be skipped.  This option will force the tests
+    to be added anyways.
+
+  ``VERBOSE``
+    Output tests as they are added or skipped.
 
   ``TEST_LIST outVar``
     The variable named by ``outVar`` will be populated in the calling scope
@@ -109,6 +117,8 @@ function(gtest_add_tests)
 
   set(options
       SKIP_DEPENDENCY
+      INCLUDE_DISABLED
+      VERBOSE
   )
   set(oneValueArgs
       TARGET
@@ -183,14 +193,25 @@ function(gtest_add_tests)
       endif()
 
       # Ignore the test case if it's disabled in GTest
-      set(gtest_case_name_member "${CMAKE_MATCH_2}")
-      if(gtest_case_name_member MATCHES "^DISABLED_")
-        continue()
+      set(gtest_test_name ${CMAKE_MATCH_1})
+      set(gtest_case_name ${CMAKE_MATCH_2})
+      if(gtest_test_name MATCHES "^DISABLED_" OR
+         gtest_case_name MATCHES "^DISABLED_")
+        if(NOT ARGS_INCLUDE_DISABLED)
+          if(ARGS_VERBOSE)
+            message("GoogleTest: Skipping disabled test ${test_name}")
+          endif()
+          continue()
+        endif()
       endif()
 
-      add_test(NAME ${ARGS_TEST_PREFIX}${test_name}${ARGS_TEST_SUFFIX}
+      set(ctest_test_name ${ARGS_TEST_PREFIX}${test_name}${ARGS_TEST_SUFFIX})
+      if(ARGS_VERBOSE)
+        message("GoogleTest: Adding ${ctest_test_name}")
+      endif()
+      add_test(NAME ${ctest_test_name}
                ${workDir}
-               COMMAND ${ARGS_TARGET} --gtest_filter=${test_name} ${ARGS_EXTRA_ARGS}
+               COMMAND ${ARGS_TARGET} --gtest_also_run_disabled_tests --gtest_filter=${test_name} ${ARGS_EXTRA_ARGS}
       )
       list(APPEND testList ${ARGS_TEST_PREFIX}${test_name}${ARGS_TEST_SUFFIX})
     endforeach()
