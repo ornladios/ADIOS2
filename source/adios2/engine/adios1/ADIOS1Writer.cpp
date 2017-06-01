@@ -17,6 +17,11 @@
 extern int adios_verbose_level;
 extern int adios_errno;
 
+// Enable compatibility with ADIOS 1.10 adios_declare_group signature
+#if !ADIOS_VERSION_GE(1, 11, 0)
+#define adios_stat_default adios_flag_yes
+#endif
+
 namespace adios
 {
 
