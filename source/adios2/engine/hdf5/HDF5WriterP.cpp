@@ -134,105 +134,105 @@ void HDF5Writer::Write(Variable<std::complex<long double>> &variable,
 }
 
 // String version
-void HDF5Writer::Write(const std::string variableName, const char *values)
+void HDF5Writer::Write(const std::string &variableName, const char *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<char>(variableName), values,
                 H5T_NATIVE_CHAR);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const unsigned char *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<unsigned char>(variableName), values,
                 H5T_NATIVE_UCHAR);
 }
 
-void HDF5Writer::Write(const std::string variableName, const short *values)
+void HDF5Writer::Write(const std::string &variableName, const short *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<short>(variableName), values,
                 H5T_NATIVE_SHORT);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const unsigned short *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<unsigned short>(variableName), values,
                 H5T_NATIVE_USHORT);
 }
 
-void HDF5Writer::Write(const std::string variableName, const int *values)
+void HDF5Writer::Write(const std::string &variableName, const int *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<int>(variableName), values, H5T_NATIVE_INT);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const unsigned int *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<unsigned int>(variableName), values,
                 H5T_NATIVE_UINT);
 }
 
-void HDF5Writer::Write(const std::string variableName, const long int *values)
+void HDF5Writer::Write(const std::string &variableName, const long int *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<long int>(variableName), values,
                 H5T_NATIVE_LONG);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const unsigned long int *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<unsigned long int>(variableName), values,
                 H5T_NATIVE_ULONG);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const long long int *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<long long int>(variableName), values,
                 H5T_NATIVE_LLONG);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const unsigned long long int *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<unsigned long long int>(variableName),
                 values, H5T_NATIVE_ULLONG);
 }
 
-void HDF5Writer::Write(const std::string variableName, const float *values)
+void HDF5Writer::Write(const std::string &variableName, const float *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<float>(variableName), values,
                 H5T_NATIVE_FLOAT);
 }
 
-void HDF5Writer::Write(const std::string variableName, const double *values)
+void HDF5Writer::Write(const std::string &variableName, const double *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<double>(variableName), values,
                 H5T_NATIVE_DOUBLE);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const long double *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<long double>(variableName), values,
                 H5T_NATIVE_LDOUBLE);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const std::complex<float> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<float>>(variableName), values,
                 m_H5File.m_DefH5TypeComplexFloat);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const std::complex<double> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<double>>(variableName), values,
                 m_H5File.m_DefH5TypeComplexDouble);
 }
 
-void HDF5Writer::Write(const std::string variableName,
+void HDF5Writer::Write(const std::string &variableName,
                        const std::complex<long double> *values)
 {
     UseHDFWrite(m_ADIOS.GetVariable<std::complex<long double>>(variableName),

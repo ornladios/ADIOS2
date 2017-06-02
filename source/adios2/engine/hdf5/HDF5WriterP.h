@@ -64,25 +64,26 @@ public:
     void Write(Variable<std::complex<long double>> &variable,
                const std::complex<long double> *values);
 
-    void Write(const std::string variableName, const char *values);
-    void Write(const std::string variableName, const unsigned char *values);
-    void Write(const std::string variableName, const short *values);
-    void Write(const std::string variableName, const unsigned short *values);
-    void Write(const std::string variableName, const int *values);
-    void Write(const std::string variableName, const unsigned int *values);
-    void Write(const std::string variableName, const long int *values);
-    void Write(const std::string variableName, const unsigned long int *values);
-    void Write(const std::string variableName, const long long int *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName, const char *values);
+    void Write(const std::string &variableName, const unsigned char *values);
+    void Write(const std::string &variableName, const short *values);
+    void Write(const std::string &variableName, const unsigned short *values);
+    void Write(const std::string &variableName, const int *values);
+    void Write(const std::string &variableName, const unsigned int *values);
+    void Write(const std::string &variableName, const long int *values);
+    void Write(const std::string &variableName,
+               const unsigned long int *values);
+    void Write(const std::string &variableName, const long long int *values);
+    void Write(const std::string &variableName,
                const unsigned long long int *values);
-    void Write(const std::string variableName, const float *values);
-    void Write(const std::string variableName, const double *values);
-    void Write(const std::string variableName, const long double *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName, const float *values);
+    void Write(const std::string &variableName, const double *values);
+    void Write(const std::string &variableName, const long double *values);
+    void Write(const std::string &variableName,
                const std::complex<float> *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName,
                const std::complex<double> *values);
-    void Write(const std::string variableName,
+    void Write(const std::string &variableName,
                const std::complex<long double> *values);
 
     void Advance(float timeoutSec = 0.0);

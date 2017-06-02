@@ -106,8 +106,8 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
 
     h5writer->Write<double>(*varT, ht.data_noghost().data());
     // h5writer->Write(*varT, ht.data_noghost().data());
-    h5writer->Write<unsigned int>(*varGndx, s.gndx);
-    h5writer->Write<unsigned int>("gndy", s.gndy);
+    h5writer->Write<unsigned int>(*varGndx, &(s.gndx));
+    h5writer->Write("gndy", &(s.gndy));
 
     h5writer->Advance();
 
