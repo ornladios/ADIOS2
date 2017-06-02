@@ -106,27 +106,6 @@ DataManBase::DataManBase()
     m_start_time = std::chrono::system_clock::now();
 }
 
-int DataManBase::put(const void *p_data, std::string p_doid, std::string p_var,
-                     std::string p_dtype, std::vector<size_t> p_putshape,
-                     std::vector<size_t> p_varshape,
-                     std::vector<size_t> p_offset, size_t p_timestep,
-                     int p_tolerance, int p_priority)
-{
-    json msg;
-    msg["doid"] = p_doid;
-    msg["var"] = p_var;
-    msg["dtype"] = p_dtype;
-    msg["putshape"] = p_putshape;
-    msg["putbytes"] = product(p_putshape, dsize(p_dtype));
-    msg["varshape"] = p_varshape;
-    msg["varbytes"] = product(p_varshape, dsize(p_dtype));
-    msg["offset"] = p_offset;
-    msg["timestep"] = p_timestep;
-    msg["tolerance"] = p_tolerance;
-    msg["priority"] = p_priority;
-    return put(p_data, msg);
-}
-
 int DataManBase::put_begin(const void *p_data, json &p_jmsg)
 {
     check_shape(p_jmsg);
@@ -152,7 +131,6 @@ int DataManBase::put_end(const void *p_data, json &p_jmsg)
     m_profiling["total_mb"] =
         m_profiling["total_mb"].get<double>() +
         product(p_jmsg["varshape"], dsize(p_jmsg["dtype"])) / 1000000.0f;
-    std::cout << product(p_jmsg["varshape"], dsize(p_jmsg["dtype"])) << "\n";
     duration = end - m_start_time;
     m_profiling["total_workflow_time"] = duration.count();
     m_profiling["workflow_mbs"] =
@@ -161,34 +139,7 @@ int DataManBase::put_end(const void *p_data, json &p_jmsg)
     m_profiling["manager_mbs"] =
         m_profiling["total_mb"].get<double>() /
         m_profiling["total_manager_time"].get<double>();
-    put_next(p_data, p_jmsg);
     return 0;
-}
-
-int DataManBase::get(void *p_data, std::string p_doid, std::string p_var,
-                     std::string p_dtype, std::vector<size_t> p_getshape,
-                     std::vector<size_t> p_varshape,
-                     std::vector<size_t> p_offset, size_t p_timestep)
-{
-    json msg;
-    msg["doid"] = p_doid;
-    msg["var"] = p_var;
-    msg["dtype"] = p_dtype;
-    msg["getshape"] = p_getshape;
-    msg["varshape"] = p_varshape;
-    msg["offset"] = p_offset;
-    msg["timestep"] = p_timestep;
-    return get(p_data, msg);
-}
-
-int DataManBase::get(void *p_data, std::string p_doid, std::string p_var,
-                     std::string &p_dtype, std::vector<size_t> &p_varshape,
-                     size_t &p_timestep)
-{
-    json msg;
-    msg["doid"] = p_doid;
-    msg["var"] = p_var;
-    return get(p_data, msg);
 }
 
 void DataManBase::reg_callback(
@@ -196,15 +147,15 @@ void DataManBase::reg_callback(
                        std::vector<size_t>)>
         cb)
 {
-    if (m_next.empty())
+    if (m_stream_mans.empty())
     {
         m_callback = cb;
     }
     else
     {
-        for (const auto &i : m_next)
+        for (const auto &i : m_stream_mans)
         {
-            i.second->reg_callback(cb);
+            i->reg_callback(cb);
         }
     }
 }
@@ -227,36 +178,6 @@ void DataManBase::dump(const void *p_data, json p_jmsg, std::ostream &out)
         }
     }
     out << std::endl;
-}
-
-void DataManBase::add_next(std::string p_name,
-                           std::shared_ptr<DataManBase> p_next)
-{
-    m_next[p_name] = p_next;
-}
-
-void DataManBase::remove_next(std::string p_name) { m_next.erase(p_name); }
-
-bool DataManBase::have_next()
-{
-    if (m_next.empty())
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
-void DataManBase::print_next(std::ostream &out)
-{
-    for (const auto &i : m_next)
-    {
-        out << i.second->name() << " -> ";
-        i.second->print_next();
-        out << std::endl;
-    }
 }
 
 bool DataManBase::auto_transform(std::vector<char> &a_data, json &a_jmsg)
@@ -282,40 +203,6 @@ bool DataManBase::auto_transform(std::vector<char> &a_data, json &a_jmsg)
     {
         return false;
     }
-}
-
-void DataManBase::add_man_to_path(std::string p_new, std::string p_path,
-                                  json p_jmsg)
-{
-    if (m_next.count(p_path) > 0)
-    {
-        auto man = get_man(p_new);
-        if (man)
-        {
-            man->init(p_jmsg);
-            man->add_next(p_path, m_next[p_path]);
-            this->add_next(p_new, man);
-            this->remove_next(p_path);
-        }
-    }
-}
-
-int DataManBase::flush_next()
-{
-    for (const auto &i : m_next)
-    {
-        i.second->flush();
-    }
-    return 0;
-}
-
-int DataManBase::put_next(const void *p_data, json p_jmsg)
-{
-    for (const auto &i : m_next)
-    {
-        i.second->put(p_data, p_jmsg);
-    }
-    return 0;
 }
 
 std::shared_ptr<DataManBase> DataManBase::get_man(std::string method)
@@ -491,23 +378,6 @@ size_t DataManBase::dsize(std::string dtype)
     return 0;
 }
 
-nlohmann::json DataManBase::atoj(unsigned int *array)
-{
-    json j;
-    if (array)
-    {
-        if (array[0] > 0)
-        {
-            j = {array[1]};
-            for (unsigned int i = 2; i <= array[0]; ++i)
-            {
-                j.insert(j.end(), array[i]);
-            }
-        }
-    }
-    return j;
-}
-
 int DataManBase::closest(int v, json j, bool up)
 {
     int s = 100, k = 0, t;
@@ -559,3 +429,5 @@ void DataManBase::check_shape(json &p_jmsg)
     p_jmsg["varbytes"] =
         product(varshape, dsize(p_jmsg["dtype"].get<std::string>()));
 }
+
+void DataManBase::dump_profiling() { logging(m_profiling.dump(4)); }

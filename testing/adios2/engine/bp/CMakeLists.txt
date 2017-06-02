@@ -10,5 +10,5 @@ if(NOT ADIOS_USE_MPI)
   add_executable(TestBPWriteRead TestBPWriteRead.cpp)
   target_link_libraries(TestBPWriteRead adios2 gtest adios1::adios)
 
-  add_test(NAME adios2::engine::bp::write_read COMMAND TestBPWriteRead)
+  gtest_add_tests(TARGET TestBPWriteRead)
 endif()

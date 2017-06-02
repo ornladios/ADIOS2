@@ -14,6 +14,11 @@
 
 #include "adios2/helper/adiosFunctions.h"
 
+// Enable compatibility with ADIOS 1.10 adios_declare_group signature
+#if !ADIOS_VERSION_GE(1, 11, 0)
+#define adios_stat_default adios_flag_yes
+#endif
+
 namespace adios
 {
 

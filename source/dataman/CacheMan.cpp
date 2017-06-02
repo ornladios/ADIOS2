@@ -19,14 +19,14 @@ int CacheItem::init(json a_jmsg)
     return 0;
 }
 
-int CacheMan::put(const void *a_data, json a_jmsg)
+int CacheMan::put(const void *a_data, json &a_jmsg)
 {
     std::string doid = a_jmsg["doid"].get<std::string>();
     std::string var = a_jmsg["var"].get<std::string>();
     return m_cache[doid][var].put(a_data, a_jmsg);
 }
 
-int CacheItem::put(const void *a_data, json a_jmsg)
+int CacheItem::put(const void *a_data, json &a_jmsg)
 {
 
     if (!m_initialized)

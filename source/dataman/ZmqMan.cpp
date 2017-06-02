@@ -26,7 +26,7 @@ int ZmqMan::init(json a_jmsg)
     StreamMan::init(a_jmsg);
     if (m_stream_mode == "sender")
     {
-        zmq_data = zmq_socket(zmq_context, ZMQ_REQ);
+        zmq_data = zmq_socket(m_zmq_context, ZMQ_REQ);
         std::string remote_address =
             make_address(m_remote_ip, m_remote_port + 1, "tcp");
         zmq_connect(zmq_data, remote_address.c_str());
@@ -34,7 +34,7 @@ int ZmqMan::init(json a_jmsg)
     }
     else if (m_stream_mode == "receiver")
     {
-        zmq_data = zmq_socket(zmq_context, ZMQ_REP);
+        zmq_data = zmq_socket(m_zmq_context, ZMQ_REP);
         std::string local_address =
             make_address(m_local_ip, m_local_port + 1, "tcp");
         zmq_bind(zmq_data, local_address.c_str());
@@ -43,20 +43,24 @@ int ZmqMan::init(json a_jmsg)
     return 0;
 }
 
-int ZmqMan::put(const void *a_data, json a_jmsg)
+int ZmqMan::put(const void *a_data, json &a_jmsg)
 {
-    char ret[10];
     DataManBase::put_begin(a_data, a_jmsg);
-    StreamMan::put(a_data, a_jmsg);
-    zmq_send(zmq_data, a_data, a_jmsg["sendbytes"].get<size_t>(), 0);
-    zmq_recv(zmq_data, ret, 10, 0);
+    StreamMan::put_stream(a_data, a_jmsg);
     DataManBase::put_end(a_data, a_jmsg);
     return 0;
 }
 
 int ZmqMan::get(void *a_data, json &a_jmsg) { return 0; }
 
-void ZmqMan::on_recv(json a_jmsg)
+void ZmqMan::on_put(std::shared_ptr<std::vector<char>> a_data)
+{
+    char ret[10];
+    zmq_send(zmq_data, a_data->data(), a_data->size(), 0);
+    zmq_recv(zmq_data, ret, 10, 0);
+}
+
+void ZmqMan::on_recv(json &a_jmsg)
 {
     if (a_jmsg["operation"].get<std::string>() == "put")
     {
@@ -65,15 +69,26 @@ void ZmqMan::on_recv(json a_jmsg)
         int ret = zmq_recv(zmq_data, data.data(), sendbytes, 0);
         zmq_send(zmq_data, "OK", 10, 0);
 
-        if (a_jmsg["compression_method"].is_string() and
-            a_jmsg["compression_method"].get<std::string>() != "null")
+        // if data is compressed then call auto_transform to decompress
+        if (a_jmsg["compression_method"].is_string())
         {
-            auto_transform(data, a_jmsg);
+            if (a_jmsg["compression_method"].get<std::string>() != "null")
+            {
+                auto_transform(data, a_jmsg);
+            }
         }
-        m_cache.put(data.data(), a_jmsg);
+
+        if (a_jmsg["varshape"] == a_jmsg["putshape"])
+        {
+            callback_direct(data.data(), a_jmsg);
+        }
+        else
+        {
+            m_cache.put(data.data(), a_jmsg);
+        }
     }
     else if (a_jmsg["operation"].get<std::string>() == "flush")
     {
-        callback();
+        callback_cache();
     }
 }

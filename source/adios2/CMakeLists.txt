@@ -85,9 +85,9 @@ endif()
 
 if(ADIOS_USE_ADIOS1)
   if(ADIOS_USE_MPI)
-    find_package(ADIOS1 REQUIRED)
+    find_package(ADIOS1 1.12.0 REQUIRED)
   else()
-    find_package(ADIOS1 COMPONENTS sequential REQUIRED)
+    find_package(ADIOS1 1.12.0 COMPONENTS sequential REQUIRED)
   endif()
 
   target_sources(adios2 PRIVATE
@@ -113,7 +113,11 @@ if(ADIOS_USE_HDF5)
       "of ADIOS is being built, which requires a sequential HDF5."
     )
   endif()
-  target_include_directories(adios2 PRIVATE ${HDF5_C_INCLUDE_DIRS})
+  if(HDF5_C_INCLUDE_DIRS)
+    target_include_directories(adios2 PRIVATE ${HDF5_C_INCLUDE_DIRS})
+  else()
+    target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
+  endif()
   target_sources(adios2 PRIVATE
     engine/hdf5/HDF5ReaderP.cpp
     engine/hdf5/HDF5WriterP.cpp
