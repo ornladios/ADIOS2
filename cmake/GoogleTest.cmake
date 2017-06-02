@@ -7,5 +7,5 @@
 if(CMAKE_VERSION VERSION_LESS 3.10)
   include(${CMAKE_CURRENT_LIST_DIR}/upstream/GoogleTest.cmake)
 else()
-  include(GoogleTest)
+  include(${CMAKE_ROOT}/Modules/GoogleTest.cmake)
 endif()
