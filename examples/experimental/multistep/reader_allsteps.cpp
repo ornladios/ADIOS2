@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
         auto bpReader =
             bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::r);
 
-        if (bpReader == nullptr)
+        if (!bpReader)
             throw std::ios_base::failure(
                 "ERROR: failed to open ADIOS bpReader\n");
 
