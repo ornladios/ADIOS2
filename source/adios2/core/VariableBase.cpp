@@ -112,8 +112,8 @@ void VariableBase::SetMemorySelection(const SelectionBoundingBox &selection)
         }
     }
 
-    ConvertUint64VectorToSizetVector(selection.m_Count, m_MemoryCount);
-    ConvertUint64VectorToSizetVector(selection.m_Start, m_MemoryStart);
+    m_MemoryCount = selection.m_Count;
+    m_MemoryStart = selection.m_Start;
 }
 
 void VariableBase::SetStepSelection(const unsigned int startStep,

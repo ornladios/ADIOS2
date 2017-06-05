@@ -42,7 +42,7 @@ public:
 
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
-    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+    MPI_Comm m_MPIComm;
 
     /** true: extra exceptions checks */
     const bool m_DebugMode = false;

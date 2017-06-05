@@ -175,16 +175,15 @@ void BP1Writer::WriteVariableMetadataInData(
     CopyToBuffer(buffer, position, &dimensionsLength); // length
 
     WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
-                          18, buffer, position);
+                          buffer, position);
 
     // CHARACTERISTICS
-    // FIX
     WriteVariableCharacteristics(variable, stats, buffer, position);
 
     // Back to varLength including payload size
-    // remove its own size (8) from length
+    // not need to remove its own size (8) from length from bpdump
     const uint64_t varLength =
-        position - varLengthPosition + variable.PayLoadSize() - 8;
+        position - varLengthPosition + variable.PayLoadSize();
 
     size_t backPosition = varLengthPosition;
     CopyToBuffer(buffer, backPosition, &varLength);
@@ -301,10 +300,6 @@ void BP1Writer::WriteCharacteristicRecord(const uint8_t characteristicID,
 {
     const std::uint8_t id = characteristicID;
     CopyToBuffer(buffer, position, &id);
-
-    const std::uint16_t lengthOfCharacteristic = sizeof(T);
-    CopyToBuffer(buffer, position, &lengthOfCharacteristic);
-
     CopyToBuffer(buffer, position, &value);
     ++characteristicsCounter;
 }
@@ -372,25 +367,18 @@ void BP1Writer::WriteVariableCharacteristics(
     // DIMENSIONS
     uint8_t characteristicID = characteristic_dimensions;
     CopyToBuffer(buffer, position, &characteristicID);
+
     const uint8_t dimensions = variable.m_Count.size();
-
-    // 24 = 3 local, global, offset x 8 bytes/each
-    const int16_t lengthOfDimensionsCharacteristic = 24 * dimensions + 3;
-    CopyToBuffer(buffer, position, &lengthOfDimensionsCharacteristic);
-
     CopyToBuffer(buffer, position, &dimensions); // count
     const uint16_t dimensionsLength = 24 * dimensions;
     CopyToBuffer(buffer, position, &dimensionsLength); // length
     WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
-                          16, buffer, position);
+                          buffer, position, true); // isCharacteristic = true
     ++characteristicsCounter;
 
     // VALUE for SCALAR or STAT min, max for ARRAY
     WriteBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
                       buffer, position);
-    // TIME INDEX
-    WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                              stats.TimeIndex, buffer, position);
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length

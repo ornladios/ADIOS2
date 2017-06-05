@@ -73,7 +73,7 @@ public:
     void Close();
 
 private:
-    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+    MPI_Comm m_MPIComm;
     const bool m_DebugMode = false;
 
     void Init();
