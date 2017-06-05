@@ -98,7 +98,8 @@ void ADIOS1Common::InitTransports(
                 adios_select_method(m_ADIOSGroup, "POSIX", "", "");
             }
             else if (itLibrary->second == "MPI_File" ||
-                     itLibrary->second == "MPI-IO")
+                     itLibrary->second == "MPI-IO" ||
+                     itLibrary->second == "MPI")
             {
                 adios_select_method(m_ADIOSGroup, "MPI", "", "");
             }
@@ -121,14 +122,24 @@ void ADIOS1Common::InitTransports(
                                             "to Open\n");
         }
     }
+}
 
-    ReOpenAsNeeded();
+bool ADIOS1Common::Open()
+{
+    adios_open(&m_ADIOSFile, m_GroupName.c_str(), m_FileName.c_str(),
+               m_OpenModeString.c_str(), m_MPIComm);
+    if (adios_errno == err_no_error)
+    {
+        m_IsFileOpen = true;
+    }
+    return m_IsFileOpen;
 }
 
 bool ADIOS1Common::ReOpenAsNeeded()
 {
     if (!m_IsFileOpen)
     {
+        // Re-open in APPEND mode
         adios_open(&m_ADIOSFile, m_GroupName.c_str(), m_FileName.c_str(), "a",
                    m_MPIComm);
         if (adios_errno == err_no_error)

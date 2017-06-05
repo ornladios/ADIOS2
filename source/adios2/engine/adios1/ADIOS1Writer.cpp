@@ -35,6 +35,7 @@ void ADIOS1Writer::Init()
 {
     InitParameters();
     InitTransports();
+    m_ADIOS1.Open();
 }
 
 #define declare_type(T)                                                        \
