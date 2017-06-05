@@ -84,7 +84,7 @@ void HDF5Common::Write(Variable<T> &variable, const T *values)
 
     if (status < 0)
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
             throw std::ios_base::failure(
                 "ERROR: HDF5 file Write failed, in call to Write\n");

@@ -49,7 +49,7 @@ VariableCompound &IO::GetVariableCompound(const std::string &name)
     return m_Compound.at(GetVariableIndex(name));
 }
 
-std::string IO::GetVariableType(const std::string &name)
+std::string IO::GetVariableType(const std::string &name) const
 {
     std::string type;
 
@@ -62,7 +62,7 @@ std::string IO::GetVariableType(const std::string &name)
     return type;
 }
 
-bool IO::InConfigFile() { return m_InConfigFile; };
+bool IO::InConfigFile() const { return m_InConfigFile; };
 
 bool IO::RemoveVariable(const std::string &name) noexcept
 {
@@ -92,7 +92,7 @@ bool IO::RemoveVariable(const std::string &name) noexcept
         isRemoved = true;
     }
 
-    if (isRemoved == true)
+    if (isRemoved)
     {
         m_Variables.erase(name);
     }
@@ -103,7 +103,7 @@ bool IO::RemoveVariable(const std::string &name) noexcept
 std::shared_ptr<Engine> IO::Open(const std::string &name,
                                  const OpenMode openMode, MPI_Comm mpiComm)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         // Check if Engine already exists
         if (m_EngineNames.count(name) == 1)
@@ -119,15 +119,13 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
 
     const bool isDefaultWriter =
         m_EngineType.empty() &&
-                (openMode == OpenMode::Write || openMode == OpenMode::w ||
-                 openMode == OpenMode::Append || openMode == OpenMode::a)
+                (openMode == OpenMode::Write || openMode == OpenMode::Append)
             ? true
             : false;
 
     const bool isDefaultReader =
         m_EngineType.empty() &&
-                (openMode == OpenMode::Read || openMode == OpenMode::r ||
-                 openMode == OpenMode::ReadWrite || openMode == OpenMode::rw)
+                (openMode == OpenMode::Read || openMode == OpenMode::ReadWrite)
             ? true
             : false;
 
@@ -214,7 +212,7 @@ unsigned int
 IO::AddTransportParameters(const std::string type,
                            const std::vector<std::string> &parameters)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (type.empty() || type.find("=") != type.npos)
         {
@@ -226,7 +224,7 @@ IO::AddTransportParameters(const std::string type,
 
     Params mapParameters = BuildParametersMap(parameters, m_DebugMode);
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (mapParameters.count("transport") == 1)
         {
@@ -241,11 +239,11 @@ IO::AddTransportParameters(const std::string type,
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
 }
 
-unsigned int IO::GetVariableIndex(const std::string &name)
+unsigned int IO::GetVariableIndex(const std::string &name) const
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
-        if (VariableExists(name) == false)
+        if (!VariableExists(name))
         {
             throw std::invalid_argument(
                 "ERROR: variable " + m_Name +
@@ -257,7 +255,7 @@ unsigned int IO::GetVariableIndex(const std::string &name)
     return itVariable->second.second;
 }
 
-bool IO::VariableExists(const std::string &name)
+bool IO::VariableExists(const std::string &name) const
 {
     bool exists = false;
     if (m_Variables.count(name) == 1)

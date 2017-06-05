@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::w);
+        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::Write);
 
         if (!bpWriter)
         {

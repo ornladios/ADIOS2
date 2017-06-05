@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         }
 
         auto bpReader =
-            bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::r);
+            bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::Read);
         if (!bpReader)
         {
             int step = 0;

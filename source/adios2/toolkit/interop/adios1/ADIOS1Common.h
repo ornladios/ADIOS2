@@ -83,7 +83,7 @@ private:
                         const std::string gdims, const std::string offsets);
 
     template <class T>
-    enum ADIOS_DATATYPES GetADIOS1Type();
+    enum ADIOS_DATATYPES GetADIOS1Type() const;
 
     std::string DimsToCSVLocalAware(const Dims &dims);
 };

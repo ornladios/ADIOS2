@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
             bpIO.DefineVariable<unsigned int>("timeStep");
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::w);
+        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::Write);
 
         if (!bpWriter)
         {

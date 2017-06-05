@@ -56,7 +56,7 @@ void BPFileWriter::Advance(const float /*timeout_sec*/)
 
 void BPFileWriter::Close(const int transportIndex)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (!m_TransportsManager.CheckTransportIndex(transportIndex))
         {
@@ -75,10 +75,10 @@ void BPFileWriter::Close(const int transportIndex)
                                    m_BP1Writer.m_HeapBuffer.m_Data.data(),
                                    m_BP1Writer.m_HeapBuffer.m_DataPosition);
 
-    if (m_BP1Writer.m_Profiler.IsActive == true)
+    if (m_BP1Writer.m_Profiler.IsActive)
     {
         // aggregate and write profiling.log
-        if (m_TransportsManager.AllTransportsClosed() == true)
+        if (m_TransportsManager.AllTransportsClosed())
         {
             auto transportTypes = m_TransportsManager.GetTransportsTypes();
             auto transportProfilers =
@@ -104,7 +104,7 @@ void BPFileWriter::InitTransports()
     if (m_IO.m_TransportsParameters.empty())
     {
         Params defaultTransportParameters;
-        defaultTransportParameters["transport"] = "file";
+        defaultTransportParameters["transport"] = "File";
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
@@ -121,7 +121,7 @@ void BPFileWriter::InitTransports()
 
 void BPFileWriter::InitBPBuffer()
 {
-    if (m_OpenMode == OpenMode::Append || m_OpenMode == OpenMode::a)
+    if (m_OpenMode == OpenMode::Append)
     {
         // TODO: Get last pg timestep and update timestep counter in
     }

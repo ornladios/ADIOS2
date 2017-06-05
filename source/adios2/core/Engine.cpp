@@ -49,7 +49,7 @@ void Engine::Close(const int /*transportIndex*/) {}
 
 // READ
 void Engine::Release() {}
-void Engine::PerformReads(PerformReadMode /*mode*/){};
+void Engine::PerformReads(ReadMode /*mode*/){};
 
 // PROTECTED
 void Engine::Init() {}
@@ -74,9 +74,9 @@ void Engine::DoWrite(VariableCompound &variable, const void *values)
 void Engine::DoWrite(const std::string &variableName, const void *values)
 {
     const std::string type(m_IO.GetVariableType(variableName));
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
-        if (type.empty() == true)
+        if (type.empty())
         {
             throw std::invalid_argument(
                 "ERROR: variable " + variableName +
@@ -203,7 +203,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
 // PRIVATE
-void Engine::ThrowUp(const std::string function)
+void Engine::ThrowUp(const std::string function) const
 {
     throw std::invalid_argument("ERROR: Engine derived class " + m_EngineType +
                                 " doesn't implement function " + function +

@@ -54,7 +54,7 @@ private:
     transportman::TransportMan m_TransportsManager;
 
     /** true: due to buffer overflow, move to transports manager */
-    bool m_TransportFlush = false;
+    bool m_DoTransportFlush = false;
 
     void Init() final;
 

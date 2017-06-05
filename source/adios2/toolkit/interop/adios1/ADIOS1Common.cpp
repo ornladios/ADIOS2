@@ -70,7 +70,7 @@ void ADIOS1Common::InitParameters(const Params &parameters)
     if (itVerbosity != parameters.end())
     {
         int verbosity = std::stoi(itVerbosity->second);
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
             if (verbosity < 0 || verbosity > 5)
                 throw std::invalid_argument(
@@ -104,16 +104,18 @@ void ADIOS1Common::InitTransports(
             }
             else
             {
-                if (m_DebugMode == true)
+                if (m_DebugMode)
+                {
                     throw std::invalid_argument(
                         "ERROR: file transport library " + itLibrary->second +
                         " for file " + m_FileName +
                         " not supported, in ADIOS1 " + ", in call to Open\n");
+                }
             }
         }
         else
         {
-            if (m_DebugMode == true)
+            if (m_DebugMode)
                 throw std::invalid_argument("ERROR: invalid transport " +
                                             itTransport->second +
                                             ", only transports of type "
@@ -180,7 +182,7 @@ std::string ADIOS1Common::DimsToCSVLocalAware(const Dims &dims)
         }
     }
 
-    if (dimsCSV.empty() == false)
+    if (!dimsCSV.empty())
     {
         dimsCSV.pop_back();
     }

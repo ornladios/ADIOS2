@@ -42,7 +42,7 @@ BP1Writer::ResizeResult BP1Writer::ResizeBuffer(const Variable<T> &variable)
 template <class T>
 void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
 {
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Resume();
     }
@@ -66,7 +66,7 @@ void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
 
     ++m_MetadataSet.DataPGVarsCount;
 
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Pause();
     }
@@ -75,7 +75,7 @@ void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
 template <class T>
 void BP1Writer::WriteVariablePayload(const Variable<T> &variable) noexcept
 {
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Resume();
     }
@@ -84,7 +84,7 @@ void BP1Writer::WriteVariablePayload(const Variable<T> &variable) noexcept
                         variable.m_AppValues, variable.TotalSize(), m_Threads);
     m_HeapBuffer.m_DataAbsolutePosition += variable.PayLoadSize();
 
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Pause();
     }
@@ -200,8 +200,8 @@ void BP1Writer::WriteVariableMetadataInIndex(
 {
     auto &buffer = index.Buffer;
 
-    if (isNew == true) // write variable header (might be shared with
-                       // attributes index)
+    if (isNew) // write variable header (might be shared with
+               // attributes index)
     {
         buffer.insert(buffer.end(), 4, 0); // skip var length (4)
         InsertToBuffer(buffer, &stats.MemberID);
@@ -234,7 +234,7 @@ void BP1Writer::WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
                                   std::uint8_t &characteristicsCounter,
                                   std::vector<char> &buffer) noexcept
 {
-    if (isScalar == true)
+    if (isScalar)
     {
         // stats.min = stats.max = value, need to test
         WriteCharacteristicRecord(characteristic_value, characteristicsCounter,
@@ -259,7 +259,7 @@ void BP1Writer::WriteBoundsRecord(const bool singleValue, const Stats<T> &stats,
                                   std::vector<char> &buffer,
                                   size_t &position) noexcept
 {
-    if (singleValue == true)
+    if (singleValue)
     {
         // stats.min = stats.max = value, need to test
         WriteCharacteristicRecord(characteristic_value, characteristicsCounter,

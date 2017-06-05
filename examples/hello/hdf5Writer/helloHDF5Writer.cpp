@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
          * Parameters, Transports, and Execution: Engines */
         adios::IO &hdf5IO = adios.DeclareIO("HDFFileIO");
         hdf5IO.SetEngine("HDF5Writer");
-        hdf5IO.AddTransport("file");
+        hdf5IO.AddTransport("File");
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto hdf5Writer = hdf5IO.Open("myVector.bp", adios::OpenMode::w);
+        auto hdf5Writer = hdf5IO.Open("myVector.bp", adios::OpenMode::Write);
 
         if (!hdf5Writer)
         {

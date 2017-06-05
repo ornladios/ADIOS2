@@ -55,7 +55,7 @@ std::string BP1Aggregator::GetGlobalProfilingLog(const std::string &rankLog)
         for (unsigned int i = 1; i < sizeMPI; ++i)
         {
             MPI_Wait(&requests[i], &statuses[i]);
-            if (m_DebugMode == true)
+            if (m_DebugMode)
             {
                 if (rankLogsSizes[i - 1] == -1)
                     throw std::runtime_error(
@@ -100,7 +100,7 @@ std::string BP1Aggregator::GetGlobalProfilingLog(const std::string &rankLog)
 
         //        // write to file
         //        std::ofstream logStream(fileName);
-        //        if (m_DebugMode == true)
+        //        if (m_DebugMode)
         //        {
         //            if (!logStream)
         //            {

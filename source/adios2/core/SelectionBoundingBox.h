@@ -55,7 +55,7 @@ public:
 
 private:
     /** Check in debug mode to make sure bounding box is valid */
-    void CheckBoundingBox();
+    void CheckBoundingBox() const;
 };
 
 } // end namespace adios

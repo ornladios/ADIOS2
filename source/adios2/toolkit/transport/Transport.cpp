@@ -26,22 +26,22 @@ Transport::Transport(const std::string type, const std::string library,
 void Transport::InitProfiler(const OpenMode openMode, const TimeUnit timeUnit)
 {
     m_Profiler.Timers.emplace(std::make_pair(
-        "open", profiling::Timer("open", TimeUnit::mus, m_DebugMode)));
+        "open", profiling::Timer("open", TimeUnit::Microseconds, m_DebugMode)));
 
-    if (openMode == OpenMode::Write || openMode == OpenMode::w)
+    if (openMode == OpenMode::Write)
     {
         m_Profiler.Timers.emplace(
             "write", profiling::Timer("write", timeUnit, m_DebugMode));
 
         m_Profiler.Bytes.emplace("write", 0);
     }
-    else if (openMode == OpenMode::Append || openMode == OpenMode::a)
+    else if (openMode == OpenMode::Append)
     {
         m_Profiler.Timers.emplace(
             "append", profiling::Timer("append", timeUnit, m_DebugMode));
         m_Profiler.Bytes.emplace("append", 0);
     }
-    else if (openMode == OpenMode::Read || openMode == OpenMode::r)
+    else if (openMode == OpenMode::Read)
     {
         m_Profiler.Timers.emplace(
             "read", profiling::Timer("read", timeUnit, m_DebugMode));
@@ -49,14 +49,15 @@ void Transport::InitProfiler(const OpenMode openMode, const TimeUnit timeUnit)
     }
 
     m_Profiler.Timers.emplace(
-        "close", profiling::Timer("close", TimeUnit::mus, m_DebugMode));
+        "close",
+        profiling::Timer("close", TimeUnit::Microseconds, m_DebugMode));
 
     m_Profiler.IsActive = true;
 }
 
 void Transport::SetBuffer(char * /*buffer*/, size_t /*size*/)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
                               " using library " + m_Library +

@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
             bpIO.DefineVariable<unsigned int>("timeStep");
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::w);
+        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::Write);
 
         if (!bpWriter)
         {
@@ -52,6 +52,8 @@ int main(int argc, char *argv[])
         {
             // template type is optional but recommended
             bpWriter->Write<unsigned int>(bpTimeStep, timeStep);
+
+            bpFloats[0] = timeStep;
             bpWriter->Write<float>(bpFloats, myDoubles.data());
             bpWriter->Advance();
         }

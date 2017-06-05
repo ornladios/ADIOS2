@@ -24,7 +24,7 @@ SelectionPoints::SelectionPoints(size_t dimensionsSize,
 SelectionPoints::SelectionPoints(size_t dimensionsSize, size_t pointsSize,
                                  uint64_t *points)
 : Selection(SelectionType::Points), m_DimensionsSize(dimensionsSize),
-  m_PointsSize(pointsSize), m_PointsPtr(points)
+  m_PointsSize(pointsSize), m_PointsPointer(points)
 {
 }
 

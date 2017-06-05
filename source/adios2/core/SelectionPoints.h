@@ -43,7 +43,7 @@ public:
     /** pointer based applications needed size*/
     const size_t m_PointsSize;
     /** pointer based applications needed array*/
-    uint64_t *m_PointsPtr = nullptr;
+    uint64_t *m_PointsPointer = nullptr;
 
     /**
      * Constructor that takes a vector<uint64_t> for points

@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
         // auto bpReader = adios.Open( "myNumbers.bp", "r" );
         // this would just open with a default transport, which is "BP"
         auto bpReader =
-            bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::r);
+            bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::Read);
 
         if (!bpReader)
             throw std::ios_base::failure(

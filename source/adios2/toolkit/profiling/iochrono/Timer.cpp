@@ -36,30 +36,15 @@ void Timer::Pause() noexcept
     m_ProcessTime += GetElapsedTime();
 }
 
-std::string Timer::GetUnits() const noexcept
+std::string Timer::GetShortUnits() const noexcept
 {
     std::string units;
     switch (m_TimeUnit)
     {
-    case TimeUnit::mus:
+    case TimeUnit::Microseconds:
         units = "mus";
         break;
-    case TimeUnit::ms:
-        units = "ms";
-        break;
-    case TimeUnit::s:
-        units = "s";
-        break;
-    case TimeUnit::m:
-        units = "m";
-        break;
-    case TimeUnit::h:
-        units = "h";
-        break;
-    case TimeUnit::MicroSeconds:
-        units = "mus";
-        break;
-    case TimeUnit::MiliSeconds:
+    case TimeUnit::Milliseconds:
         units = "ms";
         break;
     case TimeUnit::Seconds:
@@ -78,54 +63,27 @@ std::string Timer::GetUnits() const noexcept
 // PRIVATE
 int64_t Timer::GetElapsedTime()
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
-        if (m_InitialTimeSet == false)
+        if (!m_InitialTimeSet)
+        {
             throw std::invalid_argument("ERROR: Resume() in process " +
                                         m_Process + " not called\n");
+        }
     }
 
     int64_t time = -1;
 
     switch (m_TimeUnit)
     {
-    case TimeUnit::mus:
+
+    case TimeUnit::Microseconds:
         time = std::chrono::duration_cast<std::chrono::microseconds>(
                    m_ElapsedTime - m_InitialTime)
                    .count();
         break;
 
-    case TimeUnit::ms:
-        time = std::chrono::duration_cast<std::chrono::milliseconds>(
-                   m_ElapsedTime - m_InitialTime)
-                   .count();
-        break;
-
-    case TimeUnit::s:
-        time = std::chrono::duration_cast<std::chrono::seconds>(m_ElapsedTime -
-                                                                m_InitialTime)
-                   .count();
-        break;
-
-    case TimeUnit::m:
-        time = std::chrono::duration_cast<std::chrono::minutes>(m_ElapsedTime -
-                                                                m_InitialTime)
-                   .count();
-        break;
-
-    case TimeUnit::h:
-        time = std::chrono::duration_cast<std::chrono::hours>(m_ElapsedTime -
-                                                              m_InitialTime)
-                   .count();
-        break;
-
-    case TimeUnit::MicroSeconds:
-        time = std::chrono::duration_cast<std::chrono::microseconds>(
-                   m_ElapsedTime - m_InitialTime)
-                   .count();
-        break;
-
-    case TimeUnit::MiliSeconds:
+    case TimeUnit::Milliseconds:
         time = std::chrono::duration_cast<std::chrono::milliseconds>(
                    m_ElapsedTime - m_InitialTime)
                    .count();

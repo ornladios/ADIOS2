@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
             bpIO.DefineVariable<unsigned int>("timeStep");
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::w);
+        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::Write);
 
         if (!bpWriter)
         {
@@ -64,9 +64,7 @@ int main(int argc, char *argv[])
                 bpWriter->Write<unsigned int>(bpTimeStep, timeStep);
             }
 
-            // change value at every timestep
-            std::for_each(myFloats.begin(), myFloats.end(),
-                          [timeStep](float &f) { f += timeStep; });
+            myFloats[0] = timeStep;
 
             // template type is optional, but recommended
             bpWriter->Write<float>(bpFloats, myFloats.data());

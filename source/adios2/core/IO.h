@@ -161,13 +161,13 @@ public:
      * @param name input id
      * @return type as string, if not found returns an empty string
      */
-    std::string GetVariableType(const std::string &name);
+    std::string GetVariableType(const std::string &name) const;
 
     /**
      * Check existence in config file passed to ADIOS class
      * @return true: defined in config file
      */
-    bool InConfigFile();
+    bool InConfigFile() const;
 
     /**
      * Creates a polymorphic object that derives the Engine class,
@@ -257,14 +257,14 @@ private:
     std::map<unsigned int, Variable<T>> &GetVariableMap();
 
     /** Gets the internal index in variable map for an existing variable */
-    unsigned int GetVariableIndex(const std::string &name);
+    unsigned int GetVariableIndex(const std::string &name) const;
 
     /**
      * Checks if variable exists by checking its name
      * @param name unique variable name to be checked against existing variables
      * @return true: variable name exists, false: variable name doesn't exist
      */
-    bool VariableExists(const std::string &name);
+    bool VariableExists(const std::string &name) const;
 };
 
 // Explicit declaration of the public template methods

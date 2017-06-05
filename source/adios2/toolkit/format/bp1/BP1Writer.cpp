@@ -40,7 +40,7 @@ void BP1Writer::WriteProcessGroupIndex(
     const std::string hostLanguage,
     const std::vector<std::string> &transportsTypes) noexcept
 {
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Resume();
     }
@@ -121,7 +121,7 @@ void BP1Writer::WriteProcessGroupIndex(
     ++m_MetadataSet.DataPGCount;
     m_MetadataSet.DataPGIsOpen = true;
 
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Pause();
     }
@@ -129,14 +129,14 @@ void BP1Writer::WriteProcessGroupIndex(
 
 void BP1Writer::Advance()
 {
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Resume();
     }
 
     FlattenData();
 
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Pause();
     }
@@ -144,14 +144,14 @@ void BP1Writer::Advance()
 
 void BP1Writer::Close() noexcept
 {
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Resume();
     }
 
-    if (m_IsClosed == false)
+    if (!m_IsClosed)
     {
-        if (m_MetadataSet.DataPGIsOpen == true)
+        if (m_MetadataSet.DataPGIsOpen)
         {
             FlattenData();
         }
@@ -160,7 +160,7 @@ void BP1Writer::Close() noexcept
         m_IsClosed = true;
     }
 
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Pause();
     }
@@ -172,7 +172,7 @@ std::string BP1Writer::GetRankProfilingLog(
 {
     auto lf_WriterTimer = [](std::string &rankLog,
                              const profiling::Timer &timer) {
-        rankLog += "'" + timer.m_Process + "_" + timer.GetUnits() + "': " +
+        rankLog += "'" + timer.m_Process + "_" + timer.GetShortUnits() + "': " +
                    std::to_string(timer.m_ProcessTime) + ", ";
     };
 
@@ -222,7 +222,7 @@ void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
                                       const Dims offsets,
                                       std::vector<char> &buffer) noexcept
 {
-    if (offsets.empty() == true)
+    if (offsets.empty())
     {
         for (const auto &localDimension : localDimensions)
         {
@@ -261,7 +261,7 @@ void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
     };
 
     // BODY Starts here
-    if (offsets.empty() == true)
+    if (offsets.empty())
     {
         for (const auto &localDimension : localDimensions)
         {
@@ -440,7 +440,7 @@ void BP1Writer::FlattenMetadata() noexcept
 
     m_HeapBuffer.m_DataAbsolutePosition += footerSize;
 
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Bytes.emplace("buffering",
                                  m_HeapBuffer.m_DataAbsolutePosition);

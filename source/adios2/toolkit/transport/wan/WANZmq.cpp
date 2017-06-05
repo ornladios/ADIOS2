@@ -23,7 +23,7 @@ WANZmq::WANZmq(const std::string ipAddress, const std::string port,
   m_Port(port)
 {
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         // TODO verify port is unsigned int
     }
@@ -44,7 +44,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
 
     if (m_OpenMode == OpenMode::Write || m_OpenMode == OpenMode::w)
     {
-        if (m_Profiler.IsActive == true)
+        if (m_Profiler.IsActive)
         {
             m_Profiler.Timers.at("open").Resume();
         }
@@ -53,14 +53,14 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
         const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
         zmq_connect(m_Socket, fullIP.c_str());
 
-        if (m_Profiler.IsActive == true)
+        if (m_Profiler.IsActive)
         {
             m_Profiler.Timers.at("open").Pause();
         }
     }
     else if (m_OpenMode == OpenMode::Append || m_OpenMode == OpenMode::a)
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
             throw std::invalid_argument(
                 "ERROR: WAN transport " + m_Name +
@@ -71,7 +71,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
     }
     else if (m_OpenMode == OpenMode::Read || m_OpenMode == OpenMode::r)
     {
-        if (m_Profiler.IsActive == true)
+        if (m_Profiler.IsActive)
         {
             m_Profiler.Timers.at("open").Resume();
         }
@@ -80,13 +80,13 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
         const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
         zmq_bind(m_Socket, fullIP.c_str());
 
-        if (m_Profiler.IsActive == true)
+        if (m_Profiler.IsActive)
         {
             m_Profiler.Timers.at("open").Pause();
         }
     }
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (m_Socket == NULL) // something goes wrong
         {
@@ -103,7 +103,7 @@ void WANZmq::SetBuffer(char *buffer, size_t size) {}
 void WANZmq::Write(const char *buffer, size_t size)
 {
 
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("write").Resume();
     }
@@ -112,12 +112,12 @@ void WANZmq::Write(const char *buffer, size_t size)
     char ret[10];
     zmq_recv(m_Socket, ret, 10, 0);
 
-    if (m_Profiler.IsActive == true)
+    if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("write").Pause();
     }
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         const std::string retString(ret);
 

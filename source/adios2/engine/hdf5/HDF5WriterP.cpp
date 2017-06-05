@@ -29,11 +29,11 @@ HDF5WriterP::~HDF5WriterP() { Close(); }
 // PRIVATE
 void HDF5WriterP::Init()
 {
-    if (m_OpenMode != OpenMode::w && m_OpenMode != OpenMode::Write &&
-        m_OpenMode != OpenMode::a && m_OpenMode != OpenMode::Append)
+    if (m_OpenMode != OpenMode::Write && m_OpenMode != OpenMode::Append)
     {
         throw std::invalid_argument(
-            "ERROR: HDF5Writer only support OpenMode::w or OpenMode::Append "
+            "ERROR: HDF5Writer only support OpenMode::Write or "
+            "OpenMode::Append "
             ", in call to ADIOS Open or HDF5Writer constructor\n");
     }
 

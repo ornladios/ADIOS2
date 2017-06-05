@@ -41,7 +41,7 @@ size_t VariableBase::TotalSize() const noexcept
 
 void VariableBase::SetSelection(const Dims start, const Dims count)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (m_SingleValue)
         {
@@ -87,15 +87,12 @@ void VariableBase::SetSelection(const Dims start, const Dims count)
 
 void VariableBase::SetSelection(const SelectionBoundingBox &selection)
 {
-    Dims start, count;
-    ConvertUint64VectorToSizetVector(selection.m_Start, start);
-    ConvertUint64VectorToSizetVector(selection.m_Count, count);
-    SetSelection(start, count);
+    SetSelection(selection.m_Start, selection.m_Count);
 }
 
 void VariableBase::SetMemorySelection(const SelectionBoundingBox &selection)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (m_SingleValue)
         {
@@ -134,9 +131,9 @@ void VariableBase::InitShapeType()
 {
     if (!m_Shape.empty() && m_Start.empty() && m_Count.empty())
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
-            if (m_ConstantShape == true)
+            if (m_ConstantShape)
             {
                 throw std::invalid_argument(
                     "ERROR: isConstantShape (true) argument is invalid "
@@ -150,7 +147,7 @@ void VariableBase::InitShapeType()
     else if (!m_Shape.empty() && m_Shape.size() == m_Start.size() &&
              m_Shape.size() == m_Count.size())
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
             auto lf_LargerThanError = [&](const unsigned int i,
                                           const std::string dims1,

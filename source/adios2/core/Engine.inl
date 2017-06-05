@@ -27,7 +27,7 @@ T *Engine::AllocateVariable(Variable<T> &variable, T fillValue)
 template <class T>
 void Engine::Write(Variable<T> &variable, const T *values)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         variable.CheckDims("in call to Write");
     }
@@ -59,35 +59,35 @@ template <class T>
 void Engine::Read(Variable<T> &variable, T *values)
 {
     DoScheduleRead(variable, values);
-    PerformReads(PerformReadMode::BLOCKINGREAD);
+    PerformReads(ReadMode::Blocking);
 }
 
 template <class T>
 void Engine::Read(const std::string &variableName, T *values)
 {
     DoScheduleRead(variableName, values);
-    PerformReads(PerformReadMode::BLOCKINGREAD);
+    PerformReads(ReadMode::Blocking);
 }
 
 template <class T>
 void Engine::Read(Variable<T> &variable, T &values)
 {
     DoScheduleRead(variable, &values);
-    PerformReads(PerformReadMode::BLOCKINGREAD);
+    PerformReads(ReadMode::Blocking);
 }
 
 template <class T>
 void Engine::Read(const std::string &variableName, T &values)
 {
     DoScheduleRead(variableName, &values);
-    PerformReads(PerformReadMode::BLOCKINGREAD);
+    PerformReads(ReadMode::Blocking);
 }
 
 template <class T>
 void Engine::Read(Variable<T> &variable)
 {
     DoScheduleRead(variable);
-    PerformReads(PerformReadMode::BLOCKINGREAD);
+    PerformReads(ReadMode::Blocking);
 }
 
 template <class T>

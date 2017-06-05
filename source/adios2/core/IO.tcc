@@ -29,9 +29,9 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims shape,
                                 const Dims start, const Dims count,
                                 const bool constantShape)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
-        if (VariableExists(name) == true)
+        if (VariableExists(name))
         {
             std::invalid_argument("ERROR: variable " + name +
                                   " exists in IO object " + m_Name +
@@ -41,10 +41,12 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims shape,
 
     auto &variableMap = GetVariableMap<T>();
     const unsigned int size = variableMap.size();
-    variableMap.emplace(size, Variable<T>(name, shape, start, count,
-                                          constantShape, m_DebugMode));
+    auto itVariablePair =
+        variableMap.emplace(size, Variable<T>(name, shape, start, count,
+                                              constantShape, m_DebugMode));
+
     m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
-    return variableMap.at(size);
+    return itVariablePair.first->second;
 }
 
 template <class T>

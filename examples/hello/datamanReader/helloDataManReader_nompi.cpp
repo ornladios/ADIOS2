@@ -40,9 +40,10 @@ int main(int argc, char *argv[])
         dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters("real_time=yes", "method_type=stream",
                                 "method=dump");
-        auto dataManReader = dataManIO.Open("myDoubles.bp", adios::OpenMode::r);
+        auto dataManReader =
+            dataManIO.Open("myDoubles.bp", adios::OpenMode::Read);
 
-        if (dataManReader == nullptr)
+        if (!dataManReader)
         {
             throw std::ios_base::failure(
                 "ERROR: failed to create DataMan I/O engine at Open\n");

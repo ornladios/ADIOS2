@@ -54,7 +54,7 @@ public:
 
     ~ADIOS1Reader();
 
-    void PerformReads(PerformReadMode mode);
+    void PerformReads(ReadMode mode);
 
     void Release();
     void Advance(const float timeout_sec = 0.0);

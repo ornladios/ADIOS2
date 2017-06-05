@@ -57,8 +57,8 @@ public:
     /** pauses timer (set to inactive) */
     void Pause() noexcept;
 
-    /** Returns TimeUnit as std::string */
-    std::string GetUnits() const noexcept;
+    /** Returns TimeUnit as a short std::string  */
+    std::string GetShortUnits() const noexcept;
 
 private:
     /** true: extra exceptions */

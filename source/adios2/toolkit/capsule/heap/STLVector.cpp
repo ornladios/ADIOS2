@@ -35,7 +35,7 @@ size_t STLVector::GetMetadataSize() const { return m_Metadata.size(); }
 
 void STLVector::ResizeData(const size_t size)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         try
         {
@@ -56,7 +56,7 @@ void STLVector::ResizeData(const size_t size)
 
 void STLVector::ResizeMetadata(const size_t size)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         try
         {

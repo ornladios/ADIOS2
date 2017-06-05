@@ -41,9 +41,9 @@ VariableCompound &IO::DefineVariableCompound(const std::string &name,
                                              const Dims count,
                                              const bool constantShape)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
-        if (VariableExists(name) == true)
+        if (VariableExists(name))
         {
             std::invalid_argument("ERROR: variable " + name +
                                   " exists in IO object " + m_Name +
@@ -51,11 +51,11 @@ VariableCompound &IO::DefineVariableCompound(const std::string &name,
         }
     }
     const unsigned int size = m_Compound.size();
-    m_Compound.emplace(size,
-                       VariableCompound(name, sizeof(T), shape, start, count,
-                                        constantShape, m_DebugMode));
+    auto itVariableCompound = m_Compound.emplace(
+        size, VariableCompound(name, sizeof(T), shape, start, count,
+                               constantShape, m_DebugMode));
     m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
-    return m_Compound.at(size);
+    return itVariableCompound.first->second;
 }
 
 } // end namespace adios

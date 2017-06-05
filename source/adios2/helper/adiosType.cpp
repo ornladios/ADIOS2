@@ -28,7 +28,7 @@ std::string DimsToCSV(const Dims &dimensions) noexcept
         dimsCSV += std::to_string(dimension) + ",";
     }
 
-    if (dimsCSV.empty() == false)
+    if (!dimsCSV.empty())
     {
         dimsCSV.pop_back(); // remove last comma
     }
@@ -107,34 +107,35 @@ Uint64VectorToSizetVector(const std::vector<uint64_t> &in) noexcept
 TimeUnit StringToTimeUnit(const std::string timeUnitString,
                           const bool debugMode)
 {
-    TimeUnit timeUnit = TimeUnit::MicroSeconds; // default
+    TimeUnit timeUnit = TimeUnit::Microseconds; // default
 
-    if (timeUnitString == "mus" || timeUnitString == "microseconds")
+    if (timeUnitString == "Microseconds")
     {
-        timeUnit = TimeUnit::mus;
+        timeUnit = TimeUnit::Microseconds;
     }
-    else if (timeUnitString == "ms" || timeUnitString == "milliseconds")
+    else if (timeUnitString == "Milliseconds")
     {
-        timeUnit = TimeUnit::ms;
+        timeUnit = TimeUnit::Milliseconds;
     }
-    else if (timeUnitString == "s" || timeUnitString == "seconds")
+    else if (timeUnitString == "Seconds")
     {
-        timeUnit = TimeUnit::s;
+        timeUnit = TimeUnit::Seconds;
     }
-    else if (timeUnitString == "m" || timeUnitString == "minutes")
+    else if (timeUnitString == "Minutes")
     {
-        timeUnit = TimeUnit::m;
+        timeUnit = TimeUnit::Minutes;
     }
-    else if (timeUnitString == "h" || timeUnitString == "hours")
+    else if (timeUnitString == "Hours")
     {
-        timeUnit = TimeUnit::h;
+        timeUnit = TimeUnit::Hours;
     }
     else
     {
-        if (debugMode == true)
+        if (debugMode)
         {
             throw std::invalid_argument("ERROR: profile_units=value "
-                                        " must be mus, ms, s, m or h\n");
+                                        " must be Microseconds, Milliseconds, "
+                                        "Seconds, Minutes or Hours\n");
         }
     }
     return timeUnit;
@@ -161,7 +162,7 @@ size_t BytesFactor(const std::string units, const bool debugMode)
     }
     else
     {
-        if (debugMode == true)
+        if (debugMode)
         {
             throw std::invalid_argument("ERROR: units " + units +
                                         " not supported\n");
@@ -174,17 +175,17 @@ std::string OpenModeToString(const OpenMode openMode) noexcept
 {
 
     std::string openModeString;
-    if (openMode == OpenMode::Write || openMode == OpenMode::w)
+    if (openMode == OpenMode::Write)
     {
-        openModeString = "w";
+        openModeString = "Write";
     }
-    else if (openMode == OpenMode::Append || openMode == OpenMode::a)
+    else if (openMode == OpenMode::Append)
     {
-        openModeString = "a";
+        openModeString = "Append";
     }
-    else if (openMode == OpenMode::Read || openMode == OpenMode::r)
+    else if (openMode == OpenMode::Read)
     {
-        openModeString = "r";
+        openModeString = "Read";
     }
     return openModeString;
 }

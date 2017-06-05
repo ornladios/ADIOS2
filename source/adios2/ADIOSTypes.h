@@ -5,16 +5,20 @@
  * ADIOSTypes.h
  *
  *  Created on: Mar 23, 2017
- *      Author: pnb
+ *      Author: Chuck Atkins chuck.atkins@kitware.com
+ *              Norbert Podhorszki pnorbert@ornl.gov
+ *              William F Godoy godoywf@ornl.gov
+ *
  */
 
 #ifndef ADIOS2_ADIOSTYPES_H_
 #define ADIOS2_ADIOSTYPES_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <complex>
 #include <cstddef>
 #include <cstdint>
+
+#include <complex>
 #include <limits>
 #include <map>
 #include <string>
@@ -44,6 +48,7 @@ enum class IOMode
     Collective   ///< expect collective I/O operations
 };
 
+/** OpenMode in IO Open */
 enum class OpenMode
 {
     Undefined,
@@ -51,28 +56,26 @@ enum class OpenMode
     Read,
     Append,
     ReadWrite,
-    w,
-    r,
-    a,
-    rw
 };
 
-typedef enum {
-    GLOBAL_READERS = 2,
-    ROUNDROBIN_READERS = 3,
-    FIFO_READERS = 4,
-    OPEN_ALL_STEPS = 5
-} ReadMultiplexPattern;
+enum class ReadMultiplexPattern
+{
+    GlobalReaders,
+    RoundRobin,
+    FirstInFirstOut,
+    OpenAllSteps
+};
 
-typedef enum {
-    NOWAITFORSTREAM = 0,
-    WAITFORSTREAM = 1
-} StreamOpenMode; // default: wait for stream
+enum class StreamOpenMode
+{
+    Wait,
+    NoWait
+};
 
 enum class TransformType
 {
-    bzip2,
-    zfp
+    BZip2,
+    Zfp
 };
 
 enum class TransportType
@@ -81,6 +84,7 @@ enum class TransportType
     WAN
 };
 
+/** Just for info purposes */
 enum class IOEngine
 {
     Unknown,
@@ -94,35 +98,35 @@ enum class IOEngine
     DataManReader
 };
 
-typedef enum { NONBLOCKINGREAD = 0, BLOCKINGREAD = 1 } PerformReadMode;
+enum class ReadMode
+{
+    NonBlocking,
+    Blocking
+};
 
-typedef enum {
-    APPEND = 0,
-    UPDATE = 1, // writer advance modes
-    NEXT_AVAILABLE = 2,
-    LATEST_AVAILABLE = 3, // reader advance modes
-} AdvanceMode;
+enum class AdvanceMode
+{
+    Append,
+    Update, // writer advance mode
+    NextAvailable,
+    LatestAvailable // reader advance mode
+};
 
 enum class AdvanceStatus
 {
-    OK = 0,
-    STEP_NOT_READY = 1,
-    END_OF_STREAM = 2,
-    OTHER_ERROR = 3
+    OK,
+    StepNotReady,
+    EndOfStream,
+    OtherError
 };
 
 enum class TimeUnit
 {
-    MicroSeconds,
-    MiliSeconds,
+    Microseconds,
+    Milliseconds,
     Seconds,
     Minutes,
-    Hours,
-    mus,
-    ms,
-    s,
-    m,
-    h
+    Hours
 };
 
 /** Type of selection */
@@ -138,8 +142,8 @@ enum class SelectionType
 
 // adios defaults
 const std::string DefaultFileLibrary("POSIX");
-const std::string DefaultTimeUnit("mus");
-constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::mus);
+const std::string DefaultTimeUnit("Microseconds");
+constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::Microseconds);
 constexpr size_t DefaultBufferSize(16384); ///< in bytes
 
 // adios alias values and types

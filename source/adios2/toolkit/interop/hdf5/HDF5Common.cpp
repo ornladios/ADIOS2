@@ -45,7 +45,7 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
               H5Tget_size(H5T_NATIVE_LDOUBLE), H5T_NATIVE_LDOUBLE);
 }
 
-void HDF5Common::Init(const std::string name, MPI_Comm comm, bool toWrite)
+void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
 {
     m_WriteMode = toWrite;
     m_PropertyListId = H5Pcreate(H5P_FILE_ACCESS);
@@ -68,7 +68,7 @@ void HDF5Common::Init(const std::string name, MPI_Comm comm, bool toWrite)
             m_GroupId = H5Gcreate2(m_FileId, ts0.c_str(), H5P_DEFAULT,
                                    H5P_DEFAULT, H5P_DEFAULT);
 
-            if (m_DebugMode == true)
+            if (m_DebugMode)
             {
                 if (m_GroupId < 0)
                 {
@@ -96,7 +96,7 @@ void HDF5Common::WriteTimeSteps()
 {
     if (m_FileId < 0)
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
             throw std::invalid_argument("ERROR: invalid HDF5 file to record "
                                         "timestep to, in call to Write\n");
@@ -134,7 +134,7 @@ unsigned int HDF5Common::GetNumTimeSteps()
 
     if (m_FileId < 0)
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
             throw std::invalid_argument(
                 "ERROR: invalid HDF5 file to read timestep attribute.\n");
@@ -222,7 +222,7 @@ void HDF5Common::CheckWriteGroup()
     m_GroupId = H5Gcreate2(m_FileId, timeStepName.c_str(), H5P_DEFAULT,
                            H5P_DEFAULT, H5P_DEFAULT);
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (m_GroupId < 0)
         {

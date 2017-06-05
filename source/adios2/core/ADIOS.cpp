@@ -18,21 +18,16 @@
 #include <utility>
 /// \endcond
 
+#include "adios2/ADIOSMPI.h"
+
 namespace adios
 {
-
-ADIOS::ADIOS(const bool debugMode) : m_DebugMode(debugMode) {}
-
-ADIOS::ADIOS(const std::string configFile, const bool debugMode)
-: m_ConfigFile(configFile), m_DebugMode(debugMode)
-{
-}
 
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
              const bool debugMode)
 : m_MPIComm(mpiComm), m_ConfigFile(configFile), m_DebugMode(debugMode)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         CheckMPI();
     }
@@ -41,14 +36,17 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
     // m_Transforms, m_Groups );
 }
 
-ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode)
-: m_MPIComm(mpiComm), m_DebugMode(debugMode)
+ADIOS::ADIOS(const std::string configFile, const bool debugMode)
+: ADIOS(configFile, MPI_COMM_SELF, debugMode)
 {
-    if (m_DebugMode == true)
-    {
-        CheckMPI();
-    }
 }
+
+ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode)
+: ADIOS("", mpiComm, debugMode)
+{
+}
+
+ADIOS::ADIOS(const bool debugMode) : ADIOS("", MPI_COMM_SELF, debugMode) {}
 
 IO &ADIOS::DeclareIO(const std::string ioName)
 {
@@ -56,9 +54,9 @@ IO &ADIOS::DeclareIO(const std::string ioName)
 
     if (itIO != m_IOs.end()) // exists
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
-            if (itIO->second.InConfigFile() == false)
+            if (itIO->second.InConfigFile())
             {
                 throw std::invalid_argument(
                     "ERROR: IO class object with name " + ioName +
@@ -69,9 +67,10 @@ IO &ADIOS::DeclareIO(const std::string ioName)
         return itIO->second;
     }
 
-    // doesn't exist, then create
-    m_IOs.emplace(ioName, IO(ioName, m_MPIComm, false, m_DebugMode));
-    return m_IOs.at(ioName);
+    // doesn't exist, then create new pair
+    auto ioPair =
+        m_IOs.emplace(ioName, IO(ioName, m_MPIComm, false, m_DebugMode));
+    return ioPair.first->second;
 }
 
 // PRIVATE FUNCTIONS
@@ -79,9 +78,8 @@ void ADIOS::CheckMPI() const
 {
     if (m_MPIComm == MPI_COMM_NULL)
     {
-        throw std::ios_base::failure(
-            "ERROR: engine communicator is MPI_COMM_NULL,"
-            " in call to ADIOS constructor\n");
+        throw std::ios_base::failure("ERROR: MPI communicator is MPI_COMM_NULL,"
+                                     " in call to ADIOS constructor\n");
     }
 }
 

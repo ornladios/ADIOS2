@@ -57,7 +57,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    bpWriter = bpio.Open(m_outputfilename, adios::OpenMode::w, comm);
+    bpWriter = bpio.Open(m_outputfilename, adios::OpenMode::Write, comm);
 
     if (!bpWriter)
     {

@@ -5,7 +5,7 @@
  * Engine.h Base abstract class for the core Open, Write/Read, Advance, Close
  * functionality. Use toolkit components to build your own Engine extending this
  * class.
- * Examples of derived classes in: adios2/engine/*
+ * Examples of derived classes in: adios2/engine/
  *
  *  Created on: Nov 7, 2016
  *      Author: William F Godoy godoywf@ornl.gov
@@ -200,7 +200,7 @@ public:
      * return immediately.
      * @param mode Blocking or non-blocking modes
      */
-    virtual void PerformReads(PerformReadMode mode);
+    virtual void PerformReads(ReadMode mode);
 
     /**
      * Reader application indicates that no more data will be read from the
@@ -301,7 +301,7 @@ protected:
 
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
-    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+    MPI_Comm m_MPIComm;
 
     /** true: additional exceptions */
     const bool m_DebugMode = false;
@@ -388,11 +388,9 @@ protected:
     void DoScheduleRead(const std::string &variableName, void *values);
 
 private:
-    /** Checks that start and count are not empty for global variables */
-    void CheckVariableDims(const Dims start, const Dims count);
     /** Throw exception by Engine virtual functions not implemented by a derived
      * class */
-    void ThrowUp(const std::string function);
+    void ThrowUp(const std::string function) const;
 };
 
 } // end namespace adios

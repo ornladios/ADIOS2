@@ -29,7 +29,7 @@ bool HDF5ReaderP::IsValid()
 {
     bool isValid = false;
 
-    if (m_OpenMode != OpenMode::r && m_OpenMode != OpenMode::Read)
+    if (m_OpenMode != OpenMode::Read)
     {
         return isValid;
     }
@@ -41,10 +41,10 @@ bool HDF5ReaderP::IsValid()
 }
 void HDF5ReaderP::Init()
 {
-    if (m_OpenMode != OpenMode::r && m_OpenMode != OpenMode::Read)
+    if (m_OpenMode != OpenMode::Read)
     {
         throw std::invalid_argument(
-            "ERROR: HDF5Reader only supports OpenMode::r "
+            "ERROR: HDF5Reader only supports OpenMode::Read "
             ", in call to Open\n");
     }
 
@@ -62,10 +62,6 @@ void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
 
     hid_t dataSetId =
         H5Dopen(m_H5File.m_GroupId, variableName.c_str(), H5P_DEFAULT);
-    if (rank == 0)
-    {
-        std::cout << " opened to read: " << variableName << std::endl;
-    }
 
     if (dataSetId < 0)
     {
@@ -86,7 +82,6 @@ void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
     int totalElements = 1;
     for (int i = 0; i < ndims; i++)
     {
-        std::cout << " [" << i << "] th dimension: " << dims[i] << std::endl;
         count[i] = dims[i];
         totalElements *= dims[i];
     }
@@ -96,7 +91,6 @@ void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
     if (rank == size - 1)
     {
         count[0] = dims[0] - count[0] * (size - 1);
-        std::cout << " rank = " << rank << ", count=" << count[0] << std::endl;
     }
 
     hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start, stride,
@@ -117,12 +111,6 @@ void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
     T data_array[elementsRead];
     ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
                   data_array);
-
-    for (int i = 0; i < elementsRead; i++)
-    {
-        std::cout << "... rank " << rank << "   , " << data_array[i]
-                  << std::endl;
-    }
 
     H5Sclose(memDataSpace);
 

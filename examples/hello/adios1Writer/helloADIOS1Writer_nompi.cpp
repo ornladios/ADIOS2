@@ -36,7 +36,8 @@ int main(int argc, char *argv[])
             "bpFloats", {}, {}, {Nx}, adios::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto adios1Writer = adios1IO.Open("myVector.bp", adios::OpenMode::w);
+        auto adios1Writer =
+            adios1IO.Open("myVector.bp", adios::OpenMode::Write);
 
         if (!adios1Writer)
         {

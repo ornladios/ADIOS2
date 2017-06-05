@@ -27,9 +27,9 @@ void BPFileReader::Close(const int /*transportIndex*/) {}
 // PRIVATE
 void BPFileReader::Init()
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
-        if (m_OpenMode != OpenMode::r && m_OpenMode != OpenMode::Read)
+        if (m_OpenMode != OpenMode::Read)
         {
             throw std::invalid_argument(
                 "ERROR: BPFileReader only supports OpenMode::r from" + m_Name +

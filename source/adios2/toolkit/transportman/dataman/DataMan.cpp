@@ -33,7 +33,7 @@ void DataMan::OpenWANTransports(const std::string &name,
         auto itParameter = params.find(key);
         if (itParameter == params.end())
         {
-            if (debugMode == true && isMandatory == true)
+            if (debugMode && isMandatory)
             {
                 throw std::invalid_argument(
                     "ERROR: wan transport doesn't have mandatory parameter " +
@@ -92,7 +92,7 @@ void DataMan::OpenWANTransports(const std::string &name,
             }
             else
             {
-                if (m_DebugMode == true)
+                if (m_DebugMode)
                 {
                     throw std::invalid_argument("ERROR: wan library " + lib +
                                                 " not supported or not "

@@ -4,7 +4,7 @@
  *
  * ADIOS1Writer.h
  * Class to write files using old adios 1.x library.
- * It requires adios 1.x installed
+ * It requires at least adios 1.12.0 installed
  *
  *  Created on: Mar 27, 2017
  *      Author: Norbert Podhorszki pnorbert@ornl.gov

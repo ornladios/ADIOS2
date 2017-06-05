@@ -35,43 +35,45 @@ void BP1Base::InitParameters(const Params &parameters)
         const std::string key(pair.first);
         const std::string value(pair.second);
 
-        if (key == "profile")
+        if (key == "Profile")
         {
             InitParameterProfile(value);
         }
-        else if (key == "profile_units")
+        else if (key == "ProfileUnits")
         {
             InitParameterProfileUnits(value);
             useDefaultProfileUnits = false;
         }
-        else if (key == "buffer_growth")
+        else if (key == "BufferGrowth")
         {
             InitParameterBufferGrowth(value);
         }
-        else if (key == "init_buffer_size")
+        else if (key == "BufferSize")
         {
             InitParameterInitBufferSize(value);
             useDefaultBufferSize = false;
         }
-        else if (key == "max_buffer_size")
+        else if (key == "MaxBufferSize")
         {
             InitParameterMaxBufferSize(value);
         }
-        else if (key == "verbose")
+        else if (key == "Verbose")
         {
             InitParameterVerbose(value);
         }
     }
 
     // default timer for buffering
-    if (m_Profiler.IsActive == true && useDefaultProfileUnits == true)
+    if (m_Profiler.IsActive && useDefaultProfileUnits)
     {
         m_Profiler.Timers.emplace(
             "buffering",
             profiling::Timer("buffering", DefaultTimeUnitEnum, m_DebugMode));
+
+        m_Profiler.Bytes.emplace("buffering", 0);
     }
 
-    if (useDefaultBufferSize == true)
+    if (useDefaultBufferSize)
     {
         m_HeapBuffer.ResizeData(DefaultBufferSize);
     }
@@ -130,7 +132,7 @@ void BP1Base::InitParameterProfile(const std::string value)
     }
     else
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
             throw std::invalid_argument("ERROR: IO SetParameters profile "
                                         "invalid value, valid: "
@@ -142,12 +144,6 @@ void BP1Base::InitParameterProfile(const std::string value)
 
 void BP1Base::InitParameterProfileUnits(const std::string value)
 {
-    if (m_Profiler.IsActive == false)
-    {
-        m_Profiler.Timers.clear(); // remove default
-        return;
-    }
-
     TimeUnit timeUnit = StringToTimeUnit(value, m_DebugMode);
 
     if (m_Profiler.Timers.count("buffering") == 1)
@@ -157,11 +153,13 @@ void BP1Base::InitParameterProfileUnits(const std::string value)
 
     m_Profiler.Timers.emplace(
         "buffering", profiling::Timer("buffering", timeUnit, m_DebugMode));
+
+    m_Profiler.Bytes.emplace("buffering", 0);
 }
 
 void BP1Base::InitParameterBufferGrowth(const std::string value)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         bool success = true;
         try
@@ -173,7 +171,7 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
             success = false;
         }
 
-        if (success == false || m_GrowthFactor <= 1.f)
+        if (!success || m_GrowthFactor <= 1.f)
         {
             throw std::invalid_argument(
                 "ERROR: IO SetParameter buffer_growth value "
@@ -195,7 +193,7 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
         "init_buffer_size=1000Mb, init_buffer_size=16Kb (minimum default), "
         " in call to Open");
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (value.size() < 2)
         {
@@ -208,7 +206,7 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
     const size_t factor = BytesFactor(units, m_DebugMode);
     size_t bufferSize = DefaultBufferSize; // from ADIOSTypes.h
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         bool success = true;
         try
@@ -220,7 +218,7 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
             success = false;
         }
 
-        if (success == false || bufferSize < 16 * 1024) // 16384b
+        if (!success || bufferSize < 16 * 1024) // 16384b
         {
             throw std::invalid_argument(errorMessage);
         }
@@ -237,11 +235,11 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
 {
     const std::string errorMessage(
         "ERROR: couldn't convert value of max_buffer_size IO "
-        "SetParameter, valid syntax: max_buffer_size=10Gb, "
-        "max_buffer_size=1000Mb, max_buffer_size=16Kb (minimum default), "
+        "SetParameter, valid syntax: MaxBufferSize=10Gb, "
+        "MaxBufferSize=1000Mb, MaxBufferSize=16Kb (minimum default), "
         " in call to Open");
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (value.size() < 2)
         {
@@ -253,7 +251,7 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
     const std::string units(value.substr(value.size() - 2));
     const size_t factor = BytesFactor(units, m_DebugMode);
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         bool success = true;
         try
@@ -265,7 +263,7 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
             success = false;
         }
 
-        if (success == false || m_MaxBufferSize < 16 * 1024) // 16384b
+        if (!success || m_MaxBufferSize < 16 * 1024) // 16384b
         {
             throw std::invalid_argument(errorMessage);
         }
@@ -278,7 +276,7 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
 
 void BP1Base::InitParameterVerbose(const std::string value)
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         bool success = true;
         try
@@ -290,10 +288,10 @@ void BP1Base::InitParameterVerbose(const std::string value)
             success = false;
         }
 
-        if (success == false || m_Verbosity < 0 || m_Verbosity > 5)
+        if (!success || m_Verbosity < 0 || m_Verbosity > 5)
         {
             throw std::invalid_argument(
-                "ERROR: value in verbose=value in IO SetParameters must be "
+                "ERROR: value in Verbose=value in IO SetParameters must be "
                 "an integer in the range [0,5], in call to Open\n");
         }
     }

@@ -24,7 +24,7 @@ std::string FileToString(const std::string &fileName)
 {
     std::ifstream fileStream(fileName);
 
-    if (fileStream.good() == false)
+    if (!fileStream.good())
     {
         throw std::ios_base::failure(
             "ERROR: file " + fileName +
@@ -44,7 +44,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
                                std::string &value, const bool debugMode) {
         auto equalPosition = parameter.find("=");
 
-        if (debugMode == true)
+        if (debugMode)
         {
             if (equalPosition == parameter.npos)
             {
@@ -73,7 +73,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
         std::string field, value;
         lf_GetFieldValue(parameter, field, value, debugMode);
 
-        if (debugMode == true)
+        if (debugMode)
         {
             if (parametersOutput.count(field) == 1)
             {

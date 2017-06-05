@@ -35,7 +35,7 @@ public:
      */
     HDF5Common(const bool debugMode);
 
-    void Init(const std::string name, MPI_Comm comm, bool toWrite);
+    void Init(const std::string &name, MPI_Comm comm, bool toWrite);
 
     template <class T>
     void Write(Variable<T> &variable, const T *values);

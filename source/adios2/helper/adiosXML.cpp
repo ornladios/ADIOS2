@@ -56,7 +56,7 @@ void GetSubString(const std::string initialTag, const std::string finalTag,
     // find next
     bool isValue = true;
 
-    while (isValue == true)
+    while (isValue)
     {
         std::string::size_type singleQuotePosition =
             content.find('\'', currentPosition);
@@ -233,13 +233,13 @@ void GetPairsFromTag(
 //        if( pair.first == "host-language" )
 //            hostLanguage = pair.second;
 //
-//    if( debugMode == true )
+//    if( debugMode )
 //    {
 //        if( Support::HostLanguages.count( hostLanguage ) == 0 )
 //            throw std::invalid_argument("ERROR: host language " + hostLanguage
 //            + " not supported.\n" );
 //
-//        if( hostLanguage.empty() == true )
+//        if( hostLanguage.empty() )
 //            throw std::invalid_argument("ERROR: host language is empty.\n" );
 //    }
 //
@@ -258,7 +258,7 @@ void GetPairsFromTag(
 //        //get group name
 //        std::string::size_type groupPosition( 0 );
 //        GetSubString( "<adios-group ", ">", xmlGroup, tag, groupPosition );
-//        if( debugMode == true )
+//        if( debugMode )
 //        {
 //            if( tag.size() < 2 )
 //                throw std::invalid_argument( "ERROR: wrong tag " + tag + " in
@@ -275,7 +275,7 @@ void GetPairsFromTag(
 //                groupName = pair.second;
 //        }
 //
-//        if( debugMode == true )
+//        if( debugMode )
 //        {
 //            if( groupName.empty() )
 //                throw std::invalid_argument( "ERROR: group name not found. \n"
@@ -301,11 +301,11 @@ void GetPairsFromTag(
 //                            const bool debugMode, int& field )
 //    {
 //        field = 0;
-//        if( fieldStr.empty() == false )
+//        if( !fieldStr.empty())
 //        {
 //            field = std::stoi( fieldStr ); //throws invalid_argument
 //
-//            if( debugMode == true )
+//            if( debugMode )
 //            {
 //                if( field < 0 )
 //                    throw std::invalid_argument("ERROR: " + fieldName + " in
@@ -335,7 +335,7 @@ void GetPairsFromTag(
 //        }
 //
 //        auto itGroup = groups.find( groupName );
-//        if( debugMode == true )
+//        if( debugMode )
 //        {
 //            if( itGroup == groups.end() ) //not found
 //                throw std::invalid_argument( "ERROR: in transport " + method +

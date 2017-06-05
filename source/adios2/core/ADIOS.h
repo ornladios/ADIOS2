@@ -32,21 +32,8 @@ class ADIOS
 {
 public:
     /** Passed from parallel constructor, MPI_Comm is a pointer itself. */
-    MPI_Comm m_MPIComm = MPI_COMM_SELF;
+    MPI_Comm m_MPIComm;
     std::string m_HostLanguage = "C++"; ///< changed by language bindings
-
-    /** @brief ADIOS no-MPI default empty constructor
-     *  @param debugMode true: extra exception checks (recommended)
-     */
-    ADIOS(const bool debugMode = false);
-
-    /**
-     * @brief Constructor for non-MPI applications WITH a XML config file
-     * @param configFile XML format (maybe support different formats in the
-     * future?)
-     * @param debugMode true: extra exception checks (recommended)
-     */
-    ADIOS(const std::string configFile, const bool debugMode = false);
 
     /**
      * @brief Constructor for MPI applications WITH a XML config file
@@ -59,11 +46,25 @@ public:
           const bool debugMode = false);
 
     /**
+     * @brief Constructor for non-MPI applications WITH a XML config file
+     * @param configFile XML format (maybe support different formats in the
+     * future?)
+     * @param debugMode true: extra exception checks (recommended)
+     */
+    ADIOS(const std::string configFile, const bool debugMode = false);
+
+    /**
      * @brief Constructor for MPI apps WITHOUT a XML config file
      * @param mpiComm MPI communicator from application
      * @param debugMode true: extra exception checks (recommended)
      */
     ADIOS(MPI_Comm mpiComm, const bool debugMode = false);
+
+    /**
+     *  @brief ADIOS no-MPI default empty constructor
+     *  @param debugMode true: extra exception checks (recommended)
+     */
+    ADIOS(const bool debugMode = false);
 
     ~ADIOS() = default;
 

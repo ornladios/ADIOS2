@@ -21,51 +21,39 @@
 namespace adios
 {
 
-// SelectionBoundingBox::SelectionBoundingBox(const std::vector<uint64_t> start,
-//                                           const std::vector<uint64_t> count,
-//                                           const bool debugMode)
-//: Selection(SelectionType::BoundingBox, debugMode),
-//  m_Start(Uint64VectorToSizetVector(start)),
-//  m_Count(Uint64VectorToSizetVector(count))
-//{
-//    if (m_DebugMode == true)
-//    {
-//        CheckBoundingBox();
-//    }
-//}
-
 SelectionBoundingBox::SelectionBoundingBox(const Dims start, const Dims count,
                                            const bool debugMode)
 : Selection(SelectionType::BoundingBox, debugMode), m_Start(start),
   m_Count(count)
 {
+    if (m_DebugMode)
+    {
+        CheckBoundingBox();
+    }
 }
 
-void SelectionBoundingBox::CheckBoundingBox()
+void SelectionBoundingBox::CheckBoundingBox() const
 {
 
-    if (m_DebugMode == true)
+    auto lf_Throw = [](const std::string &message) {
+        throw std::invalid_argument(
+            "ERROR: " + message +
+            ", in call to SelectionBoundingBox constructor\n");
+    };
+
+    if (m_Start.size() != m_Count.size())
     {
-        auto lf_Throw = [](const std::string &message) {
-            throw std::invalid_argument(
-                "ERROR: " + message +
-                ", in call to SelectionBoundingBox constructor\n");
-        };
+        lf_Throw("start and count must have the same size");
+    }
 
-        if (m_Start.size() != m_Count.size())
-        {
-            lf_Throw("start and count must have the same size");
-        }
+    if (m_Start.empty())
+    {
+        lf_Throw("start is empty");
+    }
 
-        if (m_Start.empty())
-        {
-            lf_Throw("start is empty");
-        }
-
-        if (m_Count.empty())
-        {
-            lf_Throw("count is empty");
-        }
+    if (m_Count.empty())
+    {
+        lf_Throw("count is empty");
     }
 }
 

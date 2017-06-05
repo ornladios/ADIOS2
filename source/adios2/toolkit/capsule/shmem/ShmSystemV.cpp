@@ -43,7 +43,7 @@ ShmSystemV::ShmSystemV(const std::string &pathName, const int rankMPI,
     m_MetadataShmID = shmget(m_MetadataKey, m_MetadataSize, IPC_CREAT | 0666);
     m_Metadata = static_cast<char *>(shmat(m_MetadataShmID, nullptr, 0));
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         CheckShm();
     }

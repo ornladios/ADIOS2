@@ -21,7 +21,7 @@ void BPFileWriter::DoWriteCommon(Variable<T> &variable, const T *values)
     m_WrittenVariables.insert(variable.m_Name);
 
     // if first timestep Write create a new pg index
-    if (m_BP1Writer.m_MetadataSet.DataPGIsOpen == false)
+    if (!m_BP1Writer.m_MetadataSet.DataPGIsOpen)
     {
         m_BP1Writer.WriteProcessGroupIndex(
             m_IO.m_HostLanguage, m_TransportsManager.GetTransportsTypes());
@@ -38,7 +38,7 @@ void BPFileWriter::DoWriteCommon(Variable<T> &variable, const T *values)
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     m_BP1Writer.WriteVariableMetadata(variable);
 
-    if (m_TransportFlush == true) // in batches
+    if (m_DoTransportFlush) // in batches
     {
         // flatten data
 

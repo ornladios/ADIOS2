@@ -239,7 +239,7 @@ void ADIOS1Reader::ScheduleReadCommon(const std::string &name, const Dims &offs,
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void ADIOS1Reader::PerformReads(PerformReadMode mode)
+void ADIOS1Reader::PerformReads(ReadMode mode)
 {
     adios_perform_reads(m_fh, (int)mode);
 }
@@ -248,7 +248,7 @@ void ADIOS1Reader::Release() { adios_release_step(m_fh); }
 
 void ADIOS1Reader::Advance(const float timeout_sec)
 {
-    Advance(AdvanceMode::NEXT_AVAILABLE, timeout_sec);
+    Advance(AdvanceMode::NextAvailable, timeout_sec);
 }
 
 void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
@@ -259,7 +259,7 @@ void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
                                     "Advance() on a file which was opened for "
                                     "read as File\n");
     }
-    int last = (mode == AdvanceMode::NEXT_AVAILABLE ? 0 : 1);
+    int last = (mode == AdvanceMode::NextAvailable ? 0 : 1);
     float *to = const_cast<float *>(&timeout_sec);
     adios_advance_step(m_fh, last, *to);
 
@@ -269,13 +269,13 @@ void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
         m_AdvanceStatus = AdvanceStatus::OK;
         break;
     case err_end_of_stream:
-        m_AdvanceStatus = AdvanceStatus::END_OF_STREAM;
+        m_AdvanceStatus = AdvanceStatus::EndOfStream;
         break;
     case err_step_notready:
-        m_AdvanceStatus = AdvanceStatus::STEP_NOT_READY;
+        m_AdvanceStatus = AdvanceStatus::StepNotReady;
         break;
     default:
-        m_AdvanceStatus = AdvanceStatus::OTHER_ERROR;
+        m_AdvanceStatus = AdvanceStatus::OtherError;
         break;
     }
 }
@@ -297,9 +297,9 @@ void ADIOS1Reader::Close(const int transportIndex)
 // PRIVATE
 void ADIOS1Reader::Init()
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
-        if (m_OpenMode != OpenMode::r && m_OpenMode != OpenMode::Read)
+        if (m_OpenMode != OpenMode::Read)
         {
             throw std::invalid_argument(
                 "ERROR: ADIOS1Reader only supports OpenMode::r (read) access "
@@ -333,11 +333,13 @@ void ADIOS1Reader::InitTransports()
         }
         else
         {
-            if (m_DebugMode == true)
+            if (m_DebugMode)
+            {
                 throw std::invalid_argument(
                     "ERROR: transport " + itTransport->second +
                     " (you mean File?) not supported, in " + m_Name +
                     m_EndMessage);
+            }
         }
     }
 }

@@ -20,7 +20,7 @@ namespace transport
 {
 
 FilePointer::FilePointer(MPI_Comm mpiComm, const bool debugMode)
-: Transport("file", "C stdio.h", mpiComm, debugMode)
+: Transport("File", "C stdio.h", mpiComm, debugMode)
 {
 }
 
@@ -37,20 +37,20 @@ void FilePointer::Open(const std::string &name, const OpenMode openMode)
     m_Name = name;
     m_OpenMode = openMode;
 
-    if (m_OpenMode == OpenMode::Write || m_OpenMode == OpenMode::w)
+    if (m_OpenMode == OpenMode::Write)
     {
         m_File = fopen(name.c_str(), "w");
     }
-    else if (m_OpenMode == OpenMode::Append || m_OpenMode == OpenMode::a)
+    else if (m_OpenMode == OpenMode::Append)
     {
         m_File = fopen(name.c_str(), "a"); // need to change
     }
-    else if (m_OpenMode == OpenMode::Read || m_OpenMode == OpenMode::r)
+    else if (m_OpenMode == OpenMode::Read)
     {
         m_File = fopen(name.c_str(), "r");
     }
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (m_File == nullptr)
         {
@@ -67,7 +67,7 @@ void FilePointer::SetBuffer(char *buffer, size_t size)
 {
     int status = setvbuf(m_File, buffer, _IOFBF, size);
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (status == 1)
         {
@@ -82,7 +82,7 @@ void FilePointer::Write(const char *buffer, size_t size)
 {
     fwrite(buffer, sizeof(char), size, m_File);
 
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
         if (ferror(m_File))
         {

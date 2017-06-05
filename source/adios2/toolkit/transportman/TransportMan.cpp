@@ -42,7 +42,7 @@ void TransportMan::OpenFiles(const std::vector<std::string> &baseNames,
         const Params &parameters = parametersVector[i];
         const std::string type(parameters.at("transport"));
 
-        if (type == "file") // need to create directory
+        if (type == "File") // need to create directory
         {
             CreateDirectory(baseNames[i]);
         }
@@ -55,7 +55,7 @@ void TransportMan::OpenSingleFile(const std::string type,
                                   const OpenMode openMode,
                                   const Params &parameters, const bool profile)
 {
-    if (type == "file")
+    if (type == "File")
     {
         OpenFileTransport(name, openMode, parameters, profile);
     }
@@ -78,12 +78,12 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
     {
         // Get transport name from user
         std::string name(baseName);
-        SetParameterValue("name", parameters, name); // if found in map
+        SetParameterValue("Name", parameters, name); // if found in map
 
-        const std::string type(parameters.at("transport"));
+        const std::string type(parameters.at("Transport"));
         auto itType = typeTransportNames.find(type);
 
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
             // check if name exists for this transport type
             if (itType->second.count(name) == 1)
@@ -91,7 +91,7 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
                 throw std::invalid_argument(
                     "ERROR: two IO AddTransport of the same type can't "
                     "have the same name : " +
-                    name + ", use name=value parameter, in "
+                    name + ", use Name=value parameter, in "
                            "call to Open");
             }
         }
@@ -140,7 +140,7 @@ void TransportMan::CloseFiles(const int transportIndex, const char *buffer,
     {
         for (auto &transport : m_Transports)
         {
-            if (transport->m_Type == "file")
+            if (transport->m_Type == "File")
             {
                 // make this truly asynch?
                 transport->Write(buffer, size);
@@ -150,9 +150,9 @@ void TransportMan::CloseFiles(const int transportIndex, const char *buffer,
     }
     else
     {
-        if (m_DebugMode == true)
+        if (m_DebugMode)
         {
-            if (m_Transports[transportIndex]->m_Type != "file")
+            if (m_Transports[transportIndex]->m_Type != "File")
             {
                 throw std::invalid_argument(
                     "ERROR: index " + std::to_string(transportIndex) +
@@ -171,7 +171,7 @@ bool TransportMan::AllTransportsClosed() const noexcept
     bool allClose = true;
     for (const auto &transport : m_Transports)
     {
-        if (transport->m_IsOpen == true)
+        if (transport->m_IsOpen)
         {
             allClose = false;
             break;
@@ -205,7 +205,7 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
         }
         else
         {
-            if (m_DebugMode == true)
+            if (m_DebugMode)
             {
                 throw std::invalid_argument(
                     "ERROR: invalid IO AddTransport library " + library +
@@ -218,7 +218,7 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
                             const Params &parameters) -> std::string {
 
         std::string library(defaultLibrary);
-        SetParameterValue("library", parameters, library);
+        SetParameterValue("Library", parameters, library);
         return library;
     };
 
@@ -226,7 +226,7 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
                                const Params &parameters) -> TimeUnit {
 
         std::string profileUnits(defaultTimeUnit);
-        SetParameterValue("profile_units", parameters, profileUnits);
+        SetParameterValue("ProfileUnits", parameters, profileUnits);
         return StringToTimeUnit(profileUnits, m_DebugMode);
     };
 
@@ -235,8 +235,8 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
     lf_SetFileTransport(lf_GetLibrary(DefaultFileLibrary, parameters),
                         transport);
 
-    // Default or user profile_units in parameters
-    if (profile == true)
+    // Default or user ProfileUnits in parameters
+    if (profile)
     {
         transport->InitProfiler(openMode,
                                 lf_GetTimeUnits(DefaultTimeUnit, parameters));

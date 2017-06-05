@@ -44,83 +44,84 @@ void ADIOS1Common::WriteVariable(const std::string &name, const ShapeID shapeID,
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<char>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<char>() const {
     return adios_byte;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned char>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned char>() const {
     return adios_unsigned_byte;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<short>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<short>() const {
     return adios_short;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned short>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned short>() const {
     return adios_unsigned_short;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<int>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<int>() const {
     return adios_integer;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned int>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned int>() const {
     return adios_unsigned_integer;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<long int>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<long int>() const {
     return adios_long;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned long int>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned long int>() const {
     return adios_unsigned_long;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<long long int>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<long long int>() const {
 
     return adios_long;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned long long int>() {
+enum ADIOS_DATATYPES
+ADIOS1Common::GetADIOS1Type<unsigned long long int>() const {
     return adios_unsigned_long;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<float>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<float>() const {
     return adios_real;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<double>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<double>() const {
     return adios_double;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<long double>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<long double>() const {
     return adios_unknown;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cfloat>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cfloat>() const {
     return adios_complex;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cdouble>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cdouble>() const {
     return adios_double_complex;
 }
 
 template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cldouble>() {
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cldouble>() const {
     return adios_unknown;
 }
 

@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     }
 
     auto bpReader =
-        bpReaderIO.Open(inputfile, adios::OpenMode::r, mpiReaderComm);
+        bpReaderIO.Open(inputfile, adios::OpenMode::Read, mpiReaderComm);
 
     if (!bpReader)
     {
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     // Arrays are read by scheduling one or more of them
     // and performing the reads at once
     bpReader->ScheduleRead<double>(*vT, T);
-    bpReader->PerformReads(adios::PerformReadMode::BLOCKINGREAD);
+    bpReader->PerformReads(adios::ReadMode::Blocking);
 
     printData(T, readsize.data(), offset.data(), rank, vT->m_AvailableSteps);
     bpReader->Close();

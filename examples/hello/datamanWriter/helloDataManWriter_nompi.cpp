@@ -35,7 +35,8 @@ int main(int argc, char *argv[])
 
         // Create engine smart pointer to DataMan Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
-        auto dataManWriter = dataManIO.Open("myFloats.bp", adios::OpenMode::w);
+        auto dataManWriter =
+            dataManIO.Open("myFloats.bp", adios::OpenMode::Write);
 
         if (!dataManWriter)
         {
