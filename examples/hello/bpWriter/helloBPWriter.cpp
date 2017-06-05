@@ -40,8 +40,7 @@ int main(int argc, char *argv[])
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
         adios::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats",
-            {size * Nx}); //, {rank * Nx}, {Nx}, adios::ConstantDims);
+            "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
         auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::w);
