@@ -14,8 +14,6 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include "adiosType.h"
-
 namespace adios
 {
 

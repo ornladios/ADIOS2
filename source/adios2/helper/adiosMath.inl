@@ -14,8 +14,6 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include "adiosMath.h"
-
 #include <algorithm> //std::minmax_element, std::min_element, std::max_element
 #include <thread>
 

@@ -14,8 +14,6 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include "adiosMemory.h"
-
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::copy
 #include <cstring>   //std::memcpy

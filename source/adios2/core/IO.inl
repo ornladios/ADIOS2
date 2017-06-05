@@ -14,10 +14,6 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include "IO.h"
-
-#include <iostream>
-
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
