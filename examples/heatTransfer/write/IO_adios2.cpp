@@ -28,8 +28,8 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     // Define method for engine creation
 
-    adios::IO &bpWriterSettings = ad->DeclareIO("output");
-    if (!bpWriterSettings.InConfigFile())
+    adios::IO &bpio = ad->DeclareIO("output");
+    if (!bpio.InConfigFile())
     {
         // if not defined by user, we can change the default settings
         // BPFileWriter is the default engine
@@ -39,11 +39,11 @@ IO::IO(const Settings &s, MPI_Comm comm)
         // Passing parameters to the transport
     }
 
-    varGndx = &bpWriterSettings.DefineVariable<unsigned int>("gndx");
-    bpWriterSettings.DefineVariable<unsigned int>("gndy");
+    varGndx = &bpio.DefineVariable<unsigned int>("gndx");
+    bpio.DefineVariable<unsigned int>("gndy");
 
     // define T as 2D global array
-    varT = &bpWriterSettings.DefineVariable<double>(
+    varT = &bpio.DefineVariable<double>(
         "T",
         // Global dimensions
         {s.gndx, s.gndy},
@@ -58,7 +58,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
     bpWriter =
-        bpWriterSettings.Open(m_outputfilename, adios::OpenMode::w, comm);
+        bpio.Open(m_outputfilename, adios::OpenMode::w, comm);
 
     if (!bpWriter)
     {
