@@ -60,6 +60,8 @@ public:
 
     void InitParameters(const Params &parameters);
     void InitTransports(const std::vector<Params> &transportsParameters);
+    bool Open();           // return true if file is opened
+    bool ReOpenAsNeeded(); // return true if file is open or reopened
 
     template <class T>
     void WriteVariable(const std::string &name, const ShapeID shapeID,
@@ -75,8 +77,6 @@ private:
     const bool m_DebugMode = false;
 
     void Init();
-
-    bool ReOpenAsNeeded(); // return true if file is open or reopened
 
     void DefineVariable(const std::string &name, const ShapeID shapeID,
                         enum ADIOS_DATATYPES vartype, const std::string ldims,
