@@ -198,6 +198,17 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
                                     "HDF5 library, can't use HDF5\n");
 #endif
     }
+    else
+    {
+        if (m_DebugMode)
+        {
+            throw std::invalid_argument("ERROR: engine " + m_EngineType +
+                                        " not supported, IO SetEngine must add "
+                                        "a supported engine, in call to "
+                                        "Open\n");
+        }
+    }
+
     return engine;
 }
 
