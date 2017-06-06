@@ -10,20 +10,24 @@
  *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
-#include <mpi.h>
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
 #include <adios2.h>
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
 
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
-    int rank, size;
+    int rank = 0, size = 1;
+#ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif
 
     /** Application variable */
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};

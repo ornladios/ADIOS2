@@ -11,8 +11,6 @@
 #include <iostream>
 #include <vector>
 
-#include <mpi.h>
-
 #include <adios2.h>
 
 int main(int argc, char *argv[])

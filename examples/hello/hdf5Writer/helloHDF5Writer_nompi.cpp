@@ -8,9 +8,8 @@
  *      Author: Junmin
  */
 
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
-#include <mpi.h>
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
@@ -39,7 +38,7 @@ int main(int argc, char *argv[])
             "bpFloats", {}, {}, {Nx}, adios::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto hdf5Writer = hdf5IO.Open("myVector.bp", adios::OpenMode::w);
+        auto hdf5Writer = hdf5IO.Open("myVector.bp", adios::OpenMode::Write);
 
         if (!hdf5Writer)
         {

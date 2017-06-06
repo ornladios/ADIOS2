@@ -8,9 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
-#include <mpi.h>
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
@@ -19,8 +18,8 @@
 int main(int argc, char *argv[])
 {
     // Application variable
-    std::vector<float> myDoubles = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    const std::size_t Nx = myDoubles.size();
+    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    const std::size_t Nx = myFloats.size();
 
     try
     {
@@ -53,8 +52,8 @@ int main(int argc, char *argv[])
             // template type is optional but recommended
             bpWriter->Write<unsigned int>(bpTimeStep, timeStep);
 
-            bpFloats[0] = timeStep;
-            bpWriter->Write<float>(bpFloats, myDoubles.data());
+            myFloats[0] = timeStep;
+            bpWriter->Write<float>(bpFloats, myFloats.data());
             bpWriter->Advance();
         }
 

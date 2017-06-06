@@ -192,7 +192,9 @@ int main(int argc, char *argv[])
         if (rank == 0)
             Print2DArray(Nparts, vNparts->m_AvailableSteps, Nwriters, "Nparts");
         Delete2DArray(Nparts);
+#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
         /*
          * GlobalArrayFixedDims
@@ -228,20 +230,24 @@ int main(int argc, char *argv[])
         vGlobalArrayFixedDims->SetStepSelection(
             0, vGlobalArrayFixedDims->m_AvailableSteps);
         bpReader->Read<double>(*vGlobalArrayFixedDims, GlobalArrayFixedDims[0]);
+#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Status status;
         int token = 0;
         if (rank > 0)
             MPI_Recv(&token, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, &status);
+#endif
         std::cout << "Rank " << rank << " read start = " << start
                   << " count = " << count << std::endl;
         Print2DArray(GlobalArrayFixedDims,
                      vGlobalArrayFixedDims->m_AvailableSteps, count,
                      "GlobalArrayFixedDims");
+#ifdef ADIOS2_HAVE_MPI
         if (rank < nproc - 1)
             MPI_Send(&token, 1, MPI_INT, rank + 1, 0, MPI_COMM_WORLD);
-        Delete2DArray(GlobalArrayFixedDims);
         MPI_Barrier(MPI_COMM_WORLD);
+#endif
+        Delete2DArray(GlobalArrayFixedDims);
 
         /*
          * LocalArrayFixedDims
@@ -258,7 +264,9 @@ int main(int argc, char *argv[])
         }
         std::cout << "LocalArrayFixedDims is irregular. Cannot read this "
                      "variable yet...\n";
+#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
         /*
          * LocalArrayFixedDimsJoined
@@ -284,7 +292,9 @@ int main(int argc, char *argv[])
                          vLocalArrayFixedDimsJoined->m_Shape[0],
                          "LocalArrayFixedDimsJoined");
         Delete2DArray(LocalArrayFixedDimsJoined);
+#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
         /*
          * GlobalArray which changes size over time
@@ -301,7 +311,9 @@ int main(int argc, char *argv[])
                 "dimension is supposed to be adios::IrregularDim indicating an "
                 "Irregular array\n");
         }
+#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
         // Close file/stream
         bpReader->Close();
