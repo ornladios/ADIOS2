@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(basics)
-add_subdirectory(hello)
-add_subdirectory(heatTransfer)
-add_subdirectory(experimental)
+add_subdirectory(globalArray)
+add_subdirectory(joinedArray)
+add_subdirectory(localArray)
+add_subdirectory(values)
