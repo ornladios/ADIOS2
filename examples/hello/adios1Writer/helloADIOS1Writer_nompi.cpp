@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
-        adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
+        adios::ADIOS adios(adios::DebugON);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
