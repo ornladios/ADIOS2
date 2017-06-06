@@ -195,20 +195,26 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
         adios::IO &io = adios.DeclareIO("TestIO");
         // Declare 1D variables
         {
-            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{8});
-            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{8});
-            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{8});
-            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{8});
+            auto &var_i8 =
+                io.DefineVariable<char>("i8", {}, {}, adios::Dims{8});
+            auto &var_i16 =
+                io.DefineVariable<short>("i16", {}, {}, adios::Dims{8});
+            auto &var_i32 =
+                io.DefineVariable<int>("i32", {}, {}, adios::Dims{8});
+            auto &var_i64 =
+                io.DefineVariable<long>("i64", {}, {}, adios::Dims{8});
             auto &var_u8 =
-                io.DefineVariable<unsigned char>("u8", adios::Dims{8});
-            auto &var_u16 =
-                io.DefineVariable<unsigned short>("u16", adios::Dims{8});
+                io.DefineVariable<unsigned char>("u8", {}, {}, adios::Dims{8});
+            auto &var_u16 = io.DefineVariable<unsigned short>("u16", {}, {},
+                                                              adios::Dims{8});
             auto &var_u32 =
-                io.DefineVariable<unsigned int>("u32", adios::Dims{8});
+                io.DefineVariable<unsigned int>("u32", {}, {}, adios::Dims{8});
             auto &var_u64 =
-                io.DefineVariable<unsigned long>("u64", adios::Dims{8});
-            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{8});
-            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{8});
+                io.DefineVariable<unsigned long>("u64", {}, {}, adios::Dims{8});
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", {}, {}, adios::Dims{8});
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", {}, {}, adios::Dims{8});
         }
 
         // Create the HDF5 Engine
@@ -395,20 +401,26 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
 
         // Declare 1D variables
         {
-            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{2, 4});
-            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{2, 4});
-            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{2, 4});
-            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{2, 4});
-            auto &var_u8 =
-                io.DefineVariable<unsigned char>("u8", adios::Dims{2, 4});
-            auto &var_u16 =
-                io.DefineVariable<unsigned short>("u16", adios::Dims{2, 4});
-            auto &var_u32 =
-                io.DefineVariable<unsigned int>("u32", adios::Dims{2, 4});
-            auto &var_u64 =
-                io.DefineVariable<unsigned long>("u64", adios::Dims{2, 4});
-            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{2, 4});
-            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{2, 4});
+            auto &var_i8 =
+                io.DefineVariable<char>("i8", {}, {}, adios::Dims{2, 4});
+            auto &var_i16 =
+                io.DefineVariable<short>("i16", {}, {}, adios::Dims{2, 4});
+            auto &var_i32 =
+                io.DefineVariable<int>("i32", {}, {}, adios::Dims{2, 4});
+            auto &var_i64 =
+                io.DefineVariable<long>("i64", {}, {}, adios::Dims{2, 4});
+            auto &var_u8 = io.DefineVariable<unsigned char>("u8", {}, {},
+                                                            adios::Dims{2, 4});
+            auto &var_u16 = io.DefineVariable<unsigned short>(
+                "u16", {}, {}, adios::Dims{2, 4});
+            auto &var_u32 = io.DefineVariable<unsigned int>("u32", {}, {},
+                                                            adios::Dims{2, 4});
+            auto &var_u64 = io.DefineVariable<unsigned long>("u64", {}, {},
+                                                             adios::Dims{2, 4});
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", {}, {}, adios::Dims{2, 4});
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", {}, {}, adios::Dims{2, 4});
         }
 
         io.SetEngine("HDF5Writer");
@@ -604,20 +616,26 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
 
         // Declare 1D variables
         {
-            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{4, 2});
-            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{4, 2});
-            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{4, 2});
-            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{4, 2});
-            auto &var_u8 =
-                io.DefineVariable<unsigned char>("u8", adios::Dims{4, 2});
-            auto &var_u16 =
-                io.DefineVariable<unsigned short>("u16", adios::Dims{4, 2});
-            auto &var_u32 =
-                io.DefineVariable<unsigned int>("u32", adios::Dims{4, 2});
-            auto &var_u64 =
-                io.DefineVariable<unsigned long>("u64", adios::Dims{4, 2});
-            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{4, 2});
-            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{4, 2});
+            auto &var_i8 =
+                io.DefineVariable<char>("i8", {}, {}, adios::Dims{4, 2});
+            auto &var_i16 =
+                io.DefineVariable<short>("i16", {}, {}, adios::Dims{4, 2});
+            auto &var_i32 =
+                io.DefineVariable<int>("i32", {}, {}, adios::Dims{4, 2});
+            auto &var_i64 =
+                io.DefineVariable<long>("i64", {}, {}, adios::Dims{4, 2});
+            auto &var_u8 = io.DefineVariable<unsigned char>("u8", {}, {},
+                                                            adios::Dims{4, 2});
+            auto &var_u16 = io.DefineVariable<unsigned short>(
+                "u16", {}, {}, adios::Dims{4, 2});
+            auto &var_u32 = io.DefineVariable<unsigned int>("u32", {}, {},
+                                                            adios::Dims{4, 2});
+            auto &var_u64 = io.DefineVariable<unsigned long>("u64", {}, {},
+                                                             adios::Dims{4, 2});
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", {}, {}, adios::Dims{4, 2});
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", {}, {}, adios::Dims{4, 2});
         }
 
         // Create the HDF5 Engine

@@ -42,22 +42,11 @@ void TransportMan::OpenFiles(const std::vector<std::string> &baseNames,
         const Params &parameters = parametersVector[i];
         const std::string type(parameters.at("transport"));
 
-        if (type == "File") // need to create directory
+        if (type == "File" || type == "file") // need to create directory
         {
             CreateDirectory(baseNames[i]);
+            OpenFileTransport(names[i], openMode, parameters, profile);
         }
-        OpenSingleFile(type, names[i], openMode, parameters, profile);
-    }
-}
-
-void TransportMan::OpenSingleFile(const std::string type,
-                                  const std::string &name,
-                                  const OpenMode openMode,
-                                  const Params &parameters, const bool profile)
-{
-    if (type == "File")
-    {
-        OpenFileTransport(name, openMode, parameters, profile);
     }
 }
 

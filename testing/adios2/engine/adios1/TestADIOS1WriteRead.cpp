@@ -42,25 +42,31 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
 
         // Declare 1D variables
         {
-            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{8});
-            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{8});
-            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{8});
-            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{8});
+            auto &var_i8 =
+                io.DefineVariable<char>("i8", {}, {}, adios::Dims{8});
+            auto &var_i16 =
+                io.DefineVariable<short>("i16", {}, {}, adios::Dims{8});
+            auto &var_i32 =
+                io.DefineVariable<int>("i32", {}, {}, adios::Dims{8});
+            auto &var_i64 =
+                io.DefineVariable<long>("i64", {}, {}, adios::Dims{8});
             auto &var_u8 =
-                io.DefineVariable<unsigned char>("u8", adios::Dims{8});
-            auto &var_u16 =
-                io.DefineVariable<unsigned short>("u16", adios::Dims{8});
+                io.DefineVariable<unsigned char>("u8", {}, {}, adios::Dims{8});
+            auto &var_u16 = io.DefineVariable<unsigned short>("u16", {}, {},
+                                                              adios::Dims{8});
             auto &var_u32 =
-                io.DefineVariable<unsigned int>("u32", adios::Dims{8});
+                io.DefineVariable<unsigned int>("u32", {}, {}, adios::Dims{8});
             auto &var_u64 =
-                io.DefineVariable<unsigned long>("u64", adios::Dims{8});
-            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{8});
-            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{8});
+                io.DefineVariable<unsigned long>("u64", {}, {}, adios::Dims{8});
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", {}, {}, adios::Dims{8});
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", {}, {}, adios::Dims{8});
         }
 
         // Create the ADIOS 1 Engine
         io.SetEngine("ADIOS1Writer");
-        io.AddTransport("file");
+        io.AddTransport("File");
 
         auto engine = io.Open(fname, adios::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -265,20 +271,26 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 
         // Declare 1D variables
         {
-            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{2, 4});
-            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{2, 4});
-            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{2, 4});
-            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{2, 4});
-            auto &var_u8 =
-                io.DefineVariable<unsigned char>("u8", adios::Dims{2, 4});
-            auto &var_u16 =
-                io.DefineVariable<unsigned short>("u16", adios::Dims{2, 4});
-            auto &var_u32 =
-                io.DefineVariable<unsigned int>("u32", adios::Dims{2, 4});
-            auto &var_u64 =
-                io.DefineVariable<unsigned long>("u64", adios::Dims{2, 4});
-            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{2, 4});
-            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{2, 4});
+            auto &var_i8 =
+                io.DefineVariable<char>("i8", {}, {}, adios::Dims{2, 4});
+            auto &var_i16 =
+                io.DefineVariable<short>("i16", {}, {}, adios::Dims{2, 4});
+            auto &var_i32 =
+                io.DefineVariable<int>("i32", {}, {}, adios::Dims{2, 4});
+            auto &var_i64 =
+                io.DefineVariable<long>("i64", {}, {}, adios::Dims{2, 4});
+            auto &var_u8 = io.DefineVariable<unsigned char>("u8", {}, {},
+                                                            adios::Dims{2, 4});
+            auto &var_u16 = io.DefineVariable<unsigned short>(
+                "u16", {}, {}, adios::Dims{2, 4});
+            auto &var_u32 = io.DefineVariable<unsigned int>("u32", {}, {},
+                                                            adios::Dims{2, 4});
+            auto &var_u64 = io.DefineVariable<unsigned long>("u64", {}, {},
+                                                             adios::Dims{2, 4});
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", {}, {}, adios::Dims{2, 4});
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", {}, {}, adios::Dims{2, 4});
         }
 
         // Create the ADIOS 1 Engine
@@ -498,20 +510,26 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 
         // Declare 1D variables
         {
-            auto &var_i8 = io.DefineVariable<char>("i8", adios::Dims{4, 2});
-            auto &var_i16 = io.DefineVariable<short>("i16", adios::Dims{4, 2});
-            auto &var_i32 = io.DefineVariable<int>("i32", adios::Dims{4, 2});
-            auto &var_i64 = io.DefineVariable<long>("i64", adios::Dims{4, 2});
-            auto &var_u8 =
-                io.DefineVariable<unsigned char>("u8", adios::Dims{4, 2});
-            auto &var_u16 =
-                io.DefineVariable<unsigned short>("u16", adios::Dims{4, 2});
-            auto &var_u32 =
-                io.DefineVariable<unsigned int>("u32", adios::Dims{4, 2});
-            auto &var_u64 =
-                io.DefineVariable<unsigned long>("u64", adios::Dims{4, 2});
-            auto &var_r32 = io.DefineVariable<float>("r32", adios::Dims{4, 2});
-            auto &var_r64 = io.DefineVariable<double>("r64", adios::Dims{4, 2});
+            auto &var_i8 =
+                io.DefineVariable<char>("i8", {}, {}, adios::Dims{4, 2});
+            auto &var_i16 =
+                io.DefineVariable<short>("i16", {}, {}, adios::Dims{4, 2});
+            auto &var_i32 =
+                io.DefineVariable<int>("i32", {}, {}, adios::Dims{4, 2});
+            auto &var_i64 =
+                io.DefineVariable<long>("i64", {}, {}, adios::Dims{4, 2});
+            auto &var_u8 = io.DefineVariable<unsigned char>("u8", {}, {},
+                                                            adios::Dims{4, 2});
+            auto &var_u16 = io.DefineVariable<unsigned short>(
+                "u16", {}, {}, adios::Dims{4, 2});
+            auto &var_u32 = io.DefineVariable<unsigned int>("u32", {}, {},
+                                                            adios::Dims{4, 2});
+            auto &var_u64 = io.DefineVariable<unsigned long>("u64", {}, {},
+                                                             adios::Dims{4, 2});
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", {}, {}, adios::Dims{4, 2});
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", {}, {}, adios::Dims{4, 2});
         }
 
         // Create the ADIOS 1 Engine

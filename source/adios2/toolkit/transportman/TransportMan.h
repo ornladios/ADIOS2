@@ -62,16 +62,6 @@ public:
                    const bool profile);
 
     /**
-     * Adds a transport to m_Transports
-     * @param type
-     * @param name
-     * @param parameters
-     */
-    void OpenSingleFile(const std::string type, const std::string &name,
-                        const OpenMode openMode, const Params &parameters,
-                        const bool profile);
-
-    /**
      * Gets each transport base name from either baseName at Open or name key in
      * parameters
      * Checks if transport name rules IO AddTransport have unique names for

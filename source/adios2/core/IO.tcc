@@ -33,9 +33,9 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims shape,
     {
         if (VariableExists(name))
         {
-            std::invalid_argument("ERROR: variable " + name +
-                                  " exists in IO object " + m_Name +
-                                  ", in call to DefineVariable\n");
+            throw std::invalid_argument("ERROR: variable " + name +
+                                        " exists in IO object " + m_Name +
+                                        ", in call to DefineVariable\n");
         }
     }
 
