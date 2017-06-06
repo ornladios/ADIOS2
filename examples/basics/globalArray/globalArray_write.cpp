@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 #ifdef ADIOS2_HAVE_MPI
     adios::ADIOS adios("globalArray.xml", MPI_COMM_WORLD);
 #else
-    adios::ADIOS adios("globalArray.xml", adios::Verbose::WARN);
+    adios::ADIOS adios("globalArray.xml");
 #endif
 
     // Application variables for output

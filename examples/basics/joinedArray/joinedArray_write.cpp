@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 #ifdef ADIOS2_HAVE_MPI
     adios::ADIOS adios("localArray.xml", MPI_COMM_WORLD);
 #else
-    adios::ADIOS adios("localArray.xml", adios::Verbose::WARN);
+    adios::ADIOS adios("localArray.xml");
 #endif
 
     // Application variables for output
