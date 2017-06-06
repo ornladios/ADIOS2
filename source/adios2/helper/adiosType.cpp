@@ -171,21 +171,43 @@ size_t BytesFactor(const std::string units, const bool debugMode)
     return factor;
 }
 
-std::string OpenModeToString(const OpenMode openMode) noexcept
+std::string OpenModeToString(const OpenMode openMode,
+                             const bool oneLetter) noexcept
 {
-
     std::string openModeString;
+
     if (openMode == OpenMode::Write)
     {
-        openModeString = "Write";
+        if (oneLetter)
+        {
+            openModeString = "w";
+        }
+        else
+        {
+            openModeString = "Write";
+        }
     }
     else if (openMode == OpenMode::Append)
     {
-        openModeString = "Append";
+        if (oneLetter)
+        {
+            openModeString = "a";
+        }
+        else
+        {
+            openModeString = "Append";
+        }
     }
     else if (openMode == OpenMode::Read)
     {
-        openModeString = "Read";
+        if (oneLetter)
+        {
+            openModeString = "r";
+        }
+        else
+        {
+            openModeString = "Read";
+        }
     }
     return openModeString;
 }

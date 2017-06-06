@@ -24,10 +24,9 @@ namespace interop
 {
 
 ADIOS1Common::ADIOS1Common(const std::string &groupName,
-                           const std::string &fileName, const OpenMode openMode,
-                           MPI_Comm mpiComm, const bool debugMode)
-: m_GroupName(groupName), m_FileName(fileName),
-  m_OpenModeString(OpenModeToString(openMode)), m_MPIComm(mpiComm),
+                           const std::string &fileName, MPI_Comm mpiComm,
+                           const bool debugMode)
+: m_GroupName(groupName), m_FileName(fileName), m_MPIComm(mpiComm),
   m_DebugMode(debugMode)
 {
     Init();
@@ -126,10 +125,10 @@ void ADIOS1Common::InitTransports(
     }
 }
 
-bool ADIOS1Common::Open()
+bool ADIOS1Common::Open(const OpenMode openMode)
 {
     adios_open(&m_ADIOSFile, m_GroupName.c_str(), m_FileName.c_str(),
-               m_OpenModeString.c_str(), m_MPIComm);
+               OpenModeToString(openMode, true).c_str(), m_MPIComm);
     if (adios_errno == err_no_error)
     {
         m_IsFileOpen = true;

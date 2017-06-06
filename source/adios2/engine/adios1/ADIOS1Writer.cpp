@@ -25,7 +25,7 @@ namespace adios
 ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name,
                            const OpenMode openMode, MPI_Comm mpiComm)
 : Engine("ADIOS1Writer", io, name, openMode, mpiComm),
-  m_ADIOS1(io.m_Name, name, openMode, mpiComm, io.m_DebugMode)
+  m_ADIOS1(io.m_Name, name, mpiComm, io.m_DebugMode)
 {
     m_EndMessage = " in call to ADIOS1Writer " + m_Name + " Open\n";
     Init();
@@ -35,7 +35,7 @@ void ADIOS1Writer::Init()
 {
     InitParameters();
     InitTransports();
-    m_ADIOS1.Open();
+    m_ADIOS1.Open(m_OpenMode);
 }
 
 #define declare_type(T)                                                        \
