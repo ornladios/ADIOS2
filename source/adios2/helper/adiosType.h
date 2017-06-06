@@ -102,9 +102,11 @@ size_t BytesFactor(const std::string units, const bool debugMode);
 /**
  * Returns open mode as a string
  * @param openMode from ADIOSTypes.h
- * @return
+ * @param oneLetter if true returns a one letter version ("w", "a" or "r")
+ * @return string with open mode
  */
-std::string OpenModeToString(const OpenMode openMode) noexcept;
+std::string OpenModeToString(const OpenMode openMode,
+                             const bool oneLetter = false) noexcept;
 }
 
 #include "adiosType.inl"

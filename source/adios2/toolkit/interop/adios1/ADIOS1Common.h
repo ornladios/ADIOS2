@@ -53,14 +53,13 @@ public:
     ADIOS_ERRCODES m_ErrorNumber = static_cast<ADIOS_ERRCODES>(-1);
 
     ADIOS1Common(const std::string &groupName, const std::string &fileName,
-                 const OpenMode openMode, MPI_Comm mpiComm,
-                 const bool debugMode);
+                 MPI_Comm mpiComm, const bool debugMode);
 
     ~ADIOS1Common();
 
     void InitParameters(const Params &parameters);
     void InitTransports(const std::vector<Params> &transportsParameters);
-    bool Open();           // return true if file is opened
+    bool Open(const OpenMode openMode); // return true if file is opened
     bool ReOpenAsNeeded(); // return true if file is open or reopened
 
     template <class T>
