@@ -19,6 +19,7 @@
 int MdtmMan::init(json a_jmsg)
 {
 
+    std::cout << " 1 MdtmMan::init " << m_channel_id << std::endl;
     StreamMan::init(a_jmsg);
 
     if (a_jmsg["pipe_prefix"].is_string())
@@ -68,16 +69,22 @@ int MdtmMan::init(json a_jmsg)
 
     // Make pipes
     mkdir(m_pipepath.c_str(), 0755);
+
+    std::cout << "making " << m_full_pipename << std::endl;
     mkfifo(m_full_pipename.c_str(), 0666);
+    std::cout << "made " << m_full_pipename << std::endl;
 
     if (m_stream_mode == "sender")
     {
+        std::cout << "opening " << m_full_pipename << std::endl;
         m_pipe_handler = open(m_full_pipename.c_str(), O_WRONLY);
+        std::cout << "opened " << m_full_pipename << std::endl;
     }
     if (m_stream_mode == "receiver")
     {
         m_pipe_handler = open(m_full_pipename.c_str(), O_RDONLY | O_NONBLOCK);
     }
+
     return 0;
 }
 
