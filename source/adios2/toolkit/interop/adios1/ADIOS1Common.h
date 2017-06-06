@@ -25,6 +25,7 @@
 #endif
 
 #include "adios2/ADIOSMacros.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSTypes.h"
 
 namespace adios

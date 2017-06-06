@@ -74,13 +74,13 @@ private:
     Variable<T> *InquireVariableCommon(const std::string name,
                                        const bool readIn)
     {
-        int rank = 0;
-        MPI_Comm_rank(m_MPIComm, &rank);
+        //int rank = 0;
+        //MPI_Comm_rank(m_MPIComm, &rank);
 
-        std::cout << "I am hooked to the DataMan library\n";
-        std::cout << "Hello DatamanReader from rank " << rank << "\n";
-        std::cout << "Trying to read variable " << name
-                  << " from one of the variables coming from a WAN transport\n";
+        //std::cout << "I am hooked to the DataMan library\n";
+        //std::cout << "Hello DatamanReader from rank " << rank << "\n";
+        //std::cout << "Trying to read variable " << name
+        //        << " from one of the variables coming from a WAN transport\n";
 
         // here read variable metadata (dimensions, type, etc.)...then create a
         // Variable like below:
