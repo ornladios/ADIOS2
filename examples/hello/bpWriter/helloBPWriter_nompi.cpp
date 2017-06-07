@@ -35,10 +35,6 @@ int main(int argc, char *argv[])
         adios::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {}, {}, {Nx}, adios::ConstantDims);
 
-        /** global single value variable: name */
-        adios::Variable<unsigned int> &bpTimeStep =
-            bpIO.DefineVariable<unsigned int>("timeStep");
-
         /** Engine derived class, spawned to start IO operations */
         auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::Write);
 
