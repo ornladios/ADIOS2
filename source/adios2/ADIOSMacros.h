@@ -8,6 +8,7 @@
 #ifndef ADIOS2_ADIOSMACROS_H
 #define ADIOS2_ADIOSMACROS_H
 
+#include "adios2/ADIOSTypes.h"
 // The ADIOS_FOREACH_TYPE_1ARG macro assumes the given argument is a macro which
 // takes a single argument that is a type and then inserts the given MACRO for
 // each of the known primitive types
@@ -21,7 +22,7 @@
 //   ADIOS_FOREACH_TYPE_1ARG(instantiate_foo)
 //   #undef instantiate_foo
 //
-#define ADIOS_FOREACH_TYPE_1ARG(MACRO)                                         \
+#define ADIOS2_FOREACH_TYPE_1ARG(MACRO)                                        \
     MACRO(char)                                                                \
     MACRO(unsigned char)                                                       \
     MACRO(short)                                                               \
@@ -29,8 +30,8 @@
     MACRO(int)                                                                 \
     MACRO(unsigned int)                                                        \
     MACRO(long int)                                                            \
-    MACRO(unsigned long int)                                                   \
     MACRO(long long int)                                                       \
+    MACRO(unsigned long int)                                                   \
     MACRO(unsigned long long int)                                              \
     MACRO(float)                                                               \
     MACRO(double)                                                              \
@@ -39,7 +40,7 @@
     MACRO(std::complex<double>)                                                \
     MACRO(std::complex<long double>)
 
-#define ADIOS_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)                               \
+#define ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)                              \
     MACRO(char)                                                                \
     MACRO(unsigned char)                                                       \
     MACRO(short)                                                               \
@@ -48,15 +49,11 @@
     MACRO(unsigned int)                                                        \
     MACRO(long int)                                                            \
     MACRO(unsigned long int)                                                   \
-    MACRO(long long int)                                                       \
-    MACRO(unsigned long long int)                                              \
     MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)
+    MACRO(double)
 
-#define ADIOS_FOREACH_COMPLEX_TYPE_1ARG(MACRO)                                 \
+#define ADIOS2_FOREACH_COMPLEX_TYPE_1ARG(MACRO)                                \
     MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)
+    MACRO(double)
 
 #endif /* ADIOS2_ADIOSMACROS_H */

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<adios-config>
+
+    <io name="Output">
+        <engine name="BPFileWriter"/>
+        <transport name= "File"/>
+    </io>
+
+</adios-config>
+

@@ -5,17 +5,15 @@
  * Transform.cpp
  *
  *  Created on: Dec 5, 2016
- *      Author: wfg
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include "Transform.h"
 
-#include <utility>
-
 namespace adios
 {
 
-Transform::Transform(std::string method) : m_Method(std::move(method)) {}
+Transform::Transform(const std::string method) : m_Method(method) {}
 
 void Transform::Compress(const std::vector<char> & /*bufferIn*/,
                          std::vector<char> & /*bufferOut*/)

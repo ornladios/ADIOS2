@@ -17,9 +17,7 @@
 #include <DataMan.h>
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Engine.h"
-#include "adios2/utilities/format/bp1/BP1Writer.h"
 
 namespace adios
 {
@@ -29,72 +27,19 @@ class DataManWriter : public Engine
 
 public:
     using json = nlohmann::json;
-    /**
-     * Constructor for dataman engine Writer for WAN communications
-     * @param adios
-     * @param name unique name given to the engine
-     * @param accessMode
-     * @param mpiComm
-     * @param method
-     * @param debugMode
-     * @param nthreads
-     */
-    DataManWriter(ADIOS &adios, const std::string name,
-                  const std::string accessMode, MPI_Comm mpiComm,
-                  const Method &method);
+
+    DataManWriter(IO &io, const std::string &name, const OpenMode openMode,
+                  MPI_Comm mpiComm);
 
     virtual ~DataManWriter() = default;
 
     void SetCallBack(std::function<void(const void *, std::string, std::string,
                                         std::string, Dims)>
-                         callback);
+                         callback) final;
 
-    void Write(Variable<char> &variable, const char *values);
-    void Write(Variable<unsigned char> &variable, const unsigned char *values);
-    void Write(Variable<short> &variable, const short *values);
-    void Write(Variable<unsigned short> &variable,
-               const unsigned short *values);
-    void Write(Variable<int> &variable, const int *values);
-    void Write(Variable<unsigned int> &variable, const unsigned int *values);
-    void Write(Variable<long int> &variable, const long int *values);
-    void Write(Variable<unsigned long int> &variable,
-               const unsigned long int *values);
-    void Write(Variable<long long int> &variable, const long long int *values);
-    void Write(Variable<unsigned long long int> &variable,
-               const unsigned long long int *values);
-    void Write(Variable<float> &variable, const float *values);
-    void Write(Variable<double> &variable, const double *values);
-    void Write(Variable<long double> &variable, const long double *values);
-    void Write(Variable<std::complex<float>> &variable,
-               const std::complex<float> *values);
-    void Write(Variable<std::complex<double>> &variable,
-               const std::complex<double> *values);
-    void Write(Variable<std::complex<long double>> &variable,
-               const std::complex<long double> *values);
+    void Advance(const float timeoutSeconds = 0.0) final;
 
-    void Write(const std::string &variableName, const char *values);
-    void Write(const std::string &variableName, const unsigned char *values);
-    void Write(const std::string &variableName, const short *values);
-    void Write(const std::string &variableName, const unsigned short *values);
-    void Write(const std::string &variableName, const int *values);
-    void Write(const std::string &variableName, const unsigned int *values);
-    void Write(const std::string &variableName, const long int *values);
-    void Write(const std::string &variableName,
-               const unsigned long int *values);
-    void Write(const std::string &variableName, const long long int *values);
-    void Write(const std::string &variableName,
-               const unsigned long long int *values);
-    void Write(const std::string &variableName, const float *values);
-    void Write(const std::string &variableName, const double *values);
-    void Write(const std::string &variableName, const long double *values);
-    void Write(const std::string &variableName,
-               const std::complex<float> *values);
-    void Write(const std::string &variableName,
-               const std::complex<double> *values);
-    void Write(const std::string &variableName,
-               const std::complex<long double> *values);
-
-    void Close(const int transportIndex = -1);
+    void Close(const int transportIndex = -1) final;
 
 private:
     bool m_DoRealTime = false;
@@ -106,21 +51,14 @@ private:
 
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
-    void InitTransports(); ///< from Transports
 
-    /**
-     * From transport Mdtm in m_Method
-     * @param parameter must be an accepted parameter
-     * @param mdtmParameters
-     * @return value either returns user-defined from "parameter=value" or a
-     * default
-     */
-    std::string
-    GetMdtmParameter(const std::string parameter,
-                     const std::map<std::string, std::string> &mdtmParameters);
+#define declare_type(T)                                                        \
+    void DoWrite(Variable<T> &variable, const T *values) final;
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
     template <class T>
-    void WriteVariableCommon(Variable<T> &variable, const T *values);
+    void DoWriteCommon(Variable<T> &variable, const T *values);
 };
 
 } // end namespace adios

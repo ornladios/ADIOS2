@@ -2,19 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BPReader.h
+ * BPFileReader.h
  *
  *  Created on: Feb 27, 2017
- *      Author: wfg
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_ENGINE_BP_BPFILEREADER_H_
 #define ADIOS2_ENGINE_BP_BPFILEREADER_H_
 
-#include <iostream> //this must go away
-
 #include "adios2/ADIOSConfig.h"
-#include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Engine.h"
 
 namespace adios
@@ -25,24 +22,23 @@ class BPFileReader : public Engine
 
 public:
     /**
-     * Constructor for single BP capsule engine, writes in BP format into a
-     * single
-     * heap capsule
-     * @param name unique name given to the engine
-     * @param accessMode
-     * @param mpiComm
-     * @param method
-     * @param debugMode
-     * @param hostLanguage
+     *
      */
-    BPFileReader(ADIOS &adios, const std::string &name,
-                 const std::string accessMode, MPI_Comm mpiComm,
-                 const Method &method);
+    BPFileReader(IO &io, const std::string &name, const OpenMode openMode,
+                 MPI_Comm mpiComm);
 
     virtual ~BPFileReader() = default;
 
-    Variable<void> *InquireVariable(const std::string &variableName,
-                                    const bool readIn = true);
+    void Close(const int transportIndex = -1);
+
+private:
+    void Init(); ///< calls InitCapsules and InitTransports based on Method,
+                 /// called from constructor
+
+    void InitTransports(); ///< from Transports
+
+    VariableBase *InquireVariableUnknown(const std::string &variableName,
+                                         const bool readIn = true);
 
     Variable<char> *InquireVariableChar(const std::string &variableName,
                                         const bool readIn = true);
@@ -108,24 +104,6 @@ public:
      */
     VariableCompound *InquireVariableCompound(const std::string &variableName,
                                               const bool readIn = true);
-
-    void Close(const int transportIndex = -1);
-
-private:
-    capsule::STLVector
-        m_Heap; ///< heap capsule, contains data and metadata buffers
-    // format::BP1Writer m_BP1Writer; ///< format object will provide the
-    // required
-    // BP functionality to be applied on m_Buffer and m_Transports
-
-    void Init(); ///< calls InitCapsules and InitTransports based on Method,
-                 /// called from constructor
-
-    void InitTransports(); ///< from Transports
-
-    std::string
-    GetMdtmParameter(const std::string parameter,
-                     const std::map<std::string, std::string> &mdtmParameters);
 
     template <class T>
     Variable<T> *InquireVariableCommon(const std::string &name,

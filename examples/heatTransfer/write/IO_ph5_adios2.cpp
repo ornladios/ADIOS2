@@ -24,46 +24,44 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     rank_saved = s.rank;
     m_outputfilename = s.outputfile + ".h5";
-    // adios::ADIOS adios(comm, adios::Verbose::INFO, false);
-    ad = new adios::ADIOS(comm, adios::Verbose::INFO, false);
+    ad = new adios::ADIOS(comm, adios::DebugOFF);
 
     // Define method for engine creation
     // 1. Get method def from config file or define new one
 
-    adios::Method &h5writerSettings = ad->DeclareMethod("output");
-    if (!h5writerSettings.IsUserDefined())
+    adios::IO &h5io = ad->DeclareIO("output");
+    if (!h5io.InConfigFile())
     {
         // if not defined by user, we can change the default settings
         // BPFileWriter is the default engine
-        h5writerSettings.SetEngine("HDF5Writer");
+        h5io.SetEngine("HDF5Writer");
         // Allow an extra thread for data processing
 
         const std::string aggregatorsParam("Aggregators=" +
                                            std::to_string((s.nproc + 1) / 2));
-        h5writerSettings.SetParameters("have_metadata_file=yes",
-                                       aggregatorsParam);
+        h5io.SetParameters("have_metadata_file=yes", aggregatorsParam);
     }
 
     //    ad->DefineScalar<unsigned int>("gndx", true);
-    varGndx = &(ad->DefineVariable<unsigned int>("gndx"));
-    ad->DefineVariable<unsigned int>("gndy");
+    varGndx = &h5io.DefineVariable<unsigned int>("gndx");
+    h5io.DefineVariable<unsigned int>("gndy");
 
     // define T as 2D global array
-    varT = &(ad->DefineArray<double>(
+    varT = &h5io.DefineVariable<double>(
         "T",
         // Global dimensions
         {s.gndx, s.gndy},
         // starting offset of the local array in the global space
         {s.offsx, s.offsy},
         // local size, could be defined later using SetSelection()
-        {s.ndx, s.ndy}));
+        {s.ndx, s.ndy});
 
     // add transform to variable
     // adios::Transform tr = adios::transform::BZIP2( );
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    h5writer = ad->Open(m_outputfilename, "w", comm, h5writerSettings);
+    h5writer = h5io.Open(m_outputfilename, adios::OpenMode::Write, comm);
 
     if (h5writer == nullptr)
         throw std::ios_base::failure("ERROR: failed to open ADIOS h5writer\n");

@@ -32,9 +32,9 @@ int main(int argc, char *argv[])
     srand(rank * 32767);
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
+    adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
 #else
-    adios::ADIOS adios(adios::Verbose::WARN);
+    adios::ADIOS adios(adios::DebugON);
 #endif
 
     // Application variables for output
@@ -61,88 +61,99 @@ int main(int argc, char *argv[])
 
     try
     {
-        /*
-         * Define variables
-         */
-        // 1. Global value, constant across processes, constant over time
-        adios::Variable<unsigned int> &varNX =
-            adios.DefineVariable<unsigned int>("NX");
-        adios::Variable<int> &varNproc = adios.DefineVariable<int>("Nproc");
-
-        // 2. Local value, varying across processes, constant over time
-        adios::Variable<int> &varProcessID =
-            adios.DefineVariable<int>("ProcessID", {adios::LocalValueDim});
-
-        // 3. Global array, global dimensions (shape), offsets (start) and local
-        // dimensions (count)  are  constant over time
-        adios::Variable<double> &varGlobalArrayFixedDims =
-            adios.DefineVariable<double>("GlobalArrayFixedDims", {nproc * Nx});
-
-        // 4. Local array, local dimensions and offsets are
-        // constant over time.
-        // 4.a. Want to see this at reading as a bunch of local arrays
-        adios::Variable<float> &varLocalArrayFixedDims =
-            adios.DefineVariable<float>("LocalArrayFixedDims", {}, {},
-                                        {LocalArrayFixedDims.size()});
-        // 4.b. Joined array, a 1D array, with global dimension and offsets
-        // calculated at read time
-        adios::Variable<float> &varLocalArrayFixedDimsJoined =
-            adios.DefineVariable<float>("LocalArrayFixedDimsJoined",
-                                        {adios::JoinedDim}, {},
-                                        {LocalArrayFixedDims.size()});
-
-        // 5. Global value, constant across processes, VARYING value over time
-        adios::Variable<unsigned int> &varNY =
-            adios.DefineVariable<unsigned int>("NY");
-
-        // 6. Local value, varying across processes, VARYING over time
-        adios::Variable<unsigned int> &varNparts =
-            adios.DefineVariable<unsigned int>("Nparts",
-                                               {adios::LocalValueDim});
-
-        // 7. Global array, dimensions and offsets are VARYING over time
-        adios::Variable<double> &varGlobalArray =
-            adios.DefineVariable<double>("GlobalArray", {adios::UnknownDim});
-
-        // 8. Local array, dimensions and offsets are VARYING over time
-        adios::Variable<float> &varIrregularArray = adios.DefineVariable<float>(
-            "Irregular", {}, {}, {adios::UnknownDim});
-
-        // add transform to variable in group...not executed (just testing API)
-        // adios::Transform bzip2 = adios::transform::BZIP2();
-        // varNice->AddTransform(bzip2, 1);
 
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios::Method &bpWriterSettings = adios.DeclareMethod("output");
-        if (!bpWriterSettings.IsUserDefined())
+        adios::IO &bpWriterSettings = adios.DeclareIO("output");
+        if (!bpWriterSettings.InConfigFile())
         {
             // if not defined by user, we can change the default settings
             bpWriterSettings.SetEngine("ADIOS1Writer");
             // ISO-POSIX file is the default transport
             // Passing parameters to the transport
-            bpWriterSettings.AddTransport("File"
+            bpWriterSettings.AddTransport("file"
 #ifdef ADIOS2_HAVE_MPI
                                           ,
                                           "library=MPI-IO"
 #endif
                                           );
             // Passing parameters to the engine
-            bpWriterSettings.SetParameters("have_metadata_file", "yes");
+            bpWriterSettings.SetParameters("have_metadata_file=yes");
             // number of aggregators
             // bpWriterSettings.SetParameters("Aggregation", (nproc + 1) / 2);
         }
+        /*
+         * Define variables
+         */
+        // 1. Global value, constant across processes, constant over time
+        adios::Variable<unsigned int> &varNX =
+            bpWriterSettings.DefineVariable<unsigned int>("NX");
+        adios::Variable<int> &varNproc =
+            bpWriterSettings.DefineVariable<int>("Nproc");
+
+        // 2. Local value, varying across processes, constant over time
+        adios::Variable<int> &varProcessID =
+            bpWriterSettings.DefineVariable<int>("ProcessID",
+                                                 {adios::LocalValueDim});
+
+        // 3. Global array, global dimensions (shape), offsets (start) and
+        // local
+        // dimensions (count)  are  constant over time
+        adios::Variable<double> &varGlobalArrayFixedDims =
+            bpWriterSettings.DefineVariable<double>("GlobalArrayFixedDims",
+                                                    {nproc * Nx});
+
+        // 4. Local array, local dimensions and offsets are
+        // constant over time.
+        // 4.a. Want to see this at reading as a bunch of local arrays
+        adios::Variable<float> &varLocalArrayFixedDims =
+            bpWriterSettings.DefineVariable<float>(
+                "LocalArrayFixedDims", {}, {}, {LocalArrayFixedDims.size()});
+        // 4.b. Joined array, a 1D array, with global dimension and offsets
+        // calculated at read time
+        adios::Variable<float> &varLocalArrayFixedDimsJoined =
+            bpWriterSettings.DefineVariable<float>(
+                "LocalArrayFixedDimsJoined", {adios::JoinedDim}, {},
+                {LocalArrayFixedDims.size()});
+
+        // 5. Global value, constant across processes, VARYING value over
+        // time
+        adios::Variable<unsigned int> &varNY =
+            bpWriterSettings.DefineVariable<unsigned int>("NY");
+
+        // 6. Local value, varying across processes, VARYING over time
+        adios::Variable<unsigned int> &varNparts =
+            bpWriterSettings.DefineVariable<unsigned int>(
+                "Nparts", {adios::LocalValueDim});
+
+        // 7. Global array, dimensions and offsets are VARYING over time
+        adios::Variable<double> &varGlobalArray =
+            bpWriterSettings.DefineVariable<double>("GlobalArray",
+                                                    {adios::UnknownDim});
+
+        // 8. Local array, dimensions and offsets are VARYING over time
+        adios::Variable<float> &varIrregularArray =
+            bpWriterSettings.DefineVariable<float>("Irregular", {}, {},
+                                                   {adios::UnknownDim});
+
+        // add transform to variable in group...not executed (just testing
+        // API)
+        // adios::Transform bzip2 = adios::transform::BZIP2();
+        // varNice->AddTransform(bzip2, 1);
 
         // Open returns a smart pointer to Engine containing the Derived class
         // Writer
         // "w" means we overwrite any existing file on disk, but AdvanceStep
         // will
         // append steps later.
-        auto bpWriter = adios.Open("myNumbers.bp", "w", bpWriterSettings);
+        auto bpWriter =
+            bpWriterSettings.Open("myNumbers.bp", adios::OpenMode::Write);
 
-        if (bpWriter == nullptr)
+        if (!bpWriter)
+        {
             throw std::ios_base::failure(
                 "ERROR: failed to open ADIOS bpWriter\n");
+        }
 
         for (int step = 0; step < NSTEPS; step++)
         {
@@ -232,27 +243,21 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
+                  << rank << "\n";
+        std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "System exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout
+            << "IO System base failure exception, STOPPING PROGRAM from rank "
+            << rank << "\n";
+        std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "Exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
+        std::cout << e.what() << "\n";
     }
 
 #ifdef ADIOS2_HAVE_MPI

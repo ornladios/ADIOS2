@@ -5,28 +5,24 @@
  * ADIOS1Reader.cpp
  *
  *  Created on: Feb 27, 2017
- *      Author: wfg
+ *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
 #include "ADIOS1Reader.h"
 
-#include "adios2/core/Support.h"
-#include "adios2/core/adiosFunctions.h"           // CSVToVector
-#include "adios2/transport/file/FStream.h"        // uses C++ fstream
-#include "adios2/transport/file/FileDescriptor.h" // uses POSIX
-#include "adios2/transport/file/FilePointer.h"    // uses C FILE*
-
 #include <adios_error.h>
+
+#include "adios2/helper/adiosFunctions.h" // CSVToVector
 
 namespace adios
 {
 
-ADIOS1Reader::ADIOS1Reader(ADIOS &adios, const std::string &name,
-                           const std::string accessMode, MPI_Comm mpiComm,
-                           const Method &method)
-: Engine(adios, "ADIOS1Reader", name, accessMode, mpiComm, method,
-         " ADIOS1Reader constructor (or call to ADIOS Open).\n")
+ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name,
+                           const OpenMode openMode, MPI_Comm mpiComm)
+: Engine("ADIOS1Reader", io, name, openMode, mpiComm)
 {
+    m_EndMessage = " in call to IO Open ADIOS1Reader " + m_Name + "\n";
+
     Init();
     adios_read_init_method(m_ReadMethod, mpiComm, "");
     if (m_OpenAsFile)
@@ -47,11 +43,12 @@ ADIOS1Reader::~ADIOS1Reader()
     adios_read_finalize_method(m_ReadMethod);
 }
 
-Variable<void> *
-ADIOS1Reader::InquireVariable(const std::string &variableName,
-                              const bool readIn) // not yet implemented
+// PRIVATE
+VariableBase *
+ADIOS1Reader::InquireVariableUnknown(const std::string &variableName,
+                                     const bool readIn)
 {
-    return nullptr;
+    return nullptr; // not yet implemented
 }
 
 Variable<char> *
@@ -224,210 +221,25 @@ void ADIOS1Reader::ScheduleReadCommon(const std::string &name, const Dims &offs,
     }
 }
 
-void ADIOS1Reader::ScheduleRead(Variable<char> &variable, char *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<unsigned char> &variable,
-                                unsigned char *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<short> &variable, short *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<unsigned short> &variable,
-                                unsigned short *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<int> &variable, int *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<unsigned int> &variable,
-                                unsigned int *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<long int> &variable, long int *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<unsigned long int> &variable,
-                                unsigned long int *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<long long int> &variable,
-                                long long int *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<unsigned long long int> &variable,
-                                unsigned long long int *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<float> &variable, float *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<double> &variable, double *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<long double> &variable,
-                                long double *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<std::complex<float>> &variable,
-                                std::complex<float> *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<std::complex<double>> &variable,
-                                std::complex<double> *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
-void ADIOS1Reader::ScheduleRead(Variable<std::complex<long double>> &variable,
-                                std::complex<long double> *values)
-{
-    ScheduleReadCommon(variable.m_Name, variable.m_Start, variable.m_Count,
-                       variable.GetReadFromStep(), variable.GetReadNSteps(),
-                       variable.ReadAsLocalValue(),
-                       variable.ReadAsJoinedArray(), (void *)values);
-}
+#define declare_type(T)                                                        \
+    void ADIOS1Reader::DoScheduleRead(Variable<T> &variable, const T *values)  \
+    {                                                                          \
+        ScheduleReadCommon(variable.m_Name, variable.m_Start,                  \
+                           variable.m_Count, variable.m_ReadFromStep,          \
+                           variable.m_ReadNSteps, variable.m_ReadAsLocalValue, \
+                           variable.m_ReadAsJoined, (void *)values);           \
+    }                                                                          \
+                                                                               \
+    void ADIOS1Reader::DoScheduleRead(const std::string &variableName,         \
+                                      const T *values)                         \
+    {                                                                          \
+        DoScheduleRead(m_IO.GetVariable<T>(variableName), values);             \
+    }
 
-void ADIOS1Reader::ScheduleRead(const std::string &variableName, char *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<char>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                unsigned char *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<unsigned char>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName, short *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<short>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                unsigned short *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<unsigned short>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName, int *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<int>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                unsigned int *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<unsigned int>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                long int *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<long int>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                unsigned long int *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<unsigned long int>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                long long int *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<long long int>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                unsigned long long int *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<unsigned long long int>(variableName),
-                 values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName, float *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<float>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName, double *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<double>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                long double *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<long double>(variableName), values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                std::complex<float> *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<std::complex<float>>(variableName),
-                 values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                std::complex<double> *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<std::complex<double>>(variableName),
-                 values);
-}
-void ADIOS1Reader::ScheduleRead(const std::string &variableName,
-                                std::complex<long double> *values)
-{
-    ScheduleRead(m_ADIOS.GetVariable<std::complex<long double>>(variableName),
-                 values);
-}
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
-void ADIOS1Reader::PerformReads(PerformReadMode mode)
+void ADIOS1Reader::PerformReads(ReadMode mode)
 {
     adios_perform_reads(m_fh, (int)mode);
 }
@@ -436,7 +248,7 @@ void ADIOS1Reader::Release() { adios_release_step(m_fh); }
 
 void ADIOS1Reader::Advance(const float timeout_sec)
 {
-    Advance(AdvanceMode::NEXT_AVAILABLE, timeout_sec);
+    Advance(AdvanceMode::NextAvailable, timeout_sec);
 }
 
 void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
@@ -447,7 +259,7 @@ void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
                                     "Advance() on a file which was opened for "
                                     "read as File\n");
     }
-    int last = (mode == AdvanceMode::NEXT_AVAILABLE ? 0 : 1);
+    int last = (mode == AdvanceMode::NextAvailable ? 0 : 1);
     float *to = const_cast<float *>(&timeout_sec);
     adios_advance_step(m_fh, last, *to);
 
@@ -457,13 +269,13 @@ void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
         m_AdvanceStatus = AdvanceStatus::OK;
         break;
     case err_end_of_stream:
-        m_AdvanceStatus = AdvanceStatus::END_OF_STREAM;
+        m_AdvanceStatus = AdvanceStatus::EndOfStream;
         break;
     case err_step_notready:
-        m_AdvanceStatus = AdvanceStatus::STEP_NOT_READY;
+        m_AdvanceStatus = AdvanceStatus::StepNotReady;
         break;
     default:
-        m_AdvanceStatus = AdvanceStatus::OTHER_ERROR;
+        m_AdvanceStatus = AdvanceStatus::OtherError;
         break;
     }
 }
@@ -485,13 +297,15 @@ void ADIOS1Reader::Close(const int transportIndex)
 // PRIVATE
 void ADIOS1Reader::Init()
 {
-    if (m_DebugMode == true)
+    if (m_DebugMode)
     {
-        if (m_AccessMode != "r" && m_AccessMode != "read")
+        if (m_OpenMode != OpenMode::Read)
+        {
             throw std::invalid_argument(
-                "ERROR: ADIOS1Reader doesn't support access mode " +
-                m_AccessMode +
-                ", in call to ADIOS Open or ADIOS1Reader constructor\n");
+                "ERROR: ADIOS1Reader only supports OpenMode::r (read) access "
+                "mode " +
+                m_EndMessage);
+        }
     }
     InitParameters();
     InitTransports();
@@ -499,8 +313,8 @@ void ADIOS1Reader::Init()
 
 void ADIOS1Reader::InitParameters()
 {
-    auto itOpenAsFile = m_Method.m_Parameters.find("OpenAsFile");
-    if (itOpenAsFile != m_Method.m_Parameters.end())
+    auto itOpenAsFile = m_IO.m_Parameters.find("OpenAsFile");
+    if (itOpenAsFile != m_IO.m_Parameters.end())
     {
         m_OpenAsFile = true;
     }
@@ -509,18 +323,7 @@ void ADIOS1Reader::InitParameters()
 void ADIOS1Reader::InitTransports()
 {
 
-    if (m_DebugMode == true)
-    {
-        if (TransportNamesUniqueness() == false)
-        {
-            throw std::invalid_argument(
-                "ERROR: two transports of the same kind (e.g file IO) "
-                "can't have the same name, modify with name= in Method "
-                "AddTransport\n");
-        }
-    }
-
-    for (const auto &parameters : m_Method.m_TransportParameters)
+    for (const auto &parameters : m_IO.m_TransportsParameters)
     {
         auto itTransport = parameters.find("transport");
         if (itTransport->second == "file" || itTransport->second == "File" ||
@@ -530,11 +333,13 @@ void ADIOS1Reader::InitTransports()
         }
         else
         {
-            if (m_DebugMode == true)
+            if (m_DebugMode)
+            {
                 throw std::invalid_argument(
                     "ERROR: transport " + itTransport->second +
                     " (you mean File?) not supported, in " + m_Name +
                     m_EndMessage);
+            }
         }
     }
 }

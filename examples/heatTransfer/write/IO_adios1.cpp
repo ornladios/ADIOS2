@@ -30,7 +30,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     m_outputfilename = s.outputfile + ".bp";
     adios_init_noxml(comm);
     adios_declare_group(&group, "heat", "", adios_stat_default);
-    adios_select_method(group, "MPI", "", "");
+    adios_select_method(group, "POSIX", "", "");
 
     adios_define_var(group, "gndx", "", adios_integer, "", "", "");
     adios_define_var(group, "gndy", "", adios_integer, "", "", "");

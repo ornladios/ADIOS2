@@ -26,9 +26,9 @@ int main(int argc, char *argv[])
     const bool adiosDebug = true;
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
+    adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
 #else
-    adios::ADIOS adios(adios::Verbose::WARN);
+    adios::ADIOS adios(adios::DebugON);
 #endif
 
     // Info variables from the file
@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
     {
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios::Method &bpReaderSettings = adios.DeclareMethod("input");
-        if (!bpReaderSettings.IsUserDefined())
+        adios::IO &bpReaderSettings = adios.DeclareIO("input");
+        if (!bpReaderSettings.InConfigFile())
         {
             // if not defined by user, we can change the default settings
             bpReaderSettings.SetEngine(
@@ -70,8 +70,9 @@ int main(int argc, char *argv[])
             // this is default, nothing to be done
         }
 
-        auto bpReader = adios.Open("myNumbers.bp", "r", bpReaderSettings);
-        if (bpReader != nullptr)
+        auto bpReader =
+            bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::Read);
+        if (!bpReader)
         {
             int step = 0;
             while (bpReader->GetAdvanceStatus() == adios::AdvanceStatus::OK)
@@ -83,19 +84,19 @@ int main(int argc, char *argv[])
                 {
                     // read a Global scalar which has a single value in a step
                     adios::Variable<int> *vNproc =
-                        bpReader->InquireVariableInt("Nproc");
+                        bpReader->InquireVariable<int>("Nproc");
                     Nwriters = vNproc->m_Data[0];
                     std::cout << "# of writers = " << Nwriters << std::endl;
 
                     adios::Variable<unsigned int> *vNX =
-                        bpReader->InquireVariableUInt("NX");
+                        bpReader->InquireVariable<unsigned int>("NX");
                     Nx = vNX->m_Data[0];
                     // bpReader->Read<unsigned int>("NX", &Nx);
                     std::cout << "NX = " << Nx << std::endl;
                 }
 
                 adios::Variable<unsigned int> *vNY =
-                    bpReader->InquireVariableUInt("NY");
+                    bpReader->InquireVariable<unsigned int>("NY");
                 Ny = vNY->m_Data[0];
                 std::cout << "NY = " << Ny << std::endl;
 
@@ -115,27 +116,21 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
+                  << rank << "\n";
+        std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "System exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout
+            << "IO System base failure exception, STOPPING PROGRAM from rank "
+            << rank << "\n";
+        std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        if (rank == 0)
-        {
-            std::cout << "Exception, STOPPING PROGRAM\n";
-            std::cout << e.what() << "\n";
-        }
+        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
+        std::cout << e.what() << "\n";
     }
 
 #ifdef ADIOS2_HAVE_MPI

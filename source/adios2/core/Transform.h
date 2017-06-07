@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Transform.h
+ * Transform.h : Base class for all transforms under adios2/transform
  *
  *  Created on: Oct 17, 2016
- *      Author: wfg
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_CORE_TRANSFORM_H_
@@ -21,21 +21,19 @@
 namespace adios
 {
 
-/**
- * Parent class that defines data variable transformations. Used as a member of
- * CVariable
- */
+/** Base class that defines data variable transformations */
 class Transform
 {
 
 public:
+    /** From derived class to identify the transform */
     const std::string m_Method;
 
     /**
      * Initialize parent method
      * @param method zlib, bzip2, szip
      */
-    Transform(std::string method);
+    Transform(const std::string method);
 
     virtual ~Transform() = default;
 

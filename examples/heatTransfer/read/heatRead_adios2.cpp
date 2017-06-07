@@ -44,30 +44,32 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(mpiReaderComm, &rank);
     MPI_Comm_size(mpiReaderComm, &nproc);
 
-    adios::ADIOS ad("adios2.xml", mpiReaderComm, adios::Verbose::INFO);
+    adios::ADIOS ad("adios2.xml", mpiReaderComm, adios::DebugON);
 
     // Define method for engine creation
     // 1. Get method def from config file or define new one
 
-    adios::Method &bpReaderSettings = ad.DeclareMethod("input");
-    if (!bpReaderSettings.IsUserDefined())
+    adios::IO &bpReaderIO = ad.DeclareIO("input");
+    if (!bpReaderIO.InConfigFile())
     {
         // if not defined by user, we can change the default settings
         // BPFileWriter is the default engine
-        bpReaderSettings.SetEngine("ADIOS1Reader");
-        // Allow an extra thread for data processing
-        bpReaderSettings.AllowThreads(1);
+        bpReaderIO.SetEngine("ADIOS1Reader");
+        bpReaderIO.SetParameters("num_threads=2");
+
         // ISO-POSIX file is the default transport
         // Passing parameters to the transport
-        bpReaderSettings.AddTransport("File", "verbose=4");
-        bpReaderSettings.SetParameters("OpenAsFile");
+        bpReaderIO.AddTransport("File", "verbose=4");
     }
 
-    auto bpReader = ad.Open(inputfile, "r", mpiReaderComm, bpReaderSettings);
+    auto bpReader =
+        bpReaderIO.Open(inputfile, adios::OpenMode::Read, mpiReaderComm);
 
-    if (bpReader == nullptr)
+    if (!bpReader)
+    {
         throw std::ios_base::failure("ERROR: failed to open " +
                                      std::string(inputfile) + "\n");
+    }
 
     unsigned int gndx;
     unsigned int gndy;
@@ -75,17 +77,19 @@ int main(int argc, char *argv[])
     // bpReader->Read<unsigned int>("gndy", &gndy);
 
     adios::Variable<unsigned int> *vgndx =
-        bpReader->InquireVariableUInt("gndx");
+        bpReader->InquireVariable<unsigned int>("gndx");
+
     gndx = vgndx->m_Data[0];
+
     adios::Variable<unsigned int> *vgndy =
-        bpReader->InquireVariableUInt("gndy");
+        bpReader->InquireVariable<unsigned int>("gndy");
     gndy = vgndy->m_Data[0];
 
     if (rank == 0)
     {
         std::cout << "gndx       = " << gndx << std::endl;
         std::cout << "gndy       = " << gndy << std::endl;
-        std::cout << "# of steps = " << vgndy->GetNSteps() << std::endl;
+        std::cout << "# of steps = " << vgndy->m_AvailableSteps << std::endl;
     }
 
     // 1D decomposition of the columns, which is inefficient for reading!
@@ -100,20 +104,20 @@ int main(int argc, char *argv[])
     std::cout << "rank " << rank << " reads " << readsize[1]
               << " columns from offset " << offset[1] << std::endl;
 
-    adios::Variable<double> *vT = bpReader->InquireVariableDouble("T");
+    adios::Variable<double> *vT = bpReader->InquireVariable<double>("T");
 
-    double *T = new double[vT->GetNSteps() * readsize[0] * readsize[1]];
+    double *T = new double[vT->m_AvailableSteps * readsize[0] * readsize[1]];
 
     // Create a 2D selection for the subset
     vT->SetSelection(offset, readsize);
-    vT->SetStepSelection(0, vT->GetNSteps());
+    vT->SetStepSelection(0, vT->m_AvailableSteps);
 
     // Arrays are read by scheduling one or more of them
     // and performing the reads at once
     bpReader->ScheduleRead<double>(*vT, T);
-    bpReader->PerformReads(adios::PerformReadMode::BLOCKINGREAD);
+    bpReader->PerformReads(adios::ReadMode::Blocking);
 
-    printData(T, readsize.data(), offset.data(), rank, vT->GetNSteps());
+    printData(T, readsize.data(), offset.data(), rank, vT->m_AvailableSteps);
     bpReader->Close();
     delete[] T;
     MPI_Finalize();

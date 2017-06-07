@@ -19,7 +19,7 @@ namespace adios
 {
 
 template <class T>
-void DataManWriter::WriteVariableCommon(Variable<T> &variable, const T *values)
+void DataManWriter::DoWriteCommon(Variable<T> &variable, const T *values)
 {
     // here comes your magic at Writing now variable.m_UserValues has the
     // data
@@ -53,15 +53,19 @@ void DataManWriter::WriteVariableCommon(Variable<T> &variable, const T *values)
     {
         MPI_Barrier(m_MPIComm);
         std::cout << "I am hooked to the DataMan library\n";
-        std::cout << "putshape " << variable.m_Count.size() << std::endl;
-        std::cout << "varshape " << variable.m_Shape.size() << std::endl;
-        std::cout << "offset " << variable.m_Start.size() << std::endl;
-        for (int i = 0; i < m_SizeMPI; ++i)
+        std::cout << "Variable " << variable.m_Name << "\n";
+        std::cout << "putshape " << variable.m_Count.size() << "\n";
+        std::cout << "varshape " << variable.m_Shape.size() << "\n";
+        std::cout << "offset " << variable.m_Start.size() << "\n";
+
+        int rank = 0, size = 1;
+        MPI_Comm_size(m_MPIComm, &size);
+
+        for (int i = 0; i < size; ++i)
         {
-            if (i == m_RankMPI)
+            if (i == rank)
             {
-                std::cout << "Rank: " << m_RankMPI << "\n";
-                variable.Monitor(std::cout);
+                std::cout << "Rank: " << i << "\n";
                 std::cout << std::endl;
             }
             else

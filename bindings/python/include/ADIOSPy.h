@@ -23,7 +23,7 @@
 #include "adios2/pybind11/pybind11.h"
 #endif
 
-#include "adios2/ADIOS.h"
+#include "../../../source/adios2/core/ADIOS.h"
 #include "adios2/MethodPy.h"
 #include "adios2/VariablePy.h"
 #include "adios2/adiosPyFunctions.h" //ListToVector, VectorToList

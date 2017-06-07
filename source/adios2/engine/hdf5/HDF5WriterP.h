@@ -1,4 +1,3 @@
-
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
@@ -12,19 +11,18 @@
 #ifndef ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__
 #define ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__
 
-#include "HDF5Common.h"
+#include <hdf5.h>
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMPICommOnly.h"
-#include "adios2/capsule/heap/STLVector.h"
 #include "adios2/core/Engine.h"
-
-#include <hdf5.h>
+#include "adios2/core/IO.h"
+#include "adios2/toolkit/interop/hdf5/HDF5Common.h"
 
 namespace adios
 {
 
-class HDF5Writer : public Engine
+class HDF5WriterP : public Engine
 {
 
 public:
@@ -35,71 +33,27 @@ public:
      * @param mpiComm
      * @param method
      */
-    HDF5Writer(ADIOS &adios, const std::string name,
-               const std::string accessMode, MPI_Comm mpiComm,
-               const Method &method);
+    HDF5WriterP(IO &io, const std::string &name, const OpenMode openMode,
+                MPI_Comm mpiComm);
 
-    virtual ~HDF5Writer();
+    ~HDF5WriterP();
 
-    void Write(Variable<char> &variable, const char *values);
-    void Write(Variable<unsigned char> &variable, const unsigned char *values);
-    void Write(Variable<short> &variable, const short *values);
-    void Write(Variable<unsigned short> &variable,
-               const unsigned short *values);
-    void Write(Variable<int> &variable, const int *values);
-    void Write(Variable<unsigned int> &variable, const unsigned int *values);
-    void Write(Variable<long int> &variable, const long int *values);
-    void Write(Variable<unsigned long int> &variable,
-               const unsigned long int *values);
-    void Write(Variable<long long int> &variable, const long long int *values);
-    void Write(Variable<unsigned long long int> &variable,
-               const unsigned long long int *values);
-    void Write(Variable<float> &variable, const float *values);
-    void Write(Variable<double> &variable, const double *values);
-    void Write(Variable<long double> &variable, const long double *values);
-    void Write(Variable<std::complex<float>> &variable,
-               const std::complex<float> *values);
-    void Write(Variable<std::complex<double>> &variable,
-               const std::complex<double> *values);
-    void Write(Variable<std::complex<long double>> &variable,
-               const std::complex<long double> *values);
+    void Advance(const float timeoutSeconds = 0.0) final;
 
-    void Write(const std::string &variableName, const char *values);
-    void Write(const std::string &variableName, const unsigned char *values);
-    void Write(const std::string &variableName, const short *values);
-    void Write(const std::string &variableName, const unsigned short *values);
-    void Write(const std::string &variableName, const int *values);
-    void Write(const std::string &variableName, const unsigned int *values);
-    void Write(const std::string &variableName, const long int *values);
-    void Write(const std::string &variableName,
-               const unsigned long int *values);
-    void Write(const std::string &variableName, const long long int *values);
-    void Write(const std::string &variableName,
-               const unsigned long long int *values);
-    void Write(const std::string &variableName, const float *values);
-    void Write(const std::string &variableName, const double *values);
-    void Write(const std::string &variableName, const long double *values);
-    void Write(const std::string &variableName,
-               const std::complex<float> *values);
-    void Write(const std::string &variableName,
-               const std::complex<double> *values);
-    void Write(const std::string &variableName,
-               const std::complex<long double> *values);
-
-    void Advance(float timeoutSec = 0.0);
-
-    void Close(const int transportIndex = -1);
+    void Close(const int transportIndex = -1) final;
 
 private:
-    ///< heap capsule, contains data and metadata buffers
-    // capsule::STLVector m_Buffer;
+    interop::HDF5Common m_H5File;
 
     void Init();
 
-    HDF5Common m_H5File;
+#define declare_type(T)                                                        \
+    void DoWrite(Variable<T> &variable, const T *values) final;
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
     template <class T>
-    void UseHDFWrite(Variable<T> &variable, const T *values, hid_t h5Type);
+    void DoWriteCommon(Variable<T> &variable, const T *values);
 };
 
 } // end namespace adios

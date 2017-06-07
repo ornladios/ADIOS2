@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloADIOSNoXML_OOP.cpp
+ * helloDataManWriter.cpp
  *
- *  Created on: Jan 9, 2017
- *      Author: wfg
+ *  Created on: Feb 16, 2017
+ *      Author: Jason Wang
  */
 
 #include <iostream>
@@ -15,72 +15,35 @@
 
 int main(int argc, char *argv[])
 {
-    const bool adiosDebug = true;
-    adios::ADIOS adios(adios::Verbose::WARN, adiosDebug);
-
     // Application variable
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    std::vector<double> myDoubles = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    const std::size_t Nx = myDoubles.size();
-
-    std::vector<std::complex<float>> myCFloats;
-    myCFloats.reserve(3);
-    myCFloats.emplace_back(1, 3);
-    myCFloats.emplace_back(2, 2);
-    myCFloats.emplace_back(3, 1);
+    const std::size_t Nx = myFloats.size();
 
     try
     {
-        // Define variable and local size
-        // Define variable and local size
-        auto ioMyFloats =
-            adios.DefineVariable<float>("myfloats", adios::Dims{Nx});
-        auto ioMyFloat = adios.DefineVariable<float>("myfloat", adios::Dims{1});
-        //        auto& ioMyDoubles = adios.DefineVariable<double>( "myDoubles",
-        //        adios::Dims{Nx} );
-        //        auto& ioMyCFloats = adios.DefineVariable<std::complex<float>>(
-        //        "myCFloats", {3} );
+        adios::ADIOS adios(adios::DebugON);
+        adios::IO &dataManIO = adios.DeclareIO("WANIO");
+        dataManIO.SetEngine("DataManWriter");
+        dataManIO.SetParameters("peer-to-peer=yes", "real_time=yes",
+                                "compress=no", "method=dump");
 
-        // Define method for engine creation, it is basically straight-forward
-        // parameters
-        adios::Method &datamanSettings = adios.DeclareMethod("WAN");
-        if (!datamanSettings.IsUserDefined())
-        {
-            // if not defined by user, we can change the default settings
-            datamanSettings.SetEngine("DataManWriter");
-            datamanSettings.SetParameters(
-                "real_time=yes", "method_type=stream", "method=cache",
-                "monitoring=yes", "local_ip=127.0.0.1", "remote_ip=127.0.0.1",
-                "local_port=12306", "remote_port=12307");
-            // datamanSettings.AddTransport( "Mdtm", "localIP=127.0.0.1",
-            // "remoteIP=127.0.0.1", "tolerances=1,2,3" );
-            // datamanSettings.AddTransport( "ZeroMQ", "localIP=127.0.0.1",
-            // "remoteIP=127.0.0.1", "tolerances=1,2,3" ); not yet supported
-            // ,
-            // will throw an exception
-        }
+        // Define variable and local size
+        auto bpFloats =
+            dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
 
         // Create engine smart pointer to DataMan Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
-        // DataMan
-        auto datamanWriter = adios.Open("myDoubles.bp", "w", datamanSettings);
+        auto dataManWriter =
+            dataManIO.Open("myFloats.bp", adios::OpenMode::Write);
 
-        if (datamanWriter == nullptr)
+        if (!dataManWriter)
+        {
             throw std::ios_base::failure(
                 "ERROR: failed to create DataMan I/O engine at Open\n");
+        }
 
-        datamanWriter->Write<float>(
-            ioMyFloats,
-            myFloats.data()); // Base class Engine own the Write<T> that
-                              // will call overloaded Write from Derived
-        const float num = 1.12;
-        datamanWriter->Write<float>(ioMyFloat,
-                                    &num); // Base class Engine own the
-                                           // Write<T> that will call
-                                           // overloaded Write from
-                                           // Derived
-        //        datamanWriter->Write( ioMyCFloats, myCFloats.data() );
-        datamanWriter->Close();
+        dataManWriter->Write<float>(bpFloats, myFloats.data());
+        dataManWriter->Close();
     }
     catch (std::invalid_argument &e)
     {
@@ -89,12 +52,12 @@ int main(int argc, char *argv[])
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "System exception, STOPPING PROGRAM\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM\n";
+        std::cout << "Exception, STOPPING PROGRAM from rank\n";
         std::cout << e.what() << "\n";
     }
 

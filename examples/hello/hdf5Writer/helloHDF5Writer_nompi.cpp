@@ -1,87 +1,56 @@
 /*
- * HDF5Writer.cpp
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
+ * helloHDF5Writer_nompi.cpp  no mpi version of helloHDF5Writer.cpp
  *
  *  Created on: March 20, 2017
  *      Author: Junmin
  */
 
-#include <iostream>
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
+#include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
 #include <adios2.h>
 
 int main(int argc, char *argv[])
 {
-    const bool adiosDebug = true;
-    adios::ADIOS adios(adios::Verbose::INFO, adiosDebug);
-
-    // Application variable
-    const std::size_t intDim1 = 4;
-    const std::size_t intDim2 = 3;
-    std::vector<int> myInts = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21};
-
-    std::vector<double> myDoubles = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    const std::size_t Nx = myDoubles.size();
-
-    std::vector<std::complex<float>> myCFloats;
-    const std::size_t CFloatSize = 3;
-    myCFloats.reserve(CFloatSize);
-    myCFloats.emplace_back(1, 3);
-    myCFloats.emplace_back(2, 2);
-    myCFloats.emplace_back(3, 1);
-
-    std::vector<std::complex<double>> myCDoubles;
-    const std::size_t CDoubleSize = 3;
-    myCDoubles.reserve(CDoubleSize);
-    myCDoubles.emplace_back(1, 3);
-    myCDoubles.emplace_back(2, 2);
-    myCDoubles.emplace_back(3, 1);
-
-    std::size_t doubleVCount = Nx;
-    std::size_t floatCount = CFloatSize;
-    std::size_t intCountDim1 = intDim1;
-
-    std::size_t doubleVOffset = 0;
-    std::size_t floatOffset = 0;
-    std::size_t intOffsetDim1 = 0;
-    std::size_t intOffsetDim2 = 0;
+    /** Application variable */
+    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    const std::size_t Nx = myFloats.size();
 
     try
     {
-        // Define variable and local size
-        auto &ioMyDoubles =
-            adios.DefineVariable<double>("myDoubles", {Nx}, {Nx});
-        auto &ioMyCFloats =
-            adios.DefineVariable<std::complex<float>>("myCFloats", {3}, {3});
-        auto &ioMyCDoubles =
-            adios.DefineVariable<std::complex<double>>("myCDoubles", {3}, {3});
-        auto &ioMyInts = adios.DefineVariable<int>("myInts", {4, 3}, {4, 3});
+        /** ADIOS class factory of IO class objects, DebugON is recommended */
+        adios::ADIOS adios(adios::DebugON);
 
-        // Define method for engine creation, it is basically straight-forward
-        // parameters
-        adios::Method &HDF5Settings = adios.DeclareMethod("HDF5Writer");
-        HDF5Settings.SetParameters("chunck=yes", "collectiveIO=yes");
-        // HDF5Settings.AddTransport( "Mdtm", "localIP=128.0.0.0.1",
-        // "remoteIP=128.0.0.0.2", "tolerances=1,2,3" );
+        /*** IO class object: settings and factory of Settings: Variables,
+         * Parameters, Transports, and Execution: Engines */
+        adios::IO &hdf5IO = adios.DeclareIO("HDFFileIO");
+        hdf5IO.SetEngine("HDF5Writer");
+        hdf5IO.AddTransport("file");
 
-        // Create engine smart pointer to HDF5 Engine due to polymorphism,
-        // Open returns a smart pointer to Engine containing the Derived class
-        // HDF5
-        auto HDF5Writer = adios.Open("test.bp", "w", HDF5Settings);
+        /** global array : name, { shape (total) }, { start (local) }, { count
+         * (local) }, all are constant dimensions */
+        adios::Variable<float> &bpFloats = hdf5IO.DefineVariable<float>(
+            "bpFloats", {}, {}, {Nx}, adios::ConstantDims);
 
-        if (HDF5Writer == nullptr)
+        /** Engine derived class, spawned to start IO operations */
+        auto hdf5Writer = hdf5IO.Open("myVector.bp", adios::OpenMode::Write);
+
+        if (!hdf5Writer)
         {
             throw std::ios_base::failure(
-                "ERROR: failed to create HDF5 I/O engine at Open\n");
+                "ERROR: hdf5Writer not created at Open\n");
         }
 
-        // Base class Engine own the Write<T> that will call overloaded Write
-        // from Derived
-        HDF5Writer->Write(ioMyDoubles, myDoubles.data() + doubleVOffset);
-        HDF5Writer->Write(ioMyInts, myInts.data());
-        HDF5Writer->Write(ioMyCFloats, myCFloats.data());
-        HDF5Writer->Write(ioMyCDoubles, myCDoubles.data());
-        HDF5Writer->Close();
+        /** Write variable for buffering */
+        hdf5Writer->Write<float>(bpFloats, myFloats.data());
+
+        /** Create bp file, engine becomes unreachable after this*/
+        hdf5Writer->Close();
     }
     catch (std::invalid_argument &e)
     {
@@ -90,12 +59,12 @@ int main(int argc, char *argv[])
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "System exception, STOPPING PROGRAM\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM\n";
+        std::cout << "Exception, STOPPING PROGRAM from rank\n";
         std::cout << e.what() << "\n";
     }
 

@@ -15,177 +15,53 @@
 namespace adios
 {
 
-HDF5Reader::HDF5Reader(ADIOS &adios, const std::string name,
-                       const std::string accessMode, MPI_Comm mpiComm,
-                       const Method &method)
-: Engine(adios, "HDF5Reader", name, accessMode, mpiComm, method,
-         " HDF5Reader constructor (or call to ADIOS Open).\n")
-
+HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name,
+                         const OpenMode openMode, MPI_Comm mpiComm)
+: Engine("HDF5Reader", io, name, openMode, mpiComm), m_H5File(io.m_DebugMode)
 {
+    m_EndMessage = ", in call to IO HDF5Reader Open " + m_Name + "\n";
     Init();
 }
 
-HDF5Reader::~HDF5Reader() { Close(); }
+HDF5ReaderP::~HDF5ReaderP() { Close(); }
 
-bool HDF5Reader::isValid()
+bool HDF5ReaderP::IsValid()
 {
-    if (m_AccessMode != "r" && m_AccessMode != "read")
+    bool isValid = false;
+
+    if (m_OpenMode != OpenMode::Read)
     {
-        return false;
+        return isValid;
     }
     if (m_H5File.m_FileId >= 0)
     {
-        return true;
+        isValid = true;
     }
+    return isValid;
 }
-void HDF5Reader::Init()
+void HDF5ReaderP::Init()
 {
-    if (m_AccessMode != "r" && m_AccessMode != "read")
+    if (m_OpenMode != OpenMode::Read)
     {
         throw std::invalid_argument(
-            "ERROR: HDF5Reader doesn't support access mode " + m_AccessMode +
-            ", in call to ADIOS Open or HDF5Reader constructor\n");
+            "ERROR: HDF5Reader only supports OpenMode::Read "
+            ", in call to Open\n");
     }
 
     m_H5File.Init(m_Name, m_MPIComm, false);
     m_H5File.GetNumTimeSteps();
 }
 
-Variable<void> *HDF5Reader::InquireVariable(const std::string &variableName,
-                                            const bool readIn)
-{
-    std::cout << "Not implemented: HDF5Reader::InquireVariable()" << std::endl;
-    return nullptr;
-}
-
-Variable<char> *HDF5Reader::InquireVariableChar(const std::string &variableName,
-                                                const bool readIn)
-{
-    return nullptr;
-}
-
-Variable<unsigned char> *
-HDF5Reader::InquireVariableUChar(const std::string &variableName,
-                                 const bool readIn)
-{
-    return nullptr;
-}
-
-Variable<short> *
-HDF5Reader::InquireVariableShort(const std::string &variableName,
-                                 const bool readIn)
-{
-    return nullptr;
-}
-
-Variable<unsigned short> *
-HDF5Reader::InquireVariableUShort(const std::string &variableName,
-                                  const bool readIn)
-{
-    return nullptr;
-}
-
-Variable<int> *HDF5Reader::InquireVariableInt(const std::string &variableName,
-                                              const bool)
-{
-    return nullptr;
-}
-
-Variable<unsigned int> *
-HDF5Reader::InquireVariableUInt(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<long int> *
-HDF5Reader::InquireVariableLInt(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<unsigned long int> *
-HDF5Reader::InquireVariableULInt(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<long long int> *
-HDF5Reader::InquireVariableLLInt(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<unsigned long long int> *
-HDF5Reader::InquireVariableULLInt(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<float> *
-HDF5Reader::InquireVariableFloat(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<double> *
-HDF5Reader::InquireVariableDouble(const std::string &variableName, const bool)
-{
-
-    if (m_RankMPI == 0)
-    {
-        std::cout << " ... reading var: " << variableName << std::endl;
-    }
-    int totalts = m_H5File.GetNumTimeSteps();
-
-    if (m_RankMPI == 0)
-    {
-        std::cout << " ... I saw total timesteps: " << totalts << std::endl;
-    }
-
-    return nullptr;
-}
-
-Variable<long double> *
-HDF5Reader::InquireVariableLDouble(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<std::complex<float>> *
-HDF5Reader::InquireVariableCFloat(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<std::complex<double>> *
-HDF5Reader::InquireVariableCDouble(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-Variable<std::complex<long double>> *
-HDF5Reader::InquireVariableCLDouble(const std::string &variableName, const bool)
-{
-    return nullptr;
-}
-
-VariableCompound *
-HDF5Reader::InquireVariableCompound(const std::string &variableName,
-                                    const bool readIn)
-{
-    return nullptr;
-}
-
 template <class T>
-void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
-                            hid_t h5Type)
+void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
+                             hid_t h5Type)
 {
+    int rank, size;
+    MPI_Comm_rank(m_MPIComm, &rank);
+    MPI_Comm_size(m_MPIComm, &size);
+
     hid_t dataSetId =
         H5Dopen(m_H5File.m_GroupId, variableName.c_str(), H5P_DEFAULT);
-    if (m_RankMPI == 0)
-    {
-        std::cout << " opened to read: " << variableName << std::endl;
-    }
 
     if (dataSetId < 0)
     {
@@ -206,18 +82,15 @@ void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
     int totalElements = 1;
     for (int i = 0; i < ndims; i++)
     {
-        std::cout << " [" << i << "] th dimension: " << dims[i] << std::endl;
         count[i] = dims[i];
         totalElements *= dims[i];
     }
 
-    start[0] = m_RankMPI * dims[0] / m_SizeMPI;
-    count[0] = dims[0] / m_SizeMPI;
-    if (m_RankMPI == m_SizeMPI - 1)
+    start[0] = rank * dims[0] / size;
+    count[0] = dims[0] / size;
+    if (rank == size - 1)
     {
-        count[0] = dims[0] - count[0] * (m_SizeMPI - 1);
-        std::cout << " rank = " << m_RankMPI << ", count=" << count[0]
-                  << std::endl;
+        count[0] = dims[0] - count[0] * (size - 1);
     }
 
     hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start, stride,
@@ -239,20 +112,14 @@ void HDF5Reader::UseHDFRead(const std::string &variableName, T *values,
     ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
                   data_array);
 
-    for (int i = 0; i < elementsRead; i++)
-    {
-        std::cout << "... rank " << m_RankMPI << "   , " << data_array[i]
-                  << std::endl;
-    }
-
     H5Sclose(memDataSpace);
 
     H5Sclose(fileSpace);
     H5Dclose(dataSetId);
 }
 
-void HDF5Reader::Advance(float timeoutSec) { m_H5File.Advance(); }
+void HDF5ReaderP::Advance(const float timeoutSeconds) { m_H5File.Advance(); }
 
-void HDF5Reader::Close(const int transportIndex) { m_H5File.Close(); }
+void HDF5ReaderP::Close(const int transportIndex) { m_H5File.Close(); }
 
 } // end namespace adios

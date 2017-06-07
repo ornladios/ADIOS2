@@ -24,35 +24,26 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     rank_saved = s.rank;
     m_outputfilename = s.outputfile + ".bp";
-    ad = new adios::ADIOS("adios2.xml", comm, adios::Verbose::INFO);
+    ad = new adios::ADIOS("config.xml", comm, adios::DebugON);
 
     // Define method for engine creation
-    // 1. Get method def from config file or define new one
 
-    adios::Method &bpWriterSettings = ad->DeclareMethod("output");
-    if (!bpWriterSettings.IsUserDefined())
+    adios::IO &bpio = ad->DeclareIO("output");
+    if (!bpio.InConfigFile())
     {
         // if not defined by user, we can change the default settings
         // BPFileWriter is the default engine
-        bpWriterSettings.SetEngine("ADIOS1Writer");
+
         // Allow an extra thread for data processing
-        bpWriterSettings.AllowThreads(1);
         // ISO-POSIX file is the default transport
         // Passing parameters to the transport
-        bpWriterSettings.AddTransport("File", "library=MPI-IO");
-
-        const std::string aggregatorsParam("Aggregators=" +
-                                           std::to_string((s.nproc + 1) / 2));
-        bpWriterSettings.SetParameters("have_metadata_file=yes",
-                                       aggregatorsParam);
     }
 
-    //    ad->DefineScalar<unsigned int>("gndx", true);
-    varGndx = &ad->DefineVariable<unsigned int>("gndx");
-    ad->DefineVariable<unsigned int>("gndy");
+    varGndx = &bpio.DefineVariable<unsigned int>("gndx");
+    bpio.DefineVariable<unsigned int>("gndy");
 
     // define T as 2D global array
-    varT = &ad->DefineArray<double>(
+    varT = &bpio.DefineVariable<double>(
         "T",
         // Global dimensions
         {s.gndx, s.gndy},
@@ -66,10 +57,12 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    bpWriter = ad->Open(m_outputfilename, "w", comm, bpWriterSettings);
+    bpWriter = bpio.Open(m_outputfilename, adios::OpenMode::Write, comm);
 
-    if (bpWriter == nullptr)
+    if (!bpWriter)
+    {
         throw std::ios_base::failure("ERROR: failed to open ADIOS bpWriter\n");
+    }
 }
 
 IO::~IO()

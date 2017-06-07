@@ -11,15 +11,14 @@
 #ifndef ADIOS2_ENGINE_HDF5_HDF5READERP_H_
 #define ADIOS2_ENGINE_HDF5_HDF5READERP_H_
 
-#include "HDF5Common.h"
-
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/Engine.h"
+#include "adios2/core/IO.h"
+#include "adios2/toolkit/interop/hdf5/HDF5Common.h"
 
 namespace adios
 {
 
-class HDF5Reader : public Engine
+class HDF5ReaderP : public Engine
 {
 
 public:
@@ -30,96 +29,23 @@ public:
      * @param mpiComm
      * @param method
      */
-    HDF5Reader(ADIOS &adios, const std::string name,
-               const std::string accessMode, MPI_Comm mpiComm,
-               const Method &method);
+    HDF5ReaderP(IO &adios, const std::string &name, const OpenMode openMode,
+                MPI_Comm mpiComm);
 
-    virtual ~HDF5Reader();
+    ~HDF5ReaderP();
 
-    bool isValid();
+    bool IsValid();
 
-    Variable<void> *InquireVariable(const std::string &variableName,
-                                    const bool readIn = true);
+    void Advance(const float timeoutSeconds = 0.0) final;
 
-    Variable<char> *InquireVariableChar(const std::string &variableName,
-                                        const bool readIn = true);
+    void Close(const int transportIndex = -1) final;
 
-    Variable<unsigned char> *
-    InquireVariableUChar(const std::string &variableName,
-                         const bool readIn = true);
-
-    Variable<short> *InquireVariableShort(const std::string &variableName,
-                                          const bool readIn = true);
-
-    Variable<unsigned short> *
-    InquireVariableUShort(const std::string &variableName,
-                          const bool readIn = true);
-
-    Variable<int> *InquireVariableInt(const std::string &variableName,
-                                      const bool readIn = true);
-
-    Variable<unsigned int> *InquireVariableUInt(const std::string &variableName,
-                                                const bool readIn = true);
-
-    Variable<long int> *InquireVariableLInt(const std::string &variableName,
-                                            const bool readIn = true);
-
-    Variable<unsigned long int> *
-    InquireVariableULInt(const std::string &variableName,
-                         const bool readIn = true);
-
-    Variable<long long int> *
-    InquireVariableLLInt(const std::string &variableName,
-                         const bool readIn = true);
-
-    Variable<unsigned long long int> *
-    InquireVariableULLInt(const std::string &variableName,
-                          const bool readIn = true);
-
-    Variable<float> *InquireVariableFloat(const std::string &variableName,
-                                          const bool readIn = true);
-
-    Variable<double> *InquireVariableDouble(const std::string &variableName,
-                                            const bool readIn = true);
-    Variable<long double> *
-    InquireVariableLDouble(const std::string &variableName,
-                           const bool readIn = true);
-
-    Variable<std::complex<float>> *
-    InquireVariableCFloat(const std::string &variableName,
-                          const bool readIn = true);
-
-    Variable<std::complex<double>> *
-    InquireVariableCDouble(const std::string &variableName,
-                           const bool readIn = true);
-
-    Variable<std::complex<long double>> *
-    InquireVariableCLDouble(const std::string &variableName,
-                            const bool readIn = true);
-
-    /**
-     * Not implemented
-     * @param name
-     * @param readIn
-     * @return
-     */
-    VariableCompound *InquireVariableCompound(const std::string &variableName,
-                                              const bool readIn = true);
-
-    void Advance(float timeoutSecc = 0.0);
-
-    void Close(const int transportIndex = -1);
-
-    template <typename T>
+    template <class T>
     void UseHDFRead(const std::string &variableName, T *values, hid_t h5Type);
 
-    /*
-    template <class T>
-    void ReadMe(Variable<T> &variable, T *values, hid_t h5type);
-    */
 private:
-    HDF5Common m_H5File;
-    void Init();
+    interop::HDF5Common m_H5File;
+    void Init() final;
 };
 };
 #endif /* ADIOS2_ENGINE_HDF5_HDF5READERP_H_ */

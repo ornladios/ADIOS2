@@ -72,11 +72,23 @@ void DataMan::add_stream(json a_jmsg)
         a_jmsg["num_channels"] = num_channels;
     }
 
+    int local_port = 12306, remote_port = 12307;
+
+    if (a_jmsg["local_port"].is_number())
+    {
+        local_port = a_jmsg["local_port"].get<int>();
+    }
+
+    if (a_jmsg["remote_port"].is_number())
+    {
+        local_port = a_jmsg["remote_port"].get<int>();
+    }
+
     for (int i = 0; i < num_channels; i++)
     {
         a_jmsg["channel_id"] = i;
-        a_jmsg["local_port"] = a_jmsg["local_port"].get<int>() + 2;
-        a_jmsg["remote_port"] = a_jmsg["remote_port"].get<int>() + 2;
+        a_jmsg["local_port"] = local_port + 2;
+        a_jmsg["remote_port"] = remote_port + 2;
         auto man = get_man(method);
         if (man)
         {

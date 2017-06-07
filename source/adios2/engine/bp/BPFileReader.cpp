@@ -5,32 +5,45 @@
  * BPFileReader.cpp
  *
  *  Created on: Feb 27, 2017
- *      Author: wfg
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include "BPFileReader.h"
 
-#include "adios2/core/Support.h"
-#include "adios2/core/adiosFunctions.h"           // CSVToVector
-#include "adios2/transport/file/FStream.h"        // uses C++ fstream
-#include "adios2/transport/file/FileDescriptor.h" // uses POSIX
-#include "adios2/transport/file/FilePointer.h"    // uses C FILE*
+#include "adios2/helper/adiosFunctions.h" // CSVToVector
 
 namespace adios
 {
 
-BPFileReader::BPFileReader(ADIOS &adios, const std::string &name,
-                           const std::string accessMode, MPI_Comm mpiComm,
-                           const Method &method)
-: Engine(adios, "BPFileReader", name, accessMode, mpiComm, method,
-         " BPFileReader constructor (or call to ADIOS Open).\n"),
-  m_Heap(m_DebugMode)
+BPFileReader::BPFileReader(IO &io, const std::string &name,
+                           const OpenMode openMode, MPI_Comm mpiComm)
+: Engine("BPFileReader", io, name, openMode, mpiComm)
 {
     Init();
 }
 
-Variable<void> *BPFileReader::InquireVariable(const std::string & /*name*/,
-                                              const bool /*readIn*/)
+void BPFileReader::Close(const int /*transportIndex*/) {}
+
+// PRIVATE
+void BPFileReader::Init()
+{
+    if (m_DebugMode)
+    {
+        if (m_OpenMode != OpenMode::Read)
+        {
+            throw std::invalid_argument(
+                "ERROR: BPFileReader only supports OpenMode::r from" + m_Name +
+                " " + m_EndMessage);
+        }
+    }
+
+    InitTransports();
+}
+
+void BPFileReader::InitTransports() {}
+
+VariableBase *BPFileReader::InquireVariableUnknown(const std::string & /*name*/,
+                                                   const bool /*readIn*/)
 {
     // not yet implemented
     return nullptr;
@@ -138,94 +151,6 @@ BPFileReader::InquireVariableCompound(const std::string & /*name*/,
                                       const bool /*readIn*/)
 {
     return nullptr;
-}
-
-void BPFileReader::Close(const int /*transportIndex*/) {}
-
-// PRIVATE
-void BPFileReader::Init()
-{
-    if (m_DebugMode == true)
-    {
-        if (m_AccessMode != "r" && m_AccessMode != "read")
-        {
-            throw std::invalid_argument(
-                "ERROR: BPFileReader doesn't support access mode " +
-                m_AccessMode +
-                ", in call to ADIOS Open or BPFileReader constructor\n");
-        }
-    }
-
-    InitTransports();
-}
-
-void BPFileReader::InitTransports() // maybe move this?
-{
-    if (m_DebugMode == true)
-    {
-        if (TransportNamesUniqueness() == false)
-        {
-            throw std::invalid_argument(
-                "ERROR: two transports of the same kind (e.g file IO) "
-                "can't have the same name, modify with name= in Method "
-                "AddTransport\n");
-        }
-    }
-
-    for (const auto &parameters : m_Method.m_TransportParameters)
-    {
-        auto itTransport = parameters.find("transport");
-        if (itTransport->second == "file" || itTransport->second == "File")
-        {
-            auto itLibrary = parameters.find("library");
-            if (itLibrary == parameters.end() ||
-                itLibrary->second == "POSIX") // use default POSIX
-            {
-                auto file = std::make_shared<transport::FileDescriptor>(
-                    m_MPIComm, m_DebugMode);
-                // m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
-                m_Transports.push_back(std::move(file));
-            }
-            else if (itLibrary->second == "FILE*" ||
-                     itLibrary->second == "stdio.h")
-            {
-                auto file = std::make_shared<transport::FilePointer>(
-                    m_MPIComm, m_DebugMode);
-                // m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
-                m_Transports.push_back(std::move(file));
-            }
-            else if (itLibrary->second == "fstream" ||
-                     itLibrary->second == "std::fstream")
-            {
-                auto file = std::make_shared<transport::FStream>(m_MPIComm,
-                                                                 m_DebugMode);
-                // m_BP1Reader.OpenRankFiles( m_Name, m_AccessMode, *file );
-                m_Transports.push_back(std::move(file));
-            }
-            else if (itLibrary->second == "MPI-IO")
-            {
-            }
-            else
-            {
-                if (m_DebugMode == true)
-                {
-                    throw std::invalid_argument(
-                        "ERROR: file transport library " + itLibrary->second +
-                        " not supported, in " + m_Name + m_EndMessage);
-                }
-            }
-        }
-        else
-        {
-            if (m_DebugMode == true)
-            {
-                throw std::invalid_argument(
-                    "ERROR: transport " + itTransport->second +
-                    " (you mean File?) not supported, in " + m_Name +
-                    m_EndMessage);
-            }
-        }
-    }
 }
 
 } // end namespace adios

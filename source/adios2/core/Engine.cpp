@@ -5,444 +5,51 @@
  * Engine.cpp
  *
  *  Created on: Dec 19, 2016
- *      Author: wfg
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include "Engine.h"
+#include "Engine.tcc"
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
-
-#include "adios2/ADIOSMPI.h"
-#include "adios2/core/Support.h"
-#include "adios2/core/adiosFunctions.h"
+#include <set>
+/// \endcond
 
 namespace adios
 {
 
-Engine::Engine(ADIOS &adios, const std::string engineType,
-               const std::string &name, const std::string accessMode,
-               MPI_Comm mpiComm, const Method &method,
-               const std::string endMessage)
-: m_MPIComm(mpiComm), m_EngineType(engineType), m_Name(name),
-  m_AccessMode(accessMode), m_Method(method), m_ADIOS(adios),
-  m_DebugMode(m_Method.m_DebugMode), m_EndMessage(endMessage)
-{
-    if (m_DebugMode == true)
-    {
-        if (m_MPIComm == MPI_COMM_NULL)
-        {
-            throw std::ios_base::failure(
-                "ERROR: engine communicator is MPI_COMM_NULL,"
-                " in call to ADIOS Open or Constructor\n");
-        }
-    }
-
-    MPI_Comm_rank(m_MPIComm, &m_RankMPI);
-    MPI_Comm_size(m_MPIComm, &m_SizeMPI);
-}
-
-void Engine::SetCallBack(std::function<void(const void *, std::string,
-                                            std::string, std::string, Dims)>
-                             callback)
+Engine::Engine(const std::string engineType, IO &io, const std::string &name,
+               const OpenMode openMode, MPI_Comm mpiComm)
+: m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode),
+  m_MPIComm(mpiComm), m_DebugMode(io.m_DebugMode)
 {
 }
 
-static void EngineThrowUp(const std::string &engineType,
-                          const std::string &func)
+void Engine::SetCallBack(
+    std::function<void(const void *, std::string, std::string, std::string,
+                       std::vector<size_t>)>
+        callback)
 {
-    throw std::invalid_argument(
-        "ERROR: Engine bass class " + func + "() called. " + engineType +
-        " child class is not implementing this function\n");
 }
 
 // should these functions throw an exception?
-void Engine::Write(Variable<char> & /*variable*/, const char * /*values*/) {}
-void Engine::Write(Variable<unsigned char> & /*variable*/,
-                   const unsigned char * /*values*/)
-{
-}
-void Engine::Write(Variable<short> & /*variable*/, const short * /*values*/) {}
-void Engine::Write(Variable<unsigned short> & /*variable*/,
-                   const unsigned short * /*values*/)
-{
-}
-void Engine::Write(Variable<int> & /*variable*/, const int * /*values*/) {}
-void Engine::Write(Variable<unsigned int> & /*variable*/,
-                   const unsigned int * /*values*/)
-{
-}
-void Engine::Write(Variable<long int> & /*variable*/,
-                   const long int * /*values*/)
-{
-}
-void Engine::Write(Variable<unsigned long int> & /*variable*/,
-                   const unsigned long int * /*values*/)
-{
-}
-void Engine::Write(Variable<long long int> & /*variable*/,
-                   const long long int * /*values*/)
-{
-}
-void Engine::Write(Variable<unsigned long long int> & /*variable*/,
-                   const unsigned long long int * /*values*/)
-{
-}
-void Engine::Write(Variable<float> & /*variable*/, const float * /*values*/) {}
-void Engine::Write(Variable<double> & /*variable*/, const double * /*values*/)
-{
-}
-void Engine::Write(Variable<long double> & /*variable*/,
-                   const long double * /*values*/)
-{
-}
-void Engine::Write(Variable<std::complex<float>> & /*variable*/,
-                   const std::complex<float> * /*values*/)
-{
-}
-void Engine::Write(Variable<std::complex<double>> & /*variable*/,
-                   const std::complex<double> * /*values*/)
-{
-}
-void Engine::Write(Variable<std::complex<long double>> & /*variable*/,
-                   const std::complex<long double> * /*values*/)
-{
-}
-void Engine::Write(VariableCompound & /*variable*/, const void * /*values*/) {}
 
-void Engine::Write(const std::string & /*variableName*/,
-                   const char * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const unsigned char * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const short * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const unsigned short * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/, const int * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const unsigned int * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const long int * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const unsigned long int * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const long long int * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const unsigned long long int * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const float * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const double * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const long double * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const std::complex<float> * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const std::complex<double> * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const std::complex<long double> * /*values*/)
-{
-}
-void Engine::Write(const std::string & /*variableName*/,
-                   const void * /*values*/)
-{
-}
-
-void Engine::Advance(float /*timeout_sec*/) {}
-void Engine::Advance(AdvanceMode /*mode*/, float /*timeout_sec*/) {}
+void Engine::Advance(const float /*timeout_sec*/) {}
+void Engine::Advance(const AdvanceMode /*mode*/, const float /*timeout_sec*/) {}
 void Engine::AdvanceAsync(
     AdvanceMode /*mode*/,
     std::function<void(std::shared_ptr<adios::Engine>)> /*callback*/)
 {
 }
 
+AdvanceStatus Engine::GetAdvanceStatus() { return m_AdvanceStatus; }
+
 void Engine::Close(const int /*transportIndex*/) {}
 
 // READ
-Variable<void> *Engine::InquireVariable(const std::string & /*name*/,
-                                        const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<char> *Engine::InquireVariableChar(const std::string & /*name*/,
-                                            const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<unsigned char> *
-Engine::InquireVariableUChar(const std::string & /*name*/,
-                             const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<short> *Engine::InquireVariableShort(const std::string & /*name*/,
-                                              const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<unsigned short> *
-Engine::InquireVariableUShort(const std::string & /*name*/,
-                              const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<int> *Engine::InquireVariableInt(const std::string & /*name*/,
-                                          const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<unsigned int> *
-Engine::InquireVariableUInt(const std::string & /*name*/, const bool /*readIn*/)
-{
-    EngineThrowUp(m_EngineType, "InquireVariableUInt");
-    return nullptr;
-}
-Variable<long int> *Engine::InquireVariableLInt(const std::string & /*name*/,
-                                                const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<unsigned long int> *
-Engine::InquireVariableULInt(const std::string & /*name*/,
-                             const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<long long int> *
-Engine::InquireVariableLLInt(const std::string & /*name*/,
-                             const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<unsigned long long int> *
-Engine::InquireVariableULLInt(const std::string & /*name*/,
-                              const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<float> *Engine::InquireVariableFloat(const std::string & /*name*/,
-                                              const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<double> *Engine::InquireVariableDouble(const std::string & /*name*/,
-                                                const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<long double> *
-Engine::InquireVariableLDouble(const std::string & /*name*/,
-                               const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<std::complex<float>> *
-Engine::InquireVariableCFloat(const std::string & /*name*/,
-                              const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<std::complex<double>> *
-Engine::InquireVariableCDouble(const std::string & /*name*/,
-                               const bool /*readIn*/)
-{
-    return nullptr;
-}
-Variable<std::complex<long double>> *
-Engine::InquireVariableCLDouble(const std::string & /*name*/,
-                                const bool /*readIn*/)
-{
-    return nullptr;
-}
-VariableCompound *Engine::InquireVariableCompound(const std::string & /*name*/,
-                                                  const bool /*readIn*/)
-{
-    return nullptr;
-}
-
-void Engine::ScheduleRead(Variable<char> &variable, char *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<unsigned char> &variable,
-                          unsigned char *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<short> &variable, short *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<unsigned short> &variable,
-                          unsigned short *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<int> &variable, int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<unsigned int> &variable,
-                          unsigned int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<long int> &variable, long int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<unsigned long int> &variable,
-                          unsigned long int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<long long int> &variable,
-                          long long int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<unsigned long long int> &variable,
-                          unsigned long long int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<float> &variable, float *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<double> &variable, double *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<long double> &variable, long double *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<std::complex<float>> &variable,
-                          std::complex<float> *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<std::complex<double>> &variable,
-                          std::complex<double> *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(Variable<std::complex<long double>> &variable,
-                          std::complex<long double> *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-
-void Engine::ScheduleRead(const std::string &variableName, char *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName,
-                          unsigned char *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName, short *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName,
-                          unsigned short *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName, int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName, unsigned int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName, long int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName,
-                          unsigned long int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName,
-                          long long int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName,
-                          unsigned long long int *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName, float *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName, double *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName, long double *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName,
-                          std::complex<float> *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName,
-                          std::complex<double> *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead(const std::string &variableName,
-                          std::complex<long double> *values)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-
-void Engine::ScheduleRead(const std::string & /*variableName*/)
-{
-    EngineThrowUp(m_EngineType, "ScheduleRead");
-}
-void Engine::ScheduleRead() { EngineThrowUp(m_EngineType, "ScheduleRead"); }
 void Engine::Release() {}
-void Engine::PerformReads(PerformReadMode /*mode*/){};
+void Engine::PerformReads(ReadMode /*mode*/){};
 
 // PROTECTED
 void Engine::Init() {}
@@ -451,79 +58,156 @@ void Engine::InitParameters() {}
 
 void Engine::InitTransports() {}
 
-void Engine::CheckParameter(
-    const std::map<std::string, std::string>::const_iterator itParameter,
-    const std::map<std::string, std::string> &parameters,
-    const std::string parameterName, const std::string hint) const
-{
-    if (itParameter == parameters.end())
-    {
-        {
-            throw std::invalid_argument("ERROR: parameter name " +
-                                        parameterName + " not found " + hint);
-        }
+// DoWrite
+#define declare_type(T)                                                        \
+    void Engine::DoWrite(Variable<T> &variable, const T *values)               \
+    {                                                                          \
+        ThrowUp("Write");                                                      \
     }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+void Engine::DoWrite(VariableCompound &variable, const void *values)
+{ // TODO
 }
 
-bool Engine::TransportNamesUniqueness() const
+void Engine::DoWrite(const std::string &variableName, const void *values)
 {
-    auto lf_CheckTransportsType =
-        [&](const std::set<std::string> &specificType) -> bool
-
+    const std::string type(m_IO.GetVariableType(variableName));
+    if (m_DebugMode)
     {
-        std::set<std::string> transportNames;
-
-        for (const auto &parameters : m_Method.m_TransportParameters)
-        {
-            auto itTransport = parameters.find("transport");
-            if (m_DebugMode == true)
-            {
-                if (itTransport == parameters.end())
-                {
-                    throw std::invalid_argument("ERROR: transport not defined "
-                                                "in Method input to Engine " +
-                                                m_Name);
-                }
-            }
-
-            const std::string type(itTransport->second);
-            if (specificType.count(type) == 1) // file transports type
-            {
-                std::string name(m_Name);
-                auto itName = parameters.find("name");
-                if (itName != parameters.end())
-                {
-                    name = itName->second;
-                }
-
-                if (transportNames.count(name) == 0)
-                {
-                    transportNames.insert(name);
-                }
-                else
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
-    };
-
-    return lf_CheckTransportsType(Support::FileTransports);
-}
-
-void Engine::CheckTransportIndex(const int transportIndex)
-{
-    if (m_DebugMode == true)
-    {
-        if (transportIndex >= static_cast<int>(m_Transports.size()) ||
-            transportIndex < -1)
+        if (type.empty())
         {
             throw std::invalid_argument(
-                "ERROR: transport index " + std::to_string(transportIndex) +
-                " is out of range, in call to " + m_Name + "Close \n");
+                "ERROR: variable " + variableName +
+                " was not created with IO.DefineVariable for Engine " + m_Name +
+                ", in call to Write\n");
         }
     }
+
+    if (type == "compound")
+    {
+        DoWrite(m_IO.GetVariableCompound(variableName), values);
+    }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        DoWrite(m_IO.GetVariable<T>(variableName),                             \
+                reinterpret_cast<const T *>(values));                          \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+} // end DoWrite
+
+// READ
+VariableBase *Engine::InquireVariableUnknown(const std::string &name,
+                                             const bool readIn)
+{
+    return nullptr;
+}
+Variable<char> *Engine::InquireVariableChar(const std::string &name,
+                                            const bool readIn)
+{
+    return nullptr;
+}
+Variable<unsigned char> *Engine::InquireVariableUChar(const std::string &name,
+                                                      const bool readIn)
+{
+    return nullptr;
+}
+Variable<short> *Engine::InquireVariableShort(const std::string &name,
+                                              const bool readIn)
+{
+    return nullptr;
+}
+Variable<unsigned short> *Engine::InquireVariableUShort(const std::string &name,
+                                                        const bool readIn)
+{
+    return nullptr;
+}
+Variable<int> *Engine::InquireVariableInt(const std::string &name,
+                                          const bool readIn)
+{
+    return nullptr;
+}
+Variable<unsigned int> *Engine::InquireVariableUInt(const std::string &name,
+                                                    const bool readIn)
+{
+    return nullptr;
+}
+Variable<long int> *Engine::InquireVariableLInt(const std::string &name,
+                                                const bool readIn)
+{
+    return nullptr;
+}
+Variable<unsigned long int> *
+Engine::InquireVariableULInt(const std::string &name, const bool readIn)
+{
+    return nullptr;
+}
+Variable<long long int> *Engine::InquireVariableLLInt(const std::string &name,
+                                                      const bool readIn)
+{
+    return nullptr;
+}
+Variable<unsigned long long int> *
+Engine::InquireVariableULLInt(const std::string &name, const bool readIn)
+{
+    return nullptr;
+}
+
+Variable<float> *Engine::InquireVariableFloat(const std::string &name,
+                                              const bool readIn)
+{
+    return nullptr;
+}
+Variable<double> *Engine::InquireVariableDouble(const std::string &name,
+                                                const bool readIn)
+{
+    return nullptr;
+}
+Variable<long double> *Engine::InquireVariableLDouble(const std::string &name,
+                                                      const bool readIn)
+{
+    return nullptr;
+}
+Variable<cfloat> *Engine::InquireVariableCFloat(const std::string &name,
+                                                const bool readIn)
+{
+    return nullptr;
+}
+Variable<cdouble> *Engine::InquireVariableCDouble(const std::string &name,
+                                                  const bool readIn)
+{
+    return nullptr;
+}
+
+Variable<cldouble> *Engine::InquireVariableCLDouble(const std::string &name,
+                                                    const bool readIn)
+{
+    return nullptr;
+}
+
+#define declare_type(T)                                                        \
+    void Engine::DoScheduleRead(Variable<T> &variable, const T *values)        \
+    {                                                                          \
+        ThrowUp("ScheduleRead");                                               \
+    }                                                                          \
+                                                                               \
+    void Engine::DoScheduleRead(const std::string &variableName,               \
+                                const T *values)                               \
+    {                                                                          \
+        ThrowUp("ScheduleRead");                                               \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+// PRIVATE
+void Engine::ThrowUp(const std::string function) const
+{
+    throw std::invalid_argument("ERROR: Engine derived class " + m_EngineType +
+                                " doesn't implement function " + function +
+                                "\n");
 }
 
 } // end namespace adios

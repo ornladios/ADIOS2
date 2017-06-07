@@ -3,5 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(write)
-add_subdirectory(read)
+
+if(ADIOS_USE_ADIOS1)
+  add_subdirectory(write)
+  add_subdirectory(read)
+endif()
+
+

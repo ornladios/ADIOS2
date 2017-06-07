@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
     const bool adiosDebug = true;
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios(MPI_COMM_WORLD, adios::Verbose::WARN);
+    adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
 #else
-    adios::ADIOS adios(adios::Verbose::WARN);
+    adios::ADIOS adios(adios::DebugON);
 #endif
 
     // Info variables from the file
@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
     {
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios::Method &bpReaderSettings = adios.DeclareMethod("input");
-        if (!bpReaderSettings.IsUserDefined())
+        adios::IO &bpReaderSettings = adios.DeclareIO("input");
+        if (!bpReaderSettings.InConfigFile())
         {
             // if not defined by user, we can change the default settings
             bpReaderSettings.SetEngine(
@@ -122,9 +122,10 @@ int main(int argc, char *argv[])
         // Default behavior
         // auto bpReader = adios.Open( "myNumbers.bp", "r" );
         // this would just open with a default transport, which is "BP"
-        auto bpReader = adios.Open("myNumbers.bp", "r", bpReaderSettings);
+        auto bpReader =
+            bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::Read);
 
-        if (bpReader == nullptr)
+        if (!bpReader)
             throw std::ios_base::failure(
                 "ERROR: failed to open ADIOS bpReader\n");
 
@@ -132,7 +133,7 @@ int main(int argc, char *argv[])
          * own
          * number of steps */
 
-        adios::Variable<int> *vNproc = bpReader->InquireVariableInt("Nproc");
+        adios::Variable<int> *vNproc = bpReader->InquireVariable<int>("Nproc");
         Nwriters = vNproc->m_Data[0];
         if (rank == 0)
             std::cout << "# of writers = " << Nwriters << std::endl;
@@ -142,7 +143,7 @@ int main(int argc, char *argv[])
          */
         // read a Global scalar which has a single value in a step
         adios::Variable<unsigned int> *vNX =
-            bpReader->InquireVariableUInt("NX");
+            bpReader->InquireVariable<unsigned int>("NX");
         Nx = vNX->m_Data[0];
         // bpReader->Read<unsigned int>("NX", &Nx);
         if (rank == 0)
@@ -154,19 +155,19 @@ int main(int argc, char *argv[])
            and read does not read it as array by default.
         */
         adios::Variable<unsigned int> *vNY =
-            bpReader->InquireVariableUInt("NY");
-        Nys.resize(vNY->GetNSteps()); // number of steps available
+            bpReader->InquireVariable<unsigned int>("NY");
+        Nys.resize(vNY->m_AvailableSteps); // number of steps available
         // make a StepSelection to select multiple steps. Args: From, #of
         // consecutive steps
         // ? How do we make a selection for an arbitrary list of steps ?
-        vNY->SetStepSelection(0, vNY->GetNSteps());
+        vNY->SetStepSelection(0, vNY->m_AvailableSteps);
         bpReader->Read<unsigned int>(*vNY, Nys.data());
         if (rank == 0)
             Print1DArray(Nys.data(), Nys.size(), "NY");
 
         /* ProcessID */
         adios::Variable<int> *vProcessID =
-            bpReader->InquireVariableInt("ProcessID");
+            bpReader->InquireVariable<int>("ProcessID");
         if (vProcessID->m_Shape[0] != Nwriters)
         {
             std::cout << "ERROR: Unexpected array size of ProcessID = "
@@ -183,13 +184,13 @@ int main(int argc, char *argv[])
         // elements.
         // We can read all steps into a 2D array of nproc * Nwriters
         adios::Variable<unsigned int> *vNparts =
-            bpReader->InquireVariableUInt("Nparts");
+            bpReader->InquireVariable<unsigned int>("Nparts");
         unsigned int **Nparts =
-            Make2DArray<unsigned int>(vNparts->GetNSteps(), Nwriters);
-        vNparts->SetStepSelection(0, vNparts->GetNSteps());
+            Make2DArray<unsigned int>(vNparts->m_AvailableSteps, Nwriters);
+        vNparts->SetStepSelection(0, vNparts->m_AvailableSteps);
         bpReader->Read<unsigned int>(*vNparts, Nparts[0]);
         if (rank == 0)
-            Print2DArray(Nparts, vNparts->GetNSteps(), Nwriters, "Nparts");
+            Print2DArray(Nparts, vNparts->m_AvailableSteps, Nwriters, "Nparts");
         Delete2DArray(Nparts);
 #ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
@@ -200,7 +201,7 @@ int main(int argc, char *argv[])
          */
         // inquiry about a variable, whose name we know
         adios::Variable<double> *vGlobalArrayFixedDims =
-            bpReader->InquireVariableDouble("GlobalArrayFixedDims");
+            bpReader->InquireVariable<double>("GlobalArrayFixedDims");
 
         if (vGlobalArrayFixedDims == nullptr)
             throw std::ios_base::failure(
@@ -221,43 +222,39 @@ int main(int argc, char *argv[])
             std::cout << "GlobalArrayFixedDims parallel read" << std::endl;
 
         double **GlobalArrayFixedDims =
-            Make2DArray<double>(vGlobalArrayFixedDims->GetNSteps(), count);
+            Make2DArray<double>(vGlobalArrayFixedDims->m_AvailableSteps, count);
 
         // Make a 1D selection to describe the local dimensions of the variable
         // we READ and its offsets in the global spaces
         vGlobalArrayFixedDims->SetSelection({start}, {count});
         vGlobalArrayFixedDims->SetStepSelection(
-            0, vGlobalArrayFixedDims->GetNSteps());
+            0, vGlobalArrayFixedDims->m_AvailableSteps);
         bpReader->Read<double>(*vGlobalArrayFixedDims, GlobalArrayFixedDims[0]);
 #ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Status status;
-#endif
-
         int token = 0;
-#ifdef ADIOS2_HAVE_MPI
         if (rank > 0)
             MPI_Recv(&token, 1, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, &status);
+#endif
         std::cout << "Rank " << rank << " read start = " << start
                   << " count = " << count << std::endl;
-#endif
-        Print2DArray(GlobalArrayFixedDims, vGlobalArrayFixedDims->GetNSteps(),
-                     count, "GlobalArrayFixedDims");
+        Print2DArray(GlobalArrayFixedDims,
+                     vGlobalArrayFixedDims->m_AvailableSteps, count,
+                     "GlobalArrayFixedDims");
 #ifdef ADIOS2_HAVE_MPI
         if (rank < nproc - 1)
             MPI_Send(&token, 1, MPI_INT, rank + 1, 0, MPI_COMM_WORLD);
-#endif
-        Delete2DArray(GlobalArrayFixedDims);
-#ifdef ADIOS2_HAVE_MPI
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
+        Delete2DArray(GlobalArrayFixedDims);
 
         /*
          * LocalArrayFixedDims
          */
         // inquiry about a variable, whose name we know
         adios::Variable<float> *vLocalArrayFixedDims =
-            bpReader->InquireVariableFloat("LocalArrayFixedDims");
+            bpReader->InquireVariable<float>("LocalArrayFixedDims");
         if (vLocalArrayFixedDims->m_Shape[0] != adios::IrregularDim)
         {
             throw std::ios_base::failure(
@@ -276,9 +273,9 @@ int main(int argc, char *argv[])
          */
         // inquiry about a variable, whose name we know
         adios::Variable<float> *vLocalArrayFixedDimsJoined =
-            bpReader->InquireVariableFloat("LocalArrayFixedDimsJoined");
+            bpReader->InquireVariable<float>("LocalArrayFixedDimsJoined");
         float **LocalArrayFixedDimsJoined =
-            Make2DArray<float>(vLocalArrayFixedDimsJoined->GetNSteps(),
+            Make2DArray<float>(vLocalArrayFixedDimsJoined->m_AvailableSteps,
                                vLocalArrayFixedDimsJoined->m_Shape[0]);
 
         // Make a 1D selection to describe the local dimensions of the variable
@@ -286,12 +283,12 @@ int main(int argc, char *argv[])
         vLocalArrayFixedDimsJoined->SetSelection(
             {0}, {vLocalArrayFixedDimsJoined->m_Shape[0]});
         vLocalArrayFixedDimsJoined->SetStepSelection(
-            0, vLocalArrayFixedDimsJoined->GetNSteps());
+            0, vLocalArrayFixedDimsJoined->m_AvailableSteps);
         bpReader->Read<float>(*vLocalArrayFixedDimsJoined,
                               LocalArrayFixedDimsJoined[0]);
         if (rank == 0)
             Print2DArray(LocalArrayFixedDimsJoined,
-                         vLocalArrayFixedDimsJoined->GetNSteps(),
+                         vLocalArrayFixedDimsJoined->m_AvailableSteps,
                          vLocalArrayFixedDimsJoined->m_Shape[0],
                          "LocalArrayFixedDimsJoined");
         Delete2DArray(LocalArrayFixedDimsJoined);
@@ -304,7 +301,7 @@ int main(int argc, char *argv[])
          */
         // inquiry about a variable, whose name we know
         adios::Variable<double> *vGlobalArray =
-            bpReader->InquireVariableDouble("GlobalArray");
+            bpReader->InquireVariable<double>("GlobalArray");
         std::cout << "GlobalArray [" << vGlobalArray->m_Shape[0] << "]";
         std::cout << " = Cannot read this variable yet...\n";
         if (vGlobalArray->m_Shape[0] != adios::IrregularDim)
