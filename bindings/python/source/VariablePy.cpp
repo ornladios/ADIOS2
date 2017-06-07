@@ -5,10 +5,10 @@
  * VariablePy.cpp
  *
  *  Created on: Mar 17, 2017
- *      Author: wfg
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2/VariablePy.h"
+#include "VariablePy.h"
 
 namespace adios
 {
