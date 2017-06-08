@@ -11,6 +11,7 @@ add_library(adios2
   core/SelectionBoundingBox.cpp
   core/SelectionPoints.cpp
   core/Transform.cpp
+  core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
   

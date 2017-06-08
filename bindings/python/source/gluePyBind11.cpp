@@ -10,31 +10,33 @@
 
 #include <stdexcept>
 
+#include <adios2.h>
 #include <mpi4py/mpi4py.h>
-#include <pybind11.h>
+#include <pybind11/pybind11.h>
 
-#include "bindings/python/source/ADIOSPy.h"
-#include "bindings/python/source/EnginePy.h"
-#include "bindings/python/source/IOPy.h"
+#include "ADIOSPy.h"
+#include "EnginePy.h"
+#include "IOPy.h"
+#include "VariablePy.h"
+#include "adiosPyTypes.h"
 
-namespace py = pybind11;
-
-adios::ADIOSPy ADIOSPy(py::object py_comm, const bool debugMode)
+adios::ADIOSPy ADIOSPyInit(adios::pyObject py_comm, const bool debugMode)
 {
-    MPI_Comm *comm_p = PyMPIComm_Get(py_comm.ptr());
+    MPI_Comm *mpiCommPtr = PyMPIComm_Get(py_comm.ptr());
 
     if (debugMode)
     {
-        if (comm_p == NULL)
+        if (mpiCommPtr == NULL)
         {
-            py::error_already_set(
-                "ERROR: mpi4py communicator in ADIOS in null\n");
+            throw std::runtime_error(
+                "ERROR: mpi4py communicator is null, in call "
+                "to ADIOS constructor\n");
         }
     }
-    return adios::ADIOSPy(*comm_p, debugMode);
+    return adios::ADIOSPy(*mpiCommPtr, debugMode);
 }
 
-PYBIND11_PLUGIN(ADIOSPy)
+PYBIND11_PLUGIN(adios2py)
 {
     if (import_mpi4py() < 0)
     {
@@ -42,31 +44,42 @@ PYBIND11_PLUGIN(ADIOSPy)
             "ERROR: mpi4py not loaded correctly\n"); /* Python 2.X */
     }
 
-    py::module m("ADIOSPy", "ADIOS Python bindings using pybind11");
+    pybind11::module m("adios2py", "ADIOS2 Python bindings using pybind11");
+    m.attr("DebugON") = true;
+    m.attr("DebugOFF") = false;
+    m.attr("Write") = static_cast<int>(adios::OpenMode::Write);
+    m.attr("Read") = static_cast<int>(adios::OpenMode::Read);
+    m.attr("Append") = static_cast<int>(adios::OpenMode::Append);
+    m.attr("ReadWrite") = static_cast<int>(adios::OpenMode::ReadWrite);
+    m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS object");
 
-    m.def("ADIOSPy", &ADIOSPy, "Function that creates an ADIOS object");
+    pybind11::class_<adios::ADIOSPy>(m, "ADIOSPy")
+        .def("DeclareIO", &adios::ADIOSPy::DeclareIO);
 
-    py::class_<adios::ADIOSPy>(m, "ADIOS")
-        .def("HelloMPI", &adios::ADIOSPy::HelloMPI)
-        //.def("DefineVariable", &adios::ADIOSPy::DefineVariablePy)
-        .def("DeclareIO", &adios::ADIOSPy::DeclareIOPy,
-             py::return_value_policy::reference_internal)
-        //.def("Open", &adios::ADIOSPy::OpenPy);
+    pybind11::class_<adios::IOPy>(m, "IOPy")
+        .def("SetParameters", &adios::IOPy::SetParameters)
+        .def("AddTransport", &adios::IOPy::AddTransport)
+        .def("DefineVariable", &adios::IOPy::DefineVariable)
+        .def("Open", &adios::IOPy::Open);
 
-        py::class_<adios::VariablePy>(m, "Variable")
-        .def("SetLocalDimensions", &adios::VariablePy::SetLocalDimensions)
-        .def("GetLocalDimensions", &adios::VariablePy::GetLocalDimensions);
+    pybind11::class_<adios::VariablePy>(m, "VariablePy")
+        .def("SetDimensions", &adios::VariablePy::SetDimensions);
 
-    py::class_<adios::IOPy>(m, "IO")
-        .def("SetParameters", &adios::IOPy::SetParametersPy)
-        .def("AddTransport", &adios::IOPy::AddTransportPy)
-        .def("PrintAll", &adios::MethodPy::PrintAll);
-
-    // Engine
-    py::class_<adios::EnginePy>(m, "Engine")
-        .def("Write", &adios::EnginePy::WritePy)
-        .def("Advance", &adios::EnginePy::WritePy)
+    pybind11::class_<adios::EnginePy>(m, "EnginePy")
+        .def("Write", &adios::EnginePy::Write)
+        .def("Advance", &adios::EnginePy::Advance)
         .def("Close", &adios::EnginePy::Close);
+
+    // Trying overloaded function
+    // (adios::EnginePy (adios::IOPy::*)(
+    //                 const std::string &, const adios::OpenMode,
+    //                 adios::pyObject)) &
+    //                 &adios::IOPy::Open)
+    //        .def("Open", (adios::EnginePy (adios::IOPy::*)(const std::string
+    //        &,
+    //                                                       const
+    //                                                       adios::OpenMode)) &
+    //                         &adios::IOPy::Open);
 
     return m.ptr();
 }

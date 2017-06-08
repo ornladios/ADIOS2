@@ -22,7 +22,6 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/SelectionBoundingBox.h"
 #include "adios2/core/Transform.h"
-#include "adios2/helper/adiosFunctions.h"
 
 namespace adios
 {
@@ -41,10 +40,10 @@ public:
      *  VariableCompound -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
 
-    ShapeID m_ShapeID;                  ///< see shape types in ADIOSTypes.h
-    bool m_SingleValue = false;         ///< true: single value, false: array
-    const bool m_ConstantShape = false; ///< true: fix m_Shape, m_Start, m_Count
-    Dims m_Shape;                       ///< total dimensions across MPI
+    ShapeID m_ShapeID;                 ///< see shape types in ADIOSTypes.h
+    bool m_SingleValue = false;        ///< true: single value, false: array
+    const bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
+    Dims m_Shape;                      ///< total dimensions across MPI
     Dims m_Start; ///< starting point (offsets) in global shape
     Dims m_Count; ///< dimensions from m_Start in global shape
 
@@ -106,14 +105,11 @@ public:
     void SetStepSelection(const unsigned int startStep,
                           const unsigned int countStep);
 
-    template <class... Args>
-    void AddTransform(Transform &transform, Args... args)
-    {
-        std::vector<std::string> parameters = {args...};
-        m_TransformsInfo.emplace_back(
-            transform,
-            BuildParametersMap(parameters, m_DebugMode)); // need to check
-    }
+    void AddTransform(Transform &transform,
+                      const std::vector<std::string> &parametersVector);
+
+    void AddTransform(Transform &transform,
+                      const Params &parametersVector = Params());
 
     /** Apply current sequence of transforms defined by AddTransform */
     virtual void ApplyTransforms() = 0;
@@ -136,9 +132,9 @@ private:
         /** reference to object derived from Transform class */
         Transform &Object;
         /** parameters from AddTransform */
-        std::map<std::string, std::string> Parameters;
+        Params Parameters;
         /** resulting sizes from transformation */
-        std::vector<std::size_t> Sizes;
+        Dims Sizes;
     };
 
     /**

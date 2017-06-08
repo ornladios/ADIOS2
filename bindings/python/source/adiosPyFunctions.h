@@ -8,55 +8,33 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_PYTHON_SOURCE_ADIOSPYFUNCTIONS_H_
-#define BINDINGS_PYTHON_SOURCE_ADIOSPYFUNCTIONS_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPYFUNCTIONS_H_
+#define ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPYFUNCTIONS_H_
 
 #include <map>
 #include <string>
 #include <vector>
 
 #include "adios2/ADIOSTypes.h"
-#include "bindings/python/source/adiosPyTypes.h"
+#include "adiosPyTypes.h"
 
 namespace adios
 {
 
 /**
- * Transforms a boost python list to a Dims (std::vector<std::size_t>) object
- * @param list input boost python list from python program
- * @return Dims (std::vector<std::size_t>) object than can be passed to python
+ * Python list to vector of dimensions (Dims)
+ * @param list python list of numbers
+ * @return adios::Dims
  */
-Dims ListToVector(const pyList &list);
+Dims PyListToDims(const pyList list);
 
-std::map<std::string, std::string> KwargsToMap(const pyKwargs &dictionary);
-
-template <class T>
-const T *PyArrayToPointer(const pyArray &array)
-{
-
-    return reinterpret_cast<const T *>(array.data());
-}
-
-template <class T>
-bool IsType(const pyArray &array)
-{
-    bool isType = false;
-
-    if (pybind11::isinstance<pybind11::array_t<T>>(array))
-    {
-        isType = true;
-    }
-
-    return isType;
-}
-
-template <class T, class U>
-T PyCast(U object)
-{
-    return pybind11::cast<T>(object);
-}
-
-bool IsEmpty(pyObject object);
+/**
+ * Python dictionary kwargs to adios::Params (std::map<std::string,
+ * std::string>)
+ * @param kwargs dictionary
+ * @return adios::Params
+ */
+Params KwargsToParams(const pyKwargs &kwargs);
 
 } // end namespace adios
 

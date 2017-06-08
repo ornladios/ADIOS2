@@ -14,25 +14,10 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //BuildParametersMap
+#include "IO.h"
 
 namespace adios
 {
-
-template <class... Args>
-void IO::SetParameters(Args... args)
-{
-    std::vector<std::string> parameters = {args...};
-    m_Parameters = BuildParametersMap(parameters, m_DebugMode);
-}
-
-template <class... Args>
-unsigned int IO::AddTransport(const std::string type, Args... args)
-{
-    std::vector<std::string> parameters = {args...};
-    return AddTransportParameters(type, parameters);
-}
 
 template <class T>
 VariableCompound &IO::DefineVariableCompound(const std::string &name,
@@ -44,16 +29,16 @@ VariableCompound &IO::DefineVariableCompound(const std::string &name,
     {
         if (VariableExists(name))
         {
-            std::invalid_argument("ERROR: variable " + name +
-                                  " exists in IO object " + m_Name +
-                                  ", in call to DefineVariable\n");
+            throw std::invalid_argument("ERROR: variable " + name +
+                                        " exists in IO object " + m_Name +
+                                        ", in call to DefineVariable\n");
         }
     }
     const unsigned int size = m_Compound.size();
     auto itVariableCompound = m_Compound.emplace(
         size, VariableCompound(name, sizeof(T), shape, start, count,
                                constantShape, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
+    m_Variables.emplace(name, std::make_pair("compound", size));
     return itVariableCompound.first->second;
 }
 

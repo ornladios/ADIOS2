@@ -8,10 +8,11 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_PYTHON_SOURCE_VARIABLEPY_H_
-#define BINDINGS_PYTHON_SOURCE_VARIABLEPY_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_VARIABLEPY_H_
+#define ADIOS2_BINDINGS_PYTHON_SOURCE_VARIABLEPY_H_
 
-#include "adios2/core/VariableBase.h"
+#include <adios2.h>
+
 #include "adiosPyFunctions.h"
 
 namespace adios
@@ -21,23 +22,28 @@ class VariablePy
 {
 
 public:
-    VariablePy(const std::string name, const pyList shape, const pyList start,
-               const pyList count, const bool isConstateShape);
+    const std::string m_Name;
+    pyList m_Shape;
+    pyList m_Start;
+    pyList m_Count;
+    const bool m_IsConstantDims;
 
-    ~VariablePy();
+    VariableBase *m_VariableBase = nullptr;
+    bool m_IsDefined = false;
+
+    VariablePy(const std::string &name, const pyList shape, const pyList start,
+               const pyList count, const bool isConstantDims,
+               const bool debugMode);
+
+    ~VariablePy() = default;
 
     void SetDimensions(const pyList shape, const pyList start,
                        const pyList count);
 
-    Dims GetLocalDimensions();
+    std::string GetType() const noexcept;
 
-    VariableBase *m_VariableBase = nullptr;
-    bool m_IsVariableDefined = false;
-
-    const std::string m_Name;
-    Dims m_LocalDimensions;
-    Dims m_GlobalDimensions;
-    Dims m_GlobalOffsets;
+private:
+    const bool m_DebugMode;
 };
 
 } // end namespace adios

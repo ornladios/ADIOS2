@@ -8,11 +8,12 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
+#include "adios2/helper/adiosFunctions.h" //BuildParametersMap
+
 #include "IO.h"
 #include "IO.tcc"
 
 #include "adios2/ADIOSMPI.h"
-#include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 
 #include "adios2/engine/bp/BPFileWriter.h"
 
@@ -43,6 +44,26 @@ IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
 
 void IO::SetEngine(const std::string engineType) { m_EngineType = engineType; }
 void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
+
+void IO::SetParameters(const std::vector<std::string> &parametersVector)
+{
+    m_Parameters = BuildParametersMap(parametersVector, m_DebugMode);
+}
+
+void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
+
+unsigned int IO::AddTransport(const std::string type,
+                              const std::vector<std::string> &parametersVector)
+{
+    Params parametersMap(BuildParametersMap(parametersVector, m_DebugMode));
+    return AddTransportCommon(type, parametersMap);
+}
+
+unsigned int IO::AddTransport(const std::string type, const Params &parameters)
+{
+    Params parametersMap(parameters);
+    return AddTransportCommon(type, parametersMap);
+}
 
 VariableCompound &IO::GetVariableCompound(const std::string &name)
 {
@@ -219,34 +240,15 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
 }
 
 // PRIVATE Functions
-unsigned int
-IO::AddTransportParameters(const std::string type,
-                           const std::vector<std::string> &parameters)
+unsigned int IO::AddTransportCommon(const std::string type, Params &parameters)
 {
     if (m_DebugMode)
     {
-        if (type.empty() || type.find("=") != type.npos)
-        {
-            throw std::invalid_argument(
-                "ERROR: first argument in AddTransport must "
-                "be a single word for transport\n");
-        }
+        CheckTransportType(type);
     }
 
-    Params mapParameters = BuildParametersMap(parameters, m_DebugMode);
-
-    if (m_DebugMode)
-    {
-        if (mapParameters.count("transport") == 1)
-        {
-            std::invalid_argument("ERROR: transport can't be redefined with "
-                                  "\"transport=type\", "
-                                  "type must be the first argument\n");
-        }
-    }
-
-    mapParameters["transport"] = type;
-    m_TransportsParameters.push_back(std::move(mapParameters));
+    parameters["transport"] = type;
+    m_TransportsParameters.push_back(parameters);
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
 }
 
@@ -274,6 +276,18 @@ bool IO::VariableExists(const std::string &name) const
         exists = true;
     }
     return exists;
+}
+
+void IO::CheckTransportType(const std::string type) const
+{
+    if (type.empty() || type.find("=") != type.npos)
+    {
+        throw std::invalid_argument(
+            "ERROR: wrong first argument " + type +
+            ", must "
+            "be a single word for a supported transport type, in "
+            "call to IO AddTransport \n");
+    }
 }
 
 // Explicitly instantiate the necessary public template implementations

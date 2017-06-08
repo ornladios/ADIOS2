@@ -5,61 +5,54 @@
  * EnginePy.h
  *
  *  Created on: Mar 15, 2017
- *      Author: wgodoy
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_PYTHON_SOURCE_ENGINEPY_H_
-#define BINDINGS_PYTHON_SOURCE_ENGINEPY_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_ENGINEPY_H_
+#define ADIOS2_BINDINGS_PYTHON_SOURCE_ENGINEPY_H_
 
-#include "ADIOSPy.h"
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <memory> //std::shared_ptr
+#include <string>
+/// \endcond
+
+#include <adios2.h>
+
 #include "VariablePy.h"
-#include "adios2/core/Engine.h"
-#include "adiosPyFunctions.h"
+#include "adiosPyTypes.h" //pyArray
 
 namespace adios
 {
+
 class EnginePy
 {
 
 public:
-    EnginePy();
+    EnginePy(IO &io, const std::string &name, const OpenMode openMode,
+             MPI_Comm mpiComm);
 
-    ~EnginePy();
+    ~EnginePy() = default;
 
-    Engine *m_Engine;
+    void Write(VariablePy &variable, const pyArray &array);
 
-    void WritePy(VariablePy &variable, const pyArray &array);
-
-    void Advance();
+    void Advance(const float timeoutSeconds = 0.);
 
     void Close();
 
 private:
-    template <class T>
-    void DefineVariableInADIOS(VariablePy &variable);
+    IO &m_IO;
+    std::shared_ptr<Engine> m_Engine;
+    const bool m_DebugMode;
 
     template <class T>
-    void WriteVariableInADIOS(VariablePy &variable, const pyArray &array);
+    void DefineVariableInIO(VariablePy &variable);
 
-    //    template <class T>
-    //    void DefineVariableInADIOS(VariablePy &variable)
-    //    {
-    //        auto &var = m_ADIOSPy.DefineVariable<T>(
-    //            variable.m_Name, variable.m_LocalDimensions,
-    //            variable.m_GlobalDimensions, variable.m_GlobalOffsets);
-    //        variable.m_VariablePtr = &var;
-    //        variable.m_IsVariableDefined = true;
-    //    }
-    //
-    //    template <class T>
-    //    void WriteVariableInADIOS(VariablePy &variable, const pyArray &array)
-    //    {
-    //        m_Engine->Write(
-    //            *reinterpret_cast<Variable<T> *>(variable.m_VariablePtr),
-    //            PyArrayToPointer<T>(array));
-    //    }
+    template <class T>
+    void WriteInIO(VariablePy &variable, const pyArray &array);
 };
 
-} // end namespace
+} // end namespace adios
+
+#include "EnginePy.inl"
 
 #endif /* BINDINGS_PYTHON_SOURCE_ENGINEPY_H_ */

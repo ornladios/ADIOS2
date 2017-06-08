@@ -8,10 +8,14 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_PYTHON_SOURCE_IOPY_H_
-#define BINDINGS_PYTHON_SOURCE_IOPY_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_IOPY_H_
+#define ADIOS2_BINDINGS_PYTHON_SOURCE_IOPY_H_
 
-#include "adios2/core/IO.h"
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+/// \endcond
+
+#include "EnginePy.h"
 #include "adiosPyTypes.h"
 
 namespace adios
@@ -21,23 +25,23 @@ class IOPy
 {
 
 public:
+    IO &m_IO;
+    const bool m_DebugMode;
+
     IOPy(IO &io, const bool debugMode);
 
     ~IOPy() = default;
 
-    void SetParameters(const pyKwargs kwargs);
-    unsigned int AddTransport(const std::string type, const pyKwargs kwargs);
+    void SetParameters(const pyKwargs &kwargs);
+    unsigned int AddTransport(const std::string type, const pyKwargs &kwargs);
 
     VariablePy DefineVariable(const std::string &name, const pyList shape,
                               const pyList start, const pyList count,
-                              const bool isConstantShape = false);
+                              const bool isConstantDims);
 
-    EnginePy Open(const std::string name, const std::string openMode,
-                  pyObject py_comm = pyObject());
+    EnginePy Open(const std::string &name, const int openMode);
 
-private:
-    IO &m_IO;
-    const bool m_DebugMode;
+    // EnginePy Open(const std::string &name, const OpenMode openMode);
 };
 
 } // end namespace adios

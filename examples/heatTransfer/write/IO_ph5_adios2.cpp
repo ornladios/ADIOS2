@@ -39,7 +39,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
         const std::string aggregatorsParam("Aggregators=" +
                                            std::to_string((s.nproc + 1) / 2));
-        h5io.SetParameters("have_metadata_file=yes", aggregatorsParam);
+        h5io.SetParameters({"have_metadata_file=yes", aggregatorsParam});
     }
 
     //    ad->DefineScalar<unsigned int>("gndx", true);

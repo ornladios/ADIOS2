@@ -18,10 +18,9 @@
 #include <vector>
 /// \endcond
 
-#include "VariableBase.h"
-#include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Transform.h"
+#include "adios2/core/VariableBase.h"
 
 namespace adios
 {
@@ -61,7 +60,5 @@ public:
 };
 
 } // end namespace adios
-
-#include "Variable.inl"
 
 #endif /* ADIOS2_CORE_VARIABLE_H_ */

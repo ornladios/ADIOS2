@@ -16,6 +16,8 @@
 #include <set>
 /// \endcond
 
+#include "adios2/helper/adiosFunctions.h" //GetType<T>
+
 namespace adios
 {
 

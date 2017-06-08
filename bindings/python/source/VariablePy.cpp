@@ -13,29 +13,35 @@
 namespace adios
 {
 
-VariablePy::VariablePy(const std::string name, const pyList localDimensionsPy,
-                       const pyList globalDimensionsPy,
-                       const pyList globalOffsetsPy)
-: m_Name{name}, m_LocalDimensions{ListToVector(localDimensionsPy)},
-  m_GlobalDimensions{ListToVector(globalDimensionsPy)},
-  m_GlobalOffsets{ListToVector(globalOffsetsPy)}
+VariablePy::VariablePy(const std::string &name, const pyList shape,
+                       const pyList start, const pyList count,
+                       const bool isConstantDims, const bool debugMode)
+: m_Name(name), m_Shape(shape), m_Start(count), m_Count(count),
+  m_IsConstantDims(isConstantDims), m_DebugMode(debugMode)
 {
 }
 
-VariablePy::~VariablePy() {}
-
-void VariablePy::SetLocalDimensions(const pyList list)
+void VariablePy::SetDimensions(const pyList shape, const pyList start,
+                               const pyList count)
 {
-    //      this->m_Dimensions = ListToVector( list );
+    if (m_DebugMode)
+    {
+        if (m_IsConstantDims)
+        {
+            throw std::invalid_argument(
+                "ERROR: variable " + m_Name +
+                " dimensions are constant, in call from SetDimensions\n");
+        }
+    }
+
+    m_Shape = shape;
+    m_Start = start;
+    m_Count = count;
 }
 
-void VariablePy::SetGlobalDimensionsAndOffsets(const pyList globalDimensions,
-                                               const pyList globalOffsets)
+std::string VariablePy::GetType() const noexcept
 {
-    //        this->m_GlobalDimensions = ListToVector( globalDimensions );
-    //        this->m_GlobalOffsets = ListToVector( globalOffsets );
+    return m_VariableBase->m_Type;
 }
 
-Dims VariablePy::GetLocalDimensions() { return this->m_LocalDimensions; }
-
-} // end namespace
+} // end namespace adios

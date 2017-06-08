@@ -8,15 +8,16 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_PYTHON_SOURCE_ADIOSPYTYPES_H_
-#define BINDINGS_PYTHON_SOURCE_ADIOSPYTYPES_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPYTYPES_H_
+#define ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPYTYPES_H_
 
+#include <adios2.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pytypes.h>
 
 namespace adios
 {
-// python
+// pytypes
 using pyObject = pybind11::object;
 using pyTuple = pybind11::tuple;
 using pyDict = pybind11::dict;

@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
         adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
         adios::IO &dataManIO = adios.DeclareIO("WANIO");
         dataManIO.SetEngine("DataManWriter");
-        dataManIO.SetParameters("peer-to-peer=yes", "real_time=yes",
-                                "compress=no", "method=dump");
+        dataManIO.SetParameters({"peer-to-peer=yes", "real_time=yes",
+                                 "compress=no", "method=dump"});
 
         // Define variable and local size
         auto bpFloats =

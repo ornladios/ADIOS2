@@ -49,15 +49,15 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
             if (equalPosition == parameter.npos)
             {
                 throw std::invalid_argument(
-                    "ERROR: wrong format for parameter " + parameter +
-                    ", format must be field=value \n");
+                    "ERROR: wrong format for IO parameter " + parameter +
+                    ", format must be key=value for each entry \n");
             }
 
             if (equalPosition == parameter.size() - 1)
             {
-                throw std::invalid_argument("ERROR: empty value in parameter " +
-                                            parameter +
-                                            ", format must be field=value \n");
+                throw std::invalid_argument(
+                    "ERROR: empty value in IO parameter " + parameter +
+                    ", format must be key=value \n");
             }
         }
 

@@ -13,7 +13,7 @@
 
 #include "VariableCompound.h"
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/helper/adiosFunctions.h" //GetType
 
 namespace adios
 {
