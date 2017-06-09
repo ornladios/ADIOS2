@@ -8,11 +8,16 @@ MPICC:=mpic++
 CPPFiles:=$(shell find ./source -type f -name "*.cpp")
 OBJS:=$(patsubst %.cpp, ./bin/%.o, $(notdir $(CPPFiles)) )
 
-# Python
+# Python 2.7
 PYTHON_VERSION:= 2.7
 PYTHON_INC:= /usr/include/python$(PYTHON_VERSION)
 PYTHON_LIBLOC:= /usr/lib/python$(PYTHON_VERSION)/config-x86_64-linux-gnu/
- 
+
+# Python 3.5 ...doesn't work ImportError: dynamic module does not define init function (initadios2py)
+#PYTHON_VERSION:= 3.5
+#PYTHON_INC:= /usr/include/python$(PYTHON_VERSION)
+#PYTHON_LIBLOC:= /usr/lib/python$(PYTHON_VERSION)/config-3.5m-x86_64-linux-gnu/
+# 
 
 # ADIOS2
 ADIOS2_INC:= /usr/local/include

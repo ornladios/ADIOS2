@@ -5,16 +5,15 @@
  * adiosPyFunctions.cpp
  *
  *  Created on: Mar 13, 2017
- *      Author: wfg
+ *      Author: William F Godoy godoywf@ornl.gov
  */
-#include <iostream>
 
 #include "adiosPyFunctions.h"
 
 namespace adios
 {
 
-Dims PyListToDims(const pyList list)
+Dims PyListToDims(const pyList list) noexcept
 {
     const unsigned int length = pybind11::len(list);
     Dims dimensions;
@@ -28,7 +27,7 @@ Dims PyListToDims(const pyList list)
     return dimensions;
 }
 
-Params KwargsToParams(const pyKwargs &kwargs)
+Params KwargsToParams(const pyKwargs &kwargs) noexcept
 {
     Params parameters;
 

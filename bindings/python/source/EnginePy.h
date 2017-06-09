@@ -37,7 +37,7 @@ public:
 
     void Advance(const float timeoutSeconds = 0.);
 
-    void Close();
+    void Close(const int transportIndex = -1);
 
 private:
     IO &m_IO;

@@ -32,16 +32,25 @@ public:
 
     ~IOPy() = default;
 
-    void SetParameters(const pyKwargs &kwargs);
-    unsigned int AddTransport(const std::string type, const pyKwargs &kwargs);
+    void SetEngine(const std::string engineType);
 
-    VariablePy DefineVariable(const std::string &name, const pyList shape,
-                              const pyList start, const pyList count,
-                              const bool isConstantDims);
+    void SetParameters(const pyKwargs &kwargs) noexcept;
+    unsigned int AddTransport(const std::string type,
+                              const pyKwargs &kwargs) noexcept;
+
+    VariablePy &DefineVariable(const std::string &name, const pyList shape,
+                               const pyList start, const pyList count,
+                               const bool isConstantDims);
+
+    VariablePy &GetVariable(const std::string &name);
+
+    EnginePy Open(const std::string &name, const int openMode,
+                  adios::pyObject &object);
 
     EnginePy Open(const std::string &name, const int openMode);
 
-    // EnginePy Open(const std::string &name, const OpenMode openMode);
+private:
+    std::map<std::string, VariablePy> m_Variables;
 };
 
 } // end namespace adios

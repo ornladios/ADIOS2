@@ -26,7 +26,7 @@ namespace adios
  * @param list python list of numbers
  * @return adios::Dims
  */
-Dims PyListToDims(const pyList list);
+Dims PyListToDims(const pyList list) noexcept;
 
 /**
  * Python dictionary kwargs to adios::Params (std::map<std::string,
@@ -34,7 +34,7 @@ Dims PyListToDims(const pyList list);
  * @param kwargs dictionary
  * @return adios::Params
  */
-Params KwargsToParams(const pyKwargs &kwargs);
+Params KwargsToParams(const pyKwargs &kwargs) noexcept;
 
 } // end namespace adios
 

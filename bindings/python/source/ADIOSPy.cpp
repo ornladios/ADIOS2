@@ -12,8 +12,6 @@
 
 #include "adiosPyTypes.h"
 
-#include <iostream>
-
 namespace adios
 {
 
@@ -24,8 +22,6 @@ ADIOSPy::ADIOSPy(MPI_Comm mpiComm, const bool debug)
 
 IOPy ADIOSPy::DeclareIO(const std::string name)
 {
-    std::cout << "Declaring IO " << name << "\n";
-
     return IOPy(m_ADIOS.DeclareIO(name), m_DebugMode);
 }
 

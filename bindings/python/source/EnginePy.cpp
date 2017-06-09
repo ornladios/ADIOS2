@@ -63,6 +63,9 @@ void EnginePy::Advance(const float timeoutSeconds)
     m_Engine->Advance(timeoutSeconds);
 }
 
-void EnginePy::Close() { m_Engine->Close(); }
+void EnginePy::Close(const int transportIndex)
+{
+    m_Engine->Close(transportIndex);
+}
 
 } // end namespace adios
