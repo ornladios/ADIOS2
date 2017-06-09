@@ -19,7 +19,7 @@ ADIOS2_INC:= /usr/local/include
 ADIOS2_LIB:= /usr/local/lib
 
 # PyBind11
-PyBind11_INC:= /home/wfg/workspace/ADIOS2/thirdparty/pybind11/include
+PyBind11_INC:= ../../thirdparty/pybind11/include
 
 
 CFLAGS:=-c -Wall -fPIC -O0 -g -std=c++11 -Wno-deprecated-declarations

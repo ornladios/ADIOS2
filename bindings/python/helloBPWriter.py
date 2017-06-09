@@ -12,15 +12,15 @@ import numpy as np
 
 
 # User data
-myArray = np.array([1, 2, 3, 4])
+myArray = np.array([1., 2., 3., 4., 5.])
 
-print "Read " + str(Read)
+print "Read " + str(adiosRead)
 
 adios = ADIOS(MPI.COMM_WORLD, True)
 
 bpIO = adios.DeclareIO("BPN2N")
 ioArray = bpIO.DefineVariable("bpArray", [myArray.size], [0], [myArray.size], True)
   
-bpFileWriter = bpIO.Open("myArray.bp", Write)
+bpFileWriter = bpIO.Open("myArray.bp", adiosWrite)
 bpFileWriter.Write(ioArray, myArray)
 bpFileWriter.Close()

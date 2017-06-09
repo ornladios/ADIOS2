@@ -16,7 +16,7 @@ namespace adios
 VariablePy::VariablePy(const std::string &name, const pyList shape,
                        const pyList start, const pyList count,
                        const bool isConstantDims, const bool debugMode)
-: m_Name(name), m_Shape(shape), m_Start(count), m_Count(count),
+: m_Name(name), m_Shape(shape), m_Start(start), m_Count(count),
   m_IsConstantDims(isConstantDims), m_DebugMode(debugMode)
 {
 }

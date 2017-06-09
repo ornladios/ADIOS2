@@ -45,13 +45,13 @@ PYBIND11_PLUGIN(adios2py)
     }
 
     pybind11::module m("adios2py", "ADIOS2 Python bindings using pybind11");
-    m.attr("DebugON") = true;
-    m.attr("DebugOFF") = false;
-    m.attr("Write") = static_cast<int>(adios::OpenMode::Write);
-    m.attr("Read") = static_cast<int>(adios::OpenMode::Read);
-    m.attr("Append") = static_cast<int>(adios::OpenMode::Append);
-    m.attr("ReadWrite") = static_cast<int>(adios::OpenMode::ReadWrite);
-    m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS object");
+    m.attr("adiosDebugON") = true;
+    m.attr("adiosDebugOFF") = false;
+    m.attr("adiosWrite") = static_cast<int>(adios::OpenMode::Write);
+    m.attr("adiosRead") = static_cast<int>(adios::OpenMode::Read);
+    m.attr("adiosAppend") = static_cast<int>(adios::OpenMode::Append);
+    m.attr("adiosReadWrite") = static_cast<int>(adios::OpenMode::ReadWrite);
+    m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS class object");
 
     pybind11::class_<adios::ADIOSPy>(m, "ADIOSPy")
         .def("DeclareIO", &adios::ADIOSPy::DeclareIO);
