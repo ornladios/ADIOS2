@@ -248,14 +248,19 @@ void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
 void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
                                       const Dims globalDimensions,
                                       const Dims offsets,
-                                      const unsigned int skip,
                                       std::vector<char> &buffer,
-                                      size_t &position) noexcept
+                                      size_t &position,
+                                      const bool isCharacteristic) noexcept
 {
-    auto lf_WriteFlaggedDim = [](std::vector<char> &buffer, size_t &position,
-                                 const size_t dimension) {
-        constexpr char no = 'n';
-        CopyToBuffer(buffer, position, &no);
+    auto lf_CopyDimension = [](std::vector<char> &buffer, size_t &position,
+                               const size_t dimension,
+                               const bool isCharacteristic) {
+        if (!isCharacteristic)
+        {
+            constexpr char no = 'n';
+            CopyToBuffer(buffer, position, &no);
+        }
+
         CopyToBuffer(buffer, position,
                      reinterpret_cast<const uint64_t *>(&dimension));
     };
@@ -263,19 +268,28 @@ void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
     // BODY Starts here
     if (offsets.empty())
     {
+        unsigned int globalBoundsSkip = 18;
+        if (isCharacteristic)
+        {
+            globalBoundsSkip = 16;
+        }
+
         for (const auto &localDimension : localDimensions)
         {
-            lf_WriteFlaggedDim(buffer, position, localDimension);
-            position += skip;
+            lf_CopyDimension(buffer, position, localDimension,
+                             isCharacteristic);
+            position += globalBoundsSkip;
         }
     }
     else
     {
         for (unsigned int d = 0; d < localDimensions.size(); ++d)
         {
-            lf_WriteFlaggedDim(buffer, position, localDimensions[d]);
-            lf_WriteFlaggedDim(buffer, position, globalDimensions[d]);
-            lf_WriteFlaggedDim(buffer, position, offsets[d]);
+            lf_CopyDimension(buffer, position, localDimensions[d],
+                             isCharacteristic);
+            lf_CopyDimension(buffer, position, globalDimensions[d],
+                             isCharacteristic);
+            lf_CopyDimension(buffer, position, offsets[d], isCharacteristic);
         }
     }
 }

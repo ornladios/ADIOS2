@@ -186,9 +186,8 @@ private:
     /** Overloaded version for data buffer */
     void WriteDimensionsRecord(const Dims localDimensions,
                                const Dims globalDimensions, const Dims offsets,
-                               const unsigned int skip,
-                               std::vector<char> &buffer,
-                               size_t &position) noexcept;
+                               std::vector<char> &buffer, size_t &position,
+                               const bool isCharacteristic = false) noexcept;
 
     /** Writes min max */
     template <class T>
