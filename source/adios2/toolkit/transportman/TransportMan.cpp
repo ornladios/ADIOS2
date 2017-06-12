@@ -123,7 +123,7 @@ TransportMan::GetTransportsProfilers() noexcept
 }
 
 void TransportMan::CloseFiles(const int transportIndex, const char *buffer,
-                              const size_t size) noexcept
+                              const size_t size)
 {
     if (transportIndex == -1)
     {
