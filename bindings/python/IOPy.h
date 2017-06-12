@@ -44,12 +44,13 @@ public:
 
     VariablePy &GetVariable(const std::string &name);
 
-    EnginePy Open(const std::string &name, const int openMode,
-                  adios::pyObject &object);
-
     EnginePy Open(const std::string &name, const int openMode);
 
 private:
+    /**
+     *  Extra map needed as Variables are not created in ADIOS at
+     *  DefineVariable, but until Write when type is known from numpy
+     */
     std::map<std::string, VariablePy> m_Variables;
 };
 

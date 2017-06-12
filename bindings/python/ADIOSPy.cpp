@@ -20,6 +20,8 @@ ADIOSPy::ADIOSPy(MPI_Comm mpiComm, const bool debug)
 {
 }
 
+ADIOSPy::ADIOSPy(const bool debug) : ADIOSPy(MPI_COMM_SELF, debug) {}
+
 IOPy ADIOSPy::DeclareIO(const std::string name)
 {
     return IOPy(m_ADIOS.DeclareIO(name), m_DebugMode);

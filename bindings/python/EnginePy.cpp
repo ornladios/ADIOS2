@@ -10,11 +10,7 @@
 
 #include "EnginePy.h"
 
-#include "adios2/ADIOSMacros.h"
-
 #include "adiosPyFunctions.h"
-
-#include <iostream>
 
 namespace adios
 {

@@ -24,7 +24,8 @@ class ADIOSPy
 {
 
 public:
-    ADIOSPy(MPI_Comm mpiComm, const bool debug = false);
+    ADIOSPy(MPI_Comm mpiComm, const bool debug);
+    ADIOSPy(const bool debug);
     ~ADIOSPy() = default;
 
     IOPy DeclareIO(const std::string name);

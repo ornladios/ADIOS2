@@ -5,7 +5,7 @@
 #
 # test_hello.py
 #  Created on: Feb 2, 2017
-#      Author: wfg
+#      Author: William F Godoy godoywf@ornl.gov
 
 from mpi4py import MPI
 import adios2
@@ -15,17 +15,17 @@ import numpy as np
 myArray = np.array([1., 2., 3., 4., 5., 6.])
 
 # ADIOS
-adios = adios2.ADIOS(MPI.COMM_WORLD, adios2.adiosDebugON)
+adios = adios2.ADIOS(MPI.COMM_WORLD, adios2.DebugON)
 
 # IO
 bpIO = adios.DeclareIO("BPN2N")
 
 # Variable
 ioArray = bpIO.DefineVariable(
-    "bpArray", [myArray.size], [0], [myArray.size], adios2.adiosConstantDims)
+    "bpArray", [myArray.size], [0], [myArray.size], adios2.ConstantDims)
 
 # Engine
-bpFileWriter = bpIO.Open("myArray.bp", adios2.adiosOpenModeWrite)
+bpFileWriter = bpIO.Open("myArray.bp", adios2.OpenModeWrite)
 # bpFileWriter = bpIO.Open("myArray.bp", adiosOpenModeWrite,
 # MPI.COMM_WORLD) //doesn't work
 bpFileWriter.Write(ioArray, myArray)

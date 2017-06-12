@@ -1,14 +1,13 @@
-# clang-format off
 #
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #
 # test_hello.py
 #  Created on: Feb 2, 2017
-#      Author: wfg
+#      Author: William F Godoy godoywf@ornl.gov
 
 from mpi4py import MPI
-import adios2 
+import adios2
 import numpy as np
 
 
@@ -22,18 +21,18 @@ myArray = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 nx = myArray.size
 
 # ADIOS
-adios = adios2.ADIOS(comm, adios2.adiosDebugON)
+adios = adios2.ADIOS(comm, adios2.DebugON)
 
 # IO
 bpIO = adios.DeclareIO("BPN2N")
 
 # Variables
 bpArray = bpIO.DefineVariable("bpArray", [size * nx], [rank * nx], [nx],
-                              adios2.adiosConstantDims)
+                              adios2.ConstantDims)
 bpTimeStep = bpIO.DefineVariable("bpTimeStep")
 
 # Engine
-bpFileWriter = bpIO.Open("myArray.bp", adios2.adiosOpenModeWrite)
+bpFileWriter = bpIO.Open("myArray.bp", adios2.OpenModeWrite)
 # Doesn't work: bpFileWriter = bpIO.Open("myArray.bp", adiosOpenModeWrite,
 #                                                      MPI.COMM_WORLD)
 

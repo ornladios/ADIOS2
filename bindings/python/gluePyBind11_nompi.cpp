@@ -2,16 +2,15 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * gluePyBind11.cpp
+ * gluePyBind11_nompi.cpp
  *
- *  Created on: Mar 16, 2017
+ *  Created on: Jun 12, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include <stdexcept>
 
 #include <adios2.h>
-#include <mpi4py/mpi4py.h>
 #include <pybind11/pybind11.h>
 
 #include "ADIOSPy.h"
@@ -21,33 +20,13 @@
 #include "adiosPyFunctions.h"
 #include "adiosPyTypes.h"
 
-adios::ADIOSPy ADIOSPyInit(adios::pyObject &object, const bool debugMode)
+adios::ADIOSPy ADIOSPyInit(const bool debugMode)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
-
-    if (import_mpi4py() < 0)
-    {
-        throw std::runtime_error("ERROR: could not import mpi4py "
-                                 "communicator, in call to ADIOS "
-                                 "constructor\n");
-    }
-
-    if (mpiCommPtr == nullptr)
-    {
-        throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
-                                 "to ADIOS constructor\n");
-    }
-    return adios::ADIOSPy(*mpiCommPtr, debugMode);
+    return adios::ADIOSPy(debugMode);
 }
 
 PYBIND11_PLUGIN(adios2)
 {
-    if (import_mpi4py() < 0)
-    {
-        throw std::runtime_error(
-            "ERROR: mpi4py not loaded correctly\n"); /* Python 2.X */
-    }
-
     pybind11::module m("adios2", "ADIOS2 Python bindings using pybind11");
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
@@ -73,10 +52,6 @@ PYBIND11_PLUGIN(adios2)
              pybind11::arg("isConstantDims") = false)
         .def("GetVariable", &adios::IOPy::GetVariable,
              pybind11::return_value_policy::reference_internal)
-        //        .def("Open", (adios::EnginePy (adios::IOPy::*)(
-        //                         const std::string &, const int,
-        //                         adios::pyObject &)) &
-        //                         adios::IOPy::Open)   doesn't work
         .def("Open", (adios::EnginePy (adios::IOPy::*)(const std::string &,
                                                        const int)) &
                          adios::IOPy::Open);

@@ -10,10 +10,6 @@
 
 #include "IOPy.h"
 
-#include <mpi4py/mpi4py.h>
-
-#include "adiosPyFunctions.h" //PyObjectToMPIComm
-
 namespace adios
 {
 
@@ -69,28 +65,6 @@ VariablePy &IOPy::GetVariable(const std::string &name)
         }
     }
     return itVariable->second;
-}
-
-EnginePy IOPy::Open(const std::string &name, const int openMode,
-                    adios::pyObject &object)
-{
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
-
-    if (import_mpi4py() < 0)
-    {
-        throw std::logic_error("ERROR: could not import mpi4py "
-                               "communicator, in call to ADIOS "
-                               "constructor\n");
-    }
-
-    if (mpiCommPtr == nullptr)
-    {
-        throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
-                                 "to ADIOS constructor\n");
-    }
-
-    return EnginePy(m_IO, name, static_cast<adios::OpenMode>(openMode),
-                    *mpiCommPtr);
 }
 
 EnginePy IOPy::Open(const std::string &name, const int openMode)
