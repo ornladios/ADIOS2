@@ -74,13 +74,14 @@ option(ADIOS_USE_BZip2 "Enable support for BZip2 transforms" OFF)
 option(ADIOS_USE_ZFP "Enable support for ZFP transforms" OFF)
 option(ADIOS_USE_ADIOS1 "Enable support for the ADIOS 1 engine" OFF)
 option(ADIOS_USE_HDF5 "Enable support for the HDF5 engine" OFF)
+option(ADIOS_USE_Python "Enable support for Python bindings" OFF)
 
 # DataMan is not a user-settable option.  It will always be enabled if the
 # platform supports it.
 set(ADIOS_USE_DataMan ${SHARED_LIBS_SUPPORTED})
 
 include(GenerateADIOSConfig)
-GenerateADIOSConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan)
+GenerateADIOSConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python)
 install(
   FILES ${ADIOS_BINARY_DIR}/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
@@ -99,6 +100,11 @@ add_subdirectory(thirdparty)
 # Main library source
 #------------------------------------------------------------------------------#
 add_subdirectory(source)
+
+#------------------------------------------------------------------------------#
+# Language bindings
+#------------------------------------------------------------------------------#
+add_subdirectory(bindings)
 
 #------------------------------------------------------------------------------#
 # Examples
@@ -143,4 +149,5 @@ message("    DataMan: ${ADIOS_USE_DataMan}")
 message("      ZeroMQ:  ${ADIOS_USE_DataMan_ZeroMQ}")
 message("      ZFP:     ${ADIOS_USE_DataMan_ZFP}")
 message("    HDF5:    ${ADIOS_USE_HDF5}")
+message("    Python:  ${ADIOS_USE_Python}")
 message("")
