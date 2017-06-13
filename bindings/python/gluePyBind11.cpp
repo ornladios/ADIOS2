@@ -52,7 +52,7 @@ adios::ADIOSPy ADIOSPyInit(const bool debugMode)
 
 PYBIND11_PLUGIN(adios2)
 {
-#ifdef ADIOS2_HAVE_MPI  
+#ifdef ADIOS2_HAVE_MPI
     if (import_mpi4py() < 0)
     {
         throw std::runtime_error(
