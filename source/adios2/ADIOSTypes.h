@@ -145,10 +145,10 @@ const std::string DefaultFileLibrary("POSIX");
 const std::string DefaultTimeUnit("Microseconds");
 constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::Microseconds);
 
-/** default initial bp buffer size in bytes */
+/** default initial bp buffer size, 16Kb, in bytes */
 constexpr size_t DefaultInitialBufferSize(16384);
-/** default maximum bp buffer size in bytes */
-constexpr size_t DefaultMaxBufferSize(1048576);
+/** default maximum bp buffer size, 16Mb, in bytes */
+constexpr size_t DefaultMaxBufferSize(16777216);
 /** default buffer growth factor (from STL vector = 2.) */
 constexpr float DefaultBufferGrowthFactor(2.);
 

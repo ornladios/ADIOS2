@@ -123,6 +123,22 @@ void BP1Writer::Advance()
     }
 
     FlattenData();
+    ++m_MetadataSet.TimeStep;
+
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at("buffering").Pause();
+    }
+}
+
+void BP1Writer::Flush()
+{
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at("buffering").Resume();
+    }
+
+    FlattenData();
 
     if (m_Profiler.IsActive)
     {
@@ -348,7 +364,6 @@ void BP1Writer::FlattenData() noexcept
         position - m_MetadataSet.DataPGLengthPosition - 8;
     CopyToBuffer(buffer, m_MetadataSet.DataPGLengthPosition, &dataPGLength);
 
-    ++m_MetadataSet.TimeStep;
     m_MetadataSet.DataPGIsOpen = false;
 }
 

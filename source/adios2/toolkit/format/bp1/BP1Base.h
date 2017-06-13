@@ -109,10 +109,10 @@ public:
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
     {
-        FAILURE,   //!< FAILURE, caught a std::bad_alloc
-        UNCHANGED, //!< UNCHANGED, no need to resize (sufficient capacity)
-        SUCCESS,   //!< SUCCESS, resize was successful
-        FLUSH      //!< FLUSH, need to flush to transports for current variable
+        Failure,   //!< FAILURE, caught a std::bad_alloc
+        Unchanged, //!< UNCHANGED, no need to resize (sufficient capacity)
+        Success,   //!< SUCCESS, resize was successful
+        Flush      //!< FLUSH, need to flush to transports for current variable
     };
 
     /**
@@ -124,7 +124,7 @@ public:
      *  2: need a transport flush
      */
     template <class T>
-    ResizeResult ResizeBuffer(const Variable<T> &variable) noexcept;
+    ResizeResult ResizeBuffer(const Variable<T> &variable);
 
 protected:
     /** might be used in large payload copies to buffer */
@@ -309,7 +309,7 @@ protected:
 
 #define declare_template_instantiation(T)                                      \
     extern template BP1Base::ResizeResult BP1Base::ResizeBuffer(               \
-        const Variable<T> &variable) noexcept;
+        const Variable<T> &variable);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

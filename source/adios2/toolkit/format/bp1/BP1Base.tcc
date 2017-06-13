@@ -113,15 +113,26 @@ int8_t BP1Base::GetDataType<cldouble>() const noexcept
 }
 
 template <class T>
-BP1Base::ResizeResult
-BP1Base::ResizeBuffer(const Variable<T> &variable) noexcept
+BP1Base::ResizeResult BP1Base::ResizeBuffer(const Variable<T> &variable)
 {
     size_t currentCapacity = m_HeapBuffer.m_Data.capacity();
     size_t variableData =
         GetVariableIndexSize(variable) + variable.PayLoadSize();
     size_t requiredCapacity = variableData + m_HeapBuffer.m_DataPosition;
 
-    ResizeResult result = ResizeResult::UNCHANGED;
+    ResizeResult result = ResizeResult::Unchanged;
+
+    if (variableData > m_MaxBufferSize)
+    {
+        throw std::runtime_error(
+            "ERROR: variable " + variable.m_Name + " data size: " +
+            std::to_string(static_cast<float>(variableData) / (1024. * 1024.)) +
+            " Mb is too large for adios2 bp MaxBufferSize=" +
+            std::to_string(static_cast<float>(m_MaxBufferSize) /
+                           (1024. * 1024.)) +
+            "Mb, try increasing MaxBufferSize in call to IO SetParameters, in "
+            "call to Write\n");
+    }
 
     if (requiredCapacity <= currentCapacity)
     {
@@ -133,7 +144,7 @@ BP1Base::ResizeBuffer(const Variable<T> &variable) noexcept
         {
             m_HeapBuffer.ResizeData(m_MaxBufferSize);
         }
-        result = ResizeResult::FLUSH;
+        result = ResizeResult::Flush;
     }
     else // buffer must grow
     {
@@ -144,7 +155,7 @@ BP1Base::ResizeBuffer(const Variable<T> &variable) noexcept
                          NextExponentialSize(requiredCapacity, currentCapacity,
                                              m_GrowthFactor));
             m_HeapBuffer.ResizeData(nextSize);
-            result = ResizeResult::SUCCESS;
+            result = ResizeResult::Success;
         }
     }
 

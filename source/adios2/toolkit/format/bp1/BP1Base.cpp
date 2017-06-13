@@ -353,7 +353,7 @@ size_t BP1Base::GetProcessGroupIndexSize(const std::string name,
 
 #define declare_template_instantiation(T)                                      \
     template BP1Base::ResizeResult BP1Base::ResizeBuffer(                      \
-        const Variable<T> &variable) noexcept;
+        const Variable<T> &variable);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

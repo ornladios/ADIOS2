@@ -68,8 +68,12 @@ public:
     template <class T>
     void WriteVariablePayload(const Variable<T> &variable) noexcept;
 
-    /** Flattens data buffer */
+    /** Flattens data buffer and closes current process group */
     void Advance();
+
+    /** Flattens data buffer and close current process group, doesn't
+     * advance time index */
+    void Flush();
 
     /**
      * @param isFirstClose true: first time close, false: already closed buffer
