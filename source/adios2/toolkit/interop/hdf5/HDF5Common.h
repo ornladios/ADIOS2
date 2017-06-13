@@ -20,6 +20,8 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
 
+#include <stdexcept> // for Intel Compiler
+
 namespace adios
 {
 namespace interop
