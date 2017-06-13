@@ -20,7 +20,11 @@ ADIOSPy::ADIOSPy(MPI_Comm mpiComm, const bool debug)
 {
 }
 
-ADIOSPy::ADIOSPy(const bool debug) : ADIOSPy(MPI_COMM_SELF, debug) {}
+ADIOSPy::ADIOSPy(const bool debug)
+: m_DebugMode(debug), m_ADIOS(debug)
+{
+}
+
 
 IOPy ADIOSPy::DeclareIO(const std::string name)
 {

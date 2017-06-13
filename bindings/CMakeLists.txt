@@ -1,6 +1,3 @@
 if(ADIOS_USE_Python)
-  if(NOT BUILD_SHARED_LIBS)
-    message(ERROR "Python bindings are only supported for shared libraries")
-  endif()
   add_subdirectory(python)
 endif()

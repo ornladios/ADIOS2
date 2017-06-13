@@ -11,8 +11,11 @@
 #include <stdexcept>
 
 #include <adios2.h>
-#include <mpi4py/mpi4py.h>
 #include <pybind11/pybind11.h>
+
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi4py/mpi4py.h>
+#endif
 
 #include "ADIOSPy.h"
 #include "EnginePy.h"
@@ -21,6 +24,7 @@
 #include "adiosPyFunctions.h"
 #include "adiosPyTypes.h"
 
+#ifdef ADIOS2_HAVE_MPI
 adios::ADIOSPy ADIOSPyInit(adios::pyObject &object, const bool debugMode)
 {
     MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
@@ -39,14 +43,22 @@ adios::ADIOSPy ADIOSPyInit(adios::pyObject &object, const bool debugMode)
     }
     return adios::ADIOSPy(*mpiCommPtr, debugMode);
 }
+#else
+adios::ADIOSPy ADIOSPyInit(const bool debugMode)
+{
+    return adios::ADIOSPy(debugMode);
+}
+#endif
 
 PYBIND11_PLUGIN(adios2)
 {
+#ifdef ADIOS2_HAVE_MPI  
     if (import_mpi4py() < 0)
     {
         throw std::runtime_error(
             "ERROR: mpi4py not loaded correctly\n"); /* Python 2.X */
     }
+#endif
 
     pybind11::module m("adios2", "ADIOS2 Python bindings using pybind11");
     m.attr("DebugON") = true;
@@ -73,10 +85,6 @@ PYBIND11_PLUGIN(adios2)
              pybind11::arg("isConstantDims") = false)
         .def("GetVariable", &adios::IOPy::GetVariable,
              pybind11::return_value_policy::reference_internal)
-        //        .def("Open", (adios::EnginePy (adios::IOPy::*)(
-        //                         const std::string &, const int,
-        //                         adios::pyObject &)) &
-        //                         adios::IOPy::Open)   doesn't work
         .def("Open", (adios::EnginePy (adios::IOPy::*)(const std::string &,
                                                        const int)) &
                          adios::IOPy::Open);

@@ -15,6 +15,8 @@
 #include <string>
 /// \endcond
 
+#include <adios2.h>
+
 #include "IOPy.h"
 
 namespace adios
