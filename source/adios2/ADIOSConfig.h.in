@@ -42,4 +42,7 @@
 /* CMake Option: ADIOS_USE_DataMan=TRUE */
 #cmakedefine ADIOS2_HAVE_DATAMAN
 
+/* CMake Option: ADIOS_USE_Python=TRUE */
+#cmakedefine ADIOS2_HAVE_Python
+
 #endif /* ADIOSCONFIG_H_ */

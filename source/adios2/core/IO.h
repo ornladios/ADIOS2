@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
+#include <set>
 #include <string>
 #include <utility> //std::pair
 #include <vector>
@@ -48,7 +49,7 @@ public:
     const bool m_DebugMode = false;
 
     /** from ADIOS class passed to Engine created with Open */
-    const std::string m_HostLanguage = "C++";
+    std::string m_HostLanguage = "C++";
 
     /** From SetParameter, parameters for a particular engine from m_Type */
     Params m_Parameters;
@@ -79,12 +80,18 @@ public:
     void SetIOMode(const IOMode mode);
 
     /**
-     * Sets parameters for the method in "parameter=value" format
-     * @param args list of parameters with format "parameter1=value1", ...,
-     * "parameterN=valueN"
+     * Sets IO parameters in "parameter=value" format
+     * @param paramsVector each vector entry with format
+     * "parameter1=value1", ..., "parameterN=valueN"
      */
-    template <class... Args>
-    void SetParameters(Args... args);
+    void SetParameters(const std::vector<std::string> &parametersVector);
+
+    /**
+     * Version that passes a map to fill out parameters
+     * initializer list = { "param1", "value1" },  {"param2", "value2"},
+     * @param params adios::Params std::map<std::string, std::string>
+     */
+    void SetParameters(const Params &parameters = Params());
 
     /**
      * Adds a transport and its parameters for the method
@@ -92,8 +99,11 @@ public:
      * @param args list of parameters for a transport with format
      * "parameter1=value1", ..., "parameterN=valueN"
      */
-    template <class... Args>
-    unsigned int AddTransport(const std::string type, Args... args);
+    unsigned int AddTransport(const std::string type,
+                              const std::vector<std::string> &paramsVector);
+
+    unsigned int AddTransport(const std::string type,
+                              const Params &params = Params());
 
     /**
      * Define a Variable of primitive data type for I/O.
@@ -124,6 +134,7 @@ public:
      * change over time
      * @return reference to Variable object
      */
+
     template <class T>
     VariableCompound &
     DefineVariableCompound(const std::string &name, const Dims shape = Dims{},
@@ -242,14 +253,12 @@ private:
     std::set<std::string> m_EngineNames;
 
     /**
-     * Called from AddTransport to transform parameter to a map
+     * Called from AddTransport overloads
      * @param type
      * @param parameters
      * @return transport index
      */
-    unsigned int
-    AddTransportParameters(const std::string type,
-                           const std::vector<std::string> &parameters);
+    unsigned int AddTransportCommon(const std::string type, Params &parameters);
 
     /** Gets the internal reference to a variable map for type T
      *  This function is specialized in IO.tcc */
@@ -265,6 +274,8 @@ private:
      * @return true: variable name exists, false: variable name doesn't exist
      */
     bool VariableExists(const std::string &name) const;
+
+    void CheckTransportType(const std::string type) const;
 };
 
 // Explicit declaration of the public template methods

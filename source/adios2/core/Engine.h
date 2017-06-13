@@ -18,6 +18,7 @@
 #include <functional> //std::function
 #include <map>
 #include <memory> //std::shared_ptr
+#include <set>
 #include <string>
 #include <vector>
 /// \endcond

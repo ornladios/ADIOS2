@@ -8,8 +8,10 @@
  *      Author: Jason Wang
  */
 
+#include <chrono>
 #include <iostream>
 #include <numeric>
+#include <thread>
 #include <vector>
 
 #include <adios2.h>
@@ -43,8 +45,9 @@ int main(int argc, char *argv[])
 
         adios::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataManReader");
-        dataManIO.SetParameters("real_time=yes", "method_type=stream",
-                                "method=dump");
+        dataManIO.SetParameters(
+            {"real_time=yes", "method_type=stream", "method=dump"});
+
         auto dataManReader =
             dataManIO.Open("myDoubles.bp", adios::OpenMode::Read);
 

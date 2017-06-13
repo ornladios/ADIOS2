@@ -15,15 +15,17 @@
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
+#include "adios2/helper/adiosFunctions.h" //GetTotalSize
+
 namespace adios
 {
 
 VariableBase::VariableBase(const std::string &name, const std::string type,
                            const size_t elementSize, const Dims shape,
                            const Dims start, const Dims count,
-                           const bool constantShape, const bool debugMode)
+                           const bool constantDims, const bool debugMode)
 : m_Name(name), m_Type(type), m_ElementSize(elementSize), m_Shape(shape),
-  m_Start(start), m_Count(count), m_ConstantShape(constantShape),
+  m_Start(start), m_Count(count), m_ConstantDims(constantDims),
   m_DebugMode(debugMode)
 {
     InitShapeType();
@@ -50,7 +52,7 @@ void VariableBase::SetSelection(const Dims start, const Dims count)
                 m_Name + ", in call to SetSelection\n");
         }
 
-        if (m_ConstantShape)
+        if (m_ConstantDims)
         {
             throw std::invalid_argument(
                 "ERROR: selection is not valid for constant shape variable " +
@@ -123,6 +125,16 @@ void VariableBase::SetStepSelection(const unsigned int startStep,
     m_ReadNSteps = countStep;
 }
 
+void VariableBase::AddTransform(
+    Transform &transform, const std::vector<std::string> &parametersVector)
+{
+}
+
+void VariableBase::AddTransform(Transform &transform,
+                                const Params &parametersVector)
+{
+}
+
 // transforms related functions
 void VariableBase::ClearTransforms() { m_TransformsInfo.clear(); }
 
@@ -133,7 +145,7 @@ void VariableBase::InitShapeType()
     {
         if (m_DebugMode)
         {
-            if (m_ConstantShape)
+            if (m_ConstantDims)
             {
                 throw std::invalid_argument(
                     "ERROR: isConstantShape (true) argument is invalid "
