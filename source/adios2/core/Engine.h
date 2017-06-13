@@ -295,7 +295,7 @@ protected:
     IO &m_IO;
 
     /** Unique name for this Engine within m_IO */
-    const std::string &m_Name;
+    const std::string m_Name;
 
     /** open mode from ADIOSTypes.h OpenMode */
     const OpenMode m_OpenMode;
