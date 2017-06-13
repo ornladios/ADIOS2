@@ -24,18 +24,6 @@ BP1Writer::BP1Writer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-size_t BP1Writer::GetProcessGroupIndexSize(const std::string name,
-                                           const std::string timeStepName,
-                                           const size_t transportsSize) const
-    noexcept
-{
-    // pgIndex + list of methods (transports)
-    size_t pgSize =
-        (name.length() + timeStepName.length() + 23) + (3 + transportsSize);
-
-    return pgSize;
-}
-
 void BP1Writer::WriteProcessGroupIndex(
     const std::string hostLanguage,
     const std::vector<std::string> &transportsTypes) noexcept
@@ -473,9 +461,6 @@ void BP1Writer::FlattenMetadata() noexcept
 // Explicit instantiation of only public templates
 
 #define declare_template_instantiation(T)                                      \
-    template BP1Writer::ResizeResult BP1Writer::ResizeBuffer(                  \
-        const Variable<T> &variable);                                          \
-                                                                               \
     template void BP1Writer::WriteVariableMetadata(                            \
         const Variable<T> &variable) noexcept;                                 \
                                                                                \

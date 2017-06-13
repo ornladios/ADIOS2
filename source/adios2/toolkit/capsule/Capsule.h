@@ -59,6 +59,8 @@ public:
     virtual size_t GetDataSize() const = 0;     ///< data buffer memory size
     virtual size_t GetMetadataSize() const = 0; ///< metadata buffer memory size
 
+    size_t GetAvailableDataSize() const;
+
     virtual void ResizeData(size_t size);     ///< resize data buffer
     virtual void ResizeMetadata(size_t size); ///< resize metadata buffer
 

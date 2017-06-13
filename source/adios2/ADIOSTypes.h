@@ -144,7 +144,13 @@ enum class SelectionType
 const std::string DefaultFileLibrary("POSIX");
 const std::string DefaultTimeUnit("Microseconds");
 constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::Microseconds);
-constexpr size_t DefaultBufferSize(16384); ///< in bytes
+
+/** default initial bp buffer size in bytes */
+constexpr size_t DefaultInitialBufferSize(16384);
+/** default maximum bp buffer size in bytes */
+constexpr size_t DefaultMaxBufferSize(1048576);
+/** default buffer growth factor (from STL vector = 2.) */
+constexpr float DefaultBufferGrowthFactor(2.);
 
 // adios alias values and types
 constexpr bool DebugON = true;

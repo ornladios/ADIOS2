@@ -5,6 +5,7 @@
 
 add_subdirectory(bpWriter)
 add_subdirectory(bpTimeWriter)
+add_subdirectory(bpFlushWriter)
 
 if(ADIOS_USE_ADIOS1)
   add_subdirectory(adios1Writer)

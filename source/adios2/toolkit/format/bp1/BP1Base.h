@@ -20,6 +20,7 @@
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/Variable.h"
 #include "adios2/toolkit/capsule/heap/STLVector.h"
 #include "adios2/toolkit/format/bp1/BP1Aggregator.h"
 #include "adios2/toolkit/format/bp1/BP1Structs.h"
@@ -44,10 +45,10 @@ public:
     capsule::STLVector m_HeapBuffer;
 
     /** memory growth factor,s set by the user */
-    float m_GrowthFactor = 1.5;
+    float m_GrowthFactor = DefaultBufferGrowthFactor;
 
     /** max buffer size, set by the user */
-    size_t m_MaxBufferSize = 0;
+    size_t m_MaxBufferSize = DefaultMaxBufferSize;
 
     /** contains bp1 format metadata indices*/
     BP1MetadataSet m_MetadataSet;
@@ -105,9 +106,7 @@ public:
      */
     std::string GetBPName(const std::string &name) const noexcept;
 
-    /**
-     * Return type of the CheckAllocation function.
-     */
+    /** Return type of the CheckAllocation function. */
     enum class ResizeResult
     {
         FAILURE,   //!< FAILURE, caught a std::bad_alloc
@@ -115,6 +114,17 @@ public:
         SUCCESS,   //!< SUCCESS, resize was successful
         FLUSH      //!< FLUSH, need to flush to transports for current variable
     };
+
+    /**
+     * @param variable
+     * @return
+     * -1: allocation failed,
+     *  0: no allocation needed,
+     *  1: reallocation is sucessful
+     *  2: need a transport flush
+     */
+    template <class T>
+    ResizeResult ResizeBuffer(const Variable<T> &variable) noexcept;
 
 protected:
     /** might be used in large payload copies to buffer */
@@ -275,7 +285,34 @@ protected:
     std::vector<uint8_t>
     GetTransportIDs(const std::vector<std::string> &transportsTypes) const
         noexcept;
+
+    /**
+     * Calculates the Process Index size in bytes according to the BP
+     * format,
+     * including list of method with no parameters (for now)
+     * @param name
+     * @param timeStepName
+     * @param transportsSize
+     * @return size of pg index
+     */
+    size_t GetProcessGroupIndexSize(const std::string name,
+                                    const std::string timeStepName,
+                                    const size_t transportsSize) const noexcept;
+
+    /**
+     * Returns the estimated variable index size
+     * @param variable
+     */
+    template <class T>
+    size_t GetVariableIndexSize(const Variable<T> &variable) const noexcept;
 };
+
+#define declare_template_instantiation(T)                                      \
+    extern template BP1Base::ResizeResult BP1Base::ResizeBuffer(               \
+        const Variable<T> &variable) noexcept;
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios

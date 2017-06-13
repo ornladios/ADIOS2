@@ -16,7 +16,6 @@ add_library(adios2
   
 #helper
   helper/adiosMath.cpp
-  helper/adiosMemory.cpp
   helper/adiosString.cpp
   helper/adiosSystem.cpp
   helper/adiosType.cpp

@@ -10,6 +10,8 @@
 
 #include "BPFileWriter.h"
 
+#include <cmath>
+
 namespace adios
 {
 
@@ -27,24 +29,52 @@ void BPFileWriter::DoWriteCommon(Variable<T> &variable, const T *values)
             m_IO.m_HostLanguage, m_TransportsManager.GetTransportsTypes());
     }
 
-    // pre-calculate new metadata and payload sizes
-    //        m_TransportFlush = CheckBufferAllocation(
-    //        m_BP1Writer.GetVariableIndexSize( variable ) +
-    //        variable.PayLoadSize(),
-    //                                                  m_GrowthFactor,
-    //                                                  m_MaxBufferSize,
-    //                                                  m_Buffer.m_Data );
+    format::BP1Base::ResizeResult resizeResult =
+        m_BP1Writer.ResizeBuffer(variable);
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     m_BP1Writer.WriteVariableMetadata(variable);
 
-    if (m_DoTransportFlush) // in batches
+    if (resizeResult == format::BP1Base::ResizeResult::FLUSH)
     {
-        // flatten data
+        auto &heapBuffer = m_BP1Writer.m_HeapBuffer;
 
-        // flush to transports
+        // first batch fills current buffer and sends to transports
+        const size_t firstBatchSize = heapBuffer.GetAvailableDataSize();
+        CopyToBuffer(heapBuffer.m_Data, heapBuffer.m_DataPosition, values,
+                     firstBatchSize / sizeof(T));
+        m_TransportsManager.WriteFiles(heapBuffer.GetData(),
+                                       heapBuffer.m_DataPosition);
 
-        // reset relative positions to zero, update absolute position
+        // start writing missing size in batches directly to transport
+        const size_t missingSize = variable.PayLoadSize() - firstBatchSize;
+        const size_t bufferSize = heapBuffer.GetDataSize();
+        const size_t batches = missingSize / bufferSize;
+        const size_t lastSize = missingSize % batches;
+
+        // flush to transports in uniform batches
+        for (size_t batch = 0; batch < batches; ++batch)
+        {
+            const size_t start = batch * bufferSize / sizeof(T);
+            const char *valuesPtr =
+                reinterpret_cast<const char *>(&values[start]);
+
+            if (batch == batches - 1) // lastSize
+            {
+                m_TransportsManager.WriteFiles(valuesPtr, lastSize);
+            }
+            else
+            {
+                m_TransportsManager.WriteFiles(valuesPtr, bufferSize);
+            }
+        }
+
+        // update absolute position
+        heapBuffer.m_DataAbsolutePosition += variable.PayLoadSize();
+        // set relative position to zero
+        heapBuffer.m_DataPosition = 0;
+        // reset buffer to zero values
+        heapBuffer.m_Data.assign(heapBuffer.GetDataSize(), '\0');
     }
     else // Write data to buffer
     {

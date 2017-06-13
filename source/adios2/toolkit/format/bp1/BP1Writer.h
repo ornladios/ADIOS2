@@ -54,18 +54,6 @@ public:
         const std::vector<std::string> &transportsTypes) noexcept;
 
     /**
-     *
-     * @param variable
-     * @return
-     * -1: allocation failed,
-     *  0: no allocation needed,
-     *  1: reallocation is sucessful
-     *  2: need a transport flush
-     */
-    template <class T>
-    ResizeResult ResizeBuffer(const Variable<T> &variable);
-
-    /**
      * Write metadata for a given variable
      * @param variable
      */
@@ -104,25 +92,6 @@ public:
 private:
     /** BP format version */
     const uint8_t m_Version = 3;
-
-    /**
-     * Calculates the Process Index size in bytes according to the BP format,
-     * including list of method with no parameters (for now)
-     * @param name
-     * @param timeStepName
-     * @param transportsSize
-     * @return size of pg index
-     */
-    size_t GetProcessGroupIndexSize(const std::string name,
-                                    const std::string timeStepName,
-                                    const size_t transportsSize) const noexcept;
-
-    /**
-     * Returns the estimated variable index size
-     * @param variable
-     */
-    template <class T>
-    size_t GetVariableIndexSize(const Variable<T> &variable) const noexcept;
 
     /**
      * Get variable statistics
@@ -257,9 +226,6 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template BP1Writer::ResizeResult BP1Writer::ResizeBuffer(           \
-        const Variable<T> &variable);                                          \
-                                                                               \
     extern template void BP1Writer::WriteVariablePayload(                      \
         const Variable<T> &variable) noexcept;                                 \
                                                                                \

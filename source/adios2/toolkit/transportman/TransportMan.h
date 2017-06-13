@@ -95,14 +95,20 @@ public:
     std::vector<profiling::IOChrono *> GetTransportsProfilers() noexcept;
 
     /**
+     * Write to file transports
+     * @param transportIndex
+     * @param buffer
+     * @param size
+     */
+    void WriteFiles(const char *buffer, const size_t size,
+                    const int transportIndex = -1);
+
+    /**
      * Close file or files depending on transport index. Throws an exception
      * if transport is not a file when transportIndex > -1.
      * @param transportIndex -1: all transports, otherwise index in m_Transports
-     * @param buffer pass buffer to be sent to transport
-     * @param size passes the buffer size
      */
-    void CloseFiles(const int transportIndex, const char *buffer,
-                    const size_t size);
+    void CloseFiles(const int transportIndex = -1);
 
     /** Checks if all transports are closed */
     bool AllTransportsClosed() const noexcept;
