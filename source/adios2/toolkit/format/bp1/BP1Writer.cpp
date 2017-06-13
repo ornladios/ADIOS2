@@ -157,6 +157,9 @@ void BP1Writer::Close() noexcept
         }
 
         FlattenMetadata();
+
+        m_Profiler.Bytes.at("buffering") += m_HeapBuffer.m_DataAbsolutePosition;
+
         m_IsClosed = true;
     }
 
@@ -195,7 +198,6 @@ std::string BP1Writer::GetRankProfilingLog(
         for (const auto &transportTimerPair : transportsProfilers[t]->Timers)
         {
             lf_WriterTimer(rankLog, transportTimerPair.second);
-            rankLog += ", ";
         }
         // replace last comma with space
         rankLog.pop_back();
@@ -214,6 +216,12 @@ std::string BP1Writer::GetRankProfilingLog(
     rankLog += " }";
 
     return rankLog;
+}
+
+std::string
+BP1Writer::AggregateProfilingLog(const std::string &rankProfilingLog) noexcept
+{
+    return m_BP1Aggregator.GetGlobalProfilingLog(rankProfilingLog);
 }
 
 // PRIVATE FUNCTIONS

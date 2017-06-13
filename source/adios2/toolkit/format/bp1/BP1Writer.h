@@ -98,6 +98,9 @@ public:
         const std::vector<std::string> &transportsTypes,
         const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept;
 
+    std::string
+    AggregateProfilingLog(const std::string &rankProfilingLog) noexcept;
+
 private:
     /** BP format version */
     const uint8_t m_Version = 3;

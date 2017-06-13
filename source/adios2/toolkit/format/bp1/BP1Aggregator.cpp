@@ -83,7 +83,7 @@ std::string BP1Aggregator::GetGlobalProfilingLog(const std::string &rankLog)
         profilingLog.reserve(rankLog.size() * m_SizeMPI);
 
         profilingLog += "{\n";
-        profilingLog += rankLog + "\n";
+        profilingLog += rankLog + ",\n";
         for (unsigned int i = 1; i < sizeMPI; ++i)
         {
             const std::string rankLogStr(rankLogs[i - 1].data(),
@@ -123,6 +123,8 @@ std::string BP1Aggregator::GetGlobalProfilingLog(const std::string &rankLog)
         MPI_Isend(const_cast<char *>(rankLog.c_str()), rankLogSize, MPI_CHAR, 0,
                   1, m_MPIComm, &requestRankLog);
     }
+
+    MPI_Barrier(m_MPIComm); // Barrier here?
 
     return profilingLog;
 }
