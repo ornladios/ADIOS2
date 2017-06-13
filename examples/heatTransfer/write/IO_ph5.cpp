@@ -35,12 +35,14 @@ public:
                      const hsize_t *count);
 
     void applyMetadataCacheEviction();
-    void WriteSimpleWithChunking(const std::string &varName, int dimSize, const void *data,
-				 hid_t h5Type, const hsize_t *shape, const hsize_t *offset,
-				 const hsize_t *count);
+    void WriteSimpleWithChunking(const std::string &varName, int dimSize,
+                                 const void *data, hid_t h5Type,
+                                 const hsize_t *shape, const hsize_t *offset,
+                                 const hsize_t *count);
     int m_CurrentTimeStep;
     unsigned int m_TotalTimeSteps;
-    bool  m_Chunking;
+    bool m_Chunking;
+
 private:
     hid_t m_FilePropertyListId;
     hid_t m_FileId;
@@ -48,7 +50,7 @@ private:
 };
 
 HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
-  : m_CurrentTimeStep(0), m_TotalTimeSteps(0), m_Chunking(false)
+: m_CurrentTimeStep(0), m_TotalTimeSteps(0), m_Chunking(false)
 {
     m_FilePropertyListId = H5Pcreate(H5P_FILE_ACCESS);
 
@@ -75,8 +77,9 @@ HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
     }
 
     std::string prefix = "chunking";
-    if(fileName.substr(0, prefix.size()) == prefix) {
-      m_Chunking = true;
+    if (fileName.substr(0, prefix.size()) == prefix)
+    {
+        m_Chunking = true;
     }
 }
 
@@ -85,17 +88,19 @@ HDF5NativeWriter::~HDF5NativeWriter() { Close(); }
 void HDF5NativeWriter::applyMetadataCacheEviction()
 {
 #ifdef NEVER
-  /*
-    see https://lists.hdfgroup.org/pipermail/hdf-forum_lists.hdfgroup.org/2011-February/004201.html
-    John said the code below worked for the paper but not anymore after updates 
-  */
-  H5AC_cache_config_t mdc_config;
-  mdc_config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
-  H5Pget_mdc_config(m_FilePropertyListId, &mdc_config);
-  mdc_config.evictions_enabled = 0; // FALSE
-  mdc_config.incr_mode = H5C_incr__off;
-  mdc_config.decr_mode = H5C_decr__off;
-  H5Pset_mdc_config(m_FilePropertyListId, &mdc_config);
+    /*
+      see
+      https://lists.hdfgroup.org/pipermail/hdf-forum_lists.hdfgroup.org/2011-February/004201.html
+      John said the code below worked for the paper but not anymore after
+      updates
+    */
+    H5AC_cache_config_t mdc_config;
+    mdc_config.version = H5AC__CURR_CACHE_CONFIG_VERSION;
+    H5Pget_mdc_config(m_FilePropertyListId, &mdc_config);
+    mdc_config.evictions_enabled = 0; // FALSE
+    mdc_config.incr_mode = H5C_incr__off;
+    mdc_config.decr_mode = H5C_decr__off;
+    H5Pset_mdc_config(m_FilePropertyListId, &mdc_config);
 #endif
 }
 
@@ -169,8 +174,7 @@ void HDF5NativeWriter::WriteScalar(const std::string &varName, const void *data,
     hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
 
-    herr_t status =
-        H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, data);
+    herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, data);
 
     H5Sclose(filespaceID);
     H5Dclose(dsetID);
@@ -214,20 +218,20 @@ void HDF5NativeWriter::WriteSimple(const std::string &varName, int dimSize,
     H5Pclose(plistID);
 }
 
-void HDF5NativeWriter::WriteSimpleWithChunking(const std::string &varName, int dimSize,
-					       const void *data, hid_t h5Type,
-					       const hsize_t *shape, const hsize_t *offset,
-					       const hsize_t *count)
+void HDF5NativeWriter::WriteSimpleWithChunking(
+    const std::string &varName, int dimSize, const void *data, hid_t h5Type,
+    const hsize_t *shape, const hsize_t *offset, const hsize_t *count)
 {
     CheckWriteGroup();
     hid_t fileSpace = H5Screate_simple(dimSize, shape, NULL);
 
     hid_t dsetPid = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_chunk(dsetPid, dimSize, count);    
-    
-    size_t bytes = H5Tget_size (h5Type);
-    for (int i=0; i<dimSize; i++) {
-      bytes *= count[i];
+    H5Pset_chunk(dsetPid, dimSize, count);
+
+    size_t bytes = H5Tget_size(h5Type);
+    for (int i = 0; i < dimSize; i++)
+    {
+        bytes *= count[i];
     }
     hid_t access_plistid = H5Pcreate(H5P_DATASET_ACCESS);
     H5Pset_chunk_cache(access_plistid, 101, bytes, 1);
@@ -263,7 +267,6 @@ void HDF5NativeWriter::WriteSimpleWithChunking(const std::string &varName, int d
 
     H5Pclose(dsetPid);
     H5Pclose(access_plistid);
-
 }
 
 //
@@ -307,12 +310,17 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     std::vector<hsize_t> offset = {s.offsx, s.offsy};
     std::vector<hsize_t> count = {s.ndx, s.ndy};
 
-    if (h5writer->m_Chunking) {
-        h5writer->WriteSimpleWithChunking("T", 2, ht.data_noghost().data(), H5T_NATIVE_DOUBLE,
-					  dims.data(), offset.data(), count.data());
-    } else {
-        h5writer->WriteSimple("T", 2, ht.data_noghost().data(), H5T_NATIVE_DOUBLE,
-			      dims.data(), offset.data(), count.data());
+    if (h5writer->m_Chunking)
+    {
+        h5writer->WriteSimpleWithChunking("T", 2, ht.data_noghost().data(),
+                                          H5T_NATIVE_DOUBLE, dims.data(),
+                                          offset.data(), count.data());
+    }
+    else
+    {
+        h5writer->WriteSimple("T", 2, ht.data_noghost().data(),
+                              H5T_NATIVE_DOUBLE, dims.data(), offset.data(),
+                              count.data());
     }
 
     h5writer->WriteScalar("gndy", &(s.gndy), H5T_NATIVE_UINT);
