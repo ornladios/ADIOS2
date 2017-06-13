@@ -86,8 +86,22 @@ void BPFileWriter::Close(const int transportIndex)
 
             const std::string log(m_BP1Writer.GetRankProfilingLog(
                 transportTypes, transportProfilers));
-            // TODO profiling.log
-            // m_BP1Writer.m_BP1Aggregator.WriteProfilingLog( )
+            // TODO profiling.log from rank0
+
+            const std::string profilingLog(
+                m_BP1Writer.AggregateProfilingLog(log));
+
+            if (m_BP1Writer.m_BP1Aggregator.m_RankMPI == 0)
+            {
+                transport::FileStream profilingLogStream(m_MPIComm,
+                                                         m_DebugMode);
+                auto bpBaseNames = m_BP1Writer.GetBPBaseNames({m_Name});
+                profilingLogStream.Open(bpBaseNames[0] + "/profiling.log",
+                                        OpenMode::Write);
+                profilingLogStream.Write(profilingLog.c_str(),
+                                         profilingLog.size());
+                profilingLogStream.Close();
+            }
         }
     }
 }
@@ -123,6 +137,8 @@ void BPFileWriter::InitBPBuffer()
 {
     if (m_OpenMode == OpenMode::Append)
     {
+        throw std::invalid_argument(
+            "ADIOS2: OpenMode Append hasn't been implemented, yet");
         // TODO: Get last pg timestep and update timestep counter in
     }
     else
