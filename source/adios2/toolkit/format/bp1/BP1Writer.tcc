@@ -19,26 +19,6 @@ namespace adios
 namespace format
 {
 
-// PUBLIC
-template <class T>
-BP1Writer::ResizeResult BP1Writer::ResizeBuffer(const Variable<T> &variable)
-{
-    size_t variableData =
-        GetVariableIndexSize(variable) + variable.PayLoadSize();
-    size_t requiredCapacity = variableData + m_HeapBuffer.m_DataPosition;
-
-    if (requiredCapacity > m_MaxBufferSize && m_MaxBufferSize > 0) // is set
-    {
-        if (m_HeapBuffer.GetDataSize() < m_MaxBufferSize)
-        {
-            m_HeapBuffer.ResizeData(m_MaxBufferSize);
-            return ResizeResult::FLUSH;
-        }
-    }
-
-    return ResizeResult::SUCCESS;
-}
-
 template <class T>
 void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
 {
@@ -91,43 +71,6 @@ void BP1Writer::WriteVariablePayload(const Variable<T> &variable) noexcept
 }
 
 // PRIVATE
-template <class T>
-size_t BP1Writer::GetVariableIndexSize(const Variable<T> &variable) const
-    noexcept
-{
-    // size_t indexSize = varEntryLength + memberID + lengthGroupName +
-    // groupName + lengthVariableName + lengthOfPath + path + datatype
-    size_t indexSize = 23; // without characteristics
-    indexSize += variable.m_Name.size();
-
-    // characteristics 3 and 4, check variable number of dimensions
-    const size_t dimensions = variable.m_Count.size();
-    indexSize += 28 * dimensions; // 28 bytes per dimension
-    indexSize += 1;               // id
-
-    // characteristics, offset + payload offset in data
-    indexSize += 2 * (1 + 8);
-    // characteristic 0, if scalar add value, for now only allowing string
-    if (dimensions == 1)
-    {
-        indexSize += sizeof(T);
-        indexSize += 1; // id
-        // must have an if here
-        indexSize += 2 + variable.m_Name.size();
-        indexSize += 1; // id
-    }
-
-    // characteristic statistics
-    if (m_Verbosity == 0) // default, only min and max
-    {
-        indexSize += 2 * (sizeof(T) + 1);
-        indexSize += 1 + 1; // id
-    }
-
-    return indexSize + 12; // extra 12 bytes in case of attributes
-    // need to add transform characteristics
-}
-
 template <class T>
 BP1Writer::Stats<typename TypeInfo<T>::ValueType>
 BP1Writer::GetStats(const Variable<T> &variable) const noexcept

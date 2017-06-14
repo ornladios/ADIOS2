@@ -83,19 +83,6 @@ void MemcpyToBufferThreads(std::vector<char> &buffer, size_t &position,
                            const T *source, size_t size,
                            const unsigned int threads = 1);
 
-/**
- * Grows a buffer by a factor of  n . growthFactor . currentCapacity to
- * accommodate for incomingDataSize
- * @param incomingDataSize size of new data required to be stored in buffer
- * @param growthFactor buffer grows in multiples of the growth buffer
- * @param buffer to be resized
- * @param position, current buffer position
- * @return -1: failed to allocate (bad_alloc), 0: didn't have to allocate
- * (enough space), 1: successful allocation
- */
-int GrowBuffer(const size_t incomingDataSize, const float growthFactor,
-               std::vector<char> &buffer, const size_t position);
-
 } // end namespace adios
 
 #include "adiosMemory.inl"

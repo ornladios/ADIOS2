@@ -18,6 +18,11 @@ Capsule::Capsule(const std::string type, const bool debugMode)
 {
 }
 
+size_t Capsule::GetAvailableDataSize() const
+{
+    return GetDataSize() - m_DataPosition;
+}
+
 void Capsule::ResizeData(size_t /*size*/) {}
 
 void Capsule::ResizeMetadata(size_t /*size*/) {}

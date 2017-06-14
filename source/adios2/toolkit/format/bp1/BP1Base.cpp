@@ -27,7 +27,7 @@ BP1Base::BP1Base(MPI_Comm mpiComm, const bool debugMode)
 void BP1Base::InitParameters(const Params &parameters)
 {
     // flags for defaults that require constructors
-    bool useDefaultBufferSize = true;
+    bool useDefaultInitialBufferSize = true;
     bool useDefaultProfileUnits = true;
 
     for (const auto &pair : parameters)
@@ -44,14 +44,14 @@ void BP1Base::InitParameters(const Params &parameters)
             InitParameterProfileUnits(value);
             useDefaultProfileUnits = false;
         }
-        else if (key == "BufferGrowth")
+        else if (key == "BufferGrowthFactor")
         {
             InitParameterBufferGrowth(value);
         }
-        else if (key == "BufferSize")
+        else if (key == "InitialBufferSize")
         {
             InitParameterInitBufferSize(value);
-            useDefaultBufferSize = false;
+            useDefaultInitialBufferSize = false;
         }
         else if (key == "MaxBufferSize")
         {
@@ -73,9 +73,9 @@ void BP1Base::InitParameters(const Params &parameters)
         m_Profiler.Bytes.emplace("buffering", 0);
     }
 
-    if (useDefaultBufferSize)
+    if (useDefaultInitialBufferSize)
     {
-        m_HeapBuffer.ResizeData(DefaultBufferSize);
+        m_HeapBuffer.ResizeData(DefaultInitialBufferSize);
     }
 }
 
@@ -122,11 +122,11 @@ std::string BP1Base::GetBPName(const std::string &name) const noexcept
 // PROTECTED
 void BP1Base::InitParameterProfile(const std::string value)
 {
-    if (value == "off")
+    if (value == "off" || value == "Off")
     {
         m_Profiler.IsActive = false;
     }
-    else if (value == "on")
+    else if (value == "on" || value == "On")
     {
         m_Profiler.IsActive = true; // default
     }
@@ -189,8 +189,8 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
 {
     const std::string errorMessage(
         "ERROR: couldn't convert value of init_buffer_size IO "
-        "SetParameter, valid syntax: init_buffer_size=10Gb, "
-        "init_buffer_size=1000Mb, init_buffer_size=16Kb (minimum default), "
+        "SetParameter, valid syntax: InitialBufferSize=10Gb, "
+        "InitialBufferSize=1000Mb, InitialBufferSize=16Kb (minimum default), "
         " in call to Open");
 
     if (m_DebugMode)
@@ -204,7 +204,7 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
     const std::string number(value.substr(0, value.size() - 2));
     const std::string units(value.substr(value.size() - 2));
     const size_t factor = BytesFactor(units, m_DebugMode);
-    size_t bufferSize = DefaultBufferSize; // from ADIOSTypes.h
+    size_t bufferSize = DefaultInitialBufferSize; // from ADIOSTypes.h
 
     if (m_DebugMode)
     {
@@ -218,7 +218,7 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
             success = false;
         }
 
-        if (!success || bufferSize < 16 * 1024) // 16384b
+        if (!success || bufferSize < DefaultInitialBufferSize) // 16384b
         {
             throw std::invalid_argument(errorMessage);
         }
@@ -338,6 +338,25 @@ BP1Base::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
 
     return transportsIDs;
 }
+
+size_t BP1Base::GetProcessGroupIndexSize(const std::string name,
+                                         const std::string timeStepName,
+                                         const size_t transportsSize) const
+    noexcept
+{
+    // pgIndex + list of methods (transports)
+    size_t pgSize =
+        (name.length() + timeStepName.length() + 23) + (3 + transportsSize);
+
+    return pgSize;
+}
+
+#define declare_template_instantiation(T)                                      \
+    template BP1Base::ResizeResult BP1Base::ResizeBuffer(                      \
+        const Variable<T> &variable);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios

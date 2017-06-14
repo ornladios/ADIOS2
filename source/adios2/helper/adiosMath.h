@@ -88,6 +88,17 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
 bool CheckIndexRange(const int index, const int upperLimit,
                      const int lowerLimit = 0) noexcept;
 
+/**
+ * Returns the appropriate size larger than requiredSize
+ * @param requiredSize
+ * @param currentSize
+ * @param growthFactor larger than 1. (typically 1.5 or 2. )
+ * @return next currentSize * growthFactor^n (n is a signed integer) larger than
+ * requiredSize
+ */
+size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
+                           const float growthFactor) noexcept;
+
 } // end namespace adios
 
 #include "adiosMath.inl"

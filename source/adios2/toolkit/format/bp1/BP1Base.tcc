@@ -112,6 +112,92 @@ int8_t BP1Base::GetDataType<cldouble>() const noexcept
     return type_long_double_complex;
 }
 
+template <class T>
+BP1Base::ResizeResult BP1Base::ResizeBuffer(const Variable<T> &variable)
+{
+    size_t currentCapacity = m_HeapBuffer.m_Data.capacity();
+    size_t variableData =
+        GetVariableIndexSize(variable) + variable.PayLoadSize();
+    size_t requiredCapacity = variableData + m_HeapBuffer.m_DataPosition;
+
+    ResizeResult result = ResizeResult::Unchanged;
+
+    if (variableData > m_MaxBufferSize)
+    {
+        throw std::runtime_error(
+            "ERROR: variable " + variable.m_Name + " data size: " +
+            std::to_string(static_cast<float>(variableData) / (1024. * 1024.)) +
+            " Mb is too large for adios2 bp MaxBufferSize=" +
+            std::to_string(static_cast<float>(m_MaxBufferSize) /
+                           (1024. * 1024.)) +
+            "Mb, try increasing MaxBufferSize in call to IO SetParameters, in "
+            "call to Write\n");
+    }
+
+    if (requiredCapacity <= currentCapacity)
+    {
+        // do nothing, unchanged is default
+    }
+    else if (requiredCapacity > m_MaxBufferSize)
+    {
+        if (currentCapacity < m_MaxBufferSize)
+        {
+            m_HeapBuffer.ResizeData(m_MaxBufferSize);
+        }
+        result = ResizeResult::Flush;
+    }
+    else // buffer must grow
+    {
+        if (currentCapacity < m_MaxBufferSize)
+        {
+            const size_t nextSize =
+                std::min(m_MaxBufferSize,
+                         NextExponentialSize(requiredCapacity, currentCapacity,
+                                             m_GrowthFactor));
+            m_HeapBuffer.ResizeData(nextSize);
+            result = ResizeResult::Success;
+        }
+    }
+
+    return result;
+}
+
+template <class T>
+size_t BP1Base::GetVariableIndexSize(const Variable<T> &variable) const noexcept
+{
+    // size_t indexSize = varEntryLength + memberID + lengthGroupName +
+    // groupName + lengthVariableName + lengthOfPath + path + datatype
+    size_t indexSize = 23; // without characteristics
+    indexSize += variable.m_Name.size();
+
+    // characteristics 3 and 4, check variable number of dimensions
+    const size_t dimensions = variable.m_Count.size();
+    indexSize += 28 * dimensions; // 28 bytes per dimension
+    indexSize += 1;               // id
+
+    // characteristics, offset + payload offset in data
+    indexSize += 2 * (1 + 8);
+    // characteristic 0, if scalar add value, for now only allowing string
+    if (dimensions == 1)
+    {
+        indexSize += sizeof(T);
+        indexSize += 1; // id
+        // must have an if here
+        indexSize += 2 + variable.m_Name.size();
+        indexSize += 1; // id
+    }
+
+    // characteristic statistics
+    if (m_Verbosity == 0) // default, only min and max
+    {
+        indexSize += 2 * (sizeof(T) + 1);
+        indexSize += 1 + 1; // id
+    }
+
+    return indexSize + 12; // extra 12 bytes in case of attributes
+    // need to add transform characteristics
+}
+
 } // end namespace format
 } // end namespace adios
 

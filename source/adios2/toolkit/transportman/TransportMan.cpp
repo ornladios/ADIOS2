@@ -122,8 +122,8 @@ TransportMan::GetTransportsProfilers() noexcept
     return profilers;
 }
 
-void TransportMan::CloseFiles(const int transportIndex, const char *buffer,
-                              const size_t size)
+void TransportMan::WriteFiles(const char *buffer, const size_t size,
+                              const int transportIndex)
 {
     if (transportIndex == -1)
     {
@@ -133,6 +133,34 @@ void TransportMan::CloseFiles(const int transportIndex, const char *buffer,
             {
                 // make this truly asynch?
                 transport->Write(buffer, size);
+            }
+        }
+    }
+    else
+    {
+        if (m_DebugMode)
+        {
+            if (m_Transports[transportIndex]->m_Type != "File")
+            {
+                throw std::invalid_argument(
+                    "ERROR: index " + std::to_string(transportIndex) +
+                    " doesn't come from a file transport in IO AddTransport, "
+                    "in call to Write (flush) or Close\n");
+            }
+        }
+
+        m_Transports[transportIndex]->Write(buffer, size);
+    }
+}
+
+void TransportMan::CloseFiles(const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transport : m_Transports)
+        {
+            if (transport->m_Type == "File")
+            {
                 transport->Close();
             }
         }
@@ -150,7 +178,6 @@ void TransportMan::CloseFiles(const int transportIndex, const char *buffer,
             }
         }
 
-        m_Transports[transportIndex]->Write(buffer, size);
         m_Transports[transportIndex]->Close();
     }
 }

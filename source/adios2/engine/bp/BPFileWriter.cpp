@@ -70,10 +70,13 @@ void BPFileWriter::Close(const int transportIndex)
 
     // close bp buffer by flattening data and metadata
     m_BP1Writer.Close();
-    // send data to corresponding transport
-    m_TransportsManager.CloseFiles(transportIndex,
-                                   m_BP1Writer.m_HeapBuffer.m_Data.data(),
-                                   m_BP1Writer.m_HeapBuffer.m_DataPosition);
+    // send data to corresponding transports
+    m_TransportsManager.WriteFiles(m_BP1Writer.m_HeapBuffer.GetData(),
+                                   m_BP1Writer.m_HeapBuffer.m_DataPosition,
+                                   transportIndex);
+
+    // close them
+    m_TransportsManager.CloseFiles(transportIndex);
 
     if (m_BP1Writer.m_Profiler.IsActive)
     {
