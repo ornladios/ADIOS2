@@ -18,7 +18,7 @@ pybind11_add_module(adios2py MODULE
   VariablePy.cpp
 )
 target_link_libraries(adios2py PRIVATE adios2)
-if(ADIOS_USE_MPI)
+if(ADIOS_HAVE_MPI)
   find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
   target_link_libraries(adios2py PRIVATE PythonModule::mpi4py)
 endif()

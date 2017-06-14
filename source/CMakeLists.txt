@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
   
-if(ADIOS_USE_DataMan)
+if(ADIOS_HAVE_DataMan)
   add_subdirectory(dataman)
 endif()
 

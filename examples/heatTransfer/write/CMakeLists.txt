@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-if(ADIOS_USE_MPI)
+if(ADIOS_HAVE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
 
   add_executable(heatTransfer_write_adios2
@@ -17,7 +17,7 @@ if(ADIOS_USE_MPI)
   )
   target_link_libraries(heatTransfer_write_adios2 adios2 ${MPI_C_LIBRARIES})
 
-  if(ADIOS_USE_ADIOS1)
+  if(ADIOS_HAVE_ADIOS1)
     find_package(ADIOS1 REQUIRED)
     find_package(MPI COMPONENTS C REQUIRED)
 
@@ -35,7 +35,7 @@ if(ADIOS_USE_MPI)
     )
   endif()
 
-  if(ADIOS_USE_HDF5)
+  if(ADIOS_HAVE_HDF5)
     find_package(HDF5 REQUIRED)
     find_package(MPI COMPONENTS C REQUIRED)
 
@@ -54,7 +54,7 @@ if(ADIOS_USE_MPI)
   endif()
 
 
-  if(ADIOS_USE_HDF5)
+  if(ADIOS_HAVE_HDF5)
     find_package(HDF5 REQUIRED)
     find_package(MPI COMPONENTS C REQUIRED)
 
@@ -73,7 +73,7 @@ if(ADIOS_USE_MPI)
   endif()
 
 
-  if(ADIOS_USE_HDF5)
+  if(ADIOS_HAVE_HDF5)
      find_package(MPI COMPONENTS C REQUIRED)
 
      add_executable(heatTransfer_write_a2h5

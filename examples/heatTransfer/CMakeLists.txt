@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 
-if(ADIOS_USE_ADIOS1)
+if(ADIOS_HAVE_ADIOS1)
   add_subdirectory(write)
   add_subdirectory(read)
 endif()

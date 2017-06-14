@@ -37,6 +37,7 @@ endif()
 #------------------------------------------------------------------------------#
 # Top level options
 #------------------------------------------------------------------------------#
+include(ADIOSFunctions)
 
 # Default to a debug build if not specified
 if(NOT CMAKE_BUILD_TYPE)
@@ -54,33 +55,30 @@ get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
 cmake_dependent_option(ADIOS_BUILD_SHARED_LIBS
   "Whether or not to build shared libraries" ON
   "SHARED_LIBS_SUPPORTED" OFF)
-if(SHARED_LIBS_SUPPORTED)
-  cmake_dependent_option(ADIOS_ENABLE_PIC
-    "Build with Position Independent Code" ON
-    "NOT ADIOS_BUILD_SHARED_LIBS" ON)
-endif()
+cmake_dependent_option(ADIOS_ENABLE_PIC
+  "Build with Position Independent Code" ON
+  "SHARED_LIBS_SUPPORTED" OFF)
 set(BUILD_SHARED_LIBS ${ADIOS_BUILD_SHARED_LIBS})
 
 if(ADIOS_ENABLE_PIC)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-option(ADIOS_USE_MPI "Enable the MPI version of ADIOS" OFF)
-if(ADIOS_USE_MPI)
+adios_option(BZip2   "Enable support for BZip2 transforms" AUTO)
+adios_option(ZFP     "Enable support for ZFP transforms" AUTO)
+adios_option(MPI     "Enable support for MPI" AUTO)
+adios_option(DataMan "Enable support for DataMan" AUTO)
+adios_option(ZeroMQ  "Enable support for ZeroMQ" AUTO)
+adios_option(HDF5    "Enable support for the HDF5 engine" AUTO)
+adios_option(ADIOS1  "Enable support for the ADIOS 1 engine" AUTO)
+adios_option(Python  "Enable support for Python bindings" AUTO)
+include(${ADIOS_SOURCE_DIR}/cmake/DetectOptions.cmake)
+
+if(ADIOS_HAVE_MPI)
   # Workaround for OpenMPI forcing the link of C++ bindings
   add_definitions(-DOMPI_SKIP_MPICXX)
 endif()
-option(ADIOS_USE_BZip2 "Enable support for BZip2 transforms" OFF)
-option(ADIOS_USE_ZFP "Enable support for ZFP transforms" OFF)
-option(ADIOS_USE_ADIOS1 "Enable support for the ADIOS 1 engine" OFF)
-option(ADIOS_USE_HDF5 "Enable support for the HDF5 engine" OFF)
-option(ADIOS_USE_Python "Enable support for Python bindings" OFF)
 
-# DataMan is not a user-settable option.  It will always be enabled if the
-# platform supports it.
-set(ADIOS_USE_DataMan ${SHARED_LIBS_SUPPORTED})
-
-include(GenerateADIOSConfig)
 GenerateADIOSConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python)
 install(
   FILES ${ADIOS_BINARY_DIR}/adios2/ADIOSConfig.h
@@ -141,13 +139,13 @@ else()
 endif()
 message("    Build Type:   ${CMAKE_BUILD_TYPE}")
 message("    Testing: ${BUILD_TESTING}")
-message("    MPI:     ${ADIOS_USE_MPI}")
-message("    BZip2:   ${ADIOS_USE_BZip2}")
-message("    ZFP:     ${ADIOS_USE_ZFP}")
-message("    ADIOS1:  ${ADIOS_USE_ADIOS1}")
-message("    DataMan: ${ADIOS_USE_DataMan}")
-message("      ZeroMQ:  ${ADIOS_USE_DataMan_ZeroMQ}")
-message("      ZFP:     ${ADIOS_USE_DataMan_ZFP}")
-message("    HDF5:    ${ADIOS_USE_HDF5}")
-message("    Python:  ${ADIOS_USE_Python}")
+message("    Build Options:")
+foreach(opt BZip2 ZFP MPI DataMan ZeroMQ HDF5 ADIOS1 Python)
+  message_pad("      ${opt}" 13 label)
+  if(${ADIOS_HAVE_${opt}})
+    message("${label}: ON")
+  else()
+    message("${label}: OFF")
+  endif()
+endforeach()
 message("")

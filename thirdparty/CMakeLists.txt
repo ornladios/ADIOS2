@@ -5,6 +5,6 @@ if(BUILD_TESTING)
   add_subdirectory(GTest)
 endif()
 
-if(ADIOS_USE_Python)
+if(ADIOS_HAVE_Python)
   add_subdirectory(pybind11)
 endif()
