@@ -12,10 +12,14 @@
 #define ADIOS2_HELPER_ADIOSXML_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <map>
 #include <string>
 #include <utility> //std::pair
 #include <vector>
 /// \endcond
+
+#include "adios2/core/IO.h"
+#include "adios2/core/Transform.h"
 
 namespace adios
 {
@@ -30,9 +34,9 @@ namespace adios
  * @param currentPosition to start the search, moved forward to finalTag
  * position
  */
-void GetSubString(const std::string initialTag, const std::string finalTag,
-                  const std::string content, std::string &subString,
-                  std::string::size_type &currentPosition);
+std::string GetSubString(const std::string initialTag,
+                         const std::string finalTag, const std::string &content,
+                         std::string::size_type &currentPosition);
 
 /**
  * Extracts the value inside quotes in a string currentTag ( Example: currentTag
@@ -80,11 +84,8 @@ void GetPairsFromTag(
  * variables with transformations
  * @param groups passed returns the map of groups defined in fileContent
  */
-// void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
-//                 std::string& hostLanguage, std::vector<
-//                 std::shared_ptr<Transform> >& transforms,
-//                 std::map< std::string, Group >& groups );
 
+void RemoveXMLComments(std::string &currentContent) const noexcept;
 /**
  * Called inside the ADIOS XML constructors to get contents from file, broadcast
  * and set hostLanguage and groups from ADIOS class
@@ -96,11 +97,24 @@ void GetPairsFromTag(
  * variables with transformations
  * @param groups passed returns the map of groups defined in fileContent
  */
-// void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const
-// bool debugMode,
-//              std::string& hostLanguage, std::vector<
-//              std::shared_ptr<Transform> >& transforms,
-//              std::map< std::string, Group >& groups );
+
+void SetMembers(const std::string &fileContents, const bool debugMode,
+                std::vector<std::shared_ptr<Transform>> &transforms,
+                std::map<std::string, IO> &ios);
+
+/**
+ * Called inside the ADIOS XML constructors to get contents from file,
+ * broadcast
+ * @param configXMLFile
+ * @param mpiComm
+ * @param debugMode
+ * @param transforms
+ * @param ios
+ */
+void InitXML(const std::string configXML, const MPI_Comm mpiComm,
+             const bool debugMode,
+             std::vector<std::shared_ptr<Transform>> &transforms,
+             std::map<std::string, IO> &ios);
 }
 
 #endif /* ADIOS2_HELPER_ADIOSXML_H_ */

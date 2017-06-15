@@ -14,12 +14,14 @@
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
+#include "adios2/helper/adiosSystem.h"
+
 namespace adios
 {
 
-void GetSubString(const std::string initialTag, const std::string finalTag,
-                  const std::string content, std::string &subString,
-                  std::string::size_type &currentPosition)
+std::string GetSubString(const std::string initialTag,
+                         const std::string finalTag, const std::string &content,
+                         std::string::size_type &currentPosition)
 {
     auto lf_Wipe = [](std::string &subString,
                       std::string::size_type &currentPosition) {
@@ -36,11 +38,13 @@ void GetSubString(const std::string initialTag, const std::string finalTag,
         };
 
     // BODY OF FUNCTION STARTS HERE
+    std::string subString;
+
     std::string::size_type start(content.find(initialTag, currentPosition));
     if (start == content.npos)
     {
         lf_Wipe(subString, currentPosition);
-        return;
+        return subString;
     }
     currentPosition = start;
 
@@ -48,7 +52,7 @@ void GetSubString(const std::string initialTag, const std::string finalTag,
     if (end == content.npos)
     {
         lf_Wipe(subString, currentPosition);
-        return;
+        return subString;
     }
 
     // here make sure the finalTag is not a value surrounded by " " or ' ', if
@@ -101,11 +105,11 @@ void GetSubString(const std::string initialTag, const std::string finalTag,
             }
         }
 
-        if (closingQuotePosition ==
-            content.npos) // if can't find closing it's open until the end
+        // if can't find closing it's open until the end
+        if (closingQuotePosition == content.npos)
         {
             lf_Wipe(subString, currentPosition);
-            return;
+            return subString;
         }
 
         currentPosition = closingQuotePosition + 1;
@@ -123,6 +127,7 @@ void GetSubString(const std::string initialTag, const std::string finalTag,
 
     subString = content.substr(start, end - start + finalTag.size());
     currentPosition = end;
+    return subString;
 }
 
 void GetQuotedValue(const char quote,
@@ -192,6 +197,18 @@ void GetPairsFromTag(
         }
 
         GetPairs(tag, pairs);
+    }
+}
+
+void RemoveXMLComments(std::string &currentContent) const noexcept
+{
+    std::string::size_type startComment(currentContent.find("<!--"));
+
+    while (startComment != currentContent.npos)
+    {
+        std::string::size_type endComment(currentContent.find("-->"));
+        currentContent.erase(startComment, endComment - startComment + 3);
+        startComment = currentContent.find("<!--");
     }
 }
 
@@ -350,47 +367,82 @@ void GetPairsFromTag(
 //    }
 //}
 
-// void InitXML( const std::string xmlConfigFile, const MPI_Comm mpiComm, const
-// bool debugMode,
-//              std::string& hostLanguage, std::vector<
-//              std::shared_ptr<Transform> >& transforms,
-//              std::map< std::string, Group >& groups )
+void InitXML(const std::string configXML, const MPI_Comm mpiComm,
+             const bool debugMode,
+             std::vector<std::shared_ptr<Transform>> &transforms,
+             std::map<std::string, IO> &ios)
+{
+    // if using collective IO only?
+    std::string fileContents = BroadcastFileContents(configXML, mpiComm);
+
+    SetMembers(fileContents, debugMode, transforms, ios);
+}
+
+// void SetMembers(const std::string &fileContents, const bool debugMode,
+//                std::vector<std::shared_ptr<Transform>> &transforms,
+//                std::map<std::string, IO> &ios)
 //{
-//    int xmlFileContentSize;
-//    std::string xmlFileContent;
 //
-//    int rank;
-//    MPI_Comm_rank( mpiComm, &rank );
+//    // adios-config
+//    std::string::size_type currentPosition(0);
+//    std::string currentContent(GetSubString("<adios-config ",
+//    "</adios-config>",
+//                                            fileContents, currentPosition));
+//    RemoveXMLComments(currentContent);
 //
-//    if( rank == 0 ) //serial part
+//    while (currentPosition != std::string::npos)
 //    {
-//        DumpFileToString( xmlConfigFile, xmlFileContent ); //in
-//        ADIOSFunctions.h dumps all XML Config File to xmlFileContent
-//        xmlFileContentSize = xmlFileContent.size( ) + 1; // add one for the
-//        null character
+//        // io
+//        std::string io(
+//            GetSubString("<io ", "</io>", currentContent, currentPosition));
 //
-//        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, mpiComm ); //broadcast
-//        size for allocation
-//        MPI_Bcast( (char*)xmlFileContent.c_str(), xmlFileContentSize,
-//        MPI_CHAR, 0, mpiComm ); //broadcast contents
+//        if (io.empty()) // no more groups to find
+//        {
+//            break;
+//        }
+//
+//        // get io name
+//        std::string::size_type ioPosition(0);
+//        const std::string tag(GetSubString("<io ", ">", io, ioPosition));
+//        if (debugMode)
+//        {
+//            if (tag.size() < 2)
+//            {
+//                throw std::invalid_argument("ERROR: wrong XML tag <io " + tag
+//                +
+//                                            ", in call to ADIOS
+//                                            constructor\n");
+//            }
+//        }
+//
+//        tag = tag.substr(1, tag.size() - 2); // eliminate < >
+//        GetPairsFromTag(io, tag, pairs);
+//        std::string groupName;
+//
+//        for (auto &pair : pairs)
+//        {
+//            if (pair.first == "name")
+//                groupName = pair.second;
+//        }
+//
+//        if (debugMode)
+//        {
+//            if (groupName.empty())
+//                throw std::invalid_argument("ERROR: group name not found.
+//                \n");
+//
+//            if (groups.count(groupName) == 1) // group exists
+//                    throw std::invalid_argument( "ERROR: group " + groupName +
+//                    "
+//                    defined twice.\n" );
+//        }
+//
+//        groups.emplace(groupName,
+//                       Group(groupName, xmlGroup, transforms, debugMode));
+//
+//        currentContent.erase(currentContent.find(xmlGroup), xmlGroup.size());
+//        currentPosition = 0;
 //    }
-//    else
-//    {
-//        MPI_Bcast( &xmlFileContentSize, 1, MPI_INT, 0, mpiComm  ); //receive
-//        size
-//
-//        char* xmlFileContentMPI = new char[ xmlFileContentSize ]; //allocate
-//        xml C-char
-//        MPI_Bcast( xmlFileContentMPI, xmlFileContentSize, MPI_CHAR, 0, mpiComm
-//        ); //receive xml C-char
-//        xmlFileContent.assign( xmlFileContentMPI ); //copy to a string
-//
-//        delete []( xmlFileContentMPI ); //delete char* needed for MPI, might
-//        add size is moving to C++14 for optimization, avoid memory leak
-//    }
-//
-//    SetMembers( xmlFileContent,  mpiComm, debugMode, hostLanguage, transforms,
-//    groups );
 //}
 
 } // end namespace adios
