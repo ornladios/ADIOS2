@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-if(ADIOS_USE_MPI)
+if(ADIOS_HAVE_MPI)
 
     find_package(MPI COMPONENTS C REQUIRED)
     add_executable(heatTransfer_read_adios2 heatRead_adios2.cpp PrintData.cpp)
@@ -14,7 +14,7 @@ if(ADIOS_USE_MPI)
       adios2 ${MPI_C_LIBRARIES}
     )
     
-  if(ADIOS_USE_ADIOS1)
+  if(ADIOS_HAVE_ADIOS1)
     find_package(ADIOS1 REQUIRED)
 
     add_executable(heatTransfer_read_adios1 heatRead_adios1.cpp PrintData.cpp)

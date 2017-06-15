@@ -3,6 +3,13 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+if(NOT SHARED_LIBS_SUPPORTED)
+  message(FATAL_ERROR "DataMan requires shared library support")
+endif()
+if(MSVC)
+  message(FATAL_ERROR "DataMan is not currently compatible with MSVC")
+endif()
+
 set(dataman_targets)
 
 add_library(dataman
@@ -29,8 +36,7 @@ add_library(temporalman MODULE TemporalMan.h TemporalMan.cpp)
 target_link_libraries(temporalman PRIVATE dataman)
 list(APPEND dataman_targets temporalman)
 
-option(ADIOS_USE_DataMan_ZeroMQ "Enable ZeroMQ for DataMan" OFF)
-if(ADIOS_USE_DataMan_ZeroMQ)
+if(ADIOS_HAVE_ZeroMQ)
   find_package(ZeroMQ REQUIRED)
 
   add_library(zmqman MODULE
@@ -49,8 +55,7 @@ if(ADIOS_USE_DataMan_ZeroMQ)
 endif()
 
 
-set(ADIOS_USE_DataMan_ZFP ${ADIOS_USE_ZFP} CACHE INTERNAL "Enable ZFP for DataMan" FORCE)
-if(ADIOS_USE_DataMan_ZFP)
+if(ADIOS_HAVE_ZFP)
   find_package(ZFP REQUIRED)
 
   add_library(zfpman MODULE ZfpMan.h ZfpMan.cpp)

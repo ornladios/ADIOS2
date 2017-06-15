@@ -5,18 +5,18 @@
 
 # We currently require ADIOS1 to test ADIOS v2 bp functionality since the read
 # API is not available yet
-if(ADIOS_USE_ADIOS1)
+if(ADIOS_HAVE_ADIOS1)
   add_subdirectory(bp)
 endif()
 
-if(ADIOS_USE_ADIOS1)
+if(ADIOS_HAVE_ADIOS1)
   add_subdirectory(adios1)
 endif()
 
-if(ADIOS_USE_HDF5)
+if(ADIOS_HAVE_HDF5)
   add_subdirectory(hdf5)
 endif()
 
-if(ADIOS_USE_DataMan)
+if(ADIOS_HAVE_DataMan)
   add_subdirectory(dataman)
 endif()
