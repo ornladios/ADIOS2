@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
+#include <memory> //std::shared_ptr
 #include <string>
 #include <utility> //std::pair
 #include <vector>
@@ -39,39 +40,14 @@ std::string GetSubString(const std::string initialTag,
                          std::string::size_type &currentPosition);
 
 /**
- * Extracts the value inside quotes in a string currentTag ( Example: currentTag
- * --> field1="value1" field2="value2" )
- * @param quote double " or single '
- * @param quotePosition position of the opening quote in currentTag
- * @param currentTag initial tag value, modified by cutting the first found " "
- * portion, currentTag --> field2="value2"
- * @param value value1 in the example above
+ * Determine tag type ( opening, empty, closing ), populates and returns Params
+ * (map<string,string>) object with xml tag attributes
+ * @param fileContent to check for missing tag closing
+ * @param tag single string: key0="value0" ... keyN="valueN"
+ * @return std::map of attributes: { { "key0", "value0" } ,..., { "keyN",
+ * "valueN" } }
  */
-void GetQuotedValue(const char quote,
-                    const std::string::size_type &quotePosition,
-                    std::string &currentTag, std::string &value);
-
-/**
- * Get attributes field1="value1" field2="value2" by looping through a single
- * XML tag
- * @param tag field0="value0" field1="value1" in a single string
- * @param pairs pairs[0].first=field0 pairs[0].second=value0
- * pairs[1].first=field1 pairs[1].second=value1
- */
-void GetPairs(const std::string tag,
-              std::vector<std::pair<const std::string, const std::string>>
-                  &pairs) noexcept;
-
-/**
- * Determine tag type and call GetPairs to populate pairs
- * @param fileContent file Content in a single string
- * @param tag field0="value0" field1="value1" in a single string
- * @param pairs pairs[0].first=field0 pairs[0].second=value0
- * pairs[1].first=field1 pairs[1].second=value1
- */
-void GetPairsFromTag(
-    const std::string &fileContent, const std::string tag,
-    std::vector<std::pair<const std::string, const std::string>> &pairs);
+Params GetTagAttributes(const std::string &fileContent, const std::string &tag);
 
 /**
  * Set members m_Groups and m_HostLanguage from XML file content, called within
@@ -85,26 +61,11 @@ void GetPairsFromTag(
  * @param groups passed returns the map of groups defined in fileContent
  */
 
-void RemoveXMLComments(std::string &currentContent) const noexcept;
-/**
- * Called inside the ADIOS XML constructors to get contents from file, broadcast
- * and set hostLanguage and groups from ADIOS class
- * @param xmlConfigFile xml config file name
- * @param mpiComm communicator used from broadcasting
- * @param debugMode from ADIOS m_DebugMode passed to CGroup in groups
- * @param hostLanguage set from host-language in xml file
- * @param transforms return the modified transforms vector if there are
- * variables with transformations
- * @param groups passed returns the map of groups defined in fileContent
- */
-
-void SetMembers(const std::string &fileContents, const bool debugMode,
-                std::vector<std::shared_ptr<Transform>> &transforms,
-                std::map<std::string, IO> &ios);
+void RemoveXMLComments(std::string &currentContent) noexcept;
 
 /**
  * Called inside the ADIOS XML constructors to get contents from file,
- * broadcast
+ * broadcast and fill transforms and ios
  * @param configXMLFile
  * @param mpiComm
  * @param debugMode
@@ -115,6 +76,20 @@ void InitXML(const std::string configXML, const MPI_Comm mpiComm,
              const bool debugMode,
              std::vector<std::shared_ptr<Transform>> &transforms,
              std::map<std::string, IO> &ios);
+
+void InitIOXML(const std::string &ioTag, const MPI_Comm mpiComm,
+               const bool debugMode,
+               std::vector<std::shared_ptr<Transform>> &transforms,
+               std::map<std::string, IO> &ios);
+
+void InitEngineXML(const std::string &engineTag, const bool debugMode, IO &io);
+
+void InitTransportXML(const std::string &transportTag, const bool debugMode,
+                      IO &io);
+
+Params ParseParamsXML(const std::string &tag,
+                      const std::string::size_type elementsStartPosition,
+                      const bool debugMode);
 }
 
 #endif /* ADIOS2_HELPER_ADIOSXML_H_ */

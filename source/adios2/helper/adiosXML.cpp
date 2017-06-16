@@ -11,9 +11,11 @@
 #include "adiosXML.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <sstream>
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
+#include "adios2/ADIOSTypes.h"
 #include "adios2/helper/adiosSystem.h"
 
 namespace adios
@@ -55,9 +57,8 @@ std::string GetSubString(const std::string initialTag,
         return subString;
     }
 
-    // here make sure the finalTag is not a value surrounded by " " or ' ', if
-    // so
-    // find next
+    // make sure the finalTag is not a value surrounded by " " or ' ',
+    // if so find next
     bool isValue = true;
 
     while (isValue)
@@ -120,87 +121,126 @@ std::string GetSubString(const std::string initialTag,
         }
 
         // if this point is reached it means it's a value inside " " or ' ',
-        // move to
-        // the next end
+        // move to the next end
         end = content.find(finalTag, currentPosition);
     }
 
-    subString = content.substr(start, end - start + finalTag.size());
     currentPosition = end;
+    subString = content.substr(start, end - start + finalTag.size());
     return subString;
 }
 
-void GetQuotedValue(const char quote,
-                    const std::string::size_type &quotePosition,
-                    std::string &currentTag, std::string &value)
+std::string GetOpeningTag(const std::string tagName,
+                          const std::string &tagContents,
+                          std::string::size_type &position,
+                          const bool debugMode)
 {
-    currentTag = currentTag.substr(quotePosition + 1);
-    auto nextQuotePosition = currentTag.find(quote);
+    std::string openingTag(
+        GetSubString("<" + tagName + " ", ">", tagContents, position));
 
-    if (nextQuotePosition == currentTag.npos)
+    const std::string::size_type elementsStartPosition(position);
+
+    if (debugMode)
     {
-        throw std::invalid_argument("ERROR: Invalid attribute in..." +
-                                    currentTag + "...check XML file\n");
+        if (openingTag.size() < 2)
+        {
+            throw std::invalid_argument("ERROR: wrong XML tag <" + tagName +
+                                        ", in call to ADIOS constructor\n");
+        }
     }
 
-    value = currentTag.substr(0, nextQuotePosition);
-    currentTag = currentTag.substr(nextQuotePosition + 1);
+    // eliminate < >
+    openingTag = openingTag.substr(1, openingTag.size() - 2);
+    return openingTag;
 }
 
-void GetPairs(const std::string tag,
-              std::vector<std::pair<const std::string, const std::string>>
-                  &pairs) noexcept
+Params GetTagAttributes(const std::string &fileContent, const std::string &tag)
 {
-    std::string currentTag(
-        tag.substr(tag.find_first_of(" \t\n"))); // initialize current tag
+    auto lf_GetQuotedValue = [](const char quote,
+                                const std::string::size_type &quotePosition,
+                                std::string &currentTag) -> std::string {
 
-    while (currentTag.find('=') != currentTag.npos) // equalPosition
-    {
-        currentTag = currentTag.substr(currentTag.find_first_not_of(" \t\n"));
-        auto equalPosition = currentTag.find('=');
-        const std::string field(
-            currentTag.substr(0, equalPosition)); // get field
-        std::string value;
+        currentTag = currentTag.substr(quotePosition + 1);
+        auto nextQuotePosition = currentTag.find(quote);
 
-        const char quote = currentTag[equalPosition + 1];
-        if (quote == '\'' || quote == '"') // single quotes
+        if (nextQuotePosition == currentTag.npos)
         {
-            GetQuotedValue(quote, equalPosition + 1, currentTag, value);
+            throw std::invalid_argument(
+                "ERROR: Invalid attribute in..." + currentTag +
+                "...check XML file, in call to ADIOS constructor\n");
         }
 
-        pairs.push_back(
-            std::pair<const std::string, const std::string>(field, value));
-    }
-}
+        currentTag = currentTag.substr(nextQuotePosition + 1);
+        return currentTag.substr(0, nextQuotePosition);
+    };
 
-void GetPairsFromTag(
-    const std::string &fileContent, const std::string tag,
-    std::vector<std::pair<const std::string, const std::string>> &pairs)
-{
+    auto lf_GetAttributes = [&](const std::string &tag) -> Params {
+        Params attributes;
+        std::string currentTag(tag.substr(tag.find_first_of(" \t\n")));
+
+        while (currentTag.find('=') != currentTag.npos) // equalPosition
+        {
+            currentTag =
+                currentTag.substr(currentTag.find_first_not_of(" \t\n"));
+            auto equalPosition = currentTag.find('=');
+            if (currentTag.size() <= equalPosition + 1)
+            {
+                throw std::invalid_argument(
+                    "ERROR: tag " + tag +
+                    " is incomplete, check XML config file, "
+                    "in call to ADIOS constructor\n");
+            }
+
+            const std::string key(currentTag.substr(0, equalPosition));
+            std::string value;
+
+            const char quote = currentTag[equalPosition + 1];
+            if (quote == '\'' || quote == '"')
+            {
+                value = lf_GetQuotedValue(quote, equalPosition + 1, currentTag);
+            }
+
+            attributes.emplace(key, value);
+        }
+        return attributes;
+    };
+
+    // BODY of function starts here
+    Params attributes;
+
     if (tag.back() == '/') // last char is / --> "XML empty tag"
     {
-        GetPairs(tag, pairs);
+        attributes = lf_GetAttributes(tag);
     }
     else if (tag[0] == '/') // first char is / ---> closing tag
     {
+        attributes = lf_GetAttributes(tag);
+        if (attributes.size() > 0)
+        {
+            throw std::invalid_argument(
+                "ERROR: closing tag " + tag +
+                " can't have attributes, in call to ADIOS constructor\n");
+        }
     }
     else // opening tag
     {
         const std::string tagName(tag.substr(0, tag.find_first_of(" \t\n\r")));
-        const std::string closingTagName("</" + tagName +
-                                         ">"); // check for closing tagName
+        // look for closing tagName
+        const std::string closingTagName("</" + tagName + ">");
 
         if (fileContent.find(closingTagName) == fileContent.npos)
         {
-            throw std::invalid_argument("ERROR: closing tag " + closingTagName +
-                                        " missing, check XML file\n");
+            throw std::invalid_argument(
+                "ERROR: closing tag missing for " + closingTagName +
+                " check XML config file, in call to ADIOS constructor\n");
         }
 
-        GetPairs(tag, pairs);
+        attributes = lf_GetAttributes(tag);
     }
+    return attributes;
 }
 
-void RemoveXMLComments(std::string &currentContent) const noexcept
+void RemoveXMLComments(std::string &currentContent) noexcept
 {
     std::string::size_type startComment(currentContent.find("<!--"));
 
@@ -212,161 +252,6 @@ void RemoveXMLComments(std::string &currentContent) const noexcept
     }
 }
 
-// void SetMembers( const std::string& fileContent, const MPI_Comm mpiComm,
-// const bool debugMode,
-//                 std::string& hostLanguage, std::vector<
-//                 std::shared_ptr<Transform> >& transforms,
-//                 std::map< std::string, Group >& groups )
-//{
-//    //adios-config
-//    std::string currentContent;
-//    std::string::size_type currentPosition( 0 );
-//    GetSubString( "<adios-config ", "</adios-config>", fileContent,
-//    currentContent, currentPosition );
-//
-//    //remove comment sections
-//    std::string::size_type startComment ( currentContent.find( "<!--" ) );
-//
-//    while( startComment != currentContent.npos )
-//    {
-//        std::string::size_type endComment( currentContent.find( "-->") );
-//        currentContent.erase( startComment, endComment-startComment+3 );
-//        startComment = currentContent.find( "<!--" );
-//    }
-//
-//    //Tag <adios-config
-//    currentPosition = 0;
-//
-//    std::string tag; //use for < > tags
-//    GetSubString( "<adios-config", ">", currentContent, tag, currentPosition
-//    );
-//    tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
-//
-//    std::vector< std::pair<const std::string, const std::string> > pairs; //
-//    pairs in tag
-//    GetPairsFromTag( currentContent, tag, pairs );
-//
-//    for( auto& pair : pairs )
-//        if( pair.first == "host-language" )
-//            hostLanguage = pair.second;
-//
-//    if( debugMode )
-//    {
-//        if( Support::HostLanguages.count( hostLanguage ) == 0 )
-//            throw std::invalid_argument("ERROR: host language " + hostLanguage
-//            + " not supported.\n" );
-//
-//        if( hostLanguage.empty() )
-//            throw std::invalid_argument("ERROR: host language is empty.\n" );
-//    }
-//
-//    //adios-group
-//    currentPosition = 0;
-//
-//    while( currentPosition != std::string::npos )
-//    {
-//        std::string xmlGroup;
-//        GetSubString("<adios-group ", "</adios-group>", currentContent,
-//        xmlGroup, currentPosition ); //Get all group contents
-//
-//        if( xmlGroup.empty() ) //no more groups to find
-//            break;
-//
-//        //get group name
-//        std::string::size_type groupPosition( 0 );
-//        GetSubString( "<adios-group ", ">", xmlGroup, tag, groupPosition );
-//        if( debugMode )
-//        {
-//            if( tag.size() < 2 )
-//                throw std::invalid_argument( "ERROR: wrong tag " + tag + " in
-//                adios-group\n" ); //check < or <=
-//        }
-//
-//        tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
-//        GetPairsFromTag( xmlGroup, tag, pairs );
-//        std::string groupName;
-//
-//        for( auto& pair : pairs )
-//        {
-//            if( pair.first == "name")
-//                groupName = pair.second;
-//        }
-//
-//        if( debugMode )
-//        {
-//            if( groupName.empty() )
-//                throw std::invalid_argument( "ERROR: group name not found. \n"
-//                );
-//
-//            if( groups.count( groupName ) == 1 ) //group exists
-//                throw std::invalid_argument( "ERROR: group " + groupName + "
-//                defined twice.\n" );
-//        }
-//
-//        groups.emplace( groupName, Group( groupName, xmlGroup, transforms,
-//        debugMode ) );
-//
-//        currentContent.erase( currentContent.find( xmlGroup ), xmlGroup.size()
-//        );
-//        currentPosition = 0;
-//    }
-//
-//    //transport
-//    //lambda function to check priority and iteration casting to unsigned int
-//    auto lf_UIntCheck = []( const std::string method, const std::string
-//    fieldStr, const std::string fieldName,
-//                            const bool debugMode, int& field )
-//    {
-//        field = 0;
-//        if( !fieldStr.empty())
-//        {
-//            field = std::stoi( fieldStr ); //throws invalid_argument
-//
-//            if( debugMode )
-//            {
-//                if( field < 0 )
-//                    throw std::invalid_argument("ERROR: " + fieldName + " in
-//                    transport " + method + " can't be negative\n" );
-//            }
-//        }
-//    };
-//
-//    //this section will have to change, doing nothing for now
-//    currentPosition = 0;
-//    while( currentPosition != std::string::npos )
-//    {
-//        GetSubString( "<transport ", ">", currentContent, tag, currentPosition
-//        );
-//        if( tag.empty() ) break;
-//        tag = tag.substr( 1, tag.size() - 2 ); //eliminate < >
-//        pairs.clear();
-//        GetPairsFromTag( currentContent, tag, pairs );
-//
-//        std::string groupName, method, priorityStr, iterationStr;
-//        for( auto& pair : pairs )
-//        {
-//            if( pair.first == "group" )  groupName = pair.second;
-//            else if( pair.first == "method" ) method = pair.second;
-//            else if( pair.first == "priority" ) priorityStr = pair.second;
-//            else if( pair.first == "iteration" ) iterationStr = pair.second;
-//        }
-//
-//        auto itGroup = groups.find( groupName );
-//        if( debugMode )
-//        {
-//            if( itGroup == groups.end() ) //not found
-//                throw std::invalid_argument( "ERROR: in transport " + method +
-//                " group " + groupName + " not found.\n" );
-//        }
-//
-//        int priority, iteration;
-//        lf_UIntCheck( method, priorityStr, "priority", debugMode, priority );
-//        lf_UIntCheck( method, iterationStr, "iteration", debugMode, iteration
-//        );
-//        //here do something with the capsule
-//    }
-//}
-
 void InitXML(const std::string configXML, const MPI_Comm mpiComm,
              const bool debugMode,
              std::vector<std::shared_ptr<Transform>> &transforms,
@@ -375,74 +260,194 @@ void InitXML(const std::string configXML, const MPI_Comm mpiComm,
     // if using collective IO only?
     std::string fileContents = BroadcastFileContents(configXML, mpiComm);
 
-    SetMembers(fileContents, debugMode, transforms, ios);
+    // adios-config
+    std::string::size_type currentPosition(0);
+    std::string currentContent(GetSubString("<adios-config ", "</adios-config>",
+                                            fileContents, currentPosition));
+    RemoveXMLComments(currentContent);
+
+    // process transforms, not yet implemented
+    while (currentPosition != std::string::npos)
+    {
+        std::string transformTag(GetSubString("<transform ", "</transform>",
+                                              currentContent, currentPosition));
+
+        if (transformTag.empty()) // no more transforms
+        {
+            break;
+        }
+        // InitTransform(transformTag, debugMode, transforms);
+    }
+
+    currentPosition = 0;
+    // process IOs
+    while (currentPosition != std::string::npos)
+    {
+        // io
+        std::string ioTag(
+            GetSubString("<io ", "</io>", currentContent, currentPosition));
+
+        if (ioTag.empty()) // no more groups to find
+        {
+            break;
+        }
+        InitIOXML(ioTag, mpiComm, debugMode, transforms, ios);
+    }
 }
 
-// void SetMembers(const std::string &fileContents, const bool debugMode,
-//                std::vector<std::shared_ptr<Transform>> &transforms,
-//                std::map<std::string, IO> &ios)
-//{
-//
-//    // adios-config
-//    std::string::size_type currentPosition(0);
-//    std::string currentContent(GetSubString("<adios-config ",
-//    "</adios-config>",
-//                                            fileContents, currentPosition));
-//    RemoveXMLComments(currentContent);
-//
-//    while (currentPosition != std::string::npos)
-//    {
-//        // io
-//        std::string io(
-//            GetSubString("<io ", "</io>", currentContent, currentPosition));
-//
-//        if (io.empty()) // no more groups to find
-//        {
-//            break;
-//        }
-//
-//        // get io name
-//        std::string::size_type ioPosition(0);
-//        const std::string tag(GetSubString("<io ", ">", io, ioPosition));
-//        if (debugMode)
-//        {
-//            if (tag.size() < 2)
-//            {
-//                throw std::invalid_argument("ERROR: wrong XML tag <io " + tag
-//                +
-//                                            ", in call to ADIOS
-//                                            constructor\n");
-//            }
-//        }
-//
-//        tag = tag.substr(1, tag.size() - 2); // eliminate < >
-//        GetPairsFromTag(io, tag, pairs);
-//        std::string groupName;
-//
-//        for (auto &pair : pairs)
-//        {
-//            if (pair.first == "name")
-//                groupName = pair.second;
-//        }
-//
-//        if (debugMode)
-//        {
-//            if (groupName.empty())
-//                throw std::invalid_argument("ERROR: group name not found.
-//                \n");
-//
-//            if (groups.count(groupName) == 1) // group exists
-//                    throw std::invalid_argument( "ERROR: group " + groupName +
-//                    "
-//                    defined twice.\n" );
-//        }
-//
-//        groups.emplace(groupName,
-//                       Group(groupName, xmlGroup, transforms, debugMode));
-//
-//        currentContent.erase(currentContent.find(xmlGroup), xmlGroup.size());
-//        currentPosition = 0;
-//    }
-//}
+void InitIOXML(const std::string &ioTag, const MPI_Comm mpiComm,
+               const bool debugMode,
+               std::vector<std::shared_ptr<Transform>> &transforms,
+               std::map<std::string, IO> &ios)
+{
+    std::string::size_type position(0);
+    const std::string openingTag(
+        GetOpeningTag("io", ioTag, position, debugMode));
+    const std::string::size_type elementsStart(position);
+
+    Params ioAttributes = GetTagAttributes(ioTag, openingTag);
+
+    std::string ioName;
+    for (const auto &ioAttribute : ioAttributes)
+    {
+        if (ioAttribute.first == "name")
+        {
+            ioName = ioAttribute.second;
+        }
+    }
+
+    if (debugMode)
+    {
+        if (ioName.empty())
+        {
+            throw std::invalid_argument(
+                "ERROR: io name=\"value\" attribute not found in opening XML "
+                "tag " +
+                openingTag +
+                ", check XML config file, in call to ADIOS constructor\n");
+        }
+
+        if (ios.count(ioName) == 1) // io exists
+        {
+            throw std::invalid_argument("ERROR: io name " + ioName +
+                                        " must be unique in XML config file, "
+                                        "in call to ADIOS constructor\n");
+        }
+    }
+
+    // emplace io with inConfigFile argument as true
+    auto itIO = ios.emplace(ioName, IO(ioName, mpiComm, true, debugMode));
+
+    // process engine
+    std::string engineTag(
+        GetSubString("<engine ", "</engine>", ioTag, position));
+
+    if (!engineTag.empty()) // no more groups to find
+    {
+        InitEngineXML(engineTag, debugMode, itIO.first->second);
+    }
+
+    if (debugMode)
+    {
+        // try finding a 2nd one
+        std::string engineTag(
+            GetSubString("<engine ", "</engine>", ioTag, position));
+        if (!engineTag.empty())
+        {
+            throw std::invalid_argument("ERROR: two engine tags found in IO " +
+                                        ioName + ", only one is allowed in XML "
+                                                 "config file, in call to "
+                                                 "ADIOS constructor\n");
+        }
+    }
+
+    position = elementsStart;
+    // process transports
+    while (position != std::string::npos)
+    {
+        std::string transportTag(
+            GetSubString("<transport ", "</transport>", ioTag, position));
+
+        if (transportTag.empty()) // no more groups to find
+        {
+            break;
+        }
+    }
+}
+
+void InitEngineXML(const std::string &engineTag, const bool debugMode, IO &io)
+{
+    std::string::size_type position(0);
+    const std::string openingTag(
+        GetOpeningTag("engine", engineTag, position, debugMode));
+    const std::string::size_type elementsStartPosition(position);
+    Params attributes = GetTagAttributes(engineTag, openingTag);
+
+    std::string type;
+    for (const auto &attribute : attributes)
+    {
+        if (attribute.first == "type")
+        {
+            type = attribute.second;
+        }
+    }
+
+    io.SetEngine(type);
+    io.SetParameters(
+        ParseParamsXML(engineTag, elementsStartPosition, debugMode));
+}
+
+void InitTransportXML(const std::string &transportTag, const bool debugMode,
+                      IO &io)
+{
+    std::string::size_type position(0);
+    const std::string openingTag(
+        GetOpeningTag("transport", transportTag, position, debugMode));
+    const std::string::size_type elementsStartPosition(position);
+    Params attributes = GetTagAttributes(transportTag, openingTag);
+
+    std::string type;
+    for (const auto &attribute : attributes)
+    {
+        if (attribute.first == "type")
+        {
+            type = attribute.second;
+        }
+    }
+
+    io.AddTransport(
+        type, ParseParamsXML(transportTag, elementsStartPosition, debugMode));
+}
+
+Params ParseParamsXML(const std::string &tag,
+                      const std::string::size_type elementsStartPosition,
+                      const bool debugMode)
+{
+    std::istringstream parametersSS(tag.substr(elementsStartPosition));
+    std::string pair;
+
+    Params parameters;
+
+    while (std::getline(parametersSS, pair, ';'))
+    {
+        auto equalPosition = pair.find("=");
+
+        if (debugMode)
+        {
+            if (equalPosition == std::string::npos ||
+                equalPosition == pair.size())
+            {
+                throw std::invalid_argument("ERROR: wrong parameter " + pair +
+                                            " format is "
+                                            "key=value in XML config file, in "
+                                            "call to ADIOS constructor\n");
+            }
+        }
+        const std::string key(pair.substr(0, equalPosition));
+        const std::string value(pair.substr(equalPosition + 1));
+        parameters.emplace(key, value);
+    }
+    return parameters;
+}
 
 } // end namespace adios
