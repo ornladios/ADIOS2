@@ -276,19 +276,22 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
 
 void BP1Base::InitParameterVerbose(const std::string value)
 {
+    int verbosity = -1;
+
     if (m_DebugMode)
     {
         bool success = true;
+
         try
         {
-            m_Verbosity = static_cast<unsigned int>(std::stoi(value));
+            verbosity = std::stoi(value);
         }
         catch (std::exception &e)
         {
             success = false;
         }
 
-        if (!success || m_Verbosity < 0 || m_Verbosity > 5)
+        if (!success || verbosity < 0 || verbosity > 5)
         {
             throw std::invalid_argument(
                 "ERROR: value in Verbose=value in IO SetParameters must be "
@@ -297,8 +300,10 @@ void BP1Base::InitParameterVerbose(const std::string value)
     }
     else
     {
-        m_Verbosity = static_cast<unsigned int>(std::stoi(value));
+        verbosity = std::stoi(value);
     }
+
+    m_Verbosity = static_cast<unsigned int>(verbosity);
 }
 
 std::vector<uint8_t>
