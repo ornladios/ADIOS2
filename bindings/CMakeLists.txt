@@ -1,3 +1,3 @@
-if(ADIOS_HAVE_Python)
+if(ADIOS2_HAVE_Python)
   add_subdirectory(python)
 endif()

@@ -10,7 +10,7 @@ target_link_libraries(writer_multistep adios2)
 target_link_libraries(reader_stepping adios2)
 target_link_libraries(reader_allsteps adios2)
 
-if(ADIOS_HAVE_MPI)
+if(ADIOS2_HAVE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
 
   target_include_directories(writer_multistep PRIVATE ${MPI_C_INCLUDE_PATH})
