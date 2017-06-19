@@ -20,7 +20,7 @@ namespace transport
 {
 
 FilePointer::FilePointer(MPI_Comm mpiComm, const bool debugMode)
-: Transport("File", "C stdio.h", mpiComm, debugMode)
+: Transport("File", "stdio", mpiComm, debugMode)
 {
 }
 

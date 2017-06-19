@@ -313,19 +313,19 @@ BP1Base::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
 
         int id = METHOD_UNKNOWN;
-        if (method == "NULL")
+        if (method == "File_NULL")
         {
             id = METHOD_NULL;
         }
-        else if (method == "FileDescriptor")
+        else if (method == "File_POSIX")
         {
             id = METHOD_POSIX;
         }
-        else if (method == "FileStream")
+        else if (method == "File_fstream")
         {
             id = METHOD_FSTREAM;
         }
-        else if (method == "FilePointer")
+        else if (method == "File_stdio")
         {
             id = METHOD_FILE;
         }

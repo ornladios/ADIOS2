@@ -104,7 +104,7 @@ std::vector<std::string> TransportMan::GetTransportsTypes() noexcept
 
     for (const auto &transport : m_Transports)
     {
-        types.push_back(transport->m_Type);
+        types.push_back(transport->m_Type + "_" + transport->m_Library);
     }
     return types;
 }
