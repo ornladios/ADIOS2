@@ -18,7 +18,7 @@
 #include <adios2.h>
 
 #include "IOPy.h"
-#include "adios2/ADIOSMPI.h"
+#include "adios2/ADIOSMPICommOnly.h"
 
 namespace adios
 {

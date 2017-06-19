@@ -12,6 +12,8 @@
 
 #include "adiosPyTypes.h"
 
+#include "adios2/ADIOSMPI.h"
+
 namespace adios
 {
 
