@@ -50,8 +50,7 @@ std::string LocalTimeDate() noexcept;
  * @param mpiComm
  * @return fileContents as a single string
  */
-std::string BroadcastFileContents(const std::string &fileName,
-                                  MPI_Comm mpiComm) noexcept;
+std::string BroadcastString(const std::string &input, MPI_Comm mpiComm);
 
 } // end namespace adios
 

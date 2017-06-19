@@ -4,9 +4,9 @@
     <io name="Output">
         
         <var name="myArray"> <!-- provide a sequence of transforms -->
-            <transform type="BZip2"> <!-- not implemented yet -->
+            <transform type='BZip2'> <!-- not implemented yet -->
                 BlockSize100K=3; <!-- must be a number between 0 and 9-->
-            </transform> 
+            </transform>
             <transform type="Zfp"> <!-- not implemented yet, mutually exclusive options -->
                 Tolerance=1e-3; <!-- must be a number between 0 and 9-->
                 <!-- Rate=1; --> <!-- must be a number between 0 and 9-->
@@ -58,7 +58,7 @@
             CacheSize=8192; <!-- not to be confused with ADIOS heap buffer, this is transport library cache, always in bytes -->    
         </transport>
         
-        <transport type="RDMA"> <!-- Staging gets more complex depending on library requirements-->
+        <transport type="RDMA"> <!-- Staging gets more complex  depending on library requirements-->
         	ProfileUnits=Microseconds; <!-- Microseconds, Milliseconds, Seconds, Minutes, Hours --> 
             Library=ibverbs; <!-- SST (default), Flexpath, Dataspaces, ibverbs -->
             Port=18515; <!-- ibverbs -->

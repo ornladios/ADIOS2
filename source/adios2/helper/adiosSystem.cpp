@@ -79,10 +79,9 @@ std::string LocalTimeDate() noexcept
     return std::string(std::ctime(&now));
 }
 
-std::string BroadcastFileContents(const std::string &fileName,
-                                  MPI_Comm mpiComm) noexcept
+std::string BroadcastString(const std::string &input, MPI_Comm mpiComm)
 {
-    std::string fileContents;
+    std::string receivedInput;
     size_t characterCount = 0;
 
     int rank;
@@ -90,15 +89,16 @@ std::string BroadcastFileContents(const std::string &fileName,
 
     if (rank == 0) // sender
     {
-        fileContents = FileToString(fileName);
-        characterCount = fileContents.size();
+        characterCount = input.size();
 
         // broadcast size for allocation
         MPI_Bcast(&characterCount, 1, ADIOS2_MPI_SIZE_T, 0, mpiComm);
 
         // broadcast contents
-        MPI_Bcast(const_cast<char *>(fileContents.c_str()),
+        MPI_Bcast(const_cast<char *>(input.c_str()),
                   static_cast<int>(characterCount), MPI_CHAR, 0, mpiComm);
+
+        return input;
     }
     else // receivers
     {
@@ -106,15 +106,14 @@ std::string BroadcastFileContents(const std::string &fileName,
         MPI_Bcast(&characterCount, 1, ADIOS2_MPI_SIZE_T, 0, mpiComm);
 
         // allocate receiver
-        std::vector<char> fileContentsReceiver(characterCount);
-        MPI_Bcast(fileContentsReceiver.data(), static_cast<int>(characterCount),
+        std::vector<char> stringReceiver(characterCount);
+        MPI_Bcast(stringReceiver.data(), static_cast<int>(characterCount),
                   MPI_CHAR, 0, mpiComm);
 
-        fileContents.assign(fileContentsReceiver.begin(),
-                            fileContentsReceiver.end());
+        receivedInput.assign(stringReceiver.begin(), stringReceiver.end());
     }
 
-    return fileContents;
+    return receivedInput;
 }
 
 } // end namespace adios
