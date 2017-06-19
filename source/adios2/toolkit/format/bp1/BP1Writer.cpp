@@ -188,8 +188,12 @@ std::string BP1Writer::GetRankProfilingLog(
                         "': { ");
 
     auto &profiler = m_Profiler;
-    rankLog +=
-        "'bytes': " + std::to_string(profiler.Bytes.at("buffering")) + ", ";
+
+    std::string timeDate(profiler.Timers.at("buffering").m_LocalTimeDate);
+    timeDate.pop_back();
+
+    rankLog += "'date_and_time': '" + timeDate + "', " + "'bytes': " +
+               std::to_string(profiler.Bytes.at("buffering")) + ", ";
     lf_WriterTimer(rankLog, profiler.Timers.at("buffering"));
 
     const size_t transportsSize = transportsTypes.size();
@@ -197,7 +201,7 @@ std::string BP1Writer::GetRankProfilingLog(
     for (unsigned int t = 0; t < transportsSize; ++t)
     {
         rankLog += "'transport_" + std::to_string(t) + "': { ";
-        rankLog += "'lib': '" + transportsTypes[t] + "', ";
+        rankLog += "'type': '" + transportsTypes[t] + "', ";
 
         for (const auto &transportTimerPair : transportsProfilers[t]->Timers)
         {
