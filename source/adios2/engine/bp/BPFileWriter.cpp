@@ -129,7 +129,7 @@ void BPFileWriter::InitTransports()
     auto transportsNames = m_TransportsManager.GetFilesBaseNames(
         m_Name, m_IO.m_TransportsParameters);
     auto bpBaseNames = m_BP1Writer.GetBPBaseNames(transportsNames);
-    auto bpNames = m_BP1Writer.GetBPNames(bpBaseNames);
+    auto bpNames = m_BP1Writer.GetBPNames(transportsNames);
 
     m_TransportsManager.OpenFiles(bpBaseNames, bpNames, m_OpenMode,
                                   m_IO.m_TransportsParameters,

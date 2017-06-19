@@ -75,7 +75,7 @@ public:
     void InitParameters(const Params &parameters);
 
     /**
-     * Vector version of BPBaseName
+     * Vector version of BPBaseNames
      * @param names
      * @return vector of base (name.bp) names
      */
@@ -83,28 +83,12 @@ public:
     GetBPBaseNames(const std::vector<std::string> &names) const noexcept;
 
     /**
-     * Checks if input name has .bp extension and returns a .bp directory
-     * name
-     * @param name input (might or not have .bp)
-     * @return either name.bp (name has no .bp) or name (name has .bp
-     * extension)
-     */
-    std::string GetBPBaseName(const std::string &name) const noexcept;
-
-    /**
-     * Vector version of GetBPName
-     * @param names
+     * Get BP names from base names
+     * @param names inputs
      * @return
      */
     std::vector<std::string>
-    GetBPNames(const std::vector<std::string> &names) const noexcept;
-
-    /**
-     * Gets the name for bp buffer based on rank
-     * @param name
-     * @return name.bp/name.bp.rank
-     */
-    std::string GetBPName(const std::string &name) const noexcept;
+    GetBPNames(const std::vector<std::string> &baseNames) const noexcept;
 
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
