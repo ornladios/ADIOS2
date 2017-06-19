@@ -82,41 +82,43 @@ void BP1Base::InitParameters(const Params &parameters)
 std::vector<std::string>
 BP1Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
 {
+    auto lf_GetBPBaseName = [](const std::string &name) -> std::string {
+
+        const std::string bpBaseName(AddExtension(name, ".bp") + ".dir");
+        return bpBaseName;
+    };
+
     std::vector<std::string> bpBaseNames;
     bpBaseNames.reserve(names.size());
 
     for (const auto &name : names)
     {
-        bpBaseNames.push_back(GetBPBaseName(name));
+        bpBaseNames.push_back(lf_GetBPBaseName(name));
     }
     return bpBaseNames;
 }
 
-std::string BP1Base::GetBPBaseName(const std::string &name) const noexcept
-{
-    return AddExtension(name, ".bp");
-}
-
 std::vector<std::string>
-BP1Base::GetBPNames(const std::vector<std::string> &names) const noexcept
+BP1Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
 {
-    std::vector<std::string> bpNames;
-    bpNames.reserve(names.size());
+    auto lf_GetBPName = [](const std::string &baseName,
+                           const int rank) -> std::string {
 
-    for (const auto &name : names)
+        const std::string bpBaseName = AddExtension(baseName, ".bp");
+        // name.bp.dir/name.bp.rank
+        const std::string bpName(bpBaseName + ".dir/" + bpBaseName + "." +
+                                 std::to_string(rank));
+        return bpName;
+    };
+
+    std::vector<std::string> bpNames;
+    bpNames.reserve(baseNames.size());
+
+    for (const auto &baseName : baseNames)
     {
-        bpNames.push_back(GetBPName(name));
+        bpNames.push_back(lf_GetBPName(baseName, m_BP1Aggregator.m_RankMPI));
     }
     return bpNames;
-}
-
-std::string BP1Base::GetBPName(const std::string &name) const noexcept
-{
-    const std::string baseName = AddExtension(name, ".bp");
-    // opens a file transport under name.bp/name.bp.rank
-    const std::string bpName(baseName + "/" + baseName + "." +
-                             std::to_string(m_BP1Aggregator.m_RankMPI));
-    return bpName;
 }
 
 // PROTECTED
