@@ -10,7 +10,7 @@
 
 #include "VariablePy.h"
 
-namespace adios
+namespace adios2
 {
 
 VariablePy::VariablePy(const std::string &name, const pyList shape,

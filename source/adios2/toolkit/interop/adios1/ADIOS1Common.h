@@ -28,7 +28,7 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 
-namespace adios
+namespace adios2
 {
 namespace interop
 {

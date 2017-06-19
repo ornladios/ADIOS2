@@ -44,12 +44,12 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(mpiReaderComm, &rank);
     MPI_Comm_size(mpiReaderComm, &nproc);
 
-    adios::ADIOS ad("adios2.xml", mpiReaderComm, adios::DebugON);
+    adios2::ADIOS ad("adios2.xml", mpiReaderComm, adios2::DebugON);
 
     // Define method for engine creation
     // 1. Get method def from config file or define new one
 
-    adios::IO &bpReaderIO = ad.DeclareIO("input");
+    adios2::IO &bpReaderIO = ad.DeclareIO("input");
     if (!bpReaderIO.InConfigFile())
     {
         // if not defined by user, we can change the default settings
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     }
 
     auto bpReader =
-        bpReaderIO.Open(inputfile, adios::OpenMode::Read, mpiReaderComm);
+        bpReaderIO.Open(inputfile, adios2::OpenMode::Read, mpiReaderComm);
 
     if (!bpReader)
     {
@@ -76,12 +76,12 @@ int main(int argc, char *argv[])
     // bpReader->Read<unsigned int>("gndx", &gndx);
     // bpReader->Read<unsigned int>("gndy", &gndy);
 
-    adios::Variable<unsigned int> *vgndx =
+    adios2::Variable<unsigned int> *vgndx =
         bpReader->InquireVariable<unsigned int>("gndx");
 
     gndx = vgndx->m_Data[0];
 
-    adios::Variable<unsigned int> *vgndy =
+    adios2::Variable<unsigned int> *vgndy =
         bpReader->InquireVariable<unsigned int>("gndy");
     gndy = vgndy->m_Data[0];
 
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     std::cout << "rank " << rank << " reads " << readsize[1]
               << " columns from offset " << offset[1] << std::endl;
 
-    adios::Variable<double> *vT = bpReader->InquireVariable<double>("T");
+    adios2::Variable<double> *vT = bpReader->InquireVariable<double>("T");
 
     double *T = new double[vT->m_AvailableSteps * readsize[0] * readsize[1]];
 
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     // Arrays are read by scheduling one or more of them
     // and performing the reads at once
     bpReader->ScheduleRead<double>(*vT, T);
-    bpReader->PerformReads(adios::ReadMode::Blocking);
+    bpReader->PerformReads(adios2::ReadMode::Blocking);
 
     printData(T, readsize.data(), offset.data(), rank, vT->m_AvailableSteps);
     bpReader->Close();

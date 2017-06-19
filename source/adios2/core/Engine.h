@@ -30,7 +30,7 @@
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableCompound.h"
 
-namespace adios
+namespace adios2
 {
 
 /** Base Abstract class for IO operations:  Read/Write, Schedule, Advance and
@@ -236,7 +236,7 @@ public:
      */
     virtual void
     AdvanceAsync(const AdvanceMode mode,
-                 std::function<void(std::shared_ptr<adios::Engine>)> callback);
+                 std::function<void(std::shared_ptr<adios2::Engine>)> callback);
 
     AdvanceStatus GetAdvanceStatus();
 

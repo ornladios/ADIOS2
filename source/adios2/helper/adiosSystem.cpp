@@ -20,7 +20,7 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/helper/adiosString.h"
 
-namespace adios
+namespace adios2
 {
 
 bool CreateDirectory(const std::string &fullPath) noexcept

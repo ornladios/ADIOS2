@@ -16,7 +16,7 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
-namespace adios
+namespace adios2
 {
 
 template <class T>

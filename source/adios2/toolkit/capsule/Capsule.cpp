@@ -10,7 +10,7 @@
 
 #include "Capsule.h"
 
-namespace adios
+namespace adios2
 {
 
 Capsule::Capsule(const std::string type, const bool debugMode)

@@ -21,7 +21,7 @@
 #include "VariablePy.h"
 #include "adiosPyTypes.h" //pyArray
 
-namespace adios
+namespace adios2
 {
 
 class EnginePy

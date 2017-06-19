@@ -10,7 +10,7 @@
 
 #include "DataMan.h"
 
-namespace adios
+namespace adios2
 {
 namespace transportman
 {

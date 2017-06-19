@@ -14,7 +14,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Transform.h"
 
-namespace adios
+namespace adios2
 {
 namespace transform
 {

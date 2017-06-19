@@ -22,7 +22,7 @@
 
 #include <stdexcept> // for Intel Compiler
 
-namespace adios
+namespace adios2
 {
 namespace interop
 {

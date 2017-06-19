@@ -12,7 +12,7 @@
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 
-namespace adios
+namespace adios2
 {
 
 BPFileReader::BPFileReader(IO &io, const std::string &name,

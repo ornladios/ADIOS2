@@ -11,7 +11,7 @@
 
 #include "SelectionPoints.h"
 
-namespace adios
+namespace adios2
 {
 
 SelectionPoints::SelectionPoints(size_t dimensionsSize,

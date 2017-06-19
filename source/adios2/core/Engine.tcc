@@ -13,7 +13,7 @@
 
 #include "Engine.h"
 
-namespace adios
+namespace adios2
 {
 
 template <>

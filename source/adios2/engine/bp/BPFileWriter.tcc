@@ -10,9 +10,7 @@
 
 #include "BPFileWriter.h"
 
-#include <iostream> //TODO temporary
-
-namespace adios
+namespace adios2
 {
 
 template <class T>

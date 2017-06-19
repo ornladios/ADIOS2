@@ -12,7 +12,7 @@
 
 #include <cmath>
 
-namespace adios
+namespace adios2
 {
 
 size_t GetTotalSize(const Dims &dimensions) noexcept

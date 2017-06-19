@@ -17,7 +17,7 @@
 
 #include "adios2/helper/adiosMath.h" //NextExponentialSize
 
-namespace adios
+namespace adios2
 {
 namespace format
 {

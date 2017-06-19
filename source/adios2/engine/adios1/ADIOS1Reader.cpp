@@ -14,7 +14,7 @@
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 
-namespace adios
+namespace adios2
 {
 
 ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name,
@@ -282,7 +282,7 @@ void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
 
 void ADIOS1Reader::AdvanceAsync(
     AdvanceMode mode,
-    std::function<void(std::shared_ptr<adios::Engine>)> callback)
+    std::function<void(std::shared_ptr<adios2::Engine>)> callback)
 {
     throw std::invalid_argument(
         "ERROR: ADIOS1Reader doesn't support AdvanceSync()\n");

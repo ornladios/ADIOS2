@@ -48,9 +48,9 @@ int main(int argc, char *argv[])
     const int NSTEPS = 5;
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios("globalArray.xml", MPI_COMM_WORLD);
+    adios2::ADIOS adios("globalArray.xml", MPI_COMM_WORLD);
 #else
-    adios::ADIOS adios("globalArray.xml");
+    adios2::ADIOS adios("globalArray.xml");
 #endif
 
     // Application variables for output
@@ -63,19 +63,19 @@ int main(int argc, char *argv[])
     {
         // Get io settings from the config file or
         // create one with default settings here
-        adios::IO &io = adios.DeclareIO("Output");
+        adios2::IO &io = adios.DeclareIO("Output");
 
         /*
          * Define global array: type, name, global dimensions
          * The local process' part (start, count) can be defined now or later
          * before Write().
          */
-        adios::Variable<double> &varGlobalArray =
+        adios2::Variable<double> &varGlobalArray =
             io.DefineVariable<double>("GlobalArray", {(unsigned int)nproc, Nx});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        auto writer = io.Open("globalArray.bp", adios::OpenMode::Write);
+        auto writer = io.Open("globalArray.bp", adios2::OpenMode::Write);
 
         if (!writer)
             throw std::ios_base::failure(
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios::SelectionBoundingBox sel({(unsigned int)rank, 0}, {1, Nx});
+            adios2::SelectionBoundingBox sel({(unsigned int)rank, 0}, {1, Nx});
             varGlobalArray.SetSelection(sel);
             writer->Write<double>(varGlobalArray, row.data());
 

@@ -24,21 +24,21 @@ int main(int argc, char *argv[])
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
-        adios::ADIOS adios(adios::DebugON);
+        adios2::ADIOS adios(adios2::DebugON);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios::IO &hdf5IO = adios.DeclareIO("HDFFileIO");
+        adios2::IO &hdf5IO = adios.DeclareIO("HDFFileIO");
         hdf5IO.SetEngine("HDF5Writer");
         hdf5IO.AddTransport("file");
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios::Variable<float> &bpFloats = hdf5IO.DefineVariable<float>(
-            "bpFloats", {}, {}, {Nx}, adios::ConstantDims);
+        adios2::Variable<float> &bpFloats = hdf5IO.DefineVariable<float>(
+            "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto hdf5Writer = hdf5IO.Open("myVector.bp", adios::OpenMode::Write);
+        auto hdf5Writer = hdf5IO.Open("myVector.bp", adios2::OpenMode::Write);
 
         if (!hdf5Writer)
         {

@@ -21,7 +21,7 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
-namespace adios
+namespace adios2
 {
 /** Abstract Base class for transports */
 class Transport

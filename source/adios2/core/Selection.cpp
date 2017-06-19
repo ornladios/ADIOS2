@@ -11,7 +11,7 @@
 
 #include "Selection.h"
 
-namespace adios
+namespace adios2
 {
 
 Selection::Selection(const SelectionType type, const bool debugMode)

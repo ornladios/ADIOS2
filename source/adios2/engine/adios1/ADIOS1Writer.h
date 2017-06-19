@@ -17,7 +17,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/interop/adios1/ADIOS1Common.h"
 
-namespace adios
+namespace adios2
 {
 
 class ADIOS1Writer : public Engine

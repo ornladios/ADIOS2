@@ -21,7 +21,7 @@
 
 #include "adios2/ADIOSConfig.h"
 
-namespace adios
+namespace adios2
 {
 
 typedef int MPI_Comm;

@@ -15,7 +15,7 @@
 
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
-namespace adios
+namespace adios2
 {
 
 DataManWriter::DataManWriter(IO &io, const std::string &name,

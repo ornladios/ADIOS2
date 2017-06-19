@@ -23,7 +23,7 @@
 #include "adios2/core/SelectionBoundingBox.h"
 #include "adios2/core/Transform.h"
 
-namespace adios
+namespace adios2
 {
 /** Base class for Variable<T> (primitives) and VariableCompound classes */
 class VariableBase

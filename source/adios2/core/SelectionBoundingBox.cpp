@@ -18,7 +18,7 @@
 
 #include "adios2/helper/adiosFunctions.h" //Uint64VectorToSizetVector
 
-namespace adios
+namespace adios2
 {
 
 SelectionBoundingBox::SelectionBoundingBox(const Dims start, const Dims count,

@@ -10,7 +10,7 @@
 
 #include "Transform.h"
 
-namespace adios
+namespace adios2
 {
 
 Transform::Transform(const std::string method) : m_Method(method) {}

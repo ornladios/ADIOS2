@@ -11,7 +11,7 @@
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #else
-namespace adios
+namespace adios2
 {
 using MPI_Comm = int;
 } // end namespace adios

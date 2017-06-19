@@ -12,7 +12,7 @@
 
 #include "adios2/helper/adiosFunctions.h" //LocalTimeDate
 
-namespace adios
+namespace adios2
 {
 namespace profiling
 {

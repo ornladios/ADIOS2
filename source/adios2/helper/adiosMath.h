@@ -17,7 +17,7 @@
 
 #include "adios2/ADIOSTypes.h"
 
-namespace adios
+namespace adios2
 {
 /**
  * Loops through a vector containing dimensions and returns the product of all

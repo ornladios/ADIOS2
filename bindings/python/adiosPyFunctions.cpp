@@ -10,7 +10,7 @@
 
 #include "adiosPyFunctions.h"
 
-namespace adios
+namespace adios2
 {
 
 Dims PyListToDims(const pyList list) noexcept

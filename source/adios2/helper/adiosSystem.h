@@ -19,7 +19,7 @@
 
 #include "adios2/ADIOSMPICommOnly.h"
 
-namespace adios
+namespace adios2
 {
 
 /**

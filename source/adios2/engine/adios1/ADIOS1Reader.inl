@@ -14,7 +14,7 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-namespace adios
+namespace adios2
 {
 
 template <class T>
@@ -27,7 +27,7 @@ Variable<T> *ADIOS1Reader::InquireVariableCommon(const std::string &name,
     // name, )
     // return &variable; //return address if success
     ADIOS_VARINFO *vi = adios_inq_var(m_fh, name.c_str());
-    adios::Variable<T> *var = nullptr;
+    adios2::Variable<T> *var = nullptr;
     if (vi != nullptr)
     {
         CheckADIOS1TypeCompatibility(name, GetType<T>(), vi->type); // throws

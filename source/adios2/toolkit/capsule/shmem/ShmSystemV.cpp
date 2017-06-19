@@ -17,7 +17,7 @@
 #include <utility>
 /// \endcond
 
-namespace adios
+namespace adios2
 {
 
 ShmSystemV::ShmSystemV(const std::string &pathName, const int rankMPI,

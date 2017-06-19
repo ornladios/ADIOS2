@@ -20,7 +20,7 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Selection.h"
 
-namespace adios
+namespace adios2
 {
 
 /** Selection for a selection of an enumeration of positions.

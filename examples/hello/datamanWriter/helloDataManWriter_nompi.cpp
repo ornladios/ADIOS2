@@ -21,8 +21,8 @@ int main(int argc, char *argv[])
 
     try
     {
-        adios::ADIOS adios(adios::DebugON);
-        adios::IO &dataManIO = adios.DeclareIO("WANIO");
+        adios2::ADIOS adios(adios2::DebugON);
+        adios2::IO &dataManIO = adios.DeclareIO("WANIO");
         dataManIO.SetEngine("DataManWriter");
         dataManIO.SetParameters({"peer-to-peer=yes", "real_time=yes",
                                  "compress=no", "method=dump"});
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
         // Create engine smart pointer to DataMan Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
         auto dataManWriter =
-            dataManIO.Open("myFloats.bp", adios::OpenMode::Write);
+            dataManIO.Open("myFloats.bp", adios2::OpenMode::Write);
 
         if (!dataManWriter)
         {

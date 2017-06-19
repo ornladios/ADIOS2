@@ -11,7 +11,7 @@
 #include "Variable.h"
 #include "Variable.tcc"
 
-namespace adios
+namespace adios2
 {
 
 } // end namespace adios

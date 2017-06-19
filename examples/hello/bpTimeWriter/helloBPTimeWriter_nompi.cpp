@@ -24,22 +24,22 @@ int main(int argc, char *argv[])
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
-        adios::ADIOS adios(adios::DebugON);
+        adios2::ADIOS adios(adios2::DebugON);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
 
         /** name, { shape (total dimensions) }, { start (local) }, { count
          * {local} } */
-        adios::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats", {}, {}, {Nx}, adios::ConstantDims);
+        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
+            "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
-        adios::Variable<unsigned int> &bpTimeStep =
+        adios2::Variable<unsigned int> &bpTimeStep =
             bpIO.DefineVariable<unsigned int>("timeStep");
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::Write);
+        auto bpWriter = bpIO.Open("myVector.bp", adios2::OpenMode::Write);
 
         if (!bpWriter)
         {

@@ -14,7 +14,7 @@
 
 #include "adios2/helper/adiosFunctions.h"
 
-namespace adios
+namespace adios2
 {
 namespace format
 {

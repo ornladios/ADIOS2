@@ -14,7 +14,7 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-namespace adios
+namespace adios2
 {
 
 template <class T>

@@ -13,7 +13,7 @@
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit
 
-namespace adios
+namespace adios2
 {
 namespace format
 {

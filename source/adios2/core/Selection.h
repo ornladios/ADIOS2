@@ -41,7 +41,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSTypes.h"
 
-namespace adios
+namespace adios2
 {
 /** Base class for Selection (query) types */
 class Selection

@@ -18,7 +18,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 
-namespace adios
+namespace adios2
 {
 
 class DataManReader : public Engine

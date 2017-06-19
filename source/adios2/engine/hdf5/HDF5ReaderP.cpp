@@ -12,7 +12,7 @@
 
 #include "adios2/ADIOSMPI.h"
 
-namespace adios
+namespace adios2
 {
 
 HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name,

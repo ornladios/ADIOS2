@@ -13,7 +13,7 @@
 
 #include "adios2/ADIOSConfig.h"
 
-namespace adios
+namespace adios2
 {
 
 VariableCompound::VariableCompound(const std::string name,

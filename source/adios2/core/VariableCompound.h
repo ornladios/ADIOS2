@@ -15,7 +15,7 @@
 
 #include "adios2/ADIOSMacros.h"
 
-namespace adios
+namespace adios2
 {
 
 /**

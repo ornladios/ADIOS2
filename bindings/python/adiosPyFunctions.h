@@ -18,7 +18,7 @@
 #include "adios2/ADIOSTypes.h"
 #include "adiosPyTypes.h"
 
-namespace adios
+namespace adios2
 {
 
 /**

@@ -16,7 +16,7 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType
 
-namespace adios
+namespace adios2
 {
 
 #define declare_type(T)                                                        \

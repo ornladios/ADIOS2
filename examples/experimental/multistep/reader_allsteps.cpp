@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
     const bool adiosDebug = true;
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios::ADIOS adios(adios::DebugON);
+    adios2::ADIOS adios(adios2::DebugON);
 #endif
 
     // Info variables from the file
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     {
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios::IO &bpReaderSettings = adios.DeclareIO("input");
+        adios2::IO &bpReaderSettings = adios.DeclareIO("input");
         if (!bpReaderSettings.InConfigFile())
         {
             // if not defined by user, we can change the default settings
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
         // auto bpReader = adios.Open( "myNumbers.bp", "r" );
         // this would just open with a default transport, which is "BP"
         auto bpReader =
-            bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::Read);
+            bpReaderSettings.Open("myNumbers.bp", adios2::OpenMode::Read);
 
         if (!bpReader)
             throw std::ios_base::failure(
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
          * own
          * number of steps */
 
-        adios::Variable<int> *vNproc = bpReader->InquireVariable<int>("Nproc");
+        adios2::Variable<int> *vNproc = bpReader->InquireVariable<int>("Nproc");
         Nwriters = vNproc->m_Data[0];
         if (rank == 0)
             std::cout << "# of writers = " << Nwriters << std::endl;
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
         /* There is a single value written once.
          */
         // read a Global scalar which has a single value in a step
-        adios::Variable<unsigned int> *vNX =
+        adios2::Variable<unsigned int> *vNX =
             bpReader->InquireVariable<unsigned int>("NX");
         Nx = vNX->m_Data[0];
         // bpReader->Read<unsigned int>("NX", &Nx);
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
            Steps are not automatically presented as an array dimension
            and read does not read it as array by default.
         */
-        adios::Variable<unsigned int> *vNY =
+        adios2::Variable<unsigned int> *vNY =
             bpReader->InquireVariable<unsigned int>("NY");
         Nys.resize(vNY->m_AvailableSteps); // number of steps available
         // make a StepSelection to select multiple steps. Args: From, #of
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
             Print1DArray(Nys.data(), Nys.size(), "NY");
 
         /* ProcessID */
-        adios::Variable<int> *vProcessID =
+        adios2::Variable<int> *vProcessID =
             bpReader->InquireVariable<int>("ProcessID");
         if (vProcessID->m_Shape[0] != Nwriters)
         {
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
         // Nparts local scalar is presented as a 1D array of Nwriters
         // elements.
         // We can read all steps into a 2D array of nproc * Nwriters
-        adios::Variable<unsigned int> *vNparts =
+        adios2::Variable<unsigned int> *vNparts =
             bpReader->InquireVariable<unsigned int>("Nparts");
         unsigned int **Nparts =
             Make2DArray<unsigned int>(vNparts->m_AvailableSteps, Nwriters);
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
          * GlobalArrayFixedDims
          */
         // inquiry about a variable, whose name we know
-        adios::Variable<double> *vGlobalArrayFixedDims =
+        adios2::Variable<double> *vGlobalArrayFixedDims =
             bpReader->InquireVariable<double>("GlobalArrayFixedDims");
 
         if (vGlobalArrayFixedDims == nullptr)
@@ -253,13 +253,14 @@ int main(int argc, char *argv[])
          * LocalArrayFixedDims
          */
         // inquiry about a variable, whose name we know
-        adios::Variable<float> *vLocalArrayFixedDims =
+        adios2::Variable<float> *vLocalArrayFixedDims =
             bpReader->InquireVariable<float>("LocalArrayFixedDims");
-        if (vLocalArrayFixedDims->m_Shape[0] != adios::IrregularDim)
+        if (vLocalArrayFixedDims->m_Shape[0] != adios2::IrregularDim)
         {
             throw std::ios_base::failure(
                 "Unexpected condition: LocalArrayFixedDims array's fast "
-                "dimension is supposed to be adios::IrregularDim indicating an "
+                "dimension is supposed to be adios2::IrregularDim indicating "
+                "an "
                 "Irregular array\n");
         }
         std::cout << "LocalArrayFixedDims is irregular. Cannot read this "
@@ -272,7 +273,7 @@ int main(int argc, char *argv[])
          * LocalArrayFixedDimsJoined
          */
         // inquiry about a variable, whose name we know
-        adios::Variable<float> *vLocalArrayFixedDimsJoined =
+        adios2::Variable<float> *vLocalArrayFixedDimsJoined =
             bpReader->InquireVariable<float>("LocalArrayFixedDimsJoined");
         float **LocalArrayFixedDimsJoined =
             Make2DArray<float>(vLocalArrayFixedDimsJoined->m_AvailableSteps,
@@ -300,15 +301,16 @@ int main(int argc, char *argv[])
          * GlobalArray which changes size over time
          */
         // inquiry about a variable, whose name we know
-        adios::Variable<double> *vGlobalArray =
+        adios2::Variable<double> *vGlobalArray =
             bpReader->InquireVariable<double>("GlobalArray");
         std::cout << "GlobalArray [" << vGlobalArray->m_Shape[0] << "]";
         std::cout << " = Cannot read this variable yet...\n";
-        if (vGlobalArray->m_Shape[0] != adios::IrregularDim)
+        if (vGlobalArray->m_Shape[0] != adios2::IrregularDim)
         {
             throw std::ios_base::failure(
                 "Unexpected condition: GlobalArray array's  "
-                "dimension is supposed to be adios::IrregularDim indicating an "
+                "dimension is supposed to be adios2::IrregularDim indicating "
+                "an "
                 "Irregular array\n");
         }
 #ifdef ADIOS2_HAVE_MPI
