@@ -12,15 +12,30 @@
 
 #include "adiosPyTypes.h"
 
+#include "adios2/ADIOSMPI.h"
+
 namespace adios
 {
 
-ADIOSPy::ADIOSPy(MPI_Comm mpiComm, const bool debug)
-: m_DebugMode(debug), m_ADIOS(mpiComm, debug)
+ADIOSPy::ADIOSPy(const std::string configFile, MPI_Comm mpiComm,
+                 const bool debugMode)
+: m_DebugMode(debugMode), m_ADIOS(configFile, mpiComm, debugMode)
 {
 }
 
-ADIOSPy::ADIOSPy(const bool debug) : m_DebugMode(debug), m_ADIOS(debug) {}
+ADIOSPy::ADIOSPy(MPI_Comm mpiComm, const bool debugMode)
+: ADIOSPy("", mpiComm, debugMode)
+{
+}
+
+ADIOSPy::ADIOSPy(const std::string configFile, const bool debugMode)
+: ADIOSPy("", MPI_COMM_SELF, debugMode)
+{
+}
+
+ADIOSPy::ADIOSPy(const bool debugMode) : ADIOSPy("", MPI_COMM_SELF, debugMode)
+{
+}
 
 IOPy ADIOSPy::DeclareIO(const std::string name)
 {

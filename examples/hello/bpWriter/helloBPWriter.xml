@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<adios-config>
+
+    <io name="BPFile_N2N">
+        <engine type="BPFileWriter">
+            Threads=1; <!-- for vectorized memory operations and asynchronous tasks --> 
+            ProfileUnits=Microseconds; <!-- Microseconds (default), Milliseconds, Seconds, Minutes, Hours -->
+            MaxBufferSize=20Mb;  <!-- XXKb, XXMb, or XXXGb supported, 16Mb (default should depend on system) -->
+            InitialBufferSize=1Mb; <!-- XXKb, XXMb, or XXXGb supported, 16Kb (default should depend on system) -->
+            BufferGrowthFactor=2;  <!-- exponential growth factor > 1,  1.5 (default, e.g. STL default=2), for this case: 1, 2, 4, 8, 16, 20 Mb-->
+        </engine>
+
+        <transport type="File">
+            Library=POSIX;
+            ProfileUnits=Milliseconds;
+        </transport>
+
+    </io>
+
+</adios-config>

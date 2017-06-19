@@ -19,6 +19,7 @@
 /// \endcond
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios
 {
@@ -31,9 +32,14 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
     {
         CheckMPI();
     }
-    // XML to be implemented later
-    // InitXML( m_XMLConfigFile, m_MPIComm, m_DebugMode, m_HostLanguage,
-    // m_Transforms, m_Groups );
+    if (!configFile.empty())
+    {
+        if (configFile.substr(configFile.size() - 3) == "xml")
+        {
+            InitXML(configFile, m_MPIComm, m_DebugMode, m_Transforms, m_IOs);
+        }
+        // TODO expand for other formats
+    }
 }
 
 ADIOS::ADIOS(const std::string configFile, const bool debugMode)
@@ -56,7 +62,7 @@ IO &ADIOS::DeclareIO(const std::string ioName)
     {
         if (m_DebugMode)
         {
-            if (itIO->second.InConfigFile())
+            if (!itIO->second.InConfigFile())
             {
                 throw std::invalid_argument(
                     "ERROR: IO class object with name " + ioName +

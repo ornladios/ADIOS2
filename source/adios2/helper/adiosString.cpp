@@ -24,9 +24,9 @@ std::string FileToString(const std::string &fileName)
 {
     std::ifstream fileStream(fileName);
 
-    if (!fileStream.good())
+    if (!fileStream)
     {
-        throw std::ios_base::failure(
+        throw std::invalid_argument(
             "ERROR: file " + fileName +
             " could not be opened. Check permissions or existence\n");
     }

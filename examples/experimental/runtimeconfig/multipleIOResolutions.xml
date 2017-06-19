@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<adios-config>
+
+    <io name="LowResolution">
+        <var name="myArray"> <!-- provide a sequence of transforms -->
+            <transform type="Zfp"> <!-- not implemented yet, mutually exclusive options -->
+                Tolerance=1e-2; <!-- must be a number between 0 and 9-->
+                <!-- Rate=1; --> <!-- must be a number between 0 and 9-->
+                <!-- Precision=1; --> <!-- must be a number between 0 and 9-->
+            </transform>
+        </var>
+    </io>
+     
+    <io name="HighResolution">
+        <var name="myArray"> <!-- provide a sequence of transforms -->
+            <transform type="Zfp"> <!-- not implemented yet, mutually exclusive options -->
+                Tolerance=1e-5; <!-- must be a number between 0 and 9-->
+                <!-- Rate=1; --> <!-- must be a number between 0 and 9-->
+                <!-- Precision=1; --> <!-- must be a number between 0 and 9-->
+            </transform>
+        </var>
+    </io>
+         
+</adios-config>

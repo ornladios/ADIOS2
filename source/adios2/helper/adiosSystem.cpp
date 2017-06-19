@@ -16,7 +16,9 @@
 #include <chrono> //system_clock, now
 #include <ctime>  //std::ctime
 
+#include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/helper/adiosString.h"
 
 namespace adios
 {
@@ -75,6 +77,43 @@ std::string LocalTimeDate() noexcept
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
     return std::string(std::ctime(&now));
+}
+
+std::string BroadcastString(const std::string &input, MPI_Comm mpiComm)
+{
+    std::string receivedInput;
+    size_t characterCount = 0;
+
+    int rank;
+    MPI_Comm_rank(mpiComm, &rank);
+
+    if (rank == 0) // sender
+    {
+        characterCount = input.size();
+
+        // broadcast size for allocation
+        MPI_Bcast(&characterCount, 1, ADIOS2_MPI_SIZE_T, 0, mpiComm);
+
+        // broadcast contents
+        MPI_Bcast(const_cast<char *>(input.c_str()),
+                  static_cast<int>(characterCount), MPI_CHAR, 0, mpiComm);
+
+        return input;
+    }
+    else // receivers
+    {
+        // receive size
+        MPI_Bcast(&characterCount, 1, ADIOS2_MPI_SIZE_T, 0, mpiComm);
+
+        // allocate receiver
+        std::vector<char> stringReceiver(characterCount);
+        MPI_Bcast(stringReceiver.data(), static_cast<int>(characterCount),
+                  MPI_CHAR, 0, mpiComm);
+
+        receivedInput.assign(stringReceiver.begin(), stringReceiver.end());
+    }
+
+    return receivedInput;
 }
 
 } // end namespace adios
