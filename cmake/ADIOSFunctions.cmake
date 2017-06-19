@@ -6,7 +6,7 @@
 function(GenerateADIOSConfig)
   foreach(OPT IN LISTS ARGN)
     string(TOUPPER ${OPT} OPT_UPPER)
-    if(ADIOS_HAVE_${OPT})
+    if(ADIOS2_HAVE_${OPT})
       set(ADIOS2_HAVE_${OPT_UPPER} 1)
     else()
       set(ADIOS2_HAVE_${OPT_UPPER})
@@ -14,14 +14,14 @@ function(GenerateADIOSConfig)
   endforeach()
 
   configure_file(
-    ${ADIOS_SOURCE_DIR}/source/adios2/ADIOSConfig.h.in
-    ${ADIOS_BINARY_DIR}/adios2/ADIOSConfig.h
+    ${ADIOS2_SOURCE_DIR}/source/adios2/ADIOSConfig.h.in
+    ${ADIOS2_BINARY_DIR}/adios2/ADIOSConfig.h
   )
 endfunction()
 
 function(adios_option name description default)
-  set(ADIOS_USE_${name} ${default} CACHE STRING "${description}")
-  set_property(CACHE ADIOS_USE_${name} PROPERTY
+  set(ADIOS2_USE_${name} ${default} CACHE STRING "${description}")
+  set_property(CACHE ADIOS2_USE_${name} PROPERTY
     STRINGS "ON;TRUE;AUTO;OFF;FALSE"
   )
 endfunction()

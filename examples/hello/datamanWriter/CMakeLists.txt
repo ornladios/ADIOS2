@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-if(ADIOS_HAVE_MPI)
+if(ADIOS2_HAVE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
   
   add_executable(hello_datamanWriter helloDataManWriter.cpp)

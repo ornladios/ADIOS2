@@ -7,15 +7,15 @@ add_subdirectory(bpWriter)
 add_subdirectory(bpTimeWriter)
 add_subdirectory(bpFlushWriter)
 
-if(ADIOS_HAVE_ADIOS1)
+if(ADIOS2_HAVE_ADIOS1)
   add_subdirectory(adios1Writer)
 endif()
 
-if(ADIOS_HAVE_DataMan)
+if(ADIOS2_HAVE_DataMan)
   add_subdirectory(datamanReader)
   add_subdirectory(datamanWriter)
 endif()
 
-if(ADIOS_HAVE_HDF5)
+if(ADIOS2_HAVE_HDF5)
   add_subdirectory(hdf5Writer)
 endif()

@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 # MPI versions of the test are not properly implemented at the moment
-if(NOT ADIOS_HAVE_MPI)
+if(NOT ADIOS2_HAVE_MPI)
   find_package(ADIOS1 COMPONENTS sequential REQUIRED)
 
   add_executable(TestBPWriteRead TestBPWriteRead.cpp)

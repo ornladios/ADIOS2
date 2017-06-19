@@ -3,6 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-if(ADIOS_HAVE_ADIOS1)
+if(ADIOS2_HAVE_ADIOS1)
   add_subdirectory(multistep)
 endif()
