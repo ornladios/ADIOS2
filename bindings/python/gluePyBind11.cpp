@@ -25,6 +25,26 @@
 #include "adiosPyTypes.h"
 
 #ifdef ADIOS2_HAVE_MPI
+adios::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
+                                 adios::pyObject &object, const bool debugMode)
+{
+    MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
+
+    if (import_mpi4py() < 0)
+    {
+        throw std::runtime_error("ERROR: could not import mpi4py "
+                                 "communicator, in call to ADIOS "
+                                 "constructor\n");
+    }
+
+    if (mpiCommPtr == nullptr)
+    {
+        throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
+                                 "to ADIOS constructor\n");
+    }
+    return adios::ADIOSPy(configFile, *mpiCommPtr, debugMode);
+}
+
 adios::ADIOSPy ADIOSPyInit(adios::pyObject &object, const bool debugMode)
 {
     MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
@@ -44,6 +64,12 @@ adios::ADIOSPy ADIOSPyInit(adios::pyObject &object, const bool debugMode)
     return adios::ADIOSPy(*mpiCommPtr, debugMode);
 }
 #else
+adios::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
+                                 const bool debugMode)
+{
+    return adios::ADIOSPy(debugMode);
+}
+
 adios::ADIOSPy ADIOSPyInit(const bool debugMode)
 {
     return adios::ADIOSPy(debugMode);
@@ -69,6 +95,8 @@ PYBIND11_PLUGIN(adios2)
     m.attr("OpenModeAppend") = static_cast<int>(adios::OpenMode::Append);
     m.attr("OpenModeReadWrite") = static_cast<int>(adios::OpenMode::ReadWrite);
     m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS class object");
+    m.def("ADIOS", &ADIOSPyInitConfig,
+          "Function that creates an ADIOS class object using a config file");
 
     pybind11::class_<adios::ADIOSPy>(m, "ADIOSPy")
         .def("DeclareIO", &adios::ADIOSPy::DeclareIO);

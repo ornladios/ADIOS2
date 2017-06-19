@@ -18,6 +18,7 @@
 #include <adios2.h>
 
 #include "IOPy.h"
+#include "adios2/ADIOSMPI.h"
 
 namespace adios
 {
@@ -26,8 +27,11 @@ class ADIOSPy
 {
 
 public:
-    ADIOSPy(MPI_Comm mpiComm, const bool debug);
-    ADIOSPy(const bool debug);
+    ADIOSPy(const std::string configFile, MPI_Comm mpiComm,
+            const bool debugMode);
+    ADIOSPy(MPI_Comm mpiComm, const bool debugMode);
+    ADIOSPy(const std::string configFile, const bool debugMode);
+    ADIOSPy(const bool debugMode);
     ~ADIOSPy() = default;
 
     IOPy DeclareIO(const std::string name);
