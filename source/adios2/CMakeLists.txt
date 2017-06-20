@@ -35,7 +35,6 @@ add_library(adios2
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp
-  toolkit/transport/file/FileDescriptor.cpp
   toolkit/transport/file/FilePointer.cpp
   toolkit/transport/file/FileStream.cpp
   
@@ -52,6 +51,10 @@ target_include_directories(adios2
 
 find_package(Threads REQUIRED)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+
+if(UNIX)
+  target_sources(adios2 PRIVATE toolkit/transport/file/FileDescriptor.cpp)
+endif()
 
 if(ADIOS2_HAVE_SysVShMem)
   target_sources(adios2 PRIVATE toolkit/capsule/shmem/ShmSystemV.cpp)
