@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6.2)
+cmake_minimum_required(VERSION 2.6.4)
 
 # CMake 3.0, Let the project command manage version variables.
 if(POLICY CMP0048)
