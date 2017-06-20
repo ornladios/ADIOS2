@@ -10,7 +10,6 @@
 
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
-#include <mpi.h>
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
