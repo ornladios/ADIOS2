@@ -45,7 +45,7 @@ endif()
 # ${gtest_BINARY_DIR}.
 # Language "C" is required for find_package(Threads).
 project(gtest CXX C)
-cmake_minimum_required(VERSION 2.6.2)
+cmake_minimum_required(VERSION 2.6.4)
 
 # CMake 3.0, Let the project command manage version variables.
 if(POLICY CMP0048)
