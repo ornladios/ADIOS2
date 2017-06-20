@@ -48,9 +48,9 @@ int main(int argc, char *argv[])
     const int NSTEPS = 5;
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios("globalArray.xml", MPI_COMM_WORLD);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios("globalArray.xml");
+    adios2::ADIOS adios;
 #endif
 
     // Application variables for output

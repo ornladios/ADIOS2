@@ -53,9 +53,9 @@ int main(int argc, char *argv[])
     srand(rank * 32767);
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios("localArray.xml", MPI_COMM_WORLD);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios("localArray.xml");
+    adios2::ADIOS adios;
 #endif
 
     // Application variables for output
