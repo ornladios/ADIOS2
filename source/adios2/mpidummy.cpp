@@ -15,20 +15,24 @@
 
 #include "mpidummy.h"
 
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-
+/*
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 
 #if defined(__APPLE__) || defined(__WIN32__) || defined(__CYGWIN__)
 #define lseek64 lseek
 #define open64 open
 #endif
+*/
+
+#include <cinttypes>
+#include <cstdio>
+#include <cstring>
+
+#include <chrono>
+#include <string>
 
 namespace adios2
 {
@@ -135,11 +139,11 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
     if (ier == MPI_SUCCESS)
     {
-        memcpy(recvbuf, sendbuf, nsent);
+        std::memcpy(recvbuf, sendbuf, nsent);
     }
     else
     {
-        snprintf(mpierrmsg, ier, "could not gather data\n");
+        std::snprintf(mpierrmsg, ier, "could not gather data\n");
     }
 
     return ier;
@@ -215,11 +219,11 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
     if (ier == MPI_SUCCESS)
     {
-        memcpy(recvbuf, sendbuf, nsent);
+        std::memcpy(recvbuf, sendbuf, nsent);
     }
     else
     {
-        snprintf(mpierrmsg, ier, "could not scatter data\n");
+        std::snprintf(mpierrmsg, ier, "could not scatter data\n");
     }
 
     return ier;
@@ -277,24 +281,39 @@ int MPI_Wait(MPI_Request * /*request*/, MPI_Status * /*status*/) { return 0; }
 int MPI_File_open(MPI_Comm /*comm*/, const char *filename, int amode,
                   MPI_Info /*info*/, MPI_File *fh)
 {
-    *fh = open64(filename, amode);
-    if (*fh == -1)
+    std::string mode;
+    if (amode | MPI_MODE_RDONLY)
     {
-        snprintf(mpierrmsg, MPI_MAX_ERROR_STRING, "File not found: %s",
-                 filename);
+        mode += "r";
+    }
+    if (amode | MPI_MODE_WRONLY)
+    {
+        mode += "w";
+    }
+    if (amode | MPI_MODE_APPEND)
+    {
+        mode += "a";
+    }
+    mode += "b";
+
+    *fh = fopen(filename, mode.c_str());
+    if (!*fh)
+    {
+        std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING, "File not found: %s",
+                      filename);
         return -1;
     }
     return MPI_SUCCESS;
 }
 
-int MPI_File_close(MPI_File *fh) { return close(*fh); }
+int MPI_File_close(MPI_File *fh) { return fclose(*fh); }
 
 int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
 {
-    uint64_t curpos = lseek64(fh, 0, SEEK_CUR); // get the current seek pos
-    uint64_t endpos =
-        lseek64(fh, 0, SEEK_END);  // go to end, returned is the size in bytes
-    lseek64(fh, curpos, SEEK_SET); // go back where we were
+    long curpos = ftell(fh);
+    fseek(fh, 0, SEEK_END); // go to end, returned is the size in bytes
+    long endpos = ftell(fh);
+    fseek(fh, curpos, SEEK_SET); // go back where we were
     *size = static_cast<MPI_Offset>(endpos);
     // printf("MPI_File_get_size: fh=%d, size=%lld\n", fh, *size);
     return MPI_SUCCESS;
@@ -304,14 +323,15 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
                   MPI_Status *status)
 {
     // FIXME: int count can read only 2GB (*datatype size) array at max
-    uint64_t bytes_to_read = static_cast<uint64_t>(count) * datatype;
-    uint64_t bytes_read;
-    bytes_read = read(fh, buf, bytes_to_read);
+    size_t bytes_to_read = static_cast<size_t>(count) * datatype;
+    size_t bytes_read;
+    bytes_read = fread(buf, 1, bytes_to_read, fh);
     if (bytes_read != bytes_to_read)
     {
-        snprintf(mpierrmsg, MPI_MAX_ERROR_STRING,
-                 "could not read %" PRId64 " bytes. read only: %" PRId64 "\n",
-                 bytes_to_read, bytes_read);
+        std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING,
+                      "could not read %" PRId64 " bytes. read only: %" PRId64
+                      "\n",
+                      bytes_to_read, bytes_read);
         return -2;
     }
     *status = bytes_read;
@@ -322,10 +342,7 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
 
 int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
 {
-    lseek64(fh, offset, whence);
-    // printf("MPI_File_seek: fh=%d, offset=%lld, whence=%d\n", fh, off,
-    // whence);
-    return MPI_SUCCESS;
+    return fseek(fh, offset, whence) == MPI_SUCCESS;
 }
 
 int MPI_Get_count(const MPI_Status *status, MPI_Datatype, int *count)
@@ -336,24 +353,23 @@ int MPI_Get_count(const MPI_Status *status, MPI_Datatype, int *count)
 
 int MPI_Error_string(int /*errorcode*/, char *string, int *resultlen)
 {
-    // sprintf(string, "Dummy lib does not know error strings.
+    // std::sprintf(string, "Dummy lib does not know error strings.
     // Code=%d\n",errorcode);
-    strcpy(string, mpierrmsg);
-    *resultlen = strlen(string);
+    std::strcpy(string, mpierrmsg);
+    *resultlen = std::strlen(string);
     return MPI_SUCCESS;
 }
 
 double MPI_Wtime()
 {
-    // Implementation not tested
-    timeval tv = {0, 0};
-    gettimeofday(&tv, nullptr);
-    return tv.tv_sec + tv.tv_usec * 1e-6;
+    std::chrono::duration<double> now =
+        std::chrono::high_resolution_clock::now().time_since_epoch();
+    return now.count();
 }
 
 int MPI_Get_processor_name(char *name, int *resultlen)
 {
-    sprintf(name, "0");
+    std::sprintf(name, "0");
     *resultlen = 1;
     return 0;
 }
