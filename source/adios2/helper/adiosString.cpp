@@ -17,7 +17,7 @@
 #include <stdexcept> // std::invalid_argument
 /// \endcond
 
-namespace adios
+namespace adios2
 {
 
 std::string FileToString(const std::string &fileName)

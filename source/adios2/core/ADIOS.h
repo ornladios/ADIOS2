@@ -23,7 +23,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/core/Transform.h"
 
-namespace adios
+namespace adios2
 {
 
 /** @brief Point of entry class for an application.

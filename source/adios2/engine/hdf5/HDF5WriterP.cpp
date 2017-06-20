@@ -13,7 +13,7 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
-namespace adios
+namespace adios2
 {
 
 HDF5WriterP::HDF5WriterP(IO &io, const std::string &name,

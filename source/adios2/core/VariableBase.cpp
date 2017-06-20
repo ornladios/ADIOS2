@@ -17,7 +17,7 @@
 
 #include "adios2/helper/adiosFunctions.h" //GetTotalSize
 
-namespace adios
+namespace adios2
 {
 
 VariableBase::VariableBase(const std::string &name, const std::string type,

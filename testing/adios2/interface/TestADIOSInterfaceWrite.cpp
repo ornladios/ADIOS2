@@ -17,21 +17,21 @@ protected:
 
     // virtual void TearDown() { }
 
-    adios::ADIOS adios;
-    adios::IO &io;
+    adios2::ADIOS adios;
+    adios2::IO &io;
 };
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarChar1x10)
 {
     // Define ADIOS variables for each type
-    auto &var_i8 = io.DefineVariable<char>("i8", {}, {}, adios::Dims{10});
+    auto &var_i8 = io.DefineVariable<char>("i8", {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_i8), adios::Variable<char> &>();
+    ::testing::StaticAssertTypeEq<decltype(var_i8), adios2::Variable<char> &>();
 
     // Verify exceptions are thrown upon duplicate variable names
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<char>("i8", {}, {}, adios::Dims{10}),
+                     io.DefineVariable<char>("i8", {}, {}, adios2::Dims{10}),
                  std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -46,11 +46,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarChar1x10)
 // Rinse  and repeat for remaining types
 TEST_F(ADIOSInterfaceWriteTest, DefineVarShort1x10)
 {
-    auto &var_i16 = io.DefineVariable<short>("i16", {}, {}, adios::Dims{10});
+    auto &var_i16 = io.DefineVariable<short>("i16", {}, {}, adios2::Dims{10});
     ::testing::StaticAssertTypeEq<decltype(var_i16),
-                                  adios::Variable<short> &>();
+                                  adios2::Variable<short> &>();
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<short>("i16", {}, {}, adios::Dims{10}),
+                     io.DefineVariable<short>("i16", {}, {}, adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_i16.m_Shape.size(), 0);
     EXPECT_EQ(var_i16.m_Start.size(), 0);
@@ -62,10 +62,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarShort1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarInt1x10)
 {
-    auto &var_i32 = io.DefineVariable<int>("i32", {}, {}, adios::Dims{10});
-    ::testing::StaticAssertTypeEq<decltype(var_i32), adios::Variable<int> &>();
+    auto &var_i32 = io.DefineVariable<int>("i32", {}, {}, adios2::Dims{10});
+    ::testing::StaticAssertTypeEq<decltype(var_i32), adios2::Variable<int> &>();
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<int>("i32", {}, {}, adios::Dims{10}),
+                     io.DefineVariable<int>("i32", {}, {}, adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_i32.m_Shape.size(), 0);
     EXPECT_EQ(var_i32.m_Start.size(), 0);
@@ -77,10 +77,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarInt1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarLong1x10)
 {
-    auto &var_u16 = io.DefineVariable<long>("u16", {}, {}, adios::Dims{10});
-    ::testing::StaticAssertTypeEq<decltype(var_u16), adios::Variable<long> &>();
+    auto &var_u16 = io.DefineVariable<long>("u16", {}, {}, adios2::Dims{10});
+    ::testing::StaticAssertTypeEq<decltype(var_u16),
+                                  adios2::Variable<long> &>();
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<long>("u16", {}, {}, adios::Dims{10}),
+                     io.DefineVariable<long>("u16", {}, {}, adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_u16.m_Shape.size(), 0);
     EXPECT_EQ(var_u16.m_Start.size(), 0);
@@ -93,11 +94,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarLong1x10)
 TEST_F(ADIOSInterfaceWriteTest, DefineVarUChar1x10)
 {
     auto &var_u8 =
-        io.DefineVariable<unsigned char>("u8", {}, {}, adios::Dims{10});
+        io.DefineVariable<unsigned char>("u8", {}, {}, adios2::Dims{10});
     ::testing::StaticAssertTypeEq<decltype(var_u8),
-                                  adios::Variable<unsigned char> &>();
+                                  adios2::Variable<unsigned char> &>();
     EXPECT_THROW(auto &foo = io.DefineVariable<unsigned char>("u8", {}, {},
-                                                              adios::Dims{10}),
+                                                              adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_u8.m_Shape.size(), 0);
     EXPECT_EQ(var_u8.m_Start.size(), 0);
@@ -110,11 +111,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarUChar1x10)
 TEST_F(ADIOSInterfaceWriteTest, DefineVarUShort1x10)
 {
     auto &var_u16 =
-        io.DefineVariable<unsigned short>("u16", {}, {}, adios::Dims{10});
+        io.DefineVariable<unsigned short>("u16", {}, {}, adios2::Dims{10});
     ::testing::StaticAssertTypeEq<decltype(var_u16),
-                                  adios::Variable<unsigned short> &>();
-    EXPECT_THROW(auto &foo = io.DefineVariable<unsigned short>("u16", {}, {},
-                                                               adios::Dims{10}),
+                                  adios2::Variable<unsigned short> &>();
+    EXPECT_THROW(auto &foo = io.DefineVariable<unsigned short>(
+                     "u16", {}, {}, adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_u16.m_Shape.size(), 0);
     EXPECT_EQ(var_u16.m_Start.size(), 0);
@@ -127,11 +128,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarUShort1x10)
 TEST_F(ADIOSInterfaceWriteTest, DefineVarUInt1x10)
 {
     auto &var_u32 =
-        io.DefineVariable<unsigned int>("u32", {}, {}, adios::Dims{10});
+        io.DefineVariable<unsigned int>("u32", {}, {}, adios2::Dims{10});
     ::testing::StaticAssertTypeEq<decltype(var_u32),
-                                  adios::Variable<unsigned int> &>();
+                                  adios2::Variable<unsigned int> &>();
     EXPECT_THROW(auto &foo = io.DefineVariable<unsigned int>("u32", {}, {},
-                                                             adios::Dims{10}),
+                                                             adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_u32.m_Shape.size(), 0);
     EXPECT_EQ(var_u32.m_Start.size(), 0);
@@ -144,11 +145,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarUInt1x10)
 TEST_F(ADIOSInterfaceWriteTest, DefineVarULong1x10)
 {
     auto &var_u64 =
-        io.DefineVariable<unsigned long>("u64", {}, {}, adios::Dims{10});
+        io.DefineVariable<unsigned long>("u64", {}, {}, adios2::Dims{10});
     ::testing::StaticAssertTypeEq<decltype(var_u64),
-                                  adios::Variable<unsigned long> &>();
+                                  adios2::Variable<unsigned long> &>();
     EXPECT_THROW(auto &foo = io.DefineVariable<unsigned long>("u64", {}, {},
-                                                              adios::Dims{10}),
+                                                              adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_u64.m_Shape.size(), 0);
     EXPECT_EQ(var_u64.m_Start.size(), 0);
@@ -160,11 +161,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarULong1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarFloat1x10)
 {
-    auto &var_r32 = io.DefineVariable<float>("r32", {}, {}, adios::Dims{10});
+    auto &var_r32 = io.DefineVariable<float>("r32", {}, {}, adios2::Dims{10});
     ::testing::StaticAssertTypeEq<decltype(var_r32),
-                                  adios::Variable<float> &>();
+                                  adios2::Variable<float> &>();
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<float>("r32", {}, {}, adios::Dims{10}),
+                     io.DefineVariable<float>("r32", {}, {}, adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_r32.m_Shape.size(), 0);
     EXPECT_EQ(var_r32.m_Start.size(), 0);
@@ -176,11 +177,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarFloat1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarDouble1x10)
 {
-    auto &var_r64 = io.DefineVariable<double>("r64", {}, {}, adios::Dims{10});
+    auto &var_r64 = io.DefineVariable<double>("r64", {}, {}, adios2::Dims{10});
     ::testing::StaticAssertTypeEq<decltype(var_r64),
-                                  adios::Variable<double> &>();
+                                  adios2::Variable<double> &>();
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<double>("r64", {}, {}, adios::Dims{10}),
+                     io.DefineVariable<double>("r64", {}, {}, adios2::Dims{10}),
                  std::invalid_argument);
     ASSERT_EQ(var_r64.m_Shape.size(), 0);
     EXPECT_EQ(var_r64.m_Start.size(), 0);
@@ -192,10 +193,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarDouble1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarChar2x5)
 {
-    auto &var_i8 = io.DefineVariable<char>("i8", {}, {}, adios::Dims{2, 5});
-    ::testing::StaticAssertTypeEq<decltype(var_i8), adios::Variable<char> &>();
+    auto &var_i8 = io.DefineVariable<char>("i8", {}, {}, adios2::Dims{2, 5});
+    ::testing::StaticAssertTypeEq<decltype(var_i8), adios2::Variable<char> &>();
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<char>("i8", {}, {}, adios::Dims{2, 5}),
+                     io.DefineVariable<char>("i8", {}, {}, adios2::Dims{2, 5}),
                  std::invalid_argument);
     ASSERT_EQ(var_i8.m_Shape.size(), 0);
     EXPECT_EQ(var_i8.m_Start.size(), 0);
@@ -208,12 +209,12 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarChar2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarShort2x5)
 {
-    auto &var_i16 = io.DefineVariable<short>("i16", {}, {}, adios::Dims{2, 5});
+    auto &var_i16 = io.DefineVariable<short>("i16", {}, {}, adios2::Dims{2, 5});
     ::testing::StaticAssertTypeEq<decltype(var_i16),
-                                  adios::Variable<short> &>();
-    EXPECT_THROW(auto &foo =
-                     io.DefineVariable<short>("i16", {}, {}, adios::Dims{2, 5}),
-                 std::invalid_argument);
+                                  adios2::Variable<short> &>();
+    EXPECT_THROW(
+        auto &foo = io.DefineVariable<short>("i16", {}, {}, adios2::Dims{2, 5}),
+        std::invalid_argument);
     ASSERT_EQ(var_i16.m_Shape.size(), 0);
     EXPECT_EQ(var_i16.m_Start.size(), 0);
     EXPECT_EQ(var_i16.m_Count.size(), 2);
@@ -225,10 +226,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarShort2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarInt2x5)
 {
-    auto &var_i32 = io.DefineVariable<int>("i32", {}, {}, adios::Dims{2, 5});
-    ::testing::StaticAssertTypeEq<decltype(var_i32), adios::Variable<int> &>();
+    auto &var_i32 = io.DefineVariable<int>("i32", {}, {}, adios2::Dims{2, 5});
+    ::testing::StaticAssertTypeEq<decltype(var_i32), adios2::Variable<int> &>();
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<int>("i32", {}, {}, adios::Dims{2, 5}),
+                     io.DefineVariable<int>("i32", {}, {}, adios2::Dims{2, 5}),
                  std::invalid_argument);
     ASSERT_EQ(var_i32.m_Shape.size(), 0);
     EXPECT_EQ(var_i32.m_Start.size(), 0);
@@ -241,10 +242,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarInt2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarLong2x5)
 {
-    auto &var_u16 = io.DefineVariable<long>("u16", {}, {}, adios::Dims{2, 5});
-    ::testing::StaticAssertTypeEq<decltype(var_u16), adios::Variable<long> &>();
+    auto &var_u16 = io.DefineVariable<long>("u16", {}, {}, adios2::Dims{2, 5});
+    ::testing::StaticAssertTypeEq<decltype(var_u16),
+                                  adios2::Variable<long> &>();
     EXPECT_THROW(auto &foo =
-                     io.DefineVariable<long>("u16", {}, {}, adios::Dims{2, 5}),
+                     io.DefineVariable<long>("u16", {}, {}, adios2::Dims{2, 5}),
                  std::invalid_argument);
     ASSERT_EQ(var_u16.m_Shape.size(), 0);
     EXPECT_EQ(var_u16.m_Start.size(), 0);
@@ -258,11 +260,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarLong2x5)
 TEST_F(ADIOSInterfaceWriteTest, DefineVarUChar2x5)
 {
     auto &var_u8 =
-        io.DefineVariable<unsigned char>("u8", {}, {}, adios::Dims{2, 5});
+        io.DefineVariable<unsigned char>("u8", {}, {}, adios2::Dims{2, 5});
     ::testing::StaticAssertTypeEq<decltype(var_u8),
-                                  adios::Variable<unsigned char> &>();
+                                  adios2::Variable<unsigned char> &>();
     EXPECT_THROW(auto &foo = io.DefineVariable<unsigned char>(
-                     "u8", {}, {}, adios::Dims{2, 5}),
+                     "u8", {}, {}, adios2::Dims{2, 5}),
                  std::invalid_argument);
     ASSERT_EQ(var_u8.m_Shape.size(), 0);
     EXPECT_EQ(var_u8.m_Start.size(), 0);
@@ -276,11 +278,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarUChar2x5)
 TEST_F(ADIOSInterfaceWriteTest, DefineVarUShort2x5)
 {
     auto &var_u16 =
-        io.DefineVariable<unsigned short>("u16", {}, {}, adios::Dims{2, 5});
+        io.DefineVariable<unsigned short>("u16", {}, {}, adios2::Dims{2, 5});
     ::testing::StaticAssertTypeEq<decltype(var_u16),
-                                  adios::Variable<unsigned short> &>();
+                                  adios2::Variable<unsigned short> &>();
     EXPECT_THROW(auto &foo = io.DefineVariable<unsigned short>(
-                     "u16", {}, {}, adios::Dims{2, 5}),
+                     "u16", {}, {}, adios2::Dims{2, 5}),
                  std::invalid_argument);
     ASSERT_EQ(var_u16.m_Shape.size(), 0);
     EXPECT_EQ(var_u16.m_Start.size(), 0);
@@ -294,11 +296,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarUShort2x5)
 TEST_F(ADIOSInterfaceWriteTest, DefineVarUInt2x5)
 {
     auto &var_u32 =
-        io.DefineVariable<unsigned int>("u32", {}, {}, adios::Dims{2, 5});
+        io.DefineVariable<unsigned int>("u32", {}, {}, adios2::Dims{2, 5});
     ::testing::StaticAssertTypeEq<decltype(var_u32),
-                                  adios::Variable<unsigned int> &>();
-    EXPECT_THROW(auto &foo = io.DefineVariable<unsigned int>("u32", {}, {},
-                                                             adios::Dims{2, 5}),
+                                  adios2::Variable<unsigned int> &>();
+    EXPECT_THROW(auto &foo = io.DefineVariable<unsigned int>(
+                     "u32", {}, {}, adios2::Dims{2, 5}),
                  std::invalid_argument);
     ASSERT_EQ(var_u32.m_Shape.size(), 0);
     EXPECT_EQ(var_u32.m_Start.size(), 0);
@@ -312,11 +314,11 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarUInt2x5)
 TEST_F(ADIOSInterfaceWriteTest, DefineVarULong2x5)
 {
     auto &var_u64 =
-        io.DefineVariable<unsigned long>("u64", {}, {}, adios::Dims{2, 5});
+        io.DefineVariable<unsigned long>("u64", {}, {}, adios2::Dims{2, 5});
     ::testing::StaticAssertTypeEq<decltype(var_u64),
-                                  adios::Variable<unsigned long> &>();
+                                  adios2::Variable<unsigned long> &>();
     EXPECT_THROW(auto &foo = io.DefineVariable<unsigned long>(
-                     "u64", {}, {}, adios::Dims{2, 5}),
+                     "u64", {}, {}, adios2::Dims{2, 5}),
                  std::invalid_argument);
     ASSERT_EQ(var_u64.m_Shape.size(), 0);
     EXPECT_EQ(var_u64.m_Start.size(), 0);
@@ -329,12 +331,12 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarULong2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarFloat2x5)
 {
-    auto &var_r32 = io.DefineVariable<float>("r32", {}, {}, adios::Dims{2, 5});
+    auto &var_r32 = io.DefineVariable<float>("r32", {}, {}, adios2::Dims{2, 5});
     ::testing::StaticAssertTypeEq<decltype(var_r32),
-                                  adios::Variable<float> &>();
-    EXPECT_THROW(auto &foo =
-                     io.DefineVariable<float>("r32", {}, {}, adios::Dims{2, 5}),
-                 std::invalid_argument);
+                                  adios2::Variable<float> &>();
+    EXPECT_THROW(
+        auto &foo = io.DefineVariable<float>("r32", {}, {}, adios2::Dims{2, 5}),
+        std::invalid_argument);
     ASSERT_EQ(var_r32.m_Shape.size(), 0);
     EXPECT_EQ(var_r32.m_Start.size(), 0);
     EXPECT_EQ(var_r32.m_Count.size(), 2);
@@ -346,12 +348,13 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarFloat2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVarDouble2x5)
 {
-    auto &var_r64 = io.DefineVariable<double>("r64", {}, {}, adios::Dims{2, 5});
+    auto &var_r64 =
+        io.DefineVariable<double>("r64", {}, {}, adios2::Dims{2, 5});
     ::testing::StaticAssertTypeEq<decltype(var_r64),
-                                  adios::Variable<double> &>();
-    EXPECT_THROW(
-        auto &foo = io.DefineVariable<double>("r64", {}, {}, adios::Dims{2, 5}),
-        std::invalid_argument);
+                                  adios2::Variable<double> &>();
+    EXPECT_THROW(auto &foo = io.DefineVariable<double>("r64", {}, {},
+                                                       adios2::Dims{2, 5}),
+                 std::invalid_argument);
     ASSERT_EQ(var_r64.m_Shape.size(), 0);
     EXPECT_EQ(var_r64.m_Start.size(), 0);
     EXPECT_EQ(var_r64.m_Count.size(), 2);

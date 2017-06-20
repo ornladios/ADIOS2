@@ -20,7 +20,7 @@
 #include <thread>
 /// \endcond
 
-namespace adios
+namespace adios2
 {
 
 template <class T>

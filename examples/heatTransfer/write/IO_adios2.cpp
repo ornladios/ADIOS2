@@ -15,20 +15,20 @@
 #include <adios2.h>
 
 static int rank_saved;
-adios::ADIOS *ad = nullptr;
-std::shared_ptr<adios::Engine> bpWriter;
-adios::Variable<double> *varT = nullptr;
-adios::Variable<unsigned int> *varGndx = nullptr;
+adios2::ADIOS *ad = nullptr;
+std::shared_ptr<adios2::Engine> bpWriter;
+adios2::Variable<double> *varT = nullptr;
+adios2::Variable<unsigned int> *varGndx = nullptr;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
     rank_saved = s.rank;
     m_outputfilename = s.outputfile + ".bp";
-    ad = new adios::ADIOS("config.xml", comm, adios::DebugON);
+    ad = new adios2::ADIOS("config.xml", comm, adios2::DebugON);
 
     // Define method for engine creation
 
-    adios::IO &bpio = ad->DeclareIO("output");
+    adios2::IO &bpio = ad->DeclareIO("output");
     if (!bpio.InConfigFile())
     {
         // if not defined by user, we can change the default settings
@@ -53,11 +53,11 @@ IO::IO(const Settings &s, MPI_Comm comm)
         {s.ndx, s.ndy});
 
     // add transform to variable
-    // adios::Transform tr = adios::transform::BZIP2( );
+    // adios2::Transform tr = adios2::transform::BZIP2( );
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    bpWriter = bpio.Open(m_outputfilename, adios::OpenMode::Write, comm);
+    bpWriter = bpio.Open(m_outputfilename, adios2::OpenMode::Write, comm);
 
     if (!bpWriter)
     {
@@ -82,7 +82,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     // Make a selection to describe the local dimensions of the variable we
     // write and its offsets in the global spaces. This could have been done in
     // adios.DefineVariable()
-    adios::SelectionBoundingBox sel({s.offsx, s.offsy}, {s.ndx, s.ndy});
+    adios2::SelectionBoundingBox sel({s.offsx, s.offsy}, {s.ndx, s.ndy});
     varT->SetSelection(sel);
 
     /* Select the area that we want to write from the data pointer we pass to
@@ -96,8 +96,8 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
        above.
        Default memspace is always the full selection.
     */
-    adios::SelectionBoundingBox memspace =
-        adios::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
+    adios2::SelectionBoundingBox memspace =
+        adios2::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
     varT->SetMemorySelection(memspace);
 
     bpWriter->Write<unsigned int>(*varGndx, s.gndx);

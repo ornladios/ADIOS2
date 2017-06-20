@@ -19,7 +19,7 @@
 
 #include "adios2/ADIOSTypes.h"
 
-namespace adios
+namespace adios2
 {
 
 /**

@@ -19,7 +19,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Selection.h"
 
-namespace adios
+namespace adios2
 {
 
 /** Bounding box selection to read a subset of a non-scalar variable.

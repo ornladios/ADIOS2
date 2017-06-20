@@ -18,7 +18,7 @@
 
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
-namespace adios
+namespace adios2
 {
 
 Engine::Engine(const std::string engineType, IO &io, const std::string &name,
@@ -41,7 +41,7 @@ void Engine::Advance(const float /*timeout_sec*/) {}
 void Engine::Advance(const AdvanceMode /*mode*/, const float /*timeout_sec*/) {}
 void Engine::AdvanceAsync(
     AdvanceMode /*mode*/,
-    std::function<void(std::shared_ptr<adios::Engine>)> /*callback*/)
+    std::function<void(std::shared_ptr<adios2::Engine>)> /*callback*/)
 {
 }
 

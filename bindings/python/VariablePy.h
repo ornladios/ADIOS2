@@ -15,7 +15,7 @@
 
 #include "adiosPyFunctions.h"
 
-namespace adios
+namespace adios2
 {
 
 class VariablePy

@@ -25,8 +25,9 @@
 #include "adiosPyTypes.h"
 
 #ifdef ADIOS2_HAVE_MPI
-adios::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
-                                 adios::pyObject &object, const bool debugMode)
+adios2::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
+                                  adios2::pyObject &object,
+                                  const bool debugMode)
 {
     MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
 
@@ -42,10 +43,10 @@ adios::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
         throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
                                  "to ADIOS constructor\n");
     }
-    return adios::ADIOSPy(configFile, *mpiCommPtr, debugMode);
+    return adios2::ADIOSPy(configFile, *mpiCommPtr, debugMode);
 }
 
-adios::ADIOSPy ADIOSPyInit(adios::pyObject &object, const bool debugMode)
+adios2::ADIOSPy ADIOSPyInit(adios2::pyObject &object, const bool debugMode)
 {
     MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
 
@@ -61,18 +62,18 @@ adios::ADIOSPy ADIOSPyInit(adios::pyObject &object, const bool debugMode)
         throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
                                  "to ADIOS constructor\n");
     }
-    return adios::ADIOSPy(*mpiCommPtr, debugMode);
+    return adios2::ADIOSPy(*mpiCommPtr, debugMode);
 }
 #else
-adios::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
-                                 const bool debugMode)
+adios2::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
+                                  const bool debugMode)
 {
-    return adios::ADIOSPy(debugMode);
+    return adios2::ADIOSPy(debugMode);
 }
 
 adios::ADIOSPy ADIOSPyInit(const bool debugMode)
 {
-    return adios::ADIOSPy(debugMode);
+    return adios2::ADIOSPy(debugMode);
 }
 #endif
 
@@ -90,41 +91,41 @@ PYBIND11_PLUGIN(adios2)
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
-    m.attr("OpenModeWrite") = static_cast<int>(adios::OpenMode::Write);
-    m.attr("OpenModeRead") = static_cast<int>(adios::OpenMode::Read);
-    m.attr("OpenModeAppend") = static_cast<int>(adios::OpenMode::Append);
-    m.attr("OpenModeReadWrite") = static_cast<int>(adios::OpenMode::ReadWrite);
+    m.attr("OpenModeWrite") = static_cast<int>(adios2::OpenMode::Write);
+    m.attr("OpenModeRead") = static_cast<int>(adios2::OpenMode::Read);
+    m.attr("OpenModeAppend") = static_cast<int>(adios2::OpenMode::Append);
+    m.attr("OpenModeReadWrite") = static_cast<int>(adios2::OpenMode::ReadWrite);
     m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS class object");
     m.def("ADIOS", &ADIOSPyInitConfig,
           "Function that creates an ADIOS class object using a config file");
 
-    pybind11::class_<adios::ADIOSPy>(m, "ADIOSPy")
-        .def("DeclareIO", &adios::ADIOSPy::DeclareIO);
+    pybind11::class_<adios2::ADIOSPy>(m, "ADIOSPy")
+        .def("DeclareIO", &adios2::ADIOSPy::DeclareIO);
 
-    pybind11::class_<adios::IOPy>(m, "IOPy")
-        .def("SetEngine", &adios::IOPy::SetEngine)
-        .def("SetParameters", &adios::IOPy::SetParameters)
-        .def("AddTransport", &adios::IOPy::AddTransport)
-        .def("DefineVariable", &adios::IOPy::DefineVariable,
+    pybind11::class_<adios2::IOPy>(m, "IOPy")
+        .def("SetEngine", &adios2::IOPy::SetEngine)
+        .def("SetParameters", &adios2::IOPy::SetParameters)
+        .def("AddTransport", &adios2::IOPy::AddTransport)
+        .def("DefineVariable", &adios2::IOPy::DefineVariable,
              pybind11::return_value_policy::reference_internal,
-             pybind11::arg("name"), pybind11::arg("shape") = adios::pyList(),
-             pybind11::arg("start") = adios::pyList(),
-             pybind11::arg("count") = adios::pyList(),
+             pybind11::arg("name"), pybind11::arg("shape") = adios2::pyList(),
+             pybind11::arg("start") = adios2::pyList(),
+             pybind11::arg("count") = adios2::pyList(),
              pybind11::arg("isConstantDims") = false)
-        .def("GetVariable", &adios::IOPy::GetVariable,
+        .def("GetVariable", &adios2::IOPy::GetVariable,
              pybind11::return_value_policy::reference_internal)
-        .def("Open", (adios::EnginePy (adios::IOPy::*)(const std::string &,
-                                                       const int)) &
-                         adios::IOPy::Open);
+        .def("Open", (adios2::EnginePy (adios2::IOPy::*)(const std::string &,
+                                                         const int)) &
+                         adios2::IOPy::Open);
 
-    pybind11::class_<adios::VariablePy>(m, "VariablePy")
-        .def("SetDimensions", &adios::VariablePy::SetDimensions);
+    pybind11::class_<adios2::VariablePy>(m, "VariablePy")
+        .def("SetDimensions", &adios2::VariablePy::SetDimensions);
 
-    pybind11::class_<adios::EnginePy>(m, "EnginePy")
-        .def("Write", &adios::EnginePy::Write)
-        .def("Advance", &adios::EnginePy::Advance,
+    pybind11::class_<adios2::EnginePy>(m, "EnginePy")
+        .def("Write", &adios2::EnginePy::Write)
+        .def("Advance", &adios2::EnginePy::Advance,
              pybind11::arg("timeoutSeconds") = 0.)
-        .def("Close", &adios::EnginePy::Close,
+        .def("Close", &adios2::EnginePy::Close,
              pybind11::arg("transportIndex") = -1);
 
     return m.ptr();

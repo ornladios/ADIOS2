@@ -18,7 +18,7 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/helper/adiosString.h"
 
-namespace adios
+namespace adios2
 {
 
 void RemoveCommentsXML(std::string &currentContent) noexcept

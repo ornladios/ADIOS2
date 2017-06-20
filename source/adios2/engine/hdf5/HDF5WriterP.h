@@ -19,7 +19,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/interop/hdf5/HDF5Common.h"
 
-namespace adios
+namespace adios2
 {
 
 class HDF5WriterP : public Engine

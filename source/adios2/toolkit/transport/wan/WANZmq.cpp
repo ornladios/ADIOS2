@@ -12,7 +12,7 @@
 
 #include <zmq.h>
 
-namespace adios
+namespace adios2
 {
 namespace transport
 {
@@ -42,7 +42,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
     m_Name = name;
     m_OpenMode = openMode;
 
-    if (m_OpenMode == OpenMode::Write || m_OpenMode == OpenMode::w)
+    if (m_OpenMode == OpenMode::Write)
     {
         if (m_Profiler.IsActive)
         {
@@ -58,7 +58,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
             m_Profiler.Timers.at("open").Pause();
         }
     }
-    else if (m_OpenMode == OpenMode::Append || m_OpenMode == OpenMode::a)
+    else if (m_OpenMode == OpenMode::Append)
     {
         if (m_DebugMode)
         {
@@ -69,7 +69,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
                 "OpenMode:r (read/receiver), in call to Open\n");
         }
     }
-    else if (m_OpenMode == OpenMode::Read || m_OpenMode == OpenMode::r)
+    else if (m_OpenMode == OpenMode::Read)
     {
         if (m_Profiler.IsActive)
         {

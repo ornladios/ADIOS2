@@ -20,7 +20,7 @@
 #include "IOPy.h"
 #include "adios2/ADIOSMPICommOnly.h"
 
-namespace adios
+namespace adios2
 {
 
 class ADIOSPy
@@ -38,7 +38,7 @@ public:
 
 private:
     const bool m_DebugMode;
-    adios::ADIOS m_ADIOS;
+    adios2::ADIOS m_ADIOS;
 };
 
 } // end namespace adios

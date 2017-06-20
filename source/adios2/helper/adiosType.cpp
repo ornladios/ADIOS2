@@ -16,7 +16,7 @@
 #include <sstream>
 /// \endcond
 
-namespace adios
+namespace adios2
 {
 
 std::string DimsToCSV(const Dims &dimensions) noexcept

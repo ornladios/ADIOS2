@@ -16,7 +16,7 @@
 
 #include "adiosPyFunctions.h"
 
-namespace adios
+namespace adios2
 {
 
 template <class T>

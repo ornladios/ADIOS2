@@ -33,23 +33,23 @@ int main(int argc, char *argv[])
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
-        adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
+        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
 
         /** global array: name, { shape (total dimensions) }, { start (local) },
          * { count (local) }, all are constant dimensions */
-        adios::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios::ConstantDims);
+        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
+            "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** global single value variable: name */
-        adios::Variable<unsigned int> &bpTimeStep =
+        adios2::Variable<unsigned int> &bpTimeStep =
             bpIO.DefineVariable<unsigned int>("timeStep");
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios::OpenMode::Write);
+        auto bpWriter = bpIO.Open("myVector.bp", adios2::OpenMode::Write);
 
         if (!bpWriter)
         {

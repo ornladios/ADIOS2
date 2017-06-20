@@ -17,7 +17,7 @@
 #include <algorithm> //std::minmax_element, std::min_element, std::max_element
 #include <thread>
 
-namespace adios
+namespace adios2
 {
 
 template <class T>
@@ -83,13 +83,13 @@ void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
         if (t == threads - 1)
         {
             getMinMaxThreads.push_back(
-                std::thread(adios::GetMinMax<T>, &values[position], last,
+                std::thread(adios2::GetMinMax<T>, &values[position], last,
                             std::ref(mins[t]), std::ref(maxs[t])));
         }
         else
         {
             getMinMaxThreads.push_back(
-                std::thread(adios::GetMinMax<T>, &values[position], stride,
+                std::thread(adios2::GetMinMax<T>, &values[position], stride,
                             std::ref(mins[t]), std::ref(maxs[t])));
         }
     }

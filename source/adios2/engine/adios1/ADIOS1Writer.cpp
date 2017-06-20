@@ -19,7 +19,7 @@
 #define adios_stat_default adios_flag_yes
 #endif
 
-namespace adios
+namespace adios2
 {
 
 ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name,

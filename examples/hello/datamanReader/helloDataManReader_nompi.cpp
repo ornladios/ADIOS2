@@ -36,14 +36,14 @@ int main(int argc, char *argv[])
 
     try
     {
-        adios::ADIOS adios(adios::DebugON);
+        adios2::ADIOS adios(adios2::DebugON);
 
-        adios::IO &dataManIO = adios.DeclareIO("WAN");
+        adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataManReader");
         dataManIO.SetParameters(
             {"real_time=yes", "method_type=stream", "method=dump"});
         auto dataManReader =
-            dataManIO.Open("myDoubles.bp", adios::OpenMode::Read);
+            dataManIO.Open("myDoubles.bp", adios2::OpenMode::Read);
 
         if (!dataManReader)
         {
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
 
-        adios::Variable<double> *ioMyDoubles =
+        adios2::Variable<double> *ioMyDoubles =
             dataManReader->InquireVariable<double>("ioMyDoubles");
 
         if (ioMyDoubles == nullptr)

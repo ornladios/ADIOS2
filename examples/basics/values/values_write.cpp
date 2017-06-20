@@ -42,9 +42,9 @@ int main(int argc, char *argv[])
     srand(rank * 32767);
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios("values.xml", MPI_COMM_WORLD);
+    adios2::ADIOS adios("values.xml", MPI_COMM_WORLD);
 #else
-    adios::ADIOS adios("values.xml");
+    adios2::ADIOS adios("values.xml");
 #endif
 
     // Application variables for output
@@ -65,28 +65,28 @@ int main(int argc, char *argv[])
     {
         // Get io settings from the config file or
         // create one with default settings here
-        adios::IO &io = adios.DeclareIO("Output");
+        adios2::IO &io = adios.DeclareIO("Output");
 
         /*
          * Define variables
          */
         // 1. Global constant, same value across processes, constant over time
-        adios::Variable<int> &varNproc = io.DefineVariable<int>("Nproc");
+        adios2::Variable<int> &varNproc = io.DefineVariable<int>("Nproc");
 
         // 2. Global value, same value across processes, varying value over time
-        adios::Variable<int> &varStep = io.DefineVariable<int>("Step");
+        adios2::Variable<int> &varStep = io.DefineVariable<int>("Step");
 
         // 3. Local value, varying across processes, constant over time
-        adios::Variable<int> &varProcessID =
-            io.DefineVariable<int>("ProcessID", {adios::LocalValueDim});
+        adios2::Variable<int> &varProcessID =
+            io.DefineVariable<int>("ProcessID", {adios2::LocalValueDim});
 
         // 4. Local value, varying across processes, varying over time
-        adios::Variable<unsigned int> &varNparts =
-            io.DefineVariable<unsigned int>("Nparts", {adios::LocalValueDim});
+        adios2::Variable<unsigned int> &varNparts =
+            io.DefineVariable<unsigned int>("Nparts", {adios2::LocalValueDim});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        auto writer = io.Open("values.bp", adios::OpenMode::Write);
+        auto writer = io.Open("values.bp", adios2::OpenMode::Write);
 
         if (!writer)
             throw std::ios_base::failure(

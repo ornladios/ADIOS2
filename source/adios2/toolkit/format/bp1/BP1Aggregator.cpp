@@ -21,7 +21,7 @@
 
 #include "adios2/ADIOSMPI.h"
 
-namespace adios
+namespace adios2
 {
 namespace format
 {

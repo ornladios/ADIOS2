@@ -16,7 +16,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
-namespace adios
+namespace adios2
 {
 namespace transport
 {

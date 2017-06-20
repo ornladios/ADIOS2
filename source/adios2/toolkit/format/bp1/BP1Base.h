@@ -26,7 +26,7 @@
 #include "adios2/toolkit/format/bp1/BP1Structs.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
-namespace adios
+namespace adios2
 {
 namespace format
 {

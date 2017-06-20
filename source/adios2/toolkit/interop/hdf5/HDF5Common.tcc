@@ -15,7 +15,7 @@
 
 #include <vector>
 
-namespace adios
+namespace adios2
 {
 namespace interop
 {

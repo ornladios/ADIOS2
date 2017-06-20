@@ -53,9 +53,9 @@ int main(int argc, char *argv[])
     srand(rank * 32767);
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios("localArray.xml", MPI_COMM_WORLD);
+    adios2::ADIOS adios("localArray.xml", MPI_COMM_WORLD);
 #else
-    adios::ADIOS adios("localArray.xml");
+    adios2::ADIOS adios("localArray.xml");
 #endif
 
     // Application variables for output
@@ -69,19 +69,19 @@ int main(int argc, char *argv[])
     {
         // Get io settings from the config file or
         // create one with default settings here
-        adios::IO &io = adios.DeclareIO("Output");
+        adios2::IO &io = adios.DeclareIO("Output");
 
         /*
          * Define joinable local array: type, name, global and local size
          * Starting offset can be an empty vector
          * Only one global dimension can be joined
          */
-        adios::Variable<double> &varTable = io.DefineVariable<double>(
-            "table", {adios::JoinedDim, Ncols}, {}, {Nrows, Ncols});
+        adios2::Variable<double> &varTable = io.DefineVariable<double>(
+            "table", {adios2::JoinedDim, Ncols}, {}, {Nrows, Ncols});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        auto writer = io.Open("joinedArray.bp", adios::OpenMode::Write);
+        auto writer = io.Open("joinedArray.bp", adios2::OpenMode::Write);
 
         if (writer == nullptr)
             throw std::ios_base::failure(

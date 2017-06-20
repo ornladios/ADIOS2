@@ -26,9 +26,9 @@ int main(int argc, char *argv[])
     const bool adiosDebug = true;
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios(MPI_COMM_WORLD, adios::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios::ADIOS adios(adios::DebugON);
+    adios2::ADIOS adios(adios2::DebugON);
 #endif
 
     // Info variables from the file
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     {
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios::IO &bpReaderSettings = adios.DeclareIO("input");
+        adios2::IO &bpReaderSettings = adios.DeclareIO("input");
         if (!bpReaderSettings.InConfigFile())
         {
             // if not defined by user, we can change the default settings
@@ -71,11 +71,11 @@ int main(int argc, char *argv[])
         }
 
         auto bpReader =
-            bpReaderSettings.Open("myNumbers.bp", adios::OpenMode::Read);
+            bpReaderSettings.Open("myNumbers.bp", adios2::OpenMode::Read);
         if (!bpReader)
         {
             int step = 0;
-            while (bpReader->GetAdvanceStatus() == adios::AdvanceStatus::OK)
+            while (bpReader->GetAdvanceStatus() == adios2::AdvanceStatus::OK)
             {
                 std::cout << "Process step " << std::to_string(step)
                           << std::endl;
@@ -83,19 +83,19 @@ int main(int argc, char *argv[])
                 if (step == 0)
                 {
                     // read a Global scalar which has a single value in a step
-                    adios::Variable<int> *vNproc =
+                    adios2::Variable<int> *vNproc =
                         bpReader->InquireVariable<int>("Nproc");
                     Nwriters = vNproc->m_Data[0];
                     std::cout << "# of writers = " << Nwriters << std::endl;
 
-                    adios::Variable<unsigned int> *vNX =
+                    adios2::Variable<unsigned int> *vNX =
                         bpReader->InquireVariable<unsigned int>("NX");
                     Nx = vNX->m_Data[0];
                     // bpReader->Read<unsigned int>("NX", &Nx);
                     std::cout << "NX = " << Nx << std::endl;
                 }
 
-                adios::Variable<unsigned int> *vNY =
+                adios2::Variable<unsigned int> *vNY =
                     bpReader->InquireVariable<unsigned int>("NY");
                 Ny = vNY->m_Data[0];
                 std::cout << "NY = " << Ny << std::endl;
@@ -104,9 +104,9 @@ int main(int argc, char *argv[])
                 bpReader->Release();
 
                 // want to move on to the next available step
-                // bpReader->Advance(adios::NextStep);
-                // bpReader->Advance(adios::LatestStep);
-                bpReader->Advance(); // default is adios::NextStep
+                // bpReader->Advance(adios2::NextStep);
+                // bpReader->Advance(adios2::LatestStep);
+                bpReader->Advance(); // default is adios2::NextStep
                 ++step;
             }
 

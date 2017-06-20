@@ -18,7 +18,7 @@
 
 #include "adios2/ADIOSConfig.h"
 
-namespace adios
+namespace adios2
 {
 
 /** Base class that defines data variable transformations */

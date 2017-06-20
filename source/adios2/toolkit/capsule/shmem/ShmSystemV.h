@@ -12,7 +12,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/toolkit/capsule/Capsule.h"
 
-namespace adios
+namespace adios2
 {
 
 /**

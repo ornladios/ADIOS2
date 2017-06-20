@@ -11,8 +11,6 @@
 #include "BPFileWriter.h"
 #include "BPFileWriter.tcc"
 
-#include <iostream>
-
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
@@ -20,7 +18,7 @@
 #include "adios2/toolkit/transport/file/FilePointer.h"
 #include "adios2/toolkit/transport/file/FileStream.h"
 
-namespace adios
+namespace adios2
 {
 
 BPFileWriter::BPFileWriter(IO &io, const std::string &name,

@@ -22,7 +22,7 @@
 #include "adios2/core/Transform.h"
 #include "adios2/core/VariableBase.h"
 
-namespace adios
+namespace adios2
 {
 
 /**

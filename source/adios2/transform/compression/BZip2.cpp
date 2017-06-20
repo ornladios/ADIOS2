@@ -10,7 +10,7 @@
 
 #include "BZip2.h"
 
-namespace adios
+namespace adios2
 {
 namespace transform
 {

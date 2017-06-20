@@ -10,7 +10,7 @@
 
 #include "IOPy.h"
 
-namespace adios
+namespace adios2
 {
 
 IOPy::IOPy(IO &io, const bool debugMode) : m_IO(io), m_DebugMode(debugMode)
@@ -69,7 +69,7 @@ VariablePy &IOPy::GetVariable(const std::string &name)
 
 EnginePy IOPy::Open(const std::string &name, const int openMode)
 {
-    return EnginePy(m_IO, name, static_cast<adios::OpenMode>(openMode),
+    return EnginePy(m_IO, name, static_cast<adios2::OpenMode>(openMode),
                     m_IO.m_MPIComm);
 }
 

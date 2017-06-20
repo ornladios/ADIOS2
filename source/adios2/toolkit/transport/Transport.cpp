@@ -12,7 +12,7 @@
 
 #include "adios2/ADIOSMPI.h"
 
-namespace adios
+namespace adios2
 {
 
 Transport::Transport(const std::string type, const std::string library,

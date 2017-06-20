@@ -18,7 +18,7 @@
 extern int adios_verbose_level;
 extern int adios_errno;
 
-namespace adios
+namespace adios2
 {
 namespace interop
 {

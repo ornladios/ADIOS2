@@ -19,7 +19,7 @@
 #include "adios2/toolkit/transport/file/FilePointer.h"
 #include "adios2/toolkit/transport/file/FileStream.h"
 
-namespace adios
+namespace adios2
 {
 namespace transportman
 {

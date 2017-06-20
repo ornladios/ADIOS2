@@ -8,14 +8,12 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2/helper/adiosFunctions.h" //BuildParametersMap
-
 #include "IO.h"
 #include "IO.tcc"
 
 #include "adios2/ADIOSMPI.h"
-
 #include "adios2/engine/bp/BPFileWriter.h"
+#include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
 #include "adios2/engine/dataman/DataManReader.h"
@@ -32,7 +30,7 @@
 #include "adios2/engine/hdf5/HDF5WriterP.h"
 #endif
 
-namespace adios
+namespace adios2
 {
 
 IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,

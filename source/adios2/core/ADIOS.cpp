@@ -21,7 +21,7 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 
-namespace adios
+namespace adios2
 {
 
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,

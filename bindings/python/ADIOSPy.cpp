@@ -14,7 +14,7 @@
 
 #include "adios2/ADIOSMPI.h"
 
-namespace adios
+namespace adios2
 {
 
 ADIOSPy::ADIOSPy(const std::string configFile, MPI_Comm mpiComm,

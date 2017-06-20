@@ -15,7 +15,7 @@
 
 #include <json.hpp>
 
-namespace adios
+namespace adios2
 {
 namespace transportman
 {

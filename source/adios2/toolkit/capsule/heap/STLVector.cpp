@@ -15,7 +15,7 @@
 #include <stdexcept> //std::runtime_error
 /// \endcond
 
-namespace adios
+namespace adios2
 {
 namespace capsule
 {

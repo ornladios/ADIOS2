@@ -32,7 +32,7 @@
 #undef __MPI_DUMMY_H__
 #endif
 
-namespace adios
+namespace adios2
 {
 
 class ADIOS1Reader : public Engine
@@ -61,7 +61,7 @@ public:
     void Advance(AdvanceMode mode, const float timeout_sec = 0.0);
     void
     AdvanceAsync(AdvanceMode mode,
-                 std::function<void(std::shared_ptr<adios::Engine>)> callback);
+                 std::function<void(std::shared_ptr<adios2::Engine>)> callback);
 
     void Close(const int transportIndex = -1);
 

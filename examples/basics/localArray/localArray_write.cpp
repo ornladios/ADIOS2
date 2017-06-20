@@ -44,9 +44,9 @@ int main(int argc, char *argv[])
     srand(rank * 32767);
 
 #ifdef ADIOS2_HAVE_MPI
-    adios::ADIOS adios("localArray.xml", MPI_COMM_WORLD);
+    adios2::ADIOS adios("localArray.xml", MPI_COMM_WORLD);
 #else
-    adios::ADIOS adios("localArray.xml");
+    adios2::ADIOS adios("localArray.xml");
 #endif
 
     // Application variables for output
@@ -64,28 +64,28 @@ int main(int argc, char *argv[])
     {
         // Get io settings from the config file or
         // create one with default settings here
-        adios::IO &io = adios.DeclareIO("Output");
+        adios2::IO &io = adios.DeclareIO("Output");
 
         /*
          * Define local array: type, name, local size
          * Global dimension and starting offset must be an empty vector
          */
-        adios::Variable<double> &varV1 =
+        adios2::Variable<double> &varV1 =
             io.DefineVariable<double>("v1", {}, {}, {Nx});
 
         /*
          * Define local array: type, name
          * Global dimension and starting offset must be an empty vector
          * but local size must NOT be an empty vector.
-         * We can use {adios::UnknownDim} for this purpose or any number
+         * We can use {adios2::UnknownDim} for this purpose or any number
          * but we will modify it before writing
          */
-        adios::Variable<double> &varV2 =
-            io.DefineVariable<double>("v2", {}, {}, {adios::UnknownDim});
+        adios2::Variable<double> &varV2 =
+            io.DefineVariable<double>("v2", {}, {}, {adios2::UnknownDim});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        auto writer = io.Open("localArray.bp", adios::OpenMode::Write);
+        auto writer = io.Open("localArray.bp", adios2::OpenMode::Write);
 
         if (writer == nullptr)
             throw std::ios_base::failure(

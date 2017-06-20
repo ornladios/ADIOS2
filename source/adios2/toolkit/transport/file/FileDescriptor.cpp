@@ -20,7 +20,7 @@
 #include <ios> //std::ios_base::failure
 /// \endcond
 
-namespace adios
+namespace adios2
 {
 namespace transport
 {

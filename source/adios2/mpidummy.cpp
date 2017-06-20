@@ -30,7 +30,7 @@
 #define open64 open
 #endif
 
-namespace adios
+namespace adios2
 {
 
 static char mpierrmsg[MPI_MAX_ERROR_STRING];

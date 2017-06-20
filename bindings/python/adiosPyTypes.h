@@ -15,7 +15,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pytypes.h>
 
-namespace adios
+namespace adios2
 {
 // pytypes
 using pyObject = pybind11::object;

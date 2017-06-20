@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
+#include <memory> //std:shared_ptr
 #include <set>
 #include <string>
 #include <utility> //std::pair
@@ -26,7 +27,7 @@
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableCompound.h"
 
-namespace adios
+namespace adios2
 {
 
 // forward declaration needed as IO is passed to Engine derived
@@ -215,7 +216,7 @@ private:
     std::string m_EngineType;
 
     /** Independent (default) or Collective */
-    adios::IOMode m_IOMode = adios::IOMode::Independent;
+    adios2::IOMode m_IOMode = adios2::IOMode::Independent;
 
     // Variables
     /**

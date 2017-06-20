@@ -12,7 +12,7 @@
 
 #include "adiosPyFunctions.h"
 
-namespace adios
+namespace adios2
 {
 
 EnginePy::EnginePy(IO &io, const std::string &name, const OpenMode openMode,

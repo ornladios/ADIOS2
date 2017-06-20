@@ -18,7 +18,7 @@
 #include "EnginePy.h"
 #include "adiosPyTypes.h"
 
-namespace adios
+namespace adios2
 {
 
 class IOPy
