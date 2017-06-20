@@ -27,8 +27,7 @@ add_library(adios2
 
   toolkit/capsule/Capsule.cpp
   toolkit/capsule/heap/STLVector.cpp 
-  toolkit/capsule/shmem/ShmSystemV.cpp
-
+ 
   toolkit/format/bp1/BP1Base.cpp toolkit/format/bp1/BP1Base.tcc
   toolkit/format/bp1/BP1Aggregator.cpp
   toolkit/format/bp1/BP1Writer.cpp toolkit/format/bp1/BP1Writer.tcc
@@ -53,6 +52,10 @@ target_include_directories(adios2
 
 find_package(Threads REQUIRED)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+
+if(ADIOS2_HAVE_SysVShMem)
+  target_sources(adios2 PRIVATE toolkit/capsule/shmem/ShmSystemV.cpp)
+endif()
 
 if(ADIOS2_HAVE_DataMan)
   target_sources(adios2 PRIVATE
