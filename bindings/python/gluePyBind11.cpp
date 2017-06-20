@@ -71,7 +71,7 @@ adios2::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
     return adios2::ADIOSPy(debugMode);
 }
 
-adios::ADIOSPy ADIOSPyInit(const bool debugMode)
+adios2::ADIOSPy ADIOSPyInit(const bool debugMode)
 {
     return adios2::ADIOSPy(debugMode);
 }
