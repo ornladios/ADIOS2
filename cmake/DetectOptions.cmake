@@ -85,9 +85,13 @@ elseif(ADIOS2_USE_ADIOS1)
 endif()
 
 # Python
+# Use the FindPythonLibsNew from pybind11
+list(INSERT CMAKE_MODULE_PATH 0
+  "${ADIOS2_SOURCE_DIR}/thirdparty/pybind11/pybind11/tools"
+)
 if(ADIOS2_USE_Python STREQUAL AUTO)
   if(BUILD_SHARED_LIBS)
-    find_package(PythonLibs)
+    find_package(PythonLibsNew)
     if(PYTHONLIBS_FOUND)
       if(ADIOS2_HAVE_MPI)
         find_package(PythonModule COMPONENTS mpi4py mpi4py/mpi4py.h)
