@@ -23,12 +23,11 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(adios2py PRIVATE PythonModule::mpi4py)
 endif()
 
-find_package(PythonInterp REQUIRED)
-set(python_package_dir ${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}/site-packages)
+string(REGEX REPLACE "^${PYTHON_PREFIX}/" ""
+  python_package_dir "${PYTHON_SITE_PACKAGES}"
+)
 set_target_properties(adios2py PROPERTIES
   OUTPUT_NAME adios2
-  PREFIX "${PYTHON_MODULE_PREFIX}"
-  SUFFIX "${PYTHON_MODULE_EXTENSION}"
   LIBRARY_OUTPUT_DIRECTORY ${ADIOS2_BINARY_DIR}/${python_package_dir}
   RUNTIME_OUTPUT_DIRECTORY ${ADIOS2_BINARY_DIR}/${python_package_dir}
 )
