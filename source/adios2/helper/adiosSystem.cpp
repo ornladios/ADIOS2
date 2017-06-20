@@ -9,12 +9,11 @@
  */
 #include "adiosSystem.h"
 
-#include <sys/stat.h>  //stat, mkdir
-#include <sys/types.h> //CreateDirectory
-#include <unistd.h>    //CreateDirectory
+#include <ctime> //std::ctime
 
 #include <chrono> //system_clock, now
-#include <ctime>  //std::ctime
+
+#include <adios2sys/SystemTools.hxx>
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSTypes.h"
@@ -25,44 +24,7 @@ namespace adios2
 
 bool CreateDirectory(const std::string &fullPath) noexcept
 {
-    auto lf_Mkdir = [](const std::string directory, struct stat &st) -> bool {
-        if (stat(directory.c_str(), &st) == -1) // doesn't exist
-        {
-            mkdir(directory.c_str(), 0777);
-            if (stat(directory.c_str(), &st) == -1) // doesn't exist
-            {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    bool directoryExists = false;
-    auto directoryPosition = fullPath.find("/");
-
-    if (fullPath[0] == '/' || fullPath[0] == '.')
-    { // find the second '/'
-        directoryPosition = fullPath.find("/", directoryPosition + 1);
-    }
-
-    struct stat st = {0};
-    if (directoryPosition == fullPath.npos) // no subdirectories
-    {
-        directoryExists = lf_Mkdir(fullPath.c_str(), st);
-    }
-    else
-    {
-        std::string directory(fullPath.substr(0, directoryPosition));
-        lf_Mkdir(directory.c_str(), st);
-
-        while (directoryPosition != fullPath.npos)
-        {
-            directoryPosition = fullPath.find("/", directoryPosition + 1);
-            directory = fullPath.substr(0, directoryPosition);
-            directoryExists = lf_Mkdir(directory.c_str(), st);
-        }
-    }
-    return directoryExists;
+    return adios2sys::SystemTools::MakeDirectory(fullPath);
 }
 
 bool IsLittleEndian() noexcept
