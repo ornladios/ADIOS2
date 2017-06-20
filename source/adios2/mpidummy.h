@@ -11,26 +11,22 @@
    of the API
 */
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <fcntl.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-/// \endcond
+#include <cstdint>
+#include <cstdio>
 
-#include "adios2/ADIOSConfig.h"
+/// \cond EXCLUDE_FROM_DOXYGEN
+/// \endcond
 
 namespace adios2
 {
 
 typedef int MPI_Comm;
-typedef uint64_t MPI_Status;
-typedef uint64_t MPI_Request;
-typedef int MPI_File;
+typedef std::uint64_t MPI_Status;
+typedef std::uint64_t MPI_Request;
+typedef std::FILE *MPI_File;
 typedef int MPI_Info;
 typedef int MPI_Datatype; /* Store the byte size of a type in such vars */
-typedef uint64_t MPI_Offset;
+typedef long MPI_Offset;
 typedef int MPI_Fint;
 
 #define MPI_SUCCESS 0
@@ -40,7 +36,15 @@ typedef int MPI_Fint;
 #define MPI_ERR_TAG 4    /* Invalid tag argument */
 #define MPI_ERR_COMM 5   /* Invalid communicator */
 #define MPI_MAX_ERROR_STRING 512
-#define MPI_MODE_RDONLY O_RDONLY
+#define MPI_MODE_RDONLY 1
+#define MPI_MODE_WRONLY 2
+#define MPI_MODE_RDWR (MPI_MODE_RDONLY | MPI_MODE_RDONLY)
+#define MPI_MODE_CREATE MPI_MODE_WRONLY
+#define MPI_MODE_EXCL 0
+#define MPI_MODE_DELETE_ON_CLOSE 0
+#define MPI_MODE_UNIQUE_OPEN 0
+#define MPI_MODE_SEQUENTIAL 0
+#define MPI_MODE_APPEND 4
 #define MPI_SEEK_SET SEEK_SET
 #define MPI_SEEK_CUR SEEK_CUR
 #define MPI_SEEK_END SEEK_END
