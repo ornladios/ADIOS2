@@ -10,15 +10,9 @@ if(ADIOS2_HAVE_MPI)
   target_include_directories(hello_bpWriter PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_bpWriter ${MPI_C_LIBRARIES})
   
-  add_executable(hello_bpWriterXML helloBPWriterXML.cpp)
-  target_include_directories(hello_bpWriterXML PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(hello_bpWriterXML ${MPI_C_LIBRARIES})
-  
 else()
   add_executable(hello_bpWriter helloBPWriter_nompi.cpp)
-  add_executable(hello_bpWriterXML helloBPWriterXML_nompi.cpp)
   
 endif()
 
-target_link_libraries(hello_bpWriterXML adios2)
 target_link_libraries(hello_bpWriter adios2)
