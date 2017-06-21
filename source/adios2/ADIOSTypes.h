@@ -141,7 +141,11 @@ enum class SelectionType
 };
 
 // adios defaults
+#ifdef _WIN32
+const std::string DefaultFileLibrary("stdio");
+#else
 const std::string DefaultFileLibrary("POSIX");
+#endif
 const std::string DefaultTimeUnit("Microseconds");
 constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::Microseconds);
 

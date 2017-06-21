@@ -15,9 +15,12 @@
 /// \endcond
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
-#include "adios2/toolkit/transport/file/FileDescriptor.h"
 #include "adios2/toolkit/transport/file/FilePointer.h"
 #include "adios2/toolkit/transport/file/FileStream.h"
+
+#ifndef _WIN32
+#include "adios2/toolkit/transport/file/FileDescriptor.h"
+#endif
 
 namespace adios2
 {
@@ -204,12 +207,7 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
 {
     auto lf_SetFileTransport = [&](const std::string library,
                                    std::shared_ptr<Transport> &transport) {
-        if (library == "POSIX")
-        {
-            transport = std::make_shared<transport::FileDescriptor>(
-                m_MPIComm, m_DebugMode);
-        }
-        else if (library == "stdio")
+        if (library == "stdio")
         {
             transport = std::make_shared<transport::FilePointer>(m_MPIComm,
                                                                  m_DebugMode);
@@ -219,6 +217,13 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
             transport =
                 std::make_shared<transport::FileStream>(m_MPIComm, m_DebugMode);
         }
+#ifndef _WIN32
+        else if (library == "POSIX")
+        {
+            transport = std::make_shared<transport::FileDescriptor>(
+                m_MPIComm, m_DebugMode);
+        }
+#endif
         else
         {
             if (m_DebugMode)
