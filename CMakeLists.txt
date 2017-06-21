@@ -34,6 +34,9 @@ if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 endif()
 
+# Let windows builds auto-export dll symbols
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+
 #------------------------------------------------------------------------------#
 # Top level options
 #------------------------------------------------------------------------------#
