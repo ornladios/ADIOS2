@@ -115,7 +115,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
 
         // Open the file for reading
         ADIOS_FILE *f =
-            adios_read_open_file((fname + "/" + fname + ".0").c_str(),
+            adios_read_open_file((fname + ".dir/" + fname + ".0").c_str(),
                                  ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
         ASSERT_NE(f, nullptr);
 
@@ -331,7 +331,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
 
         // Open the file for reading
         ADIOS_FILE *f =
-            adios_read_open_file((fname + "/" + fname + ".0").c_str(),
+            adios_read_open_file((fname + ".dir/" + fname + ".0").c_str(),
                                  ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
         ASSERT_NE(f, nullptr);
 
@@ -557,7 +557,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
 
         // Open the file for reading
         ADIOS_FILE *f =
-            adios_read_open_file((fname + "/" + fname + ".0").c_str(),
+            adios_read_open_file((fname + ".dir/" + fname + ".0").c_str(),
                                  ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
         ASSERT_NE(f, nullptr);
 
