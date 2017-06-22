@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     /** Application variable */
-    std::vector<float> myFloats(100);
+    std::vector<float> myFloats(1000000); //~ 4 MB
     const std::size_t Nx = myFloats.size();
 
     try
@@ -38,7 +38,11 @@ int main(int argc, char *argv[])
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N_Flush");
         bpIO.SetEngine("BPFileWriter");
-        // bpIO.SetParameters( )
+
+        //        bpIO.SetParameters({{"MaxBufferSize", "9Mb"},
+        //                            {"BufferGrowthFactor", "1.5"},
+        //                            {"Threads", "2"}});
+        //        bpIO.AddTransport("File", {{"ProfileUnits", "Microseconds"}});
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
@@ -54,8 +58,13 @@ int main(int argc, char *argv[])
                 "ERROR: bpWriter not created at Open\n");
         }
 
-        /** Write variable for buffering */
-        bpWriter->Write<float>(bpFloats, myFloats.data());
+        for (unsigned int t = 0; t < 100; ++t)
+        {
+            /** values to time step */
+            myFloats.assign(myFloats.size(), t);
+            /** Write variable for buffering */
+            bpWriter->Write<float>(bpFloats, myFloats.data());
+        }
 
         /** Create bp file, engine becomes unreachable after this*/
         bpWriter->Close();
