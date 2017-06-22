@@ -40,8 +40,9 @@ int main(int argc, char *argv[])
 
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataManReader");
-        dataManIO.SetParameters(
-            {"real_time=yes", "method_type=stream", "method=dump"});
+        dataManIO.SetParameters({{"real_time", "yes"},
+                                 {"method_type", "stream"},
+                                 {"method", "dump"}});
         auto dataManReader =
             dataManIO.Open("myDoubles.bp", adios2::OpenMode::Read);
 
