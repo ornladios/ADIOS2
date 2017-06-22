@@ -251,9 +251,13 @@ protected:
     /** set initial buffer size */
     void InitParameterInitBufferSize(const std::string value);
 
-    /** unlimited (default), set max buffer size in Gb or Mb
+    /** default = DefaultMaxBufferSize in ADIOSTypes.h, set max buffer size in
+     * Gb or Mb
      *  max_buffer_size=100Mb or  max_buffer_size=1Gb */
     void InitParameterMaxBufferSize(const std::string value);
+
+    /** Set available number of threads for vector operations */
+    void InitParameterThreads(const std::string value);
 
     /** verbose file level=0 (default) */
     void InitParameterVerbose(const std::string value);

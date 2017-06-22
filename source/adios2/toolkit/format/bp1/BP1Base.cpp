@@ -57,6 +57,10 @@ void BP1Base::InitParameters(const Params &parameters)
         {
             InitParameterMaxBufferSize(value);
         }
+        else if (key == "Threads")
+        {
+            InitParameterThreads(value);
+        }
         else if (key == "Verbose")
         {
             InitParameterVerbose(value);
@@ -274,6 +278,38 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
     {
         m_MaxBufferSize = static_cast<size_t>(std::stoul(number) * factor);
     }
+}
+
+void BP1Base::InitParameterThreads(const std::string value)
+{
+    int threads = -1;
+
+    if (m_DebugMode)
+    {
+        bool success = true;
+
+        try
+        {
+            threads = std::stoi(value);
+        }
+        catch (std::exception &e)
+        {
+            success = false;
+        }
+
+        if (!success || threads < 1)
+        {
+            throw std::invalid_argument(
+                "ERROR: value in Threads=value in IO SetParameters must be "
+                "an integer >= 1 (default), in call to Open\n");
+        }
+    }
+    else
+    {
+        threads = std::stoi(value);
+    }
+
+    m_Threads = static_cast<unsigned int>(threads);
 }
 
 void BP1Base::InitParameterVerbose(const std::string value)

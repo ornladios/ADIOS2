@@ -45,7 +45,7 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
                          const T *source, const size_t elements,
                          const unsigned int threads) noexcept
 {
-    if (threads == 1)
+    if (threads == 1 || threads > elements)
     {
         CopyToBuffer(buffer, position, source, elements);
         return;
@@ -58,23 +58,35 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
     std::vector<std::thread> copyThreads;
     copyThreads.reserve(threads);
 
+    const char *src = reinterpret_cast<const char *>(source);
+
     for (unsigned int t = 0; t < threads; ++t)
     {
-        size_t bufferPosition = stride * t * sizeof(T);
-        const size_t sourcePosition = stride * t;
-
+        const size_t bufferStart = position + stride * t * sizeof(T);
+        const size_t srcStart = stride * t * sizeof(T);
         if (t == threads - 1) // last thread takes stride + remainder
         {
-            copyThreads.push_back(std::thread(CopyToBuffer<T>, std::ref(buffer),
-                                              std::ref(bufferPosition),
-                                              &source[sourcePosition], last));
-            position = bufferPosition; // last position
+            copyThreads.push_back(std::thread(std::memcpy, &buffer[bufferStart],
+                                              &src[srcStart],
+                                              last * sizeof(T)));
+            // std::copy not working properly with std::thread...why?
+            //            copyThreads.push_back(std::thread(std::copy,
+            //            &src[srcStart],
+            //                                              &src[srcStart] +
+            //                                              last * sizeof(T),
+            //                                              buffer.begin() +
+            //                                              bufferStart));
         }
         else
         {
-            copyThreads.push_back(std::thread(CopyToBuffer<T>, std::ref(buffer),
-                                              std::ref(bufferPosition),
-                                              &source[sourcePosition], stride));
+            copyThreads.push_back(std::thread(std::memcpy, &buffer[bufferStart],
+                                              &src[srcStart],
+                                              stride * sizeof(T)));
+            // std::copy not working properly with std::thread...why?
+            //            copyThreads.push_back(std::thread(
+            //                std::copy, &src[srcStart], &src[srcStart] + stride
+            //                * sizeof(T),
+            //                buffer.begin() + bufferStart));
         }
     }
 
@@ -82,6 +94,8 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
     {
         copyThread.join();
     }
+
+    position += elements * sizeof(T);
 }
 
 template <class T>

@@ -60,7 +60,7 @@ template <class T>
 void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
                       const unsigned int threads) noexcept
 {
-    if (threads == 1)
+    if (threads == 1 || threads > size)
     {
         GetMinMax(values, size, min, max);
         return;
