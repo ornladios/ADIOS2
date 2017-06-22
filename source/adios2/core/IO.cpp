@@ -43,11 +43,6 @@ IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
 void IO::SetEngine(const std::string engineType) { m_EngineType = engineType; }
 void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
-void IO::SetParameters(const std::vector<std::string> &parametersVector)
-{
-    m_Parameters = BuildParametersMap(parametersVector, m_DebugMode);
-}
-
 void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
 
 unsigned int IO::AddTransport(const std::string type,

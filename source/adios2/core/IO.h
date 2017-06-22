@@ -81,13 +81,6 @@ public:
     void SetIOMode(const IOMode mode);
 
     /**
-     * Sets IO parameters in "parameter=value" format
-     * @param paramsVector each vector entry with format
-     * "parameter1=value1", ..., "parameterN=valueN"
-     */
-    void SetParameters(const std::vector<std::string> &parametersVector);
-
-    /**
      * Version that passes a map to fill out parameters
      * initializer list = { "param1", "value1" },  {"param2", "value2"},
      * @param params adios::Params std::map<std::string, std::string>

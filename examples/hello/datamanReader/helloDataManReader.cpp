@@ -45,8 +45,9 @@ int main(int argc, char *argv[])
 
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataManReader");
-        dataManIO.SetParameters(
-            {"real_time=yes", "method_type=stream", "method=dump"});
+        dataManIO.SetParameters({{"real_time", "yes"},
+                                 {"method_type", "stream"},
+                                 {"method", "dump"}});
 
         auto dataManReader =
             dataManIO.Open("myDoubles.bp", adios2::OpenMode::Read);
@@ -82,9 +83,9 @@ int main(int argc, char *argv[])
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM "
+                     "from rank "
+                  << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
