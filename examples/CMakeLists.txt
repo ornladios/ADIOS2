@@ -6,4 +6,7 @@
 add_subdirectory(basics)
 add_subdirectory(hello)
 add_subdirectory(heatTransfer)
-add_subdirectory(experimental)
+
+if(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL)
+  add_subdirectory(experimental)
+endif()
