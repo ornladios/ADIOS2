@@ -9,3 +9,6 @@ else()
 endif()
 
 target_link_libraries(helloBPWriterXML adios2)
+target_compile_definitions(helloBPWriterXML PRIVATE
+  -DDEFAULT_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/helloBPWriter.xml
+)
