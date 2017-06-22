@@ -20,15 +20,13 @@
 namespace adios2
 {
 
-std::string FileToString(const std::string &fileName)
+std::string FileToString(const std::string &fileName) noexcept
 {
     std::ifstream fileStream(fileName);
 
     if (!fileStream)
     {
-        throw std::invalid_argument(
-            "ERROR: file " + fileName +
-            " could not be opened. Check permissions or existence\n");
+        return std::string(); // empty string
     }
 
     std::ostringstream fileSS;

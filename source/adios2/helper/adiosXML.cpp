@@ -196,11 +196,13 @@ Params GetTagAttributesXML(const std::string &tagHeader)
     auto lf_GetAttributes = [&](const std::string &tag) -> Params {
         Params attributes;
         std::string currentTag(tag.substr(tag.find_first_of(" \t\n")));
+        std::string::size_type currentPosition(0);
 
-        while (currentTag.find('=') != currentTag.npos) // equalPosition
+        while (currentTag.find('=', currentPosition) !=
+               currentTag.npos) // equalPosition
         {
-            currentTag =
-                currentTag.substr(currentTag.find_first_not_of(" \t\n"));
+            currentTag = currentTag.substr(
+                currentTag.find_first_not_of(" \t\n", currentPosition));
             auto equalPosition = currentTag.find('=');
             if (currentTag.size() <= equalPosition + 1)
             {
@@ -210,20 +212,28 @@ Params GetTagAttributesXML(const std::string &tagHeader)
                     "in call to ADIOS constructor\n");
             }
 
-            const std::string key(currentTag.substr(0, equalPosition));
+            std::string key(currentTag.substr(0, equalPosition));
+            key.erase(key.find_last_not_of(" \t\n") + 1);
+
             std::string value;
 
-            const char quote = currentTag[equalPosition + 1];
+            auto quotePosition =
+                currentTag.find_first_not_of(" \t\n", equalPosition + 1);
+
+            const char quote = currentTag.at(quotePosition);
             if (quote == '\'' || quote == '"')
             {
-                value = lf_GetQuotedValue(quote, equalPosition + 1, currentTag);
+                value = lf_GetQuotedValue(quote, quotePosition, currentTag);
             }
             else
             {
-                // throw exception here?
+                throw std::invalid_argument(
+                    "ERROR: quote must be \" or ' in XML config tag " + tag +
+                    ", in call to ADIOS constructor");
             }
 
             attributes.emplace(key, value);
+            currentPosition = quotePosition + value.size() + 1;
         }
         return attributes;
     };
@@ -262,6 +272,12 @@ void InitXML(const std::string configXML, const MPI_Comm mpiComm,
 {
     // independent IO
     std::string fileContents(FileToString(configXML));
+    if (fileContents.empty())
+    {
+        // issue a warning?
+        return;
+    }
+
     RemoveCommentsXML(fileContents);
 
     // adios-config
