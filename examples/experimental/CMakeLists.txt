@@ -6,3 +6,5 @@
 if(ADIOS2_HAVE_ADIOS1)
   add_subdirectory(multistep)
 endif()
+
+add_subdirectory(runtimeconfig)

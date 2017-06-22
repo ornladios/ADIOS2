@@ -15,8 +15,33 @@
 
 #include <adios2.h>
 
+#define str_helper(X) #X
+#define str(X) str_helper(X)
+
+#ifndef DEFAULT_CONFIG
+#define DEFAULT_CONFIG helloBPWriter.xml
+#endif
+#define DEFAULT_CONFIG_STR str(DEFAULT_CONFIG)
+
 int main(int argc, char *argv[])
 {
+    std::string configFile;
+    if (argc == 1)
+    {
+        configFile = DEFAULT_CONFIG_STR;
+    }
+    else if (argc == 2)
+    {
+        configFile = argv[1];
+    }
+    else
+    {
+        std::cerr << "Usage: " << argv[0] << " [/path/to/config.xml]"
+                  << std::endl;
+        return 1;
+    }
+    std::cout << "Using config file: " << configFile << std::endl;
+
     /** Application variable */
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     const std::size_t Nx = myFloats.size();
@@ -24,7 +49,7 @@ int main(int argc, char *argv[])
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
-        adios2::ADIOS adios("helloBPWriter.xml", adios2::DebugON);
+        adios2::ADIOS adios(configFile, adios2::DebugON);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
