@@ -3,6 +3,4 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(interface)
-add_subdirectory(engine)
-add_subdirectory(bindings)
+python_add_test(PythonBPWrite TestBPWriteTypes.py)

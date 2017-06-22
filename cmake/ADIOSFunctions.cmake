@@ -37,3 +37,12 @@ function(message_pad msg out_len out_msg)
     set(${out_msg} "${msg}${pad}" PARENT_SCOPE)
   endif()
 endfunction()
+
+function(python_add_test name script)
+  add_test(NAME ${name}
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${script} ${ARGN}
+  )
+  set_property(TEST ${name} PROPERTY
+    ENVIRONMENT "PYTHONPATH=${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}:$ENV{PYTHONPATH}"
+  )
+endfunction()

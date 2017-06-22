@@ -3,6 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(interface)
-add_subdirectory(engine)
-add_subdirectory(bindings)
+if(ADIOS2_HAVE_Python)
+  add_subdirectory(python)
+endif()
