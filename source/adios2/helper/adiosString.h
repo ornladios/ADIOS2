@@ -27,7 +27,7 @@ namespace adios2
  * @param fileName of text file
  * @return file contents in a string
  */
-std::string FileToString(const std::string &fileName);
+std::string FileToString(const std::string &fileName) noexcept;
 
 /**
  * Transforms a vector to a map of parameters
