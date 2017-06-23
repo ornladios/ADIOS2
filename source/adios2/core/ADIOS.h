@@ -80,6 +80,11 @@ public:
      */
     IO &DeclareIO(const std::string ioName);
 
+    /**
+     * Retrieve an already defined IO object
+     */
+    IO &GetIO(const std::string name);
+
 protected: // no const member to allow default empty and copy constructors
     /** XML File to be read containing configuration information */
     std::string m_ConfigFile;

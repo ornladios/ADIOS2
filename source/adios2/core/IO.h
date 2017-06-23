@@ -88,6 +88,11 @@ public:
     void SetParameters(const Params &parameters = Params());
 
     /**
+     * Retrieve existing parameter set
+     */
+    const Params &GetParameters() const;
+
+    /**
      * Adds a transport and its parameters for the method
      * @param type must be a supported transport type under /include/transport
      * @param args list of parameters for a transport with format
