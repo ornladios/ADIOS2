@@ -35,14 +35,8 @@ IO::IO(const Settings &s, MPI_Comm comm)
         // if not defined by user, we can change the default settings
         // BPFileWriter is the default engine
         h5io.SetEngine("HDF5Writer");
-        // Allow an extra thread for data processing
-
-        const std::string aggregatorsParam("Aggregators=" +
-                                           std::to_string((s.nproc + 1) / 2));
-        h5io.SetParameters({"have_metadata_file=yes", aggregatorsParam});
     }
 
-    //    ad->DefineScalar<unsigned int>("gndx", true);
     varGndx = &h5io.DefineVariable<unsigned int>("gndx");
     h5io.DefineVariable<unsigned int>("gndy");
 
