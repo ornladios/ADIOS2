@@ -192,7 +192,8 @@ std::string BP1Writer::GetRankProfilingLog(
     std::string timeDate(profiler.Timers.at("buffering").m_LocalTimeDate);
     timeDate.pop_back();
 
-    rankLog += "'date_and_time': '" + timeDate + "', " + "'bytes': " +
+    rankLog += "'date_and_time': '" + timeDate + "', 'threads': " +
+               std::to_string(m_Threads) + ", 'bytes': " +
                std::to_string(profiler.Bytes.at("buffering")) + ", ";
     lf_WriterTimer(rankLog, profiler.Timers.at("buffering"));
 
