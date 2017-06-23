@@ -11,258 +11,107 @@
 #include "adiosXML.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <sstream>
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
+#include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/helper/adiosString.h"
+
+#include <pugixml.hpp>
 
 namespace adios2
 {
 
-void RemoveCommentsXML(std::string &currentContent) noexcept
+Params InitParametersXML(pugi::xml_node node, bool debugMode)
 {
-    std::string::size_type startComment(currentContent.find("<!--"));
-
-    while (startComment != currentContent.npos)
+    Params params;
+    for (pugi::xml_node paramNode : node.children("parameter"))
     {
-        std::string::size_type endComment(currentContent.find("-->"));
-        currentContent.erase(startComment, endComment - startComment + 3);
-        startComment = currentContent.find("<!--");
-    }
-}
-
-TagXML GetTagXML(const std::string tagName, const std::string &content,
-                 std::string::size_type &position)
-{
-    auto lf_SetPositions =
-        [](const std::string input, const std::string &content,
-           std::string::size_type &position) -> std::string::size_type {
-
-        const std::string::size_type inputPosition =
-            GetStringPositionXML(input, content, position);
-
-        if (inputPosition != std::string::npos)
+        pugi::xml_attribute attrKey = paramNode.attribute("key");
+        if (!attrKey)
         {
-            position = inputPosition + input.size();
-        }
-        return inputPosition;
-    };
-
-    TagXML tagXML;
-
-    std::string name(tagName);
-    if (name.back() == ' ')
-    {
-        name.pop_back();
-    }
-
-    auto openingStart = lf_SetPositions("<" + name, content, position);
-    auto openingEnd = lf_SetPositions(">", content, position);
-
-    if (openingStart == std::string::npos || openingEnd == std::string::npos)
-    {
-        tagXML.IsFull = false;
-        return tagXML;
-    }
-
-    tagXML.Header = content.substr(openingStart, openingEnd + 1 - openingStart);
-
-    auto closingStart =
-        GetStringPositionXML("</" + name + ">", content, position);
-
-    if (closingStart == std::string::npos)
-    {
-        throw std::invalid_argument(
-            "ERROR: could not find closing tag </" + name +
-            "> in XML config file, in call to ADIOS constructor\n");
-    }
-    tagXML.IsFull = true;
-    tagXML.Elements =
-        content.substr(openingEnd + 1, closingStart - (openingEnd + 1));
-
-    //    std::cout << "START..." << tagXML.Header << "...";
-    //    std::cout << tagXML.Elements << "...END\n";
-
-    return tagXML;
-}
-
-std::string::size_type
-GetStringPositionXML(const std::string input, const std::string &content,
-                     const std::string::size_type &startPosition) noexcept
-{
-    std::string::size_type foundPosition(content.find(input, startPosition));
-    if (foundPosition == content.npos)
-    {
-        return foundPosition;
-    }
-
-    // check if it is not inside " " or ' '
-    std::string::size_type currentPosition(startPosition);
-
-    while (foundPosition != content.npos)
-    {
-        const std::string::size_type singleQuotePosition(
-            content.find('\'', currentPosition));
-        const std::string::size_type doubleQuotePosition(
-            content.find('\"', currentPosition));
-
-        if ((singleQuotePosition == content.npos &&
-             doubleQuotePosition == content.npos) ||
-            (singleQuotePosition == content.npos &&
-             foundPosition < doubleQuotePosition) ||
-            (doubleQuotePosition == content.npos &&
-             foundPosition < singleQuotePosition) ||
-            (foundPosition < singleQuotePosition &&
-             foundPosition < doubleQuotePosition))
-        {
-            break;
-        }
-        // find the closing corresponding quote
-        std::string::size_type closingQuotePosition;
-
-        if (singleQuotePosition != content.npos &&
-            doubleQuotePosition == content.npos)
-        {
-            currentPosition = singleQuotePosition;
-            closingQuotePosition = content.find('\'', currentPosition + 1);
-        }
-        else if (singleQuotePosition == content.npos &&
-                 doubleQuotePosition != content.npos)
-        {
-            currentPosition = doubleQuotePosition;
-            closingQuotePosition = content.find('\"', currentPosition + 1);
-        }
-        else
-        {
-            if (singleQuotePosition < doubleQuotePosition)
+            if (debugMode)
             {
-                currentPosition = singleQuotePosition;
-                closingQuotePosition = content.find('\'', currentPosition + 1);
+                throw std::invalid_argument("ERROR: XML: No \"key\" attribute "
+                                            "found on <parameter> element.");
             }
-            else
-            {
-                currentPosition = doubleQuotePosition;
-                closingQuotePosition = content.find('\"', currentPosition + 1);
-            }
-        }
-        // if can't find closing it's open until the end
-        if (closingQuotePosition == content.npos)
-        {
-            currentPosition == content.npos;
-            break;
-        }
-
-        currentPosition = closingQuotePosition + 1;
-
-        if (closingQuotePosition < foundPosition)
-        {
             continue;
         }
-        else
-        {
-            // if this point is reached it means it's a value inside " " or ' ',
-            // iterate
-            foundPosition = content.find(input, currentPosition);
-            currentPosition = foundPosition;
-        }
-    }
 
-    return foundPosition;
+        pugi::xml_attribute attrValue = paramNode.attribute("value");
+        if (!attrValue)
+        {
+            if (debugMode)
+            {
+                throw std::invalid_argument("ERROR: XML: No \"value\" "
+                                            "attribute found on <parameter> "
+                                            "element.");
+            }
+            continue;
+        }
+
+        params.emplace(attrKey.value(), attrValue.value());
+    }
+    return params;
 }
 
-Params GetTagAttributesXML(const std::string &tagHeader)
+void InitIOXML(const pugi::xml_node ioNode, const MPI_Comm mpiComm,
+               const bool debugMode,
+               std::vector<std::shared_ptr<Transform>> &transforms,
+               std::map<std::string, IO> &ios)
 {
-    auto lf_GetQuotedValue = [](const char quote,
-                                const std::string::size_type &quotePosition,
-                                std::string &currentTag) -> std::string {
-
-        currentTag = currentTag.substr(quotePosition + 1);
-        auto nextQuotePosition = currentTag.find(quote);
-
-        if (nextQuotePosition == currentTag.npos)
+    // Extract <io name=""> attribute
+    pugi::xml_attribute nameAttr = ioNode.attribute("name");
+    if (!nameAttr)
+    {
+        if (debugMode)
         {
             throw std::invalid_argument(
-                "ERROR: Invalid attribute in..." + currentTag +
-                "...check XML file, in call to ADIOS constructor\n");
+                "ERROR: XML: No \"name\" attribute found on <io> element.");
         }
+        return;
+    }
+    std::string ioName = nameAttr.value();
 
-        const std::string value(currentTag.substr(0, nextQuotePosition));
-        currentTag = currentTag.substr(nextQuotePosition + 1);
-        return value;
-    };
+    // Build the IO object
+    auto ioIt = ios.emplace(ioName, IO(ioName, mpiComm, true, debugMode));
+    IO &io = ioIt.first->second;
 
-    auto lf_GetAttributes = [&](const std::string &tag) -> Params {
-        Params attributes;
-        std::string currentTag(tag.substr(tag.find_first_of(" \t\n")));
-        std::string::size_type currentPosition(0);
+    // Extract <engine> element
+    pugi::xml_node engineNode = ioNode.child("engine");
+    if (!engineNode)
+    {
+        throw std::invalid_argument(
+            "ERROR: XML: No <engine> element found in <io> element.");
+    }
+    pugi::xml_attribute engineTypeAttr = engineNode.attribute("type");
+    if (!engineTypeAttr)
+    {
+        throw std::invalid_argument(
+            "ERROR: XML: No \"type\" attribute found on <engine> element.");
+    }
+    io.SetEngine(engineTypeAttr.value());
 
-        while (currentTag.find('=', currentPosition) !=
-               currentTag.npos) // equalPosition
+    // Process <engine> parameters
+    io.SetParameters(InitParametersXML(engineNode, debugMode));
+
+    // Extract and process <transport> elements
+    for (pugi::xml_node transportNode : ioNode.children("transport"))
+    {
+        pugi::xml_attribute typeAttr = transportNode.attribute("type");
+        if (!typeAttr)
         {
-            currentTag = currentTag.substr(
-                currentTag.find_first_not_of(" \t\n", currentPosition));
-            auto equalPosition = currentTag.find('=');
-            if (currentTag.size() <= equalPosition + 1)
+            if (debugMode)
             {
-                throw std::invalid_argument(
-                    "ERROR: tag " + tag +
-                    " is incomplete, check XML config file, "
-                    "in call to ADIOS constructor\n");
+                throw std::invalid_argument("ERROR: XML: No \"type\" attribute "
+                                            "found on <transport> element.");
             }
-
-            std::string key(currentTag.substr(0, equalPosition));
-            key.erase(key.find_last_not_of(" \t\n") + 1);
-
-            std::string value;
-
-            auto quotePosition =
-                currentTag.find_first_not_of(" \t\n", equalPosition + 1);
-
-            const char quote = currentTag.at(quotePosition);
-            if (quote == '\'' || quote == '"')
-            {
-                value = lf_GetQuotedValue(quote, quotePosition, currentTag);
-            }
-            else
-            {
-                throw std::invalid_argument(
-                    "ERROR: quote must be \" or ' in XML config tag " + tag +
-                    ", in call to ADIOS constructor");
-            }
-
-            attributes.emplace(key, value);
-            currentPosition = quotePosition + value.size() + 1;
+            continue;
         }
-        return attributes;
-    };
-
-    // BODY of function starts here
-    Params attributes;
-    // eliminate < >
-    std::string openingTag = tagHeader.substr(1, tagHeader.size() - 2);
-
-    if (tagHeader.back() == '/') // last char is / --> "XML empty tag"
-    {
-        // attributes = lf_GetAttributes(openingTag);
-        // throw exception here, ADIOS2 doesn't allow XML empty tags
+        io.AddTransport(typeAttr.value(),
+                        InitParametersXML(transportNode, debugMode));
     }
-    else if (tagHeader[0] == '/') // first char is / ---> closing tag
-    {
-        attributes = lf_GetAttributes(openingTag);
-        if (attributes.size() > 0)
-        {
-            throw std::invalid_argument(
-                "ERROR: closing tag " + tagHeader +
-                " can't have attributes, in call to ADIOS constructor\n");
-        }
-    }
-    else // opening tag
-    {
-        attributes = lf_GetAttributes(openingTag);
-    }
-    return attributes;
 }
 
 void InitXML(const std::string configXML, const MPI_Comm mpiComm,
@@ -270,214 +119,55 @@ void InitXML(const std::string configXML, const MPI_Comm mpiComm,
              std::vector<std::shared_ptr<Transform>> &transforms,
              std::map<std::string, IO> &ios)
 {
-    // independent IO
-    std::string fileContents(FileToString(configXML));
-    if (fileContents.empty())
+    int mpiRank;
+    MPI_Comm_rank(mpiComm, &mpiRank);
+    std::string fileContents;
+    unsigned long long len;
+
+    // Read the file on rank 0 and broadcast it to everybody else
+    if (mpiRank == 0)
     {
-        // issue a warning?
+        fileContents = FileToString(configXML);
+        len = static_cast<unsigned long long>(fileContents.size());
+    }
+    MPI_Bcast(&len, 1, MPI_UNSIGNED_LONG, 0, mpiComm);
+    if (mpiRank != 0)
+    {
+        fileContents.resize(len);
+    }
+    MPI_Bcast(const_cast<char *>(fileContents.data()), len, MPI_CHAR, 0,
+              mpiComm);
+
+    pugi::xml_document doc;
+    auto parse_result = doc.load_buffer_inplace(
+        const_cast<char *>(fileContents.data()), fileContents.size());
+    if (!parse_result)
+    {
+        if (debugMode)
+        {
+            throw std::invalid_argument(
+                std::string("ERROR: XML: Parse error: ") +
+                parse_result.description());
+        }
         return;
     }
 
-    RemoveCommentsXML(fileContents);
-
-    // adios-config
-    std::string::size_type position(0);
-    const TagXML adiosConfigXML(
-        GetTagXML("adios-config", fileContents, position));
-
-    // process transforms, not yet implemented
-
-    while (position != std::string::npos)
+    pugi::xml_node configNode = doc.child("adios-config");
+    if (!configNode)
     {
-        const TagXML transformXML(
-            GetTagXML("transform ", adiosConfigXML.Elements, position));
-
-        if (transformXML.Header.empty())
-        {
-            break;
-        }
-        // InitTransform(transformTag, debugMode, transforms);
-    }
-
-    position = 0;
-    // process IOs
-    while (position != std::string::npos)
-    {
-        // io
-        const TagXML ioXML(GetTagXML("io ", adiosConfigXML.Elements, position));
-
-        if (ioXML.Header.empty()) // no more groups to find
-        {
-            break;
-        }
-        InitIOXML(ioXML, mpiComm, debugMode, transforms, ios);
-    }
-}
-
-void InitIOXML(const TagXML &ioXML, const MPI_Comm mpiComm,
-               const bool debugMode,
-               std::vector<std::shared_ptr<Transform>> &transforms,
-               std::map<std::string, IO> &ios)
-{
-    const Params ioAttributes(GetTagAttributesXML(ioXML.Header));
-
-    std::string ioName;
-    for (const auto &ioAttribute : ioAttributes)
-    {
-        if (ioAttribute.first == "name")
-        {
-            ioName = ioAttribute.second;
-        }
-    }
-
-    if (debugMode)
-    {
-        if (ioName.empty())
-        {
-            throw std::invalid_argument(
-                "ERROR: io name=\"value\" attribute not found in opening XML "
-                "tag " +
-                ioXML.Header +
-                ", check XML config file, in call to ADIOS constructor\n");
-        }
-
-        if (ios.count(ioName) == 1) // io exists
-        {
-            throw std::invalid_argument("ERROR: io name " + ioName +
-                                        " must be unique in XML config file, "
-                                        "in call to ADIOS constructor\n");
-        }
-    }
-
-    // emplace io with inConfigFile argument as true
-    auto itIO = ios.emplace(ioName, IO(ioName, mpiComm, true, debugMode));
-
-    // process engine
-    std::string::size_type position(0);
-
-    TagXML engineXML(GetTagXML("engine ", ioXML.Elements, position));
-    if (!engineXML.Header.empty()) // found first one
-    {
-        InitEngineXML(engineXML, debugMode, itIO.first->second);
-    }
-
-    if (debugMode)
-    {
-        // try finding a 2nd one from current position
-        TagXML engineXML(GetTagXML("engine ", ioXML.Elements, position));
-        if (!engineXML.Header.empty()) // found first one
-        {
-            throw std::invalid_argument(
-                "ERROR: more than one engine found in <io name=" + ioName +
-                "...>, only one per io tag is allowed in XML "
-                "config file, in call to "
-                "ADIOS constructor\n");
-        }
-    }
-
-    position = 0;
-    // process transports
-    while (position != std::string::npos)
-    {
-        TagXML transportXML(GetTagXML("transport", ioXML.Elements, position));
-
-        if (transportXML.Header.empty()) // no more groups to find
-        {
-            break;
-        }
-        InitTransportXML(transportXML, debugMode, itIO.first->second);
-    }
-}
-
-void InitEngineXML(const TagXML &engineXML, const bool debugMode, IO &io)
-{
-    const Params attributes = GetTagAttributesXML(engineXML.Header);
-
-    std::string type;
-    for (const auto &attribute : attributes)
-    {
-        if (attribute.first == "type")
-        {
-            type = attribute.second;
-            break;
-        }
-    }
-
-    if (!type.empty())
-    {
-        io.SetEngine(type);
-    }
-
-    io.SetParameters(ParseParamsXML(engineXML.Elements, debugMode));
-}
-
-void InitTransportXML(const TagXML &transportXML, const bool debugMode, IO &io)
-{
-    const Params attributes = GetTagAttributesXML(transportXML.Header);
-
-    std::string type;
-    for (const auto &attribute : attributes)
-    {
-        if (attribute.first == "type")
-        {
-            type = attribute.second;
-            break;
-        }
-    }
-
-    if (type.empty())
-    {
-        throw std::invalid_argument(
-            "ERROR: missing transport type in " + transportXML.Header +
-            ", in XML config file, in call to ADIOS constructor\n");
-    }
-
-    io.AddTransport(type, ParseParamsXML(transportXML.Elements, debugMode));
-}
-
-Params ParseParamsXML(const std::string &tagElements, const bool debugMode)
-{
-    auto start = tagElements.find_first_not_of(" \t\n");
-    auto end = tagElements.find_last_not_of(" \t\n");
-
-    std::string parametersString(tagElements.substr(start, end - start + 1));
-    if (debugMode)
-    {
-        if (parametersString.back() != ';')
-        {
-            throw std::invalid_argument(
-                "ERROR: parameters in config XML file must end with a ; " +
-                tagElements + ", in call to ADIOS constructor\n");
-        }
-    }
-
-    std::istringstream parametersSS(parametersString);
-    std::string pair;
-
-    Params parameters;
-
-    while (std::getline(parametersSS, pair, ';'))
-    {
-        pair = pair.substr(pair.find_first_not_of(" \t\n"));
-        auto equalPosition = pair.find("=");
-
         if (debugMode)
         {
-            if (equalPosition == std::string::npos ||
-                equalPosition == pair.size())
-            {
-                throw std::invalid_argument("ERROR: wrong parameter " + pair +
-                                            " format is "
-                                            "key=value in XML config file, in "
-                                            "call to ADIOS constructor\n");
-            }
+            throw std::invalid_argument(
+                "ERROR: XML: No <adios-config> element found");
         }
-
-        const std::string key(pair.substr(0, equalPosition));
-        const std::string value(pair.substr(equalPosition + 1));
-        parameters.emplace(key, value);
+        return;
     }
-    return parameters;
+
+    ios.clear();
+    for (pugi::xml_node ioNode : configNode.children("io"))
+    {
+        InitIOXML(ioNode, mpiComm, debugMode, transforms, ios);
+    }
 }
 
 } // end namespace adios
