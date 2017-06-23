@@ -45,6 +45,8 @@ void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
 void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
 
+const Params &IO::GetParameters() const { return m_Parameters; }
+
 unsigned int IO::AddTransport(const std::string type,
                               const std::vector<std::string> &parametersVector)
 {

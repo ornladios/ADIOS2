@@ -79,6 +79,18 @@ IO &ADIOS::DeclareIO(const std::string ioName)
     return ioPair.first->second;
 }
 
+IO &ADIOS::GetIO(const std::string name)
+{
+    auto itIO = m_IOs.find(name);
+    if (itIO == m_IOs.end())
+    {
+        throw std::invalid_argument(
+            "ERROR: Unable to find previously defined IO object with name \"" +
+            name + "\" in call to GetIO.");
+    }
+    return itIO->second;
+}
+
 // PRIVATE FUNCTIONS
 void ADIOS::CheckMPI() const
 {
