@@ -18,5 +18,8 @@
 *.exe
 *.bp
 *.out
+*.pyc
+*.bp
+*.bp.dir
 build/
 
