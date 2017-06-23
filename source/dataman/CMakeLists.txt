@@ -54,7 +54,6 @@ if(ADIOS2_HAVE_ZeroMQ)
   list(APPEND dataman_targets mdtmman)
 endif()
 
-
 if(ADIOS2_HAVE_ZFP)
   find_package(ZFP REQUIRED)
 
@@ -63,6 +62,13 @@ if(ADIOS2_HAVE_ZFP)
 
   list(APPEND dataman_targets zfpman)
 endif()
+
+# Library versioning like this only makes sense for libdataman.  The others are plugins
+# loaded via dlopen.
+set_target_properties(dataman PROPERTIES
+  VERSION ${ADIOS2_VERSION}
+  SOVERSION ${ADIOS2_VERSION_MAJOR}
+)
 
 install(
   TARGETS ${dataman_targets} EXPORT adios2
