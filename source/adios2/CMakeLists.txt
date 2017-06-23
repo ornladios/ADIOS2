@@ -133,6 +133,12 @@ if(ADIOS2_HAVE_HDF5)
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
 
+# Set library version information
+set_target_properties(adios2 PROPERTIES
+  VERSION ${ADIOS2_VERSION}
+  SOVERSION ${ADIOS2_VERSION_MAJOR}
+)
+
 install(
   FILES ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
