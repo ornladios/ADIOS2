@@ -48,7 +48,7 @@ target_include_directories(adios2
     $<INSTALL_INTERFACE:include>
   PRIVATE ${ADIOS2_SOURCE_DIR}/source
 )
-target_link_libraries(adios2 PRIVATE adios2sys)
+target_link_libraries(adios2 PRIVATE adios2sys pugixml)
 
 find_package(Threads REQUIRED)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
