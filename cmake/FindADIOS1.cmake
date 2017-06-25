@@ -117,14 +117,13 @@ find_program(ADIOS1_CONFIG NAME adios_config HINTS ${adios1_config_hints})
 
 # check `adios_config` program ################################################
 if(ADIOS1_CONFIG)
-  execute_process(COMMAND ${ADIOS1_CONFIG} ${adios1_config_opt}
+  execute_process(COMMAND ${ADIOS1_CONFIG} -c ${adios1_config_opt}
     OUTPUT_VARIABLE adios1_config_out
     RESULT_VARIABLE adios1_config_ret
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
   if(adios1_config_ret EQUAL 0)
-    string(REGEX MATCH "CFLAGS=([^\n]*)" adios1_match "${adios1_config_out}")
-    string(REPLACE " " ";" adios1_match "${CMAKE_MATCH_1}")
+    string(REPLACE " " ";" adios1_match "${adios1_config_out}")
     set(adios1_include_hints)
     set(ADIOS1_COMPILE_OPTIONS)
     foreach(OPT IN LISTS adios1_match)
@@ -134,8 +133,15 @@ if(ADIOS1_CONFIG)
         list(APPEND ADIOS1_COMPILE_OPTIONS ${OPT})
       endif()
     endforeach()
-    string(REGEX MATCH "LDFLAGS=([^\n]*)" adios1_match "${adios1_config_out}")
-    string(REPLACE " " ";" adios1_match "${CMAKE_MATCH_1}")
+  endif()
+
+  execute_process(COMMAND ${ADIOS1_CONFIG} -l ${adios1_config_opt}
+    OUTPUT_VARIABLE adios1_config_out
+    RESULT_VARIABLE adios1_config_ret
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(adios1_config_ret EQUAL 0)
+    string(REPLACE " " ";" adios1_match "${adios1_config_out}")
     set(adios1_libs)
     set(adios1_lib_hints)
     set(adios1_lib_flags)
