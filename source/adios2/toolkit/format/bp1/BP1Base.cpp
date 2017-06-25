@@ -22,6 +22,8 @@ BP1Base::BP1Base(MPI_Comm mpiComm, const bool debugMode)
 : m_HeapBuffer(debugMode), m_BP1Aggregator(mpiComm, debugMode),
   m_DebugMode(debugMode)
 {
+    // default
+    m_Profiler.IsActive = true;
 }
 
 void BP1Base::InitParameters(const Params &parameters)

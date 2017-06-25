@@ -43,8 +43,8 @@ struct IOChrono
     /** Create byte tracking counter for each process*/
     std::unordered_map<std::string, size_t> Bytes;
 
-    /** flag to determine if IOChrono object is used */
-    bool IsActive = true;
+    /** flag to determine if IOChrono object is being used */
+    bool IsActive = false;
 };
 
 } // end namespace profiling

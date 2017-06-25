@@ -155,6 +155,9 @@ constexpr size_t DefaultInitialBufferSize(16384);
 constexpr size_t DefaultMaxBufferSize(16777216);
 /** default buffer growth factor (from STL vector = 2.) */
 constexpr float DefaultBufferGrowthFactor(2.);
+/** default size for writing/reading files using POSIX/fstream/stdio write
+ *  1Gb - 1Kb (tolerance)*/
+constexpr size_t DefaultMaxFileBatchSize(1024 * 1024 * 1024 - 1024);
 
 // adios alias values and types
 constexpr bool DebugON = true;

@@ -11,9 +11,8 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEPOINTER_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEPOINTER_H_
 
-#include <stdio.h> // FILE*
+#include <cstdio> // FILE*
 
-#include "adios2/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2
@@ -40,13 +39,13 @@ public:
 
     void Write(const char *buffer, size_t size) final;
 
-    void Flush();
+    void Flush() final;
 
-    void Close();
+    void Close() final;
 
 private:
     /** C File pointer */
-    FILE *m_File = nullptr; // NULL or nullptr?
+    std::FILE *m_File = nullptr; // NULL or nullptr?
 };
 
 } // end namespace transport

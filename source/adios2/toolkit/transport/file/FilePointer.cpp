@@ -26,7 +26,7 @@ FilePointer::FilePointer(MPI_Comm mpiComm, const bool debugMode)
 
 FilePointer::~FilePointer()
 {
-    if (m_File)
+    if (m_IsOpen)
     {
         fclose(m_File);
     }
@@ -34,73 +34,136 @@ FilePointer::~FilePointer()
 
 void FilePointer::Open(const std::string &name, const OpenMode openMode)
 {
+    if (m_DebugMode)
+    {
+        if (name.empty())
+        {
+            throw std::invalid_argument(
+                "ERROR: file name is empty, in call to FilePointer Open\n");
+        }
+    }
+
     m_Name = name;
     m_OpenMode = openMode;
 
     if (m_OpenMode == OpenMode::Write)
     {
-        m_File = fopen(name.c_str(), "w");
+        m_File = std::fopen(name.c_str(), "w");
     }
     else if (m_OpenMode == OpenMode::Append)
     {
-        m_File = fopen(name.c_str(), "a"); // need to change
+        // need to change when implemented
+        m_File = std::fopen(name.c_str(), "a");
     }
     else if (m_OpenMode == OpenMode::Read)
     {
-        m_File = fopen(name.c_str(), "r");
+        m_File = std::fopen(name.c_str(), "r");
     }
 
-    if (m_DebugMode)
+    if (std::ferror(m_File))
     {
-        if (m_File == nullptr)
-        {
-            throw std::ios_base::failure(
-                "ERROR: couldn't open file " + name +
-                ", "
-                "in call to Open from stdio.h FilePointer* transport\n");
-        }
+        throw std::ios_base::failure("ERROR: couldn't open file " + name +
+                                     ", "
+                                     "in call to FilePointer Open\n");
     }
+
     m_IsOpen = true;
 }
 
 void FilePointer::SetBuffer(char *buffer, size_t size)
 {
-    int status = setvbuf(m_File, buffer, _IOFBF, size);
+    const int status = std::setvbuf(m_File, buffer, _IOFBF, size);
 
-    if (m_DebugMode)
+    if (!status)
     {
-        if (status == 1)
-        {
-            throw std::ios_base::failure(
-                "ERROR: could not set buffer in rank " +
-                std::to_string(m_RankMPI) + "\n");
-        }
+        throw std::ios_base::failure(
+            "ERROR: could not set FILE* buffer in file " + m_Name +
+            ", in call to FilePointer SetBuffer\n");
     }
 }
 
 void FilePointer::Write(const char *buffer, size_t size)
 {
-    fwrite(buffer, sizeof(char), size, m_File);
+    auto lf_Write = [&](const char *buffer, size_t size) {
 
-    if (m_DebugMode)
-    {
-        if (ferror(m_File))
+        if (m_Profiler.IsActive)
+        {
+            m_Profiler.Timers.at("write").Resume();
+        }
+        auto writtenSize = std::fwrite(buffer, sizeof(char), size, m_File);
+
+        if (m_Profiler.IsActive)
+        {
+            m_Profiler.Timers.at("write").Pause();
+        }
+
+        if (std::ferror(m_File))
+        {
+            throw std::ios_base::failure("ERROR: couldn't write to file " +
+                                         m_Name + ", in call to FILE* Write\n");
+        }
+
+        if (writtenSize != size)
         {
             throw std::ios_base::failure(
-                "ERROR: couldn't write to file " + m_Name +
-                ", in call to FilePointer* transport write\n");
+                "ERROR: written size + " + std::to_string(writtenSize) +
+                " is not equal to intended size " + std::to_string(size) +
+                " in file " + m_Name + ", in call to FilePointer Write\n");
         }
+    };
+
+    if (size > DefaultMaxFileBatchSize)
+    {
+        const size_t batches = size / DefaultMaxFileBatchSize;
+        const size_t remainder = size % DefaultMaxFileBatchSize;
+
+        size_t position = 0;
+        for (size_t b = 0; b < batches; ++b)
+        {
+            lf_Write(&buffer[position], DefaultMaxFileBatchSize);
+            position += DefaultMaxFileBatchSize;
+        }
+        lf_Write(&buffer[position], remainder);
+    }
+    else
+    {
+        lf_Write(buffer, size);
     }
 }
 
-void FilePointer::Flush() { fflush(m_File); }
+void FilePointer::Flush()
+{
+    const int status = std::fflush(m_File);
+
+    if (status == EOF)
+    {
+        throw std::ios_base::failure("ERROR: couldn't flush file " + m_Name +
+                                     ", in call to FilePointer Flush\n");
+    }
+}
 
 void FilePointer::Close()
 {
-    fclose(m_File);
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at("close").Resume();
+    }
+
+    const int status = std::fclose(m_File);
+
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at("close").Pause();
+    }
+
+    if (status == EOF)
+    {
+        throw std::ios_base::failure("ERROR: couldn't close file " + m_Name +
+                                     ", in call to FilePointer Write\n");
+    }
 
     m_IsOpen = false;
 }
 
 } // end namespace transport
-} // namespace adios
+} // end namespace adios
