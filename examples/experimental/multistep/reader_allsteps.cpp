@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
             bpReaderSettings.SetEngine(
                 "ADIOS1Reader"); // BP is the default engine
             // see only one step at a time
-            bpReaderSettings.SetParameters({{"OpenAsFile","yes"}});
+            bpReaderSettings.SetParameters({{"OpenAsFile", "yes"}});
         }
 
         // Create engine smart pointer due to polymorphism,

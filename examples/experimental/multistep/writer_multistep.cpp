@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 #endif
                                           );
             // Passing parameters to the engine
-            bpWriterSettings.SetParameters({{"have_metadata_file","yes"}});
+            bpWriterSettings.SetParameters({{"have_metadata_file", "yes"}});
             // number of aggregators
             // bpWriterSettings.SetParameters("Aggregation", (nproc + 1) / 2);
         }
