@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
         // if not defined by user, we can change the default settings
         // BPFileWriter is the default engine
         bpReaderIO.SetEngine("ADIOS1Reader");
-        bpReaderIO.SetParameters({"num_threads=2"});
+        bpReaderIO.SetParameters({{"num_threads","2"}});
 
         // ISO-POSIX file is the default transport
         // Passing parameters to the transport
