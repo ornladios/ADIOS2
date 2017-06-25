@@ -18,6 +18,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
+#include <iostream>
 /// \endcond
 
 namespace adios2
@@ -32,7 +33,7 @@ FileDescriptor::FileDescriptor(MPI_Comm mpiComm, const bool debugMode)
 
 FileDescriptor::~FileDescriptor()
 {
-    if (m_FileDescriptor != -1)
+    if (m_IsOpen)
     {
         close(m_FileDescriptor);
     }
@@ -40,6 +41,15 @@ FileDescriptor::~FileDescriptor()
 
 void FileDescriptor::Open(const std::string &name, const OpenMode openMode)
 {
+    if (m_DebugMode)
+    {
+        if (name.empty())
+        {
+            throw std::invalid_argument(
+                "ERROR: file name is empty, in call to FilePointer Open\n");
+        }
+    }
+
     m_Name = name;
     m_OpenMode = openMode;
 
@@ -91,37 +101,34 @@ void FileDescriptor::Open(const std::string &name, const OpenMode openMode)
     {
         if (m_FileDescriptor == -1)
         {
-            throw std::ios_base::failure(
-                "ERROR: couldn't open file " + m_Name +
-                ", from call to Open in FileDescriptor transport using "
-                "POSIX open. Does file exists?\n");
+            throw std::ios_base::failure("ERROR: couldn't open file " + m_Name +
+                                         ", check permissions or existence, in "
+                                         "call to FileDescriptor Open\n");
         }
     }
 
     m_IsOpen = true;
 }
 
-void FileDescriptor::Write(const char *buffer, std::size_t size)
+void FileDescriptor::Write(const char *buffer, size_t size)
 {
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("write").Resume();
-    }
+    auto lf_Write = [&](const char *buffer, size_t size) {
 
-    auto writtenSize = write(m_FileDescriptor, buffer, size);
+        if (m_Profiler.IsActive)
+        {
+            m_Profiler.Timers.at("write").Resume();
+        }
+        auto writtenSize = write(m_FileDescriptor, buffer, size);
+        if (m_Profiler.IsActive)
+        {
+            m_Profiler.Timers.at("write").Pause();
+        }
 
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("write").Pause();
-    }
-
-    if (m_DebugMode)
-    {
         if (writtenSize == -1)
         {
-            throw std::ios_base::failure(
-                "ERROR: couldn't write to file " + m_Name +
-                ", in call to POSIX FileDescriptor write\n");
+            throw std::ios_base::failure("ERROR: couldn't write to file " +
+                                         m_Name +
+                                         ", in call to FileDescriptor Write\n");
         }
 
         if (static_cast<size_t>(writtenSize) != size)
@@ -129,8 +136,26 @@ void FileDescriptor::Write(const char *buffer, std::size_t size)
             throw std::ios_base::failure(
                 "ERROR: written size + " + std::to_string(writtenSize) +
                 " is not equal to intended size " + std::to_string(size) +
-                " in file " + m_Name + ", in call to POSIX write\n");
+                " in file " + m_Name + ", in call to FileDescriptor Write\n");
         }
+    };
+
+    if (size > DefaultMaxFileBatchSize)
+    {
+        const size_t batches = size / DefaultMaxFileBatchSize;
+        const size_t remainder = size % DefaultMaxFileBatchSize;
+
+        size_t position = 0;
+        for (size_t b = 0; b < batches; ++b)
+        {
+            lf_Write(&buffer[position], DefaultMaxFileBatchSize);
+            position += DefaultMaxFileBatchSize;
+        }
+        lf_Write(&buffer[position], remainder);
+    }
+    else
+    {
+        lf_Write(buffer, size);
     }
 }
 
@@ -143,24 +168,21 @@ void FileDescriptor::Close()
         m_Profiler.Timers.at("close").Resume();
     }
 
-    int status = close(m_FileDescriptor);
+    const int status = close(m_FileDescriptor);
 
     if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("close").Pause();
     }
 
-    if (m_DebugMode)
+    if (status == -1)
     {
-        if (status == -1)
-        {
-            throw std::ios_base::failure("ERROR: couldn't close file " +
-                                         m_Name + ", in call to POSIX write\n");
-        }
+        throw std::ios_base::failure("ERROR: couldn't close file " + m_Name +
+                                     ", in call to FileDescriptor Close\n");
     }
 
     m_IsOpen = false;
 }
 
 } // end namespace transport
-} // namespace adios
+} // end namespace adios

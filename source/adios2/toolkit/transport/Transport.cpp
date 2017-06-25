@@ -25,6 +25,8 @@ Transport::Transport(const std::string type, const std::string library,
 
 void Transport::InitProfiler(const OpenMode openMode, const TimeUnit timeUnit)
 {
+    m_Profiler.IsActive = true;
+
     m_Profiler.Timers.emplace(std::make_pair(
         "open", profiling::Timer("open", TimeUnit::Microseconds, m_DebugMode)));
 
@@ -51,8 +53,6 @@ void Transport::InitProfiler(const OpenMode openMode, const TimeUnit timeUnit)
     m_Profiler.Timers.emplace(
         "close",
         profiling::Timer("close", TimeUnit::Microseconds, m_DebugMode));
-
-    m_Profiler.IsActive = true;
 }
 
 void Transport::SetBuffer(char * /*buffer*/, size_t /*size*/)
