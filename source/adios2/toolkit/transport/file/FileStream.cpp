@@ -26,6 +26,15 @@ FileStream::FileStream(MPI_Comm mpiComm, const bool debugMode)
 
 void FileStream::Open(const std::string &name, const OpenMode openMode)
 {
+    if (m_DebugMode)
+    {
+        if (name.empty())
+        {
+            throw std::invalid_argument(
+                "ERROR: file name is empty, in call to FilePointer Open\n");
+        }
+    }
+
     m_Name = name;
     m_OpenMode = openMode;
 
@@ -43,72 +52,87 @@ void FileStream::Open(const std::string &name, const OpenMode openMode)
         m_FileStream.open(name, std::fstream::in);
     }
 
-    if (m_DebugMode)
+    if (!m_FileStream)
     {
-        if (!m_FileStream)
-        {
-            throw std::ios_base::failure("ERROR: couldn't open file " + name +
-                                         ", in call to FileStream Open\n");
-        }
+        throw std::ios_base::failure("ERROR: couldn't open file " + m_Name +
+                                     ", in call to FileStream Open\n");
     }
+
     m_IsOpen = true;
 }
 
 void FileStream::SetBuffer(char *buffer, size_t size)
 {
     m_FileStream.rdbuf()->pubsetbuf(buffer, size);
-    if (m_DebugMode)
+
+    if (!m_FileStream)
     {
-        if (!m_FileStream)
-        {
-            throw std::ios_base::failure("ERROR: couldn't SetBuffer to file " +
-                                         m_Name +
-                                         ", in call to FileStream SetBuffer\n");
-        }
+        throw std::ios_base::failure("ERROR: couldn't set buffer in file " +
+                                     m_Name +
+                                     ", in call to FileStream SetBuffer\n");
     }
 }
 
 void FileStream::Write(const char *buffer, size_t size)
 {
-    m_FileStream.write(buffer, size);
+    auto lf_Write = [&](const char *buffer, size_t size) {
 
-    if (m_DebugMode)
-    {
+        if (m_Profiler.IsActive)
+        {
+            m_Profiler.Timers.at("write").Resume();
+        }
+        m_FileStream.write(buffer, static_cast<std::streamsize>(size));
+
+        if (m_Profiler.IsActive)
+        {
+            m_Profiler.Timers.at("write").Pause();
+        }
+
         if (!m_FileStream)
         {
             throw std::ios_base::failure("ERROR: couldn't write to file " +
-                                         m_Name +
-                                         ", in call to FileStream write\n");
+                                         m_Name + ", in call to FILE* Write\n");
         }
+    };
+
+    if (size > DefaultMaxFileBatchSize)
+    {
+        const size_t batches = size / DefaultMaxFileBatchSize;
+        const size_t remainder = size % DefaultMaxFileBatchSize;
+
+        size_t position = 0;
+        for (size_t b = 0; b < batches; ++b)
+        {
+            lf_Write(&buffer[position], DefaultMaxFileBatchSize);
+            position += DefaultMaxFileBatchSize;
+        }
+        lf_Write(&buffer[position], remainder);
+    }
+    else
+    {
+        lf_Write(buffer, size);
     }
 }
 
 void FileStream::Flush()
 {
     m_FileStream.flush();
-    if (m_DebugMode)
+    if (!m_FileStream)
     {
-        if (!m_FileStream)
-        {
-            throw std::ios_base::failure("ERROR: couldn't flush to file " +
-                                         m_Name +
-                                         ", in call to FileStream Flush\n");
-        }
+        throw std::ios_base::failure("ERROR: couldn't flush to file " + m_Name +
+                                     ", in call to FileStream Flush\n");
     }
 }
 
 void FileStream::Close()
 {
     m_FileStream.close();
-    if (m_DebugMode)
+    if (!m_FileStream)
     {
-        if (!m_FileStream)
-        {
-            throw std::ios_base::failure("ERROR: couldn't close file " +
-                                         m_Name +
-                                         ", in call to FileStream Close\n");
-        }
+        throw std::ios_base::failure("ERROR: couldn't close file " + m_Name +
+                                     ", in call to FileStream Close\n");
     }
+
     m_IsOpen = false;
 }
 

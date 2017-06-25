@@ -93,14 +93,11 @@ public:
     const Params &GetParameters() const;
 
     /**
-     * Adds a transport and its parameters for the method
-     * @param type must be a supported transport type under /include/transport
-     * @param args list of parameters for a transport with format
-     * "parameter1=value1", ..., "parameterN=valueN"
+     * Adds a transport and its parameters for the IO Engine
+     * @param type must be a supported transport type
+     * @param params acceptable parameters for a particular transport
+     * @return
      */
-    unsigned int AddTransport(const std::string type,
-                              const std::vector<std::string> &paramsVector);
-
     unsigned int AddTransport(const std::string type,
                               const Params &params = Params());
 
@@ -250,14 +247,6 @@ private:
     std::map<std::string, double> m_AttributesNumeric;
 
     std::set<std::string> m_EngineNames;
-
-    /**
-     * Called from AddTransport overloads
-     * @param type
-     * @param parameters
-     * @return transport index
-     */
-    unsigned int AddTransportCommon(const std::string type, Params &parameters);
 
     /** Gets the internal reference to a variable map for type T
      *  This function is specialized in IO.tcc */

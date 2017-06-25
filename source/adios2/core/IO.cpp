@@ -47,17 +47,17 @@ void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
 
 const Params &IO::GetParameters() const { return m_Parameters; }
 
-unsigned int IO::AddTransport(const std::string type,
-                              const std::vector<std::string> &parametersVector)
-{
-    Params parametersMap(BuildParametersMap(parametersVector, m_DebugMode));
-    return AddTransportCommon(type, parametersMap);
-}
-
 unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 {
     Params parametersMap(parameters);
-    return AddTransportCommon(type, parametersMap);
+    if (m_DebugMode)
+    {
+        CheckTransportType(type);
+    }
+
+    parametersMap["transport"] = type;
+    m_TransportsParameters.push_back(parametersMap);
+    return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
 }
 
 VariableCompound &IO::GetVariableCompound(const std::string &name)
@@ -235,18 +235,6 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
 }
 
 // PRIVATE Functions
-unsigned int IO::AddTransportCommon(const std::string type, Params &parameters)
-{
-    if (m_DebugMode)
-    {
-        CheckTransportType(type);
-    }
-
-    parameters["transport"] = type;
-    m_TransportsParameters.push_back(parameters);
-    return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
-}
-
 unsigned int IO::GetVariableIndex(const std::string &name) const
 {
     if (m_DebugMode)
