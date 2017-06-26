@@ -17,8 +17,8 @@ project(ADIOS2 VERSION 2.0.0)
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
 #------------------------------------------------------------------------------#
-
 include(GNUInstallDirs)
+set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/adios2")
 
 list(INSERT CMAKE_MODULE_PATH 0 "${ADIOS2_SOURCE_DIR}/cmake")
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -83,9 +83,8 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX)
 endif()
 
-GenerateADIOSConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python SysVShMem)
-install(
-  FILES ${ADIOS2_BINARY_DIR}/adios2/ADIOSConfig.h
+GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python SysVShMem)
+install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 
@@ -124,6 +123,11 @@ if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(testing)
 endif()
+
+#------------------------------------------------------------------------------#
+# Generating package configs
+#------------------------------------------------------------------------------#
+GenerateADIOSPackageConfig()
 
 #------------------------------------------------------------------------------#
 # Configuration summary
