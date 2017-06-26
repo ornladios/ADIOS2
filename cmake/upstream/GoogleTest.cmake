@@ -188,7 +188,7 @@ function(gtest_add_tests)
         # Note that this check is to allow backwards compatibility so this
         # module can be copied locally in projects to use with older CMake
         # versions
-        if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.8.20170401)
+        if(NOT (CMAKE_VERSION VERSION_LESS 3.8.20170401))
           string(REGEX REPLACE
                  "(^|\\.)DISABLED_" "\\1"
                  orig_test_name "${gtest_test_name}"
