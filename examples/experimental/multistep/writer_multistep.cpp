@@ -74,7 +74,11 @@ int main(int argc, char *argv[])
             bpWriterSettings.AddTransport("file"
 #ifdef ADIOS2_HAVE_MPI
                                           ,
-                                          { "library=MPI-IO" }
+                                          {
+                                              {
+                                                  "library", "MPI-IO"
+                                              }
+                                          }
 #endif
                                           );
             // Passing parameters to the engine
