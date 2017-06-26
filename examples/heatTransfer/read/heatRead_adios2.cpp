@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
         // ISO-POSIX file is the default transport
         // Passing parameters to the transport
-        bpReaderIO.AddTransport("File", {"verbose=4"});
+        bpReaderIO.AddTransport("File", {{"verbose", "4"}});
     }
 
     auto bpReader =
