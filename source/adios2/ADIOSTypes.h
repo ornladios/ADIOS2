@@ -152,19 +152,19 @@ const std::string DefaultTimeUnit("Microseconds");
 constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::Microseconds);
 
 /** default initial bp buffer size, 16Kb, in bytes */
-constexpr size_t DefaultInitialBufferSize(16384);
+constexpr size_t DefaultInitialBufferSize(16 * 1024);
 
-/** default maximum bp buffer size, 250Mb, in bytes.
+/** default maximum bp buffer size, unlimited, in bytes.
  *  Needs to be studied for optimizing applications */
-constexpr size_t DefaultMaxBufferSize(268435456000);
+constexpr size_t DefaultMaxBufferSize(std::numeric_limits<size_t>::max() - 1);
 
-/** default buffer growth factor (from STL vector = 2.). Needs to be studied
+/** default buffer growth factor. Needs to be studied
  * for optimizing applications*/
-constexpr float DefaultBufferGrowthFactor(2.);
+constexpr float DefaultBufferGrowthFactor(1.05);
 
 /** default size for writing/reading files using POSIX/fstream/stdio write
  *  2Gb - 100Kb (tolerance)*/
-constexpr size_t DefaultMaxFileBatchSize(2 * 1024 * 1024 * 1024 - 100 * 1024);
+constexpr size_t DefaultMaxFileBatchSize(2147381248);
 
 // adios alias values and types
 constexpr bool DebugON = true;

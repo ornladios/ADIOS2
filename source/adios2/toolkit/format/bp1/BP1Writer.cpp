@@ -117,6 +117,15 @@ void BP1Writer::WriteProcessGroupIndex(
 
 void BP1Writer::Advance()
 {
+    // enforce memory policy here to restrict buffer size for each timestep
+    // this is flushing
+
+    if (m_MaxBufferSize == DefaultMaxBufferSize)
+    {
+        // current position + 1Kb chunk tolerance
+        m_MaxBufferSize = m_HeapBuffer.m_DataPosition + 64;
+    }
+
     if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Resume();
