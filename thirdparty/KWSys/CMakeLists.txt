@@ -4,5 +4,7 @@ set(KWSYS_USE_RegularExpression ON)
 set(KWSYS_USE_SystemTools ON)
 set(KWSYS_BUILD_SHARED ${ADIOS2_BUILD_SHARED_LIBS})
 set(KWSYS_SPLIT_OBJECTS_FROM_INTERFACE ON)
+set(KWSYS_INSTALL_EXPORT_NAME adios2Exports)
+set(KWSYS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
 
-add_subdirectory(adios2sys EXCLUDE_FROM_ALL)
+add_subdirectory(adios2sys)
