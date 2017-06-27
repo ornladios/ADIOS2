@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!-- Config XML file fo the  heatTransfer_write_adios2 executable from 
+     IO_adios2.cpp -->
+
+<adios-config>
+    <io name="output">
+        <engine type="BPFileWriter">
+            
+            <!-- for vectorized memory operations --> 
+            <parameter key="Threads" value="1"/>
+
+            <!-- Microseconds (default), Milliseconds, Seconds, 
+                 Minutes, Hours -->
+            <parameter key="ProfileUnits" value="Microseconds"/>
+
+            <!-- XXKb, XXMb, or XXXGb supported, default=16Kb 
+                (applications might choose an optimal value) -->
+            <parameter key="InitialBufferSize" value="1Mb"/>
+            
+            <!-- XXKb, XXMb, or XXXGb supported, default=200Mb 
+                (applications might choose an optimal value) -->
+            <parameter key="MaxBufferSize" value="20Mb"/>
+
+            <!-- exponential growth factor > 1, default = 2 (as in the STL) 
+                 for this case: 1, 2, 4, 8, 16, 20 Mb -->
+            <parameter key="BufferGrowthFactor" value="2"/>
+            
+        </engine>
+
+        <transport type="File">
+            
+            <!-- POSIX, stdio (C FILE*), fstream (C++) -->
+            <parameter key="Library" value="POSIX"/>
+            
+            <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
+                 Minutes, Hours. open/close always in Microseconds -->
+            <parameter key="ProfileUnits" value="Milliseconds"/>
+        </transport>
+    </io>
+</adios-config>

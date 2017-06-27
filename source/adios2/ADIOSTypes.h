@@ -2,7 +2,8 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * ADIOSTypes.h
+ * ADIOSTypes.h : public header that contains "using/typedef" alias, defaults
+ * and parameters options as enum classes
  *
  *  Created on: Mar 23, 2017
  *      Author: Chuck Atkins chuck.atkins@kitware.com
@@ -31,7 +32,8 @@
 namespace adios2
 {
 
-/** Variable shape type identifier */
+/** Variable shape type identifier, assigned automatically from the signature of
+ *  DefineVariable */
 enum class ShapeID
 {
     GlobalValue, ///< single global value, common case
@@ -84,12 +86,12 @@ enum class TransportType
     WAN
 };
 
-/** Just for info purposes */
+/** Currently available engines, just for info purposes */
 enum class IOEngine
 {
     Unknown,
     BPFileWriter, ///< produces bp files
-    BPFileReader, ///< read bp files
+    BPFileReader, ///< read bp files (not yet implemented)
     HDF5Writer,   ///<
     HDF5Reader,   ///<
     ADIOS1Writer,
@@ -151,13 +153,18 @@ constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::Microseconds);
 
 /** default initial bp buffer size, 16Kb, in bytes */
 constexpr size_t DefaultInitialBufferSize(16384);
-/** default maximum bp buffer size, 16Mb, in bytes */
-constexpr size_t DefaultMaxBufferSize(16777216);
-/** default buffer growth factor (from STL vector = 2.) */
+
+/** default maximum bp buffer size, 250Mb, in bytes.
+ *  Needs to be studied for optimizing applications */
+constexpr size_t DefaultMaxBufferSize(268435456000);
+
+/** default buffer growth factor (from STL vector = 2.). Needs to be studied
+ * for optimizing applications*/
 constexpr float DefaultBufferGrowthFactor(2.);
+
 /** default size for writing/reading files using POSIX/fstream/stdio write
- *  1Gb - 1Kb (tolerance)*/
-constexpr size_t DefaultMaxFileBatchSize(1024 * 1024 * 1024 - 1024);
+ *  2Gb - 100Kb (tolerance)*/
+constexpr size_t DefaultMaxFileBatchSize(2 * 1024 * 1024 * 1024 - 100 * 1024);
 
 // adios alias values and types
 constexpr bool DebugON = true;
