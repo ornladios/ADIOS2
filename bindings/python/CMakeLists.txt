@@ -2,6 +2,8 @@ if(NOT BUILD_SHARED_LIBS)
   message(ERROR "Python bindings are only supported for shared libraries")
 endif()
 
+find_package(PythonLibsNew REQUIRED)
+
 pybind11_add_module(adios2py MODULE
   ADIOSPy.h
   ADIOSPy.cpp
