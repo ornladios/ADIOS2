@@ -16,6 +16,8 @@ if(ADIOS2_HAVE_MPI)
     PRIVATE ${MPI_C_INCLUDE_PATH}
   )
   target_link_libraries(heatTransfer_write_adios2 adios2 ${MPI_C_LIBRARIES})
+  target_compile_definitions(heatTransfer_write_adios2 PRIVATE
+   -DDEFAULT_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/config.xml)
 
   if(ADIOS2_HAVE_ADIOS1)
     find_package(ADIOS1 REQUIRED)
