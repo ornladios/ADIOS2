@@ -15,15 +15,15 @@
 
             <!-- XXKb, XXMb, or XXXGb supported, default=16Kb 
                 (applications might choose an optimal value) -->
-            <!--<parameter key="InitialBufferSize" value="16Mb"/>  -->
+            <!--<parameter key="InitialBufferSize" value="16Kb"/>  -->
             
-            <!-- XXKb, XXMb, or XXXGb supported, default=200Mb 
+            <!-- XXKb, XXMb, or XXXGb supported, default=Unlimited or 
+                 maximum at each time step  
                 (applications might choose an optimal value) -->
-            <!-- <parameter key="MaxBufferSize" value="20Mb"/> -->
+            <!-- <parameter key="MaxBufferSize" value="50Mb"/> -->
 
-            <!-- exponential growth factor > 1, default = 2 (as in the STL) 
-                 for this case: 1, 2, 4, 8, 16, 20 Mb -->
-            <parameter key="BufferGrowthFactor" value="2"/>
+            <!-- exponential growth factor > 1, default = 1.05 --> 
+            <parameter key="BufferGrowthFactor" value="1.05"/>
             
         </engine>
 
