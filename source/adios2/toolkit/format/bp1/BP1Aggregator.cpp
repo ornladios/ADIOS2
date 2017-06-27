@@ -117,7 +117,8 @@ std::string BP1Aggregator::GetGlobalProfilingLog(const std::string &rankLog)
     {
         const int rankLogSize = static_cast<const int>(rankLog.size());
         MPI_Request requestSize;
-        MPI_Isend(&rankLogSize, 1, MPI_INT, 0, 0, m_MPIComm, &requestSize);
+        MPI_Isend(const_cast<int *>(&rankLogSize), 1, MPI_INT, 0, 0, m_MPIComm,
+                  &requestSize);
 
         MPI_Request requestRankLog;
         MPI_Isend(const_cast<char *>(rankLog.c_str()), rankLogSize, MPI_CHAR, 0,
