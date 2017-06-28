@@ -44,9 +44,8 @@ add_library(adios2
 target_include_directories(adios2
   PUBLIC
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
-    $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}>
-    $<INSTALL_INTERFACE:include>
-  PRIVATE ${ADIOS2_SOURCE_DIR}/source
+    $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_link_libraries(adios2 PRIVATE adios2sys pugixml)
 
@@ -139,19 +138,16 @@ set_target_properties(adios2 PROPERTIES
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(
-  FILES ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
+install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
-install(
-  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
   FILES_MATCHING REGEX "[^/]*\.(h|inl)$"
 )
 
 # Library installation
-install(
-  TARGETS adios2 EXPORT adios2
+install(TARGETS adios2 EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
