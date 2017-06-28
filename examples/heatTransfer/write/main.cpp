@@ -12,6 +12,7 @@
  */
 #include <mpi.h>
 
+#include <future> //std::future, std::async
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -23,15 +24,16 @@
 
 void printUsage()
 {
-    std::cout
-        << "Usage: heatTransfer  output  N  M   nx  ny   steps iterations\n"
-        << "  output: name of output file\n"
-        << "  N:      number of processes in X dimension\n"
-        << "  M:      number of processes in Y dimension\n"
-        << "  nx:     local array size in X dimension per processor\n"
-        << "  ny:     local array size in Y dimension per processor\n"
-        << "  steps:  the total number of steps to output\n"
-        << "  iterations: one step consist of this many iterations\n\n";
+    std::cout << "Usage: heatTransfer  output  N  M   nx  ny   steps "
+                 "iterations async\n"
+              << "  output: name of output file\n"
+              << "  N:      number of processes in X dimension\n"
+              << "  M:      number of processes in Y dimension\n"
+              << "  nx:     local array size in X dimension per processor\n"
+              << "  ny:     local array size in Y dimension per processor\n"
+              << "  steps:  the total number of steps to output\n"
+              << "  iterations: one step consist of this many iterations\n"
+              << "  async: on or off (default) \n\n";
 }
 
 int main(int argc, char *argv[])
@@ -68,7 +70,18 @@ int main(int argc, char *argv[])
         ht.heatEdges();
         ht.exchange(mpiHeatTransferComm);
         // ht.printT("Heated T:", mpiHeatTransferComm);
-        io.write(0, ht, settings, mpiHeatTransferComm);
+
+        std::future<void> futureWrite;
+        if (settings.async)
+        {
+            futureWrite =
+                std::async(std::launch::async, &IO::write, &io, 0, std::ref(ht),
+                           std::ref(settings), mpiHeatTransferComm);
+        }
+        else
+        {
+            io.write(0, ht, settings, mpiHeatTransferComm);
+        }
 
         for (unsigned int t = 1; t <= settings.steps; ++t)
         {
@@ -80,7 +93,22 @@ int main(int argc, char *argv[])
                 ht.exchange(mpiHeatTransferComm);
                 ht.heatEdges();
             }
-            io.write(t, ht, settings, mpiHeatTransferComm);
+
+            if (settings.async)
+            {
+                futureWrite.get();
+                futureWrite = std::async(std::launch::async, &IO::write, &io, t,
+                                         std::ref(ht), std::ref(settings),
+                                         mpiHeatTransferComm);
+            }
+            else
+            {
+                io.write(t, ht, settings, mpiHeatTransferComm);
+            }
+        }
+        if (settings.async)
+        {
+            futureWrite.get();
         }
         MPI_Barrier(mpiHeatTransferComm);
 

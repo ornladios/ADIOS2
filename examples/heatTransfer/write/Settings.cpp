@@ -49,6 +49,24 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
     steps = convertToUint("steps", argv[6]);
     iterations = convertToUint("iterations", argv[7]);
 
+    if (argc == 9)
+    {
+        const std::string asyncArg(argv[8]);
+        if (asyncArg == "ON" || asyncArg == "on")
+        {
+            async = true;
+        }
+        else if (asyncArg == "OFF" || asyncArg == "off")
+        {
+            // nothing off is default
+        }
+        else
+        {
+            throw std::invalid_argument("ERROR: wrong async argument " +
+                                        asyncArg + " must be on or off\n");
+        }
+    }
+
     if (npx * npy != this->nproc)
     {
         throw std::invalid_argument("N*M must equal the number of processes");

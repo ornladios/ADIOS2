@@ -15,7 +15,7 @@ if(ADIOS2_HAVE_MPI)
   target_include_directories(heatTransfer_write_adios2
     PRIVATE ${MPI_C_INCLUDE_PATH}
   )
-  target_link_libraries(heatTransfer_write_adios2 adios2 ${MPI_C_LIBRARIES})
+  target_link_libraries(heatTransfer_write_adios2 adios2 ${MPI_C_LIBRARIES} pthread)
   target_compile_definitions(heatTransfer_write_adios2 PRIVATE
    -DDEFAULT_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/config.xml)
 
@@ -33,7 +33,7 @@ if(ADIOS2_HAVE_MPI)
       PRIVATE ${MPI_C_INCLUDE_PATH}
     )
     target_link_libraries(heatTransfer_write_adios1
-      adios1::adios ${MPI_C_LIBRARIES}
+      adios1::adios ${MPI_C_LIBRARIES} pthread
     )
   endif()
 
@@ -51,7 +51,7 @@ if(ADIOS2_HAVE_MPI)
       PRIVATE ${MPI_C_INCLUDE_PATH} ${HDF5_C_INCLUDE_DIRS}
     )
     target_link_libraries(heatTransfer_write_hdf5
-      ${MPI_C_LIBRARIES} ${HDF5_C_LIBRARIES}
+      ${MPI_C_LIBRARIES} ${HDF5_C_LIBRARIES} pthread
     )
   endif()
 
@@ -70,7 +70,7 @@ if(ADIOS2_HAVE_MPI)
       PRIVATE ${MPI_C_INCLUDE_PATH} ${HDF5_C_INCLUDE_DIRS}
     )
     target_link_libraries(heatTransfer_write_ph5
-      ${MPI_C_LIBRARIES} ${HDF5_C_LIBRARIES}
+      ${MPI_C_LIBRARIES} ${HDF5_C_LIBRARIES} pthread
     )
   endif()
 
@@ -91,7 +91,7 @@ if(ADIOS2_HAVE_MPI)
     #target_link_libraries(heatTransfer_write_a2h5
     #  ${MPI_C_LIBRARIES} 
     #)
-    target_link_libraries(heatTransfer_write_a2h5 PUBLIC adios2)
+    target_link_libraries(heatTransfer_write_a2h5 PUBLIC adios2 pthread)
 
   endif()
 
