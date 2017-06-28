@@ -95,6 +95,8 @@ list(INSERT CMAKE_MODULE_PATH 0
 )
 if(ADIOS2_USE_Python STREQUAL AUTO)
   if(BUILD_SHARED_LIBS)
+    set(Python_ADDITIONAL_VERSIONS 3 2.7)
+    find_package(PythonInterp)
     find_package(PythonLibsNew)
     if(PYTHONLIBS_FOUND)
       if(ADIOS2_HAVE_MPI)
