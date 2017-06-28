@@ -47,6 +47,9 @@ public:
     int rank_up;
     int rank_down;
 
+    /** true: std::async Write, false (default): sync */
+    bool async = false;
+
     Settings(int argc, char *argv[], int rank, int nproc);
 };
 
