@@ -2,6 +2,8 @@ if(NOT BUILD_SHARED_LIBS)
   message(ERROR "Python bindings are only supported for shared libraries")
 endif()
 
+set(Python_ADDITIONAL_VERSIONS 3 2.7)
+find_package(PythonInterp REQUIRED)
 find_package(PythonLibsNew REQUIRED)
 
 pybind11_add_module(adios2py MODULE
@@ -27,6 +29,9 @@ endif()
 
 string(REGEX REPLACE "^${PYTHON_PREFIX}/" ""
   CMAKE_INSTALL_PYTHONDIR "${PYTHON_SITE_PACKAGES}"
+)
+set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR}"
+  CACHE INTERNAL "" FORCE
 )
 set_target_properties(adios2py PROPERTIES
   OUTPUT_NAME adios2
