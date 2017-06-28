@@ -55,14 +55,19 @@ include(CMakeDependentOption)
 
 # Setup shared library / -fPIC stuff
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
-cmake_dependent_option(ADIOS2_BUILD_SHARED_LIBS
-  "Whether or not to build shared libraries" ON
-  "SHARED_LIBS_SUPPORTED" OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED})
+if(NOT SHARED_LIBS_SUPPORTED)
+  if(BUILD_SHARED_LIBS)
+    message(WARNING "A shared library build was requested but is not supported on this platform / compiler.  Unexpected build results will likely occur")
+  endif()
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL
+    "Build shared libraries (so/dylib/dll)." FORCE
+  )
+endif()
+
 cmake_dependent_option(ADIOS2_ENABLE_PIC
   "Build with Position Independent Code" ON
   "SHARED_LIBS_SUPPORTED" OFF)
-set(BUILD_SHARED_LIBS ${ADIOS2_BUILD_SHARED_LIBS})
-
 if(ADIOS2_ENABLE_PIC)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
