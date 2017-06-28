@@ -14,6 +14,13 @@
 
 #include <adios2.h>
 
+#define str_helper(X) #X
+#define str(X) str_helper(X)
+#ifndef DEFAULT_CONFIG
+#define DEFAULT_CONFIG config.xml
+#endif
+#define DEFAULT_CONFIG_STR str(DEFAULT_CONFIG)
+
 static int rank_saved;
 adios2::ADIOS *ad = nullptr;
 std::shared_ptr<adios2::Engine> bpWriter;
@@ -24,7 +31,8 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     rank_saved = s.rank;
     m_outputfilename = s.outputfile + ".bp";
-    ad = new adios2::ADIOS("config.xml", comm, adios2::DebugON);
+    ad = new adios2::ADIOS(std::string(DEFAULT_CONFIG_STR), comm,
+                           adios2::DebugON);
 
     // Define method for engine creation
 
