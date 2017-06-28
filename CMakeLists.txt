@@ -17,8 +17,8 @@ project(ADIOS2 VERSION 2.0.0)
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
 #------------------------------------------------------------------------------#
-
 include(GNUInstallDirs)
+set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/adios2")
 
 list(INSERT CMAKE_MODULE_PATH 0 "${ADIOS2_SOURCE_DIR}/cmake")
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -55,14 +55,19 @@ include(CMakeDependentOption)
 
 # Setup shared library / -fPIC stuff
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
-cmake_dependent_option(ADIOS2_BUILD_SHARED_LIBS
-  "Whether or not to build shared libraries" ON
-  "SHARED_LIBS_SUPPORTED" OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED})
+if(NOT SHARED_LIBS_SUPPORTED)
+  if(BUILD_SHARED_LIBS)
+    message(WARNING "A shared library build was requested but is not supported on this platform / compiler.  Unexpected build results will likely occur")
+  endif()
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL
+    "Build shared libraries (so/dylib/dll)." FORCE
+  )
+endif()
+
 cmake_dependent_option(ADIOS2_ENABLE_PIC
   "Build with Position Independent Code" ON
   "SHARED_LIBS_SUPPORTED" OFF)
-set(BUILD_SHARED_LIBS ${ADIOS2_BUILD_SHARED_LIBS})
-
 if(ADIOS2_ENABLE_PIC)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -83,9 +88,8 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX)
 endif()
 
-GenerateADIOSConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python SysVShMem)
-install(
-  FILES ${ADIOS2_BINARY_DIR}/adios2/ADIOSConfig.h
+GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python SysVShMem)
+install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 
@@ -124,6 +128,11 @@ if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(testing)
 endif()
+
+#------------------------------------------------------------------------------#
+# Generating package configs
+#------------------------------------------------------------------------------#
+GenerateADIOSPackageConfig()
 
 #------------------------------------------------------------------------------#
 # Configuration summary
