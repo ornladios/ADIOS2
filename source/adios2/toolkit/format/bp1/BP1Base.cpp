@@ -182,7 +182,7 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
         if (!success || m_GrowthFactor <= 1.f)
         {
             throw std::invalid_argument(
-                "ERROR: IO SetParameter buffer_growth value "
+                "ERROR: BufferGrowthFactor value "
                 "can't be less or equal than 1 (default = 1.5), or couldn't "
                 "convert number, in call to Open\n");
         }
@@ -196,10 +196,8 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
 void BP1Base::InitParameterInitBufferSize(const std::string value)
 {
     const std::string errorMessage(
-        "ERROR: couldn't convert value of init_buffer_size IO "
-        "SetParameter, valid syntax: InitialBufferSize=10Gb, "
-        "InitialBufferSize=1000Mb, InitialBufferSize=16Kb (minimum default), "
-        " in call to Open");
+        "ERROR: wrong value for InitialBufferSize, it must be larger than "
+        "16Kb (minimum default), in call to Open\n");
 
     if (m_DebugMode)
     {
