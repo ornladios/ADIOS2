@@ -27,7 +27,8 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(adios2py PRIVATE PythonModule::mpi4py)
 endif()
 
-string(REGEX REPLACE "^${PYTHON_PREFIX}/" ""
+string(REGEX REPLACE
+  "^${PYTHON_PREFIX}/[^/]*/python" "${CMAKE_INSTALL_LIBDIR}/python"
   CMAKE_INSTALL_PYTHONDIR "${PYTHON_SITE_PACKAGES}"
 )
 set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR}"
