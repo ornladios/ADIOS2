@@ -101,7 +101,7 @@ int MdtmMan::get(void *a_data, json &a_jmsg) { return 0; }
 
 void MdtmMan::on_put(std::shared_ptr<std::vector<char>> a_data)
 {
-    auto writtenSize = write(m_pipe_handler, a_data->data(), a_data->size());
+    write(m_pipe_handler, a_data->data(), a_data->size());
 }
 
 void MdtmMan::on_recv(json &a_jmsg)
