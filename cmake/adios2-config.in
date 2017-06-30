@@ -1,0 +1,60 @@
+#!/bin/bash
+
+function usage() {
+  echo "Usage: $1 [OPTION]"
+  echo
+  echo "Known values for OPTION are:"
+  echo
+  echo "  --prefix      print installation prefix"
+  echo "  --libs        print library linling information"
+  echo "  --cxxflags    print preprocessor and compiler flags"
+  echo "  --help        display this help and exit"
+  echo "  --version     output version information"
+}
+
+if [ $# -ne 1 ]
+then
+  usage $0
+  exit 1
+fi
+
+prefix=$(readlink -f $(dirname ${BASH_SOURCE})/..)
+ADIOS2_CXX_LIBS=$(echo "@ADIOS2_CXX_LIBS@")
+ADIOS2_CXX_OPTS=$(echo "@ADIOS2_CXX_OPTS@")
+ADIOS2_CXX_DEFS=$(echo "@ADIOS2_CXX_DEFS@")
+ADIOS2_CXX_INCS=$(echo "@ADIOS2_CXX_INCS@")
+
+case $1 in
+  --prefix) echo ${prefix} ;;
+  --libs)
+    echo -n "-L${prefix}/@CMAKE_INSTALL_LIBDIR@ -ladios2 "
+    for LIB in ${ADIOS2_CXX_LIBS}
+    do
+      echo -n "${LIB} "
+    done
+    echo
+    ;;
+  --cxxflags)
+    for OPT in ${ADIOS2_CXX_OPTS}
+    do
+      echo -n "${OPT} "
+    done
+    for DEF in ${ADIOS2_CXX_DEFS}
+    do
+      echo -n "-D${DEF} "
+    done
+    for INC in ${ADIOS2_CXX_INCS}
+    do
+      echo -n "-I${prefix}/@CMAKE_INSTALL_INCLUDEDIR@ "
+    done
+    echo
+    ;;
+  --version) echo @ADIOS2_VERSION@ ;;
+  --help)
+    usage
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac
