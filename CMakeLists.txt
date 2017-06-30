@@ -57,14 +57,21 @@ include(CMakeDependentOption)
 
 # Setup shared library / -fPIC stuff
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
-option(BUILD_SHARED_LIBS "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED})
+if(DEFINED BUILD_SHARED_LIBS)
+  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
+elseif(DEFINED ADIOS2_BUILD_SHARED_LIBS)
+  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${ADIOS2_BUILD_SHARED_LIBS})
+else()
+  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${SHARED_LIBS_SUPPORTED})
+endif()
+unset(BUILD_SHARED_LIBS)
+option(ADIOS2_BUILD_SHARED_LIBS "Build shared libraries (so/dylib/dll)." ${ADIOS2_BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS ${ADIOS2_BUILD_SHARED_LIBS})
 if(NOT SHARED_LIBS_SUPPORTED)
   if(BUILD_SHARED_LIBS)
     message(WARNING "A shared library build was requested but is not supported on this platform / compiler.  Unexpected build results will likely occur")
   endif()
-  set(BUILD_SHARED_LIBS OFF CACHE BOOL
-    "Build shared libraries (so/dylib/dll)." FORCE
-  )
+  set(BUILD_SHARED_LIBS OFF)
 endif()
 
 cmake_dependent_option(ADIOS2_ENABLE_PIC
@@ -80,7 +87,7 @@ adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(DataMan   "Enable support for DataMan" AUTO)
 adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
-adios_option(ADIOS1    "Enable support for the ADIOS 1 engine" AUTO)
+adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 include(${ADIOS2_SOURCE_DIR}/cmake/DetectOptions.cmake)
@@ -98,10 +105,8 @@ install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
 #------------------------------------------------------------------------------#
 # Third party libraries
 #------------------------------------------------------------------------------#
-option(ADIOS2_BUILD_TESTING "Build ADIOS tests" ON)
-set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
-mark_as_advanced(BUILD_TESTING)
 include(CTest)
+mark_as_advanced(BUILD_TESTING)
 add_subdirectory(thirdparty)
 
 #------------------------------------------------------------------------------#
@@ -117,7 +122,7 @@ add_subdirectory(bindings)
 #------------------------------------------------------------------------------#
 # Examples
 #------------------------------------------------------------------------------#
-option(ADIOS2_BUILD_EXAMPLES "Build ADIOS examples" ON)
+option(ADIOS2_BUILD_EXAMPLES "Build ADIOS2 examples" ON)
 if(ADIOS2_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
@@ -125,7 +130,15 @@ endif()
 #------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
-# We have to wait until after the library is defined to enable testing
+if(DEFINED BUILD_TESTING)
+  set(ADIOS2_BUILD_TESTING_DEFAULT ${BUILD_TESTING})
+else()
+  set(ADIOS2_BUILD_TESTING_DEFAULT ON)
+endif()
+unset(BUILD_TESTING)
+option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree" ${ADIOS2_BUILD_TESTING_DEFAULT})
+include(CTest)
+set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(testing)
