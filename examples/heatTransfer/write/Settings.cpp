@@ -82,22 +82,22 @@ Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
 
     // determine neighbors
     if (posx == 0)
-        rank_left = -1;
-    else
-        rank_left = rank - 1;
-
-    if (posx == npx - 1)
-        rank_right = -1;
-    else
-        rank_right = rank + 1;
-
-    if (posy == 0)
         rank_up = -1;
     else
-        rank_up = rank - npx;
+        rank_up = rank - 1;
 
-    if (posy == npy - 1)
+    if (posx == npx - 1)
         rank_down = -1;
     else
-        rank_down = rank + npx;
+        rank_down = rank + 1;
+
+    if (posy == 0)
+        rank_left = -1;
+    else
+        rank_left = rank - npx;
+
+    if (posy == npy - 1)
+        rank_right = -1;
+    else
+        rank_right = rank + npx;
 }
