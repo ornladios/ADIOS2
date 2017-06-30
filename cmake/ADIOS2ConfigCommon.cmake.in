@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.5)
 
 include(CMakeFindDependencyMacro)
 
+set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
+if(ADIOS2_HAVE_MPI)
+  find_dependency(MPI)
+endif()
+
 if(NOT @BUILD_SHARED_LIBS@)
   set(ADIOS2_HAVE_BZip2 @ADIOS2_HAVE_BZip2@)
   if(ADIOS2_HAVE_BZip2)
@@ -11,11 +16,6 @@ if(NOT @BUILD_SHARED_LIBS@)
   set(ADIOS2_HAVE_ZFP @ADIOS2_HAVE_ZFP@)
   if(ADIOS2_HAVE_ZFP)
     find_dependency(ZFP)
-  endif()
-
-  set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
-  if(ADIOS2_HAVE_MPI)
-    find_dependency(MPI)
   endif()
 
   set(ADIOS2_HAVE_ZeroMQ @ADIOS2_HAVE_ZeroMQ@)
