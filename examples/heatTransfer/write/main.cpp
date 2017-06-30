@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         HeatTransfer ht(settings);
         IO io(settings, mpiHeatTransferComm);
 
-        ht.init(true);
+        ht.init(false);
         // ht.printT("Initialized T:", mpiHeatTransferComm);
         ht.heatEdges();
         ht.exchange(mpiHeatTransferComm);
