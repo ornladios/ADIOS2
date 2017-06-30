@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto hdf5Writer = hdf5IO.Open("myVector.bp", adios2::OpenMode::Write);
+        auto hdf5Writer = hdf5IO.Open("myVector.h5", adios2::OpenMode::Write);
 
         if (!hdf5Writer)
         {
