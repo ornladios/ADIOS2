@@ -276,6 +276,10 @@ void BP1Writer::WriteVariableCharacteristics(
     WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
                               stats.TimeIndex, buffer);
 
+    WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
+                              static_cast<uint32_t>(m_BP1Aggregator.m_RankMPI),
+                              buffer);
+
     WriteCharacteristicRecord(characteristic_offset, characteristicsCounter,
                               stats.Offset, buffer);
 
