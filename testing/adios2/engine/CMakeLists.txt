@@ -5,9 +5,7 @@
 
 # We currently require ADIOS1 to test ADIOS v2 bp functionality since the read
 # API is not available yet
-if(ADIOS2_HAVE_ADIOS1)
-  add_subdirectory(bp)
-endif()
+add_subdirectory(bp)
 
 if(ADIOS2_HAVE_ADIOS1)
   add_subdirectory(adios1)

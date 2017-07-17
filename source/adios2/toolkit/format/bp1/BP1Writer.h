@@ -86,12 +86,17 @@ public:
      * @param transportsTypes list of transport types
      * @param transportsProfilers list of references to transport profilers
      */
-    std::string GetRankProfilingLog(
+    std::string GetRankProfilingJSON(
         const std::vector<std::string> &transportsTypes,
         const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept;
 
+    /**
+     * Forms the final profiling.json string aggregating from all ranks
+     * @param rankProfilingJSON
+     * @return profiling.json
+     */
     std::string
-    AggregateProfilingLog(const std::string &rankProfilingLog) noexcept;
+    AggregateProfilingJSON(const std::string &rankProfilingJSON) noexcept;
 
 private:
     /** BP format version */

@@ -71,37 +71,12 @@ void BPFileWriter::Close(const int transportIndex)
                                    m_BP1Writer.m_HeapBuffer.m_DataPosition,
                                    transportIndex);
 
-    // close them
     m_TransportsManager.CloseFiles(transportIndex);
 
-    if (m_BP1Writer.m_Profiler.IsActive)
+    if (m_BP1Writer.m_Profiler.IsActive &&
+        m_TransportsManager.AllTransportsClosed())
     {
-        // aggregate and write profiling.log
-        if (m_TransportsManager.AllTransportsClosed())
-        {
-            auto transportTypes = m_TransportsManager.GetTransportsTypes();
-            auto transportProfilers =
-                m_TransportsManager.GetTransportsProfilers();
-
-            const std::string log(m_BP1Writer.GetRankProfilingLog(
-                transportTypes, transportProfilers));
-            // TODO profiling.log from rank0
-
-            const std::string profilingLog(
-                m_BP1Writer.AggregateProfilingLog(log));
-
-            if (m_BP1Writer.m_BP1Aggregator.m_RankMPI == 0)
-            {
-                transport::FileStream profilingLogStream(m_MPIComm,
-                                                         m_DebugMode);
-                auto bpBaseNames = m_BP1Writer.GetBPBaseNames({m_Name});
-                profilingLogStream.Open(bpBaseNames[0] + "/profiling.log",
-                                        OpenMode::Write);
-                profilingLogStream.Write(profilingLog.c_str(),
-                                         profilingLog.size());
-                profilingLogStream.Close();
-            }
-        }
+        WriteProfilingJSONFile();
     }
 }
 
@@ -144,6 +119,28 @@ void BPFileWriter::InitBPBuffer()
     {
         m_BP1Writer.WriteProcessGroupIndex(
             m_IO.m_HostLanguage, m_TransportsManager.GetTransportsTypes());
+    }
+}
+
+void BPFileWriter::WriteProfilingJSONFile()
+{
+    auto transportTypes = m_TransportsManager.GetTransportsTypes();
+    auto transportProfilers = m_TransportsManager.GetTransportsProfilers();
+
+    const std::string lineJSON(
+        m_BP1Writer.GetRankProfilingJSON(transportTypes, transportProfilers));
+
+    const std::string profilingJSON(
+        m_BP1Writer.AggregateProfilingJSON(lineJSON));
+
+    if (m_BP1Writer.m_BP1Aggregator.m_RankMPI == 0)
+    {
+        transport::FileStream profilingJSONStream(m_MPIComm, m_DebugMode);
+        auto bpBaseNames = m_BP1Writer.GetBPBaseNames({m_Name});
+        profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
+                                 OpenMode::Write);
+        profilingJSONStream.Write(profilingJSON.c_str(), profilingJSON.size());
+        profilingJSONStream.Close();
     }
 }
 
