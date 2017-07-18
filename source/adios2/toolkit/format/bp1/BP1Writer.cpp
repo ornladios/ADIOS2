@@ -182,36 +182,39 @@ void BP1Writer::Close() noexcept
     }
 }
 
-std::string BP1Writer::GetRankProfilingLog(
+std::string BP1Writer::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
     const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept
 {
     auto lf_WriterTimer = [](std::string &rankLog,
                              const profiling::Timer &timer) {
-        rankLog += "'" + timer.m_Process + "_" + timer.GetShortUnits() + "': " +
-                   std::to_string(timer.m_ProcessTime) + ", ";
+        rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
+                   "\": " + std::to_string(timer.m_ProcessTime) + ", ";
     };
 
     // prepare string dictionary per rank
-    std::string rankLog("'rank_" + std::to_string(m_BP1Aggregator.m_RankMPI) +
-                        "': { ");
+    std::string rankLog("{ \"rank\": " +
+                        std::to_string(m_BP1Aggregator.m_RankMPI) + ", ");
 
     auto &profiler = m_Profiler;
 
     std::string timeDate(profiler.Timers.at("buffering").m_LocalTimeDate);
     timeDate.pop_back();
+    // avoid whitespace
+    std::replace(timeDate.begin(), timeDate.end(), ' ', '_');
 
-    rankLog += "'date_and_time': '" + timeDate + "', 'threads': " +
-               std::to_string(m_Threads) + ", 'bytes': " +
-               std::to_string(profiler.Bytes.at("buffering")) + ", ";
+    rankLog += "\"start\": \"" + timeDate + "\", ";
+    rankLog += "\"threads\": " + std::to_string(m_Threads) + ", ";
+    rankLog +=
+        "\"bytes\": " + std::to_string(profiler.Bytes.at("buffering")) + ", ";
     lf_WriterTimer(rankLog, profiler.Timers.at("buffering"));
 
     const size_t transportsSize = transportsTypes.size();
 
     for (unsigned int t = 0; t < transportsSize; ++t)
     {
-        rankLog += "'transport_" + std::to_string(t) + "': { ";
-        rankLog += "'type': '" + transportsTypes[t] + "', ";
+        rankLog += "\"transport_" + std::to_string(t) + "\": { ";
+        rankLog += "\"type\": \"" + transportsTypes[t] + "\", ";
 
         for (const auto &transportTimerPair : transportsProfilers[t]->Timers)
         {
@@ -231,15 +234,15 @@ std::string BP1Writer::GetRankProfilingLog(
             rankLog += "},";
         }
     }
-    rankLog += " }";
+    rankLog += " }"; // end rank entry
 
     return rankLog;
 }
 
 std::string
-BP1Writer::AggregateProfilingLog(const std::string &rankProfilingLog) noexcept
+BP1Writer::AggregateProfilingJSON(const std::string &rankProfilingLog) noexcept
 {
-    return m_BP1Aggregator.GetGlobalProfilingLog(rankProfilingLog);
+    return m_BP1Aggregator.GetGlobalProfilingJSON(rankProfilingLog);
 }
 
 // PRIVATE FUNCTIONS

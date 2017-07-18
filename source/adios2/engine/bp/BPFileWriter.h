@@ -77,6 +77,10 @@ private:
      */
     template <class T>
     void DoWriteCommon(Variable<T> &variable, const T *values);
+
+    /** Write a profiling.json file from m_BP1Writer and m_TransportsManager
+     * profilers*/
+    void WriteProfilingJSONFile();
 };
 
 } // end namespace adios

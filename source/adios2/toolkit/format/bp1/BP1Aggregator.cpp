@@ -33,9 +33,9 @@ BP1Aggregator::BP1Aggregator(MPI_Comm mpiComm, const bool debugMode)
     MPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
-std::string BP1Aggregator::GetGlobalProfilingLog(const std::string &rankLog)
+std::string BP1Aggregator::GetGlobalProfilingJSON(const std::string &rankLog)
 {
-    std::string profilingLog;
+    std::string profilingJSON;
 
     if (m_RankMPI == 0)
     {
@@ -80,38 +80,17 @@ std::string BP1Aggregator::GetGlobalProfilingLog(const std::string &rankLog)
 
         // write global string
         // key is to reserve memory first
-        profilingLog.reserve(rankLog.size() * m_SizeMPI);
+        profilingJSON.reserve(rankLog.size() * m_SizeMPI);
 
-        profilingLog += "{\n";
-        profilingLog += rankLog + ",\n";
+        profilingJSON += "[\n";
+        profilingJSON += rankLog;
         for (unsigned int i = 1; i < sizeMPI; ++i)
         {
-            const std::string rankLogStr(rankLogs[i - 1].data(),
-                                         rankLogs[i - 1].size());
-            profilingLog += rankLogStr + ",";
-            if (i < sizeMPI - 1)
-            {
-                profilingLog += "\n";
-            }
+            profilingJSON += ",\n";
+            profilingJSON.append(rankLogs[i - 1].data(),
+                                 rankLogs[i - 1].size());
         }
-        profilingLog.pop_back(); // eliminate trailing comma
-        profilingLog += "\n";
-        profilingLog += "}\n";
-
-        //        // write to file
-        //        std::ofstream logStream(fileName);
-        //        if (m_DebugMode)
-        //        {
-        //            if (!logStream)
-        //            {
-        //                throw std::ios_base::failure(
-        //                    "ERROR: couldn't open profiling file " + fileName
-        //                    + "\n");
-        //            }
-        //        }
-        //
-        //        logStream.write(logFile.c_str(), logFile.size());
-        //        logStream.close();
+        profilingJSON += "\n]\n"; // close json
     }
     else
     {
@@ -127,7 +106,7 @@ std::string BP1Aggregator::GetGlobalProfilingLog(const std::string &rankLog)
 
     MPI_Barrier(m_MPIComm); // Barrier here?
 
-    return profilingLog;
+    return profilingJSON;
 }
 
 } // end namespace format

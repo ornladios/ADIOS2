@@ -46,7 +46,7 @@ public:
      * python dictionary format
      * @param rankLog contain rank profiling info to be aggregated
      */
-    std::string GetGlobalProfilingLog(const std::string &rankLog);
+    std::string GetGlobalProfilingJSON(const std::string &rankLog);
 
 private:
     const bool m_DebugMode = false;
