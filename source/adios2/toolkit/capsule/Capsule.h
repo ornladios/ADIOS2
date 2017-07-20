@@ -61,8 +61,8 @@ public:
 
     size_t GetAvailableDataSize() const;
 
-    virtual void ResizeData(size_t size);     ///< resize data buffer
-    virtual void ResizeMetadata(size_t size); ///< resize metadata buffer
+    virtual void ResizeData(const size_t size);     ///< resize data buffer
+    virtual void ResizeMetadata(const size_t size); ///< resize metadata buffer
 
 protected:
     const bool m_DebugMode = false; ///< true: extra exception checks

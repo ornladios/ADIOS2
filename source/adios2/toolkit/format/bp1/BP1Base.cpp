@@ -170,6 +170,8 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
     if (m_DebugMode)
     {
         bool success = true;
+        std::string description;
+
         try
         {
             m_GrowthFactor = std::stof(value);
@@ -177,6 +179,7 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
         catch (std::exception &e)
         {
             success = false;
+            description = std::string(e.what());
         }
 
         if (!success || m_GrowthFactor <= 1.f)
@@ -184,7 +187,8 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
             throw std::invalid_argument(
                 "ERROR: BufferGrowthFactor value "
                 "can't be less or equal than 1 (default = 1.5), or couldn't "
-                "convert number, in call to Open\n");
+                "convert number,\n additional description:" +
+                description + "\n, in call to Open\n");
         }
     }
     else
@@ -195,15 +199,14 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
 
 void BP1Base::InitParameterInitBufferSize(const std::string value)
 {
-    const std::string errorMessage(
-        "ERROR: wrong value for InitialBufferSize, it must be larger than "
-        "16Kb (minimum default), in call to Open\n");
-
     if (m_DebugMode)
     {
         if (value.size() < 2)
         {
-            throw std::invalid_argument(errorMessage);
+            throw std::invalid_argument(
+                "ERROR: wrong value for InitialBufferSize, it must be larger "
+                "than "
+                "16Kb (minimum default), in call to Open\n");
         }
     }
 
@@ -215,6 +218,8 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
     if (m_DebugMode)
     {
         bool success = true;
+        std::string description;
+
         try
         {
             bufferSize = static_cast<size_t>(std::stoul(number) * factor);
@@ -222,11 +227,16 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
         catch (std::exception &e)
         {
             success = false;
+            description = std::string(e.what());
         }
 
         if (!success || bufferSize < DefaultInitialBufferSize) // 16384b
         {
-            throw std::invalid_argument(errorMessage);
+            throw std::invalid_argument(
+                "ERROR: wrong value for InitialBufferSize, it must be larger "
+                "than "
+                "16Kb (minimum default), additional description: " +
+                description + " in call to Open\n");
         }
     }
     else
@@ -239,17 +249,15 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
 
 void BP1Base::InitParameterMaxBufferSize(const std::string value)
 {
-    const std::string errorMessage(
-        "ERROR: couldn't convert value of max_buffer_size IO "
-        "SetParameter, valid syntax: MaxBufferSize=10Gb, "
-        "MaxBufferSize=1000Mb, MaxBufferSize=16Kb (minimum default), "
-        " in call to Open");
-
     if (m_DebugMode)
     {
         if (value.size() < 2)
         {
-            throw std::invalid_argument(errorMessage);
+            throw std::invalid_argument(
+                "ERROR: couldn't convert value of max_buffer_size IO "
+                "SetParameter, valid syntax: MaxBufferSize=10Gb, "
+                "MaxBufferSize=1000Mb, MaxBufferSize=16Kb (minimum default), "
+                " in call to Open");
         }
     }
 
@@ -260,6 +268,8 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
     if (m_DebugMode)
     {
         bool success = true;
+        std::string description;
+
         try
         {
             m_MaxBufferSize = static_cast<size_t>(std::stoul(number) * factor);
@@ -267,11 +277,17 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
         catch (std::exception &e)
         {
             success = false;
+            description = std::string(e.what());
         }
 
         if (!success || m_MaxBufferSize < 16 * 1024) // 16384b
         {
-            throw std::invalid_argument(errorMessage);
+            throw std::invalid_argument(
+                "ERROR: couldn't convert value of max_buffer_size IO "
+                "SetParameter, valid syntax: MaxBufferSize=10Gb, "
+                "MaxBufferSize=1000Mb, MaxBufferSize=16Kb (minimum default), "
+                "\nadditional description: " +
+                description + " in call to Open");
         }
     }
     else
@@ -287,6 +303,7 @@ void BP1Base::InitParameterThreads(const std::string value)
     if (m_DebugMode)
     {
         bool success = true;
+        std::string description;
 
         try
         {
@@ -295,13 +312,15 @@ void BP1Base::InitParameterThreads(const std::string value)
         catch (std::exception &e)
         {
             success = false;
+            description = std::string(e.what());
         }
 
         if (!success || threads < 1)
         {
             throw std::invalid_argument(
                 "ERROR: value in Threads=value in IO SetParameters must be "
-                "an integer >= 1 (default), in call to Open\n");
+                "an integer >= 1 (default) \nadditional description: " +
+                description + "\n, in call to Open\n");
         }
     }
     else
@@ -319,6 +338,7 @@ void BP1Base::InitParameterVerbose(const std::string value)
     if (m_DebugMode)
     {
         bool success = true;
+        std::string description;
 
         try
         {
@@ -327,13 +347,15 @@ void BP1Base::InitParameterVerbose(const std::string value)
         catch (std::exception &e)
         {
             success = false;
+            description = std::string(e.what());
         }
 
         if (!success || verbosity < 0 || verbosity > 5)
         {
             throw std::invalid_argument(
                 "ERROR: value in Verbose=value in IO SetParameters must be "
-                "an integer in the range [0,5], in call to Open\n");
+                "an integer in the range [0,5], \nadditional description: " +
+                description + "\n, in call to Open\n");
         }
     }
     else

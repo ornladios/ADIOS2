@@ -40,16 +40,17 @@ void FileStream::Open(const std::string &name, const OpenMode openMode)
 
     if (m_OpenMode == OpenMode::Write)
     {
-        m_FileStream.open(name, std::fstream::out);
+        m_FileStream.open(name, std::fstream::out | std::fstream::binary);
     }
     else if (m_OpenMode == OpenMode::Append)
     {
         // to be changed to rw?
-        m_FileStream.open(name, std::fstream::out | std::fstream::app);
+        m_FileStream.open(name, std::fstream::out | std::fstream::app |
+                                    std::fstream::binary);
     }
     else if (m_OpenMode == OpenMode::Read)
     {
-        m_FileStream.open(name, std::fstream::in);
+        m_FileStream.open(name, std::fstream::in | std::fstream::binary);
     }
 
     if (!m_FileStream)

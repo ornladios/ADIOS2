@@ -37,7 +37,7 @@ void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
     stats.MemberID = variableIndex.MemberID;
 
     // write metadata header in data and extract offsets
-    stats.Offset = m_HeapBuffer.m_DataAbsolutePosition;
+    stats.Offset = static_cast<uint64_t>(m_HeapBuffer.m_DataAbsolutePosition);
     WriteVariableMetadataInData(variable, stats);
     stats.PayloadOffset = m_HeapBuffer.m_DataAbsolutePosition;
 
@@ -109,7 +109,8 @@ void BP1Writer::WriteVariableMetadataInData(
     constexpr char no = 'n'; // isDimension
     CopyToBuffer(buffer, position, &no);
 
-    const uint8_t dimensions = variable.m_Count.size();
+    const uint8_t dimensions =
+        static_cast<const uint8_t>(variable.m_Count.size());
     CopyToBuffer(buffer, position, &dimensions); // count
 
     // 27 is from 9 bytes for each: var y/n + local, var y/n + global dimension,
@@ -145,11 +146,11 @@ void BP1Writer::WriteVariableMetadataInIndex(
     if (isNew) // write variable header (might be shared with
                // attributes index)
     {
-        buffer.insert(buffer.end(), 4, 0); // skip var length (4)
+        buffer.insert(buffer.end(), 4, '\0'); // skip var length (4)
         InsertToBuffer(buffer, &stats.MemberID);
-        buffer.insert(buffer.end(), 2, 0); // skip group name
+        buffer.insert(buffer.end(), 2, '\0'); // skip group name
         WriteNameRecord(variable.m_Name, buffer);
-        buffer.insert(buffer.end(), 2, 0); // skip path
+        buffer.insert(buffer.end(), 2, '\0'); // skip path
 
         const std::uint8_t dataType = GetDataType<T>();
         InsertToBuffer(buffer, &dataType);
@@ -256,15 +257,17 @@ void BP1Writer::WriteVariableCharacteristics(
     // going back at the end
     const size_t characteristicsCountPosition = buffer.size();
     // skip characteristics count(1) + length (4)
-    buffer.insert(buffer.end(), 5, 0);
+    buffer.insert(buffer.end(), 5, '\0');
     uint8_t characteristicsCounter = 0;
 
     // DIMENSIONS
     uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
-    const uint8_t dimensions = variable.m_Count.size();
+    const uint8_t dimensions =
+        static_cast<const uint8_t>(variable.m_Count.size());
     InsertToBuffer(buffer, &dimensions); // count
-    const uint16_t dimensionsLength = 24 * dimensions;
+    const uint16_t dimensionsLength =
+        static_cast<const uint16_t>(24 * dimensions);
     InsertToBuffer(buffer, &dimensionsLength); // length
     WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
                           buffer);
@@ -276,9 +279,10 @@ void BP1Writer::WriteVariableCharacteristics(
     WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
                               stats.TimeIndex, buffer);
 
+    const uint32_t rankU32 =
+        static_cast<const uint32_t>(m_BP1Aggregator.m_RankMPI);
     WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
-                              static_cast<uint32_t>(m_BP1Aggregator.m_RankMPI),
-                              buffer);
+                              rankU32, buffer);
 
     WriteCharacteristicRecord(characteristic_offset, characteristicsCounter,
                               stats.Offset, buffer);
@@ -293,8 +297,8 @@ void BP1Writer::WriteVariableCharacteristics(
     CopyToBuffer(buffer, backPosition, &characteristicsCounter); // count (1)
 
     // remove its own length (4) + characteristic counter (1)
-    const uint32_t characteristicsLength =
-        buffer.size() - characteristicsCountPosition - 4 - 1;
+    const uint32_t characteristicsLength = static_cast<const uint32_t>(
+        buffer.size() - characteristicsCountPosition - 4 - 1);
 
     CopyToBuffer(buffer, backPosition, &characteristicsLength); // length
 }
@@ -315,9 +319,11 @@ void BP1Writer::WriteVariableCharacteristics(
     uint8_t characteristicID = characteristic_dimensions;
     CopyToBuffer(buffer, position, &characteristicID);
 
-    const uint8_t dimensions = variable.m_Count.size();
+    const uint8_t dimensions =
+        static_cast<const uint8_t>(variable.m_Count.size());
     CopyToBuffer(buffer, position, &dimensions); // count
-    const uint16_t dimensionsLength = 24 * dimensions;
+    const uint16_t dimensionsLength =
+        static_cast<const uint16_t>(24 * dimensions);
     CopyToBuffer(buffer, position, &dimensionsLength); // length
     WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
                           buffer, position, true); // isCharacteristic = true
@@ -333,8 +339,8 @@ void BP1Writer::WriteVariableCharacteristics(
     CopyToBuffer(buffer, backPosition, &characteristicsCounter);
 
     // remove its own length (4) + characteristic counter (1)
-    const uint32_t characteristicsLength =
-        position - characteristicsCountPosition - 4 - 1;
+    const uint32_t characteristicsLength = static_cast<const uint32_t>(
+        position - characteristicsCountPosition - 4 - 1);
     CopyToBuffer(buffer, backPosition, &characteristicsLength);
 }
 

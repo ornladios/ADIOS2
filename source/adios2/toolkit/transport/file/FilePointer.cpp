@@ -48,16 +48,16 @@ void FilePointer::Open(const std::string &name, const OpenMode openMode)
 
     if (m_OpenMode == OpenMode::Write)
     {
-        m_File = std::fopen(name.c_str(), "w");
+        m_File = fopen(name.c_str(), "wb");
     }
     else if (m_OpenMode == OpenMode::Append)
     {
         // need to change when implemented
-        m_File = std::fopen(name.c_str(), "a");
+        m_File = fopen(name.c_str(), "ab");
     }
     else if (m_OpenMode == OpenMode::Read)
     {
-        m_File = std::fopen(name.c_str(), "r");
+        m_File = fopen(name.c_str(), "rb");
     }
 
     if (std::ferror(m_File))

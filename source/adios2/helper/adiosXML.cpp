@@ -6,6 +6,7 @@
  *
  *  Created on: May 17, 2017
  *      Author: William F Godoy godoywf@ornl.gov
+ *              Chuck Atkins chuck.atkins@kitware.com
  */
 
 #include "adiosXML.h"
@@ -16,6 +17,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/helper/adiosMPIFunctions.h"
 #include "adios2/helper/adiosString.h"
 
 #include <pugixml.hpp>
@@ -23,93 +25,124 @@
 namespace adios2
 {
 
-Params InitParametersXML(pugi::xml_node node, bool debugMode)
+Params InitParametersXML(const pugi::xml_node &node, const bool debugMode)
 {
     Params params;
-    for (pugi::xml_node paramNode : node.children("parameter"))
+    for (const pugi::xml_node paramNode : node.children("parameter"))
     {
-        pugi::xml_attribute attrKey = paramNode.attribute("key");
-        if (!attrKey)
+        const pugi::xml_attribute key = paramNode.attribute("key");
+        if (debugMode)
         {
-            if (debugMode)
+            if (!key)
             {
                 throw std::invalid_argument("ERROR: XML: No \"key\" attribute "
-                                            "found on <parameter> element.");
+                                            "found on <parameter> element, in "
+                                            "call to ADIOS constructor\n");
             }
-            continue;
         }
 
-        pugi::xml_attribute attrValue = paramNode.attribute("value");
-        if (!attrValue)
+        const pugi::xml_attribute value = paramNode.attribute("value");
+
+        if (debugMode)
         {
-            if (debugMode)
+            if (!value)
             {
+
                 throw std::invalid_argument("ERROR: XML: No \"value\" "
                                             "attribute found on <parameter> "
-                                            "element.");
+                                            "element,  for key " +
+                                            std::string(key.value()) +
+                                            ", in call to ADIOS constructor\n");
+                continue;
             }
-            continue;
         }
 
-        params.emplace(attrKey.value(), attrValue.value());
+        params.emplace(key.value(), value.value());
     }
     return params;
 }
 
-void InitIOXML(const pugi::xml_node ioNode, const MPI_Comm mpiComm,
+void InitIOXML(const pugi::xml_node &ioNode, const MPI_Comm mpiComm,
                const bool debugMode,
                std::vector<std::shared_ptr<Transform>> &transforms,
                std::map<std::string, IO> &ios)
 {
     // Extract <io name=""> attribute
-    pugi::xml_attribute nameAttr = ioNode.attribute("name");
+    const pugi::xml_attribute nameAttr = ioNode.attribute("name");
     if (!nameAttr)
     {
         if (debugMode)
         {
-            throw std::invalid_argument(
-                "ERROR: XML: No \"name\" attribute found on <io> element.");
+            throw std::invalid_argument("ERROR: XML: No \"name\" attribute "
+                                        "found on <io> element, in call to "
+                                        "ADIOS constructor.\n");
         }
         return;
     }
-    std::string ioName = nameAttr.value();
+    const std::string ioName = nameAttr.value();
 
     // Build the IO object
     auto ioIt = ios.emplace(ioName, IO(ioName, mpiComm, true, debugMode));
     IO &io = ioIt.first->second;
 
     // Extract <engine> element
-    pugi::xml_node engineNode = ioNode.child("engine");
-    if (!engineNode)
+    if (debugMode)
     {
-        throw std::invalid_argument(
-            "ERROR: XML: No <engine> element found in <io> element.");
+        unsigned int count = 0;
+
+        for (const pugi::xml_node engineNode : ioNode.children("engine"))
+        {
+            ++count;
+            if (count == 2)
+            {
+                throw std::invalid_argument(
+                    "ERROR: XML only one <engine> element "
+                    "can exist inside an <io> element from io " +
+                    ioName + ", in call to ADIOS constructor\n");
+            }
+        }
     }
-    pugi::xml_attribute engineTypeAttr = engineNode.attribute("type");
-    if (!engineTypeAttr)
+
+    const pugi::xml_node engineNode = ioNode.child("engine");
+    if (engineNode)
     {
-        throw std::invalid_argument(
-            "ERROR: XML: No \"type\" attribute found on <engine> element.");
+        const pugi::xml_attribute engineTypeAttr = engineNode.attribute("type");
+
+        if (debugMode)
+        {
+            if (!engineTypeAttr)
+            {
+                throw std::invalid_argument(
+                    "ERROR: XML: No \"type\" attribute "
+                    "found on <engine> element, in call to "
+                    "ADIOS constructor");
+            }
+        }
+
+        io.SetEngine(engineTypeAttr.value());
     }
-    io.SetEngine(engineTypeAttr.value());
 
     // Process <engine> parameters
     io.SetParameters(InitParametersXML(engineNode, debugMode));
 
     // Extract and process <transport> elements
-    for (pugi::xml_node transportNode : ioNode.children("transport"))
+    for (const pugi::xml_node transportNode : ioNode.children("transport"))
     {
-        pugi::xml_attribute typeAttr = transportNode.attribute("type");
-        if (!typeAttr)
+        const pugi::xml_attribute typeXMLAttribute =
+            transportNode.attribute("type");
+
+        if (debugMode)
         {
-            if (debugMode)
+            if (!typeXMLAttribute)
             {
+
                 throw std::invalid_argument("ERROR: XML: No \"type\" attribute "
-                                            "found on <transport> element.");
+                                            "found on <transport> element, in "
+                                            "call to ADIOS constructor\n");
             }
-            continue;
         }
-        io.AddTransport(typeAttr.value(),
+
+        io.AddTransport(typeXMLAttribute.value(),
                         InitParametersXML(transportNode, debugMode));
     }
 }
@@ -122,49 +155,43 @@ void InitXML(const std::string configXML, const MPI_Comm mpiComm,
     int mpiRank;
     MPI_Comm_rank(mpiComm, &mpiRank);
     std::string fileContents;
-    unsigned long long len;
 
     // Read the file on rank 0 and broadcast it to everybody else
     if (mpiRank == 0)
     {
         fileContents = FileToString(configXML);
-        len = static_cast<unsigned long long>(fileContents.size());
     }
-    MPI_Bcast(&len, 1, MPI_UNSIGNED_LONG, 0, mpiComm);
-    if (mpiRank != 0)
-    {
-        fileContents.resize(len);
-    }
-    MPI_Bcast(const_cast<char *>(fileContents.data()), len, MPI_CHAR, 0,
-              mpiComm);
+
+    fileContents = BroadcastString(fileContents, mpiComm);
 
     pugi::xml_document doc;
     auto parse_result = doc.load_buffer_inplace(
         const_cast<char *>(fileContents.data()), fileContents.size());
-    if (!parse_result)
+
+    if (debugMode)
     {
-        if (debugMode)
+        if (!parse_result)
         {
             throw std::invalid_argument(
-                std::string("ERROR: XML: Parse error: ") +
-                parse_result.description());
+                "ERROR: XML: parse error in file " + configXML +
+                " description: " + std::string(parse_result.description()) +
+                ", in call to ADIOS constructor\n");
         }
-        return;
     }
 
-    pugi::xml_node configNode = doc.child("adios-config");
-    if (!configNode)
+    const pugi::xml_node configNode = doc.child("adios-config");
+
+    if (debugMode)
     {
-        if (debugMode)
+        if (!configNode)
         {
             throw std::invalid_argument(
-                "ERROR: XML: No <adios-config> element found");
+                "ERROR: XML: No <adios-config> element found in file " +
+                configXML + ", in call to ADIOS constructor\n");
         }
-        return;
     }
 
-    ios.clear();
-    for (pugi::xml_node ioNode : configNode.children("io"))
+    for (const pugi::xml_node ioNode : configNode.children("io"))
     {
         InitIOXML(ioNode, mpiComm, debugMode, transforms, ios);
     }

@@ -26,7 +26,6 @@
 #define open64 open
 #endif
 */
-
 #include <cinttypes>
 #include <cstdio>
 #include <cstring>
