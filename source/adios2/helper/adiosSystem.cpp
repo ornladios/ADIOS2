@@ -9,7 +9,7 @@
  */
 #include "adiosSystem.h"
 
-#include <ctime> //std::ctime
+#include <ctime>
 
 #include <chrono> //system_clock, now
 
@@ -19,8 +19,12 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/helper/adiosString.h"
 
-#ifdef _WIN32
-#define _CRT_SECURE_NO_DEPRECATE // remove warning for ctime
+// remove ctime warning on Windows
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_DEPRECATE
+#define _SCL_SECURE_NO_WARNINGS
+#define _SCL_SECURE_NO_DEPRECATE
 #endif
 
 namespace adios2

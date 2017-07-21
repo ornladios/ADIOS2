@@ -54,14 +54,13 @@ TEST_F(XMLConfigTest, TwoIOs)
 TEST_F(XMLConfigTest, TwoEnginesException)
 {
     std::string configFile = configDir + "/config2.xml";
-    adios2::ADIOS adios;
 
 #ifdef ADIOS2_HAVE_MPI
-    EXPECT_THROW(adios =
-                     adios2::ADIOS(configFile, MPI_COMM_WORLD, adios2::DebugON),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON),
+        std::invalid_argument);
 #else
-    EXPECT_THROW(adios = adios2::ADIOS(configFile, adios2::DebugON),
+    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
                  std::invalid_argument);
 #endif
 }

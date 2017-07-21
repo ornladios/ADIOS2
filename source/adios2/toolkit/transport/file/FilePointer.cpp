@@ -14,6 +14,14 @@
 #include <ios> //std::ios_base::failure
 /// \endcond
 
+// removes fopen warning on Windows
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_DEPRECATE
+#define _SCL_SECURE_NO_WARNINGS
+#define _SCL_SECURE_NO_DEPRECATE
+#endif
+
 namespace adios2
 {
 namespace transport
@@ -60,7 +68,7 @@ void FilePointer::Open(const std::string &name, const OpenMode openMode)
         m_File = fopen(name.c_str(), "rb");
     }
 
-    if (std::ferror(m_File))
+    if (ferror(m_File))
     {
         throw std::ios_base::failure("ERROR: couldn't open file " + name +
                                      ", "
@@ -72,7 +80,7 @@ void FilePointer::Open(const std::string &name, const OpenMode openMode)
 
 void FilePointer::SetBuffer(char *buffer, size_t size)
 {
-    const int status = std::setvbuf(m_File, buffer, _IOFBF, size);
+    const int status = setvbuf(m_File, buffer, _IOFBF, size);
 
     if (!status)
     {
@@ -90,7 +98,7 @@ void FilePointer::Write(const char *buffer, size_t size)
         {
             m_Profiler.Timers.at("write").Resume();
         }
-        auto writtenSize = std::fwrite(buffer, sizeof(char), size, m_File);
+        auto writtenSize = fwrite(buffer, sizeof(char), size, m_File);
 
         if (m_Profiler.IsActive)
         {
@@ -133,7 +141,7 @@ void FilePointer::Write(const char *buffer, size_t size)
 
 void FilePointer::Flush()
 {
-    const int status = std::fflush(m_File);
+    const int status = fflush(m_File);
 
     if (status == EOF)
     {
@@ -149,7 +157,7 @@ void FilePointer::Close()
         m_Profiler.Timers.at("close").Resume();
     }
 
-    const int status = std::fclose(m_File);
+    const int status = fclose(m_File);
 
     if (m_Profiler.IsActive)
     {
