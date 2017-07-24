@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * ShmSystemV.cpp
+ * ShmSystemV.cpp : implementation of ShmSystemV class
  *
  *  Created on: Dec 22, 2016
- *      Author: wfg
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include "ShmSystemV.h"

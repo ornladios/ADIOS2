@@ -14,6 +14,11 @@
 #include <ios> //std::ios_base::failure
 /// \endcond
 
+// removes fopen warning on Windows
+#ifdef _WIN32
+#pragma warning(disable : 4996) // fopen
+#endif
+
 namespace adios2
 {
 namespace transport
@@ -28,7 +33,7 @@ FilePointer::~FilePointer()
 {
     if (m_IsOpen)
     {
-        fclose(m_File);
+        std::fclose(m_File);
     }
 }
 
@@ -48,19 +53,19 @@ void FilePointer::Open(const std::string &name, const OpenMode openMode)
 
     if (m_OpenMode == OpenMode::Write)
     {
-        m_File = std::fopen(name.c_str(), "w");
+        m_File = std::fopen(name.c_str(), "wb");
     }
     else if (m_OpenMode == OpenMode::Append)
     {
         // need to change when implemented
-        m_File = std::fopen(name.c_str(), "a");
+        m_File = std::fopen(name.c_str(), "ab");
     }
     else if (m_OpenMode == OpenMode::Read)
     {
-        m_File = std::fopen(name.c_str(), "r");
+        m_File = std::fopen(name.c_str(), "rb");
     }
 
-    if (std::ferror(m_File))
+    if (ferror(m_File))
     {
         throw std::ios_base::failure("ERROR: couldn't open file " + name +
                                      ", "

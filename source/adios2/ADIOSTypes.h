@@ -144,7 +144,7 @@ enum class SelectionType
 
 // adios defaults
 #ifdef _WIN32
-const std::string DefaultFileLibrary("stdio");
+const std::string DefaultFileLibrary("fstream");
 #else
 const std::string DefaultFileLibrary("POSIX");
 #endif
@@ -160,7 +160,7 @@ constexpr size_t DefaultMaxBufferSize(std::numeric_limits<size_t>::max() - 1);
 
 /** default buffer growth factor. Needs to be studied
  * for optimizing applications*/
-constexpr float DefaultBufferGrowthFactor(1.05);
+constexpr float DefaultBufferGrowthFactor(1.05f);
 
 /** default size for writing/reading files using POSIX/fstream/stdio write
  *  2Gb - 100Kb (tolerance)*/

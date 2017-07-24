@@ -25,7 +25,7 @@ namespace adios2
 
 template <class T>
 void InsertToBuffer(std::vector<char> &buffer, const T *source,
-                    const std::size_t elements) noexcept
+                    const size_t elements) noexcept
 {
     const char *src = reinterpret_cast<const char *>(source);
     buffer.insert(buffer.end(), src, src + elements * sizeof(T));
@@ -157,6 +157,13 @@ void MemcpyToBufferThreads(std::vector<char> &buffer, size_t &position,
     {
         thread.join();
     }
+}
+
+template <class T>
+void InsertU64(std::vector<char> &buffer, const T element) noexcept
+{
+    const uint64_t element64 = static_cast<const uint64_t>(element);
+    InsertToBuffer(buffer, &element64);
 }
 
 } // end namespace
