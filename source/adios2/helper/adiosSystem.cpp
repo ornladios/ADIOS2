@@ -20,11 +20,8 @@
 #include "adios2/helper/adiosString.h"
 
 // remove ctime warning on Windows
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_DEPRECATE
-#define _SCL_SECURE_NO_WARNINGS
-#define _SCL_SECURE_NO_DEPRECATE
+#ifdef _WIN32
+#pragma warning(disable : 4996)
 #endif
 
 namespace adios2

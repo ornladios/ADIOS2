@@ -15,11 +15,8 @@
 /// \endcond
 
 // removes fopen warning on Windows
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_DEPRECATE
-#define _SCL_SECURE_NO_WARNINGS
-#define _SCL_SECURE_NO_DEPRECATE
+#ifdef _WIN32
+#pragma warning(disable : 4996) // fopen
 #endif
 
 namespace adios2
@@ -36,7 +33,7 @@ FilePointer::~FilePointer()
 {
     if (m_IsOpen)
     {
-        fclose(m_File);
+        std::fclose(m_File);
     }
 }
 
@@ -56,16 +53,16 @@ void FilePointer::Open(const std::string &name, const OpenMode openMode)
 
     if (m_OpenMode == OpenMode::Write)
     {
-        m_File = fopen(name.c_str(), "wb");
+        m_File = std::fopen(name.c_str(), "wb");
     }
     else if (m_OpenMode == OpenMode::Append)
     {
         // need to change when implemented
-        m_File = fopen(name.c_str(), "ab");
+        m_File = std::fopen(name.c_str(), "ab");
     }
     else if (m_OpenMode == OpenMode::Read)
     {
-        m_File = fopen(name.c_str(), "rb");
+        m_File = std::fopen(name.c_str(), "rb");
     }
 
     if (ferror(m_File))
@@ -80,7 +77,7 @@ void FilePointer::Open(const std::string &name, const OpenMode openMode)
 
 void FilePointer::SetBuffer(char *buffer, size_t size)
 {
-    const int status = setvbuf(m_File, buffer, _IOFBF, size);
+    const int status = std::setvbuf(m_File, buffer, _IOFBF, size);
 
     if (!status)
     {
@@ -98,7 +95,7 @@ void FilePointer::Write(const char *buffer, size_t size)
         {
             m_Profiler.Timers.at("write").Resume();
         }
-        auto writtenSize = fwrite(buffer, sizeof(char), size, m_File);
+        auto writtenSize = std::fwrite(buffer, sizeof(char), size, m_File);
 
         if (m_Profiler.IsActive)
         {
@@ -141,7 +138,7 @@ void FilePointer::Write(const char *buffer, size_t size)
 
 void FilePointer::Flush()
 {
-    const int status = fflush(m_File);
+    const int status = std::fflush(m_File);
 
     if (status == EOF)
     {
@@ -157,7 +154,7 @@ void FilePointer::Close()
         m_Profiler.Timers.at("close").Resume();
     }
 
-    const int status = fclose(m_File);
+    const int status = std::fclose(m_File);
 
     if (m_Profiler.IsActive)
     {
