@@ -62,9 +62,9 @@ Params InitParametersXML(const pugi::xml_node &node, const bool debugMode)
     return params;
 }
 
-void InitIOXML(const pugi::xml_node &ioNode, const MPI_Comm mpiComm,
+void InitIOXML(const pugi::xml_node &ioNode, MPI_Comm mpiComm,
                const bool debugMode,
-               std::vector<std::shared_ptr<Transform>> &transforms,
+               std::map<std::string, std::shared_ptr<Transform>> &transforms,
                std::map<std::string, IO> &ios)
 {
     // Extract <io name=""> attribute
@@ -147,9 +147,9 @@ void InitIOXML(const pugi::xml_node &ioNode, const MPI_Comm mpiComm,
     }
 }
 
-void InitXML(const std::string configXML, const MPI_Comm mpiComm,
+void InitXML(const std::string configXML, MPI_Comm mpiComm,
              const bool debugMode,
-             std::vector<std::shared_ptr<Transform>> &transforms,
+             std::map<std::string, std::shared_ptr<Transform>> &transforms,
              std::map<std::string, IO> &ios)
 {
     int mpiRank;

@@ -125,18 +125,31 @@ void VariableBase::SetStepSelection(const unsigned int startStep,
     m_ReadNSteps = countStep;
 }
 
-void VariableBase::AddTransform(
-    Transform &transform, const std::vector<std::string> &parametersVector)
-{
-}
-
-void VariableBase::AddTransform(Transform &transform,
-                                const Params &parametersVector)
-{
-}
-
 // transforms related functions
-void VariableBase::ClearTransforms() { m_TransformsInfo.clear(); }
+unsigned int VariableBase::AddTransform(Transform &transform,
+                                        const Params &parameters) noexcept
+{
+    m_TransformsInfo.push_back(TransformInfo{transform, parameters});
+    return static_cast<unsigned int>(m_TransformsInfo.size() - 1);
+}
+
+void VariableBase::ResetTransformParameters(const unsigned int transformIndex,
+                                            const Params &parameters)
+{
+    if (m_DebugMode)
+    {
+        if (transformIndex < m_TransformsInfo.size())
+        {
+            m_TransformsInfo[transformIndex].Parameters = parameters;
+        }
+    }
+    else
+    {
+        m_TransformsInfo[transformIndex].Parameters = parameters;
+    }
+}
+
+void VariableBase::ClearTransforms() noexcept { m_TransformsInfo.clear(); }
 
 // PRIVATE
 void VariableBase::InitShapeType()

@@ -27,10 +27,10 @@
 /* CMake Option: ADIOS_USE_MPI=OFF */
 #cmakedefine ADIOS2_HAVE_MPI
 
-/* CMake Option: ADIOS_USE_ZFP=OFF */
+/* CMake Option: ADIOS_USE_ZFP=ON */
 #cmakedefine ADIOS2_HAVE_ZFP
 
-/* CMake Option: ADIOS_USE_BZip2=OFF */
+/* CMake Option: ADIOS_USE_BZip2=ON */
 #cmakedefine ADIOS2_HAVE_BZIP2
 
 /* CMake Option: ADIOS_USE_ADIOS1=ON */

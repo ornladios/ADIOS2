@@ -105,17 +105,37 @@ public:
     void SetStepSelection(const unsigned int startStep,
                           const unsigned int countStep);
 
-    void AddTransform(Transform &transform,
-                      const std::vector<std::string> &parametersVector);
+    /**
+     * Pushed a new transform to a sequence of transports
+     * @param transform reference to an object derived from the Transform class
+     * @param parameters transform specific parameters
+     * @return transformID handler
+     */
+    unsigned int AddTransform(Transform &transform,
+                              const Params &parameters = Params()) noexcept;
 
-    void AddTransform(Transform &transform,
-                      const Params &parametersVector = Params());
+    void ResetTransformParameters(const unsigned int transformIndex,
+                                  const Params &parameters = Params());
+
+    /** Clears out the transform sequence defined by AddTransform */
+    void ClearTransforms() noexcept;
 
     /** Apply current sequence of transforms defined by AddTransform */
     virtual void ApplyTransforms() = 0;
 
-    /** Clears out the transform sequence defined by AddTransform */
-    void ClearTransforms();
+    /** Transforms metadata info */
+    struct TransformInfo
+    {
+        /** reference to object derived from Transform class */
+        Transform &Operator;
+        /** parameters from AddTransform */
+        Params Parameters;
+        /** resulting sizes from transformation */
+        Dims Sizes;
+    };
+
+    /** Registered transforms */
+    std::vector<TransformInfo> m_TransformsInfo;
 
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */
@@ -125,24 +145,6 @@ private:
     const bool m_DebugMode = false;
 
     void InitShapeType();
-
-    /** Transforms metadata info */
-    struct TransformInfo
-    {
-        /** reference to object derived from Transform class */
-        Transform &Object;
-        /** parameters from AddTransform */
-        Params Parameters;
-        /** resulting sizes from transformation */
-        Dims Sizes;
-    };
-
-    /**
-     * Sequence determines application order, e.g.
-     * first Transforms[0] then Transforms[1]. Pointer used as
-     * reference (no memory management).
-     */
-    std::vector<TransformInfo> m_TransformsInfo;
 };
 
 } // end namespace
