@@ -10,12 +10,12 @@
 
 #include "adiosDynamicBinder.h"
 
-#include <algorithm>                    // for copy
-#include <iostream>                     // for operator<<, stringstream, bas...
-#include <iterator>                     // for ostream_iterator
-#include <sstream>                      // for stringstream
-#include <stdexcept>                    // for runtime_error
-#include <vector>                       // for vector
+#include <algorithm> // for copy
+#include <iostream>  // for operator<<, stringstream, bas...
+#include <iterator>  // for ostream_iterator
+#include <sstream>   // for stringstream
+#include <stdexcept> // for runtime_error
+#include <vector>    // for vector
 
 #include <adios2sys/DynamicLoader.hxx>
 

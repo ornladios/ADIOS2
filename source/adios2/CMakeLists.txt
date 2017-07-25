@@ -29,6 +29,10 @@ add_library(adios2
 #  engine/bp/BPFileReader.cpp
   engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
 
+  engine/plugin/PluginEngine.h engine/plugin/PluginEngine.inl
+  engine/plugin/PluginEngine.cpp
+  engine/plugin/PluginEngineInterface.h engine/plugin/PluginEngineInterface.cpp
+
   toolkit/capsule/Capsule.cpp
   toolkit/capsule/heap/STLVector.cpp 
  
