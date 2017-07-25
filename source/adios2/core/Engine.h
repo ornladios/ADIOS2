@@ -37,6 +37,9 @@ namespace adios2
  * Close */
 class Engine
 {
+public:
+    using AdvanceAsyncCallback =
+        std::function<void(std::shared_ptr<adios2::Engine>)>;
 
 public:
     /**
@@ -247,9 +250,8 @@ public:
      * readers
      * @param callback Will be called when advance is completed.
      */
-    virtual void
-    AdvanceAsync(const AdvanceMode mode,
-                 std::function<void(std::shared_ptr<adios2::Engine>)> callback);
+    virtual void AdvanceAsync(const AdvanceMode mode,
+                              AdvanceAsyncCallback callback);
 
     AdvanceStatus GetAdvanceStatus();
 
