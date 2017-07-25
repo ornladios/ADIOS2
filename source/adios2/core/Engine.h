@@ -356,40 +356,11 @@ protected:
     // READ
     virtual VariableBase *InquireVariableUnknown(const std::string &name,
                                                  const bool readIn);
-    virtual Variable<char> *InquireVariableChar(const std::string &name,
-                                                const bool readIn);
-    virtual Variable<unsigned char> *
-    InquireVariableUChar(const std::string &name, const bool readIn);
-    virtual Variable<short> *InquireVariableShort(const std::string &name,
-                                                  const bool readIn);
-    virtual Variable<unsigned short> *
-    InquireVariableUShort(const std::string &name, const bool readIn);
-    virtual Variable<int> *InquireVariableInt(const std::string &name,
-                                              const bool readIn);
-    virtual Variable<unsigned int> *InquireVariableUInt(const std::string &name,
-                                                        const bool readIn);
-    virtual Variable<long int> *InquireVariableLInt(const std::string &name,
-                                                    const bool readIn);
-    virtual Variable<unsigned long int> *
-    InquireVariableULInt(const std::string &name, const bool readIn);
-    virtual Variable<long long int> *
-    InquireVariableLLInt(const std::string &name, const bool readIn);
-    virtual Variable<unsigned long long int> *
-    InquireVariableULLInt(const std::string &name, const bool readIn);
-
-    virtual Variable<float> *InquireVariableFloat(const std::string &name,
-                                                  const bool readIn);
-    virtual Variable<double> *InquireVariableDouble(const std::string &name,
-                                                    const bool readIn);
-    virtual Variable<long double> *
-    InquireVariableLDouble(const std::string &name, const bool readIn);
-
-    virtual Variable<cfloat> *InquireVariableCFloat(const std::string &name,
-                                                    const bool readIn);
-    virtual Variable<cdouble> *InquireVariableCDouble(const std::string &name,
-                                                      const bool readIn);
-    virtual Variable<cldouble> *InquireVariableCLDouble(const std::string &name,
-                                                        const bool readIn);
+#define declare(T, L)                                                          \
+    virtual Variable<T> *InquireVariable##L(const std::string &name,           \
+                                            const bool readIn);
+    ADIOS2_FOREACH_TYPE_2ARGS(declare)
+#undef declare
 
 // Known-type
 #define declare_type(T)                                                        \

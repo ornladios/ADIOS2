@@ -128,88 +128,15 @@ VariableBase *Engine::InquireVariableUnknown(const std::string &name,
 {
     return nullptr;
 }
-Variable<char> *Engine::InquireVariableChar(const std::string &name,
-                                            const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned char> *Engine::InquireVariableUChar(const std::string &name,
-                                                      const bool readIn)
-{
-    return nullptr;
-}
-Variable<short> *Engine::InquireVariableShort(const std::string &name,
-                                              const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned short> *Engine::InquireVariableUShort(const std::string &name,
-                                                        const bool readIn)
-{
-    return nullptr;
-}
-Variable<int> *Engine::InquireVariableInt(const std::string &name,
-                                          const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned int> *Engine::InquireVariableUInt(const std::string &name,
-                                                    const bool readIn)
-{
-    return nullptr;
-}
-Variable<long int> *Engine::InquireVariableLInt(const std::string &name,
-                                                const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned long int> *
-Engine::InquireVariableULInt(const std::string &name, const bool readIn)
-{
-    return nullptr;
-}
-Variable<long long int> *Engine::InquireVariableLLInt(const std::string &name,
-                                                      const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned long long int> *
-Engine::InquireVariableULLInt(const std::string &name, const bool readIn)
-{
-    return nullptr;
-}
 
-Variable<float> *Engine::InquireVariableFloat(const std::string &name,
-                                              const bool readIn)
-{
-    return nullptr;
-}
-Variable<double> *Engine::InquireVariableDouble(const std::string &name,
-                                                const bool readIn)
-{
-    return nullptr;
-}
-Variable<long double> *Engine::InquireVariableLDouble(const std::string &name,
-                                                      const bool readIn)
-{
-    return nullptr;
-}
-Variable<cfloat> *Engine::InquireVariableCFloat(const std::string &name,
-                                                const bool readIn)
-{
-    return nullptr;
-}
-Variable<cdouble> *Engine::InquireVariableCDouble(const std::string &name,
-                                                  const bool readIn)
-{
-    return nullptr;
-}
-
-Variable<cldouble> *Engine::InquireVariableCLDouble(const std::string &name,
-                                                    const bool readIn)
-{
-    return nullptr;
-}
+#define define(T, L)                                                           \
+    Variable<T> *Engine::InquireVariable##L(const std::string &name,           \
+                                            const bool readIn)                 \
+    {                                                                          \
+        return nullptr;                                                        \
+    }
+ADIOS2_FOREACH_TYPE_2ARGS(define)
+#undef define
 
 #define declare_type(T)                                                        \
     void Engine::DoScheduleRead(Variable<T> &variable, const T *values)        \
