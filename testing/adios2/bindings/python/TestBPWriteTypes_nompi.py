@@ -10,15 +10,13 @@
 
 
 from adios2NPTypes import SmallTestData
-from mpi4py import MPI
 import adios2
 
 
 # Test data
 data = SmallTestData()
 
-comm = MPI.COMM_WORLD
-adios = adios2.ADIOS(comm, adios2.DebugON)
+adios = adios2.ADIOS(adios2.DebugON)
 
 bpIO = adios.DeclareIO("NPTypes")
 

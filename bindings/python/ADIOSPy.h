@@ -12,6 +12,7 @@
 #define ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPY_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <memory> //std::shared_ptr
 #include <string>
 /// \endcond
 
@@ -32,13 +33,14 @@ public:
     ADIOSPy(MPI_Comm mpiComm, const bool debugMode);
     ADIOSPy(const std::string configFile, const bool debugMode);
     ADIOSPy(const bool debugMode);
+
     ~ADIOSPy() = default;
 
     IOPy DeclareIO(const std::string name);
 
 private:
     const bool m_DebugMode;
-    adios2::ADIOS m_ADIOS;
+    std::shared_ptr<adios2::ADIOS> m_ADIOS;
 };
 
 } // end namespace adios

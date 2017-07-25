@@ -3,4 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-python_add_test(PythonBPWrite TestBPWriteTypes.py)
+if(NOT ADIOS2_HAVE_MPI)
+    python_add_test(PythonBPWrite TestBPWriteTypes_nompi.py)
+endif()
+
+if(ADIOS2_HAVE_MPI)
+    python_add_test(PythonBPWrite TestBPWriteTypes.py)
+endif()
