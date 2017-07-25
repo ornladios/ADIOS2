@@ -18,6 +18,7 @@ add_library(adios2
   core/VariableCompound.cpp core/VariableCompound.tcc
   
 #helper
+  helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
   helper/adiosMPIFunctions.cpp
   helper/adiosString.cpp
