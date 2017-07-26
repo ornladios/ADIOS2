@@ -55,31 +55,40 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include(CMakeDependentOption)
 
-# Setup shared library / -fPIC stuff
+# Setup shared library defaults.  If explicitly specified somehow, then default 
+# to that.  Otherwise base the default on whether or not shared libs are even
+# supported.
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
-if(DEFINED BUILD_SHARED_LIBS)
-  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
-elseif(DEFINED ADIOS2_BUILD_SHARED_LIBS)
+if(DEFINED ADIOS2_BUILD_SHARED_LIBS)
   set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${ADIOS2_BUILD_SHARED_LIBS})
+elseif(DEFINED BUILD_SHARED_LIBS)
+  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
 else()
   set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${SHARED_LIBS_SUPPORTED})
 endif()
-unset(BUILD_SHARED_LIBS)
-option(ADIOS2_BUILD_SHARED_LIBS "Build shared libraries (so/dylib/dll)." ${ADIOS2_BUILD_SHARED_LIBS})
+cmake_dependent_option(ADIOS2_BUILD_SHARED_LIBS
+  "Build shared libraries (so/dylib/dll)." ${ADIOS2_BUILD_SHARED_LIBS_DEFAULT}
+  "SHARED_LIBS_SUPPORTED" OFF
+)
 set(BUILD_SHARED_LIBS ${ADIOS2_BUILD_SHARED_LIBS})
-if(NOT SHARED_LIBS_SUPPORTED)
-  if(BUILD_SHARED_LIBS)
-    message(WARNING "A shared library build was requested but is not supported on this platform / compiler.  Unexpected build results will likely occur")
-  endif()
-  set(BUILD_SHARED_LIBS OFF)
-endif()
+mark_as_advanced(BUILD_SHARED_LIBS)
 
-cmake_dependent_option(ADIOS2_ENABLE_PIC
-  "Build with Position Independent Code" ON
-  "SHARED_LIBS_SUPPORTED" OFF)
-if(ADIOS2_ENABLE_PIC)
-  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# Setup PIC defaults.  If explicitly specified somehow, then default 
+# to that.  Otherwise base the default on whether or not shared libs are even
+# supported.
+if(DEFINED ADIOS2_ENABLE_PIC)
+  set(ADIOS2_ENABLE_PIC_DEFAULT ${ADIOS2_ENABLE_PIC})
+elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
+  set(ADIOS2_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
+else()
+  set(ADIOS2_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
 endif()
+cmake_dependent_option(ADIOS2_ENABLE_PIC
+  "Build with Position Independent Code" ${ADIOS2_ENABLE_PIC_DEFAULT}
+  "SHARED_LIBS_SUPPORTED" OFF
+)
+set(CMAKE_POSITION_INDEPENDENT_CODE ${ADIOS2_ENABLE_PIC})
+mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
 
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
@@ -162,10 +171,13 @@ message("")
 message("  Installation prefix: ${CMAKE_INSTALL_PREFIX}")
 message("  Features:")
 if(BUILD_SHARED_LIBS)
-  message("    Library Type: shared")
+  set(msg_lib_type "shared")
+elseif(CMAKE_POSITION_INDEPENDENT_CODE)
+  set(msg_lib_type "static (with PIC)")
 else()
-  message("    Library Type: static")
+  set(msg_lib_type "static (without PIC)")
 endif()
+message("    Library Type: ${msg_lib_type}")
 message("    Build Type:   ${CMAKE_BUILD_TYPE}")
 message("    Testing: ${BUILD_TESTING}")
 message("    Build Options:")
