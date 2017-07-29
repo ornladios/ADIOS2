@@ -56,4 +56,10 @@
     MACRO(float)                                                               \
     MACRO(double)
 
+#define ADIOS2_FOREACH_ZFP_TYPE_1ARG(MACRO)                                    \
+    MACRO(int32_t)                                                             \
+    MACRO(int64_t)                                                             \
+    MACRO(float)                                                               \
+    MACRO(double)
+
 #endif /* ADIOS2_ADIOSMACROS_H */

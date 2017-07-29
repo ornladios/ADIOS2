@@ -96,6 +96,8 @@ public:
      */
     IO &GetIO(const std::string name);
 
+    Transform &GetTransform(const std::string transform);
+
 private:
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;
@@ -104,7 +106,7 @@ private:
     const bool m_DebugMode = false;
 
     /** transforms associated with ADIOS run */
-    std::vector<std::shared_ptr<Transform>> m_Transforms;
+    std::map<std::string, std::shared_ptr<Transform>> m_Transforms;
 
     /**
      * @brief List of IO class objects defined from either ADIOS

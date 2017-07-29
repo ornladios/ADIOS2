@@ -19,3 +19,12 @@ endif()
 if(ADIOS2_HAVE_HDF5)
   add_subdirectory(hdf5Writer)
 endif()
+
+if(ADIOS2_HAVE_BZip2)
+  add_subdirectory(bpBZip2Wrapper)
+endif()
+
+if(ADIOS2_HAVE_ZFP)
+  add_subdirectory(bpZfpWrapper)
+endif()
+
