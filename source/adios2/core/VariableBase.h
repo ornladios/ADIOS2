@@ -137,9 +137,14 @@ public:
     /** Registered transforms */
     std::vector<TransformInfo> m_TransformsInfo;
 
+    /** Self-check dims according to type, called right after DefineVariable and
+     * SetSelection.
+     * @param hint extra debugging info for the exception */
+    void CheckDimsCommon(const std::string hint) const;
+
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */
-    void CheckDims(const std::string hint) const;
+    void CheckDimsBeforeWrite(const std::string hint) const;
 
 private:
     const bool m_DebugMode = false;

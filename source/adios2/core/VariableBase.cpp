@@ -168,14 +168,6 @@ void VariableBase::InitShapeType()
             }
             m_ShapeID = ShapeID::JoinedArray;
         }
-        else if (std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) > 1)
-        {
-            throw std::invalid_argument(
-                "ERROR: variable can't have more than one "
-                "JoinedDim in shape argument, in call to "
-                "DefineVariable " +
-                m_Name + "\n");
-        }
         else if (m_Start.empty() && m_Count.empty())
         {
             if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
@@ -265,6 +257,12 @@ void VariableBase::InitShapeType()
     }
 
     /* Extra checks for invalid settings */
+    if (m_DebugMode)
+        CheckDimsCommon("DefineVariable(" + m_Name + ")");
+}
+
+void VariableBase::CheckDimsCommon(const std::string hint) const
+{
     if (m_ShapeID != ShapeID::LocalValue)
     {
         if ((!m_Shape.empty() &&
@@ -276,14 +274,26 @@ void VariableBase::InitShapeType()
         {
             throw std::invalid_argument("ERROR: LocalValueDim is only "
                                         "allowed in a {LocalValueDim} "
-                                        "shape in call to "
-                                        "DefineVariable " +
-                                        m_Name + "\n");
+                                        "shape in call to " +
+                                        hint + "\n");
         }
+    }
+
+    if ((!m_Shape.empty() &&
+         std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) > 1) ||
+        (!m_Start.empty() &&
+         std::count(m_Start.begin(), m_Start.end(), JoinedDim) > 0) ||
+        (!m_Count.empty() &&
+         std::count(m_Count.begin(), m_Count.end(), JoinedDim) > 0))
+    {
+        throw std::invalid_argument("ERROR: JoinedDim is only allowed once in "
+                                    "Shape and cannot appear in Start/Count in "
+                                    "call to " +
+                                    hint + "\n");
     }
 }
 
-void VariableBase::CheckDims(const std::string hint) const
+void VariableBase::CheckDimsBeforeWrite(const std::string hint) const
 {
     if (m_ShapeID == ShapeID::GlobalArray)
     {
@@ -292,10 +302,12 @@ void VariableBase::CheckDims(const std::string hint) const
             throw std::invalid_argument(
                 "ERROR: GlobalArray variable " + m_Name +
                 " start and count dimensions must be defined by either "
-                "DefineVariable or a Selection " +
+                "DefineVariable or a Selection in call to " +
                 hint + "\n");
         }
     }
+
+    CheckDimsCommon(hint);
     // TODO need to think more exceptions here
 }
 
