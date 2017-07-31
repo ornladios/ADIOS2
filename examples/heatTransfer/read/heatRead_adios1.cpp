@@ -69,6 +69,8 @@ int main(int argc, char *argv[])
     // 1D decomposition of the columns, which is inefficient for reading!
     uint64_t readsize[2] = {gndx, gndy / nproc};
     uint64_t offset[2] = {0LL, rank * readsize[1]};
+    size_t readsize_size_t[2] = {gndx, gndy / nproc};
+    size_t offset_size_t[2] = {0LL, rank * readsize[1]};
     if (rank == nproc - 1)
     {
         // last process should read all the rest of columns
@@ -90,7 +92,7 @@ int main(int argc, char *argv[])
     adios_schedule_read(f, sel, "T", 0, vT->nsteps, T);
     adios_perform_reads(f, 1);
 
-    printData(T, readsize, offset, rank, vT->nsteps);
+    printData(T, readsize_size_t, offset_size_t, rank, vT->nsteps);
     adios_read_close(f);
     adios_free_varinfo(vT);
     delete[] T;

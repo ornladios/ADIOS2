@@ -13,7 +13,6 @@
 
 #include <cstdint>
 
-void printData(double *xy, uint64_t *size, uint64_t *offset, int rank,
-               int steps);
+void printData(double *xy, size_t *size, size_t *offset, int rank, int steps);
 
 #endif /* PRINTDATA_H_ */
