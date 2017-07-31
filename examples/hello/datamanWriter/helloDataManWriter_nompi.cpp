@@ -24,10 +24,10 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(adios2::DebugON);
         adios2::IO &dataManIO = adios.DeclareIO("WANIO");
         dataManIO.SetEngine("DataManWriter");
-        dataManIO.SetParameters({{"peer-to-peer", "yes"},
-                                 {"real_time", "yes"},
-                                 {"compress", "no"},
-                                 {"method", "dump"}});
+        dataManIO.SetParameters({{"compress", "no"},
+                {"method", "dump"},
+                {"type", "wan"}
+                });
 
         // Define variable and local size
         auto bpFloats =

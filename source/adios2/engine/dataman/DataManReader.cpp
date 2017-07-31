@@ -17,7 +17,8 @@ namespace adios2
 
 DataManReader::DataManReader(IO &io, const std::string &name,
                              const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("DataManReader", io, name, openMode, mpiComm)
+: Engine("DataManReader", io, name, openMode, mpiComm),
+    m_Man(mpiComm, true)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
@@ -29,7 +30,7 @@ void DataManReader::SetCallBack(
         callback)
 {
     m_CallBack = callback;
-    m_Man.reg_callback(callback);
+//    m_Man.reg_callback(callback);
 }
 
 void DataManReader::Close(const int transportIndex) {}
@@ -93,7 +94,7 @@ void DataManReader::Init()
             }
         }
         jmsg["stream_mode"] = "receiver";
-        m_Man.add_stream(jmsg);
+//        m_Man.add_stream(jmsg);
 
         std::string method_type;
         int num_channels = 0;

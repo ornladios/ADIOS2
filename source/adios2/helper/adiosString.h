@@ -67,6 +67,12 @@ GetParametersValues(const std::string &key,
  */
 void SetParameterValue(const std::string key, const Params &parameters,
                        std::string &value) noexcept;
+
+std::string GetParameter(const std::string key, const adios2::Params &params,
+                              const bool isMandatory,
+                              const bool debugMode, const std::string hint);
 }
+
+
 
 #endif /* ADIOS2_HELPER_ADIOSSTRING_H_ */

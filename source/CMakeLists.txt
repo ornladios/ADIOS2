@@ -2,10 +2,6 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
-  
-if(ADIOS2_HAVE_DataMan)
-  add_subdirectory(dataman)
-endif()
 
 add_subdirectory(adios2)
 

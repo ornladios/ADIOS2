@@ -48,7 +48,7 @@ void DataManWriter::DoWriteCommon(Variable<T> &variable, const T *values)
     jmsg["varshape"] = variable.m_Shape;
     jmsg["offset"] = variable.m_Start;
     jmsg["timestep"] = 0;
-    m_Man.put(values, jmsg);
+//    m_Man.put(values, jmsg);
 
     if (m_DoMonitor)
     {

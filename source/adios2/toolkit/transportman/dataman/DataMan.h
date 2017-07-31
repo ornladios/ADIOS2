@@ -12,7 +12,6 @@
 #define ADIOS2_TOOLKIT_TRANSPORTMAN_DATAMAN_DATAMAN_H_
 
 #include "adios2/toolkit/transportman/TransportMan.h"
-
 #include <json.hpp>
 
 namespace adios2

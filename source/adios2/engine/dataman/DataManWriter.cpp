@@ -20,7 +20,8 @@ namespace adios2
 
 DataManWriter::DataManWriter(IO &io, const std::string &name,
                              const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("DataManWriter", io, name, openMode, mpiComm)
+: Engine("DataManWriter", io, name, openMode, mpiComm),
+    m_Man(mpiComm, true)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";
     Init();
@@ -32,12 +33,16 @@ void DataManWriter::SetCallBack(
         callback)
 {
     m_CallBack = callback;
-    m_Man.reg_callback(callback);
+//    m_Man.reg_callback(callback);
 }
 
-void DataManWriter::Advance(const float timeoutSeconds) { m_Man.flush(); }
+void DataManWriter::Advance(const float timeoutSeconds) {
+//    m_Man.flush();
+}
 
-void DataManWriter::Close(const int transportIndex) { m_Man.flush(); }
+void DataManWriter::Close(const int transportIndex) {
+//    m_Man.flush();
+}
 
 // PRIVATE functions below
 void DataManWriter::Init()
@@ -97,20 +102,40 @@ void DataManWriter::Init()
                                  }) == s.end();
         };
 
-        json jmsg;
-        for (const auto &i : m_IO.m_Parameters)
-        {
-            if (lf_IsNumber(i.second))
-            {
-                jmsg[i.first] = std::stoi(i.second);
-            }
-            else
-            {
-                jmsg[i.first] = i.second;
+//        json jmsg;
+//        for (const auto &i : m_IO.m_Parameters)
+//        {
+//            if (lf_IsNumber(i.second))
+//            {
+//                jmsg[i.first] = std::stoi(i.second);
+//            }
+//            else
+//            {
+//                jmsg[i.first] = i.second;
+//            }
+//        }
+//        jmsg["stream_mode"] = "sender";
+//        m_Man.add_stream(jmsg);
+
+        int n_Transports = 1;
+        std::vector<Params> para(n_Transports);
+
+        std::cout << para.size() << std::endl;
+
+        for(unsigned int i=0; i<para.size(); i++){
+            para[i]["type"] = "wan";
+            para[i]["transport"] = "zmq";
+            para[i]["name"] = "stream";
+            para[i]["ipaddress"] = "127.0.0.1";
+        }
+
+        for(auto &i :para){
+            for(auto &j :i){
+                std::cout << j.first << " " << j.second << std::endl;
             }
         }
-        jmsg["stream_mode"] = "sender";
-        m_Man.add_stream(jmsg);
+
+        m_Man.OpenWANTransports("zmq", adios2::OpenMode::Write, para, true);
 
         std::string method_type;
         lf_AssignString("method_type", method_type);

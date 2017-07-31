@@ -13,8 +13,7 @@
 
 #include <iostream> //std::cout << Needs to go
 
-#include <DataMan.h>
-
+#include "adios2/toolkit/transportman/DataMan/DataMan.h"
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 
@@ -63,7 +62,7 @@ public:
 
 private:
     bool m_DoRealTime = false;
-    DataMan m_Man;
+    transportman::DataMan m_Man;
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         m_CallBack; ///< call back function

@@ -97,7 +97,7 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX)
 endif()
 
-GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python SysVShMem)
+GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 ZeroMQ DataMan Python SysVShMem)
 install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
