@@ -60,8 +60,7 @@ void VariableBase::SetSelection(const Dims start, const Dims count)
         }
 
         if (m_ShapeID == ShapeID::GlobalArray &&
-            (m_Shape.size() != m_Count.size() ||
-             m_Shape.size() != m_Start.size()))
+            (m_Shape.size() != count.size() || m_Shape.size() != start.size()))
         {
             throw std::invalid_argument("ERROR: count and start must be the "
                                         "same size as shape for variable " +
@@ -154,89 +153,147 @@ void VariableBase::ClearTransforms() noexcept { m_TransformsInfo.clear(); }
 // PRIVATE
 void VariableBase::InitShapeType()
 {
-    if (!m_Shape.empty() && m_Start.empty() && m_Count.empty())
+    if (!m_Shape.empty())
     {
-        if (m_DebugMode)
+        if (std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) == 1)
         {
-            if (m_ConstantDims)
+            if (!m_Start.empty() &&
+                std::count(m_Start.begin(), m_Start.end(), 0) != m_Start.size())
             {
-                throw std::invalid_argument(
-                    "ERROR: isConstantShape (true) argument is invalid "
-                    "with empty start and count "
-                    "arguments\n");
+                throw std::invalid_argument("ERROR: The Start array must be "
+                                            "empty or full-zero when defining "
+                                            "a Joined Array in call to "
+                                            "DefineVariable " +
+                                            m_Name + "\n");
+            }
+            m_ShapeID = ShapeID::JoinedArray;
+        }
+        else if (m_Start.empty() && m_Count.empty())
+        {
+            if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
+            {
+                m_ShapeID = ShapeID::LocalValue;
+                m_SingleValue = true;
+            }
+            else
+            {
+                if (m_DebugMode)
+                {
+                    if (m_ConstantDims)
+                    {
+                        throw std::invalid_argument(
+                            "ERROR: isConstantShape (true) argument is invalid "
+                            "with empty start and count "
+                            "arguments in call to "
+                            "DefineVariable " +
+                            m_Name + "\n");
+                    }
+                }
+
+                m_ShapeID = ShapeID::GlobalArray;
             }
         }
-
-        m_ShapeID = ShapeID::GlobalArray;
-    }
-    else if (!m_Shape.empty() && m_Shape.size() == m_Start.size() &&
-             m_Shape.size() == m_Count.size())
-    {
-        if (m_DebugMode)
+        else if (m_Shape.size() == m_Start.size() &&
+                 m_Shape.size() == m_Count.size())
         {
-            auto lf_LargerThanError = [&](const unsigned int i,
-                                          const std::string dims1,
-                                          const std::string dims2) {
-
-                const std::string iString(std::to_string(i));
-                throw std::invalid_argument(
-                    "ERROR: " + dims1 + "[" + iString + "] > " + dims2 + "[" +
-                    iString + "], in DefineVariable " + m_Name + "\n");
-            };
-
-            for (unsigned int i = 0; i < m_Shape.size(); ++i)
+            if (m_DebugMode)
             {
-                if (m_Count[i] > m_Shape[i])
+                auto lf_LargerThanError = [&](const unsigned int i,
+                                              const std::string dims1,
+                                              const std::string dims2) {
+
+                    const std::string iString(std::to_string(i));
+                    throw std::invalid_argument(
+                        "ERROR: " + dims1 + "[" + iString + "] > " + dims2 +
+                        "[" + iString + "], in DefineVariable " + m_Name +
+                        "\n");
+                };
+
+                for (unsigned int i = 0; i < m_Shape.size(); ++i)
                 {
-                    lf_LargerThanError(i, "count", "shape");
-                }
-                if (m_Start[i] > m_Shape[i])
-                {
-                    lf_LargerThanError(i, "start", "shape");
+                    if (m_Count[i] > m_Shape[i])
+                    {
+                        lf_LargerThanError(i, "count", "shape");
+                    }
+                    if (m_Start[i] > m_Shape[i])
+                    {
+                        lf_LargerThanError(i, "start", "shape");
+                    }
                 }
             }
+            m_ShapeID = ShapeID::GlobalArray;
         }
+        else
+        {
+            throw std::invalid_argument("ERROR: the "
+                                        "combination of shape, start and count "
+                                        "arguments is inconsistent, in call to "
+                                        "DefineVariable " +
+                                        m_Name + "\n");
+        }
+    }
+    else //(m_Shape.empty())
+    {
+        if (m_Start.empty())
+        {
+            if (m_Count.empty())
+            {
+                m_ShapeID = ShapeID::GlobalValue;
+                m_SingleValue = true;
+            }
+            else if (m_Start.empty() && !m_Count.empty())
+            {
+                m_ShapeID = ShapeID::LocalArray;
+            }
+        }
+        else
+        {
+            throw std::invalid_argument(
+                "ERROR: if the "
+                "shape is empty, start must be empty as well, in call to "
+                "DefineVariable " +
+                m_Name + "\n");
+        }
+    }
 
-        m_ShapeID = ShapeID::GlobalArray;
-    }
-    else if (m_Shape.empty() && m_Start.empty() && m_Count.empty())
+    /* Extra checks for invalid settings */
+    if (m_DebugMode)
+        CheckDimsCommon("DefineVariable(" + m_Name + ")");
+}
+
+void VariableBase::CheckDimsCommon(const std::string hint) const
+{
+    if (m_ShapeID != ShapeID::LocalValue)
     {
-        m_ShapeID = ShapeID::GlobalValue;
-        m_SingleValue = true;
+        if ((!m_Shape.empty() &&
+             std::count(m_Shape.begin(), m_Shape.end(), LocalValueDim) > 0) ||
+            (!m_Start.empty() &&
+             std::count(m_Start.begin(), m_Start.end(), LocalValueDim) > 0) ||
+            (!m_Count.empty() &&
+             std::count(m_Count.begin(), m_Count.end(), LocalValueDim) > 0))
+        {
+            throw std::invalid_argument("ERROR: LocalValueDim is only "
+                                        "allowed in a {LocalValueDim} "
+                                        "shape in call to " +
+                                        hint + "\n");
+        }
     }
-    else if (m_Shape.empty() && m_Start.empty() && !m_Count.empty())
+
+    if ((!m_Shape.empty() &&
+         std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) > 1) ||
+        (!m_Start.empty() &&
+         std::count(m_Start.begin(), m_Start.end(), JoinedDim) > 0) ||
+        (!m_Count.empty() &&
+         std::count(m_Count.begin(), m_Count.end(), JoinedDim) > 0))
     {
-        m_ShapeID = ShapeID::LocalArray;
-    }
-    else if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
-    {
-        m_ShapeID = ShapeID::LocalValue;
-        m_SingleValue = true;
-    }
-    else if (!m_Shape.empty() &&
-             std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) == 1)
-    {
-        m_ShapeID = ShapeID::JoinedArray;
-    }
-    else if (!m_Shape.empty() &&
-             std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) > 1)
-    {
-        throw std::invalid_argument("ERROR: variable can't have more than one "
-                                    "JoinedDim in shape argument, in call to "
-                                    "DefineVariable " +
-                                    m_Name + "\n");
-    }
-    else
-    {
-        throw std::invalid_argument("ERROR: the "
-                                    "combination of shape, start and count "
-                                    "arguments is inconsistent, in call to "
-                                    "DefineVariable " +
-                                    m_Name + "\n");
+        throw std::invalid_argument("ERROR: JoinedDim is only allowed once in "
+                                    "Shape and cannot appear in Start/Count in "
+                                    "call to " +
+                                    hint + "\n");
     }
 }
 
-void VariableBase::CheckDims(const std::string hint) const
+void VariableBase::CheckDimsBeforeWrite(const std::string hint) const
 {
     if (m_ShapeID == ShapeID::GlobalArray)
     {
@@ -245,10 +302,12 @@ void VariableBase::CheckDims(const std::string hint) const
             throw std::invalid_argument(
                 "ERROR: GlobalArray variable " + m_Name +
                 " start and count dimensions must be defined by either "
-                "DefineVariable or a Selection " +
+                "DefineVariable or a Selection in call to " +
                 hint + "\n");
         }
     }
+
+    CheckDimsCommon(hint);
     // TODO need to think more exceptions here
 }
 
