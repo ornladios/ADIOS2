@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
     // 1D decomposition of the columns, which is inefficient for reading!
     std::vector<uint64_t> readsize({gndx, gndy / nproc});
     std::vector<uint64_t> offset({0LL, rank * readsize[1]});
-    std::vector<size_t> readsize_size_t({gndx, gndy / nproc});
-    std::vector<size_t> offset_size_t({0LL, rank * readsize[1]});
+    adios2::Dims readsize_size_t({gndx, gndy / nproc});
+    adios2::Dims offset_size_t({0LL, rank * readsize[1]});
     if (rank == nproc - 1)
     {
         // last process should read all the rest of columns
