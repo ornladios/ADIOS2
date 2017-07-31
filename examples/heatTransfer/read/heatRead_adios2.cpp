@@ -95,6 +95,8 @@ int main(int argc, char *argv[])
     // 1D decomposition of the columns, which is inefficient for reading!
     std::vector<uint64_t> readsize({gndx, gndy / nproc});
     std::vector<uint64_t> offset({0LL, rank * readsize[1]});
+    std::vector<size_t> readsize_size_t({gndx, gndy / nproc});
+    std::vector<size_t> offset_size_t({0LL, rank * readsize[1]});
     if (rank == nproc - 1)
     {
         // last process should read all the rest of columns
@@ -109,7 +111,7 @@ int main(int argc, char *argv[])
     double *T = new double[vT->m_AvailableSteps * readsize[0] * readsize[1]];
 
     // Create a 2D selection for the subset
-    vT->SetSelection(offset, readsize);
+    vT->SetSelection(offset_size_t, readsize_size_t);
     vT->SetStepSelection(0, vT->m_AvailableSteps);
 
     // Arrays are read by scheduling one or more of them
