@@ -29,7 +29,7 @@ void Engine::Write(Variable<T> &variable, const T *values)
 {
     if (m_DebugMode)
     {
-        variable.CheckDimsBeforeWrite("Write(" + variable.m_Name + ")");
+        variable.CheckDimsBeforeWrite("Write " + variable.m_Name);
     }
 
     DoWrite(variable, values);
