@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Variable.tcc
+ * Attribute.tcc
  *
- *  Created on: May 1, 2017
+ *  Created on: Aug 1, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_CORE_VARIABLE_TCC_
-#define ADIOS2_CORE_VARIABLE_TCC_
+#ifndef ADIOS2_CORE_ATTRIBUTE_TCC_
+#define ADIOS2_CORE_ATTRIBUTE_TCC_
 
-#include "Variable.h"
+#include "Attribute.h"
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
@@ -22,22 +22,20 @@ namespace adios2
 #define declare_type(T)                                                        \
                                                                                \
     template <>                                                                \
-    Variable<T>::Variable(const std::string &name, const Dims shape,           \
-                          const Dims start, const Dims count,                  \
-                          const bool constantShape, const bool debugMode)      \
-    : VariableBase(name, GetType<T>(), sizeof(T), shape, start, count,         \
-                   constantShape, debugMode)                                   \
+    Attribute<T>::Attribute(const std::string &name, const T *array,           \
+                            const size_t elements)                             \
+    : AttributeBase(name, GetType<T>(), elements), m_DataArray(array),         \
+      m_DataValue()                                                            \
     {                                                                          \
     }                                                                          \
                                                                                \
     template <>                                                                \
-    void Variable<T>::ApplyTransforms()                                        \
+    Attribute<T>::Attribute(const std::string &name, const T &value)           \
+    : AttributeBase(name, GetType<T>(), 1), m_DataValue()                      \
     {                                                                          \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
 
-} // end namespace adios
-
-#endif /* ADIOS2_CORE_VARIABLE_TCC_ */
+} // end namespace adios2

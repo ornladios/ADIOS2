@@ -54,7 +54,7 @@ public:
                 const Dims count, const bool constantShape,
                 const bool debugMode);
 
-    virtual ~Variable<T>() = default;
+    ~Variable<T>() = default;
 
     void ApplyTransforms() final;
 };

@@ -24,11 +24,15 @@
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/Attribute.h"
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableCompound.h"
 
 namespace adios2
 {
+
+/** used for Variables and Attributes */
+using DataMap = std::map<std::string, std::pair<std::string, unsigned int>>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
@@ -138,6 +142,26 @@ public:
                            const bool constantShape = false);
 
     /**
+     * Define attribute from contiguous data array
+     * @param name must be unique for the IO object
+     * @param array pointer to user data
+     * @param elements number of data elements
+     * @return reference to internal Attribute
+     */
+    template <class T>
+    Attribute<T> &DefineAttribute(const std::string &name, const T *array,
+                                  const size_t elements);
+
+    /**
+     * Define attribute from a single variable
+     * @param name must be unique for the IO object
+     * @param value single data value
+     * @return reference to internal Attribute
+     */
+    template <class T>
+    Attribute<T> &DefineAttribute(const std::string &name, const T &value);
+
+    /**
      * Removes an existing Variable previously created with DefineVariable or
      * DefineVariableCompound
      * @param name
@@ -162,6 +186,15 @@ public:
      * throws an exception if VariableCompound is not found
      */
     VariableCompound &GetVariableCompound(const std::string &name);
+
+    /**
+     * Gets an existing attribute of primitive type by name
+     * @param name of attribute to be retrieved
+     * @return reference to an existing attribute created with DefineAttribute
+     * throws an exception if Attribute is not found
+     */
+    template <class T>
+    Attribute<T> &GetAttribute(const std::string &name);
 
     /**
      * Get the type if variable (by name id) exists
@@ -222,7 +255,7 @@ private:
      *        pair.second = index in fixed size map (e.g. m_Int8, m_Double)
      * </pre>
      */
-    std::map<std::string, std::pair<std::string, unsigned int>> m_Variables;
+    DataMap m_Variables;
 
     /** Variable containers based on fixed-size type */
     std::map<unsigned int, Variable<char>> m_Char;
@@ -243,25 +276,63 @@ private:
     std::map<unsigned int, Variable<cldouble>> m_CLDouble;
     std::map<unsigned int, VariableCompound> m_Compound;
 
-    std::map<std::string, std::string> m_AttributesString;
-    std::map<std::string, double> m_AttributesNumeric;
-
-    std::set<std::string> m_EngineNames;
-
     /** Gets the internal reference to a variable map for type T
      *  This function is specialized in IO.tcc */
     template <class T>
     std::map<unsigned int, Variable<T>> &GetVariableMap();
 
-    /** Gets the internal index in variable map for an existing variable */
-    unsigned int GetVariableIndex(const std::string &name) const;
+    /**
+     * Map holding attribute identifiers
+     * <pre>
+     * key: unique attribute name,
+     * value: pair.first = type as string GetType<T> from
+     *                     helper/adiosTemplates.h
+     *        pair.second = index in fixed size map (e.g. m_Int8, m_Double)
+     * </pre>
+     */
+    DataMap m_Attributes;
+
+    std::map<unsigned int, Attribute<std::string>> m_StringA;
+    std::map<unsigned int, Attribute<char>> m_CharA;
+    std::map<unsigned int, Attribute<unsigned char>> m_UCharA;
+    std::map<unsigned int, Attribute<short>> m_ShortA;
+    std::map<unsigned int, Attribute<unsigned short>> m_UShortA;
+    std::map<unsigned int, Attribute<int>> m_IntA;
+    std::map<unsigned int, Attribute<unsigned int>> m_UIntA;
+    std::map<unsigned int, Attribute<long int>> m_LIntA;
+    std::map<unsigned int, Attribute<unsigned long int>> m_ULIntA;
+    std::map<unsigned int, Attribute<long long int>> m_LLIntA;
+    std::map<unsigned int, Attribute<unsigned long long int>> m_ULLIntA;
+    std::map<unsigned int, Attribute<float>> m_FloatA;
+    std::map<unsigned int, Attribute<double>> m_DoubleA;
+    std::map<unsigned int, Attribute<long double>> m_LDoubleA;
+
+    template <class T>
+    std::map<unsigned int, Attribute<T>> &GetAttributeMap();
 
     /**
-     * Checks if variable exists by checking its name
-     * @param name unique variable name to be checked against existing variables
-     * @return true: variable name exists, false: variable name doesn't exist
+     * Gets map index for Variables or Attributes
+     * @param name
+     * @param dataMap m_Variables or m_Attributes
+     * @param hint "Variable", "Attribute", or "VariableCompound"
+     * @return index in type map
      */
-    bool VariableExists(const std::string &name) const;
+    unsigned int GetMapIndex(const std::string &name, const DataMap &dataMap,
+                             const std::string hint) const;
+
+    /** Checks if attribute exists, called from DefineAttribute different
+     * signatures */
+    void CheckAttributeCommon(const std::string &name) const;
+
+    std::set<std::string> m_EngineNames;
+
+    /**
+     * Checks if iterator points to end. Used for Variables and Attributes.
+     * @param itDataMap iterator to be tested
+     * @param dataMap map
+     * @return true: itDataMap == dataMap.end(), false otherwise
+     */
+    bool IsEnd(DataMap::const_iterator itDataMap, const DataMap &dataMap) const;
 
     void CheckTransportType(const std::string type) const;
 };
@@ -274,6 +345,15 @@ private:
     extern template Variable<T> &IO::GetVariable<T>(const std::string &name);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    extern template Attribute<T> &IO::DefineAttribute<T>(                      \
+        const std::string &name, const T *array, const size_t elements);       \
+    extern template Attribute<T> &IO::DefineAttribute<T>(                      \
+        const std::string &name, const T &value);
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace adios

@@ -62,7 +62,7 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 
 VariableCompound &IO::GetVariableCompound(const std::string &name)
 {
-    return m_Compound.at(GetVariableIndex(name));
+    return m_Compound.at(GetMapIndex(name, m_Variables, "VariableCompound"));
 }
 
 std::string IO::GetVariableType(const std::string &name) const
@@ -235,30 +235,42 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
 }
 
 // PRIVATE Functions
-unsigned int IO::GetVariableIndex(const std::string &name) const
+unsigned int IO::GetMapIndex(const std::string &name, const DataMap &dataMap,
+                             const std::string hint) const
 {
+    auto itDataMap = dataMap.find(name);
+
     if (m_DebugMode)
     {
-        if (!VariableExists(name))
+        if (IsEnd(itDataMap, dataMap))
         {
-            throw std::invalid_argument(
-                "ERROR: variable " + m_Name +
-                " wasn't created with DefineVariable, in call to IO object " +
-                m_Name + " GetVariable\n");
+            throw std::invalid_argument("ERROR: " + hint + " " + m_Name +
+                                        " wasn't created with Define " + hint +
+                                        ", in call to IO object " + m_Name +
+                                        " Get" + hint + "\n");
         }
     }
-    auto itVariable = m_Variables.find(name);
-    return itVariable->second.second;
+    return itDataMap->second.second;
 }
 
-bool IO::VariableExists(const std::string &name) const
+void IO::CheckAttributeCommon(const std::string &name) const
 {
-    bool exists = false;
-    if (m_Variables.count(name) == 1)
+    auto itAttribute = m_Attributes.find(name);
+    if (!IsEnd(itAttribute, m_Attributes))
     {
-        exists = true;
+        throw std::invalid_argument("ERROR: attribute " + name +
+                                    " exists in IO object " + m_Name +
+                                    ", in call to DefineAttribute\n");
     }
-    return exists;
+}
+
+bool IO::IsEnd(DataMap::const_iterator itDataMap, const DataMap &dataMap) const
+{
+    if (itDataMap == dataMap.end())
+    {
+        return true;
+    }
+    return false;
 }
 
 void IO::CheckTransportType(const std::string type) const
