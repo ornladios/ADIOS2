@@ -45,6 +45,12 @@ void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
 void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
 
+void IO::SetSingleParameter(const std::string key,
+                            const std::string value) noexcept
+{
+    m_Parameters[key] = value;
+}
+
 const Params &IO::GetParameters() const { return m_Parameters; }
 
 unsigned int IO::AddTransport(const std::string type, const Params &parameters)
@@ -58,6 +64,46 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     parametersMap["transport"] = type;
     m_TransportsParameters.push_back(parametersMap);
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
+}
+
+void IO::SetTransportSingleParameter(const unsigned int transportIndex,
+                                     const std::string key,
+                                     const std::string value)
+{
+    if (m_DebugMode)
+    {
+        if (transportIndex >=
+            static_cast<unsigned int>(m_TransportsParameters.size()))
+        {
+            throw std::invalid_argument("ERROR: transportIndex is larger than "
+                                        "transports created with AddTransport "
+                                        "function calls\n");
+        }
+    }
+
+    m_TransportsParameters[transportIndex][key] = value;
+}
+
+VariableCompound &
+IO::DefineVariableCompound(const std::string &name, const size_t sizeOfVariable,
+                           const Dims &shape, const Dims &start,
+                           const Dims &count, const bool constantDims)
+{
+    if (m_DebugMode)
+    {
+        if (VariableExists(name))
+        {
+            throw std::invalid_argument("ERROR: variable " + name +
+                                        " exists in IO object " + m_Name +
+                                        ", in call to DefineVariable\n");
+        }
+    }
+    const unsigned int size = m_Compound.size();
+    auto itVariableCompound = m_Compound.emplace(
+        size, VariableCompound(name, sizeOfVariable, shape, start, count,
+                               constantDims, m_DebugMode));
+    m_Variables.emplace(name, std::make_pair("compound", size));
+    return itVariableCompound.first->second;
 }
 
 VariableCompound &IO::GetVariableCompound(const std::string &name)

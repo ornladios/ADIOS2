@@ -88,6 +88,14 @@ public:
     void SetParameters(const Params &parameters = Params());
 
     /**
+     * Sets a single parameter overwriting value if key exists;
+     * @param key parameter key
+     * @param value parameter value
+     */
+    void SetSingleParameter(const std::string key,
+                            const std::string value) noexcept;
+
+    /**
      * Retrieve existing parameter set
      */
     const Params &GetParameters() const;
@@ -96,10 +104,22 @@ public:
      * Adds a transport and its parameters for the IO Engine
      * @param type must be a supported transport type
      * @param params acceptable parameters for a particular transport
-     * @return
+     * @return transportIndex handler
      */
     unsigned int AddTransport(const std::string type,
                               const Params &params = Params());
+
+    /**
+     * Set a single parameter to an existing transport identified with a
+     * transportIndex handler from AddTransport. This function overwrites
+     * existing parameter.
+     * @param transportIndex index handler from AddTransport
+     * @param key parameter key
+     * @param value parameter value
+     */
+    void SetTransportSingleParameter(const unsigned int transportIndex,
+                                     const std::string key,
+                                     const std::string value);
 
     /**
      * Define a Variable of primitive data type for I/O.
@@ -130,12 +150,18 @@ public:
      * change over time
      * @return reference to Variable object
      */
-
     template <class T>
     VariableCompound &
     DefineVariableCompound(const std::string &name, const Dims shape = Dims{},
                            const Dims start = Dims{}, const Dims count = Dims{},
-                           const bool constantShape = false);
+                           const bool constantDims = false);
+
+    VariableCompound &DefineVariableCompound(const std::string &name,
+                                             const size_t sizeOfVariable,
+                                             const Dims &shape = Dims{},
+                                             const Dims &start = Dims{},
+                                             const Dims &count = Dims{},
+                                             const bool constantDims = false);
 
     /**
      * Removes an existing Variable previously created with DefineVariable or

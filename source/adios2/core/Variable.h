@@ -51,7 +51,7 @@ public:
      * @param debugMode
      */
     Variable<T>(const std::string &name, const Dims shape, const Dims start,
-                const Dims count, const bool constantShape,
+                const Dims count, const bool constantDims,
                 const bool debugMode);
 
     virtual ~Variable<T>() = default;
