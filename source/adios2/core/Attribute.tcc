@@ -31,7 +31,7 @@ namespace adios2
                                                                                \
     template <>                                                                \
     Attribute<T>::Attribute(const std::string &name, const T &value)           \
-    : AttributeBase(name, GetType<T>(), 1), m_DataValue()                      \
+    : AttributeBase(name, GetType<T>(), 1), m_DataValue(value)                 \
     {                                                                          \
     }
 
@@ -39,3 +39,5 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace adios2
+
+#endif /* ADIOS2_CORE_ATTRIBUTE_TCC_ */

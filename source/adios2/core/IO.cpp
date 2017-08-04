@@ -287,11 +287,22 @@ void IO::CheckTransportType(const std::string type) const
 
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
-    template Variable<T> &IO::DefineVariable<T>(                               \
-        const std::string &, const Dims, const Dims, const Dims, const bool);  \
+    template Variable<T> &IO::DefineVariable<T>(const std::string &,           \
+                                                const Dims &, const Dims &,    \
+                                                const Dims &, const bool);     \
     template Variable<T> &IO::GetVariable<T>(const std::string &);
 
 ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
+
+#define declare_template_instantiation(T)                                      \
+    template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
+                                                  const T *, const size_t);    \
+    template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
+                                                  const T &);                  \
+    template Attribute<T> &IO::GetAttribute(const std::string &);
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace adios

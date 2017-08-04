@@ -118,8 +118,8 @@ public:
      * @return reference to Variable object
      */
     template <class T>
-    Variable<T> &DefineVariable(const std::string &name, const Dims shape = {},
-                                const Dims start = {}, const Dims count = {},
+    Variable<T> &DefineVariable(const std::string &name, const Dims &shape = {},
+                                const Dims &start = {}, const Dims &count = {},
                                 const bool constantShape = false);
 
     /**
@@ -136,13 +136,14 @@ public:
      */
 
     template <class T>
-    VariableCompound &
-    DefineVariableCompound(const std::string &name, const Dims shape = Dims{},
-                           const Dims start = Dims{}, const Dims count = Dims{},
-                           const bool constantShape = false);
+    VariableCompound &DefineVariableCompound(const std::string &name,
+                                             const Dims &shape = Dims{},
+                                             const Dims &start = Dims{},
+                                             const Dims &count = Dims{},
+                                             const bool constantShape = false);
 
     /**
-     * Define attribute from contiguous data array
+     * Define attribute from contiguous data array owned by an application
      * @param name must be unique for the IO object
      * @param array pointer to user data
      * @param elements number of data elements
@@ -153,7 +154,7 @@ public:
                                   const size_t elements);
 
     /**
-     * Define attribute from a single variable
+     * Define attribute from a single variable making a copy
      * @param name must be unique for the IO object
      * @param value single data value
      * @return reference to internal Attribute
@@ -340,8 +341,8 @@ private:
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
     extern template Variable<T> &IO::DefineVariable<T>(                        \
-        const std::string &name, const Dims, const Dims, const Dims,           \
-        const bool constantShape);                                             \
+        const std::string &, const Dims &, const Dims &, const Dims &,         \
+        const bool);                                                           \
     extern template Variable<T> &IO::GetVariable<T>(const std::string &name);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
@@ -349,14 +350,15 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 
 #define declare_template_instantiation(T)                                      \
     extern template Attribute<T> &IO::DefineAttribute<T>(                      \
-        const std::string &name, const T *array, const size_t elements);       \
-    extern template Attribute<T> &IO::DefineAttribute<T>(                      \
-        const std::string &name, const T &value);
+        const std::string &, const T *, const size_t);                         \
+    extern template Attribute<T> &IO::DefineAttribute<T>(const std::string &,  \
+                                                         const T &);           \
+    extern template Attribute<T> &IO::GetAttribute(const std::string &);
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace adios
+} // end namespace adios2
 
 #include "adios2/core/IO.inl"
 

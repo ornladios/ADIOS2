@@ -11,6 +11,13 @@
 #ifndef ADIOS2_CORE_ATTRIBUTEBASE_H_
 #define ADIOS2_CORE_ATTRIBUTEBASE_H_
 
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+/// \endcond
+
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSTypes.h"
+
 namespace adios2
 {
 

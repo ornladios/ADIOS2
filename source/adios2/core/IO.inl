@@ -21,10 +21,10 @@ namespace adios2
 {
 
 template <class T>
-VariableCompound &IO::DefineVariableCompound(const std::string &name,
-                                             const Dims shape, const Dims start,
-                                             const Dims count,
-                                             const bool constantShape)
+VariableCompound &
+IO::DefineVariableCompound(const std::string &name, const Dims &shape,
+                           const Dims &start, const Dims &count,
+                           const bool constantShape)
 {
     if (m_DebugMode)
     {

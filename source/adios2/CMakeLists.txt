@@ -4,6 +4,8 @@
 #------------------------------------------------------------------------------#
   
 add_library(adios2
+  core/Attribute.cpp core/Attribute.tcc
+  core/AttributeBase.cpp
   core/ADIOS.cpp
   core/Engine.cpp
   core/IO.cpp core/IO.tcc

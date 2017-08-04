@@ -22,8 +22,8 @@ namespace adios2
 #define declare_type(T)                                                        \
                                                                                \
     template <>                                                                \
-    Variable<T>::Variable(const std::string &name, const Dims shape,           \
-                          const Dims start, const Dims count,                  \
+    Variable<T>::Variable(const std::string &name, const Dims &shape,          \
+                          const Dims &start, const Dims &count,                \
                           const bool constantShape, const bool debugMode)      \
     : VariableBase(name, GetType<T>(), sizeof(T), shape, start, count,         \
                    constantShape, debugMode)                                   \

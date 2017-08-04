@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Attribute.h : template class
+ * Attribute.h : template class that defines typed attributes
  *
  *  Created on: Aug 1, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -45,4 +45,4 @@ public:
 
 } // end namespace adios2
 
-#endif /* SOURCE_ADIOS2_CORE_ATTRIBUTE_H_ */
+#endif /* ADIOS2_CORE_ATTRIBUTE_H_ */

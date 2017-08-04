@@ -18,8 +18,6 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSMacros.h"
-#include "adios2/core/Transform.h"
 #include "adios2/core/VariableBase.h"
 
 namespace adios2
@@ -50,8 +48,8 @@ public:
      * @param constantShape
      * @param debugMode
      */
-    Variable<T>(const std::string &name, const Dims shape, const Dims start,
-                const Dims count, const bool constantShape,
+    Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
+                const Dims &count, const bool constantShape,
                 const bool debugMode);
 
     ~Variable<T>() = default;
