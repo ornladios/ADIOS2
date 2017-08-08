@@ -26,13 +26,14 @@ namespace adios2
 {
 
 template <class T>
-Variable<T> &IO::DefineVariable(const std::string &name, const Dims shape,
-                                const Dims start, const Dims count,
+Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
+                                const Dims &start, const Dims &count,
                                 const bool constantShape)
 {
     if (m_DebugMode)
     {
-        if (VariableExists(name))
+        auto itVariable = m_Variables.find(name);
+        if (!IsEnd(itVariable, m_Variables))
         {
             throw std::invalid_argument("ERROR: variable " + name +
                                         " exists in IO object " + m_Name +
@@ -41,7 +42,8 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims shape,
     }
 
     auto &variableMap = GetVariableMap<T>();
-    const unsigned int size = variableMap.size();
+    const unsigned int size =
+        static_cast<const unsigned int>(variableMap.size());
     auto itVariablePair =
         variableMap.emplace(size, Variable<T>(name, shape, start, count,
                                               constantShape, m_DebugMode));
@@ -53,7 +55,53 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims shape,
 template <class T>
 Variable<T> &IO::GetVariable(const std::string &name)
 {
-    return GetVariableMap<T>().at(GetVariableIndex(name));
+    return GetVariableMap<T>().at(GetMapIndex(name, m_Variables, "Variable"));
+}
+
+template <class T>
+Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value)
+{
+    if (m_DebugMode)
+    {
+        CheckAttributeCommon(name);
+    }
+
+    auto &attributeMap = GetAttributeMap<T>();
+    const unsigned int size =
+        static_cast<const unsigned int>(attributeMap.size());
+
+    auto itAttributePair =
+        attributeMap.emplace(size, Attribute<T>(name, value));
+    m_Attributes.emplace(name, std::make_pair(GetType<T>(), size));
+
+    return itAttributePair.first->second;
+}
+
+template <class T>
+Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
+                                  const size_t elements)
+{
+    if (m_DebugMode)
+    {
+        CheckAttributeCommon(name);
+    }
+
+    auto &attributeMap = GetAttributeMap<T>();
+    const unsigned int size =
+        static_cast<const unsigned int>(attributeMap.size());
+
+    auto itAttributePair =
+        attributeMap.emplace(size, Attribute<T>(name, array, elements));
+    m_Attributes.emplace(name, std::make_pair(GetType<T>(), size));
+
+    return itAttributePair.first->second;
+}
+
+template <class T>
+Attribute<T> &IO::GetAttribute(const std::string &name)
+{
+    return GetAttributeMap<T>().at(
+        GetMapIndex(name, m_Attributes, "Attribute"));
 }
 
 // PRIVATE
@@ -153,6 +201,91 @@ std::map<unsigned int, Variable<cldouble>> &IO::GetVariableMap()
     return m_CLDouble;
 }
 
-} // end namespace adios
+// attributes
+template <>
+std::map<unsigned int, Attribute<std::string>> &IO::GetAttributeMap()
+{
+    return m_StringA;
+}
+
+template <>
+std::map<unsigned int, Attribute<char>> &IO::GetAttributeMap()
+{
+    return m_CharA;
+}
+
+template <>
+std::map<unsigned int, Attribute<unsigned char>> &IO::GetAttributeMap()
+{
+    return m_UCharA;
+}
+
+template <>
+std::map<unsigned int, Attribute<short>> &IO::GetAttributeMap()
+{
+    return m_ShortA;
+}
+
+template <>
+std::map<unsigned int, Attribute<unsigned short>> &IO::GetAttributeMap()
+{
+    return m_UShortA;
+}
+
+template <>
+std::map<unsigned int, Attribute<int>> &IO::GetAttributeMap()
+{
+    return m_IntA;
+}
+
+template <>
+std::map<unsigned int, Attribute<unsigned int>> &IO::GetAttributeMap()
+{
+    return m_UIntA;
+}
+
+template <>
+std::map<unsigned int, Attribute<long int>> &IO::GetAttributeMap()
+{
+    return m_LIntA;
+}
+
+template <>
+std::map<unsigned int, Attribute<unsigned long int>> &IO::GetAttributeMap()
+{
+    return m_ULIntA;
+}
+
+template <>
+std::map<unsigned int, Attribute<long long int>> &IO::GetAttributeMap()
+{
+    return m_LLIntA;
+}
+
+template <>
+std::map<unsigned int, Attribute<unsigned long long int>> &IO::GetAttributeMap()
+{
+    return m_ULLIntA;
+}
+
+template <>
+std::map<unsigned int, Attribute<float>> &IO::GetAttributeMap()
+{
+    return m_FloatA;
+}
+
+template <>
+std::map<unsigned int, Attribute<double>> &IO::GetAttributeMap()
+{
+    return m_DoubleA;
+}
+
+template <>
+std::map<unsigned int, Attribute<long double>> &IO::GetAttributeMap()
+{
+    return m_LDoubleA;
+}
+
+} // end namespace adios2
 
 #endif /* ADIOS2_CORE_IO_TCC_ */

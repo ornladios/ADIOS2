@@ -63,8 +63,8 @@ public:
     unsigned int m_AvailableSteps = 1;
 
     VariableBase(const std::string &name, const std::string type,
-                 const size_t elementSize, const Dims shape, const Dims start,
-                 const Dims count, const bool constantShape,
+                 const size_t elementSize, const Dims &shape, const Dims &start,
+                 const Dims &count, const bool constantShape,
                  const bool debugMode);
 
     virtual ~VariableBase() = default;
@@ -82,7 +82,7 @@ public:
     size_t TotalSize() const noexcept;
 
     /** Set the local dimension and global offset of the variable */
-    void SetSelection(const Dims start, const Dims count);
+    void SetSelection(const Dims &start, const Dims &count);
 
     /** Overloaded version of SetSelection using a SelectionBoundingBox */
     void SetSelection(const SelectionBoundingBox &selection);
