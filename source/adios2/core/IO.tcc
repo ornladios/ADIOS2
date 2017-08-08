@@ -28,7 +28,7 @@ namespace adios2
 template <class T>
 Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
                                 const Dims &start, const Dims &count,
-                                const bool constantShape)
+                                const bool constantDims)
 {
     if (m_DebugMode)
     {

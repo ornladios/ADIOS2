@@ -140,7 +140,7 @@ public:
     template <class T>
     Variable<T> &DefineVariable(const std::string &name, const Dims &shape = {},
                                 const Dims &start = {}, const Dims &count = {},
-                                const bool constantShape = false);
+                                const bool constantDims = false);
 
     /**
      * Define a Variable of primitive data type for I/O.
@@ -159,8 +159,8 @@ public:
                                              const Dims &shape = Dims{},
                                              const Dims &start = Dims{},
                                              const Dims &count = Dims{},
-                                             const bool constantShape = false);
-  
+                                             const bool constantDims = false);
+
     VariableCompound &DefineVariableCompound(const std::string &name,
                                              const size_t sizeOfVariable,
                                              const Dims &shape = Dims{},

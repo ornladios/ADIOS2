@@ -53,6 +53,8 @@ int main(int argc, char *argv[])
     adios2_close(engineH);
     adios2_finalize(adiosH);
 
+    free(myFloats);
+
     MPI_Finalize();
 
     return 0;

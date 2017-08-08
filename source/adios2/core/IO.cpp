@@ -91,7 +91,8 @@ IO::DefineVariableCompound(const std::string &name, const size_t sizeOfVariable,
 {
     if (m_DebugMode)
     {
-        if (VariableExists(name))
+        auto itVariable = m_Variables.find(name);
+        if (!IsEnd(itVariable, m_Variables))
         {
             throw std::invalid_argument("ERROR: variable " + name +
                                         " exists in IO object " + m_Name +
