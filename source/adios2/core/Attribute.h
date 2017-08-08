@@ -21,8 +21,8 @@ class Attribute : public AttributeBase
 {
 
 public:
-    const T *m_DataArray = nullptr;
-    T m_DataValue;
+    std::vector<T> m_DataArray;
+    T m_DataSingleValue;
 
     /**
      * Data array constructor

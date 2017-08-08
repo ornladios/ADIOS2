@@ -20,6 +20,8 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/Attribute.h"
+#include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/toolkit/capsule/heap/STLVector.h"
 #include "adios2/toolkit/format/bp1/BP1Base.h"
@@ -41,7 +43,7 @@ public:
      */
     BP1Writer(MPI_Comm mpiComm, const bool debugMode = false);
 
-    virtual ~BP1Writer() = default;
+    ~BP1Writer() = default;
 
     /**
      * Writes a process group index PGIndex and list of methods (from
@@ -69,16 +71,16 @@ public:
     void WriteVariablePayload(const Variable<T> &variable) noexcept;
 
     /** Flattens data buffer and closes current process group */
-    void Advance();
+    void Advance(IO &io);
 
     /** Flattens data buffer and close current process group, doesn't
      *  advance time index */
-    void Flush();
+    void Flush(IO &io);
 
     /**
      * @param isFirstClose true: first time close, false: already closed buffer
      */
-    void Close() noexcept;
+    void Close(IO &io) noexcept;
 
     /**
      * Get a string with profiling information for this rank
@@ -101,6 +103,65 @@ public:
 private:
     /** BP format version */
     const uint8_t m_Version = 3;
+
+    /**
+     * Writes in BP buffer all attributes defined in an IO object.
+     * Called by FlattenData function
+     * @param io input containing attributes
+     */
+    void WriteAttributes(IO &io);
+
+    /**
+     * Called from WriteAttributeInData specialized functions
+     * @param attribute input
+     * @param stats
+     * @return attribute length position
+     */
+    template <class T>
+    size_t WriteAttributeHeaderInData(const Attribute<T> &attribute,
+                                      Stats<T> &stats) noexcept;
+
+    /**
+     * Called from WriteAttributeInData specialized functions
+     * @param attribute input
+     * @param stats
+     * @param attributeLengthPosition
+     */
+    template <class T>
+    void
+    WriteAttributeLengthInData(const Attribute<T> &attribute, Stats<T> &stats,
+                               const size_t attributeLengthPosition) noexcept;
+
+    /**
+     * Write a single attribute in data buffer, called from WriteAttributes
+     * @param attribute input
+     * @param stats
+     */
+    template <class T>
+    void WriteAttributeInData(const Attribute<T> &attribute,
+                              Stats<T> &stats) noexcept;
+
+    /**
+     * Writes attribute value in index characteristic value.
+     * @param characteristicID
+     * @param characteristicsCounter
+     * @param attribute
+     * @param buffer
+     */
+    template <class T>
+    void WriteAttributeCharacteristicValueInIndex(
+        std::uint8_t &characteristicsCounter, const Attribute<T> &attribute,
+        std::vector<char> &buffer) noexcept;
+
+    /**
+     * Write a single attribute in m_Metadata AttributesIndex, called from
+     * WriteAttributes
+     * @param attribute
+     * @param stats
+     */
+    template <class T>
+    void WriteAttributeInIndex(const Attribute<T> &attribute,
+                               const Stats<T> &stats) noexcept;
 
     /**
      * Get variable statistics
@@ -160,14 +221,16 @@ private:
      * data
      * characteristic
      */
-    void WriteDimensionsRecord(const Dims localDimensions,
-                               const Dims globalDimensions, const Dims offsets,
+    void WriteDimensionsRecord(const Dims &localDimensions,
+                               const Dims &globalDimensions,
+                               const Dims &offsets,
                                std::vector<char> &buffer) noexcept;
 
     /** Overloaded version for data buffer */
-    void WriteDimensionsRecord(const Dims localDimensions,
-                               const Dims globalDimensions, const Dims offsets,
-                               std::vector<char> &buffer, size_t &position,
+    void WriteDimensionsRecord(const Dims &localDimensions,
+                               const Dims &globalDimensions,
+                               const Dims &offsets, std::vector<char> &buffer,
+                               size_t &position,
                                const bool isCharacteristic = false) noexcept;
 
     /** Writes min max */
@@ -224,7 +287,7 @@ private:
      * @param metadataSet
      * @param buffer
      */
-    void FlattenData() noexcept;
+    void FlattenData(IO &io) noexcept;
 
     /**
      * Flattens the metadata indices into a single metadata buffer in capsule
@@ -245,6 +308,6 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_UTILITIES_FORMAT_BP1_BP1WRITER_H_ */

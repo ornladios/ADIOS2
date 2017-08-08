@@ -58,7 +58,8 @@ struct BP1MetadataSet
      */
     uint32_t TimeStep = 1;
 
-    BP1Index PGIndex = BP1Index(0); ///< single buffer for PGIndex
+    /** single buffer for PGIndex */
+    BP1Index PGIndex = BP1Index(0);
 
     // no priority for now
     /** @brief key: variable name, value: bp metadata variable index */
@@ -67,7 +68,10 @@ struct BP1MetadataSet
     /** @brief key: attribute name, value: bp metadata attribute index */
     std::unordered_map<std::string, BP1Index> AttributesIndices;
 
-    const unsigned int MiniFooterSize = 28; ///< from bpls reader
+    bool AreAttributesWritten = false;
+
+    /** Fixed size for mini footer */
+    const unsigned int MiniFooterSize = 28;
 
     // PG (relative) positions in Data buffer, to be updated every advance step
     // or init
@@ -85,6 +89,6 @@ struct BP1MetadataSet
 };
 
 } // end namespace format
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1STRUCTS_H_ */

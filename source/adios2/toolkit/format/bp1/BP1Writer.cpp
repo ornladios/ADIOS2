@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "adios2/helper/adiosFunctions.h" //GetType<T>
+
 namespace adios2
 {
 namespace format
@@ -117,10 +119,14 @@ void BP1Writer::WriteProcessGroupIndex(
     }
 }
 
-void BP1Writer::Advance()
+void BP1Writer::Advance(IO &io)
 {
     // enforce memory policy here to restrict buffer size for each timestep
     // this is flushing
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at("buffering").Resume();
+    }
 
     if (m_MaxBufferSize == DefaultMaxBufferSize)
     {
@@ -128,12 +134,7 @@ void BP1Writer::Advance()
         m_MaxBufferSize = m_HeapBuffer.m_DataPosition + 64;
     }
 
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Resume();
-    }
-
-    FlattenData();
+    FlattenData(io);
     ++m_MetadataSet.TimeStep;
 
     if (m_Profiler.IsActive)
@@ -142,14 +143,14 @@ void BP1Writer::Advance()
     }
 }
 
-void BP1Writer::Flush()
+void BP1Writer::Flush(IO &io)
 {
     if (m_Profiler.IsActive)
     {
         m_Profiler.Timers.at("buffering").Resume();
     }
 
-    FlattenData();
+    FlattenData(io);
 
     if (m_Profiler.IsActive)
     {
@@ -157,7 +158,7 @@ void BP1Writer::Flush()
     }
 }
 
-void BP1Writer::Close() noexcept
+void BP1Writer::Close(IO &io) noexcept
 {
     if (m_Profiler.IsActive)
     {
@@ -168,7 +169,7 @@ void BP1Writer::Close() noexcept
     {
         if (m_MetadataSet.DataPGIsOpen)
         {
-            FlattenData();
+            FlattenData(io);
         }
 
         FlattenMetadata();
@@ -248,9 +249,64 @@ BP1Writer::AggregateProfilingJSON(const std::string &rankProfilingLog) noexcept
 }
 
 // PRIVATE FUNCTIONS
-void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
-                                      const Dims globalDimensions,
-                                      const Dims offsets,
+void BP1Writer::WriteAttributes(IO &io)
+{
+    const auto attributesDataMap = io.GetAttributesDataMap();
+
+    auto &buffer = m_HeapBuffer.m_Data;
+    auto &position = m_HeapBuffer.m_DataPosition;
+
+    // used only to update m_HeapBuffer.m_DataAbsolutePosition;
+    const size_t attributesCountPosition = position;
+
+    // count is known ahead of time, write
+    const uint32_t attributesCount =
+        static_cast<const uint32_t>(attributesDataMap.size());
+    CopyToBuffer(buffer, position, &attributesCount);
+
+    // will go back
+    const size_t attributesLengthPosition = position;
+    position += 8; // skip attributes length
+
+    m_HeapBuffer.m_DataAbsolutePosition += position - attributesCountPosition;
+
+    uint32_t memberID = 0;
+
+    for (const auto &attributePair : attributesDataMap)
+    {
+        const std::string name(attributePair.first);
+        const std::string type(attributePair.second.first);
+
+        if (type == "unknown")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        Stats<T> stats;                                                        \
+        stats.Offset = m_HeapBuffer.m_DataAbsolutePosition;                    \
+        stats.MemberID = memberID;                                             \
+        Attribute<T> &attribute = io.GetAttribute<T>(name);                    \
+        WriteAttributeInData(attribute, stats);                                \
+        WriteAttributeInIndex(attribute, stats);                               \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+
+        ++memberID;
+    }
+
+    // complete attributes length
+    const uint64_t attributesLength =
+        static_cast<const uint64_t>(position - attributesLengthPosition);
+
+    size_t backPosition = attributesLengthPosition;
+    CopyToBuffer(buffer, backPosition, &attributesLength);
+}
+
+void BP1Writer::WriteDimensionsRecord(const Dims &localDimensions,
+                                      const Dims &globalDimensions,
+                                      const Dims &offsets,
                                       std::vector<char> &buffer) noexcept
 {
     if (offsets.empty())
@@ -272,9 +328,9 @@ void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
     }
 }
 
-void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
-                                      const Dims globalDimensions,
-                                      const Dims offsets,
+void BP1Writer::WriteDimensionsRecord(const Dims &localDimensions,
+                                      const Dims &globalDimensions,
+                                      const Dims &offsets,
                                       std::vector<char> &buffer,
                                       size_t &position,
                                       const bool isCharacteristic) noexcept
@@ -356,7 +412,7 @@ BP1Writer::GetBP1Index(const std::string name,
     return itName->second;
 }
 
-void BP1Writer::FlattenData() noexcept
+void BP1Writer::FlattenData(IO &io) noexcept
 {
     auto &buffer = m_HeapBuffer.m_Data;
     auto &position = m_HeapBuffer.m_DataPosition;
@@ -369,13 +425,19 @@ void BP1Writer::FlattenData() noexcept
         position - m_MetadataSet.DataPGVarsCountPosition - 8 - 4;
     CopyToBuffer(buffer, m_MetadataSet.DataPGVarsCountPosition, &varsLength);
 
-    // attributes (empty for now) count (4) and length (8) are zero by moving
-    // positions in time step zero
-    position += 12;
-    m_HeapBuffer.m_DataAbsolutePosition += 12;
+    // attributes are only written once
+    if (!m_MetadataSet.AreAttributesWritten)
+    {
+        WriteAttributes(io);
+        m_MetadataSet.AreAttributesWritten = true;
+    }
+    else
+    {
+        position += 12;
+        m_HeapBuffer.m_DataAbsolutePosition += 12;
+    }
 
-    // Finish writing pg group length
-    // without record itself, 12 due to empty attributes
+    // Finish writing pg group length without record itself
     const uint64_t dataPGLength =
         position - m_MetadataSet.DataPGLengthPosition - 8;
     CopyToBuffer(buffer, m_MetadataSet.DataPGLengthPosition, &dataPGLength);
@@ -385,7 +447,7 @@ void BP1Writer::FlattenData() noexcept
 
 void BP1Writer::FlattenMetadata() noexcept
 {
-    auto lf_IndexCountLength =
+    auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, BP1Index> &indices, uint32_t &count,
            uint64_t &length) {
 
@@ -426,12 +488,13 @@ void BP1Writer::FlattenMetadata() noexcept
     // var index count and length (total), and each index length
     uint32_t varsCount;
     uint64_t varsLength;
-    lf_IndexCountLength(m_MetadataSet.VarsIndices, varsCount, varsLength);
+    lf_SetIndexCountLength(m_MetadataSet.VarsIndices, varsCount, varsLength);
+
     // attribute index count and length, and each index length
     uint32_t attributesCount;
     uint64_t attributesLength;
-    lf_IndexCountLength(m_MetadataSet.AttributesIndices, attributesCount,
-                        attributesLength);
+    lf_SetIndexCountLength(m_MetadataSet.AttributesIndices, attributesCount,
+                           attributesLength);
 
     const size_t footerSize = static_cast<const size_t>(
         (pgLength + 16) + (varsLength + 12) + (attributesLength + 12) +

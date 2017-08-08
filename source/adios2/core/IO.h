@@ -189,6 +189,12 @@ public:
     VariableCompound &GetVariableCompound(const std::string &name);
 
     /**
+     * Return  map with attributes name and type info
+     * @return m_Attributes
+     */
+    const DataMap &GetAttributesDataMap() const noexcept;
+
+    /**
      * Gets an existing attribute of primitive type by name
      * @param name of attribute to be retrieved
      * @return reference to an existing attribute created with DefineAttribute
