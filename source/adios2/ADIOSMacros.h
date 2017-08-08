@@ -24,6 +24,7 @@
 //
 #define ADIOS2_FOREACH_TYPE_1ARG(MACRO)                                        \
     MACRO(char)                                                                \
+    MACRO(signed char)                                                         \
     MACRO(unsigned char)                                                       \
     MACRO(short)                                                               \
     MACRO(unsigned short)                                                      \
@@ -42,6 +43,7 @@
 
 #define ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)                              \
     MACRO(char)                                                                \
+    MACRO(signed char)                                                         \
     MACRO(unsigned char)                                                       \
     MACRO(short)                                                               \
     MACRO(unsigned short)                                                      \

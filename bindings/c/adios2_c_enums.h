@@ -15,20 +15,17 @@
 extern "C" {
 #endif
 
-enum adios2_debug_mode
-{
+typedef enum {
     adios2_debug_mode_on = 0,
     adios2_debug_mode_off = 1,
-};
+} adios2_debug_mode;
 
-enum adios2_constant_dims
-{
+typedef enum {
     adios2_constant_dims_true = 0,
     adios2_constant_dims_false = 1,
-};
+} adios2_constant_dims;
 
-enum adios2_type
-{
+typedef enum {
     adios2_type_string,
 
     adios2_type_char,
@@ -57,16 +54,15 @@ enum adios2_type
     adios2_type_uint16_t,
     adios2_type_uint32_t,
     adios2_type_uint64_t
-};
+} adios2_type;
 
-enum adios2_open_mode
-{
+typedef enum {
     adios2_open_mode_undefined,
     adios2_open_mode_write,
     adios2_open_mode_read,
     adios2_open_mode_append,
     adios2_open_mode_read_write
-};
+} adios2_open_mode;
 
 #ifdef __cplusplus
 } // end extern C

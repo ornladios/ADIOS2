@@ -64,6 +64,12 @@ std::map<unsigned int, Variable<char>> &IO::GetVariableMap()
 }
 
 template <>
+std::map<unsigned int, Variable<signed char>> &IO::GetVariableMap()
+{
+    return m_SChar;
+}
+
+template <>
 std::map<unsigned int, Variable<unsigned char>> &IO::GetVariableMap()
 {
     return m_UChar;

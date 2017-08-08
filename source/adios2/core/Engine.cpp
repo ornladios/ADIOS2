@@ -35,7 +35,15 @@ void Engine::SetCallBack(
 {
 }
 
-// should these functions throw an exception?
+void Engine::Write(VariableBase &variable, const void *values)
+{
+    DoWrite(variable.m_Name, values);
+}
+
+void Engine::Write(const std::string &variableName, const void *values)
+{
+    DoWrite(variableName, values);
+}
 
 void Engine::Advance(const float /*timeout_sec*/) {}
 void Engine::Advance(const AdvanceMode /*mode*/, const float /*timeout_sec*/) {}
@@ -89,13 +97,26 @@ void Engine::DoWrite(const std::string &variableName, const void *values)
 
     if (type == "compound")
     {
-        DoWrite(m_IO.GetVariableCompound(variableName), values);
+        VariableCompound &variable = m_IO.GetVariableCompound(variableName);
+
+        if (m_DebugMode)
+        {
+            variable.CheckDimsBeforeWrite("Write " + variable.m_Name);
+        }
+
+        DoWrite(variable, values);
     }
 #define declare_type(T)                                                        \
     else if (type == GetType<T>())                                             \
     {                                                                          \
-        DoWrite(m_IO.GetVariable<T>(variableName),                             \
-                reinterpret_cast<const T *>(values));                          \
+        Variable<T> &variable = m_IO.GetVariable<T>(variableName);             \
+                                                                               \
+        if (m_DebugMode)                                                       \
+        {                                                                      \
+            variable.CheckDimsBeforeWrite("Write " + variable.m_Name);         \
+        }                                                                      \
+                                                                               \
+        DoWrite(variable, reinterpret_cast<const T *>(values));                \
     }
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -212,4 +233,14 @@ void Engine::ThrowUp(const std::string function) const
                                 "\n");
 }
 
-} // end namespace adios
+#define declare_template_instantiation(T)                                      \
+    template void Engine::Write<T>(Variable<T> &, const T *);                  \
+    template void Engine::Write<T>(Variable<T> &, const T);                    \
+                                                                               \
+    template void Engine::Write<T>(const std::string &, const T *);            \
+    template void Engine::Write<T>(const std::string &, const T);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+} // end namespace adios2

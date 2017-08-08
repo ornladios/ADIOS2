@@ -33,6 +33,11 @@ inline std::string GetType<char>() noexcept
     return "char";
 }
 template <>
+inline std::string GetType<signed char>() noexcept
+{
+    return "signed char";
+}
+template <>
 inline std::string GetType<unsigned char>() noexcept
 {
     return "unsigned char";

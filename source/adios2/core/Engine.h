@@ -63,6 +63,14 @@ public:
     void Write(Variable<T> &variable, const T *values);
 
     /**
+     * Single value version
+     * @param variable
+     * @param values
+     */
+    template <class T>
+    void Write(Variable<T> &variable, const T value);
+
+    /**
      * String version
      * @param variableName
      * @param values
@@ -71,23 +79,28 @@ public:
     void Write(const std::string &variableName, const T *values);
 
     /**
-     * Single value version
-     * @param variable
-     * @param values
-     */
-    template <class T>
-    void Write(Variable<T> &variable, const T values);
-
-    /**
-     * Single value version using string as variable handlers, allows rvalues to
+     * Single value version using string as variable handlers, allows
+     * rvalues to
      * be passed
      * @param variableName
      * @param values
      */
     template <class T>
-    void Write(const std::string &variableName, const T values);
+    void Write(const std::string &variableName, const T value);
 
-    /// Read API
+    /**
+     * Runtime version for either Variable<T> or VariableCompound
+     * @param variable
+     * @param values
+     */
+    void Write(VariableBase &variable, const void *values);
+
+    /**
+     * Runtime version
+     * @param variableName
+     * @param values
+     */
+    void Write(const std::string &variableName, const void *values);
 
     /**
      *
@@ -394,7 +407,17 @@ private:
     void ThrowUp(const std::string function) const;
 };
 
-} // end namespace adios
+#define declare_template_instantiation(T)                                      \
+    extern template void Engine::Write<T>(Variable<T> &, const T *);           \
+    extern template void Engine::Write<T>(Variable<T> &, const T);             \
+                                                                               \
+    extern template void Engine::Write<T>(const std::string &, const T *);     \
+    extern template void Engine::Write<T>(const std::string &, const T);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+} // end namespace adios2
 
 #include "Engine.inl"
 

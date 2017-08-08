@@ -252,6 +252,7 @@ private:
 
     /** Variable containers based on fixed-size type */
     std::map<unsigned int, Variable<char>> m_Char;
+    std::map<unsigned int, Variable<signed char>> m_SChar;
     std::map<unsigned int, Variable<unsigned char>> m_UChar;
     std::map<unsigned int, Variable<short>> m_Short;
     std::map<unsigned int, Variable<unsigned short>> m_UShort;

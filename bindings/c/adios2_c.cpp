@@ -160,17 +160,17 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
 
     case (adios2_type_double_complex):
 
-        variable = dynamic_cast<adios2::Variable<std::complex<double>> *>(
-            &ioCpp.DefineVariable<std::complex<double>>(
-                name, shapeV, startV, countV, constantSizeBool));
+        //        variable = dynamic_cast<adios2::Variable<std::complex<double>>
+        //        *>(
+        //            &ioCpp.DefineVariable<std::complex<double>>(
+        //                name, shapeV, startV, countV, constantSizeBool));
         break;
 
     case (adios2_type_int8_t):
 
-        //        variable = dynamic_cast<adios2::Variable<int8_t> *>(
-        //            &ioCpp.DefineVariable<int8_t>(name, shapeV, startV,
-        //            countV,
-        //                                          constantSizeBool));
+        variable = dynamic_cast<adios2::Variable<int8_t> *>(
+            &ioCpp.DefineVariable<int8_t>(name, shapeV, startV, countV,
+                                          constantSizeBool));
         break;
 
     case (adios2_type_int16_t):
@@ -293,7 +293,7 @@ void adios2_write(adios2_Engine *engine, adios2_Variable *variable,
 void adios2_write_by_name(adios2_Engine *engine, const char *variable_name,
                           const void *values)
 {
-    // engine->EngineCpp->Write(variable_name, values);
+    engine->EngineCpp->Write(variable_name, values);
 }
 
 void adios2_advance(adios2_Engine *engine) { engine->EngineCpp->Advance(); }
@@ -308,10 +308,6 @@ void adios2_close_by_index(adios2_Engine *engine,
                            const unsigned int transport_index)
 {
     engine->EngineCpp->Close(transport_index);
-    if (engine->EngineCpp) // need to add flag in Engine
-    {
-        delete engine;
-    }
 }
 
 void adios2_finalize(adios2_ADIOS *adios)

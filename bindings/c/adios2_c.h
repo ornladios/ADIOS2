@@ -11,16 +11,15 @@
 #ifndef ADIOS2_BINDINGS_C_ADIOS2_C_H_
 #define ADIOS2_BINDINGS_C_ADIOS2_C_H_
 
-#include <stddef.h>
+#include <mpi.h>    //TODO: resolve mpi or mpidummy
+#include <stddef.h> //size_t
+
+#include "adios2_c_enums.h"
 
 typedef void adios2_ADIOS;
 typedef void adios2_IO;
 typedef void adios2_Variable;
-struct adios2_Engine;
-
-#include "adios2_c_enums.h"
-
-#include <mpi.h>
+typedef struct adios2_Engine adios2_Engine;
 
 #ifdef __cplusplus
 extern "C" {
@@ -159,4 +158,4 @@ void adios2_finalize(adios2_ADIOS *adios);
 } // end extern C
 #endif
 
-#endif /* BINDINGS_C_ADIOS2_C_H_ */
+#endif /* ADIOS2_BINDINGS_C_ADIOS2_C_H_ */
