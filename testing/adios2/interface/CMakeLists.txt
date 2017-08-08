@@ -9,5 +9,9 @@ target_link_libraries(TestADIOSInterfaceWrite adios2 gtest gtest_main)
 add_executable(TestADIOSDefineVariable TestADIOSDefineVariable.cpp)
 target_link_libraries(TestADIOSDefineVariable adios2 gtest gtest_main)
 
+add_executable(TestADIOSDefineAttribute TestADIOSDefineAttribute.cpp)
+target_link_libraries(TestADIOSDefineAttribute adios2 gtest gtest_main)
+
 gtest_add_tests(TARGET TestADIOSInterfaceWrite)
 gtest_add_tests(TARGET TestADIOSDefineVariable)
+gtest_add_tests(TARGET TestADIOSDefineAttribute)

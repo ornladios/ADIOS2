@@ -8,6 +8,8 @@
 #ifndef ADIOS2_ADIOSMACROS_H
 #define ADIOS2_ADIOSMACROS_H
 
+#include <string>
+
 #include "adios2/ADIOSTypes.h"
 // The ADIOS_FOREACH_TYPE_1ARG macro assumes the given argument is a macro which
 // takes a single argument that is a type and then inserts the given MACRO for
@@ -51,6 +53,8 @@
     MACRO(unsigned int)                                                        \
     MACRO(long int)                                                            \
     MACRO(unsigned long int)                                                   \
+    MACRO(long long int)                                                       \
+    MACRO(unsigned long long int)                                              \
     MACRO(float)                                                               \
     MACRO(double)
 
@@ -63,5 +67,21 @@
     MACRO(int64_t)                                                             \
     MACRO(float)                                                               \
     MACRO(double)
+
+#define ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(MACRO)                              \
+    MACRO(std::string)                                                         \
+    MACRO(char)                                                                \
+    MACRO(unsigned char)                                                       \
+    MACRO(short)                                                               \
+    MACRO(unsigned short)                                                      \
+    MACRO(int)                                                                 \
+    MACRO(unsigned int)                                                        \
+    MACRO(long int)                                                            \
+    MACRO(unsigned long int)                                                   \
+    MACRO(long long int)                                                       \
+    MACRO(unsigned long long int)                                              \
+    MACRO(float)                                                               \
+    MACRO(double)                                                              \
+    MACRO(long double)
 
 #endif /* ADIOS2_ADIOSMACROS_H */
