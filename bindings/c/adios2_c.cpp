@@ -15,6 +15,10 @@
 
 #include <adios2.h>
 
+#ifndef ADIOS2_HAVE_MPI_C
+#define MPI_COMM_SELF 2
+#endif
+
 adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
                                  const adios2_debug_mode debug_mode)
 {
@@ -159,11 +163,9 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
         break;
 
     case (adios2_type_double_complex):
-
-        //        variable = dynamic_cast<adios2::Variable<std::complex<double>>
-        //        *>(
-        //            &ioCpp.DefineVariable<std::complex<double>>(
-        //                name, shapeV, startV, countV, constantSizeBool));
+        variable = dynamic_cast<adios2::Variable<std::complex<double>> *>(
+            &ioCpp.DefineVariable<std::complex<double>>(
+                name, shapeV, startV, countV, constantSizeBool));
         break;
 
     case (adios2_type_int8_t):
@@ -249,7 +251,15 @@ struct adios2_Engine
 };
 
 adios2_Engine *adios2_open(adios2_IO *io, const char *name,
-                           const adios2_open_mode open_mode, MPI_Comm mpi_comm)
+                           const adios2_open_mode open_mode)
+{
+    auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
+    return adios2_open_new_comm(io, name, open_mode, ioCpp.m_MPIComm);
+}
+
+adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
+                                    const adios2_open_mode open_mode,
+                                    MPI_Comm mpi_comm)
 {
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
     adios2_Engine *engine = new adios2_Engine;

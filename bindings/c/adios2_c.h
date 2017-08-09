@@ -11,10 +11,9 @@
 #ifndef ADIOS2_BINDINGS_C_ADIOS2_C_H_
 #define ADIOS2_BINDINGS_C_ADIOS2_C_H_
 
-#include <mpi.h>    //TODO: resolve mpi or mpidummy
 #include <stddef.h> //size_t
 
-#include "adios2_c_enums.h"
+#include "adios2/adios2_c_enums.h"
 
 typedef void adios2_ADIOS;
 typedef void adios2_IO;
@@ -23,6 +22,12 @@ typedef struct adios2_Engine adios2_Engine;
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef ADIOS2_HAVE_MPI_C
+#include <mpi.h>
+#else
+typedef int MPI_Comm;
 #endif
 
 /**
@@ -127,15 +132,52 @@ void adios2_set_transport_param(adios2_IO *io,
                                 const unsigned int transport_index,
                                 const char *key, const char *value);
 
+/**
+ * Create an adios2_Engine, from adios2_IO, that executes all IO operations.
+ * Resuse MPI_Comm passed to adios2_ADIOS that created adios2_IO io
+ * @param io input that creates the adios2_Engine
+ * @param name engine name
+ * @param open_mode read, write, append use adios2_open_mode enum
+ * @return engine handler
+ */
 adios2_Engine *adios2_open(adios2_IO *io, const char *name,
-                           const adios2_open_mode open_mode, MPI_Comm mpi_comm);
+                           const adios2_open_mode open_mode);
 
+/**
+ * Create an adios2_Engine, from adios2_IO, that executes all IO operations.
+ * Allows passing a new communicator.
+ * @param io input that creates the adios2_Engine
+ * @param name engine name
+ * @param open_mode read, write, append use adios2_open_mode enum
+ * @param mpi_comm allows passing a new MPI communicator
+ * @return engine handler
+ */
+adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
+                                    const adios2_open_mode open_mode,
+                                    MPI_Comm mpi_comm);
+
+/**
+ * Write a variable using a adios2_Variable handler
+ * @param engine handler for engine executing the write
+ * @param variable handler for variable from adios2_define_variable
+ * @param values application data to be written for this variable
+ */
 void adios2_write(adios2_Engine *engine, adios2_Variable *variable,
                   const void *values);
 
+/**
+ * Write a variable using a variable name created from adios2_define_variable
+ * @param engine handler for engine executing the write
+ * @param variable_name unique variable name, within io that create the engine.
+ * @param values application data to be written for this variable
+ */
 void adios2_write_by_name(adios2_Engine *engine, const char *variable_name,
                           const void *values);
 
+/**
+ * Advance time step for writes
+ * @param engine handler executing IO tasks
+ */
 void adios2_advance(adios2_Engine *engine);
 
 /**
@@ -145,12 +187,19 @@ void adios2_advance(adios2_Engine *engine);
  */
 void adios2_close(adios2_Engine *engine);
 
+/**
+ * Close a particular transport from the index returned by adios2_add_transport
+ * @param engine handler containing all transports to
+ * be closed. NOTE: engine NEVER becomes NULL due to this function.
+ * @param transport_index handler from adios2_add_transport
+ */
 void adios2_close_by_index(adios2_Engine *engine,
                            const unsigned int transport_index);
 
 /**
- * Deallocate adios pointer
- * @param adios input to be deallocated, all destrcutors called
+ * Final point for adios2_ADIOS handler.
+ * Deallocate adios pointer. Required to avoid memory leaks.
+ * @param adios input to be deallocated
  */
 void adios2_finalize(adios2_ADIOS *adios);
 

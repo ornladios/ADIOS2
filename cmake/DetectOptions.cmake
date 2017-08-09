@@ -43,6 +43,11 @@ elseif(ADIOS2_USE_MPI)
   set(ADIOS2_HAVE_MPI TRUE)
 endif()
 
+# C
+if(ADIOS2_USE_C)
+  set(ADIOS2_HAVE_C TRUE)
+endif()
+
 # DataMan
 if(ADIOS2_USE_DataMan STREQUAL AUTO)
   if(SHARED_LIBS_SUPPORTED AND NOT MSVC)
