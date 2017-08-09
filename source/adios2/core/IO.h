@@ -207,6 +207,14 @@ public:
     Variable<T> &GetVariable(const std::string &name);
 
     /**
+     * Runtime function: return a pointer to VariableBase
+     * @param name unique variable identifier
+     * @return nullptr if not found, pointer to VariableBase if variable is
+     * found
+     */
+    VariableBase *GetVariableBase(const std::string &name) noexcept;
+
+    /**
      * Gets an existing variable of compound type by name
      * @param name of variable to be retrieved
      * @return reference to an existing variable created with DefineVariable

@@ -5,6 +5,8 @@
 #ifndef TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
 #define TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
 
+#include <array>
+
 // Test data for each type.  Make sure our values exceed the range of the
 // previous size to make sure we all bytes for each element
 struct SmallTestData

@@ -91,6 +91,12 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
                 name, shapeV, startV, countV, constantSizeBool));
         break;
 
+    case (adios2_type_signed_char):
+        variable = dynamic_cast<adios2::Variable<signed char> *>(
+            &ioCpp.DefineVariable<char>(name, shapeV, startV, countV,
+                                        constantSizeBool));
+        break;
+
     case (adios2_type_short):
         variable = dynamic_cast<adios2::Variable<short> *>(
             &ioCpp.DefineVariable<short>(name, shapeV, startV, countV,
@@ -218,6 +224,14 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
                                             constantSizeBool));
         break;
     }
+
+    return reinterpret_cast<adios2_Variable *>(variable);
+}
+
+adios2_Variable *adios2_get_variable(adios2_IO *io, const char *name)
+{
+    adios2::VariableBase *variable =
+        reinterpret_cast<adios2::IO *>(io)->GetVariableBase(name);
 
     return reinterpret_cast<adios2_Variable *>(variable);
 }

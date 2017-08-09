@@ -29,6 +29,8 @@ typedef enum {
     adios2_type_string,
 
     adios2_type_char,
+    adios2_type_signed_char,
+
     adios2_type_short,
     adios2_type_int,
     adios2_type_long_int,

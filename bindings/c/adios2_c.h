@@ -77,26 +77,6 @@ adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode);
 adios2_IO *adios2_declare_io(adios2_ADIOS *adios, const char *io_name);
 
 /**
- *
- * @param io handler that owns the variable
- * @param name unique variable name inside IO handler
- * @param type primitive type
- * @param ndims number of dimensions
- * @param shape total MPI dimensions
- * @param start local MPI start (offset)
- * @param count local MPI count
- * @param constant_size adios2_constant_dims_true: shape, start and count are
- * constant, or
- * adios2_constant_size_false
- * @return variable handler
- */
-adios2_Variable *
-adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
-                       const size_t ndims, const size_t *shape,
-                       const size_t *start, const size_t *count,
-                       const adios2_constant_dims constant_dims);
-
-/**
  * Sets engine type for current io handler
  * @param io handler
  * @param engine_type available engine type
@@ -131,6 +111,35 @@ unsigned int adios2_add_transport(adios2_IO *io, const char *transport_type);
 void adios2_set_transport_param(adios2_IO *io,
                                 const unsigned int transport_index,
                                 const char *key, const char *value);
+
+/**
+ *
+ * @param io handler that owns the variable
+ * @param name unique variable name inside IO handler
+ * @param type primitive type
+ * @param ndims number of dimensions
+ * @param shape total MPI dimensions
+ * @param start local MPI start (offset)
+ * @param count local MPI count
+ * @param constant_size adios2_constant_dims_true: shape, start and count are
+ * constant, or
+ * adios2_constant_size_false
+ * @return variable handler
+ */
+adios2_Variable *
+adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
+                       const size_t ndims, const size_t *shape,
+                       const size_t *start, const size_t *count,
+                       const adios2_constant_dims constant_dims);
+
+/**
+ * Returns a handler to a previously defined variable identified by a unique
+ * name
+ * @param io handler to variable io owner
+ * @param name unique name input
+ * @return variable handler if found
+ */
+adios2_Variable *adios2_get_variable(adios2_IO *io, const char *name);
 
 /**
  * Create an adios2_Engine, from adios2_IO, that executes all IO operations.

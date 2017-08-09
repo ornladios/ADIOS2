@@ -112,6 +112,28 @@ VariableCompound &IO::GetVariableCompound(const std::string &name)
     return m_Compound.at(GetMapIndex(name, m_Variables, "VariableCompound"));
 }
 
+VariableBase *IO::GetVariableBase(const std::string &name) noexcept
+{
+    VariableBase *variableBase = nullptr;
+    auto itVariable = m_Variables.find(name);
+    if (itVariable == m_Variables.end())
+    {
+        return variableBase;
+    }
+
+    const std::string type(itVariable->second.first);
+    if (type == "compound")
+    {
+        variableBase = &GetVariableCompound(name);
+    }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>()) { variableBase = &GetVariable<T>(name); }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+    return variableBase;
+}
+
 std::string IO::GetVariableType(const std::string &name) const
 {
     std::string type;
