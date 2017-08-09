@@ -166,6 +166,13 @@ constexpr float DefaultBufferGrowthFactor(1.05f);
  *  2Gb - 100Kb (tolerance)*/
 constexpr size_t DefaultMaxFileBatchSize(2147381248);
 
+constexpr char PathSeparator =
+#ifdef _WIN32
+    '\\';
+#else
+    '/';
+#endif
+
 // adios alias values and types
 constexpr bool DebugON = true;
 constexpr bool DebugOFF = false;

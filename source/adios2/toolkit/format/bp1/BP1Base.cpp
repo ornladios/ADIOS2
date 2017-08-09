@@ -111,8 +111,11 @@ BP1Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
                            const int rank) -> std::string {
 
         const std::string bpBaseName = AddExtension(baseName, ".bp");
-        // name.bp.dir/name.bp.rank
-        const std::string bpName(bpBaseName + ".dir/" + bpBaseName + "." +
+        // path/root.bp.dir/root.bp.rank
+        const std::string bpRootName =
+            bpBaseName.substr(bpBaseName.find_last_of(PathSeparator));
+
+        const std::string bpName(bpBaseName + ".dir/" + bpRootName + "." +
                                  std::to_string(rank));
         return bpName;
     };
