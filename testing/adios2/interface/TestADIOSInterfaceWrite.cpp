@@ -43,6 +43,30 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVarChar1x10)
     EXPECT_EQ(var_i8.m_Type, "char");
 }
 
+TEST_F(ADIOSInterfaceWriteTest, DefineVarSChar1x10)
+{
+    // Define ADIOS variables for each type
+    auto &var_si8 =
+        io.DefineVariable<signed char>("si8", {}, {}, adios2::Dims{10});
+
+    // Verify the return type is as expected
+    ::testing::StaticAssertTypeEq<decltype(var_si8),
+                                  adios2::Variable<signed char> &>();
+
+    // Verify exceptions are thrown upon duplicate variable names
+    EXPECT_THROW(auto &foo =
+                     io.DefineVariable<char>("si8", {}, {}, adios2::Dims{10}),
+                 std::invalid_argument);
+
+    // Verify the dimensions, name, and type are correct
+    ASSERT_EQ(var_si8.m_Shape.size(), 0);
+    EXPECT_EQ(var_si8.m_Start.size(), 0);
+    EXPECT_EQ(var_si8.m_Count.size(), 1);
+    EXPECT_EQ(var_si8.m_Count[0], 10);
+    EXPECT_EQ(var_si8.m_Name, "si8");
+    EXPECT_EQ(var_si8.m_Type, "signed char");
+}
+
 // Rinse  and repeat for remaining types
 TEST_F(ADIOSInterfaceWriteTest, DefineVarShort1x10)
 {

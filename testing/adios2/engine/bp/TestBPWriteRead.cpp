@@ -41,6 +41,8 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         {
             auto &var_i8 =
                 io.DefineVariable<char>("i8", {}, {}, adios2::Dims{8});
+            auto &var_si8 =
+                io.DefineVariable<signed char>("si8", {}, {}, adios2::Dims{8});
             auto &var_i16 =
                 io.DefineVariable<short>("i16", {}, {}, adios2::Dims{8});
             auto &var_i32 =
@@ -72,6 +74,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         {
             // Retrieve the variables that previously went out of scope
             auto &var_i8 = io.GetVariable<char>("i8");
+            auto &var_si8 = io.GetVariable<signed char>("si8");
             auto &var_i16 = io.GetVariable<short>("i16");
             auto &var_i32 = io.GetVariable<int>("i32");
             auto &var_i64 = io.GetVariable<long>("i64");
@@ -84,6 +87,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_si8, m_TestData.SI8.data() + step);
             engine->Write(var_i16, m_TestData.I16.data() + step);
             engine->Write(var_i32, m_TestData.I32.data() + step);
             engine->Write(var_i64, m_TestData.I64.data() + step);
@@ -124,6 +128,10 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         ASSERT_NE(var_i8, nullptr);
         ASSERT_EQ(var_i8->ndim, 1);
         ASSERT_EQ(var_i8->dims[0], 8);
+        ADIOS_VARINFO *var_si8 = adios_inq_var(f, "si8");
+        ASSERT_NE(var_si8, nullptr);
+        ASSERT_EQ(var_si8->ndim, 1);
+        ASSERT_EQ(var_si8->dims[0], 8);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
         ASSERT_EQ(var_i16->ndim, 1);
@@ -162,6 +170,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         ASSERT_EQ(var_r64->dims[0], 8);
 
         std::array<char, 8> I8;
+        std::array<signed char, 8> SI8;
         std::array<int16_t, 8> I16;
         std::array<int32_t, 8> I32;
         std::array<int64_t, 8> I64;
@@ -181,6 +190,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         {
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
+            adios_schedule_read_byid(f, sel, var_si8->varid, t, 1, SI8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
             adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
             adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
@@ -200,6 +210,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(SI8[i], m_TestData.SI8[i + t]) << msg;
                 EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
                 EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
                 EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
@@ -216,6 +227,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
 
         // Cleanup variable structures
         adios_free_varinfo(var_i8);
+        adios_free_varinfo(var_si8);
         adios_free_varinfo(var_i16);
         adios_free_varinfo(var_i32);
         adios_free_varinfo(var_i64);
@@ -257,6 +269,9 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         {
             auto &var_i8 =
                 io.DefineVariable<char>("i8", {}, {}, adios2::Dims{2, 4});
+
+            auto &var_si8 = io.DefineVariable<signed char>("si8", {}, {},
+                                                           adios2::Dims{2, 4});
             auto &var_i16 =
                 io.DefineVariable<short>("i16", {}, {}, adios2::Dims{2, 4});
             auto &var_i32 =
@@ -288,6 +303,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         {
             // Retrieve the variables that previously went out of scope
             auto &var_i8 = io.GetVariable<char>("i8");
+            auto &var_si8 = io.GetVariable<signed char>("si8");
             auto &var_i16 = io.GetVariable<short>("i16");
             auto &var_i32 = io.GetVariable<int>("i32");
             auto &var_i64 = io.GetVariable<long>("i64");
@@ -300,6 +316,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_si8, m_TestData.SI8.data() + step);
             engine->Write(var_i16, m_TestData.I16.data() + step);
             engine->Write(var_i32, m_TestData.I32.data() + step);
             engine->Write(var_i64, m_TestData.I64.data() + step);
@@ -341,6 +358,11 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         ASSERT_EQ(var_i8->ndim, 2);
         ASSERT_EQ(var_i8->dims[0], 2);
         ASSERT_EQ(var_i8->dims[1], 4);
+        ADIOS_VARINFO *var_si8 = adios_inq_var(f, "si8");
+        ASSERT_NE(var_si8, nullptr);
+        ASSERT_EQ(var_si8->ndim, 2);
+        ASSERT_EQ(var_si8->dims[0], 2);
+        ASSERT_EQ(var_si8->dims[1], 4);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
         ASSERT_EQ(var_i16->ndim, 2);
@@ -388,6 +410,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         ASSERT_EQ(var_r64->dims[1], 4);
 
         std::array<char, 8> I8;
+        std::array<signed char, 8> SI8;
         std::array<int16_t, 8> I16;
         std::array<int32_t, 8> I32;
         std::array<int64_t, 8> I64;
@@ -407,6 +430,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         {
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
+            adios_schedule_read_byid(f, sel, var_si8->varid, t, 1, SI8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
             adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
             adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
@@ -426,6 +450,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(SI8[i], m_TestData.SI8[i + t]) << msg;
                 EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
                 EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
                 EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
@@ -442,6 +467,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
 
         // Cleanup variable structures
         adios_free_varinfo(var_i8);
+        adios_free_varinfo(var_si8);
         adios_free_varinfo(var_i16);
         adios_free_varinfo(var_i32);
         adios_free_varinfo(var_i64);
@@ -483,6 +509,8 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         {
             auto &var_i8 =
                 io.DefineVariable<char>("i8", {}, {}, adios2::Dims{4, 2});
+            auto &var_si8 = io.DefineVariable<signed char>("si8", {}, {},
+                                                           adios2::Dims{4, 2});
             auto &var_i16 =
                 io.DefineVariable<short>("i16", {}, {}, adios2::Dims{4, 2});
             auto &var_i32 =
@@ -514,6 +542,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         {
             // Retrieve the variables that previously went out of scope
             auto &var_i8 = io.GetVariable<char>("i8");
+            auto &var_si8 = io.GetVariable<signed char>("si8");
             auto &var_i16 = io.GetVariable<short>("i16");
             auto &var_i32 = io.GetVariable<int>("i32");
             auto &var_i64 = io.GetVariable<long>("i64");
@@ -526,6 +555,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);
+            engine->Write(var_si8, m_TestData.SI8.data() + step);
             engine->Write(var_i16, m_TestData.I16.data() + step);
             engine->Write(var_i32, m_TestData.I32.data() + step);
             engine->Write(var_i64, m_TestData.I64.data() + step);
@@ -567,6 +597,11 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         ASSERT_EQ(var_i8->ndim, 2);
         ASSERT_EQ(var_i8->dims[0], 4);
         ASSERT_EQ(var_i8->dims[1], 2);
+        ADIOS_VARINFO *var_si8 = adios_inq_var(f, "si8");
+        ASSERT_NE(var_si8, nullptr);
+        ASSERT_EQ(var_si8->ndim, 2);
+        ASSERT_EQ(var_si8->dims[0], 4);
+        ASSERT_EQ(var_si8->dims[1], 2);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
         ASSERT_EQ(var_i16->ndim, 2);
@@ -614,6 +649,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         ASSERT_EQ(var_r64->dims[1], 2);
 
         std::array<char, 8> I8;
+        std::array<signed char, 8> SI8;
         std::array<int16_t, 8> I16;
         std::array<int32_t, 8> I32;
         std::array<int64_t, 8> I64;
@@ -633,6 +669,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         {
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
+            adios_schedule_read_byid(f, sel, var_si8->varid, t, 1, SI8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
             adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
             adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
@@ -652,6 +689,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
+                EXPECT_EQ(SI8[i], m_TestData.SI8[i + t]) << msg;
                 EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
                 EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
                 EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
@@ -668,6 +706,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
 
         // Cleanup variable structures
         adios_free_varinfo(var_i8);
+        adios_free_varinfo(var_si8);
         adios_free_varinfo(var_i16);
         adios_free_varinfo(var_i32);
         adios_free_varinfo(var_i64);
