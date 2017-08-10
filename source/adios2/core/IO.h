@@ -92,6 +92,14 @@ public:
     void SetParameters(const Params &parameters = Params());
 
     /**
+     * Sets a single parameter overwriting value if key exists;
+     * @param key parameter key
+     * @param value parameter value
+     */
+    void SetSingleParameter(const std::string key,
+                            const std::string value) noexcept;
+
+    /**
      * Retrieve existing parameter set
      */
     const Params &GetParameters() const;
@@ -100,10 +108,22 @@ public:
      * Adds a transport and its parameters for the IO Engine
      * @param type must be a supported transport type
      * @param params acceptable parameters for a particular transport
-     * @return
+     * @return transportIndex handler
      */
     unsigned int AddTransport(const std::string type,
                               const Params &params = Params());
+
+    /**
+     * Set a single parameter to an existing transport identified with a
+     * transportIndex handler from AddTransport. This function overwrites
+     * existing parameter.
+     * @param transportIndex index handler from AddTransport
+     * @param key parameter key
+     * @param value parameter value
+     */
+    void SetTransportSingleParameter(const unsigned int transportIndex,
+                                     const std::string key,
+                                     const std::string value);
 
     /**
      * Define a Variable of primitive data type for I/O.
@@ -120,7 +140,7 @@ public:
     template <class T>
     Variable<T> &DefineVariable(const std::string &name, const Dims &shape = {},
                                 const Dims &start = {}, const Dims &count = {},
-                                const bool constantShape = false);
+                                const bool constantDims = false);
 
     /**
      * Define a Variable of primitive data type for I/O.
@@ -134,13 +154,19 @@ public:
      * change over time
      * @return reference to Variable object
      */
-
     template <class T>
     VariableCompound &DefineVariableCompound(const std::string &name,
                                              const Dims &shape = Dims{},
                                              const Dims &start = Dims{},
                                              const Dims &count = Dims{},
-                                             const bool constantShape = false);
+                                             const bool constantDims = false);
+
+    VariableCompound &DefineVariableCompound(const std::string &name,
+                                             const size_t sizeOfVariable,
+                                             const Dims &shape = Dims{},
+                                             const Dims &start = Dims{},
+                                             const Dims &count = Dims{},
+                                             const bool constantDims = false);
 
     /**
      * Define attribute from contiguous data array owned by an application
@@ -179,6 +205,14 @@ public:
      */
     template <class T>
     Variable<T> &GetVariable(const std::string &name);
+
+    /**
+     * Runtime function: return a pointer to VariableBase
+     * @param name unique variable identifier
+     * @return nullptr if not found, pointer to VariableBase if variable is
+     * found
+     */
+    VariableBase *GetVariableBase(const std::string &name) noexcept;
 
     /**
      * Gets an existing variable of compound type by name
@@ -260,6 +294,7 @@ private:
 
     /** Variable containers based on fixed-size type */
     std::map<unsigned int, Variable<char>> m_Char;
+    std::map<unsigned int, Variable<signed char>> m_SChar;
     std::map<unsigned int, Variable<unsigned char>> m_UChar;
     std::map<unsigned int, Variable<short>> m_Short;
     std::map<unsigned int, Variable<unsigned short>> m_UShort;

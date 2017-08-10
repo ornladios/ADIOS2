@@ -49,6 +49,11 @@ enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<char>() const {
 }
 
 template <>
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<signed char>() const {
+    return adios_byte;
+}
+
+template <>
 enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<unsigned char>() const {
     return adios_unsigned_byte;
 }
@@ -126,6 +131,6 @@ enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cldouble>() const {
 }
 
 } // end namespace interop
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_INTEROP_ADIOS1_ADIOS1COMMON_TCC_ */

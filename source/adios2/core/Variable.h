@@ -57,6 +57,6 @@ public:
     void ApplyTransforms() final;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_CORE_VARIABLE_H_ */

@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.5)
 
 include(CMakeFindDependencyMacro)
 
+set(ADIOS2_HAVE_C @ADIOS2_HAVE_C@)
+if(ADIOS2_HAVE_C)
+  find_dependency(C)
+endif()
+
 set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
 if(ADIOS2_HAVE_MPI)
   find_dependency(MPI)

@@ -45,6 +45,12 @@ void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
 void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
 
+void IO::SetSingleParameter(const std::string key,
+                            const std::string value) noexcept
+{
+    m_Parameters[key] = value;
+}
+
 const Params &IO::GetParameters() const { return m_Parameters; }
 
 unsigned int IO::AddTransport(const std::string type, const Params &parameters)
@@ -60,9 +66,72 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
 }
 
+void IO::SetTransportSingleParameter(const unsigned int transportIndex,
+                                     const std::string key,
+                                     const std::string value)
+{
+    if (m_DebugMode)
+    {
+        if (transportIndex >=
+            static_cast<unsigned int>(m_TransportsParameters.size()))
+        {
+            throw std::invalid_argument("ERROR: transportIndex is larger than "
+                                        "transports created with AddTransport "
+                                        "function calls\n");
+        }
+    }
+
+    m_TransportsParameters[transportIndex][key] = value;
+}
+
+VariableCompound &
+IO::DefineVariableCompound(const std::string &name, const size_t sizeOfVariable,
+                           const Dims &shape, const Dims &start,
+                           const Dims &count, const bool constantDims)
+{
+    if (m_DebugMode)
+    {
+        auto itVariable = m_Variables.find(name);
+        if (!IsEnd(itVariable, m_Variables))
+        {
+            throw std::invalid_argument("ERROR: variable " + name +
+                                        " exists in IO object " + m_Name +
+                                        ", in call to DefineVariable\n");
+        }
+    }
+    const unsigned int size = m_Compound.size();
+    auto itVariableCompound = m_Compound.emplace(
+        size, VariableCompound(name, sizeOfVariable, shape, start, count,
+                               constantDims, m_DebugMode));
+    m_Variables.emplace(name, std::make_pair("compound", size));
+    return itVariableCompound.first->second;
+}
+
 VariableCompound &IO::GetVariableCompound(const std::string &name)
 {
     return m_Compound.at(GetMapIndex(name, m_Variables, "VariableCompound"));
+}
+
+VariableBase *IO::GetVariableBase(const std::string &name) noexcept
+{
+    VariableBase *variableBase = nullptr;
+    auto itVariable = m_Variables.find(name);
+    if (itVariable == m_Variables.end())
+    {
+        return variableBase;
+    }
+
+    const std::string type(itVariable->second.first);
+    if (type == "compound")
+    {
+        variableBase = &GetVariableCompound(name);
+    }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>()) { variableBase = &GetVariable<T>(name); }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+    return variableBase;
 }
 
 std::string IO::GetVariableType(const std::string &name) const

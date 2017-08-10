@@ -97,6 +97,6 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace interop
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_INTEROP_ADIOS1_ADIOS1COMMON_H_ */

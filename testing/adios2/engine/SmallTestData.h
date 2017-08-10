@@ -5,11 +5,14 @@
 #ifndef TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
 #define TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
 
+#include <array>
+
 // Test data for each type.  Make sure our values exceed the range of the
 // previous size to make sure we all bytes for each element
 struct SmallTestData
 {
     std::array<char, 10> I8 = {{0, 1, -2, 3, -4, 5, -6, 7, -8, 9}};
+    std::array<signed char, 10> SI8 = {{0, -1, 2, -3, 4, -5, 6, -7, 8, -9}};
     std::array<short, 10> I16 = {
         {512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
     std::array<int, 10> I32 = {{131072, 131073, -131070, 131075, -131068,
