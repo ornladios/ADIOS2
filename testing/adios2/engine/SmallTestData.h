@@ -6,11 +6,17 @@
 #define TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
 
 #include <array>
+#include <limits>
+
+#ifdef WIN32
+#define NOMINMAX
+#endif
 
 // Test data for each type.  Make sure our values exceed the range of the
 // previous size to make sure we all bytes for each element
 struct SmallTestData
 {
+    // TODO: Fix the right initial value for char array
     std::array<char, 10> I8 = {{0, 1, -2, 3, -4, 5, -6, 7, -8, 9}};
     std::array<signed char, 10> SI8 = {{0, -1, 2, -3, 4, -5, 6, -7, 8, -9}};
     std::array<short, 10> I16 = {
@@ -36,4 +42,67 @@ struct SmallTestData
     std::array<double, 10> R64 = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}};
 };
 
+// Utility function for generateNewSmallTestData
+template <typename T>
+T clip(const T &n, const T &lower, const T &upper)
+{
+    return std::max(lower, std::min(n, upper));
+}
+
+SmallTestData generateNewSmallTestData(SmallTestData input, int step, int rank,
+                                       int size)
+{
+    rank++; // Make rank to be 1 based index
+    for (int i = 0; i < 10; i++)
+    { // Make sure that data is within the range
+        int jump = rank + step * size;
+        input.I8[i] = clip(
+            static_cast<char>(input.I8[i] + static_cast<char>(jump)),
+            std::numeric_limits<char>::min(), std::numeric_limits<char>::max());
+        input.SI8[i] = clip(static_cast<signed char>(
+                                input.SI8[i] + static_cast<signed char>(jump)),
+                            std::numeric_limits<signed char>::min(),
+                            std::numeric_limits<signed char>::max());
+        input.I16[i] =
+            clip(static_cast<short>(input.I16[i] + static_cast<short>(jump)),
+                 std::numeric_limits<short>::min(),
+                 std::numeric_limits<short>::max());
+        input.I32[i] = clip(
+            static_cast<int>(input.I32[i] + static_cast<int>(jump)),
+            std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
+        input.I64[i] = clip(
+            static_cast<long>(input.I64[i] + static_cast<long>(jump)),
+            std::numeric_limits<long>::min(), std::numeric_limits<long>::max());
+
+        input.U8[i] = clip(static_cast<unsigned char>(
+                               input.U8[i] + static_cast<unsigned char>(jump)),
+                           std::numeric_limits<unsigned char>::min(),
+                           std::numeric_limits<unsigned char>::max());
+        input.U16[i] =
+            clip(static_cast<unsigned short>(input.U16[i] +
+                                             static_cast<unsigned short>(jump)),
+                 std::numeric_limits<unsigned short>::min(),
+                 std::numeric_limits<unsigned short>::max());
+        input.U32[i] = clip(static_cast<unsigned int>(
+                                input.U32[i] + static_cast<unsigned int>(jump)),
+                            std::numeric_limits<unsigned int>::min(),
+                            std::numeric_limits<unsigned int>::max());
+        input.U64[i] =
+            clip(static_cast<unsigned long int>(
+                     input.U64[i] + static_cast<unsigned long int>(jump)),
+                 std::numeric_limits<unsigned long int>::min(),
+                 std::numeric_limits<unsigned long int>::max());
+
+        input.R32[i] =
+            clip(static_cast<float>(input.R32[i] + static_cast<float>(jump)),
+                 -std::numeric_limits<float>::max(),
+                 std::numeric_limits<float>::max());
+        input.R64[i] =
+            clip(static_cast<double>(input.R64[i] + static_cast<double>(jump)),
+                 -std::numeric_limits<double>::max(),
+                 std::numeric_limits<double>::max());
+    }
+
+    return input;
+}
 #endif // TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
