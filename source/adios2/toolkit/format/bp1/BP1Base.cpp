@@ -11,8 +11,6 @@
 #include "BP1Base.h"
 #include "BP1Base.tcc"
 
-#include <iostream>
-
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit
 
