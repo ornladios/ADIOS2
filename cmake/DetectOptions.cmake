@@ -48,6 +48,12 @@ if(ADIOS2_USE_C)
   set(ADIOS2_HAVE_C TRUE)
 endif()
 
+# Fortran
+if(ADIOS2_USE_Fortran)
+  set(ADIOS2_HAVE_Fortran TRUE)
+  enable_language(Fortran)
+endif()
+
 # DataMan
 if(ADIOS2_USE_DataMan STREQUAL AUTO)
   if(SHARED_LIBS_SUPPORTED AND NOT MSVC)

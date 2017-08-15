@@ -52,4 +52,7 @@
 /* CMake Option: ADIOS_USE_C=ON */
 #cmakedefine ADIOS2_HAVE_C
 
+/* CMake Option: ADIOS_USE_Fortran=ON */
+#cmakedefine ADIOS2_HAVE_Fortran
+
 #endif /* ADIOSCONFIG_H_ */

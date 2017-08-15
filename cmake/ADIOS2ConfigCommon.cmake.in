@@ -7,6 +7,11 @@ if(ADIOS2_HAVE_C)
   find_dependency(C)
 endif()
 
+set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
+if(ADIOS2_HAVE_Fortran)
+  find_dependency(Fortran)
+endif()
+
 set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
 if(ADIOS2_HAVE_MPI)
   find_dependency(MPI)
