@@ -59,18 +59,10 @@ include(CMakeDependentOption)
 # to that.  Otherwise base the default on whether or not shared libs are even
 # supported.
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
-if(DEFINED ADIOS2_BUILD_SHARED_LIBS)
-  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${ADIOS2_BUILD_SHARED_LIBS})
-elseif(DEFINED BUILD_SHARED_LIBS)
-  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
-else()
-  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(ADIOS2_BUILD_SHARED_LIBS
-  "Build shared libraries (so/dylib/dll)." ${ADIOS2_BUILD_SHARED_LIBS_DEFAULT}
+cmake_dependent_option(BUILD_SHARED_LIBS
+  "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED}
   "SHARED_LIBS_SUPPORTED" OFF
 )
-set(BUILD_SHARED_LIBS ${ADIOS2_BUILD_SHARED_LIBS})
 mark_as_advanced(BUILD_SHARED_LIBS)
 
 # Setup PIC defaults.  If explicitly specified somehow, then default 
