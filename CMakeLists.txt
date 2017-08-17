@@ -95,8 +95,8 @@ adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 include(${ADIOS2_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
-  # Workaround for OpenMPI forcing the link of C++ bindings
-  add_definitions(-DOMPI_SKIP_MPICXX)
+  # Workaround for MPI forcing the link of C++ bindings
+  add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
 GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python C SysVShMem)
