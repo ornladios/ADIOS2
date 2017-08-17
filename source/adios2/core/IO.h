@@ -138,9 +138,10 @@ public:
      * @return reference to Variable object
      */
     template <class T>
-    Variable<T> &DefineVariable(const std::string &name, const Dims &shape = {},
-                                const Dims &start = {}, const Dims &count = {},
-                                const bool constantDims = false);
+    Variable<T> &
+    DefineVariable(const std::string &name, const Dims &shape = Dims{},
+                   const Dims &start = Dims{}, const Dims &count = Dims{},
+                   const bool constantDims = false);
 
     /**
      * Define a Variable of primitive data type for I/O.
