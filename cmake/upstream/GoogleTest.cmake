@@ -14,6 +14,7 @@ This module defines functions to help use the Google Test infrastructure.
 
     gtest_add_tests(TARGET target
                     [SOURCES src1...]
+                    [EXEC_WRAPPER wrapper1...]
                     [EXTRA_ARGS arg1...]
                     [WORKING_DIRECTORY dir]
                     [TEST_PREFIX prefix]
@@ -30,6 +31,10 @@ This module defines functions to help use the Google Test infrastructure.
     When provided, only the listed files will be scanned for test cases. If
     this option is not given, the :prop_tgt:`SOURCES` property of the
     specified ``target`` will be used to obtain the list of sources.
+
+  ``EXEC_WRAPPER wrapper1...``
+    Any extra arguments to pass on the command line before each test case. This
+    can be userful when the test case should be run in parallel.
 
   ``EXTRA_ARGS arg1...``
     Any extra arguments to pass on the command line to each test case.
@@ -66,6 +71,7 @@ This module defines functions to help use the Google Test infrastructure.
     include(GoogleTest)
     add_executable(FooTest FooUnitTest.cxx)
     gtest_add_tests(TARGET      FooTest
+                    EXEC_WRAPPER mpirun -n 2
                     TEST_SUFFIX .noArgs
                     TEST_LIST   noArgsTests
     )
@@ -119,6 +125,7 @@ function(gtest_add_tests)
   )
   set(multiValueArgs
       SOURCES
+      EXEC_WRAPPER
       EXTRA_ARGS
   )
   set(allKeywords ${options} ${oneValueArgs} ${multiValueArgs})
@@ -182,6 +189,13 @@ function(gtest_add_tests)
         continue()
       endif()
 
+      # Wrap the test executable in another command if necessary
+      if (ARGS_EXEC_WRAPPER)
+        set(ctest_test_command ${ARGS_EXEC_WRAPPER} $<TARGET_FILE:${ARGS_TARGET}>)
+      else()
+        set(ctest_test_command ${ARGS_TARGET})
+      endif()
+
       # Make sure tests disabled in GTest get disabled in CTest
       if(gtest_test_name MATCHES "(^|\\.)DISABLED_")
         # Add the disabled test if CMake is new enough
@@ -198,7 +212,7 @@ function(gtest_add_tests)
           )
           add_test(NAME ${ctest_test_name}
                    ${workDir}
-                   COMMAND ${ARGS_TARGET}
+                   COMMAND ${ctest_test_command}
                      --gtest_also_run_disabled_tests
                      --gtest_filter=${gtest_test_name}
                      ${ARGS_EXTRA_ARGS}
@@ -210,7 +224,7 @@ function(gtest_add_tests)
         set(ctest_test_name ${ARGS_TEST_PREFIX}${gtest_test_name}${ARGS_TEST_SUFFIX})
         add_test(NAME ${ctest_test_name}
                  ${workDir}
-                 COMMAND ${ARGS_TARGET}
+                 COMMAND ${ctest_test_command}
                    --gtest_filter=${gtest_test_name}
                    ${ARGS_EXTRA_ARGS}
         )
