@@ -4,8 +4,6 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
-
   add_executable(hello_bpWriter helloBPWriter.cpp)
   target_include_directories(hello_bpWriter PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_bpWriter ${MPI_C_LIBRARIES})
@@ -18,11 +16,10 @@ if(ADIOS2_HAVE_MPI)
   
 else()
   add_executable(hello_bpWriter helloBPWriter_nompi.cpp)
-  
+
   if(ADIOS2_HAVE_C)
     add_executable(hello_bpWriter_c helloBPWriter_nompi.c)
   endif()
-  
 endif()
 
 target_link_libraries(hello_bpWriter adios2)

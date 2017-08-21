@@ -4,8 +4,6 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
-
   add_executable(hello_bpTimeWriter helloBPTimeWriter.cpp)
   target_include_directories(hello_bpTimeWriter PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_bpTimeWriter ${MPI_C_LIBRARIES})
