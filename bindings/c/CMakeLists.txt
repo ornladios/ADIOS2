@@ -9,7 +9,6 @@ add_library(adios2_c adios2_c.cpp)
 target_link_libraries(adios2_c PRIVATE adios2)
 
 if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
   target_compile_definitions(adios2_c PUBLIC ADIOS2_HAVE_MPI_C)
   target_include_directories(adios2_c PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${MPI_C_INCLUDE_PATH})
   target_link_libraries(adios2_c PRIVATE ${MPI_C_LIBRARIES})
