@@ -1,7 +1,3 @@
-set(Python_ADDITIONAL_VERSIONS 3 2.7)
-find_package(PythonInterp REQUIRED)
-find_package(PythonLibsNew REQUIRED)
-
 pybind11_add_module(adios2py MODULE
   ADIOSPy.h
   ADIOSPy.cpp
@@ -19,7 +15,6 @@ pybind11_add_module(adios2py MODULE
 )
 target_link_libraries(adios2py PRIVATE adios2)
 if(ADIOS2_HAVE_MPI)
-  find_package(PythonModule REQUIRED COMPONENTS mpi4py mpi4py/mpi4py.h)
   target_link_libraries(adios2py PRIVATE PythonModule::mpi4py)
 endif()
 

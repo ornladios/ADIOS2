@@ -4,8 +4,6 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
-
   add_executable(hello_bpFlushWriter helloBPFlushWriter.cpp)
   target_include_directories(hello_bpFlushWriter PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_bpFlushWriter ${MPI_C_LIBRARIES})

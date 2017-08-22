@@ -7,7 +7,6 @@ add_executable(globalArray_write globalArray_write.cpp)
 target_link_libraries(globalArray_write adios2)
 
 if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
   target_include_directories(globalArray_write PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(globalArray_write ${MPI_C_LIBRARIES})
 endif()

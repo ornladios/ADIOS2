@@ -119,8 +119,9 @@ set( PythonModule_${module_NAME}_PATH
   endif()
 
   include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(PythonModule_${module_NAME} DEFAULT_MSG
-    ${required_vars}
+  find_package_handle_standard_args(PythonModule_${module_NAME}
+    FOUND_VAR PythonModule_${module_NAME}_FOUND
+    REQUIRED_VARS ${required_vars}
   )
 endif()
 
