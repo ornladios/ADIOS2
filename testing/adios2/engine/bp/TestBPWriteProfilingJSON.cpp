@@ -50,21 +50,21 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON)
         // Declare 1D variables
         {
             auto &var_i8 =
-                io.DefineVariable<char>("i8", {}, {}, adios2::Dims{8});
+                io.DefineVariable<int8_t>("i8", {}, {}, adios2::Dims{8});
             auto &var_i16 =
-                io.DefineVariable<short>("i16", {}, {}, adios2::Dims{8});
+                io.DefineVariable<int16_t>("i16", {}, {}, adios2::Dims{8});
             auto &var_i32 =
-                io.DefineVariable<int>("i32", {}, {}, adios2::Dims{8});
+                io.DefineVariable<int32_t>("i32", {}, {}, adios2::Dims{8});
             auto &var_i64 =
-                io.DefineVariable<long>("i64", {}, {}, adios2::Dims{8});
+                io.DefineVariable<int64_t>("i64", {}, {}, adios2::Dims{8});
             auto &var_u8 =
-                io.DefineVariable<unsigned char>("u8", {}, {}, adios2::Dims{8});
-            auto &var_u16 = io.DefineVariable<unsigned short>("u16", {}, {},
-                                                              adios2::Dims{8});
+                io.DefineVariable<uint8_t>("u8", {}, {}, adios2::Dims{8});
+            auto &var_u16 =
+                io.DefineVariable<uint16_t>("u16", {}, {}, adios2::Dims{8});
             auto &var_u32 =
-                io.DefineVariable<unsigned int>("u32", {}, {}, adios2::Dims{8});
-            auto &var_u64 = io.DefineVariable<unsigned long>("u64", {}, {},
-                                                             adios2::Dims{8});
+                io.DefineVariable<uint32_t>("u32", {}, {}, adios2::Dims{8});
+            auto &var_u64 =
+                io.DefineVariable<uint64_t>("u64", {}, {}, adios2::Dims{8});
             auto &var_r32 =
                 io.DefineVariable<float>("r32", {}, {}, adios2::Dims{8});
             auto &var_r64 =
@@ -82,14 +82,14 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON)
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<char>("i8");
-            auto &var_i16 = io.GetVariable<short>("i16");
-            auto &var_i32 = io.GetVariable<int>("i32");
-            auto &var_i64 = io.GetVariable<long>("i64");
-            auto &var_u8 = io.GetVariable<unsigned char>("u8");
-            auto &var_u16 = io.GetVariable<unsigned short>("u16");
-            auto &var_u32 = io.GetVariable<unsigned int>("u32");
-            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_i8 = io.GetVariable<int8_t>("i8");
+            auto &var_i16 = io.GetVariable<int16_t>("i16");
+            auto &var_i32 = io.GetVariable<int32_t>("i32");
+            auto &var_i64 = io.GetVariable<int64_t>("i64");
+            auto &var_u8 = io.GetVariable<uint8_t>("u8");
+            auto &var_u16 = io.GetVariable<uint16_t>("u16");
+            auto &var_u32 = io.GetVariable<uint32_t>("u32");
+            auto &var_u64 = io.GetVariable<uint64_t>("u64");
             auto &var_r32 = io.GetVariable<float>("r32");
             auto &var_r64 = io.GetVariable<double>("r64");
 
