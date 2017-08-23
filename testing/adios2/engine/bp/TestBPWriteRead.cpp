@@ -40,22 +40,20 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         // Declare 1D variables
         {
             auto &var_i8 =
-                io.DefineVariable<char>("i8", {}, {}, adios2::Dims{8});
-            auto &var_si8 =
-                io.DefineVariable<signed char>("si8", {}, {}, adios2::Dims{8});
+                io.DefineVariable<int8_t>("i8", {}, {}, adios2::Dims{8});
             auto &var_i16 =
-                io.DefineVariable<short>("i16", {}, {}, adios2::Dims{8});
+                io.DefineVariable<int16_t>("i16", {}, {}, adios2::Dims{8});
             auto &var_i32 =
-                io.DefineVariable<int>("i32", {}, {}, adios2::Dims{8});
+                io.DefineVariable<int32_t>("i32", {}, {}, adios2::Dims{8});
             auto &var_i64 =
-                io.DefineVariable<long>("i64", {}, {}, adios2::Dims{8});
+                io.DefineVariable<int64_t>("i64", {}, {}, adios2::Dims{8});
             auto &var_u8 =
-                io.DefineVariable<unsigned char>("u8", {}, {}, adios2::Dims{8});
-            auto &var_u16 = io.DefineVariable<unsigned short>("u16", {}, {},
+                io.DefineVariable<uint8_t>("u8", {}, {}, adios2::Dims{8});
+            auto &var_u16 = io.DefineVariable<uint16_t>("u16", {}, {},
                                                               adios2::Dims{8});
             auto &var_u32 =
-                io.DefineVariable<unsigned int>("u32", {}, {}, adios2::Dims{8});
-            auto &var_u64 = io.DefineVariable<unsigned long>("u64", {}, {},
+                io.DefineVariable<uint32_t>("u32", {}, {}, adios2::Dims{8});
+            auto &var_u64 = io.DefineVariable<uint64_t>("u64", {}, {},
                                                              adios2::Dims{8});
             auto &var_r32 =
                 io.DefineVariable<float>("r32", {}, {}, adios2::Dims{8});
@@ -73,21 +71,19 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<char>("i8");
-            auto &var_si8 = io.GetVariable<signed char>("si8");
-            auto &var_i16 = io.GetVariable<short>("i16");
-            auto &var_i32 = io.GetVariable<int>("i32");
-            auto &var_i64 = io.GetVariable<long>("i64");
-            auto &var_u8 = io.GetVariable<unsigned char>("u8");
-            auto &var_u16 = io.GetVariable<unsigned short>("u16");
-            auto &var_u32 = io.GetVariable<unsigned int>("u32");
-            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_i8 = io.GetVariable<int8_t>("i8");
+            auto &var_i16 = io.GetVariable<int16_t>("i16");
+            auto &var_i32 = io.GetVariable<int32_t>("i32");
+            auto &var_i64 = io.GetVariable<int64_t>("i64");
+            auto &var_u8 = io.GetVariable<uint8_t>("u8");
+            auto &var_u16 = io.GetVariable<uint16_t>("u16");
+            auto &var_u32 = io.GetVariable<uint32_t>("u32");
+            auto &var_u64 = io.GetVariable<uint64_t>("u64");
             auto &var_r32 = io.GetVariable<float>("r32");
             auto &var_r64 = io.GetVariable<double>("r64");
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);
-            engine->Write(var_si8, m_TestData.SI8.data() + step);
             engine->Write(var_i16, m_TestData.I16.data() + step);
             engine->Write(var_i32, m_TestData.I32.data() + step);
             engine->Write(var_i64, m_TestData.I64.data() + step);
@@ -169,12 +165,11 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         ASSERT_EQ(var_r64->ndim, 1);
         ASSERT_EQ(var_r64->dims[0], 8);
 
-        std::array<char, 8> I8;
-        std::array<signed char, 8> SI8;
+        std::array<int8_t, 8> I8;
         std::array<int16_t, 8> I16;
         std::array<int32_t, 8> I32;
         std::array<int64_t, 8> I64;
-        std::array<unsigned char, 8> U8;
+        std::array<uint8_t, 8> U8;
         std::array<uint16_t, 8> U16;
         std::array<uint32_t, 8> U32;
         std::array<uint64_t, 8> U64;
@@ -190,7 +185,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         {
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
-            adios_schedule_read_byid(f, sel, var_si8->varid, t, 1, SI8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
             adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
             adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
@@ -210,7 +204,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
-                EXPECT_EQ(SI8[i], m_TestData.SI8[i + t]) << msg;
                 EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
                 EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
                 EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
@@ -268,23 +261,20 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         // Declare 1D variables
         {
             auto &var_i8 =
-                io.DefineVariable<char>("i8", {}, {}, adios2::Dims{2, 4});
-
-            auto &var_si8 = io.DefineVariable<signed char>("si8", {}, {},
-                                                           adios2::Dims{2, 4});
+                io.DefineVariable<int8_t>("i8", {}, {}, adios2::Dims{2, 4});
             auto &var_i16 =
-                io.DefineVariable<short>("i16", {}, {}, adios2::Dims{2, 4});
+                io.DefineVariable<int16_t>("i16", {}, {}, adios2::Dims{2, 4});
             auto &var_i32 =
-                io.DefineVariable<int>("i32", {}, {}, adios2::Dims{2, 4});
+                io.DefineVariable<int32_t>("i32", {}, {}, adios2::Dims{2, 4});
             auto &var_i64 =
-                io.DefineVariable<long>("i64", {}, {}, adios2::Dims{2, 4});
-            auto &var_u8 = io.DefineVariable<unsigned char>("u8", {}, {},
+                io.DefineVariable<int64_t>("i64", {}, {}, adios2::Dims{2, 4});
+            auto &var_u8 = io.DefineVariable<uint8_t>("u8", {}, {},
                                                             adios2::Dims{2, 4});
-            auto &var_u16 = io.DefineVariable<unsigned short>(
+            auto &var_u16 = io.DefineVariable<uint16_t>(
                 "u16", {}, {}, adios2::Dims{2, 4});
-            auto &var_u32 = io.DefineVariable<unsigned int>("u32", {}, {},
+            auto &var_u32 = io.DefineVariable<uint32_t>("u32", {}, {},
                                                             adios2::Dims{2, 4});
-            auto &var_u64 = io.DefineVariable<unsigned long>(
+            auto &var_u64 = io.DefineVariable<uint64_t>(
                 "u64", {}, {}, adios2::Dims{2, 4});
             auto &var_r32 =
                 io.DefineVariable<float>("r32", {}, {}, adios2::Dims{2, 4});
@@ -302,21 +292,19 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<char>("i8");
-            auto &var_si8 = io.GetVariable<signed char>("si8");
-            auto &var_i16 = io.GetVariable<short>("i16");
-            auto &var_i32 = io.GetVariable<int>("i32");
-            auto &var_i64 = io.GetVariable<long>("i64");
-            auto &var_u8 = io.GetVariable<unsigned char>("u8");
-            auto &var_u16 = io.GetVariable<unsigned short>("u16");
-            auto &var_u32 = io.GetVariable<unsigned int>("u32");
-            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_i8 = io.GetVariable<int8_t>("i8");
+            auto &var_i16 = io.GetVariable<int16_t>("i16");
+            auto &var_i32 = io.GetVariable<int32_t>("i32");
+            auto &var_i64 = io.GetVariable<int64_t>("i64");
+            auto &var_u8 = io.GetVariable<uint8_t>("u8");
+            auto &var_u16 = io.GetVariable<uint16_t>("u16");
+            auto &var_u32 = io.GetVariable<uint32_t>("u32");
+            auto &var_u64 = io.GetVariable<uint64_t>("u64");
             auto &var_r32 = io.GetVariable<float>("r32");
             auto &var_r64 = io.GetVariable<double>("r64");
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);
-            engine->Write(var_si8, m_TestData.SI8.data() + step);
             engine->Write(var_i16, m_TestData.I16.data() + step);
             engine->Write(var_i32, m_TestData.I32.data() + step);
             engine->Write(var_i64, m_TestData.I64.data() + step);
@@ -409,12 +397,11 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         ASSERT_EQ(var_r64->dims[0], 2);
         ASSERT_EQ(var_r64->dims[1], 4);
 
-        std::array<char, 8> I8;
-        std::array<signed char, 8> SI8;
+        std::array<int8_t, 8> I8;
         std::array<int16_t, 8> I16;
         std::array<int32_t, 8> I32;
         std::array<int64_t, 8> I64;
-        std::array<unsigned char, 8> U8;
+        std::array<uint8_t, 8> U8;
         std::array<uint16_t, 8> U16;
         std::array<uint32_t, 8> U32;
         std::array<uint64_t, 8> U64;
@@ -430,7 +417,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         {
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
-            adios_schedule_read_byid(f, sel, var_si8->varid, t, 1, SI8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
             adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
             adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
@@ -450,7 +436,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
-                EXPECT_EQ(SI8[i], m_TestData.SI8[i + t]) << msg;
                 EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
                 EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
                 EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
@@ -508,22 +493,20 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         // Declare 1D variables
         {
             auto &var_i8 =
-                io.DefineVariable<char>("i8", {}, {}, adios2::Dims{4, 2});
-            auto &var_si8 = io.DefineVariable<signed char>("si8", {}, {},
-                                                           adios2::Dims{4, 2});
+                io.DefineVariable<int8_t>("i8", {}, {}, adios2::Dims{4, 2});
             auto &var_i16 =
-                io.DefineVariable<short>("i16", {}, {}, adios2::Dims{4, 2});
+                io.DefineVariable<int16_t>("i16", {}, {}, adios2::Dims{4, 2});
             auto &var_i32 =
-                io.DefineVariable<int>("i32", {}, {}, adios2::Dims{4, 2});
+                io.DefineVariable<int32_t>("i32", {}, {}, adios2::Dims{4, 2});
             auto &var_i64 =
-                io.DefineVariable<long>("i64", {}, {}, adios2::Dims{4, 2});
-            auto &var_u8 = io.DefineVariable<unsigned char>("u8", {}, {},
+                io.DefineVariable<int64_t>("i64", {}, {}, adios2::Dims{4, 2});
+            auto &var_u8 = io.DefineVariable<uint8_t>("u8", {}, {},
                                                             adios2::Dims{4, 2});
-            auto &var_u16 = io.DefineVariable<unsigned short>(
+            auto &var_u16 = io.DefineVariable<uint16_t>(
                 "u16", {}, {}, adios2::Dims{4, 2});
-            auto &var_u32 = io.DefineVariable<unsigned int>("u32", {}, {},
+            auto &var_u32 = io.DefineVariable<uint32_t>("u32", {}, {},
                                                             adios2::Dims{4, 2});
-            auto &var_u64 = io.DefineVariable<unsigned long>(
+            auto &var_u64 = io.DefineVariable<uint64_t>(
                 "u64", {}, {}, adios2::Dims{4, 2});
             auto &var_r32 =
                 io.DefineVariable<float>("r32", {}, {}, adios2::Dims{4, 2});
@@ -541,21 +524,19 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<char>("i8");
-            auto &var_si8 = io.GetVariable<signed char>("si8");
-            auto &var_i16 = io.GetVariable<short>("i16");
-            auto &var_i32 = io.GetVariable<int>("i32");
-            auto &var_i64 = io.GetVariable<long>("i64");
-            auto &var_u8 = io.GetVariable<unsigned char>("u8");
-            auto &var_u16 = io.GetVariable<unsigned short>("u16");
-            auto &var_u32 = io.GetVariable<unsigned int>("u32");
-            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_i8 = io.GetVariable<int8_t>("i8");
+            auto &var_i16 = io.GetVariable<int16_t>("i16");
+            auto &var_i32 = io.GetVariable<int32_t>("i32");
+            auto &var_i64 = io.GetVariable<int64_t>("i64");
+            auto &var_u8 = io.GetVariable<uint8_t>("u8");
+            auto &var_u16 = io.GetVariable<uint16_t>("u16");
+            auto &var_u32 = io.GetVariable<uint32_t>("u32");
+            auto &var_u64 = io.GetVariable<uint64_t>("u64");
             auto &var_r32 = io.GetVariable<float>("r32");
             auto &var_r64 = io.GetVariable<double>("r64");
 
             // Write each one
             engine->Write(var_i8, m_TestData.I8.data() + step);
-            engine->Write(var_si8, m_TestData.SI8.data() + step);
             engine->Write(var_i16, m_TestData.I16.data() + step);
             engine->Write(var_i32, m_TestData.I32.data() + step);
             engine->Write(var_i64, m_TestData.I64.data() + step);
@@ -648,12 +629,11 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         ASSERT_EQ(var_r64->dims[0], 4);
         ASSERT_EQ(var_r64->dims[1], 2);
 
-        std::array<char, 8> I8;
-        std::array<signed char, 8> SI8;
+        std::array<int8_t, 8> I8;
         std::array<int16_t, 8> I16;
         std::array<int32_t, 8> I32;
         std::array<int64_t, 8> I64;
-        std::array<unsigned char, 8> U8;
+        std::array<uint8_t, 8> U8;
         std::array<uint16_t, 8> U16;
         std::array<uint32_t, 8> U32;
         std::array<uint64_t, 8> U64;
@@ -669,7 +649,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         {
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
-            adios_schedule_read_byid(f, sel, var_si8->varid, t, 1, SI8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
             adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
             adios_schedule_read_byid(f, sel, var_i64->varid, t, 1, I64.data());
@@ -689,7 +668,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], m_TestData.I8[i + t]) << msg;
-                EXPECT_EQ(SI8[i], m_TestData.SI8[i + t]) << msg;
                 EXPECT_EQ(I16[i], m_TestData.I16[i + t]) << msg;
                 EXPECT_EQ(I32[i], m_TestData.I32[i + t]) << msg;
                 EXPECT_EQ(I64[i], m_TestData.I64[i + t]) << msg;
