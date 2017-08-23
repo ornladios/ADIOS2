@@ -25,7 +25,7 @@ class ADIOS1WriteReadTest : public ::testing::Test
 public:
     ADIOS1WriteReadTest() = default;
 
-    const SmallTestData m_TestData;
+    SmallTestData m_TestData;
 };
 
 //******************************************************************************
@@ -64,8 +64,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape =
-                adios2::Dims(static_cast<unsigned int>(world_size), Nx);
+            adios2::Dims shape(static_cast<unsigned int>(world_size), Nx);
             auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
             auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
             auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
@@ -358,8 +357,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape =
-                adios2::Dims{(unsigned int)Ny * world_size, Nx};
+            adios2::Dims shape(static_cast<unsigned int>(Ny * world_size), Nx);
             auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
             auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
             auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
@@ -654,8 +652,7 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape =
-                adios2::Dims{(unsigned int)Ny * world_size, Nx};
+            adios2::Dims shape(static_cast<unsigned int>(Ny * world_size), Nx);
             auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
             auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
             auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
