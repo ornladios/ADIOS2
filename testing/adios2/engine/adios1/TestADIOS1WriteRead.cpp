@@ -25,7 +25,7 @@ class ADIOS1WriteReadTest : public ::testing::Test
 public:
     ADIOS1WriteReadTest() = default;
 
-    const SmallTestData m_TestData;
+    SmallTestData m_TestData;
 };
 
 //******************************************************************************
@@ -64,15 +64,15 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape = adios2::Dims{(unsigned int)world_size, Nx};
-            auto &var_i8 = io.DefineVariable<char>("i8", shape);
-            auto &var_i16 = io.DefineVariable<short>("i16", shape);
-            auto &var_i32 = io.DefineVariable<int>("i32", shape);
-            auto &var_i64 = io.DefineVariable<long>("i64", shape);
-            auto &var_u8 = io.DefineVariable<unsigned char>("u8", shape);
-            auto &var_u16 = io.DefineVariable<unsigned short>("u16", shape);
-            auto &var_u32 = io.DefineVariable<unsigned int>("u32", shape);
-            auto &var_u64 = io.DefineVariable<unsigned long>("u64", shape);
+            adios2::Dims shape(static_cast<unsigned int>(world_size), Nx);
+            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
+            auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
+            auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
+            auto &var_i64 = io.DefineVariable<int64_t>("i64", shape);
+            auto &var_u8 = io.DefineVariable<uint8_t>("u8", shape);
+            auto &var_u16 = io.DefineVariable<uint16_t>("u16", shape);
+            auto &var_u32 = io.DefineVariable<uint32_t>("u32", shape);
+            auto &var_u64 = io.DefineVariable<uint64_t>("u64", shape);
             auto &var_r32 = io.DefineVariable<float>("r32", shape);
             auto &var_r64 = io.DefineVariable<double>("r64", shape);
         }
@@ -96,14 +96,14 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
                 m_TestData, step, world_rank, world_size);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<char>("i8");
-            auto &var_i16 = io.GetVariable<short>("i16");
-            auto &var_i32 = io.GetVariable<int>("i32");
-            auto &var_i64 = io.GetVariable<long>("i64");
-            auto &var_u8 = io.GetVariable<unsigned char>("u8");
-            auto &var_u16 = io.GetVariable<unsigned short>("u16");
-            auto &var_u32 = io.GetVariable<unsigned int>("u32");
-            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_i8 = io.GetVariable<int8_t>("i8");
+            auto &var_i16 = io.GetVariable<int16_t>("i16");
+            auto &var_i32 = io.GetVariable<int32_t>("i32");
+            auto &var_i64 = io.GetVariable<int64_t>("i64");
+            auto &var_u8 = io.GetVariable<uint8_t>("u8");
+            auto &var_u16 = io.GetVariable<uint16_t>("u16");
+            auto &var_u32 = io.GetVariable<uint32_t>("u32");
+            auto &var_u64 = io.GetVariable<uint64_t>("u64");
             auto &var_r32 = io.GetVariable<float>("r32");
             auto &var_r64 = io.GetVariable<double>("r64");
 
@@ -227,11 +227,11 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         ASSERT_EQ(var_r64->dims[0], world_size);
         ASSERT_EQ(var_r64->dims[1], Nx);
 
-        std::array<char, Nx> I8;
+        std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
         std::array<int32_t, Nx> I32;
         std::array<int64_t, Nx> I64;
-        std::array<unsigned char, Nx> U8;
+        std::array<uint8_t, Nx> U8;
         std::array<uint16_t, Nx> U16;
         std::array<uint32_t, Nx> U32;
         std::array<uint64_t, Nx> U64;
@@ -357,16 +357,15 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape =
-                adios2::Dims{(unsigned int)Ny * world_size, Nx};
-            auto &var_i8 = io.DefineVariable<char>("i8", shape);
-            auto &var_i16 = io.DefineVariable<short>("i16", shape);
-            auto &var_i32 = io.DefineVariable<int>("i32", shape);
-            auto &var_i64 = io.DefineVariable<long>("i64", shape);
-            auto &var_u8 = io.DefineVariable<unsigned char>("u8", shape);
-            auto &var_u16 = io.DefineVariable<unsigned short>("u16", shape);
-            auto &var_u32 = io.DefineVariable<unsigned int>("u32", shape);
-            auto &var_u64 = io.DefineVariable<unsigned long>("u64", shape);
+            adios2::Dims shape(static_cast<unsigned int>(Ny * world_size), Nx);
+            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
+            auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
+            auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
+            auto &var_i64 = io.DefineVariable<int64_t>("i64", shape);
+            auto &var_u8 = io.DefineVariable<uint8_t>("u8", shape);
+            auto &var_u16 = io.DefineVariable<uint16_t>("u16", shape);
+            auto &var_u32 = io.DefineVariable<uint32_t>("u32", shape);
+            auto &var_u64 = io.DefineVariable<uint64_t>("u64", shape);
             auto &var_r32 = io.DefineVariable<float>("r32", shape);
             auto &var_r64 = io.DefineVariable<double>("r64", shape);
         }
@@ -390,14 +389,14 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
                 m_TestData, step, world_rank, world_size);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<char>("i8");
-            auto &var_i16 = io.GetVariable<short>("i16");
-            auto &var_i32 = io.GetVariable<int>("i32");
-            auto &var_i64 = io.GetVariable<long>("i64");
-            auto &var_u8 = io.GetVariable<unsigned char>("u8");
-            auto &var_u16 = io.GetVariable<unsigned short>("u16");
-            auto &var_u32 = io.GetVariable<unsigned int>("u32");
-            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_i8 = io.GetVariable<int8_t>("i8");
+            auto &var_i16 = io.GetVariable<int16_t>("i16");
+            auto &var_i32 = io.GetVariable<int32_t>("i32");
+            auto &var_i64 = io.GetVariable<int64_t>("i64");
+            auto &var_u8 = io.GetVariable<uint8_t>("u8");
+            auto &var_u16 = io.GetVariable<uint16_t>("u16");
+            auto &var_u32 = io.GetVariable<uint32_t>("u32");
+            auto &var_u64 = io.GetVariable<uint64_t>("u64");
             auto &var_r32 = io.GetVariable<float>("r32");
             auto &var_r64 = io.GetVariable<double>("r64");
 
@@ -524,11 +523,11 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         // If the size of the array is smaller than the data
         // the result is weird... double and uint64_t would get completely
         // garbage data
-        std::array<char, Nx * Ny> I8;
+        std::array<int8_t, Nx * Ny> I8;
         std::array<int16_t, Nx * Ny> I16;
         std::array<int32_t, Nx * Ny> I32;
         std::array<int64_t, Nx * Ny> I64;
-        std::array<unsigned char, Nx * Ny> U8;
+        std::array<uint8_t, Nx * Ny> U8;
         std::array<uint16_t, Nx * Ny> U16;
         std::array<uint32_t, Nx * Ny> U32;
         std::array<uint64_t, Nx * Ny> U64;
@@ -653,16 +652,15 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape =
-                adios2::Dims{(unsigned int)Ny * world_size, Nx};
-            auto &var_i8 = io.DefineVariable<char>("i8", shape);
-            auto &var_i16 = io.DefineVariable<short>("i16", shape);
-            auto &var_i32 = io.DefineVariable<int>("i32", shape);
-            auto &var_i64 = io.DefineVariable<long>("i64", shape);
-            auto &var_u8 = io.DefineVariable<unsigned char>("u8", shape);
-            auto &var_u16 = io.DefineVariable<unsigned short>("u16", shape);
-            auto &var_u32 = io.DefineVariable<unsigned int>("u32", shape);
-            auto &var_u64 = io.DefineVariable<unsigned long>("u64", shape);
+            adios2::Dims shape(static_cast<unsigned int>(Ny * world_size), Nx);
+            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
+            auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
+            auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
+            auto &var_i64 = io.DefineVariable<int64_t>("i64", shape);
+            auto &var_u8 = io.DefineVariable<uint8_t>("u8", shape);
+            auto &var_u16 = io.DefineVariable<uint16_t>("u16", shape);
+            auto &var_u32 = io.DefineVariable<uint32_t>("u32", shape);
+            auto &var_u64 = io.DefineVariable<uint64_t>("u64", shape);
             auto &var_r32 = io.DefineVariable<float>("r32", shape);
             auto &var_r64 = io.DefineVariable<double>("r64", shape);
         }
@@ -686,14 +684,14 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
                 m_TestData, step, world_rank, world_size);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<char>("i8");
-            auto &var_i16 = io.GetVariable<short>("i16");
-            auto &var_i32 = io.GetVariable<int>("i32");
-            auto &var_i64 = io.GetVariable<long>("i64");
-            auto &var_u8 = io.GetVariable<unsigned char>("u8");
-            auto &var_u16 = io.GetVariable<unsigned short>("u16");
-            auto &var_u32 = io.GetVariable<unsigned int>("u32");
-            auto &var_u64 = io.GetVariable<unsigned long>("u64");
+            auto &var_i8 = io.GetVariable<int8_t>("i8");
+            auto &var_i16 = io.GetVariable<int16_t>("i16");
+            auto &var_i32 = io.GetVariable<int32_t>("i32");
+            auto &var_i64 = io.GetVariable<int64_t>("i64");
+            auto &var_u8 = io.GetVariable<uint8_t>("u8");
+            auto &var_u16 = io.GetVariable<uint16_t>("u16");
+            auto &var_u32 = io.GetVariable<uint32_t>("u32");
+            auto &var_u64 = io.GetVariable<uint64_t>("u64");
             auto &var_r32 = io.GetVariable<float>("r32");
             auto &var_r64 = io.GetVariable<double>("r64");
 
@@ -820,11 +818,11 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         // If the size of the array is smaller than the data
         // the result is weird... double and uint64_t would get completely
         // garbage data
-        std::array<char, Nx * Ny> I8;
+        std::array<int8_t, Nx * Ny> I8;
         std::array<int16_t, Nx * Ny> I16;
         std::array<int32_t, Nx * Ny> I32;
         std::array<int64_t, Nx * Ny> I64;
-        std::array<unsigned char, Nx * Ny> U8;
+        std::array<uint8_t, Nx * Ny> U8;
         std::array<uint16_t, Nx * Ny> U16;
         std::array<uint32_t, Nx * Ny> U32;
         std::array<uint64_t, Nx * Ny> U64;
