@@ -43,67 +43,21 @@ struct SmallTestData
     std::array<double, 10> R64 = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}};
 };
 
-// Utility function for generateNewSmallTestData
-template <typename T>
-T clip(const T &n, const T &lower, const T &upper)
-{
-    return std::max(lower, std::min(n, upper));
-}
-
-SmallTestData generateNewSmallTestData(SmallTestData input, int step, int rank,
+SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
                                        int size)
 {
-    rank++; // Make rank to be 1 based index
-    for (int i = 0; i < 10; i++)
-    { // Make sure that data is within the range
-        int jump = rank + step * size;
-        input.I8[i] = clip(
-            static_cast<char>(input.I8[i] + static_cast<char>(jump)),
-            std::numeric_limits<char>::min(), std::numeric_limits<char>::max());
-        input.SI8[i] = clip(static_cast<signed char>(
-                                input.SI8[i] + static_cast<signed char>(jump)),
-                            std::numeric_limits<signed char>::min(),
-                            std::numeric_limits<signed char>::max());
-        input.I16[i] =
-            clip(static_cast<short>(input.I16[i] + static_cast<short>(jump)),
-                 std::numeric_limits<short>::min(),
-                 std::numeric_limits<short>::max());
-        input.I32[i] = clip(
-            static_cast<int>(input.I32[i] + static_cast<int>(jump)),
-            std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
-        input.I64[i] = clip(
-            static_cast<long>(input.I64[i] + static_cast<long>(jump)),
-            std::numeric_limits<long>::min(), std::numeric_limits<long>::max());
+    int j = rank + 1 + step * size;
+    std::for_each(in.I8.begin(), in.I8.end(), [&](int8_t &v) { v += j; });
+    std::for_each(in.I16.begin(), in.I16.end(), [&](int16_t &v) { v += j; });
+    std::for_each(in.I32.begin(), in.I32.end(), [&](int32_t &v) { v += j; });
+    std::for_each(in.I64.begin(), in.I64.end(), [&](int64_t &v) { v += j; });
+    std::for_each(in.U8.begin(), in.U8.end(), [&](uint8_t &v) { v += j; });
+    std::for_each(in.U16.begin(), in.U16.end(), [&](uint16_t &v) { v += j; });
+    std::for_each(in.U32.begin(), in.U32.end(), [&](uint32_t &v) { v += j; });
+    std::for_each(in.U64.begin(), in.U64.end(), [&](uint64_t &v) { v += j; });
+    std::for_each(in.R32.begin(), in.R32.end(), [&](float &v) { v += j; });
+    std::for_each(in.R64.begin(), in.R64.end(), [&](double &v) { v += j; });
 
-        input.U8[i] = clip(static_cast<unsigned char>(
-                               input.U8[i] + static_cast<unsigned char>(jump)),
-                           std::numeric_limits<unsigned char>::min(),
-                           std::numeric_limits<unsigned char>::max());
-        input.U16[i] =
-            clip(static_cast<unsigned short>(input.U16[i] +
-                                             static_cast<unsigned short>(jump)),
-                 std::numeric_limits<unsigned short>::min(),
-                 std::numeric_limits<unsigned short>::max());
-        input.U32[i] = clip(static_cast<unsigned int>(
-                                input.U32[i] + static_cast<unsigned int>(jump)),
-                            std::numeric_limits<unsigned int>::min(),
-                            std::numeric_limits<unsigned int>::max());
-        input.U64[i] =
-            clip(static_cast<unsigned long int>(
-                     input.U64[i] + static_cast<unsigned long int>(jump)),
-                 std::numeric_limits<unsigned long int>::min(),
-                 std::numeric_limits<unsigned long int>::max());
-
-        input.R32[i] =
-            clip(static_cast<float>(input.R32[i] + static_cast<float>(jump)),
-                 -std::numeric_limits<float>::max(),
-                 std::numeric_limits<float>::max());
-        input.R64[i] =
-            clip(static_cast<double>(input.R64[i] + static_cast<double>(jump)),
-                 -std::numeric_limits<double>::max(),
-                 std::numeric_limits<double>::max());
-    }
-
-    return input;
+    return in;
 }
 #endif // TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
