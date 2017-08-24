@@ -14,10 +14,7 @@
 #include <vector>
 
 #include <adios2.h>
-
-#ifndef ADIOS2_HAVE_MPI_C
-#define MPI_COMM_SELF 2
-#endif
+#include <adios2/ADIOSMPI.h>
 
 adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
                                  const adios2_debug_mode debug_mode)

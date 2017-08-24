@@ -16,6 +16,8 @@
 
 namespace adios2
 {
+namespace mpi
+{
 
 typedef int MPI_Comm;
 typedef std::uint64_t MPI_Status;
@@ -123,6 +125,7 @@ int MPI_Get_processor_name(char *name, int *resultlen);
 
 double MPI_Wtime();
 
+} // end namespace mpi
 } // end namespace adios
 
 #endif /* ADIOS2_MPIDUMMY_H_ */

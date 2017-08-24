@@ -13,6 +13,8 @@
 
 #include <stddef.h> //size_t
 
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/adios2_c_enums.h"
 
 typedef void adios2_ADIOS;
@@ -22,12 +24,6 @@ typedef struct adios2_Engine adios2_Engine;
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifdef ADIOS2_HAVE_MPI_C
-#include <mpi.h>
-#else
-typedef int MPI_Comm;
 #endif
 
 /**

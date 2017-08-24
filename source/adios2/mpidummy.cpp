@@ -41,6 +41,8 @@
 
 namespace adios2
 {
+namespace mpi
+{
 
 static char mpierrmsg[MPI_MAX_ERROR_STRING];
 
@@ -380,4 +382,5 @@ int MPI_Get_processor_name(char *name, int *resultlen)
     return 0;
 }
 
+} // end namespace mpi
 } // end namespace adios

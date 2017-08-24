@@ -43,11 +43,6 @@ if(MPI_FOUND)
   set(ADIOS2_HAVE_MPI TRUE)
 endif()
 
-# C
-if(ADIOS2_USE_C)
-  set(ADIOS2_HAVE_C TRUE)
-endif()
-
 # DataMan
 if(SHARED_LIBS_SUPPORTED AND NOT MSVC)
   set(ADIOS2_HAVE_DataMan TRUE)

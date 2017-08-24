@@ -45,11 +45,9 @@
 /* CMake Option: ADIOS_USE_SysVShMem=ON */
 #cmakedefine ADIOS2_HAVE_SYSVSHMEM
 
-/* Language Bindings: */
+/* Optional Language Bindings: */
+
 /* CMake Option: ADIOS_USE_Python=ON */
 #cmakedefine ADIOS2_HAVE_PYTHON
-
-/* CMake Option: ADIOS_USE_C=ON */
-#cmakedefine ADIOS2_HAVE_C
 
 #endif /* ADIOSCONFIG_H_ */
