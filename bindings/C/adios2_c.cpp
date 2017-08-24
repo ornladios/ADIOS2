@@ -20,7 +20,8 @@ adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
                                  const adios2_debug_mode debug_mode)
 {
     const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
-    adios2_ADIOS *adios = new adios2::ADIOS(config_file, mpi_comm, debugBool);
+    adios2_ADIOS *adios = reinterpret_cast<adios2_ADIOS *>(
+        new adios2::ADIOS(config_file, mpi_comm, debugBool));
 
     return adios;
 }
@@ -43,8 +44,8 @@ adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode)
 
 adios2_IO *adios2_declare_io(adios2_ADIOS *adios, const char *ioName)
 {
-    adios2_IO *io =
-        &reinterpret_cast<adios2::ADIOS *>(adios)->DeclareIO(ioName);
+    adios2_IO *io = reinterpret_cast<adios2_IO *>(
+        &reinterpret_cast<adios2::ADIOS *>(adios)->DeclareIO(ioName));
     return io;
 }
 
