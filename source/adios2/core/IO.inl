@@ -21,28 +21,13 @@ namespace adios2
 {
 
 template <class T>
-VariableCompound &
-IO::DefineVariableCompound(const std::string &name, const Dims &shape,
-                           const Dims &start, const Dims &count,
-                           const bool constantShape)
+VariableCompound &IO::DefineVariableCompound(const std::string &name,
+                                             const Dims &shape, const Dims &start,
+                                             const Dims &count,
+                                             const bool constantDims)
 {
-    if (m_DebugMode)
-    {
-        auto itVariable = m_Variables.find(name);
-        if (!IsEnd(itVariable, m_Variables))
-        {
-            throw std::invalid_argument(
-                "ERROR: compound variable " + name + " exists in IO object " +
-                m_Name + ", in call to DefineVariableCompound\n");
-        }
-    }
-    const unsigned int size =
-        static_cast<const unsigned int>(m_Compound.size());
-    auto itVariableCompound = m_Compound.emplace(
-        size, VariableCompound(name, sizeof(T), shape, start, count,
-                               constantShape, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair("compound", size));
-    return itVariableCompound.first->second;
+    return DefineVariableCompound(name, sizeof(T), shape, start, count,
+                                  constantDims);
 }
 
 } // end namespace adios2

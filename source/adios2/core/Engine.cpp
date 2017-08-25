@@ -35,7 +35,15 @@ void Engine::SetCallBack(
 {
 }
 
-// should these functions throw an exception?
+void Engine::Write(VariableBase &variable, const void *values)
+{
+    DoWrite(variable.m_Name, values);
+}
+
+void Engine::Write(const std::string &variableName, const void *values)
+{
+    DoWrite(variableName, values);
+}
 
 void Engine::Advance(const float /*timeout_sec*/) {}
 void Engine::Advance(const AdvanceMode /*mode*/, const float /*timeout_sec*/) {}
@@ -89,13 +97,26 @@ void Engine::DoWrite(const std::string &variableName, const void *values)
 
     if (type == "compound")
     {
-        DoWrite(m_IO.GetVariableCompound(variableName), values);
+        VariableCompound &variable = m_IO.GetVariableCompound(variableName);
+
+        if (m_DebugMode)
+        {
+            variable.CheckDimsBeforeWrite("Write " + variable.m_Name);
+        }
+
+        DoWrite(variable, values);
     }
 #define declare_type(T)                                                        \
     else if (type == GetType<T>())                                             \
     {                                                                          \
-        DoWrite(m_IO.GetVariable<T>(variableName),                             \
-                reinterpret_cast<const T *>(values));                          \
+        Variable<T> &variable = m_IO.GetVariable<T>(variableName);             \
+                                                                               \
+        if (m_DebugMode)                                                       \
+        {                                                                      \
+            variable.CheckDimsBeforeWrite("Write " + variable.m_Name);         \
+        }                                                                      \
+                                                                               \
+        DoWrite(variable, reinterpret_cast<const T *>(values));                \
     }
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -107,88 +128,15 @@ VariableBase *Engine::InquireVariableUnknown(const std::string &name,
 {
     return nullptr;
 }
-Variable<char> *Engine::InquireVariableChar(const std::string &name,
-                                            const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned char> *Engine::InquireVariableUChar(const std::string &name,
-                                                      const bool readIn)
-{
-    return nullptr;
-}
-Variable<short> *Engine::InquireVariableShort(const std::string &name,
-                                              const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned short> *Engine::InquireVariableUShort(const std::string &name,
-                                                        const bool readIn)
-{
-    return nullptr;
-}
-Variable<int> *Engine::InquireVariableInt(const std::string &name,
-                                          const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned int> *Engine::InquireVariableUInt(const std::string &name,
-                                                    const bool readIn)
-{
-    return nullptr;
-}
-Variable<long int> *Engine::InquireVariableLInt(const std::string &name,
-                                                const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned long int> *
-Engine::InquireVariableULInt(const std::string &name, const bool readIn)
-{
-    return nullptr;
-}
-Variable<long long int> *Engine::InquireVariableLLInt(const std::string &name,
-                                                      const bool readIn)
-{
-    return nullptr;
-}
-Variable<unsigned long long int> *
-Engine::InquireVariableULLInt(const std::string &name, const bool readIn)
-{
-    return nullptr;
-}
 
-Variable<float> *Engine::InquireVariableFloat(const std::string &name,
-                                              const bool readIn)
-{
-    return nullptr;
-}
-Variable<double> *Engine::InquireVariableDouble(const std::string &name,
-                                                const bool readIn)
-{
-    return nullptr;
-}
-Variable<long double> *Engine::InquireVariableLDouble(const std::string &name,
-                                                      const bool readIn)
-{
-    return nullptr;
-}
-Variable<cfloat> *Engine::InquireVariableCFloat(const std::string &name,
-                                                const bool readIn)
-{
-    return nullptr;
-}
-Variable<cdouble> *Engine::InquireVariableCDouble(const std::string &name,
-                                                  const bool readIn)
-{
-    return nullptr;
-}
-
-Variable<cldouble> *Engine::InquireVariableCLDouble(const std::string &name,
-                                                    const bool readIn)
-{
-    return nullptr;
-}
+#define define(T, L)                                                           \
+    Variable<T> *Engine::InquireVariable##L(const std::string &name,           \
+                                            const bool readIn)                 \
+    {                                                                          \
+        return nullptr;                                                        \
+    }
+ADIOS2_FOREACH_TYPE_2ARGS(define)
+#undef define
 
 #define declare_type(T)                                                        \
     void Engine::DoScheduleRead(Variable<T> &variable, const T *values)        \
@@ -212,4 +160,14 @@ void Engine::ThrowUp(const std::string function) const
                                 "\n");
 }
 
-} // end namespace adios
+#define declare_template_instantiation(T)                                      \
+    template void Engine::Write<T>(Variable<T> &, const T *);                  \
+    template void Engine::Write<T>(Variable<T> &, const T);                    \
+                                                                               \
+    template void Engine::Write<T>(const std::string &, const T *);            \
+    template void Engine::Write<T>(const std::string &, const T);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+} // end namespace adios2

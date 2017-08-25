@@ -18,6 +18,7 @@ add_library(adios2
   core/VariableCompound.cpp core/VariableCompound.tcc
   
 #helper
+  helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
   helper/adiosMPIFunctions.cpp
   helper/adiosString.cpp
@@ -27,6 +28,10 @@ add_library(adios2
   
 #  engine/bp/BPFileReader.cpp
   engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
+
+  engine/plugin/PluginEngine.h engine/plugin/PluginEngine.inl
+  engine/plugin/PluginEngine.cpp
+  engine/plugin/PluginEngineInterface.h engine/plugin/PluginEngineInterface.cpp
 
   toolkit/capsule/Capsule.cpp
   toolkit/capsule/heap/STLVector.cpp 
@@ -51,8 +56,6 @@ target_include_directories(adios2
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_link_libraries(adios2 PRIVATE adios2sys pugixml)
-
-find_package(Threads REQUIRED)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 if(UNIX)
@@ -72,19 +75,16 @@ if(ADIOS2_HAVE_DataMan)
 endif()
   
 if(ADIOS2_HAVE_BZip2)
-  find_package(BZip2 REQUIRED)
   target_sources(adios2 PRIVATE transform/compress/CompressBZip2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
 
 if(ADIOS2_HAVE_ZFP)
-  find_package(ZFP REQUIRED)
   target_sources(adios2 PRIVATE transform/compress/CompressZfp.cpp)
   target_link_libraries(adios2 PRIVATE zfp::zfp)
 endif()
 
 if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
   target_include_directories(adios2 PUBLIC ${MPI_C_INCLUDE_PATH})
   target_link_libraries(adios2 PUBLIC ${MPI_C_LIBRARIES})
 else()
@@ -92,12 +92,6 @@ else()
 endif()
 
 if(ADIOS2_HAVE_ADIOS1)
-  if(ADIOS2_HAVE_MPI)
-    find_package(ADIOS1 1.12.0 REQUIRED)
-  else()
-    find_package(ADIOS1 1.12.0 COMPONENTS sequential REQUIRED)
-  endif()
-
   target_sources(adios2 PRIVATE
     engine/adios1/ADIOS1Reader.cpp
     engine/adios1/ADIOS1Writer.cpp
@@ -109,18 +103,6 @@ if(ADIOS2_HAVE_ADIOS1)
 endif()
 
 if(ADIOS2_HAVE_HDF5)
-  find_package(HDF5 REQUIRED)
-  if(ADIOS2_HAVE_MPI AND (NOT HDF5_IS_PARALLEL))
-    message(FATAL_ERROR
-      "A sequential version of HDF5 was detected but the parallel version "
-      "of ADIOS is being built, which requires a parallel HDF5."
-    )
-  elseif((NOT ADIOS2_HAVE_MPI) AND HDF5_IS_PARALLEL)
-    message(FATAL_ERROR
-      "A parallel version of HDF5 was detected but the sequential version "
-      "of ADIOS is being built, which requires a sequential HDF5."
-    )
-  endif()
   if(HDF5_C_INCLUDE_DIRS)
     target_include_directories(adios2 PRIVATE ${HDF5_C_INCLUDE_DIRS})
   else()

@@ -7,8 +7,6 @@
 if(NOT ADIOS2_HAVE_MPI)
   
   if(ADIOS2_HAVE_ADIOS1)
-    find_package(ADIOS1 COMPONENTS sequential REQUIRED)
-
     add_executable(TestBPWriteRead TestBPWriteRead.cpp)
     target_link_libraries(TestBPWriteRead adios2 gtest adios1::adios)
   
@@ -21,11 +19,12 @@ if(NOT ADIOS2_HAVE_MPI)
     gtest_add_tests(TARGET TestBPWriteRead)
     gtest_add_tests(TARGET TestBPWriteReadstdio)
     gtest_add_tests(TARGET TestBPWriteReadfstream)
-    
   endif()
     
   add_executable(TestBPWriteProfilingJSON TestBPWriteProfilingJSON.cpp)
-  target_link_libraries(TestBPWriteProfilingJSON adios2 gtest gtest_main NLohmannJson)
+  target_link_libraries(TestBPWriteProfilingJSON
+    adios2 gtest gtest_main NLohmannJson
+  )
   
   gtest_add_tests(TARGET TestBPWriteProfilingJSON)
 endif()
