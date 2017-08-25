@@ -221,6 +221,12 @@ std::map<unsigned int, Attribute<char>> &IO::GetAttributeMap()
 }
 
 template <>
+std::map<unsigned int, Attribute<signed char>> &IO::GetAttributeMap()
+{
+    return m_SCharA;
+}
+
+template <>
 std::map<unsigned int, Attribute<unsigned char>> &IO::GetAttributeMap()
 {
     return m_UCharA;

@@ -9,6 +9,7 @@
 
 #include <array>
 #include <limits>
+#include <string>
 
 #ifdef WIN32
 #define NOMINMAX
@@ -18,7 +19,9 @@
 // previous size to make sure we all bytes for each element
 struct SmallTestData
 {
-    // TODO: Fix the right initial value for char array
+    std::string S1 = "Testing ADIOS2 String Attributes";
+    std::array<std::string, 3> S3 = {{"one", "two", "three"}};
+
     std::array<int8_t, 10> I8 = {{0, 1, -2, 3, -4, 5, -6, 7, -8, 9}};
     std::array<int16_t, 10> I16 = {
         {512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
@@ -60,4 +63,5 @@ SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
 
     return in;
 }
+
 #endif // TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_

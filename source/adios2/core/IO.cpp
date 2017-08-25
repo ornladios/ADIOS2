@@ -113,7 +113,6 @@ VariableCompound &IO::GetVariableCompound(const std::string &name)
     return m_Compound.at(GetMapIndex(name, m_Variables, "VariableCompound"));
 }
 
-
 const DataMap &IO::GetAttributesDataMap() const noexcept
 {
     return m_Attributes;
