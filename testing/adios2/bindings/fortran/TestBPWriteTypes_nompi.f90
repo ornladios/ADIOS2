@@ -24,8 +24,9 @@ program TestBPWriteTypes
     call adios2_declare_io(io, adios, "bpIO", ierr)
 
     ! Defines a variable to be written in bp format
-    call adios2_define_variable(variables(1), io, "var_I8", adios2_type_integer1, 1, &
-        & shape_dims, start_dims, count_dims, adios2_constant_dims_true, ierr)
+    call adios2_define_variable(variables(1), io, "var_I8", &
+        & adios2_type_integer1, 1, shape_dims, start_dims, count_dims, &
+        & adios2_constant_dims_true, ierr)
 
     ! Open myVector_f.bp in write mode, this launches an engine
     call adios2_open(engine, io, "ftypes.bp", adios2_open_mode_write, ierr)

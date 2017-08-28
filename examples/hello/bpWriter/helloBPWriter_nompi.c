@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         myFloats[i] = i;
     }
 
-    adios2_ADIOS *adiosH = adios2_init(adios2_debug_mode_on);
+    adios2_ADIOS *adiosH = adios2_init_nompi(adios2_debug_mode_on);
     adios2_IO *ioH = adios2_declare_io(adiosH, "BPFile_N2N");
 
     // count dims are allocated in stack

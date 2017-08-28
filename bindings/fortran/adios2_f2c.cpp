@@ -53,7 +53,7 @@ void adios2_init_config_f2c_(adios2_ADIOS **adios, const char *config_file,
     *ierr = 0;
     try
     {
-        *adios = adios2_init_config(
+        *adios = adios2_init_config_nompi(
             config_file, static_cast<adios2_debug_mode>(*debug_mode));
     }
     catch (std::exception &e)

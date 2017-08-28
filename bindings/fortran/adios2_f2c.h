@@ -13,7 +13,7 @@
 
 #include <stddef.h>
 
-#ifdef ADIOS2_USE_MPI_F
+#ifdef ADIOS2_HAVE_MPI_F
 #include <mpi.h>
 #endif
 

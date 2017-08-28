@@ -124,10 +124,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         ASSERT_NE(var_i8, nullptr);
         ASSERT_EQ(var_i8->ndim, 1);
         ASSERT_EQ(var_i8->dims[0], 8);
-        ADIOS_VARINFO *var_si8 = adios_inq_var(f, "si8");
-        ASSERT_NE(var_si8, nullptr);
-        ASSERT_EQ(var_si8->ndim, 1);
-        ASSERT_EQ(var_si8->dims[0], 8);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
         ASSERT_EQ(var_i16->ndim, 1);
@@ -220,7 +216,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
 
         // Cleanup variable structures
         adios_free_varinfo(var_i8);
-        adios_free_varinfo(var_si8);
         adios_free_varinfo(var_i16);
         adios_free_varinfo(var_i32);
         adios_free_varinfo(var_i64);
@@ -346,11 +341,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         ASSERT_EQ(var_i8->ndim, 2);
         ASSERT_EQ(var_i8->dims[0], 2);
         ASSERT_EQ(var_i8->dims[1], 4);
-        ADIOS_VARINFO *var_si8 = adios_inq_var(f, "si8");
-        ASSERT_NE(var_si8, nullptr);
-        ASSERT_EQ(var_si8->ndim, 2);
-        ASSERT_EQ(var_si8->dims[0], 2);
-        ASSERT_EQ(var_si8->dims[1], 4);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
         ASSERT_EQ(var_i16->ndim, 2);
@@ -452,7 +442,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
 
         // Cleanup variable structures
         adios_free_varinfo(var_i8);
-        adios_free_varinfo(var_si8);
         adios_free_varinfo(var_i16);
         adios_free_varinfo(var_i32);
         adios_free_varinfo(var_i64);
@@ -578,11 +567,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         ASSERT_EQ(var_i8->ndim, 2);
         ASSERT_EQ(var_i8->dims[0], 4);
         ASSERT_EQ(var_i8->dims[1], 2);
-        ADIOS_VARINFO *var_si8 = adios_inq_var(f, "si8");
-        ASSERT_NE(var_si8, nullptr);
-        ASSERT_EQ(var_si8->ndim, 2);
-        ASSERT_EQ(var_si8->dims[0], 4);
-        ASSERT_EQ(var_si8->dims[1], 2);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
         ASSERT_EQ(var_i16->ndim, 2);
@@ -684,7 +668,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
 
         // Cleanup variable structures
         adios_free_varinfo(var_i8);
-        adios_free_varinfo(var_si8);
         adios_free_varinfo(var_i16);
         adios_free_varinfo(var_i32);
         adios_free_varinfo(var_i64);
