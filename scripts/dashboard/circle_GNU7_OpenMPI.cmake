@@ -5,7 +5,7 @@ set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
-# set(CTEST_DASHBOARD_ROOT "$ENV{CTEST_DASHBOARD_ROOT}")
+set(CTEST_DASHBOARD_ROOT "$ENV{CTEST_DASHBOARD_ROOT}")
 
 set(dashboard_model Experimental)
 set(dashboard_root_name "Builds/GCC-7.1.0_OpenMPI")

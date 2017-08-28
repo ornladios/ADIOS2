@@ -20,6 +20,15 @@ mkdir -p ${BASEDIR}/../../../Logs
 for CONFIG in ${DASHBOARD_CONFIGS}
 do
     echo ${CONFIG}
+
+    DASHBOARDDIR=${BASEDIR}/../../../${CONFIG}
+
+    echo "Dashboard directory for this build: ${DASHBOARDDIR}"
+
+    mkdir -p "${DASHBOARDDIR}/ADIOS2"
+
+    export CTEST_DASHBOARD_ROOT="${DASHBOARDDIR}"
+
     LOG=${BASEDIR}/../../../Logs/${CONFIG}
     ctest -S ${BASEDIR}/../dashboard/circle_${CONFIG}.cmake -VV 1>${LOG}.out 2>${LOG}.err
     
