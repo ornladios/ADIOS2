@@ -12,6 +12,7 @@
 #include <mpi.h>
 #else
 #include "adios2/mpidummy.h"
+using namespace adios2::mpi;
 #endif
 
 #include <climits> //UXXX_MAX

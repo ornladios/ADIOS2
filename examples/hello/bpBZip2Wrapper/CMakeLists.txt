@@ -4,15 +4,11 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
-
   add_executable(hello_bpBZip2Wrapper helloBPBZip2Wrapper.cpp)
   target_include_directories(hello_bpBZip2Wrapper PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_bpBZip2Wrapper ${MPI_C_LIBRARIES})
-  
 else()
   add_executable(hello_bpBZip2Wrapper helloBPBZip2Wrapper_nompi.cpp)
-  
 endif()
 
 target_link_libraries(hello_bpBZip2Wrapper adios2)

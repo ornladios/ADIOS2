@@ -13,6 +13,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/engine/bp/BPFileWriter.h"
+#include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
@@ -282,6 +283,10 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5\n");
 #endif
+    }
+    else if (m_EngineType == "PluginEngine")
+    {
+        engine = std::make_shared<PluginEngine>(*this, name, openMode, mpiComm);
     }
     else
     {

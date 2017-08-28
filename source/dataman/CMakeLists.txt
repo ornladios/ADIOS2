@@ -48,8 +48,6 @@ target_link_libraries(temporalman PRIVATE dataman)
 list(APPEND dataman_modules temporalman)
 
 if(ADIOS2_HAVE_ZeroMQ)
-  find_package(ZeroMQ REQUIRED)
-
   add_library(zmqman MODULE
     StreamMan.h StreamMan.cpp
     ZmqMan.h ZmqMan.cpp
@@ -66,8 +64,6 @@ if(ADIOS2_HAVE_ZeroMQ)
 endif()
 
 if(ADIOS2_HAVE_ZFP)
-  find_package(ZFP REQUIRED)
-
   add_library(zfpman MODULE ZfpMan.h ZfpMan.cpp)
   target_link_libraries(zfpman PRIVATE dataman zfp::zfp)
 

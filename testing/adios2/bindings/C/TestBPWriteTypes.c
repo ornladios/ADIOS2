@@ -8,13 +8,20 @@
  *      Author: wgodoy
  */
 
+#include <mpi.h>
+
 #include <adios2_c.h>
 
 #include "SmallTestData_c.h"
 
 int main(int argc, char *argv[])
 {
-    adios2_ADIOS *adiosH = adios2_init(adios2_debug_mode_on);
+    MPI_Init(&argc, &argv);
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    adios2_ADIOS *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
 
     // IO
     adios2_IO *ioH = adios2_declare_io(adiosH, "CArrayTypes");
@@ -33,10 +40,9 @@ int main(int argc, char *argv[])
 
     // Define variables in ioH
     {
+
         adios2_define_variable(ioH, "varI8", adios2_type_char, 1, NULL, NULL,
                                count, adios2_constant_dims_true);
-        adios2_define_variable(ioH, "varSI8", adios2_type_signed_char, 1, NULL,
-                               NULL, count, adios2_constant_dims_true);
         adios2_define_variable(ioH, "varI16", adios2_type_short, 1, NULL, NULL,
                                count, adios2_constant_dims_true);
         adios2_define_variable(ioH, "varI32", adios2_type_int, 1, NULL, NULL,
@@ -59,7 +65,6 @@ int main(int argc, char *argv[])
     }
     // get variables
     adios2_Variable *varI8 = adios2_get_variable(ioH, "varI8");
-    adios2_Variable *varSI8 = adios2_get_variable(ioH, "varSI8");
     adios2_Variable *varI16 = adios2_get_variable(ioH, "varI16");
     adios2_Variable *varI32 = adios2_get_variable(ioH, "varI32");
     adios2_Variable *varI64 = adios2_get_variable(ioH, "varI64");
@@ -75,7 +80,6 @@ int main(int argc, char *argv[])
         adios2_open(ioH, "ctypes.bp", adios2_open_mode_write);
 
     adios2_write(engineH, varI8, data_I8);
-    adios2_write(engineH, varSI8, data_SI8);
     adios2_write(engineH, varI16, data_I16);
     adios2_write(engineH, varI32, data_I32);
     adios2_write(engineH, varI64, data_I64);
@@ -92,5 +96,7 @@ int main(int argc, char *argv[])
 
     // deallocate adiosH
     adios2_finalize(adiosH);
+
+    MPI_Finalize();
     return 0;
 }

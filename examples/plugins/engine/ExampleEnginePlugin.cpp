@@ -1,0 +1,106 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
+ * ExampleEnginePlugin.cpp This plugin does nothing but write API calls out to a
+ * log file.
+ *
+ *  Created on: Jul 31, 2017
+ *      Author: Chuck Atkins <chuck.atkins@kitware.com>
+ */
+
+#include "ExampleEnginePlugin.h"
+
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+
+#ifndef _WIN32_
+#include <sys/time.h>
+#endif
+
+namespace
+{
+std::string now()
+{
+    tm *timeInfo;
+#ifdef _WIN32
+    time_t rawTime;
+    std::time(&rawTime);
+    timeInfo = std::localtime(&rawtime);
+#else
+    timeval curTime;
+    gettimeofday(&curTime, nullptr);
+    timeInfo = std::localtime(&curTime.tv_sec);
+#endif
+
+    char timeBuf[80];
+    std::memset(timeBuf, 0, sizeof(timeBuf));
+    std::strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%dT%H:%M:%S", timeInfo);
+
+#ifdef _WIN32
+    return std::string(timeBuf);
+#else
+    double subSec = curTime.tv_usec / 1e6;
+    char subSecBuf[9];
+    std::memset(subSecBuf, 0, sizeof(subSecBuf));
+    std::sprintf(subSecBuf, "%1.6f", subSec);
+    return std::string(timeBuf) + std::string(&subSecBuf[1]);
+#endif
+}
+}
+
+namespace adios2
+{
+
+ExampleEnginePlugin::ExampleEnginePlugin(IO &io, const std::string &name,
+                                         const OpenMode openMode,
+                                         MPI_Comm mpiComm)
+: adios2::PluginEngineInterface(io, name, openMode, mpiComm)
+{
+    Init();
+}
+
+ExampleEnginePlugin::~ExampleEnginePlugin() { m_Log.close(); }
+
+void ExampleEnginePlugin::Close(const int transportIndex)
+{
+    m_Log << now() << " Close with transportIndex " << transportIndex
+          << std::endl;
+}
+
+void ExampleEnginePlugin::Init()
+{
+    std::string logName = "ExamplePlugin.log";
+    auto paramLogNameIt = m_IO.m_Parameters.find("LogName");
+    if (paramLogNameIt != m_IO.m_Parameters.end())
+    {
+        logName = paramLogNameIt->second;
+    }
+
+    m_Log.open(logName);
+    if (!m_Log)
+    {
+        throw std::ios_base::failure(
+            "ExampleEnginePlugin: Failed to open log file " + logName);
+    }
+
+    m_Log << now() << " Init" << std::endl;
+}
+
+#define define(T)                                                              \
+    void ExampleEnginePlugin::DoWrite(Variable<T> &variable, const T *values)  \
+    {                                                                          \
+        m_Log << now() << " Writing variable \"" << variable.m_Name << "\""    \
+              << std::endl;                                                    \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(define)
+#undef define
+void ExampleEnginePlugin::DoWrite(VariableCompound &variable,
+                                  const void *values)
+{
+    m_Log << now() << " Writing variable \"" << variable.m_Name << "\""
+          << std::endl;
+}
+
+} // end namespace adios2

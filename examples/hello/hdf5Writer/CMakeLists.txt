@@ -4,8 +4,6 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
-
   add_executable(hello_hdf5Writer helloHDF5Writer.cpp)
   target_include_directories(hello_hdf5Writer PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_hdf5Writer ${MPI_C_LIBRARIES})

@@ -14,45 +14,38 @@
 #include <vector>
 
 #include <adios2.h>
+#include <adios2/ADIOSMPI.h>
 
-#ifdef ADIOS2_HAVE_MPI_C
+adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
+                                 const adios2_debug_mode debug_mode)
+{
+    const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
+    adios2_ADIOS *adios = reinterpret_cast<adios2_ADIOS *>(
+        new adios2::ADIOS(config_file, mpi_comm, debugBool));
+
+    return adios;
+}
 
 adios2_ADIOS *adios2_init(MPI_Comm mpi_comm, const adios2_debug_mode debug_mode)
 {
     return adios2_init_config("", mpi_comm, debug_mode);
 }
 
-adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
-                                 const adios2_debug_mode debug_mode)
+adios2_ADIOS *adios2_init_config_nompi(const char *config_file,
+                                       const adios2_debug_mode debug_mode)
 {
-    const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
-    adios2_ADIOS *adios = new adios2::ADIOS(config_file, mpi_comm, debugBool);
-
-    return adios;
-}
-#else
-adios2_ADIOS *adios2_init(const adios2_debug_mode debug_mode)
-{
-    const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
-    adios2_ADIOS *adios = new adios2::ADIOS(debugBool);
-
-    return adios;
+    return adios2_init_config(config_file, MPI_COMM_SELF, debug_mode);
 }
 
-adios2_ADIOS *adios2_init_config(const char *config_file,
-                                 const adios2_debug_mode debug_mode)
+adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode)
 {
-    const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
-    adios2_ADIOS *adios = new adios2::ADIOS(config_file, debugBool);
-
-    return adios;
+    return adios2_init_config("", MPI_COMM_SELF, debug_mode);
 }
-#endif
 
 adios2_IO *adios2_declare_io(adios2_ADIOS *adios, const char *ioName)
 {
-    adios2_IO *io =
-        &reinterpret_cast<adios2::ADIOS *>(adios)->DeclareIO(ioName);
+    adios2_IO *io = reinterpret_cast<adios2_IO *>(
+        &reinterpret_cast<adios2::ADIOS *>(adios)->DeclareIO(ioName));
     return io;
 }
 
@@ -273,36 +266,9 @@ adios2_Engine *adios2_open(adios2_IO *io, const char *name,
                            const adios2_open_mode open_mode)
 {
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
-    adios2_Engine *engine = new adios2_Engine;
-
-    switch (open_mode)
-    {
-
-    case adios2_open_mode_write:
-        engine->EngineCpp = ioCpp.Open(name, adios2::OpenMode::Write);
-        break;
-
-    case adios2_open_mode_read:
-        engine->EngineCpp = ioCpp.Open(name, adios2::OpenMode::Read);
-        break;
-
-    case adios2_open_mode_append:
-        engine->EngineCpp = ioCpp.Open(name, adios2::OpenMode::Append);
-        break;
-
-    case adios2_open_mode_read_write:
-        engine->EngineCpp = ioCpp.Open(name, adios2::OpenMode::ReadWrite);
-        break;
-
-    case adios2_open_mode_undefined:
-
-        break;
-    }
-
-    return engine;
+    return adios2_open_new_comm(io, name, open_mode, ioCpp.m_MPIComm);
 }
 
-#ifdef ADIOS2_HAVE_MPI_C
 adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
                                     const adios2_open_mode open_mode,
                                     MPI_Comm mpi_comm)
@@ -338,14 +304,12 @@ adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
 
     return engine;
 }
-#endif
 
 void adios2_write(adios2_Engine *engine, adios2_Variable *variable,
                   const void *values)
 {
     auto &variableBase = *reinterpret_cast<adios2::VariableBase *>(variable);
-    adios2_write_by_name(reinterpret_cast<adios2_Engine *>(engine),
-                         variableBase.m_Name.c_str(), values);
+    adios2_write_by_name(engine, variableBase.m_Name.c_str(), values);
 }
 
 void adios2_write_by_name(adios2_Engine *engine, const char *variable_name,

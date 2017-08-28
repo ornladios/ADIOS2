@@ -11,10 +11,18 @@
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #else
+#ifdef __cplusplus
 namespace adios2
 {
+namespace mpi
+{
 using MPI_Comm = int;
+} // end namespace mpi
 } // end namespace adios
+using adios2::mpi::MPI_Comm;
+#else
+typedef int MPI_Comm;
+#endif
 #endif
 
 #endif /* ADIOS2_ADIOSMPICOMMONLY_H_ */

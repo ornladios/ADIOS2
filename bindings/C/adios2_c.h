@@ -13,30 +13,18 @@
 
 #include <stddef.h> //size_t
 
-#ifdef ADIOS2_HAVE_MPI_C
-#include <mpi.h>
-#endif
-
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/adios2_c_enums.h"
-
-typedef void adios2_ADIOS;
-typedef void adios2_IO;
-typedef void adios2_Variable;
-typedef struct adios2_Engine adios2_Engine;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef ADIOS2_HAVE_MPI_C
-/**
- * Create an ADIOS struct pointer in MPI application.
- * @param mpi_comm MPI communicator from application for ADIOS scope
- * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
- * @return valid ADIOS* handler
- */
-adios2_ADIOS *adios2_init(MPI_Comm mpi_comm,
-                          const adios2_debug_mode debug_mode);
+typedef struct adios2_ADIOS adios2_ADIOS;
+typedef struct adios2_IO adios2_IO;
+typedef struct adios2_Variable adios2_Variable;
+typedef struct adios2_Engine adios2_Engine;
 
 /**
  * Create an ADIOS struct pointer handler using a runtime config file in MPI
@@ -48,13 +36,15 @@ adios2_ADIOS *adios2_init(MPI_Comm mpi_comm,
  */
 adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
                                  const adios2_debug_mode debug_mode);
-#else
+
 /**
- * Create an ADIOS struct pointer handler in serial nonMPI application.
+ * Create an ADIOS struct pointer in MPI application.
+ * @param mpi_comm MPI communicator from application for ADIOS scope
  * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
  * @return valid ADIOS* handler
  */
-adios2_ADIOS *adios2_init(const adios2_debug_mode debug_mode);
+adios2_ADIOS *adios2_init(MPI_Comm mpi_comm,
+                          const adios2_debug_mode debug_mode);
 
 /**
  * Create an ADIOS struct pointer handler using a runtime config file in serial
@@ -64,9 +54,15 @@ adios2_ADIOS *adios2_init(const adios2_debug_mode debug_mode);
  * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
  * @return valid ADIOS* handler
  */
-adios2_ADIOS *adios2_init_config(const char *config_file,
-                                 const adios2_debug_mode debug_mode);
-#endif
+adios2_ADIOS *adios2_init_config_nompi(const char *config_file,
+                                       const adios2_debug_mode debug_mode);
+
+/**
+ * Create an ADIOS struct pointer handler in serial nonMPI application.
+ * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
+ * @return valid ADIOS* handler
+ */
+adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode);
 
 /**
  * Create an IO struct pointer handler from ADIOS* handler
@@ -152,7 +148,6 @@ adios2_Variable *adios2_get_variable(adios2_IO *io, const char *name);
 adios2_Engine *adios2_open(adios2_IO *io, const char *name,
                            const adios2_open_mode open_mode);
 
-#ifdef ADIOS2_HAVE_MPI_C
 /**
  * Create an adios2_Engine, from adios2_IO, that executes all IO operations.
  * Allows passing a new communicator.
@@ -165,7 +160,6 @@ adios2_Engine *adios2_open(adios2_IO *io, const char *name,
 adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
                                     const adios2_open_mode open_mode,
                                     MPI_Comm mpi_comm);
-#endif
 
 /**
  * Write a variable using a adios2_Variable handler

@@ -24,16 +24,20 @@ else()
                        nompi/adios2_io_open_nompi_mod.f90 )
 endif()  
   
-target_link_libraries(adios2_f PRIVATE adios2 adios2_c)
+target_link_libraries(adios2_f PRIVATE adios2)
 
 if(ADIOS2_HAVE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
   find_package(MPI COMPONENTS Fortran REQUIRED)
   target_compile_definitions(adios2_f PUBLIC ADIOS2_HAVE_MPI_F)
-  target_include_directories(adios2_f PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${MPI_C_INCLUDE_PATH} ${CMAKE_CURRENT_BINARY_DIR})
-  target_link_libraries(adios2_f PRIVATE ${MPI_C_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+  target_include_directories(adios2_f PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
+                                             ${MPI_C_INCLUDE_PATH} 
+                                             ${CMAKE_CURRENT_BINARY_DIR})
+  target_link_libraries(adios2_f PRIVATE ${MPI_C_LIBRARIES} 
+                                         ${MPI_Fortran_LIBRARIES})
 else()
-  target_include_directories(adios2_f PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+  target_include_directories(adios2_f PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
+                                             ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 list(APPEND adios2_f_targets adios2_f)
