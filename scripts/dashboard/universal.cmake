@@ -167,6 +167,7 @@ if(EXISTS \"${CTEST_SOURCE_DIRECTORY}/.git\")
 endif()
 ")
     set(CTEST_CHECKOUT_COMMAND "\"${CMAKE_COMMAND}\" -P \"${ctest_checkout_script}\"")
+    message(STATUS "CTEST_CHECKOUT_COMMAND: ${CTEST_CHECKOUT_COMMAND}")
   endif()
 
   # CTest delayed initialization is broken, so we put the

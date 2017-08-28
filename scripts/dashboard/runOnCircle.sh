@@ -1,9 +1,9 @@
 #!/usr/bin/bash
 
-echo "runOnCircle.sh (node index = ${CIRCLE_NODE_INDEX}, total nodes = ${CIRCLE_NODE_TOTAL})"
+# echo "runOnCircle.sh (node index = ${CIRCLE_NODE_INDEX}, total nodes = ${CIRCLE_NODE_TOTAL})"
 
 # Initialize modules system
-. /etc/profile.d/lmod.sh >/dev/null
+# . /etc/profile.d/lmod.sh >/dev/null
 
 BASEDIR=$(readlink -f $(dirname ${BASH_SOURCE}))
 cd ${BASEDIR}
@@ -22,15 +22,12 @@ do
     echo ${CONFIG}
 
     DASHBOARDDIR=${BASEDIR}/../../../${CONFIG}
-
-    echo "Dashboard directory for this build: ${DASHBOARDDIR}"
-
-    mkdir -p "${DASHBOARDDIR}/ADIOS2"
-
-    export CTEST_DASHBOARD_ROOT="${DASHBOARDDIR}"
+    mkdir -p "${DASHBOARDDIR}"
+    export USE_BASE_DIRECTORY="${DASHBOARDDIR}"
 
     LOG=${BASEDIR}/../../../Logs/${CONFIG}
-    ctest -S ${BASEDIR}/../dashboard/circle_${CONFIG}.cmake -VV 1>${LOG}.out 2>${LOG}.err
+    # ctest -S ${BASEDIR}/../dashboard/circle_${CONFIG}.cmake -VV 1>${LOG}.out 2>${LOG}.err
+    ctest -S ${BASEDIR}/circle_${CONFIG}.cmake -VV
     
     # if [[ "$i" =~ scripts/dashboard/circle_([^\.]+) ]];
     # then
