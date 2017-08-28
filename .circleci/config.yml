@@ -4,11 +4,8 @@ jobs:
     working_directory: /home/adios2/hidecirclesource
     docker:
       - image: ornladios/adios2:el7-ohpc
-    parallelism: 2
     steps:
       - checkout
       - run:
-        name: Run dashboard scripts
-        type: shell
-        command: |
-          circleci tests glob "scripts/dashboard/circle_*.cmake" | circleci tests split | xargs bash scripts/circle/runOnCircle.sh
+          name: Run dashboard scripts
+          command: 'cd /home/adios2 && bash hidecirclesource/scripts/circle/runOnCircle.sh'

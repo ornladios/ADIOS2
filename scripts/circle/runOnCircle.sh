@@ -8,34 +8,44 @@ echo "runOnCircle.sh (node index = ${CIRCLE_NODE_INDEX}, total nodes = ${CIRCLE_
 BASEDIR=$(readlink -f $(dirname ${BASH_SOURCE}))
 cd ${BASEDIR}
 
-ARGUMENTS="$@"
+DASHBOARD_CONFIGS="GNU4_NoMPI GNU7_OpenMPI"
 
-IFS=' '
-read -ra DASHSCRIPTS <<< "$ARGUMENTS"
-for i in "${DASHSCRIPTS[@]}"; do
-    if [[ "$i" =~ scripts/dashboard/circle_([^\.]+) ]];
-    then
-        CONFIG="${BASH_REMATCH[1]}"
+mkdir -p ${BASEDIR}/../../../Logs
 
-        echo "Running build: ${CONFIG}"
+# ARGUMENTS="$@"
 
-        DASHBOARDDIR=${BASEDIR}/../../../${CONFIG}
+# IFS=' '
+# read -ra DASHSCRIPTS <<< "$ARGUMENTS"
+# for i in "${DASHSCRIPTS[@]}"; do
+for CONFIG in ${DASHBOARD_CONFIGS}
+do
+    echo ${CONFIG}
+    LOG=${BASEDIR}/../../../Logs/${CONFIG}
+    ctest -S ${BASEDIR}/../dashboard/circle_${CONFIG}.cmake -VV 1>${LOG}.out 2>${LOG}.err
+    
+    # if [[ "$i" =~ scripts/dashboard/circle_([^\.]+) ]];
+    # then
+    #     CONFIG="${BASH_REMATCH[1]}"
 
-        echo "Dashboard directory for this build: ${DASHBOARDDIR}"
+        # echo "Running build: ${CONFIG}"
 
-        mkdir -p "${DASHBOARDDIR}/ADIOS2"
-        mkdir -p "${DASHBOARDDIR}/Logs"
+        # DASHBOARDDIR=${BASEDIR}/../../../${CONFIG}
 
-        export CTEST_DASHBOARD_ROOT="${DASHBOARDDIR}"
+        # echo "Dashboard directory for this build: ${DASHBOARDDIR}"
 
-        DASHBOARDCONFIG="${BASEDIR}/../dashboard/circle_${CONFIG}.cmake"
+        # mkdir -p "${DASHBOARDDIR}/ADIOS2"
+        # mkdir -p "${DASHBOARDDIR}/Logs"
 
-        echo "Dashboard script: ${DASHBOARDCONFIG}"
+        # export CTEST_DASHBOARD_ROOT="${DASHBOARDDIR}"
 
-        LOG="${DASHBOARDDIR}/Logs/${CONFIG}"
+        # DASHBOARDCONFIG="${BASEDIR}/../dashboard/circle_${CONFIG}.cmake"
 
-        ctest -S $DASHBOARDCONFIG -VV 1>${LOG}.out 2>${LOG}.err
-    else
-        echo "Unable to find build name in ${i}"
-    fi
+        # echo "Dashboard script: ${DASHBOARDCONFIG}"
+
+        # LOG="${DASHBOARDDIR}/Logs/${CONFIG}"
+
+        # ctest -S $DASHBOARDCONFIG -VV 1>${LOG}.out 2>${LOG}.err
+    # else
+    #     echo "Unable to find build name in ${i}"
+    # fi
 done
