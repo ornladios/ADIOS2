@@ -43,6 +43,15 @@ if(MPI_FOUND)
   set(ADIOS2_HAVE_MPI TRUE)
 endif()
 
+# Fortran
+if(ADIOS2_USE_Fortran)
+  set(ADIOS2_HAVE_Fortran TRUE)
+  enable_language(Fortran)
+  if(ADIOS2_HAVE_MPI)
+    find_package(MPI COMPONENTS Fortran REQUIRED)
+  endif()
+endif()
+
 # DataMan
 if(SHARED_LIBS_SUPPORTED AND NOT MSVC)
   set(ADIOS2_HAVE_DataMan TRUE)
