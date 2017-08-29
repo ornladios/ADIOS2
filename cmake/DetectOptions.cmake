@@ -47,6 +47,9 @@ endif()
 if(ADIOS2_USE_Fortran)
   set(ADIOS2_HAVE_Fortran TRUE)
   enable_language(Fortran)
+  if(ADIOS2_HAVE_MPI)
+    find_package(MPI COMPONENTS Fortran REQUIRED)
+  endif()
 endif()
 
 # DataMan

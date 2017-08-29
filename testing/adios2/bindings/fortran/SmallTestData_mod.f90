@@ -17,7 +17,7 @@ module small_test_data
     integer(kind=2), parameter, dimension(10) :: data_I16 = &
     & (/ 512, 513, -510, 515, -508, 517, -506, 519, -504, 521 /)
 
-    integer, parameter, dimension(10) :: data_I32 = &
+    integer(kind=4), parameter, dimension(10) :: data_I32 = &
     & (/ 131072, 131073,  -131070, 131075,  -131068, 131077, -131066, 131079, &
     &   -131064, 131081 /)
 

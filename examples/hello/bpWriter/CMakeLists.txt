@@ -36,5 +36,5 @@ target_link_libraries(hello_bpWriter adios2)
 target_link_libraries(hello_bpWriter_c adios2)
 
 if(ADIOS2_HAVE_Fortran)
-  target_link_libraries(hello_bpWriter_f PRIVATE adios2_f adios2)
+  target_link_libraries(hello_bpWriter_f PRIVATE adios2_f)
 endif()

@@ -167,6 +167,13 @@ message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} "
                          "${CMAKE_CXX_COMPILER_WRAPPER}")
 message("    ${CMAKE_CXX_COMPILER}")
 message("")
+if(ADIOS2_HAVE_Fortran)
+  message("  Fortran Compiler : ${CMAKE_Fortran_COMPILER_ID} "
+                               "${CMAKE_Fortran_COMPILER_VERSION} "
+                               "${CMAKE_Fortran_COMPILER_WRAPPER}")
+  message("    ${CMAKE_Fortran_COMPILER}")
+  message("")
+endif()
 message("  Installation prefix: ${CMAKE_INSTALL_PREFIX}")
 message("  Features:")
 if(BUILD_SHARED_LIBS)

@@ -51,6 +51,6 @@
 #cmakedefine ADIOS2_HAVE_PYTHON
 
 /* CMake Option: ADIOS_USE_Fortran=ON */
-#cmakedefine ADIOS2_HAVE_Fortran
+#cmakedefine ADIOS2_HAVE_FORTRAN
 
 #endif /* ADIOSCONFIG_H_ */
