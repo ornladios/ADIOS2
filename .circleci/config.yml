@@ -1,11 +1,30 @@
+defaults: &defaults
+  working_directory: /home/adios2/hidecirclesource
+  docker:
+    - image: ornladios/adios2:el7-ohpc
+  steps:
+    - checkout
+    - run:
+        name: Configure
+        command: bash --login $CIRCLE_WORKING_DIRECTORY/scripts/circle/runOnCircle.sh configure
+    - run:
+        name: Build
+        command: bash --login $CIRCLE_WORKING_DIRECTORY/scripts/circle/runOnCircle.sh build
+    - run:
+        name: Test
+        command: bash --login $CIRCLE_WORKING_DIRECTORY/scripts/circle/runOnCircle.sh test
+
 version: 2
+
 jobs:
+  "gcc48":
+    <<: *defaults
+  "gcc7-openmpi":
+    <<: *defaults
+
+workflows:
+  version: 2
   build:
-    working_directory: /home/adios2/hidecirclesource
-    docker:
-      - image: ornladios/adios2:el7-ohpc
-    steps:
-      - checkout
-      - run:
-          name: Run dashboard scripts
-          command: 'cd /home/adios2 && bash --login hidecirclesource/scripts/dashboard/runOnCircle.sh'
+    jobs:
+      - "gcc48"
+      - "gcc7-openmpi"
