@@ -36,10 +36,10 @@ public:
 TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
 {
     // Each process would write a 1x8 array and all processes would
-    // form a world_size * Nx matrix
+    // form a mpiSize * Nx 1D array
     std::string fname = "ADIOS2ADIOS1WriteADIOS1Read1D8.bp";
 
-    int world_rank = 0, world_size = 1;
+    int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 8;
 
@@ -47,8 +47,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
     const std::size_t NSteps = 3;
 
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Write test data using ADIOS2
@@ -60,21 +60,32 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
 #endif
         adios2::IO &io = adios.DeclareIO("TestIO");
 
-        // Declare 2D variables (NumOfProcesses * Nx)
+        // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape(static_cast<unsigned int>(world_size), Nx);
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
-            auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
-            auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
-            auto &var_i64 = io.DefineVariable<int64_t>("i64", shape);
-            auto &var_u8 = io.DefineVariable<uint8_t>("u8", shape);
-            auto &var_u16 = io.DefineVariable<uint16_t>("u16", shape);
-            auto &var_u32 = io.DefineVariable<uint32_t>("u32", shape);
-            auto &var_u64 = io.DefineVariable<uint64_t>("u64", shape);
-            auto &var_r32 = io.DefineVariable<float>("r32", shape);
-            auto &var_r64 = io.DefineVariable<double>("r64", shape);
+            adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
+            adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
+            adios2::Dims count{static_cast<unsigned int>(Nx)};
+            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto &var_i16 =
+                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto &var_i32 =
+                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto &var_i64 =
+                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto &var_u8 =
+                io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto &var_u16 =
+                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto &var_u32 =
+                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto &var_u64 =
+                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", shape, start, count);
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", shape, start, count);
         }
 
         // Create the ADIOS 1 Engine
@@ -92,8 +103,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, step, world_rank, world_size);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto &var_i8 = io.GetVariable<int8_t>("i8");
@@ -107,10 +118,9 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
             auto &var_r32 = io.GetVariable<float>("r32");
             auto &var_r64 = io.GetVariable<double>("r64");
 
-            // Make a 2D selection to describe the local dimensions of the
+            // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::SelectionBoundingBox sel({(unsigned int)world_rank, 0},
-                                             {1, Nx});
+            adios2::SelectionBoundingBox sel({mpiRank * Nx}, {Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -158,74 +168,64 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         // Check the variables exist
         ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
         ASSERT_NE(var_i8, nullptr);
-        ASSERT_EQ(var_i8->ndim, 2);
+        ASSERT_EQ(var_i8->ndim, 1);
         ASSERT_EQ(var_i8->global, 1);
         ASSERT_EQ(var_i8->nsteps, NSteps);
-        ASSERT_EQ(var_i8->dims[0], world_size);
-        ASSERT_EQ(var_i8->dims[1], Nx);
+        ASSERT_EQ(var_i8->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
-        ASSERT_EQ(var_i16->ndim, 2);
+        ASSERT_EQ(var_i16->ndim, 1);
         ASSERT_EQ(var_i16->global, 1);
         ASSERT_EQ(var_i16->nsteps, NSteps);
-        ASSERT_EQ(var_i16->dims[0], world_size);
-        ASSERT_EQ(var_i16->dims[1], Nx);
+        ASSERT_EQ(var_i16->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
         ASSERT_NE(var_i32, nullptr);
-        ASSERT_EQ(var_i32->ndim, 2);
+        ASSERT_EQ(var_i32->ndim, 1);
         ASSERT_EQ(var_i32->global, 1);
         ASSERT_EQ(var_i32->nsteps, NSteps);
-        ASSERT_EQ(var_i32->dims[0], world_size);
-        ASSERT_EQ(var_i32->dims[1], Nx);
+        ASSERT_EQ(var_i32->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
         ASSERT_NE(var_i64, nullptr);
-        ASSERT_EQ(var_i64->ndim, 2);
+        ASSERT_EQ(var_i64->ndim, 1);
         ASSERT_EQ(var_i64->global, 1);
         ASSERT_EQ(var_i64->nsteps, NSteps);
-        ASSERT_EQ(var_i64->dims[0], world_size);
-        ASSERT_EQ(var_i64->dims[1], Nx);
+        ASSERT_EQ(var_i64->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
         ASSERT_NE(var_u8, nullptr);
-        ASSERT_EQ(var_u8->ndim, 2);
+        ASSERT_EQ(var_u8->ndim, 1);
         ASSERT_EQ(var_u8->global, 1);
         ASSERT_EQ(var_u8->nsteps, NSteps);
-        ASSERT_EQ(var_u8->dims[0], world_size);
-        ASSERT_EQ(var_u8->dims[1], Nx);
+        ASSERT_EQ(var_u8->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
         ASSERT_NE(var_u16, nullptr);
-        ASSERT_EQ(var_u16->ndim, 2);
+        ASSERT_EQ(var_u16->ndim, 1);
         ASSERT_EQ(var_u16->global, 1);
         ASSERT_EQ(var_u16->nsteps, NSteps);
-        ASSERT_EQ(var_u16->dims[0], world_size);
-        ASSERT_EQ(var_u16->dims[1], Nx);
+        ASSERT_EQ(var_u16->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
         ASSERT_NE(var_u32, nullptr);
-        ASSERT_EQ(var_u32->ndim, 2);
+        ASSERT_EQ(var_u32->ndim, 1);
         ASSERT_EQ(var_u32->global, 1);
         ASSERT_EQ(var_u32->nsteps, NSteps);
-        ASSERT_EQ(var_u32->dims[0], world_size);
-        ASSERT_EQ(var_u32->dims[1], Nx);
+        ASSERT_EQ(var_u32->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
         ASSERT_NE(var_u64, nullptr);
-        ASSERT_EQ(var_u64->ndim, 2);
+        ASSERT_EQ(var_u64->ndim, 1);
         ASSERT_EQ(var_u64->global, 1);
         ASSERT_EQ(var_u64->nsteps, NSteps);
-        ASSERT_EQ(var_u64->dims[0], world_size);
-        ASSERT_EQ(var_u64->dims[1], Nx);
+        ASSERT_EQ(var_u64->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
         ASSERT_NE(var_r32, nullptr);
-        ASSERT_EQ(var_r32->ndim, 2);
+        ASSERT_EQ(var_r32->ndim, 1);
         ASSERT_EQ(var_r32->global, 1);
         ASSERT_EQ(var_r32->nsteps, NSteps);
-        ASSERT_EQ(var_r32->dims[0], world_size);
-        ASSERT_EQ(var_r32->dims[1], Nx);
+        ASSERT_EQ(var_r32->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
         ASSERT_NE(var_r64, nullptr);
-        ASSERT_EQ(var_r64->ndim, 2);
+        ASSERT_EQ(var_r64->ndim, 1);
         ASSERT_EQ(var_r64->global, 1);
         ASSERT_EQ(var_r64->nsteps, NSteps);
-        ASSERT_EQ(var_r64->dims[0], world_size);
-        ASSERT_EQ(var_r64->dims[1], Nx);
+        ASSERT_EQ(var_r64->dims[0], mpiSize * Nx);
 
         std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
@@ -238,16 +238,16 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         std::array<float, Nx> R32;
         std::array<double, Nx> R64;
 
-        uint64_t start[2] = {static_cast<uint64_t>(world_rank), 0};
-        uint64_t count[2] = {1, Nx};
-        ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
+        uint64_t start[1] = {mpiRank * Nx};
+        uint64_t count[1] = {Nx};
+        ADIOS_SELECTION *sel = adios_selection_boundingbox(1, start, count);
 
         // Read stuff
         for (size_t t = 0; t < NSteps; ++t)
         {
             // Generate test data for each rank uniquely
             SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, t, world_rank, world_size);
+                generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
@@ -265,7 +265,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
             for (size_t i = 0; i < Nx; ++i)
             {
                 std::stringstream ss;
-                ss << "t=" << t << " i=" << i << " rank=" << world_rank;
+                ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
@@ -326,10 +326,10 @@ TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read1D8)
 TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
-    // form a 2D (world_size*2) * Nx matrix where Nx is 4 here
+    // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
     std::string fname = "ADIOS2ADIOS1WriteADIOS1Read2D2x4Test.bp";
 
-    int world_rank = 0, world_size = 1;
+    int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 4;
 
@@ -337,11 +337,11 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
     const std::size_t Ny = 2;
 
     // Number of steps
-    const std::size_t NSteps = 1;
+    const std::size_t NSteps = 3;
 
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Write test data using ADIOS2
@@ -353,21 +353,35 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 #endif
         adios2::IO &io = adios.DeclareIO("TestIO");
 
-        // Declare 2D variables ((NumOfProcesses*2) * Nx)
+        // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape(static_cast<unsigned int>(Ny * world_size), Nx);
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
-            auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
-            auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
-            auto &var_i64 = io.DefineVariable<int64_t>("i64", shape);
-            auto &var_u8 = io.DefineVariable<uint8_t>("u8", shape);
-            auto &var_u16 = io.DefineVariable<uint16_t>("u16", shape);
-            auto &var_u32 = io.DefineVariable<uint32_t>("u32", shape);
-            auto &var_u64 = io.DefineVariable<uint64_t>("u64", shape);
-            auto &var_r32 = io.DefineVariable<float>("r32", shape);
-            auto &var_r64 = io.DefineVariable<double>("r64", shape);
+            adios2::Dims shape{static_cast<unsigned int>(Ny),
+                               static_cast<unsigned int>(Nx * mpiSize)};
+            adios2::Dims start{static_cast<unsigned int>(0),
+                               static_cast<unsigned int>(mpiRank * Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny),
+                               static_cast<unsigned int>(Nx)};
+            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto &var_i16 =
+                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto &var_i32 =
+                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto &var_i64 =
+                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto &var_u8 =
+                io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto &var_u16 =
+                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto &var_u32 =
+                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto &var_u64 =
+                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", shape, start, count);
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", shape, start, count);
         }
 
         // Create the ADIOS 1 Engine
@@ -385,8 +399,8 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, step, world_rank, world_size);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto &var_i8 = io.GetVariable<int8_t>("i8");
@@ -403,7 +417,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
             adios2::SelectionBoundingBox sel(
-                {(unsigned int)(world_rank * Ny), 0}, {Ny, Nx});
+                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -454,71 +468,71 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         ASSERT_EQ(var_i8->ndim, 2);
         ASSERT_EQ(var_i8->global, 1);
         ASSERT_EQ(var_i8->nsteps, NSteps);
-        ASSERT_EQ(var_i8->dims[0], world_size * Ny);
-        ASSERT_EQ(var_i8->dims[1], Nx);
+        ASSERT_EQ(var_i8->dims[0], Ny);
+        ASSERT_EQ(var_i8->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
         ASSERT_EQ(var_i16->ndim, 2);
         ASSERT_EQ(var_i16->global, 1);
         ASSERT_EQ(var_i16->nsteps, NSteps);
-        ASSERT_EQ(var_i16->dims[0], world_size * Ny);
-        ASSERT_EQ(var_i16->dims[1], Nx);
+        ASSERT_EQ(var_i16->dims[0], Ny);
+        ASSERT_EQ(var_i16->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
         ASSERT_NE(var_i32, nullptr);
         ASSERT_EQ(var_i32->ndim, 2);
         ASSERT_EQ(var_i32->global, 1);
         ASSERT_EQ(var_i32->nsteps, NSteps);
-        ASSERT_EQ(var_i32->dims[0], world_size * Ny);
-        ASSERT_EQ(var_i32->dims[1], Nx);
+        ASSERT_EQ(var_i32->dims[0], Ny);
+        ASSERT_EQ(var_i32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
         ASSERT_NE(var_i64, nullptr);
         ASSERT_EQ(var_i64->ndim, 2);
         ASSERT_EQ(var_i64->global, 1);
         ASSERT_EQ(var_i64->nsteps, NSteps);
-        ASSERT_EQ(var_i64->dims[0], world_size * Ny);
-        ASSERT_EQ(var_i64->dims[1], Nx);
+        ASSERT_EQ(var_i64->dims[0], Ny);
+        ASSERT_EQ(var_i64->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
         ASSERT_NE(var_u8, nullptr);
         ASSERT_EQ(var_u8->ndim, 2);
         ASSERT_EQ(var_u8->global, 1);
         ASSERT_EQ(var_u8->nsteps, NSteps);
-        ASSERT_EQ(var_u8->dims[0], world_size * Ny);
-        ASSERT_EQ(var_u8->dims[1], Nx);
+        ASSERT_EQ(var_u8->dims[0], Ny);
+        ASSERT_EQ(var_u8->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
         ASSERT_NE(var_u16, nullptr);
         ASSERT_EQ(var_u16->ndim, 2);
         ASSERT_EQ(var_u16->global, 1);
         ASSERT_EQ(var_u16->nsteps, NSteps);
-        ASSERT_EQ(var_u16->dims[0], world_size * Ny);
-        ASSERT_EQ(var_u16->dims[1], Nx);
+        ASSERT_EQ(var_u16->dims[0], Ny);
+        ASSERT_EQ(var_u16->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
         ASSERT_NE(var_u32, nullptr);
         ASSERT_EQ(var_u32->ndim, 2);
         ASSERT_EQ(var_u32->global, 1);
         ASSERT_EQ(var_u32->nsteps, NSteps);
-        ASSERT_EQ(var_u32->dims[0], world_size * Ny);
-        ASSERT_EQ(var_u32->dims[1], Nx);
+        ASSERT_EQ(var_u32->dims[0], Ny);
+        ASSERT_EQ(var_u32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
         ASSERT_NE(var_u64, nullptr);
         ASSERT_EQ(var_u64->ndim, 2);
         ASSERT_EQ(var_u64->global, 1);
         ASSERT_EQ(var_u64->nsteps, NSteps);
-        ASSERT_EQ(var_u64->dims[0], world_size * Ny);
-        ASSERT_EQ(var_u64->dims[1], Nx);
+        ASSERT_EQ(var_u64->dims[0], Ny);
+        ASSERT_EQ(var_u64->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
         ASSERT_NE(var_r32, nullptr);
         ASSERT_EQ(var_r32->ndim, 2);
         ASSERT_EQ(var_r32->global, 1);
         ASSERT_EQ(var_r32->nsteps, NSteps);
-        ASSERT_EQ(var_r32->dims[0], world_size * Ny);
-        ASSERT_EQ(var_r32->dims[1], Nx);
+        ASSERT_EQ(var_r32->dims[0], Ny);
+        ASSERT_EQ(var_r32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
         ASSERT_NE(var_r64, nullptr);
         ASSERT_EQ(var_r64->ndim, 2);
         ASSERT_EQ(var_r64->global, 1);
         ASSERT_EQ(var_r64->nsteps, NSteps);
-        ASSERT_EQ(var_r64->dims[0], world_size * Ny);
-        ASSERT_EQ(var_r64->dims[1], Nx);
+        ASSERT_EQ(var_r64->dims[0], Ny);
+        ASSERT_EQ(var_r64->dims[1], mpiSize * Nx);
 
         // If the size of the array is smaller than the data
         // the result is weird... double and uint64_t would get completely
@@ -534,7 +548,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         std::array<float, Nx * Ny> R32;
         std::array<double, Nx * Ny> R64;
 
-        uint64_t start[2] = {static_cast<uint64_t>(world_rank * Ny), 0};
+        uint64_t start[2] = {0, static_cast<uint64_t>(mpiRank * Nx)};
         uint64_t count[2] = {Ny, Nx};
         ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
 
@@ -543,7 +557,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         {
             // Generate test data for each rank uniquely
             SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, t, world_rank, world_size);
+                generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
@@ -561,7 +575,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
             for (size_t i = 0; i < Nx; ++i)
             {
                 std::stringstream ss;
-                ss << "t=" << t << " i=" << i << " rank=" << world_rank;
+                ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
@@ -622,21 +636,21 @@ TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read2D2x4)
 TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
-    // form a 2D (world_size*4) * Nx matrix where Nx is 2 here
+    // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
     std::string fname = "ADIOS2ADIOS1WriteADIOS1Read2D4x2Test.bp";
 
-    int world_rank = 0, world_size = 1;
+    int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 2;
     // Number of cols
     const std::size_t Ny = 4;
 
     // Number of steps
-    const std::size_t NSteps = 1;
+    const std::size_t NSteps = 3;
 
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // Write test data using ADIOS2
@@ -648,21 +662,35 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 #endif
         adios2::IO &io = adios.DeclareIO("TestIO");
 
-        // Declare 2D variables ((NumOfProcesses*4) * Nx)
+        // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape(static_cast<unsigned int>(Ny * world_size), Nx);
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape);
-            auto &var_i16 = io.DefineVariable<int16_t>("i16", shape);
-            auto &var_i32 = io.DefineVariable<int32_t>("i32", shape);
-            auto &var_i64 = io.DefineVariable<int64_t>("i64", shape);
-            auto &var_u8 = io.DefineVariable<uint8_t>("u8", shape);
-            auto &var_u16 = io.DefineVariable<uint16_t>("u16", shape);
-            auto &var_u32 = io.DefineVariable<uint32_t>("u32", shape);
-            auto &var_u64 = io.DefineVariable<uint64_t>("u64", shape);
-            auto &var_r32 = io.DefineVariable<float>("r32", shape);
-            auto &var_r64 = io.DefineVariable<double>("r64", shape);
+            adios2::Dims shape{static_cast<unsigned int>(Ny),
+                               static_cast<unsigned int>(mpiSize * Nx)};
+            adios2::Dims start{static_cast<unsigned int>(0),
+                               static_cast<unsigned int>(mpiRank * Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny),
+                               static_cast<unsigned int>(Nx)};
+            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto &var_i16 =
+                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto &var_i32 =
+                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto &var_i64 =
+                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto &var_u8 =
+                io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto &var_u16 =
+                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto &var_u32 =
+                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto &var_u64 =
+                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto &var_r32 =
+                io.DefineVariable<float>("r32", shape, start, count);
+            auto &var_r64 =
+                io.DefineVariable<double>("r64", shape, start, count);
         }
 
         // Create the ADIOS 1 Engine
@@ -680,8 +708,8 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, step, world_rank, world_size);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto &var_i8 = io.GetVariable<int8_t>("i8");
@@ -698,7 +726,7 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
             adios2::SelectionBoundingBox sel(
-                {(unsigned int)(world_rank * Ny), 0}, {Ny, Nx});
+                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -749,71 +777,71 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         ASSERT_EQ(var_i8->ndim, 2);
         ASSERT_EQ(var_i8->global, 1);
         ASSERT_EQ(var_i8->nsteps, NSteps);
-        ASSERT_EQ(var_i8->dims[0], world_size * Ny);
-        ASSERT_EQ(var_i8->dims[1], Nx);
+        ASSERT_EQ(var_i8->dims[0], Ny);
+        ASSERT_EQ(var_i8->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
         ASSERT_NE(var_i16, nullptr);
         ASSERT_EQ(var_i16->ndim, 2);
         ASSERT_EQ(var_i16->global, 1);
         ASSERT_EQ(var_i16->nsteps, NSteps);
-        ASSERT_EQ(var_i16->dims[0], world_size * Ny);
-        ASSERT_EQ(var_i16->dims[1], Nx);
+        ASSERT_EQ(var_i16->dims[0], Ny);
+        ASSERT_EQ(var_i16->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
         ASSERT_NE(var_i32, nullptr);
         ASSERT_EQ(var_i32->ndim, 2);
         ASSERT_EQ(var_i32->global, 1);
         ASSERT_EQ(var_i32->nsteps, NSteps);
-        ASSERT_EQ(var_i32->dims[0], world_size * Ny);
-        ASSERT_EQ(var_i32->dims[1], Nx);
+        ASSERT_EQ(var_i32->dims[0], Ny);
+        ASSERT_EQ(var_i32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
         ASSERT_NE(var_i64, nullptr);
         ASSERT_EQ(var_i64->ndim, 2);
         ASSERT_EQ(var_i64->global, 1);
         ASSERT_EQ(var_i64->nsteps, NSteps);
-        ASSERT_EQ(var_i64->dims[0], world_size * Ny);
-        ASSERT_EQ(var_i64->dims[1], Nx);
+        ASSERT_EQ(var_i64->dims[0], Ny);
+        ASSERT_EQ(var_i64->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
         ASSERT_NE(var_u8, nullptr);
         ASSERT_EQ(var_u8->ndim, 2);
         ASSERT_EQ(var_u8->global, 1);
         ASSERT_EQ(var_u8->nsteps, NSteps);
-        ASSERT_EQ(var_u8->dims[0], world_size * Ny);
-        ASSERT_EQ(var_u8->dims[1], Nx);
+        ASSERT_EQ(var_u8->dims[0], Ny);
+        ASSERT_EQ(var_u8->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
         ASSERT_NE(var_u16, nullptr);
         ASSERT_EQ(var_u16->ndim, 2);
         ASSERT_EQ(var_u16->global, 1);
         ASSERT_EQ(var_u16->nsteps, NSteps);
-        ASSERT_EQ(var_u16->dims[0], world_size * Ny);
-        ASSERT_EQ(var_u16->dims[1], Nx);
+        ASSERT_EQ(var_u16->dims[0], Ny);
+        ASSERT_EQ(var_u16->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
         ASSERT_NE(var_u32, nullptr);
         ASSERT_EQ(var_u32->ndim, 2);
         ASSERT_EQ(var_u32->global, 1);
         ASSERT_EQ(var_u32->nsteps, NSteps);
-        ASSERT_EQ(var_u32->dims[0], world_size * Ny);
-        ASSERT_EQ(var_u32->dims[1], Nx);
+        ASSERT_EQ(var_u32->dims[0], Ny);
+        ASSERT_EQ(var_u32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
         ASSERT_NE(var_u64, nullptr);
         ASSERT_EQ(var_u64->ndim, 2);
         ASSERT_EQ(var_u64->global, 1);
         ASSERT_EQ(var_u64->nsteps, NSteps);
-        ASSERT_EQ(var_u64->dims[0], world_size * Ny);
-        ASSERT_EQ(var_u64->dims[1], Nx);
+        ASSERT_EQ(var_u64->dims[0], Ny);
+        ASSERT_EQ(var_u64->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
         ASSERT_NE(var_r32, nullptr);
         ASSERT_EQ(var_r32->ndim, 2);
         ASSERT_EQ(var_r32->global, 1);
         ASSERT_EQ(var_r32->nsteps, NSteps);
-        ASSERT_EQ(var_r32->dims[0], world_size * Ny);
-        ASSERT_EQ(var_r32->dims[1], Nx);
+        ASSERT_EQ(var_r32->dims[0], Ny);
+        ASSERT_EQ(var_r32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
         ASSERT_NE(var_r64, nullptr);
         ASSERT_EQ(var_r64->ndim, 2);
         ASSERT_EQ(var_r64->global, 1);
         ASSERT_EQ(var_r64->nsteps, NSteps);
-        ASSERT_EQ(var_r64->dims[0], world_size * Ny);
-        ASSERT_EQ(var_r64->dims[1], Nx);
+        ASSERT_EQ(var_r64->dims[0], Ny);
+        ASSERT_EQ(var_r64->dims[1], mpiSize * Nx);
 
         // If the size of the array is smaller than the data
         // the result is weird... double and uint64_t would get completely
@@ -829,7 +857,7 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         std::array<float, Nx * Ny> R32;
         std::array<double, Nx * Ny> R64;
 
-        uint64_t start[2] = {static_cast<uint64_t>(world_rank * Ny), 0};
+        uint64_t start[2] = {0, static_cast<uint64_t>(mpiRank * Nx)};
         uint64_t count[2] = {Ny, Nx};
         ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
 
@@ -838,7 +866,7 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         {
             // Generate test data for each rank uniquely
             SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, t, world_rank, world_size);
+                generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
             // Read the current step
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
@@ -856,7 +884,7 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
             for (size_t i = 0; i < Nx; ++i)
             {
                 std::stringstream ss;
-                ss << "t=" << t << " i=" << i << " rank=" << world_rank;
+                ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
