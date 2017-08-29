@@ -1,7 +1,5 @@
 defaults: &defaults
   working_directory: /home/adios2/hidecirclesource
-  docker:
-    - image: ornladios/adios2:el7-ohpc
   steps:
     - checkout
     - run:
@@ -17,14 +15,19 @@ defaults: &defaults
 version: 2
 
 jobs:
-  "gcc48":
+  "el7-gcc48":
     <<: *defaults
-  "gcc7-openmpi":
+    docker:
+      - image: ornladios/adios2:el7-ohpc
+
+  "el7-gcc7-openmpi":
     <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-ohpc
 
 workflows:
   version: 2
   build:
     jobs:
-      - "gcc48"
-      - "gcc7-openmpi"
+      - "el7-gcc48"
+      - "el7-gcc7-openmpi"

@@ -1,13 +1,13 @@
 # Client maintainer: chuck.atkins@kitware.com
-set(CTEST_SITE "CircleCI EL7")
-set(CTEST_BUILD_NAME "$ENV{CIRCLE_BRANCH}_gcc7-openmpi")
+set(CTEST_SITE "CircleCI")
+set(CTEST_BUILD_NAME "$ENV{CIRCLE_BRANCH}_$ENV{CIRCLE_JOB}")
 set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 
 set(dashboard_model Experimental)
-set(dashboard_binary_name "build_gcc7-openmpi")
+set(dashboard_binary_name "build_$ENV{CIRCLE_JOB}")
 
 set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}")
 set(CTEST_DASHBOARD_ROOT "$ENV{HOME}")
@@ -23,4 +23,16 @@ set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
 
-include(${CMAKE_CURRENT_LIST_DIR}/adios_common.cmake)
+set(dashboard_cache "
+ADIOS2_USE_ADIOS1:STRING=ON
+ADIOS2_USE_BZip2:STRING=ON
+ADIOS2_USE_DataMan:STRING=ON
+ADIOS2_USE_Fortran:STRING=ON
+ADIOS2_USE_HDF5:STRING=ON
+ADIOS2_USE_MPI:STRING=ON
+ADIOS2_USE_Python:STRING=ON
+ADIOS2_USE_ZFP:STRING=ON
+ADIOS2_USE_ZeroMQ:STRING=ON
+")
+
+include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)

@@ -12,11 +12,11 @@ check_var CIRCLE_WORKING_DIRECTORY
 check_var CIRCLE_BRANCH
 check_var CIRCLE_JOB
 
-CTEST_SCRIPT="${CIRCLE_WORKING_DIRECTORY}/scripts/dashboard/circle-el7_${CIRCLE_JOB}.cmake"
+CTEST_SCRIPT="${CIRCLE_WORKING_DIRECTORY}/scripts/circle/circle_${CIRCLE_JOB}.cmake"
 
 if [ ! -f "${CTEST_SCRIPT}" ]
 then
-  echo "Unable to find CTest script circle-el7_${CIRCLE_JOB}.cmake"
+  echo "Unable to find CTest script $(basename ${CTEST_SCRIPT})"
   exit 2
 fi
 
