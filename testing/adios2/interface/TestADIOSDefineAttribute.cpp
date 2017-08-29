@@ -13,10 +13,6 @@ public:
     ADIOSDefineAttributeTest() : adios(true), io(adios.DeclareIO("TestIO")) {}
 
 protected:
-    // virtual void SetUp() { }
-
-    // virtual void TearDown() { }
-
     adios2::ADIOS adios;
     adios2::IO &io;
 };
@@ -95,87 +91,87 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
                                   adios2::Attribute<long double> &>();
 
     // Verify the members are correct
-    ASSERT_EQ(attributeString.m_DataArray, nullptr);
+    ASSERT_EQ(attributeString.m_IsSingleValue, true);
     EXPECT_EQ(attributeString.m_Name, "attributeString");
-    EXPECT_EQ(attributeString.m_DataValue, "-1");
+    EXPECT_EQ(attributeString.m_DataSingleValue, "-1");
     EXPECT_EQ(attributeString.m_Elements, 1);
     EXPECT_EQ(attributeString.m_Type, "string");
 
-    ASSERT_EQ(attributeChar.m_DataArray, nullptr);
+    ASSERT_EQ(attributeChar.m_DataArray.empty(), true);
     EXPECT_EQ(attributeChar.m_Name, "attributeChar");
-    EXPECT_EQ(attributeChar.m_DataValue, '0');
+    EXPECT_EQ(attributeChar.m_DataSingleValue, '0');
     EXPECT_EQ(attributeChar.m_Elements, 1);
     EXPECT_EQ(attributeChar.m_Type, "char");
 
-    ASSERT_EQ(attributeUChar.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUChar.m_DataArray.empty(), true);
     EXPECT_EQ(attributeUChar.m_Name, "attributeUChar");
-    EXPECT_EQ(attributeUChar.m_DataValue, '1');
+    EXPECT_EQ(attributeUChar.m_DataSingleValue, '1');
     EXPECT_EQ(attributeUChar.m_Elements, 1);
     EXPECT_EQ(attributeUChar.m_Type, "unsigned char");
 
-    ASSERT_EQ(attributeShort.m_DataArray, nullptr);
+    ASSERT_EQ(attributeShort.m_DataArray.empty(), true);
     EXPECT_EQ(attributeShort.m_Name, "attributeShort");
-    EXPECT_EQ(attributeShort.m_DataValue, 2);
+    EXPECT_EQ(attributeShort.m_DataSingleValue, 2);
     EXPECT_EQ(attributeShort.m_Elements, 1);
     EXPECT_EQ(attributeShort.m_Type, "short");
 
-    ASSERT_EQ(attributeUShort.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUShort.m_DataArray.empty(), true);
     EXPECT_EQ(attributeUShort.m_Name, "attributeUShort");
-    EXPECT_EQ(attributeUShort.m_DataValue, 3);
+    EXPECT_EQ(attributeUShort.m_DataSingleValue, 3);
     EXPECT_EQ(attributeUShort.m_Elements, 1);
     EXPECT_EQ(attributeUShort.m_Type, "unsigned short");
 
-    ASSERT_EQ(attributeInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeInt.m_DataArray.empty(), true);
     EXPECT_EQ(attributeInt.m_Name, "attributeInt");
-    EXPECT_EQ(attributeInt.m_DataValue, 4);
+    EXPECT_EQ(attributeInt.m_DataSingleValue, 4);
     EXPECT_EQ(attributeInt.m_Elements, 1);
     EXPECT_EQ(attributeInt.m_Type, "int");
 
-    ASSERT_EQ(attributeUInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUInt.m_DataArray.empty(), true);
     EXPECT_EQ(attributeUInt.m_Name, "attributeUInt");
-    EXPECT_EQ(attributeUInt.m_DataValue, 5);
+    EXPECT_EQ(attributeUInt.m_DataSingleValue, 5);
     EXPECT_EQ(attributeUInt.m_Elements, 1);
     EXPECT_EQ(attributeUInt.m_Type, "unsigned int");
 
-    ASSERT_EQ(attributeLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLInt.m_DataArray.empty(), true);
     EXPECT_EQ(attributeLInt.m_Name, "attributeLInt");
-    EXPECT_EQ(attributeLInt.m_DataValue, 6);
+    EXPECT_EQ(attributeLInt.m_DataSingleValue, 6);
     EXPECT_EQ(attributeLInt.m_Elements, 1);
     EXPECT_EQ(attributeLInt.m_Type, "long int");
 
-    ASSERT_EQ(attributeULInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeULInt.m_DataArray.empty(), true);
     EXPECT_EQ(attributeULInt.m_Name, "attributeULInt");
-    EXPECT_EQ(attributeULInt.m_DataValue, 7);
+    EXPECT_EQ(attributeULInt.m_DataSingleValue, 7);
     EXPECT_EQ(attributeULInt.m_Elements, 1);
     EXPECT_EQ(attributeULInt.m_Type, "unsigned long int");
 
-    ASSERT_EQ(attributeLLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLLInt.m_DataArray.empty(), true);
     EXPECT_EQ(attributeLLInt.m_Name, "attributeLLInt");
-    EXPECT_EQ(attributeLLInt.m_DataValue, 8);
+    EXPECT_EQ(attributeLLInt.m_DataSingleValue, 8);
     EXPECT_EQ(attributeLLInt.m_Elements, 1);
     EXPECT_EQ(attributeLLInt.m_Type, "long long int");
 
-    ASSERT_EQ(attributeULLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeULLInt.m_DataArray.empty(), true);
     EXPECT_EQ(attributeULLInt.m_Name, "attributeULLInt");
-    EXPECT_EQ(attributeULLInt.m_DataValue, 9);
+    EXPECT_EQ(attributeULLInt.m_DataSingleValue, 9);
     EXPECT_EQ(attributeULLInt.m_Elements, 1);
     EXPECT_EQ(attributeULLInt.m_Type, "unsigned long long int");
 
-    ASSERT_EQ(attributeFloat.m_DataArray, nullptr);
+    ASSERT_EQ(attributeFloat.m_DataArray.empty(), true);
     EXPECT_EQ(attributeFloat.m_Name, "attributeFloat");
-    EXPECT_EQ(attributeFloat.m_DataValue, 10);
+    EXPECT_EQ(attributeFloat.m_DataSingleValue, 10);
     EXPECT_EQ(attributeFloat.m_Elements, 1);
     EXPECT_EQ(attributeFloat.m_Type, "float");
 
-    ASSERT_EQ(attributeDouble.m_DataArray, nullptr);
+    ASSERT_EQ(attributeDouble.m_DataArray.empty(), true);
     EXPECT_EQ(attributeDouble.m_Name, "attributeDouble");
-    EXPECT_EQ(attributeDouble.m_DataValue, 11);
+    EXPECT_EQ(attributeDouble.m_DataSingleValue, 11);
     EXPECT_EQ(attributeDouble.m_Elements, 1);
     EXPECT_EQ(attributeDouble.m_Type, "double");
 
-    ASSERT_EQ(attributeLDouble.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLDouble.m_DataArray.empty(), true);
     EXPECT_EQ(attributeLDouble.m_Name, "attributeLDouble");
-    EXPECT_EQ(attributeLDouble.m_DataValue, 12);
+    EXPECT_EQ(attributeLDouble.m_DataSingleValue, 12);
     EXPECT_EQ(attributeLDouble.m_Elements, 1);
     EXPECT_EQ(attributeLDouble.m_Type, "long double");
 }
@@ -260,16 +256,16 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
                                   adios2::Attribute<long double> &>();
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_NE(attributeString.m_DataArray, nullptr);
+    ASSERT_EQ(attributeString.m_DataArray.empty(), false);
     EXPECT_EQ(attributeString.m_DataArray[0], "-1");
     EXPECT_EQ(attributeString.m_DataArray[1], "0");
     EXPECT_EQ(attributeString.m_DataArray[2], "+1");
     EXPECT_EQ(attributeString.m_Name, "attributeString");
-    ASSERT_EQ(attributeString.m_DataValue.empty(), true);
+    ASSERT_EQ(attributeString.m_DataSingleValue.empty(), true);
     EXPECT_EQ(attributeString.m_Elements, 3);
     EXPECT_EQ(attributeString.m_Type, "string");
 
-    ASSERT_NE(attributeChar.m_DataArray, nullptr);
+    ASSERT_EQ(attributeChar.m_DataArray.empty(), false);
     EXPECT_EQ(attributeChar.m_DataArray[0], 0);
     EXPECT_EQ(attributeChar.m_DataArray[1], 0 + 1);
     EXPECT_EQ(attributeChar.m_DataArray[2], 0 + 2);
@@ -277,7 +273,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeChar.m_Elements, 3);
     EXPECT_EQ(attributeChar.m_Type, "char");
 
-    ASSERT_NE(attributeUChar.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUChar.m_DataArray.empty(), false);
     EXPECT_EQ(attributeUChar.m_DataArray[0], 1);
     EXPECT_EQ(attributeUChar.m_DataArray[1], 1 + 1);
     EXPECT_EQ(attributeUChar.m_DataArray[2], 1 + 2);
@@ -285,7 +281,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeUChar.m_Elements, 3);
     EXPECT_EQ(attributeUChar.m_Type, "unsigned char");
 
-    ASSERT_NE(attributeShort.m_DataArray, nullptr);
+    ASSERT_EQ(attributeShort.m_DataArray.empty(), false);
     EXPECT_EQ(attributeShort.m_DataArray[0], 2);
     EXPECT_EQ(attributeShort.m_DataArray[1], 2 + 1);
     EXPECT_EQ(attributeShort.m_DataArray[2], 2 + 2);
@@ -293,7 +289,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeShort.m_Elements, 3);
     EXPECT_EQ(attributeShort.m_Type, "short");
 
-    ASSERT_NE(attributeUShort.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUShort.m_DataArray.empty(), false);
     EXPECT_EQ(attributeUShort.m_DataArray[0], 3);
     EXPECT_EQ(attributeUShort.m_DataArray[1], 3 + 1);
     EXPECT_EQ(attributeUShort.m_DataArray[2], 3 + 2);
@@ -301,7 +297,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeUShort.m_Elements, 3);
     EXPECT_EQ(attributeUShort.m_Type, "unsigned short");
 
-    ASSERT_NE(attributeInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeInt.m_DataArray[0], 4);
     EXPECT_EQ(attributeInt.m_DataArray[1], 4 + 1);
     EXPECT_EQ(attributeInt.m_DataArray[2], 4 + 2);
@@ -309,7 +305,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeInt.m_Elements, 3);
     EXPECT_EQ(attributeInt.m_Type, "int");
 
-    ASSERT_NE(attributeUInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeUInt.m_DataArray[0], 5);
     EXPECT_EQ(attributeUInt.m_DataArray[1], 5 + 1);
     EXPECT_EQ(attributeUInt.m_DataArray[2], 5 + 2);
@@ -317,7 +313,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeUInt.m_Elements, 3);
     EXPECT_EQ(attributeUInt.m_Type, "unsigned int");
 
-    ASSERT_NE(attributeLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeLInt.m_DataArray[0], 6);
     EXPECT_EQ(attributeLInt.m_DataArray[1], 6 + 1);
     EXPECT_EQ(attributeLInt.m_DataArray[2], 6 + 2);
@@ -325,7 +321,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeLInt.m_Elements, 3);
     EXPECT_EQ(attributeLInt.m_Type, "long int");
 
-    ASSERT_NE(attributeULInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeULInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeULInt.m_DataArray[0], 7);
     EXPECT_EQ(attributeULInt.m_DataArray[1], 7 + 1);
     EXPECT_EQ(attributeULInt.m_DataArray[2], 7 + 2);
@@ -333,7 +329,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeULInt.m_Elements, 3);
     EXPECT_EQ(attributeULInt.m_Type, "unsigned long int");
 
-    ASSERT_NE(attributeLLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLLInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeLLInt.m_DataArray[0], 8);
     EXPECT_EQ(attributeLLInt.m_DataArray[1], 8 + 1);
     EXPECT_EQ(attributeLLInt.m_DataArray[2], 8 + 2);
@@ -341,7 +337,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeLLInt.m_Elements, 3);
     EXPECT_EQ(attributeLLInt.m_Type, "long long int");
 
-    ASSERT_NE(attributeULLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeULLInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeULLInt.m_DataArray[0], 9);
     EXPECT_EQ(attributeULLInt.m_DataArray[1], 9 + 1);
     EXPECT_EQ(attributeULLInt.m_DataArray[2], 9 + 2);
@@ -349,7 +345,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeULLInt.m_Elements, 3);
     EXPECT_EQ(attributeULLInt.m_Type, "unsigned long long int");
 
-    ASSERT_NE(attributeFloat.m_DataArray, nullptr);
+    ASSERT_EQ(attributeFloat.m_DataArray.empty(), false);
     EXPECT_EQ(attributeFloat.m_DataArray[0], 10);
     EXPECT_EQ(attributeFloat.m_DataArray[1], 10 + 1);
     EXPECT_EQ(attributeFloat.m_DataArray[2], 10 + 2);
@@ -357,7 +353,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeFloat.m_Elements, 3);
     EXPECT_EQ(attributeFloat.m_Type, "float");
 
-    ASSERT_NE(attributeDouble.m_DataArray, nullptr);
+    ASSERT_EQ(attributeDouble.m_DataArray.empty(), false);
     EXPECT_EQ(attributeDouble.m_DataArray[0], 11);
     EXPECT_EQ(attributeDouble.m_DataArray[1], 11 + 1);
     EXPECT_EQ(attributeDouble.m_DataArray[2], 11 + 2);
@@ -365,7 +361,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeDouble.m_Elements, 3);
     EXPECT_EQ(attributeDouble.m_Type, "double");
 
-    ASSERT_NE(attributeLDouble.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLDouble.m_DataArray.empty(), false);
     EXPECT_EQ(attributeLDouble.m_DataArray[0], 12);
     EXPECT_EQ(attributeLDouble.m_DataArray[1], 12 + 1);
     EXPECT_EQ(attributeLDouble.m_DataArray[2], 12 + 2);
@@ -460,16 +456,16 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
                                   adios2::Attribute<long double> &>();
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_NE(attributeString.m_DataArray, nullptr);
+    ASSERT_EQ(attributeString.m_DataArray.empty(), false);
     EXPECT_EQ(attributeString.m_DataArray[0], "-1");
     EXPECT_EQ(attributeString.m_DataArray[1], "0");
     EXPECT_EQ(attributeString.m_DataArray[2], "+1");
     EXPECT_EQ(attributeString.m_Name, "attributeString");
-    ASSERT_EQ(attributeString.m_DataValue.empty(), true);
+    ASSERT_EQ(attributeString.m_DataSingleValue.empty(), true);
     EXPECT_EQ(attributeString.m_Elements, 3);
     EXPECT_EQ(attributeString.m_Type, "string");
 
-    ASSERT_NE(attributeChar.m_DataArray, nullptr);
+    ASSERT_EQ(attributeChar.m_DataArray.empty(), false);
     EXPECT_EQ(attributeChar.m_DataArray[0], 0);
     EXPECT_EQ(attributeChar.m_DataArray[1], 0 + 1);
     EXPECT_EQ(attributeChar.m_DataArray[2], 0 + 2);
@@ -477,7 +473,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeChar.m_Elements, 3);
     EXPECT_EQ(attributeChar.m_Type, "char");
 
-    ASSERT_NE(attributeUChar.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUChar.m_DataArray.empty(), false);
     EXPECT_EQ(attributeUChar.m_DataArray[0], 1);
     EXPECT_EQ(attributeUChar.m_DataArray[1], 1 + 1);
     EXPECT_EQ(attributeUChar.m_DataArray[2], 1 + 2);
@@ -485,7 +481,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeUChar.m_Elements, 3);
     EXPECT_EQ(attributeUChar.m_Type, "unsigned char");
 
-    ASSERT_NE(attributeShort.m_DataArray, nullptr);
+    ASSERT_EQ(attributeShort.m_DataArray.empty(), false);
     EXPECT_EQ(attributeShort.m_DataArray[0], 2);
     EXPECT_EQ(attributeShort.m_DataArray[1], 2 + 1);
     EXPECT_EQ(attributeShort.m_DataArray[2], 2 + 2);
@@ -493,7 +489,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeShort.m_Elements, 3);
     EXPECT_EQ(attributeShort.m_Type, "short");
 
-    ASSERT_NE(attributeUShort.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUShort.m_DataArray.empty(), false);
     EXPECT_EQ(attributeUShort.m_DataArray[0], 3);
     EXPECT_EQ(attributeUShort.m_DataArray[1], 3 + 1);
     EXPECT_EQ(attributeUShort.m_DataArray[2], 3 + 2);
@@ -501,7 +497,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeUShort.m_Elements, 3);
     EXPECT_EQ(attributeUShort.m_Type, "unsigned short");
 
-    ASSERT_NE(attributeInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeInt.m_DataArray[0], 4);
     EXPECT_EQ(attributeInt.m_DataArray[1], 4 + 1);
     EXPECT_EQ(attributeInt.m_DataArray[2], 4 + 2);
@@ -509,7 +505,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeInt.m_Elements, 3);
     EXPECT_EQ(attributeInt.m_Type, "int");
 
-    ASSERT_NE(attributeUInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeUInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeUInt.m_DataArray[0], 5);
     EXPECT_EQ(attributeUInt.m_DataArray[1], 5 + 1);
     EXPECT_EQ(attributeUInt.m_DataArray[2], 5 + 2);
@@ -517,7 +513,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeUInt.m_Elements, 3);
     EXPECT_EQ(attributeUInt.m_Type, "unsigned int");
 
-    ASSERT_NE(attributeLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeLInt.m_DataArray[0], 6);
     EXPECT_EQ(attributeLInt.m_DataArray[1], 6 + 1);
     EXPECT_EQ(attributeLInt.m_DataArray[2], 6 + 2);
@@ -525,7 +521,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeLInt.m_Elements, 3);
     EXPECT_EQ(attributeLInt.m_Type, "long int");
 
-    ASSERT_NE(attributeULInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeULInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeULInt.m_DataArray[0], 7);
     EXPECT_EQ(attributeULInt.m_DataArray[1], 7 + 1);
     EXPECT_EQ(attributeULInt.m_DataArray[2], 7 + 2);
@@ -533,7 +529,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeULInt.m_Elements, 3);
     EXPECT_EQ(attributeULInt.m_Type, "unsigned long int");
 
-    ASSERT_NE(attributeLLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLLInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeLLInt.m_DataArray[0], 8);
     EXPECT_EQ(attributeLLInt.m_DataArray[1], 8 + 1);
     EXPECT_EQ(attributeLLInt.m_DataArray[2], 8 + 2);
@@ -541,7 +537,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeLLInt.m_Elements, 3);
     EXPECT_EQ(attributeLLInt.m_Type, "long long int");
 
-    ASSERT_NE(attributeULLInt.m_DataArray, nullptr);
+    ASSERT_EQ(attributeULLInt.m_DataArray.empty(), false);
     EXPECT_EQ(attributeULLInt.m_DataArray[0], 9);
     EXPECT_EQ(attributeULLInt.m_DataArray[1], 9 + 1);
     EXPECT_EQ(attributeULLInt.m_DataArray[2], 9 + 2);
@@ -549,7 +545,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeULLInt.m_Elements, 3);
     EXPECT_EQ(attributeULLInt.m_Type, "unsigned long long int");
 
-    ASSERT_NE(attributeFloat.m_DataArray, nullptr);
+    ASSERT_EQ(attributeFloat.m_DataArray.empty(), false);
     EXPECT_EQ(attributeFloat.m_DataArray[0], 10);
     EXPECT_EQ(attributeFloat.m_DataArray[1], 10 + 1);
     EXPECT_EQ(attributeFloat.m_DataArray[2], 10 + 2);
@@ -557,7 +553,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeFloat.m_Elements, 3);
     EXPECT_EQ(attributeFloat.m_Type, "float");
 
-    ASSERT_NE(attributeDouble.m_DataArray, nullptr);
+    ASSERT_EQ(attributeDouble.m_DataArray.empty(), false);
     EXPECT_EQ(attributeDouble.m_DataArray[0], 11);
     EXPECT_EQ(attributeDouble.m_DataArray[1], 11 + 1);
     EXPECT_EQ(attributeDouble.m_DataArray[2], 11 + 2);
@@ -565,7 +561,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeDouble.m_Elements, 3);
     EXPECT_EQ(attributeDouble.m_Type, "double");
 
-    ASSERT_NE(attributeLDouble.m_DataArray, nullptr);
+    ASSERT_EQ(attributeLDouble.m_DataArray.empty(), false);
     EXPECT_EQ(attributeLDouble.m_DataArray[0], 12);
     EXPECT_EQ(attributeLDouble.m_DataArray[1], 12 + 1);
     EXPECT_EQ(attributeLDouble.m_DataArray[2], 12 + 2);

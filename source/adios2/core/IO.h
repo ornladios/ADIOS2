@@ -224,6 +224,12 @@ public:
     VariableCompound &GetVariableCompound(const std::string &name);
 
     /**
+     * Return  map with attributes name and type info
+     * @return m_Attributes
+     */
+    const DataMap &GetAttributesDataMap() const noexcept;
+
+    /**
      * Gets an existing attribute of primitive type by name
      * @param name of attribute to be retrieved
      * @return reference to an existing attribute created with DefineAttribute
@@ -331,6 +337,7 @@ private:
 
     std::map<unsigned int, Attribute<std::string>> m_StringA;
     std::map<unsigned int, Attribute<char>> m_CharA;
+    std::map<unsigned int, Attribute<signed char>> m_SCharA;
     std::map<unsigned int, Attribute<unsigned char>> m_UCharA;
     std::map<unsigned int, Attribute<short>> m_ShortA;
     std::map<unsigned int, Attribute<unsigned short>> m_UShortA;

@@ -71,6 +71,7 @@
 #define ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(MACRO)                              \
     MACRO(std::string)                                                         \
     MACRO(char)                                                                \
+    MACRO(signed char)                                                         \
     MACRO(unsigned char)                                                       \
     MACRO(short)                                                               \
     MACRO(unsigned short)                                                      \

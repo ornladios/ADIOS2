@@ -9,6 +9,9 @@ if(NOT ADIOS2_HAVE_MPI)
   if(ADIOS2_HAVE_ADIOS1)
     add_executable(TestBPWriteRead TestBPWriteRead.cpp)
     target_link_libraries(TestBPWriteRead adios2 gtest adios1::adios)
+
+    add_executable(TestBPWriteReadAttributes TestBPWriteReadAttributes.cpp)
+    target_link_libraries(TestBPWriteReadAttributes adios2 gtest adios1::adios)
   
     add_executable(TestBPWriteReadstdio TestBPWriteReadstdio.cpp)
     target_link_libraries(TestBPWriteReadstdio adios2 gtest adios1::adios)
@@ -17,6 +20,7 @@ if(NOT ADIOS2_HAVE_MPI)
     target_link_libraries(TestBPWriteReadfstream adios2 gtest adios1::adios)
     
     gtest_add_tests(TARGET TestBPWriteRead)
+    gtest_add_tests(TARGET TestBPWriteReadAttributes)
     gtest_add_tests(TARGET TestBPWriteReadstdio)
     gtest_add_tests(TARGET TestBPWriteReadfstream)
   endif()

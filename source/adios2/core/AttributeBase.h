@@ -28,6 +28,7 @@ public:
     const std::string m_Name;
     const std::string m_Type;
     const size_t m_Elements;
+    const bool m_IsSingleValue;
 
     /**
      * Unique constructor used by Attribute<T> derived class
@@ -36,7 +37,7 @@ public:
      * @param elements
      */
     AttributeBase(const std::string &name, const std::string type,
-                  const size_t elements);
+                  const size_t elements, const bool isSingleValue);
 
     virtual ~AttributeBase() = default;
 };

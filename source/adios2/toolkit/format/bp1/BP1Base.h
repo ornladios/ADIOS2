@@ -303,6 +303,6 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_H_ */

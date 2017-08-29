@@ -12,6 +12,7 @@
 #include "BPFileWriter.tcc"
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
 #include "adios2/toolkit/transport/file/FileStream.h"
@@ -47,7 +48,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void BPFileWriter::Advance(const float /*timeout_sec*/)
 {
-    m_BP1Writer.Advance();
+    m_BP1Writer.Advance(m_IO);
 }
 
 void BPFileWriter::Close(const int transportIndex)
@@ -65,7 +66,7 @@ void BPFileWriter::Close(const int transportIndex)
     }
 
     // close bp buffer by flattening data and metadata
-    m_BP1Writer.Close();
+    m_BP1Writer.Close(m_IO);
     // send data to corresponding transports
     m_TransportsManager.WriteFiles(m_BP1Writer.m_HeapBuffer.GetData(),
                                    m_BP1Writer.m_HeapBuffer.m_DataPosition,

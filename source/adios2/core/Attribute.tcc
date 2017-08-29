@@ -24,14 +24,15 @@ namespace adios2
     template <>                                                                \
     Attribute<T>::Attribute(const std::string &name, const T *array,           \
                             const size_t elements)                             \
-    : AttributeBase(name, GetType<T>(), elements), m_DataArray(array),         \
-      m_DataValue()                                                            \
+    : AttributeBase(name, GetType<T>(), elements, false),                      \
+      m_DataArray(std::vector<T>(array, array + elements)),                    \
+      m_DataSingleValue()                                                      \
     {                                                                          \
     }                                                                          \
                                                                                \
     template <>                                                                \
     Attribute<T>::Attribute(const std::string &name, const T &value)           \
-    : AttributeBase(name, GetType<T>(), 1), m_DataValue(value)                 \
+    : AttributeBase(name, GetType<T>(), 1, true), m_DataSingleValue(value)     \
     {                                                                          \
     }
 
