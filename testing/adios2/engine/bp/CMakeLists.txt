@@ -32,3 +32,17 @@ if(NOT ADIOS2_HAVE_MPI)
   
   gtest_add_tests(TARGET TestBPWriteProfilingJSON)
 endif()
+
+# Testing CMake code
+add_executable(TestBPWriteRead TestBPWriteRead.cpp)
+target_link_libraries(TestBPWriteRead adios2 gtest adios1::adios)
+if(ADIOS2_HAVE_MPI)
+  target_include_directories(TestBPWriteRead PRIVATE ${MPI_C_INCLUDE_PATH})
+  target_link_libraries(TestBPWriteRead ${MPI_C_LIBRARIES})
+  set(extra_test_args
+    EXEC_WRAPPER
+      ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
+  )
+endif()
+
+gtest_add_tests(TARGET TestBPWriteRead ${extra_test_args})
