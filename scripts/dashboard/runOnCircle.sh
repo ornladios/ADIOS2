@@ -24,11 +24,12 @@ do
     DASHBOARDDIR=${BASEDIR}/../../../${CONFIG}
     mkdir -p "${DASHBOARDDIR}"
     export USE_BASE_DIRECTORY="${DASHBOARDDIR}"
+    export SOURCE_TREE="${BASEDIR}/../../"
 
     LOG=${BASEDIR}/../../../Logs/${CONFIG}
     # ctest -S ${BASEDIR}/../dashboard/circle_${CONFIG}.cmake -VV 1>${LOG}.out 2>${LOG}.err
     ctest -S ${BASEDIR}/circle_${CONFIG}.cmake -VV
-    
+
     # if [[ "$i" =~ scripts/dashboard/circle_([^\.]+) ]];
     # then
     #     CONFIG="${BASH_REMATCH[1]}"

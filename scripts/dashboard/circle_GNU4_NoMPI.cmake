@@ -5,8 +5,12 @@ set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
-set(CTEST_DASHBOARD_ROOT "$ENV{USE_BASE_DIRECTORY}")
 
+set(CTEST_GIT_COMMAND "/usr/bin/true")
+# set(dashboard_source_name "$ENV{SOURCE_TREE}")
+# set(dashboard_binary_name "$ENV{USE_BASE_DIRECTORY}")
+set(CTEST_SOURCE_DIRECTORY "$ENV{SOURCE_TREE}")
+set(CTEST_BINARY_DIRECTORY "$ENV{USE_BASE_DIRECTORY}")
 set(dashboard_model Experimental)
 set(dashboard_root_name "Builds/GCC-4.8.5_NoMPI")
 set(dashboard_binary_name "GNU4_NoMPI")             # Keep build trees separate for each build
