@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
+
 # Adaptable Input / Output System (ADIOS) v2.0
 This is v2.0 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
