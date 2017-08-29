@@ -13,10 +13,7 @@
 #   set(CTEST_BUILD_NAME "Platform-Compiler")
 #   set(CTEST_CONFIGURATION_TYPE Debug)
 #   set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-#   set(dashboard_cache "
-#   QT_QMAKE_EXECUTABLE:FILEPATH=$ENV{HOME}/Qt/4.8.1-gcc-x64/bin/qmake
-#   ")
-#   include(${CTEST_SCRIPT_DIRECTORY}/common/adios_common.cmake)
+#   include(${CTEST_SCRIPT_DIRECTORY}/adios_common.cmake)
 #
 # Then run a scheduled task (cron job) with a command line such as
 #
@@ -28,24 +25,33 @@
 # The following variables may be set before including this script
 # to configure it:
 #
-#   dashboard_model           = Nightly | Experimental | Continuous
-#   dashboard_disable_loop    = For continuous dashboards, disable loop.
+#   dashboard_model           = Nightly | Experimental
 #   dashboard_root_name       = Change name of "MyTests" directory
-#   dashboard_source_name     = Name of source directory (openqube)
-#   dashboard_binary_name     = Name of binary directory (openqube-build)
+#   dashboard_source_name     = Name of source directory (adios)
+#   dashboard_binary_name     = Name of binary directory (adios-build)
 #   dashboard_cache           = Initial CMakeCache.txt file content
-#   dashboard_do_coverage     = True to enable coverage (ex: gcov)
-#   dashboard_do_memcheck     = True to enable memcheck (ex: valgrind)
-#   dashboard_git_url         = Custom git clone url
-#   dashboard_git_branch      = Custom remote branch to track
-#   dashboard_git_crlf        = Value of core.autocrlf for repository
-#   CTEST_UPDATE_COMMAND      = path to svn command-line client
-#   CTEST_BUILD_FLAGS         = build tool arguments (ex: -j2)
-#   CTEST_DASHBOARD_ROOT      = Where to put source and build trees
-#   CTEST_TEST_TIMEOUT        = Per-test timeout length
-#   CTEST_TEST_ARGS           = ctest_test args (ex: PARALLEL_LEVEL 4)
-#   CMAKE_MAKE_PROGRAM        = Path to "make" tool to use
+
+#   dashboard_do_checkout  = True to enable source checkout via git
+#   dashboard_do_configure = True to enable the Configure step
+#   dashboard_do_build     = True to enable the Build step
+#   dashboard_do_test      = True to enable the Test step
+#   dashboard_do_coverage  = True to enable coverage (ex: gcov)
+#   dashboard_do_memcheck  = True to enable memcheck (ex: valgrind)
+
+#   CTEST_GIT_COMMAND     = path to git command-line client
+#   CTEST_BUILD_FLAGS     = build tool arguments (ex: -j2)
+#   CTEST_DASHBOARD_ROOT  = Where to put source and build trees
+#   CTEST_TEST_CTEST      = Whether to run long CTestTest* tests
+#   CTEST_TEST_TIMEOUT    = Per-test timeout length
+#   CTEST_TEST_ARGS       = ctest_test args (ex: PARALLEL_LEVEL 4)
+#   CMAKE_MAKE_PROGRAM    = Path to "make" tool to use
 #
+# Options to configure Git:
+#   dashboard_git_url      = Custom git clone url
+#   dashboard_git_branch   = Custom remote branch to track
+#   dashboard_git_crlf     = Value of core.autocrlf for repository
+#
+
 # For Makefile generators the script may be executed from an
 # environment already configured to use the desired compilers.
 # Alternatively the environment may be set at the top of the script:
@@ -68,4 +74,4 @@ endif()
 if(NOT dashboard_model)
   set(dashboard_model Experimental)
 endif()
-include(${CMAKE_CURRENT_LIST_DIR}/universal.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/common.cmake)
