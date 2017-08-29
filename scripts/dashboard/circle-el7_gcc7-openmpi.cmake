@@ -9,8 +9,8 @@ set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 set(dashboard_model Experimental)
 set(dashboard_binary_name "build_gcc7-openmpi")
 
-set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}/source")
-set(CTEST_DASHBOARD_ROOT "$ENV{CIRCLE_WORKING_DIRECTORY}")
+set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}")
+set(CTEST_DASHBOARD_ROOT "$ENV{HOME}")
 
 include(${CMAKE_CURRENT_LIST_DIR}/EnvironmentModules.cmake)
 module(purge)
