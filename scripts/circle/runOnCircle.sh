@@ -32,3 +32,12 @@ case "$1" in
 esac
 
 /opt/cmake/3.6.0/bin/ctest -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE
+
+if [ $? -eq 0 ]
+then
+  echo "ctest returned success"
+  exit 0
+else
+  echo "ctest returned failure" >&2
+  exit 1
+fi
