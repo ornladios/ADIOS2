@@ -91,7 +91,11 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         // Create the ADIOS 1 Engine
         io.SetEngine("ADIOS1Writer");
 
+#ifdef ADIOS2_HAVE_MPI
+        io.AddTransport("file", {{"library", "MPI"}});
+#else
         io.AddTransport("file");
+#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -383,7 +387,11 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         // Create the ADIOS 1 Engine
         io.SetEngine("ADIOS1Writer");
 
+#ifdef ADIOS2_HAVE_MPI
+        io.AddTransport("file", {{"library", "MPI"}});
+#else
         io.AddTransport("file");
+#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -688,7 +696,11 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         // Create the ADIOS 1 Engine
         io.SetEngine("ADIOS1Writer");
 
+#ifdef ADIOS2_HAVE_MPI
+        io.AddTransport("file", {{"library", "MPI"}});
+#else
         io.AddTransport("file");
+#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);

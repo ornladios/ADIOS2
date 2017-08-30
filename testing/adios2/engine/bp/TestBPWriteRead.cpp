@@ -83,7 +83,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the ADIOS 1 Engine
+        // Create the BP Engine
         io.SetEngine("BPFileWriter");
 
         io.AddTransport("file");
@@ -152,14 +152,19 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
     }
 
     {
-        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
+        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_SELF,
                                "verbose=3");
 
         // Open the file for reading
+        // Note: Since collective metadata generation is not implemented yet,
+        // SO for now we read each subfile instead of a single bp file with all
+        // metadata.
+        // Meanwhile if we open file with MPI_COMM_WORLD, then the selection
+        // bounding box should be [0, Nx]
         std::string index = std::to_string(mpiRank);
         ADIOS_FILE *f = adios_read_open_file(
             (fname + ".dir/" + fname + "." + index).c_str(),
-            ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
+            ADIOS_READ_METHOD_BP, MPI_COMM_SELF);
         ASSERT_NE(f, nullptr);
 
         // Check the variables exist
@@ -235,12 +240,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         std::array<float, Nx> R32;
         std::array<double, Nx> R64;
 
-        // QUESTION: For ADIOS1Writer, the start index would be mpiRank * Nx.
-        // However it seems that BPWriter would skip empty values to find the
-        // right start index. Here 0 would make the test pass.
-        // Note: Since collective metadata generation is not implemented yet,
-        // which makes sence.
-        uint64_t start[1] = {0};
+        uint64_t start[1] = {mpiRank * Nx};
         uint64_t count[1] = {Nx};
         ADIOS_SELECTION *sel = adios_selection_boundingbox(1, start, count);
 
@@ -441,14 +441,19 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
     }
 
     {
-        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
+        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_SELF,
                                "verbose=3");
 
         // Open the file for reading
+        // Note: Since collective metadata generation is not implemented yet,
+        // SO for now we read each subfile instead of a single bp file with all
+        // metadata.
+        // Meanwhile if we open file with MPI_COMM_WORLD, then the selection
+        // bounding box should be [0, Nx]
         std::string index = std::to_string(mpiRank);
         ADIOS_FILE *f = adios_read_open_file(
             (fname + ".dir/" + fname + "." + index).c_str(),
-            ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
+            ADIOS_READ_METHOD_BP, MPI_COMM_SELF);
         ASSERT_NE(f, nullptr);
 
         // Check the variables exist
@@ -537,8 +542,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         std::array<float, Nx * Ny> R32;
         std::array<double, Nx * Ny> R64;
 
-        // FIXME: When bp metadata generation has landed, use mpiRank * Nx
-        uint64_t start[2] = {0, 0};
+        uint64_t start[2] = {0, mpiRank * Nx};
         uint64_t count[2] = {Ny, Nx};
         ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
 
@@ -675,7 +679,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the ADIOS 1 Engine
+        // Create the BP Engine
         io.SetEngine("BPFileWriter");
 
         io.AddTransport("file");
@@ -739,14 +743,19 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
     }
 
     {
-        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
+        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_SELF,
                                "verbose=3");
 
         // Open the file for reading
+        // Note: Since collective metadata generation is not implemented yet,
+        // SO for now we read each subfile instead of a single bp file with all
+        // metadata.
+        // Meanwhile if we open file with MPI_COMM_WORLD, then the selection
+        // bounding box should be [0, Nx]
         std::string index = std::to_string(mpiRank);
         ADIOS_FILE *f = adios_read_open_file(
             (fname + ".dir/" + fname + "." + index).c_str(),
-            ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
+            ADIOS_READ_METHOD_BP, MPI_COMM_SELF);
         ASSERT_NE(f, nullptr);
 
         // Check the variables exist
@@ -835,8 +844,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         std::array<float, Nx * Ny> R32;
         std::array<double, Nx * Ny> R64;
 
-        // FIXME: When bp metadata generation has landed, use mpiRank * Nx
-        uint64_t start[2] = {0, 0};
+        uint64_t start[2] = {0, mpiRank * Nx};
         uint64_t count[2] = {Ny, Nx};
         ADIOS_SELECTION *sel = adios_selection_boundingbox(2, start, count);
 

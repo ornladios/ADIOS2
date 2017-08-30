@@ -38,10 +38,11 @@ public:
 //******************************************************************************
 
 // ADIOS2 write, native ADIOS1 read
-TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON)
+TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
 {
     // Use a relative path + file name to test path in file name capability
-    std::string fname = "foo/ADIOS2BPWriteProfilingJSON.bp";
+    std::string fname;
+    fname = "foo/ADIOS2BPWriteProfilingJSON.bp";
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -94,9 +95,8 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON)
 
         // Create the BP Engine
         io.SetEngine("BPFileWriter");
-        // Using MPI Rank here?
         io.SetParameters({{"Threads", "2"}});
-        io.AddTransport("File", {{"Library", "POSIX"}});
+        io.AddTransport("file", {{"Library", "POSIX"}});
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);

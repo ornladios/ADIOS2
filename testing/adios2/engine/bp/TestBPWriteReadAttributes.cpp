@@ -30,7 +30,8 @@ public:
 // ADIOS2 write, native ADIOS1 read for single value attributes
 TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
 {
-    std::string fname = "ADIOS2BPWriteAttributeADIOS1ReadSingleTypes.bp";
+    std::string fname = "foo/ADIOS2BPWriteAttributeADIOS1ReadSingleTypes.bp";
+    std::string fRootName = "ADIOS2BPWriteAttributeADIOS1ReadSingleTypes.bp";
 
     int mpiRank = 0, mpiSize = 1;
 #ifdef ADIOS2_HAVE_MPI
@@ -40,7 +41,8 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
 
     // FIXME: Since collective meta generation has not landed yet, so there is
     // no way for us to gather different attribute data per process. Ideally we
-    // should use unique attribute data per process. Ex: std::to_string(mpiRank);
+    // should use unique attribute data per process. Ex:
+    // std::to_string(mpiRank);
     std::string mpiRankString = std::to_string(0);
     std::string s1_Single = std::string("s1_Single_") + mpiRankString;
     std::string i8_Single = std::string("i8_Single_") + mpiRankString;
@@ -107,13 +109,13 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
     }
 
     {
-        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
+        adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_SELF,
                                "verbose=3");
 
         // Open the file for reading
         ADIOS_FILE *f = adios_read_open_file(
-            (fname + ".dir/" + fname + "." + mpiRankString).c_str(),
-            ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
+            (fname + ".dir/" + fRootName + "." + mpiRankString).c_str(),
+            ADIOS_READ_METHOD_BP, MPI_COMM_SELF);
         ASSERT_NE(f, nullptr);
 
         int size, status;
@@ -206,7 +208,8 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
 // ADIOS2 write, native ADIOS1 read for array attributes
 TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
 {
-    std::string fname = "ADIOS2BPWriteAttributeADIOS1ReadArrayTypes.bp";
+    std::string fname = "foo/bar/ADIOS2BPWriteAttributeADIOS1ReadArrayTypes.bp";
+    std::string fRootName = "ADIOS2BPWriteAttributeADIOS1ReadArrayTypes.bp";
 
     // Write test data using ADIOS2
     {
@@ -244,7 +247,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
         // Create the BP Engine
         io.SetEngine("BPFileWriter");
 
-        io.AddTransport("File");
+        io.AddTransport("file");
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -259,7 +262,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
 
         // Open the file for reading
         ADIOS_FILE *f =
-            adios_read_open_file((fname + ".dir/" + fname + ".0").c_str(),
+            adios_read_open_file((fname + ".dir/" + fRootName + ".0").c_str(),
                                  ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
         ASSERT_NE(f, nullptr);
 
