@@ -32,31 +32,76 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
 {
     std::string fname = "ADIOS2BPWriteAttributeADIOS1ReadSingleTypes.bp";
 
-    // Write test data using ADIOS2
+    int mpiRank = 0, mpiSize = 1;
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    // FIXME: Since collective meta generation has not landed yet, so there is
+    // no way for us to gather different attribute data per process. Ideally we
+    // should use unique attribute data per process. Ex: std::to_string(mpiRank);
+    std::string mpiRankString = std::to_string(0);
+    std::string s1_Single = std::string("s1_Single_") + mpiRankString;
+    std::string i8_Single = std::string("i8_Single_") + mpiRankString;
+    std::string i16_Single = std::string("i16_Single_") + mpiRankString;
+    std::string i32_Single = std::string("i32_Single_") + mpiRankString;
+    std::string i64_Single = std::string("i64_Single_") + mpiRankString;
+    std::string u8_Single = std::string("u8_Single_") + mpiRankString;
+    std::string u16_Single = std::string("u16_Single_") + mpiRankString;
+    std::string u32_Single = std::string("u32_Single_") + mpiRankString;
+    std::string u64_Single = std::string("u64_Single_") + mpiRankString;
+    std::string float_Single = std::string("float_Single_") + mpiRankString;
+    std::string double_Single = std::string("double_Single_") + mpiRankString;
+
+    // When collective meta generation has landed, use
+    // generateNewSmallTestData(m_TestData, 0, 0, mpiSize);
+    // Generate current testing data
+    SmallTestData currentTestData =
+        generateNewSmallTestData(m_TestData, 0, 0, 0);
+
+    // Write test data using BP
     {
+#ifdef ADIOS2_HAVE_MPI
+        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
         adios2::ADIOS adios(true);
+#endif
         adios2::IO &io = adios.DeclareIO("TestIO");
 
         // Declare Single Value Attributes
         {
-            io.DefineAttribute<std::string>("s1_Single", m_TestData.S1);
-            io.DefineAttribute<int8_t>("i8_Single", m_TestData.I8.front());
-            io.DefineAttribute<int16_t>("i16_Single", m_TestData.I16.front());
-            io.DefineAttribute<int32_t>("i32_Single", m_TestData.I32.front());
-            io.DefineAttribute<int64_t>("i64_Single", m_TestData.I64.front());
+            io.DefineAttribute<std::string>(s1_Single, currentTestData.S1);
+            io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front());
+            io.DefineAttribute<int16_t>(i16_Single,
+                                        currentTestData.I16.front());
+            io.DefineAttribute<int32_t>(i32_Single,
+                                        currentTestData.I32.front());
+            io.DefineAttribute<int64_t>(i64_Single,
+                                        currentTestData.I64.front());
 
-            io.DefineAttribute<uint8_t>("u8_Single", m_TestData.U8.front());
-            io.DefineAttribute<uint16_t>("u16_Single", m_TestData.U16.front());
-            io.DefineAttribute<uint32_t>("u32_Single", m_TestData.U32.front());
-            io.DefineAttribute<uint64_t>("u64_Single", m_TestData.U64.front());
+            io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.front());
+            io.DefineAttribute<uint16_t>(u16_Single,
+                                         currentTestData.U16.front());
+            io.DefineAttribute<uint32_t>(u32_Single,
+                                         currentTestData.U32.front());
+            io.DefineAttribute<uint64_t>(u64_Single,
+                                         currentTestData.U64.front());
 
-            io.DefineAttribute<float>("float_Single", m_TestData.R32.front());
-            io.DefineAttribute<double>("double_Single", m_TestData.R64.front());
+            io.DefineAttribute<float>(float_Single,
+                                      currentTestData.R32.front());
+            io.DefineAttribute<double>(double_Single,
+                                       currentTestData.R64.front());
         }
 
         // Create the BP Engine
         io.SetEngine("BPFileWriter");
-        io.AddTransport("File");
+
+#ifdef ADIOS2_HAVE_MPI
+        io.AddTransport("file", {{"library", "MPI"}});
+#else
+        io.AddTransport("file");
+#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -65,93 +110,97 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
         engine->Close();
     }
 
-// Read test data using ADIOS1
-#ifdef ADIOS2_HAVE_MPI
-    // Read everything from rank 0
-    int rank;
-    MPI_Comm_rank();
-    if (rank == 0)
-#endif
     {
         adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
                                "verbose=3");
 
         // Open the file for reading
-        ADIOS_FILE *f =
-            adios_read_open_file((fname + ".dir/" + fname + ".0").c_str(),
-                                 ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
+        ADIOS_FILE *f = adios_read_open_file(
+            (fname + ".dir/" + fname + "." + mpiRankString).c_str(),
+            ADIOS_READ_METHOD_BP, MPI_COMM_WORLD);
         ASSERT_NE(f, nullptr);
 
         int size, status;
         enum ADIOS_DATATYPES type;
         void *data = nullptr;
 
-        status = adios_get_attr(f, "s1_Single", &type, &size, &data);
+        // status = adios_get_attr(f, "s1_Single_0", &type, &size, &data);
+        status = adios_get_attr(f, s1_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_string);
         std::string singleStringAttribute(reinterpret_cast<char *>(data), size);
-        ASSERT_STREQ(singleStringAttribute.c_str(), m_TestData.S1.c_str());
+        ASSERT_STREQ(singleStringAttribute.c_str(), currentTestData.S1.c_str());
 
-        status = adios_get_attr(f, "i8_Single", &type, &size, &data);
+        status = adios_get_attr(f, i8_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_byte);
-        ASSERT_EQ(*reinterpret_cast<int8_t *>(data), m_TestData.I8.front());
+        ASSERT_EQ(*reinterpret_cast<int8_t *>(data),
+                  currentTestData.I8.front());
 
-        status = adios_get_attr(f, "i16_Single", &type, &size, &data);
+        status = adios_get_attr(f, i16_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_short);
-        ASSERT_EQ(*reinterpret_cast<int16_t *>(data), m_TestData.I16.front());
+        ASSERT_EQ(*reinterpret_cast<int16_t *>(data),
+                  currentTestData.I16.front());
 
-        status = adios_get_attr(f, "i32_Single", &type, &size, &data);
+        status = adios_get_attr(f, i32_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_integer);
-        ASSERT_EQ(*reinterpret_cast<int32_t *>(data), m_TestData.I32.front());
+        ASSERT_EQ(*reinterpret_cast<int32_t *>(data),
+                  currentTestData.I32.front());
 
-        status = adios_get_attr(f, "i64_Single", &type, &size, &data);
+        status = adios_get_attr(f, i64_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_long);
-        ASSERT_EQ(*reinterpret_cast<int64_t *>(data), m_TestData.I64.front());
+        ASSERT_EQ(*reinterpret_cast<int64_t *>(data),
+                  currentTestData.I64.front());
 
-        status = adios_get_attr(f, "u8_Single", &type, &size, &data);
+        status = adios_get_attr(f, u8_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_unsigned_byte);
-        ASSERT_EQ(*reinterpret_cast<uint8_t *>(data), m_TestData.U8.front());
+        ASSERT_EQ(*reinterpret_cast<uint8_t *>(data),
+                  currentTestData.U8.front());
 
-        status = adios_get_attr(f, "u16_Single", &type, &size, &data);
+        status = adios_get_attr(f, u16_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_unsigned_short);
-        ASSERT_EQ(*reinterpret_cast<uint16_t *>(data), m_TestData.U16.front());
+        ASSERT_EQ(*reinterpret_cast<uint16_t *>(data),
+                  currentTestData.U16.front());
 
-        status = adios_get_attr(f, "u32_Single", &type, &size, &data);
+        status = adios_get_attr(f, u32_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_unsigned_integer);
-        ASSERT_EQ(*reinterpret_cast<uint32_t *>(data), m_TestData.U32.front());
+        ASSERT_EQ(*reinterpret_cast<uint32_t *>(data),
+                  currentTestData.U32.front());
 
-        status = adios_get_attr(f, "u64_Single", &type, &size, &data);
+        status = adios_get_attr(f, u64_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_unsigned_long);
-        ASSERT_EQ(*reinterpret_cast<uint64_t *>(data), m_TestData.U64.front());
+        ASSERT_EQ(*reinterpret_cast<uint64_t *>(data),
+                  currentTestData.U64.front());
 
-        status = adios_get_attr(f, "float_Single", &type, &size, &data);
+        status = adios_get_attr(f, float_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_real);
-        ASSERT_EQ(*reinterpret_cast<float *>(data), m_TestData.R32.front());
+        ASSERT_EQ(*reinterpret_cast<float *>(data),
+                  currentTestData.R32.front());
 
-        status = adios_get_attr(f, "double_Single", &type, &size, &data);
+        status = adios_get_attr(f, double_Single.c_str(), &type, &size, &data);
         ASSERT_EQ(status, 0);
         ASSERT_NE(data, nullptr);
         ASSERT_EQ(type, adios_double);
-        ASSERT_EQ(*reinterpret_cast<double *>(data), m_TestData.R64.front());
+        ASSERT_EQ(*reinterpret_cast<double *>(data),
+                  currentTestData.R64.front());
 
         // Cleanup file
         adios_read_close(f);
@@ -207,13 +256,6 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
         engine->Close();
     }
 
-// Read test data using ADIOS1
-#ifdef ADIOS2_HAVE_MPI
-    // Read everything from rank 0
-    int rank;
-    MPI_Comm_rank();
-    if (rank == 0)
-#endif
     {
         adios_read_init_method(ADIOS_READ_METHOD_BP, MPI_COMM_WORLD,
                                "verbose=3");
