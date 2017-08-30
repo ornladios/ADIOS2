@@ -9,7 +9,7 @@ set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 set(dashboard_model Experimental)
 set(dashboard_binary_name "build_$ENV{CIRCLE_JOB}")
 
-set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}")
+set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}/source")
 set(CTEST_DASHBOARD_ROOT "$ENV{HOME}")
 
 include(${CMAKE_CURRENT_LIST_DIR}/EnvironmentModules.cmake)
