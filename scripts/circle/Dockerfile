@@ -61,7 +61,4 @@ RUN cd source && \
 # Cleanup
 RUN rm -rf /opt/adios1/1.12.0/source
 
-# Make the directory where CircleCI can clone the ADIOS2 source
-RUN mkdir -p /home/adios2/source
-
 WORKDIR /home/adios2
