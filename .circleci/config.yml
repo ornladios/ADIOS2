@@ -1,7 +1,8 @@
 defaults: &defaults
   working_directory: /home/adios2
   steps:
-    - checkout /home/adios2/source
+    - checkout:
+        path: /home/adios2/source
     - run:
         name: Configure
         command: bash --login source/scripts/circle/runOnCircle.sh configure
