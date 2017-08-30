@@ -1,8 +1,7 @@
 FROM centos:centos7
 
 # Install extra repos
-RUN yum -y install epel-release https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm && \
-    yum -y upgrade
+RUN yum -y install epel-release https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
 
 # Install core dev packages
 RUN yum -y install \
@@ -16,6 +15,9 @@ RUN yum -y install \
 RUN yum -y install \
       lmod-ohpc gnu7-compilers-ohpc openmpi-gnu7-ohpc phdf5-gnu7-openmpi-ohpc \
       python-numpy-gnu7-ohpc
+
+# Cleanup headers and packages
+RUN yum clean all
 
 # Install the CMake binary
 WORKDIR /opt/cmake/3.6.0
@@ -49,7 +51,7 @@ RUN cd source && \
       ./configure --prefix=/opt/adios1/1.12.0/gnu48 --without-mpi && \
     make -j8 install && \
     make distclean
-    
+
 # GCC 7
 RUN cd source && \
     . /etc/profile && \
@@ -61,4 +63,17 @@ RUN cd source && \
 # Cleanup
 RUN rm -rf /opt/adios1/1.12.0/source
 
+# Create a non-root user to run the builds/tests
+RUN export uid=1001 gid=1001 && \
+    mkdir -p /home/adios2 && \
+    echo "adios2:x:${uid}:${gid}:adios2,,,:/home/adios2:/bin/bash" >> /etc/passwd && \
+    echo "adios2:x:${uid}:" >> /etc/group && \
+    mkdir -p /etc/sudoers.d && \
+    echo "adios2 ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/adios2 && \
+    chmod 0440 /etc/sudoers.d/adios2 && \
+    chown ${uid}:${gid} -R /home/adios2
+
+USER adios2
+ENV HOME /home/adios2
 WORKDIR /home/adios2
+CMD /bin/bash
