@@ -64,7 +64,6 @@ typedef enum {
     adios2_open_mode_write,
     adios2_open_mode_read,
     adios2_open_mode_append,
-    adios2_open_mode_read_write
 } adios2_open_mode;
 
 #ifdef __cplusplus

@@ -9,9 +9,6 @@ add_library(adios2
   core/ADIOS.cpp
   core/Engine.cpp
   core/IO.cpp core/IO.tcc
-  core/Selection.cpp
-  core/SelectionBoundingBox.cpp
-  core/SelectionPoints.cpp
   core/Transform.cpp core/Transform.tcc
   core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
@@ -26,25 +23,25 @@ add_library(adios2
   helper/adiosType.cpp
   helper/adiosXML.cpp
   
-#  engine/bp/BPFileReader.cpp
+  engine/bp/BPFileReader.cpp engine/bp/BPFileReader.tcc
   engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
 
-  engine/plugin/PluginEngine.h engine/plugin/PluginEngine.inl
-  engine/plugin/PluginEngine.cpp
-  engine/plugin/PluginEngineInterface.h engine/plugin/PluginEngineInterface.cpp
+#  engine/plugin/PluginEngine.h engine/plugin/PluginEngine.inl
+#  engine/plugin/PluginEngine.cpp
+#  engine/plugin/PluginEngineInterface.h engine/plugin/PluginEngineInterface.cpp
 
-  toolkit/capsule/Capsule.cpp
-  toolkit/capsule/heap/STLVector.cpp 
- 
+  toolkit/format/BufferSTL.cpp
+  
   toolkit/format/bp1/BP1Base.cpp toolkit/format/bp1/BP1Base.tcc
   toolkit/format/bp1/BP1Aggregator.cpp
   toolkit/format/bp1/BP1Writer.cpp toolkit/format/bp1/BP1Writer.tcc
+  toolkit/format/bp1/BP1Reader.cpp toolkit/format/bp1/BP1Reader.tcc
 
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp
-  toolkit/transport/file/FilePointer.cpp
-  toolkit/transport/file/FileStream.cpp
+  toolkit/transport/file/FileStdio.cpp
+  toolkit/transport/file/FileFStream.cpp
   
   toolkit/transportman/TransportMan.cpp
   
@@ -59,11 +56,11 @@ target_link_libraries(adios2 PRIVATE adios2sys pugixml)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 if(UNIX)
-  target_sources(adios2 PRIVATE toolkit/transport/file/FileDescriptor.cpp)
+  target_sources(adios2 PRIVATE toolkit/transport/file/FilePOSIX.cpp)
 endif()
 
 if(ADIOS2_HAVE_SysVShMem)
-  target_sources(adios2 PRIVATE toolkit/capsule/shmem/ShmSystemV.cpp)
+  target_sources(adios2 PRIVATE toolkit/transport/shm/ShmSystemV.cpp)
 endif()
 
 if(ADIOS2_HAVE_DataMan)

@@ -36,7 +36,7 @@ public:
      * @param nthreads
      */
     using json = nlohmann::json;
-    DataManReader(IO &io, const std::string &name, const OpenMode openMode,
+    DataManReader(IO &io, const std::string &name, const Mode openMode,
                   MPI_Comm mpiComm);
 
     virtual ~DataManReader() = default;

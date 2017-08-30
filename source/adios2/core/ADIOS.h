@@ -123,6 +123,6 @@ private:
     void CheckMPI() const;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ADIOS_H_ */

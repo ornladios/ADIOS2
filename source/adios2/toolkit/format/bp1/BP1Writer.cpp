@@ -11,15 +11,20 @@
 #include "BP1Writer.h"
 #include "BP1Writer.tcc"
 
+#include <chrono>
+#include <future>
 #include <string>
 #include <vector>
 
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //GetType<T>, ReadValue<T>,
+                                          // ReduceValue<T>
 
 namespace adios2
 {
 namespace format
 {
+
+std::mutex BP1Writer::m_Mutex;
 
 BP1Writer::BP1Writer(MPI_Comm mpiComm, const bool debugMode)
 : BP1Base(mpiComm, debugMode)
@@ -30,15 +35,11 @@ void BP1Writer::WriteProcessGroupIndex(
     const std::string hostLanguage,
     const std::vector<std::string> &transportsTypes) noexcept
 {
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Resume();
-    }
-
+    ProfilerStart("buffering");
     std::vector<char> &metadataBuffer = m_MetadataSet.PGIndex.Buffer;
 
-    std::vector<char> &dataBuffer = m_HeapBuffer.m_Data;
-    size_t &dataPosition = m_HeapBuffer.m_DataPosition;
+    std::vector<char> &dataBuffer = m_Data.m_Buffer;
+    size_t &dataPosition = m_Data.m_Position;
 
     m_MetadataSet.DataPGLengthPosition = dataPosition;
     dataPosition += 8; // skip pg length (8)
@@ -74,7 +75,7 @@ void BP1Writer::WriteProcessGroupIndex(
     CopyToBuffer(dataBuffer, dataPosition, &m_MetadataSet.TimeStep);
 
     // offset to pg in data in metadata which is the current absolute position
-    InsertU64(metadataBuffer, m_HeapBuffer.m_DataAbsolutePosition);
+    InsertU64(metadataBuffer, m_Data.m_AbsolutePosition);
 
     // Back to writing metadata pg index length (length of group)
     const uint16_t metadataPGIndexLength = static_cast<const uint16_t>(
@@ -101,88 +102,61 @@ void BP1Writer::WriteProcessGroupIndex(
     }
 
     // update absolute position
-    m_HeapBuffer.m_DataAbsolutePosition +=
+    m_Data.m_AbsolutePosition +=
         dataPosition - m_MetadataSet.DataPGLengthPosition;
     // pg vars count and position
     m_MetadataSet.DataPGVarsCount = 0;
     m_MetadataSet.DataPGVarsCountPosition = dataPosition;
     // add vars count and length
     dataPosition += 12;
-    m_HeapBuffer.m_DataAbsolutePosition += 12; // add vars count and length
+    m_Data.m_AbsolutePosition += 12; // add vars count and length
 
     ++m_MetadataSet.DataPGCount;
     m_MetadataSet.DataPGIsOpen = true;
 
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Pause();
-    }
+    ProfilerStop("buffering");
 }
 
 void BP1Writer::Advance(IO &io)
 {
-    // enforce memory policy here to restrict buffer size for each timestep
-    // this is flushing
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Resume();
-    }
+    ProfilerStart("buffering");
 
     if (m_MaxBufferSize == DefaultMaxBufferSize)
     {
-        // current position + 1Kb chunk tolerance
-        m_MaxBufferSize = m_HeapBuffer.m_DataPosition + 64;
+        m_MaxBufferSize = m_Data.m_Position + 64;
     }
 
-    FlattenData(io);
+    SerializeData(io);
     ++m_MetadataSet.TimeStep;
-
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Pause();
-    }
+    ProfilerStop("buffering");
 }
 
 void BP1Writer::Flush(IO &io)
 {
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Resume();
-    }
-
-    FlattenData(io);
-
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Pause();
-    }
+    ProfilerStart("buffering");
+    SerializeData(io);
+    ProfilerStop("buffering");
 }
 
 void BP1Writer::Close(IO &io) noexcept
 {
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Resume();
-    }
+    ProfilerStart("buffering");
 
     if (!m_IsClosed)
     {
         if (m_MetadataSet.DataPGIsOpen)
         {
-            FlattenData(io);
+            SerializeData(io);
         }
 
-        FlattenMetadata();
+        SerializeMetadataInData();
 
-        m_Profiler.Bytes.at("buffering") += m_HeapBuffer.m_DataAbsolutePosition;
+        m_Profiler.Bytes.at("buffering") += m_Data.m_AbsolutePosition;
 
         m_IsClosed = true;
     }
 
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Pause();
-    }
+    ProfilerStop("buffering");
 }
 
 std::string BP1Writer::GetRankProfilingJSON(
@@ -242,10 +216,17 @@ std::string BP1Writer::GetRankProfilingJSON(
     return rankLog;
 }
 
-std::string
-BP1Writer::AggregateProfilingJSON(const std::string &rankProfilingLog) noexcept
+std::vector<char>
+BP1Writer::AggregateProfilingJSON(const std::string &rankProfilingLog)
 {
-    return m_BP1Aggregator.GetGlobalProfilingJSON(rankProfilingLog);
+    return m_BP1Aggregator.SetCollectiveProfilingJSON(rankProfilingLog);
+}
+
+void BP1Writer::AggregateCollectiveMetadata()
+{
+    AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount);
+    AggregateMergeIndex(m_MetadataSet.VarsIndices);
+    AggregateMergeIndex(m_MetadataSet.AttributesIndices);
 }
 
 // PRIVATE FUNCTIONS
@@ -253,8 +234,9 @@ void BP1Writer::WriteAttributes(IO &io)
 {
     const auto attributesDataMap = io.GetAttributesDataMap();
 
-    auto &buffer = m_HeapBuffer.m_Data;
-    auto &position = m_HeapBuffer.m_DataPosition;
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
 
     // used only to update m_HeapBuffer.m_DataAbsolutePosition;
     const size_t attributesCountPosition = position;
@@ -268,7 +250,7 @@ void BP1Writer::WriteAttributes(IO &io)
     const size_t attributesLengthPosition = position;
     position += 8; // skip attributes length
 
-    m_HeapBuffer.m_DataAbsolutePosition += position - attributesCountPosition;
+    absolutePosition += position - attributesCountPosition;
 
     uint32_t memberID = 0;
 
@@ -284,7 +266,7 @@ void BP1Writer::WriteAttributes(IO &io)
     else if (type == GetType<T>())                                             \
     {                                                                          \
         Stats<T> stats;                                                        \
-        stats.Offset = m_HeapBuffer.m_DataAbsolutePosition;                    \
+        stats.Offset = absolutePosition;                                       \
         stats.MemberID = memberID;                                             \
         Attribute<T> &attribute = io.GetAttribute<T>(name);                    \
         WriteAttributeInData(attribute, stats);                                \
@@ -395,15 +377,15 @@ void BP1Writer::WriteNameRecord(const std::string name,
     CopyToBuffer(buffer, position, name.c_str(), length);
 }
 
-BP1Index &
-BP1Writer::GetBP1Index(const std::string name,
-                       std::unordered_map<std::string, BP1Index> &indices,
-                       bool &isNew) const noexcept
+BP1Writer::SerialElementIndex &BP1Writer::GetSerialElementIndex(
+    const std::string &name,
+    std::unordered_map<std::string, SerialElementIndex> &indices,
+    bool &isNew) const noexcept
 {
     auto itName = indices.find(name);
     if (itName == indices.end())
     {
-        indices.emplace(name, BP1Index(indices.size()));
+        indices.emplace(name, SerialElementIndex(indices.size()));
         isNew = true;
         return indices.at(name);
     }
@@ -412,10 +394,11 @@ BP1Writer::GetBP1Index(const std::string name,
     return itName->second;
 }
 
-void BP1Writer::FlattenData(IO &io) noexcept
+void BP1Writer::SerializeData(IO &io) noexcept
 {
-    auto &buffer = m_HeapBuffer.m_Data;
-    auto &position = m_HeapBuffer.m_DataPosition;
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
 
     // vars count and Length (only for PG)
     CopyToBuffer(buffer, m_MetadataSet.DataPGVarsCountPosition,
@@ -434,7 +417,7 @@ void BP1Writer::FlattenData(IO &io) noexcept
     else
     {
         position += 12;
-        m_HeapBuffer.m_DataAbsolutePosition += 12;
+        absolutePosition += 12;
     }
 
     // Finish writing pg group length without record itself
@@ -445,11 +428,11 @@ void BP1Writer::FlattenData(IO &io) noexcept
     m_MetadataSet.DataPGIsOpen = false;
 }
 
-void BP1Writer::FlattenMetadata() noexcept
+void BP1Writer::SerializeMetadataInData() noexcept
 {
     auto lf_SetIndexCountLength =
-        [](std::unordered_map<std::string, BP1Index> &indices, uint32_t &count,
-           uint64_t &length) {
+        [](std::unordered_map<std::string, SerialElementIndex> &indices,
+           uint32_t &count, uint64_t &length) {
 
             count = indices.size();
             length = 0;
@@ -466,7 +449,7 @@ void BP1Writer::FlattenMetadata() noexcept
 
     auto lf_FlattenIndices =
         [](const uint32_t count, const uint64_t length,
-           const std::unordered_map<std::string, BP1Index> &indices,
+           const std::unordered_map<std::string, SerialElementIndex> &indices,
            std::vector<char> &buffer, size_t &position) {
 
             CopyToBuffer(buffer, position, &count);
@@ -500,12 +483,14 @@ void BP1Writer::FlattenMetadata() noexcept
         (pgLength + 16) + (varsLength + 12) + (attributesLength + 12) +
         m_MetadataSet.MiniFooterSize);
 
-    auto &buffer = m_HeapBuffer.m_Data;
-    auto &position = m_HeapBuffer.m_DataPosition;
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
 
     // reserve data to fit metadata,
     // must replace with growth buffer strategy?
-    m_HeapBuffer.ResizeData(position + footerSize);
+    m_Data.Resize(position + footerSize,
+                  " when writing metadata in bp data buffer");
 
     // write pg index
     CopyToBuffer(buffer, position, &pgCount);
@@ -522,7 +507,7 @@ void BP1Writer::FlattenMetadata() noexcept
 
     // getting absolute offsets, minifooter is 28 bytes for now
     const uint64_t offsetPGIndex =
-        static_cast<const uint64_t>(m_HeapBuffer.m_DataAbsolutePosition);
+        static_cast<const uint64_t>(absolutePosition);
     const uint64_t offsetVarsIndex =
         static_cast<const uint64_t>(offsetPGIndex + (pgLength + 16));
     const uint64_t offsetAttributeIndex =
@@ -544,12 +529,498 @@ void BP1Writer::FlattenMetadata() noexcept
     {
     }
 
-    m_HeapBuffer.m_DataAbsolutePosition += footerSize;
+    absolutePosition += footerSize;
 
     if (m_Profiler.IsActive)
     {
-        m_Profiler.Bytes.emplace("buffering",
-                                 m_HeapBuffer.m_DataAbsolutePosition);
+        m_Profiler.Bytes.emplace("buffering", absolutePosition);
+    }
+}
+
+void BP1Writer::AggregateIndex(const SerialElementIndex &index,
+                               const size_t count)
+{
+    auto &buffer = m_Metadata.m_Buffer;
+    auto &position = m_Metadata.m_Position;
+
+    size_t countPosition = position;
+    const size_t totalCount =
+        ReduceValues<size_t>(count, m_BP1Aggregator.m_MPIComm);
+
+    if (m_BP1Aggregator.m_RankMPI == 0)
+    {
+        // Write count
+        position += 16;
+        m_Metadata.Resize(position, " in call to AggregateIndex bp1 metadata");
+        const uint64_t totalCountU64 = static_cast<const uint64_t>(totalCount);
+        CopyToBuffer(buffer, countPosition, &totalCountU64);
+    }
+
+    // write contents
+    GathervVectors(index.Buffer, buffer, position, m_BP1Aggregator.m_MPIComm);
+
+    // get total length and write it after count and before index
+    if (m_BP1Aggregator.m_RankMPI == 0)
+    {
+        const uint64_t totalLengthU64 =
+            static_cast<const uint64_t>(position - countPosition - 8);
+        CopyToBuffer(buffer, countPosition, &totalLengthU64);
+    }
+}
+
+void BP1Writer::AggregateMergeIndex(
+    const std::unordered_map<std::string, SerialElementIndex> &indices) noexcept
+{
+    // first serialize index
+    std::vector<char> serializedIndices = SerializeIndices(indices);
+    // gather in rank 0
+    std::vector<char> gatheredSerialIndices;
+    size_t gatheredSerialIndicesPosition = 0;
+
+    GathervVectors(serializedIndices, gatheredSerialIndices,
+                   gatheredSerialIndicesPosition, m_BP1Aggregator.m_MPIComm);
+
+    // deallocate local serialized Indices
+    std::vector<char>().swap(serializedIndices);
+
+    // deserialize in [name][rank] order
+    const std::unordered_map<std::string, std::vector<SerialElementIndex>>
+        nameRankIndices =
+            DeserializeIndicesPerRankThreads(gatheredSerialIndices);
+
+    // deallocate gathered serial indices (full in rank 0 only)
+    std::vector<char>().swap(gatheredSerialIndices);
+
+    // to write count and length
+    auto &buffer = m_Metadata.m_Buffer;
+    auto &position = m_Metadata.m_Position;
+
+    size_t countPosition = position;
+
+    if (m_BP1Aggregator.m_RankMPI == 0)
+    {
+        // Write count
+        position += 12;
+        m_Metadata.Resize(position,
+                          ", in call to AggregateMergeIndex bp1 metadata");
+        const uint64_t totalCountU64 =
+            static_cast<const uint64_t>(nameRankIndices.size());
+        CopyToBuffer(buffer, countPosition, &totalCountU64);
+    }
+
+    MergeSerializeIndices(nameRankIndices);
+
+    if (m_BP1Aggregator.m_RankMPI == 0)
+    {
+        // Write length
+        const uint64_t totalLengthU64 =
+            static_cast<const uint64_t>(position - countPosition - 8);
+        CopyToBuffer(buffer, countPosition, &totalLengthU64);
+    }
+}
+
+std::vector<char> BP1Writer::SerializeIndices(
+    const std::unordered_map<std::string, SerialElementIndex> &indices) const
+    noexcept
+{
+    std::vector<char> serializedIndices;
+
+    for (const auto &indexPair : indices)
+    {
+        const SerialElementIndex &index = indexPair.second;
+
+        // add rank at the beginning
+        const uint32_t rankSource =
+            static_cast<const uint32_t>(m_BP1Aggregator.m_RankMPI);
+        InsertToBuffer(serializedIndices, &rankSource);
+
+        // insert buffer
+        InsertToBuffer(serializedIndices, index.Buffer.data(),
+                       index.Buffer.size());
+    }
+
+    return serializedIndices;
+}
+
+std::unordered_map<std::string, std::vector<BP1Base::SerialElementIndex>>
+BP1Writer::DeserializeIndicesPerRankThreads(
+    const std::vector<char> &serialized) const noexcept
+{
+    auto lf_Deserialize = [&](
+        const int rankSource, const std::vector<char> &serialized,
+        const size_t serializedPosition,
+        std::unordered_map<std::string, std::vector<SerialElementIndex>>
+            &deserialized) {
+
+        size_t localPosition = serializedPosition;
+        ElementIndexHeader header =
+            ReadElementIndexHeader(serialized, localPosition);
+
+        // mutex portion
+        {
+            std::lock_guard<std::mutex> lock(m_Mutex);
+            // inside mutex to avoid race condition
+            if (deserialized.count(header.Name) == 0)
+            {
+                deserialized[header.Name] = std::vector<SerialElementIndex>(
+                    m_BP1Aggregator.m_SizeMPI,
+                    SerialElementIndex(header.MemberID, 0));
+            }
+        }
+
+        const size_t bufferSize = static_cast<const size_t>(header.Length) + 4;
+        SerialElementIndex &index = deserialized[header.Name][rankSource];
+        InsertToBuffer(index.Buffer, &serialized[serializedPosition],
+                       bufferSize);
+    };
+
+    // BODY OF FUNCTION starts here
+    std::unordered_map<std::string, std::vector<SerialElementIndex>>
+        deserialized;
+    const size_t serializedSize = serialized.size();
+
+    if (m_BP1Aggregator.m_RankMPI != 0 || serializedSize < 8)
+    {
+        return deserialized;
+    }
+
+    size_t serializedPosition = 0;
+
+    std::vector<std::future<void>> asyncs(m_Threads);
+    std::vector<size_t> asyncPositions(m_Threads);
+    std::vector<int> asyncRankSources(m_Threads);
+
+    bool launched = false;
+
+    while (serializedPosition < serializedSize)
+    {
+        // extract rank and index buffer size
+        for (unsigned int t = 0; t < m_Threads; ++t)
+        {
+            const int rankSource = static_cast<const int>(
+                ReadValue<uint32_t>(serialized, serializedPosition));
+            asyncRankSources[t] = rankSource;
+            asyncPositions[t] = serializedPosition;
+
+            const size_t bufferSize = static_cast<const size_t>(
+                ReadValue<uint32_t>(serialized, serializedPosition));
+            serializedPosition += bufferSize;
+
+            if (launched)
+            {
+                asyncs[t].get();
+            }
+
+            if (serializedPosition <= serializedSize)
+            {
+                asyncs[t] =
+                    std::async(std::launch::async, lf_Deserialize,
+                               asyncRankSources[t], std::ref(serialized),
+                               asyncPositions[t], std::ref(deserialized));
+            }
+        }
+
+        launched = true;
+    }
+
+    for (auto &async : asyncs)
+    {
+        if (async.valid())
+        {
+            async.wait();
+        }
+    }
+
+    return deserialized;
+}
+
+void BP1Writer::MergeSerializeIndices(
+    const std::unordered_map<std::string, std::vector<SerialElementIndex>>
+        &nameRankIndices) noexcept
+{
+    auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
+                                     size_t &position, const uint8_t dataType,
+                                     uint8_t &count, uint32_t &length,
+                                     uint32_t &timeStep)
+
+    {
+        switch (dataType)
+        {
+
+        case (type_byte):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<char>(buffer, position, true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_short):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<short>(buffer, position, true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_integer):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<int>(buffer, position, true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_long):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<long int>(buffer, position,
+                                                          true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_unsigned_byte):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<unsigned char>(buffer, position,
+                                                               true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_unsigned_short):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<unsigned short>(buffer,
+                                                                position, true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_unsigned_integer):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<unsigned int>(buffer, position,
+                                                              true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_unsigned_long):
+        {
+            auto characteristics =
+                ReadElementIndexCharacteristics<unsigned long int>(
+                    buffer, position, true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_real):
+        {
+            auto characteristics =
+                ReadElementIndexCharacteristics<float>(buffer, position, true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+
+        case (type_double):
+        {
+            auto characteristics =
+                ReadElementIndexCharacteristics<double>(buffer, position, true);
+            count = characteristics.Count;
+            length = characteristics.Length;
+            timeStep = characteristics.Statistics.TimeStep;
+            break;
+        }
+            // TODO: complex, string, string array, long double
+        }
+
+    };
+
+    auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices) {
+
+        // extract header
+        ElementIndexHeader header;
+        // index non-empty buffer
+        size_t firstRank = 0;
+        // index positions per rank
+        std::vector<size_t> positions(indices.size(), 0);
+        // merge index length
+        uint32_t entryLength = 0;
+        size_t headerSize = 0;
+
+        for (size_t r = 0; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+            size_t &position = positions[r];
+
+            header = ReadElementIndexHeader(buffer, position);
+            firstRank = r;
+            entryLength += position;
+            headerSize += position;
+            break;
+        }
+
+        uint64_t setsCount = 0;
+        unsigned int currentTimeStep = 1;
+        bool marching = true;
+        std::vector<char> sorted;
+
+        while (marching)
+        {
+            marching = false;
+
+            for (size_t r = firstRank; r < indices.size(); ++r)
+            {
+                const auto &buffer = indices[r].Buffer;
+                if (buffer.empty())
+                {
+                    continue;
+                }
+
+                auto &position = positions[r];
+                if (position < buffer.size())
+                {
+                    marching = true;
+                }
+                else
+                {
+                    continue;
+                }
+
+                uint8_t count = 0;
+                uint32_t length = 0;
+                uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+
+                while (timeStep == currentTimeStep)
+                {
+                    size_t localPosition = position;
+                    lf_GetCharacteristics(buffer, localPosition,
+                                          header.DataType, count, length,
+                                          timeStep);
+
+                    if (timeStep != currentTimeStep)
+                    {
+                        break;
+                    }
+
+                    entryLength += length + 5;
+                    ++setsCount;
+
+                    // here copy to sorted buffer
+                    InsertToBuffer(sorted, &buffer[position], length + 5);
+                    position += length + 5;
+
+                    if (position >= buffer.size())
+                    {
+                        break;
+                    }
+                }
+            }
+            ++currentTimeStep;
+        }
+
+        // Copy header to metadata buffer, need mutex here
+        {
+            std::lock_guard<std::mutex> lock(m_Mutex);
+            auto &buffer = m_Metadata.m_Buffer;
+            auto &position = m_Metadata.m_Position;
+
+            m_Metadata.Resize(buffer.size() + headerSize + sorted.size(),
+                              "in call to MergeSerializeIndices bp1 metadata");
+
+            CopyToBuffer(buffer, position, indices[firstRank].Buffer.data(),
+                         headerSize);
+
+            CopyToBuffer(buffer, position, sorted.data(), sorted.size());
+        }
+    };
+
+    auto lf_MergeRankRange = [&](
+        const std::unordered_map<std::string, std::vector<SerialElementIndex>>
+            &nameRankIndices,
+        const std::vector<std::string> &names, const size_t start,
+        const size_t end)
+
+    {
+        for (size_t i = start; i < end; ++i)
+        {
+            auto itIndex = nameRankIndices.find(names[i]);
+            lf_MergeRank(itIndex->second);
+        }
+    };
+    // BODY OF FUNCTION STARTS HERE
+    if (m_Threads == 1) // serial version
+    {
+        for (const auto &rankIndices : nameRankIndices)
+        {
+            lf_MergeRank(rankIndices.second);
+        }
+        return;
+    }
+
+    // if threaded
+    const size_t elements = nameRankIndices.size();
+    const size_t stride = elements / m_Threads;        // elements per thread
+    const size_t last = stride + elements % m_Threads; // remainder to last
+
+    std::vector<std::thread> threads;
+    threads.reserve(m_Threads);
+
+    // copy names in order to use threads
+    std::vector<std::string> names;
+    names.reserve(nameRankIndices.size());
+
+    for (const auto &nameRankIndexPair : nameRankIndices)
+    {
+        names.push_back(nameRankIndexPair.first);
+    }
+
+    for (unsigned int t = 0; t < m_Threads; ++t)
+    {
+        const size_t start = stride * t;
+        size_t end;
+
+        if (t == m_Threads - 1)
+        {
+            end = start + stride;
+        }
+        else
+        {
+            end = start + last;
+        }
+
+        threads.push_back(std::thread(lf_MergeRankRange,
+                                      std::ref(nameRankIndices),
+                                      std::ref(names), start, end));
+    }
+
+    for (auto &thread : threads)
+    {
+        thread.join();
     }
 }
 
@@ -569,4 +1040,4 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 //------------------------------------------------------------------------------
 
 } // end namespace format
-} // end namespace adios
+} // end namespace adios2

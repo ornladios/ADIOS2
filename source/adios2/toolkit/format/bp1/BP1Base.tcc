@@ -15,126 +15,20 @@
 
 #include <cmath> //std::min
 
-#include "adios2/helper/adiosMath.h" //NextExponentialSize
+#include "adios2/helper/adiosFunctions.h" //NextExponentialSize, CopyFromBuffer
 
 namespace adios2
 {
 namespace format
 {
 
-template <>
-int8_t BP1Base::GetDataType<std::string>() const noexcept
-{
-    return type_string;
-}
-
-template <>
-int8_t BP1Base::GetDataType<char>() const noexcept
-{
-    return type_byte;
-}
-
-template <>
-int8_t BP1Base::GetDataType<signed char>() const noexcept
-{
-    return type_byte;
-}
-
-template <>
-int8_t BP1Base::GetDataType<short>() const noexcept
-{
-    return type_short;
-}
-
-template <>
-int8_t BP1Base::GetDataType<int>() const noexcept
-{
-    return type_integer;
-}
-
-template <>
-int8_t BP1Base::GetDataType<long int>() const noexcept
-{
-    return type_long;
-}
-
-template <>
-int8_t BP1Base::GetDataType<long long int>() const noexcept
-{
-    return type_long;
-}
-
-template <>
-int8_t BP1Base::GetDataType<unsigned char>() const noexcept
-{
-    return type_unsigned_byte;
-}
-template <>
-int8_t BP1Base::GetDataType<unsigned short>() const noexcept
-{
-    return type_unsigned_short;
-}
-template <>
-int8_t BP1Base::GetDataType<unsigned int>() const noexcept
-{
-    return type_unsigned_integer;
-}
-
-template <>
-int8_t BP1Base::GetDataType<unsigned long int>() const noexcept
-{
-    return type_unsigned_long;
-}
-
-template <>
-int8_t BP1Base::GetDataType<unsigned long long int>() const noexcept
-{
-    return type_unsigned_long;
-}
-
-template <>
-int8_t BP1Base::GetDataType<float>() const noexcept
-{
-    return type_real;
-}
-
-template <>
-int8_t BP1Base::GetDataType<double>() const noexcept
-{
-    return type_double;
-}
-
-template <>
-int8_t BP1Base::GetDataType<long double>() const noexcept
-{
-    return type_long_double;
-}
-
-template <>
-int8_t BP1Base::GetDataType<cfloat>() const noexcept
-{
-    return type_complex;
-}
-
-template <>
-int8_t BP1Base::GetDataType<cdouble>() const noexcept
-{
-    return type_double_complex;
-}
-
-template <>
-int8_t BP1Base::GetDataType<cldouble>() const noexcept
-{
-    return type_long_double_complex;
-}
-
 template <class T>
 BP1Base::ResizeResult BP1Base::ResizeBuffer(const Variable<T> &variable)
 {
-    size_t currentCapacity = m_HeapBuffer.m_Data.capacity();
+    size_t currentCapacity = m_Data.m_Buffer.capacity();
     size_t variableData =
         GetVariableIndexSize(variable) + variable.PayLoadSize();
-    size_t requiredCapacity = variableData + m_HeapBuffer.m_DataPosition;
+    size_t requiredCapacity = variableData + m_Data.m_Position;
 
     ResizeResult result = ResizeResult::Unchanged;
 
@@ -158,7 +52,10 @@ BP1Base::ResizeResult BP1Base::ResizeBuffer(const Variable<T> &variable)
     {
         if (currentCapacity < m_MaxBufferSize)
         {
-            m_HeapBuffer.ResizeData(m_MaxBufferSize);
+            m_Data.Resize(m_MaxBufferSize, " when resizing buffer to " +
+                                               std::to_string(m_MaxBufferSize) +
+                                               "bytes, in call to variable " +
+                                               variable.m_Name + " Write");
         }
         result = ResizeResult::Flush;
     }
@@ -170,7 +67,10 @@ BP1Base::ResizeResult BP1Base::ResizeBuffer(const Variable<T> &variable)
                 std::min(m_MaxBufferSize,
                          NextExponentialSize(requiredCapacity, currentCapacity,
                                              m_GrowthFactor));
-            m_HeapBuffer.ResizeData(nextSize);
+            m_Data.Resize(nextSize, " when resizing buffer to " +
+                                        std::to_string(nextSize) +
+                                        "bytes, in call to variable " +
+                                        variable.m_Name + " Write");
             result = ResizeResult::Success;
         }
     }
@@ -178,6 +78,211 @@ BP1Base::ResizeResult BP1Base::ResizeBuffer(const Variable<T> &variable)
     return result;
 }
 
+// PROTECTED
+template <>
+int8_t BP1Base::GetDataType<std::string>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_string);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<char>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_byte);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<signed char>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_byte);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<short>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_short);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<int>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_integer);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<long int>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_long);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<long long int>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_long);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<unsigned char>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_unsigned_byte);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<unsigned short>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_unsigned_short);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<unsigned int>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_unsigned_integer);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<unsigned long int>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_unsigned_long);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<unsigned long long int>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_unsigned_long);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<float>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_real);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<double>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_double);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<long double>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_long_double);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<cfloat>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_complex);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<cdouble>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_double_complex);
+    return type;
+}
+
+template <>
+int8_t BP1Base::GetDataType<cldouble>() const noexcept
+{
+    const int8_t type = static_cast<const int8_t>(type_long_double_complex);
+    return type;
+}
+
+template <class T>
+BP1Base::Characteristics<T>
+BP1Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
+                                         size_t &position,
+                                         const bool untilTimeStep) const
+{
+    Characteristics<T> characteristics;
+    characteristics.Count = ReadValue<uint8_t>(buffer, position);
+    characteristics.Length = ReadValue<uint32_t>(buffer, position);
+
+    bool foundTimeStep = false;
+
+    while (position < characteristics.Length + 5)
+    {
+        const uint8_t id = ReadValue<uint8_t>(buffer, position);
+
+        switch (id)
+        {
+        case (characteristic_time_index):
+            characteristics.Statistics.TimeStep =
+                ReadValue<uint32_t>(buffer, position);
+            foundTimeStep = true;
+            break;
+
+        case (characteristic_file_index):
+            characteristics.Statistics.FileIndex =
+                ReadValue<uint32_t>(buffer, position);
+            break;
+
+        case (characteristic_value):
+            // TODO make sure it's string or string array
+            characteristics.Statistics.Min = ReadValue<T>(buffer, position);
+            break;
+
+        case (characteristic_min):
+            characteristics.Statistics.Min = ReadValue<T>(buffer, position);
+            break;
+
+        case (characteristic_max):
+            characteristics.Statistics.Max = ReadValue<T>(buffer, position);
+            break;
+
+        case (characteristic_offset):
+            characteristics.Statistics.Offset =
+                ReadValue<uint64_t>(buffer, position);
+            break;
+
+        case (characteristic_payload_offset):
+            characteristics.Statistics.PayloadOffset =
+                ReadValue<uint64_t>(buffer, position);
+            break;
+
+        case (characteristic_dimensions):
+            const uint8_t dimensionsCount =
+                ReadValue<uint8_t>(buffer, position);
+            characteristics.Dimensions.reserve(dimensionsCount * 3);
+
+            ReadValue<uint16_t>(buffer, position); // length (not used)
+
+            for (auto d = 0; d < dimensionsCount * 3; ++d)
+            {
+                characteristics.Dimensions.push_back(
+                    ReadValue<uint64_t>(buffer, position));
+            }
+            break;
+            // TODO: implement compression and BP1 Stats characteristics
+        }
+
+        if (untilTimeStep && foundTimeStep)
+        {
+            break;
+        }
+    }
+
+    return characteristics;
+}
+
+// PRIVATE
 template <class T>
 size_t BP1Base::GetVariableIndexSize(const Variable<T> &variable) const noexcept
 {
@@ -215,6 +320,6 @@ size_t BP1Base::GetVariableIndexSize(const Variable<T> &variable) const noexcept
 }
 
 } // end namespace format
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_TCC_ */

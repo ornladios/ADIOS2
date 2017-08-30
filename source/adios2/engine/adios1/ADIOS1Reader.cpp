@@ -9,6 +9,7 @@
  */
 
 #include "ADIOS1Reader.h"
+#include "ADIOS1Reader.tcc"
 
 #include <adios_error.h>
 
@@ -18,7 +19,7 @@ namespace adios2
 {
 
 ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name,
-                           const OpenMode openMode, MPI_Comm mpiComm)
+                           const Mode openMode, MPI_Comm mpiComm)
 : Engine("ADIOS1Reader", io, name, openMode, mpiComm)
 {
     m_EndMessage = " in call to IO Open ADIOS1Reader " + m_Name + "\n";
@@ -39,137 +40,13 @@ ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name,
 ADIOS1Reader::~ADIOS1Reader()
 {
     if (m_fh != nullptr)
+    {
         adios_read_close(m_fh);
+    }
     adios_read_finalize_method(m_ReadMethod);
 }
 
 // PRIVATE
-VariableBase *
-ADIOS1Reader::InquireVariableUnknown(const std::string &variableName,
-                                     const bool readIn)
-{
-    return nullptr; // not yet implemented
-}
-
-Variable<char> *
-ADIOS1Reader::InquireVariableChar(const std::string &variableName,
-                                  const bool readIn)
-{
-    return InquireVariableCommon<char>(variableName, readIn);
-}
-
-Variable<unsigned char> *
-ADIOS1Reader::InquireVariableUChar(const std::string &variableName,
-                                   const bool readIn)
-{
-    return InquireVariableCommon<unsigned char>(variableName, readIn);
-}
-
-Variable<short> *
-ADIOS1Reader::InquireVariableShort(const std::string &variableName,
-                                   const bool readIn)
-{
-    return InquireVariableCommon<short>(variableName, readIn);
-}
-
-Variable<unsigned short> *
-ADIOS1Reader::InquireVariableUShort(const std::string &variableName,
-                                    const bool readIn)
-{
-    return InquireVariableCommon<unsigned short>(variableName, readIn);
-}
-
-Variable<int> *ADIOS1Reader::InquireVariableInt(const std::string &variableName,
-                                                const bool readIn)
-{
-    return InquireVariableCommon<int>(variableName, readIn);
-}
-
-Variable<unsigned int> *
-ADIOS1Reader::InquireVariableUInt(const std::string &variableName,
-                                  const bool readIn)
-{
-    return InquireVariableCommon<unsigned int>(variableName, readIn);
-}
-
-Variable<long int> *
-ADIOS1Reader::InquireVariableLInt(const std::string &variableName,
-                                  const bool readIn)
-{
-    return InquireVariableCommon<long int>(variableName, readIn);
-}
-
-Variable<unsigned long int> *
-ADIOS1Reader::InquireVariableULInt(const std::string &variableName,
-                                   const bool readIn)
-{
-    return InquireVariableCommon<unsigned long int>(variableName, readIn);
-}
-
-Variable<long long int> *
-ADIOS1Reader::InquireVariableLLInt(const std::string &variableName,
-                                   const bool readIn)
-{
-    return InquireVariableCommon<long long int>(variableName, readIn);
-}
-
-Variable<unsigned long long int> *
-ADIOS1Reader::InquireVariableULLInt(const std::string &variableName,
-                                    const bool readIn)
-{
-    return InquireVariableCommon<unsigned long long int>(variableName, readIn);
-}
-
-Variable<float> *
-ADIOS1Reader::InquireVariableFloat(const std::string &variableName,
-                                   const bool readIn)
-{
-    return InquireVariableCommon<float>(variableName, readIn);
-}
-
-Variable<double> *
-ADIOS1Reader::InquireVariableDouble(const std::string &variableName,
-                                    const bool readIn)
-{
-    return InquireVariableCommon<double>(variableName, readIn);
-}
-
-Variable<long double> *
-ADIOS1Reader::InquireVariableLDouble(const std::string &variableName,
-                                     const bool readIn)
-{
-    return InquireVariableCommon<long double>(variableName, readIn);
-}
-
-Variable<std::complex<float>> *
-ADIOS1Reader::InquireVariableCFloat(const std::string &variableName,
-                                    const bool readIn)
-{
-    return InquireVariableCommon<std::complex<float>>(variableName, readIn);
-}
-
-Variable<std::complex<double>> *
-ADIOS1Reader::InquireVariableCDouble(const std::string &variableName,
-                                     const bool readIn)
-{
-    return InquireVariableCommon<std::complex<double>>(variableName, readIn);
-}
-
-Variable<std::complex<long double>> *
-ADIOS1Reader::InquireVariableCLDouble(const std::string &variableName,
-                                      const bool readIn)
-{
-    return InquireVariableCommon<std::complex<long double>>(variableName,
-                                                            readIn);
-}
-
-VariableCompound *
-ADIOS1Reader::InquireVariableCompound(const std::string &variableName,
-                                      const bool readIn)
-{
-    return nullptr;
-}
-
 void ADIOS1Reader::ScheduleReadCommon(const std::string &name, const Dims &offs,
                                       const Dims &ldims, const int fromStep,
                                       const int nSteps,
@@ -299,7 +176,7 @@ void ADIOS1Reader::Init()
 {
     if (m_DebugMode)
     {
-        if (m_OpenMode != OpenMode::Read)
+        if (m_OpenMode != Mode::Read)
         {
             throw std::invalid_argument(
                 "ERROR: ADIOS1Reader only supports OpenMode::r (read) access "

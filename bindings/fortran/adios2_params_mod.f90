@@ -36,6 +36,5 @@ module adios2_params
     integer, parameter :: adios2_open_mode_write = 1
     integer, parameter :: adios2_open_mode_read = 2
     integer, parameter :: adios2_open_mode_append = 3
-    integer, parameter :: adios2_open_mode_read_write = 4
 
 end module

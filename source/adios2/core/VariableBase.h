@@ -20,7 +20,6 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/core/SelectionBoundingBox.h"
 #include "adios2/core/Transform.h"
 
 namespace adios2
@@ -47,20 +46,24 @@ public:
     Dims m_Start; ///< starting point (offsets) in global shape
     Dims m_Count; ///< dimensions from m_Start in global shape
 
-    Dims m_MemoryStart; ///< offset of memory selection
-    Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)
-
-    /** Read from this step (must be 0 in staging) */
-    unsigned int m_ReadFromStep = 0;
-    /** Read this many steps at once (must be 1 in staging) */
-    unsigned int m_ReadNSteps = 1;
     /** Global array was written as Joined array, so read accordingly */
     bool m_ReadAsJoined = false;
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
-    /** number of steps available in a file (or 1 in staging) filled by
-     * InquireVariable*/
-    unsigned int m_AvailableSteps = 1;
+
+    /** Transforms metadata info */
+    struct TransformInfo
+    {
+        /** reference to object derived from Transform class */
+        Transform &Operator;
+        /** parameters from AddTransform */
+        Params Parameters;
+        /** resulting sizes from transformation */
+        Dims Sizes;
+    };
+
+    /** Registered transforms */
+    std::vector<TransformInfo> m_TransformsInfo;
 
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
@@ -81,29 +84,28 @@ public:
      */
     size_t TotalSize() const noexcept;
 
-    /** Set the local dimension and global offset of the variable */
-    void SetSelection(const Dims &start, const Dims &count);
+    /** Set Dims and Time start and count */
+    void SetSelection(const std::pair<Dims, Dims> &boxDims,
+                      const std::pair<size_t, size_t> &boxSteps =
+                          std::pair<size_t, size_t>(0, 1));
 
-    /** Overloaded version of SetSelection using a SelectionBoundingBox */
-    void SetSelection(const SelectionBoundingBox &selection);
+    /**
+     * Set the steps for the variable. The pointer passed at
+     * reading must be able to hold enough memory to store multiple steps in a
+     * single read. For writing it changes the time step
+     * @param boxSteps {startStep, countStep}
+     */
+    void SetStepSelection(const std::pair<size_t, size_t> &boxSteps);
 
     /**
      * Set the local dimension and global offset of the variable using a
      * selection
      * Only bounding boxes are allowed
      */
-    void SetMemorySelection(const SelectionBoundingBox &selection);
+    void SetMemorySelection(const std::pair<Dims, Dims> &boxDims);
 
-    /**
-     * Set the steps for the variable to read from. The pointer passed at
-     * reading must be able to hold enough memory to store multiple steps in a
-     * single read.
-     * @param startStep  The first step to read. Steps start from 0
-     * @param countStep    Number of consecutive steps to read at once.
-     *
-     */
-    void SetStepSelection(const unsigned int startStep,
-                          const unsigned int countStep);
+    size_t GetAvailableStepsStart();
+    size_t GetAvailableStepsCount();
 
     /**
      * Pushed a new transform to a sequence of transports
@@ -120,28 +122,6 @@ public:
     /** Clears out the transform sequence defined by AddTransform */
     void ClearTransforms() noexcept;
 
-    /** Apply current sequence of transforms defined by AddTransform */
-    virtual void ApplyTransforms() = 0;
-
-    /** Transforms metadata info */
-    struct TransformInfo
-    {
-        /** reference to object derived from Transform class */
-        Transform &Operator;
-        /** parameters from AddTransform */
-        Params Parameters;
-        /** resulting sizes from transformation */
-        Dims Sizes;
-    };
-
-    /** Registered transforms */
-    std::vector<TransformInfo> m_TransformsInfo;
-
-    /** Self-check dims according to type, called right after DefineVariable and
-     * SetSelection.
-     * @param hint extra debugging info for the exception */
-    void CheckDimsCommon(const std::string hint) const;
-
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */
     void CheckDimsBeforeWrite(const std::string hint) const;
@@ -149,9 +129,23 @@ public:
 private:
     const bool m_DebugMode = false;
 
+    Dims m_MemoryStart; ///< offset of memory selection
+    Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)
+
+    size_t m_StepStart = 0;
+    size_t m_StepCount = 1;
+
+    size_t m_AvailableStepsCount = 1;
+    size_t m_AvailableStepsStart = 0;
+
     void InitShapeType();
+
+    /** Self-check dims according to type, called right after DefineVariable and
+     *  SetSelection.
+     * @param hint extra debugging info for the exception */
+    void CheckDimsCommon(const std::string hint) const;
 };
 
-} // end namespace
+} // end namespace adios2
 
 #endif /* ADIOS2_CORE_VARIABLEBASE_H_ */

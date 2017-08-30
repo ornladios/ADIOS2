@@ -59,29 +59,16 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
                          const unsigned int threads = 1) noexcept;
 
 /**
- * Memcpy data to a specific location in the buffer updating position
- * Does not update vec.size().
- * @param buffer data destination used in memcpy
- * @param position starting position in buffer (in terms of T not bytes)
- * @param source pointer to source data
- * @param size number of bytes from source
+ * Copy memory from a buffer at a certain input position
+ * @param buffer data source
+ * @param position start position to copy from buffer, modified to final
+ * position
+ * @param destination pointer to destination
+ * @param elements  number of elements of destination type
  */
 template <class T>
-void MemcpyToBuffer(std::vector<char> &buffer, size_t &position,
-                    const T *source, size_t size) noexcept;
-
-/**
- * Threaded version of MemcpyToBuffer
- * @param buffer data destination used in memcpy
- * @param position starting position in buffer (in terms of T not bytes)
- * @param source pointer to source data
- * @param size number of bytes from source
- * @param threads number of threads sharing the memcpy load
- */
-template <class T>
-void MemcpyToBufferThreads(std::vector<char> &buffer, size_t &position,
-                           const T *source, size_t size,
-                           const unsigned int threads = 1);
+void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
+                    T *destination, const size_t elements = 1) noexcept;
 
 /**
  * Cast an element to uint64 and insert to a buffer
@@ -91,7 +78,10 @@ void MemcpyToBufferThreads(std::vector<char> &buffer, size_t &position,
 template <class T>
 void InsertU64(std::vector<char> &buffer, const T element) noexcept;
 
-} // end namespace adios
+template <class T>
+T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
+
+} // end namespace adios2
 
 #include "adiosMemory.inl"
 

@@ -49,16 +49,10 @@ int main(int argc, char *argv[])
                                  {"method_type", "stream"},
                                  {"method", "dump"}});
 
-        auto dataManReader =
-            dataManIO.Open("myDoubles.bp", adios2::OpenMode::Read);
+        adios2::Engine &dataManReader =
+            dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
 
-        if (!dataManReader)
-        {
-            throw std::ios_base::failure(
-                "ERROR: failed to create DataMan I/O engine at Open\n");
-        }
-
-        dataManReader->SetCallBack(UserCallBack);
+        dataManReader.SetCallBack(UserCallBack);
 
         for (unsigned int i = 0; i < 3; ++i)
         {
@@ -66,14 +60,14 @@ int main(int argc, char *argv[])
         }
 
         adios2::Variable<double> *ioMyDoubles =
-            dataManReader->InquireVariable<double>("ioMyDoubles");
+            dataManReader.InquireVariable<double>("ioMyDoubles");
 
         if (ioMyDoubles == nullptr)
         {
             std::cout << "Variable ioMyDoubles not read...yet\n";
         }
 
-        dataManReader->Close();
+        dataManReader.Close();
     }
     catch (std::invalid_argument &e)
     {

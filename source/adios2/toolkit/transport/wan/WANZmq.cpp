@@ -37,12 +37,12 @@ WANZmq::~WANZmq()
     }
 }
 
-void WANZmq::Open(const std::string &name, const OpenMode openMode)
+void WANZmq::Open(const std::string &name, const Mode openMode)
 {
     m_Name = name;
     m_OpenMode = openMode;
 
-    if (m_OpenMode == OpenMode::Write)
+    if (m_OpenMode == Mode::Write)
     {
         if (m_Profiler.IsActive)
         {
@@ -58,7 +58,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
             m_Profiler.Timers.at("open").Pause();
         }
     }
-    else if (m_OpenMode == OpenMode::Append)
+    else if (m_OpenMode == Mode::Append)
     {
         if (m_DebugMode)
         {
@@ -69,7 +69,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
                 "OpenMode:r (read/receiver), in call to Open\n");
         }
     }
-    else if (m_OpenMode == OpenMode::Read)
+    else if (m_OpenMode == Mode::Read)
     {
         if (m_Profiler.IsActive)
         {

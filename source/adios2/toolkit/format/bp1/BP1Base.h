@@ -12,7 +12,7 @@
 #define ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <memory> //std::shared_ptr
+#include <string>
 #include <vector>
 /// \endcond
 
@@ -21,9 +21,8 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
-#include "adios2/toolkit/capsule/heap/STLVector.h"
+#include "adios2/toolkit/format/BufferSTL.h"
 #include "adios2/toolkit/format/bp1/BP1Aggregator.h"
-#include "adios2/toolkit/format/bp1/BP1Structs.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2
@@ -38,11 +37,70 @@ class BP1Base
 {
 
 public:
+    /**
+     * Metadata index used for Variables and Attributes, needed in a
+     * container for characteristic sets merge independently for each Variable
+     * or Attribute
+     */
+    struct SerialElementIndex
+    {
+        /** buffer containing the metadata index, start with 500bytes */
+        std::vector<char> Buffer;
+        /** number of characteristics sets (time and spatial aggregation) */
+        uint64_t Count = 0;
+        /** unique ID assigned to each variable for counter */
+        const uint32_t MemberID;
+
+        SerialElementIndex(const uint32_t memberID,
+                           const size_t bufferSize = 500)
+        : MemberID(memberID)
+        {
+            Buffer.reserve(bufferSize);
+        }
+    };
+
+    struct MetadataSet
+    {
+        /**
+         * updated with advance step, if append it will be updated to last,
+         * starts with one in ADIOS1
+         */
+        uint32_t TimeStep = 1;
+
+        /** single buffer for PGIndex */
+        SerialElementIndex PGIndex = SerialElementIndex(0);
+
+        // no priority for now
+        /** @brief key: variable name, value: bp metadata variable index */
+        std::unordered_map<std::string, SerialElementIndex> VarsIndices;
+
+        /** @brief key: attribute name, value: bp metadata attribute index */
+        std::unordered_map<std::string, SerialElementIndex> AttributesIndices;
+
+        bool AreAttributesWritten = false;
+
+        /** Fixed size for mini footer */
+        const unsigned int MiniFooterSize = 28;
+
+        /** number of current PGs */
+        uint64_t DataPGCount = 0;
+        /** current PG initial ( relative ) position in data buffer */
+        size_t DataPGLengthPosition = 0;
+        /** number of variables in current PG */
+        uint32_t DataPGVarsCount = 0;
+        /** current PG variable count ( relative ) position */
+        size_t DataPGVarsCountPosition = 0;
+        /** true: currently writing to a pg, false: no current pg */
+        bool DataPGIsOpen = false;
+    };
+
     /** statistics verbosity, only 0 is supported */
     unsigned int m_Verbosity = 0;
 
     /** contains data buffer and position */
-    capsule::STLVector m_HeapBuffer;
+    // capsule::STLVector m_HeapBuffer;
+    BufferSTL m_Data;
+    BufferSTL m_Metadata;
 
     /** memory growth factor,s set by the user */
     float m_GrowthFactor = DefaultBufferGrowthFactor;
@@ -51,7 +109,7 @@ public:
     size_t m_MaxBufferSize = DefaultMaxBufferSize;
 
     /** contains bp1 format metadata indices*/
-    BP1MetadataSet m_MetadataSet;
+    MetadataSet m_MetadataSet;
 
     /** object that takes care of all MPI aggregation tasks */
     BP1Aggregator m_BP1Aggregator;
@@ -62,6 +120,9 @@ public:
 
     /** buffering and MPI aggregation profiling info, set by user */
     profiling::IOChrono m_Profiler;
+
+    /** Default: write collective metadata in Capsule metadata. */
+    bool m_CollectiveMetadata = true;
 
     /**
      * Unique constructor
@@ -89,6 +150,8 @@ public:
      */
     std::vector<std::string>
     GetBPNames(const std::vector<std::string> &baseNames) const noexcept;
+
+    std::string GetBPMetadataFileName(const std::string &name) const noexcept;
 
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
@@ -193,7 +256,7 @@ protected:
     /**
      * Characteristic ID in variable metadata
      */
-    enum VariableCharacteristicID
+    enum CharacteristicID
     {
         characteristic_value = 0,      //!< characteristic_value
         characteristic_min = 1,        //!< Used to read in older bp file format
@@ -224,22 +287,46 @@ protected:
     template <class T>
     struct Stats
     {
-        T Min;
-        T Max;
         uint64_t Offset;
         uint64_t PayloadOffset;
-        uint32_t TimeIndex;
+        T Min;
+        T Max;
+        uint32_t TimeStep;
+        uint32_t FileIndex;
         uint32_t MemberID;
-
-        //      unsigned long int count;
-        //      long double sum;
-        //      long double sumSquare;
-        // unsigned long int histogram
-        // bool finite??
     };
 
+    template <class T>
+    struct Characteristics
+    {
+        Stats<T> Statistics;
+        std::vector<uint64_t> Dimensions;
+        uint32_t Length;
+        uint8_t Count;
+    };
+
+    struct ElementIndexHeader
+    {
+        uint64_t CharacteristicsSetsCount;
+        uint32_t Length;
+        uint32_t MemberID;
+        std::string GroupName;
+        std::string Name;
+        std::string Path;
+        uint8_t DataType;
+    };
+
+    /**
+     * Functions used for setting bool parameters of type On Off
+     * @param value
+     * @param parameter
+     * @param hint
+     */
+    void InitOnOffParameter(const std::string value, bool &parameter,
+                            const std::string hint);
+
     /** profile=on (default) generate profiling.log
-         *  profile=off */
+     *  profile=off */
     void InitParameterProfile(const std::string value);
 
     /** profile_units=s (default) (mus, ms, s,m,h) from ADIOSTypes.h TimeUnit */
@@ -259,8 +346,11 @@ protected:
     /** Set available number of threads for vector operations */
     void InitParameterThreads(const std::string value);
 
-    /** verbose file level=0 (default) */
+    /** verbose file level=0 (default), not active */
     void InitParameterVerbose(const std::string value);
+
+    /** verbose file level=0 (default) */
+    void InitParameterCollectiveMetadata(const std::string value);
 
     /**
      * Returns data type index from enum Datatypes
@@ -287,9 +377,40 @@ protected:
                                     const std::string timeStepName,
                                     const size_t transportsSize) const noexcept;
 
+    ElementIndexHeader ReadElementIndexHeader(const std::vector<char> &buffer,
+                                              size_t &position) const noexcept;
+
     /**
-     * Returns the estimated variable index size
-     * @param variable
+     * Read variable characteristics.
+     * @param buffer
+     * @param position
+     * @param untilTimeStep, stop if time step characteristic is found
+     * @return
+     */
+    template <class T>
+    Characteristics<T>
+    ReadElementIndexCharacteristics(const std::vector<char> &buffer,
+                                    size_t &position,
+                                    const bool untilTimeStep = false) const;
+
+    /**
+     * Common function to extract a bp string, 2 bytes for length + contents
+     * @param buffer
+     * @param position
+     * @return
+     */
+    std::string ReadBP1String(const std::vector<char> &buffer,
+                              size_t &position) const noexcept;
+
+    void ProfilerStart(const std::string process);
+
+    void ProfilerStop(const std::string process);
+
+private:
+    /**
+     * Returns the estimated variable index size. Used by ResizeBuffer public
+     * function
+     * @param variable input
      */
     template <class T>
     size_t GetVariableIndexSize(const Variable<T> &variable) const noexcept;
@@ -297,7 +418,12 @@ protected:
 
 #define declare_template_instantiation(T)                                      \
     extern template BP1Base::ResizeResult BP1Base::ResizeBuffer(               \
-        const Variable<T> &variable);
+        const Variable<T> &variable);                                          \
+                                                                               \
+    extern template BP1Base::Characteristics<T>                                \
+    BP1Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
+                                             size_t &position,                 \
+                                             const bool untilTimeStep) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

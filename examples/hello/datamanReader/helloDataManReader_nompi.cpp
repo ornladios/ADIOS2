@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
                                  {"method_type", "stream"},
                                  {"method", "dump"}});
         auto dataManReader =
-            dataManIO.Open("myDoubles.bp", adios2::OpenMode::Read);
+            dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
 
         if (!dataManReader)
         {

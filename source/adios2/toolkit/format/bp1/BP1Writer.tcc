@@ -7,6 +7,7 @@
  *  Created on: Apr 11, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
+
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_TCC_
 #define ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_TCC_
 
@@ -22,53 +23,43 @@ namespace format
 template <class T>
 void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
 {
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Resume();
-    }
+    ProfilerStart("buffering");
 
     Stats<typename TypeInfo<T>::ValueType> stats = GetStats(variable);
 
-    stats.TimeIndex = m_MetadataSet.TimeStep;
     // Get new Index or point to existing index
     bool isNew = true; // flag to check if variable is new
-    BP1Index &variableIndex =
-        GetBP1Index(variable.m_Name, m_MetadataSet.VarsIndices, isNew);
+    SerialElementIndex &variableIndex = GetSerialElementIndex(
+        variable.m_Name, m_MetadataSet.VarsIndices, isNew);
     stats.MemberID = variableIndex.MemberID;
 
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
+
     // write metadata header in data and extract offsets
-    stats.Offset = static_cast<uint64_t>(m_HeapBuffer.m_DataAbsolutePosition);
+    stats.Offset = static_cast<uint64_t>(absolutePosition);
     WriteVariableMetadataInData(variable, stats);
-    stats.PayloadOffset = m_HeapBuffer.m_DataAbsolutePosition;
+    stats.PayloadOffset = absolutePosition;
 
     // write to metadata  index
     WriteVariableMetadataInIndex(variable, stats, isNew, variableIndex);
-
     ++m_MetadataSet.DataPGVarsCount;
 
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Pause();
-    }
+    ProfilerStop("buffering");
 }
 
 template <class T>
 void BP1Writer::WriteVariablePayload(const Variable<T> &variable) noexcept
 {
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Resume();
-    }
+    ProfilerStart("buffering");
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    CopyToBufferThreads(buffer, position, variable.m_AppValues,
+                        variable.TotalSize(), m_Threads);
 
-    CopyToBufferThreads(m_HeapBuffer.m_Data, m_HeapBuffer.m_DataPosition,
-                        variable.m_AppValues, variable.TotalSize(), m_Threads);
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
+    absolutePosition += variable.PayLoadSize();
 
-    m_HeapBuffer.m_DataAbsolutePosition += variable.PayLoadSize();
-
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("buffering").Pause();
-    }
+    ProfilerStop("buffering");
 }
 
 // PRIVATE
@@ -76,8 +67,8 @@ template <class T>
 size_t BP1Writer::WriteAttributeHeaderInData(const Attribute<T> &attribute,
                                              Stats<T> &stats) noexcept
 {
-    auto &buffer = m_HeapBuffer.m_Data;
-    auto &position = m_HeapBuffer.m_DataPosition;
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
 
     // will go back to write length
     const size_t attributeLengthPosition = position;
@@ -99,8 +90,9 @@ void BP1Writer::WriteAttributeLengthInData(
     const Attribute<T> &attribute, Stats<T> &stats,
     const size_t attributeLengthPosition) noexcept
 {
-    auto &buffer = m_HeapBuffer.m_Data;
-    auto &position = m_HeapBuffer.m_DataPosition;
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
 
     // back to attribute length
     const uint32_t attributeLength =
@@ -108,7 +100,7 @@ void BP1Writer::WriteAttributeLengthInData(
     size_t backPosition = attributeLengthPosition;
     CopyToBuffer(buffer, backPosition, &attributeLengthPosition);
 
-    m_HeapBuffer.m_DataAbsolutePosition += position - attributeLengthPosition;
+    absolutePosition += position - attributeLengthPosition;
 }
 
 template <>
@@ -119,8 +111,9 @@ BP1Writer::WriteAttributeInData(const Attribute<std::string> &attribute,
     const size_t attributeLengthPosition =
         WriteAttributeHeaderInData(attribute, stats);
 
-    auto &buffer = m_HeapBuffer.m_Data;
-    auto &position = m_HeapBuffer.m_DataPosition;
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
 
     uint8_t dataType = GetDataType<std::string>();
     if (!attribute.m_IsSingleValue)
@@ -130,8 +123,7 @@ BP1Writer::WriteAttributeInData(const Attribute<std::string> &attribute,
     CopyToBuffer(buffer, position, &dataType);
 
     // here record payload offset
-    stats.PayloadOffset = m_HeapBuffer.m_DataAbsolutePosition + position -
-                          attributeLengthPosition;
+    stats.PayloadOffset = absolutePosition + position - attributeLengthPosition;
 
     if (dataType == type_string)
     {
@@ -170,15 +162,15 @@ void BP1Writer::WriteAttributeInData(const Attribute<T> &attribute,
     const size_t attributeLengthPosition =
         WriteAttributeHeaderInData(attribute, stats);
 
-    auto &buffer = m_HeapBuffer.m_Data;
-    auto &position = m_HeapBuffer.m_DataPosition;
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
 
     uint8_t dataType = GetDataType<T>();
     CopyToBuffer(buffer, position, &dataType);
 
     // here record payload offset
-    stats.PayloadOffset = m_HeapBuffer.m_DataAbsolutePosition + position -
-                          attributeLengthPosition;
+    stats.PayloadOffset = absolutePosition + position - attributeLengthPosition;
 
     const uint32_t dataSize = attribute.m_Elements * sizeof(T);
     CopyToBuffer(buffer, position, &dataSize);
@@ -201,7 +193,8 @@ inline void BP1Writer::WriteAttributeCharacteristicValueInIndex(
     uint8_t &characteristicsCounter, const Attribute<std::string> &attribute,
     std::vector<char> &buffer) noexcept
 {
-    uint8_t characteristicID = characteristic_value;
+    const uint8_t characteristicID =
+        static_cast<const uint8_t>(CharacteristicID::characteristic_value);
 
     InsertToBuffer(buffer, &characteristicID);
 
@@ -235,7 +228,7 @@ void BP1Writer::WriteAttributeCharacteristicValueInIndex(
     uint8_t &characteristicsCounter, const Attribute<T> &attribute,
     std::vector<char> &buffer) noexcept
 {
-    uint8_t characteristicID = characteristic_value;
+    const uint8_t characteristicID = CharacteristicID::characteristic_value;
 
     InsertToBuffer(buffer, &characteristicID);
 
@@ -255,7 +248,7 @@ template <class T>
 void BP1Writer::WriteAttributeInIndex(const Attribute<T> &attribute,
                                       const Stats<T> &stats) noexcept
 {
-    BP1Index index(stats.MemberID);
+    SerialElementIndex index(stats.MemberID);
     auto &buffer = index.Buffer;
 
     buffer.insert(buffer.end(), 4, '\0'); // skip attribute length (4)
@@ -299,12 +292,10 @@ void BP1Writer::WriteAttributeInIndex(const Attribute<T> &attribute,
 
     // TIME Index
     WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                              stats.TimeIndex, buffer);
+                              stats.TimeStep, buffer);
 
-    const uint32_t rankU32 =
-        static_cast<const uint32_t>(m_BP1Aggregator.m_RankMPI);
     WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
-                              rankU32, buffer);
+                              stats.FileIndex, buffer);
 
     WriteCharacteristicRecord(characteristic_offset, characteristicsCounter,
                               stats.Offset, buffer);
@@ -340,6 +331,9 @@ BP1Writer::GetStats(const Variable<T> &variable) const noexcept
         GetMinMaxThreads(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
                          m_Threads);
     }
+
+    stats.TimeStep = m_MetadataSet.TimeStep;
+    stats.FileIndex = static_cast<uint32_t>(m_BP1Aggregator.m_RankMPI);
     return stats;
 }
 
@@ -348,8 +342,9 @@ void BP1Writer::WriteVariableMetadataInData(
     const Variable<T> &variable,
     const Stats<typename TypeInfo<T>::ValueType> &stats) noexcept
 {
-    auto &buffer = m_HeapBuffer.m_Data;
-    auto &position = m_HeapBuffer.m_DataPosition;
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
 
     // for writing length at the end
     const size_t varLengthPosition = position;
@@ -389,14 +384,14 @@ void BP1Writer::WriteVariableMetadataInData(
     size_t backPosition = varLengthPosition;
     CopyToBuffer(buffer, backPosition, &varLength);
 
-    m_HeapBuffer.m_DataAbsolutePosition += position - varLengthPosition;
+    absolutePosition += position - varLengthPosition;
 }
 
 template <class T>
 void BP1Writer::WriteVariableMetadataInIndex(
     const Variable<T> &variable,
     const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
-    BP1Index &index) noexcept
+    SerialElementIndex &index) noexcept
 {
     auto &buffer = index.Buffer;
 
@@ -420,6 +415,7 @@ void BP1Writer::WriteVariableMetadataInIndex(
         if (m_Verbosity == 0)
         {
             ++index.Count;
+            // fixed since group and path are not printed
             size_t setsCountPosition = 15 + variable.m_Name.size();
             CopyToBuffer(buffer, setsCountPosition, &index.Count);
         }
@@ -435,7 +431,6 @@ void BP1Writer::WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
 {
     if (isScalar)
     {
-        // stats.min = stats.max = value, need to test
         WriteCharacteristicRecord(characteristic_value, characteristicsCounter,
                                   stats.Min, buffer);
     }
@@ -517,6 +512,15 @@ void BP1Writer::WriteVariableCharacteristics(
     uint8_t characteristicsCounter = 0;
 
     // DIMENSIONS
+    WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
+                              stats.TimeStep, buffer);
+
+    WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
+                              stats.FileIndex, buffer);
+
+    WriteBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
+                      buffer);
+
     uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
     const uint8_t dimensions =
@@ -528,17 +532,6 @@ void BP1Writer::WriteVariableCharacteristics(
     WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
                           buffer);
     ++characteristicsCounter;
-
-    WriteBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
-                      buffer);
-
-    WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                              stats.TimeIndex, buffer);
-
-    const uint32_t rankU32 =
-        static_cast<const uint32_t>(m_BP1Aggregator.m_RankMPI);
-    WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
-                              rankU32, buffer);
 
     WriteCharacteristicRecord(characteristic_offset, characteristicsCounter,
                               stats.Offset, buffer);

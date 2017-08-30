@@ -105,8 +105,14 @@ size_t BytesFactor(const std::string units, const bool debugMode);
  * @param oneLetter if true returns a one letter version ("w", "a" or "r")
  * @return string with open mode
  */
-std::string OpenModeToString(const OpenMode openMode,
+std::string OpenModeToString(const Mode openMode,
                              const bool oneLetter = false) noexcept;
+
+template <class T, class U>
+std::vector<U> NewVectorType(const std::vector<T> &in);
+
+template <class T, class U>
+std::vector<U> NewVectorTypeFromArray(const T *in, const size_t inSize);
 }
 
 #include "adiosType.inl"

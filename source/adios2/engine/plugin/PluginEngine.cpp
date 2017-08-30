@@ -51,7 +51,7 @@ void PluginEngine::RegisterPlugin(const std::string pluginName,
 /******************************************************************************/
 
 PluginEngine::PluginEngine(IO &io, const std::string &name,
-                           const OpenMode openMode, MPI_Comm mpiComm)
+                           const Mode openMode, MPI_Comm mpiComm)
 : Engine("Plugin", io, name, openMode, mpiComm), m_Impl(new Impl)
 {
     Init();

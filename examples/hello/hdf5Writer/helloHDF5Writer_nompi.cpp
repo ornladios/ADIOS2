@@ -38,19 +38,14 @@ int main(int argc, char *argv[])
             "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto hdf5Writer = hdf5IO.Open("myVector.h5", adios2::OpenMode::Write);
-
-        if (!hdf5Writer)
-        {
-            throw std::ios_base::failure(
-                "ERROR: hdf5Writer not created at Open\n");
-        }
+        adios2::Engine &hdf5Writer =
+            hdf5IO.Open("myVector.h5", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        hdf5Writer->Write<float>(bpFloats, myFloats.data());
+        hdf5Writer.Write<float>(bpFloats, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
-        hdf5Writer->Close();
+        hdf5Writer.Close();
     }
     catch (std::invalid_argument &e)
     {

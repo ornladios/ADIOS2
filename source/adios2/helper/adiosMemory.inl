@@ -99,64 +99,13 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
 }
 
 template <class T>
-void CopyFromBuffer(T *destination, size_t elements,
-                    const std::vector<char> &buffer, size_t &position) noexcept
+void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
+                    T *destination, size_t elements) noexcept
 {
     std::copy(buffer.begin() + position,
               buffer.begin() + position + sizeof(T) * elements,
               reinterpret_cast<char *>(destination));
     position += elements * sizeof(T);
-}
-
-template <class T>
-void MemcpyToBuffer(std::vector<char> &buffer, size_t &position,
-                    const T *source, size_t size) noexcept
-{
-    std::memcpy(&buffer[position], source, size);
-    position += size;
-}
-
-template <class T>
-void MemcpyToBufferThreads(std::vector<char> &buffer, size_t &position,
-                           const T *source, size_t size,
-                           const unsigned int threads)
-{
-    if (threads == 1)
-    {
-        std::memcpy(&buffer[position], source, size);
-        return;
-    }
-
-    const size_t stride = size / threads;
-    const size_t remainder = size % threads;
-    const size_t last = stride + remainder;
-
-    std::vector<std::thread> memcpyThreads;
-    memcpyThreads.reserve(threads);
-
-    for (unsigned int t = 0; t < threads; ++t)
-    {
-        const size_t initialDestination = position + stride * t;
-        const size_t initialSource = stride * t / sizeof(T);
-
-        if (t == threads - 1)
-        {
-            memcpyThreads.push_back(std::thread(std::memcpy,
-                                                &buffer[initialDestination],
-                                                &source[initialSource], last));
-        }
-        else
-        {
-            memcpyThreads.push_back(
-                std::thread(std::memcpy, &buffer[initialDestination],
-                            &source[initialSource], stride));
-        }
-    }
-
-    for (auto &thread : memcpyThreads)
-    {
-        thread.join();
-    }
 }
 
 template <class T>
@@ -166,6 +115,14 @@ void InsertU64(std::vector<char> &buffer, const T element) noexcept
     InsertToBuffer(buffer, &element64);
 }
 
-} // end namespace
+template <class T>
+T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept
+{
+    T value;
+    CopyFromBuffer(buffer, position, &value);
+    return value;
+}
+
+} // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSMEMORY_INL_ */

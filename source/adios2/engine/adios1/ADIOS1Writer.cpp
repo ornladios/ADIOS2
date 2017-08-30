@@ -23,7 +23,7 @@ namespace adios2
 {
 
 ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name,
-                           const OpenMode openMode, MPI_Comm mpiComm)
+                           const Mode openMode, MPI_Comm mpiComm)
 : Engine("ADIOS1Writer", io, name, openMode, mpiComm),
   m_ADIOS1(io.m_Name, name, mpiComm, io.m_DebugMode)
 {

@@ -19,18 +19,20 @@ namespace adios2
 namespace transport
 {
 
-/** File descriptor transport using the POSIX library */
-class FileDescriptor : public Transport
+/** File descriptor transport using the POSIX IO library */
+class FilePOSIX : public Transport
 {
 
 public:
-    FileDescriptor(MPI_Comm mpiComm, const bool debugMode);
+    FilePOSIX(MPI_Comm mpiComm, const bool debugMode);
 
-    ~FileDescriptor();
+    ~FilePOSIX();
 
-    void Open(const std::string &name, const OpenMode openMode) final;
+    void Open(const std::string &name, const Mode openMode) final;
 
-    void Write(const char *buffer, size_t size) final;
+    void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
+
+    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
     /** Does nothing, each write is supposed to flush */
     void Flush() final;
@@ -40,8 +42,15 @@ public:
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;
+
+    /**
+     * Check if m_FileDescriptor is -1 after an operation
+     * @param hint exception message
+     */
+    void CheckFile(const std::string hint) const;
 };
 
 } // end namespace transport
-} // end namespace
+} // end namespace adios2
+
 #endif /* ADIOS2_TRANSPORT_FILE_FILEDESCRIPTOR_H_ */

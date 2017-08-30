@@ -19,7 +19,7 @@ namespace adios2
 {
 
 DataManWriter::DataManWriter(IO &io, const std::string &name,
-                             const OpenMode openMode, MPI_Comm mpiComm)
+                             const Mode openMode, MPI_Comm mpiComm)
 : Engine("DataManWriter", io, name, openMode, mpiComm)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";

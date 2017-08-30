@@ -32,7 +32,7 @@ class PluginEngineInterface : public Engine
 
 public:
     PluginEngineInterface(IO &io, const std::string &name,
-                          const OpenMode openMode, MPI_Comm mpiComm);
+                          const Mode openMode, MPI_Comm mpiComm);
     virtual ~PluginEngineInterface() = default;
 };
 

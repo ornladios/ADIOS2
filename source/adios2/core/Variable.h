@@ -53,8 +53,6 @@ public:
                 const bool debugMode);
 
     ~Variable<T>() = default;
-
-    void ApplyTransforms() final;
 };
 
 } // end namespace adios2

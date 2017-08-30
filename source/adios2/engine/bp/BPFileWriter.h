@@ -29,7 +29,7 @@ public:
      * @param openMode w (supported), r, a from OpenMode in ADIOSTypes.h
      * @param mpiComm MPI communicator
      */
-    BPFileWriter(IO &io, const std::string &name, const OpenMode openMode,
+    BPFileWriter(IO &io, const std::string &name, const Mode openMode,
                  MPI_Comm mpiComm);
 
     ~BPFileWriter();
@@ -48,13 +48,10 @@ public:
 
 private:
     /** Single object controlling BP buffering */
-    format::BP1Writer m_BP1Writer;
+    format::BP1Writer m_BP1BuffersWriter;
 
-    /** single object controlling a vector of Transports from IO AddTransport */
-    transportman::TransportMan m_TransportsManager;
-
-    /** true: due to buffer overflow, move to transports manager */
-    bool m_DoTransportFlush = false;
+    /** Single object controlling a vector of Transports from IO AddTransport */
+    transportman::TransportMan m_FileManager;
 
     void Init() final;
 
@@ -62,7 +59,7 @@ private:
     void InitParameters() final;
     /** Parses transports and parameters from IO AddTransport */
     void InitTransports() final;
-
+    /** Allocates memory and starts a PG group */
     void InitBPBuffer();
 
 #define declare_type(T)                                                        \
@@ -83,6 +80,6 @@ private:
     void WriteProfilingJSONFile();
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_BP_BPFILEWRITER_H_ */

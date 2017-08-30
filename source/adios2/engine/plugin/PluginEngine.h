@@ -37,7 +37,7 @@ public:
     // Function pointers used for the plugin factory methods
 
     using EngineCreatePtr = std::add_pointer<PluginEngineInterface *(
-        IO &, const std::string &, const OpenMode, MPI_Comm)>::type;
+        IO &, const std::string &, const Mode, MPI_Comm)>::type;
     using EngineDestroyPtr =
         std::add_pointer<void(PluginEngineInterface *)>::type;
     using EngineCreateFun =
@@ -62,7 +62,7 @@ public:
     static void RegisterPlugin(const std::string name);
 
 public:
-    PluginEngine(IO &io, const std::string &name, const OpenMode openMode,
+    PluginEngine(IO &io, const std::string &name, const Mode openMode,
                  MPI_Comm mpiComm);
     virtual ~PluginEngine();
 

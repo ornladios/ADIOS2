@@ -28,7 +28,7 @@ class EnginePy
 {
 
 public:
-    EnginePy(IO &io, const std::string &name, const OpenMode openMode,
+    EnginePy(IO &io, const std::string &name, const Mode openMode,
              MPI_Comm mpiComm);
 
     ~EnginePy() = default;
@@ -41,7 +41,7 @@ public:
 
 private:
     IO &m_IO;
-    std::shared_ptr<Engine> m_Engine;
+    Engine &m_Engine;
     const bool m_DebugMode;
 
     template <class T>

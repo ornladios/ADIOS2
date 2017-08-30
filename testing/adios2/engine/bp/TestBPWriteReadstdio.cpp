@@ -65,7 +65,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8stdio)
         io.SetEngine("BPFileWriter");
         io.AddTransport("File", {{"Library", "stdio"}});
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -281,7 +281,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4stdio)
         io.SetEngine("BPFileWriter");
         io.AddTransport("file", {{"Library", "stdio"}});
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -507,7 +507,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2stdio)
         io.SetEngine("BPFileWriter");
         io.AddTransport("file", {{"Library", "stdio"}});
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < 3; ++step)

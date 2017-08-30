@@ -27,6 +27,7 @@ typedef int MPI_Info;
 typedef int MPI_Datatype; /* Store the byte size of a type in such vars */
 typedef long MPI_Offset;
 typedef int MPI_Fint;
+typedef int MPI_Op;
 
 #define MPI_SUCCESS 0
 #define MPI_ERR_BUFFER 1 /* Invalid buffer pointer */
@@ -124,6 +125,9 @@ int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *comm_out);
 int MPI_Get_processor_name(char *name, int *resultlen);
 
 double MPI_Wtime();
+
+int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
+               MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
 
 } // end namespace mpi
 } // end namespace adios

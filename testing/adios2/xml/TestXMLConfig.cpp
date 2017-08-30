@@ -41,7 +41,8 @@ TEST_F(XMLConfigTest, TwoIOs)
         EXPECT_EQ(params.at("MaxBufferSize"), "20Mb");
         EXPECT_EQ(params.at("InitialBufferSize"), "1Mb");
         EXPECT_EQ(params.at("BufferGrowthFactor"), "2");
-        auto engine = io.Open("Test BP Writer 1", adios2::OpenMode::Write);
+        adios2::Engine &engine =
+            io.Open("Test BP Writer 1", adios2::Mode::Write);
     });
 
     EXPECT_NO_THROW({

@@ -21,7 +21,7 @@ DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
 }
 
 void DataMan::OpenWANTransports(const std::string &name,
-                                const OpenMode openMode,
+                                const Mode openMode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
 {

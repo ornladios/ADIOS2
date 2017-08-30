@@ -125,7 +125,7 @@ void ADIOS1Common::InitTransports(
     }
 }
 
-bool ADIOS1Common::Open(const OpenMode openMode)
+bool ADIOS1Common::Open(const Mode openMode)
 {
     adios_open(&m_ADIOSFile, m_GroupName.c_str(), m_FileName.c_str(),
                OpenModeToString(openMode, true).c_str(), m_MPIComm);

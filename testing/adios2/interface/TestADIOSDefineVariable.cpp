@@ -97,8 +97,8 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
-    adios2::SelectionBoundingBox sel({50, n / 2, 0}, {10, n / 2, 30});
-    globalarray.SetSelection(sel);
+    globalarray.SetSelection(
+        adios2::Box<adios2::Dims>({50, n / 2, 0}, {10, n / 2, 30}));
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(globalarray.m_Shape.size(), 3);
@@ -128,7 +128,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
     ::testing::StaticAssertTypeEq<decltype(globalarray),
                                   adios2::Variable<int> &>();
 
-    adios2::SelectionBoundingBox sel({50, n / 2, 0}, {10, n / 2, 30});
+    adios2::Box<adios2::Dims> sel({50, n / 2, 0}, {10, n / 2, 30});
     EXPECT_THROW(globalarray.SetSelection(sel), std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -206,10 +206,9 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write
-    adios2::SelectionBoundingBox sel({}, {10, n / 2, 30});
-    localarray.SetSelection(sel);
+    localarray.SetSelection(adios2::Box<adios2::Dims>({}, {10, n / 2, 30}));
 
-    adios2::SelectionBoundingBox selbad({50, n / 2, 0}, {10, n / 2, 30});
+    adios2::Box<adios2::Dims> selbad({50, n / 2, 0}, {10, n / 2, 30});
     EXPECT_THROW(localarray.SetSelection(selbad), std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -235,7 +234,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
     ::testing::StaticAssertTypeEq<decltype(localarray),
                                   adios2::Variable<int> &>();
 
-    adios2::SelectionBoundingBox sel({}, {10, n / 2, 30});
+    adios2::Box<adios2::Dims> sel({}, {10, n / 2, 30});
     EXPECT_THROW(localarray.SetSelection(sel), std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct

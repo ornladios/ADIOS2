@@ -12,8 +12,9 @@
 #include "IO.tcc"
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/engine/bp/BPFileReader.h"
 #include "adios2/engine/bp/BPFileWriter.h"
-#include "adios2/engine/plugin/PluginEngine.h"
+//#include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
@@ -191,34 +192,27 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     return isRemoved;
 }
 
-std::shared_ptr<Engine> IO::Open(const std::string &name,
-                                 const OpenMode openMode, MPI_Comm mpiComm)
+Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
 {
     if (m_DebugMode)
     {
-        // Check if Engine already exists
-        if (m_EngineNames.count(name) == 1)
+        if (m_Engines.count(name) == 1)
         {
-            throw std::invalid_argument(
-                "ERROR: IO Engine with name " + name +
-                " already created by Open, in call from Open.\n");
+            throw std::invalid_argument("ERROR: IO Engine with name " + name +
+                                        " already created, in call to Open.\n");
         }
     }
 
     std::shared_ptr<Engine> engine;
-    m_EngineNames.insert(name);
 
     const bool isDefaultWriter =
         m_EngineType.empty() &&
-                (openMode == OpenMode::Write || openMode == OpenMode::Append)
+                (openMode == Mode::Write || openMode == Mode::Append)
             ? true
             : false;
 
     const bool isDefaultReader =
-        m_EngineType.empty() &&
-                (openMode == OpenMode::Read || openMode == OpenMode::ReadWrite)
-            ? true
-            : false;
+        m_EngineType.empty() && (openMode == Mode::Read) ? true : false;
 
     if (isDefaultWriter || m_EngineType == "BPFileWriter")
     {
@@ -226,8 +220,7 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     }
     else if (isDefaultReader || m_EngineType == "BPFileReader")
     {
-        // engine = std::make_shared<BPFileReader>(*this, name, openMode,
-        // mpiComm);
+        engine = std::make_shared<BPFileReader>(*this, name, openMode, mpiComm);
     }
     else if (m_EngineType == "DataManWriter")
     {
@@ -291,7 +284,8 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     }
     else if (m_EngineType == "PluginEngine")
     {
-        engine = std::make_shared<PluginEngine>(*this, name, openMode, mpiComm);
+        // engine = std::make_shared<PluginEngine>(*this, name, openMode,
+        // mpiComm);
     }
     else
     {
@@ -304,11 +298,22 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
         }
     }
 
-    return engine;
+    auto itEngine = m_Engines.emplace(name, std::move(engine));
+
+    if (m_DebugMode)
+    {
+        if (!itEngine.second)
+        {
+            throw std::invalid_argument(
+                "ERROR: engine of type " + m_EngineType + " and name " + name +
+                " could not be created, in call to Open\n");
+        }
+    }
+    // return a reference
+    return *itEngine.first->second.get();
 }
 
-std::shared_ptr<Engine> IO::Open(const std::string &name,
-                                 const OpenMode openMode)
+Engine &IO::Open(const std::string &name, const Mode openMode)
 {
     return Open(name, openMode, m_MPIComm);
 }

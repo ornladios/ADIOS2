@@ -76,7 +76,7 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON)
         io.SetParameters({{"Threads", "2"}});
         io.AddTransport("File", {{"Library", "POSIX"}});
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < 3; ++step)

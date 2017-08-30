@@ -32,7 +32,7 @@ public:
      * @param method
      * @param debugMode
      */
-    ADIOS1Writer(IO &adios, const std::string &name, const OpenMode openMode,
+    ADIOS1Writer(IO &adios, const std::string &name, const Mode openMode,
                  MPI_Comm mpiComm);
 
     ~ADIOS1Writer() = default;

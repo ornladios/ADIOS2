@@ -34,10 +34,10 @@ void EnginePy::DefineVariableInIO(VariablePy &variable)
 template <class T>
 void EnginePy::WriteInIO(VariablePy &variable, const pyArray &array)
 {
-    m_Engine->Write(*dynamic_cast<Variable<T> *>(variable.m_VariableBase),
-                    reinterpret_cast<const T *>(array.data()));
+    m_Engine.Write(*dynamic_cast<Variable<T> *>(variable.m_VariableBase),
+                   reinterpret_cast<const T *>(array.data()));
 }
 
-} // end namespace adios
+} // end namespace adios2
 
-#endif /* BINDINGS_PYTHON_SOURCE_ENGINEPY_TCC_ */
+#endif /* BINDINGS_PYTHON_SOURCE_ENGINEPY_INL_ */

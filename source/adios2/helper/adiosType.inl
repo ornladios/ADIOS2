@@ -14,6 +14,8 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
+#include <algorithm>
+
 namespace adios2
 {
 
@@ -139,6 +141,21 @@ bool IsTypeAlias(
     return isAlias;
 }
 
-} // end namespace adios
+template <class T, class U>
+std::vector<U> NewVectorType(const std::vector<T> &in)
+{
+    return NewVectorTypeFromArray(in.data(), in.size());
+}
+
+template <class T, class U>
+std::vector<U> NewVectorTypeFromArray(const T *in, const size_t inSize)
+{
+    std::vector<U> out(inSize);
+    std::transform(in, in + inSize, out.begin(),
+                   [](T value) { return static_cast<U>(value); });
+    return out;
+}
+
+} // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSTYPE_INL_ */

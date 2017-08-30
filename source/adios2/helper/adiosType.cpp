@@ -93,14 +93,12 @@ std::vector<std::size_t> Uint64ArrayToSizetVector(const size_t nElements,
     return out;
 }
 
-std::vector<std::size_t>
+std::vector<size_t>
 Uint64VectorToSizetVector(const std::vector<uint64_t> &in) noexcept
 {
     std::vector<size_t> out(in.size());
-    out.resize(in.size());
     std::transform(in.begin(), in.end(), out.begin(),
                    [](uint64_t value) { return static_cast<size_t>(value); });
-
     return out;
 }
 
@@ -171,12 +169,12 @@ size_t BytesFactor(const std::string units, const bool debugMode)
     return factor;
 }
 
-std::string OpenModeToString(const OpenMode openMode,
+std::string OpenModeToString(const Mode openMode,
                              const bool oneLetter) noexcept
 {
     std::string openModeString;
 
-    if (openMode == OpenMode::Write)
+    if (openMode == Mode::Write)
     {
         if (oneLetter)
         {
@@ -187,7 +185,7 @@ std::string OpenModeToString(const OpenMode openMode,
             openModeString = "Write";
         }
     }
-    else if (openMode == OpenMode::Append)
+    else if (openMode == Mode::Append)
     {
         if (oneLetter)
         {
@@ -198,7 +196,7 @@ std::string OpenModeToString(const OpenMode openMode,
             openModeString = "Append";
         }
     }
-    else if (openMode == OpenMode::Read)
+    else if (openMode == Mode::Read)
     {
         if (oneLetter)
         {

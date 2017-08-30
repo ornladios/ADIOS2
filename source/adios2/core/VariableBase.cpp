@@ -41,8 +41,12 @@ size_t VariableBase::TotalSize() const noexcept
     return GetTotalSize(m_Count);
 }
 
-void VariableBase::SetSelection(const Dims &start, const Dims &count)
+void VariableBase::SetSelection(const std::pair<Dims, Dims> &boxDims,
+                                const std::pair<size_t, size_t> &boxSteps)
 {
+    const Dims &start = boxDims.first;
+    const Dims &count = boxDims.second;
+
     if (m_DebugMode)
     {
         if (m_SingleValue)
@@ -82,17 +86,16 @@ void VariableBase::SetSelection(const Dims &start, const Dims &count)
         }
     }
 
-    m_Count = count;
     m_Start = start;
+    m_Count = count;
+    SetStepSelection(boxSteps);
 }
 
-void VariableBase::SetSelection(const SelectionBoundingBox &selection)
+void VariableBase::SetMemorySelection(const std::pair<Dims, Dims> &boxDims)
 {
-    SetSelection(selection.m_Start, selection.m_Count);
-}
+    const Dims &start = boxDims.first;
+    const Dims &count = boxDims.second;
 
-void VariableBase::SetMemorySelection(const SelectionBoundingBox &selection)
-{
     if (m_DebugMode)
     {
         if (m_SingleValue)
@@ -102,26 +105,35 @@ void VariableBase::SetMemorySelection(const SelectionBoundingBox &selection)
                                         m_Name +
                                         ", in call to SetMemorySelection\n");
         }
-        if (m_Shape.size() != selection.m_Count.size() ||
-            m_Shape.size() != selection.m_Start.size())
+
+        if (m_Shape.size() != start.size() || m_Shape.size() != count.size())
         {
             throw std::invalid_argument(
-                "ERROR: selection argument m_Count and m_Start sizes must be "
-                "the "
-                "same as variable " +
+                "ERROR: selection Dims start, count sizes must be "
+                "the same as variable " +
                 m_Name + " m_Shape, in call to SetMemorySelction\n");
         }
     }
 
-    m_MemoryCount = selection.m_Count;
-    m_MemoryStart = selection.m_Start;
+    m_MemoryStart = start;
+    m_MemoryCount = count;
 }
 
-void VariableBase::SetStepSelection(const unsigned int startStep,
-                                    const unsigned int countStep)
+size_t VariableBase::GetAvailableStepsStart() { return m_AvailableStepsStart; }
+size_t VariableBase::GetAvailableStepsCount() { return m_AvailableStepsCount; }
+
+void VariableBase::SetStepSelection(const std::pair<size_t, size_t> &boxSteps)
 {
-    m_ReadFromStep = startStep;
-    m_ReadNSteps = countStep;
+    if (boxSteps.second == 0)
+    {
+        throw std::invalid_argument("ERROR: boxSteps.second count argument "
+                                    " can't be zero, from variable " +
+                                    m_Name +
+                                    ", in call to Setting Step Selection\n");
+    }
+
+    m_StepStart = boxSteps.first;
+    m_StepCount = boxSteps.second;
 }
 
 // transforms related functions
@@ -232,7 +244,7 @@ void VariableBase::InitShapeType()
                                         m_Name + "\n");
         }
     }
-    else //(m_Shape.empty())
+    else
     {
         if (m_Start.empty())
         {
@@ -258,7 +270,9 @@ void VariableBase::InitShapeType()
 
     /* Extra checks for invalid settings */
     if (m_DebugMode)
+    {
         CheckDimsCommon("DefineVariable(" + m_Name + ")");
+    }
 }
 
 void VariableBase::CheckDimsCommon(const std::string hint) const
@@ -311,4 +325,4 @@ void VariableBase::CheckDimsBeforeWrite(const std::string hint) const
     // TODO need to think more exceptions here
 }
 
-} // end namespace adios
+} // end namespace adios2

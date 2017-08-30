@@ -162,7 +162,7 @@ void InitXML(const std::string configXML, MPI_Comm mpiComm,
         fileContents = FileToString(configXML);
     }
 
-    fileContents = BroadcastString(fileContents, mpiComm);
+    fileContents = BroadcastValue(fileContents, mpiComm);
 
     pugi::xml_document doc;
     auto parse_result = doc.load_buffer_inplace(

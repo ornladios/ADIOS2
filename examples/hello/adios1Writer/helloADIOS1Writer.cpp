@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
         /** Engine derived class, spawned to start IO operations */
         auto adios1Writer =
-            adios1IO.Open("myVector.bp", adios2::OpenMode::Write);
+            adios1IO.Open("myVector.bp", adios2::Mode::Write);
 
         if (!adios1Writer)
         {

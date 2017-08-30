@@ -57,7 +57,7 @@ public:
      */
     void OpenFiles(const std::vector<std::string> &baseNames,
                    const std::vector<std::string> &names,
-                   const OpenMode openMode,
+                   const Mode openMode,
                    const std::vector<Params> &parametersVector,
                    const bool profile);
 
@@ -104,6 +104,16 @@ public:
                     const int transportIndex = -1);
 
     /**
+     * Read contents from a single file and assign it to buffer
+     * @param buffer
+     * @param size
+     * @param start
+     * @param transportIndex
+     */
+    void ReadFile(char *buffer, const size_t size, const size_t start,
+                  const int transportIndex);
+
+    /**
      * Close file or files depending on transport index. Throws an exception
      * if transport is not a file when transportIndex > -1.
      * @param transportIndex -1: all transports, otherwise index in m_Transports
@@ -117,7 +127,7 @@ protected:
     MPI_Comm m_MPIComm;
     const bool m_DebugMode = false;
 
-    void OpenFileTransport(const std::string &fileName, const OpenMode openMode,
+    void OpenFileTransport(const std::string &fileName, const Mode openMode,
                            const Params &parameters, const bool profile);
 };
 

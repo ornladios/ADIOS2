@@ -29,7 +29,7 @@ public:
      * @param mpiComm
      * @param method
      */
-    HDF5ReaderP(IO &adios, const std::string &name, const OpenMode openMode,
+    HDF5ReaderP(IO &adios, const std::string &name, const Mode openMode,
                 MPI_Comm mpiComm);
 
     ~HDF5ReaderP();

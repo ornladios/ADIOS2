@@ -220,7 +220,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
         // Create the HDF5 Engine
         io.SetEngine("HDF5Writer");
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -427,7 +427,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
         io.AddTransport("file");
 
         // Create the HDF5 Engine
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < 3; ++step)
@@ -642,7 +642,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
         io.SetEngine("HDF5Writer");
         io.AddTransport("file");
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < 3; ++step)

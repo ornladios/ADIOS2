@@ -17,7 +17,7 @@ namespace adios2
 {
 
 HDF5WriterP::HDF5WriterP(IO &io, const std::string &name,
-                         const OpenMode openMode, MPI_Comm mpiComm)
+                         const Mode openMode, MPI_Comm mpiComm)
 : Engine("HDF5Writer", io, name, openMode, mpiComm), m_H5File(io.m_DebugMode)
 {
     m_EndMessage = ", in call to IO HDF5Writer Open " + m_Name + "\n";
@@ -29,7 +29,7 @@ HDF5WriterP::~HDF5WriterP() { Close(); }
 // PRIVATE
 void HDF5WriterP::Init()
 {
-    if (m_OpenMode != OpenMode::Write && m_OpenMode != OpenMode::Append)
+    if (m_OpenMode != Mode::Write && m_OpenMode != Mode::Append)
     {
         throw std::invalid_argument(
             "ERROR: HDF5Writer only support OpenMode::Write or "

@@ -14,8 +14,8 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
 #include <memory> //std:shared_ptr
-#include <set>
 #include <string>
+#include <unordered_set>
 #include <utility> //std::pair
 #include <vector>
 /// \endcond
@@ -260,8 +260,8 @@ public:
      * @param mpiComm assigns a new communicator to the Engine
      * @return a smart pointer to a derived object of the Engine class
      */
-    std::shared_ptr<Engine> Open(const std::string &name,
-                                 const OpenMode openMode, MPI_Comm mpiComm);
+    Engine &Open(const std::string &name, const Mode openMode,
+                 MPI_Comm mpiComm);
 
     /**
      * Overloaded version that reuses the MPI_Comm object passed
@@ -271,8 +271,7 @@ public:
      * @param openMode write, read, append from ADIOSTypes.h OpenMode
      * @return a smart pointer to a derived object of the Engine class
      */
-    std::shared_ptr<Engine> Open(const std::string &name,
-                                 const OpenMode openMode);
+    Engine &Open(const std::string &name, const Mode openMode);
 
     // READ FUNCTIONS:
     void SetReadMultiplexPattern(const ReadMultiplexPattern pattern);
@@ -354,6 +353,8 @@ private:
     template <class T>
     std::map<unsigned int, Attribute<T>> &GetAttributeMap();
 
+    std::map<std::string, std::shared_ptr<Engine>> m_Engines;
+
     /**
      * Gets map index for Variables or Attributes
      * @param name
@@ -367,8 +368,6 @@ private:
     /** Checks if attribute exists, called from DefineAttribute different
      * signatures */
     void CheckAttributeCommon(const std::string &name) const;
-
-    std::set<std::string> m_EngineNames;
 
     /**
      * Checks if iterator points to end. Used for Variables and Attributes.

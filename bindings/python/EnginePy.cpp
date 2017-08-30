@@ -15,7 +15,7 @@
 namespace adios2
 {
 
-EnginePy::EnginePy(IO &io, const std::string &name, const OpenMode openMode,
+EnginePy::EnginePy(IO &io, const std::string &name, const Mode openMode,
                    MPI_Comm mpiComm)
 : m_IO(io), m_Engine(m_IO.Open(name, openMode, mpiComm)),
   m_DebugMode(m_IO.m_DebugMode)
@@ -56,12 +56,12 @@ void EnginePy::Write(VariablePy &variable, const pyArray &array)
 
 void EnginePy::Advance(const float timeoutSeconds)
 {
-    m_Engine->Advance(timeoutSeconds);
+    m_Engine.Advance(timeoutSeconds);
 }
 
 void EnginePy::Close(const int transportIndex)
 {
-    m_Engine->Close(transportIndex);
+    m_Engine.Close(transportIndex);
 }
 
-} // end namespace adios
+} // end namespace adios2

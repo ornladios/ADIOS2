@@ -97,7 +97,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
         io.AddTransport("file");
 #endif
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -393,7 +393,7 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
         io.AddTransport("file");
 #endif
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -702,7 +702,7 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         io.AddTransport("file");
 #endif
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
+        auto engine = io.Open(fname, adios2::Mode::Write);
         ASSERT_NE(engine.get(), nullptr);
 
         for (size_t step = 0; step < NSteps; ++step)

@@ -16,7 +16,7 @@ rank = comm.Get_rank()
 size = comm.Get_size()
 
 # User data
-myArray = numpy.array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.])
+myArray = numpy.array([0, 1., 2., 3., 4., 5., 6., 7., 8., 9.])
 Nx = myArray.size
 
 # ADIOS MPI Communicator, debug mode
@@ -31,5 +31,6 @@ ioArray = bpIO.DefineVariable(
 
 # ADIOS Engine
 bpFileWriter = bpIO.Open("npArray.bp", adios2.OpenModeWrite)
+# doesn't work: bpFileWriter = bpIO.Open("npArray.bp", adios2.OpenModeWrite, newcomm)
 bpFileWriter.Write(ioArray, myArray)
 bpFileWriter.Close()

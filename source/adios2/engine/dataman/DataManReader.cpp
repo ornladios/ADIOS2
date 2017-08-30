@@ -16,7 +16,7 @@ namespace adios2
 {
 
 DataManReader::DataManReader(IO &io, const std::string &name,
-                             const OpenMode openMode, MPI_Comm mpiComm)
+                             const Mode openMode, MPI_Comm mpiComm)
 : Engine("DataManReader", io, name, openMode, mpiComm)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";

@@ -17,7 +17,6 @@
 
 namespace adios2
 {
-
 namespace transform
 {
 

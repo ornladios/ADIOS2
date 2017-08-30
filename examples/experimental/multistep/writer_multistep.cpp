@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
         // will
         // append steps later.
         auto bpWriter =
-            bpWriterSettings.Open("myNumbers.bp", adios2::OpenMode::Write);
+            bpWriterSettings.Open("myNumbers.bp", adios2::Mode::Write);
 
         if (!bpWriter)
         {

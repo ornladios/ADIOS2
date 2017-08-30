@@ -28,11 +28,6 @@ namespace adios2
     : VariableBase(name, GetType<T>(), sizeof(T), shape, start, count,         \
                    constantDims, debugMode)                                    \
     {                                                                          \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    void Variable<T>::ApplyTransforms()                                        \
-    {                                                                          \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

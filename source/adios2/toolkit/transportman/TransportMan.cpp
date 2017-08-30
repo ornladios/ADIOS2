@@ -15,12 +15,14 @@
 /// \endcond
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
-#include "adios2/toolkit/transport/file/FilePointer.h"
-#include "adios2/toolkit/transport/file/FileStream.h"
 
+/// transports
 #ifndef _WIN32
-#include "adios2/toolkit/transport/file/FileDescriptor.h"
+#include "adios2/toolkit/transport/file/FilePOSIX.h"
 #endif
+
+#include "adios2/toolkit/transport/file/FileFStream.h"
+#include "adios2/toolkit/transport/file/FileStdio.h"
 
 namespace adios2
 {
@@ -34,7 +36,7 @@ TransportMan::TransportMan(MPI_Comm mpiComm, const bool debugMode)
 
 void TransportMan::OpenFiles(const std::vector<std::string> &baseNames,
                              const std::vector<std::string> &names,
-                             const OpenMode openMode,
+                             const Mode openMode,
                              const std::vector<Params> &parametersVector,
                              const bool profile)
 {
@@ -47,7 +49,10 @@ void TransportMan::OpenFiles(const std::vector<std::string> &baseNames,
 
         if (type == "File" || type == "file") // need to create directory
         {
-            CreateDirectory(baseNames[i]);
+            if (openMode == Mode::Write || openMode == Mode::Append)
+            {
+                CreateDirectory(baseNames[i]);
+            }
             OpenFileTransport(names[i], openMode, parameters, profile);
         }
     }
@@ -201,7 +206,7 @@ bool TransportMan::AllTransportsClosed() const noexcept
 
 // PRIVATE
 void TransportMan::OpenFileTransport(const std::string &fileName,
-                                     const OpenMode openMode,
+                                     const Mode openMode,
                                      const Params &parameters,
                                      const bool profile)
 {
@@ -209,19 +214,19 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
                                    std::shared_ptr<Transport> &transport) {
         if (library == "stdio")
         {
-            transport = std::make_shared<transport::FilePointer>(m_MPIComm,
-                                                                 m_DebugMode);
+            transport =
+                std::make_shared<transport::FileStdio>(m_MPIComm, m_DebugMode);
         }
         else if (library == "fstream")
         {
-            transport =
-                std::make_shared<transport::FileStream>(m_MPIComm, m_DebugMode);
+            transport = std::make_shared<transport::FileFStream>(m_MPIComm,
+                                                                 m_DebugMode);
         }
 #ifndef _WIN32
         else if (library == "POSIX")
         {
-            transport = std::make_shared<transport::FileDescriptor>(
-                m_MPIComm, m_DebugMode);
+            transport =
+                std::make_shared<transport::FilePOSIX>(m_MPIComm, m_DebugMode);
         }
 #endif
         else

@@ -75,11 +75,7 @@ int main(int argc, char *argv[])
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        auto writer = io.Open("globalArray.bp", adios2::OpenMode::Write);
-
-        if (!writer)
-            throw std::ios_base::failure(
-                "ERROR: failed to open file with ADIOS\n");
+        adios2::Engine &writer = io.Open("globalArray.bp", adios2::Mode::Write);
 
         for (int step = 0; step < NSTEPS; step++)
         {
@@ -90,18 +86,19 @@ int main(int argc, char *argv[])
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::SelectionBoundingBox sel({(unsigned int)rank, 0}, {1, Nx});
-            varGlobalArray.SetSelection(sel);
-            writer->Write<double>(varGlobalArray, row.data());
+            // adios2::SelectionBoundingBox sel();
+            varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
+                {static_cast<size_t>(rank), 0}, {1, static_cast<size_t>(Nx)}));
+            writer.Write<double>(varGlobalArray, row.data());
 
             // Indicate we are done for this step.
             // Disk I/O will be performed during this call unless
             // time aggregation postpones all of that to some later step
-            writer->Advance();
+            writer.Advance();
         }
 
         // Called once: indicate that we are done with this output for the run
-        writer->Close();
+        writer.Close();
     }
     catch (std::invalid_argument &e)
     {

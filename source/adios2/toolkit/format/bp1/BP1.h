@@ -11,7 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP1_BP1_H_
 
+#include "adios2/toolkit/format/bp1/BP1Reader.h"
 #include "adios2/toolkit/format/bp1/BP1Writer.h"
-/** TODO  #include "adios2/toolkit/format/bp1/BP1Reader.h" */
 
 #endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1_H_ */

@@ -60,7 +60,7 @@ public:
 
     void InitParameters(const Params &parameters);
     void InitTransports(const std::vector<Params> &transportsParameters);
-    bool Open(const OpenMode openMode); // return true if file is opened
+    bool Open(const Mode openMode); // return true if file is opened
     bool ReOpenAsNeeded(); // return true if file is open or reopened
 
     template <class T>

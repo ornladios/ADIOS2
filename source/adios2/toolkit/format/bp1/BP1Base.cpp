@@ -12,7 +12,8 @@
 #include "BP1Base.tcc"
 
 #include "adios2/ADIOSTypes.h"            //PathSeparator
-#include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit
+#include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
+                                          // ReadValue
 
 namespace adios2
 {
@@ -20,8 +21,7 @@ namespace format
 {
 
 BP1Base::BP1Base(MPI_Comm mpiComm, const bool debugMode)
-: m_HeapBuffer(debugMode), m_BP1Aggregator(mpiComm, debugMode),
-  m_DebugMode(debugMode)
+: m_BP1Aggregator(mpiComm, debugMode), m_DebugMode(debugMode)
 {
     // default
     m_Profiler.IsActive = true;
@@ -68,6 +68,10 @@ void BP1Base::InitParameters(const Params &parameters)
         {
             InitParameterVerbose(value);
         }
+        else if (key == "CollectiveMetadata")
+        {
+            InitParameterCollectiveMetadata(value);
+        }
     }
 
     // default timer for buffering
@@ -82,7 +86,8 @@ void BP1Base::InitParameters(const Params &parameters)
 
     if (useDefaultInitialBufferSize)
     {
-        m_HeapBuffer.ResizeData(DefaultInitialBufferSize);
+        m_Data.Resize(DefaultInitialBufferSize, "in call to Open");
+        // m_HeapBuffer.ResizeData(DefaultInitialBufferSize);
     }
 }
 
@@ -103,6 +108,12 @@ BP1Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
         bpBaseNames.push_back(lf_GetBPBaseName(name));
     }
     return bpBaseNames;
+}
+
+std::string BP1Base::GetBPMetadataFileName(const std::string &name) const
+    noexcept
+{
+    return AddExtension(name, ".bp");
 }
 
 std::vector<std::string>
@@ -137,26 +148,31 @@ BP1Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
 }
 
 // PROTECTED
-void BP1Base::InitParameterProfile(const std::string value)
+void BP1Base::InitOnOffParameter(const std::string value, bool &parameter,
+                                 const std::string hint)
 {
     if (value == "off" || value == "Off")
     {
-        m_Profiler.IsActive = false;
+        parameter = false;
     }
     else if (value == "on" || value == "On")
     {
-        m_Profiler.IsActive = true; // default
+        parameter = true;
     }
     else
     {
         if (m_DebugMode)
         {
             throw std::invalid_argument("ERROR: IO SetParameters profile "
-                                        "invalid value, valid: "
-                                        "profile=on or "
-                                        "profile=off, in call to Open\n");
+                                        "invalid value, " +
+                                        hint + " in call to Open\n");
         }
     }
+}
+
+void BP1Base::InitParameterProfile(const std::string value)
+{
+    InitOnOffParameter(value, m_Profiler.IsActive, "valid: Profile On or Off");
 }
 
 void BP1Base::InitParameterProfileUnits(const std::string value)
@@ -195,7 +211,8 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
         {
             throw std::invalid_argument(
                 "ERROR: BufferGrowthFactor value "
-                "can't be less or equal than 1 (default = 1.5), or couldn't "
+                "can't be less or equal than 1 (default = 1.5), or "
+                "couldn't "
                 "convert number,\n additional description:" +
                 description + "\n, in call to Open\n");
         }
@@ -213,9 +230,8 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
         if (value.size() < 2)
         {
             throw std::invalid_argument(
-                "ERROR: wrong value for InitialBufferSize, it must be larger "
-                "than "
-                "16Kb (minimum default), in call to Open\n");
+                "ERROR: wrong value for InitialBufferSize, it must be "
+                "larger than 16Kb (minimum default), in call to Open\n");
         }
     }
 
@@ -242,7 +258,8 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
         if (!success || bufferSize < DefaultInitialBufferSize) // 16384b
         {
             throw std::invalid_argument(
-                "ERROR: wrong value for InitialBufferSize, it must be larger "
+                "ERROR: wrong value for InitialBufferSize, it must be "
+                "larger "
                 "than "
                 "16Kb (minimum default), additional description: " +
                 description + " in call to Open\n");
@@ -253,7 +270,9 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
         bufferSize = static_cast<size_t>(std::stoul(number) * factor);
     }
 
-    m_HeapBuffer.ResizeData(bufferSize);
+    // m_HeapBuffer.ResizeData(bufferSize);
+    m_Data.Resize(bufferSize, "bufferSize " + std::to_string(bufferSize) +
+                                  ", in call to Open");
 }
 
 void BP1Base::InitParameterMaxBufferSize(const std::string value)
@@ -265,7 +284,8 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
             throw std::invalid_argument(
                 "ERROR: couldn't convert value of max_buffer_size IO "
                 "SetParameter, valid syntax: MaxBufferSize=10Gb, "
-                "MaxBufferSize=1000Mb, MaxBufferSize=16Kb (minimum default), "
+                "MaxBufferSize=1000Mb, MaxBufferSize=16Kb (minimum "
+                "default), "
                 " in call to Open");
         }
     }
@@ -294,7 +314,8 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
             throw std::invalid_argument(
                 "ERROR: couldn't convert value of max_buffer_size IO "
                 "SetParameter, valid syntax: MaxBufferSize=10Gb, "
-                "MaxBufferSize=1000Mb, MaxBufferSize=16Kb (minimum default), "
+                "MaxBufferSize=1000Mb, MaxBufferSize=16Kb (minimum "
+                "default), "
                 "\nadditional description: " +
                 description + " in call to Open");
         }
@@ -363,7 +384,8 @@ void BP1Base::InitParameterVerbose(const std::string value)
         {
             throw std::invalid_argument(
                 "ERROR: value in Verbose=value in IO SetParameters must be "
-                "an integer in the range [0,5], \nadditional description: " +
+                "an integer in the range [0,5], \nadditional "
+                "description: " +
                 description + "\n, in call to Open\n");
         }
     }
@@ -373,6 +395,12 @@ void BP1Base::InitParameterVerbose(const std::string value)
     }
 
     m_Verbosity = static_cast<unsigned int>(verbosity);
+}
+
+void BP1Base::InitParameterCollectiveMetadata(const std::string value)
+{
+    InitOnOffParameter(value, m_CollectiveMetadata,
+                       "valid: CollectiveMetadata On or Off");
 }
 
 std::vector<uint8_t>
@@ -425,9 +453,62 @@ size_t BP1Base::GetProcessGroupIndexSize(const std::string name,
     return pgSize;
 }
 
+BP1Base::ElementIndexHeader
+BP1Base::ReadElementIndexHeader(const std::vector<char> &buffer,
+                                size_t &position) const noexcept
+{
+    ElementIndexHeader header;
+    header.Length = ReadValue<uint32_t>(buffer, position);
+    header.MemberID = ReadValue<uint32_t>(buffer, position);
+    header.GroupName = ReadBP1String(buffer, position);
+    header.Name = ReadBP1String(buffer, position);
+    header.Path = ReadBP1String(buffer, position);
+    header.DataType = ReadValue<int8_t>(buffer, position);
+    header.CharacteristicsSetsCount = ReadValue<uint64_t>(buffer, position);
+
+    return header;
+}
+
+std::string BP1Base::ReadBP1String(const std::vector<char> &buffer,
+                                   size_t &position) const noexcept
+{
+    const size_t size =
+        static_cast<size_t>(ReadValue<uint16_t>(buffer, position));
+
+    if (size == 0)
+    {
+        return std::string();
+    }
+
+    const std::string values(&buffer[position], size);
+    position += size;
+    return values;
+}
+
+void BP1Base::ProfilerStart(const std::string process)
+{
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at(process).Resume();
+    }
+}
+
+void BP1Base::ProfilerStop(const std::string process)
+{
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at(process).Pause();
+    }
+}
+
 #define declare_template_instantiation(T)                                      \
     template BP1Base::ResizeResult BP1Base::ResizeBuffer(                      \
-        const Variable<T> &variable);
+        const Variable<T> &variable);                                          \
+                                                                               \
+    template BP1Base::Characteristics<T>                                       \
+    BP1Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
+                                             size_t &position,                 \
+                                             const bool untilTimeStep) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

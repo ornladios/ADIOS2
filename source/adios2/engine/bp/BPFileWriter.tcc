@@ -7,6 +7,8 @@
  *  Created on: May 22, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
+#ifndef ADIOS2_ENGINE_BP_BPFILEWRITER_TCC_
+#define ADIOS2_ENGINE_BP_BPFILEWRITER_TCC_
 
 #include "BPFileWriter.h"
 
@@ -21,40 +23,39 @@ void BPFileWriter::DoWriteCommon(Variable<T> &variable, const T *values)
     m_WrittenVariables.insert(variable.m_Name);
 
     // if first timestep Write create a new pg index
-    if (!m_BP1Writer.m_MetadataSet.DataPGIsOpen)
+    if (!m_BP1BuffersWriter.m_MetadataSet.DataPGIsOpen)
     {
-        m_BP1Writer.WriteProcessGroupIndex(
-            m_IO.m_HostLanguage, m_TransportsManager.GetTransportsTypes());
+        m_BP1BuffersWriter.WriteProcessGroupIndex(
+            m_IO.m_HostLanguage, m_FileManager.GetTransportsTypes());
     }
 
-    const size_t oldSize = m_BP1Writer.m_HeapBuffer.GetDataSize();
-
     format::BP1Base::ResizeResult resizeResult =
-        m_BP1Writer.ResizeBuffer(variable);
-
-    const size_t newSize = m_BP1Writer.m_HeapBuffer.GetDataSize();
+        m_BP1BuffersWriter.ResizeBuffer(variable);
 
     if (resizeResult == format::BP1Base::ResizeResult::Flush)
     {
-        m_BP1Writer.Flush(m_IO);
-        auto &heapBuffer = m_BP1Writer.m_HeapBuffer;
+        m_BP1BuffersWriter.Flush(m_IO);
+        auto &buffer = m_BP1BuffersWriter.m_Data.m_Buffer;
+        auto &position = m_BP1BuffersWriter.m_Data.m_Position;
 
-        m_TransportsManager.WriteFiles(heapBuffer.GetData(),
-                                       heapBuffer.m_DataPosition);
+        m_FileManager.WriteFiles(buffer.data(), position);
         // set relative position to zero
-        heapBuffer.m_DataPosition = 0;
-        // reset buffer to zero values
-        heapBuffer.m_Data.assign(heapBuffer.GetDataSize(), '\0');
+        position = 0;
+        // reset buffer to zero values to current size
+        buffer.assign(buffer.size(), '\0');
 
-        m_BP1Writer.WriteProcessGroupIndex(
-            m_IO.m_HostLanguage, m_TransportsManager.GetTransportsTypes());
+        // new group index
+        m_BP1BuffersWriter.WriteProcessGroupIndex(
+            m_IO.m_HostLanguage, m_FileManager.GetTransportsTypes());
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
-    m_BP1Writer.WriteVariableMetadata(variable);
-    m_BP1Writer.WriteVariablePayload(variable);
+    m_BP1BuffersWriter.WriteVariableMetadata(variable);
+    m_BP1BuffersWriter.WriteVariablePayload(variable);
 
     variable.m_AppValues = nullptr; // not needed after write
 }
 
-} // end namespace adios
+} // end namespace adios2
+
+#endif /* ADIOS2_ENGINE_BP_BPFILEWRITER_TCC_ */

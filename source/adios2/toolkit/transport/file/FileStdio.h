@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * FilePointer.h wrapper of C/C++ stdio.h for file I/O
+ * FileStdio.h wrapper of C/C++ stdio.h for file I/O
  *
  *  Created on: Jan 6, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -20,24 +20,22 @@ namespace adios2
 namespace transport
 {
 
-/**
- * Class that defines a transport method using C file pointer (FP) to
- * streams
- * FILE*
- */
-class FilePointer : public Transport
+/** File transport using C stdio FILE* */
+class FileStdio : public Transport
 {
 
 public:
-    FilePointer(MPI_Comm mpiComm, const bool debugMode);
+    FileStdio(MPI_Comm mpiComm, const bool debugMode);
 
-    ~FilePointer();
+    ~FileStdio();
 
-    void Open(const std::string &name, const OpenMode openMode) final;
+    void Open(const std::string &name, const Mode openMode) final;
 
     void SetBuffer(char *buffer, size_t size) final;
 
-    void Write(const char *buffer, size_t size) final;
+    void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
+
+    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
     void Flush() final;
 
@@ -45,10 +43,16 @@ public:
 
 private:
     /** C File pointer */
-    FILE *m_File = nullptr; // NULL or nullptr?
+    FILE *m_File = nullptr;
+
+    /**
+     * Check for std::ferror and throw an exception if true
+     * @param hint exception message
+     */
+    void CheckFile(const std::string hint) const;
 };
 
 } // end namespace transport
-} // end namespace
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEPOINTER_H_ */

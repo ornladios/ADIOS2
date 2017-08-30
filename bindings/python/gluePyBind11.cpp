@@ -91,10 +91,9 @@ PYBIND11_PLUGIN(adios2)
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
-    m.attr("OpenModeWrite") = static_cast<int>(adios2::OpenMode::Write);
-    m.attr("OpenModeRead") = static_cast<int>(adios2::OpenMode::Read);
-    m.attr("OpenModeAppend") = static_cast<int>(adios2::OpenMode::Append);
-    m.attr("OpenModeReadWrite") = static_cast<int>(adios2::OpenMode::ReadWrite);
+    m.attr("ModeWrite") = static_cast<int>(adios2::Mode::Write);
+    m.attr("ModeRead") = static_cast<int>(adios2::Mode::Read);
+    m.attr("ModeAppend") = static_cast<int>(adios2::Mode::Append);
     m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS class object");
     m.def("ADIOS", &ADIOSPyInitConfig,
           "Function that creates an ADIOS class object using a config file");

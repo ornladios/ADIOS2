@@ -69,7 +69,7 @@ VariablePy &IOPy::GetVariable(const std::string &name)
 
 EnginePy IOPy::Open(const std::string &name, const int openMode)
 {
-    return EnginePy(m_IO, name, static_cast<adios2::OpenMode>(openMode),
+    return EnginePy(m_IO, name, static_cast<adios2::Mode>(openMode),
                     m_IO.m_MPIComm);
 }
 

@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         io.SetEngine("PluginEngine");
         io.SetParameters({{"PluginName", "MyPlugin"}});
-        auto writer = io.Open("TestPlugin", adios2::OpenMode::Write);
+        auto writer = io.Open("TestPlugin", adios2::Mode::Write);
 
         if (!writer)
         {

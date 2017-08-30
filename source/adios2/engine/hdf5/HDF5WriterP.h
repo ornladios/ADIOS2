@@ -33,7 +33,7 @@ public:
      * @param mpiComm
      * @param method
      */
-    HDF5WriterP(IO &io, const std::string &name, const OpenMode openMode,
+    HDF5WriterP(IO &io, const std::string &name, const Mode openMode,
                 MPI_Comm mpiComm);
 
     ~HDF5WriterP();

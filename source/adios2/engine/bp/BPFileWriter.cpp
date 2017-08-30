@@ -10,20 +10,23 @@
 
 #include "BPFileWriter.h"
 #include "BPFileWriter.tcc"
+#include <adios2/toolkit/transport/file/FileFStream.h>
+
+#include <iostream>
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
-#include "adios2/toolkit/transport/file/FileStream.h"
 
 namespace adios2
 {
 
-BPFileWriter::BPFileWriter(IO &io, const std::string &name,
-                           const OpenMode openMode, MPI_Comm mpiComm)
+BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode openMode,
+                           MPI_Comm mpiComm)
 : Engine("BPFileWriter", io, name, openMode, mpiComm),
-  m_BP1Writer(mpiComm, m_DebugMode), m_TransportsManager(mpiComm, m_DebugMode)
+  m_BP1BuffersWriter(mpiComm, m_DebugMode),
+  m_FileManager(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open BPFileWriter " + m_Name + "\n";
     Init();
@@ -48,16 +51,16 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void BPFileWriter::Advance(const float /*timeout_sec*/)
 {
-    m_BP1Writer.Advance(m_IO);
+    m_BP1BuffersWriter.Advance(m_IO);
 }
 
 void BPFileWriter::Close(const int transportIndex)
 {
     if (m_DebugMode)
     {
-        if (!m_TransportsManager.CheckTransportIndex(transportIndex))
+        if (!m_FileManager.CheckTransportIndex(transportIndex))
         {
-            auto transportsSize = m_TransportsManager.m_Transports.size();
+            auto transportsSize = m_FileManager.m_Transports.size();
             throw std::invalid_argument(
                 "ERROR: transport index " + std::to_string(transportIndex) +
                 " outside range, -1 (default) to " +
@@ -65,26 +68,32 @@ void BPFileWriter::Close(const int transportIndex)
         }
     }
 
-    // close bp buffer by flattening data and metadata
-    m_BP1Writer.Close(m_IO);
+    // close bp buffer by serializing data and metadata
+    m_BP1BuffersWriter.Close(m_IO);
     // send data to corresponding transports
-    m_TransportsManager.WriteFiles(m_BP1Writer.m_HeapBuffer.GetData(),
-                                   m_BP1Writer.m_HeapBuffer.m_DataPosition,
+    m_FileManager.WriteFiles(m_BP1BuffersWriter.m_Data.m_Buffer.data(),
+                                   m_BP1BuffersWriter.m_Data.m_Position,
                                    transportIndex);
 
-    m_TransportsManager.CloseFiles(transportIndex);
+    m_FileManager.CloseFiles(transportIndex);
 
-    if (m_BP1Writer.m_Profiler.IsActive &&
-        m_TransportsManager.AllTransportsClosed())
+    if (m_BP1BuffersWriter.m_Profiler.IsActive &&
+        m_FileManager.AllTransportsClosed())
     {
         WriteProfilingJSONFile();
+    }
+
+    if (m_BP1BuffersWriter.m_CollectiveMetadata &&
+        m_FileManager.AllTransportsClosed())
+    {
+        m_BP1BuffersWriter.AggregateCollectiveMetadata();
     }
 }
 
 // PRIVATE FUNCTIONS
 void BPFileWriter::InitParameters()
 {
-    m_BP1Writer.InitParameters(m_IO.m_Parameters);
+    m_BP1BuffersWriter.InitParameters(m_IO.m_Parameters);
 }
 
 void BPFileWriter::InitTransports()
@@ -98,19 +107,19 @@ void BPFileWriter::InitTransports()
     }
 
     // Names are std::vector<std::string>
-    auto transportsNames = m_TransportsManager.GetFilesBaseNames(
+    auto transportsNames = m_FileManager.GetFilesBaseNames(
         m_Name, m_IO.m_TransportsParameters);
-    auto bpBaseNames = m_BP1Writer.GetBPBaseNames(transportsNames);
-    auto bpNames = m_BP1Writer.GetBPNames(transportsNames);
+    auto bpBaseNames = m_BP1BuffersWriter.GetBPBaseNames(transportsNames);
+    auto bpNames = m_BP1BuffersWriter.GetBPNames(transportsNames);
 
-    m_TransportsManager.OpenFiles(bpBaseNames, bpNames, m_OpenMode,
+    m_FileManager.OpenFiles(bpBaseNames, bpNames, m_OpenMode,
                                   m_IO.m_TransportsParameters,
-                                  m_BP1Writer.m_Profiler.IsActive);
+                                  m_BP1BuffersWriter.m_Profiler.IsActive);
 }
 
 void BPFileWriter::InitBPBuffer()
 {
-    if (m_OpenMode == OpenMode::Append)
+    if (m_OpenMode == Mode::Append)
     {
         throw std::invalid_argument(
             "ADIOS2: OpenMode Append hasn't been implemented, yet");
@@ -118,31 +127,32 @@ void BPFileWriter::InitBPBuffer()
     }
     else
     {
-        m_BP1Writer.WriteProcessGroupIndex(
-            m_IO.m_HostLanguage, m_TransportsManager.GetTransportsTypes());
+        m_BP1BuffersWriter.WriteProcessGroupIndex(
+            m_IO.m_HostLanguage, m_FileManager.GetTransportsTypes());
     }
 }
 
 void BPFileWriter::WriteProfilingJSONFile()
 {
-    auto transportTypes = m_TransportsManager.GetTransportsTypes();
-    auto transportProfilers = m_TransportsManager.GetTransportsProfilers();
+    auto transportTypes = m_FileManager.GetTransportsTypes();
+    auto transportProfilers = m_FileManager.GetTransportsProfilers();
 
-    const std::string lineJSON(
-        m_BP1Writer.GetRankProfilingJSON(transportTypes, transportProfilers));
+    const std::string lineJSON(m_BP1BuffersWriter.GetRankProfilingJSON(
+                                   transportTypes, transportProfilers) +
+                               ",\n");
 
-    const std::string profilingJSON(
-        m_BP1Writer.AggregateProfilingJSON(lineJSON));
+    const std::vector<char> profilingJSON(
+        m_BP1BuffersWriter.AggregateProfilingJSON(lineJSON));
 
-    if (m_BP1Writer.m_BP1Aggregator.m_RankMPI == 0)
+    if (m_BP1BuffersWriter.m_BP1Aggregator.m_RankMPI == 0)
     {
-        transport::FileStream profilingJSONStream(m_MPIComm, m_DebugMode);
-        auto bpBaseNames = m_BP1Writer.GetBPBaseNames({m_Name});
+        transport::FileFStream profilingJSONStream(m_MPIComm, m_DebugMode);
+        auto bpBaseNames = m_BP1BuffersWriter.GetBPBaseNames({m_Name});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
-                                 OpenMode::Write);
-        profilingJSONStream.Write(profilingJSON.c_str(), profilingJSON.size());
+                                 Mode::Write);
+        profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
         profilingJSONStream.Close();
     }
 }
 
-} // end namespace adios
+} // end namespace adios2

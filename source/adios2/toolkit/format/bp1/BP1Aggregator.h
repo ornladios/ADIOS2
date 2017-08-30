@@ -2,7 +2,8 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Aggregator.h
+ * BP1Aggregator.h : defines an object that manages MPI aggregation tasks in BP1
+ * format
  *
  *  Created on: Mar 1, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -13,6 +14,8 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
+#include <unordered_map>
+#include <vector>
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
@@ -36,6 +39,7 @@ public:
     /**
      * Unique constructor
      * @param mpiComm coming from engine
+     * @param debugMode true: extra exception checks
      */
     BP1Aggregator(MPI_Comm mpiComm, const bool debugMode = false);
 
@@ -46,13 +50,17 @@ public:
      * python dictionary format
      * @param rankLog contain rank profiling info to be aggregated
      */
-    std::string GetGlobalProfilingJSON(const std::string &rankLog);
+    std::vector<char>
+    SetCollectiveProfilingJSON(const std::string &rankLog) const;
+
+    void GathervBuffers(const std::vector<char> &bufferIn,
+                        std::vector<char> &bufferOut, size_t &position) const;
 
 private:
     const bool m_DebugMode = false;
 };
 
 } // end namespace format
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_UTILITIES_FORMAT_BP1_BP1AGGREGATOR_H_ */

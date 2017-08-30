@@ -16,6 +16,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <functional> //std::function
+#include <future>
 #include <map>
 #include <memory> //std::shared_ptr
 #include <set>
@@ -25,6 +26,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
@@ -50,9 +52,11 @@ public:
      * @param mpiComm new communicator passed at Open or from ADIOS class
      */
     Engine(const std::string engineType, IO &io, const std::string &name,
-           const OpenMode openMode, MPI_Comm mpiComm);
+           const Mode openMode, MPI_Comm mpiComm);
 
     virtual ~Engine() = default;
+
+    void SetStep(const size_t step = 0);
 
     /**
      * Write function that adds static checking on the variable to be passed by
@@ -106,13 +110,16 @@ public:
     void Write(const std::string &variableName, const void *values);
 
     /**
-     *
-     * @param variableName
-     * @return
+     * Inquires if a variable of a certain type exists.
+     * Returns a pointer reference, not need to manage memory.
+     * @param variableName input to search
+     * @return pointer reference to existing variable, nullptr if variable
+     * doesn't exist
      */
     template <class T>
-    Variable<T> *InquireVariable(const std::string &variableName,
-                                 const bool readIn = false);
+    Variable<T> *InquireVariable(const std::string &variableName);
+
+    VariableBase *InquireVariableAny(const std::string &variableName);
 
     /**
      * Read function that adds static checking on the variable to be passed by
@@ -124,7 +131,7 @@ public:
      * must use Read(variable) instead intentionally
      */
     template <class T>
-    void Read(Variable<T> &variable, T *values);
+    void Read(Variable<T> &variable, T *values = nullptr);
 
     /**
      * String version
@@ -132,92 +139,7 @@ public:
      * @param values
      */
     template <class T>
-    void Read(const std::string &variableName, T *values);
-
-    /**
-     * Single value version
-     * @param variable
-     * @param values
-     */
-    template <class T>
-    void Read(Variable<T> &variable, T &values);
-
-    /**
-     * Single value version using string as variable handlers
-     * @param variableName
-     * @param values
-     */
-    template <class T>
-    void Read(const std::string &variableName, T &values);
-
-    /**
-     * Unallocated version, ADIOS will allocate space for incoming data
-     * @param variable
-     */
-    template <class T>
-    void Read(Variable<T> &variable);
-
-    /**
-     * Unallocated version, ADIOS will allocate space for incoming data
-     * @param variableName
-     */
-    template <class T>
-    void Read(const std::string &variableName);
-
-    /**
-     * Read function that adds static checking on the variable to be passed by
-     * values
-     * It then calls its corresponding derived class virtual function
-     * This version uses m_Group to look for the variableName.
-     * @param variable name of variable to the written
-     * @param values pointer passed from the application
-     */
-    template <class T>
-    void ScheduleRead(Variable<T> &variable, T *values);
-
-    /**
-     * String version
-     * @param variableName
-     * @param values
-     */
-    template <class T>
-    void ScheduleRead(const std::string &variableName, T *values);
-
-    /**
-     * Single value version
-     * @param variable
-     * @param values
-     */
-    template <class T>
-    void ScheduleRead(Variable<T> &variable, T &values);
-
-    /**
-     * Single value version using string as variable handlers
-     * @param variableName
-     * @param values
-     */
-    template <class T>
-    void ScheduleRead(const std::string &variableName, T &values);
-
-    /**
-     * Unallocated version, ADIOS will allocate space for incoming data
-     * @param variableName
-     */
-    // virtual void ScheduleRead(const std::string &variableName);
-
-    /**
-     * Unallocated unspecified version, ADIOS will receive any variable and will
-     * allocate space for incoming data
-     */
-    // virtual void ScheduleRead();
-
-    /**
-     * Perform all scheduled reads, either blocking until all reads completed,
-     * or
-     * return immediately.
-     * @param mode Blocking or non-blocking modes
-     */
-    virtual void PerformReads(ReadMode mode);
+    void Read(const std::string &variableName, T *values = nullptr);
 
     /**
      * Reader application indicates that no more data will be read from the
@@ -250,36 +172,13 @@ public:
      * readers
      * @param callback Will be called when advance is completed.
      */
-    virtual void AdvanceAsync(const AdvanceMode mode,
-                              AdvanceAsyncCallback callback);
+    //    virtual void AdvanceAsync(const AdvanceMode mode,
+    //                              AdvanceAsyncCallback callback);
+    std::future<void> AdvanceAsync(
+        AdvanceMode mode,
+        std::function<void(std::shared_ptr<adios2::Engine>)> /*callback*/);
 
     AdvanceStatus GetAdvanceStatus();
-
-    /**
-     * @brief Let ADIOS allocate memory for a variable in the buffer (bp),
-     * to be populated by the user. Variable dimensions are fixed.
-     * To decrease the cost of copying memory, a user may let ADIOS allocate
-     * the memory for a user-variable,
-     * according to the definition of an ADIOS-variable. The memory will be
-     * part
-     * of the ADIOS buffer used
-     * by the engine and it lives until the engine (file, stream) is closed.
-     * A variable that has been allocated this way (cannot have its local
-     * dimensions changed, and AdvanceAsync() should be
-     * used instead of Advance() and the user-variable must not be modified
-     * by
-     * the application until the notification arrives.
-     * This is required so that any reader can access the written data
-     * before
-     * the application overwrites it.
-     * @param var Variable with defined local dimensions and offsets in
-     * global
-     * space
-     * @param fillValue Fill the allocated array with this value
-     * @return A constant pointer reference to the allocated array.
-     */
-    template <class T>
-    T *AllocateVariable(Variable<T> &var, T fillValue = 0);
 
     /**
      * Needed for DataMan Engine
@@ -294,13 +193,19 @@ public:
      * reading
      * @return a vector of strings
      */
-    std::vector<std::string> VariableNames();
+    std::map<std::string, std::string> Variables();
 
     /**
      * Closes a particular transport, or all if -1
      * @param transportIndex order from IO AddTransport
      */
     virtual void Close(const int transportIndex = -1) = 0;
+
+    virtual void Flush(const int transportIndex = -1);
+    virtual void Get(const int transportIndex = -1);
+
+    virtual std::future<void> FlushAsync(const int transportIndex = -1);
+    virtual std::future<void> GetAsync(const int transportIndex = -1);
 
 protected:
     /** from derived class */
@@ -313,7 +218,7 @@ protected:
     const std::string m_Name;
 
     /** open mode from ADIOSTypes.h OpenMode */
-    const OpenMode m_OpenMode;
+    const Mode m_OpenMode;
 
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
@@ -355,30 +260,18 @@ protected:
      */
     void DoWrite(const std::string &variableName, const void *values);
 
-    // READ
-    virtual VariableBase *InquireVariableUnknown(const std::string &name,
-                                                 const bool readIn);
+// READ
 #define declare(T, L)                                                          \
-    virtual Variable<T> *InquireVariable##L(const std::string &name,           \
-                                            const bool readIn);
+    virtual Variable<T> *DoInquireVariable##L(const std::string &variableName);
+
     ADIOS2_FOREACH_TYPE_2ARGS(declare)
 #undef declare
-
-// Known-type
-#define declare_type(T)                                                        \
-    virtual void DoScheduleRead(Variable<T> &variable, const T *values);       \
-    virtual void DoScheduleRead(const std::string &variableName,               \
-                                const T *values);
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
-    void DoScheduleRead(const std::string &variableName, void *values);
 
 private:
     /** Throw exception by Engine virtual functions not implemented by a derived
      * class */
     void ThrowUp(const std::string function) const;
-};
+}; // END OF CLASS
 
 #define declare_template_instantiation(T)                                      \
     extern template void Engine::Write<T>(Variable<T> &, const T *);           \

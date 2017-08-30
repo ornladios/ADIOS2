@@ -257,11 +257,6 @@ void adios2_set_transport_param(adios2_IO *io,
         transport_index, key, value);
 }
 
-struct adios2_Engine
-{
-    std::shared_ptr<adios2::Engine> EngineCpp;
-};
-
 adios2_Engine *adios2_open(adios2_IO *io, const char *name,
                            const adios2_open_mode open_mode)
 {
@@ -274,27 +269,21 @@ adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
                                     MPI_Comm mpi_comm)
 {
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
-    adios2_Engine *engine = new adios2_Engine;
+    adios2::Engine *engine = nullptr;
 
     switch (open_mode)
     {
 
     case adios2_open_mode_write:
-        engine->EngineCpp = ioCpp.Open(name, adios2::OpenMode::Write, mpi_comm);
+        engine = &ioCpp.Open(name, adios2::Mode::Write, mpi_comm);
         break;
 
     case adios2_open_mode_read:
-        engine->EngineCpp = ioCpp.Open(name, adios2::OpenMode::Read, mpi_comm);
+        engine = &ioCpp.Open(name, adios2::Mode::Read, mpi_comm);
         break;
 
     case adios2_open_mode_append:
-        engine->EngineCpp =
-            ioCpp.Open(name, adios2::OpenMode::Append, mpi_comm);
-        break;
-
-    case adios2_open_mode_read_write:
-        engine->EngineCpp =
-            ioCpp.Open(name, adios2::OpenMode::ReadWrite, mpi_comm);
+        engine = &ioCpp.Open(name, adios2::Mode::Append, mpi_comm);
         break;
 
     case adios2_open_mode_undefined:
@@ -302,7 +291,7 @@ adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
         break;
     }
 
-    return engine;
+    return reinterpret_cast<adios2_Engine *>(engine);
 }
 
 void adios2_write(adios2_Engine *engine, adios2_Variable *variable,
@@ -315,21 +304,27 @@ void adios2_write(adios2_Engine *engine, adios2_Variable *variable,
 void adios2_write_by_name(adios2_Engine *engine, const char *variable_name,
                           const void *values)
 {
-    engine->EngineCpp->Write(variable_name, values);
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.Write(variable_name, values);
 }
 
-void adios2_advance(adios2_Engine *engine) { engine->EngineCpp->Advance(); }
+void adios2_advance(adios2_Engine *engine)
+{
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.Advance();
+}
 
 void adios2_close(adios2_Engine *engine)
 {
-    engine->EngineCpp->Close();
-    delete engine;
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.Close();
 }
 
 void adios2_close_by_index(adios2_Engine *engine,
                            const unsigned int transport_index)
 {
-    engine->EngineCpp->Close(transport_index);
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.Close(transport_index);
 }
 
 void adios2_finalize(adios2_ADIOS *adios)

@@ -11,11 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <algorithm> //std::count, std::copy, std::for_each
-#include <cmath>     //std::ceil
-#include <cstring>   //std::memcpy
-/// \endcond
+#include <mutex>
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
@@ -23,9 +19,7 @@
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
-#include "adios2/toolkit/capsule/heap/STLVector.h"
 #include "adios2/toolkit/format/bp1/BP1Base.h"
-#include "adios2/toolkit/format/bp1/BP1Structs.h"
 
 namespace adios2
 {
@@ -97,12 +91,20 @@ public:
      * @param rankProfilingJSON
      * @return profiling.json
      */
-    std::string
-    AggregateProfilingJSON(const std::string &rankProfilingJSON) noexcept;
+    std::vector<char>
+    AggregateProfilingJSON(const std::string &rankProfilingJSON);
+
+    /**
+     * Creates the final collective Metadata buffer in m_HeapBuffer.m_Metadata
+     * from all ranks
+     */
+    void AggregateCollectiveMetadata();
 
 private:
     /** BP format version */
     const uint8_t m_Version = 3;
+
+    static std::mutex m_Mutex;
 
     /**
      * Writes in BP buffer all attributes defined in an IO object.
@@ -181,7 +183,7 @@ private:
     void WriteVariableMetadataInIndex(
         const Variable<T> &variable,
         const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
-        BP1Index &index) noexcept;
+        SerialElementIndex &index) noexcept;
 
     template <class T>
     void WriteVariableCharacteristics(
@@ -269,7 +271,7 @@ private:
                                    size_t &position) noexcept;
 
     /**
-     * Returns corresponding index of type BP1Index, if doesn't exists creates a
+     * Returns corresponding serial index, if doesn't exists creates a
      * new one. Used for variables and attributes
      * @param name variable or attribute name to look for index
      * @param indices look up hash table of indices
@@ -277,24 +279,67 @@ private:
      * indices
      * @return reference to BP1Index in indices
      */
-    BP1Index &GetBP1Index(const std::string name,
-                          std::unordered_map<std::string, BP1Index> &indices,
-                          bool &isNew) const noexcept;
+    SerialElementIndex &GetSerialElementIndex(
+        const std::string &name,
+        std::unordered_map<std::string, SerialElementIndex> &indices,
+        bool &isNew) const noexcept;
 
     /**
-     * Flattens the data and fills the pg length, vars count, vars length and
-     * attributes
-     * @param metadataSet
-     * @param buffer
+     * Wraps up the data buffer serialization in m_HeapBuffer and fills the pg
+     * length, vars count, vars
+     * length and attributes count and attributes length
+     * @param io object containing all attributes
      */
-    void FlattenData(IO &io) noexcept;
+    void SerializeData(IO &io) noexcept;
 
     /**
-     * Flattens the metadata indices into a single metadata buffer in capsule
-     * @param metadataSet
-     * @param buffer
+     * Serializes the metadata indices appending it into the data buffer inside
+     * m_HeapBuffer
      */
-    void FlattenMetadata() noexcept;
+    void SerializeMetadataInData() noexcept;
+
+    /**
+     * Used for PG index, aggregates without merging
+     * @param index input
+     * @param count total number of indices
+     */
+    void AggregateIndex(const SerialElementIndex &index, const size_t count);
+
+    /**
+     * Collective operation to aggregate and merge (sort) indices (variables and
+     * attributes)
+     * @param indices
+     */
+    void AggregateMergeIndex(
+        const std::unordered_map<std::string, SerialElementIndex>
+            &indices) noexcept;
+
+    /**
+     * Returns a serialized buffer with all indices with format:
+     * Rank (4 bytes), Buffer
+     * @param indices input of all indices to be serialized
+     * @return buffer with serialized indices
+     */
+    std::vector<char> SerializeIndices(
+        const std::unordered_map<std::string, SerialElementIndex> &indices)
+        const noexcept;
+
+    /**
+     * In rank=0, deserialize gathered indices
+     * @param serializedIndices input gathered indices
+     * @return hash[name][rank] = bp index buffer
+     */
+    std::unordered_map<std::string, std::vector<SerialElementIndex>>
+    DeserializeIndicesPerRankThreads(
+        const std::vector<char> &serializedIndices) const noexcept;
+
+    /**
+     * Merge indices by time step (default) and write to m_HeapBuffer.m_Metadata
+     * @param nameRankIndices
+     */
+    void MergeSerializeIndices(
+        const std::unordered_map<std::string, std::vector<SerialElementIndex>>
+            &nameRankIndices) noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \

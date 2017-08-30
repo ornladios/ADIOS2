@@ -158,4 +158,4 @@ void ADIOS::CheckMPI() const
     }
 }
 
-} // end namespace adios
+} // end namespace adios2

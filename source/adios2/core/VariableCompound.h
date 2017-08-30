@@ -45,8 +45,6 @@ public:
 
     ~VariableCompound() = default;
 
-    void ApplyTransforms() final;
-
     /**
      * Inserts an Element into the compound struct definition
      * @param name

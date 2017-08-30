@@ -121,8 +121,17 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
     switch (sendtype)
     {
+    case MPI_CHAR:
+        n = sizeof(char);
+        break;
     case MPI_INT:
         n = sizeof(int);
+        break;
+    case MPI_UNSIGNED:
+        n = sizeof(unsigned int);
+        break;
+    case MPI_UNSIGNED_LONG:
+        n = sizeof(unsigned long);
         break;
     default:
         return MPI_ERR_TYPE;
@@ -131,8 +140,17 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
     switch (recvtype)
     {
+    case MPI_CHAR:
+        nrecv = sizeof(char);
+        break;
     case MPI_INT:
         nrecv = sizeof(int);
+        break;
+    case MPI_UNSIGNED:
+        nrecv = sizeof(unsigned int);
+        break;
+    case MPI_UNSIGNED_LONG:
+        nrecv = sizeof(unsigned long);
         break;
     default:
         return MPI_ERR_TYPE;
@@ -379,6 +397,13 @@ int MPI_Get_processor_name(char *name, int *resultlen)
 {
     std::sprintf(name, "0");
     *resultlen = 1;
+    return 0;
+}
+
+int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
+               MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
+{
+    *recvbuf = *sendbuf;
     return 0;
 }
 

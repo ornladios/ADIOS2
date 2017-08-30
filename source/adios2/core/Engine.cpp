@@ -22,7 +22,7 @@ namespace adios2
 {
 
 Engine::Engine(const std::string engineType, IO &io, const std::string &name,
-               const OpenMode openMode, MPI_Comm mpiComm)
+               const Mode openMode, MPI_Comm mpiComm)
 : m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode),
   m_MPIComm(mpiComm), m_DebugMode(io.m_DebugMode)
 {
@@ -47,10 +47,11 @@ void Engine::Write(const std::string &variableName, const void *values)
 
 void Engine::Advance(const float /*timeout_sec*/) {}
 void Engine::Advance(const AdvanceMode /*mode*/, const float /*timeout_sec*/) {}
-void Engine::AdvanceAsync(
-    AdvanceMode /*mode*/,
+std::future<void> Engine::AdvanceAsync(
+    AdvanceMode mode,
     std::function<void(std::shared_ptr<adios2::Engine>)> /*callback*/)
 {
+    return std::future<void>();
 }
 
 AdvanceStatus Engine::GetAdvanceStatus() { return m_AdvanceStatus; }
@@ -59,7 +60,6 @@ void Engine::Close(const int /*transportIndex*/) {}
 
 // READ
 void Engine::Release() {}
-void Engine::PerformReads(ReadMode /*mode*/){};
 
 // PROTECTED
 void Engine::Init() {}
@@ -78,7 +78,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
 void Engine::DoWrite(VariableCompound &variable, const void *values)
-{ // TODO
+{
+    ThrowUp("Write Compound");
 }
 
 void Engine::DoWrite(const std::string &variableName, const void *values)
@@ -123,34 +124,30 @@ void Engine::DoWrite(const std::string &variableName, const void *values)
 } // end DoWrite
 
 // READ
-VariableBase *Engine::InquireVariableUnknown(const std::string &name,
-                                             const bool readIn)
-{
-    return nullptr;
-}
-
-#define define(T, L)                                                           \
-    Variable<T> *Engine::InquireVariable##L(const std::string &name,           \
-                                            const bool readIn)                 \
+#define declare(T, L)                                                          \
+    Variable<T> *Engine::DoInquireVariable##L(                                 \
+        const std::string & /*variableName*/)                                  \
     {                                                                          \
+        ThrowUp("DoInquireVariable");                                          \
         return nullptr;                                                        \
     }
-ADIOS2_FOREACH_TYPE_2ARGS(define)
-#undef define
 
-#define declare_type(T)                                                        \
-    void Engine::DoScheduleRead(Variable<T> &variable, const T *values)        \
-    {                                                                          \
-        ThrowUp("ScheduleRead");                                               \
-    }                                                                          \
-                                                                               \
-    void Engine::DoScheduleRead(const std::string &variableName,               \
-                                const T *values)                               \
-    {                                                                          \
-        ThrowUp("ScheduleRead");                                               \
-    }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
+ADIOS2_FOREACH_TYPE_2ARGS(declare)
+#undef declare
+
+void Engine::Flush(const int transportIndex) {}
+
+void Engine::Get(const int transportIndex) {}
+
+std::future<void> Engine::FlushAsync(const int transportIndex)
+{
+    return std::future<void>();
+}
+
+std::future<void> Engine::GetAsync(const int transportIndex)
+{
+    return std::future<void>();
+}
 
 // PRIVATE
 void Engine::ThrowUp(const std::string function) const

@@ -34,7 +34,7 @@ public:
 
     ~WANZmq();
 
-    void Open(const std::string &name, const OpenMode openMode) final;
+    void Open(const std::string &name, const Mode openMode) final;
 
     void SetBuffer(char *buffer, size_t size) final;
 

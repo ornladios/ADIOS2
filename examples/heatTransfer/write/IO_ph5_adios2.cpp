@@ -55,7 +55,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    h5writer = h5io.Open(m_outputfilename, adios2::OpenMode::Write, comm);
+    h5writer = h5io.Open(m_outputfilename, adios2::Mode::Write, comm);
 
     if (h5writer == nullptr)
         throw std::ios_base::failure("ERROR: failed to open ADIOS h5writer\n");

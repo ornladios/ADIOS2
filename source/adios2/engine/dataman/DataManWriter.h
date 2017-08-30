@@ -28,7 +28,7 @@ class DataManWriter : public Engine
 public:
     using json = nlohmann::json;
 
-    DataManWriter(IO &io, const std::string &name, const OpenMode openMode,
+    DataManWriter(IO &io, const std::string &name, const Mode openMode,
                   MPI_Comm mpiComm);
 
     virtual ~DataManWriter() = default;

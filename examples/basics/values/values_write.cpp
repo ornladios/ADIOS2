@@ -86,11 +86,7 @@ int main(int argc, char *argv[])
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        auto writer = io.Open("values.bp", adios2::OpenMode::Write);
-
-        if (!writer)
-            throw std::ios_base::failure(
-                "ERROR: failed to open file with ADIOS\n");
+        adios2::Engine &writer = io.Open("values.bp", adios2::Mode::Write);
 
         for (int step = 0; step < NSTEPS; step++)
         {
@@ -103,27 +99,27 @@ int main(int argc, char *argv[])
                 // 1. Writing a global constant value only once
                 if (step == 0)
                 {
-                    writer->Write<int>("Nproc", nproc);
+                    writer.Write<int>("Nproc", nproc);
                 }
-                writer->Write<int>(varStep, step);
+                writer.Write<int>(varStep, step);
             }
 
             // 3. and 4. Writing a local value on every process. Will be shown
             // at reading as a 1D array
             if (step == 0)
             {
-                writer->Write<int>(varProcessID, rank);
+                writer.Write<int>(varProcessID, rank);
             }
-            writer->Write<unsigned int>(varNparts, Nparts);
+            writer.Write<unsigned int>(varNparts, Nparts);
 
             // Indicate we are done for this step.
             // Disk I/O will be performed during this call unless
             // time aggregation postpones all of that to some later step
-            writer->Advance();
+            writer.Advance();
         }
 
         // Called once: indicate that we are done with this output for the run
-        writer->Close();
+        writer.Close();
     }
     catch (std::invalid_argument &e)
     {

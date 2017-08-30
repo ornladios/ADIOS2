@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * FileStream.h wrapper of C++ fstream for file I/O
+ * FileFStream.h wrapper of C++ fstream for file I/O
  *
  *  Created on: Oct 18, 2016
  *      Author: William F Godoy godoywf@ornl.gov
@@ -22,19 +22,21 @@ namespace transport
 {
 
 /** File stream transport using C++ fstream */
-class FileStream : public Transport
+class FileFStream : public Transport
 {
 
 public:
-    FileStream(MPI_Comm mpiComm, const bool debugMode);
+    FileFStream(MPI_Comm mpiComm, const bool debugMode);
 
-    ~FileStream() = default;
+    ~FileFStream() = default;
 
-    void Open(const std::string &name, const OpenMode openMode) final;
+    void Open(const std::string &name, const Mode openMode) final;
 
     void SetBuffer(char *buffer, size_t size) final;
 
-    void Write(const char *buffer, size_t size) final;
+    void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
+
+    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
     void Flush() final;
 
@@ -43,9 +45,15 @@ public:
 private:
     /** file stream using fstream library */
     std::fstream m_FileStream;
+
+    /**
+     * Check if m_FileStream is false after an operation
+     * @param hint exception message
+     */
+    void CheckFile(const std::string hint) const;
 };
 
 } // end namespace transport
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEPOINTER_H_ */

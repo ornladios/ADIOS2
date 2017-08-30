@@ -24,6 +24,6 @@ void VariableCompound::InsertMember(const std::string name, const size_t offset)
     m_Elements.push_back(Element{name, GetType<T>(), offset});
 }
 
-} // end namespace
+} // end namespace adios2
 
 #endif /* ADIOS2_CORE_VARIABLECOMPOUND_TCC_ */
