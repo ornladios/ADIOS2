@@ -97,11 +97,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
         // Create the BP Engine
         io.SetEngine("BPFileWriter");
 
-#ifdef ADIOS2_HAVE_MPI
-        io.AddTransport("file", {{"library", "MPI"}});
-#else
         io.AddTransport("file");
-#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -247,6 +243,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
 
         // Create the BP Engine
         io.SetEngine("BPFileWriter");
+
         io.AddTransport("File");
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);

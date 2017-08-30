@@ -86,11 +86,8 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         // Create the ADIOS 1 Engine
         io.SetEngine("BPFileWriter");
 
-#ifdef ADIOS2_HAVE_MPI
-        io.AddTransport("file", {{"library", "MPI"}});
-#else
         io.AddTransport("file");
-#endif
+
         // QUESTION: It seems that BPFilterWriter cannot overwrite existing
         // files
         // Ex. if you tune Nx and NSteps, the test would fail. But if you clear
@@ -383,11 +380,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
 
         // Create the BP Engine
         io.SetEngine("BPFileWriter");
-#ifdef ADIOS2_HAVE_MPI
-        io.AddTransport("file", {{"library", "MPI"}});
-#else
         io.AddTransport("file");
-#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -685,11 +678,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         // Create the ADIOS 1 Engine
         io.SetEngine("BPFileWriter");
 
-#ifdef ADIOS2_HAVE_MPI
-        io.AddTransport("file", {{"library", "MPI"}});
-#else
         io.AddTransport("file");
-#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
