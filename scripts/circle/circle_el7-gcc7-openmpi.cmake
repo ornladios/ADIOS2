@@ -17,7 +17,7 @@ module(purge)
 module(load gnu7)
 module(load openmpi)
 module(load phdf5)
-module(load netcdf)
+module(load python)
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
@@ -30,9 +30,11 @@ ADIOS2_USE_DataMan:STRING=ON
 ADIOS2_USE_Fortran:STRING=ON
 ADIOS2_USE_HDF5:STRING=ON
 ADIOS2_USE_MPI:STRING=ON
-ADIOS2_USE_Python:STRING=ON
+ADIOS2_USE_Python:STRING=OFF
 ADIOS2_USE_ZFP:STRING=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
+ZFP_ROOT:PATH=/opt/zfp/install
+ADIOS1_ROOT:PATH=/opt/adios1/1.12.0/gnu7_openmpi
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)

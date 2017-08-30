@@ -29,6 +29,8 @@ ADIOS2_USE_MPI:STRING=OFF
 ADIOS2_USE_Python:STRING=ON
 ADIOS2_USE_ZFP:STRING=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
+ZFP_ROOT:PATH=/opt/zfp/install
+ADIOS1_ROOT:PATH=/opt/adios1/1.12.0/gnu48
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)
