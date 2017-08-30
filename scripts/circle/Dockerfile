@@ -1,69 +1,67 @@
-FROM centos:centos7.3.1611
+FROM centos:centos7
 
-RUN yum -y update && \
-    yum -y install \
-        bzip2-devel.x86_64 \
-        curl \
-        gcc \
-        gcc-c++ \
-        gcc-gfortran \
-        git \
-        gmake \
-        hdf5-devel.x86_64 \
-        numpy.x86_64 \
-        python-devel.x86_64 \
-        https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+# Install extra repos
+RUN yum -y install epel-release https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm && \
+    yum -y upgrade
 
-RUN yum -y update && \
-    yum -y install \
-        czmq-devel \
-        mpi4py-openmpi.x86_64 \
-        ohpc-base \
-        openmpi-gnu7-ohpc \
-        phdf5-gnu7-openmpi-ohpc \
-        netcdf-gnu7-openmpi-ohpc
+# Install core dev packages
+RUN yum -y install \
+      curl file \
+      gcc gcc-c++ gcc-gfortran \
+      git make autoconf automake libtool\
+      bzip2-devel zeromq-devel hdf5-devel \
+      python-devel numpy
 
-WORKDIR /home/adios2
+# Install gcc7 OpenHPC packages
+RUN yum -y install \
+      lmod-ohpc gnu7-compilers-ohpc openmpi-gnu7-ohpc phdf5-gnu7-openmpi-ohpc \
+      python-numpy-gnu7-ohpc
 
-# Now get some packages from source and build them, starting with CMake
+# Install the CMake binary
+WORKDIR /opt/cmake/3.6.0
+RUN curl -L https://cmake.org/files/v3.6/cmake-3.6.0-Linux-x86_64.tar.gz | \
+      tar --strip-components=1 -xzv
 
-RUN curl -O https://cmake.org/files/v3.6/cmake-3.6.0-Linux-x86_64.tar.gz && \
-    mkdir -p /opt/cmake && \
-    cd /opt/cmake && \
-    tar -zxvf /home/adios2/cmake-3.6.0-Linux-x86_64.tar.gz && \
-    rm -rf /home/adios2/cmake-3.6.0-Linux-x86_64.tar.gz && \
-    ln -s /opt/cmake/cmake-3.6.0-Linux-x86_64/bin/cmake /usr/local/bin/cmake && \
-    ln -s /opt/cmake/cmake-3.6.0-Linux-x86_64/bin/cpack /usr/local/bin/cpack && \
-    ln -s /opt/cmake/cmake-3.6.0-Linux-x86_64/bin/ctest /usr/local/bin/ctest && \
-
-# Clone and build zfp master
-
-    mkdir /opt/zfp && \
-    cd /opt/zfp && \
-    mkdir build install && \
+# ZFP
+WORKDIR /opt/zfp
+RUN mkdir build install && \
     git clone https://github.com/LLNL/zfp.git src && \
     cd build && \
-    cmake -DCMAKE_INSTALL_PREFIX:String=/opt/zfp/install ../src/ && \
-    make install && \
+    /opt/cmake/3.6.0/bin/cmake \
+      -DCMAKE_INSTALL_PREFIX=/opt/zfp/install \
+      ../src && \
+    make -j8 install && \
     cd ../ && \
-    rm -rf build src && \
+    rm -rf build src
 
-# Clone ADIOS1 and build two versions
+# ADIOS1
 
-    mkdir -p /opt/adios1/1.12.0 && \
-    cd /opt/adios1/1.12.0 && \
-    curl -OL https://github.com/ornladios/ADIOS/archive/v1.12.0.tar.gz && \
-    tar -zxvf v1.12.0.tar.gz && \
+# Source setup
+WORKDIR /opt/adios1/1.12.0
+RUN mkdir source && \
+    curl -L https://github.com/ornladios/ADIOS/archive/v1.12.0.tar.gz | \
+      tar -C source --strip-components=1 -xzv && \
+    cd source && ./autogen.sh
+
+# GCC 4.8
+RUN cd source && \
+    CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" FCFLAGS="-O2 -fPIC" \
+      ./configure --prefix=/opt/adios1/1.12.0/gnu48 --without-mpi && \
+    make -j8 install && \
+    make distclean
     
-    mkdir build-gnu-485 build-gnu-710 && \
-    mkdir gnu-4.8.5 gnu-7.1.0 && \
-    cd build-gnu-485 && \
+# GCC 7
+RUN cd source && \
+    . /etc/profile && \
+    module load gnu7 openmpi phdf5 && \
+    CFLAGS="-O2 -fPIC" CXXFLAGS="-O2 -fPIC" FCFLAGS="-O2 -fPIC" \
+      ./configure --prefix=/opt/adios1/1.12.0/gnu7_openmpi && \
+    make -j8 install
 
-    cd /opt/adios1/1.12.0 && \
-    rm -rf ADIOS-1.12.0 build-gnu-485 build-gnu-710 v1.12.0.tar.gz && \
+# Cleanup
+RUN rm -rf /opt/adios1/1.12.0/source
 
 # Make the directory where CircleCI can clone the ADIOS2 source
-
-    mkdir -p /home/adios2/hidecirclesource
+RUN mkdir -p /home/adios2/source
 
 WORKDIR /home/adios2
