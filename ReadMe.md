@@ -1,4 +1,8 @@
+[![GitHub (pre-)release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
+[![GitHub license](http://dmlc.github.io/img/apache2.svg)](./LICENSE)
 [![CircleCI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
+[![Build Status](https://travis-ci.org/ornladios/adios2.svg)](https://travis-ci.org/ornladios/adios2)
+
 
 # Adaptable Input / Output System (ADIOS) v2.0
 This is v2.0 of the ADIOS I/O system, developed as part of the
