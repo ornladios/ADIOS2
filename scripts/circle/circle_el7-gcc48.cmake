@@ -9,7 +9,7 @@ set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 set(dashboard_model Experimental)
 set(dashboard_binary_name "build-$ENV{CIRCLE_JOB}")
 
-set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}")
+set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}/source")
 set(CTEST_DASHBOARD_ROOT "$ENV{HOME}")
 
 include(${CMAKE_CURRENT_LIST_DIR}/EnvironmentModules.cmake)
@@ -29,6 +29,8 @@ ADIOS2_USE_MPI:STRING=OFF
 ADIOS2_USE_Python:STRING=ON
 ADIOS2_USE_ZFP:STRING=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
+ZFP_ROOT_DIR:PATH=/opt/zfp/install
+ADIOS1_ROOT:PATH=/opt/adios1/1.12.0/gnu48
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)

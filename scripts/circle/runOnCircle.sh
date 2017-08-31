@@ -12,7 +12,8 @@ check_var CIRCLE_WORKING_DIRECTORY
 check_var CIRCLE_BRANCH
 check_var CIRCLE_JOB
 
-CTEST_SCRIPT="${CIRCLE_WORKING_DIRECTORY}/scripts/circle/circle_${CIRCLE_JOB}.cmake"
+SOURCE_DIR=${CIRCLE_WORKING_DIRECTORY}/source
+CTEST_SCRIPT="${SOURCE_DIR}/scripts/circle/circle_${CIRCLE_JOB}.cmake"
 
 if [ ! -f "${CTEST_SCRIPT}" ]
 then
@@ -30,4 +31,4 @@ case "$1" in
     ;;
 esac
 
-ctest -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE
+/opt/cmake/3.6.0/bin/ctest -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE
