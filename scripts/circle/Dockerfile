@@ -13,8 +13,7 @@ RUN yum -y install \
 
 # Install gcc7 OpenHPC packages
 RUN yum -y install \
-      lmod-ohpc gnu7-compilers-ohpc openmpi-gnu7-ohpc phdf5-gnu7-openmpi-ohpc \
-      python-numpy-gnu7-ohpc
+      lmod-ohpc gnu7-compilers-ohpc openmpi-gnu7-ohpc phdf5-gnu7-openmpi-ohpc
 
 # Cleanup headers and packages
 RUN yum clean all
@@ -63,14 +62,23 @@ RUN cd source && \
 # Cleanup
 RUN rm -rf /opt/adios1/1.12.0/source
 
+# mpi4py
+WORKDIR /opt
+RUN . /etc/profile && \
+    module purge && \
+    module load gnu7 openmpi && \
+    curl -L https://bitbucket.org/mpi4py/mpi4py/downloads/mpi4py-2.0.0.tar.gz | \
+      tar -xzv && \
+    cd mpi4py-2.0.0 && \
+    python setup.py build && \
+    python setup.py install && \
+    cd ../ && rm -rf mpi4py-2.0.0
+
 # Create a non-root user to run the builds/tests
 RUN export uid=1001 gid=1001 && \
     mkdir -p /home/adios2 && \
     echo "adios2:x:${uid}:${gid}:adios2,,,:/home/adios2:/bin/bash" >> /etc/passwd && \
     echo "adios2:x:${uid}:" >> /etc/group && \
-    mkdir -p /etc/sudoers.d && \
-    echo "adios2 ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/adios2 && \
-    chmod 0440 /etc/sudoers.d/adios2 && \
     chown ${uid}:${gid} -R /home/adios2
 
 USER adios2
