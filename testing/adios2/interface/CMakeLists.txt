@@ -24,10 +24,10 @@ if(ADIOS2_HAVE_MPI)
 
   set(extra_test_args
     EXEC_WRAPPER
-      ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2#${MPIEXEC_MAX_NUMPROCS}
+      ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
   )
 endif()
 
 gtest_add_tests(TARGET TestADIOSInterfaceWrite ${extra_test_args})
-gtest_add_tests(TARGET TestADIOSDefineVariable)
+gtest_add_tests(TARGET TestADIOSDefineVariable ${extra_test_args})
 gtest_add_tests(TARGET TestADIOSDefineAttribute ${extra_test_args})

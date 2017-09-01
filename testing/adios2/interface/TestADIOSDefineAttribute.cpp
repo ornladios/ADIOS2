@@ -23,12 +23,18 @@ protected:
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
 {
+    int mpiRank = 0, mpiSize = 1;
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+    std::string name = std::string("attributeString") + std::to_string(mpiRank);
+
     // Attribute should be unique per process
-    auto &attributeString1 =
-        io.DefineAttribute<std::string>("attributeString", "-1");
+    auto &attributeString1 = io.DefineAttribute<std::string>(name, "-1");
 
     EXPECT_THROW(auto &attributeString2 =
-                     io.DefineAttribute<std::string>("attributeString", "0"),
+                     io.DefineAttribute<std::string>(name, "0"),
                  std::invalid_argument);
 
     EXPECT_THROW(auto &attributeString2 =
@@ -36,7 +42,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
                  std::invalid_argument);
 
     EXPECT_NO_THROW(auto &attributeString3 =
-                        io.GetAttribute<std::string>("attributeString"));
+                        io.GetAttribute<std::string>(name));
 }
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
