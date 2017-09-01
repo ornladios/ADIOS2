@@ -847,6 +847,8 @@ void SystemTools::ReplaceString(std::string& source, const char* replace,
   free(orig);
 }
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+
 #if defined(KEY_WOW64_32KEY) && defined(KEY_WOW64_64KEY)
 #define KWSYS_ST_KEY_WOW64_32KEY KEY_WOW64_32KEY
 #define KWSYS_ST_KEY_WOW64_64KEY KEY_WOW64_64KEY
@@ -855,7 +857,6 @@ void SystemTools::ReplaceString(std::string& source, const char* replace,
 #define KWSYS_ST_KEY_WOW64_64KEY 0x0100
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
 static bool SystemToolsParseRegistryKey(const std::string& key,
                                         HKEY& primaryKey, std::string& second,
                                         std::string& valuename)
@@ -2268,11 +2269,7 @@ bool SystemTools::CopyADirectory(const std::string& source,
                                  const std::string& destination, bool always)
 {
   Directory dir;
-#ifdef _WIN32
-  dir.Load(Encoding::ToNarrow(Encoding::ToWindowsExtendedPath(source)));
-#else
   dir.Load(source);
-#endif
   size_t fileNum;
   if (!SystemTools::MakeDirectory(destination)) {
     return false;
@@ -2625,11 +2622,7 @@ bool SystemTools::RemoveADirectory(const std::string& source)
   }
 
   Directory dir;
-#ifdef _WIN32
-  dir.Load(Encoding::ToNarrow(Encoding::ToWindowsExtendedPath(source)));
-#else
   dir.Load(source);
-#endif
   size_t fileNum;
   for (fileNum = 0; fileNum < dir.GetNumberOfFiles(); ++fileNum) {
     if (strcmp(dir.GetFile(static_cast<unsigned long>(fileNum)), ".") &&
@@ -3796,11 +3789,7 @@ std::string SystemTools::GetFilenamePath(const std::string& filename)
  */
 std::string SystemTools::GetFilenameName(const std::string& filename)
 {
-#if defined(_WIN32)
   std::string::size_type slash_pos = filename.find_last_of("/\\");
-#else
-  std::string::size_type slash_pos = filename.rfind('/');
-#endif
   if (slash_pos != std::string::npos) {
     return filename.substr(slash_pos + 1);
   } else {
