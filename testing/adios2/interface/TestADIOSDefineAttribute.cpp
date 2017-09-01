@@ -371,17 +371,17 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
         generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
 
     std::string mpiRankString = std::to_string(mpiRank);
-    std::string s3_Single = std::string("s3_Single_") + mpiRankString;
-    std::string i8_Single = std::string("i8_Single_") + mpiRankString;
-    std::string i16_Single = std::string("i16_Single_") + mpiRankString;
-    std::string i32_Single = std::string("i32_Single_") + mpiRankString;
-    std::string i64_Single = std::string("i64_Single_") + mpiRankString;
-    std::string u8_Single = std::string("u8_Single_") + mpiRankString;
-    std::string u16_Single = std::string("u16_Single_") + mpiRankString;
-    std::string u32_Single = std::string("u32_Single_") + mpiRankString;
-    std::string u64_Single = std::string("u64_Single_") + mpiRankString;
-    std::string float_Single = std::string("float_Single_") + mpiRankString;
-    std::string double_Single = std::string("double_Single_") + mpiRankString;
+    std::string s3_Single = std::string("s3_Array_") + mpiRankString;
+    std::string i8_Single = std::string("i8_Array_") + mpiRankString;
+    std::string i16_Single = std::string("i16_Array_") + mpiRankString;
+    std::string i32_Single = std::string("i32_Array_") + mpiRankString;
+    std::string i64_Single = std::string("i64_Array_") + mpiRankString;
+    std::string u8_Single = std::string("u8_Array_") + mpiRankString;
+    std::string u16_Single = std::string("u16_Array_") + mpiRankString;
+    std::string u32_Single = std::string("u32_Array_") + mpiRankString;
+    std::string u64_Single = std::string("u64_Array_") + mpiRankString;
+    std::string float_Single = std::string("float_Array_") + mpiRankString;
+    std::string double_Single = std::string("double_Array_") + mpiRankString;
 
     // Define ADIOS global value
     {

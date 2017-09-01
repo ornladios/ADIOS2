@@ -28,6 +28,6 @@ if(ADIOS2_HAVE_MPI)
   )
 endif()
 
-gtest_add_tests(TARGET TestADIOSInterfaceWrite)
+gtest_add_tests(TARGET TestADIOSInterfaceWrite ${extra_test_args})
 gtest_add_tests(TARGET TestADIOSDefineVariable)
 gtest_add_tests(TARGET TestADIOSDefineAttribute ${extra_test_args})
