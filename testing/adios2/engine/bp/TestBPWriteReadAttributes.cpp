@@ -57,7 +57,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
     std::string double_Single = std::string("double_Single_") + mpiRankString;
 
     // When collective meta generation has landed, use
-    // generateNewSmallTestData(m_TestData, 0, 0, mpiSize);
+    // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
     // Generate current testing data
     SmallTestData currentTestData =
         generateNewSmallTestData(m_TestData, 0, 0, 0);
