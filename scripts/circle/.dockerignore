@@ -1,3 +1,4 @@
 runOnCircle.sh
 postComment.sh
 *.cmake
+findStatus.py

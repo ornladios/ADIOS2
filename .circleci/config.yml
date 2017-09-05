@@ -4,14 +4,17 @@ defaults: &defaults
     - checkout:
         path: /home/adios2/source
     - run:
+        name: Update
+        command: bash source/scripts/circle/runOnCircle.sh update
+    - run:
         name: Configure
-        command: bash --login source/scripts/circle/runOnCircle.sh configure
+        command: bash source/scripts/circle/runOnCircle.sh configure
     - run:
         name: Build
-        command: bash --login source/scripts/circle/runOnCircle.sh build
+        command: bash source/scripts/circle/runOnCircle.sh build
     - run:
         name: Test
-        command: bash --login source/scripts/circle/runOnCircle.sh test
+        command: bash source/scripts/circle/runOnCircle.sh test
 
 version: 2
 

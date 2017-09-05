@@ -33,6 +33,7 @@
 #   dashboard_cache       = Initial CMakeCache.txt file content
 
 #   dashboard_do_checkout  = True to enable source checkout via git
+#   dashboard_do_update    = True to enable the Update step
 #   dashboard_do_configure = True to enable the Configure step
 #   dashboard_do_build     = True to enable the Build step
 #   dashboard_do_test      = True to enable the Test step
@@ -68,6 +69,10 @@ if(NOT DEFINED dashboard_full)
 endif()
 
 # Initialize all build steps to "ON"
+if(NOT DEFINED dashboard_do_update)
+  set(dashboard_do_update ${dashboard_full})
+endif()
+
 if(NOT DEFINED dashboard_do_checkout)
   set(dashboard_do_checkout ${dashboard_full})
 endif()
@@ -94,7 +99,7 @@ if(NOT DEFINED dashboard_do_memcheck)
 endif()
 
 if(NOT DEFINED dashboard_fresh)
-  if(dashboard_full OR dashboard_do_configure)
+  if(dashboard_full OR dashboard_do_update)
     set(dashboard_fresh TRUE)
   else()
     set(dashboard_fresh FALSE)
@@ -366,6 +371,18 @@ if(dashboard_fresh)
   endif()
 else()
   ctest_start(${dashboard_model} APPEND)
+endif()
+
+# Look for updates.
+if(dashboard_do_update)
+  if(COMMAND dashboard_hook_update)
+    dashboard_hook_update()
+  endif()
+  message("Calling ctest_update...")
+  ctest_update(RETURN_VALUE count)
+  set(CTEST_CHECKOUT_COMMAND) # checkout on first iteration only
+  message("Found ${count} changed files")
+  ctest_submit(PARTS Update)
 endif()
 
 if(dashboard_do_configure)

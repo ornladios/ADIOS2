@@ -1,14 +1,15 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "CircleCI")
-set(CTEST_BUILD_NAME "$ENV{CIRCLE_BRANCH}_$ENV{CIRCLE_JOB}")
 set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 
 set(dashboard_model Experimental)
-set(dashboard_binary_name "build-$ENV{CIRCLE_JOB}")
+set(dashboard_binary_name "build_$ENV{CIRCLE_JOB}")
 
+set(CTEST_GIT_COMMAND "/usr/bin/git")
+set(CTEST_UPDATE_VERSION_ONLY TRUE)
 set(CTEST_SOURCE_DIRECTORY "$ENV{CIRCLE_WORKING_DIRECTORY}/source")
 set(CTEST_DASHBOARD_ROOT "$ENV{HOME}")
 

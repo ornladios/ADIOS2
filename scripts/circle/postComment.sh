@@ -37,3 +37,4 @@ for i in "${ADDR[@]}"; do
       echo "Unable to find PR number in ${i}"
     fi
 done
+
