@@ -4,14 +4,14 @@ API_BASE="https://api.github.com/repos/ornladios/adios2"
 USER=${STATUS_ROBOT_NAME}
 TOKEN=${STATUS_ROBOT_KEY}
 COMMIT=${CIRCLE_SHA1}
-CDASH_STATUS_CONTEXT="cdash-results-link"
+CDASH_STATUS_CONTEXT="cdash"
 
 build_status_body() {
   cat <<EOF
 {
   "state": "success",
   "target_url": "https://open.cdash.org/index.php?compare1=61&filtercount=1&field1=revision&project=ADIOS&showfilters=0&limit=100&value1=${COMMIT}&showfeed=0",
-  "description": "Build and test results can also be viewed on CDash",
+  "description": "Build and test results available on CDash",
   "context": "${CDASH_STATUS_CONTEXT}"
 }
 EOF
