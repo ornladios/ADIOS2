@@ -31,6 +31,7 @@
 #   dashboard_source_name = Name of source directory (CMake)
 #   dashboard_binary_name = Name of binary directory (CMake-build)
 #   dashboard_cache       = Initial CMakeCache.txt file content
+#   dashboard_track       = The name of the CDash "Track" to submit to
 
 #   dashboard_do_checkout  = True to enable source checkout via git
 #   dashboard_do_update    = True to enable the Update step
@@ -129,6 +130,7 @@ endif()
 if(NOT "${dashboard_model}" MATCHES "^(Nightly|Experimental)$")
   message(FATAL_ERROR "dashboard_model must be Nightly or Experimental")
 endif()
+
 
 # Default to a Debug build.
 if(NOT DEFINED CTEST_BUILD_CONFIGURATION)
@@ -359,18 +361,21 @@ if(dashboard_fresh)
 endif()
 
 # Start a new submission.
+if(dashboard_track)
+  set(dashboard_track_arg TRACK "${dashboard_track}")
+endif()
 message("Calling ctest_start")
 if(dashboard_fresh)
   if(COMMAND dashboard_hook_start)
     dashboard_hook_start()
   endif()
-  ctest_start(${dashboard_model})
+  ctest_start(${dashboard_model} ${dashboard_track_arg})
   ctest_submit(PARTS Start)
   if(COMMAND dashboard_hook_started)
     dashboard_hook_started()
   endif()
 else()
-  ctest_start(${dashboard_model} APPEND)
+  ctest_start(${dashboard_model} ${dashboard_track_arg} APPEND)
 endif()
 
 # Look for updates.

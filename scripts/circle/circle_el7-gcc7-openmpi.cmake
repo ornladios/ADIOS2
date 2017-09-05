@@ -7,6 +7,7 @@ set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 
 set(dashboard_model Experimental)
 set(dashboard_binary_name "build_$ENV{CIRCLE_JOB}")
+set(dashboard_track "Continuous Integration")
 
 set(CTEST_GIT_COMMAND "/usr/bin/git")
 set(CTEST_UPDATE_VERSION_ONLY TRUE)
