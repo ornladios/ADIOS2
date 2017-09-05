@@ -278,11 +278,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
         // Create the ADIOS 1 Engine
         io.SetEngine("HDF5Writer");
 
-#ifdef ADIOS2_HAVE_MPI
-        io.AddTransport("file", {{"library", "MPI"}});
-#else
+        // HDf5 engine calls the HDF5 common object that calls the hDF5 library.
+        // The IO functionality, SetParameters and AddTransports will be added
+        // in the future. For now `io.AddTransport("file", {
+        // "library", "MPI"}});` is omitted.
+        // })
         io.AddTransport("file");
-#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -540,11 +541,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
         // Create the ADIOS 1 Engine
         io.SetEngine("HDF5Writer");
 
-#ifdef ADIOS2_HAVE_MPI
-        io.AddTransport("file", {{"library", "MPI"}});
-#else
+        // HDf5 engine calls the HDF5 common object that calls the hDF5 library.
+        // The IO functionality, SetParameters and AddTransports will be added
+        // in the future. For now `io.AddTransport("file", {
+        // "library", "MPI"}});` is omitted.
+        // })
         io.AddTransport("file");
-#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
@@ -815,11 +817,12 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
         // Create the ADIOS 1 Engine
         io.SetEngine("HDF5Writer");
 
-#ifdef ADIOS2_HAVE_MPI
-        io.AddTransport("file", {{"library", "MPI"}});
-#else
+        // HDf5 engine calls the HDF5 common object that calls the hDF5 library.
+        // The IO functionality, SetParameters and AddTransports will be added
+        // in the future. For now `io.AddTransport("file", {
+        // "library", "MPI"}});` is omitted.
+        // })
         io.AddTransport("file");
-#endif
 
         auto engine = io.Open(fname, adios2::OpenMode::Write);
         ASSERT_NE(engine.get(), nullptr);
