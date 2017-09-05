@@ -1,0 +1,18 @@
+#------------------------------------------------------------------------------#
+# Distributed under the OSI-approved Apache License, Version 2.0.  See
+# accompanying file Copyright.txt for details.
+#------------------------------------------------------------------------------#
+
+list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
+  # A common warning from system-supplied python headers
+  ".*python.*warning:.*_POSIX_C_SOURCE.*redefined"
+  ".*python.*warning:.*_XOPEN_SOURCE.*redefined"
+)
+
+list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
+  # Exclude third party libraries from coverage results
+  "/thirdparty"
+
+  # Exclude try_compile sources from coverage results
+  "/CMakeFiles/CMakeTmp/"
+)

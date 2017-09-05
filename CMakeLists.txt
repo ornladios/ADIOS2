@@ -143,13 +143,17 @@ endif()
 unset(BUILD_TESTING)
 option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree" 
        ${ADIOS2_BUILD_TESTING_DEFAULT})
-       
+
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(testing)
 endif()
+configure_file(
+  ${ADIOS2_SOURCE_DIR}/CTestCustom.cmake.in
+  ${ADIOS2_BINARY_DIR}/CTestCustom.cmake @ONLY
+)
 
 #------------------------------------------------------------------------------#
 # Generating package configs
