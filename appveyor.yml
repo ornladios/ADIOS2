@@ -8,5 +8,8 @@ os: Visual Studio 2015
 platform:
   - x86
 
+before_build:
+- del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+
 build_script:
 - cmd: ctest.exe -VV -S scripts/appveyor/av_default.cmake -Ddashboard_full=ON -DCTEST_BUILD_NAME=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH%_%APPVEYOR_BUILD_NUMBER%_msvc
