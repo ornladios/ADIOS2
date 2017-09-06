@@ -30,4 +30,6 @@ ADIOS2_USE_ZFP:STRING=OFF
 ADIOS2_USE_ZeroMQ:STRING=OFF
 ")
 
+message("Inside av_default.cmake, about to include adios_common")
+
 include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)
