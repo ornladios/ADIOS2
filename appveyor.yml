@@ -2,7 +2,9 @@ version: 1.0.{build}
 
 skip_branch_with_pr: true
 
-os: Visual Studio 2015
+os: 
+  - Visual Studio 2015
+  - Visual Studio 2017
 
 platform:
   - x86
@@ -10,27 +12,30 @@ platform:
 before_build:
 - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 - if not exist C:\projects\adios2build\NUL echo 'Build tree does not yet exist'
+- set CUSTOM_BUILD_NAME=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH%_%APPVEYOR_BUILD_NUMBER%_%APPVEYOR_BUILD_WORKER_IMAGE%
 - ctest.exe
   -VV -S ../adios2/scripts\appveyor\av_default.cmake
   -Ddashboard_full=OFF
   -Ddashboard_do_update=true
-  -DCTEST_BUILD_NAME=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH%_%APPVEYOR_BUILD_NUMBER%_vs-2015
+  -DCTEST_BUILD_NAME=%CUSTOM_BUILD_NAME%
 
 build_script:
+- set CUSTOM_BUILD_NAME=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH%_%APPVEYOR_BUILD_NUMBER%_%APPVEYOR_BUILD_WORKER_IMAGE%
 - ctest.exe
   -VV -S ../adios2/scripts\appveyor\av_default.cmake
   -Ddashboard_full=OFF
   -Ddashboard_do_configure=true
-  -DCTEST_BUILD_NAME=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH%_%APPVEYOR_BUILD_NUMBER%_vs-2015
+  -DCTEST_BUILD_NAME=%CUSTOM_BUILD_NAME%
 - ctest.exe
   -VV -S ../adios2/scripts\appveyor\av_default.cmake
   -Ddashboard_full=OFF
   -Ddashboard_do_build=true
-  -DCTEST_BUILD_NAME=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH%_%APPVEYOR_BUILD_NUMBER%_vs-2015
+  -DCTEST_BUILD_NAME=%CUSTOM_BUILD_NAME%
 
 test_script:
+- set CUSTOM_BUILD_NAME=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH%_%APPVEYOR_BUILD_NUMBER%_%APPVEYOR_BUILD_WORKER_IMAGE%
 - ctest.exe
   -VV -S ../adios2/scripts\appveyor\av_default.cmake
   -Ddashboard_full=OFF
   -Ddashboard_do_test=true
-  -DCTEST_BUILD_NAME=%APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH%_%APPVEYOR_BUILD_NUMBER%_vs-2015
+  -DCTEST_BUILD_NAME=%CUSTOM_BUILD_NAME%
