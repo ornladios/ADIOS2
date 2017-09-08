@@ -1,4 +1,3 @@
-message("Adding thirdparty subdirectories")
 add_subdirectory(KWSys)
 add_subdirectory(NLohmannJson)
 add_subdirectory(pugixml)

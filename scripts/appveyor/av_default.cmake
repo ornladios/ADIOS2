@@ -5,6 +5,8 @@ set(CTEST_CMAKE_GENERATOR "Visual Studio 14 2015 Win64")
 # set(CTEST_BUILD_FLAGS "-k -j4")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 
+message("av_default.cmake, CTEST_BUILD_NAME=${CTEST_BUILD_NAME}, push build notes is ADIOS_CTEST_SUBMIT_NOTES=${ADIOS_CTEST_SUBMIT_NOTES}")
+
 set(dashboard_model Experimental)
 set(dashboard_binary_name "build_visual-studio")
 set(dashboard_track "Continuous Integration")
@@ -13,10 +15,6 @@ set(CTEST_GIT_COMMAND "git.exe")
 set(CTEST_UPDATE_VERSION_ONLY TRUE)
 set(CTEST_SOURCE_DIRECTORY "$ENV{APPVEYOR_BUILD_FOLDER}")
 set(CTEST_DASHBOARD_ROOT "C:/projects/adios2build")
-
-# set(ENV{CC}  gcc)
-# set(ENV{CXX} g++)
-# set(ENV{FC}  gfortran)
 
 set(dashboard_cache "
 ADIOS2_USE_ADIOS1:STRING=OFF
@@ -29,7 +27,5 @@ ADIOS2_USE_Python:STRING=OFF
 ADIOS2_USE_ZFP:STRING=OFF
 ADIOS2_USE_ZeroMQ:STRING=OFF
 ")
-
-message("Inside av_default.cmake, about to include adios_common")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)
