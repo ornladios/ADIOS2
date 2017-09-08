@@ -90,7 +90,7 @@ adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
 adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
-adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
+adios_option(Fortran   "Enable support for Fortran bindings" OFF)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 include(${ADIOS2_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
