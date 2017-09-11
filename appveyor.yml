@@ -10,9 +10,9 @@ platform:
   - x86
 
 before_build:
-- del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+- del /q /f "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 - ps: |
-    $env:CUSTOM_BUILD_NAME = ("{0}_{1}_{2}" -f $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_BUILD_WORKER_IMAGE -replace " ","-" )
+    $env:CUSTOM_BUILD_NAME = ("{0}_{1}_vs{2}" -f $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_BUILD_WORKER_IMAGE.split()[2] )
     if ($env:APPVEYOR_BUILD_WORKER_IMAGE -eq "Visual Studio 2015")
     {
       Write-Host "This build will push the shared notes"
