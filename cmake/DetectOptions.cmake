@@ -33,23 +33,30 @@ if(ZFP_FOUND)
   set(ADIOS2_HAVE_ZFP TRUE)
 endif()
 
+set(mpi_find_components C)
+
+# Fortran
+if(ADIOS2_USE_Fortran STREQUAL AUTO)
+  # Currently auto-detection for language support does not work in CMake.  See
+  # documentation for the "enable_language" command
+  message(WARN "Auto-detection of Fortran is not currently supported; Disabling")
+  #enable_language(Fortran OPTIONAL)
+elseif(ADIOS2_USE_Fortran)
+  enable_language(Fortran)
+endif()
+if(CMAKE_Fortran_COMPILER_LOADED)
+  set(ADIOS2_HAVE_Fortran TRUE)
+  list(APPEND mpi_find_components Fortran)
+endif()
+
 # MPI
 if(ADIOS2_USE_MPI STREQUAL AUTO)
-  find_package(MPI)
+  find_package(MPI COMPONENTS ${mpi_find_components})
 elseif(ADIOS2_USE_MPI)
-  find_package(MPI REQUIRED)
+  find_package(MPI COMPONENTS ${mpi_find_components} REQUIRED)
 endif()
 if(MPI_FOUND)
   set(ADIOS2_HAVE_MPI TRUE)
-endif()
-
-# Fortran
-if(ADIOS2_USE_Fortran)
-  set(ADIOS2_HAVE_Fortran TRUE)
-  enable_language(Fortran)
-  if(ADIOS2_HAVE_MPI)
-    find_package(MPI COMPONENTS Fortran REQUIRED)
-  endif()
 endif()
 
 # DataMan
