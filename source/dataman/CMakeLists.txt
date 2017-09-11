@@ -19,7 +19,7 @@ target_include_directories(dataman
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 target_link_libraries(dataman
-  PRIVATE adios2sys
+  PRIVATE adios2sys_interface
   PUBLIC NLohmannJson
 )
 set_target_properties(dataman PROPERTIES
