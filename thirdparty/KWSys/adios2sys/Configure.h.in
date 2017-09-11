@@ -71,7 +71,7 @@
 /* Setup the export macro.  */
 #if @KWSYS_BUILD_SHARED@
 #if defined(_WIN32) || defined(__CYGWIN__)
-#if defined(@KWSYS_NAMESPACE@_EXPORTS)
+#if defined(@KWSYS_DEFINE_SYMBOL@)
 #define @KWSYS_NAMESPACE@_EXPORT __declspec(dllexport)
 #else
 #define @KWSYS_NAMESPACE@_EXPORT __declspec(dllimport)

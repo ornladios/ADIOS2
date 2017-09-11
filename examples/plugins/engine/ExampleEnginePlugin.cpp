@@ -15,7 +15,7 @@
 #include <cstring>
 #include <ctime>
 
-#ifndef _WIN32_
+#ifndef _WIN32
 #include <sys/time.h>
 #endif
 
@@ -27,7 +27,7 @@ std::string now()
 #ifdef _WIN32
     time_t rawTime;
     std::time(&rawTime);
-    timeInfo = std::localtime(&rawtime);
+    timeInfo = std::localtime(&rawTime);
 #else
     timeval curTime;
     gettimeofday(&curTime, nullptr);
