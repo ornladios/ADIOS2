@@ -5,16 +5,35 @@
  * TestBPWriteTypes.c
  *
  *  Created on: Aug 9, 2017
- *      Author: wgodoy
+ *      Author: Haocheng
  */
 
 #include <adios2_c.h>
 
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
+
+#include <gtest/gtest.h>
+
 #include "SmallTestData_c.h"
 
-int main(int argc, char *argv[])
+class BPWriteTypes : public ::testing::Test
 {
+public:
+    BPWriteTypes() = default;
+};
+
+TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
+{
+    int rank(0), size(0);
+#ifdef ADIOS2_HAVE_MPI
+    adios2_ADIOS *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
     adios2_ADIOS *adiosH = adios2_init_nompi(adios2_debug_mode_on);
+#endif
 
     // IO
     adios2_IO *ioH = adios2_declare_io(adiosH, "CArrayTypes");
@@ -33,6 +52,7 @@ int main(int argc, char *argv[])
 
     // Define variables in ioH
     {
+
         adios2_define_variable(ioH, "varI8", adios2_type_char, 1, NULL, NULL,
                                count, adios2_constant_dims_true);
         adios2_define_variable(ioH, "varI16", adios2_type_short, 1, NULL, NULL,
@@ -88,5 +108,24 @@ int main(int argc, char *argv[])
 
     // deallocate adiosH
     adios2_finalize(adiosH);
-    return 0;
+}
+
+//******************************************************************************
+// main
+//******************************************************************************
+
+int main(int argc, char **argv)
+{
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(nullptr, nullptr);
+#endif
+
+    ::testing::InitGoogleTest(&argc, argv);
+    int result = RUN_ALL_TESTS();
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Finalize();
+#endif
+
+    return result;
 }
