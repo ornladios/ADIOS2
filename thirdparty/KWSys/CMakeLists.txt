@@ -12,5 +12,6 @@ endif()
 
 set(KWSYS_INSTALL_EXPORT_NAME adios2Exports)
 set(KWSYS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
+set(KWSYS_DEFINE_SYMBOL adios2_EXPORTS)
 
 add_subdirectory(adios2sys)
