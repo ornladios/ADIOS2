@@ -1,0 +1,47 @@
+version: 1.0.{build}
+
+skip_branch_with_pr: true
+
+os:
+  - Visual Studio 2015
+  - Visual Studio 2017
+
+platform:
+  - x86
+
+before_build:
+- del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+- ps: |
+    $env:CUSTOM_BUILD_NAME = ("{0}_{1}_{2}" -f $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_BUILD_WORKER_IMAGE -replace " ","-" )
+    if ($env:APPVEYOR_BUILD_WORKER_IMAGE -eq "Visual Studio 2015")
+    {
+      Write-Host "This build will push the shared notes"
+      $env:DO_PUSH_NOTES = "TRUE"
+    } else {
+    Write-Host "This build will only pushed the CMake cache"
+      $env:DO_PUSH_NOTES = "FALSE"
+    }
+- ctest.exe -VV -S ../adios2/scripts\appveyor\av_default.cmake
+    -Ddashboard_full=OFF
+    -Ddashboard_do_update=true
+    -DCTEST_BUILD_NAME=%CUSTOM_BUILD_NAME%
+    -DADIOS_CTEST_SUBMIT_NOTES=%DO_PUSH_NOTES%
+
+build_script:
+- ctest.exe -VV -S ../adios2/scripts\appveyor\av_default.cmake
+    -Ddashboard_full=OFF
+    -Ddashboard_do_configure=true
+    -DCTEST_BUILD_NAME=%CUSTOM_BUILD_NAME%
+    -DADIOS_CTEST_SUBMIT_NOTES=true
+- ctest.exe -VV -S ../adios2/scripts\appveyor\av_default.cmake
+    -Ddashboard_full=OFF
+    -Ddashboard_do_build=true
+    -DCTEST_BUILD_NAME=%CUSTOM_BUILD_NAME%
+    -DADIOS_CTEST_SUBMIT_NOTES=%DO_PUSH_NOTES%
+
+test_script:
+- ctest.exe -VV -S ../adios2/scripts\appveyor\av_default.cmake
+    -Ddashboard_full=OFF
+    -Ddashboard_do_test=true
+    -DCTEST_BUILD_NAME=%CUSTOM_BUILD_NAME%
+    -DADIOS_CTEST_SUBMIT_NOTES=%DO_PUSH_NOTES%

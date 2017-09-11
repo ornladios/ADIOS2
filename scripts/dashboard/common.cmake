@@ -283,12 +283,6 @@ endif()
 
 #-----------------------------------------------------------------------------
 
-# Send the main script as a note.
-list(APPEND CTEST_NOTES_FILES
-  "${CTEST_SCRIPT_DIRECTORY}/${CTEST_SCRIPT_NAME}"
-  "${CMAKE_CURRENT_LIST_FILE}"
-  )
-
 # Check for required variables.
 foreach(req
     CTEST_CMAKE_GENERATOR
@@ -387,7 +381,19 @@ if(dashboard_do_update)
   ctest_update(RETURN_VALUE count)
   set(CTEST_CHECKOUT_COMMAND) # checkout on first iteration only
   message("Found ${count} changed files")
-  ctest_submit(PARTS Update)
+
+  if(ADIOS_CTEST_SUBMIT_NOTES)
+    message("Submitting dashboard scripts as Notes")
+    # Send the main script as a note while submitting the Update part
+    set(CTEST_NOTES_FILES
+      "${CTEST_SCRIPT_DIRECTORY}/${CTEST_SCRIPT_NAME}"
+      "${CMAKE_CURRENT_LIST_FILE}"
+    )
+    ctest_submit(PARTS Update Notes)
+  else()
+    message("Skipping notes submission for Update step")
+    ctest_submit(PARTS Update)
+  endif()
 endif()
 
 if(dashboard_do_configure)
@@ -396,7 +402,14 @@ if(dashboard_do_configure)
   endif()
   message("Calling ctest_configure")
   ctest_configure(${dashboard_configure_args})
-  ctest_submit(PARTS Configure)
+  if(ADIOS_CTEST_SUBMIT_NOTES)
+    message("Submitting CMakeCache.txt as Notes")
+    set(CTEST_NOTES_FILES "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt")
+    ctest_submit(PARTS Configure Notes)
+  else()
+    message("Skipping notes submission for Configure step")
+    ctest_submit(PARTS Configure)
+  endif()
 endif()
 
 ctest_read_custom_files(${CTEST_BINARY_DIRECTORY})
