@@ -5,8 +5,7 @@
 
 if(ADIOS2_HAVE_MPI)
   add_executable(hello_adios1Writer helloADIOS1Writer.cpp)
-  target_include_directories(hello_adios1Writer PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(hello_adios1Writer ${MPI_C_LIBRARIES})
+  target_link_libraries(hello_adios1Writer MPI::MPI_C)
 else()
   add_executable(hello_adios1Writer helloADIOS1Writer_nompi.cpp)
 endif()

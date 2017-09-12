@@ -5,8 +5,7 @@
 
 if(ADIOS2_HAVE_MPI)
   add_executable(hello_bpZfpWrapper helloBPZfpWrapper.cpp)
-  target_include_directories(hello_bpZfpWrapper PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(hello_bpZfpWrapper ${MPI_C_LIBRARIES})
+  target_link_libraries(hello_bpZfpWrapper MPI::MPI_C)
   
 else()
   add_executable(hello_bpZfpWrapper helloBPZfpWrapper_nompi.cpp)
