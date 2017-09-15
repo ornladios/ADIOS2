@@ -155,7 +155,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeI64.m_Name, i64_Single);
     EXPECT_EQ(attributeI64.m_DataSingleValue, currentTestData.I64.front());
     EXPECT_EQ(attributeI64.m_Elements, 1);
-    EXPECT_EQ(attributeI64.m_Type, "long int");
+    EXPECT_EQ(sizeof(attributeI64.m_DataSingleValue), 8);
 
     ASSERT_EQ(attributeU8.m_IsSingleValue, true);
     ASSERT_EQ(attributeU8.m_DataArray.empty(), true);
@@ -183,7 +183,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeU64.m_Name, u64_Single);
     EXPECT_EQ(attributeU64.m_DataSingleValue, currentTestData.U64.front());
     EXPECT_EQ(attributeU64.m_Elements, 1);
-    EXPECT_EQ(attributeU64.m_Type, "unsigned long int");
+    EXPECT_EQ(sizeof(attributeU64.m_DataSingleValue), 8);
 
     ASSERT_EQ(attributeFloat.m_IsSingleValue, true);
     ASSERT_EQ(attributeFloat.m_DataArray.empty(), true);
@@ -305,7 +305,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     ASSERT_EQ(attributeI64.m_DataArray.empty(), false);
     EXPECT_EQ(attributeI64.m_Name, i64_Single);
     EXPECT_EQ(attributeI64.m_Elements, numberOfElements);
-    EXPECT_EQ(attributeI64.m_Type, "long int");
+    EXPECT_EQ(sizeof(attributeI64.m_DataSingleValue), 8);
 
     ASSERT_EQ(attributeU8.m_IsSingleValue, false);
     ASSERT_EQ(attributeU8.m_DataArray.empty(), false);
@@ -329,7 +329,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     ASSERT_EQ(attributeU64.m_DataArray.empty(), false);
     EXPECT_EQ(attributeU64.m_Name, u64_Single);
     EXPECT_EQ(attributeU64.m_Elements, numberOfElements);
-    EXPECT_EQ(attributeU64.m_Type, "unsigned long int");
+    EXPECT_EQ(sizeof(attributeU64.m_DataSingleValue), 8);
 
     ASSERT_EQ(attributeFloat.m_IsSingleValue, false);
     ASSERT_EQ(attributeFloat.m_DataArray.empty(), false);
@@ -480,7 +480,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     ASSERT_EQ(attributeI64.m_DataArray.empty(), false);
     EXPECT_EQ(attributeI64.m_Name, i64_Single);
     EXPECT_EQ(attributeI64.m_Elements, numberOfElements);
-    EXPECT_EQ(attributeI64.m_Type, "long int");
+    EXPECT_EQ(sizeof(attributeI64.m_DataSingleValue), 8);
 
     ASSERT_EQ(attributeU8.m_IsSingleValue, false);
     ASSERT_EQ(attributeU8.m_DataArray.empty(), false);
@@ -504,7 +504,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     ASSERT_EQ(attributeU64.m_DataArray.empty(), false);
     EXPECT_EQ(attributeU64.m_Name, u64_Single);
     EXPECT_EQ(attributeU64.m_Elements, numberOfElements);
-    EXPECT_EQ(attributeU64.m_Type, "unsigned long int");
+    EXPECT_EQ(sizeof(attributeU64.m_DataSingleValue), 8);
 
     ASSERT_EQ(attributeFloat.m_IsSingleValue, false);
     ASSERT_EQ(attributeFloat.m_DataArray.empty(), false);

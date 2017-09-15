@@ -9,7 +9,7 @@
             <parameter key="BufferGrowthFactor" value="2"/>
         </engine>
         <transport type="File">
-            <parameter key="Library" value="POSIX"/>
+            <parameter key="Library" value="fstream"/>
             <parameter key="ProfileUnits" value="Milliseconds"/>
         </transport>
     </io>
