@@ -151,7 +151,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_1x10)
     EXPECT_EQ(var_int64_t.m_Count.size(), 1);
     EXPECT_EQ(var_int64_t.m_Count[0], 10);
     EXPECT_EQ(var_int64_t.m_Name, name);
-    EXPECT_EQ(var_int64_t.m_Type, "long int");
+    EXPECT_EQ(var_int64_t.m_ElementSize, 8);
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_1x10)
@@ -283,7 +283,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_1x10)
     EXPECT_EQ(var_uint64_t.m_Count.size(), 1);
     EXPECT_EQ(var_uint64_t.m_Count[0], 10);
     EXPECT_EQ(var_uint64_t.m_Name, name);
-    EXPECT_EQ(var_uint64_t.m_Type, "unsigned long int");
+    EXPECT_EQ(var_uint64_t.m_ElementSize, 8);
 }
 
 // Rinse  and repeat for remaining types
@@ -422,7 +422,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_2x5)
     EXPECT_EQ(var_int64_t.m_Count[0], 2);
     EXPECT_EQ(var_int64_t.m_Count[1], 5);
     EXPECT_EQ(var_int64_t.m_Name, name);
-    EXPECT_EQ(var_int64_t.m_Type, "long int");
+    EXPECT_EQ(var_int64_t.m_ElementSize, 8);
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_2x5)
@@ -558,7 +558,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
     EXPECT_EQ(var_uint64_t.m_Count[0], 2);
     EXPECT_EQ(var_uint64_t.m_Count[1], 5);
     EXPECT_EQ(var_uint64_t.m_Name, name);
-    EXPECT_EQ(var_uint64_t.m_Type, "unsigned long int");
+    EXPECT_EQ(var_uint64_t.m_ElementSize, 8);
 }
 
 int main(int argc, char **argv)

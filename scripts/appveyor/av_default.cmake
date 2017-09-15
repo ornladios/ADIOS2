@@ -1,8 +1,8 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "AppVeyor")
 set(CTEST_BUILD_CONFIGURATION Release)
+set(CTEST_CONFIGURATION_TYPE Release)
 set(CTEST_CMAKE_GENERATOR "Visual Studio 14 2015 Win64")
-# set(CTEST_BUILD_FLAGS "-k -j4")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 
 message("av_default.cmake, CTEST_BUILD_NAME=${CTEST_BUILD_NAME}, push build notes is ADIOS_CTEST_SUBMIT_NOTES=${ADIOS_CTEST_SUBMIT_NOTES}")
