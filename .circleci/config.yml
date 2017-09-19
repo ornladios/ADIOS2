@@ -1,0 +1,37 @@
+defaults: &defaults
+  working_directory: /home/adios2
+  steps:
+    - checkout:
+        path: /home/adios2/source
+    - run:
+        name: Update
+        command: bash source/scripts/circle/runOnCircle.sh update
+    - run:
+        name: Configure
+        command: bash source/scripts/circle/runOnCircle.sh configure
+    - run:
+        name: Build
+        command: bash source/scripts/circle/runOnCircle.sh build
+    - run:
+        name: Test
+        command: bash source/scripts/circle/runOnCircle.sh test
+
+version: 2
+
+jobs:
+  "el7-gcc48":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-ohpc
+
+  "el7-gcc7-openmpi":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-ohpc
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - "el7-gcc48"
+      - "el7-gcc7-openmpi"

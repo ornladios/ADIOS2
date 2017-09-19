@@ -1,3 +1,11 @@
+[![GitHub (pre-)release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
+[![GitHub license](http://dmlc.github.io/img/apache2.svg)](./LICENSE)
+
+
+[![Circle CI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
+[![Travis CI](https://travis-ci.org/ornladios/ADIOS2.svg)](https://travis-ci.org/ornladios/ADIOS2)
+[![AppVeyor CI](https://ci.appveyor.com/api/projects/status/0s2a3qp57hgbvlhj?svg=true)](https://ci.appveyor.com/project/ornladios/adios2)
+
 # Adaptable Input / Output System (ADIOS) v2.0
 This is v2.0 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
@@ -72,6 +80,7 @@ ADIOS2 build configuration:
       HDF5     : ON
       ADIOS1   : OFF
       Python   : ON
+      C        : ON
       SysVShMem: ON
 
 -- Configuring done
@@ -92,6 +101,7 @@ The following options can be specified with CMake's `-DVAR=VALUE` syntax to cont
 | `ADIOS2_USE_HDF5`    | **`AUTO`**/``ON``/``OFF`` | Enable the [HDF5](https://www.hdfgroup.org) engine.                              |
 | `ADIOS2_USE_ADIOS1`  | **`AUTO`**/``ON``/``OFF`` | Enable the [ADIOS 1.x](https://www.olcf.ornl.gov/center-projects/adios/) engine. |
 | `ADIOS2_USE_Python`  | **`AUTO`**/``ON``/``OFF`` | Enable the Python >= 2.7 bindings. |
+| `ADIOS2_USE_C`       | **`AUTO`**/``ON``/``OFF`` | Enable the C bindings library libadios2_c.so or libadios2_c.a |
 
 Note: The `ADIOS2_USE_HDF5` and `ADIOS2_USE_ADIOS1` options require the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  SImilary, enabling MPI and Python bindings requires the presence of `mpi4py`.
 

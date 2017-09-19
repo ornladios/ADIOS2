@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.6)
 
 # Fail immediately if not using an out-of-source build
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
@@ -45,7 +45,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 include(ADIOSFunctions)
 
 # Default to a debug build if not specified
-if(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
@@ -59,18 +59,10 @@ include(CMakeDependentOption)
 # to that.  Otherwise base the default on whether or not shared libs are even
 # supported.
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
-if(DEFINED ADIOS2_BUILD_SHARED_LIBS)
-  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${ADIOS2_BUILD_SHARED_LIBS})
-elseif(DEFINED BUILD_SHARED_LIBS)
-  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${BUILD_SHARED_LIBS})
-else()
-  set(ADIOS2_BUILD_SHARED_LIBS_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(ADIOS2_BUILD_SHARED_LIBS
-  "Build shared libraries (so/dylib/dll)." ${ADIOS2_BUILD_SHARED_LIBS_DEFAULT}
+cmake_dependent_option(BUILD_SHARED_LIBS
+  "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED}
   "SHARED_LIBS_SUPPORTED" OFF
 )
-set(BUILD_SHARED_LIBS ${ADIOS2_BUILD_SHARED_LIBS})
 mark_as_advanced(BUILD_SHARED_LIBS)
 
 # Setup PIC defaults.  If explicitly specified somehow, then default 
@@ -98,15 +90,18 @@ adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
 adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
+adios_option(Fortran   "Enable support for Fortran bindings" OFF)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 include(${ADIOS2_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
-  # Workaround for OpenMPI forcing the link of C++ bindings
-  add_definitions(-DOMPI_SKIP_MPICXX)
+  # Workaround for MPI forcing the link of C++ bindings
+  add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
-GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 ZeroMQ DataMan Python SysVShMem)
+GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python Fortran 
+                          SysVShMem)
+
 install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
@@ -146,7 +141,9 @@ else()
   set(ADIOS2_BUILD_TESTING_DEFAULT ON)
 endif()
 unset(BUILD_TESTING)
-option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree" ${ADIOS2_BUILD_TESTING_DEFAULT})
+option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree" 
+       ${ADIOS2_BUILD_TESTING_DEFAULT})
+       
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)
@@ -165,9 +162,18 @@ GenerateADIOSPackageConfig()
 message("")
 message("ADIOS2 build configuration:")
 message("  ADIOS Version: ${ADIOS2_VERSION}")
-message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} ${CMAKE_CXX_COMPILER_WRAPPER}")
+message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} " 
+                         "${CMAKE_CXX_COMPILER_VERSION} " 
+                         "${CMAKE_CXX_COMPILER_WRAPPER}")
 message("    ${CMAKE_CXX_COMPILER}")
 message("")
+if(ADIOS2_HAVE_Fortran)
+  message("  Fortran Compiler : ${CMAKE_Fortran_COMPILER_ID} "
+                               "${CMAKE_Fortran_COMPILER_VERSION} "
+                               "${CMAKE_Fortran_COMPILER_WRAPPER}")
+  message("    ${CMAKE_Fortran_COMPILER}")
+  message("")
+endif()
 message("  Installation prefix: ${CMAKE_INSTALL_PREFIX}")
 message("  Features:")
 if(BUILD_SHARED_LIBS)
@@ -181,7 +187,8 @@ message("    Library Type: ${msg_lib_type}")
 message("    Build Type:   ${CMAKE_BUILD_TYPE}")
 message("    Testing: ${BUILD_TESTING}")
 message("    Build Options:")
-foreach(opt BZip2 ZFP MPI DataMan ZeroMQ HDF5 ADIOS1 Python SysVShMem)
+
+foreach(opt BZip2 ZFP MPI DataMan ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem)
   message_pad("      ${opt}" 15 label)
   if(${ADIOS2_HAVE_${opt}})
     message("${label}: ON")

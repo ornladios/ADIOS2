@@ -23,7 +23,19 @@ namespace format
 {
 
 template <>
+int8_t BP1Base::GetDataType<std::string>() const noexcept
+{
+    return type_string;
+}
+
+template <>
 int8_t BP1Base::GetDataType<char>() const noexcept
+{
+    return type_byte;
+}
+
+template <>
+int8_t BP1Base::GetDataType<signed char>() const noexcept
 {
     return type_byte;
 }

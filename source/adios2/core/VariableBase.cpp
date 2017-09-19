@@ -21,8 +21,8 @@ namespace adios2
 {
 
 VariableBase::VariableBase(const std::string &name, const std::string type,
-                           const size_t elementSize, const Dims shape,
-                           const Dims start, const Dims count,
+                           const size_t elementSize, const Dims &shape,
+                           const Dims &start, const Dims &count,
                            const bool constantDims, const bool debugMode)
 : m_Name(name), m_Type(type), m_ElementSize(elementSize), m_Shape(shape),
   m_Start(start), m_Count(count), m_ConstantDims(constantDims),
@@ -41,7 +41,7 @@ size_t VariableBase::TotalSize() const noexcept
     return GetTotalSize(m_Count);
 }
 
-void VariableBase::SetSelection(const Dims start, const Dims count)
+void VariableBase::SetSelection(const Dims &start, const Dims &count)
 {
     if (m_DebugMode)
     {

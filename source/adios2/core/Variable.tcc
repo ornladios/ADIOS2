@@ -14,7 +14,7 @@
 #include "Variable.h"
 
 #include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //GetType
+#include "adios2/helper/adiosFunctions.h" //GetType<T>
 
 namespace adios2
 {
@@ -22,11 +22,11 @@ namespace adios2
 #define declare_type(T)                                                        \
                                                                                \
     template <>                                                                \
-    Variable<T>::Variable(const std::string &name, const Dims shape,           \
-                          const Dims start, const Dims count,                  \
-                          const bool constantShape, const bool debugMode)      \
+    Variable<T>::Variable(const std::string &name, const Dims &shape,          \
+                          const Dims &start, const Dims &count,                \
+                          const bool constantDims, const bool debugMode)       \
     : VariableBase(name, GetType<T>(), sizeof(T), shape, start, count,         \
-                   constantShape, debugMode)                                   \
+                   constantDims, debugMode)                                    \
     {                                                                          \
     }                                                                          \
                                                                                \
@@ -38,6 +38,6 @@ namespace adios2
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_CORE_VARIABLE_TCC_ */

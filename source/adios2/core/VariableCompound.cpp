@@ -19,10 +19,10 @@ namespace adios2
 VariableCompound::VariableCompound(const std::string name,
                                    const size_t sizeOfStruct, const Dims shape,
                                    const Dims start, const Dims count,
-                                   const bool constantShape,
+                                   const bool constantDims,
                                    const bool debugMode)
 : VariableBase(name, "compound", sizeOfStruct, shape, start, count,
-               constantShape, debugMode)
+               constantDims, debugMode)
 {
 }
 

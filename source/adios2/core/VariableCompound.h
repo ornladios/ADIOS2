@@ -41,7 +41,7 @@ public:
 
     VariableCompound(const std::string name, const std::size_t sizeOfStruct,
                      const Dims shape, const Dims start, const Dims count,
-                     const bool constantShape, const bool debugMode);
+                     const bool constantDims, const bool debugMode);
 
     ~VariableCompound() = default;
 

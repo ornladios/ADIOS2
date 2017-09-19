@@ -6,19 +6,12 @@
 add_executable(writer_multistep writer_multistep.cpp)
 add_executable(reader_stepping reader_stepping.cpp)
 add_executable(reader_allsteps reader_allsteps.cpp)
-target_link_libraries(writer_multistep adios2)
-target_link_libraries(reader_stepping adios2)
-target_link_libraries(reader_allsteps adios2)
 
-if(ADIOS2_HAVE_MPI)
-  find_package(MPI COMPONENTS C REQUIRED)
+foreach(tgt IN ITEMS writer_multistep reader_stepping reader_allsteps)
+  target_link_libraries(${tgt} adios2)
 
-  target_include_directories(writer_multistep PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(writer_multistep ${MPI_C_LIBRARIES})
-
-  target_include_directories(reader_stepping PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(reader_stepping ${MPI_C_LIBRARIES})
-
-  target_include_directories(reader_allsteps PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(reader_allsteps ${MPI_C_LIBRARIES})
-endif()
+  if(ADIOS2_HAVE_MPI)
+    target_include_directories(${tgt} PRIVATE ${MPI_C_INCLUDE_PATH})
+    target_link_libraries(${tgt} ${MPI_C_LIBRARIES})
+  endif()
+endforeach()

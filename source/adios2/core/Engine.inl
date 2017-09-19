@@ -25,37 +25,6 @@ T *Engine::AllocateVariable(Variable<T> &variable, T fillValue)
 }
 
 template <class T>
-void Engine::Write(Variable<T> &variable, const T *values)
-{
-    if (m_DebugMode)
-    {
-        variable.CheckDimsBeforeWrite("Write(" + variable.m_Name + ")");
-    }
-
-    DoWrite(variable, values);
-}
-
-template <class T>
-void Engine::Write(const std::string &variableName, const T *values)
-{
-    Write(m_IO.GetVariable<T>(variableName), values);
-}
-
-template <class T>
-void Engine::Write(Variable<T> &variable, const T values)
-{
-    const T val = values; // need an address for memory copy
-    Write(variable, &values);
-}
-
-template <class T>
-void Engine::Write(const std::string &variableName, const T values)
-{
-    const T val = values; // need an address for memory copy
-    Write(m_IO.GetVariable<T>(variableName), &values);
-}
-
-template <class T>
 void Engine::Read(Variable<T> &variable, T *values)
 {
     DoScheduleRead(variable, values);
@@ -122,6 +91,6 @@ void Engine::ScheduleRead(const std::string &variableName, T &values)
     DoScheduleRead(variableName, &values);
 }
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_CORE_ENGINE_INL_ */

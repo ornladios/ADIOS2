@@ -2,7 +2,8 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * IO.inl inline template functions implementation of IO class
+ * IO.inl inline template functions implementation of IO class. VariableCompound
+ * can take any type so must be inlined as type is not known a priori.
  *
  *  Created on: May 15, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -21,27 +22,14 @@ namespace adios2
 
 template <class T>
 VariableCompound &IO::DefineVariableCompound(const std::string &name,
-                                             const Dims shape, const Dims start,
-                                             const Dims count,
-                                             const bool constantShape)
+                                             const Dims &shape, const Dims &start,
+                                             const Dims &count,
+                                             const bool constantDims)
 {
-    if (m_DebugMode)
-    {
-        if (VariableExists(name))
-        {
-            throw std::invalid_argument("ERROR: variable " + name +
-                                        " exists in IO object " + m_Name +
-                                        ", in call to DefineVariable\n");
-        }
-    }
-    const unsigned int size = m_Compound.size();
-    auto itVariableCompound = m_Compound.emplace(
-        size, VariableCompound(name, sizeof(T), shape, start, count,
-                               constantShape, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair("compound", size));
-    return itVariableCompound.first->second;
+    return DefineVariableCompound(name, sizeof(T), shape, start, count,
+                                  constantDims);
 }
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_CORE_IO_INL_ */

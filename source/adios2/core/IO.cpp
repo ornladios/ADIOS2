@@ -13,6 +13,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/engine/bp/BPFileWriter.h"
+#include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
@@ -45,6 +46,12 @@ void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
 void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
 
+void IO::SetSingleParameter(const std::string key,
+                            const std::string value) noexcept
+{
+    m_Parameters[key] = value;
+}
+
 const Params &IO::GetParameters() const { return m_Parameters; }
 
 unsigned int IO::AddTransport(const std::string type, const Params &parameters)
@@ -60,9 +67,77 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
 }
 
+void IO::SetTransportSingleParameter(const unsigned int transportIndex,
+                                     const std::string key,
+                                     const std::string value)
+{
+    if (m_DebugMode)
+    {
+        if (transportIndex >=
+            static_cast<unsigned int>(m_TransportsParameters.size()))
+        {
+            throw std::invalid_argument("ERROR: transportIndex is larger than "
+                                        "transports created with AddTransport "
+                                        "function calls\n");
+        }
+    }
+
+    m_TransportsParameters[transportIndex][key] = value;
+}
+
+VariableCompound &
+IO::DefineVariableCompound(const std::string &name, const size_t sizeOfVariable,
+                           const Dims &shape, const Dims &start,
+                           const Dims &count, const bool constantDims)
+{
+    if (m_DebugMode)
+    {
+        auto itVariable = m_Variables.find(name);
+        if (!IsEnd(itVariable, m_Variables))
+        {
+            throw std::invalid_argument("ERROR: variable " + name +
+                                        " exists in IO object " + m_Name +
+                                        ", in call to DefineVariable\n");
+        }
+    }
+    const unsigned int size = m_Compound.size();
+    auto itVariableCompound = m_Compound.emplace(
+        size, VariableCompound(name, sizeOfVariable, shape, start, count,
+                               constantDims, m_DebugMode));
+    m_Variables.emplace(name, std::make_pair("compound", size));
+    return itVariableCompound.first->second;
+}
+
 VariableCompound &IO::GetVariableCompound(const std::string &name)
 {
-    return m_Compound.at(GetVariableIndex(name));
+    return m_Compound.at(GetMapIndex(name, m_Variables, "VariableCompound"));
+}
+
+const DataMap &IO::GetAttributesDataMap() const noexcept
+{
+    return m_Attributes;
+}
+
+VariableBase *IO::GetVariableBase(const std::string &name) noexcept
+{
+    VariableBase *variableBase = nullptr;
+    auto itVariable = m_Variables.find(name);
+    if (itVariable == m_Variables.end())
+    {
+        return variableBase;
+    }
+
+    const std::string type(itVariable->second.first);
+    if (type == "compound")
+    {
+        variableBase = &GetVariableCompound(name);
+    }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>()) { variableBase = &GetVariable<T>(name); }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+    return variableBase;
 }
 
 std::string IO::GetVariableType(const std::string &name) const
@@ -214,6 +289,10 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
                                     "HDF5 library, can't use HDF5\n");
 #endif
     }
+    else if (m_EngineType == "PluginEngine")
+    {
+        engine = std::make_shared<PluginEngine>(*this, name, openMode, mpiComm);
+    }
     else
     {
         if (m_DebugMode)
@@ -235,30 +314,42 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
 }
 
 // PRIVATE Functions
-unsigned int IO::GetVariableIndex(const std::string &name) const
+unsigned int IO::GetMapIndex(const std::string &name, const DataMap &dataMap,
+                             const std::string hint) const
 {
+    auto itDataMap = dataMap.find(name);
+
     if (m_DebugMode)
     {
-        if (!VariableExists(name))
+        if (IsEnd(itDataMap, dataMap))
         {
-            throw std::invalid_argument(
-                "ERROR: variable " + m_Name +
-                " wasn't created with DefineVariable, in call to IO object " +
-                m_Name + " GetVariable\n");
+            throw std::invalid_argument("ERROR: " + hint + " " + m_Name +
+                                        " wasn't created with Define " + hint +
+                                        ", in call to IO object " + m_Name +
+                                        " Get" + hint + "\n");
         }
     }
-    auto itVariable = m_Variables.find(name);
-    return itVariable->second.second;
+    return itDataMap->second.second;
 }
 
-bool IO::VariableExists(const std::string &name) const
+void IO::CheckAttributeCommon(const std::string &name) const
 {
-    bool exists = false;
-    if (m_Variables.count(name) == 1)
+    auto itAttribute = m_Attributes.find(name);
+    if (!IsEnd(itAttribute, m_Attributes))
     {
-        exists = true;
+        throw std::invalid_argument("ERROR: attribute " + name +
+                                    " exists in IO object " + m_Name +
+                                    ", in call to DefineAttribute\n");
     }
-    return exists;
+}
+
+bool IO::IsEnd(DataMap::const_iterator itDataMap, const DataMap &dataMap) const
+{
+    if (itDataMap == dataMap.end())
+    {
+        return true;
+    }
+    return false;
 }
 
 void IO::CheckTransportType(const std::string type) const
@@ -275,11 +366,22 @@ void IO::CheckTransportType(const std::string type) const
 
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
-    template Variable<T> &IO::DefineVariable<T>(                               \
-        const std::string &, const Dims, const Dims, const Dims, const bool);  \
+    template Variable<T> &IO::DefineVariable<T>(const std::string &,           \
+                                                const Dims &, const Dims &,    \
+                                                const Dims &, const bool);     \
     template Variable<T> &IO::GetVariable<T>(const std::string &);
 
 ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
+
+#define declare_template_instantiation(T)                                      \
+    template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
+                                                  const T *, const size_t);    \
+    template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
+                                                  const T &);                  \
+    template Attribute<T> &IO::GetAttribute(const std::string &);
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace adios

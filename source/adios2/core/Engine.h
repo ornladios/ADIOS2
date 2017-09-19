@@ -37,6 +37,9 @@ namespace adios2
  * Close */
 class Engine
 {
+public:
+    using AdvanceAsyncCallback =
+        std::function<void(std::shared_ptr<adios2::Engine>)>;
 
 public:
     /**
@@ -63,6 +66,14 @@ public:
     void Write(Variable<T> &variable, const T *values);
 
     /**
+     * Single value version
+     * @param variable
+     * @param values
+     */
+    template <class T>
+    void Write(Variable<T> &variable, const T value);
+
+    /**
      * String version
      * @param variableName
      * @param values
@@ -71,23 +82,28 @@ public:
     void Write(const std::string &variableName, const T *values);
 
     /**
-     * Single value version
-     * @param variable
-     * @param values
-     */
-    template <class T>
-    void Write(Variable<T> &variable, const T values);
-
-    /**
-     * Single value version using string as variable handlers, allows rvalues to
+     * Single value version using string as variable handlers, allows
+     * rvalues to
      * be passed
      * @param variableName
      * @param values
      */
     template <class T>
-    void Write(const std::string &variableName, const T values);
+    void Write(const std::string &variableName, const T value);
 
-    /// Read API
+    /**
+     * Runtime version for either Variable<T> or VariableCompound
+     * @param variable
+     * @param values
+     */
+    void Write(VariableBase &variable, const void *values);
+
+    /**
+     * Runtime version
+     * @param variableName
+     * @param values
+     */
+    void Write(const std::string &variableName, const void *values);
 
     /**
      *
@@ -234,9 +250,8 @@ public:
      * readers
      * @param callback Will be called when advance is completed.
      */
-    virtual void
-    AdvanceAsync(const AdvanceMode mode,
-                 std::function<void(std::shared_ptr<adios2::Engine>)> callback);
+    virtual void AdvanceAsync(const AdvanceMode mode,
+                              AdvanceAsyncCallback callback);
 
     AdvanceStatus GetAdvanceStatus();
 
@@ -343,40 +358,11 @@ protected:
     // READ
     virtual VariableBase *InquireVariableUnknown(const std::string &name,
                                                  const bool readIn);
-    virtual Variable<char> *InquireVariableChar(const std::string &name,
-                                                const bool readIn);
-    virtual Variable<unsigned char> *
-    InquireVariableUChar(const std::string &name, const bool readIn);
-    virtual Variable<short> *InquireVariableShort(const std::string &name,
-                                                  const bool readIn);
-    virtual Variable<unsigned short> *
-    InquireVariableUShort(const std::string &name, const bool readIn);
-    virtual Variable<int> *InquireVariableInt(const std::string &name,
-                                              const bool readIn);
-    virtual Variable<unsigned int> *InquireVariableUInt(const std::string &name,
-                                                        const bool readIn);
-    virtual Variable<long int> *InquireVariableLInt(const std::string &name,
-                                                    const bool readIn);
-    virtual Variable<unsigned long int> *
-    InquireVariableULInt(const std::string &name, const bool readIn);
-    virtual Variable<long long int> *
-    InquireVariableLLInt(const std::string &name, const bool readIn);
-    virtual Variable<unsigned long long int> *
-    InquireVariableULLInt(const std::string &name, const bool readIn);
-
-    virtual Variable<float> *InquireVariableFloat(const std::string &name,
-                                                  const bool readIn);
-    virtual Variable<double> *InquireVariableDouble(const std::string &name,
-                                                    const bool readIn);
-    virtual Variable<long double> *
-    InquireVariableLDouble(const std::string &name, const bool readIn);
-
-    virtual Variable<cfloat> *InquireVariableCFloat(const std::string &name,
-                                                    const bool readIn);
-    virtual Variable<cdouble> *InquireVariableCDouble(const std::string &name,
-                                                      const bool readIn);
-    virtual Variable<cldouble> *InquireVariableCLDouble(const std::string &name,
-                                                        const bool readIn);
+#define declare(T, L)                                                          \
+    virtual Variable<T> *InquireVariable##L(const std::string &name,           \
+                                            const bool readIn);
+    ADIOS2_FOREACH_TYPE_2ARGS(declare)
+#undef declare
 
 // Known-type
 #define declare_type(T)                                                        \
@@ -394,7 +380,17 @@ private:
     void ThrowUp(const std::string function) const;
 };
 
-} // end namespace adios
+#define declare_template_instantiation(T)                                      \
+    extern template void Engine::Write<T>(Variable<T> &, const T *);           \
+    extern template void Engine::Write<T>(Variable<T> &, const T);             \
+                                                                               \
+    extern template void Engine::Write<T>(const std::string &, const T *);     \
+    extern template void Engine::Write<T>(const std::string &, const T);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+} // end namespace adios2
 
 #include "Engine.inl"
 

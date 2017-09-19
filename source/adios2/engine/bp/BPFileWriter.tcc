@@ -34,15 +34,9 @@ void BPFileWriter::DoWriteCommon(Variable<T> &variable, const T *values)
 
     const size_t newSize = m_BP1Writer.m_HeapBuffer.GetDataSize();
 
-    //    if (resizeResult == format::BP1Base::ResizeResult::Success)
-    //    {
-    //        std::cout << "Old buffer size: " << oldSize << "\n";
-    //        std::cout << "New buffer size: " << newSize << "\n";
-    //    }
-
     if (resizeResult == format::BP1Base::ResizeResult::Flush)
     {
-        m_BP1Writer.Flush();
+        m_BP1Writer.Flush(m_IO);
         auto &heapBuffer = m_BP1Writer.m_HeapBuffer;
 
         m_TransportsManager.WriteFiles(heapBuffer.GetData(),

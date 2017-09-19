@@ -11,6 +11,7 @@
 #include "BP1Base.h"
 #include "BP1Base.tcc"
 
+#include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit
 
 namespace adios2
@@ -111,8 +112,16 @@ BP1Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
                            const int rank) -> std::string {
 
         const std::string bpBaseName = AddExtension(baseName, ".bp");
-        // name.bp.dir/name.bp.rank
-        const std::string bpName(bpBaseName + ".dir/" + bpBaseName + "." +
+
+        // path/root.bp.dir/root.bp.rank
+        std::string bpRootName = bpBaseName;
+        const auto lastPathSeparator(bpBaseName.find_last_of(PathSeparator));
+
+        if (lastPathSeparator != std::string::npos)
+        {
+            bpRootName = bpBaseName.substr(lastPathSeparator);
+        }
+        const std::string bpName(bpBaseName + ".dir/" + bpRootName + "." +
                                  std::to_string(rank));
         return bpName;
     };
@@ -424,4 +433,4 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format
-} // end namespace adios
+} // end namespace adios2

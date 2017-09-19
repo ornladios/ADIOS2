@@ -27,10 +27,22 @@ inline std::string GetType<void>() noexcept
 {
     return "unknown";
 }
+
+template <>
+inline std::string GetType<std::string>() noexcept
+{
+    return "string";
+}
+
 template <>
 inline std::string GetType<char>() noexcept
 {
     return "char";
+}
+template <>
+inline std::string GetType<signed char>() noexcept
+{
+    return "signed char";
 }
 template <>
 inline std::string GetType<unsigned char>() noexcept
