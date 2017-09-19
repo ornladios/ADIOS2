@@ -33,7 +33,9 @@ class ADIOS
 public:
     /** Passed from parallel constructor, MPI_Comm is a pointer itself. */
     MPI_Comm m_MPIComm;
-    std::string m_HostLanguage = "C++"; ///< changed by language bindings
+
+    /** Changed by language bindings */
+    std::string m_HostLanguage = "C++";
 
     /**
      * @brief Constructor for MPI applications WITH a XML config file
@@ -43,7 +45,7 @@ public:
      * @param debugMode true: extra exception checks (recommended)
      */
     ADIOS(const std::string configFile, MPI_Comm mpiComm,
-          const bool debugMode = false);
+          const bool debugMode = true);
 
     /**
      * @brief Constructor for non-MPI applications WITH a XML config file
@@ -51,20 +53,27 @@ public:
      * future?)
      * @param debugMode true: extra exception checks (recommended)
      */
-    ADIOS(const std::string configFile, const bool debugMode = false);
+    ADIOS(const std::string configFile, const bool debugMode = true);
 
     /**
      * @brief Constructor for MPI apps WITHOUT a XML config file
      * @param mpiComm MPI communicator from application
      * @param debugMode true: extra exception checks (recommended)
      */
-    ADIOS(MPI_Comm mpiComm, const bool debugMode = false);
+    ADIOS(MPI_Comm mpiComm, const bool debugMode = true);
 
     /**
      *  @brief ADIOS no-MPI default empty constructor
      *  @param debugMode true: extra exception checks (recommended)
      */
-    ADIOS(const bool debugMode = false);
+    ADIOS(const bool debugMode = true);
+
+    /**
+     * Delete copy constructor explicitly. Objects shouldn't be allowed to be
+     * redefined. Use smart pointers if this is absolutely necessary.
+     * @param adios reference to another adios object
+     */
+    ADIOS(const ADIOS &adios) = delete;
 
     ~ADIOS() = default;
 
@@ -81,19 +90,23 @@ public:
     IO &DeclareIO(const std::string ioName);
 
     /**
-     * Retrieve an already defined IO object
+     * Retrieve an already defined IO object. Make sure IO was previously
+     * created with DeclareIO. Otherwise, throws an exception in debug mode.
+     * @return reference to existing IO object inside ADIOS
      */
     IO &GetIO(const std::string name);
 
-protected: // no const member to allow default empty and copy constructors
+    Transform &GetTransform(const std::string transform);
+
+private:
     /** XML File to be read containing configuration information */
-    std::string m_ConfigFile;
+    const std::string m_ConfigFile;
 
     /** if true will do more checks, exceptions, warnings, expect slower code */
-    bool m_DebugMode = false;
+    const bool m_DebugMode = true;
 
     /** transforms associated with ADIOS run */
-    std::vector<std::shared_ptr<Transform>> m_Transforms;
+    std::map<std::string, std::shared_ptr<Transform>> m_Transforms;
 
     /**
      * @brief List of IO class objects defined from either ADIOS

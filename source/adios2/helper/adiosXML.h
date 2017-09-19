@@ -16,7 +16,6 @@
 #include <memory> //std::shared_ptr
 #include <string>
 #include <utility> //std::pair
-#include <vector>
 /// \endcond
 
 #include "adios2/core/IO.h"
@@ -34,9 +33,9 @@ namespace adios2
  * @param transforms
  * @param ios
  */
-void InitXML(const std::string configXML, const MPI_Comm mpiComm,
+void InitXML(const std::string configXML, MPI_Comm mpiComm,
              const bool debugMode,
-             std::vector<std::shared_ptr<Transform>> &transforms,
+             std::map<std::string, std::shared_ptr<Transform>> &transforms,
              std::map<std::string, IO> &ios);
 }
 

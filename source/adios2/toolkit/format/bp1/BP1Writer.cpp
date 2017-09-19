@@ -42,7 +42,7 @@ void BP1Writer::WriteProcessGroupIndex(
     dataPosition += 8; // skip pg length (8)
 
     const std::size_t metadataPGLengthPosition = metadataBuffer.size();
-    metadataBuffer.insert(metadataBuffer.end(), 2, 0); // skip pg length (2)
+    metadataBuffer.insert(metadataBuffer.end(), 2, '\0'); // skip pg length (2)
 
     // write name to metadata
     const std::string name(std::to_string(m_BP1Aggregator.m_RankMPI));
@@ -56,7 +56,8 @@ void BP1Writer::WriteProcessGroupIndex(
     WriteNameRecord(name, dataBuffer, dataPosition);
 
     // processID in metadata,
-    const uint32_t processID = static_cast<uint32_t>(m_BP1Aggregator.m_RankMPI);
+    const uint32_t processID =
+        static_cast<const uint32_t>(m_BP1Aggregator.m_RankMPI);
     InsertToBuffer(metadataBuffer, &processID);
     // skip coordination var in data ....what is coordination var?
     dataPosition += 4;
@@ -71,22 +72,23 @@ void BP1Writer::WriteProcessGroupIndex(
     CopyToBuffer(dataBuffer, dataPosition, &m_MetadataSet.TimeStep);
 
     // offset to pg in data in metadata which is the current absolute position
-    InsertToBuffer(metadataBuffer, reinterpret_cast<uint64_t *>(
-                                       &m_HeapBuffer.m_DataAbsolutePosition));
+    InsertU64(metadataBuffer, m_HeapBuffer.m_DataAbsolutePosition);
 
     // Back to writing metadata pg index length (length of group)
-    const uint16_t metadataPGIndexLength =
-        metadataBuffer.size() - metadataPGLengthPosition - 2;
+    const uint16_t metadataPGIndexLength = static_cast<const uint16_t>(
+        metadataBuffer.size() - metadataPGLengthPosition - 2);
+
     size_t backPosition = metadataPGLengthPosition;
     CopyToBuffer(metadataBuffer, backPosition, &metadataPGIndexLength);
     // DONE With metadataBuffer
 
     // here write method in data
     const std::vector<uint8_t> methodIDs = GetTransportIDs(transportsTypes);
-    const uint8_t methodsCount = methodIDs.size();
+    const uint8_t methodsCount = static_cast<const uint8_t>(methodIDs.size());
     CopyToBuffer(dataBuffer, dataPosition, &methodsCount); // count
     // methodID (1) + method params length(2), no parameters for now
-    const uint16_t methodsLength = methodIDs.size() * 3;
+    const uint16_t methodsLength =
+        static_cast<const uint16_t>(methodsCount * 3);
 
     CopyToBuffer(dataBuffer, dataPosition, &methodsLength); // length
 
@@ -253,23 +255,19 @@ void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
 {
     if (offsets.empty())
     {
-        for (const auto &localDimension : localDimensions)
+        for (const auto localDimension : localDimensions)
         {
-            InsertToBuffer(buffer,
-                           reinterpret_cast<const uint64_t *>(&localDimension));
-            buffer.insert(buffer.end(), 2 * sizeof(uint64_t), 0);
+            InsertU64(buffer, localDimension);
+            buffer.insert(buffer.end(), 2 * sizeof(uint64_t), '\0');
         }
     }
     else
     {
         for (unsigned int d = 0; d < localDimensions.size(); ++d)
         {
-            InsertToBuffer(buffer, reinterpret_cast<const uint64_t *>(
-                                       &localDimensions[d]));
-            InsertToBuffer(buffer, reinterpret_cast<const uint64_t *>(
-                                       &globalDimensions[d]));
-            InsertToBuffer(buffer,
-                           reinterpret_cast<const uint64_t *>(&offsets[d]));
+            InsertU64(buffer, localDimensions[d]);
+            InsertU64(buffer, globalDimensions[d]);
+            InsertU64(buffer, offsets[d]);
         }
     }
 }
@@ -290,8 +288,9 @@ void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
             CopyToBuffer(buffer, position, &no);
         }
 
-        CopyToBuffer(buffer, position,
-                     reinterpret_cast<const uint64_t *>(&dimension));
+        const uint64_t dimension64 = static_cast<const uint64_t>(dimension);
+
+        CopyToBuffer(buffer, position, &dimension64);
     };
 
     // BODY Starts here
@@ -326,7 +325,7 @@ void BP1Writer::WriteDimensionsRecord(const Dims localDimensions,
 void BP1Writer::WriteNameRecord(const std::string name,
                                 std::vector<char> &buffer) noexcept
 {
-    const uint16_t length = name.length();
+    const uint16_t length = static_cast<const uint16_t>(name.length());
     InsertToBuffer(buffer, &length);
     InsertToBuffer(buffer, name.c_str(), length);
 }
@@ -335,7 +334,7 @@ void BP1Writer::WriteNameRecord(const std::string name,
                                 std::vector<char> &buffer,
                                 size_t &position) noexcept
 {
-    const uint16_t length = name.length();
+    const uint16_t length = static_cast<const uint16_t>(name.length());
     CopyToBuffer(buffer, position, &length);
     CopyToBuffer(buffer, position, name.c_str(), length);
 }
@@ -434,23 +433,22 @@ void BP1Writer::FlattenMetadata() noexcept
     lf_IndexCountLength(m_MetadataSet.AttributesIndices, attributesCount,
                         attributesLength);
 
-    const size_t footerSize = (pgLength + 16) + (varsLength + 12) +
-                              (attributesLength + 12) +
-                              m_MetadataSet.MiniFooterSize;
+    const size_t footerSize = static_cast<const size_t>(
+        (pgLength + 16) + (varsLength + 12) + (attributesLength + 12) +
+        m_MetadataSet.MiniFooterSize);
 
     auto &buffer = m_HeapBuffer.m_Data;
     auto &position = m_HeapBuffer.m_DataPosition;
 
     // reserve data to fit metadata,
-    // must replace with growth buffer strategy
+    // must replace with growth buffer strategy?
     m_HeapBuffer.ResizeData(position + footerSize);
-    // buffer.resize(position + footerSize);
 
     // write pg index
     CopyToBuffer(buffer, position, &pgCount);
     CopyToBuffer(buffer, position, &pgLength);
     CopyToBuffer(buffer, position, m_MetadataSet.PGIndex.Buffer.data(),
-                 pgLength);
+                 static_cast<const size_t>(pgLength));
 
     // Vars indices
     lf_FlattenIndices(varsCount, varsLength, m_MetadataSet.VarsIndices, buffer,
@@ -460,9 +458,12 @@ void BP1Writer::FlattenMetadata() noexcept
                       m_MetadataSet.AttributesIndices, buffer, position);
 
     // getting absolute offsets, minifooter is 28 bytes for now
-    const uint64_t offsetPGIndex = m_HeapBuffer.m_DataAbsolutePosition;
-    const uint64_t offsetVarsIndex = offsetPGIndex + (pgLength + 16);
-    const uint64_t offsetAttributeIndex = offsetVarsIndex + (varsLength + 12);
+    const uint64_t offsetPGIndex =
+        static_cast<const uint64_t>(m_HeapBuffer.m_DataAbsolutePosition);
+    const uint64_t offsetVarsIndex =
+        static_cast<const uint64_t>(offsetPGIndex + (pgLength + 16));
+    const uint64_t offsetAttributeIndex =
+        static_cast<const uint64_t>(offsetVarsIndex + (varsLength + 12));
 
     CopyToBuffer(buffer, position, &offsetPGIndex);
     CopyToBuffer(buffer, position, &offsetVarsIndex);

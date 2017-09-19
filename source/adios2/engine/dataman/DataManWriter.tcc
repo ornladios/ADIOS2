@@ -40,7 +40,8 @@ void DataManWriter::DoWriteCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    json jmsg;
+    std::cout << "DoWriteCommon begin" << std::endl;
+    nlohmann::json jmsg;
     jmsg["doid"] = m_Name;
     jmsg["var"] = variable.m_Name;
     jmsg["dtype"] = GetType<T>();
@@ -48,7 +49,12 @@ void DataManWriter::DoWriteCommon(Variable<T> &variable, const T *values)
     jmsg["varshape"] = variable.m_Shape;
     jmsg["offset"] = variable.m_Start;
     jmsg["timestep"] = 0;
-//    m_Man.put(values, jmsg);
+    jmsg["bytes"] =
+        std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(),
+                        sizeof(T), std::multiplies<size_t>());
+
+    std::cout << "DoWriteCommon end" << std::endl;
+    m_Man.WriteWAN(values, jmsg);
 
     if (m_DoMonitor)
     {

@@ -130,25 +130,103 @@ void SetParameterValue(const std::string key, const Params &parameters,
 }
 
 std::string GetParameter(const std::string key, const Params &params,
-                              const bool isMandatory,
-                              const bool debugMode, const std::string hint){
-        std::string value;
-        auto itParameter = params.find(key);
-        if (itParameter == params.end())
+                         const bool isMandatory, const bool debugMode,
+                         const std::string hint)
+{
+    std::string value;
+    auto itParameter = params.find(key);
+    if (itParameter == params.end())
+    {
+        if (debugMode && isMandatory)
         {
-            if (debugMode && isMandatory)
-            {
-                throw std::invalid_argument(
-                    "ERROR: mandatory parameter " + key +
-					" not found, " + hint );
-            }
+            throw std::invalid_argument("ERROR: mandatory parameter " + key +
+                                        " not found, " + hint);
         }
-        else
-        {
-            value = itParameter->second;
-        }
-        return value;
+    }
+    else
+    {
+        value = itParameter->second;
+    }
+    return value;
+}
+
+void SetParameterValueInt(const std::string key, const Params &parameters,
+                          int &value, const bool debugMode,
+                          const std::string hint)
+{
+    auto itKey = parameters.find(key);
+
+    if (itKey == parameters.end())
+    {
+        return;
     }
 
+    if (debugMode)
+    {
+        try
+        {
+            value = std::stoi(itKey->second);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::invalid_argument(
+                "ERROR: could not cast " + itKey->second +
+                " to int from key parameter: " + itKey->first + ", " + hint));
+        }
+    }
+    else
+    {
+        value = std::stoi(itKey->second);
+    }
+}
+
+double StringToDouble(const std::string value, const bool debugMode,
+                      const std::string hint)
+{
+    double valueDouble = -1.;
+
+    if (debugMode)
+    {
+        try
+        {
+            valueDouble = std::stod(value);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::invalid_argument(
+                "ERROR: could not cast " + value + " to double, " + hint));
+        }
+    }
+    else
+    {
+        valueDouble = std::stod(value);
+    }
+    return valueDouble;
+}
+
+unsigned int StringToUInt(const std::string value, const bool debugMode,
+                          const std::string hint)
+{
+    unsigned int valueUInt = 0;
+
+    if (debugMode)
+    {
+        try
+        {
+            valueUInt = static_cast<unsigned int>(std::stoul(value));
+        }
+        catch (...)
+        {
+            std::throw_with_nested(
+                std::invalid_argument("ERROR: could not cast " + value +
+                                      " to unsigned int, " + hint));
+        }
+    }
+    else
+    {
+        valueUInt = static_cast<unsigned int>(std::stoul(value));
+    }
+    return valueUInt;
+}
 
 } // end namespace adios

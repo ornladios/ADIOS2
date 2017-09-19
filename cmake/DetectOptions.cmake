@@ -94,7 +94,7 @@ list(INSERT CMAKE_MODULE_PATH 0
   "${ADIOS2_SOURCE_DIR}/thirdparty/pybind11/pybind11/tools"
 )
 if(ADIOS2_USE_Python STREQUAL AUTO)
-  if(BUILD_SHARED_LIBS)
+  if(SHARED_LIBS_SUPPORTED AND ADIOS2_ENABLE_PIC)
     set(Python_ADDITIONAL_VERSIONS 3 2.7)
     find_package(PythonInterp)
     find_package(PythonLibsNew)

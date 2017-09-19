@@ -1,6 +1,12 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
+ *
+ * ShmSystemV.h : ShmSystem class as a thin wrapper to a shared memory capsule
+ *                using POSIX SystemV
+ *
+ * Created on: Dec 22, 2016
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_TOOLKIT_CAPSULE_SHMEM_SHMSYSTEMV_H_

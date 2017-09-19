@@ -17,8 +17,6 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSMPICommOnly.h"
-
 namespace adios2
 {
 
@@ -42,15 +40,6 @@ bool IsLittleEndian() noexcept;
  * @return string from char* std::ctime
  */
 std::string LocalTimeDate() noexcept;
-
-/**
- * Rank 0: opens file, dumps contents string and broadcast.
- * Others: receive std::vector<char> and copy to a string
- * @param fileName
- * @param mpiComm
- * @return fileContents as a single string
- */
-std::string BroadcastString(const std::string &input, MPI_Comm mpiComm);
 
 } // end namespace adios
 

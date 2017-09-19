@@ -14,9 +14,6 @@
 #include <cstdint>
 #include <cstdio>
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-/// \endcond
-
 namespace adios2
 {
 

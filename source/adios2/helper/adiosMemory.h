@@ -83,6 +83,14 @@ void MemcpyToBufferThreads(std::vector<char> &buffer, size_t &position,
                            const T *source, size_t size,
                            const unsigned int threads = 1);
 
+/**
+ * Cast an element to uint64 and insert to a buffer
+ * @param buffer data destination
+ * @param element to be added to buffer
+ */
+template <class T>
+void InsertU64(std::vector<char> &buffer, const T element) noexcept;
+
 } // end namespace adios
 
 #include "adiosMemory.inl"

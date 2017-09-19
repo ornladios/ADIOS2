@@ -10,13 +10,14 @@ add_library(adios2
   core/Selection.cpp
   core/SelectionBoundingBox.cpp
   core/SelectionPoints.cpp
-  core/Transform.cpp
+  core/Transform.cpp core/Transform.tcc
   core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
   
 #helper
   helper/adiosMath.cpp
+  helper/adiosMPIFunctions.cpp
   helper/adiosString.cpp
   helper/adiosSystem.cpp
   helper/adiosType.cpp
@@ -79,15 +80,14 @@ endif()
 
 if(ADIOS2_HAVE_BZip2)
   find_package(BZip2 REQUIRED)
-  target_sources(adios2 PRIVATE transform/compression/BZip2.cpp)
+  target_sources(adios2 PRIVATE transform/compress/CompressBZip2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
 
 if(ADIOS2_HAVE_ZFP)
   find_package(ZFP REQUIRED)
-  message("ADIOS ZFP support not yet implemented")
-#  target_sources(adios2 PRIVATE transform/compression/ZFP.cpp)
-#  target_link_libraries(adios2 PRIVATE zfp::zfp)
+  target_sources(adios2 PRIVATE transform/compress/CompressZfp.cpp)
+  target_link_libraries(adios2 PRIVATE zfp::zfp)
 endif()
 
 if(ADIOS2_HAVE_MPI)

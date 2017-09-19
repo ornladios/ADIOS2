@@ -13,9 +13,9 @@
 
 #include <iostream> //std::cout << Needs to go
 
-#include "adios2/toolkit/transportman/DataMan/DataMan.h"
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/transportman/dataman/DataMan.h"
 
 namespace adios2
 {
@@ -45,7 +45,7 @@ public:
      * @param callback function (get) provided by the user to be applied in
      * DataMan
      */
-    void SetCallBack(std::function<void(const void *, std::string, std::string,
+    void SetCallback(std::function<void(const void *, std::string, std::string,
                                         std::string, Dims)>
                          callback);
 

@@ -50,10 +50,10 @@ private:
     const std::string m_IPAddress;
     std::string m_Port;
 
-    /** TODO: find out if is provided externally */
+    /** context handler created by zmq, thread safe */
     void *m_Context = NULL;
 
-    /** handler created by zmq */
+    /** socket handler created by zmq */
     void *m_Socket = NULL;
 };
 

@@ -21,6 +21,15 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 
+// transforms
+#ifdef ADIOS2_HAVE_BZIP2
+#include "adios2/transform/compress/CompressBZip2.h"
+#endif
+
+#ifdef ADIOS2_HAVE_ZFP
+#include "adios2/transform/compress/CompressZfp.h"
+#endif
+
 namespace adios2
 {
 
@@ -86,9 +95,57 @@ IO &ADIOS::GetIO(const std::string name)
     {
         throw std::invalid_argument(
             "ERROR: Unable to find previously defined IO object with name \"" +
-            name + "\" in call to GetIO.");
+            name + "\", in call to GetIO.");
     }
     return itIO->second;
+}
+
+Transform &ADIOS::GetTransform(const std::string transform)
+{
+    auto itTransform = m_Transforms.find(transform);
+
+    if (itTransform != m_Transforms.end())
+    {
+        return *itTransform->second.get();
+    }
+
+    if (transform == "bzip2" || transform == "BZip2")
+    {
+#ifdef ADIOS2_HAVE_BZIP2
+        auto itPair = m_Transforms.emplace(
+            "bzip2",
+            std::make_shared<adios2::transform::CompressBZip2>(m_DebugMode));
+        return *itPair.first->second;
+#else
+        throw std::invalid_argument(
+            "ERROR: this version of ADIOS2 didn't compile with "
+            "bzip2 library, in call to GetTransport\n");
+#endif
+    }
+    else if (transform == "zfp" || transform == "Zfp")
+    {
+#ifdef ADIOS2_HAVE_ZFP
+        auto itPair = m_Transforms.emplace(
+            "zfp",
+            std::make_shared<adios2::transform::CompressZfp>(m_DebugMode));
+        return *itPair.first->second;
+#else
+        throw std::invalid_argument(
+            "ERROR: this version of ADIOS2 didn't compile with "
+            "zfp library, in call to GetTransport\n");
+#endif
+    }
+    else
+    {
+        if (m_DebugMode)
+        {
+            throw std::invalid_argument(
+                "ERROR: transform " + transform +
+                " not supported by ADIOS2, in call to GetTransport\n");
+        }
+    }
+
+    return *itTransform->second.get();
 }
 
 // PRIVATE FUNCTIONS

@@ -41,11 +41,12 @@ void STLVector::ResizeData(const size_t size)
         {
             m_Data.resize(size);
         }
-        catch (std::bad_alloc &e)
+        catch (...)
         {
-            throw std::runtime_error("ERROR: bad_alloc detected when resizing "
-                                     "data buffer with size " +
-                                     std::to_string(size) + "\n");
+            std::throw_with_nested(
+                std::runtime_error("ERROR: possible overflow when resizing "
+                                   "data buffer with size " +
+                                   std::to_string(size) + "\n"));
         }
     }
     else
@@ -62,11 +63,12 @@ void STLVector::ResizeMetadata(const size_t size)
         {
             m_Metadata.resize(size);
         }
-        catch (std::bad_alloc &e)
+        catch (...)
         {
-            throw std::runtime_error("ERROR: bad_alloc detected when resizing "
-                                     "metadata buffer with size " +
-                                     std::to_string(size) + "\n");
+            std::throw_with_nested(
+                std::runtime_error("ERROR: possible overflow when resizing "
+                                   "metadata buffer with size " +
+                                   std::to_string(size) + "\n"));
         }
     }
     else

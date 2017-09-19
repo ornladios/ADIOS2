@@ -45,7 +45,7 @@ public:
 
 private:
     /** C File pointer */
-    std::FILE *m_File = nullptr; // NULL or nullptr?
+    FILE *m_File = nullptr; // NULL or nullptr?
 };
 
 } // end namespace transport

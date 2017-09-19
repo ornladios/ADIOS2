@@ -68,7 +68,7 @@ adios2::ADIOSPy ADIOSPyInit(adios2::pyObject &object, const bool debugMode)
 adios2::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
                                   const bool debugMode)
 {
-    return adios2::ADIOSPy(debugMode);
+    return adios2::ADIOSPy(configFile, debugMode);
 }
 
 adios2::ADIOSPy ADIOSPyInit(const bool debugMode)

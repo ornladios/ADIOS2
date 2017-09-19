@@ -69,10 +69,41 @@ void SetParameterValue(const std::string key, const Params &parameters,
                        std::string &value) noexcept;
 
 std::string GetParameter(const std::string key, const adios2::Params &params,
-                              const bool isMandatory,
-                              const bool debugMode, const std::string hint);
+                         const bool isMandatory, const bool debugMode,
+                         const std::string hint);
+/**
+ * Sets int value if found in parameters for input key
+ * @param key input
+ * @param parameters map with key: field, value: value
+ * @param value to be modified if key is found in parameters
+ * @param debugMode check for string conversion
+ * @param hint passed for extra debugging info if exception is thrown
+ */
+void SetParameterValueInt(const std::string key, const Params &parameters,
+                          int &value, const bool debugMode,
+                          const std::string hint);
+
+/**
+ * function that cast a string to a double verifying validity of the cast with
+ * exceptions in debugMode
+ * @param value string to be casted
+ * @param debugMode check for string conversion
+ * @param hint passed for extra debugging info if exception is thrown
+ * @return value as a double
+ */
+double StringToDouble(const std::string value, const bool debugMode,
+                      const std::string hint);
+
+/**
+ * function that cast a string to unsigned int verifying validity of the cast
+ * with exceptions in debugMode
+ * @param value string to be casted
+ * @param debugMode check for string conversion
+ * @param hint passed for extra debugging info if exception is thrown
+ * @return value as unsigned int
+ */
+unsigned int StringToUInt(const std::string value, const bool debugMode,
+                          const std::string hint);
 }
-
-
 
 #endif /* ADIOS2_HELPER_ADIOSSTRING_H_ */

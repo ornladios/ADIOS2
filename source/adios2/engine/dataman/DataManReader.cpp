@@ -17,20 +17,19 @@ namespace adios2
 
 DataManReader::DataManReader(IO &io, const std::string &name,
                              const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("DataManReader", io, name, openMode, mpiComm),
-    m_Man(mpiComm, true)
+: Engine("DataManReader", io, name, openMode, mpiComm), m_Man(mpiComm, true)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
 }
 
-void DataManReader::SetCallBack(
+void DataManReader::SetCallback(
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         callback)
 {
     m_CallBack = callback;
-//    m_Man.reg_callback(callback);
+    m_Man.SetCallback(callback);
 }
 
 void DataManReader::Close(const int transportIndex) {}
@@ -81,6 +80,7 @@ void DataManReader::Init()
                                  }) == s.end();
         };
 
+        /*
         json jmsg;
         for (auto &i : m_IO.m_Parameters)
         {
@@ -94,7 +94,19 @@ void DataManReader::Init()
             }
         }
         jmsg["stream_mode"] = "receiver";
-//        m_Man.add_stream(jmsg);
+        */
+
+        int n_Transports = 1;
+        std::vector<Params> para(n_Transports);
+
+        for (unsigned int i = 0; i < para.size(); i++)
+        {
+            para[i]["type"] = "wan";
+            para[i]["transport"] = "zmq";
+            para[i]["name"] = "stream";
+            para[i]["ipaddress"] = "127.0.0.1";
+        }
+        m_Man.OpenWANTransports("zmq", adios2::OpenMode::Read, para, true);
 
         std::string method_type;
         int num_channels = 0;

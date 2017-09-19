@@ -72,7 +72,7 @@ public:
     void Advance();
 
     /** Flattens data buffer and close current process group, doesn't
-     * advance time index */
+     *  advance time index */
     void Flush();
 
     /**

@@ -10,6 +10,7 @@
 
 #include "WANZmq.h"
 
+#include <iostream>
 #include <zmq.h>
 
 namespace adios2
@@ -22,7 +23,7 @@ WANZmq::WANZmq(const std::string ipAddress, const std::string port,
 : Transport("wan", "zmq", mpiComm, debugMode), m_IPAddress(ipAddress),
   m_Port(port)
 {
-
+    m_Context = zmq_ctx_new();
     if (m_DebugMode)
     {
         // TODO verify port is unsigned int
@@ -34,6 +35,10 @@ WANZmq::~WANZmq()
     if (m_Socket)
     {
         zmq_close(m_Socket);
+    }
+    if (m_Context)
+    {
+        zmq_ctx_destroy(m_Context);
     }
 }
 
@@ -51,7 +56,8 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
 
         m_Socket = zmq_socket(m_Context, ZMQ_REQ);
         const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
-        zmq_connect(m_Socket, fullIP.c_str());
+        std::cout << "full IP = " << fullIP << std::endl;
+        int err = zmq_connect(m_Socket, fullIP.c_str());
 
         if (m_Profiler.IsActive)
         {
@@ -78,6 +84,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
 
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
+        std::cout << "full IP = " << fullIP << std::endl;
         zmq_bind(m_Socket, fullIP.c_str());
 
         if (m_Profiler.IsActive)
@@ -108,9 +115,12 @@ void WANZmq::Write(const char *buffer, size_t size)
         m_Profiler.Timers.at("write").Resume();
     }
 
+    /*
+
     int status = zmq_send(m_Socket, buffer, size, 0);
     char ret[10];
     zmq_recv(m_Socket, ret, 10, 0);
+
 
     if (m_Profiler.IsActive)
     {
@@ -128,6 +138,7 @@ void WANZmq::Write(const char *buffer, size_t size)
                                          ", in call to WANZmq write\n");
         }
     }
+    */
 }
 
 void WANZmq::Flush() {}

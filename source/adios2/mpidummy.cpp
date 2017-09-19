@@ -26,13 +26,18 @@
 #define open64 open
 #endif
 */
-
 #include <cinttypes>
 #include <cstdio>
 #include <cstring>
 
 #include <chrono>
 #include <string>
+
+// remove warnings on Windows
+#ifdef _WIN32
+#pragma warning(disable : 4996) // fopen
+#pragma warning(disable : 4477) // strcpy, sprintf
+#endif
 
 namespace adios2
 {
@@ -296,7 +301,7 @@ int MPI_File_open(MPI_Comm /*comm*/, const char *filename, int amode,
     }
     mode += "b";
 
-    *fh = fopen(filename, mode.c_str());
+    *fh = std::fopen(filename, mode.c_str());
     if (!*fh)
     {
         std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING, "File not found: %s",
@@ -310,10 +315,10 @@ int MPI_File_close(MPI_File *fh) { return fclose(*fh); }
 
 int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
 {
-    long curpos = ftell(fh);
+    long curpos = std::ftell(fh);
     fseek(fh, 0, SEEK_END); // go to end, returned is the size in bytes
-    long endpos = ftell(fh);
-    fseek(fh, curpos, SEEK_SET); // go back where we were
+    long endpos = std::ftell(fh);
+    std::fseek(fh, curpos, SEEK_SET); // go back where we were
     *size = static_cast<MPI_Offset>(endpos);
     // printf("MPI_File_get_size: fh=%d, size=%lld\n", fh, *size);
     return MPI_SUCCESS;
@@ -325,13 +330,14 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
     // FIXME: int count can read only 2GB (*datatype size) array at max
     size_t bytes_to_read = static_cast<size_t>(count) * datatype;
     size_t bytes_read;
-    bytes_read = fread(buf, 1, bytes_to_read, fh);
+    bytes_read = std::fread(buf, 1, bytes_to_read, fh);
     if (bytes_read != bytes_to_read)
     {
         std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING,
-                      "could not read %" PRId64 " bytes. read only: %" PRId64
+                      "could not read %llu bytes. read only: %llu"
                       "\n",
-                      bytes_to_read, bytes_read);
+                      (unsigned long long)bytes_to_read,
+                      (unsigned long long)bytes_read);
         return -2;
     }
     *status = bytes_read;
@@ -342,7 +348,7 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
 
 int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
 {
-    return fseek(fh, offset, whence) == MPI_SUCCESS;
+    return std::fseek(fh, offset, whence) == MPI_SUCCESS;
 }
 
 int MPI_Get_count(const MPI_Status *status, MPI_Datatype, int *count)

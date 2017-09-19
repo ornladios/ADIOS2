@@ -13,6 +13,7 @@
 
 #include "adios2/toolkit/transportman/TransportMan.h"
 #include <json.hpp>
+#include <thread>
 
 namespace adios2
 {
@@ -31,11 +32,29 @@ public:
                            const std::vector<Params> &parametersVector,
                            const bool profile);
 
+    void WriteWAN(const void *buffer, nlohmann::json jmsg);
+
+    void SetCallback(std::function<void(const void *, std::string, std::string,
+                                        std::string, Dims)>
+                         callback);
+
 private:
+    void ReadThread(std::shared_ptr<Transport> trans,
+                    std::shared_ptr<Transport> ctl_trans);
+
+    std::vector<std::shared_ptr<Transport>> m_ControlTransports;
+    std::vector<std::thread> m_ControlThreads;
+    size_t m_CurrentTransport = 0;
+    bool m_Listening = false;
+
+    std::function<void(const void *, std::string, std::string, std::string,
+                       Dims)>
+        m_CallBack;
+
     nlohmann::json m_JMessage;
 
     /** Pick the appropriate default */
-    const std::string m_DefaultPort = "22";
+    const int m_DefaultPort = 12306;
 };
 
 } // end namespace transportman
