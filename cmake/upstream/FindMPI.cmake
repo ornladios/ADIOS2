@@ -480,38 +480,38 @@ function (_MPI_interrogate_compiler lang)
   # Extract include paths from compile command line
   string(REGEX MATCHALL "(^| )[-/]I([^\" ]+|\"[^\"]+\")" MPI_ALL_INCLUDE_PATHS "${MPI_COMPILE_CMDLINE}")
 
-  foreach(_MPI_INCLUDE_PATH IN LISTS MPI_ALL_INCLUDE_PATHS)
-    string(REGEX REPLACE "^ ?[-/]I" "" _MPI_INCLUDE_PATH "${_MPI_INCLUDE_PATH}")
-    string(REPLACE "//" "/" _MPI_INCLUDE_PATH "${_MPI_INCLUDE_PATH}")
-    get_filename_component(_MPI_INCLUDE_PATH "${_MPI_INCLUDE_PATH}" REALPATH)
-    list(APPEND MPI_INCLUDE_DIRS_WORK "${_MPI_INCLUDE_PATH}")
-  endforeach()
-
   # If extracting failed to work, we'll try using -showme:incdirs.
-  if (NOT MPI_INCLUDE_DIRS_WORK)
+  if (NOT MPI_ALL_INCLUDE_PATHS)
     _MPI_check_compiler(${LANG} "-showme:incdirs" MPI_INCDIRS_CMDLINE MPI_INCDIRS_COMPILER_RETURN)
     if(MPI_INCDIRS_COMPILER_RETURN)
       separate_arguments(MPI_INCLUDE_DIRS_WORK ${_MPI_COMMAND_TYPE} "${MPI_INCDIRS_CMDLINE}")
     endif()
   endif()
 
+  foreach(_MPI_INCLUDE_PATH IN LISTS MPI_ALL_INCLUDE_PATHS)
+    string(REGEX REPLACE "^ ?[-/]I" "" _MPI_INCLUDE_PATH "${_MPI_INCLUDE_PATH}")
+    string(REPLACE "\"" "" _MPI_INCLUDE_PATH "${_MPI_INCLUDE_PATH}")
+    get_filename_component(_MPI_INCLUDE_PATH "${_MPI_INCLUDE_PATH}" REALPATH)
+    list(APPEND MPI_INCLUDE_DIRS_WORK "${_MPI_INCLUDE_PATH}")
+  endforeach()
+
   # Extract linker paths from the link command line
   string(REGEX MATCHALL "(^| )(-Wl,|-Xlinker |)(-L|[/-]LIBPATH:|[/-]libpath:)([^\" ]+|\"[^\"]+\")" MPI_ALL_LINK_PATHS "${MPI_LINK_CMDLINE}")
 
-  foreach(_MPI_LPATH IN LISTS MPI_ALL_LINK_PATHS)
-    string(REGEX REPLACE "^ ?(-Wl,|-Xlinker )?(-L|[/-]LIBPATH:|[/-]libpath:)" "" _MPI_LPATH "${_MPI_LPATH}")
-    string(REPLACE "//" "/" _MPI_LPATH "${_MPI_LPATH}")
-    get_filename_component(_MPI_LPATH "${_MPI_LPATH}" REALPATH)
-    list(APPEND MPI_LINK_DIRECTORIES_WORK "${_MPI_LPATH}")
-  endforeach()
-
   # If extracting failed to work, we'll try using -showme:libdirs.
-  if (NOT MPI_LINK_DIRECTORIES_WORK)
+  if (NOT MPI_ALL_LINK_PATHS)
     _MPI_check_compiler(${LANG} "-showme:libdirs" MPI_LIBDIRS_CMDLINE MPI_LIBDIRS_COMPILER_RETURN)
     if(MPI_LIBDIRS_COMPILER_RETURN)
       separate_arguments(MPI_LINK_DIRECTORIES_WORK ${_MPI_COMMAND_TYPE} "${MPI_LIBDIRS_CMDLINE}")
     endif()
   endif()
+
+  foreach(_MPI_LPATH IN LISTS MPI_ALL_LINK_PATHS)
+    string(REGEX REPLACE "^ ?(-Wl,|-Xlinker )?(-L|[/-]LIBPATH:|[/-]libpath:)" "" _MPI_LPATH "${_MPI_LPATH}")
+    string(REPLACE "\"" "" _MPI_LPATH "${_MPI_LPATH}")
+    get_filename_component(_MPI_LPATH "${_MPI_LPATH}" REALPATH)
+    list(APPEND MPI_LINK_DIRECTORIES_WORK "${_MPI_LPATH}")
+  endforeach()
 
   # Extract linker flags from the link command line
   string(REGEX MATCHALL "(^| )(-Wl,|-Xlinker )([^\" ]+|\"[^\"]+\")" MPI_ALL_LINK_FLAGS "${MPI_LINK_CMDLINE}")
@@ -614,7 +614,7 @@ function (_MPI_interrogate_compiler lang)
   # link it in that case. -lpthread is covered by the normal library treatment on the other hand.
   if("${MPI_COMPILE_CMDLINE}" MATCHES "-pthread")
     list(APPEND MPI_COMPILE_OPTIONS_WORK "-pthread")
-    if(MPI_COMPILE_OPTIONS_WORK)
+    if(MPI_LINK_FLAGS_WORK)
       string(APPEND MPI_LINK_FLAGS_WORK " -pthread")
     else()
       set(MPI_LINK_FLAGS_WORK "-pthread")
