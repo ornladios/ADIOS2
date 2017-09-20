@@ -22,7 +22,12 @@ before_build:
 - cd C:\projects\adios2
 - git reset --hard %APPVEYOR_PULL_REQUEST_HEAD_COMMIT%
 - ps: |
-    $env:CUSTOM_BUILD_NAME = ("{0}_{1}_vs{2}" -f $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_BUILD_WORKER_IMAGE.split()[2] )
+    if(Test-Path env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH) {
+        $env:BUILD_NAME_BRANCH = $env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH
+    } else {
+        $env:BUILD_NAME_BRANCH = $env:APPVEYOR_REPO_BRANCH
+    }
+    $env:CUSTOM_BUILD_NAME = ("{0}_{1}_vs{2}" -f $env:BUILD_NAME_BRANCH, $env:APPVEYOR_BUILD_NUMBER, $env:APPVEYOR_BUILD_WORKER_IMAGE.split()[2] )
 - ctest.exe -VV -S ../adios2/scripts\appveyor\av_default.cmake
     -Ddashboard_full=OFF
     -Ddashboard_do_update=true
