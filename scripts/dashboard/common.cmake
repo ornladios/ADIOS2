@@ -131,10 +131,13 @@ if(NOT "${dashboard_model}" MATCHES "^(Nightly|Experimental)$")
   message(FATAL_ERROR "dashboard_model must be Nightly or Experimental")
 endif()
 
-
 # Default to a Debug build.
 if(NOT DEFINED CTEST_BUILD_CONFIGURATION)
   set(CTEST_BUILD_CONFIGURATION Debug)
+endif()
+
+if(NOT DEFINED CTEST_CONFIGURATION_TYPE)
+  set(CTEST_CONFIGURATION_TYPE ${CTEST_BUILD_CONFIGURATION})
 endif()
 
 # Choose CTest reporting mode.
