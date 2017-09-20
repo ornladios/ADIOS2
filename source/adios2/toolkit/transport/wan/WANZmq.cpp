@@ -56,7 +56,6 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
 
         m_Socket = zmq_socket(m_Context, ZMQ_REQ);
         const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
-        std::cout << "full IP = " << fullIP << std::endl;
         int err = zmq_connect(m_Socket, fullIP.c_str());
 
         if (m_Profiler.IsActive)
@@ -84,7 +83,6 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
 
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
-        std::cout << "full IP = " << fullIP << std::endl;
         zmq_bind(m_Socket, fullIP.c_str());
 
         if (m_Profiler.IsActive)

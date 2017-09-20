@@ -51,10 +51,10 @@ private:
     std::string m_Port;
 
     /** context handler created by zmq, thread safe */
-    void *m_Context = NULL;
+    void *m_Context = nullptr;
 
     /** socket handler created by zmq */
-    void *m_Socket = NULL;
+    void *m_Socket = nullptr;
 };
 
 } // end namespace transport

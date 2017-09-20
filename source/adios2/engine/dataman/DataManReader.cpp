@@ -108,10 +108,10 @@ void DataManReader::Init()
         }
         m_Man.OpenWANTransports("zmq", adios2::OpenMode::Read, para, true);
 
-        std::string method_type;
-        int num_channels = 0;
-        lf_AssignString("method_type", method_type);
-        lf_AssignInt("num_channels", num_channels);
+        std::string methodType;
+        int numChannels = 0;
+        lf_AssignString("method_type", methodType);
+        lf_AssignInt("num_channels", numChannels);
     }
     else
     {
