@@ -4,9 +4,12 @@
 #------------------------------------------------------------------------------#
 
 if(NOT ADIOS2_HAVE_MPI)
-    python_add_test(PythonBPWrite TestBPWriteTypes_nompi.py)
+    python_add_test(NAME PythonBPWrite SCRIPT TestBPWriteTypes_nompi.py)
 endif()
 
 if(ADIOS2_HAVE_MPI)
-    python_add_test(PythonBPWrite TestBPWriteTypes.py)
+    set(test_parameters
+      EXEC_WRAPPER
+      ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS})
+    python_add_test(NAME PythonBPWrite ${test_parameters} SCRIPT TestBPWriteTypes.py)
 endif()
