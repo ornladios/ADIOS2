@@ -12,7 +12,6 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
 #include <iostream> //std::cout must be removed, only used for hello example
-#include <unistd.h> //sleep must be removed
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"

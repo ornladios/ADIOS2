@@ -73,10 +73,6 @@ void DataManWriter::DoWriteCommon(Variable<T> &variable, const T *values)
                 std::cout << "Rank: " << i << "\n";
                 std::cout << std::endl;
             }
-            else
-            {
-                sleep(1);
-            }
         }
         MPI_Barrier(m_MPIComm);
     }
