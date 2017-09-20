@@ -74,13 +74,11 @@ if(ADIOS2_HAVE_ZeroMQ)
   target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()
 
-if(ADIOS2_HAVE_DataMan)
-  target_sources(adios2 PRIVATE
+target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
     engine/dataman/DataManWriter.cpp
-  )
-  target_link_libraries(adios2 PRIVATE NLohmannJson)
-endif()
+)
+target_link_libraries(adios2 PRIVATE NLohmannJson)
 
 
 if(ADIOS2_HAVE_BZip2)
