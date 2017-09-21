@@ -39,8 +39,8 @@
 /* CMake Option: ADIOS_USE_HDF5=ON */
 #cmakedefine ADIOS2_HAVE_HDF5
 
-/* CMake Option: ADIOS_USE_DataMan=ON */
-#cmakedefine ADIOS2_HAVE_DATAMAN
+/* CMake Option: ADIOS_USE_ZeroMQ=ON */
+#cmakedefine ADIOS2_HAVE_ZEROMQ
 
 /* CMake Option: ADIOS_USE_SysVShMem=ON */
 #cmakedefine ADIOS2_HAVE_SYSVSHMEM

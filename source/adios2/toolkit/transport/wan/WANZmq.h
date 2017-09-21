@@ -50,11 +50,11 @@ private:
     const std::string m_IPAddress;
     std::string m_Port;
 
-    /** TODO: find out if is provided externally */
-    void *m_Context = NULL;
+    /** context handler created by zmq, thread safe */
+    void *m_Context = nullptr;
 
-    /** handler created by zmq */
-    void *m_Socket = NULL;
+    /** socket handler created by zmq */
+    void *m_Socket = nullptr;
 };
 
 } // end namespace transport

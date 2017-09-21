@@ -47,6 +47,7 @@ add_library(adios2
   toolkit/transport/file/FileStream.cpp
   
   toolkit/transportman/TransportMan.cpp
+  toolkit/transportman/dataman/DataMan.cpp
   
 )
 target_include_directories(adios2
@@ -66,14 +67,20 @@ if(ADIOS2_HAVE_SysVShMem)
   target_sources(adios2 PRIVATE toolkit/capsule/shmem/ShmSystemV.cpp)
 endif()
 
-if(ADIOS2_HAVE_DataMan)
+if(ADIOS2_HAVE_ZeroMQ)
   target_sources(adios2 PRIVATE
+    toolkit/transport/wan/WANZmq.cpp
+  )
+  target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
+endif()
+
+target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
     engine/dataman/DataManWriter.cpp
-  )
-  target_link_libraries(adios2 PRIVATE dataman)
-endif()
-  
+)
+target_link_libraries(adios2 PRIVATE NLohmannJson)
+
+
 if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE transform/compress/CompressBZip2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
