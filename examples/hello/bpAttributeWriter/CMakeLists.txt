@@ -7,8 +7,7 @@ if(ADIOS2_HAVE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
 
   add_executable(hello_bpAttributeWriter helloBPAttributeWriter.cpp)
-  target_include_directories(hello_bpAttributeWriter PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(hello_bpAttributeWriter ${MPI_C_LIBRARIES})
+  target_link_libraries(hello_bpAttributeWriter MPI::MPI_C)
   
 else()
   add_executable(hello_bpAttributeWriter helloBPAttributeWriter_nompi.cpp)

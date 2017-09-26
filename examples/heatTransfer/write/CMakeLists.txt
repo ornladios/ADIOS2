@@ -10,11 +10,8 @@ if(ADIOS2_HAVE_MPI)
     Settings.cpp
     IO_adios2.cpp
   )
-  target_include_directories(heatTransfer_write_adios2
-    PRIVATE ${MPI_C_INCLUDE_PATH}
-  )
   target_link_libraries(heatTransfer_write_adios2
-    adios2 ${MPI_C_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
+    adios2 MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
   )
   target_compile_definitions(heatTransfer_write_adios2 PRIVATE
    -DDEFAULT_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/config.xml
@@ -27,11 +24,8 @@ if(ADIOS2_HAVE_MPI)
       Settings.cpp
       IO_adios1.cpp
     )
-    target_include_directories(heatTransfer_write_adios1
-      PRIVATE ${MPI_C_INCLUDE_PATH}
-    )
     target_link_libraries(heatTransfer_write_adios1
-      adios1::adios ${MPI_C_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
+      adios1::adios MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
     )
   endif()
 
@@ -43,10 +37,10 @@ if(ADIOS2_HAVE_MPI)
       IO_hdf5_a.cpp
     )
     target_include_directories(heatTransfer_write_hdf5
-      PRIVATE ${MPI_C_INCLUDE_PATH} ${HDF5_C_INCLUDE_DIRS}
+      PRIVATE ${HDF5_C_INCLUDE_DIRS}
     )
     target_link_libraries(heatTransfer_write_hdf5
-      ${HDF5_C_LIBRARIES} ${MPI_C_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
+      ${HDF5_C_LIBRARIES} MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
     )
 
     add_executable(heatTransfer_write_ph5
@@ -56,10 +50,10 @@ if(ADIOS2_HAVE_MPI)
       IO_ph5.cpp
     )
     target_include_directories(heatTransfer_write_ph5
-      PRIVATE ${MPI_C_INCLUDE_PATH} ${HDF5_C_INCLUDE_DIRS}
+      PRIVATE ${HDF5_C_INCLUDE_DIRS}
     )
     target_link_libraries(heatTransfer_write_ph5
-      ${HDF5_C_LIBRARIES} ${MPI_C_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
+      ${HDF5_C_LIBRARIES} MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
     )
 
     add_executable(heatTransfer_write_a2h5
@@ -69,11 +63,8 @@ if(ADIOS2_HAVE_MPI)
       IO_ph5_adios2.cpp
     )
 
-    target_include_directories(heatTransfer_write_a2h5
-      PRIVATE ${MPI_C_INCLUDE_PATH}
-    )
     target_link_libraries(heatTransfer_write_a2h5
-      adios2 ${MPI_C_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
+      adios2 MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
     )
   endif()
 endif()

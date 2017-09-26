@@ -3,10 +3,9 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-if(ADIOS2_HAVE_MPI)
-  add_executable(hello_adios1Writer helloADIOS1Writer.cpp)
-  target_link_libraries(hello_adios1Writer MPI::MPI_C)
+# This module is already included in new versions of CMake
+if(CMAKE_VERSION VERSION_LESS 3.10)
+  include(${CMAKE_CURRENT_LIST_DIR}/upstream/FindMPI.cmake)
 else()
-  add_executable(hello_adios1Writer helloADIOS1Writer_nompi.cpp)
+  include(${CMAKE_ROOT}/Modules/FindMPI.cmake)
 endif()
-target_link_libraries(hello_adios1Writer adios2)

@@ -24,25 +24,13 @@ if (ADIOS2_HAVE_ADIOS1)
   )
 
   if(ADIOS2_HAVE_MPI)
-    target_include_directories(TestBPWriteRead PRIVATE ${MPI_C_INCLUDE_PATH})
-    target_link_libraries(TestBPWriteRead ${MPI_C_LIBRARIES})
+    target_link_libraries(TestBPWriteRead MPI::MPI_C)
+    target_link_libraries(TestBPWriteReadAttributes MPI::MPI_C)
+    target_link_libraries(TestBPWriteReadstdio MPI::MPI_C)
+    target_link_libraries(TestBPWriteReadfstream MPI::MPI_C)
+    target_link_libraries(TestBPWriteProfilingJSON MPI::MPI_C)
 
-    target_include_directories(TestBPWriteReadAttributes PRIVATE ${MPI_C_INCLUDE_PATH})
-    target_link_libraries(TestBPWriteReadAttributes ${MPI_C_LIBRARIES})
-
-    target_include_directories(TestBPWriteReadstdio PRIVATE ${MPI_C_INCLUDE_PATH})
-    target_link_libraries(TestBPWriteReadstdio ${MPI_C_LIBRARIES})
-
-    target_include_directories(TestBPWriteReadfstream PRIVATE ${MPI_C_INCLUDE_PATH})
-    target_link_libraries(TestBPWriteReadfstream ${MPI_C_LIBRARIES})
-
-    target_include_directories(TestBPWriteProfilingJSON PRIVATE ${MPI_C_INCLUDE_PATH})
-    target_link_libraries(TestBPWriteProfilingJSON ${MPI_C_LIBRARIES})
-
-    set(extra_test_args
-      EXEC_WRAPPER
-        ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
-    )
+    set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
   endif()
 
   gtest_add_tests(TARGET TestBPWriteRead ${extra_test_args})

@@ -5,8 +5,7 @@
 
 if(ADIOS2_HAVE_MPI)
   add_executable(hello_datamanWriter helloDataManWriter.cpp)
-  target_include_directories(hello_datamanWriter PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(hello_datamanWriter ${MPI_C_LIBRARIES})
+  target_link_libraries(hello_datamanWriter MPI::MPI_C)
 else()
   add_executable(hello_datamanWriter helloDataManWriter_nompi.cpp)
 endif()
