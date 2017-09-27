@@ -48,7 +48,7 @@ varR64 = bpIO.DefineVariable(
 
 
 # ADIOS Engine
-bpFileWriter = bpIO.Open("npTypes.bp", adios2.OpenModeWrite)
+bpFileWriter = bpIO.Open("npTypes.bp", adios2.ModeWrite)
 
 bpFileWriter.Write(varI8, data.I8)
 bpFileWriter.Write(varI16, data.I16)

@@ -33,7 +33,6 @@ add_library(adios2
   toolkit/format/BufferSTL.cpp
   
   toolkit/format/bp1/BP1Base.cpp toolkit/format/bp1/BP1Base.tcc
-  toolkit/format/bp1/BP1Aggregator.cpp
   toolkit/format/bp1/BP1Writer.cpp toolkit/format/bp1/BP1Writer.tcc
   toolkit/format/bp1/BP1Reader.cpp toolkit/format/bp1/BP1Reader.tcc
 

@@ -21,10 +21,11 @@ namespace format
 {
 
 BP1Base::BP1Base(MPI_Comm mpiComm, const bool debugMode)
-: m_BP1Aggregator(mpiComm, debugMode), m_DebugMode(debugMode)
+: m_MPIComm(mpiComm), m_DebugMode(debugMode)
 {
-    // default
-    m_Profiler.IsActive = true;
+    MPI_Comm_rank(m_MPIComm, &m_RankMPI);
+    MPI_Comm_size(m_MPIComm, &m_SizeMPI);
+    m_Profiler.IsActive = true; // default
 }
 
 void BP1Base::InitParameters(const Params &parameters)
@@ -87,7 +88,6 @@ void BP1Base::InitParameters(const Params &parameters)
     if (useDefaultInitialBufferSize)
     {
         m_Data.Resize(DefaultInitialBufferSize, "in call to Open");
-        // m_HeapBuffer.ResizeData(DefaultInitialBufferSize);
     }
 }
 
@@ -142,7 +142,7 @@ BP1Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
 
     for (const auto &baseName : baseNames)
     {
-        bpNames.push_back(lf_GetBPName(baseName, m_BP1Aggregator.m_RankMPI));
+        bpNames.push_back(lf_GetBPName(baseName, m_RankMPI));
     }
     return bpNames;
 }

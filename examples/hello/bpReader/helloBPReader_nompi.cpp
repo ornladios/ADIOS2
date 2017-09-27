@@ -2,9 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloBPWriter_nompi.cpp sequential non-mpi version of helloBPWriter
+ * helloBPReader.cpp: Simple self-descriptive example of how to read a variable
+ * to a BP File.
  *
- *  Created on: Jan 9, 2017
+ *  Created on: Feb 16, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
@@ -18,8 +19,9 @@
 int main(int argc, char *argv[])
 {
     /** Application variable */
-    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    const std::size_t Nx = myFloats.size();
+    const std::size_t Nx = 10;
+    std::vector<float> myFloats(Nx);
+    std::vector<int> myInts(Nx);
 
     try
     {
@@ -28,22 +30,28 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
-
-        /** global array: name, { shape (total dimensions) }, { start (local) },
-         * { count (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
+        adios2::IO &bpIO = adios.DeclareIO("ReadBP");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpWriter =
-            bpIO.Open("myVector.bp", adios2::Mode::Write);
+        adios2::Engine &bpReader = bpIO.Open("myVector.bp", adios2::Mode::Read);
 
         /** Write variable for buffering */
-        bpWriter.Write<float>(bpFloats, myFloats.data());
+        adios2::Variable<float> *bpFloats =
+            bpReader.InquireVariable<float>("bpFloats");
+        adios2::Variable<int> *bpInts = bpReader.InquireVariable<int>("bpInts");
 
-        /** Create bp file, engine becomes unreachable after this*/
-        bpWriter.Close();
+        if (bpFloats != nullptr)
+        {
+            bpReader.Read<float>(*bpFloats, myFloats.data());
+        }
+
+        if (bpFloats != nullptr)
+        {
+            bpReader.Read<int>(*bpInts, myInts.data());
+        }
+
+        /** Close bp file, engine becomes unreachable after this*/
+        bpReader.Close();
     }
     catch (std::invalid_argument &e)
     {

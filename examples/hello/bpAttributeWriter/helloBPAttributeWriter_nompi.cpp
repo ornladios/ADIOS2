@@ -52,12 +52,6 @@ int main(int argc, char *argv[])
         adios2::Engine &bpWriter =
             bpIO.Open("myVector.bp", adios2::Mode::Write);
 
-        if (!bpWriter)
-        {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
-        }
-
         /** Write variable for buffering */
         bpWriter.Write<float>(bpFloats, myFloats.data());
 

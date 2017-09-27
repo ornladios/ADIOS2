@@ -75,6 +75,8 @@ void Transport::Flush()
     }
 }
 
+size_t Transport::GetSize() { return 0; }
+
 void Transport::ProfilerStart(const std::string process) noexcept
 {
     if (m_Profiler.IsActive)

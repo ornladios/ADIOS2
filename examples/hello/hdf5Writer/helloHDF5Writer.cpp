@@ -48,12 +48,6 @@ int main(int argc, char *argv[])
         adios2::Engine &hdf5Writer =
             hdf5IO.Open("myVector.h5", adios2::Mode::Write);
 
-        if (!hdf5Writer)
-        {
-            throw std::ios_base::failure(
-                "ERROR: hdf5Writer not created at Open\n");
-        }
-
         /** Write variable for buffering */
         hdf5Writer.Write<float>(bpFloats, myFloats.data());
 

@@ -19,15 +19,15 @@ namespace adios2
 namespace mpi
 {
 
-typedef int MPI_Comm;
-typedef std::uint64_t MPI_Status;
-typedef std::uint64_t MPI_Request;
-typedef std::FILE *MPI_File;
-typedef int MPI_Info;
-typedef int MPI_Datatype; /* Store the byte size of a type in such vars */
-typedef long MPI_Offset;
-typedef int MPI_Fint;
-typedef int MPI_Op;
+using MPI_Comm = int;
+using MPI_Status = std::uint64_t;
+using MPI_Request = std::uint64_t;
+using MPI_File = std::FILE *;
+using MPI_Info = int;
+using MPI_Datatype = int;
+using MPI_Offset = long int;
+using MPI_Fint = int;
+using MPI_Op = int;
 
 #define MPI_SUCCESS 0
 #define MPI_ERR_BUFFER 1 /* Invalid buffer pointer */
@@ -68,6 +68,7 @@ typedef int MPI_Op;
 #define MPI_SUM 0
 
 #define MPI_MAX_PROCESSOR_NAME 32
+
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
 int MPI_Initialized(int *flag);

@@ -223,6 +223,8 @@ public:
      */
     VariableCompound &GetVariableCompound(const std::string &name);
 
+    const DataMap &GetVariablesDataMap() const noexcept;
+
     /**
      * Return  map with attributes name and type info
      * @return m_Attributes

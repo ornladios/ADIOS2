@@ -140,6 +140,20 @@ void FileFStream::Read(char *buffer, size_t size, size_t start)
     }
 }
 
+size_t FileFStream::GetSize()
+{
+    const auto currentPosition = m_FileStream.tellg();
+    m_FileStream.seekg(0, std::ios_base::end);
+    const auto size = m_FileStream.tellg();
+    if (size == -1)
+    {
+        throw std::ios_base::failure("ERROR: couldn't get size of " + m_Name +
+                                     " file\n");
+    }
+    m_FileStream.seekg(currentPosition);
+    return static_cast<size_t>(size);
+}
+
 void FileFStream::Flush()
 {
     m_FileStream.flush();

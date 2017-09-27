@@ -212,71 +212,107 @@ BP1Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
                                          const bool untilTimeStep) const
 {
     Characteristics<T> characteristics;
-    characteristics.Count = ReadValue<uint8_t>(buffer, position);
-    characteristics.Length = ReadValue<uint32_t>(buffer, position);
+    characteristics.EntryCount = ReadValue<uint8_t>(buffer, position);
+    characteristics.EntryLength = ReadValue<uint32_t>(buffer, position);
+
+    const size_t start = position;
+    size_t localPosition = 0;
 
     bool foundTimeStep = false;
 
-    while (position < characteristics.Length + 5)
+    while (localPosition < characteristics.EntryLength)
     {
         const uint8_t id = ReadValue<uint8_t>(buffer, position);
 
         switch (id)
         {
         case (characteristic_time_index):
-            characteristics.Statistics.TimeStep =
+        {
+            characteristics.Statistics.Step =
                 ReadValue<uint32_t>(buffer, position);
             foundTimeStep = true;
             break;
+        }
 
         case (characteristic_file_index):
+        {
             characteristics.Statistics.FileIndex =
                 ReadValue<uint32_t>(buffer, position);
             break;
+        }
 
         case (characteristic_value):
-            // TODO make sure it's string or string array
+        { // TODO make sure it's string or string array
             characteristics.Statistics.Min = ReadValue<T>(buffer, position);
             break;
+        }
 
         case (characteristic_min):
+        {
             characteristics.Statistics.Min = ReadValue<T>(buffer, position);
             break;
+        }
 
         case (characteristic_max):
+        {
             characteristics.Statistics.Max = ReadValue<T>(buffer, position);
             break;
+        }
 
         case (characteristic_offset):
+        {
             characteristics.Statistics.Offset =
                 ReadValue<uint64_t>(buffer, position);
             break;
+        }
 
         case (characteristic_payload_offset):
+        {
             characteristics.Statistics.PayloadOffset =
                 ReadValue<uint64_t>(buffer, position);
             break;
+        }
 
         case (characteristic_dimensions):
+        {
             const uint8_t dimensionsCount =
                 ReadValue<uint8_t>(buffer, position);
-            characteristics.Dimensions.reserve(dimensionsCount * 3);
 
-            ReadValue<uint16_t>(buffer, position); // length (not used)
+            characteristics.ShapeU64.reserve(dimensionsCount);
+            characteristics.StartU64.reserve(dimensionsCount);
+            characteristics.CountU64.reserve(dimensionsCount);
+            position += 2; // skip length (not required)
 
-            for (auto d = 0; d < dimensionsCount * 3; ++d)
+            for (unsigned int d = 0; d < dimensionsCount; ++d)
             {
-                characteristics.Dimensions.push_back(
+                characteristics.CountU64.push_back(
+                    ReadValue<uint64_t>(buffer, position));
+
+                characteristics.ShapeU64.push_back(
+                    ReadValue<uint64_t>(buffer, position));
+
+                characteristics.StartU64.push_back(
                     ReadValue<uint64_t>(buffer, position));
             }
             break;
-            // TODO: implement compression and BP1 Stats characteristics
         }
+        // TODO: implement compression and BP1 Stats characteristics
+        default:
+        {
+            throw std::invalid_argument("ERROR: characteristic ID " +
+                                        std::to_string(id) +
+                                        " not supported\n");
+            break;
+        }
+
+        } // end switch
 
         if (untilTimeStep && foundTimeStep)
         {
             break;
         }
+
+        localPosition = position - start;
     }
 
     return characteristics;

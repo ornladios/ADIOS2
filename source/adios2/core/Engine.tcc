@@ -57,6 +57,29 @@ void Engine::Write(const std::string &variableName, const T values)
 ADIOS2_FOREACH_TYPE_2ARGS(define)
 #undef define
 
+#define declare(T, L)                                                          \
+    Variable<T> *Engine::DoInquireVariable##L(                                 \
+        const std::string & /*variableName*/)                                  \
+    {                                                                          \
+        ThrowUp("DoInquireVariable");                                          \
+        return nullptr;                                                        \
+    }
+
+ADIOS2_FOREACH_TYPE_2ARGS(declare)
+#undef declare
+
+template <class T>
+void Engine::Read(Variable<T> &variable, T *values)
+{
+    DoRead(variable, values);
+}
+
+template <class T>
+void Engine::Read(const std::string &variableName, T *values)
+{
+    Read(m_IO.GetVariable<T>(variableName), values);
+}
+
 } // end namespace adios2
 
 #endif /** ADIOS2_CORE_ENGINE_TCC_ */

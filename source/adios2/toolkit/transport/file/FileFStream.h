@@ -38,6 +38,8 @@ public:
 
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
+    size_t GetSize();
+
     void Flush() final;
 
     void Close() final;

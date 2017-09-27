@@ -42,12 +42,6 @@ int main(int argc, char *argv[])
         adios2::Engine &bpWriter =
             bpIO.Open("myVector.bp", adios2::Mode::Write);
 
-        if (!bpWriter)
-        {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
-        }
-
         for (unsigned int timeStep = 0; timeStep < 10; ++timeStep)
         {
             // template type is optional but recommended

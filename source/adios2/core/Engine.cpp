@@ -56,6 +56,19 @@ std::future<void> Engine::AdvanceAsync(
 
 AdvanceStatus Engine::GetAdvanceStatus() { return m_AdvanceStatus; }
 
+std::map<std::string, std::string> Engine::GetAvailableVariables() const
+{
+    std::map<std::string, std::string> availableVariables;
+    const auto &variables = m_IO.GetVariablesDataMap();
+
+    for (const auto &variablePair : variables)
+    {
+        availableVariables[variablePair.first] = variablePair.second.first;
+    }
+
+    return availableVariables;
+}
+
 void Engine::Close(const int /*transportIndex*/) {}
 
 // READ
@@ -68,11 +81,11 @@ void Engine::InitParameters() {}
 
 void Engine::InitTransports() {}
 
-// DoWrite
+// Write
 #define declare_type(T)                                                        \
     void Engine::DoWrite(Variable<T> &variable, const T *values)               \
     {                                                                          \
-        ThrowUp("Write");                                                      \
+        ThrowUp("DoWrite");                                                    \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -123,17 +136,11 @@ void Engine::DoWrite(const std::string &variableName, const void *values)
 #undef declare_type
 } // end DoWrite
 
-// READ
-#define declare(T, L)                                                          \
-    Variable<T> *Engine::DoInquireVariable##L(                                 \
-        const std::string & /*variableName*/)                                  \
-    {                                                                          \
-        ThrowUp("DoInquireVariable");                                          \
-        return nullptr;                                                        \
-    }
-
-ADIOS2_FOREACH_TYPE_2ARGS(declare)
-#undef declare
+// Read
+#define declare_type(T)                                                        \
+    void Engine::DoRead(Variable<T> &variable, T *values) { ThrowUp("DoRead"); }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 void Engine::Flush(const int transportIndex) {}
 
@@ -162,7 +169,10 @@ void Engine::ThrowUp(const std::string function) const
     template void Engine::Write<T>(Variable<T> &, const T);                    \
                                                                                \
     template void Engine::Write<T>(const std::string &, const T *);            \
-    template void Engine::Write<T>(const std::string &, const T);
+    template void Engine::Write<T>(const std::string &, const T);              \
+                                                                               \
+    template void Engine::Read<T>(Variable<T> &, T *);                         \
+    template void Engine::Read<T>(const std::string &, T *);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

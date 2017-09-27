@@ -39,35 +39,32 @@ int main(int argc, char *argv[])
         adios2::IO &bpIO = adios.DeclareIO("ReadBP");
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpReader = bpIO.Open("myVector.bp", adios2::Mode::Read);
+        adios2::Engine &bpReader = bpIO.Open("myVector.bp", adios2::Mode::Read);
+        const auto variableNames = bpReader.GetAvailableVariables();
 
-        if (!bpReader)
+        for (const auto variableName : variableNames)
         {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
+            std::cout << "Name: " << variableName.first
+                      << "  type: " << variableName.second << "\n";
         }
 
         /** Write variable for buffering */
         adios2::Variable<float> *bpFloats =
-            bpReader->InquireVariable<float>("bpFloats");
-        adios2::Variable<int> *bpInts =
-            bpReader->InquireVariable<int>("bpInts");
+            bpReader.InquireVariable<float>("bpFloats");
+        adios2::Variable<int> *bpInts = bpReader.InquireVariable<int>("bpInts");
 
-        /** Set selection */
-        adios2::Box
-
-            if (bpFloats != nullptr)
+        if (bpFloats != nullptr) // means not found
         {
-            bpReader->Read<float>(*bpFloats, myFloats.data());
+            bpReader.Read<float>(*bpFloats, myFloats.data());
         }
 
-        if (bpFloats != nullptr)
+        if (bpFloats != nullptr) // means not found
         {
-            bpReader->Read<int>(*bpInts, myInts.data());
+            bpReader.Read<int>(*bpInts, myInts.data());
         }
 
-        /** Create bp  file, engine becomes unreachable after this*/
-        bpReader->Close();
+        /** Close bp file, engine becomes unreachable after this*/
+        bpReader.Close();
     }
     catch (std::invalid_argument &e)
     {

@@ -131,7 +131,7 @@ public:
      * must use Read(variable) instead intentionally
      */
     template <class T>
-    void Read(Variable<T> &variable, T *values = nullptr);
+    void Read(Variable<T> &variable, T *values);
 
     /**
      * String version
@@ -139,7 +139,7 @@ public:
      * @param values
      */
     template <class T>
-    void Read(const std::string &variableName, T *values = nullptr);
+    void Read(const std::string &variableName, T *values);
 
     /**
      * Reader application indicates that no more data will be read from the
@@ -191,9 +191,9 @@ public:
 
     /** Return the names of all variables present in a stream/file opened for
      * reading
-     * @return a vector of strings
+     * @return a map of strings key: name, value : type
      */
-    std::map<std::string, std::string> Variables();
+    std::map<std::string, std::string> GetAvailableVariables() const;
 
     /**
      * Closes a particular transport, or all if -1
@@ -267,6 +267,11 @@ protected:
     ADIOS2_FOREACH_TYPE_2ARGS(declare)
 #undef declare
 
+#define declare_type(T) virtual void DoRead(Variable<T> &variable, T *values);
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 private:
     /** Throw exception by Engine virtual functions not implemented by a derived
      * class */
@@ -278,7 +283,10 @@ private:
     extern template void Engine::Write<T>(Variable<T> &, const T);             \
                                                                                \
     extern template void Engine::Write<T>(const std::string &, const T *);     \
-    extern template void Engine::Write<T>(const std::string &, const T);
+    extern template void Engine::Write<T>(const std::string &, const T);       \
+                                                                               \
+    extern template void Engine::Read<T>(Variable<T> &, T *);                  \
+    extern template void Engine::Read<T>(const std::string &, T *);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

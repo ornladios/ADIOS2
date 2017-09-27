@@ -14,7 +14,8 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include <numeric> //std::accumulate
+#include <numeric>   //std::accumulate
+#include <stdexcept> //std::runtime_error
 
 namespace adios2
 {
@@ -57,12 +58,23 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
     if (rank == rankDestination) // pre-allocate vector
     {
         gatheredSize = std::accumulate(counts.begin(), counts.end(), 0);
-        out.resize(out.size() + gatheredSize);
-        position += gatheredSize;
+        const size_t newSize = out.size() + gatheredSize;
+        try
+        {
+            out.resize(newSize);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(
+                std::runtime_error("ERROR: buffer overflow when resizing to " +
+                                   std::to_string(newSize) +
+                                   " bytes, in call to GathervVectors\n"));
+        }
     }
 
     GathervArrays(in.data(), in.size(), counts.data(), counts.size(),
-                  out.data(), mpiComm);
+                  &out[position], mpiComm);
+    position += gatheredSize;
 }
 
 } // end namespace adios2

@@ -34,6 +34,8 @@ public:
 
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
+    size_t GetSize() final;
+
     /** Does nothing, each write is supposed to flush */
     void Flush() final;
 

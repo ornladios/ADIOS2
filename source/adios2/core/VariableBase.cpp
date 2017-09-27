@@ -119,8 +119,10 @@ void VariableBase::SetMemorySelection(const std::pair<Dims, Dims> &boxDims)
     m_MemoryCount = count;
 }
 
-size_t VariableBase::GetAvailableStepsStart() { return m_AvailableStepsStart; }
-size_t VariableBase::GetAvailableStepsCount() { return m_AvailableStepsCount; }
+size_t VariableBase::GetAvailableStepsCount() const
+{
+    return m_AvailableStepsCount;
+}
 
 void VariableBase::SetStepSelection(const std::pair<size_t, size_t> &boxSteps)
 {
@@ -210,26 +212,30 @@ void VariableBase::InitShapeType()
         {
             if (m_DebugMode)
             {
-                auto lf_LargerThanError = [&](const unsigned int i,
-                                              const std::string dims1,
-                                              const std::string dims2) {
+                auto lf_LargerThanError =
+                    [&](const unsigned int i, const std::string dims1,
+                        const size_t dims1Value, const std::string dims2,
+                        const size_t dims2Value) {
 
-                    const std::string iString(std::to_string(i));
-                    throw std::invalid_argument(
-                        "ERROR: " + dims1 + "[" + iString + "] > " + dims2 +
-                        "[" + iString + "], in DefineVariable " + m_Name +
-                        "\n");
-                };
+                        const std::string iString(std::to_string(i));
+                        throw std::invalid_argument(
+                            "ERROR: " + dims1 + "[" + iString + "] = " +
+                            std::to_string(dims1Value) + " > " + dims2 + "[" +
+                            iString + "], = " + std::to_string(dims2Value) +
+                            " in DefineVariable " + m_Name + "\n");
+                    };
 
                 for (unsigned int i = 0; i < m_Shape.size(); ++i)
                 {
                     if (m_Count[i] > m_Shape[i])
                     {
-                        lf_LargerThanError(i, "count", "shape");
+                        lf_LargerThanError(i, "count", m_Count[i], "shape",
+                                           m_Shape[i]);
                     }
                     if (m_Start[i] > m_Shape[i])
                     {
-                        lf_LargerThanError(i, "start", "shape");
+                        lf_LargerThanError(i, "start", m_Start[i], "shape",
+                                           m_Shape[i]);
                     }
                 }
             }

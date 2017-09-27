@@ -16,7 +16,7 @@
 
 static int rank_saved;
 adios2::ADIOS *ad = nullptr;
-std::shared_ptr<adios2::Engine> h5writer;
+adios2::Engine *h5writer;
 adios2::Variable<double> *varT = nullptr;
 adios2::Variable<unsigned int> *varGndx = nullptr;
 
@@ -55,10 +55,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    h5writer = h5io.Open(m_outputfilename, adios2::Mode::Write, comm);
-
-    if (h5writer == nullptr)
-        throw std::ios_base::failure("ERROR: failed to open ADIOS h5writer\n");
+    h5writer = &(h5io.Open(m_outputfilename, adios2::Mode::Write, comm));
 }
 
 IO::~IO()

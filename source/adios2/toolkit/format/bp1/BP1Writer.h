@@ -298,6 +298,12 @@ private:
      */
     void SerializeMetadataInData() noexcept;
 
+    void WriteMinifooter(const uint64_t pgIndexStart,
+                         const uint64_t variablesIndexStart,
+                         const uint64_t attributesIndexStart,
+                         std::vector<char> &buffer, size_t &position,
+                         const bool addSubfiles = false);
+
     /**
      * Used for PG index, aggregates without merging
      * @param index input
@@ -340,6 +346,9 @@ private:
     void MergeSerializeIndices(
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
             &nameRankIndices) noexcept;
+
+    std::vector<char>
+    SetCollectiveProfilingJSON(const std::string &rankLog) const;
 };
 
 #define declare_template_instantiation(T)                                      \

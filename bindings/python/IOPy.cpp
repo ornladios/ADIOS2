@@ -73,4 +73,4 @@ EnginePy IOPy::Open(const std::string &name, const int openMode)
                     m_IO.m_MPIComm);
 }
 
-} // end namespace adios
+} // end namespace adios2

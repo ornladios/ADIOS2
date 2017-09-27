@@ -4,6 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_subdirectory(bpWriter)
+add_subdirectory(bpReader)
 add_subdirectory(bpTimeWriter)
 add_subdirectory(bpFlushWriter)
 add_subdirectory(bpAttributeWriter)

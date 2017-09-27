@@ -16,7 +16,7 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSMPI.h"
 
 namespace adios2
 {

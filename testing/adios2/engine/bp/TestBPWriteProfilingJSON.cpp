@@ -76,8 +76,7 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON)
         io.SetParameters({{"Threads", "2"}});
         io.AddTransport("File", {{"Library", "POSIX"}});
 
-        auto engine = io.Open(fname, adios2::Mode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < 3; ++step)
         {
@@ -94,23 +93,23 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON)
             auto &var_r64 = io.GetVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.data() + step);
-            engine->Write(var_i16, m_TestData.I16.data() + step);
-            engine->Write(var_i32, m_TestData.I32.data() + step);
-            engine->Write(var_i64, m_TestData.I64.data() + step);
-            engine->Write(var_u8, m_TestData.U8.data() + step);
-            engine->Write(var_u16, m_TestData.U16.data() + step);
-            engine->Write(var_u32, m_TestData.U32.data() + step);
-            engine->Write(var_u64, m_TestData.U64.data() + step);
-            engine->Write(var_r32, m_TestData.R32.data() + step);
-            engine->Write(var_r64, m_TestData.R64.data() + step);
+            engine.Write(var_i8, m_TestData.I8.data() + step);
+            engine.Write(var_i16, m_TestData.I16.data() + step);
+            engine.Write(var_i32, m_TestData.I32.data() + step);
+            engine.Write(var_i64, m_TestData.I64.data() + step);
+            engine.Write(var_u8, m_TestData.U8.data() + step);
+            engine.Write(var_u16, m_TestData.U16.data() + step);
+            engine.Write(var_u32, m_TestData.U32.data() + step);
+            engine.Write(var_u64, m_TestData.U64.data() + step);
+            engine.Write(var_r32, m_TestData.R32.data() + step);
+            engine.Write(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
-            engine->Advance();
+            engine.Advance();
         }
 
         // Close the file
-        engine->Close();
+        engine.Close();
     }
 
     // open json file, parse it to a json structure, and verify a few things

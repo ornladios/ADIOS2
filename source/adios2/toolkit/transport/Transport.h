@@ -88,6 +88,12 @@ public:
      */
     virtual void Read(char *buffer, size_t size, size_t start = MaxSizeT) = 0;
 
+    /**
+     * Returns the size of current data in transport
+     * @return size as size_t
+     */
+    virtual size_t GetSize();
+
     /** flushes current contents to physical medium without closing */
     virtual void Flush();
 

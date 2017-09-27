@@ -11,7 +11,7 @@
 
 #include <fcntl.h>     // open
 #include <stddef.h>    // write output
-#include <sys/stat.h>  // open
+#include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
 #include <unistd.h>    // write, close
 
@@ -54,13 +54,13 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode)
 
     case (Mode::Append):
         ProfilerStart("open");
-        m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
+        m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
         ProfilerStop("open");
         break;
 
     case (Mode::Read):
         ProfilerStart("open");
-        m_FileDescriptor = open(m_Name.c_str(), O_RDONLY | O_CREAT, 0777);
+        m_FileDescriptor = open(m_Name.c_str(), O_RDONLY);
         ProfilerStop("open");
         break;
 
@@ -185,6 +185,17 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
     {
         lf_Read(buffer, size);
     }
+}
+
+size_t FilePOSIX::GetSize()
+{
+    struct stat fileStat;
+    if (fstat(m_FileDescriptor, &fileStat) == -1)
+    {
+        throw std::ios_base::failure("ERROR: couldn't get size of file " +
+                                     m_Name + "\n");
+    }
+    return static_cast<size_t>(fileStat.st_size);
 }
 
 void FilePOSIX::Flush() {}

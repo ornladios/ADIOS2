@@ -168,6 +168,20 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
     }
 }
 
+size_t FileStdio::GetSize()
+{
+    const auto currentPosition = ftell(m_File);
+    fseek(m_File, 0, SEEK_END);
+    const auto size = ftell(m_File);
+    if (size == -1)
+    {
+        throw std::ios_base::failure("ERROR: couldn't get size of " + m_Name +
+                                     " file\n");
+    }
+    fseek(m_File, currentPosition, SEEK_SET);
+    return static_cast<size_t>(size);
+}
+
 void FileStdio::Flush()
 {
     const int status = std::fflush(m_File);

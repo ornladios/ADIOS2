@@ -292,7 +292,7 @@ void BP1Writer::WriteAttributeInIndex(const Attribute<T> &attribute,
 
     // TIME Index
     WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                              stats.TimeStep, buffer);
+                              stats.Step, buffer);
 
     WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
                               stats.FileIndex, buffer);
@@ -332,8 +332,8 @@ BP1Writer::GetStats(const Variable<T> &variable) const noexcept
                          m_Threads);
     }
 
-    stats.TimeStep = m_MetadataSet.TimeStep;
-    stats.FileIndex = static_cast<uint32_t>(m_BP1Aggregator.m_RankMPI);
+    stats.Step = m_MetadataSet.TimeStep;
+    stats.FileIndex = static_cast<uint32_t>(m_RankMPI);
     return stats;
 }
 
@@ -513,7 +513,7 @@ void BP1Writer::WriteVariableCharacteristics(
 
     // DIMENSIONS
     WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                              stats.TimeStep, buffer);
+                              stats.Step, buffer);
 
     WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
                               stats.FileIndex, buffer);

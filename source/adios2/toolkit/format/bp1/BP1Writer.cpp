@@ -48,7 +48,7 @@ void BP1Writer::WriteProcessGroupIndex(
     metadataBuffer.insert(metadataBuffer.end(), 2, '\0'); // skip pg length (2)
 
     // write name to metadata
-    const std::string name(std::to_string(m_BP1Aggregator.m_RankMPI));
+    const std::string name(std::to_string(m_RankMPI));
 
     WriteNameRecord(name, metadataBuffer);
     // write if host language Fortran in metadata and data
@@ -59,8 +59,7 @@ void BP1Writer::WriteProcessGroupIndex(
     WriteNameRecord(name, dataBuffer, dataPosition);
 
     // processID in metadata,
-    const uint32_t processID =
-        static_cast<const uint32_t>(m_BP1Aggregator.m_RankMPI);
+    const uint32_t processID = static_cast<const uint32_t>(m_RankMPI);
     InsertToBuffer(metadataBuffer, &processID);
     // skip coordination var in data ....what is coordination var?
     dataPosition += 4;
@@ -170,8 +169,7 @@ std::string BP1Writer::GetRankProfilingJSON(
     };
 
     // prepare string dictionary per rank
-    std::string rankLog("{ \"rank\": " +
-                        std::to_string(m_BP1Aggregator.m_RankMPI) + ", ");
+    std::string rankLog("{ \"rank\": " + std::to_string(m_RankMPI) + ", ");
 
     auto &profiler = m_Profiler;
 
@@ -219,14 +217,28 @@ std::string BP1Writer::GetRankProfilingJSON(
 std::vector<char>
 BP1Writer::AggregateProfilingJSON(const std::string &rankProfilingLog)
 {
-    return m_BP1Aggregator.SetCollectiveProfilingJSON(rankProfilingLog);
+    return SetCollectiveProfilingJSON(rankProfilingLog);
 }
 
 void BP1Writer::AggregateCollectiveMetadata()
 {
+    const uint64_t pgIndexStart = m_Metadata.m_Position;
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount);
+
+    const uint64_t variablesIndexStart = m_Metadata.m_Position;
     AggregateMergeIndex(m_MetadataSet.VarsIndices);
+
+    const uint64_t attributesIndexStart = m_Metadata.m_Position;
     AggregateMergeIndex(m_MetadataSet.AttributesIndices);
+
+    if (m_RankMPI == 0)
+    {
+        m_Metadata.Resize(m_Metadata.m_Position + m_MetadataSet.MiniFooterSize,
+                          " when writing collective bp1 Minifooter");
+        WriteMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
+                        m_Metadata.m_Buffer, m_Metadata.m_Position, true);
+        m_Metadata.m_AbsolutePosition = m_Metadata.m_Position;
+    }
 }
 
 // PRIVATE FUNCTIONS
@@ -505,36 +517,51 @@ void BP1Writer::SerializeMetadataInData() noexcept
     lf_FlattenIndices(attributesCount, attributesLength,
                       m_MetadataSet.AttributesIndices, buffer, position);
 
-    // getting absolute offsets, minifooter is 28 bytes for now
-    const uint64_t offsetPGIndex =
-        static_cast<const uint64_t>(absolutePosition);
-    const uint64_t offsetVarsIndex =
-        static_cast<const uint64_t>(offsetPGIndex + (pgLength + 16));
-    const uint64_t offsetAttributeIndex =
-        static_cast<const uint64_t>(offsetVarsIndex + (varsLength + 12));
+    // getting absolute offset start, minifooter is 28 bytes for now
+    const uint64_t pgIndexStart = static_cast<const uint64_t>(absolutePosition);
+    const uint64_t variablesIndexStart =
+        static_cast<const uint64_t>(pgIndexStart + (pgLength + 16));
+    const uint64_t attributesIndexStart =
+        static_cast<const uint64_t>(variablesIndexStart + (varsLength + 12));
 
-    CopyToBuffer(buffer, position, &offsetPGIndex);
-    CopyToBuffer(buffer, position, &offsetVarsIndex);
-    CopyToBuffer(buffer, position, &offsetAttributeIndex);
-
-    // version
-    if (IsLittleEndian())
-    {
-        const uint8_t endian = 0;
-        CopyToBuffer(buffer, position, &endian);
-        position += 2;
-        CopyToBuffer(buffer, position, &m_Version);
-    }
-    else
-    {
-    }
+    WriteMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
+                    buffer, position);
 
     absolutePosition += footerSize;
-
     if (m_Profiler.IsActive)
     {
         m_Profiler.Bytes.emplace("buffering", absolutePosition);
     }
+}
+
+void BP1Writer::WriteMinifooter(const uint64_t pgIndexStart,
+                                const uint64_t variablesIndexStart,
+                                const uint64_t attributesIndexStart,
+                                std::vector<char> &buffer, size_t &position,
+                                const bool addSubfiles)
+{
+    CopyToBuffer(buffer, position, &pgIndexStart);
+    CopyToBuffer(buffer, position, &variablesIndexStart);
+    CopyToBuffer(buffer, position, &attributesIndexStart);
+
+    // version
+    uint8_t endianness = 0; // little-endian
+    if (!IsLittleEndian())
+    {
+        endianness = 1; // big-endian
+    }
+
+    CopyToBuffer(buffer, position, &endianness);
+    if (addSubfiles)
+    {
+        position += 1;
+        CopyToBuffer(buffer, position, &m_Version);
+    }
+    else
+    {
+        position += 2;
+    }
+    CopyToBuffer(buffer, position, &m_Version);
 }
 
 void BP1Writer::AggregateIndex(const SerialElementIndex &index,
@@ -544,10 +571,9 @@ void BP1Writer::AggregateIndex(const SerialElementIndex &index,
     auto &position = m_Metadata.m_Position;
 
     size_t countPosition = position;
-    const size_t totalCount =
-        ReduceValues<size_t>(count, m_BP1Aggregator.m_MPIComm);
+    const size_t totalCount = ReduceValues<size_t>(count, m_MPIComm);
 
-    if (m_BP1Aggregator.m_RankMPI == 0)
+    if (m_RankMPI == 0)
     {
         // Write count
         position += 16;
@@ -557,10 +583,10 @@ void BP1Writer::AggregateIndex(const SerialElementIndex &index,
     }
 
     // write contents
-    GathervVectors(index.Buffer, buffer, position, m_BP1Aggregator.m_MPIComm);
+    GathervVectors(index.Buffer, buffer, position, m_MPIComm);
 
     // get total length and write it after count and before index
-    if (m_BP1Aggregator.m_RankMPI == 0)
+    if (m_RankMPI == 0)
     {
         const uint64_t totalLengthU64 =
             static_cast<const uint64_t>(position - countPosition - 8);
@@ -578,7 +604,7 @@ void BP1Writer::AggregateMergeIndex(
     size_t gatheredSerialIndicesPosition = 0;
 
     GathervVectors(serializedIndices, gatheredSerialIndices,
-                   gatheredSerialIndicesPosition, m_BP1Aggregator.m_MPIComm);
+                   gatheredSerialIndicesPosition, m_MPIComm);
 
     // deallocate local serialized Indices
     std::vector<char>().swap(serializedIndices);
@@ -597,20 +623,20 @@ void BP1Writer::AggregateMergeIndex(
 
     size_t countPosition = position;
 
-    if (m_BP1Aggregator.m_RankMPI == 0)
+    if (m_RankMPI == 0)
     {
         // Write count
         position += 12;
         m_Metadata.Resize(position,
                           ", in call to AggregateMergeIndex bp1 metadata");
-        const uint64_t totalCountU64 =
-            static_cast<const uint64_t>(nameRankIndices.size());
-        CopyToBuffer(buffer, countPosition, &totalCountU64);
+        const uint32_t totalCountU32 =
+            static_cast<const uint32_t>(nameRankIndices.size());
+        CopyToBuffer(buffer, countPosition, &totalCountU32);
     }
 
     MergeSerializeIndices(nameRankIndices);
 
-    if (m_BP1Aggregator.m_RankMPI == 0)
+    if (m_RankMPI == 0)
     {
         // Write length
         const uint64_t totalLengthU64 =
@@ -630,8 +656,7 @@ std::vector<char> BP1Writer::SerializeIndices(
         const SerialElementIndex &index = indexPair.second;
 
         // add rank at the beginning
-        const uint32_t rankSource =
-            static_cast<const uint32_t>(m_BP1Aggregator.m_RankMPI);
+        const uint32_t rankSource = static_cast<const uint32_t>(m_RankMPI);
         InsertToBuffer(serializedIndices, &rankSource);
 
         // insert buffer
@@ -659,12 +684,10 @@ BP1Writer::DeserializeIndicesPerRankThreads(
         // mutex portion
         {
             std::lock_guard<std::mutex> lock(m_Mutex);
-            // inside mutex to avoid race condition
             if (deserialized.count(header.Name) == 0)
             {
                 deserialized[header.Name] = std::vector<SerialElementIndex>(
-                    m_BP1Aggregator.m_SizeMPI,
-                    SerialElementIndex(header.MemberID, 0));
+                    m_SizeMPI, SerialElementIndex(header.MemberID, 0));
             }
         }
 
@@ -679,7 +702,7 @@ BP1Writer::DeserializeIndicesPerRankThreads(
         deserialized;
     const size_t serializedSize = serialized.size();
 
-    if (m_BP1Aggregator.m_RankMPI != 0 || serializedSize < 8)
+    if (m_RankMPI != 0 || serializedSize < 8)
     {
         return deserialized;
     }
@@ -751,9 +774,9 @@ void BP1Writer::MergeSerializeIndices(
         {
             const auto characteristics =
                 ReadElementIndexCharacteristics<char>(buffer, position, true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -761,9 +784,9 @@ void BP1Writer::MergeSerializeIndices(
         {
             const auto characteristics =
                 ReadElementIndexCharacteristics<short>(buffer, position, true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -771,9 +794,9 @@ void BP1Writer::MergeSerializeIndices(
         {
             const auto characteristics =
                 ReadElementIndexCharacteristics<int>(buffer, position, true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -782,9 +805,9 @@ void BP1Writer::MergeSerializeIndices(
             const auto characteristics =
                 ReadElementIndexCharacteristics<long int>(buffer, position,
                                                           true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -793,9 +816,9 @@ void BP1Writer::MergeSerializeIndices(
             const auto characteristics =
                 ReadElementIndexCharacteristics<unsigned char>(buffer, position,
                                                                true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -804,9 +827,9 @@ void BP1Writer::MergeSerializeIndices(
             const auto characteristics =
                 ReadElementIndexCharacteristics<unsigned short>(buffer,
                                                                 position, true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -815,9 +838,9 @@ void BP1Writer::MergeSerializeIndices(
             const auto characteristics =
                 ReadElementIndexCharacteristics<unsigned int>(buffer, position,
                                                               true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -826,9 +849,9 @@ void BP1Writer::MergeSerializeIndices(
             auto characteristics =
                 ReadElementIndexCharacteristics<unsigned long int>(
                     buffer, position, true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -836,9 +859,9 @@ void BP1Writer::MergeSerializeIndices(
         {
             auto characteristics =
                 ReadElementIndexCharacteristics<float>(buffer, position, true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
 
@@ -846,13 +869,13 @@ void BP1Writer::MergeSerializeIndices(
         {
             auto characteristics =
                 ReadElementIndexCharacteristics<double>(buffer, position, true);
-            count = characteristics.Count;
-            length = characteristics.Length;
-            timeStep = characteristics.Statistics.TimeStep;
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
             break;
         }
             // TODO: complex, string, string array, long double
-        }
+        } // end switch
 
     };
 
@@ -865,7 +888,6 @@ void BP1Writer::MergeSerializeIndices(
         // index positions per rank
         std::vector<size_t> positions(indices.size(), 0);
         // merge index length
-        uint32_t entryLength = 0;
         size_t headerSize = 0;
 
         for (size_t r = 0; r < indices.size(); ++r)
@@ -879,9 +901,19 @@ void BP1Writer::MergeSerializeIndices(
 
             header = ReadElementIndexHeader(buffer, position);
             firstRank = r;
-            entryLength += position;
-            headerSize += position;
+
+            headerSize = position;
             break;
+        }
+        // move all positions to headerSize
+        for (size_t r = 0; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+            positions[r] = headerSize;
         }
 
         uint64_t setsCount = 0;
@@ -927,11 +959,11 @@ void BP1Writer::MergeSerializeIndices(
                         break;
                     }
 
-                    entryLength += length + 5;
                     ++setsCount;
 
                     // here copy to sorted buffer
                     InsertToBuffer(sorted, &buffer[position], length + 5);
+
                     position += length + 5;
 
                     if (position >= buffer.size())
@@ -943,18 +975,21 @@ void BP1Writer::MergeSerializeIndices(
             ++currentTimeStep;
         }
 
+        const uint32_t entryLength = headerSize + sorted.size() - 4;
         // Copy header to metadata buffer, need mutex here
         {
             std::lock_guard<std::mutex> lock(m_Mutex);
             auto &buffer = m_Metadata.m_Buffer;
             auto &position = m_Metadata.m_Position;
 
-            m_Metadata.Resize(buffer.size() + headerSize + sorted.size(),
-                              "in call to MergeSerializeIndices bp1 metadata");
+            m_Metadata.Resize(buffer.size() +
+                                  static_cast<size_t>(entryLength + 4),
+                              "in call to MergeSerializeIndices bp3 index");
 
-            CopyToBuffer(buffer, position, indices[firstRank].Buffer.data(),
-                         headerSize);
-
+            CopyToBuffer(buffer, position, &entryLength);
+            CopyToBuffer(buffer, position, &indices[firstRank].Buffer[4],
+                         headerSize - 8 - 4);
+            CopyToBuffer(buffer, position, &setsCount);
             CopyToBuffer(buffer, position, sorted.data(), sorted.size());
         }
     };
@@ -1022,6 +1057,41 @@ void BP1Writer::MergeSerializeIndices(
     {
         thread.join();
     }
+}
+
+std::vector<char>
+BP1Writer::SetCollectiveProfilingJSON(const std::string &rankLog) const
+{
+    // Gather sizes
+    const size_t rankLogSize = rankLog.size();
+    std::vector<size_t> rankLogsSizes = GatherValues(rankLogSize, m_MPIComm);
+
+    // Gatherv JSON per rank
+    std::vector<char> profilingJSON(3);
+    const std::string header("[\n");
+    const std::string footer("\n]\n");
+    size_t gatheredSize = 0;
+    size_t position = 0;
+
+    if (m_RankMPI == 0) // pre-allocate in destination
+    {
+        gatheredSize =
+            std::accumulate(rankLogsSizes.begin(), rankLogsSizes.end(), 0);
+
+        profilingJSON.resize(gatheredSize + header.size() + footer.size() - 2);
+        CopyToBuffer(profilingJSON, position, header.c_str(), header.size());
+    }
+
+    GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
+                  rankLogsSizes.size(), &profilingJSON[position], m_MPIComm);
+
+    if (m_RankMPI == 0) // add footer to close JSON
+    {
+        position += gatheredSize - 2;
+        CopyToBuffer(profilingJSON, position, footer.c_str(), footer.size());
+    }
+
+    return profilingJSON;
 }
 
 //------------------------------------------------------------------------------

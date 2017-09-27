@@ -40,16 +40,14 @@ void TransportMan::OpenFiles(const std::vector<std::string> &baseNames,
                              const std::vector<Params> &parametersVector,
                              const bool profile)
 {
-    const unsigned int size = baseNames.size();
-
-    for (unsigned int i = 0; i < size; ++i)
+    for (auto i = 0; i < names.size(); ++i)
     {
         const Params &parameters = parametersVector[i];
         const std::string type(parameters.at("transport"));
 
         if (type == "File" || type == "file") // need to create directory
         {
-            if (openMode == Mode::Write || openMode == Mode::Append)
+            if (openMode == Mode::Write)
             {
                 CreateDirectory(baseNames[i]);
             }
@@ -146,19 +144,29 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
     }
     else
     {
-        if (m_DebugMode)
-        {
-            if (m_Transports[transportIndex]->m_Type != "File")
-            {
-                throw std::invalid_argument(
-                    "ERROR: index " + std::to_string(transportIndex) +
-                    " doesn't come from a file transport in IO AddTransport, "
-                    "in call to Write (flush) or Close\n");
-            }
-        }
-
+        CheckFileType(transportIndex);
         m_Transports[transportIndex]->Write(buffer, size);
     }
+}
+
+size_t TransportMan::GetFileSize(const int transportIndex)
+{
+    if (m_DebugMode)
+    {
+        CheckTransportIndex(transportIndex);
+    }
+
+    return m_Transports[transportIndex]->GetSize();
+}
+
+void TransportMan::ReadFile(char *buffer, const size_t size, const size_t start,
+                            const int transportIndex)
+{
+    if (m_DebugMode)
+    {
+        CheckTransportIndex(transportIndex);
+    }
+    m_Transports[transportIndex]->Read(buffer, size, start);
 }
 
 void TransportMan::CloseFiles(const int transportIndex)
@@ -175,17 +183,7 @@ void TransportMan::CloseFiles(const int transportIndex)
     }
     else
     {
-        if (m_DebugMode)
-        {
-            if (m_Transports[transportIndex]->m_Type != "File")
-            {
-                throw std::invalid_argument(
-                    "ERROR: index " + std::to_string(transportIndex) +
-                    " doesn't come from a file transport in IO AddTransport, "
-                    "in call to Close\n");
-            }
-        }
-
+        CheckFileType(transportIndex);
         m_Transports[transportIndex]->Close();
     }
 }
@@ -273,5 +271,19 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
     m_Transports.push_back(std::move(transport)); // is move needed?
 }
 
+void TransportMan::CheckFileType(const int transportIndex)
+{
+    if (m_DebugMode)
+    {
+        if (m_Transports[transportIndex]->m_Type != "File")
+        {
+            throw std::invalid_argument(
+                "ERROR: invalid file transport library " +
+                m_Transports[transportIndex]->m_Library +
+                ", only POSIX, stdio, fstream are supported\n");
+        }
+    }
+}
+
 } // end namespace transport
-} // end namespace adios
+} // end namespace adios2

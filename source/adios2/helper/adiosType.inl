@@ -144,7 +144,7 @@ bool IsTypeAlias(
 template <class T, class U>
 std::vector<U> NewVectorType(const std::vector<T> &in)
 {
-    return NewVectorTypeFromArray(in.data(), in.size());
+    return NewVectorTypeFromArray<T, U>(in.data(), in.size());
 }
 
 template <class T, class U>

@@ -38,8 +38,10 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+        bpIO.SetParameters({{"Threads", "2"}});
 
-        /** global array: name, { shape (total dimensions) }, { start (local) },
+        /** global array: name, { shape (total dimensions) }, { start
+         * (local) },
          * { count (local) }, all are constant dimensions */
         adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
@@ -76,9 +78,9 @@ int main(int argc, char *argv[])
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM "
+                     "from rank "
+                  << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

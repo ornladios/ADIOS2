@@ -56,8 +56,7 @@ public:
      * @param profile
      */
     void OpenFiles(const std::vector<std::string> &baseNames,
-                   const std::vector<std::string> &names,
-                   const Mode openMode,
+                   const std::vector<std::string> &names, const Mode openMode,
                    const std::vector<Params> &parametersVector,
                    const bool profile);
 
@@ -103,6 +102,8 @@ public:
     void WriteFiles(const char *buffer, const size_t size,
                     const int transportIndex = -1);
 
+    size_t GetFileSize(const int transportIndex = 0);
+
     /**
      * Read contents from a single file and assign it to buffer
      * @param buffer
@@ -110,8 +111,8 @@ public:
      * @param start
      * @param transportIndex
      */
-    void ReadFile(char *buffer, const size_t size, const size_t start,
-                  const int transportIndex);
+    void ReadFile(char *buffer, const size_t size, const size_t start = 0,
+                  const int transportIndex = 0);
 
     /**
      * Close file or files depending on transport index. Throws an exception
@@ -129,9 +130,11 @@ protected:
 
     void OpenFileTransport(const std::string &fileName, const Mode openMode,
                            const Params &parameters, const bool profile);
+
+    void CheckFileType(const int transportIndex);
 };
 
 } // end namespace transport
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_ */

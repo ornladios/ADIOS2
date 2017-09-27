@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
+#include <unordered_map>
 #include <vector>
 /// \endcond
 
@@ -22,7 +23,6 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
 #include "adios2/toolkit/format/BufferSTL.h"
-#include "adios2/toolkit/format/bp1/BP1Aggregator.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2
@@ -94,6 +94,21 @@ public:
         bool DataPGIsOpen = false;
     };
 
+    struct Minifooter
+    {
+        uint64_t PGIndexStart;
+        uint64_t VarsIndexStart;
+        uint64_t AttributesIndexStart;
+        uint8_t Version = 3;
+        bool IsLittleEndian = true;
+        bool HasSubFiles = false;
+    };
+
+    MPI_Comm m_MPIComm;  ///< MPI communicator from Engine
+    int m_RankMPI = 0;   ///< current MPI rank process
+    int m_SizeMPI = 1;   ///< current MPI processes size
+    int m_Processes = 1; ///< number of aggregated MPI processes
+
     /** statistics verbosity, only 0 is supported */
     unsigned int m_Verbosity = 0;
 
@@ -110,9 +125,6 @@ public:
 
     /** contains bp1 format metadata indices*/
     MetadataSet m_MetadataSet;
-
-    /** object that takes care of all MPI aggregation tasks */
-    BP1Aggregator m_BP1Aggregator;
 
     /** true: Close was called, Engine will call this many times for different
      * transports */
@@ -291,7 +303,7 @@ protected:
         uint64_t PayloadOffset;
         T Min;
         T Max;
-        uint32_t TimeStep;
+        uint32_t Step;
         uint32_t FileIndex;
         uint32_t MemberID;
     };
@@ -300,9 +312,11 @@ protected:
     struct Characteristics
     {
         Stats<T> Statistics;
-        std::vector<uint64_t> Dimensions;
-        uint32_t Length;
-        uint8_t Count;
+        std::vector<uint64_t> ShapeU64;
+        std::vector<uint64_t> StartU64;
+        std::vector<uint64_t> CountU64;
+        uint32_t EntryLength;
+        uint8_t EntryCount;
     };
 
     struct ElementIndexHeader

@@ -78,6 +78,8 @@ private:
     /** Write a profiling.json file from m_BP1Writer and m_TransportsManager
      * profilers*/
     void WriteProfilingJSONFile();
+
+    void WriteCollectiveMetadataFile();
 };
 
 } // end namespace adios2

@@ -11,12 +11,12 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1READER_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP1_BP1READER_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <vector>
-/// \endcond
+#include <map>
+#include <mutex>
+#include <string>
+#include <utility> //std::pair
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/core/IO.h"
 #include "adios2/toolkit/format/bp1/BP1Base.h"
 
 namespace adios2
@@ -24,10 +24,46 @@ namespace adios2
 namespace format
 {
 
-class BP1Reader : BP1Base
+class BP1Reader : public BP1Base
 {
 
 public:
+    /** BP Minifooter fields */
+    Minifooter m_Minifooter;
+
+    /**
+     * Synchronous Reads
+     * <pre>
+     * key: subfile index
+     * value: map
+     *        key: step
+     *        value: bucket index vector of pairs -> pair.first = seekStart,
+     *                                               pair.second = seekCount
+     * </pre>
+     */
+    std::map<unsigned int,
+             std::map<size_t, std::vector<std::pair<size_t, size_t>>>>
+        m_VariableSubFileInfo;
+
+    /**
+     * Deferred Reads
+     * <pre>
+     *
+     * key: subfile index
+     * value: map
+     *        key: variable name
+     *        value: map
+     *               key: step
+     *               value: bucket index vector of pairs:
+     *                                                   pair.first = seekStart,
+     *                                                   pair.second = seekCount
+     * </pre>
+     */
+    std::map<unsigned int,         // file index
+             std::map<std::string, // variable name, step, seekStart, seekCount
+                      std::map<size_t, std::vector<std::pair<size_t, size_t>>>>>
+        m_MultiVariablesSubFileInfo;
+
     /**
      * Unique constructor
      * @param mpiComm
@@ -36,6 +72,29 @@ public:
     BP1Reader(MPI_Comm mpiComm, const bool debugMode);
 
     ~BP1Reader() = default;
+
+    void ParseMetadata(IO &io);
+
+private:
+    static std::mutex m_Mutex;
+
+    void ParseMinifooter();
+    void ParsePGIndex();
+    void ParseVariablesIndex(IO &io);
+    void ParseAttributesIndex(IO &io);
+
+    /**
+     * This function reads a variable index element (serialized) and calls IO
+     * DefineVariable to deserialize the data
+     * @param header serialize
+     * @param io
+     * @param buffer
+     * @param position
+     */
+    template <class T>
+    void DefineVariableInIO(const ElementIndexHeader &header, IO &io,
+                            const std::vector<char> &buffer,
+                            size_t position) const;
 };
 
 } // end namespace format

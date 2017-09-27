@@ -25,8 +25,7 @@ namespace adios2
 BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode openMode,
                            MPI_Comm mpiComm)
 : Engine("BPFileWriter", io, name, openMode, mpiComm),
-  m_BP1BuffersWriter(mpiComm, m_DebugMode),
-  m_FileManager(mpiComm, m_DebugMode)
+  m_BP1BuffersWriter(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open BPFileWriter " + m_Name + "\n";
     Init();
@@ -72,8 +71,8 @@ void BPFileWriter::Close(const int transportIndex)
     m_BP1BuffersWriter.Close(m_IO);
     // send data to corresponding transports
     m_FileManager.WriteFiles(m_BP1BuffersWriter.m_Data.m_Buffer.data(),
-                                   m_BP1BuffersWriter.m_Data.m_Position,
-                                   transportIndex);
+                             m_BP1BuffersWriter.m_Data.m_Position,
+                             transportIndex);
 
     m_FileManager.CloseFiles(transportIndex);
 
@@ -86,7 +85,7 @@ void BPFileWriter::Close(const int transportIndex)
     if (m_BP1BuffersWriter.m_CollectiveMetadata &&
         m_FileManager.AllTransportsClosed())
     {
-        m_BP1BuffersWriter.AggregateCollectiveMetadata();
+        WriteCollectiveMetadataFile();
     }
 }
 
@@ -107,14 +106,14 @@ void BPFileWriter::InitTransports()
     }
 
     // Names are std::vector<std::string>
-    auto transportsNames = m_FileManager.GetFilesBaseNames(
-        m_Name, m_IO.m_TransportsParameters);
+    auto transportsNames =
+        m_FileManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
     auto bpBaseNames = m_BP1BuffersWriter.GetBPBaseNames(transportsNames);
     auto bpNames = m_BP1BuffersWriter.GetBPNames(transportsNames);
 
     m_FileManager.OpenFiles(bpBaseNames, bpNames, m_OpenMode,
-                                  m_IO.m_TransportsParameters,
-                                  m_BP1BuffersWriter.m_Profiler.IsActive);
+                            m_IO.m_TransportsParameters,
+                            m_BP1BuffersWriter.m_Profiler.IsActive);
 }
 
 void BPFileWriter::InitBPBuffer()
@@ -144,7 +143,7 @@ void BPFileWriter::WriteProfilingJSONFile()
     const std::vector<char> profilingJSON(
         m_BP1BuffersWriter.AggregateProfilingJSON(lineJSON));
 
-    if (m_BP1BuffersWriter.m_BP1Aggregator.m_RankMPI == 0)
+    if (m_BP1BuffersWriter.m_RankMPI == 0)
     {
         transport::FileFStream profilingJSONStream(m_MPIComm, m_DebugMode);
         auto bpBaseNames = m_BP1BuffersWriter.GetBPBaseNames({m_Name});
@@ -152,6 +151,21 @@ void BPFileWriter::WriteProfilingJSONFile()
                                  Mode::Write);
         profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
         profilingJSONStream.Close();
+    }
+}
+
+void BPFileWriter::WriteCollectiveMetadataFile()
+{
+    m_BP1BuffersWriter.AggregateCollectiveMetadata();
+    if (m_BP1BuffersWriter.m_RankMPI == 0)
+    {
+        transport::FileFStream metadataStream(m_MPIComm, m_DebugMode);
+        const std::string metadataFileName(
+            m_BP1BuffersWriter.GetBPMetadataFileName(m_Name));
+        metadataStream.Open(metadataFileName, Mode::Write);
+        metadataStream.Write(m_BP1BuffersWriter.m_Metadata.m_Buffer.data(),
+                             m_BP1BuffersWriter.m_Metadata.m_AbsolutePosition);
+        metadataStream.Close();
     }
 }
 

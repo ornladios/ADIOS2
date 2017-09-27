@@ -65,6 +65,15 @@ public:
     /** Registered transforms */
     std::vector<TransformInfo> m_TransformsInfo;
 
+    size_t m_AvailableStepsCount = 0;
+
+    /** Index Metadata Position in a serial metadata buffer */
+    size_t m_IndexPosition;
+
+    /** Index to Step and Subsets inside a step positions in a serial metadata
+     * buffer */
+    std::vector<std::vector<size_t>> m_IndexStepSubsetPositions;
+
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
                  const Dims &count, const bool constantShape,
@@ -104,8 +113,7 @@ public:
      */
     void SetMemorySelection(const std::pair<Dims, Dims> &boxDims);
 
-    size_t GetAvailableStepsStart();
-    size_t GetAvailableStepsCount();
+    size_t GetAvailableStepsCount() const;
 
     /**
      * Pushed a new transform to a sequence of transports
@@ -126,7 +134,7 @@ public:
      * @param hint extra debugging info for the exception */
     void CheckDimsBeforeWrite(const std::string hint) const;
 
-private:
+protected:
     const bool m_DebugMode = false;
 
     Dims m_MemoryStart; ///< offset of memory selection
@@ -134,9 +142,6 @@ private:
 
     size_t m_StepStart = 0;
     size_t m_StepCount = 1;
-
-    size_t m_AvailableStepsCount = 1;
-    size_t m_AvailableStepsStart = 0;
 
     void InitShapeType();
 
