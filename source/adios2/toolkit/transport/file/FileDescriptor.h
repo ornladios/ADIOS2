@@ -32,6 +32,8 @@ public:
 
     void Write(const char *buffer, size_t size) final;
 
+    void Read(char *buffer, size_t size) final;
+
     /** Does nothing, each write is supposed to flush */
     void Flush() final;
 

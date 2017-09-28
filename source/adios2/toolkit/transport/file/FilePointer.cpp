@@ -136,6 +136,11 @@ void FilePointer::Write(const char *buffer, size_t size)
     }
 }
 
+void FilePointer::Read(char *buffer, size_t size)
+{
+    // TODO: Implement read function
+}
+
 void FilePointer::Flush()
 {
     const int status = std::fflush(m_File);
