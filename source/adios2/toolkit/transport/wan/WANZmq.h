@@ -40,6 +40,8 @@ public:
 
     void Write(const char *buffer, size_t size) final;
 
+    void Read(char *buffer, size_t size) final;
+
     void Flush() final;
 
     void Close() final;

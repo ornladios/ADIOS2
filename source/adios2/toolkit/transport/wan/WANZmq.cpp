@@ -148,6 +148,11 @@ void WANZmq::Write(const char *buffer, size_t size)
     */
 }
 
+void WANZmq::Read(char *buffer, size_t size)
+{
+    // TODO: Implement read function
+}
+
 void WANZmq::Flush() {}
 
 void WANZmq::Close()

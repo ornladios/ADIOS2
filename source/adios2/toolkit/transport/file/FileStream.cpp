@@ -115,6 +115,11 @@ void FileStream::Write(const char *buffer, size_t size)
     }
 }
 
+void FileStream::Read(char *buffer, size_t size)
+{
+    // TODO: Implement read function
+}
+
 void FileStream::Flush()
 {
     m_FileStream.flush();

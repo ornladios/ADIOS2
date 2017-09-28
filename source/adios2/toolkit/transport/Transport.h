@@ -72,6 +72,13 @@ public:
      */
     virtual void Write(const char *buffer, size_t size) = 0;
 
+    /**
+     * Reads from file stream
+     * @param buffer raw data to read from file stream
+     * @param size number of bytes to read from file stream
+     */
+    virtual void Read(char *buffer, size_t size) = 0;
+
     /** flushes current contents to physical medium without closing */
     virtual void Flush() = 0;
 

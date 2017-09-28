@@ -159,6 +159,11 @@ void FileDescriptor::Write(const char *buffer, size_t size)
     }
 }
 
+void FileDescriptor::Read(char *buffer, size_t size)
+{
+    // TODO: Implement read function
+}
+
 void FileDescriptor::Flush() {}
 
 void FileDescriptor::Close()
