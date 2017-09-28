@@ -80,6 +80,12 @@ public:
      */
     void SetEngine(const std::string engine);
 
+    /**
+     * Gets the engine type for this IO class object
+     * @param engine
+     */
+    const std::string GetEngine() const;
+
     /** Set the IO mode (collective or independent)
      * @param IO mode */
     void SetIOMode(const IOMode mode);
@@ -102,7 +108,7 @@ public:
     /**
      * Retrieve existing parameter set
      */
-    const Params &GetParameters() const;
+    Params &GetParameters();
 
     /**
      * Adds a transport and its parameters for the IO Engine
@@ -112,6 +118,8 @@ public:
      */
     unsigned int AddTransport(const std::string type,
                               const Params &params = Params());
+
+    const std::vector<Params> &GetTransportParameters() const;
 
     /**
      * Set a single parameter to an existing transport identified with a
