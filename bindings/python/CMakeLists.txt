@@ -1,6 +1,8 @@
 pybind11_add_module(adios2py MODULE
   adios2py.cpp
+  PyAttribute.cpp
   PyADIOS.cpp
+  PyEnums.cpp
   PyIO.cpp
   PyVariable.cpp
 #  adiosPyFunctions.h
@@ -10,10 +12,6 @@ pybind11_add_module(adios2py MODULE
 #  EnginePy.inl
 #  EnginePy.cpp
 #  gluePyBind11.cpp
-#  IOPy.h
-#  IOPy.cpp
-#  VariablePy.h
-#  VariablePy.cpp
 )
 target_link_libraries(adios2py PRIVATE adios2)
 if(ADIOS2_HAVE_MPI)

@@ -58,6 +58,8 @@ void IO::SetSingleParameter(const std::string key,
 
 Params &IO::GetParameters() { return m_Parameters; }
 
+const Params &IO::GetParameters() const { return m_Parameters; }
+
 unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 {
     Params parametersMap(parameters);
