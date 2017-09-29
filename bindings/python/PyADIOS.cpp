@@ -8,9 +8,10 @@
 
 namespace adios2
 {
-template<typename T> void GeneratePythonBindings(pybind11::module &m);
+template <typename T>
+void GeneratePythonBindings(pybind11::module &m);
 
-template<>
+template <>
 void GeneratePythonBindings<ADIOS>(pybind11::module &m)
 {
     pybind11::class_<ADIOS>(m, "ADIOS")
@@ -25,8 +26,7 @@ void GeneratePythonBindings<ADIOS>(pybind11::module &m)
                  a->m_HostLanguage = "Python";
                  return a;
              }),
-             pybind11::arg("config").none(false),
-             pybind11::arg("debug") = true)
+             pybind11::arg("config").none(false), pybind11::arg("debug") = true)
 #ifdef ADIOS2_HAVE_MPI
         .def(pybind11::init([](pybind11::object comm, const bool debug) {
                  import_mpi4py__MPI();
@@ -34,8 +34,7 @@ void GeneratePythonBindings<ADIOS>(pybind11::module &m)
                  a->m_HostLanguage = "Python";
                  return a;
              }),
-             pybind11::arg("comm").none(false),
-             pybind11::arg("debug") = true)
+             pybind11::arg("comm").none(false), pybind11::arg("debug") = true)
         .def(pybind11::init([](pybind11::object comm, const std::string config,
                                const bool debug) {
                  import_mpi4py__MPI();
@@ -44,8 +43,7 @@ void GeneratePythonBindings<ADIOS>(pybind11::module &m)
                  return a;
              }),
              pybind11::arg("comm").none(false),
-             pybind11::arg("config").none(false),
-             pybind11::arg("debug") = true)
+             pybind11::arg("config").none(false), pybind11::arg("debug") = true)
 #endif
         .def_readonly("HostLanguage", &ADIOS::m_HostLanguage)
         .def("DeclareIO", &ADIOS::DeclareIO)

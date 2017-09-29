@@ -1,7 +1,8 @@
 #include <adios2.h>
 
-#include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace adios2
 {
@@ -12,18 +13,16 @@ template <>
 void GeneratePythonBindings<IO>(pybind11::module &m)
 {
     pybind11::class_<IO>(m, "IO")
-        .def_property("EngineType", &IO::SetEngine,
-                      &IO::GetEngine)
+        .def_property("EngineType", &IO::SetEngine, &IO::GetEngine)
         .def_property("Parameters", &IO::SetParameters,
-                      (Params& (IO::*)())&IO::GetParameters)
+                      (Params & (IO::*)()) & IO::GetParameters)
         .def("SetIOMode", &IO::SetIOMode)
         .def("AddTransport", &IO::AddTransport)
         .def_property_readonly("TransportParameters",
                                &IO::GetTransportParameters)
         .def("DefineVariable",
-             [](IO &io, std::string &name, Dims &shape,
-                Dims &start, Dims &count, bool constantDims,
-                pybind11::dtype type) {
+             [](IO &io, std::string &name, Dims &shape, Dims &start,
+                Dims &count, bool constantDims, pybind11::dtype type) {
                  if (type.is_none())
                  {
                      // Delay variable creation
@@ -49,7 +48,6 @@ void GeneratePythonBindings<IO>(pybind11::module &m)
              pybind11::arg("count").none(false) = Dims{},
              pybind11::arg("constantDims") = false,
              pybind11::arg("type").none(false));
-}
 }
 
 } // end namespace adios2

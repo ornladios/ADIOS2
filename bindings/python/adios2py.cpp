@@ -4,8 +4,8 @@
 
 namespace adios2
 {
-  template<typename T>
-  void GeneratePythonBindings(pybind11::module &m);
+template <typename T>
+void GeneratePythonBindings(pybind11::module &m);
 }
 
 PYBIND11_MODULE(adios2, m)
