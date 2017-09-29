@@ -109,6 +109,7 @@ public:
      * Retrieve existing parameter set
      */
     Params &GetParameters();
+    const Params &GetParameters() const;
 
     /**
      * Adds a transport and its parameters for the IO Engine
