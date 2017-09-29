@@ -4,9 +4,10 @@
 
 namespace adios2
 {
-template<typename T> void GeneratePythonBindings(pybind11::module &m);
+template <typename T>
+void GeneratePythonBindings(pybind11::module &m);
 
-template<>
+template <>
 void GeneratePythonBindings<void>(pybind11::module &m)
 {
     pybind11::enum_<ShapeID>(m, "ShapeID")
@@ -41,7 +42,7 @@ void GeneratePythonBindings<void>(pybind11::module &m)
         .value("NonBlocking", ReadMode::Blocking)
         .value("Blocking", ReadMode::Blocking)
         .export_values();
-    
+
     pybind11::enum_<AdvanceMode>(m, "AdvanceMode")
         .value("Append", AdvanceMode::Append)
         .value("Update", AdvanceMode::Update)

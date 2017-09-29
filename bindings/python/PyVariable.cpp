@@ -5,9 +5,10 @@
 
 namespace adios2
 {
-template<typename T> void GeneratePythonBindings(pybind11::module &m);
+template <typename T>
+void GeneratePythonBindings(pybind11::module &m);
 
-template<>
+template <>
 void GeneratePythonBindings<VariableBase>(pybind11::module &m)
 {
     pybind11::class_<VariableBase>(m, "Variable")
@@ -19,8 +20,7 @@ void GeneratePythonBindings<VariableBase>(pybind11::module &m)
         .def_readonly("Count", &VariableBase::m_Count)
         .def_readonly("IsScalar", &VariableBase::m_SingleValue)
         .def_readonly("HasConstantDims", &VariableBase::m_ConstantDims)
-        .def_property_readonly("PayLoadSize",
-                               &VariableBase::PayLoadSize)
+        .def_property_readonly("PayLoadSize", &VariableBase::PayLoadSize)
         .def_property_readonly("TotalSize", &VariableBase::TotalSize);
 
 #define pyvar(T, L)                                                            \
@@ -29,7 +29,6 @@ void GeneratePythonBindings<VariableBase>(pybind11::module &m)
         .def_readwrite("Data", &Variable<T>::m_Data);
     ADIOS2_FOREACH_TYPE_2ARGS(pyvar)
 #undef pyvar
-
 }
 
 } // end namespace adios2

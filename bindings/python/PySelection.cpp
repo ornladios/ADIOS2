@@ -5,9 +5,10 @@
 
 namespace adios2
 {
-template<typename T> void GeneratePythonBindings(pybind11::module &m);
+template <typename T>
+void GeneratePythonBindings(pybind11::module &m);
 
-template<>
+template <>
 void GeneratePythonBindings<Selection>(pybind11::module &m)
 {
     pybind11::class_<Selection>(m, "Selection")
