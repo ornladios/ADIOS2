@@ -1,6 +1,6 @@
-#include <adios2.h>
-
 #include <pybind11/pybind11.h>
+
+#include <adios2.h>
 
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi4py/mpi4py.h>

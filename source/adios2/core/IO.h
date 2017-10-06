@@ -91,6 +91,11 @@ public:
     void SetIOMode(const IOMode mode);
 
     /**
+     * Get the IO mode (collective or independent)
+     */
+    const IOMode GetIOMode() const;
+
+    /**
      * Version that passes a map to fill out parameters
      * initializer list = { "param1", "value1" },  {"param2", "value2"},
      * @param params adios::Params std::map<std::string, std::string>
