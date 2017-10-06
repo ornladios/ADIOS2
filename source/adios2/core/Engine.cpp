@@ -18,6 +18,8 @@
 
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
+#include <iostream>
+
 namespace adios2
 {
 
@@ -130,6 +132,12 @@ VariableBase *Engine::InquireVariableUnknown(const std::string &name,
 }
 
 #define define(T, L)                                                           \
+    template <>                                                                \
+    Variable<T> *Engine::InquireVariable<T>(const std::string &variableName,   \
+                                            const bool readIn)                 \
+    {                                                                          \
+        return InquireVariable##L(variableName, readIn);                       \
+    }                                                                          \
     Variable<T> *Engine::InquireVariable##L(const std::string &name,           \
                                             const bool readIn)                 \
     {                                                                          \
@@ -170,4 +178,5 @@ void Engine::ThrowUp(const std::string function) const
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace adios2
+
+} // end namespace adios

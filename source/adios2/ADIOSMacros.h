@@ -112,6 +112,7 @@
 //
 #define ADIOS2_FOREACH_TYPE_2ARGS(MACRO)                                       \
     MACRO(char, Char)                                                          \
+    MACRO(signed char, SChar)                                                  \
     MACRO(unsigned char, UChar)                                                \
     MACRO(short, Short)                                                        \
     MACRO(unsigned short, UShort)                                              \
@@ -130,6 +131,7 @@
 
 #define ADIOS2_FOREACH_PRIMITIVE_TYPE_2ARGS(MACRO)                             \
     MACRO(char, Char)                                                          \
+    MACRO(signed char, SChar)                                                  \
     MACRO(unsigned char, UChar)                                                \
     MACRO(short, Short)                                                        \
     MACRO(unsigned short, UShort)                                              \

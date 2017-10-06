@@ -46,7 +46,9 @@ IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
 
 void IO::SetEngine(const std::string engineType) { m_EngineType = engineType; }
 const std::string IO::GetEngine() const { return m_EngineType; }
+
 void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
+const IOMode IO::GetIOMode() const { return m_IOMode; }
 
 void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
 
