@@ -31,6 +31,7 @@ namespace adios2
 struct PythonEngine::Impl
 {
     std::string m_PluginName;
+    pybind11::object enginePyClass;
     pybind11::object enginePyObject;
 };
 
@@ -39,12 +40,13 @@ struct PythonEngine::Impl
 
 PythonEngine::PythonEngine(IO &io, const std::string &name,
                            const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("Plugin", io, name, openMode, mpiComm), m_Impl(new Impl)
+: Engine("PythonEngine", io, name, openMode, mpiComm), m_Impl(new Impl)
 {
+    std::cout << "PythonEngine::PythonEngine" << std::endl;
     Init();
     // m_Impl->m_Plugin =
     //     m_Impl->m_HandleCreate(io, m_Impl->m_PluginName, openMode, mpiComm);
-    std::cout << "PythonEngine::PythonEngine" << std::endl;
+    m_Impl->enginePyObject = m_Impl->enginePyClass("PythonEngine", io, name, openMode);
 }
 
 PythonEngine::~PythonEngine() {
@@ -129,18 +131,20 @@ void PythonEngine::Init()
     // Initialize python interpreter if it's not already running
     adios2::PythonInterpreter::instance().initialize();
 
-    m_Impl->enginePyObject =
+    m_Impl->enginePyClass =
         adios2::PythonInstanceBuilder::BuildInstance(pluginClassName,
                                                      pluginModuleName);
 }
 
-#define define(T)                                                              \
+#define define(T)                                                        \
     void PythonEngine::DoWrite(Variable<T> &variable, const T *values)   \
-    {                                                                          \
-        std::cout << "PythonEngine::DoWrite(var, vals), "                \
-                  << "type: " << typeid(T).name() << std::endl;                \
-        m_Impl->enginePyObject.attr("Writef")();                               \
-    }                                                                          \
+    {                                                                    \
+        std::shared_ptr<Engine> eng = m_Impl->enginePyObject.cast<std::shared_ptr<Engine>>();        \
+        std::cout << "PythonEngine::DoWrite(var, vals), "             \
+                  << "type: " << typeid(T).name() << std::endl;       \
+        eng->DoWrite(variable, values);                      \
+    }                                                                    \
+                                                                         \
     void PythonEngine::DoScheduleRead(Variable<T> &variable,             \
                                             const T *values)                   \
     {                                                                          \

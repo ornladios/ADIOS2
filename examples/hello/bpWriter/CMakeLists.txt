@@ -27,3 +27,9 @@ endif()
 
 target_link_libraries(hello_bpWriter adios2)
 target_link_libraries(hello_bpWriter_c adios2)
+
+
+ if(ADIOS2_HAVE_Python)
+  add_executable(examplePythonPlugin examplePythonPlugin.cpp)
+  target_link_libraries(examplePythonPlugin PUBLIC adios2)
+ endif()

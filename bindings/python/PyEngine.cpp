@@ -15,16 +15,16 @@ template <>
 void GeneratePythonBindings<Engine>(pybind11::module &m)
 {
     // Wrapping for internal Engine classes
-    pybind11::class_<Engine, std::shared_ptr<Engine>>(m, "EngineBase")
-        .def("Write",
+    pybind11::class_<Engine, std::shared_ptr<Engine>> engine(m, "EngineBase");
+    engine.def("Write",
              [](Engine &e, VariableBase &variable, pybind11::array values) {
                  e.Write(variable, values.data());
-             })
-        .def("Write",
+             });
+    engine.def("Write",
              [](Engine &e, const std::string name, pybind11::array values) {
                  e.Write(name, values.data());
-             })
-        .def("InquireVariable",
+             });
+    engine.def("InquireVariable",
              [](Engine &e, const std::string name) -> VariableBase * {
                  VariableBase *var;
 #define inquire(T)                                                             \
@@ -35,8 +35,8 @@ void GeneratePythonBindings<Engine>(pybind11::module &m)
                  ADIOS2_FOREACH_TYPE_1ARG(inquire)
 #undef inquire
                  return nullptr;
-             })
-        .def("Close", &Engine::Close);
+             });
+    engine.def("Close", &Engine::Close);
 
 
     // 
@@ -66,6 +66,7 @@ void GeneratePythonBindings<Engine>(pybind11::module &m)
 #define define_dowrite(T)                                                      \
     void DoWrite(Variable<T> &var, const T *values) override                   \
     {                                                                          \
+        std::cout << "BINGO!" << std::endl;                                    \
         DoWrite(var,                                                           \
                 pybind11::array_t<T>(std::accumulate(var.m_Count.begin(),      \
                                                      var.m_Count.end(), 0),    \
@@ -84,19 +85,22 @@ void GeneratePythonBindings<Engine>(pybind11::module &m)
         using PyEngineBase::PyEngineBase;
         void Init() override
         {
-          PYBIND11_OVERLOAD(void, PyEngineBase, Init,);
+            std::cout << "PyEngine Init() trampoline" << std::endl;
+            PYBIND11_OVERLOAD(void, PyEngineBase, Init,);
         }
         void DoWrite(VariableBase &var, pybind11::array values) override
         {
+            std::cout << "PyEngine DoWrite() trampoline" << std::endl;
             PYBIND11_OVERLOAD_PURE(void, PyEngineBase, DoWrite, var, values);
         }
         void Close(const int transportIndex)
         {
+            std::cout << "PyEngine Close() trampoline" << std::endl;
             PYBIND11_OVERLOAD_PURE(void, PyEngineBase, Close, transportIndex);
         }
     };
 
-    pybind11::class_<PyEngineBase, PyEngine>(m, "Engine")
+    pybind11::class_<PyEngineBase, PyEngine>(m, "Engine", engine)
         .def(pybind11::init<const std::string, IO &, const std::string,
                             const OpenMode>())
         .def("Init", &PyEngineBase::Init)

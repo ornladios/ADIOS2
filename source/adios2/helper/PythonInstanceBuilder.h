@@ -38,12 +38,12 @@ namespace PythonInstanceBuilder
 
             pybind11::object constructor =
                 moduleObject.attr(className.c_str());
-            return constructor();
+            return constructor;
         }
         else if (globals.contains(className.c_str()))
         {
             pybind11::object constructor = globals[className.c_str()];
-            return constructor();
+            return constructor;
         }
 
         // Unable to instantiate the object in this case
