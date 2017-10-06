@@ -34,6 +34,10 @@
 #endif
 #endif
 
+#ifdef ADIOS2_HAVE_PYTHON
+#include "adios2/engine/pyengine/PythonEngine.h"
+#endif
+
 namespace adios2
 {
 
@@ -319,6 +323,15 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     else if (m_EngineType == "PluginEngine")
     {
         engine = std::make_shared<PluginEngine>(*this, name, openMode, mpiComm);
+    }
+    else if (m_EngineType == "PythonEngine")
+    {
+#ifdef ADIOS2_HAVE_PYTHON
+        engine = std::make_shared<PythonEngine>(*this, name, openMode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Python enabled, can't use PythonEngine\n");
+#endif
     }
     else
     {

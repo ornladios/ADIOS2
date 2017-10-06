@@ -135,6 +135,18 @@ if(ADIOS2_HAVE_HDF5)
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
 
+if(ADIOS2_HAVE_Python)
+  target_sources(adios2 PRIVATE
+    helper/PythonInterpreter.h
+    helper/PythonInterpreter.cpp
+    helper/PythonInstanceBuilder.h
+    engine/pyengine/PythonEngine.h
+    engine/pyengine/PythonEngine.cpp
+  )
+  target_include_directories(adios2 PRIVATE ${PYBIND11_INCLUDE_DIR} ${PYTHON_INCLUDE_DIRS})
+  target_link_libraries(adios2 PRIVATE pybind11::embed)
+endif()
+
 # Set library version information
 set_target_properties(adios2 PROPERTIES
   VERSION ${ADIOS2_VERSION}
