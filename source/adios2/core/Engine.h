@@ -37,6 +37,12 @@ namespace adios2
  * Close */
 class Engine
 {
+
+    // PythonEngine not only inherits from Engine, but also holds a shared_ptr
+    // to an instance of Engine, so it can proxy method calls to it.  Hence,
+    // PythonEngine needs access to everything in here.
+    friend class PythonEngine;
+
 public:
     using AdvanceAsyncCallback =
         std::function<void(std::shared_ptr<adios2::Engine>)>;
