@@ -103,7 +103,7 @@ adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 include(${ADIOS2_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
-  # Workaround for OpenMPI AND MPICH forcing the link of C++ bindings
+  # Workaround for MPI AND MPICH forcing the link of C++ bindings
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
