@@ -27,22 +27,25 @@ void HDF5Common::Write(Variable<T> &variable, const T *values)
     int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     hid_t h5Type = GetHDF5Type<T>();
 
-    if (dimSize == 0) {
-       // write scalar
-       hid_t filespaceID = H5Screate(H5S_SCALAR);
-       hid_t dsetID = H5Dcreate(m_GroupId, variable.m_Name.c_str(), h5Type, filespaceID,
-       	                           H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-       hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
-       H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
+    if (dimSize == 0)
+    {
+        // write scalar
+        hid_t filespaceID = H5Screate(H5S_SCALAR);
+        hid_t dsetID =
+            H5Dcreate(m_GroupId, variable.m_Name.c_str(), h5Type, filespaceID,
+                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
 
-       herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, values);
+        herr_t status =
+            H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, values);
 
-       H5Sclose(filespaceID);
-       H5Dclose(dsetID);
+        H5Sclose(filespaceID);
+        H5Dclose(dsetID);
 
-       return;
-    }   
-     
+        return;
+    }
+
     std::vector<hsize_t> dimsf, count, offset;
 
     for (int i = 0; i < dimSize; ++i)
@@ -74,8 +77,7 @@ void HDF5Common::Write(Variable<T> &variable, const T *values)
             offset.push_back(0);
         }
     }
-   
-   
+
     hid_t fileSpace = H5Screate_simple(dimSize, dimsf.data(), NULL);
 
     hid_t dsetID = H5Dcreate(m_GroupId, variable.m_Name.c_str(), h5Type,

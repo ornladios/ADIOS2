@@ -232,7 +232,6 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5\n");
 #endif
-
     }
     else if (m_EngineType == "DataManWriter")
     {

@@ -48,8 +48,8 @@ public:
     unsigned int GetNumTimeSteps();
     void WriteTimeSteps();
 
-    static void StaticGetTimeStepString(std::string& timeStepName, int ts);
-    
+    static void StaticGetTimeStepString(std::string &timeStepName, int ts);
+
     hid_t m_PropertyListId = -1;
     hid_t m_FileId = -1;
     hid_t m_GroupId = -1;
