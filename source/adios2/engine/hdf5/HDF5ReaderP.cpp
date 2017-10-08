@@ -77,7 +77,7 @@ void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
     hsize_t dims[ndims];
     herr_t status_n = H5Sget_simple_extent_dims(fileSpace, dims, NULL);
 
-    // hsize_t start[ndims] = {0}, count[ndims] = {0}, stride[ndims] = {1};
+    //hsize_t start[ndims] = {0}, count[ndims] = {0}, stride[ndims] = {1};
     hsize_t start[ndims], count[ndims], stride[ndims];
 
     int totalElements = 1;
@@ -85,9 +85,9 @@ void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
     {
         count[i] = dims[i];
         totalElements *= dims[i];
-        start[i] = 0;
-        count[i] = 0;
-        stride[i] = 1;
+	start[i] = 0;
+	count[i] = 0;
+	stride[i] = 1;
     }
 
     start[0] = rank * dims[0] / size;
