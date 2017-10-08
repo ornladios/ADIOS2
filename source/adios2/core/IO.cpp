@@ -28,6 +28,7 @@
 #ifdef ADIOS2_HAVE_HDF5 // external dependencies
 #include "adios2/engine/hdf5/HDF5ReaderP.h"
 #include "adios2/engine/hdf5/HDF5WriterP.h"
+#include "adios2/engine/mixer/HDFMixer.h"
 #endif
 
 namespace adios2
@@ -222,6 +223,16 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     {
         // engine = std::make_shared<BPFileReader>(*this, name, openMode,
         // mpiComm);
+    }
+    else if (m_EngineType == "HDFMixer")
+    {
+#ifdef ADIOS2_HAVE_HDF5
+        engine = std::make_shared<HDFMixer>(*this, name, openMode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "HDF5 library, can't use HDF5\n");
+#endif
+
     }
     else if (m_EngineType == "DataManWriter")
     {
