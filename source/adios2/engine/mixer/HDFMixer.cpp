@@ -155,7 +155,7 @@ void HDFMixer::InitBuffer()
     */
 }
 
-  void HDFMixer::WriteProfilingJSONFile() {/*
+void HDFMixer::WriteProfilingJSONFile() { /*
      auto transportTypes = m_TransportsManager.GetTransportsTypes();
      auto transportProfilers = m_TransportsManager.GetTransportsProfilers();
 
