@@ -78,6 +78,25 @@ if(ADIOS2_HAVE_MPI)
 
 
   if(ADIOS2_HAVE_HDF5)
+    find_package(HDF5 REQUIRED)
+    find_package(MPI COMPONENTS C REQUIRED)
+
+    add_executable(heatTransfer_write_h5mixer
+      main.cpp
+      HeatTransfer.cpp
+      Settings.cpp
+      IO_h5mixer.cpp
+    )
+    target_include_directories(heatTransfer_write_h5mixer
+      PRIVATE ${MPI_C_INCLUDE_PATH} ${HDF5_C_INCLUDE_DIRS}
+    )
+    target_link_libraries(heatTransfer_write_h5mixer PUBLIC adios2
+      ${CMAKE_THREAD_LIBS_INIT}
+    )
+  endif()
+
+
+  if(ADIOS2_HAVE_HDF5)
      find_package(MPI COMPONENTS C REQUIRED)
 
      add_executable(heatTransfer_write_a2h5
