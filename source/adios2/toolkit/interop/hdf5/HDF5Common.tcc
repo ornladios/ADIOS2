@@ -35,8 +35,9 @@ void HDF5Common::Write(Variable<T> &variable, const T *values)
             H5Dcreate(m_GroupId, variable.m_Name.c_str(), h5Type, filespaceID,
                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
+#ifdef ADIOS2_HAVE_MPI
         H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
-
+#endif
         herr_t status =
             H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, values);
 
