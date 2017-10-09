@@ -56,156 +56,136 @@ public:
 
     virtual ~Engine() = default;
 
-    void SetStep(const size_t step = 0);
+    /**
+     * Gets the factory IO object
+     * @return reference to IO object that created this engine
+     */
+    IO &GetIO() noexcept;
+
+    virtual void BeginStep();
 
     /**
-     * Write function that adds static checking on the variable to be passed by
-     * values
-     * It then calls its corresponding derived class virtual function
-     * This version uses m_Group to look for the variableName.
-     * @param variable name of variable to the written
-     * @param values pointer passed from the application
+     * Puts variable with pre-defined pointer at DefineVariable into adios2
+     * buffer.
+     * Launch policy:
+     * <pre>
+     *     Synch: Variable data memory is reusable after this call
+     *     Deferred: function returns immediately so Variable data memory is
+     *               not reusable until PerformPuts
+     * </pre>
+     * @param variable input object with metadata and pointer data contents
      */
     template <class T>
-    void Write(Variable<T> &variable, const T *values);
+    void PutSync(Variable<T> &variable);
+
+    template <class T>
+    void PutSync(const std::string &variableName);
+
+    template <class T>
+    void PutDeferred(Variable<T> &variable);
+
+    template <class T>
+    void PutDeferred(const std::string &variableName);
 
     /**
-     * Single value version
-     * @param variable
-     * @param values
+     * Puts variable data passing new data pointer from application.
+     * Launch policy:
+     * <pre>
+     *     Synch: Variable data memory is reusable after this call
+     *     Deferred: function returns immediately so Variable data memory is
+     *               not reusable until PerformPuts
+     * </pre>
+     * @param variable input object with metadata
+     * @param values data pointer for this variable, can be reused
      */
     template <class T>
-    void Write(Variable<T> &variable, const T value);
+    void PutSync(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutSync(const std::string &variableName, const T *values);
+
+    template <class T>
+    void PutDeferred(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutDeferred(const std::string &variable, const T *values);
 
     /**
-     * String version
-     * @param variableName
-     * @param values
+     * Puts variable data passing a single value from application.
+     * Launch policy:
+     * <pre>
+     *     Synch: Variable data memory is reusable after this call
+     *     Deferred: function returns immediately so Variable data memory is
+     *               not reusable until PerformPuts
+     * </pre>
+     * @param variable input object with metadata
+     * @param value single value passed by value
      */
     template <class T>
-    void Write(const std::string &variableName, const T *values);
+    void PutSync(Variable<T> &variable, const T &value);
 
-    /**
-     * Single value version using string as variable handlers, allows
-     * rvalues to
-     * be passed
-     * @param variableName
-     * @param values
-     */
     template <class T>
-    void Write(const std::string &variableName, const T value);
+    void PutSync(const std::string &variableName, const T &value);
 
-    /**
-     * Runtime version for either Variable<T> or VariableCompound
-     * @param variable
-     * @param values
-     */
-    void Write(VariableBase &variable, const void *values);
-
-    /**
-     * Runtime version
-     * @param variableName
-     * @param values
-     */
-    void Write(const std::string &variableName, const void *values);
-
-    /**
-     * Inquires if a variable of a certain type exists.
-     * Returns a pointer reference, not need to manage memory.
-     * @param variableName input to search
-     * @return pointer reference to existing variable, nullptr if variable
-     * doesn't exist
-     */
     template <class T>
-    Variable<T> *InquireVariable(const std::string &variableName);
+    void PutDeferred(Variable<T> &variable, const T &value);
 
-    VariableBase *InquireVariableAny(const std::string &variableName);
-
-    /**
-     * Read function that adds static checking on the variable to be passed by
-     * values
-     * It then calls its corresponding derived class virtual function
-     * This version uses m_Group to look for the variableName.
-     * @param variable name of variable to the written
-     * @param values pointer passed from the application, nullptr not allowed,
-     * must use Read(variable) instead intentionally
-     */
     template <class T>
-    void Read(Variable<T> &variable, T *values);
+    void PutDeferred(const std::string &variable, const T &value);
 
-    /**
-     * String version
-     * @param variableName
-     * @param values
-     */
     template <class T>
-    void Read(const std::string &variableName, T *values);
+    void GetSync(Variable<T> &variable);
+
+    template <class T>
+    void GetSync(const std::string &variable);
+
+    template <class T>
+    void GetDeferred(Variable<T> &variable);
+
+    template <class T>
+    void GetDeferred(const std::string &variableName);
+
+    template <class T>
+    void GetSync(Variable<T> &variable, T *values);
+
+    template <class T>
+    void GetSync(const std::string &variableName, T *values);
+
+    template <class T>
+    void GetDeferred(Variable<T> &variable, T *values);
+
+    template <class T>
+    void GetDeferred(const std::string &variable, T *values);
+
+    template <class T>
+    void GetSync(Variable<T> &variable, T &values);
+
+    template <class T>
+    void GetSync(const std::string &variableName, T &values);
+
+    template <class T>
+    void GetDeferred(Variable<T> &variable, T &values);
+
+    template <class T>
+    void GetDeferred(const std::string &variableName, T &values);
 
     /**
      * Reader application indicates that no more data will be read from the
      * current stream before advancing.
      * This is necessary to allow writers to advance as soon as possible.
      */
-    virtual void Release();
+    virtual void EndStep();
 
-    /**
-     * Indicates that a new step is going to be written as new variables come
-     * in.
-     */
-    virtual void Advance(const float timeoutSeconds = 0.0);
-
-    /**
-     * Indicates that a new step is going to be written as new variables come
-     * in.
-     * @param mode Advance mode, there are different options for writers and
-     * readers
-     */
-    virtual void Advance(const AdvanceMode mode,
-                         const float timeoutSeconds = 0.0);
-
-    /** @brief Advance asynchronously and get a callback when readers release
-     * access to the buffered step.
-     *
-     * User variables that were allocated through AllocateVariable()
-     * must not be modified until advance is completed.
-     * @param mode Advance mode, there are different options for writers and
-     * readers
-     * @param callback Will be called when advance is completed.
-     */
-    //    virtual void AdvanceAsync(const AdvanceMode mode,
-    //                              AdvanceAsyncCallback callback);
-    std::future<void> AdvanceAsync(
-        AdvanceMode mode,
-        std::function<void(std::shared_ptr<adios2::Engine>)> /*callback*/);
-
-    AdvanceStatus GetAdvanceStatus();
-
-    /**
-     * Needed for DataMan Engine
-     * @param callback function passed from the user
-     */
-    virtual void
-    SetCallBack(std::function<void(const void *, std::string, std::string,
-                                   std::string, std::vector<size_t>)>
-                    callback);
-
-    /** Return the names of all variables present in a stream/file opened for
-     * reading
-     * @return a map of strings key: name, value : type
-     */
-    std::map<std::string, std::string> GetAvailableVariables() const;
+    /** Execute all Put<Deferred,T> starting from a previous PerformPuts */
+    virtual void PerformPuts();
+    /** Execute all Get<Deferred,T> starting from a previous PerformGets */
+    virtual void PerformGets();
 
     /**
      * Closes a particular transport, or all if -1
      * @param transportIndex order from IO AddTransport
      */
     virtual void Close(const int transportIndex = -1) = 0;
-
-    virtual void Flush(const int transportIndex = -1);
-    virtual void Get(const int transportIndex = -1);
-
-    virtual std::future<void> FlushAsync(const int transportIndex = -1);
-    virtual std::future<void> GetAsync(const int transportIndex = -1);
 
 protected:
     /** from derived class */
@@ -244,55 +224,72 @@ protected:
     /** From IO AddTransport */
     virtual void InitTransports();
 
-// Known-type
 #define declare_type(T)                                                        \
-    virtual void DoWrite(Variable<T> &variable, const T *values);
+    virtual void DoPutSync(Variable<T> &, const T *);                          \
+    virtual void DoPutDeferred(Variable<T> &, const T *);                      \
+    virtual void DoPutDeferred(Variable<T> &, const T &);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-    virtual void DoWrite(VariableCompound &variable, const void *values);
-
-    /**
-     * Finds the variable and call the corresponding DoWrite by
-     * type
-     * @param variableName
-     * @param values application values
-     */
-    void DoWrite(const std::string &variableName, const void *values);
-
-// READ
-#define declare(T, L)                                                          \
-    virtual Variable<T> *DoInquireVariable##L(const std::string &variableName);
-
-    ADIOS2_FOREACH_TYPE_2ARGS(declare)
-#undef declare
-
-#define declare_type(T) virtual void DoRead(Variable<T> &variable, T *values);
-
+// Get
+#define declare_type(T)                                                        \
+    virtual void DoGetSync(Variable<T> &, T *);                                \
+    virtual void DoGetDeferred(Variable<T> &, T *);                            \
+    virtual void DoGetDeferred(Variable<T> &, T &);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
 private:
-    /** Throw exception by Engine virtual functions not implemented by a derived
-     * class */
+    /** Throw exception by Engine virtual functions not implemented/supported by
+     *  a derived  class */
     void ThrowUp(const std::string function) const;
-}; // END OF CLASS
+
+    /**
+     * Called by string Put/Get versions
+     * @param variableName
+     * @return Variable<T> reference if found, else throws an exception in debug
+     * mode
+     */
+    template <class T>
+    Variable<T> &FindVariable(const std::string &variableName);
+};
 
 #define declare_template_instantiation(T)                                      \
-    extern template void Engine::Write<T>(Variable<T> &, const T *);           \
-    extern template void Engine::Write<T>(Variable<T> &, const T);             \
+    extern template void Engine::PutSync<T>(Variable<T> &);                    \
+    extern template void Engine::PutDeferred<T>(Variable<T> &);                \
+    extern template void Engine::PutSync<T>(const std::string &);              \
+    extern template void Engine::PutDeferred<T>(const std::string &);          \
                                                                                \
-    extern template void Engine::Write<T>(const std::string &, const T *);     \
-    extern template void Engine::Write<T>(const std::string &, const T);       \
+    extern template void Engine::PutSync<T>(Variable<T> &, const T *);         \
+    extern template void Engine::PutDeferred<T>(Variable<T> &, const T *);     \
+    extern template void Engine::PutSync<T>(const std::string &, const T *);   \
+    extern template void Engine::PutDeferred<T>(const std::string &,           \
+                                                const T *);                    \
                                                                                \
-    extern template void Engine::Read<T>(Variable<T> &, T *);                  \
-    extern template void Engine::Read<T>(const std::string &, T *);
+    extern template void Engine::PutSync<T>(Variable<T> &, const T &);         \
+    extern template void Engine::PutDeferred<T>(Variable<T> &, const T &);     \
+    extern template void Engine::PutSync<T>(const std::string &, const T &);   \
+    extern template void Engine::PutDeferred<T>(const std::string &,           \
+                                                const T &);                    \
+                                                                               \
+    extern template void Engine::GetSync<T>(Variable<T> &);                    \
+    extern template void Engine::GetDeferred<T>(Variable<T> &);                \
+    extern template void Engine::GetSync<T>(const std::string &);              \
+    extern template void Engine::GetDeferred<T>(const std::string &);          \
+                                                                               \
+    extern template void Engine::GetSync<T>(Variable<T> &, T *);               \
+    extern template void Engine::GetDeferred<T>(Variable<T> &, T *);           \
+    extern template void Engine::GetSync<T>(const std::string &, T *);         \
+    extern template void Engine::GetDeferred<T>(const std::string &, T *);     \
+                                                                               \
+    extern template void Engine::GetSync<T>(Variable<T> &, T &);               \
+    extern template void Engine::GetDeferred<T>(Variable<T> &, T &);           \
+    extern template void Engine::GetSync<T>(const std::string &, T &);         \
+    extern template void Engine::GetDeferred<T>(const std::string &, T &);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace adios2
-
-#include "Engine.inl"
 
 #endif /* ADIOS2_CORE_ENGINE_H_ */

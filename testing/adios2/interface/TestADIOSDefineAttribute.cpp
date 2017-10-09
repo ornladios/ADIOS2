@@ -26,12 +26,13 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
                      io.DefineAttribute<std::string>("attributeString", "0"),
                  std::invalid_argument);
 
-    EXPECT_THROW(auto &attributeString2 =
-                     io.GetAttribute<std::string>("NoExistingAttribute"),
-                 std::invalid_argument);
+    auto *nonExistingAttribute =
+        io.InquireAttribute<std::string>("NonExistingAttribute");
+
+    ASSERT_EQ(nonExistingAttribute, nullptr);
 
     EXPECT_NO_THROW(auto &attributeString3 =
-                        io.GetAttribute<std::string>("attributeString"));
+                        *io.InquireAttribute<std::string>("attributeString"));
 }
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
@@ -370,7 +371,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     EXPECT_EQ(attributeLDouble.m_Type, "long double");
 }
 
-TEST_F(ADIOSDefineAttributeTest, GetAttribute)
+TEST_F(ADIOSDefineAttributeTest, InquireAttribute)
 {
     // Define ADIOS global value
     const std::vector<std::string> vString{"-1", "0", "+1"};
@@ -408,21 +409,27 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
         io.DefineAttribute<long double>("attributeLDouble", vLDouble.data(), 3);
     }
 
-    auto &attributeString = io.GetAttribute<std::string>("attributeString");
-    auto &attributeChar = io.GetAttribute<char>("attributeChar");
-    auto &attributeUChar = io.GetAttribute<unsigned char>("attributeUChar");
-    auto &attributeShort = io.GetAttribute<short>("attributeShort");
-    auto &attributeUShort = io.GetAttribute<unsigned short>("attributeUShort");
-    auto &attributeInt = io.GetAttribute<int>("attributeInt");
-    auto &attributeUInt = io.GetAttribute<unsigned int>("attributeUInt");
-    auto &attributeLInt = io.GetAttribute<long int>("attributeLInt");
-    auto &attributeULInt = io.GetAttribute<unsigned long int>("attributeULInt");
-    auto &attributeLLInt = io.GetAttribute<long long int>("attributeLLInt");
+    auto &attributeString =
+        *io.InquireAttribute<std::string>("attributeString");
+    auto &attributeChar = *io.InquireAttribute<char>("attributeChar");
+    auto &attributeUChar =
+        *io.InquireAttribute<unsigned char>("attributeUChar");
+    auto &attributeShort = *io.InquireAttribute<short>("attributeShort");
+    auto &attributeUShort =
+        *io.InquireAttribute<unsigned short>("attributeUShort");
+    auto &attributeInt = *io.InquireAttribute<int>("attributeInt");
+    auto &attributeUInt = *io.InquireAttribute<unsigned int>("attributeUInt");
+    auto &attributeLInt = *io.InquireAttribute<long int>("attributeLInt");
+    auto &attributeULInt =
+        *io.InquireAttribute<unsigned long int>("attributeULInt");
+    auto &attributeLLInt =
+        *io.InquireAttribute<long long int>("attributeLLInt");
     auto &attributeULLInt =
-        io.GetAttribute<unsigned long long int>("attributeULLInt");
-    auto &attributeFloat = io.GetAttribute<float>("attributeFloat");
-    auto &attributeDouble = io.GetAttribute<double>("attributeDouble");
-    auto &attributeLDouble = io.GetAttribute<long double>("attributeLDouble");
+        *io.InquireAttribute<unsigned long long int>("attributeULLInt");
+    auto &attributeFloat = *io.InquireAttribute<float>("attributeFloat");
+    auto &attributeDouble = *io.InquireAttribute<double>("attributeDouble");
+    auto &attributeLDouble =
+        *io.InquireAttribute<long double>("attributeLDouble");
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(attributeString),

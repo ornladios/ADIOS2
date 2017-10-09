@@ -156,6 +156,6 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
     max = *itMax;
 }
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSMATH_INL_ */

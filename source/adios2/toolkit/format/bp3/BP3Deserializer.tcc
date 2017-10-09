@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Reader.tcc
+ * BP3Deserializer.tcc
  *
  *  Created on: Sep 7, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1READER_TCC_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP1READER_TCC_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_TCC_
+#define ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_TCC_
 
-#include "BP1Reader.h"
+#include "BP3Deserializer.h"
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -21,9 +21,10 @@ namespace format
 {
 
 template <class T>
-void BP1Reader::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
-                                   const std::vector<char> &buffer,
-                                   size_t position) const
+void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
+                                         IO &io,
+                                         const std::vector<char> &buffer,
+                                         size_t position) const
 {
     const size_t initialPosition = position;
 
@@ -92,4 +93,4 @@ void BP1Reader::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1READER_TCC_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_TCC_ */

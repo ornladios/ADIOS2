@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Reader.h
+ * BP3Deserializer.h
  *
  *  Created on: Sep 7, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1READER_H_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP1READER_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_
+#define ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_
 
 #include <map>
 #include <mutex>
@@ -17,14 +17,14 @@
 #include <utility> //std::pair
 
 #include "adios2/core/IO.h"
-#include "adios2/toolkit/format/bp1/BP1Base.h"
+#include "adios2/toolkit/format/bp3/BP3Base.h"
 
 namespace adios2
 {
 namespace format
 {
 
-class BP1Reader : public BP1Base
+class BP3Deserializer : public BP3Base
 {
 
 public:
@@ -69,9 +69,9 @@ public:
      * @param mpiComm
      * @param debug true: extra checks
      */
-    BP1Reader(MPI_Comm mpiComm, const bool debugMode);
+    BP3Deserializer(MPI_Comm mpiComm, const bool debugMode);
 
-    ~BP1Reader() = default;
+    ~BP3Deserializer() = default;
 
     void ParseMetadata(IO &io);
 
@@ -100,4 +100,4 @@ private:
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1READER_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_ */

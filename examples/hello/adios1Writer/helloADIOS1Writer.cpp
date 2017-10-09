@@ -50,20 +50,14 @@ int main(int argc, char *argv[])
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto adios1Writer =
+        adios2::Engine &adios1Writer =
             adios1IO.Open("myVector.bp", adios2::Mode::Write);
 
-        if (!adios1Writer)
-        {
-            throw std::ios_base::failure(
-                "ERROR: adios1Writer not created at Open\n");
-        }
-
         /** Write variable for buffering */
-        adios1Writer->Write<float>(bpFloats, myFloats.data());
+        adios1Writer.PutSync<float>(bpFloats, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
-        adios1Writer->Close();
+        adios1Writer.Close();
     }
     catch (std::invalid_argument &e)
     {

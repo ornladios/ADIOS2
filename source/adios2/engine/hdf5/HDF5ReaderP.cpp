@@ -15,8 +15,8 @@
 namespace adios2
 {
 
-HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name,
-                         const Mode openMode, MPI_Comm mpiComm)
+HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
+                         MPI_Comm mpiComm)
 : Engine("HDF5Reader", io, name, openMode, mpiComm), m_H5File(io.m_DebugMode)
 {
     m_EndMessage = ", in call to IO HDF5Reader Open " + m_Name + "\n";
@@ -122,7 +122,7 @@ void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
     H5Dclose(dataSetId);
 }
 
-void HDF5ReaderP::Advance(const float timeoutSeconds) { m_H5File.Advance(); }
+void HDF5ReaderP::EndStep() { m_H5File.Advance(); }
 
 void HDF5ReaderP::Close(const int transportIndex) { m_H5File.Close(); }
 

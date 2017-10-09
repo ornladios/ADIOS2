@@ -89,12 +89,14 @@ int main(int argc, char *argv[])
 
         for (int step = 0; step < NSTEPS; step++)
         {
+            writer.BeginStep();
+
             for (int i = 0; i < Nx; i++)
             {
                 v1[i] = rank * 1.0 + step * 0.1;
             }
 
-            writer.Write<double>(varV1, v1.data());
+            writer.PutSync<double>(varV1, v1.data());
 
             // random size per process per step, 5..10 each
             Nelems = rand() % 6 + 5;
@@ -107,9 +109,9 @@ int main(int argc, char *argv[])
             // Set the size of the array now because we did not know
             // the size at the time of definition
             varV2.SetSelection(adios2::Box<adios2::Dims>({}, {Nelems}));
-            writer.Write<double>(varV2, v2.data());
+            writer.PutSync<double>(varV2, v2.data());
 
-            writer.Advance();
+            writer.EndStep();
         }
 
         writer.Close();

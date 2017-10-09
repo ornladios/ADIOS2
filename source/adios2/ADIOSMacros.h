@@ -157,4 +157,8 @@
     MACRO(std::complex<double>, CDouble)                                       \
     MACRO(std::complex<long double>, CLDouble)
 
+#define ADIOS2_FOREACH_LAUNCH_MODE(MACRO)                                      \
+    MACRO(Sync)                                                                \
+    MACRO(Deferred)
+
 #endif /* ADIOS2_ADIOSMACROS_H */

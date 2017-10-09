@@ -87,6 +87,8 @@ int main(int argc, char *argv[])
 
         for (int step = 0; step < NSTEPS; step++)
         {
+            writer.BeginStep();
+
             for (int row = 0; row < Nrows; row++)
             {
                 for (int col = 0; col < Ncols; col++)
@@ -96,9 +98,9 @@ int main(int argc, char *argv[])
                 }
             }
 
-            writer.Write<double>(varTable, mytable.data());
+            writer.PutSync<double>(varTable, mytable.data());
 
-            writer.Advance();
+            writer.EndStep();
         }
 
         writer.Close();

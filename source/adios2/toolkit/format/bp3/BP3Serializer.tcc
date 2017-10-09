@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Writer.tcc
+ * BP3Serializer.tcc
  *
  *  Created on: Apr 11, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_TCC_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_TCC_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3Serializer_TCC_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3Serializer_TCC_
 
-#include "BP1Writer.h"
+#include "BP3Serializer.h"
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -21,11 +21,11 @@ namespace format
 {
 
 template <class T>
-void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
+void BP3Serializer::PutVariableMetadata(const Variable<T> &variable) noexcept
 {
     ProfilerStart("buffering");
 
-    Stats<typename TypeInfo<T>::ValueType> stats = GetStats(variable);
+    Stats<typename TypeInfo<T>::ValueType> stats = GetStats<T>(variable);
 
     // Get new Index or point to existing index
     bool isNew = true; // flag to check if variable is new
@@ -37,35 +37,35 @@ void BP1Writer::WriteVariableMetadata(const Variable<T> &variable) noexcept
 
     // write metadata header in data and extract offsets
     stats.Offset = static_cast<uint64_t>(absolutePosition);
-    WriteVariableMetadataInData(variable, stats);
+    PutVariableMetadataInData(variable, stats);
     stats.PayloadOffset = absolutePosition;
 
     // write to metadata  index
-    WriteVariableMetadataInIndex(variable, stats, isNew, variableIndex);
+    PutVariableMetadataInIndex(variable, stats, isNew, variableIndex);
     ++m_MetadataSet.DataPGVarsCount;
 
     ProfilerStop("buffering");
 }
 
 template <class T>
-void BP1Writer::WriteVariablePayload(const Variable<T> &variable) noexcept
+void BP3Serializer::PutVariablePayload(const Variable<T> &variable) noexcept
 {
     ProfilerStart("buffering");
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
-    CopyToBufferThreads(buffer, position, variable.m_AppValues,
+
+    CopyToBufferThreads(buffer, position, variable.GetData(),
                         variable.TotalSize(), m_Threads);
 
     auto &absolutePosition = m_Data.m_AbsolutePosition;
     absolutePosition += variable.PayLoadSize();
-
     ProfilerStop("buffering");
 }
 
 // PRIVATE
 template <class T>
-size_t BP1Writer::WriteAttributeHeaderInData(const Attribute<T> &attribute,
-                                             Stats<T> &stats) noexcept
+size_t BP3Serializer::PutAttributeHeaderInData(const Attribute<T> &attribute,
+                                               Stats<T> &stats) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
@@ -75,7 +75,7 @@ size_t BP1Writer::WriteAttributeHeaderInData(const Attribute<T> &attribute,
     position += 4; // skip length
 
     CopyToBuffer(buffer, position, &stats.MemberID);
-    WriteNameRecord(attribute.m_Name, buffer, position);
+    PutNameRecord(attribute.m_Name, buffer, position);
     position += 2; // skip path
 
     // TODO: attribute from Variable??
@@ -86,7 +86,7 @@ size_t BP1Writer::WriteAttributeHeaderInData(const Attribute<T> &attribute,
 }
 
 template <class T>
-void BP1Writer::WriteAttributeLengthInData(
+void BP3Serializer::PutAttributeLengthInData(
     const Attribute<T> &attribute, Stats<T> &stats,
     const size_t attributeLengthPosition) noexcept
 {
@@ -105,11 +105,11 @@ void BP1Writer::WriteAttributeLengthInData(
 
 template <>
 inline void
-BP1Writer::WriteAttributeInData(const Attribute<std::string> &attribute,
-                                Stats<std::string> &stats) noexcept
+BP3Serializer::PutAttributeInData(const Attribute<std::string> &attribute,
+                                  Stats<std::string> &stats) noexcept
 {
     const size_t attributeLengthPosition =
-        WriteAttributeHeaderInData(attribute, stats);
+        PutAttributeHeaderInData(attribute, stats);
 
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
@@ -152,15 +152,15 @@ BP1Writer::WriteAttributeInData(const Attribute<std::string> &attribute,
         }
     }
 
-    WriteAttributeLengthInData(attribute, stats, attributeLengthPosition);
+    PutAttributeLengthInData(attribute, stats, attributeLengthPosition);
 }
 
 template <class T>
-void BP1Writer::WriteAttributeInData(const Attribute<T> &attribute,
-                                     Stats<T> &stats) noexcept
+void BP3Serializer::PutAttributeInData(const Attribute<T> &attribute,
+                                       Stats<T> &stats) noexcept
 {
     const size_t attributeLengthPosition =
-        WriteAttributeHeaderInData(attribute, stats);
+        PutAttributeHeaderInData(attribute, stats);
 
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
@@ -185,11 +185,11 @@ void BP1Writer::WriteAttributeInData(const Attribute<T> &attribute,
                      attribute.m_Elements);
     }
 
-    WriteAttributeLengthInData(attribute, stats, attributeLengthPosition);
+    PutAttributeLengthInData(attribute, stats, attributeLengthPosition);
 }
 
 template <>
-inline void BP1Writer::WriteAttributeCharacteristicValueInIndex(
+inline void BP3Serializer::PutAttributeCharacteristicValueInIndex(
     uint8_t &characteristicsCounter, const Attribute<std::string> &attribute,
     std::vector<char> &buffer) noexcept
 {
@@ -224,7 +224,7 @@ inline void BP1Writer::WriteAttributeCharacteristicValueInIndex(
 }
 
 template <class T>
-void BP1Writer::WriteAttributeCharacteristicValueInIndex(
+void BP3Serializer::PutAttributeCharacteristicValueInIndex(
     uint8_t &characteristicsCounter, const Attribute<T> &attribute,
     std::vector<char> &buffer) noexcept
 {
@@ -245,8 +245,8 @@ void BP1Writer::WriteAttributeCharacteristicValueInIndex(
 }
 
 template <class T>
-void BP1Writer::WriteAttributeInIndex(const Attribute<T> &attribute,
-                                      const Stats<T> &stats) noexcept
+void BP3Serializer::PutAttributeInIndex(const Attribute<T> &attribute,
+                                        const Stats<T> &stats) noexcept
 {
     SerialElementIndex index(stats.MemberID);
     auto &buffer = index.Buffer;
@@ -254,7 +254,7 @@ void BP1Writer::WriteAttributeInIndex(const Attribute<T> &attribute,
     buffer.insert(buffer.end(), 4, '\0'); // skip attribute length (4)
     InsertToBuffer(buffer, &stats.MemberID);
     buffer.insert(buffer.end(), 2, '\0'); // skip group name
-    WriteNameRecord(attribute.m_Name, buffer);
+    PutNameRecord(attribute.m_Name, buffer);
     buffer.insert(buffer.end(), 2, '\0'); // skip path
 
     uint8_t dataType = GetDataType<T>(); // dataType
@@ -283,26 +283,26 @@ void BP1Writer::WriteAttributeInIndex(const Attribute<T> &attribute,
     InsertToBuffer(buffer, &dimensions); // count
     constexpr uint16_t dimensionsLength = 24;
     InsertToBuffer(buffer, &dimensionsLength); // length
-    WriteDimensionsRecord({attribute.m_Elements}, {}, {}, buffer);
+    PutDimensionsRecord({attribute.m_Elements}, {}, {}, buffer);
     ++characteristicsCounter;
 
     // VALUE
-    WriteAttributeCharacteristicValueInIndex(characteristicsCounter, attribute,
-                                             buffer);
+    PutAttributeCharacteristicValueInIndex(characteristicsCounter, attribute,
+                                           buffer);
 
     // TIME Index
-    WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                              stats.Step, buffer);
+    PutCharacteristicRecord(characteristic_time_index, characteristicsCounter,
+                            stats.Step, buffer);
 
-    WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
-                              stats.FileIndex, buffer);
+    PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
+                            stats.FileIndex, buffer);
 
-    WriteCharacteristicRecord(characteristic_offset, characteristicsCounter,
-                              stats.Offset, buffer);
+    PutCharacteristicRecord(characteristic_offset, characteristicsCounter,
+                            stats.Offset, buffer);
 
-    WriteCharacteristicRecord(characteristic_payload_offset,
-                              characteristicsCounter, stats.PayloadOffset,
-                              buffer);
+    PutCharacteristicRecord(characteristic_payload_offset,
+                            characteristicsCounter, stats.PayloadOffset,
+                            buffer);
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
@@ -320,15 +320,15 @@ void BP1Writer::WriteAttributeInIndex(const Attribute<T> &attribute,
 }
 
 template <class T>
-BP1Writer::Stats<typename TypeInfo<T>::ValueType>
-BP1Writer::GetStats(const Variable<T> &variable) const noexcept
+BP3Serializer::Stats<typename TypeInfo<T>::ValueType>
+BP3Serializer::GetStats(const Variable<T> &variable) const noexcept
 {
     Stats<typename TypeInfo<T>::ValueType> stats;
     const std::size_t valuesSize = variable.TotalSize();
 
     if (m_Verbosity == 0)
     {
-        GetMinMaxThreads(variable.m_AppValues, valuesSize, stats.Min, stats.Max,
+        GetMinMaxThreads(variable.GetData(), valuesSize, stats.Min, stats.Max,
                          m_Threads);
     }
 
@@ -338,7 +338,7 @@ BP1Writer::GetStats(const Variable<T> &variable) const noexcept
 }
 
 template <class T>
-void BP1Writer::WriteVariableMetadataInData(
+void BP3Serializer::PutVariableMetadataInData(
     const Variable<T> &variable,
     const Stats<typename TypeInfo<T>::ValueType> &stats) noexcept
 {
@@ -352,7 +352,7 @@ void BP1Writer::WriteVariableMetadataInData(
 
     CopyToBuffer(buffer, position, &stats.MemberID);
 
-    WriteNameRecord(variable.m_Name, buffer, position);
+    PutNameRecord(variable.m_Name, buffer, position);
     position += 2; // skip path
 
     const uint8_t dataType = GetDataType<T>();
@@ -370,11 +370,11 @@ void BP1Writer::WriteVariableMetadataInData(
     uint16_t dimensionsLength = 27 * dimensions;
     CopyToBuffer(buffer, position, &dimensionsLength); // length
 
-    WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
-                          buffer, position);
+    PutDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
+                        buffer, position);
 
     // CHARACTERISTICS
-    WriteVariableCharacteristics(variable, stats, buffer, position);
+    PutVariableCharacteristics(variable, stats, buffer, position);
 
     // Back to varLength including payload size
     // not need to remove its own size (8) from length from bpdump
@@ -388,7 +388,7 @@ void BP1Writer::WriteVariableMetadataInData(
 }
 
 template <class T>
-void BP1Writer::WriteVariableMetadataInIndex(
+void BP3Serializer::PutVariableMetadataInIndex(
     const Variable<T> &variable,
     const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
     SerialElementIndex &index) noexcept
@@ -400,7 +400,7 @@ void BP1Writer::WriteVariableMetadataInIndex(
         buffer.insert(buffer.end(), 4, '\0'); // skip var length (4)
         InsertToBuffer(buffer, &stats.MemberID);
         buffer.insert(buffer.end(), 2, '\0'); // skip group name
-        WriteNameRecord(variable.m_Name, buffer);
+        PutNameRecord(variable.m_Name, buffer);
         buffer.insert(buffer.end(), 2, '\0'); // skip path
 
         const std::uint8_t dataType = GetDataType<T>();
@@ -421,64 +421,62 @@ void BP1Writer::WriteVariableMetadataInIndex(
         }
     }
 
-    WriteVariableCharacteristics(variable, stats, buffer);
+    PutVariableCharacteristics(variable, stats, buffer);
 }
 
 template <class T>
-void BP1Writer::WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
-                                  std::uint8_t &characteristicsCounter,
-                                  std::vector<char> &buffer) noexcept
+void BP3Serializer::PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
+                                    std::uint8_t &characteristicsCounter,
+                                    std::vector<char> &buffer) noexcept
 {
     if (isScalar)
     {
-        WriteCharacteristicRecord(characteristic_value, characteristicsCounter,
-                                  stats.Min, buffer);
+        PutCharacteristicRecord(characteristic_value, characteristicsCounter,
+                                stats.Min, buffer);
     }
     else
     {
         if (m_Verbosity == 0) // default verbose
         {
-            WriteCharacteristicRecord(
-                characteristic_min, characteristicsCounter, stats.Min, buffer);
+            PutCharacteristicRecord(characteristic_min, characteristicsCounter,
+                                    stats.Min, buffer);
 
-            WriteCharacteristicRecord(
-                characteristic_max, characteristicsCounter, stats.Max, buffer);
+            PutCharacteristicRecord(characteristic_max, characteristicsCounter,
+                                    stats.Max, buffer);
         }
     }
 }
 
 template <class T>
-void BP1Writer::WriteBoundsRecord(const bool singleValue, const Stats<T> &stats,
-                                  std::uint8_t &characteristicsCounter,
-                                  std::vector<char> &buffer,
-                                  size_t &position) noexcept
+void BP3Serializer::PutBoundsRecord(const bool singleValue,
+                                    const Stats<T> &stats,
+                                    std::uint8_t &characteristicsCounter,
+                                    std::vector<char> &buffer,
+                                    size_t &position) noexcept
 {
     if (singleValue)
     {
         // stats.min = stats.max = value, need to test
-        WriteCharacteristicRecord(characteristic_value, characteristicsCounter,
-                                  stats.Min, buffer, position);
+        PutCharacteristicRecord(characteristic_value, characteristicsCounter,
+                                stats.Min, buffer, position);
     }
     else
     {
         if (m_Verbosity == 0) // default min and max only
         {
-            WriteCharacteristicRecord(characteristic_min,
-                                      characteristicsCounter, stats.Min, buffer,
-                                      position);
+            PutCharacteristicRecord(characteristic_min, characteristicsCounter,
+                                    stats.Min, buffer, position);
 
-            WriteCharacteristicRecord(characteristic_max,
-                                      characteristicsCounter, stats.Max, buffer,
-                                      position);
+            PutCharacteristicRecord(characteristic_max, characteristicsCounter,
+                                    stats.Max, buffer, position);
         }
     }
 }
 
 template <class T>
-void BP1Writer::WriteCharacteristicRecord(const std::uint8_t characteristicID,
-                                          std::uint8_t &characteristicsCounter,
-                                          const T &value,
-                                          std::vector<char> &buffer) noexcept
+void BP3Serializer::PutCharacteristicRecord(
+    const std::uint8_t characteristicID, std::uint8_t &characteristicsCounter,
+    const T &value, std::vector<char> &buffer) noexcept
 {
     const std::uint8_t id = characteristicID;
     InsertToBuffer(buffer, &id);
@@ -487,11 +485,11 @@ void BP1Writer::WriteCharacteristicRecord(const std::uint8_t characteristicID,
 }
 
 template <class T>
-void BP1Writer::WriteCharacteristicRecord(const uint8_t characteristicID,
-                                          uint8_t &characteristicsCounter,
-                                          const T &value,
-                                          std::vector<char> &buffer,
-                                          size_t &position) noexcept
+void BP3Serializer::PutCharacteristicRecord(const uint8_t characteristicID,
+                                            uint8_t &characteristicsCounter,
+                                            const T &value,
+                                            std::vector<char> &buffer,
+                                            size_t &position) noexcept
 {
     const std::uint8_t id = characteristicID;
     CopyToBuffer(buffer, position, &id);
@@ -500,7 +498,7 @@ void BP1Writer::WriteCharacteristicRecord(const uint8_t characteristicID,
 }
 
 template <class T>
-void BP1Writer::WriteVariableCharacteristics(
+void BP3Serializer::PutVariableCharacteristics(
     const Variable<T> &variable,
     const Stats<typename TypeInfo<T>::ValueType> &stats,
     std::vector<char> &buffer) noexcept
@@ -512,14 +510,14 @@ void BP1Writer::WriteVariableCharacteristics(
     uint8_t characteristicsCounter = 0;
 
     // DIMENSIONS
-    WriteCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                              stats.Step, buffer);
+    PutCharacteristicRecord(characteristic_time_index, characteristicsCounter,
+                            stats.Step, buffer);
 
-    WriteCharacteristicRecord(characteristic_file_index, characteristicsCounter,
-                              stats.FileIndex, buffer);
+    PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
+                            stats.FileIndex, buffer);
 
-    WriteBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
-                      buffer);
+    PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
+                    buffer);
 
     uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
@@ -529,16 +527,16 @@ void BP1Writer::WriteVariableCharacteristics(
     const uint16_t dimensionsLength =
         static_cast<const uint16_t>(24 * dimensions);
     InsertToBuffer(buffer, &dimensionsLength); // length
-    WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
-                          buffer);
+    PutDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
+                        buffer);
     ++characteristicsCounter;
 
-    WriteCharacteristicRecord(characteristic_offset, characteristicsCounter,
-                              stats.Offset, buffer);
+    PutCharacteristicRecord(characteristic_offset, characteristicsCounter,
+                            stats.Offset, buffer);
 
-    WriteCharacteristicRecord(characteristic_payload_offset,
-                              characteristicsCounter, stats.PayloadOffset,
-                              buffer);
+    PutCharacteristicRecord(characteristic_payload_offset,
+                            characteristicsCounter, stats.PayloadOffset,
+                            buffer);
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
@@ -553,7 +551,7 @@ void BP1Writer::WriteVariableCharacteristics(
 }
 
 template <class T>
-void BP1Writer::WriteVariableCharacteristics(
+void BP3Serializer::PutVariableCharacteristics(
     const Variable<T> &variable,
     const Stats<typename TypeInfo<T>::ValueType> &stats,
     std::vector<char> &buffer, size_t &position) noexcept
@@ -574,13 +572,13 @@ void BP1Writer::WriteVariableCharacteristics(
     const uint16_t dimensionsLength =
         static_cast<const uint16_t>(24 * dimensions);
     CopyToBuffer(buffer, position, &dimensionsLength); // length
-    WriteDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
-                          buffer, position, true); // isCharacteristic = true
+    PutDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
+                        buffer, position, true); // isCharacteristic = true
     ++characteristicsCounter;
 
     // VALUE for SCALAR or STAT min, max for ARRAY
-    WriteBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
-                      buffer, position);
+    PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
+                    buffer, position);
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
@@ -596,4 +594,4 @@ void BP1Writer::WriteVariableCharacteristics(
 } // end namespace format
 } // end namespace adios2
 
-#endif // ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_TCC_
+#endif // ADIOS2_TOOLKIT_FORMAT_BP3_BP3Serializer_TCC_

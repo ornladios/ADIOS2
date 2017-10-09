@@ -79,6 +79,8 @@ int main(int argc, char *argv[])
 
         for (int step = 0; step < NSTEPS; step++)
         {
+            writer.BeginStep();
+
             for (int i = 0; i < Nx; i++)
             {
                 row[i] = step * Nx * nproc * 1.0 + rank * Nx * 1.0 + (double)i;
@@ -89,12 +91,12 @@ int main(int argc, char *argv[])
             // adios2::SelectionBoundingBox sel();
             varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
                 {static_cast<size_t>(rank), 0}, {1, static_cast<size_t>(Nx)}));
-            writer.Write<double>(varGlobalArray, row.data());
+            writer.PutSync<double>(varGlobalArray, row.data());
 
             // Indicate we are done for this step.
             // Disk I/O will be performed during this call unless
             // time aggregation postpones all of that to some later step
-            writer.Advance();
+            writer.EndStep();
         }
 
         // Called once: indicate that we are done with this output for the run

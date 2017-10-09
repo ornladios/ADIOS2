@@ -40,27 +40,28 @@ int main(int argc, char *argv[])
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpReader = bpIO.Open("myVector.bp", adios2::Mode::Read);
-        const auto variableNames = bpReader.GetAvailableVariables();
+        const std::map<std::string, std::string> variables =
+            bpIO.GetAvailableVariables();
 
-        for (const auto variableName : variableNames)
+        for (const auto variablePair : variables)
         {
-            std::cout << "Name: " << variableName.first
-                      << "  type: " << variableName.second << "\n";
+            std::cout << "Name: " << variablePair.first
+                      << "  type: " << variablePair.second << "\n";
         }
 
         /** Write variable for buffering */
         adios2::Variable<float> *bpFloats =
-            bpReader.InquireVariable<float>("bpFloats");
-        adios2::Variable<int> *bpInts = bpReader.InquireVariable<int>("bpInts");
+            bpIO.InquireVariable<float>("bpFloats");
+        adios2::Variable<int> *bpInts = bpIO.InquireVariable<int>("bpInts");
 
         if (bpFloats != nullptr) // means not found
         {
-            bpReader.Read<float>(*bpFloats, myFloats.data());
+            bpReader.GetSync<float>(*bpFloats, myFloats.data());
         }
 
         if (bpFloats != nullptr) // means not found
         {
-            bpReader.Read<int>(*bpInts, myInts.data());
+            bpReader.GetSync<int>(*bpInts, myInts.data());
         }
 
         /** Close bp file, engine becomes unreachable after this*/

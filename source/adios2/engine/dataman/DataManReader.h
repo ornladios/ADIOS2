@@ -50,15 +50,6 @@ public:
                                         std::string, Dims)>
                          callback);
 
-    /**
-     * Not implemented
-     * @param name
-     * @param readIn
-     * @return
-     */
-    VariableCompound *InquireVariableCompound(const std::string &name,
-                                              const bool readIn = true);
-
     void Close(const int transportIndex = -1);
 
 private:

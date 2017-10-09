@@ -36,7 +36,7 @@ public:
 
     bool IsValid();
 
-    void Advance(const float timeoutSeconds = 0.0) final;
+    void EndStep() final;
 
     void Close(const int transportIndex = -1) final;
 

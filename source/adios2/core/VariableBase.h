@@ -65,6 +65,7 @@ public:
     /** Registered transforms */
     std::vector<TransformInfo> m_TransformsInfo;
 
+    size_t m_AvailableStepsStart = 1;
     size_t m_AvailableStepsCount = 0;
 
     /** Index Metadata Position in a serial metadata buffer */
@@ -113,6 +114,8 @@ public:
      */
     void SetMemorySelection(const std::pair<Dims, Dims> &boxDims);
 
+    size_t GetAvailableStepsStart() const;
+
     size_t GetAvailableStepsCount() const;
 
     /**
@@ -132,7 +135,7 @@ public:
 
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */
-    void CheckDimsBeforeWrite(const std::string hint) const;
+    void CheckDimensions(const std::string hint) const;
 
 protected:
     const bool m_DebugMode = false;
@@ -143,12 +146,14 @@ protected:
     size_t m_StepStart = 0;
     size_t m_StepCount = 1;
 
+    unsigned int m_DeferredCounter = 0;
+
     void InitShapeType();
 
     /** Self-check dims according to type, called right after DefineVariable and
      *  SetSelection.
      * @param hint extra debugging info for the exception */
-    void CheckDimsCommon(const std::string hint) const;
+    void CheckDimensionsCommon(const std::string hint) const;
 };
 
 } // end namespace adios2

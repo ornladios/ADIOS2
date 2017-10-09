@@ -56,9 +56,13 @@ enum class Mode
     Undefined,
     Write,
     Read,
-    Append,
+    Append
+};
 
-    Deferred
+enum Launch
+{
+    Sync = 0,
+    Deferred = 1,
 };
 
 enum class ReadMultiplexPattern

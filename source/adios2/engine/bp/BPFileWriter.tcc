@@ -16,27 +16,28 @@ namespace adios2
 {
 
 template <class T>
-void BPFileWriter::DoWriteCommon(Variable<T> &variable, const T *values)
+void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
     // set variable
-    variable.m_AppValues = values;
+    variable.SetData(values);
+
     m_WrittenVariables.insert(variable.m_Name);
 
     // if first timestep Write create a new pg index
-    if (!m_BP1BuffersWriter.m_MetadataSet.DataPGIsOpen)
+    if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
     {
-        m_BP1BuffersWriter.WriteProcessGroupIndex(
+        m_BP3Serializer.PutProcessGroupIndex(
             m_IO.m_HostLanguage, m_FileManager.GetTransportsTypes());
     }
 
-    format::BP1Base::ResizeResult resizeResult =
-        m_BP1BuffersWriter.ResizeBuffer(variable);
+    format::BP3Base::ResizeResult resizeResult =
+        m_BP3Serializer.ResizeBuffer(variable);
 
-    if (resizeResult == format::BP1Base::ResizeResult::Flush)
+    if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
-        m_BP1BuffersWriter.Flush(m_IO);
-        auto &buffer = m_BP1BuffersWriter.m_Data.m_Buffer;
-        auto &position = m_BP1BuffersWriter.m_Data.m_Position;
+        m_BP3Serializer.SerializeData(m_IO);
+        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
+        auto &position = m_BP3Serializer.m_Data.m_Position;
 
         m_FileManager.WriteFiles(buffer.data(), position);
         // set relative position to zero
@@ -45,15 +46,15 @@ void BPFileWriter::DoWriteCommon(Variable<T> &variable, const T *values)
         buffer.assign(buffer.size(), '\0');
 
         // new group index
-        m_BP1BuffersWriter.WriteProcessGroupIndex(
+        m_BP3Serializer.PutProcessGroupIndex(
             m_IO.m_HostLanguage, m_FileManager.GetTransportsTypes());
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
-    m_BP1BuffersWriter.WriteVariableMetadata(variable);
-    m_BP1BuffersWriter.WriteVariablePayload(variable);
+    m_BP3Serializer.PutVariableMetadata(variable);
+    m_BP3Serializer.PutVariablePayload(variable);
 
-    variable.m_AppValues = nullptr; // not needed after write
+    variable.SetData(nullptr); // not needed after PutSync
 }
 
 } // end namespace adios2

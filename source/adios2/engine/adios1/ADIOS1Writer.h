@@ -37,7 +37,8 @@ public:
 
     ~ADIOS1Writer() = default;
 
-    void Advance(const float timeoutSeconds = 0.) final;
+    void BeginStep() final;
+    void EndStep() final;
 
     /**
      * Closes a single transport or all transports
@@ -57,7 +58,7 @@ private:
     void InitTransports() final;
 
 #define declare_type(T)                                                        \
-    void DoWrite(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &variable, const T *values) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 };

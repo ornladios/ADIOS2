@@ -22,8 +22,8 @@
 namespace adios2
 {
 
-ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name,
-                           const Mode openMode, MPI_Comm mpiComm)
+ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name, const Mode openMode,
+                           MPI_Comm mpiComm)
 : Engine("ADIOS1Writer", io, name, openMode, mpiComm),
   m_ADIOS1(io.m_Name, name, mpiComm, io.m_DebugMode)
 {
@@ -31,6 +31,13 @@ ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name,
     Init();
 }
 
+void ADIOS1Writer::BeginStep() {}
+
+void ADIOS1Writer::EndStep() { m_ADIOS1.Advance(); }
+
+void ADIOS1Writer::Close(const int transportIndex) { m_ADIOS1.Close(); }
+
+// PRIVATE
 void ADIOS1Writer::Init()
 {
     InitParameters();
@@ -39,7 +46,7 @@ void ADIOS1Writer::Init()
 }
 
 #define declare_type(T)                                                        \
-    void ADIOS1Writer::DoWrite(Variable<T> &variable, const T *values)         \
+    void ADIOS1Writer::DoPutSync(Variable<T> &variable, const T *values)       \
     {                                                                          \
         m_ADIOS1.WriteVariable(variable.m_Name, variable.m_ShapeID,            \
                                variable.m_Count, variable.m_Shape,             \
@@ -48,11 +55,6 @@ void ADIOS1Writer::Init()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void ADIOS1Writer::Advance(const float /*timeout_sec*/) { m_ADIOS1.Advance(); }
-
-void ADIOS1Writer::Close(const int transportIndex) { m_ADIOS1.Close(); }
-
-// PRIVATE FUNCTIONS
 void ADIOS1Writer::InitParameters()
 {
     m_ADIOS1.InitParameters(m_IO.m_Parameters);
@@ -63,4 +65,4 @@ void ADIOS1Writer::InitTransports()
     m_ADIOS1.InitTransports(m_IO.m_TransportsParameters);
 }
 
-} // end namespace adios
+} // end namespace adios2

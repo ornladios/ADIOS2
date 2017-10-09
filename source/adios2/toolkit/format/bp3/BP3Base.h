@@ -33,7 +33,7 @@ namespace format
 /**
  * Base class for BP1Writer and BP1Reader format
  */
-class BP1Base
+class BP3Base
 {
 
 public:
@@ -52,7 +52,7 @@ public:
         const uint32_t MemberID;
 
         SerialElementIndex(const uint32_t memberID,
-                           const size_t bufferSize = 500)
+                           const size_t bufferSize = 200)
         : MemberID(memberID)
         {
             Buffer.reserve(bufferSize);
@@ -141,9 +141,9 @@ public:
      * @param mpiComm for m_BP1Aggregator
      * @param debugMode true: exceptions checks
      */
-    BP1Base(MPI_Comm mpiComm, const bool debugMode);
+    BP3Base(MPI_Comm mpiComm, const bool debugMode);
 
-    virtual ~BP1Base() = default;
+    virtual ~BP3Base() = default;
 
     void InitParameters(const Params &parameters);
 
@@ -431,11 +431,11 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template BP1Base::ResizeResult BP1Base::ResizeBuffer(               \
+    extern template BP3Base::ResizeResult BP3Base::ResizeBuffer(               \
         const Variable<T> &variable);                                          \
                                                                                \
-    extern template BP1Base::Characteristics<T>                                \
-    BP1Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
+    extern template BP3Base::Characteristics<T>                                \
+    BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
                                              size_t &position,                 \
                                              const bool untilTimeStep) const;
 

@@ -71,13 +71,13 @@ int main(int argc, char *argv[])
     // bpReader->Read<unsigned int>("gndy", &gndy);
 
     adios2::Variable<unsigned int> *vgndx =
-        bpReader.InquireVariable<unsigned int>("gndx");
+        bpReaderIO.InquireVariable<unsigned int>("gndx");
 
-    gndx = vgndx->m_Data[0];
+    gndx = vgndx->GetData()[0];
 
     adios2::Variable<unsigned int> *vgndy =
-        bpReader.InquireVariable<unsigned int>("gndy");
-    gndy = vgndy->m_Data[0];
+        bpReaderIO.InquireVariable<unsigned int>("gndy");
+    gndy = vgndy->GetData()[0];
 
     if (rank == 0)
     {
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     std::cout << "rank " << rank << " reads " << readsize[1]
               << " columns from offset " << offset[1] << std::endl;
 
-    adios2::Variable<double> *vT = bpReader.InquireVariable<double>("T");
+    adios2::Variable<double> *vT = bpReaderIO.InquireVariable<double>("T");
 
     double *T =
         new double[vT->GetAvailableStepsCount() * readsize[0] * readsize[1]];

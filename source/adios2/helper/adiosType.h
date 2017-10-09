@@ -113,7 +113,11 @@ std::vector<U> NewVectorType(const std::vector<T> &in);
 
 template <class T, class U>
 std::vector<U> NewVectorTypeFromArray(const T *in, const size_t inSize);
-}
+
+template <class T>
+constexpr bool IsLvalue(T &&);
+
+} // end namespace adios2
 
 #include "adiosType.inl"
 

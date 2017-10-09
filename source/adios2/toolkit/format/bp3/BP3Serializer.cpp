@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Writer.cpp
+ * BP3Serializer.cpp
  *
  *  Created on: Feb 1, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "BP1Writer.h"
-#include "BP1Writer.tcc"
+#include "BP3Serializer.h"
+#include "BP3Serializer.tcc"
 
 #include <chrono>
 #include <future>
@@ -24,14 +24,14 @@ namespace adios2
 namespace format
 {
 
-std::mutex BP1Writer::m_Mutex;
+std::mutex BP3Serializer::m_Mutex;
 
-BP1Writer::BP1Writer(MPI_Comm mpiComm, const bool debugMode)
-: BP1Base(mpiComm, debugMode)
+BP3Serializer::BP3Serializer(MPI_Comm mpiComm, const bool debugMode)
+: BP3Base(mpiComm, debugMode)
 {
 }
 
-void BP1Writer::WriteProcessGroupIndex(
+void BP3Serializer::PutProcessGroupIndex(
     const std::string hostLanguage,
     const std::vector<std::string> &transportsTypes) noexcept
 {
@@ -50,13 +50,13 @@ void BP1Writer::WriteProcessGroupIndex(
     // write name to metadata
     const std::string name(std::to_string(m_RankMPI));
 
-    WriteNameRecord(name, metadataBuffer);
+    PutNameRecord(name, metadataBuffer);
     // write if host language Fortran in metadata and data
     const char hostFortran = (hostLanguage == "Fortran") ? 'y' : 'n';
     InsertToBuffer(metadataBuffer, &hostFortran);
     CopyToBuffer(dataBuffer, dataPosition, &hostFortran);
     // write name in data
-    WriteNameRecord(name, dataBuffer, dataPosition);
+    PutNameRecord(name, dataBuffer, dataPosition);
 
     // processID in metadata,
     const uint32_t processID = static_cast<const uint32_t>(m_RankMPI);
@@ -66,8 +66,8 @@ void BP1Writer::WriteProcessGroupIndex(
 
     // time step name to metadata and data
     const std::string timeStepName(std::to_string(m_MetadataSet.TimeStep));
-    WriteNameRecord(timeStepName, metadataBuffer);
-    WriteNameRecord(timeStepName, dataBuffer, dataPosition);
+    PutNameRecord(timeStepName, metadataBuffer);
+    PutNameRecord(timeStepName, dataBuffer, dataPosition);
 
     // time step to metadata and data
     InsertToBuffer(metadataBuffer, &m_MetadataSet.TimeStep);
@@ -116,28 +116,22 @@ void BP1Writer::WriteProcessGroupIndex(
     ProfilerStop("buffering");
 }
 
-void BP1Writer::Advance(IO &io)
+void BP3Serializer::SerializeData(IO &io, const bool advanceStep)
 {
     ProfilerStart("buffering");
-
-    if (m_MaxBufferSize == DefaultMaxBufferSize)
+    SerializeDataBuffer(io);
+    if (advanceStep)
     {
-        m_MaxBufferSize = m_Data.m_Position + 64;
+        if (m_MaxBufferSize == DefaultMaxBufferSize)
+        {
+            m_MaxBufferSize = m_Data.m_Position + 64;
+        }
+        ++m_MetadataSet.TimeStep;
     }
-
-    SerializeData(io);
-    ++m_MetadataSet.TimeStep;
     ProfilerStop("buffering");
 }
 
-void BP1Writer::Flush(IO &io)
-{
-    ProfilerStart("buffering");
-    SerializeData(io);
-    ProfilerStop("buffering");
-}
-
-void BP1Writer::Close(IO &io) noexcept
+void BP3Serializer::CloseData(IO &io)
 {
     ProfilerStart("buffering");
 
@@ -145,7 +139,7 @@ void BP1Writer::Close(IO &io) noexcept
     {
         if (m_MetadataSet.DataPGIsOpen)
         {
-            SerializeData(io);
+            SerializeDataBuffer(io);
         }
 
         SerializeMetadataInData();
@@ -158,7 +152,7 @@ void BP1Writer::Close(IO &io) noexcept
     ProfilerStop("buffering");
 }
 
-std::string BP1Writer::GetRankProfilingJSON(
+std::string BP3Serializer::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
     const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept
 {
@@ -215,12 +209,12 @@ std::string BP1Writer::GetRankProfilingJSON(
 }
 
 std::vector<char>
-BP1Writer::AggregateProfilingJSON(const std::string &rankProfilingLog)
+BP3Serializer::AggregateProfilingJSON(const std::string &rankProfilingLog)
 {
     return SetCollectiveProfilingJSON(rankProfilingLog);
 }
 
-void BP1Writer::AggregateCollectiveMetadata()
+void BP3Serializer::AggregateCollectiveMetadata()
 {
     const uint64_t pgIndexStart = m_Metadata.m_Position;
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount);
@@ -235,14 +229,14 @@ void BP1Writer::AggregateCollectiveMetadata()
     {
         m_Metadata.Resize(m_Metadata.m_Position + m_MetadataSet.MiniFooterSize,
                           " when writing collective bp1 Minifooter");
-        WriteMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
-                        m_Metadata.m_Buffer, m_Metadata.m_Position, true);
+        PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
+                      m_Metadata.m_Buffer, m_Metadata.m_Position, true);
         m_Metadata.m_AbsolutePosition = m_Metadata.m_Position;
     }
 }
 
 // PRIVATE FUNCTIONS
-void BP1Writer::WriteAttributes(IO &io)
+void BP3Serializer::PutAttributes(IO &io)
 {
     const auto attributesDataMap = io.GetAttributesDataMap();
 
@@ -280,9 +274,9 @@ void BP1Writer::WriteAttributes(IO &io)
         Stats<T> stats;                                                        \
         stats.Offset = absolutePosition;                                       \
         stats.MemberID = memberID;                                             \
-        Attribute<T> &attribute = io.GetAttribute<T>(name);                    \
-        WriteAttributeInData(attribute, stats);                                \
-        WriteAttributeInIndex(attribute, stats);                               \
+        Attribute<T> &attribute = *io.InquireAttribute<T>(name);               \
+        PutAttributeInData(attribute, stats);                                  \
+        PutAttributeInIndex(attribute, stats);                                 \
     }
         ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -298,10 +292,10 @@ void BP1Writer::WriteAttributes(IO &io)
     CopyToBuffer(buffer, backPosition, &attributesLength);
 }
 
-void BP1Writer::WriteDimensionsRecord(const Dims &localDimensions,
-                                      const Dims &globalDimensions,
-                                      const Dims &offsets,
-                                      std::vector<char> &buffer) noexcept
+void BP3Serializer::PutDimensionsRecord(const Dims &localDimensions,
+                                        const Dims &globalDimensions,
+                                        const Dims &offsets,
+                                        std::vector<char> &buffer) noexcept
 {
     if (offsets.empty())
     {
@@ -322,12 +316,12 @@ void BP1Writer::WriteDimensionsRecord(const Dims &localDimensions,
     }
 }
 
-void BP1Writer::WriteDimensionsRecord(const Dims &localDimensions,
-                                      const Dims &globalDimensions,
-                                      const Dims &offsets,
-                                      std::vector<char> &buffer,
-                                      size_t &position,
-                                      const bool isCharacteristic) noexcept
+void BP3Serializer::PutDimensionsRecord(const Dims &localDimensions,
+                                        const Dims &globalDimensions,
+                                        const Dims &offsets,
+                                        std::vector<char> &buffer,
+                                        size_t &position,
+                                        const bool isCharacteristic) noexcept
 {
     auto lf_CopyDimension = [](std::vector<char> &buffer, size_t &position,
                                const size_t dimension,
@@ -372,24 +366,24 @@ void BP1Writer::WriteDimensionsRecord(const Dims &localDimensions,
     }
 }
 
-void BP1Writer::WriteNameRecord(const std::string name,
-                                std::vector<char> &buffer) noexcept
+void BP3Serializer::PutNameRecord(const std::string name,
+                                  std::vector<char> &buffer) noexcept
 {
     const uint16_t length = static_cast<const uint16_t>(name.length());
     InsertToBuffer(buffer, &length);
     InsertToBuffer(buffer, name.c_str(), length);
 }
 
-void BP1Writer::WriteNameRecord(const std::string name,
-                                std::vector<char> &buffer,
-                                size_t &position) noexcept
+void BP3Serializer::PutNameRecord(const std::string name,
+                                  std::vector<char> &buffer,
+                                  size_t &position) noexcept
 {
     const uint16_t length = static_cast<const uint16_t>(name.length());
     CopyToBuffer(buffer, position, &length);
     CopyToBuffer(buffer, position, name.c_str(), length);
 }
 
-BP1Writer::SerialElementIndex &BP1Writer::GetSerialElementIndex(
+BP3Serializer::SerialElementIndex &BP3Serializer::GetSerialElementIndex(
     const std::string &name,
     std::unordered_map<std::string, SerialElementIndex> &indices,
     bool &isNew) const noexcept
@@ -406,7 +400,7 @@ BP1Writer::SerialElementIndex &BP1Writer::GetSerialElementIndex(
     return itName->second;
 }
 
-void BP1Writer::SerializeData(IO &io) noexcept
+void BP3Serializer::SerializeDataBuffer(IO &io) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
@@ -423,7 +417,7 @@ void BP1Writer::SerializeData(IO &io) noexcept
     // attributes are only written once
     if (!m_MetadataSet.AreAttributesWritten)
     {
-        WriteAttributes(io);
+        PutAttributes(io);
         m_MetadataSet.AreAttributesWritten = true;
     }
     else
@@ -440,7 +434,7 @@ void BP1Writer::SerializeData(IO &io) noexcept
     m_MetadataSet.DataPGIsOpen = false;
 }
 
-void BP1Writer::SerializeMetadataInData() noexcept
+void BP3Serializer::SerializeMetadataInData() noexcept
 {
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
@@ -524,8 +518,8 @@ void BP1Writer::SerializeMetadataInData() noexcept
     const uint64_t attributesIndexStart =
         static_cast<const uint64_t>(variablesIndexStart + (varsLength + 12));
 
-    WriteMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
-                    buffer, position);
+    PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
+                  buffer, position);
 
     absolutePosition += footerSize;
     if (m_Profiler.IsActive)
@@ -534,11 +528,11 @@ void BP1Writer::SerializeMetadataInData() noexcept
     }
 }
 
-void BP1Writer::WriteMinifooter(const uint64_t pgIndexStart,
-                                const uint64_t variablesIndexStart,
-                                const uint64_t attributesIndexStart,
-                                std::vector<char> &buffer, size_t &position,
-                                const bool addSubfiles)
+void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
+                                  const uint64_t variablesIndexStart,
+                                  const uint64_t attributesIndexStart,
+                                  std::vector<char> &buffer, size_t &position,
+                                  const bool addSubfiles)
 {
     CopyToBuffer(buffer, position, &pgIndexStart);
     CopyToBuffer(buffer, position, &variablesIndexStart);
@@ -564,8 +558,8 @@ void BP1Writer::WriteMinifooter(const uint64_t pgIndexStart,
     CopyToBuffer(buffer, position, &m_Version);
 }
 
-void BP1Writer::AggregateIndex(const SerialElementIndex &index,
-                               const size_t count)
+void BP3Serializer::AggregateIndex(const SerialElementIndex &index,
+                                   const size_t count)
 {
     auto &buffer = m_Metadata.m_Buffer;
     auto &position = m_Metadata.m_Position;
@@ -594,7 +588,7 @@ void BP1Writer::AggregateIndex(const SerialElementIndex &index,
     }
 }
 
-void BP1Writer::AggregateMergeIndex(
+void BP3Serializer::AggregateMergeIndex(
     const std::unordered_map<std::string, SerialElementIndex> &indices) noexcept
 {
     // first serialize index
@@ -645,7 +639,7 @@ void BP1Writer::AggregateMergeIndex(
     }
 }
 
-std::vector<char> BP1Writer::SerializeIndices(
+std::vector<char> BP3Serializer::SerializeIndices(
     const std::unordered_map<std::string, SerialElementIndex> &indices) const
     noexcept
 {
@@ -667,8 +661,8 @@ std::vector<char> BP1Writer::SerializeIndices(
     return serializedIndices;
 }
 
-std::unordered_map<std::string, std::vector<BP1Base::SerialElementIndex>>
-BP1Writer::DeserializeIndicesPerRankThreads(
+std::unordered_map<std::string, std::vector<BP3Base::SerialElementIndex>>
+BP3Serializer::DeserializeIndicesPerRankThreads(
     const std::vector<char> &serialized) const noexcept
 {
     auto lf_Deserialize = [&](
@@ -757,7 +751,7 @@ BP1Writer::DeserializeIndicesPerRankThreads(
     return deserialized;
 }
 
-void BP1Writer::MergeSerializeIndices(
+void BP3Serializer::MergeSerializeIndices(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
         &nameRankIndices) noexcept
 {
@@ -1060,7 +1054,7 @@ void BP1Writer::MergeSerializeIndices(
 }
 
 std::vector<char>
-BP1Writer::SetCollectiveProfilingJSON(const std::string &rankLog) const
+BP3Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
 {
     // Gather sizes
     const size_t rankLogSize = rankLog.size();
@@ -1098,10 +1092,10 @@ BP1Writer::SetCollectiveProfilingJSON(const std::string &rankLog) const
 // Explicit instantiation of only public templates
 
 #define declare_template_instantiation(T)                                      \
-    template void BP1Writer::WriteVariableMetadata(                            \
+    template void BP3Serializer::PutVariableMetadata(                          \
         const Variable<T> &variable) noexcept;                                 \
                                                                                \
-    template void BP1Writer::WriteVariablePayload(                             \
+    template void BP3Serializer::PutVariablePayload(                           \
         const Variable<T> &variable) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)

@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
             hdf5IO.Open("myVector.h5", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        hdf5Writer.Write<float>(bpFloats, myFloats.data());
+        hdf5Writer.PutSync<float>(bpFloats, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
         hdf5Writer.Close();

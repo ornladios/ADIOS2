@@ -28,7 +28,7 @@ namespace adios2
 template <class T>
 Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
                                 const Dims &start, const Dims &count,
-                                const bool constantDims)
+                                const bool constantDims, T *data)
 {
     if (m_DebugMode)
     {
@@ -46,16 +46,20 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
         static_cast<const unsigned int>(variableMap.size());
     auto itVariablePair =
         variableMap.emplace(size, Variable<T>(name, shape, start, count,
-                                              constantDims, m_DebugMode));
-
+                                              constantDims, data, m_DebugMode));
     m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
     return itVariablePair.first->second;
 }
 
 template <class T>
-Variable<T> &IO::GetVariable(const std::string &name)
+Variable<T> *IO::InquireVariable(const std::string &name)
 {
-    return GetVariableMap<T>().at(GetMapIndex(name, m_Variables, "Variable"));
+    const int index = GetMapIndex(name, m_Variables);
+    if (index == -1)
+    {
+        return nullptr;
+    }
+    return &GetVariableMap<T>().at(index);
 }
 
 template <class T>
@@ -98,10 +102,14 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 }
 
 template <class T>
-Attribute<T> &IO::GetAttribute(const std::string &name)
+Attribute<T> *IO::InquireAttribute(const std::string &name)
 {
-    return GetAttributeMap<T>().at(
-        GetMapIndex(name, m_Attributes, "Attribute"));
+    const int index = GetMapIndex(name, m_Attributes);
+    if (index == -1)
+    {
+        return nullptr;
+    }
+    return &GetAttributeMap<T>().at(index);
 }
 
 // PRIVATE

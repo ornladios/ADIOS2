@@ -156,6 +156,12 @@ std::vector<U> NewVectorTypeFromArray(const T *in, const size_t inSize)
     return out;
 }
 
+template <class T>
+constexpr bool IsLvalue(T &&)
+{
+    return std::is_lvalue_reference<T>{};
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSTYPE_INL_ */

@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
         adios2::Engine &dataManReader =
             dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
 
-        dataManReader.SetCallBack(UserCallBack);
+        // dataManReader.SetCallBack(UserCallBack);
 
         for (unsigned int i = 0; i < 3; ++i)
         {
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         }
 
         adios2::Variable<double> *ioMyDoubles =
-            dataManReader.InquireVariable<double>("ioMyDoubles");
+            dataManIO.InquireVariable<double>("ioMyDoubles");
 
         if (ioMyDoubles == nullptr)
         {

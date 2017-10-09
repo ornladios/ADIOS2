@@ -26,16 +26,16 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     Init();
 }
 
-void DataManWriter::SetCallBack(
-    std::function<void(const void *, std::string, std::string, std::string,
-                       Dims)>
-        callback)
-{
-    m_CallBack = callback;
-    m_Man.reg_callback(callback);
-}
+// void DataManWriter::SetCallBack(
+//    std::function<void(const void *, std::string, std::string, std::string,
+//                       Dims)>
+//        callback)
+//{
+//    m_CallBack = callback;
+//    m_Man.reg_callback(callback);
+//}
 
-void DataManWriter::Advance(const float timeoutSeconds) { m_Man.flush(); }
+void DataManWriter::EndStep() { m_Man.flush(); }
 
 void DataManWriter::Close(const int transportIndex) { m_Man.flush(); }
 
@@ -121,11 +121,11 @@ void DataManWriter::Init()
 }
 
 #define declare_type(T)                                                        \
-    void DataManWriter::DoWrite(Variable<T> &variable, const T *values)        \
+    void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)      \
     {                                                                          \
-        DoWriteCommon(variable, values);                                       \
+        PutSyncCommon(variable, values);                                       \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-} // end namespace adios
+} // end namespace adios2

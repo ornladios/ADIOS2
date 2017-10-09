@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Writer.h
+ * BP3Serializer.h
  *
  *  Created on: Jan 24, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_H_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP1WRITER_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3SERIALIZER_H_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3SERIALIZER_H_
 
 #include <mutex>
 
@@ -19,14 +19,14 @@
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
-#include "adios2/toolkit/format/bp1/BP1Base.h"
+#include "adios2/toolkit/format/bp3/BP3Base.h"
 
 namespace adios2
 {
 namespace format
 {
 
-class BP1Writer : public BP1Base
+class BP3Serializer : public BP3Base
 {
 
 public:
@@ -35,9 +35,9 @@ public:
      * @param mpiComm MPI communicator for BP1 Aggregator
      * @param debug true: extra checks
      */
-    BP1Writer(MPI_Comm mpiComm, const bool debugMode = false);
+    BP3Serializer(MPI_Comm mpiComm, const bool debugMode = false);
 
-    ~BP1Writer() = default;
+    ~BP3Serializer() = default;
 
     /**
      * Writes a process group index PGIndex and list of methods (from
@@ -45,36 +45,36 @@ public:
      * @param hostLanguage from ADIOS class passed to IO
      * @param transportsTypes passed to get list of transport "bp methods"
      */
-    void WriteProcessGroupIndex(
+    void PutProcessGroupIndex(
         const std::string hostLanguage,
         const std::vector<std::string> &transportsTypes) noexcept;
 
     /**
-     * Write metadata for a given variable
+     * Put in buffer metadata for a given variable
      * @param variable
      */
     template <class T>
-    void WriteVariableMetadata(const Variable<T> &variable) noexcept;
+    void PutVariableMetadata(const Variable<T> &variable) noexcept;
 
     /**
-     * Expensive part this is only for heap buffers need to adapt to vector of
-     * capsules
-     * @param variable
+     * Put in buffer variable payload. Expensive part.
+     * @param variable payload input from m_PutValues
      */
     template <class T>
-    void WriteVariablePayload(const Variable<T> &variable) noexcept;
-
-    /** Flattens data buffer and closes current process group */
-    void Advance(IO &io);
-
-    /** Flattens data buffer and close current process group, doesn't
-     *  advance time index */
-    void Flush(IO &io);
+    void PutVariablePayload(const Variable<T> &variable) noexcept;
 
     /**
-     * @param isFirstClose true: first time close, false: already closed buffer
+     *  Serializes data buffer and close current process group
+     * @param io : attributes written in first step
+     * @param advanceStep true: advances step, false: doesn't advance
      */
-    void Close(IO &io) noexcept;
+    void SerializeData(IO &io, const bool advanceStep = false);
+
+    /**
+     * Finishes bp buffer by serializing data and adding trailing metadata
+     * @param io
+     */
+    void CloseData(IO &io);
 
     /**
      * Get a string with profiling information for this rank
@@ -107,21 +107,22 @@ private:
     static std::mutex m_Mutex;
 
     /**
-     * Writes in BP buffer all attributes defined in an IO object.
-     * Called by FlattenData function
+     * Put in BP buffer all attributes defined in an IO object.
+     * Called by SerializeData function
      * @param io input containing attributes
      */
-    void WriteAttributes(IO &io);
+    void PutAttributes(IO &io);
 
     /**
-     * Called from WriteAttributeInData specialized functions
+     * Put in BP buffer attribute header, called from PutAttributeInData
+     * specialized functions
      * @param attribute input
      * @param stats
      * @return attribute length position
      */
     template <class T>
-    size_t WriteAttributeHeaderInData(const Attribute<T> &attribute,
-                                      Stats<T> &stats) noexcept;
+    size_t PutAttributeHeaderInData(const Attribute<T> &attribute,
+                                    Stats<T> &stats) noexcept;
 
     /**
      * Called from WriteAttributeInData specialized functions
@@ -131,8 +132,8 @@ private:
      */
     template <class T>
     void
-    WriteAttributeLengthInData(const Attribute<T> &attribute, Stats<T> &stats,
-                               const size_t attributeLengthPosition) noexcept;
+    PutAttributeLengthInData(const Attribute<T> &attribute, Stats<T> &stats,
+                             const size_t attributeLengthPosition) noexcept;
 
     /**
      * Write a single attribute in data buffer, called from WriteAttributes
@@ -140,8 +141,8 @@ private:
      * @param stats
      */
     template <class T>
-    void WriteAttributeInData(const Attribute<T> &attribute,
-                              Stats<T> &stats) noexcept;
+    void PutAttributeInData(const Attribute<T> &attribute,
+                            Stats<T> &stats) noexcept;
 
     /**
      * Writes attribute value in index characteristic value.
@@ -151,9 +152,10 @@ private:
      * @param buffer
      */
     template <class T>
-    void WriteAttributeCharacteristicValueInIndex(
-        std::uint8_t &characteristicsCounter, const Attribute<T> &attribute,
-        std::vector<char> &buffer) noexcept;
+    void
+    PutAttributeCharacteristicValueInIndex(std::uint8_t &characteristicsCounter,
+                                           const Attribute<T> &attribute,
+                                           std::vector<char> &buffer) noexcept;
 
     /**
      * Write a single attribute in m_Metadata AttributesIndex, called from
@@ -162,8 +164,8 @@ private:
      * @param stats
      */
     template <class T>
-    void WriteAttributeInIndex(const Attribute<T> &attribute,
-                               const Stats<T> &stats) noexcept;
+    void PutAttributeInIndex(const Attribute<T> &attribute,
+                             const Stats<T> &stats) noexcept;
 
     /**
      * Get variable statistics
@@ -175,24 +177,24 @@ private:
     GetStats(const Variable<T> &variable) const noexcept;
 
     template <class T>
-    void WriteVariableMetadataInData(
+    void PutVariableMetadataInData(
         const Variable<T> &variable,
         const Stats<typename TypeInfo<T>::ValueType> &stats) noexcept;
 
     template <class T>
-    void WriteVariableMetadataInIndex(
+    void PutVariableMetadataInIndex(
         const Variable<T> &variable,
         const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
         SerialElementIndex &index) noexcept;
 
     template <class T>
-    void WriteVariableCharacteristics(
+    void PutVariableCharacteristics(
         const Variable<T> &variable,
         const Stats<typename TypeInfo<T>::ValueType> &stats,
         std::vector<char> &buffer) noexcept;
 
     template <class T>
-    void WriteVariableCharacteristics(
+    void PutVariableCharacteristics(
         const Variable<T> &variable,
         const Stats<typename TypeInfo<T>::ValueType> &stats,
         std::vector<char> &buffer, size_t &position) noexcept;
@@ -204,12 +206,12 @@ private:
      * @param name to be written in bp file
      * @param buffer metadata buffer
      */
-    void WriteNameRecord(const std::string name,
-                         std::vector<char> &buffer) noexcept;
+    void PutNameRecord(const std::string name,
+                       std::vector<char> &buffer) noexcept;
 
     /** Overloaded version for data buffer */
-    void WriteNameRecord(const std::string name, std::vector<char> &buffer,
-                         size_t &position) noexcept;
+    void PutNameRecord(const std::string name, std::vector<char> &buffer,
+                       size_t &position) noexcept;
 
     /**
      * Write a dimension record for a global variable used by
@@ -223,30 +225,27 @@ private:
      * data
      * characteristic
      */
-    void WriteDimensionsRecord(const Dims &localDimensions,
-                               const Dims &globalDimensions,
-                               const Dims &offsets,
-                               std::vector<char> &buffer) noexcept;
+    void PutDimensionsRecord(const Dims &localDimensions,
+                             const Dims &globalDimensions, const Dims &offsets,
+                             std::vector<char> &buffer) noexcept;
 
     /** Overloaded version for data buffer */
-    void WriteDimensionsRecord(const Dims &localDimensions,
-                               const Dims &globalDimensions,
-                               const Dims &offsets, std::vector<char> &buffer,
-                               size_t &position,
-                               const bool isCharacteristic = false) noexcept;
+    void PutDimensionsRecord(const Dims &localDimensions,
+                             const Dims &globalDimensions, const Dims &offsets,
+                             std::vector<char> &buffer, size_t &position,
+                             const bool isCharacteristic = false) noexcept;
 
     /** Writes min max */
     template <class T>
-    void WriteBoundsRecord(const bool isScalar, const Stats<T> &stats,
-                           uint8_t &characteristicsCounter,
-                           std::vector<char> &buffer) noexcept;
+    void PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
+                         uint8_t &characteristicsCounter,
+                         std::vector<char> &buffer) noexcept;
 
     /** Overloaded version for data buffer */
     template <class T>
-    void WriteBoundsRecord(const bool singleValue, const Stats<T> &stats,
-                           uint8_t &characteristicsCounter,
-                           std::vector<char> &buffer,
-                           size_t &position) noexcept;
+    void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
+                         uint8_t &characteristicsCounter,
+                         std::vector<char> &buffer, size_t &position) noexcept;
 
     /**
      * Write a characteristic value record to buffer
@@ -258,17 +257,17 @@ private:
      * @param addLength true for data, false for metadata
      */
     template <class T>
-    void WriteCharacteristicRecord(const uint8_t characteristicID,
-                                   uint8_t &characteristicsCounter,
-                                   const T &value,
-                                   std::vector<char> &buffer) noexcept;
+    void PutCharacteristicRecord(const uint8_t characteristicID,
+                                 uint8_t &characteristicsCounter,
+                                 const T &value,
+                                 std::vector<char> &buffer) noexcept;
 
     /** Overloaded version for data buffer */
     template <class T>
-    void WriteCharacteristicRecord(const uint8_t characteristicID,
-                                   uint8_t &characteristicsCounter,
-                                   const T &value, std::vector<char> &buffer,
-                                   size_t &position) noexcept;
+    void PutCharacteristicRecord(const uint8_t characteristicID,
+                                 uint8_t &characteristicsCounter,
+                                 const T &value, std::vector<char> &buffer,
+                                 size_t &position) noexcept;
 
     /**
      * Returns corresponding serial index, if doesn't exists creates a
@@ -290,7 +289,7 @@ private:
      * length and attributes count and attributes length
      * @param io object containing all attributes
      */
-    void SerializeData(IO &io) noexcept;
+    void SerializeDataBuffer(IO &io) noexcept;
 
     /**
      * Serializes the metadata indices appending it into the data buffer inside
@@ -298,11 +297,11 @@ private:
      */
     void SerializeMetadataInData() noexcept;
 
-    void WriteMinifooter(const uint64_t pgIndexStart,
-                         const uint64_t variablesIndexStart,
-                         const uint64_t attributesIndexStart,
-                         std::vector<char> &buffer, size_t &position,
-                         const bool addSubfiles = false);
+    void PutMinifooter(const uint64_t pgIndexStart,
+                       const uint64_t variablesIndexStart,
+                       const uint64_t attributesIndexStart,
+                       std::vector<char> &buffer, size_t &position,
+                       const bool addSubfiles = false);
 
     /**
      * Used for PG index, aggregates without merging
@@ -352,10 +351,10 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template void BP1Writer::WriteVariablePayload(                      \
+    extern template void BP3Serializer::PutVariablePayload(                    \
         const Variable<T> &variable) noexcept;                                 \
                                                                                \
-    extern template void BP1Writer::WriteVariableMetadata(                     \
+    extern template void BP3Serializer::PutVariableMetadata(                   \
         const Variable<T> &variable) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
@@ -364,4 +363,4 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_UTILITIES_FORMAT_BP1_BP1WRITER_H_ */
+#endif /* ADIOS2_UTILITIES_FORMAT_BP3_BP3Serializer_H_ */

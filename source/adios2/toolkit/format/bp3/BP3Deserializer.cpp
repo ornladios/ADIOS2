@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Reader.cpp
+ * BP3Deserializer.cpp
  *
  *  Created on: Sep 7, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "BP1Reader.h"
-#include "BP1Reader.tcc"
+#include "BP3Deserializer.h"
+#include "BP3Deserializer.tcc"
 
 #include <future>
 #include <vector>
@@ -21,14 +21,14 @@ namespace adios2
 namespace format
 {
 
-std::mutex BP1Reader::m_Mutex;
+std::mutex BP3Deserializer::m_Mutex;
 
-BP1Reader::BP1Reader(MPI_Comm mpiComm, const bool debugMode)
-: BP1Base(mpiComm, debugMode)
+BP3Deserializer::BP3Deserializer(MPI_Comm mpiComm, const bool debugMode)
+: BP3Base(mpiComm, debugMode)
 {
 }
 
-void BP1Reader::ParseMetadata(IO &io)
+void BP3Deserializer::ParseMetadata(IO &io)
 {
     ParseMinifooter();
     ParsePGIndex();
@@ -37,7 +37,7 @@ void BP1Reader::ParseMetadata(IO &io)
 }
 
 // PRIVATE
-void BP1Reader::ParseMinifooter()
+void BP3Deserializer::ParseMinifooter()
 {
     auto lf_GetEndianness = [](const uint8_t endianness, bool &isLittleEndian) {
 
@@ -81,7 +81,7 @@ void BP1Reader::ParseMinifooter()
     m_Minifooter.AttributesIndexStart = ReadValue<uint64_t>(buffer, position);
 }
 
-void BP1Reader::ParsePGIndex()
+void BP3Deserializer::ParsePGIndex()
 {
     const auto &buffer = m_Metadata.m_Buffer;
     auto &position = m_Metadata.m_Position;
@@ -92,7 +92,7 @@ void BP1Reader::ParsePGIndex()
         ReadValue<uint64_t>(buffer, position); // not required
 }
 
-void BP1Reader::ParseVariablesIndex(IO &io)
+void BP3Deserializer::ParseVariablesIndex(IO &io)
 {
     auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
                                    size_t position) {
@@ -243,7 +243,7 @@ void BP1Reader::ParseVariablesIndex(IO &io)
     }
 }
 
-void BP1Reader::ParseAttributesIndex(IO &io) {}
+void BP3Deserializer::ParseAttributesIndex(IO &io) {}
 
 } // end namespace format
 } // end namespace adios2

@@ -20,13 +20,13 @@ namespace adios2
 {
 
 template <class T>
-void DataManWriter::DoWriteCommon(Variable<T> &variable, const T *values)
+void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
     // here comes your magic at Writing now variable.m_UserValues has the
     // data
     // passed by the user
     // set variable
-    variable.m_AppValues = values;
+    variable.SetData(values);
     m_WrittenVariables.insert(variable.m_Name);
 
     // This part will go away, this is just to monitor variables per rank

@@ -64,33 +64,33 @@ int main(int argc, char *argv[])
                                count, adios2_constant_dims_true);
     }
     // get variables
-    adios2_Variable *varI8 = adios2_get_variable(ioH, "varI8");
-    adios2_Variable *varI16 = adios2_get_variable(ioH, "varI16");
-    adios2_Variable *varI32 = adios2_get_variable(ioH, "varI32");
-    adios2_Variable *varI64 = adios2_get_variable(ioH, "varI64");
-    adios2_Variable *varU8 = adios2_get_variable(ioH, "varU8");
-    adios2_Variable *varU16 = adios2_get_variable(ioH, "varU16");
-    adios2_Variable *varU32 = adios2_get_variable(ioH, "varU32");
-    adios2_Variable *varU64 = adios2_get_variable(ioH, "varU64");
-    adios2_Variable *varR32 = adios2_get_variable(ioH, "varR32");
-    adios2_Variable *varR64 = adios2_get_variable(ioH, "varR64");
+    adios2_Variable *varI8 = adios2_inquire_variable(ioH, "varI8");
+    adios2_Variable *varI16 = adios2_inquire_variable(ioH, "varI16");
+    adios2_Variable *varI32 = adios2_inquire_variable(ioH, "varI32");
+    adios2_Variable *varI64 = adios2_inquire_variable(ioH, "varI64");
+    adios2_Variable *varU8 = adios2_inquire_variable(ioH, "varU8");
+    adios2_Variable *varU16 = adios2_inquire_variable(ioH, "varU16");
+    adios2_Variable *varU32 = adios2_inquire_variable(ioH, "varU32");
+    adios2_Variable *varU64 = adios2_inquire_variable(ioH, "varU64");
+    adios2_Variable *varR32 = adios2_inquire_variable(ioH, "varR32");
+    adios2_Variable *varR64 = adios2_inquire_variable(ioH, "varR64");
 
     // Open Engine handler, Write and Close
     adios2_Engine *engineH =
-        adios2_open(ioH, "ctypes.bp", adios2_open_mode_write);
+        adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
-    adios2_write(engineH, varI8, data_I8);
-    adios2_write(engineH, varI16, data_I16);
-    adios2_write(engineH, varI32, data_I32);
-    adios2_write(engineH, varI64, data_I64);
+    adios2_put_sync(engineH, varI8, data_I8);
+    adios2_put_sync(engineH, varI16, data_I16);
+    adios2_put_sync(engineH, varI32, data_I32);
+    adios2_put_sync(engineH, varI64, data_I64);
 
-    adios2_write(engineH, varU8, data_U8);
-    adios2_write(engineH, varU16, data_U16);
-    adios2_write(engineH, varU32, data_U32);
-    adios2_write(engineH, varU64, data_U64);
+    adios2_put_sync(engineH, varU8, data_U8);
+    adios2_put_sync(engineH, varU16, data_U16);
+    adios2_put_sync(engineH, varU32, data_U32);
+    adios2_put_sync(engineH, varU64, data_U64);
 
-    adios2_write(engineH, varR32, data_R32);
-    adios2_write(engineH, varR64, data_R64);
+    adios2_put_sync(engineH, varR32, data_R32);
+    adios2_put_sync(engineH, varR64, data_R64);
 
     adios2_close(engineH);
 

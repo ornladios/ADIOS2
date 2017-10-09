@@ -31,14 +31,6 @@ class Variable : public VariableBase
 {
 
 public:
-    /** pointer to values passed from application in Engine Write*/
-    const T *m_AppValues = nullptr;
-
-    /** reference to non-const data, mostly used for reading */
-    T *m_AppPointer = nullptr;
-
-    std::vector<T> m_Data;
-
     /**
      * Unique constructor
      * @param name
@@ -49,10 +41,21 @@ public:
      * @param debugMode
      */
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
-                const Dims &count, const bool constantShape,
+                const Dims &count, const bool constantShape, T *data,
                 const bool debugMode);
 
     ~Variable<T>() = default;
+
+    T *GetData() const noexcept;
+
+    void SetData(const T *) noexcept;
+
+private:
+    /** TODO: used for allocating memory from ADIOS2 */
+    std::vector<T> m_AllocatedData;
+
+    /** reference to non-const data */
+    T *m_Data = nullptr;
 };
 
 } // end namespace adios2

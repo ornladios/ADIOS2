@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         adios2::Engine &dataManWriter =
             dataManIO.Open("myFloats.bp", adios2::Mode::Write);
 
-        dataManWriter.Write<float>(bpFloats, myFloats.data());
+        dataManWriter.PutSync<float>(bpFloats, myFloats.data());
         dataManWriter.Close();
     }
     catch (std::invalid_argument &e)

@@ -19,7 +19,7 @@ namespace adios2
 BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode openMode,
                            MPI_Comm mpiComm)
 : Engine("BPFileReader", io, name, openMode, mpiComm),
-  m_BP1BuffersReader(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode)
+  m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode)
 {
     Init();
 }
@@ -52,10 +52,10 @@ void BPFileReader::InitTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
-    if (m_BP1BuffersReader.m_RankMPI == 0)
+    if (m_BP3Deserializer.m_RankMPI == 0)
     {
         const std::string metadataFile(
-            m_BP1BuffersReader.GetBPMetadataFileName(m_Name));
+            m_BP3Deserializer.GetBPMetadataFileName(m_Name));
         m_FileManager.OpenFiles({}, {metadataFile}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, true);
     }
@@ -64,39 +64,21 @@ void BPFileReader::InitTransports()
 void BPFileReader::InitBuffers()
 {
     // Put all metadata in buffer
-    if (m_BP1BuffersReader.m_RankMPI == 0)
+    if (m_BP3Deserializer.m_RankMPI == 0)
     {
         const size_t fileSize = m_FileManager.GetFileSize(0);
-        m_BP1BuffersReader.m_Metadata.Resize(
+        m_BP3Deserializer.m_Metadata.Resize(
             fileSize,
             "allocating metadata buffer, in call to BPFileReader Open");
 
-        m_FileManager.ReadFile(m_BP1BuffersReader.m_Metadata.m_Buffer.data(),
+        m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
                                fileSize);
     }
     // broadcast vector to all ranks from zero
-    BroadcastVector(m_BP1BuffersReader.m_Metadata.m_Buffer, m_MPIComm);
+    BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // fills IO with Variables and Attributes
-    m_BP1BuffersReader.ParseMetadata(m_IO);
+    m_BP3Deserializer.ParseMetadata(m_IO);
 }
-
-#define declare(T, L)                                                          \
-    Variable<T> *BPFileReader::DoInquireVariable##L(                           \
-        const std::string &variableName)                                       \
-    {                                                                          \
-        return InquireVariableCommon<T>(variableName);                         \
-    }
-ADIOS2_FOREACH_TYPE_2ARGS(declare)
-#undef declare
-
-#define declare_type(T)                                                        \
-    void BPFileReader::DoRead(Variable<T> &variable, T *values)                \
-    {                                                                          \
-        ReadCommon(variable, values);                                          \
-    }
-
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
 
 } // end namespace adios2

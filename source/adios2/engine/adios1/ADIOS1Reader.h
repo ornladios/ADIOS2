@@ -52,14 +52,11 @@ public:
 
     ~ADIOS1Reader();
 
-    void PerformReads(ReadMode mode);
+    void PerformGets() final;
 
-    void Release();
+    void EndStep() final;
     void Advance(const float timeout_sec = 0.0);
     void Advance(AdvanceMode mode, const float timeout_sec = 0.0);
-    void
-    AdvanceAsync(AdvanceMode mode,
-                 std::function<void(std::shared_ptr<adios2::Engine>)> callback);
 
     void Close(const int transportIndex = -1);
 
@@ -72,23 +69,8 @@ private:
     void InitParameters() final;
     void InitTransports() final;
 
-#define declare(T, L)                                                          \
-    virtual Variable<T> *DoInquireVariable##L(const std::string &variableName) \
-        final;
-
-    ADIOS2_FOREACH_TYPE_2ARGS(declare)
-#undef declare
-
-    /** Not yet implemented */
-    VariableCompound *InquireVariableCompound(const std::string &name,
-                                              const bool readIn);
-
-    template <class T>
-    Variable<T> *InquireVariableCommon(const std::string &name);
-
 #define declare_type(T)                                                        \
-    void DoScheduleRead(Variable<T> &variable, const T *values) final;         \
-    void DoScheduleRead(const std::string &variableName, const T *values) final;
+    void DoGetDeferred(Variable<T> &variable, T *values) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -106,6 +88,10 @@ private:
                                       enum ADIOS_DATATYPES adios1Type);
 
     enum ADIOS_READ_METHOD m_ReadMethod = ADIOS_READ_METHOD_BP;
+
+    template <class T>
+    Variable<T> *
+    ADIOS1Reader::InquireVariableCommon(const std::string &variableName);
 };
 
 } // end namespace adios

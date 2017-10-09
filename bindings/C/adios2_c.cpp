@@ -15,6 +15,8 @@
 
 #include <adios2.h>
 #include <adios2/ADIOSMPI.h>
+#include <adios2/ADIOSMacros.h>
+#include <adios2/helper/adiosFunctions.h>
 
 adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
                                  const adios2_debug_mode debug_mode)
@@ -226,10 +228,31 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
     return reinterpret_cast<adios2_Variable *>(variable);
 }
 
-adios2_Variable *adios2_get_variable(adios2_IO *io, const char *name)
+adios2_Variable *adios2_inquire_variable(adios2_IO *io, const char *name)
 {
-    adios2::VariableBase *variable =
-        reinterpret_cast<adios2::IO *>(io)->GetVariableBase(name);
+    adios2::IO &ioCpp = *reinterpret_cast<adios2::IO *>(io);
+    const auto &dataMap = ioCpp.GetVariablesDataMap();
+
+    auto itVariable = dataMap.find(name);
+    if (itVariable == dataMap.end()) // not found
+    {
+        return nullptr;
+    }
+
+    const std::string type(itVariable->second.first);
+    adios2::VariableBase *variable = nullptr;
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        variable = ioCpp.InquireVariable<T>(name);                             \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
     return reinterpret_cast<adios2_Variable *>(variable);
 }
@@ -241,7 +264,7 @@ void adios2_set_engine(adios2_IO *io, const char *engine_type)
 
 void adios2_set_param(adios2_IO *io, const char *key, const char *value)
 {
-    reinterpret_cast<adios2::IO *>(io)->SetSingleParameter(key, value);
+    reinterpret_cast<adios2::IO *>(io)->SetParameter(key, value);
 }
 
 unsigned int adios2_add_transport(adios2_IO *io, const char *transport_type)
@@ -253,19 +276,19 @@ void adios2_set_transport_param(adios2_IO *io,
                                 const unsigned int transport_index,
                                 const char *key, const char *value)
 {
-    reinterpret_cast<adios2::IO *>(io)->SetTransportSingleParameter(
-        transport_index, key, value);
+    reinterpret_cast<adios2::IO *>(io)->SetTransportParameter(transport_index,
+                                                              key, value);
 }
 
 adios2_Engine *adios2_open(adios2_IO *io, const char *name,
-                           const adios2_open_mode open_mode)
+                           const adios2_mode open_mode)
 {
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
     return adios2_open_new_comm(io, name, open_mode, ioCpp.m_MPIComm);
 }
 
 adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
-                                    const adios2_open_mode open_mode,
+                                    const adios2_mode open_mode,
                                     MPI_Comm mpi_comm)
 {
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
@@ -274,19 +297,19 @@ adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
     switch (open_mode)
     {
 
-    case adios2_open_mode_write:
+    case adios2_mode_write:
         engine = &ioCpp.Open(name, adios2::Mode::Write, mpi_comm);
         break;
 
-    case adios2_open_mode_read:
+    case adios2_mode_read:
         engine = &ioCpp.Open(name, adios2::Mode::Read, mpi_comm);
         break;
 
-    case adios2_open_mode_append:
+    case adios2_mode_append:
         engine = &ioCpp.Open(name, adios2::Mode::Append, mpi_comm);
         break;
 
-    case adios2_open_mode_undefined:
+    case adios2_mode_undefined:
 
         break;
     }
@@ -294,24 +317,80 @@ adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
     return reinterpret_cast<adios2_Engine *>(engine);
 }
 
-void adios2_write(adios2_Engine *engine, adios2_Variable *variable,
-                  const void *values)
-{
-    auto &variableBase = *reinterpret_cast<adios2::VariableBase *>(variable);
-    adios2_write_by_name(engine, variableBase.m_Name.c_str(), values);
-}
-
-void adios2_write_by_name(adios2_Engine *engine, const char *variable_name,
-                          const void *values)
+void adios2_acquire_step(adios2_Engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
-    engineCpp.Write(variable_name, values);
+    engineCpp.BeginStep();
 }
 
-void adios2_advance(adios2_Engine *engine)
+void adios2_put_sync(adios2_Engine *engine, adios2_Variable *variable,
+                     const void *values)
+{
+    adios2::VariableBase *variableBase =
+        reinterpret_cast<adios2::VariableBase *>(variable);
+    const std::string type(variableBase->m_Type);
+
+    adios2::Engine &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.PutSync(*dynamic_cast<adios2::Variable<T> *>(variableBase),  \
+                          reinterpret_cast<const T *>(values));                \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_put_sync_self(adios2_Engine *engine, adios2_Variable *variable)
+{
+    adios2::VariableBase *variableBase =
+        reinterpret_cast<adios2::VariableBase *>(variable);
+    const std::string type(variableBase->m_Type);
+
+    adios2::Engine &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.PutSync(*dynamic_cast<adios2::Variable<T> *>(variableBase)); \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_put_sync_by_name(adios2_Engine *engine, const char *variable_name,
+                             const void *values)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
-    engineCpp.Advance();
+    const std::string type(
+        engineCpp.GetIO().InquireVariableType(variable_name));
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.PutSync(variable_name, reinterpret_cast<const T *>(values)); \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_release_step(adios2_Engine *engine)
+{
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.EndStep();
 }
 
 void adios2_close(adios2_Engine *engine)

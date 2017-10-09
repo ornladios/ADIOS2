@@ -37,17 +37,18 @@ int main(int argc, char *argv[])
 
         /** Write variable for buffering */
         adios2::Variable<float> *bpFloats =
-            bpReader.InquireVariable<float>("bpFloats");
-        adios2::Variable<int> *bpInts = bpReader.InquireVariable<int>("bpInts");
+            bpIO.InquireVariable<float>("bpFloats");
+
+        adios2::Variable<int> *bpInts = bpIO.InquireVariable<int>("bpInts");
 
         if (bpFloats != nullptr)
         {
-            bpReader.Read<float>(*bpFloats, myFloats.data());
+            bpReader.GetSync<float>(*bpFloats, myFloats.data());
         }
 
         if (bpFloats != nullptr)
         {
-            bpReader.Read<int>(*bpInts, myInts.data());
+            bpReader.GetSync<int>(*bpInts, myInts.data());
         }
 
         /** Close bp file, engine becomes unreachable after this*/

@@ -8,19 +8,18 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "BP1Base.h"
-#include "BP1Base.tcc"
-
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
-                                          // ReadValue
+#include <adios2/toolkit/format/bp3/BP3Base.h>
+#include <adios2/toolkit/format/bp3/BP3Base.tcc>
+// ReadValue
 
 namespace adios2
 {
 namespace format
 {
 
-BP1Base::BP1Base(MPI_Comm mpiComm, const bool debugMode)
+BP3Base::BP3Base(MPI_Comm mpiComm, const bool debugMode)
 : m_MPIComm(mpiComm), m_DebugMode(debugMode)
 {
     MPI_Comm_rank(m_MPIComm, &m_RankMPI);
@@ -28,7 +27,7 @@ BP1Base::BP1Base(MPI_Comm mpiComm, const bool debugMode)
     m_Profiler.IsActive = true; // default
 }
 
-void BP1Base::InitParameters(const Params &parameters)
+void BP3Base::InitParameters(const Params &parameters)
 {
     // flags for defaults that require constructors
     bool useDefaultInitialBufferSize = true;
@@ -92,7 +91,7 @@ void BP1Base::InitParameters(const Params &parameters)
 }
 
 std::vector<std::string>
-BP1Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
+BP3Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
 {
     auto lf_GetBPBaseName = [](const std::string &name) -> std::string {
 
@@ -110,14 +109,14 @@ BP1Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
     return bpBaseNames;
 }
 
-std::string BP1Base::GetBPMetadataFileName(const std::string &name) const
+std::string BP3Base::GetBPMetadataFileName(const std::string &name) const
     noexcept
 {
     return AddExtension(name, ".bp");
 }
 
 std::vector<std::string>
-BP1Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
+BP3Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
 {
     auto lf_GetBPName = [](const std::string &baseName,
                            const int rank) -> std::string {
@@ -148,7 +147,7 @@ BP1Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
 }
 
 // PROTECTED
-void BP1Base::InitOnOffParameter(const std::string value, bool &parameter,
+void BP3Base::InitOnOffParameter(const std::string value, bool &parameter,
                                  const std::string hint)
 {
     if (value == "off" || value == "Off")
@@ -170,12 +169,12 @@ void BP1Base::InitOnOffParameter(const std::string value, bool &parameter,
     }
 }
 
-void BP1Base::InitParameterProfile(const std::string value)
+void BP3Base::InitParameterProfile(const std::string value)
 {
     InitOnOffParameter(value, m_Profiler.IsActive, "valid: Profile On or Off");
 }
 
-void BP1Base::InitParameterProfileUnits(const std::string value)
+void BP3Base::InitParameterProfileUnits(const std::string value)
 {
     TimeUnit timeUnit = StringToTimeUnit(value, m_DebugMode);
 
@@ -190,7 +189,7 @@ void BP1Base::InitParameterProfileUnits(const std::string value)
     m_Profiler.Bytes.emplace("buffering", 0);
 }
 
-void BP1Base::InitParameterBufferGrowth(const std::string value)
+void BP3Base::InitParameterBufferGrowth(const std::string value)
 {
     if (m_DebugMode)
     {
@@ -223,7 +222,7 @@ void BP1Base::InitParameterBufferGrowth(const std::string value)
     }
 }
 
-void BP1Base::InitParameterInitBufferSize(const std::string value)
+void BP3Base::InitParameterInitBufferSize(const std::string value)
 {
     if (m_DebugMode)
     {
@@ -275,7 +274,7 @@ void BP1Base::InitParameterInitBufferSize(const std::string value)
                                   ", in call to Open");
 }
 
-void BP1Base::InitParameterMaxBufferSize(const std::string value)
+void BP3Base::InitParameterMaxBufferSize(const std::string value)
 {
     if (m_DebugMode)
     {
@@ -326,7 +325,7 @@ void BP1Base::InitParameterMaxBufferSize(const std::string value)
     }
 }
 
-void BP1Base::InitParameterThreads(const std::string value)
+void BP3Base::InitParameterThreads(const std::string value)
 {
     int threads = -1;
 
@@ -361,7 +360,7 @@ void BP1Base::InitParameterThreads(const std::string value)
     m_Threads = static_cast<unsigned int>(threads);
 }
 
-void BP1Base::InitParameterVerbose(const std::string value)
+void BP3Base::InitParameterVerbose(const std::string value)
 {
     int verbosity = -1;
 
@@ -397,14 +396,14 @@ void BP1Base::InitParameterVerbose(const std::string value)
     m_Verbosity = static_cast<unsigned int>(verbosity);
 }
 
-void BP1Base::InitParameterCollectiveMetadata(const std::string value)
+void BP3Base::InitParameterCollectiveMetadata(const std::string value)
 {
     InitOnOffParameter(value, m_CollectiveMetadata,
                        "valid: CollectiveMetadata On or Off");
 }
 
 std::vector<uint8_t>
-BP1Base::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
+BP3Base::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     noexcept
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
@@ -441,7 +440,7 @@ BP1Base::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     return transportsIDs;
 }
 
-size_t BP1Base::GetProcessGroupIndexSize(const std::string name,
+size_t BP3Base::GetProcessGroupIndexSize(const std::string name,
                                          const std::string timeStepName,
                                          const size_t transportsSize) const
     noexcept
@@ -453,8 +452,8 @@ size_t BP1Base::GetProcessGroupIndexSize(const std::string name,
     return pgSize;
 }
 
-BP1Base::ElementIndexHeader
-BP1Base::ReadElementIndexHeader(const std::vector<char> &buffer,
+BP3Base::ElementIndexHeader
+BP3Base::ReadElementIndexHeader(const std::vector<char> &buffer,
                                 size_t &position) const noexcept
 {
     ElementIndexHeader header;
@@ -469,7 +468,7 @@ BP1Base::ReadElementIndexHeader(const std::vector<char> &buffer,
     return header;
 }
 
-std::string BP1Base::ReadBP1String(const std::vector<char> &buffer,
+std::string BP3Base::ReadBP1String(const std::vector<char> &buffer,
                                    size_t &position) const noexcept
 {
     const size_t size =
@@ -485,7 +484,7 @@ std::string BP1Base::ReadBP1String(const std::vector<char> &buffer,
     return values;
 }
 
-void BP1Base::ProfilerStart(const std::string process)
+void BP3Base::ProfilerStart(const std::string process)
 {
     if (m_Profiler.IsActive)
     {
@@ -493,7 +492,7 @@ void BP1Base::ProfilerStart(const std::string process)
     }
 }
 
-void BP1Base::ProfilerStop(const std::string process)
+void BP3Base::ProfilerStop(const std::string process)
 {
     if (m_Profiler.IsActive)
     {
@@ -502,11 +501,11 @@ void BP1Base::ProfilerStop(const std::string process)
 }
 
 #define declare_template_instantiation(T)                                      \
-    template BP1Base::ResizeResult BP1Base::ResizeBuffer(                      \
+    template BP3Base::ResizeResult BP3Base::ResizeBuffer(                      \
         const Variable<T> &variable);                                          \
                                                                                \
-    template BP1Base::Characteristics<T>                                       \
-    BP1Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
+    template BP3Base::Characteristics<T>                                       \
+    BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
                                              size_t &position,                 \
                                              const bool untilTimeStep) const;
 

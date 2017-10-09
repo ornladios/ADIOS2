@@ -44,12 +44,16 @@ int main(int argc, char *argv[])
 
         for (unsigned int timeStep = 0; timeStep < 10; ++timeStep)
         {
-            // template type is optional but recommended
-            bpWriter.Write<unsigned int>(bpTimeStep, timeStep);
+            bpWriter.BeginStep();
 
+            // template type is optional but recommended
+            bpWriter.PutSync<unsigned int>(bpTimeStep, timeStep);
+
+            // modifying data
             myFloats[0] = timeStep;
-            bpWriter.Write<float>(bpFloats, myFloats.data());
-            bpWriter.Advance();
+            bpWriter.PutSync<float>(bpFloats, myFloats.data());
+
+            bpWriter.EndStep();
         }
 
         bpWriter.Close();

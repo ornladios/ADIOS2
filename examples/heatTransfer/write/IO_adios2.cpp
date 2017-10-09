@@ -101,15 +101,15 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     */
     varT->SetMemorySelection(adios2::Box<adios2::Dims>({1, 1}, {s.ndx, s.ndy}));
 
-    bpWriter->Write<unsigned int>(*varGndx, s.gndx);
-    bpWriter->Write<unsigned int>("gndy", s.gndy);
-    bpWriter->Write<double>(*varT, ht.data_noghost().data());
-    bpWriter->Advance();
+    bpWriter->PutSync<unsigned int>(*varGndx, s.gndx);
+    bpWriter->PutSync<unsigned int>("gndy", s.gndy);
+    bpWriter->PutSync<double>(*varT, ht.data_noghost().data());
+    bpWriter->EndStep();
 
 #else
 
-    bpWriter->Write<double>(*varT, ht.data_noghost().data());
-    bpWriter->Advance();
+    bpWriter->PutSync<double>(*varT, ht.data_noghost().data());
+    bpWriter->EndStep();
 
 #endif
 }

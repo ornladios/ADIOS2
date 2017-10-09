@@ -65,41 +65,40 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         io.SetEngine("BPFileWriter");
         io.AddTransport("File");
 
-        auto engine = io.Open(fname, adios2::Mode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<int8_t>("i8");
-            auto &var_i16 = io.GetVariable<int16_t>("i16");
-            auto &var_i32 = io.GetVariable<int32_t>("i32");
-            auto &var_i64 = io.GetVariable<int64_t>("i64");
-            auto &var_u8 = io.GetVariable<uint8_t>("u8");
-            auto &var_u16 = io.GetVariable<uint16_t>("u16");
-            auto &var_u32 = io.GetVariable<uint32_t>("u32");
-            auto &var_u64 = io.GetVariable<uint64_t>("u64");
-            auto &var_r32 = io.GetVariable<float>("r32");
-            auto &var_r64 = io.GetVariable<double>("r64");
+            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
+            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
+            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
+            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
+            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
+            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
+            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
+            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
+            auto &var_r32 = *io.InquireVariable<float>("r32");
+            auto &var_r64 = *io.InquireVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.data() + step);
-            engine->Write(var_i16, m_TestData.I16.data() + step);
-            engine->Write(var_i32, m_TestData.I32.data() + step);
-            engine->Write(var_i64, m_TestData.I64.data() + step);
-            engine->Write(var_u8, m_TestData.U8.data() + step);
-            engine->Write(var_u16, m_TestData.U16.data() + step);
-            engine->Write(var_u32, m_TestData.U32.data() + step);
-            engine->Write(var_u64, m_TestData.U64.data() + step);
-            engine->Write(var_r32, m_TestData.R32.data() + step);
-            engine->Write(var_r64, m_TestData.R64.data() + step);
+            engine.PutSync(var_i8, m_TestData.I8.data() + step);
+            engine.PutSync(var_i16, m_TestData.I16.data() + step);
+            engine.PutSync(var_i32, m_TestData.I32.data() + step);
+            engine.PutSync(var_i64, m_TestData.I64.data() + step);
+            engine.PutSync(var_u8, m_TestData.U8.data() + step);
+            engine.PutSync(var_u16, m_TestData.U16.data() + step);
+            engine.PutSync(var_u32, m_TestData.U32.data() + step);
+            engine.PutSync(var_u64, m_TestData.U64.data() + step);
+            engine.PutSync(var_r32, m_TestData.R32.data() + step);
+            engine.PutSync(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
-            engine->Advance();
+            engine.EndStep();
         }
 
         // Close the file
-        engine->Close();
+        engine.Close();
     }
 
 // Read test data using ADIOS1
@@ -281,41 +280,40 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
         io.SetEngine("BPFileWriter");
         io.AddTransport("file");
 
-        auto engine = io.Open(fname, adios2::Mode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < 3; ++step)
         {
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<int8_t>("i8");
-            auto &var_i16 = io.GetVariable<int16_t>("i16");
-            auto &var_i32 = io.GetVariable<int32_t>("i32");
-            auto &var_i64 = io.GetVariable<int64_t>("i64");
-            auto &var_u8 = io.GetVariable<uint8_t>("u8");
-            auto &var_u16 = io.GetVariable<uint16_t>("u16");
-            auto &var_u32 = io.GetVariable<uint32_t>("u32");
-            auto &var_u64 = io.GetVariable<uint64_t>("u64");
-            auto &var_r32 = io.GetVariable<float>("r32");
-            auto &var_r64 = io.GetVariable<double>("r64");
+            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
+            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
+            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
+            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
+            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
+            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
+            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
+            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
+            auto &var_r32 = *io.InquireVariable<float>("r32");
+            auto &var_r64 = *io.InquireVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.data() + step);
-            engine->Write(var_i16, m_TestData.I16.data() + step);
-            engine->Write(var_i32, m_TestData.I32.data() + step);
-            engine->Write(var_i64, m_TestData.I64.data() + step);
-            engine->Write(var_u8, m_TestData.U8.data() + step);
-            engine->Write(var_u16, m_TestData.U16.data() + step);
-            engine->Write(var_u32, m_TestData.U32.data() + step);
-            engine->Write(var_u64, m_TestData.U64.data() + step);
-            engine->Write(var_r32, m_TestData.R32.data() + step);
-            engine->Write(var_r64, m_TestData.R64.data() + step);
+            engine.PutSync(var_i8, m_TestData.I8.data() + step);
+            engine.PutSync(var_i16, m_TestData.I16.data() + step);
+            engine.PutSync(var_i32, m_TestData.I32.data() + step);
+            engine.PutSync(var_i64, m_TestData.I64.data() + step);
+            engine.PutSync(var_u8, m_TestData.U8.data() + step);
+            engine.PutSync(var_u16, m_TestData.U16.data() + step);
+            engine.PutSync(var_u32, m_TestData.U32.data() + step);
+            engine.PutSync(var_u64, m_TestData.U64.data() + step);
+            engine.PutSync(var_r32, m_TestData.R32.data() + step);
+            engine.PutSync(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
-            engine->Advance();
+            engine.EndStep();
         }
 
         // Close the file
-        engine->Close();
+        engine.Close();
     }
 
 // Read test data using ADIOS1
@@ -507,41 +505,42 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
         io.SetEngine("BPFileWriter");
         io.AddTransport("file");
 
-        auto engine = io.Open(fname, adios2::Mode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < 3; ++step)
         {
+            engine.BeginStep();
+
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<int8_t>("i8");
-            auto &var_i16 = io.GetVariable<int16_t>("i16");
-            auto &var_i32 = io.GetVariable<int32_t>("i32");
-            auto &var_i64 = io.GetVariable<int64_t>("i64");
-            auto &var_u8 = io.GetVariable<uint8_t>("u8");
-            auto &var_u16 = io.GetVariable<uint16_t>("u16");
-            auto &var_u32 = io.GetVariable<uint32_t>("u32");
-            auto &var_u64 = io.GetVariable<uint64_t>("u64");
-            auto &var_r32 = io.GetVariable<float>("r32");
-            auto &var_r64 = io.GetVariable<double>("r64");
+            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
+            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
+            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
+            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
+            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
+            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
+            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
+            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
+            auto &var_r32 = *io.InquireVariable<float>("r32");
+            auto &var_r64 = *io.InquireVariable<double>("r64");
 
             // Write each one
-            engine->Write(var_i8, m_TestData.I8.data() + step);
-            engine->Write(var_i16, m_TestData.I16.data() + step);
-            engine->Write(var_i32, m_TestData.I32.data() + step);
-            engine->Write(var_i64, m_TestData.I64.data() + step);
-            engine->Write(var_u8, m_TestData.U8.data() + step);
-            engine->Write(var_u16, m_TestData.U16.data() + step);
-            engine->Write(var_u32, m_TestData.U32.data() + step);
-            engine->Write(var_u64, m_TestData.U64.data() + step);
-            engine->Write(var_r32, m_TestData.R32.data() + step);
-            engine->Write(var_r64, m_TestData.R64.data() + step);
+            engine.PutSync(var_i8, m_TestData.I8.data() + step);
+            engine.PutSync(var_i16, m_TestData.I16.data() + step);
+            engine.PutSync(var_i32, m_TestData.I32.data() + step);
+            engine.PutSync(var_i64, m_TestData.I64.data() + step);
+            engine.PutSync(var_u8, m_TestData.U8.data() + step);
+            engine.PutSync(var_u16, m_TestData.U16.data() + step);
+            engine.PutSync(var_u32, m_TestData.U32.data() + step);
+            engine.PutSync(var_u64, m_TestData.U64.data() + step);
+            engine.PutSync(var_r32, m_TestData.R32.data() + step);
+            engine.PutSync(var_r64, m_TestData.R64.data() + step);
 
             // Advance to the next time step
-            engine->Advance();
+            engine.EndStep();
         }
 
         // Close the file
-        engine->Close();
+        engine.Close();
     }
 
 // Read test data using ADIOS1

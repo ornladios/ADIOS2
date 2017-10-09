@@ -93,17 +93,18 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     //    adios2::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
     // varT->SetMemorySelection(memspace);
 
-    h5writer->Write<double>(*varT, ht.data_noghost().data());
+    h5writer->BeginStep();
+    h5writer->PutSync<double>(*varT, ht.data_noghost().data());
     // h5writer->Write(*varT, ht.data_noghost().data());
-    h5writer->Write<unsigned int>(*varGndx, &(s.gndx));
-    h5writer->Write("gndy", &(s.gndy));
+    h5writer->PutSync<unsigned int>(*varGndx, &(s.gndx));
+    h5writer->PutSync("gndy", &(s.gndy));
 
-    h5writer->Advance();
+    h5writer->EndStep();
 
 #else
-
-    h5writer->Write<double>(*varT, ht.data_noghost().data());
-    h5writer->Advance();
+    h5writer->BeginStep();
+    h5writer->PutSync<double>(*varT, ht.data_noghost().data());
+    h5writer->EndStep();
 
 #endif
 }

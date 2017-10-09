@@ -133,9 +133,9 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
  * name
  * @param io handler to variable io owner
  * @param name unique name input
- * @return variable handler if found
+ * @return variable handler if found, else NULL
  */
-adios2_Variable *adios2_get_variable(adios2_IO *io, const char *name);
+adios2_Variable *adios2_inquire_variable(adios2_IO *io, const char *name);
 
 /**
  * Create an adios2_Engine, from adios2_IO, that executes all IO operations.
@@ -146,7 +146,7 @@ adios2_Variable *adios2_get_variable(adios2_IO *io, const char *name);
  * @return engine handler
  */
 adios2_Engine *adios2_open(adios2_IO *io, const char *name,
-                           const adios2_open_mode open_mode);
+                           const adios2_mode open_mode);
 
 /**
  * Create an adios2_Engine, from adios2_IO, that executes all IO operations.
@@ -158,8 +158,28 @@ adios2_Engine *adios2_open(adios2_IO *io, const char *name,
  * @return engine handler
  */
 adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
-                                    const adios2_open_mode open_mode,
+                                    const adios2_mode open_mode,
                                     MPI_Comm mpi_comm);
+
+/**
+ * starts interaction with current step
+ * @param engine handler executing IO tasks
+ */
+void adios2_acquire_step(adios2_Engine *engine);
+
+/**
+ * Put a variable in IO using a adios2_Variable handler
+ * @param engine handler for engine executing the write
+ * @param variable handler for variable from adios2_define_variable
+ * @param values application data to be written for this variable
+ */
+void adios2_put_sync(adios2_Engine *engine, adios2_Variable *variable,
+                     const void *values);
+
+void adios2_put_sync_self(adios2_Engine *engine, adios2_Variable *variable);
+
+void adios2_put_sync_by_name(adios2_Engine *engine, const char *variableName,
+                             const void *values);
 
 /**
  * Write a variable using a adios2_Variable handler
@@ -167,23 +187,21 @@ adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
  * @param variable handler for variable from adios2_define_variable
  * @param values application data to be written for this variable
  */
-void adios2_write(adios2_Engine *engine, adios2_Variable *variable,
-                  const void *values);
+// void adios2_put_deferred(adios2_Engine *engine, adios2_Variable *variable,
+//                         const void *values);
+//
+// void adios2_put_deferred_self(adios2_Engine *engine, adios2_Variable
+// *variable);
+//
+// void adios2_put_deferred_by_name(adios2_Engine *engine,
+//                                 const char *variableName, const void
+//                                 *values);
 
 /**
- * Write a variable using a variable name created from adios2_define_variable
- * @param engine handler for engine executing the write
- * @param variable_name unique variable name, within io that create the engine.
- * @param values application data to be written for this variable
- */
-void adios2_write_by_name(adios2_Engine *engine, const char *variable_name,
-                          const void *values);
-
-/**
- * Advance time step for writes
+ * terminates interaction with current step
  * @param engine handler executing IO tasks
  */
-void adios2_advance(adios2_Engine *engine);
+void adios2_release_step(adios2_Engine *engine);
 
 /**
  * Close all transports in adios2_Engine

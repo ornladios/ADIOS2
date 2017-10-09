@@ -18,8 +18,8 @@
 namespace adios2
 {
 
-ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name,
-                           const Mode openMode, MPI_Comm mpiComm)
+ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name, const Mode openMode,
+                           MPI_Comm mpiComm)
 : Engine("ADIOS1Reader", io, name, openMode, mpiComm)
 {
     m_EndMessage = " in call to IO Open ADIOS1Reader " + m_Name + "\n";
@@ -99,29 +99,24 @@ void ADIOS1Reader::ScheduleReadCommon(const std::string &name, const Dims &offs,
 }
 
 #define declare_type(T)                                                        \
-    void ADIOS1Reader::DoScheduleRead(Variable<T> &variable, const T *values)  \
+    void ADIOS1Reader::DoGetDeferred(Variable<T> &variable, T *values)         \
     {                                                                          \
-        ScheduleReadCommon(variable.m_Name, variable.m_Start,                  \
-                           variable.m_Count, variable.m_ReadFromStep,          \
-                           variable.m_ReadNSteps, variable.m_ReadAsLocalValue, \
-                           variable.m_ReadAsJoined, (void *)values);           \
-    }                                                                          \
-                                                                               \
-    void ADIOS1Reader::DoScheduleRead(const std::string &variableName,         \
-                                      const T *values)                         \
-    {                                                                          \
-        DoScheduleRead(m_IO.GetVariable<T>(variableName), values);             \
+        ScheduleReadCommon(                                                    \
+            variable.m_Name, variable.m_Start, variable.m_Count,               \
+            variable.GetAvailableStepsStart(),                                 \
+            variable.GetAvailableStepsStart(), variable.m_ReadAsLocalValue,    \
+            variable.m_ReadAsJoined, (void *)values);                          \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void ADIOS1Reader::PerformReads(ReadMode mode)
+void ADIOS1Reader::PerformGets()
 {
-    adios_perform_reads(m_fh, (int)mode);
+    adios_perform_reads(m_fh, static_cast<int>(ReadMode::Blocking));
 }
 
-void ADIOS1Reader::Release() { adios_release_step(m_fh); }
+void ADIOS1Reader::EndStep() { adios_release_step(m_fh); }
 
 void ADIOS1Reader::Advance(const float timeout_sec)
 {
@@ -155,14 +150,6 @@ void ADIOS1Reader::Advance(AdvanceMode mode, const float timeout_sec)
         m_AdvanceStatus = AdvanceStatus::OtherError;
         break;
     }
-}
-
-void ADIOS1Reader::AdvanceAsync(
-    AdvanceMode mode,
-    std::function<void(std::shared_ptr<adios2::Engine>)> callback)
-{
-    throw std::invalid_argument(
-        "ERROR: ADIOS1Reader doesn't support AdvanceSync()\n");
 }
 
 void ADIOS1Reader::Close(const int transportIndex)
@@ -199,7 +186,6 @@ void ADIOS1Reader::InitParameters()
 
 void ADIOS1Reader::InitTransports()
 {
-
     for (const auto &parameters : m_IO.m_TransportsParameters)
     {
         auto itTransport = parameters.find("transport");

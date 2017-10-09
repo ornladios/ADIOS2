@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * adios2_f.cpp :  C-header glue code implmentation for functions called from
+ * adios2_f.cpp :  C-header glue code implementation for functions called from
  * Fortran modules
  *
  *  Created on: Aug 14, 2017
@@ -186,8 +186,7 @@ void adios2_open_f2c_(adios2_Engine **engine, adios2_IO **io, const char *name,
     *ierr = 0;
     try
     {
-        *engine =
-            adios2_open(*io, name, static_cast<adios2_open_mode>(*open_mode));
+        *engine = adios2_open(*io, name, static_cast<adios2_mode>(*open_mode));
     }
     catch (std::exception &e)
     {
@@ -203,9 +202,9 @@ void adios2_open_new_comm_f2c_(adios2_Engine **engine, adios2_IO **io,
     *ierr = 0;
     try
     {
-        *engine = adios2_open_new_comm(
-            *io, name, static_cast<adios2_open_mode>(*open_mode),
-            MPI_Comm_f2c(*comm));
+        *engine = adios2_open_new_comm(*io, name,
+                                       static_cast<adios2_mode>(*open_mode),
+                                       MPI_Comm_f2c(*comm));
     }
     catch (std::exception &e)
     {
@@ -220,7 +219,7 @@ void adios2_write_f2c_(adios2_Engine **engine, adios2_Variable **variable,
     *ierr = 0;
     try
     {
-        adios2_write(*engine, *variable, values);
+        adios2_put_sync(*engine, *variable, values);
     }
     catch (std::exception &e)
     {
@@ -233,7 +232,7 @@ void adios2_advance_f2c_(adios2_Engine **engine, int *ierr)
     *ierr = 0;
     try
     {
-        adios2_advance(*engine);
+        adios2_release_step(*engine);
     }
     catch (std::exception &e)
     {

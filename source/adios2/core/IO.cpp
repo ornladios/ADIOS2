@@ -45,15 +45,20 @@ IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
 void IO::SetEngine(const std::string engineType) { m_EngineType = engineType; }
 void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
-void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
+void IO::SetParameters(const Params &parameters) noexcept
+{
+    for (const auto &parameter : parameters)
+    {
+        m_Parameters[parameter.first] = parameter.second;
+    }
+}
 
-void IO::SetSingleParameter(const std::string key,
-                            const std::string value) noexcept
+void IO::SetParameter(const std::string key, const std::string value) noexcept
 {
     m_Parameters[key] = value;
 }
 
-const Params &IO::GetParameters() const { return m_Parameters; }
+Params &IO::GetParameters() noexcept { return m_Parameters; }
 
 unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 {
@@ -68,50 +73,23 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
 }
 
-void IO::SetTransportSingleParameter(const unsigned int transportIndex,
-                                     const std::string key,
-                                     const std::string value)
+void IO::SetTransportParameter(const unsigned int transportIndex,
+                               const std::string key, const std::string value)
 {
     if (m_DebugMode)
     {
         if (transportIndex >=
             static_cast<unsigned int>(m_TransportsParameters.size()))
         {
-            throw std::invalid_argument("ERROR: transportIndex is larger than "
-                                        "transports created with AddTransport "
-                                        "function calls\n");
+            throw std::invalid_argument(
+                "ERROR: transportIndex is larger than "
+                "transports created with AddTransport, for key: " +
+                key + ", value: " + value + "in call to SetTransportParameter "
+                                            "\n");
         }
     }
 
     m_TransportsParameters[transportIndex][key] = value;
-}
-
-VariableCompound &
-IO::DefineVariableCompound(const std::string &name, const size_t sizeOfVariable,
-                           const Dims &shape, const Dims &start,
-                           const Dims &count, const bool constantDims)
-{
-    if (m_DebugMode)
-    {
-        auto itVariable = m_Variables.find(name);
-        if (!IsEnd(itVariable, m_Variables))
-        {
-            throw std::invalid_argument("ERROR: variable " + name +
-                                        " exists in IO object " + m_Name +
-                                        ", in call to DefineVariable\n");
-        }
-    }
-    const unsigned int size = m_Compound.size();
-    auto itVariableCompound = m_Compound.emplace(
-        size, VariableCompound(name, sizeOfVariable, shape, start, count,
-                               constantDims, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair("compound", size));
-    return itVariableCompound.first->second;
-}
-
-VariableCompound &IO::GetVariableCompound(const std::string &name)
-{
-    return m_Compound.at(GetMapIndex(name, m_Variables, "VariableCompound"));
 }
 
 const DataMap &IO::GetVariablesDataMap() const noexcept { return m_Variables; }
@@ -119,41 +97,6 @@ const DataMap &IO::GetVariablesDataMap() const noexcept { return m_Variables; }
 const DataMap &IO::GetAttributesDataMap() const noexcept
 {
     return m_Attributes;
-}
-
-VariableBase *IO::GetVariableBase(const std::string &name) noexcept
-{
-    VariableBase *variableBase = nullptr;
-    auto itVariable = m_Variables.find(name);
-    if (itVariable == m_Variables.end())
-    {
-        return variableBase;
-    }
-
-    const std::string type(itVariable->second.first);
-    if (type == "compound")
-    {
-        variableBase = &GetVariableCompound(name);
-    }
-#define declare_type(T)                                                        \
-    else if (type == GetType<T>()) { variableBase = &GetVariable<T>(name); }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
-    return variableBase;
-}
-
-std::string IO::GetVariableType(const std::string &name) const
-{
-    std::string type;
-
-    auto itVariable = m_Variables.find(name);
-    if (itVariable != m_Variables.end())
-    {
-        type = itVariable->second.first;
-    }
-
-    return type;
 }
 
 bool IO::InConfigFile() const { return m_InConfigFile; };
@@ -192,6 +135,27 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     }
 
     return isRemoved;
+}
+
+std::map<std::string, std::string> IO::GetAvailableVariables() const noexcept
+{
+    std::map<std::string, std::string> variables;
+    for (const auto &variablePair : m_Variables)
+    {
+        variables[variablePair.first] = variablePair.second.first;
+    }
+    return variables;
+}
+
+std::string IO::InquireVariableType(const std::string &name) const noexcept
+{
+    auto itVariable = m_Variables.find(name);
+    if (itVariable == m_Variables.end())
+    {
+        return std::string();
+    }
+
+    return itVariable->second.first;
 }
 
 Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
@@ -320,21 +284,14 @@ Engine &IO::Open(const std::string &name, const Mode openMode)
     return Open(name, openMode, m_MPIComm);
 }
 
-// PRIVATE Functions
-unsigned int IO::GetMapIndex(const std::string &name, const DataMap &dataMap,
-                             const std::string hint) const
+// PRIVATE
+int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
+    noexcept
 {
     auto itDataMap = dataMap.find(name);
-
-    if (m_DebugMode)
+    if (itDataMap == dataMap.end())
     {
-        if (IsEnd(itDataMap, dataMap))
-        {
-            throw std::invalid_argument("ERROR: " + hint + " " + m_Name +
-                                        " wasn't created with Define " + hint +
-                                        ", in call to IO object " + m_Name +
-                                        " Get" + hint + "\n");
-        }
+        return -1;
     }
     return itDataMap->second.second;
 }
@@ -373,10 +330,10 @@ void IO::CheckTransportType(const std::string type) const
 
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
-    template Variable<T> &IO::DefineVariable<T>(const std::string &,           \
-                                                const Dims &, const Dims &,    \
-                                                const Dims &, const bool);     \
-    template Variable<T> &IO::GetVariable<T>(const std::string &);
+    template Variable<T> &IO::DefineVariable<T>(                               \
+        const std::string &, const Dims &, const Dims &, const Dims &,         \
+        const bool, T *);                                                      \
+    template Variable<T> *IO::InquireVariable<T>(const std::string &);
 
 ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
@@ -386,7 +343,7 @@ ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
                                                   const T *, const size_t);    \
     template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
                                                   const T &);                  \
-    template Attribute<T> &IO::GetAttribute(const std::string &);
+    template Attribute<T> *IO::InquireAttribute(const std::string &);
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

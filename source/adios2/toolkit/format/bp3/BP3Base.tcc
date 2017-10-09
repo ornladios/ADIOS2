@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Base.tcc
+ * BP3Base.tcc
  *
  *  Created on: May 19, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_TCC_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_TCC_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3BASE_TCC_
+#define ADIOS2_TOOLKIT_FORMAT_BP1_BP3BASE_TCC_
 
-#include "BP1Base.h"
+#include "BP3Base.h"
 
 #include <cmath> //std::min
 
@@ -23,7 +23,7 @@ namespace format
 {
 
 template <class T>
-BP1Base::ResizeResult BP1Base::ResizeBuffer(const Variable<T> &variable)
+BP3Base::ResizeResult BP3Base::ResizeBuffer(const Variable<T> &variable)
 {
     size_t currentCapacity = m_Data.m_Buffer.capacity();
     size_t variableData =
@@ -80,134 +80,134 @@ BP1Base::ResizeResult BP1Base::ResizeBuffer(const Variable<T> &variable)
 
 // PROTECTED
 template <>
-int8_t BP1Base::GetDataType<std::string>() const noexcept
+int8_t BP3Base::GetDataType<std::string>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_string);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<char>() const noexcept
+int8_t BP3Base::GetDataType<char>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_byte);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<signed char>() const noexcept
+int8_t BP3Base::GetDataType<signed char>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_byte);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<short>() const noexcept
+int8_t BP3Base::GetDataType<short>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_short);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<int>() const noexcept
+int8_t BP3Base::GetDataType<int>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_integer);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<long int>() const noexcept
+int8_t BP3Base::GetDataType<long int>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_long);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<long long int>() const noexcept
+int8_t BP3Base::GetDataType<long long int>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_long);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<unsigned char>() const noexcept
+int8_t BP3Base::GetDataType<unsigned char>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_unsigned_byte);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<unsigned short>() const noexcept
+int8_t BP3Base::GetDataType<unsigned short>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_unsigned_short);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<unsigned int>() const noexcept
+int8_t BP3Base::GetDataType<unsigned int>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_unsigned_integer);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<unsigned long int>() const noexcept
+int8_t BP3Base::GetDataType<unsigned long int>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_unsigned_long);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<unsigned long long int>() const noexcept
+int8_t BP3Base::GetDataType<unsigned long long int>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_unsigned_long);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<float>() const noexcept
+int8_t BP3Base::GetDataType<float>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_real);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<double>() const noexcept
+int8_t BP3Base::GetDataType<double>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_double);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<long double>() const noexcept
+int8_t BP3Base::GetDataType<long double>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_long_double);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<cfloat>() const noexcept
+int8_t BP3Base::GetDataType<cfloat>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_complex);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<cdouble>() const noexcept
+int8_t BP3Base::GetDataType<cdouble>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_double_complex);
     return type;
 }
 
 template <>
-int8_t BP1Base::GetDataType<cldouble>() const noexcept
+int8_t BP3Base::GetDataType<cldouble>() const noexcept
 {
     const int8_t type = static_cast<const int8_t>(type_long_double_complex);
     return type;
 }
 
 template <class T>
-BP1Base::Characteristics<T>
-BP1Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
+BP3Base::Characteristics<T>
+BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
                                          size_t &position,
                                          const bool untilTimeStep) const
 {
@@ -320,7 +320,7 @@ BP1Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
 
 // PRIVATE
 template <class T>
-size_t BP1Base::GetVariableIndexSize(const Variable<T> &variable) const noexcept
+size_t BP3Base::GetVariableIndexSize(const Variable<T> &variable) const noexcept
 {
     // size_t indexSize = varEntryLength + memberID + lengthGroupName +
     // groupName + lengthVariableName + lengthOfPath + path + datatype
@@ -358,4 +358,4 @@ size_t BP1Base::GetVariableIndexSize(const Variable<T> &variable) const noexcept
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_TCC_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP3Base_TCC_ */

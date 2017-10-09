@@ -119,6 +119,11 @@ void VariableBase::SetMemorySelection(const std::pair<Dims, Dims> &boxDims)
     m_MemoryCount = count;
 }
 
+size_t VariableBase::GetAvailableStepsStart() const
+{
+    return m_AvailableStepsStart;
+}
+
 size_t VariableBase::GetAvailableStepsCount() const
 {
     return m_AvailableStepsCount;
@@ -163,6 +168,24 @@ void VariableBase::ResetTransformParameters(const unsigned int transformIndex,
 }
 
 void VariableBase::ClearTransforms() noexcept { m_TransformsInfo.clear(); }
+
+void VariableBase::CheckDimensions(const std::string hint) const
+{
+    if (m_ShapeID == ShapeID::GlobalArray)
+    {
+        if (m_Start.empty() || m_Count.empty())
+        {
+            throw std::invalid_argument(
+                "ERROR: GlobalArray variable " + m_Name +
+                " start and count dimensions must be defined by either "
+                "DefineVariable or a Selection in call to " +
+                hint + "\n");
+        }
+    }
+
+    CheckDimensionsCommon(hint);
+    // TODO need to think more exceptions here
+}
 
 // PRIVATE
 void VariableBase::InitShapeType()
@@ -277,11 +300,11 @@ void VariableBase::InitShapeType()
     /* Extra checks for invalid settings */
     if (m_DebugMode)
     {
-        CheckDimsCommon("DefineVariable(" + m_Name + ")");
+        CheckDimensionsCommon("DefineVariable(" + m_Name + ")");
     }
 }
 
-void VariableBase::CheckDimsCommon(const std::string hint) const
+void VariableBase::CheckDimensionsCommon(const std::string hint) const
 {
     if (m_ShapeID != ShapeID::LocalValue)
     {
@@ -311,24 +334,6 @@ void VariableBase::CheckDimsCommon(const std::string hint) const
                                     "call to " +
                                     hint + "\n");
     }
-}
-
-void VariableBase::CheckDimsBeforeWrite(const std::string hint) const
-{
-    if (m_ShapeID == ShapeID::GlobalArray)
-    {
-        if (m_Start.empty() || m_Count.empty())
-        {
-            throw std::invalid_argument(
-                "ERROR: GlobalArray variable " + m_Name +
-                " start and count dimensions must be defined by either "
-                "DefineVariable or a Selection in call to " +
-                hint + "\n");
-        }
-    }
-
-    CheckDimsCommon(hint);
-    // TODO need to think more exceptions here
 }
 
 } // end namespace adios2

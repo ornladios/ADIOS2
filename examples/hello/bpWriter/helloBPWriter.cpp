@@ -49,15 +49,15 @@ int main(int argc, char *argv[])
             "bpInts", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpWriter =
+        adios2::Engine &bpFileWriter =
             bpIO.Open("myVector.bp", adios2::Mode::Write);
 
-        /** Write variable for buffering */
-        bpWriter.Write<float>(bpFloats, myFloats.data());
-        bpWriter.Write<int>(bpInts, myInts.data());
+        /** Put variables for buffering, template type is optional */
+        bpFileWriter.PutSync<float>(bpFloats, myFloats.data());
+        bpFileWriter.PutSync(bpInts, myInts.data());
 
         /** Create bp file, engine becomes unreachable after this*/
-        bpWriter.Close();
+        bpFileWriter.Close();
     }
     catch (std::invalid_argument &e)
     {

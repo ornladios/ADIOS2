@@ -38,7 +38,8 @@ public:
 
     ~HDF5WriterP();
 
-    void Advance(const float timeoutSeconds = 0.0) final;
+    void BeginStep() final;
+    void EndStep() final;
 
     void Close(const int transportIndex = -1) final;
 
@@ -48,12 +49,12 @@ private:
     void Init();
 
 #define declare_type(T)                                                        \
-    void DoWrite(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &variable, const T *values) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>
-    void DoWriteCommon(Variable<T> &variable, const T *values);
+    void DoPutSyncCommon(Variable<T> &variable, const T *values);
 };
 
 } // end namespace adios
