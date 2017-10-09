@@ -44,47 +44,36 @@ PythonEngine::PythonEngine(IO &io, const std::string &name,
                            const OpenMode openMode, MPI_Comm mpiComm)
 : Engine("PythonEngine", io, name, openMode, mpiComm), m_Impl(new Impl)
 {
-    std::cout << "PythonEngine::PythonEngine" << std::endl;
     Init();
     m_Impl->enginePyObject = m_Impl->enginePyClass("PythonEngine", io, name, openMode);
     m_Impl->eng = m_Impl->enginePyObject.cast<std::shared_ptr<PyEngineBase>>();
 }
 
-PythonEngine::~PythonEngine() {
-    // m_Impl->m_HandleDestroy(m_Impl->m_Plugin);
-    std::cout << "PythonEngine::~PythonEngine" << std::endl;
-}
+PythonEngine::~PythonEngine() {}
 
 void PythonEngine::PerformReads(ReadMode mode)
 {
-    // m_Impl->m_Plugin->PerformReads(mode);
-    std::cout << "PythonEngine::PerformReads" << std::endl;
+    m_Impl->eng->PerformReads(mode);
 }
 
 void PythonEngine::Release() {
-    // m_Impl->m_Plugin->Release();
-    std::cout << "PythonEngine::Release" << std::endl;
+    m_Impl->eng->Release();
 }
 
 void PythonEngine::Advance(const float timeoutSeconds)
 {
-    // m_Impl->m_Plugin->Advance(timeoutSeconds);
-    std::cout << "PythonEngine::Advance(timeoutSeconds)"
-              << std::endl;
+    m_Impl->eng->Advance(timeoutSeconds);
 }
 
 void PythonEngine::Advance(const AdvanceMode mode, const float timeoutSeconds)
 {
-    // m_Impl->m_Plugin->Advance(mode, timeoutSeconds);
-    std::cout << "PythonEngine::Advance(mode, timeoutSeconds)"
-              << std::endl;
+    m_Impl->eng->Advance(mode, timeoutSeconds);
 }
 
 void PythonEngine::AdvanceAsync(const AdvanceMode mode,
                                 AdvanceAsyncCallback callback)
 {
-    // m_Impl->m_Plugin->AdvanceAsync(mode, callback);
-    std::cout << "PythonEngine::AdvanceAsync" << std::endl;
+    m_Impl->eng->AdvanceAsync(mode, callback);
 }
 
 void PythonEngine::SetCallBack(
@@ -92,14 +81,11 @@ void PythonEngine::SetCallBack(
                        std::vector<size_t>)>
         callback)
 {
-    // m_Impl->m_Plugin->SetCallBack(callback);
-    std::cout << "PythonEngine::SetCallBack" << std::endl;
+    m_Impl->eng->SetCallBack(callback);
 }
 
 void PythonEngine::Close(const int transportIndex)
 {
-    // m_Impl->m_Plugin->Close(transportIndex);
-    std::cout << "PythonEngine::Close" << std::endl;
     m_Impl->eng->Close();
 }
 
@@ -141,22 +127,18 @@ void PythonEngine::Init()
 #define define(T)                                                        \
     void PythonEngine::DoWrite(Variable<T> &variable, const T *values)   \
     {                                                                    \
-        std::cout << "PythonEngine::DoWrite(var, vals), "             \
-                  << "type: " << typeid(T).name() << std::endl;       \
-        m_Impl->eng->DoWrite(variable, values);                      \
+        m_Impl->eng->DoWrite(variable, values);                          \
     }                                                                    \
                                                                          \
     void PythonEngine::DoScheduleRead(Variable<T> &variable,             \
-                                            const T *values)                   \
-    {                                                                          \
-        std::cout << "PythonEngine::DoScheduledRead(var, vals), "        \
-                  << "type: " << typeid(T).name() << std::endl;                \
-    }                                                                          \
+                                            const T *values)             \
+    {                                                                    \
+        m_Impl->eng->DoScheduleRead(variable, values);                   \
+    }                                                                    \
     void PythonEngine::DoScheduleRead(const std::string &variableName,   \
-                                            const T *values)                   \
-    {                                                                          \
-        std::cout << "PythonEngine::DoScheduledRead(varName, vals), "    \
-                  << "type: " << typeid(T).name() << std::endl;                \
+                                            const T *values)             \
+    {                                                                    \
+        m_Impl->eng->DoScheduleRead(variableName, values);               \
     }
 ADIOS2_FOREACH_TYPE_1ARG(define)
 #undef define
@@ -164,16 +146,16 @@ ADIOS2_FOREACH_TYPE_1ARG(define)
 void PythonEngine::DoWrite(VariableCompound &variable,
                                  const void *values)
 {
-    // m_Impl->m_Plugin->DoWrite(variable, values);
-    std::cout << "PythonEngine::DoWrite" << std::endl;
+    std::cout << "PythonEngine::DoWrite(VariableCompound &variable, "
+              << "const void *values) is not yet implemented" << std::endl;
+    // m_Impl->eng->DoWrite(variable, values);
 }
 
-#define define(T, L)                                                           \
+#define define(T, L)                                                     \
     Variable<T> *PythonEngine::InquireVariable##L(                       \
-        const std::string &name, const bool readIn)                            \
-    {                                                                          \
-        std::cout << "PythonEngine::InquireVariable##L" << std::endl;    \
-        return InquireVariable##L(name, readIn);                               \
+        const std::string &name, const bool readIn)                      \
+    {                                                                    \
+        return m_Impl->eng->InquireVariable##L(name, readIn);            \
     }
 ADIOS2_FOREACH_TYPE_2ARGS(define)
 #undef define
@@ -181,8 +163,7 @@ ADIOS2_FOREACH_TYPE_2ARGS(define)
 VariableBase *PythonEngine::InquireVariableUnknown(
     const std::string &name, const bool readIn)
 {
-    std::cout << "PythonEngine::InquireVariableUnknown" << std::endl;
-    return InquireVariableUnknown(name, readIn);
+    return m_Impl->eng->InquireVariableUnknown(name, readIn);
 }
 
 } // end namespace adios2
