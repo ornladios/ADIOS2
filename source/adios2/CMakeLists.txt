@@ -114,14 +114,24 @@ if(ADIOS2_HAVE_HDF5)
   else()
     target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
   endif()
-  target_sources(adios2 PRIVATE
-    engine/hdf5/HDF5ReaderP.cpp
-    engine/hdf5/HDF5WriterP.cpp
-    engine/mixer/HDFMixer.cpp	
-    engine/mixer/HDFMixer.tcc
-    engine/mixer/HDFMixerWriter.cpp
-    toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
-  )
+
+  if(HDF5_VERSION VERSION_LESS 1.11)
+    target_sources(adios2 PRIVATE
+      engine/hdf5/HDF5ReaderP.cpp
+      engine/hdf5/HDF5WriterP.cpp
+      toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
+    )  
+  else()
+    target_sources(adios2 PRIVATE
+      engine/hdf5/HDF5ReaderP.cpp
+      engine/hdf5/HDF5WriterP.cpp
+      engine/mixer/HDFMixer.cpp	
+      engine/mixer/HDFMixer.tcc
+      engine/mixer/HDFMixerWriter.cpp
+      toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
+    )
+  endif()
+
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
 
