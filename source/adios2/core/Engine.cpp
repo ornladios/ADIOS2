@@ -64,7 +64,9 @@ void Engine::Release() {}
 void Engine::PerformReads(ReadMode /*mode*/){};
 
 // PROTECTED
-void Engine::Init() {}
+void Engine::Init() {
+    std::cout << "Inside Engine::Init()" << std::endl;
+}
 
 void Engine::InitParameters() {}
 

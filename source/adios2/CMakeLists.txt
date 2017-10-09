@@ -142,6 +142,7 @@ if(ADIOS2_HAVE_Python)
     helper/PythonInstanceBuilder.h
     engine/pyengine/PythonEngine.h
     engine/pyengine/PythonEngine.cpp
+    engine/pyengine/PyEngineBase.h
   )
   target_include_directories(adios2 PRIVATE ${PYBIND11_INCLUDE_DIR} ${PYTHON_INCLUDE_DIRS})
   target_link_libraries(adios2 PRIVATE pybind11::embed)

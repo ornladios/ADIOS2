@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <adios2.h>
+#include "PyEngineBase.h"
 
 namespace adios2
 {
@@ -38,44 +39,9 @@ void GeneratePythonBindings<Engine>(pybind11::module &m)
              });
     engine.def("Close", &Engine::Close);
 
-
     // 
     // Wrappings to extend Engine in Python
     //
-
-    // This first base class used to translate the protected template functions
-    // into public members that can be overridden in python
-    class PyEngineBase : public Engine
-    {
-    public:
-        PyEngineBase(const std::string engineType, IO &io,
-                     const std::string &name, const OpenMode openMode)
-        : Engine(engineType, io, name, openMode, io.m_MPIComm)
-        {
-        }
-
-        virtual ~PyEngineBase() = default;
-
-        using Engine::Init;
-        virtual void DoWrite(VariableBase &var, pybind11::array values) = 0;
-        using Engine::Close;
-
-    protected:
-        // The C++ code calls this implementation which will redirect to the
-        // python implementation.
-#define define_dowrite(T)                                                      \
-    void DoWrite(Variable<T> &var, const T *values) override                   \
-    {                                                                          \
-        std::cout << "BINGO!" << std::endl;                                    \
-        DoWrite(var,                                                           \
-                pybind11::array_t<T>(std::accumulate(var.m_Count.begin(),      \
-                                                     var.m_Count.end(), 0),    \
-                                     values));                                 \
-    }
-        ADIOS2_FOREACH_TYPE_1ARG(define_dowrite)
-#undef define_dowrite
-    };
-
 
     // This is the trampoline class used by pybind11 to implement the
     // inheritance model and virtual springboard
@@ -85,27 +51,24 @@ void GeneratePythonBindings<Engine>(pybind11::module &m)
         using PyEngineBase::PyEngineBase;
         void Init() override
         {
-            std::cout << "PyEngine Init() trampoline" << std::endl;
             PYBIND11_OVERLOAD(void, PyEngineBase, Init,);
         }
-        void DoWrite(VariableBase &var, pybind11::array values) override
+        void DoWrite(VariableBase *var, pybind11::array values) override
         {
-            std::cout << "PyEngine DoWrite() trampoline" << std::endl;
             PYBIND11_OVERLOAD_PURE(void, PyEngineBase, DoWrite, var, values);
         }
         void Close(const int transportIndex)
         {
-            std::cout << "PyEngine Close() trampoline" << std::endl;
             PYBIND11_OVERLOAD_PURE(void, PyEngineBase, Close, transportIndex);
         }
     };
 
-    pybind11::class_<PyEngineBase, PyEngine>(m, "Engine", engine)
+    pybind11::class_<PyEngineBase, PyEngine, std::shared_ptr<PyEngineBase>>(m, "Engine", engine)
         .def(pybind11::init<const std::string, IO &, const std::string,
                             const OpenMode>())
         .def("Init", &PyEngineBase::Init)
         .def("DoWrite",
-             (void (PyEngineBase::*)(VariableBase &, pybind11::array)) &
+             (void (PyEngineBase::*)(VariableBase *, pybind11::array)) &
                  PyEngineBase::DoWrite)
         .def("Close", &PyEngineBase::Close);
 }

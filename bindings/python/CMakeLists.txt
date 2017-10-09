@@ -7,6 +7,7 @@ pybind11_add_module(adios2py MODULE
   PyIO.cpp
   PyVariable.cpp
 )
+target_include_directories(adios2py PRIVATE ${ADIOS2_SOURCE_DIR}/source/adios2/engine/pyengine)
 target_link_libraries(adios2py PRIVATE adios2)
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(adios2py PRIVATE PythonModule::mpi4py)
