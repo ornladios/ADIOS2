@@ -67,7 +67,8 @@ if(ADIOS2_HAVE_MPI)
       adios2 MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
     )
 
-    if(HDF5_VERSION VERSION_GREATER_EQUAL 1.11)
+    if(HDF5_VERSION VERSION_LESS 1.11)
+    else()
       add_executable(heatTransfer_write_h5mixer
         main.cpp
         HeatTransfer.cpp
