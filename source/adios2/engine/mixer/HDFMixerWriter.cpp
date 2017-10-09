@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "HDFMixerWriter.h"
+#include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h"
 
 //
@@ -122,11 +123,11 @@ void adios2::HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
     GetVarInfo(var, dimsf, nDims, start, count, one);
     //
 
-    MPI_Gather(start.data(), nDims, ADIOS_MPI_SIZE_T, all_starts, nDims,
-               ADIOS_MPI_SIZE_T, 0, m_MPISubfileComm);
+    MPI_Gather(start.data(), nDims, ADIOS2_MPI_SIZE_T, all_starts, nDims,
+               ADIOS2_MPI_SIZE_T, 0, m_MPISubfileComm);
 
-    MPI_Gather(count.data(), nDims, ADIOS_MPI_SIZE_T, all_counts, nDims,
-               ADIOS_MPI_SIZE_T, 0, m_MPISubfileComm);
+    MPI_Gather(count.data(), nDims, ADIOS2_MPI_SIZE_T, all_counts, nDims,
+               ADIOS2_MPI_SIZE_T, 0, m_MPISubfileComm);
 
     herr_t status;
     if (m_Rank == 0)
@@ -134,18 +135,7 @@ void adios2::HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
         m_VDSFile.CheckWriteGroup();
         /* Set VDS creation property. */
         hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
-        // status = H5Pset_fill_value(dcpl, ADIOS_MPI_SIZE_T, 0);
-
-        /*
-        std::cout<<"nDims = "<<nDims<<" h5type="<<h5Type<<"
-        filename="<<m_FileName<<std::endl; for (int i=0; i<m_NumSubFiles; i++) {
-          std::cout<<((size_t*)all_starts)[i*nDims]<<",
-        "<<((size_t*)all_starts)[i*nDims+1]<<" :: ";
-          std::cout<<((size_t*)all_counts)[i*nDims]<<",
-        "<<((size_t*)all_counts)[i*nDims+1]<<std::endl;
-        }
-        std::cout<<"num subfiles="<<m_NumSubFiles<<std::endl;
-        */
+        // status = H5Pset_fill_value(dcpl, ADIOS2_MPI_SIZE_T, 0);
 
         space = H5Screate_simple(nDims, dimsf.data(), NULL);
         // summaryFile.Init(fileName.c_str(), MPI_COMM_SELF, true);

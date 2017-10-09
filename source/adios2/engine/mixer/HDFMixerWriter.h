@@ -13,6 +13,7 @@
 
 #include "adios2/toolkit/interop/hdf5/HDF5Common.h"
 
+/*
 inline MPI_Datatype mpi_typeof(char) { return MPI_CHAR; }
 inline MPI_Datatype mpi_typeof(signed short) { return MPI_SHORT; }
 inline MPI_Datatype mpi_typeof(signed int) { return MPI_INT; }
@@ -37,7 +38,7 @@ inline MPI_Datatype mpi_typeof(std::pair<long double, int>)
 inline MPI_Datatype mpi_typeof(std::pair<short, int>) { return MPI_SHORT_INT; }
 
 #define ADIOS_MPI_SIZE_T (mpi_typeof(size_t()))
-
+*/
 namespace adios2
 {
 
