@@ -54,7 +54,9 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
     H5Pset_fapl_mpio(m_PropertyListId, comm, MPI_INFO_NULL);
 #endif
 
-    std::string ts0 = "/TimeStep0";
+    // std::string ts0 = "/TimeStep0";
+    std::string ts0;
+    StaticGetTimeStepString(ts0, 0);
 
     if (toWrite)
     {
@@ -195,8 +197,10 @@ void HDF5Common::Advance()
             return;
         }
 
-        std::string timeStepName =
-            "/TimeStep" + std::to_string(m_CurrentTimeStep + 1);
+        // std::string timeStepName =
+        //    "/TimeStep" + std::to_string(m_CurrentTimeStep + 1);
+        std::string timeStepName;
+        StaticGetTimeStepString(timeStepName, m_CurrentTimeStep + 1);
         m_GroupId = H5Gopen(m_FileId, timeStepName.c_str(), H5P_DEFAULT);
         if (m_GroupId < 0)
         {
@@ -218,7 +222,10 @@ void HDF5Common::CheckWriteGroup()
         return;
     }
 
-    std::string timeStepName = "/TimeStep" + std::to_string(m_CurrentTimeStep);
+    // std::string timeStepName = "/TimeStep" +
+    // std::to_string(m_CurrentTimeStep);
+    std::string timeStepName;
+    StaticGetTimeStepString(timeStepName, m_CurrentTimeStep);
     m_GroupId = H5Gcreate2(m_FileId, timeStepName.c_str(), H5P_DEFAULT,
                            H5P_DEFAULT, H5P_DEFAULT);
 
@@ -230,6 +237,11 @@ void HDF5Common::CheckWriteGroup()
                 "ERROR: HDF5: Unable to create group " + timeStepName);
         }
     }
+}
+
+void HDF5Common::StaticGetTimeStepString(std::string &timeStepName, int ts)
+{
+    timeStepName = "/TimeStep" + std::to_string(ts);
 }
 
 #define declare_template_instantiation(T)                                      \

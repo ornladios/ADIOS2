@@ -60,6 +60,17 @@ typedef int MPI_Fint;
 #define MPI_UNSIGNED 4
 #define MPI_UNSIGNED_LONG 5
 #define MPI_UNSIGNED_LONG_LONG 6
+#define MPI_SHORT 7
+#define MPI_LONG 8
+#define MPI_UNSIGNED_CHAR 9
+#define MPI_2INT 10
+#define MPI_UNSIGNED_SHORT 11
+#define MPI_LONG_LONG_INT 12
+#define MPI_LONG_DOUBLE 13
+#define MPI_FLOAT_INT 14
+#define MPI_DOUBLE_INT 15
+#define MPI_LONG_DOUBLE_INT 16
+#define MPI_SHORT_INT 17
 
 #define MPI_ANY_SOURCE 0
 #define MPI_ANY_TAG 0
