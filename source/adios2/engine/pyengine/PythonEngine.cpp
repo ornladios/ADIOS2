@@ -9,6 +9,7 @@
  */
 
 #include "PythonEngine.h"
+#include "PyEngineBase.h"
 
 #include <functional>
 #include <map>
@@ -33,6 +34,7 @@ struct PythonEngine::Impl
     std::string m_PluginName;
     pybind11::object enginePyClass;
     pybind11::object enginePyObject;
+    std::shared_ptr<PyEngineBase> eng;
 };
 
 
@@ -44,9 +46,8 @@ PythonEngine::PythonEngine(IO &io, const std::string &name,
 {
     std::cout << "PythonEngine::PythonEngine" << std::endl;
     Init();
-    // m_Impl->m_Plugin =
-    //     m_Impl->m_HandleCreate(io, m_Impl->m_PluginName, openMode, mpiComm);
     m_Impl->enginePyObject = m_Impl->enginePyClass("PythonEngine", io, name, openMode);
+    m_Impl->eng = m_Impl->enginePyObject.cast<std::shared_ptr<PyEngineBase>>();
 }
 
 PythonEngine::~PythonEngine() {
@@ -99,6 +100,7 @@ void PythonEngine::Close(const int transportIndex)
 {
     // m_Impl->m_Plugin->Close(transportIndex);
     std::cout << "PythonEngine::Close" << std::endl;
+    m_Impl->eng->Close();
 }
 
 void PythonEngine::Init()
@@ -139,10 +141,9 @@ void PythonEngine::Init()
 #define define(T)                                                        \
     void PythonEngine::DoWrite(Variable<T> &variable, const T *values)   \
     {                                                                    \
-        std::shared_ptr<Engine> eng = m_Impl->enginePyObject.cast<std::shared_ptr<Engine>>();        \
         std::cout << "PythonEngine::DoWrite(var, vals), "             \
                   << "type: " << typeid(T).name() << std::endl;       \
-        eng->DoWrite(variable, values);                      \
+        m_Impl->eng->DoWrite(variable, values);                      \
     }                                                                    \
                                                                          \
     void PythonEngine::DoScheduleRead(Variable<T> &variable,             \
