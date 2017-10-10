@@ -10,11 +10,25 @@
 
 #include "PythonInterpreter.h"
 
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <pybind11/embed.h>
+
+#include "adios2//ADIOSConfig.h"
 
 #if WIN32
 #include <Python.h>
 extern __declspec(dllimport) int Py_NoSiteFlag;
+#endif
+
+#if defined(__linux)
+# ifndef _GNU_SOURCE
+#   define _GNU_SOURCE
+# endif
+#   include <dlfcn.h>
+#elif defined(__unix)
+# include <dlfcn.h>
 #endif
 
 namespace adios2
@@ -50,9 +64,35 @@ void PythonInterpreter::initialize()
     return;
   }
 
+#if defined(__linux) || defined(__unix)
+  {
+    // Find the actual library file where the symbol below is defined,
+    // then use that path to help find Python run-time libraries.
+    void *handle = dlsym(RTLD_NEXT, "Py_SetProgramName");
+    if(handle)
+    {
+      Dl_info di;
+      int ret = dladdr(handle, &di);
+      if (ret != 0 && di.dli_saddr && di.dli_fname)
+      {
+        Py_SetProgramName(const_cast<char *>(di.dli_fname));
+      }
+    }
+  }
+#endif
+
   m_embedded = true;
   Py_NoSiteFlag = 1;
   pybind11::initialize_interpreter();
+
+  // If, at configure time, we found PYTHON_SITE_PACKAGES, then we
+  // use it now.  This allows us to find modules in your virtual
+  // environment site-packages directory, or extra modules you may
+  // have installed with your system python.
+#ifdef ADIOS2_PYTHON_SITE_PACKAGES_DIRECTORY
+  pybind11::module sys = pybind11::module::import("sys");
+  sys.attr("path").attr("append")(ADIOS2_PYTHON_SITE_PACKAGES_DIRECTORY);
+#endif
 }
 
 void PythonInterpreter::finalize()
