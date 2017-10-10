@@ -99,8 +99,10 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
-GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python Fortran 
-                          SysVShMem)
+set(ADIOS2_CONFIG_OPTS
+  BZip2 ZFP MPI DataMan ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem
+)
+GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 
 install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
@@ -188,7 +190,7 @@ message("    Build Type:   ${CMAKE_BUILD_TYPE}")
 message("    Testing: ${BUILD_TESTING}")
 message("    Build Options:")
 
-foreach(opt BZip2 ZFP MPI DataMan ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem)
+foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
   message_pad("      ${opt}" 15 label)
   if(${ADIOS2_HAVE_${opt}})
     message("${label}: ON")

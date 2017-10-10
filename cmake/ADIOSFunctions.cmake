@@ -40,8 +40,13 @@ function(python_add_test)
 endfunction()
 
 function(GenerateADIOSHeaderConfig)
+  set(ADIOS2_CONFIG_DEFINES)
   foreach(OPT IN LISTS ARGN)
     string(TOUPPER ${OPT} OPT_UPPER)
+    string(APPEND ADIOS2_CONFIG_DEFINES "
+/* CMake Option: ADIOS_USE_${OPT}=OFF */
+#cmakedefine ADIOS2_HAVE_${OPT_UPPER}
+")
     if(ADIOS2_HAVE_${OPT})
       set(ADIOS2_HAVE_${OPT_UPPER} 1)
     else()
@@ -51,6 +56,10 @@ function(GenerateADIOSHeaderConfig)
 
   configure_file(
     ${ADIOS2_SOURCE_DIR}/source/adios2/ADIOSConfig.h.in
+    ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h.in
+  )
+  configure_file(
+    ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h.in
     ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   )
 endfunction()
