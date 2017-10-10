@@ -14,6 +14,10 @@ TEST(PythonEngineTest, CreatePythonEngineFromCPlusPlus)
 {
     int mpiRank = 0, mpiSize = 1;
 
+    // Application variable
+    std::vector<double> myDoubles = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    const std::size_t Nx = myDoubles.size();
+
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -23,6 +27,9 @@ TEST(PythonEngineTest, CreatePythonEngineFromCPlusPlus)
 #endif
 
     adios2::IO &io = adios.DeclareIO("PythonPluginIO");
+
+    adios2::Variable<double> &var = io.DefineVariable<double>(
+            "data", {mpiSize * Nx}, {mpiRank * Nx}, {Nx}, adios2::ConstantDims);
 
     io.SetEngine("PythonEngine");
     io.SetParameters({{"PluginName", "TestPythonPlugin"},
@@ -35,6 +42,9 @@ TEST(PythonEngineTest, CreatePythonEngineFromCPlusPlus)
     });
 
     ASSERT_NE(writer.get(), nullptr);
+
+    /** Write variable for buffering */
+    writer->Write<double>(var, myDoubles.data());
 
     writer->Close();
 }

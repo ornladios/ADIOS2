@@ -37,7 +37,7 @@ void GeneratePythonBindings<Engine>(pybind11::module &m)
 #undef inquire
                  return nullptr;
              });
-    engine.def("Close", &Engine::Close);
+    engine.def("Close", &Engine::Close, pybind11::arg("transportIndex") = -1);
 
     // 
     // Wrappings to extend Engine in Python

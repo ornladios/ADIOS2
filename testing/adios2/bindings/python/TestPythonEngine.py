@@ -6,6 +6,12 @@ import sys
 # workaround to allow that to happen.
 sys.path.append('/usr/lib/python2.7')
 
+# When importing from C++, this path is also missing.  This lives in the
+# virtual environment directory and is part of the path automatically
+# when running the virtual env python.
+sys.path.append('/data/scott/projects/adios2/adios-env/lib/python2.7/site-packages')
+
+
 import adios2
 import numpy      # Required when importing this module from C++
 
