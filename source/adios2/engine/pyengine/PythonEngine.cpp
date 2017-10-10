@@ -19,7 +19,7 @@
 #include <iostream>
 
 #include "adios2/helper/PythonInterpreter.h"
-#include "adios2/helper/PythonInstanceBuilder.h"
+#include "adios2/helper/PythonModuleHelper.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -120,8 +120,8 @@ void PythonEngine::Init()
     adios2::PythonInterpreter::instance().initialize();
 
     m_Impl->enginePyClass =
-        adios2::PythonInstanceBuilder::BuildInstance(pluginClassName,
-                                                     pluginModuleName);
+        adios2::PythonModuleHelper::FindPythonClass(pluginClassName,
+                                                    pluginModuleName);
 }
 
 #define define(T)                                                        \

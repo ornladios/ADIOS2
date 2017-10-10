@@ -139,7 +139,7 @@ if(ADIOS2_HAVE_Python)
   target_sources(adios2 PRIVATE
     helper/PythonInterpreter.h
     helper/PythonInterpreter.cpp
-    helper/PythonInstanceBuilder.h
+    helper/PythonModuleHelper.h
     engine/pyengine/PythonEngine.h
     engine/pyengine/PythonEngine.cpp
     engine/pyengine/PyEngineBase.h
