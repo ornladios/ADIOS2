@@ -2,24 +2,25 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * PythonInstanceBuilder.h Instantiate some arbitrary python class
+ * PythonModuleHelper.h Helper method to find a python class, importing
+ *                      it if necessary.
  *
  *  Created on: Oct 02, 2017
  *      Author: Scott Wittenburg <scott.wittenburg@kitware.com>
  */
 
-#ifndef ADIOS2_HELPER_PYTHONINSTANCEBUILDER_H_
-#define ADIOS2_HELPER_PYTHONINSTANCEBUILDER_H_
+#ifndef ADIOS2_HELPER_PYTHONMODULEHELPER_H_
+#define ADIOS2_HELPER_PYTHONMODULEHELPER_H_
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 namespace adios2
 {
-namespace PythonInstanceBuilder
+namespace PythonModuleHelper
 {
-    pybind11::object BuildInstance(const std::string& className,
-                                   const std::string* moduleName = nullptr)
+    pybind11::object FindPythonClass(const std::string& className,
+                                     const std::string* moduleName = nullptr)
     {
         pybind11::dict globals = pybind11::globals();
 
@@ -55,4 +56,4 @@ namespace PythonInstanceBuilder
 }
 }
 
-#endif /* ADIOS2_HELPER_PYTHONINSTANCEBUILDER_H_ */
+#endif /* ADIOS2_HELPER_PYTHONMODULEHELPER_H_ */
