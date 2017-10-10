@@ -13,11 +13,11 @@ endif()
 
 python_add_test(NAME PythonBPWrite SCRIPT TestBPWriteTypes.py
     ${test_parameters} ${use_mpi})
-# python_add_test(NAME TestOpenPythonEngineFromPython SCRIPT TestOpenPythonEngineFromPython.py
-#     ${test_parameters} ${use_mpi}
-#     ADDTOPYPATH ${CMAKE_CURRENT_SOURCE_DIR})
-# python_add_test(NAME TestOpenInlinePythonEngineFromPython SCRIPT TestOpenInlinePythonEngineFromPython.py
-#     ${test_parameters} ${use_mpi})
+python_add_test(NAME TestOpenPythonEngineFromPython SCRIPT TestOpenPythonEngineFromPython.py
+    ${test_parameters} ${use_mpi}
+    ADDTOPYPATH ${CMAKE_CURRENT_SOURCE_DIR})
+python_add_test(NAME TestOpenInlinePythonEngineFromPython SCRIPT TestOpenInlinePythonEngineFromPython.py
+    ${test_parameters} ${use_mpi})
 
 add_executable(TestPythonEngineFromCpp TestPythonEngineFromCpp.cpp)
 target_link_libraries(TestPythonEngineFromCpp adios2 gtest gtest_main)

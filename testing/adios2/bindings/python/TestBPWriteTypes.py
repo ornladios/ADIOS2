@@ -79,8 +79,7 @@ class TestBPWriteTypes(Adios2PythonTestBase):
         bpFileWriter.Write(varR32, data.R32)
         bpFileWriter.Write(varR64, data.R64)
         
-        # FIXME: Pass transportIndex until the default args works properly
-        bpFileWriter.Close(-1)
+        bpFileWriter.Close()
 
 ###
 ### Trigger the tests
