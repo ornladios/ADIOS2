@@ -48,10 +48,11 @@ namespace PythonModuleHelper
         }
 
         // Unable to instantiate the object in this case
-        throw std::runtime_error("PythonInstanceBuilder: Specified class was "
-                                 "not present in main module, nor was a "
-                                 "module name provided in the parameters.  "
-                                 "Unable to instantiate python class.");
+        throw std::runtime_error("PythonModuleHelper::FindPythonClass "
+                                 "Specified class was not present in main "
+                                 "module, nor was a module name provided in "
+                                 "the parameters.  Unable to instantiate "
+                                 "python class.");
     }
 }
 }

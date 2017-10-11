@@ -13,6 +13,9 @@ python_add_test(NAME PythonBPWrite SCRIPT TestBPWriteTypes.py
 python_add_test(NAME TestOpenPythonEngineFromPython SCRIPT TestOpenPythonEngineFromPython.py
     ${extra_test_args} ${use_mpi}
     ADDTOPYPATH ${CMAKE_CURRENT_SOURCE_DIR})
+python_add_test(NAME TestImportFromCppOpenFromPython SCRIPT TestImportFromCppOpenFromPython.py
+    ${extra_test_args} ${use_mpi}
+    ADDTOPYPATH ${CMAKE_CURRENT_SOURCE_DIR})
 python_add_test(NAME TestOpenInlinePythonEngineFromPython SCRIPT TestOpenInlinePythonEngineFromPython.py
     ${extra_test_args} ${use_mpi})
 
