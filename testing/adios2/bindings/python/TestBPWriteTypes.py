@@ -24,7 +24,7 @@ class TestBPWriteTypes(Adios2PythonTestBase):
         # Test data
         data = SmallTestData()
         rank = 0
-        size = 0
+        size = 1
 
         if self.isUsingMpi():
             comm = MPI.COMM_WORLD
@@ -49,7 +49,7 @@ class TestBPWriteTypes(Adios2PythonTestBase):
         #     "varI64", [], [], [data.I64.size], True, data.I64.dtype)
 
         varU8 = bpIO.DefineVariable(
-            "varUI8", [size * ], [rank * ], [data.U8.size], True, data.U8.dtype)
+            "varUI8", [size * data.U8.size], [rank * data.U8.size], [data.U8.size], True, data.U8.dtype)
         varU16 = bpIO.DefineVariable(
             "varUI16", [size * data.U16.size], [rank * data.U16.size], [data.U16.size], True, data.U16.dtype)
         varU32 = bpIO.DefineVariable(
