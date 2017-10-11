@@ -89,7 +89,7 @@ void PythonInterpreter::initialize()
         char* pyHome = const_cast<char *>(di.dli_fname);
         std::cout << "Will use location of 'Py_SetProgramName' (" << pyHome
                   << ") as argument to Py_SetProgramName" << std::endl;
-        Py_SetProgramName();
+        Py_SetProgramName(pyHome);
       }
     }
   }
