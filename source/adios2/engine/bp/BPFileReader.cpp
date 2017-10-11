@@ -24,6 +24,12 @@ BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode openMode,
     Init();
 }
 
+void BPFileReader::PerformGets()
+{
+    const auto variablesSubFileInfo =
+        m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+}
+
 void BPFileReader::Close(const int /*transportIndex*/) {}
 
 // PRIVATE
@@ -40,7 +46,7 @@ void BPFileReader::Init()
     }
 
     InitTransports();
-    InitBuffers();
+    InitBuffer();
 }
 
 void BPFileReader::InitTransports()
@@ -61,7 +67,7 @@ void BPFileReader::InitTransports()
     }
 }
 
-void BPFileReader::InitBuffers()
+void BPFileReader::InitBuffer()
 {
     // Put all metadata in buffer
     if (m_BP3Deserializer.m_RankMPI == 0)
@@ -74,11 +80,28 @@ void BPFileReader::InitBuffers()
         m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
                                fileSize);
     }
-    // broadcast vector to all ranks from zero
-    BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
+    // broadcast buffer to all ranks from zero
+    m_BP3Deserializer.m_Metadata.m_Buffer =
+        BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // fills IO with Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_IO);
 }
+
+#define declare_type(T)                                                        \
+    void BPFileReader::DoGetSync(Variable<T> &variable, T *data)               \
+    {                                                                          \
+        GetSyncCommon(variable, data);                                         \
+    }                                                                          \
+    void BPFileReader::DoGetDeferred(Variable<T> &variable, T *data)           \
+    {                                                                          \
+        GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    void BPFileReader::DoGetDeferred(Variable<T> &variable, T &data)           \
+    {                                                                          \
+        GetDeferredCommon(variable, &data);                                    \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 } // end namespace adios2

@@ -11,16 +11,16 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_
 #define ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_
 
-#include <map>
 #include <mutex>
-#include <string>
-#include <utility> //std::pair
+#include <set>
 
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosFunctions.h" //VariablesSubFileInfo
 #include "adios2/toolkit/format/bp3/BP3Base.h"
 
 namespace adios2
 {
+
 namespace format
 {
 
@@ -30,39 +30,6 @@ class BP3Deserializer : public BP3Base
 public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
-
-    /**
-     * Synchronous Reads
-     * <pre>
-     * key: subfile index
-     * value: map
-     *        key: step
-     *        value: bucket index vector of pairs -> pair.first = seekStart,
-     *                                               pair.second = seekCount
-     * </pre>
-     */
-    std::map<unsigned int,
-             std::map<size_t, std::vector<std::pair<size_t, size_t>>>>
-        m_VariableSubFileInfo;
-
-    /**
-     * Deferred Reads
-     * <pre>
-     *
-     * key: subfile index
-     * value: map
-     *        key: variable name
-     *        value: map
-     *               key: step
-     *               value: bucket index vector of pairs:
-     *                                                   pair.first = seekStart,
-     *                                                   pair.second = seekCount
-     * </pre>
-     */
-    std::map<unsigned int,         // file index
-             std::map<std::string, // variable name, step, seekStart, seekCount
-                      std::map<size_t, std::vector<std::pair<size_t, size_t>>>>>
-        m_MultiVariablesSubFileInfo;
 
     /**
      * Unique constructor
@@ -75,7 +42,21 @@ public:
 
     void ParseMetadata(IO &io);
 
+    // Sync functions
+    template <class T>
+    std::map<std::string, SubFileInfoMap>
+    GetSyncVariableSubFileInfo(const Variable<T> &variable) const;
+
+    // Deferred functions
+    template <class T>
+    void GetDeferredVariable(Variable<T> &variable, T *data);
+
+    std::map<std::string, SubFileInfoMap>
+    PerformGetsVariablesSubFileInfo(IO &io);
+
 private:
+    std::map<std::string, SubFileInfoMap> m_DeferredVariables;
+
     static std::mutex m_Mutex;
 
     void ParseMinifooter();
@@ -95,7 +76,21 @@ private:
     void DefineVariableInIO(const ElementIndexHeader &header, IO &io,
                             const std::vector<char> &buffer,
                             size_t position) const;
+
+    template <class T>
+    SubFileInfoMap GetSubFileInfo(const Variable<T> &variable) const;
 };
+
+#define declare_template_instantiation(T)                                      \
+    extern template std::map<std::string, SubFileInfoMap>                      \
+    BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable)   \
+        const;                                                                 \
+                                                                               \
+    extern template void BP3Deserializer::GetDeferredVariable(                 \
+        Variable<T> &variable, T *data);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios2

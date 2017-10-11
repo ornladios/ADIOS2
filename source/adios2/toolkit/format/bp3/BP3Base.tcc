@@ -275,24 +275,24 @@ BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
 
         case (characteristic_dimensions):
         {
-            const uint8_t dimensionsCount =
-                ReadValue<uint8_t>(buffer, position);
+            const unsigned int dimensionsSize =
+                static_cast<unsigned int>(ReadValue<uint8_t>(buffer, position));
 
-            characteristics.ShapeU64.reserve(dimensionsCount);
-            characteristics.StartU64.reserve(dimensionsCount);
-            characteristics.CountU64.reserve(dimensionsCount);
+            characteristics.Shape.reserve(dimensionsSize);
+            characteristics.Start.reserve(dimensionsSize);
+            characteristics.Count.reserve(dimensionsSize);
             position += 2; // skip length (not required)
 
-            for (unsigned int d = 0; d < dimensionsCount; ++d)
+            for (unsigned int d = 0; d < dimensionsSize; ++d)
             {
-                characteristics.CountU64.push_back(
-                    ReadValue<uint64_t>(buffer, position));
+                characteristics.Count.push_back(
+                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
 
-                characteristics.ShapeU64.push_back(
-                    ReadValue<uint64_t>(buffer, position));
+                characteristics.Shape.push_back(
+                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
 
-                characteristics.StartU64.push_back(
-                    ReadValue<uint64_t>(buffer, position));
+                characteristics.Start.push_back(
+                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
             }
             break;
         }
@@ -352,7 +352,7 @@ size_t BP3Base::GetVariableIndexSize(const Variable<T> &variable) const noexcept
     }
 
     return indexSize + 12; // extra 12 bytes in case of attributes
-    // need to add transform characteristics
+    // TODO: need to add transform characteristics
 }
 
 } // end namespace format

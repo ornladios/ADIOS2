@@ -16,6 +16,18 @@
 namespace adios2
 {
 
+template <class T>
+void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
+{
+    const std::map<std::string, SubFileInfoMap> variableSubfileInfo =
+        m_BP3Deserializer.GetSyncVariableSubFileInfo(variable);
+}
+
+template <class T>
+void BPFileReader::GetDeferredCommon(Variable<T> &variable, T *data)
+{
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_BP_BPFILEREADER_TCC_ */

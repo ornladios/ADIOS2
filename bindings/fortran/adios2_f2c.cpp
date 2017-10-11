@@ -35,6 +35,7 @@ void adios2_init_config_f2c_(adios2_ADIOS **adios, const char *config_file,
         *adios =
             adios2_init_config(config_file, MPI_Comm_f2c(*comm),
                                static_cast<adios2_debug_mode>(*debug_mode));
+        adios2_set_host_language(*adios, "Fortran");
     }
     catch (std::exception &e)
     {
@@ -55,6 +56,7 @@ void adios2_init_config_f2c_(adios2_ADIOS **adios, const char *config_file,
     {
         *adios = adios2_init_config_nompi(
             config_file, static_cast<adios2_debug_mode>(*debug_mode));
+        adios2_set_host_language(*adios, "Fortran");
     }
     catch (std::exception &e)
     {

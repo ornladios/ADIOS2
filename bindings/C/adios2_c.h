@@ -65,6 +65,14 @@ adios2_ADIOS *adios2_init_config_nompi(const char *config_file,
 adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode);
 
 /**
+ * Function use by language bindings (Fortran) calling the C bindings. DO NOT
+ * use this function in applications.
+ * @param adios ADIOS* handler
+ * @param host_language "Fortran"
+ */
+void adios2_set_host_language(adios2_ADIOS *adios, const char *host_language);
+
+/**
  * Create an IO struct pointer handler from ADIOS* handler
  * @param adios ADIOS* handler that owns the IO* handler
  * @param io_name unique name for the newly declared io handler

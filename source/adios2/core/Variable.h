@@ -54,7 +54,7 @@ private:
     /** TODO: used for allocating memory from ADIOS2 */
     std::vector<T> m_AllocatedData;
 
-    /** reference to non-const data */
+    /** reference to data */
     T *m_Data = nullptr;
 };
 

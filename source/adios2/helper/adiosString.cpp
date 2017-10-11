@@ -208,4 +208,19 @@ unsigned int StringToUInt(const std::string value, const bool debugMode,
     return valueUInt;
 }
 
-} // end namespace adios
+std::string DimsToString(const Dims &dimensions)
+{
+    std::string dimensionsString("Dims(" + std::to_string(dimensions.size()) +
+                                 "):[");
+
+    for (const auto dimension : dimensions)
+    {
+        dimensionsString += std::to_string(dimension) + ", ";
+    }
+    dimensionsString.pop_back();
+    dimensionsString.pop_back();
+    dimensionsString += "]";
+    return dimensionsString;
+}
+
+} // end namespace adios2

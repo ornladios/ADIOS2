@@ -53,7 +53,10 @@ void BPFileWriter::Init()
     {                                                                          \
         PutSyncCommon(variable, values);                                       \
     }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &, const T *values) {}        \
+    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
+    {                                                                          \
+        PutDeferredCommon(variable, values);                                   \
+    }                                                                          \
     void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -76,8 +79,7 @@ void BPFileWriter::Close(const int transportIndex)
     m_BP3Serializer.CloseData(m_IO);
     // send data to corresponding transports
     m_FileManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
-                             m_BP3Serializer.m_Data.m_Position,
-                             transportIndex);
+                             m_BP3Serializer.m_Data.m_Position, transportIndex);
 
     m_FileManager.CloseFiles(transportIndex);
 

@@ -101,6 +101,14 @@ double StringToDouble(const std::string value, const bool debugMode,
  */
 unsigned int StringToUInt(const std::string value, const bool debugMode,
                           const std::string hint);
-}
+
+/**
+ * Returns a single string with dimension values
+ * @param dimensions input
+ * @return string dimensions values
+ */
+std::string DimsToString(const Dims &dimensions);
+
+} // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSSTRING_H_ */

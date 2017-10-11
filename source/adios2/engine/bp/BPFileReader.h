@@ -35,6 +35,8 @@ public:
 
     virtual ~BPFileReader() = default;
 
+    void PerformGets() final;
+
     void Close(const int transportIndex = -1);
 
 private:
@@ -43,7 +45,20 @@ private:
 
     void Init();
     void InitTransports();
-    void InitBuffers();
+    void InitBuffer();
+
+#define declare_type(T)                                                        \
+    void DoGetSync(Variable<T> &, T *) final;                                  \
+    void DoGetDeferred(Variable<T> &, T *) final;                              \
+    void DoGetDeferred(Variable<T> &, T &) final;
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+    template <class T>
+    void GetSyncCommon(Variable<T> &variable, T *data);
+
+    template <class T>
+    void GetDeferredCommon(Variable<T> &variable, T *data);
 };
 
 } // end namespace adios2

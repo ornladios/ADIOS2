@@ -245,5 +245,44 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
 void BP3Deserializer::ParseAttributesIndex(IO &io) {}
 
+std::map<std::string, SubFileInfoMap>
+BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
+{
+    if (m_DeferredVariables.empty())
+    {
+        return m_DeferredVariables;
+    }
+
+    for (auto &subFileInfoPair : m_DeferredVariables)
+    {
+        const std::string variableName(subFileInfoPair.first);
+        const std::string type(io.InquireVariableType(variableName));
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        subFileInfoPair.second =                                               \
+            GetSubFileInfo(*io.InquireVariable<T>(variableName));              \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+    return m_DeferredVariables;
+}
+
+#define declare_template_instantiation(T)                                      \
+    template std::map<std::string, SubFileInfoMap>                             \
+    BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable)   \
+        const;                                                                 \
+                                                                               \
+    template void BP3Deserializer::GetDeferredVariable(Variable<T> &variable,  \
+                                                       T *data);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
 } // end namespace format
 } // end namespace adios2

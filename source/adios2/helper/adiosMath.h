@@ -99,7 +99,19 @@ bool CheckIndexRange(const int index, const int upperLimit,
 size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
                            const float growthFactor) noexcept;
 
-} // end namespace adios
+/**
+ * Returns the intersection box { start, end } from box1 and box2
+ * @param box1
+ * @param box2
+ * @return empty if not interception, otherwise intersection box
+ */
+Box<Dims> IntersectionBox(const Box<Dims> &box1,
+                          const Box<Dims> &box2) noexcept;
+
+size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
+                   const bool isRowMajor = true, const bool isZeroIndex = true);
+
+} // end namespace adios2
 
 #include "adiosMath.inl"
 

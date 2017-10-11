@@ -190,6 +190,11 @@ protected:
     unsigned int m_Threads = 1;
     const bool m_DebugMode = false;
 
+    /** from host language */
+    bool m_IsRowMajor = true; // C, C++ defaults
+    /** from host language */
+    bool m_IsZeroIndex = true; // C, C++
+
     /** method type for file I/O */
     enum IO_METHOD
     {
@@ -312,9 +317,9 @@ protected:
     struct Characteristics
     {
         Stats<T> Statistics;
-        std::vector<uint64_t> ShapeU64;
-        std::vector<uint64_t> StartU64;
-        std::vector<uint64_t> CountU64;
+        Dims Shape;
+        Dims Start;
+        Dims Count;
         uint32_t EntryLength;
         uint8_t EntryCount;
     };

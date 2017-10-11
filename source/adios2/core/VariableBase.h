@@ -68,12 +68,20 @@ public:
     size_t m_AvailableStepsStart = 1;
     size_t m_AvailableStepsCount = 0;
 
-    /** Index Metadata Position in a serial metadata buffer */
-    size_t m_IndexPosition;
+    size_t m_StepStart = 1;
+    size_t m_StepCount = 1;
 
-    /** Index to Step and Subsets inside a step positions in a serial metadata
-     * buffer */
-    std::vector<std::vector<size_t>> m_IndexStepSubsetPositions;
+    /** Index Metadata Position in a serial metadata buffer */
+    size_t m_IndexStart;
+
+    /** Index to Step and Subsets inside a step characteristics position in a
+     * serial metadata buffer
+     * <pre>
+     * key: step number (time_index in bp3 format)
+     * value:  vector of block starts for that step
+     * </pre>
+     * */
+    std::map<size_t, std::vector<size_t>> m_IndexStepBlockStarts;
 
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
@@ -142,9 +150,6 @@ protected:
 
     Dims m_MemoryStart; ///< offset of memory selection
     Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)
-
-    size_t m_StepStart = 0;
-    size_t m_StepCount = 1;
 
     unsigned int m_DeferredCounter = 0;
 

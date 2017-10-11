@@ -24,6 +24,7 @@ adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
     const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
     adios2_ADIOS *adios = reinterpret_cast<adios2_ADIOS *>(
         new adios2::ADIOS(config_file, mpi_comm, debugBool));
+    adios2_set_host_language(adios, "C");
 
     return adios;
 }
@@ -42,6 +43,12 @@ adios2_ADIOS *adios2_init_config_nompi(const char *config_file,
 adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode)
 {
     return adios2_init_config("", MPI_COMM_SELF, debug_mode);
+}
+
+void adios2_set_host_language(adios2_ADIOS *adios, const char *host_language)
+{
+    adios2::ADIOS &adiosCpp = *reinterpret_cast<adios2::ADIOS *>(adios);
+    adiosCpp.m_HostLanguage = std::string(host_language);
 }
 
 adios2_IO *adios2_declare_io(adios2_ADIOS *adios, const char *ioName)

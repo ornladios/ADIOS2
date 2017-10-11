@@ -57,6 +57,11 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     variable.SetData(nullptr); // not needed after PutSync
 }
 
+template <class T>
+void BPFileWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
+{
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_BP_BPFILEWRITER_TCC_ */

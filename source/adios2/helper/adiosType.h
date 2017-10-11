@@ -23,6 +23,26 @@
 namespace adios2
 {
 
+struct SubFileInfo
+{
+    Box<Dims> IntersectionBox; ///< first = Start point, second = End point
+    Box<size_t> Seeks;         ///< first = Start seek, second = End seek
+};
+
+/**
+ * Structure that contains the seek info per variable
+ * <pre>
+ *   key: subfile index
+ *   value: (map)
+ *     key: step
+ *     value: (vector)
+ *       index : block ID within step
+ *       value : file seek box: first = seekStart, second = seekCount
+ * </pre>
+ */
+using SubFileInfoMap =
+    std::map<unsigned int, std::map<size_t, std::vector<SubFileInfo>>>;
+
 /**
  * Gets type from template parameter T
  * @return string with type
