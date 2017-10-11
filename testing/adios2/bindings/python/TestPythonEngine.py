@@ -4,6 +4,7 @@ import numpy as np
 
 print('Inside TestPythonEngine module')
 
+
 class TestPythonEngine(adios2.Engine):
     def __init__(self, engineType, io, name, openMode):
         adios2.Engine.__init__(self, engineType, io, name, openMode)
@@ -14,7 +15,7 @@ class TestPythonEngine(adios2.Engine):
 
     # def Init(self):
     #     print('Inside TestPythonEngine Init()')
-        
+
     def DoWrite(self, variable, values):
         print('Inside TestPythonEngine.DoWrite')
         print(variable)

@@ -1,27 +1,27 @@
 from Adios2PythonTestBase import Adios2PythonTestBase
 
-if Adios2PythonTestBase.isUsingMpi():
-    from mpi4py import MPI
-
 import numpy
 import adios2
 
+if Adios2PythonTestBase.isUsingMpi():
+    from mpi4py import MPI
+
 MODULE_LEVEL_VARIABLE = 0
 
-###
-### Define a new engine type in python
-###
+
+#
+# Define a new engine type in python
+#
 class TestInlinePythonEngine(adios2.Engine):
     def __init__(self, engineType, io, name, openMode):
         adios2.Engine.__init__(self, engineType, io, name, openMode)
-        print('Inside TestInlinePythonEngine python ctor, just called parent ctor')
 
         # Calls Engine::Init() if no Init() method is defined here
         self.Init()
 
     # def Init(self):
     #     print('Inside TestPythonEngine Init()')
-        
+
     def DoWrite(self, variable, values):
         global MODULE_LEVEL_VARIABLE
         MODULE_LEVEL_VARIABLE += 1
@@ -35,9 +35,10 @@ class TestInlinePythonEngine(adios2.Engine):
     def Close(self, transportIndex):
         print('Inside TestInlinePythonEngine.Close')
 
-###
-### Create a testcase class with some tests
-###
+
+#
+# Create a testcase class with some tests
+#
 class TestOpenInlinePythonEngineFromPython(Adios2PythonTestBase):
     def testCreateEngine(self):
         global MODULE_LEVEL_VARIABLE
@@ -95,16 +96,22 @@ class TestOpenInlinePythonEngineFromPython(Adios2PythonTestBase):
 
         bpIO.EngineType = "PythonEngine"
         bpIO.Parameters = {
-            "PluginName": "FirstPythonPlugin", 
+            "PluginName": "FirstPythonPlugin",
             "PluginClass": "MissingEngine"
         }
+
+        bpFileWriter = None
 
         # Make sure exception is raised due to wrong engine name
         with self.assertRaises(RuntimeError):
             bpFileWriter = bpIO.Open("npArray.bp", adios2.OpenMode.Write)
 
-###
-### Trigger the tests
-###
+        if bpFileWriter:
+            bpFileWriter.Close()
+
+
+#
+# Trigger the tests
+#
 if __name__ == '__main__':
     Adios2PythonTestBase.main()

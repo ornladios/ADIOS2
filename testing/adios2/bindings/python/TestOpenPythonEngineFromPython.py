@@ -1,16 +1,18 @@
 from Adios2PythonTestBase import Adios2PythonTestBase
 
-if Adios2PythonTestBase.isUsingMpi():
-    from mpi4py import MPI
-
 import numpy
 import adios2
 
+# Import this module so the IO factory can find the engine class it needs
 from TestPythonEngine import TestPythonEngine
 
-###
-### Create a testcase class with some tests
-###
+if Adios2PythonTestBase.isUsingMpi():
+    from mpi4py import MPI
+
+
+#
+# Create a testcase class with some tests
+#
 class TestOpenPythonEngineFromPython(Adios2PythonTestBase):
     def testCreateEngine(self):
         rank = 0
@@ -39,11 +41,11 @@ class TestOpenPythonEngineFromPython(Adios2PythonTestBase):
         # Engine derived class, spawned to start IO operations
         bpIO.EngineType = "PythonEngine"
 
-        # Since we import the TestPythonEngine class directly, we should not need
-        # to provide a "PluginModule" parameter
+        # Since we import the TestPythonEngine class directly, we should not
+        # need to provide a "PluginModule" parameter
         bpIO.Parameters = {
-          "PluginName": "DoNotReallyCare",
-          "PluginClass": "TestPythonEngine"
+            "PluginName": "DoNotReallyCare",
+            "PluginClass": "TestPythonEngine"
         }
 
         # ADIOS Engine
@@ -52,8 +54,9 @@ class TestOpenPythonEngineFromPython(Adios2PythonTestBase):
 
         bpFileWriter.Close()
 
-###
-### Trigger the tests
-###
+
+#
+# Trigger the tests
+#
 if __name__ == '__main__':
     Adios2PythonTestBase.main()
