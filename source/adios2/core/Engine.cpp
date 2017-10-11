@@ -178,4 +178,4 @@ void Engine::ThrowUp(const std::string function) const
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace adios
+} // end namespace adios2
