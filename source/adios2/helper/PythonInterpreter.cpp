@@ -15,6 +15,8 @@
 #include <string>
 #include <pybind11/embed.h>
 
+#include "adios2sys/SystemTools.hxx"
+
 #include "adios2//ADIOSConfig.h"
 
 #if WIN32
@@ -64,7 +66,16 @@ void PythonInterpreter::initialize()
     return;
   }
 
+  if (adios2sys::SystemTools::HasEnv("PYTHONHOME"))
+  {
+    char* pyHomeVar =
+      const_cast<char *>(adios2sys::SystemTools::GetEnv("PYTHONHOME"));
+    std::cout << "Will use PYTHONHOME (" << pyHomeVar << ") as argument to "
+              << "Py_SetProgramName" << std::endl;
+    Py_SetProgramName(pyHomeVar);
+  }
 #if defined(__linux) || defined(__unix)
+  else
   {
     // Find the actual library file where the symbol below is defined,
     // then use that path to help find Python run-time libraries.
@@ -75,7 +86,10 @@ void PythonInterpreter::initialize()
       int ret = dladdr(handle, &di);
       if (ret != 0 && di.dli_saddr && di.dli_fname)
       {
-        Py_SetProgramName(const_cast<char *>(di.dli_fname));
+        char* pyHome = const_cast<char *>(di.dli_fname);
+        std::cout << "Will use location of 'Py_SetProgramName' (" << pyHome
+                  << ") as argument to Py_SetProgramName" << std::endl;
+        Py_SetProgramName();
       }
     }
   }
