@@ -22,27 +22,27 @@ namespace adios2
 class PythonInterpreter
 {
 public:
-  static PythonInterpreter& instance();
+    static PythonInterpreter &instance();
 
-  // Check if python is initialized.
-  bool isInitialized() const;
+    // Check if python is initialized.
+    bool isInitialized() const;
 
-  // Initialize the embedded python
-  void initialize();
+    // Initialize the embedded python
+    void initialize();
 
-  // Finalize the embedded python.
-  void finalize();
+    // Finalize the embedded python.
+    void finalize();
 
-  // Returns true if the embedded python session has been initialized.
-  bool isEmbedded() const { return m_embedded; }
+    // Returns true if the embedded python session has been initialized.
+    bool isEmbedded() const { return m_embedded; }
 
 private:
-  PythonInterpreter();
-  virtual ~PythonInterpreter();
+    PythonInterpreter();
+    virtual ~PythonInterpreter();
 
-  static PythonInterpreter m_instance;
+    static PythonInterpreter m_instance;
 
-  bool m_embedded;
+    bool m_embedded;
 };
 }
 

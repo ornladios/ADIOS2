@@ -9,16 +9,13 @@
  *      Author: Chuck Atkins <chuck.atkins@kitware.com>
  */
 
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-// #include <pybind11/stl.h>
-
-// #include "adios2/core/Engine.h"
-// #include "adios2/core/IO.h"
-// #include "adios2/core/Variable.h"
-
 #ifndef ADIOS2_ENGINE_PYENGINE_PYENGINEBASE_H_
 #define ADIOS2_ENGINE_PYENGINE_PYENGINEBASE_H_
+
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+
+#include "adios2/core/Engine.h"
 
 namespace adios2
 {
@@ -29,8 +26,8 @@ class PyEngineBase : public Engine
     friend class PythonEngine;
 
 public:
-    PyEngineBase(const std::string engineType, IO &io,
-                 const std::string &name, const OpenMode openMode)
+    PyEngineBase(const std::string engineType, IO &io, const std::string &name,
+                 const OpenMode openMode)
     : Engine(engineType, io, name, openMode, io.m_MPIComm)
     {
     }
@@ -42,8 +39,8 @@ public:
     using Engine::Close;
 
 protected:
-    // The C++ code calls this implementation which will redirect to the
-    // python implementation.
+// The C++ code calls this implementation which will redirect to the
+// python implementation.
 #define define_dowrite(T)                                                      \
     void DoWrite(Variable<T> &var, const T *values) override                   \
     {                                                                          \
@@ -52,7 +49,7 @@ protected:
                                                      var.m_Count.end(), 0),    \
                                      values));                                 \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(define_dowrite)
+    ADIOS2_FOREACH_TYPE_1ARG(define_dowrite)
 #undef define_dowrite
 };
 }

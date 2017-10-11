@@ -12,11 +12,11 @@
 #include "PyEngineBase.h"
 
 #include <functional>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <stdexcept>
 #include <utility>
-#include <iostream>
 
 #include "adios2/helper/PythonInterpreter.h"
 #include "adios2/helper/PythonModuleHelper.h"
@@ -37,7 +37,6 @@ struct PythonEngine::Impl
     std::shared_ptr<PyEngineBase> eng;
 };
 
-
 /******************************************************************************/
 
 PythonEngine::PythonEngine(IO &io, const std::string &name,
@@ -45,7 +44,8 @@ PythonEngine::PythonEngine(IO &io, const std::string &name,
 : Engine("PythonEngine", io, name, openMode, mpiComm), m_Impl(new Impl)
 {
     Init();
-    m_Impl->enginePyObject = m_Impl->enginePyClass("PythonEngine", io, name, openMode);
+    m_Impl->enginePyObject =
+        m_Impl->enginePyClass("PythonEngine", io, name, openMode);
     m_Impl->eng = m_Impl->enginePyObject.cast<std::shared_ptr<PyEngineBase>>();
 }
 
@@ -56,9 +56,7 @@ void PythonEngine::PerformReads(ReadMode mode)
     m_Impl->eng->PerformReads(mode);
 }
 
-void PythonEngine::Release() {
-    m_Impl->eng->Release();
-}
+void PythonEngine::Release() { m_Impl->eng->Release(); }
 
 void PythonEngine::Advance(const float timeoutSeconds)
 {
@@ -84,10 +82,7 @@ void PythonEngine::SetCallBack(
     m_Impl->eng->SetCallBack(callback);
 }
 
-void PythonEngine::Close(const int transportIndex)
-{
-    m_Impl->eng->Close();
-}
+void PythonEngine::Close(const int transportIndex) { m_Impl->eng->Close(); }
 
 void PythonEngine::Init()
 {
@@ -100,7 +95,7 @@ void PythonEngine::Init()
     m_Impl->m_PluginName = paramPluginNameIt->second;
 
     // Get the python engine plugin module name, if provided
-    std::string* pluginModuleName = nullptr;
+    std::string *pluginModuleName = nullptr;
     auto paramPluginModuleIt = m_IO.m_Parameters.find("PluginModule");
     if (paramPluginModuleIt != m_IO.m_Parameters.end())
     {
@@ -119,49 +114,45 @@ void PythonEngine::Init()
     // Initialize python interpreter if it's not already running
     adios2::PythonInterpreter::instance().initialize();
 
-    m_Impl->enginePyClass =
-        adios2::PythonModuleHelper::FindPythonClass(pluginClassName,
-                                                    pluginModuleName);
+    m_Impl->enginePyClass = adios2::PythonModuleHelper::FindPythonClass(
+        pluginClassName, pluginModuleName);
 }
 
-#define define(T)                                                        \
-    void PythonEngine::DoWrite(Variable<T> &variable, const T *values)   \
-    {                                                                    \
-        m_Impl->eng->DoWrite(variable, values);                          \
-    }                                                                    \
-                                                                         \
-    void PythonEngine::DoScheduleRead(Variable<T> &variable,             \
-                                            const T *values)             \
-    {                                                                    \
-        m_Impl->eng->DoScheduleRead(variable, values);                   \
-    }                                                                    \
-    void PythonEngine::DoScheduleRead(const std::string &variableName,   \
-                                            const T *values)             \
-    {                                                                    \
-        m_Impl->eng->DoScheduleRead(variableName, values);               \
+#define define(T)                                                              \
+    void PythonEngine::DoWrite(Variable<T> &variable, const T *values)         \
+    {                                                                          \
+        m_Impl->eng->DoWrite(variable, values);                                \
+    }                                                                          \
+    void PythonEngine::DoScheduleRead(Variable<T> &variable, const T *values)  \
+    {                                                                          \
+        m_Impl->eng->DoScheduleRead(variable, values);                         \
+    }                                                                          \
+    void PythonEngine::DoScheduleRead(const std::string &variableName,         \
+                                      const T *values)                         \
+    {                                                                          \
+        m_Impl->eng->DoScheduleRead(variableName, values);                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(define)
 #undef define
 
-void PythonEngine::DoWrite(VariableCompound &variable,
-                                 const void *values)
+void PythonEngine::DoWrite(VariableCompound &variable, const void *values)
 {
     std::cout << "PythonEngine::DoWrite(VariableCompound &variable, "
               << "const void *values) is not yet implemented" << std::endl;
     // m_Impl->eng->DoWrite(variable, values);
 }
 
-#define define(T, L)                                                     \
-    Variable<T> *PythonEngine::InquireVariable##L(                       \
-        const std::string &name, const bool readIn)                      \
-    {                                                                    \
-        return m_Impl->eng->InquireVariable##L(name, readIn);            \
+#define define(T, L)                                                           \
+    Variable<T> *PythonEngine::InquireVariable##L(const std::string &name,     \
+                                                  const bool readIn)           \
+    {                                                                          \
+        return m_Impl->eng->InquireVariable##L(name, readIn);                  \
     }
 ADIOS2_FOREACH_TYPE_2ARGS(define)
 #undef define
 
-VariableBase *PythonEngine::InquireVariableUnknown(
-    const std::string &name, const bool readIn)
+VariableBase *PythonEngine::InquireVariableUnknown(const std::string &name,
+                                                   const bool readIn)
 {
     return m_Impl->eng->InquireVariableUnknown(name, readIn);
 }
