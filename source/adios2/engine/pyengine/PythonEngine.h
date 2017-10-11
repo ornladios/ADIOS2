@@ -76,6 +76,6 @@ private:
     std::unique_ptr<Impl> m_Impl;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_PYENGINE_PYTHONENGINE_H_ */
