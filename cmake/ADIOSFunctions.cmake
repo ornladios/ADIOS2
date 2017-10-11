@@ -71,6 +71,13 @@ function(GenerateADIOSHeaderConfig)
     endif()
   endforeach()
 
+  if(ADIOS2_HAVE_Python)
+    string(APPEND ADIOS2_CONFIG_DEFINES "
+/* Python site-packages directory discovered at configure time */
+#define ADIOS2_PYTHON_SITE_PACKAGES_DIRECTORY \"@PYTHON_SITE_PACKAGES@\"
+")
+  endif()
+
   configure_file(
     ${ADIOS2_SOURCE_DIR}/source/adios2/ADIOSConfig.h.in
     ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h.in
