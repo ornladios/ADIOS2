@@ -1,5 +1,5 @@
-#include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 #include <adios2.h>
@@ -53,9 +53,8 @@ void GeneratePythonBindings<IO>(pybind11::module &m)
         .def("GetVariable", &IO::GetVariableBase,
              pybind11::arg("name").none(false))
         .def("Open", [](IO &io, const std::string &name,
-                        const OpenMode mode) {
-            return io.Open(name, mode);
-        }, pybind11::return_value_policy::reference);
+                        const OpenMode mode) { return io.Open(name, mode); },
+             pybind11::return_value_policy::reference);
 }
 
 } // end namespace adios2

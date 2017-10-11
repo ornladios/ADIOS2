@@ -29,7 +29,7 @@ TEST(PythonEngineTest, CreatePythonEngineFromCPlusPlus)
     adios2::IO &io = adios.DeclareIO("PythonPluginIO");
 
     adios2::Variable<double> &var = io.DefineVariable<double>(
-            "data", {mpiSize * Nx}, {mpiRank * Nx}, {Nx}, adios2::ConstantDims);
+        "data", {mpiSize * Nx}, {mpiRank * Nx}, {Nx}, adios2::ConstantDims);
 
     io.SetEngine("PythonEngine");
     io.SetParameters({{"PluginName", "TestPythonPlugin"},
@@ -37,9 +37,8 @@ TEST(PythonEngineTest, CreatePythonEngineFromCPlusPlus)
                       {"PluginClass", "TestPythonEngine"}});
 
     std::shared_ptr<adios2::Engine> writer;
-    EXPECT_NO_THROW({
-        writer = io.Open("TestPythonPlugin", adios2::OpenMode::Write);
-    });
+    EXPECT_NO_THROW(
+        { writer = io.Open("TestPythonPlugin", adios2::OpenMode::Write); });
 
     ASSERT_NE(writer.get(), nullptr);
 
@@ -76,9 +75,9 @@ TEST(PythonEngineTest, CreatePythonEngineFromCPlusPlusExpectImportError)
 
     std::shared_ptr<adios2::Engine> writer;
 
-    ASSERT_THROW({
-        writer = io.Open("TestPythonPlugin", adios2::OpenMode::Write);
-    }, std::runtime_error);
+    ASSERT_THROW(
+        { writer = io.Open("TestPythonPlugin", adios2::OpenMode::Write); },
+        std::runtime_error);
 }
 
 //******************************************************************************

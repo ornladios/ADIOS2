@@ -11,7 +11,6 @@
 #ifndef ADIOS2_ENGINE_PYENGINE_PYTHONENGINE_H_
 #define ADIOS2_ENGINE_PYENGINE_PYTHONENGINE_H_
 
-
 #include <functional>  // for function
 #include <memory>      // for unique_ptr
 #include <string>      // for string
