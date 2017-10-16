@@ -24,8 +24,13 @@ endfunction()
 
 function(python_add_test)
   set(options)
+  # NAME: test name
+  # ADDTOPYPATH: Provide this if python modules need to be found in specific directories
+  # USE_MPI_FOR_PYTHON_TESTS: Set to anything for mpi mode
   set(oneValueArgs
       NAME
+      ADDTOPYPATH
+      USE_MPI_FOR_PYTHON_TESTS
   )
   # EXEC_WRAPPER: Any extra arguments to pass on the command line before test case
   # SCRIPT: Script name and corresponding comand line inputs
@@ -34,8 +39,20 @@ function(python_add_test)
   add_test(NAME ${ARGS_NAME}
     COMMAND ${ARGS_EXEC_WRAPPER} ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SCRIPT}
   )
-  set_property(TEST ${ARGS_NAME} PROPERTY
-    ENVIRONMENT "PYTHONPATH=${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}:$ENV{PYTHONPATH}"
+
+  set(testsPythonPath "${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}:$ENV{PYTHONPATH}")
+
+  if(DEFINED ARGS_ADDTOPYPATH)
+    set(testsPythonPath "${ARGS_ADDTOPYPATH}:${testsPythonPath}")
+  endif()
+
+  if(ARGS_USE_MPI_FOR_PYTHON_TESTS)
+    set(mpi_flag "ADIOS2_PYTHON_TESTS_USE_MPI=${ARGS_USE_MPI_FOR_PYTHON_TESTS}")
+  endif()
+
+  set_property(TEST ${ARGS_NAME} PROPERTY ENVIRONMENT
+    "PYTHONPATH=${testsPythonPath}"
+    ${mpi_flag}
   )
 endfunction()
 
@@ -53,6 +70,13 @@ function(GenerateADIOSHeaderConfig)
       set(ADIOS2_HAVE_${OPT_UPPER})
     endif()
   endforeach()
+
+  if(ADIOS2_HAVE_Python)
+    string(APPEND ADIOS2_CONFIG_DEFINES "
+/* Python site-packages directory discovered at configure time */
+#define ADIOS2_PYTHON_SITE_PACKAGES_DIRECTORY \"@PYTHON_SITE_PACKAGES@\"
+")
+  endif()
 
   configure_file(
     ${ADIOS2_SOURCE_DIR}/source/adios2/ADIOSConfig.h.in

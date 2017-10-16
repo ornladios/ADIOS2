@@ -14,6 +14,8 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
+#include "adios2/ADIOSMacros.h"
+
 namespace adios2
 {
 
@@ -119,6 +121,15 @@ inline std::string GetType<std::complex<long double>>() noexcept
 {
     return "long double complex";
 }
+
+#define define_impl(T, L)                                                      \
+    template <>                                                                \
+    inline std::string GetTypeDescription<T>() noexcept                        \
+    {                                                                          \
+        return ADIOS2_STRINGIFY(L);                                            \
+    }
+ADIOS2_FOREACH_TYPE_2ARGS(define_impl)
+#undef define_impl
 
 template <class T>
 bool IsTypeAlias(

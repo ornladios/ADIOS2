@@ -34,6 +34,10 @@
 #endif
 #endif
 
+#ifdef ADIOS2_HAVE_PYTHON
+#include "adios2/engine/pyengine/PythonEngine.h"
+#endif
+
 namespace adios2
 {
 
@@ -45,7 +49,10 @@ IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
 }
 
 void IO::SetEngine(const std::string engineType) { m_EngineType = engineType; }
+const std::string IO::GetEngine() const { return m_EngineType; }
+
 void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
+const IOMode IO::GetIOMode() const { return m_IOMode; }
 
 void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
 
@@ -54,6 +61,8 @@ void IO::SetSingleParameter(const std::string key,
 {
     m_Parameters[key] = value;
 }
+
+Params &IO::GetParameters() { return m_Parameters; }
 
 const Params &IO::GetParameters() const { return m_Parameters; }
 
@@ -68,6 +77,11 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     parametersMap["transport"] = type;
     m_TransportsParameters.push_back(parametersMap);
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
+}
+
+const std::vector<Params> &IO::GetTransportParameters() const
+{
+    return m_TransportsParameters;
 }
 
 void IO::SetTransportSingleParameter(const unsigned int transportIndex,
@@ -309,6 +323,15 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     else if (m_EngineType == "PluginEngine")
     {
         engine = std::make_shared<PluginEngine>(*this, name, openMode, mpiComm);
+    }
+    else if (m_EngineType == "PythonEngine")
+    {
+#ifdef ADIOS2_HAVE_PYTHON
+        engine = std::make_shared<PythonEngine>(*this, name, openMode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Python enabled, can't use PythonEngine\n");
+#endif
     }
     else
     {

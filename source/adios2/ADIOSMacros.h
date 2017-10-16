@@ -11,6 +11,10 @@
 #include <string>
 
 #include "adios2/ADIOSTypes.h"
+
+#define ADIOS2_STRINGIFY_HELPER(X) #X
+#define ADIOS2_STRINGIFY(X) ADIOS2_STRINGIFY_HELPER(X)
+
 // The ADIOS_FOREACH_TYPE_1ARG macro assumes the given argument is a macro which
 // takes a single argument that is a type and then inserts the given MACRO for
 // each of the known primitive types
@@ -108,6 +112,7 @@
 //
 #define ADIOS2_FOREACH_TYPE_2ARGS(MACRO)                                       \
     MACRO(char, Char)                                                          \
+    MACRO(signed char, SChar)                                                  \
     MACRO(unsigned char, UChar)                                                \
     MACRO(short, Short)                                                        \
     MACRO(unsigned short, UShort)                                              \
@@ -126,6 +131,7 @@
 
 #define ADIOS2_FOREACH_PRIMITIVE_TYPE_2ARGS(MACRO)                             \
     MACRO(char, Char)                                                          \
+    MACRO(signed char, SChar)                                                  \
     MACRO(unsigned char, UChar)                                                \
     MACRO(short, Short)                                                        \
     MACRO(unsigned short, UShort)                                              \

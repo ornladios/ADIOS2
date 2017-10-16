@@ -294,7 +294,7 @@ public:
      * reading
      * @return a vector of strings
      */
-    std::vector<std::string> VariableNames();
+    std::vector<std::string> VariableNames() const;
 
     /**
      * Closes a particular transport, or all if -1

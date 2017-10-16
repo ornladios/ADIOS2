@@ -8,10 +8,7 @@ target_link_libraries(TestBPWriteTypes_c adios2 gtest)
 
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPWriteTypes_c MPI::MPI_C)
-  set(extra_test_args
-    EXEC_WRAPPER
-    ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
-  )
+  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 endif()
 
 gtest_add_tests(TARGET TestBPWriteTypes_c ${extra_test_args})
