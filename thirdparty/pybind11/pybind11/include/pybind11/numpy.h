@@ -471,6 +471,11 @@ public:
         return detail::array_descriptor_proxy(m_ptr)->kind;
     }
 
+    /// 
+    char type() const {
+        return detail::array_descriptor_proxy(m_ptr)->type;
+    }
+
 private:
     static object _dtype_from_pep3118() {
         static PyObject *obj = module::import("numpy.core._internal")

@@ -18,6 +18,8 @@
 
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
+#include <iostream>
+
 namespace adios2
 {
 
@@ -62,7 +64,7 @@ void Engine::Release() {}
 void Engine::PerformReads(ReadMode /*mode*/){};
 
 // PROTECTED
-void Engine::Init() {}
+void Engine::Init() { std::cout << "Inside Engine::Init()" << std::endl; }
 
 void Engine::InitParameters() {}
 
@@ -130,6 +132,12 @@ VariableBase *Engine::InquireVariableUnknown(const std::string &name,
 }
 
 #define define(T, L)                                                           \
+    template <>                                                                \
+    Variable<T> *Engine::InquireVariable<T>(const std::string &variableName,   \
+                                            const bool readIn)                 \
+    {                                                                          \
+        return InquireVariable##L(variableName, readIn);                       \
+    }                                                                          \
     Variable<T> *Engine::InquireVariable##L(const std::string &name,           \
                                             const bool readIn)                 \
     {                                                                          \
