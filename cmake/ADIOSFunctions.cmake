@@ -40,19 +40,26 @@ function(python_add_test)
     COMMAND ${ARGS_EXEC_WRAPPER} ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SCRIPT}
   )
 
-  set(testsPythonPath "${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}:$ENV{PYTHONPATH}")
+  set(testsPythonPath "${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR};$ENV{PYTHONPATH}")
 
   if(DEFINED ARGS_ADDTOPYPATH)
-    set(testsPythonPath "${ARGS_ADDTOPYPATH}:${testsPythonPath}")
+    set(testsPythonPath "${ARGS_ADDTOPYPATH};${testsPythonPath}")
   endif()
 
   if(ARGS_USE_MPI_FOR_PYTHON_TESTS)
     set(mpi_flag "ADIOS2_PYTHON_TESTS_USE_MPI=${ARGS_USE_MPI_FOR_PYTHON_TESTS}")
   endif()
 
+  if(WIN32)
+    set(path_var "PATH=${ADIOS2_BINARY_DIR}/bin;$ENV{PATH}")
+  else()
+    string(REPLACE ";" ":" testsPythonPath ${testsPythonPath})
+  endif()
+
   set_property(TEST ${ARGS_NAME} PROPERTY ENVIRONMENT
     "PYTHONPATH=${testsPythonPath}"
     ${mpi_flag}
+    ${path_var}
   )
 endfunction()
 

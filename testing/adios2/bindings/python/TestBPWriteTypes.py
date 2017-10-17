@@ -44,9 +44,11 @@ class TestBPWriteTypes(Adios2PythonTestBase):
         varI16 = bpIO.DefineVariable(
             "varI16", [size * data.I16.size], [rank * data.I16.size],
             [data.I16.size], True, data.I16.dtype)
-        varI32 = bpIO.DefineVariable(
-            "varI32", [size * data.I32.size], [rank * data.I32.size],
-            [data.I32.size], True, data.I32.dtype)
+
+        # varI32 = bpIO.DefineVariable(
+        #     "varI32", [size * data.I32.size], [rank * data.I32.size],
+        #     [data.I32.size], True, data.I32.dtype)
+
         # FIXME: Uncomment below when 64 bit ints work properly
         # varI64 = bpIO.DefineVariable(
         #     "varI64", [], [], [data.I64.size], True, data.I64.dtype)
@@ -57,9 +59,11 @@ class TestBPWriteTypes(Adios2PythonTestBase):
         varU16 = bpIO.DefineVariable(
             "varUI16", [size * data.U16.size], [rank * data.U16.size],
             [data.U16.size], True, data.U16.dtype)
-        varU32 = bpIO.DefineVariable(
-            "varUI32", [size * data.U32.size], [rank * data.U32.size],
-            [data.U32.size], True, data.U32.dtype)
+
+        # varU32 = bpIO.DefineVariable(
+        #     "varUI32", [size * data.U32.size], [rank * data.U32.size],
+        #     [data.U32.size], True, data.U32.dtype)
+
         # FIXME: Uncomment below when 64 bit ints work properly
         # varU64 = bpIO.DefineVariable(
         #     "varUI64", [], [], [data.U64.size], True, data.U64.dtype)
@@ -77,13 +81,17 @@ class TestBPWriteTypes(Adios2PythonTestBase):
 
         bpFileWriter.Write(varI8, data.I8)
         bpFileWriter.Write(varI16, data.I16)
-        bpFileWriter.Write(varI32, data.I32)
+
+        # bpFileWriter.Write(varI32, data.I32)
+
         # FIXME: Uncomment below when 64 bit ints work properly
         # bpFileWriter.Write(varI64, data.I64)
 
         bpFileWriter.Write(varU8, data.U8)
         bpFileWriter.Write(varU16, data.U16)
-        bpFileWriter.Write(varU32, data.U32)
+
+        # bpFileWriter.Write(varU32, data.U32)
+
         # FIXME: Uncomment below when 64 bit ints work properly
         # bpFileWriter.Write(varU64, data.U64)
 
