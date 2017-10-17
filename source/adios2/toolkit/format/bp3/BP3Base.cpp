@@ -118,32 +118,22 @@ std::string BP3Base::GetBPMetadataFileName(const std::string &name) const
 std::vector<std::string>
 BP3Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
 {
-    auto lf_GetBPName = [](const std::string &baseName,
-                           const int rank) -> std::string {
-
-        const std::string bpBaseName = AddExtension(baseName, ".bp");
-
-        // path/root.bp.dir/root.bp.rank
-        std::string bpRootName = bpBaseName;
-        const auto lastPathSeparator(bpBaseName.find_last_of(PathSeparator));
-
-        if (lastPathSeparator != std::string::npos)
-        {
-            bpRootName = bpBaseName.substr(lastPathSeparator);
-        }
-        const std::string bpName(bpBaseName + ".dir/" + bpRootName + "." +
-                                 std::to_string(rank));
-        return bpName;
-    };
-
     std::vector<std::string> bpNames;
     bpNames.reserve(baseNames.size());
 
     for (const auto &baseName : baseNames)
     {
-        bpNames.push_back(lf_GetBPName(baseName, m_RankMPI));
+        bpNames.push_back(
+            GetBPRankName(baseName, static_cast<unsigned int>(m_RankMPI)));
     }
     return bpNames;
+}
+
+std::string BP3Base::GetBPSubFileName(const std::string &name,
+                                      const unsigned int subFileIndex) const
+    noexcept
+{
+    return GetBPRankName(name, subFileIndex);
 }
 
 // PROTECTED
@@ -459,16 +449,16 @@ BP3Base::ReadElementIndexHeader(const std::vector<char> &buffer,
     ElementIndexHeader header;
     header.Length = ReadValue<uint32_t>(buffer, position);
     header.MemberID = ReadValue<uint32_t>(buffer, position);
-    header.GroupName = ReadBP1String(buffer, position);
-    header.Name = ReadBP1String(buffer, position);
-    header.Path = ReadBP1String(buffer, position);
+    header.GroupName = ReadBP3String(buffer, position);
+    header.Name = ReadBP3String(buffer, position);
+    header.Path = ReadBP3String(buffer, position);
     header.DataType = ReadValue<int8_t>(buffer, position);
     header.CharacteristicsSetsCount = ReadValue<uint64_t>(buffer, position);
 
     return header;
 }
 
-std::string BP3Base::ReadBP1String(const std::vector<char> &buffer,
+std::string BP3Base::ReadBP3String(const std::vector<char> &buffer,
                                    size_t &position) const noexcept
 {
     const size_t size =
@@ -498,6 +488,24 @@ void BP3Base::ProfilerStop(const std::string process)
     {
         m_Profiler.Timers.at(process).Pause();
     }
+}
+
+std::string BP3Base::GetBPRankName(const std::string &name,
+                                   const unsigned int rank) const noexcept
+{
+    const std::string bpName = AddExtension(name, ".bp");
+
+    // path/root.bp.dir/root.bp.rank
+    std::string bpRoot = bpName;
+    const auto lastPathSeparator(bpName.find_last_of(PathSeparator));
+
+    if (lastPathSeparator != std::string::npos)
+    {
+        bpRoot = bpName.substr(lastPathSeparator);
+    }
+    const std::string bpRankName(bpName + ".dir/" + bpRoot + "." +
+                                 std::to_string(rank));
+    return bpRankName;
 }
 
 #define declare_template_instantiation(T)                                      \

@@ -40,7 +40,8 @@ void TransportMan::OpenFiles(const std::vector<std::string> &baseNames,
                              const std::vector<Params> &parametersVector,
                              const bool profile)
 {
-    for (auto i = 0; i < names.size(); ++i)
+
+    for (size_t i = 0; i < names.size(); ++i)
     {
         const Params &parameters = parametersVector[i];
         const std::string type(parameters.at("transport"));
@@ -51,9 +52,21 @@ void TransportMan::OpenFiles(const std::vector<std::string> &baseNames,
             {
                 CreateDirectory(baseNames[i]);
             }
-            OpenFileTransport(names[i], openMode, parameters, profile);
+
+            std::shared_ptr<Transport> file =
+                OpenFileTransport(names[i], openMode, parameters, profile);
+            m_Transports.insert({i, file});
         }
     }
+}
+
+void TransportMan::OpenFileID(const std::string &name, const unsigned int id,
+                              const Mode openMode, const Params &parameters,
+                              const bool profile)
+{
+
+    std::shared_ptr<Transport> file =
+        OpenFileTransport(name, openMode, parameters, profile);
 }
 
 std::vector<std::string> TransportMan::GetFilesBaseNames(
@@ -108,8 +121,9 @@ std::vector<std::string> TransportMan::GetTransportsTypes() noexcept
     std::vector<std::string> types;
     types.reserve(m_Transports.size());
 
-    for (const auto &transport : m_Transports)
+    for (const auto &transportPair : m_Transports)
     {
+        const std::shared_ptr<Transport> &transport = transportPair.second;
         types.push_back(transport->m_Type + "_" + transport->m_Library);
     }
     return types;
@@ -121,8 +135,9 @@ TransportMan::GetTransportsProfilers() noexcept
     std::vector<profiling::IOChrono *> profilers;
     profilers.reserve(m_Transports.size());
 
-    for (const auto &transport : m_Transports)
+    for (const auto &transportPair : m_Transports)
     {
+        const auto &transport = transportPair.second;
         profilers.push_back(&transport->m_Profiler);
     }
     return profilers;
@@ -133,8 +148,9 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
 {
     if (transportIndex == -1)
     {
-        for (auto &transport : m_Transports)
+        for (auto &transportPair : m_Transports)
         {
+            auto &transport = transportPair.second;
             if (transport->m_Type == "File")
             {
                 // make this truly asynch?
@@ -173,8 +189,10 @@ void TransportMan::CloseFiles(const int transportIndex)
 {
     if (transportIndex == -1)
     {
-        for (auto &transport : m_Transports)
+        for (auto &transportPair : m_Transports)
         {
+            auto &transport = transportPair.second;
+
             if (transport->m_Type == "File")
             {
                 transport->Close();
@@ -191,8 +209,10 @@ void TransportMan::CloseFiles(const int transportIndex)
 bool TransportMan::AllTransportsClosed() const noexcept
 {
     bool allClose = true;
-    for (const auto &transport : m_Transports)
+    for (const auto &transportPair : m_Transports)
     {
+        const auto &transport = transportPair.second;
+
         if (transport->m_IsOpen)
         {
             allClose = false;
@@ -203,10 +223,10 @@ bool TransportMan::AllTransportsClosed() const noexcept
 }
 
 // PRIVATE
-void TransportMan::OpenFileTransport(const std::string &fileName,
-                                     const Mode openMode,
-                                     const Params &parameters,
-                                     const bool profile)
+std::shared_ptr<Transport>
+TransportMan::OpenFileTransport(const std::string &fileName,
+                                const Mode openMode, const Params &parameters,
+                                const bool profile)
 {
     auto lf_SetFileTransport = [&](const std::string library,
                                    std::shared_ptr<Transport> &transport) {
@@ -266,9 +286,9 @@ void TransportMan::OpenFileTransport(const std::string &fileName,
                                 lf_GetTimeUnits(DefaultTimeUnit, parameters));
     }
 
-    // open and move transport to container
+    // open
     transport->Open(fileName, openMode);
-    m_Transports.push_back(std::move(transport)); // is move needed?
+    return transport;
 }
 
 void TransportMan::CheckFileType(const int transportIndex)

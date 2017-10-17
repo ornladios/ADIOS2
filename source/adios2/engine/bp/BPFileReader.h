@@ -42,6 +42,7 @@ public:
 private:
     format::BP3Deserializer m_BP3Deserializer;
     transportman::TransportMan m_FileManager;
+    transportman::TransportMan m_SubFileManager;
 
     void Init();
     void InitTransports();
@@ -59,6 +60,10 @@ private:
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
+
+    void
+    ReadVariables(IO &io,
+                  const std::map<std::string, SubFileInfoMap> &variablesInfo);
 };
 
 } // end namespace adios2

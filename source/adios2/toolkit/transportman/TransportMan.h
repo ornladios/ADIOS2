@@ -30,13 +30,14 @@ class TransportMan
 {
 
 public:
-    /** contains all transports from IO AddTransport
+    /**
+     * Contains all transports
      * <pre>
-     * key : unique id from IO AddTransport
-     * value : obejct derived from Transport.h class
+     * key : unique id
+     * value : object derived from Transport base class
      * </pre>
      */
-    std::vector<std::shared_ptr<Transport>> m_Transports;
+    std::unordered_map<size_t, std::shared_ptr<Transport>> m_Transports;
 
     /**
      * Unique base constructor
@@ -60,8 +61,13 @@ public:
                    const std::vector<Params> &parametersVector,
                    const bool profile);
 
+    void OpenFileID(const std::string &name, const unsigned int id,
+                    const Mode openMode, const Params &parameters,
+                    const bool profile);
+
     /**
-     * Gets each transport base name from either baseName at Open or name key in
+     * Gets each transport base name from either baseName at Open or name
+     * key in
      * parameters
      * Checks if transport name rules IO AddTransport have unique names for
      * every type (for now)
@@ -128,8 +134,10 @@ protected:
     MPI_Comm m_MPIComm;
     const bool m_DebugMode = false;
 
-    void OpenFileTransport(const std::string &fileName, const Mode openMode,
-                           const Params &parameters, const bool profile);
+    std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName,
+                                                 const Mode openMode,
+                                                 const Params &parameters,
+                                                 const bool profile);
 
     void CheckFileType(const int transportIndex);
 };

@@ -27,6 +27,7 @@ struct SubFileInfo
 {
     Box<Dims> IntersectionBox; ///< first = Start point, second = End point
     Box<size_t> Seeks;         ///< first = Start seek, second = End seek
+    std::vector<char> Data;
 };
 
 /**

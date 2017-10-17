@@ -19,7 +19,8 @@ namespace adios2
 BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode openMode,
                            MPI_Comm mpiComm)
 : Engine("BPFileReader", io, name, openMode, mpiComm),
-  m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode)
+  m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
+  m_SubFileManager(mpiComm, m_DebugMode)
 {
     Init();
 }
@@ -57,13 +58,16 @@ void BPFileReader::InitTransports()
         defaultTransportParameters["transport"] = "File";
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
+    // TODO Set Parameters
 
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
         const std::string metadataFile(
             m_BP3Deserializer.GetBPMetadataFileName(m_Name));
+
+        const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
         m_FileManager.OpenFiles({}, {metadataFile}, adios2::Mode::Read,
-                                m_IO.m_TransportsParameters, true);
+                                m_IO.m_TransportsParameters, profile);
     }
 }
 
@@ -103,5 +107,53 @@ void BPFileReader::InitBuffer()
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+void BPFileReader::ReadVariables(
+    IO &io, const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo)
+{
+    const bool &profile = m_BP3Deserializer.m_Profiler.IsActive;
+
+    // sequentially request bytes from transport manager
+    // threaded here?
+    for (const auto &variableNamePair : variablesSubFileInfo) // variable name
+    {
+        const std::string variableName(variableNamePair.first);
+        unsigned int subFileTransportIndex = 0;
+
+        // or threaded here?
+        for (const auto &subFileIndexPair : variableNamePair.second)
+        {
+            const unsigned int subFileIndex = subFileIndexPair.first;
+            const std::string subFile(
+                m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
+
+            m_SubFileManager.OpenFiles({}, {subFile}, adios2::Mode::Read,
+                                       std::vector<Params>(), profile);
+
+            for (const auto &stepPair : subFileIndexPair.second) // step
+            {
+                const size_t step = stepPair.first;
+
+                for (const auto &blockInfo : stepPair.second)
+                {
+                    const auto &seek = blockInfo.Seeks;
+                    const size_t blockStart = seek.first;
+                    const size_t blockSize = seek.second - seek.first;
+                    std::vector<char> contiguousData(blockSize);
+                    m_SubFileManager.ReadFile(contiguousData.data(), blockStart,
+                                              blockSize, subFileTransportIndex);
+
+                    // will go to BP3Deserializer along with contiguous data
+
+                    // Variable Data
+                    // blockInfo.IntersectionBox;
+                } // end block
+            }     // end step
+            ++subFileTransportIndex;
+        } // end subfile
+    }     // end variable
+
+    m_SubFileManager.CloseFiles();
+}
 
 } // end namespace adios2

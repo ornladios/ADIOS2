@@ -54,6 +54,10 @@ public:
     std::map<std::string, SubFileInfoMap>
     PerformGetsVariablesSubFileInfo(IO &io);
 
+    template <class T>
+    void ClipContiguousMemory(const std::vector<char> &contiguousMemory,
+                              Variable<T> &variable);
+
 private:
     std::map<std::string, SubFileInfoMap> m_DeferredVariables;
 

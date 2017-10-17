@@ -33,8 +33,7 @@ template <class T>
 void BP3Deserializer::GetDeferredVariable(Variable<T> &variable, T *data)
 {
     variable.SetData(data);
-    SubFileInfoMap emptyMap;
-    m_DeferredVariables[variable.m_Name] = emptyMap;
+    m_DeferredVariables[variable.m_Name] = SubFileInfoMap();
 }
 
 // PRIVATE

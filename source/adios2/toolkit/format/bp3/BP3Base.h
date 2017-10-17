@@ -165,6 +165,10 @@ public:
 
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
 
+    std::string GetBPSubFileName(const std::string &name,
+                                 const unsigned int subFileIndex) const
+        noexcept;
+
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
     {
@@ -418,7 +422,7 @@ protected:
      * @param position
      * @return
      */
-    std::string ReadBP1String(const std::vector<char> &buffer,
+    std::string ReadBP3String(const std::vector<char> &buffer,
                               size_t &position) const noexcept;
 
     void ProfilerStart(const std::string process);
@@ -433,6 +437,9 @@ private:
      */
     template <class T>
     size_t GetVariableIndexSize(const Variable<T> &variable) const noexcept;
+
+    std::string GetBPRankName(const std::string &name,
+                              const unsigned int rank) const noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \
