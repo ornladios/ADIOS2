@@ -162,6 +162,28 @@ constexpr bool IsLvalue(T &&)
     return std::is_lvalue_reference<T>{};
 }
 
+template <class T, class U>
+U *InquireKey(const T &key, std::map<T, U> &input) noexcept
+{
+    auto itKey = input.find(key);
+    if (itKey == input.end())
+    {
+        return nullptr;
+    }
+    return &itKey->second;
+}
+
+template <class T, class U>
+U *InquireKey(const T &key, std::unordered_map<T, U> &input) noexcept
+{
+    auto itKey = input.find(key);
+    if (itKey == input.end())
+    {
+        return nullptr;
+    }
+    return &itKey->second;
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSTYPE_INL_ */

@@ -99,9 +99,7 @@ public:
      */
     void SetParameter(const std::string key, const std::string value) noexcept;
 
-    /**
-     * Retrieve existing parameter set
-     */
+    /** Retrieve current parameters map */
     Params &GetParameters() noexcept;
 
     /**
@@ -183,7 +181,7 @@ public:
      * throws an exception if Variable is not found
      */
     template <class T>
-    Variable<T> *InquireVariable(const std::string &name);
+    Variable<T> *InquireVariable(const std::string &name) noexcept;
 
     std::string InquireVariableType(const std::string &name) const noexcept;
 
@@ -215,7 +213,7 @@ public:
      * @return nullptr if not found, else pointer reference to exising attribute
      */
     template <class T>
-    Attribute<T> *InquireAttribute(const std::string &name);
+    Attribute<T> *InquireAttribute(const std::string &name) noexcept;
 
     /**
      * Check existence in config file passed to ADIOS class
@@ -362,7 +360,7 @@ private:
         const std::string &, const Dims &, const Dims &, const Dims &,         \
         const bool, T *);                                                      \
     extern template Variable<T> *IO::InquireVariable<T>(                       \
-        const std::string &name);
+        const std::string &name) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -372,7 +370,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
         const std::string &, const T *, const size_t);                         \
     extern template Attribute<T> &IO::DefineAttribute<T>(const std::string &,  \
                                                          const T &);           \
-    extern template Attribute<T> *IO::InquireAttribute(const std::string &);
+    extern template Attribute<T> *IO::InquireAttribute<T>(                     \
+        const std::string &) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

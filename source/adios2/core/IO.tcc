@@ -52,14 +52,16 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
 }
 
 template <class T>
-Variable<T> *IO::InquireVariable(const std::string &name)
+Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 {
+    Variable<T> *variable = nullptr;
+
     const int index = GetMapIndex(name, m_Variables);
-    if (index == -1)
+    if (index >= 0)
     {
-        return nullptr;
+        variable = &GetVariableMap<T>().at(index);
     }
-    return &GetVariableMap<T>().at(index);
+    return variable;
 }
 
 template <class T>
@@ -102,14 +104,16 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 }
 
 template <class T>
-Attribute<T> *IO::InquireAttribute(const std::string &name)
+Attribute<T> *IO::InquireAttribute(const std::string &name) noexcept
 {
+    Attribute<T> *attribute = nullptr;
+
     const int index = GetMapIndex(name, m_Attributes);
-    if (index == -1)
+    if (index >= 0)
     {
-        return nullptr;
+        attribute = &GetAttributeMap<T>().at(index);
     }
-    return &GetAttributeMap<T>().at(index);
+    return attribute;
 }
 
 // PRIVATE

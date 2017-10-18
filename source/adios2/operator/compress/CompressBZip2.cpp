@@ -8,9 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "CompressBZip2.h"
-
-/// \cond EXCLUDE_FROM_DOXYGEN
+#include <adios2/operator/compress/CompressBZip2.h>
 #include <cmath>     //std::ceil
 #include <ios>       //std::ios_base::failure
 #include <stdexcept> //std::invalid_argument
@@ -22,11 +20,11 @@
 
 namespace adios2
 {
-namespace transform
+namespace compress
 {
 
-CompressBZip2::CompressBZip2(const bool debugMode)
-: Transform("bzip2", debugMode)
+CompressBZip2::CompressBZip2(const Params &parameters, const bool debugMode)
+: Operator("bzip2", parameters, debugMode)
 {
 }
 

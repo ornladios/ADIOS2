@@ -13,6 +13,7 @@
 #define ADIOS2_CORE_VARIABLEBASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <adios2/core/Operator.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -20,7 +21,6 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/core/Transform.h"
 
 namespace adios2
 {
@@ -52,10 +52,10 @@ public:
     bool m_ReadAsLocalValue = false;
 
     /** Transforms metadata info */
-    struct TransformInfo
+    struct OperatorInfo
     {
         /** reference to object derived from Transform class */
-        Transform &Operator;
+        Operator &OperatorRef;
         /** parameters from AddTransform */
         Params Parameters;
         /** resulting sizes from transformation */
@@ -63,7 +63,7 @@ public:
     };
 
     /** Registered transforms */
-    std::vector<TransformInfo> m_TransformsInfo;
+    std::vector<OperatorInfo> m_OperatorsInfo;
 
     size_t m_AvailableStepsStart = 1;
     size_t m_AvailableStepsCount = 0;
@@ -132,14 +132,14 @@ public:
      * @param parameters transform specific parameters
      * @return transformID handler
      */
-    unsigned int AddTransform(Transform &transform,
+    unsigned int AddTransform(Operator &transform,
                               const Params &parameters = Params()) noexcept;
 
     void ResetTransformParameters(const unsigned int transformIndex,
                                   const Params &parameters = Params());
 
     /** Clears out the transform sequence defined by AddTransform */
-    void ClearTransforms() noexcept;
+    void ClearOperators() noexcept;
 
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */

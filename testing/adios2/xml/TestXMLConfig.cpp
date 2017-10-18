@@ -32,7 +32,7 @@ TEST_F(XMLConfigTest, TwoIOs)
 #endif
 
     EXPECT_NO_THROW({
-        adios2::IO &io = adios.GetIO("Test IO 1");
+        adios2::IO &io = *adios.InquireIO("Test IO 1");
         const adios2::Params &params = io.GetParameters();
         ASSERT_EQ(params.size(), 5);
         EXPECT_THROW(params.at("DoesNotExist"), std::out_of_range);
@@ -46,7 +46,7 @@ TEST_F(XMLConfigTest, TwoIOs)
     });
 
     EXPECT_NO_THROW({
-        adios2::IO &io = adios.GetIO("Test IO 2");
+        adios2::IO &io = *adios.InquireIO("Test IO 2");
         const adios2::Params &params = io.GetParameters();
         ASSERT_EQ(params.size(), 0);
     });

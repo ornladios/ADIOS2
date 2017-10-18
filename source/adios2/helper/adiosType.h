@@ -15,6 +15,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 /// \endcond
 
@@ -137,6 +138,22 @@ std::vector<U> NewVectorTypeFromArray(const T *in, const size_t inSize);
 
 template <class T>
 constexpr bool IsLvalue(T &&);
+
+/**
+ * Inquire for existing key and return value in a map
+ * @param input contains key, value pairs
+ * @return if found: a pointer to value, else a nullptr
+ */
+template <class T, class U>
+U *InquireKey(const T &key, std::map<T, U> &input) noexcept;
+
+/**
+ * Inquire for existing key and return value in an unordered_map
+ * @param input contains key, value pairs
+ * @return if found: a pointer to value, else a nullptr
+ */
+template <class T, class U>
+U *InquireKey(const T &key, std::unordered_map<T, U> &input) noexcept;
 
 } // end namespace adios2
 

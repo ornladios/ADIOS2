@@ -144,11 +144,11 @@ void VariableBase::SetStepSelection(const std::pair<size_t, size_t> &boxSteps)
 }
 
 // transforms related functions
-unsigned int VariableBase::AddTransform(Transform &transform,
+unsigned int VariableBase::AddTransform(Operator &transform,
                                         const Params &parameters) noexcept
 {
-    m_TransformsInfo.push_back(TransformInfo{transform, parameters});
-    return static_cast<unsigned int>(m_TransformsInfo.size() - 1);
+    m_OperatorsInfo.push_back(OperatorInfo{transform, parameters});
+    return static_cast<unsigned int>(m_OperatorsInfo.size() - 1);
 }
 
 void VariableBase::ResetTransformParameters(const unsigned int transformIndex,
@@ -156,18 +156,18 @@ void VariableBase::ResetTransformParameters(const unsigned int transformIndex,
 {
     if (m_DebugMode)
     {
-        if (transformIndex < m_TransformsInfo.size())
+        if (transformIndex < m_OperatorsInfo.size())
         {
-            m_TransformsInfo[transformIndex].Parameters = parameters;
+            m_OperatorsInfo[transformIndex].Parameters = parameters;
         }
     }
     else
     {
-        m_TransformsInfo[transformIndex].Parameters = parameters;
+        m_OperatorsInfo[transformIndex].Parameters = parameters;
     }
 }
 
-void VariableBase::ClearTransforms() noexcept { m_TransformsInfo.clear(); }
+void VariableBase::ClearOperators() noexcept { m_OperatorsInfo.clear(); }
 
 void VariableBase::CheckDimensions(const std::string hint) const
 {

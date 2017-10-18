@@ -13,14 +13,14 @@
 
 #include <zfp.h>
 
-#include "adios2/core/Transform.h"
+#include "adios2/core/Operator.h"
 
 namespace adios2
 {
-namespace transform
+namespace compress
 {
 
-class CompressZfp : public Transform
+class CompressZfp : public Operator
 {
 
 public:
@@ -28,7 +28,7 @@ public:
      * Unique constructor
      * @param debugMode
      */
-    CompressZfp(const bool debugMode);
+    CompressZfp(const Params &parameters, const bool debugMode);
 
     ~CompressZfp() = default;
 

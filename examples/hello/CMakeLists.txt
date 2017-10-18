@@ -8,6 +8,7 @@ add_subdirectory(bpReader)
 add_subdirectory(bpTimeWriter)
 add_subdirectory(bpFlushWriter)
 add_subdirectory(bpAttributeWriter)
+add_subdirectory(callback)
 
 if(ADIOS2_HAVE_ADIOS1)
   add_subdirectory(adios1Writer)

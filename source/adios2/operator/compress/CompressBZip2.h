@@ -8,17 +8,17 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TRANSFORM_COMPRESSION_COMPRESSBZIP2_H_
-#define ADIOS2_TRANSFORM_COMPRESSION_COMPRESSBZIP2_H_
+#ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSBZIP2_H_
+#define ADIOS2_OPERATOR_COMPRESS_COMPRESSBZIP2_H_
 
-#include "adios2/core/Transform.h"
+#include "adios2/core/Operator.h"
 
 namespace adios2
 {
-namespace transform
+namespace compress
 {
 
-class CompressBZip2 : public Transform
+class CompressBZip2 : public Operator
 {
 
 public:
@@ -26,7 +26,7 @@ public:
      * Unique constructor
      * @param debugMode
      */
-    CompressBZip2(const bool debugMode);
+    CompressBZip2(const Params &parameters, const bool debugMode);
 
     ~CompressBZip2() = default;
 

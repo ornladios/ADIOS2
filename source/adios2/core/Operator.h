@@ -2,16 +2,19 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Transform.h : Base class for all transforms under adios2/transform
+ * Operator.h : Base class for all derive operators classes under
+ * adios2/operator.
+ * This include callback functions, compression, etc.
  *
  *  Created on: Oct 17, 2016
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_CORE_TRANSFORM_H_
-#define ADIOS2_CORE_TRANSFORM_H_
+#ifndef ADIOS2_CORE_OPERATOR_H_
+#define ADIOS2_CORE_OPERATOR_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <functional>
 #include <string>
 #include <vector>
 /// \endcond
@@ -21,23 +24,30 @@
 namespace adios2
 {
 
+template <class R, class... Args>
+class Callback; // forward declaration
+
 /** Base class that defines data variable transformations implemented under
  * adios2/transform */
-class Transform
+class Operator
 {
 
 public:
     /** From derived class */
-    const std::string m_Library;
+    const std::string m_Type;
 
     /**
-     * Unique base class constructor
-     * @param method bzip2, zfp
+     * Base class constructor
+     * @param type from derived class object: e.g. bzip2, zfp, callback
      * @param debugMode true: extra exceptions checks
      */
-    Transform(const std::string library, const bool debugMode);
+    Operator(const std::string type, const Params &parameters,
+             const bool debugMode);
 
-    virtual ~Transform() = default;
+    virtual ~Operator() = default;
+
+    template <class R, class... Args>
+    std::function<R(Args...)> GetCallback();
 
     /**
      * Returns a conservative buffer size to hold input data for classes
@@ -90,6 +100,9 @@ public:
                               const Params &parameters) const;
 
 protected:
+    /** Parameters associated with a particular Operator */
+    Params m_Parameters;
+
     /** true: extra exception checks, false: skip exception checks */
     const bool m_DebugMode = false;
 
@@ -108,4 +121,6 @@ protected:
 
 } // end namespace adios2
 
-#endif /* ADIOS2_CORE_TRANSFORM_H_ */
+#include "Operator.inl"
+
+#endif /* ADIOS2_CORE_OPERATOR_H_ */

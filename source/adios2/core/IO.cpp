@@ -288,12 +288,12 @@ Engine &IO::Open(const std::string &name, const Mode openMode)
 int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
     noexcept
 {
-    auto itDataMap = dataMap.find(name);
-    if (itDataMap == dataMap.end())
+    auto itName = dataMap.find(name);
+    if (itName == dataMap.end())
     {
         return -1;
     }
-    return itDataMap->second.second;
+    return itName->second.second;
 }
 
 void IO::CheckAttributeCommon(const std::string &name) const
@@ -333,7 +333,7 @@ void IO::CheckTransportType(const std::string type) const
     template Variable<T> &IO::DefineVariable<T>(                               \
         const std::string &, const Dims &, const Dims &, const Dims &,         \
         const bool, T *);                                                      \
-    template Variable<T> *IO::InquireVariable<T>(const std::string &);
+    template Variable<T> *IO::InquireVariable<T>(const std::string &) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
@@ -343,7 +343,8 @@ ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
                                                   const T *, const size_t);    \
     template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
                                                   const T &);                  \
-    template Attribute<T> *IO::InquireAttribute(const std::string &);
+    template Attribute<T> *IO::InquireAttribute<T>(                            \
+        const std::string &) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

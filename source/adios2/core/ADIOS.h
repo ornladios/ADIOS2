@@ -12,6 +12,7 @@
 #define ADIOS2_CORE_ADIOS_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <adios2/core/Operator.h>
 #include <map>
 #include <memory> //std::shared_ptr
 #include <string>
@@ -21,7 +22,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/IO.h"
-#include "adios2/core/Transform.h"
+#include "adios2/core/Operator.h"
 
 namespace adios2
 {
@@ -87,16 +88,42 @@ public:
      * @param ioName must be unique
      * @return reference to existing (or newly created) method inside ADIOS
      */
-    IO &DeclareIO(const std::string ioName);
+    IO &DeclareIO(const std::string name);
 
     /**
-     * Retrieve an already defined IO object. Make sure IO was previously
-     * created with DeclareIO. Otherwise, throws an exception in debug mode.
-     * @return reference to existing IO object inside ADIOS
+     * Retrieve a reference pointer to an existing Operator object
+     * created with DeclareIO.
+     * @param name of IO to look for
+     * @return if IO exists returns a reference to existing IO object inside
+     * ADIOS, otherwise a nullptr
      */
-    IO &GetIO(const std::string name);
+    IO *InquireIO(const std::string name) noexcept;
 
-    Transform &GetTransform(const std::string transform);
+    /**
+     * Declares a derived class of the Operator abstract class. If object is
+     * defined in the user
+     * config file, by name, it will be already created during the processing of
+     * the config file. So this function returns a reference to that object.
+     * @param name must be unique for each operator created with DefineOperator
+     * @param type from derived class
+     * @param parameters optional parameters
+     * @return
+     */
+    Operator &DefineOperator(const std::string name, const std::string type,
+                             const Params &parameters = Params());
+
+    template <class R, class... Args>
+    Operator &DefineOperator(const std::string name,
+                             const std::function<R(Args...)> &function,
+                             const Params &parameters = Params());
+
+    /**
+     * Retrieve a reference pointer to an existing Operator object
+     * created with DeclareIO.
+     * @return if IO exists returns a reference to existing IO object inside
+     * ADIOS, otherwise a nullptr
+     */
+    Operator *InquireOperator(const std::string name) noexcept;
 
 private:
     /** XML File to be read containing configuration information */
@@ -104,9 +131,6 @@ private:
 
     /** if true will do more checks, exceptions, warnings, expect slower code */
     const bool m_DebugMode = true;
-
-    /** transforms associated with ADIOS run */
-    std::map<std::string, std::shared_ptr<Transform>> m_Transforms;
 
     /**
      * @brief List of IO class objects defined from either ADIOS
@@ -119,10 +143,15 @@ private:
      */
     std::map<std::string, IO> m_IOs;
 
+    /** operators created with DefineOperator */
+    std::map<std::string, std::shared_ptr<Operator>> m_Operators;
+
     /** throws exception if m_MPIComm = MPI_COMM_NULL */
     void CheckMPI() const;
 };
 
 } // end namespace adios2
+
+#include "ADIOS.inl"
 
 #endif /* ADIOS2_ADIOS_H_ */

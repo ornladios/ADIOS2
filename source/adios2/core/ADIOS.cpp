@@ -19,15 +19,15 @@
 /// \endcond
 
 #include "adios2/ADIOSMPI.h"
-#include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosFunctions.h" //InquireKey
 
 // transforms
 #ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/transform/compress/CompressBZip2.h"
+#include "adios2/operator/compress/CompressBZip2.h"
 #endif
 
 #ifdef ADIOS2_HAVE_ZFP
-#include "adios2/transform/compress/CompressZfp.h"
+#include "adios2/operator/compress/CompressZfp.h"
 #endif
 
 namespace adios2
@@ -45,7 +45,7 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
     {
         if (configFile.substr(configFile.size() - 3) == "xml")
         {
-            InitXML(configFile, m_MPIComm, m_DebugMode, m_Transforms, m_IOs);
+            InitXML(configFile, m_MPIComm, m_DebugMode, m_Operators, m_IOs);
         }
         // TODO expand for other formats
     }
@@ -63,76 +63,62 @@ ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode)
 
 ADIOS::ADIOS(const bool debugMode) : ADIOS("", MPI_COMM_SELF, debugMode) {}
 
-IO &ADIOS::DeclareIO(const std::string ioName)
+IO &ADIOS::DeclareIO(const std::string name)
 {
-    auto itIO = m_IOs.find(ioName);
-
-    if (itIO != m_IOs.end()) // exists
+    if (m_DebugMode && m_IOs.count(name) == 1)
     {
-        if (m_DebugMode)
-        {
-            if (!itIO->second.InConfigFile())
-            {
-                throw std::invalid_argument(
-                    "ERROR: IO class object with name " + ioName +
-                    " previously declared, name must be unique "
-                    " , in call to DeclareIO\n");
-            }
-        }
-        return itIO->second;
+        throw std::invalid_argument("ERROR: IO with name " + name +
+                                    " previously declared in config file or "
+                                    "with DeclareIO, name must be unique "
+                                    " , in call to DeclareIO\n");
     }
 
-    // doesn't exist, then create new pair
-    auto ioPair =
-        m_IOs.emplace(ioName, IO(ioName, m_MPIComm, false, m_DebugMode));
+    auto ioPair = m_IOs.emplace(name, IO(name, m_MPIComm, false, m_DebugMode));
     return ioPair.first->second;
 }
 
-IO &ADIOS::GetIO(const std::string name)
+IO *ADIOS::InquireIO(const std::string name) noexcept
 {
-    auto itIO = m_IOs.find(name);
-    if (m_DebugMode && itIO == m_IOs.end())
-    {
-        throw std::invalid_argument(
-            "ERROR: Unable to find previously defined IO object with name \"" +
-            name + "\", in call to GetIO.");
-    }
-    return itIO->second;
+    return InquireKey(name, m_IOs);
 }
 
-Transform &ADIOS::GetTransform(const std::string transform)
+Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
+                                const Params &parameters)
 {
-    auto itTransform = m_Transforms.find(transform);
+    std::shared_ptr<Operator> operatorPtr;
 
-    if (itTransform != m_Transforms.end())
+    if (m_DebugMode && m_Operators.count(name) == 1)
     {
-        return *itTransform->second.get();
+        throw std::invalid_argument("ERROR: Operator with name " + name +
+                                    ", is already defined in config file "
+                                    "or with call to DefineOperator, name must "
+                                    "be unique, in call to DefineOperator\n");
     }
 
-    if (transform == "bzip2" || transform == "BZip2")
+    if (type == "bzip2" || type == "BZip2")
     {
 #ifdef ADIOS2_HAVE_BZIP2
-        auto itPair = m_Transforms.emplace(
-            "bzip2",
-            std::make_shared<adios2::transform::CompressBZip2>(m_DebugMode));
-        return *itPair.first->second;
+        auto itPair = m_Operators.emplace(
+            name, std::make_shared<adios2::compress::CompressBZip2>(
+                      parameters, m_DebugMode));
+        operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(
-            "ERROR: this version of ADIOS2 didn't compile with "
-            "bzip2 library, in call to GetTransport\n");
+            "ERROR: this version of ADIOS2 didn't compile with the "
+            "bzip2 library, in call to DefineOperator\n");
 #endif
     }
-    else if (transform == "zfp" || transform == "Zfp")
+    else if (type == "zfp" || type == "Zfp")
     {
 #ifdef ADIOS2_HAVE_ZFP
-        auto itPair = m_Transforms.emplace(
-            "zfp",
-            std::make_shared<adios2::transform::CompressZfp>(m_DebugMode));
-        return *itPair.first->second;
+        auto itPair = m_Operators.emplace(
+            name, std::make_shared<adios2::compress::CompressZfp>(parameters,
+                                                                  m_DebugMode));
+        operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(
-            "ERROR: this version of ADIOS2 didn't compile with "
-            "zfp library, in call to GetTransport\n");
+            "ERROR: this version of ADIOS2 didn't compile with the "
+            "zfp library (minimum v1.5), in call to DefineOperator\n");
 #endif
     }
     else
@@ -140,12 +126,24 @@ Transform &ADIOS::GetTransform(const std::string transform)
         if (m_DebugMode)
         {
             throw std::invalid_argument(
-                "ERROR: transform " + transform +
-                " not supported by ADIOS2, in call to GetTransport\n");
+                "ERROR: Operator " + name + " of type " + type +
+                " is not supported by ADIOS2, in call to DefineOperator\n");
         }
     }
 
-    return *itTransform->second.get();
+    if (m_DebugMode && !operatorPtr)
+    {
+        throw std::invalid_argument(
+            "ERROR: Operator " + name + " of type " + type +
+            " couldn't be defined, in call to DefineOperator\n");
+    }
+
+    return *operatorPtr.get();
+}
+
+Operator *ADIOS::InquireOperator(const std::string name) noexcept
+{
+    return InquireKey(name, m_Operators)->get();
 }
 
 // PRIVATE FUNCTIONS

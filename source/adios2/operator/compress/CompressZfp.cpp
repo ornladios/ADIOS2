@@ -8,16 +8,18 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "CompressZfp.h"
-
 #include "adios2/helper/adiosFunctions.h"
+#include <adios2/operator/compress/CompressZfp.h>
 
 namespace adios2
 {
-namespace transform
+namespace compress
 {
 
-CompressZfp::CompressZfp(const bool debugMode) : Transform("zfp", debugMode) {}
+CompressZfp::CompressZfp(const Params &parameters, const bool debugMode)
+: Operator("zfp", parameters, debugMode)
+{
+}
 
 size_t CompressZfp::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
                                     const std::string type,

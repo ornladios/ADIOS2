@@ -7,9 +7,10 @@ add_library(adios2
   core/Attribute.cpp core/Attribute.tcc
   core/AttributeBase.cpp
   core/ADIOS.cpp
+  core/Callback.cpp
   core/Engine.cpp
   core/IO.cpp core/IO.tcc
-  core/Transform.cpp core/Transform.tcc
+  core/Operator.cpp core/Operator.tcc
   core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
@@ -71,12 +72,12 @@ if(ADIOS2_HAVE_DataMan)
 endif()
   
 if(ADIOS2_HAVE_BZip2)
-  target_sources(adios2 PRIVATE transform/compress/CompressBZip2.cpp)
+  target_sources(adios2 PRIVATE operator/compress/CompressBZip2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
 
 if(ADIOS2_HAVE_ZFP)
-  target_sources(adios2 PRIVATE transform/compress/CompressZfp.cpp)
+  target_sources(adios2 PRIVATE operator/compress/CompressZfp.cpp)
   target_link_libraries(adios2 PRIVATE zfp::zfp)
 endif()
 

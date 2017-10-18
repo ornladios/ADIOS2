@@ -36,7 +36,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     // Define method for engine creation
 
-    adios2::IO &bpio = ad->DeclareIO("output");
+    adios2::IO &bpio = *ad->InquireIO("output");
     if (!bpio.InConfigFile())
     {
         // if not defined by user, we can change the default settings
