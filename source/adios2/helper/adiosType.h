@@ -28,7 +28,7 @@ struct SubFileInfo
 {
     Box<Dims> IntersectionBox; ///< first = Start point, second = End point
     Box<size_t> Seeks;         ///< first = Start seek, second = End seek
-    std::vector<char> Data;
+    std::vector<char> ContiguousData; /// TODO: check if needed
 };
 
 /**
@@ -43,7 +43,7 @@ struct SubFileInfo
  * </pre>
  */
 using SubFileInfoMap =
-    std::map<unsigned int, std::map<size_t, std::vector<SubFileInfo>>>;
+    std::map<size_t, std::map<size_t, std::vector<SubFileInfo>>>;
 
 /**
  * Gets type from template parameter T

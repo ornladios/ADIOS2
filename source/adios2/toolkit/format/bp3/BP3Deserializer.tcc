@@ -157,7 +157,7 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
                 LinearIndex(blockDimensions, info.IntersectionBox.second,
                             m_IsRowMajor, m_IsZeroIndex);
 
-            const size_t fileIndex = static_cast<unsigned int>(
+            const size_t fileIndex = static_cast<const size_t>(
                 blockCharacteristics.Statistics.FileIndex);
 
             infoMap[fileIndex][step].push_back(info);

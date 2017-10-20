@@ -118,12 +118,11 @@ void BPFileReader::ReadVariables(
     for (const auto &variableNamePair : variablesSubFileInfo) // variable name
     {
         const std::string variableName(variableNamePair.first);
-        unsigned int subFileTransportIndex = 0;
 
         // or threaded here?
         for (const auto &subFileIndexPair : variableNamePair.second)
         {
-            const unsigned int subFileIndex = subFileIndexPair.first;
+            const size_t subFileIndex = subFileIndexPair.first;
             const std::string subFile(
                 m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
 
@@ -141,17 +140,15 @@ void BPFileReader::ReadVariables(
                     const size_t blockSize = seek.second - seek.first;
                     std::vector<char> contiguousData(blockSize);
                     m_SubFileManager.ReadFile(contiguousData.data(), blockStart,
-                                              blockSize, subFileTransportIndex);
+                                              blockSize, subFileIndex);
 
                     // will go to BP3Deserializer along with contiguous data
+                    // m_BP3Deserializer
 
-                    // Variable Data
-                    // blockInfo.IntersectionBox;
                 } // end block
             }     // end step
-            ++subFileTransportIndex;
-        } // end subfile
-    }     // end variable
+        }         // end subfile
+    }             // end variable
 
     m_SubFileManager.CloseFiles();
 }

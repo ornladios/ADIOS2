@@ -56,6 +56,7 @@ public:
 
     template <class T>
     void ClipContiguousMemory(const std::vector<char> &contiguousMemory,
+                              const Box<Dims> &intersectionBox,
                               Variable<T> &variable);
 
 private:

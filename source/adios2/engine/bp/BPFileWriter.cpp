@@ -63,17 +63,19 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void BPFileWriter::Close(const int transportIndex)
 {
-    if (m_DebugMode)
-    {
-        if (!m_FileManager.CheckTransportIndex(transportIndex))
-        {
-            auto transportsSize = m_FileManager.m_Transports.size();
-            throw std::invalid_argument(
-                "ERROR: transport index " + std::to_string(transportIndex) +
-                " outside range, -1 (default) to " +
-                std::to_string(transportsSize - 1) + ", in call to Close\n");
-        }
-    }
+    //    if (m_DebugMode)
+    //    {
+    //        if (!m_FileManager.CheckTransportIndex(transportIndex))
+    //       {
+    //            auto transportsSize = m_FileManager.m_Transports.size();
+    //            throw std::invalid_argument(
+    //                "ERROR: transport index " + std::to_string(transportIndex)
+    //                +
+    //                " outside range, -1 (default) to " +
+    //                std::to_string(transportsSize - 1) + ", in call to
+    //                Close\n");
+    //        }
+    //    }
 
     // close bp buffer by serializing data and metadata
     m_BP3Serializer.CloseData(m_IO);

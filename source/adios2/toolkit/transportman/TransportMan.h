@@ -81,13 +81,6 @@ public:
                       const std::vector<Params> &parametersVector) const;
 
     /**
-     * Checks if index is in range
-     * @param index input to be checked against m_Transports range or it's -1
-     * @param true: in range, false: out of range
-     */
-    bool CheckTransportIndex(const int index) const noexcept;
-
-    /**
      * m_Type from m_Transports based on derived classes of Transport
      * @return m_Type for each transport in m_Transports (e.g.
      * {FileDescriptor,
@@ -108,7 +101,7 @@ public:
     void WriteFiles(const char *buffer, const size_t size,
                     const int transportIndex = -1);
 
-    size_t GetFileSize(const int transportIndex = 0);
+    size_t GetFileSize(const size_t transportIndex = 0);
 
     /**
      * Read contents from a single file and assign it to buffer
@@ -118,7 +111,7 @@ public:
      * @param transportIndex
      */
     void ReadFile(char *buffer, const size_t size, const size_t start = 0,
-                  const int transportIndex = 0);
+                  const size_t transportIndex = 0);
 
     /**
      * Close file or files depending on transport index. Throws an exception
@@ -139,7 +132,10 @@ protected:
                                                  const Params &parameters,
                                                  const bool profile);
 
-    void CheckFileType(const int transportIndex);
+    void CheckFile(
+        std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
+            itTransport,
+        const std::string hint) const;
 };
 
 } // end namespace transport

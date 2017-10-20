@@ -64,9 +64,9 @@ void TransportMan::OpenFileID(const std::string &name, const unsigned int id,
                               const Mode openMode, const Params &parameters,
                               const bool profile)
 {
-
     std::shared_ptr<Transport> file =
         OpenFileTransport(name, openMode, parameters, profile);
+    m_Transports.insert({id, file});
 }
 
 std::vector<std::string> TransportMan::GetFilesBaseNames(
@@ -107,13 +107,6 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
         baseNames.push_back(name);
     }
     return baseNames;
-}
-
-bool TransportMan::CheckTransportIndex(const int index) const noexcept
-{
-    const int upperLimit = static_cast<int>(m_Transports.size());
-    const int lowerLimit = -1;
-    return CheckIndexRange(index, upperLimit, lowerLimit);
 }
 
 std::vector<std::string> TransportMan::GetTransportsTypes() noexcept
@@ -160,29 +153,28 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
     }
     else
     {
-        CheckFileType(transportIndex);
-        m_Transports[transportIndex]->Write(buffer, size);
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to WriteFiles with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->Write(buffer, size);
     }
 }
 
-size_t TransportMan::GetFileSize(const int transportIndex)
+size_t TransportMan::GetFileSize(const size_t transportIndex)
 {
-    if (m_DebugMode)
-    {
-        CheckTransportIndex(transportIndex);
-    }
-
-    return m_Transports[transportIndex]->GetSize();
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to GetFileSize with index " +
+                               std::to_string(transportIndex));
+    return itTransport->second->GetSize();
 }
 
 void TransportMan::ReadFile(char *buffer, const size_t size, const size_t start,
-                            const int transportIndex)
+                            const size_t transportIndex)
 {
-    if (m_DebugMode)
-    {
-        CheckTransportIndex(transportIndex);
-    }
-    m_Transports[transportIndex]->Read(buffer, size, start);
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to ReadFile with index " +
+                               std::to_string(transportIndex));
+    itTransport->second->Read(buffer, size, start);
 }
 
 void TransportMan::CloseFiles(const int transportIndex)
@@ -201,8 +193,10 @@ void TransportMan::CloseFiles(const int transportIndex)
     }
     else
     {
-        CheckFileType(transportIndex);
-        m_Transports[transportIndex]->Close();
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to CloseFiles with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->Close();
     }
 }
 
@@ -291,16 +285,24 @@ TransportMan::OpenFileTransport(const std::string &fileName,
     return transport;
 }
 
-void TransportMan::CheckFileType(const int transportIndex)
+void TransportMan::CheckFile(
+    std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
+        itTransport,
+    const std::string hint) const
 {
     if (m_DebugMode)
     {
-        if (m_Transports[transportIndex]->m_Type != "File")
+        if (itTransport == m_Transports.end())
         {
-            throw std::invalid_argument(
-                "ERROR: invalid file transport library " +
-                m_Transports[transportIndex]->m_Library +
-                ", only POSIX, stdio, fstream are supported\n");
+            throw std::invalid_argument("ERROR: invalid transport " + hint +
+                                        "\n");
+        }
+
+        if (itTransport->second->m_Type != "File")
+        {
+            throw std::invalid_argument("ERROR: invalid type " +
+                                        itTransport->second->m_Library +
+                                        ", must be file " + hint + "\n");
         }
     }
 }
