@@ -158,8 +158,16 @@ private:
                                  const std::string, const std::string,         \
                                  const Dims &)> &function,                     \
         const Params &parameters);
+
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+    /** define CallBack2 */
+    Operator &DefineCallBack(
+        const std::string name,
+        const std::function<void(void *, const std::string, const std::string,
+                                 const std::string, const Dims &)> &function,
+        const Params &parameters);
 };
 
 } // end namespace adios2

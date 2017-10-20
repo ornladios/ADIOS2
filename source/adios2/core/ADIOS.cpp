@@ -32,6 +32,7 @@
 
 // callback
 #include "adios2/operator/callback/Signature1.h"
+#include "adios2/operator/callback/Signature2.h"
 
 namespace adios2
 {
@@ -174,7 +175,22 @@ void ADIOS::CheckMPI() const
         auto itPair = m_Operators.emplace(name, std::move(callbackOperator));  \
         return *itPair.first->second;                                          \
     }
+
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+Operator &ADIOS::DefineCallBack(
+    const std::string name,
+    const std::function<void(void *, const std::string, const std::string,
+                             const std::string, const Dims &)> &function,
+    const Params &parameters)
+{
+    std::shared_ptr<Operator> callbackOperator =
+        std::make_shared<callback::Signature2>(function, parameters,
+                                               m_DebugMode);
+
+    auto itPair = m_Operators.emplace(name, std::move(callbackOperator));
+    return *itPair.first->second;
+}
 
 } // end namespace adios2

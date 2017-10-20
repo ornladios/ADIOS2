@@ -237,7 +237,7 @@ public:
      * @param parameters specific parameters for IO
      */
     void AddOperator(Operator &adiosOperator,
-                     const Params &parameters) noexcept;
+                     const Params &parameters = Params()) noexcept;
 
     /**
      * Creates a polymorphic object that derives the Engine class,

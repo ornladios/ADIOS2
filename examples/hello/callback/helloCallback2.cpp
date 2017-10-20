@@ -2,21 +2,22 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloDataManReader_nompi.cpp
+ * helloCallback2.cpp
  *
- *  Created on: Jan 9, 2017
- *      Author: Jason Wang
+ *  Created on: Oct 20, 2017
+ *      Author: William F Godoy godoywf@ornl.gov
  */
+#include <mpi.h>
 
-#include <chrono>
-#include <iostream>
-#include <numeric>
-#include <thread>
+#include <cstdint>   //std::int32_t
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
+#include <numeric>   //std::iota
+#include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
 #include <adios2.h>
 
-// matches Signature2 in ADIOS2
 void UserCallBack(void *data, const std::string &doid, const std::string &var,
                   const std::string &dtype,
                   const std::vector<std::size_t> &varshape)
@@ -30,53 +31,41 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
 
     for (unsigned int i = 0; i < varsize; ++i)
     {
-        std::cout << ((float *)data)[i] << " ";
+        std::cout << (reinterpret_cast<float *>(data))[i] << " ";
     }
     std::cout << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
-    // Application variable
     MPI_Init(&argc, &argv);
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    /** Application variable uints from 0 to 100 */
+    std::vector<float> myFloats(100);
+    std::iota(myFloats.begin(), myFloats.end(), 0.f);
+    const std::size_t Nx = myFloats.size();
+    const std::size_t inputBytes = Nx * sizeof(float);
+
     try
     {
-        adios2::ADIOS adios(adios2::DebugON);
+        /** ADIOS class factory of IO class objects, DebugON is recommended */
+        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
-        adios2::Operator &callbackFloat = adios.DefineOperator(
-            "Print float Variable callback",
+        adios2::Operator &callback = adios.DefineOperator(
+            "Print Variable<float>",
             std::function<void(void *, const std::string &, const std::string &,
-                               const std::string &, const adios2::Dims &)>(
-                UserCallBack));
+                               const std::string &,
+                               const std::vector<std::size_t> &)>(
+                &UserCallBack));
 
-        adios2::IO &dataManIO = adios.DeclareIO("WAN");
-        dataManIO.SetEngine("DataManReader");
-        dataManIO.SetParameters({{"real_time", "yes"},
-                                 {"method_type", "stream"},
-                                 {"method", "dump"}});
-        dataManIO.AddOperator(callbackFloat); // progated to all Engines
-
-        adios2::Engine &dataManReader =
-            dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
-
-        for (unsigned int i = 0; i < 3; ++i)
+        if (callback.m_Type == "Signature2")
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            callback.RunCallback2(myFloats.data(), "0", "bpFloats", "float",
+                                  std::vector<std::size_t>{Nx});
         }
-
-        adios2::Variable<double> *ioMyDoubles =
-            dataManIO.InquireVariable<double>("ioMyDoubles");
-
-        if (ioMyDoubles == nullptr)
-        {
-            std::cout << "Variable ioMyDoubles not read...yet\n";
-        }
-
-        dataManReader.Close();
     }
     catch (std::invalid_argument &e)
     {
@@ -86,9 +75,9 @@ int main(int argc, char *argv[])
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM "
-                     "from rank "
-                  << rank << "\n";
+        std::cout
+            << "IO System base failure exception, STOPPING PROGRAM from rank "
+            << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

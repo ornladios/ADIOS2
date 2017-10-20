@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloCallback.cpp
+ * helloCallback1.cpp
  *
  *  Created on: Oct 18, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -27,11 +27,8 @@ void UserCallBack(const float *data, const std::string &id,
     std::cout << "Variable type : " << type << "\n";
     std::cout << "Variable id : " << id << "\n";
 
-    size_t totalSize = 1;
-    for (const size_t n : count)
-    {
-        totalSize *= n;
-    }
+    const size_t totalSize = std::accumulate(count.begin(), count.end(), 1,
+                                             std::multiplies<std::size_t>());
 
     std::cout << "Variable data :\n { ";
     for (size_t i = 0; i < totalSize; ++i)

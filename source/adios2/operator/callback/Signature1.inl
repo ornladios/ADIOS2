@@ -40,7 +40,8 @@ void Signature1<T>::RunCallback1(const T *arg1, const std::string &arg2,
     }
     else
     {
-        throw std::runtime_error("ERROR: function Callback1 failed\n");
+        throw std::runtime_error(
+            "ERROR: callback function of Signature1<T> type failed\n");
     }
 }
 

@@ -13,7 +13,10 @@ add_library(adios2
   core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
-  
+
+#operator callback
+  operator/callback/Signature2.cpp
+
 #helper
   helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
