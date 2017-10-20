@@ -12,7 +12,7 @@
 #define ADIOS2_CORE_ADIOS_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <adios2/core/Operator.h>
+#include <functional>
 #include <map>
 #include <memory> //std::shared_ptr
 #include <string>
@@ -21,6 +21,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Operator.h"
 
@@ -148,6 +149,17 @@ private:
 
     /** throws exception if m_MPIComm = MPI_COMM_NULL */
     void CheckMPI() const;
+
+/** define CallBack1 */
+#define declare_type(T)                                                        \
+    Operator &DefineCallBack(                                                  \
+        const std::string name,                                                \
+        const std::function<void(const T *, const std::string,                 \
+                                 const std::string, const std::string,         \
+                                 const Dims &)> &function,                     \
+        const Params &parameters);
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 };
 
 } // end namespace adios2

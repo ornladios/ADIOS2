@@ -21,7 +21,7 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey
 
-// transforms
+// compress
 #ifdef ADIOS2_HAVE_BZIP2
 #include "adios2/operator/compress/CompressBZip2.h"
 #endif
@@ -29,6 +29,9 @@
 #ifdef ADIOS2_HAVE_ZFP
 #include "adios2/operator/compress/CompressZfp.h"
 #endif
+
+// callback
+#include "adios2/operator/callback/Signature1.h"
 
 namespace adios2
 {
@@ -155,5 +158,23 @@ void ADIOS::CheckMPI() const
                                      " in call to ADIOS constructor\n");
     }
 }
+
+#define declare_type(T)                                                        \
+    Operator &ADIOS::DefineCallBack(                                           \
+        const std::string name,                                                \
+        const std::function<void(const T *, const std::string,                 \
+                                 const std::string, const std::string,         \
+                                 const Dims &)> &function,                     \
+        const Params &parameters)                                              \
+    {                                                                          \
+        std::shared_ptr<Operator> callbackOperator =                           \
+            std::make_shared<callback::Signature1<T>>(function, parameters,    \
+                                                      m_DebugMode);            \
+                                                                               \
+        auto itPair = m_Operators.emplace(name, std::move(callbackOperator));  \
+        return *itPair.first->second;                                          \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 } // end namespace adios2

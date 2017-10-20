@@ -19,16 +19,12 @@
 #include <vector>
 /// \endcond
 
+#include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 
 namespace adios2
 {
 
-template <class R, class... Args>
-class Callback; // forward declaration
-
-/** Base class that defines data variable transformations implemented under
- * adios2/transform */
 class Operator
 {
 
@@ -46,9 +42,12 @@ public:
 
     virtual ~Operator() = default;
 
-    template <class R, class... Args>
-    std::function<R(Args...)> GetCallback();
-
+#define declare_type(T)                                                        \
+    virtual void RunCallback1(const T *, const std::string &,                  \
+                              const std::string &, const std::string &,        \
+                              const Dims &);
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
     /**
      * Returns a conservative buffer size to hold input data for classes
      * @param sizeIn size of input data to be compressed in bytes
@@ -117,10 +116,11 @@ protected:
     virtual size_t DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
                                    const std::string type,
                                    const Params &parameters) const;
+
+private:
+    void CheckCallbackType(const std::string type) const;
 };
 
 } // end namespace adios2
-
-#include "Operator.inl"
 
 #endif /* ADIOS2_CORE_OPERATOR_H_ */

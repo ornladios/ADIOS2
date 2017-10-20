@@ -28,14 +28,10 @@ Operator &ADIOS::DefineOperator(const std::string name,
     {
         throw std::invalid_argument("ERROR: operator with name " + name +
                                     " previously defined, must be unique, in "
-                                    "call to DefineOperatorCallback\n");
+                                    "call to DefineOperator\n");
     }
 
-    std::shared_ptr<Operator> callback = std::make_shared<Callback<R, Args...>>(
-        function, parameters, m_DebugMode);
-
-    auto itPair = m_Operators.emplace(name, std::move(callback));
-    return *itPair.first->second;
+    return DefineCallBack(name, function, parameters);
 }
 
 } // end namespace adios2

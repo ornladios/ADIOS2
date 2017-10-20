@@ -20,6 +20,17 @@ Operator::Operator(const std::string type, const Params &parameters,
 {
 }
 
+#define declare_type(T)                                                        \
+                                                                               \
+    void Operator::RunCallback1(const T *arg1, const std::string &arg2,        \
+                                const std::string &arg3,                       \
+                                const std::string &arg4, const Dims &arg5)     \
+    {                                                                          \
+        CheckCallbackType("Callback1");                                        \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 size_t Operator::BufferMaxSize(const size_t sizeIn) const
 {
     if (m_DebugMode)
@@ -94,6 +105,17 @@ size_t Operator::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
     }
 
     return 0;
+}
+
+// PRIVATE
+void Operator::CheckCallbackType(const std::string type) const
+{
+    if (m_DebugMode && m_Type != type)
+    {
+        throw std::invalid_argument("ERROR: operator of type " + m_Type +
+                                    " doesn't match expected callback type " +
+                                    type + " arguments\n");
+    }
 }
 
 } // end namespace adios2

@@ -7,7 +7,6 @@ add_library(adios2
   core/Attribute.cpp core/Attribute.tcc
   core/AttributeBase.cpp
   core/ADIOS.cpp
-  core/Callback.cpp
   core/Engine.cpp
   core/IO.cpp core/IO.tcc
   core/Operator.cpp core/Operator.tcc
