@@ -42,6 +42,10 @@ public:
 
     virtual ~Operator() = default;
 
+    void SetParameter(const std::string key, const std::string value) noexcept;
+
+    Params &GetParameters() noexcept;
+
 #define declare_type(T)                                                        \
     virtual void RunCallback1(const T *, const std::string &,                  \
                               const std::string &, const std::string &,        \

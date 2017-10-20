@@ -20,6 +20,14 @@ Operator::Operator(const std::string type, const Params &parameters,
 {
 }
 
+void Operator::SetParameter(const std::string key,
+                            const std::string value) noexcept
+{
+    m_Parameters[key] = value;
+}
+
+Params &Operator::GetParameters() noexcept { return m_Parameters; }
+
 #define declare_type(T)                                                        \
                                                                                \
     void Operator::RunCallback1(const T *arg1, const std::string &arg2,        \

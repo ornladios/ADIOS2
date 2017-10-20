@@ -16,8 +16,11 @@
 
 #include <adios2.h>
 
-void UserCallBack(const void *data, std::string doid, std::string var,
-                  std::string dtype, std::vector<std::size_t> varshape)
+// matches Signature1 in ADIOS2
+template <class T>
+void UserCallBack(const T *data, const std::string &doid,
+                  const std::string &var, const std::string &dtype,
+                  const std::vector<std::size_t> &varshape)
 {
     std::cout << "data object ID = " << doid << "\n";
     std::cout << "variable name = " << var << "\n";
@@ -27,7 +30,9 @@ void UserCallBack(const void *data, std::string doid, std::string var,
                                           std::multiplies<std::size_t>());
 
     for (unsigned int i = 0; i < varsize; ++i)
+    {
         std::cout << ((float *)data)[i] << " ";
+    }
     std::cout << std::endl;
 }
 
@@ -42,6 +47,12 @@ int main(int argc, char *argv[])
     try
     {
         adios2::ADIOS adios(adios2::DebugON);
+
+        adios2::Operator &callbackFloat = adios.DefineOperator(
+            "Print float Variable callback",
+            std::function<void(const float *, const std::string &,
+                               const std::string &, const std::string &,
+                               const adios2::Dims &)>(UserCallBack<float>));
 
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataManReader");

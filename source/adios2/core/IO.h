@@ -31,7 +31,7 @@
 namespace adios2
 {
 
-/** used for Variables and Attributes */
+/** used for Variables and Attributes, name, type, type-index */
 using DataMap =
     std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
 
@@ -44,6 +44,12 @@ class IO
 {
 
 public:
+    struct OperatorInfo
+    {
+        Operator &ADIOSOperator;
+        Params Parameters;
+    };
+
     /** unique identifier */
     const std::string m_Name;
 
@@ -55,13 +61,16 @@ public:
     const bool m_DebugMode = false;
 
     /** from ADIOS class passed to Engine created with Open */
-    std::string m_HostLanguage = "C++";
+    const std::string m_HostLanguage = "C++";
 
     /** From SetParameter, parameters for a particular engine from m_Type */
     Params m_Parameters;
 
     /** From AddTransport, parameters in map for each transport in vector */
     std::vector<Params> m_TransportsParameters;
+
+    /** From Add Operator */
+    std::vector<OperatorInfo> m_Operators;
 
     /**
      * Constructor called from ADIOS factory class
@@ -221,9 +230,14 @@ public:
      */
     bool InConfigFile() const;
 
-    void SetCallBack(std::function<void(const void *, std::string, std::string,
-                                        std::string, std::vector<size_t>)>
-                         callback);
+    /**
+     * Adds an operator defined by the ADIOS class. Could be a variable set
+     * transform, callback function, etc.
+     * @param adiosOperator operator created by the ADIOS class
+     * @param parameters specific parameters for IO
+     */
+    void AddOperator(Operator &adiosOperator,
+                     const Params &parameters) noexcept;
 
     /**
      * Creates a polymorphic object that derives the Engine class,

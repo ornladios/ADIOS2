@@ -29,6 +29,17 @@ class VariableBase
 {
 
 public:
+    /** Operators metadata info */
+    struct OperatorInfo
+    {
+        /** reference to object derived from Operator class */
+        Operator &ADIOSOperator;
+        /** Variable specific parameters */
+        Params Parameters;
+        /** resulting sizes from Operator */
+        Dims Sizes;
+    };
+
     /** unique identifier inside Method that creates a Variable */
     const std::string m_Name;
 
@@ -50,17 +61,6 @@ public:
     bool m_ReadAsJoined = false;
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
-
-    /** Transforms metadata info */
-    struct OperatorInfo
-    {
-        /** reference to object derived from Transform class */
-        Operator &OperatorRef;
-        /** parameters from AddTransform */
-        Params Parameters;
-        /** resulting sizes from transformation */
-        Dims Sizes;
-    };
 
     /** Registered transforms */
     std::vector<OperatorInfo> m_OperatorsInfo;
