@@ -43,6 +43,7 @@ TEST_F(XMLConfigTest, TwoIOs)
         EXPECT_EQ(params.at("BufferGrowthFactor"), "2");
         adios2::Engine &engine =
             io.Open("Test BP Writer 1", adios2::Mode::Write);
+        engine.Close();
     });
 
     EXPECT_NO_THROW({

@@ -56,8 +56,8 @@ public:
      * @param parametersVector from IO
      * @param profile
      */
-    void OpenFiles(const std::vector<std::string> &baseNames,
-                   const std::vector<std::string> &names, const Mode openMode,
+    void OpenFiles(const std::vector<std::string> &fileNames,
+                   const Mode openMode,
                    const std::vector<Params> &parametersVector,
                    const bool profile);
 

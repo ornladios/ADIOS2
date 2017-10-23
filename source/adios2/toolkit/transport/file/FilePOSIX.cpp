@@ -48,6 +48,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode)
 
     case (Mode::Write):
         ProfilerStart("open");
+        MkDir(m_Name);
         m_FileDescriptor = open(m_Name.c_str(), O_WRONLY | O_CREAT, 0777);
         ProfilerStop("open");
         break;

@@ -60,10 +60,10 @@ typedef enum {
 } adios2_type;
 
 typedef enum {
-    adios2_mode_undefined,
-    adios2_mode_write,
-    adios2_mode_read,
-    adios2_mode_append,
+    adios2_mode_undefined = 0,
+    adios2_mode_write = 1,
+    adios2_mode_read = 2,
+    adios2_mode_append = 3,
 } adios2_mode;
 
 #ifdef __cplusplus

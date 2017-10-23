@@ -104,6 +104,8 @@ protected:
     /** true: turn on exceptions */
     const bool m_DebugMode = false;
 
+    void MkDir(const std::string &fileName);
+
     void ProfilerStart(const std::string process) noexcept;
 
     void ProfilerStop(const std::string process) noexcept;

@@ -32,7 +32,7 @@ program helloBPWriter
         & shape_dims, start_dims, count_dims, adios2_constant_dims_true, ierr)
 
     ! Open myVector_f.bp in write mode
-    call adios2_open(engine1, io, "myVector_f.bp", adios2_open_mode_write, ierr)
+    call adios2_open(engine1, io, "myVector_f.bp", adios2_mode_write, ierr)
 
     ! Write myArray contents to bp buffer, based on var1 metadata
     call adios2_write(engine1, var1, myArray, ierr)

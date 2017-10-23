@@ -66,7 +66,7 @@ void BPFileReader::InitTransports()
             m_BP3Deserializer.GetBPMetadataFileName(m_Name));
 
         const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
-        m_FileManager.OpenFiles({}, {metadataFile}, adios2::Mode::Read,
+        m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, profile);
     }
 }
@@ -126,7 +126,7 @@ void BPFileReader::ReadVariables(
             const std::string subFile(
                 m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
 
-            m_SubFileManager.OpenFiles({}, {subFile}, adios2::Mode::Read,
+            m_SubFileManager.OpenFiles({subFile}, adios2::Mode::Read,
                                        std::vector<Params>(), profile);
 
             for (const auto &stepPair : subFileIndexPair.second) // step

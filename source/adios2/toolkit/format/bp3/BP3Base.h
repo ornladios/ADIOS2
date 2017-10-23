@@ -156,12 +156,16 @@ public:
     GetBPBaseNames(const std::vector<std::string> &names) const noexcept;
 
     /**
-     * Get BP names from base names
-     * @param names inputs
+     * Get BP rank names from base names:  /path/name.bp.dir/name.bp.rank
+     * @param baseNames inputs
      * @return
      */
     std::vector<std::string>
-    GetBPNames(const std::vector<std::string> &baseNames) const noexcept;
+    GetBPRankNames(const std::vector<std::string> &baseNames) const noexcept;
+
+    std::vector<std::string>
+    GetBPMetadataFileNames(const std::vector<std::string> &names) const
+        noexcept;
 
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
 

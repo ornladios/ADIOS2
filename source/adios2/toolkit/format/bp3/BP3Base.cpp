@@ -109,6 +109,19 @@ BP3Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
     return bpBaseNames;
 }
 
+std::vector<std::string>
+BP3Base::GetBPMetadataFileNames(const std::vector<std::string> &names) const
+    noexcept
+{
+    std::vector<std::string> metadataFileNames;
+    metadataFileNames.reserve(names.size());
+    for (const auto &name : names)
+    {
+        metadataFileNames.push_back(GetBPMetadataFileName(name));
+    }
+    return metadataFileNames;
+}
+
 std::string BP3Base::GetBPMetadataFileName(const std::string &name) const
     noexcept
 {
@@ -116,15 +129,15 @@ std::string BP3Base::GetBPMetadataFileName(const std::string &name) const
 }
 
 std::vector<std::string>
-BP3Base::GetBPNames(const std::vector<std::string> &baseNames) const noexcept
+BP3Base::GetBPRankNames(const std::vector<std::string> &names) const noexcept
 {
     std::vector<std::string> bpNames;
-    bpNames.reserve(baseNames.size());
+    bpNames.reserve(names.size());
 
-    for (const auto &baseName : baseNames)
+    for (const auto &name : names)
     {
         bpNames.push_back(
-            GetBPRankName(baseName, static_cast<unsigned int>(m_RankMPI)));
+            GetBPRankName(name, static_cast<unsigned int>(m_RankMPI)));
     }
     return bpNames;
 }

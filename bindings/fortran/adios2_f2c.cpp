@@ -80,14 +80,14 @@ void adios2_declare_io_f2c_(adios2_IO **io, adios2_ADIOS **adios,
     }
 }
 
-void adios2_set_param_f2c_(adios2_IO **io, const char *key, const char *value,
-                           int *ierr)
+void adios2_set_parameter_f2c_(adios2_IO **io, const char *key,
+                               const char *value, int *ierr)
 {
     *ierr = 0;
 
     try
     {
-        adios2_set_param(*io, key, value);
+        adios2_set_parameter(*io, key, value);
     }
     catch (std::exception &e)
     {
@@ -117,15 +117,16 @@ void adios2_add_transport_f2c_(int *transport_index, adios2_IO **io,
     }
 }
 
-void adios2_set_transport_param_f2c_(adios2_IO **io, const int *transport_index,
-                                     const char *key, const char *value,
-                                     int *ierr)
+void adios2_set_transport_parameter_f2c_(adios2_IO **io,
+                                         const int *transport_index,
+                                         const char *key, const char *value,
+                                         int *ierr)
 {
     *ierr = 0;
 
     try
     {
-        adios2_set_transport_param(
+        adios2_set_transport_parameter(
             *io, static_cast<unsigned int>(*transport_index), key, value);
     }
     catch (std::exception &e)

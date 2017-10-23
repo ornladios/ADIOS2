@@ -25,14 +25,14 @@ int main(int argc, char *argv[])
 
     // IO
     adios2_IO *ioH = adios2_declare_io(adiosH, "CArrayTypes");
-    // Set engine parameters
+    //    //Set engine parameters
     adios2_set_engine(ioH, "BPFileWriter");
-    adios2_set_param(ioH, "ProfileUnits", "Microseconds");
-    adios2_set_param(ioH, "Threads", "1");
+    adios2_set_parameter(ioH, "ProfileUnits", "Microseconds");
+    adios2_set_parameter(ioH, "Threads", "1");
 
     // Set transport and parameters
     const unsigned int transportID = adios2_add_transport(ioH, "File");
-    adios2_set_transport_param(ioH, transportID, "library", "fstream");
+    adios2_set_transport_parameter(ioH, transportID, "library", "fstream");
 
     // count dims are allocated in stack
     size_t count[1];
@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
 
     // Define variables in ioH
     {
-
         adios2_define_variable(ioH, "varI8", adios2_type_char, 1, NULL, NULL,
                                count, adios2_constant_dims_true);
         adios2_define_variable(ioH, "varI16", adios2_type_short, 1, NULL, NULL,
@@ -76,8 +75,7 @@ int main(int argc, char *argv[])
     adios2_Variable *varR64 = adios2_inquire_variable(ioH, "varR64");
 
     // Open Engine handler, Write and Close
-    adios2_Engine *engineH =
-        adios2_open(ioH, "ctypes.bp", adios2_mode_write);
+    adios2_Engine *engineH = adios2_open(ioH, "ctypes", adios2_mode_write);
 
     adios2_put_sync(engineH, varI8, data_I8);
     adios2_put_sync(engineH, varI16, data_I16);

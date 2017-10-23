@@ -27,7 +27,7 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
     {
         m_BP3Serializer.PutProcessGroupIndex(
-            m_IO.m_HostLanguage, m_FileManager.GetTransportsTypes());
+            m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
     }
 
     format::BP3Base::ResizeResult resizeResult =
@@ -39,7 +39,7 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
         auto &position = m_BP3Serializer.m_Data.m_Position;
 
-        m_FileManager.WriteFiles(buffer.data(), position);
+        m_FileDataManager.WriteFiles(buffer.data(), position);
         // set relative position to zero
         position = 0;
         // reset buffer to zero values to current size
@@ -47,7 +47,7 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
         // new group index
         m_BP3Serializer.PutProcessGroupIndex(
-            m_IO.m_HostLanguage, m_FileManager.GetTransportsTypes());
+            m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//

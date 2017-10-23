@@ -25,7 +25,9 @@ namespace adios2
 BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode openMode,
                            MPI_Comm mpiComm)
 : Engine("BPFileWriter", io, name, openMode, mpiComm),
-  m_BP3Serializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode)
+  m_BP3Serializer(mpiComm, m_DebugMode),
+  m_FileDataManager(mpiComm, m_DebugMode),
+  m_FileMetadataManager(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open BPFileWriter " + m_Name + "\n";
     Init();
@@ -63,36 +65,23 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void BPFileWriter::Close(const int transportIndex)
 {
-    //    if (m_DebugMode)
-    //    {
-    //        if (!m_FileManager.CheckTransportIndex(transportIndex))
-    //       {
-    //            auto transportsSize = m_FileManager.m_Transports.size();
-    //            throw std::invalid_argument(
-    //                "ERROR: transport index " + std::to_string(transportIndex)
-    //                +
-    //                " outside range, -1 (default) to " +
-    //                std::to_string(transportsSize - 1) + ", in call to
-    //                Close\n");
-    //        }
-    //    }
-
     // close bp buffer by serializing data and metadata
     m_BP3Serializer.CloseData(m_IO);
     // send data to corresponding transports
-    m_FileManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
-                             m_BP3Serializer.m_Data.m_Position, transportIndex);
+    m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
+                                 m_BP3Serializer.m_Data.m_Position,
+                                 transportIndex);
 
-    m_FileManager.CloseFiles(transportIndex);
+    m_FileDataManager.CloseFiles(transportIndex);
 
     if (m_BP3Serializer.m_Profiler.IsActive &&
-        m_FileManager.AllTransportsClosed())
+        m_FileDataManager.AllTransportsClosed())
     {
         WriteProfilingJSONFile();
     }
 
     if (m_BP3Serializer.m_CollectiveMetadata &&
-        m_FileManager.AllTransportsClosed())
+        m_FileDataManager.AllTransportsClosed())
     {
         WriteCollectiveMetadataFile();
     }
@@ -114,15 +103,18 @@ void BPFileWriter::InitTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
-    // Names are std::vector<std::string>
-    auto transportsNames =
-        m_FileManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
-    auto bpBaseNames = m_BP3Serializer.GetBPBaseNames(transportsNames);
-    auto bpNames = m_BP3Serializer.GetBPNames(transportsNames);
+    // Names passed to IO AddTransport option with key "Name"
+    std::vector<std::string> transportsNames =
+        m_FileDataManager.GetFilesBaseNames(m_Name,
+                                            m_IO.m_TransportsParameters);
 
-    m_FileManager.OpenFiles(bpBaseNames, bpNames, m_OpenMode,
-                            m_IO.m_TransportsParameters,
-                            m_BP3Serializer.m_Profiler.IsActive);
+    // /path/name.bp.dir/name.bp.rank
+    std::vector<std::string> bpRankNames =
+        m_BP3Serializer.GetBPRankNames(transportsNames);
+
+    m_FileDataManager.OpenFiles(bpRankNames, m_OpenMode,
+                                m_IO.m_TransportsParameters,
+                                m_BP3Serializer.m_Profiler.IsActive);
 }
 
 void BPFileWriter::InitBPBuffer()
@@ -136,14 +128,14 @@ void BPFileWriter::InitBPBuffer()
     else
     {
         m_BP3Serializer.PutProcessGroupIndex(
-            m_IO.m_HostLanguage, m_FileManager.GetTransportsTypes());
+            m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
     }
 }
 
 void BPFileWriter::WriteProfilingJSONFile()
 {
-    auto transportTypes = m_FileManager.GetTransportsTypes();
-    auto transportProfilers = m_FileManager.GetTransportsProfilers();
+    auto transportTypes = m_FileDataManager.GetTransportsTypes();
+    auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
 
     const std::string lineJSON(m_BP3Serializer.GetRankProfilingJSON(
                                    transportTypes, transportProfilers) +
@@ -168,13 +160,23 @@ void BPFileWriter::WriteCollectiveMetadataFile()
     m_BP3Serializer.AggregateCollectiveMetadata();
     if (m_BP3Serializer.m_RankMPI == 0)
     {
-        transport::FileFStream metadataStream(m_MPIComm, m_DebugMode);
-        const std::string metadataFileName(
-            m_BP3Serializer.GetBPMetadataFileName(m_Name));
-        metadataStream.Open(metadataFileName, Mode::Write);
-        metadataStream.Write(m_BP3Serializer.m_Metadata.m_Buffer.data(),
-                             m_BP3Serializer.m_Metadata.m_AbsolutePosition);
-        metadataStream.Close();
+        // first init metadata files
+        std::vector<std::string> transportsNames =
+            m_FileMetadataManager.GetFilesBaseNames(
+                m_Name, m_IO.m_TransportsParameters);
+
+        std::vector<std::string> bpMetadataFileNames =
+            m_BP3Serializer.GetBPMetadataFileNames(transportsNames);
+
+        m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
+                                        m_IO.m_TransportsParameters,
+                                        m_BP3Serializer.m_Profiler.IsActive);
+
+        const auto &buffer = m_BP3Serializer.m_Metadata.m_Buffer;
+        const size_t size = m_BP3Serializer.m_Metadata.m_AbsolutePosition;
+
+        m_FileMetadataManager.WriteFiles(buffer.data(), size);
+        m_FileMetadataManager.CloseFiles();
     }
 }
 

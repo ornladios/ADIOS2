@@ -11,6 +11,7 @@
 #include "Transport.h"
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
 namespace adios2
 {
@@ -100,6 +101,18 @@ void Transport::CheckName() const
         throw std::invalid_argument("ERROR: name can't be empty for " +
                                     m_Library + " transport \n");
     }
+}
+
+void Transport::MkDir(const std::string &fileName)
+{
+    const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
+    if (lastPathSeparator == std::string::npos)
+    {
+        return;
+    }
+
+    const std::string path(fileName.substr(0, lastPathSeparator));
+    CreateDirectory(path);
 }
 
 } // end namespace adios2

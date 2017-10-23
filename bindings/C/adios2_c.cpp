@@ -269,7 +269,7 @@ void adios2_set_engine(adios2_IO *io, const char *engine_type)
     reinterpret_cast<adios2::IO *>(io)->SetEngine(engine_type);
 }
 
-void adios2_set_param(adios2_IO *io, const char *key, const char *value)
+void adios2_set_parameter(adios2_IO *io, const char *key, const char *value)
 {
     reinterpret_cast<adios2::IO *>(io)->SetParameter(key, value);
 }
@@ -279,9 +279,9 @@ unsigned int adios2_add_transport(adios2_IO *io, const char *transport_type)
     return reinterpret_cast<adios2::IO *>(io)->AddTransport(transport_type);
 }
 
-void adios2_set_transport_param(adios2_IO *io,
-                                const unsigned int transport_index,
-                                const char *key, const char *value)
+void adios2_set_transport_parameter(adios2_IO *io,
+                                    const unsigned int transport_index,
+                                    const char *key, const char *value)
 {
     reinterpret_cast<adios2::IO *>(io)->SetTransportParameter(transport_index,
                                                               key, value);
@@ -305,15 +305,15 @@ adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
     {
 
     case adios2_mode_write:
-        engine = &ioCpp.Open(name, adios2::Mode::Write, mpi_comm);
+        engine = &ioCpp.Open(std::string(name), adios2::Mode::Write, mpi_comm);
         break;
 
     case adios2_mode_read:
-        engine = &ioCpp.Open(name, adios2::Mode::Read, mpi_comm);
+        engine = &ioCpp.Open(std::string(name), adios2::Mode::Read, mpi_comm);
         break;
 
     case adios2_mode_append:
-        engine = &ioCpp.Open(name, adios2::Mode::Append, mpi_comm);
+        engine = &ioCpp.Open(std::string(name), adios2::Mode::Append, mpi_comm);
         break;
 
     case adios2_mode_undefined:

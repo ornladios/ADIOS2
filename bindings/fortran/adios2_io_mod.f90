@@ -15,13 +15,13 @@ module adios2_io
 
 contains
 
-    subroutine adios2_set_param(io, key, value, ierr)
+    subroutine adios2_set_parameter(io, key, value, ierr)
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: key
         character*(*), intent(in) :: value
         integer, intent(out) :: ierr
 
-        call adios2_set_param_f2c( io, TRIM(ADJUSTL(key))//char(0), &
+        call adios2_set_parameter_f2c( io, TRIM(ADJUSTL(key))//char(0), &
             & TRIM(ADJUSTL(value))//char(0) )
 
     end subroutine
@@ -46,7 +46,7 @@ contains
         character*(*), intent(in) :: value
         integer, intent(out):: ierr
 
-        call adios2_set_transport_param_f2c(io, transport_index, &
+        call adios2_set_transport_parameter_f2c(io, transport_index, &
           & TRIM(ADJUSTL(key))//char(0), TRIM(ADJUSTL(value))//char(0), &
           & ierr)
 

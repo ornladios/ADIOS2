@@ -93,7 +93,7 @@ void adios2_set_engine(adios2_IO *io, const char *engine_type);
  * @param key parameter key
  * @param value parameter value
  */
-void adios2_set_param(adios2_IO *io, const char *key, const char *value);
+void adios2_set_parameter(adios2_IO *io, const char *key, const char *value);
 
 /**
  * Set a transport for the present io
@@ -112,9 +112,9 @@ unsigned int adios2_add_transport(adios2_IO *io, const char *transport_type);
  * @param key parameter key
  * @param value parameter value
  */
-void adios2_set_transport_param(adios2_IO *io,
-                                const unsigned int transport_index,
-                                const char *key, const char *value);
+void adios2_set_transport_parameter(adios2_IO *io,
+                                    const unsigned int transport_index,
+                                    const char *key, const char *value);
 
 /**
  *

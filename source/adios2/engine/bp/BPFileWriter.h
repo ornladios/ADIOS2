@@ -42,8 +42,11 @@ private:
     /** Single object controlling BP buffering */
     format::BP3Serializer m_BP3Serializer;
 
-    /** Single object controlling a vector of Transports from IO AddTransport */
-    transportman::TransportMan m_FileManager;
+    /** Manage BP data files Transports from IO AddTransport */
+    transportman::TransportMan m_FileDataManager;
+
+    /** Manages the optional collective metadata files */
+    transportman::TransportMan m_FileMetadataManager;
 
     void Init() final;
 

@@ -20,8 +20,8 @@ int main(int argc, char *argv[])
     adios2_IO *ioH = adios2_declare_io(adiosH, "CArrayTypes");
     // Set engine parameters
     adios2_set_engine(ioH, "BPFileWriter");
-    adios2_set_param(ioH, "ProfileUnits", "Microseconds");
-    adios2_set_param(ioH, "Threads", "1");
+    adios2_set_parameter(ioH, "ProfileUnits", "Microseconds");
+    adios2_set_parameter(ioH, "Threads", "1");
 
     // Set transport and parameters
     const unsigned int transportID = adios2_add_transport(ioH, "File");
@@ -68,8 +68,7 @@ int main(int argc, char *argv[])
     adios2_Variable *varR64 = adios2_inquire_variable(ioH, "varR64");
 
     // Open Engine handler, Write and Close
-    adios2_Engine *engineH =
-        adios2_open(ioH, "ctypes.bp", adios2_mode_write);
+    adios2_Engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
     adios2_put_sync(engineH, varI8, data_I8);
     adios2_put_sync(engineH, varI16, data_I16);

@@ -34,27 +34,21 @@ TransportMan::TransportMan(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void TransportMan::OpenFiles(const std::vector<std::string> &baseNames,
-                             const std::vector<std::string> &names,
+void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
                              const Mode openMode,
                              const std::vector<Params> &parametersVector,
                              const bool profile)
 {
 
-    for (size_t i = 0; i < names.size(); ++i)
+    for (size_t i = 0; i < fileNames.size(); ++i)
     {
         const Params &parameters = parametersVector[i];
         const std::string type(parameters.at("transport"));
 
         if (type == "File" || type == "file") // need to create directory
         {
-            if (openMode == Mode::Write)
-            {
-                CreateDirectory(baseNames[i]);
-            }
-
             std::shared_ptr<Transport> file =
-                OpenFileTransport(names[i], openMode, parameters, profile);
+                OpenFileTransport(fileNames[i], openMode, parameters, profile);
             m_Transports.insert({i, file});
         }
     }
