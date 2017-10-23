@@ -403,7 +403,7 @@ void BP3Serializer::PutVariableMetadataInIndex(
         PutNameRecord(variable.m_Name, buffer);
         buffer.insert(buffer.end(), 2, '\0'); // skip path
 
-        const std::uint8_t dataType = GetDataType<T>();
+        const uint8_t dataType = GetDataType<T>();
         InsertToBuffer(buffer, &dataType);
 
         // Characteristics Sets Count in Metadata
@@ -426,7 +426,7 @@ void BP3Serializer::PutVariableMetadataInIndex(
 
 template <class T>
 void BP3Serializer::PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
-                                    std::uint8_t &characteristicsCounter,
+                                    uint8_t &characteristicsCounter,
                                     std::vector<char> &buffer) noexcept
 {
     if (isScalar)
@@ -450,15 +450,19 @@ void BP3Serializer::PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
 template <class T>
 void BP3Serializer::PutBoundsRecord(const bool singleValue,
                                     const Stats<T> &stats,
-                                    std::uint8_t &characteristicsCounter,
+                                    uint8_t &characteristicsCounter,
                                     std::vector<char> &buffer,
                                     size_t &position) noexcept
 {
     if (singleValue)
     {
-        // stats.min = stats.max = value, need to test
-        PutCharacteristicRecord(characteristic_value, characteristicsCounter,
-                                stats.Min, buffer, position);
+        const uint8_t id = characteristic_value;
+        CopyToBuffer(buffer, position, &id);
+        // special case required by bpdump
+        const uint16_t length = sizeof(T);
+        CopyToBuffer(buffer, position, &length);
+        CopyToBuffer(buffer, position, &stats.Min);
+        ++characteristicsCounter;
     }
     else
     {
@@ -474,11 +478,12 @@ void BP3Serializer::PutBoundsRecord(const bool singleValue,
 }
 
 template <class T>
-void BP3Serializer::PutCharacteristicRecord(
-    const std::uint8_t characteristicID, std::uint8_t &characteristicsCounter,
-    const T &value, std::vector<char> &buffer) noexcept
+void BP3Serializer::PutCharacteristicRecord(const uint8_t characteristicID,
+                                            uint8_t &characteristicsCounter,
+                                            const T &value,
+                                            std::vector<char> &buffer) noexcept
 {
-    const std::uint8_t id = characteristicID;
+    const uint8_t id = characteristicID;
     InsertToBuffer(buffer, &id);
     InsertToBuffer(buffer, &value);
     ++characteristicsCounter;
@@ -491,7 +496,7 @@ void BP3Serializer::PutCharacteristicRecord(const uint8_t characteristicID,
                                             std::vector<char> &buffer,
                                             size_t &position) noexcept
 {
-    const std::uint8_t id = characteristicID;
+    const uint8_t id = characteristicID;
     CopyToBuffer(buffer, position, &id);
     CopyToBuffer(buffer, position, &value);
     ++characteristicsCounter;

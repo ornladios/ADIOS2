@@ -1025,7 +1025,7 @@ void BP3Serializer::MergeSerializeIndices(
         }
     };
     // BODY OF FUNCTION STARTS HERE
-    if (m_Threads == 1) // serial version
+    // if (m_Threads == 1) // enforcing serial version for now
     {
         for (const auto &rankIndices : nameRankIndices)
         {
@@ -1033,8 +1033,7 @@ void BP3Serializer::MergeSerializeIndices(
         }
         return;
     }
-
-    // if threaded
+    // TODO need to debug this part, if threaded per variable
     const size_t elements = nameRankIndices.size();
     const size_t stride = elements / m_Threads;        // elements per thread
     const size_t last = stride + elements % m_Threads; // remainder to last

@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
         adios2::Engine &bpWriter =
             bpIO.Open("myVector.bp", adios2::Mode::Write);
 
-        for (unsigned int timeStep = 0; timeStep < 10; ++timeStep)
+        for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
         {
             bpWriter.BeginStep();
             if (rank == 0) // global single value, only saved by rank 0
