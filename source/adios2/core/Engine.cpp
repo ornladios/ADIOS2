@@ -25,8 +25,8 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 
 IO &Engine::GetIO() noexcept { return m_IO; }
 
-void Engine::BeginStep() { ThrowUp("AcquireStep"); }
-void Engine::EndStep() { ThrowUp("ReleaseStep"); }
+void Engine::BeginStep() { ThrowUp("BeginStep"); }
+void Engine::EndStep() { ThrowUp("EndStep"); }
 
 void Engine::PutSync(const std::string &variableName)
 {
@@ -79,7 +79,36 @@ void Engine::PutDeferred(const std::string &variableName)
 void Engine::PerformPuts() { ThrowUp("PerformPuts"); }
 void Engine::PerformGets() { ThrowUp("PerformGets"); }
 
-void Engine::WriteStep() { ThrowUp("WriteStep"); }
+void Engine::WriteStep()
+{
+    BeginStep();
+
+    const auto &variablesDataMap = m_IO.GetVariablesDataMap();
+    for (const auto &variablePair : variablesDataMap)
+    {
+        const std::string variableName(variablePair.first);
+        const std::string type(variablePair.second.first);
+
+        if (type == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        if (variable->GetData() != nullptr)                                    \
+        {                                                                      \
+            PutDeferred<T>(*variable, variable->GetData());                    \
+        }                                                                      \
+    }
+
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+    PerformPuts();
+    EndStep();
+}
 void Engine::ReadStep() { ThrowUp("ReadStep"); }
 
 // PROTECTED

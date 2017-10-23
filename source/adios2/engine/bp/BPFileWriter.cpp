@@ -51,8 +51,6 @@ void BPFileWriter::PerformPuts()
     }
 }
 
-void BPFileWriter::WriteStep() {}
-
 void BPFileWriter::EndStep()
 {
     m_BP3Serializer.SerializeData(m_IO, true); // true: advances step

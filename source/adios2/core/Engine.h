@@ -180,9 +180,9 @@ public:
     virtual void PerformGets();
 
     /** Convenience function to write all variables in IO */
-    virtual void WriteStep();
+    void WriteStep();
     /** Convenience function to read all variables in IO */
-    virtual void ReadStep();
+    void ReadStep();
 
     /**
      * Closes a particular transport, or all if -1
