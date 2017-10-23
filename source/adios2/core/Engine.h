@@ -78,13 +78,11 @@ public:
     template <class T>
     void PutSync(Variable<T> &variable);
 
-    template <class T>
     void PutSync(const std::string &variableName);
 
     template <class T>
     void PutDeferred(Variable<T> &variable);
 
-    template <class T>
     void PutDeferred(const std::string &variableName);
 
     /**
@@ -181,6 +179,11 @@ public:
     /** Execute all Get<Deferred,T> starting from a previous PerformGets */
     virtual void PerformGets();
 
+    /** Convenience function to write all variables in IO */
+    virtual void WriteStep();
+    /** Convenience function to read all variables in IO */
+    virtual void ReadStep();
+
     /**
      * Closes a particular transport, or all if -1
      * @param transportIndex order from IO AddTransport
@@ -209,9 +212,6 @@ protected:
 
     /** added to exceptions to improve debugging */
     std::string m_EndMessage;
-
-    /** Tracks written variables */
-    std::set<std::string> m_WrittenVariables;
 
     AdvanceStatus m_AdvanceStatus = AdvanceStatus::OK;
 
@@ -257,8 +257,6 @@ private:
 #define declare_template_instantiation(T)                                      \
     extern template void Engine::PutSync<T>(Variable<T> &);                    \
     extern template void Engine::PutDeferred<T>(Variable<T> &);                \
-    extern template void Engine::PutSync<T>(const std::string &);              \
-    extern template void Engine::PutDeferred<T>(const std::string &);          \
                                                                                \
     extern template void Engine::PutSync<T>(Variable<T> &, const T *);         \
     extern template void Engine::PutDeferred<T>(Variable<T> &, const T *);     \

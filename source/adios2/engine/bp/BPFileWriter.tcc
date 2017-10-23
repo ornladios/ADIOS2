@@ -21,8 +21,6 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     // set variable
     variable.SetData(values);
 
-    m_WrittenVariables.insert(variable.m_Name);
-
     // if first timestep Write create a new pg index
     if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
     {
@@ -30,8 +28,11 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
     }
 
-    format::BP3Base::ResizeResult resizeResult =
-        m_BP3Serializer.ResizeBuffer(variable);
+    const size_t dataSize = variable.PayloadSize() +
+                            m_BP3Serializer.GetVariableBPIndexSize(
+                                variable.m_Name, variable.m_Count);
+    format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
+        dataSize, "in call to variable " + variable.m_Name + " PutSync");
 
     if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
@@ -60,6 +61,12 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void BPFileWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
+    variable.SetData(values);
+    m_BP3Serializer.m_DeferredVariables.push_back(variable.m_Name);
+    m_BP3Serializer.m_DeferredVariablesDataSize +=
+        variable.PayloadSize() +
+        m_BP3Serializer.GetVariableBPIndexSize(variable.m_Name,
+                                               variable.m_Count);
 }
 
 } // end namespace adios2

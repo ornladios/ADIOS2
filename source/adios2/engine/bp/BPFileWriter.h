@@ -35,7 +35,11 @@ public:
     ~BPFileWriter();
 
     void BeginStep() final;
+    void PerformPuts() final;
     void EndStep() final;
+
+    void WriteStep() final;
+
     void Close(const int transportIndex = -1) final;
 
 private:

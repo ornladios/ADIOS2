@@ -94,7 +94,7 @@ public:
      * Returns the payload size in bytes
      * @return TotalSize * m_ElementSize
      */
-    size_t PayLoadSize() const noexcept;
+    size_t PayloadSize() const noexcept;
 
     /**
      * Returns the total number of elements

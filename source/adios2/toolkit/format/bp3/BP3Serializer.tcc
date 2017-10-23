@@ -58,7 +58,7 @@ void BP3Serializer::PutVariablePayload(const Variable<T> &variable) noexcept
                         variable.TotalSize(), m_Threads);
 
     auto &absolutePosition = m_Data.m_AbsolutePosition;
-    absolutePosition += variable.PayLoadSize();
+    absolutePosition += variable.PayloadSize();
     ProfilerStop("buffering");
 }
 
@@ -379,7 +379,7 @@ void BP3Serializer::PutVariableMetadataInData(
     // Back to varLength including payload size
     // not need to remove its own size (8) from length from bpdump
     const uint64_t varLength = static_cast<const uint64_t>(
-        position - varLengthPosition + variable.PayLoadSize());
+        position - varLengthPosition + variable.PayloadSize());
 
     size_t backPosition = varLengthPosition;
     CopyToBuffer(buffer, backPosition, &varLength);

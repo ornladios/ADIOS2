@@ -35,7 +35,23 @@ BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode openMode,
 
 BPFileWriter::~BPFileWriter() = default;
 
-void BPFileWriter::BeginStep() {}
+void BPFileWriter::BeginStep()
+{
+    m_BP3Serializer.m_DeferredVariables.clear();
+    m_BP3Serializer.m_DeferredVariablesDataSize = 0;
+}
+
+void BPFileWriter::PerformPuts()
+{
+    m_BP3Serializer.AllocateDeferredSize();
+
+    for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
+    {
+        PutSync(variableName);
+    }
+}
+
+void BPFileWriter::WriteStep() {}
 
 void BPFileWriter::EndStep()
 {

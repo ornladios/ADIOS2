@@ -55,12 +55,6 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <class T>                                                         \
-    void Engine::Put##L(const std::string &variableName)                       \
-    {                                                                          \
-        Put##L(FindVariable<T>(variableName));                                 \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
     void Engine::Put##L(Variable<T> &variable, const T &value)                 \
     {                                                                          \
         const T valueLocal = value;                                            \
@@ -107,12 +101,6 @@ ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
     void Engine::Get##L(Variable<T> &variable)                                 \
     {                                                                          \
         Get##L(variable, variable.GetData());                                  \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Get##L(const std::string &variableName)                       \
-    {                                                                          \
-        Get##L(FindVariable<T>(variableName));                                 \
     }                                                                          \
                                                                                \
     template <class T>                                                         \

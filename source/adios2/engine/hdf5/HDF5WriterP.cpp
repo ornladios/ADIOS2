@@ -59,7 +59,6 @@ template <class T>
 void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
 {
     variable.SetData(values);
-    m_WrittenVariables.insert(variable.m_Name);
     m_H5File.Write(variable, values);
 }
 

@@ -116,6 +116,29 @@ void BP3Serializer::PutProcessGroupIndex(
     ProfilerStop("buffering");
 }
 
+void BP3Serializer::AllocateDeferredSize()
+{
+    if (m_MaxBufferSize == DefaultMaxBufferSize)
+    {
+        if (m_DeferredVariablesDataSize > DefaultInitialBufferSize)
+        {
+            m_MaxBufferSize = m_DeferredVariablesDataSize;
+        }
+        else
+        {
+            m_MaxBufferSize = DefaultInitialBufferSize;
+        }
+    }
+    else if (m_MaxBufferSize > m_DeferredVariablesDataSize)
+    {
+        // must be a multiple integer
+        const size_t times = m_MaxBufferSize / m_DeferredVariablesDataSize;
+        m_MaxBufferSize = times * m_DeferredVariablesDataSize;
+    }
+
+    ResizeBuffer(m_MaxBufferSize, "in call to PerformPuts");
+}
+
 void BP3Serializer::SerializeData(IO &io, const bool advanceStep)
 {
     ProfilerStart("buffering");

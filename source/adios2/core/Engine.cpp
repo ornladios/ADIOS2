@@ -27,8 +27,60 @@ IO &Engine::GetIO() noexcept { return m_IO; }
 
 void Engine::BeginStep() { ThrowUp("AcquireStep"); }
 void Engine::EndStep() { ThrowUp("ReleaseStep"); }
+
+void Engine::PutSync(const std::string &variableName)
+{
+    const std::string type(m_IO.InquireVariableType(variableName));
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        if (m_DebugMode && variable == nullptr)                                \
+        {                                                                      \
+            throw std::invalid_argument("ERROR: variable " + variableName +    \
+                                        " not found, in call to PutSync\n");   \
+        }                                                                      \
+        PutSync<T>(*variable);                                                 \
+    }
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void Engine::PutDeferred(const std::string &variableName)
+{
+    const std::string type(m_IO.InquireVariableType(variableName));
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        if (m_DebugMode && variable == nullptr)                                \
+        {                                                                      \
+            throw std::invalid_argument("ERROR: variable " + variableName +    \
+                                        " not found, in call to PutSync\n");   \
+        }                                                                      \
+        PutDeferred<T>(*variable);                                             \
+    }
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
 void Engine::PerformPuts() { ThrowUp("PerformPuts"); }
 void Engine::PerformGets() { ThrowUp("PerformGets"); }
+
+void Engine::WriteStep() { ThrowUp("WriteStep"); }
+void Engine::ReadStep() { ThrowUp("ReadStep"); }
 
 // PROTECTED
 void Engine::Init() {}
@@ -73,8 +125,6 @@ void Engine::ThrowUp(const std::string function) const
 #define declare_template_instantiation(T)                                      \
     template void Engine::PutSync<T>(Variable<T> &);                           \
     template void Engine::PutDeferred<T>(Variable<T> &);                       \
-    template void Engine::PutSync<T>(const std::string &);                     \
-    template void Engine::PutDeferred<T>(const std::string &);                 \
                                                                                \
     template void Engine::PutSync<T>(Variable<T> &, const T *);                \
     template void Engine::PutDeferred<T>(Variable<T> &, const T *);            \
@@ -88,8 +138,6 @@ void Engine::ThrowUp(const std::string function) const
                                                                                \
     template void Engine::GetSync<T>(Variable<T> &);                           \
     template void Engine::GetDeferred<T>(Variable<T> &);                       \
-    template void Engine::GetSync<T>(const std::string &);                     \
-    template void Engine::GetDeferred<T>(const std::string &);                 \
                                                                                \
     template void Engine::GetSync<T>(Variable<T> &, T *);                      \
     template void Engine::GetDeferred<T>(Variable<T> &, T *);                  \

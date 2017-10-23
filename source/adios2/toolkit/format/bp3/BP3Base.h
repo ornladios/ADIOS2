@@ -173,6 +173,15 @@ public:
                                  const unsigned int subFileIndex) const
         noexcept;
 
+    /**
+     * Returns the estimated variable index size. Used by ResizeBuffer public
+     * function
+     * @param variableName input
+     * @param variableCount input
+     */
+    size_t GetVariableBPIndexSize(const std::string &variableName,
+                                  const Dims &variableCount) const noexcept;
+
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
     {
@@ -183,15 +192,16 @@ public:
     };
 
     /**
-     * @param variable
+     * Resizes the data buffer to hold new dataIn size
+     * @param dataIn input size for new data
+     * @param hint for exception handling
      * @return
      * -1: allocation failed,
      *  0: no allocation needed,
      *  1: reallocation is sucessful
      *  2: need a transport flush
      */
-    template <class T>
-    ResizeResult ResizeBuffer(const Variable<T> &variable);
+    ResizeResult ResizeBuffer(const size_t dataIn, const std::string hint);
 
 protected:
     /** might be used in large payload copies to buffer */
@@ -434,22 +444,11 @@ protected:
     void ProfilerStop(const std::string process);
 
 private:
-    /**
-     * Returns the estimated variable index size. Used by ResizeBuffer public
-     * function
-     * @param variable input
-     */
-    template <class T>
-    size_t GetVariableIndexSize(const Variable<T> &variable) const noexcept;
-
     std::string GetBPRankName(const std::string &name,
                               const unsigned int rank) const noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template BP3Base::ResizeResult BP3Base::ResizeBuffer(               \
-        const Variable<T> &variable);                                          \
-                                                                               \
     extern template BP3Base::Characteristics<T>                                \
     BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
                                              size_t &position,                 \

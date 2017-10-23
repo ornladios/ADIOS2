@@ -22,6 +22,10 @@ if(ADIOS2_HAVE_MPI)
                                                    ${MPI_C_LIBRARIES})
   endif()
   
+  add_executable(hello_bpPutDeferred helloBPPutDeferred.cpp)
+  target_include_directories(hello_bpPutDeferred PRIVATE ${MPI_C_INCLUDE_PATH})
+  target_link_libraries(hello_bpPutDeferred ${MPI_C_LIBRARIES})
+  
 else()
   add_executable(hello_bpWriter helloBPWriter_nompi.cpp)
   add_executable(hello_bpWriter_c helloBPWriter_nompi.c)
@@ -38,3 +42,5 @@ target_link_libraries(hello_bpWriter_c adios2)
 if(ADIOS2_HAVE_Fortran)
   target_link_libraries(hello_bpWriter_f PRIVATE adios2_f)
 endif()
+
+target_link_libraries(hello_bpPutDeferred adios2)

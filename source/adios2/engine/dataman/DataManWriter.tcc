@@ -27,7 +27,6 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     // passed by the user
     // set variable
     variable.SetData(values);
-    m_WrittenVariables.insert(variable.m_Name);
 
     // This part will go away, this is just to monitor variables per rank
 

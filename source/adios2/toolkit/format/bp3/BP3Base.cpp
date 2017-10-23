@@ -149,6 +149,91 @@ std::string BP3Base::GetBPSubFileName(const std::string &name,
     return GetBPRankName(name, subFileIndex);
 }
 
+size_t BP3Base::GetVariableBPIndexSize(const std::string &variableName,
+                                       const Dims &variableCount) const noexcept
+{
+    size_t indexSize = 23; // header
+    indexSize += variableName.size();
+
+    // characteristics 3 and 4, check variable number of dimensions
+    const size_t dimensions = variableCount.size();
+    indexSize += 28 * dimensions; // 28 bytes per dimension
+    indexSize += 1;               // id
+
+    // characteristics, offset + payload offset in data
+    indexSize += 2 * (1 + 8);
+    // characteristic 0, if scalar add value, for now only allowing string
+    if (dimensions == 1)
+    {
+        indexSize += 2 * sizeof(uint64_t); // complex largest size
+        indexSize += 1;                    // id
+        indexSize += 1;                    // id
+    }
+
+    // characteristic statistics
+    if (m_Verbosity == 0) // default, only min and max
+    {
+        indexSize += 2 * (2 * sizeof(uint64_t) + 1);
+        indexSize += 1 + 1; // id
+    }
+
+    return indexSize + 12; // extra 12 bytes in case of attributes
+}
+
+BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
+                                            const std::string hint)
+{
+    const size_t currentCapacity = m_Data.m_Buffer.capacity();
+    //    size_t variableData =
+    //        GetVariableIndexSize(variable) + variable.PayLoadSize();
+    const size_t requiredCapacity = dataIn + m_Data.m_Position;
+
+    ResizeResult result = ResizeResult::Unchanged;
+
+    if (dataIn > m_MaxBufferSize)
+    {
+        throw std::runtime_error(
+            "ERROR: data size: " +
+            std::to_string(static_cast<float>(dataIn) / (1024. * 1024.)) +
+            " Mb is too large for adios2 bp MaxBufferSize=" +
+            std::to_string(static_cast<float>(m_MaxBufferSize) /
+                           (1024. * 1024.)) +
+            "Mb, try increasing MaxBufferSize in call to IO SetParameters " +
+            hint + "\n");
+    }
+
+    if (requiredCapacity <= currentCapacity)
+    {
+        // do nothing, unchanged is default
+    }
+    else if (requiredCapacity > m_MaxBufferSize)
+    {
+        if (currentCapacity < m_MaxBufferSize)
+        {
+            m_Data.Resize(m_MaxBufferSize, " when resizing buffer to " +
+                                               std::to_string(m_MaxBufferSize) +
+                                               "bytes, " + hint + "\n");
+        }
+        result = ResizeResult::Flush;
+    }
+    else // buffer must grow
+    {
+        if (currentCapacity < m_MaxBufferSize)
+        {
+            const size_t nextSize =
+                std::min(m_MaxBufferSize,
+                         NextExponentialSize(requiredCapacity, currentCapacity,
+                                             m_GrowthFactor));
+            m_Data.Resize(nextSize, " when resizing buffer to " +
+                                        std::to_string(nextSize) + "bytes, " +
+                                        hint);
+            result = ResizeResult::Success;
+        }
+    }
+
+    return result;
+}
+
 // PROTECTED
 void BP3Base::InitOnOffParameter(const std::string value, bool &parameter,
                                  const std::string hint)
@@ -522,9 +607,6 @@ std::string BP3Base::GetBPRankName(const std::string &name,
 }
 
 #define declare_template_instantiation(T)                                      \
-    template BP3Base::ResizeResult BP3Base::ResizeBuffer(                      \
-        const Variable<T> &variable);                                          \
-                                                                               \
     template BP3Base::Characteristics<T>                                       \
     BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
                                              size_t &position,                 \

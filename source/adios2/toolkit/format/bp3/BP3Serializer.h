@@ -30,6 +30,8 @@ class BP3Serializer : public BP3Base
 {
 
 public:
+    std::vector<std::string> m_DeferredVariables;
+    size_t m_DeferredVariablesDataSize = 0;
     /**
      * Unique constructor
      * @param mpiComm MPI communicator for BP1 Aggregator
@@ -62,6 +64,8 @@ public:
      */
     template <class T>
     void PutVariablePayload(const Variable<T> &variable) noexcept;
+
+    void AllocateDeferredSize();
 
     /**
      *  Serializes data buffer and close current process group
