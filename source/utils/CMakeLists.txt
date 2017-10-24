@@ -2,15 +2,12 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
-  
-if(ADIOS2_HAVE_DataMan)
-  add_subdirectory(dataman)
-endif()
 
-add_subdirectory(adios2)
-add_subdirectory(utils)
+#BPLS2
+add_executable(bpls2 ./bpls2/main.cpp ./bpls2/BPLS2.cpp Utils.cpp)
 
-install(
-  FILES adios2.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+target_link_libraries(bpls2 PRIVATE adios2)
+
+install(TARGETS bpls2
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
