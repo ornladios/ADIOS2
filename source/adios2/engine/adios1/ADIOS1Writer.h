@@ -58,7 +58,8 @@ private:
     void InitTransports() final;
 
 #define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &variable, const T *values) final;              \
+    void DoPutDeferred(Variable<T> &variable, const T *values) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 };

@@ -51,6 +51,12 @@ void ADIOS1Writer::Init()
         m_ADIOS1.WriteVariable(variable.m_Name, variable.m_ShapeID,            \
                                variable.m_Count, variable.m_Shape,             \
                                variable.m_Start, values);                      \
+    }                                                                          \
+    void ADIOS1Writer::DoPutDeferred(Variable<T> &variable, const T *values)   \
+    {                                                                          \
+        m_ADIOS1.WriteVariable(variable.m_Name, variable.m_ShapeID,            \
+                               variable.m_Count, variable.m_Shape,             \
+                               variable.m_Start, values);                      \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
