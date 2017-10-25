@@ -11,10 +11,13 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "adios2/ADIOSMPI.h"
 #include "utils/bpls2/BPLS2.h"
 
 int main(int argc, char *argv[])
 {
+    MPI_Init(&argc, &argv);
+
     try
     {
         adios2::utils::BPLS2 bpls2(argc, argv);
@@ -25,4 +28,6 @@ int main(int argc, char *argv[])
         std::cout << "bpls2 Caught an Exception\n";
         std::cout << e.what() << "\n";
     }
+
+    MPI_Finalize();
 }

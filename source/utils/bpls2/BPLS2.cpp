@@ -12,6 +12,11 @@
 
 #include <iostream>
 
+#include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/core/ADIOS.h"
+#include "adios2/core/IO.h"
+#include "adios2/engine/bp/BPFileReader.h"
+
 namespace adios2
 {
 namespace utils
@@ -31,6 +36,7 @@ void BPLS2::Run()
 {
     ParseArguments();
     ProcessParameters();
+    ProcessTransport();
 }
 
 // PRIVATE
@@ -172,6 +178,38 @@ void BPLS2::SetParameters(const std::string argument, const bool isLong)
                                         argCharString + " in argument " +
                                         argument + "\n");
         }
+    }
+}
+
+void BPLS2::ProcessTransport() const
+{
+    ADIOS adios(true);
+    IO &io = adios.DeclareIO("bpls2");
+    BPFileReader bpFileReader(io, m_FileName, Mode::Read, io.m_MPIComm);
+    const auto variablesMap = io.GetAvailableVariables();
+    // const auto attributesMap = io.GetAvailableAttributes();
+
+    if (m_Parameters.count("verbose") == 1)
+    {
+        const auto &metadataSet = bpFileReader.m_BP3Deserializer.m_MetadataSet;
+        std::cout << "File info:\n";
+        std::cout << "    groups:     " << metadataSet.DataPGCount << "\n";
+        std::cout << "    variables:  " << variablesMap.size() << "\n";
+        std::cout << "    attributes: TODO\n";
+        std::cout << "    meshes:     TODO\n";
+        std::cout << "    time steps: " << metadataSet.TimeStep << "\n";
+        std::cout << "    file size:  "
+                  << bpFileReader.m_FileManager.GetFileSize(0) << " bytes\n";
+
+        const auto &minifooter = bpFileReader.m_BP3Deserializer.m_Minifooter;
+        std::cout << "    bp version: " << std::to_string(minifooter.Version)
+                  << "\n";
+        std::string endianness("Little Endian");
+        if (!minifooter.IsLittleEndian)
+        {
+            endianness = "Big Endian";
+        }
+        std::cout << "    Endianness: " << endianness << "\n";
     }
 }
 

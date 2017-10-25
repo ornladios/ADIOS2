@@ -19,8 +19,15 @@
 namespace adios2
 {
 
+namespace utils
+{
+class BPLS2;
+}
+
 class BPFileReader : public Engine
 {
+
+    friend class utils::BPLS2;
 
 public:
     /**

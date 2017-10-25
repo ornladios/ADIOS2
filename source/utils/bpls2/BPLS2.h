@@ -38,6 +38,8 @@ private:
     void PrintUsage() const noexcept final;
     void PrintExamples() const noexcept final;
     void SetParameters(const std::string argument, const bool isLong) final;
+
+    void ProcessTransport() const;
 };
 
 } // end namespace utils
