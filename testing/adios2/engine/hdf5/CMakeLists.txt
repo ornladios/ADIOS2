@@ -13,4 +13,9 @@ else()
 endif()
 target_link_libraries(TestHDF5WriteRead adios2 gtest ${HDF5_C_LIBRARIES})
 
-gtest_add_tests(TARGET TestHDF5WriteRead)
+if(ADIOS2_HAVE_MPI)
+  target_link_libraries(TestHDF5WriteRead MPI::MPI_C)
+  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
+endif()
+
+gtest_add_tests(TARGET TestHDF5WriteRead ${extra_test_args})

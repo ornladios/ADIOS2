@@ -7,6 +7,5 @@ add_executable(localArray_write localArray_write.cpp)
 target_link_libraries(localArray_write adios2)
 
 if(ADIOS2_HAVE_MPI)
-  target_include_directories(localArray_write PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(localArray_write ${MPI_C_LIBRARIES})
+  target_link_libraries(localArray_write MPI::MPI_C)
 endif()

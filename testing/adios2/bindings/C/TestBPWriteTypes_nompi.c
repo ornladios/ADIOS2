@@ -5,7 +5,7 @@
  * TestBPWriteTypes.c
  *
  *  Created on: Aug 9, 2017
- *      Author: wgodoy
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include <adios2_c.h>

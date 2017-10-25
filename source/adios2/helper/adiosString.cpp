@@ -129,6 +129,27 @@ void SetParameterValue(const std::string key, const Params &parameters,
     }
 }
 
+std::string GetParameter(const std::string key, const Params &params,
+                         const bool isMandatory, const bool debugMode,
+                         const std::string hint)
+{
+    std::string value;
+    auto itParameter = params.find(key);
+    if (itParameter == params.end())
+    {
+        if (debugMode && isMandatory)
+        {
+            throw std::invalid_argument("ERROR: mandatory parameter " + key +
+                                        " not found, " + hint);
+        }
+    }
+    else
+    {
+        value = itParameter->second;
+    }
+    return value;
+}
+
 void SetParameterValueInt(const std::string key, const Params &parameters,
                           int &value, const bool debugMode,
                           const std::string hint)

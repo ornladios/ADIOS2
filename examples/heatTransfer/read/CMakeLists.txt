@@ -5,18 +5,10 @@
 
 if(ADIOS2_HAVE_MPI)
   add_executable(heatTransfer_read_adios2 heatRead_adios2.cpp PrintData.h)
-  target_include_directories(heatTransfer_read_adios2
-    PRIVATE ${MPI_C_INCLUDE_PATH}
-  )
-  target_link_libraries(heatTransfer_read_adios2 adios2 ${MPI_C_LIBRARIES})
+  target_link_libraries(heatTransfer_read_adios2 adios2 MPI::MPI_C)
 
   if(ADIOS2_HAVE_ADIOS1)
     add_executable(heatTransfer_read_adios1 heatRead_adios1.cpp PrintData.h)
-    target_include_directories(heatTransfer_read_adios1
-      PRIVATE ${MPI_C_INCLUDE_PATH}
-    )
-    target_link_libraries(heatTransfer_read_adios1
-      adios1::adios ${MPI_C_LIBRARIES}
-    )
+    target_link_libraries(heatTransfer_read_adios1 adios1::adios MPI::MPI_C)
   endif()
 endif()

@@ -45,6 +45,7 @@ add_library(adios2
   toolkit/transport/file/FileFStream.cpp
   
   toolkit/transportman/TransportMan.cpp
+  toolkit/transportman/dataman/DataMan.cpp
   
 )
 target_include_directories(adios2
@@ -53,7 +54,7 @@ target_include_directories(adios2
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(adios2 PRIVATE adios2sys pugixml)
+target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 if(UNIX)
@@ -64,14 +65,20 @@ if(ADIOS2_HAVE_SysVShMem)
   target_sources(adios2 PRIVATE toolkit/transport/shm/ShmSystemV.cpp)
 endif()
 
-if(ADIOS2_HAVE_DataMan)
+if(ADIOS2_HAVE_ZeroMQ)
   target_sources(adios2 PRIVATE
+    toolkit/transport/wan/WANZmq.cpp
+  )
+  target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
+endif()
+
+target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
     engine/dataman/DataManWriter.cpp
-  )
-  target_link_libraries(adios2 PRIVATE dataman)
-endif()
-  
+)
+target_link_libraries(adios2 PRIVATE NLohmannJson)
+
+
 if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE operator/compress/CompressBZip2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
@@ -83,8 +90,7 @@ if(ADIOS2_HAVE_ZFP)
 endif()
 
 if(ADIOS2_HAVE_MPI)
-  target_include_directories(adios2 PUBLIC ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(adios2 PUBLIC ${MPI_C_LIBRARIES})
+  target_link_libraries(adios2 PUBLIC MPI::MPI_C)
 else()
   target_sources(adios2 PRIVATE mpidummy.cpp)
 endif()
@@ -106,11 +112,24 @@ if(ADIOS2_HAVE_HDF5)
   else()
     target_include_directories(adios2 PRIVATE ${HDF5_INCLUDE_DIRS})
   endif()
-  target_sources(adios2 PRIVATE
-    engine/hdf5/HDF5ReaderP.cpp
-    engine/hdf5/HDF5WriterP.cpp
-    toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
-  )
+
+  if(HDF5_VERSION VERSION_LESS 1.11)
+    target_sources(adios2 PRIVATE
+      engine/hdf5/HDF5ReaderP.cpp
+      engine/hdf5/HDF5WriterP.cpp
+      toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
+    )  
+  else()
+    target_sources(adios2 PRIVATE
+      engine/hdf5/HDF5ReaderP.cpp
+      engine/hdf5/HDF5WriterP.cpp
+      engine/mixer/HDFMixer.cpp	
+      engine/mixer/HDFMixer.tcc
+      engine/mixer/HDFMixerWriter.cpp
+      toolkit/interop/hdf5/HDF5Common.cpp toolkit/interop/hdf5/HDF5Common.tcc
+    )
+  endif()
+
   target_link_libraries(adios2 PRIVATE ${HDF5_C_LIBRARIES})
 endif()
 

@@ -31,8 +31,10 @@
 #   dashboard_source_name = Name of source directory (CMake)
 #   dashboard_binary_name = Name of binary directory (CMake-build)
 #   dashboard_cache       = Initial CMakeCache.txt file content
+#   dashboard_track       = The name of the CDash "Track" to submit to
 
 #   dashboard_do_checkout  = True to enable source checkout via git
+#   dashboard_do_update    = True to enable the Update step
 #   dashboard_do_configure = True to enable the Configure step
 #   dashboard_do_build     = True to enable the Build step
 #   dashboard_do_test      = True to enable the Test step
@@ -68,6 +70,10 @@ if(NOT DEFINED dashboard_full)
 endif()
 
 # Initialize all build steps to "ON"
+if(NOT DEFINED dashboard_do_update)
+  set(dashboard_do_update ${dashboard_full})
+endif()
+
 if(NOT DEFINED dashboard_do_checkout)
   set(dashboard_do_checkout ${dashboard_full})
 endif()
@@ -94,7 +100,7 @@ if(NOT DEFINED dashboard_do_memcheck)
 endif()
 
 if(NOT DEFINED dashboard_fresh)
-  if(dashboard_full OR dashboard_do_configure)
+  if(dashboard_full OR dashboard_do_update)
     set(dashboard_fresh TRUE)
   else()
     set(dashboard_fresh FALSE)
@@ -128,6 +134,10 @@ endif()
 # Default to a Debug build.
 if(NOT DEFINED CTEST_BUILD_CONFIGURATION)
   set(CTEST_BUILD_CONFIGURATION Debug)
+endif()
+
+if(NOT DEFINED CTEST_CONFIGURATION_TYPE)
+  set(CTEST_CONFIGURATION_TYPE ${CTEST_BUILD_CONFIGURATION})
 endif()
 
 # Choose CTest reporting mode.
@@ -276,12 +286,6 @@ endif()
 
 #-----------------------------------------------------------------------------
 
-# Send the main script as a note.
-list(APPEND CTEST_NOTES_FILES
-  "${CTEST_SCRIPT_DIRECTORY}/${CTEST_SCRIPT_NAME}"
-  "${CMAKE_CURRENT_LIST_FILE}"
-  )
-
 # Check for required variables.
 foreach(req
     CTEST_CMAKE_GENERATOR
@@ -354,18 +358,45 @@ if(dashboard_fresh)
 endif()
 
 # Start a new submission.
+if(dashboard_track)
+  set(dashboard_track_arg TRACK "${dashboard_track}")
+endif()
 message("Calling ctest_start")
 if(dashboard_fresh)
   if(COMMAND dashboard_hook_start)
     dashboard_hook_start()
   endif()
-  ctest_start(${dashboard_model})
+  ctest_start(${dashboard_model} ${dashboard_track_arg})
   ctest_submit(PARTS Start)
   if(COMMAND dashboard_hook_started)
     dashboard_hook_started()
   endif()
 else()
-  ctest_start(${dashboard_model} APPEND)
+  ctest_start(${dashboard_model} ${dashboard_track_arg} APPEND)
+endif()
+
+# Look for updates.
+if(dashboard_do_update)
+  if(COMMAND dashboard_hook_update)
+    dashboard_hook_update()
+  endif()
+  message("Calling ctest_update...")
+  ctest_update(RETURN_VALUE count)
+  set(CTEST_CHECKOUT_COMMAND) # checkout on first iteration only
+  message("Found ${count} changed files")
+
+  if(ADIOS_CTEST_SUBMIT_NOTES)
+    message("Submitting dashboard scripts as Notes")
+    # Send the main script as a note while submitting the Update part
+    set(CTEST_NOTES_FILES
+      "${CTEST_SCRIPT_DIRECTORY}/${CTEST_SCRIPT_NAME}"
+      "${CMAKE_CURRENT_LIST_FILE}"
+    )
+    ctest_submit(PARTS Update Notes)
+  else()
+    message("Skipping notes submission for Update step")
+    ctest_submit(PARTS Update)
+  endif()
 endif()
 
 if(dashboard_do_configure)
@@ -374,7 +405,14 @@ if(dashboard_do_configure)
   endif()
   message("Calling ctest_configure")
   ctest_configure(${dashboard_configure_args})
-  ctest_submit(PARTS Configure)
+  if(ADIOS_CTEST_SUBMIT_NOTES)
+    message("Submitting CMakeCache.txt as Notes")
+    set(CTEST_NOTES_FILES "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt")
+    ctest_submit(PARTS Configure Notes)
+  else()
+    message("Skipping notes submission for Configure step")
+    ctest_submit(PARTS Configure)
+  endif()
 endif()
 
 ctest_read_custom_files(${CTEST_BINARY_DIRECTORY})
@@ -393,7 +431,12 @@ if(dashboard_do_test)
     dashboard_hook_test()
   endif()
   message("Calling ctest_test")
-  ctest_test(${CTEST_TEST_ARGS})
+  ctest_test(${CTEST_TEST_ARGS} RETURN_VALUE TEST_RESULTS)
+  if(${TEST_RESULTS} EQUAL 0)
+    message("ctest test results return value: ${TEST_RESULTS}")
+  else()
+    message(SEND_ERROR "Some tests failed")
+  endif()
   ctest_submit(PARTS Test)
 endif()
 

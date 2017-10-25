@@ -45,7 +45,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 include(ADIOSFunctions)
 
 # Default to a debug build if not specified
-if(NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
@@ -90,7 +90,7 @@ adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
 adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
-adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
+adios_option(Fortran   "Enable support for Fortran bindings" OFF)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 include(${ADIOS2_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
@@ -99,8 +99,10 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
-GenerateADIOSHeaderConfig(MPI ZFP BZip2 ADIOS1 HDF5 DataMan Python Fortran 
-                          SysVShMem)
+set(ADIOS2_CONFIG_OPTS
+  BZip2 ZFP MPI DataMan ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem
+)
+GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 
 install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
@@ -175,6 +177,14 @@ if(ADIOS2_HAVE_Fortran)
   message("")
 endif()
 message("  Installation prefix: ${CMAKE_INSTALL_PREFIX}")
+message("        bin: ${CMAKE_INSTALL_BINDIR}")
+message("        lib: ${CMAKE_INSTALL_LIBDIR}")
+message("    include: ${CMAKE_INSTALL_INCLUDEDIR}")
+message("      cmake: ${CMAKE_INSTALL_CMAKEDIR}")
+if(ADIOS2_HAVE_Python)
+  message("     python: ${CMAKE_INSTALL_PYTHONDIR}")
+endif()
+message("")
 message("  Features:")
 if(BUILD_SHARED_LIBS)
   set(msg_lib_type "shared")
@@ -188,7 +198,7 @@ message("    Build Type:   ${CMAKE_BUILD_TYPE}")
 message("    Testing: ${BUILD_TESTING}")
 message("    Build Options:")
 
-foreach(opt BZip2 ZFP MPI DataMan ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem)
+foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
   message_pad("      ${opt}" 15 label)
   if(${ADIOS2_HAVE_${opt}})
     message("${label}: ON")

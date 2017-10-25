@@ -11,13 +11,9 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
-#include <iostream> //std::cout must be removed, only used for hello example
-#include <unistd.h> //sleep must be removed
-
-#include <DataMan.h>
-
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/transportman/dataman/DataMan.h"
 
 namespace adios2
 {
@@ -26,18 +22,12 @@ class DataManWriter : public Engine
 {
 
 public:
-    using json = nlohmann::json;
-
     DataManWriter(IO &io, const std::string &name, const Mode openMode,
                   MPI_Comm mpiComm);
 
-    virtual ~DataManWriter() = default;
+    ~DataManWriter() = default;
 
-    //    void SetCallBack(std::function<void(const void *, std::string,
-    //    std::string,
-    //                                        std::string, Dims)>
-    //                         callback) final;
-
+    void BeginStep() final;
     void EndStep() final;
 
     void Close(const int transportIndex = -1) final;
@@ -45,7 +35,7 @@ public:
 private:
     bool m_DoRealTime = false;
     bool m_DoMonitor = false;
-    DataMan m_Man;
+    transportman::DataMan m_Man;
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         m_CallBack; ///< call back function
@@ -62,6 +52,6 @@ private:
     void PutSyncCommon(Variable<T> &variable, const T *values);
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */

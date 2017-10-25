@@ -7,8 +7,9 @@ if(ADIOS2_HAVE_MPI)
   add_executable(hello_bpTimeWriter helloBPTimeWriter.cpp)
   add_executable(hello_bpWriteStep helloBPWriteStep.cpp)
   
-  target_include_directories(hello_bpTimeWriter PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(hello_bpTimeWriter ${MPI_C_LIBRARIES})
+  target_link_libraries(hello_bpTimeWriter MPI::MPI_C)
+  target_link_libraries(hello_bpWriteStep MPI::MPI_C)
+  
 else()
   add_executable(hello_bpTimeWriter helloBPTimeWriter_nompi.cpp)
   add_executable(hello_bpWriteStep helloBPWriteStep_nompi.cpp)

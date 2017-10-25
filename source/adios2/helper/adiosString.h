@@ -68,6 +68,9 @@ GetParametersValues(const std::string &key,
 void SetParameterValue(const std::string key, const Params &parameters,
                        std::string &value) noexcept;
 
+std::string GetParameter(const std::string key, const adios2::Params &params,
+                         const bool isMandatory, const bool debugMode,
+                         const std::string hint);
 /**
  * Sets int value if found in parameters for input key
  * @param key input

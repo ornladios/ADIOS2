@@ -25,6 +25,7 @@ protected:
 TEST_F(XMLConfigTest, TwoIOs)
 {
     std::string configFile = configDir + "/config1.xml";
+
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON);
 #else

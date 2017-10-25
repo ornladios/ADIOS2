@@ -23,3 +23,5 @@
 *.bp.dir
 build/
 
+# Mac OSX finder-related files
+.DS_Store

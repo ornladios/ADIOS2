@@ -23,18 +23,18 @@
 #  KWSYS_SPLIT_OBJECTS_FROM_INTERFACE
 #                    = Instead of creating a single ${KWSYS_NAMESPACE} library
 #                      target, create three separate targets:
+#                        ${KWSYS_NAMESPACE}
+#                          - An INTERFACE library only containing usage
+#                            requirements.
 #                        ${KWSYS_NAMESPACE}_objects
 #                          - An OBJECT library for the built kwsys objects.
-#                        ${KWSYS_NAMESPACE}_interface
-#                          - An INTERFACE library for the usage requirements.
-#                        ${KWSYS_NAMESPACE}
+#                            Note: This is omitted from the install rules
+#                        ${KWSYS_NAMESPACE}_private
 #                          - An INTERFACE library combining both that is
 #                            appropriate for use with PRIVATE linking in
 #                            target_link_libraries. Because of how interface
 #                            properties propagate, this target is not suitable
 #                            for use with PUBLIC or INTERFACE linking.
-#                      Note: only the ${KWSYS_NAMESPACE}_interface library will
-#                      be installed
 #
 #    Example:
 #
@@ -438,6 +438,10 @@ ELSE()
   SET(KWSYS_LIBRARY_TYPE STATIC)
 ENDIF()
 
+IF(NOT KWSYS_DEFINE_SYMBOL)
+  SET(KWSYS_DEFINE_SYMBOL ${KWSYS_NAMESPACE}_EXPORTS)
+ENDIF()
+
 #-----------------------------------------------------------------------------
 # Configure some implementation details.
 
@@ -448,6 +452,11 @@ KWSYS_PLATFORM_C_TEST(KWSYS_C_HAS_SSIZE_T
 SET_SOURCE_FILES_PROPERTIES(ProcessUNIX.c System.c PROPERTIES
   COMPILE_FLAGS "-DKWSYS_C_HAS_PTRDIFF_T=${KWSYS_C_HAS_PTRDIFF_T} -DKWSYS_C_HAS_SSIZE_T=${KWSYS_C_HAS_SSIZE_T}"
   )
+
+IF(DEFINED KWSYS_PROCESS_USE_SELECT)
+  GET_PROPERTY(ProcessUNIX_FLAGS SOURCE ProcessUNIX.c PROPERTY COMPILE_FLAGS)
+  SET_PROPERTY(SOURCE ProcessUNIX.c PROPERTY COMPILE_FLAGS "${ProcessUNIX_FLAGS} -DKWSYSPE_USE_SELECT=${KWSYSPE_USE_SELECT}")
+ENDIF()
 
 IF(KWSYS_USE_DynamicLoader)
   GET_PROPERTY(KWSYS_SUPPORTS_SHARED_LIBS GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
@@ -815,15 +824,18 @@ ENDFOREACH()
 # Add the library with the configured name and list of sources.
 IF(KWSYS_C_SRCS OR KWSYS_CXX_SRCS)
   IF(KWSYS_SPLIT_OBJECTS_FROM_INTERFACE)
-    SET(KWSYS_TARGET_INTERFACE ${KWSYS_NAMESPACE}_interface)
+    SET(KWSYS_TARGET_INTERFACE ${KWSYS_NAMESPACE})
     SET(KWSYS_TARGET_OBJECT ${KWSYS_NAMESPACE}_objects)
-    SET(KWSYS_TARGET_LINK ${KWSYS_NAMESPACE})
+    SET(KWSYS_TARGET_LINK ${KWSYS_NAMESPACE}_private)
+    SET(KWSYS_TARGET_INSTALL ${KWSYS_TARGET_INTERFACE} ${KWSYS_TARGET_LINK})
     SET(KWSYS_LINK_DEPENDENCY INTERFACE)
     ADD_LIBRARY(${KWSYS_TARGET_OBJECT} OBJECT
       ${KWSYS_C_SRCS} ${KWSYS_CXX_SRCS})
     IF(KWSYS_BUILD_SHARED)
       SET_PROPERTY(TARGET ${KWSYS_TARGET_OBJECT} PROPERTY
         POSITION_INDEPENDENT_CODE TRUE)
+      TARGET_COMPILE_DEFINITIONS(${KWSYS_TARGET_OBJECT} PRIVATE
+        ${KWSYS_DEFINE_SYMBOL})
     ENDIF()
     ADD_LIBRARY(${KWSYS_TARGET_INTERFACE} INTERFACE)
     ADD_LIBRARY(${KWSYS_TARGET_LINK} INTERFACE)
@@ -835,6 +847,7 @@ IF(KWSYS_C_SRCS OR KWSYS_CXX_SRCS)
     SET(KWSYS_TARGET_INTERFACE ${KWSYS_NAMESPACE})
     SET(KWSYS_TARGET_OBJECT ${KWSYS_NAMESPACE})
     SET(KWSYS_TARGET_LINK ${KWSYS_NAMESPACE})
+    set(KWSYS_TARGET_INSTALL ${KWSYS_TARGET_LINK})
     SET(KWSYS_LINK_DEPENDENCY PUBLIC)
     ADD_LIBRARY(${KWSYS_TARGET_INTERFACE} ${KWSYS_LIBRARY_TYPE}
       ${KWSYS_C_SRCS} ${KWSYS_CXX_SRCS})
@@ -895,21 +908,25 @@ IF(KWSYS_C_SRCS OR KWSYS_CXX_SRCS)
 
   # Create an install target for the library.
   IF(KWSYS_INSTALL_LIBRARY_RULE)
-    INSTALL(TARGETS ${KWSYS_TARGET_LINK} ${KWSYS_TARGET_INTERFACE} ${KWSYS_INSTALL_LIBRARY_RULE})
+    INSTALL(TARGETS ${KWSYS_TARGET_INSTALL} ${KWSYS_INSTALL_LIBRARY_RULE})
   ENDIF()
 ENDIF()
 
 # Add a C-only library if requested.
 IF(KWSYS_ENABLE_C AND KWSYS_C_SRCS)
  IF(KWSYS_SPLIT_OBJECTS_FROM_INTERFACE)
-    SET(KWSYS_TARGET_C_INTERFACE ${KWSYS_NAMESPACE}_c_interface)
-    SET(KWSYS_TARGET_C_OBJECT ${KWSYS_NAMESPACE}_c_object)
-    SET(KWSYS_TARGET_C_LINK ${KWSYS_NAMESPACE}_c)
+    SET(KWSYS_TARGET_C_INTERFACE ${KWSYS_NAMESPACE}_c)
+    SET(KWSYS_TARGET_C_OBJECT ${KWSYS_NAMESPACE}_c_objects)
+    SET(KWSYS_TARGET_C_LINK ${KWSYS_NAMESPACE}_c_private)
+    SET(KWSYS_TARGET_C_INSTALL
+      ${KWSYS_TARGET_C_INTERFACE} ${KWSYS_TARGET_C_LINK})
     SET(KWSYS_LINK_DEPENDENCY INTERFACE)
     ADD_LIBRARY(${KWSYS_TARGET_C_OBJECT} OBJECT ${KWSYS_C_SRCS})
     IF(KWSYS_BUILD_SHARED)
       SET_PROPERTY(TARGET ${KWSYS_TARGET_C_OBJECT} PROPERTY
         POSITION_INDEPENDENT_CODE TRUE)
+      TARGET_COMPILE_DEFINITIONS(${KWSYS_TARGET_C_OBJECT} PRIVATE
+        ${KWSYS_DEFINE_SYMBOL})
     ENDIF()
     ADD_LIBRARY(${KWSYS_TARGET_C_INTERFACE} INTERFACE)
     ADD_LIBRARY(${KWSYS_TARGET_C_LINK} INTERFACE)
@@ -921,6 +938,7 @@ IF(KWSYS_ENABLE_C AND KWSYS_C_SRCS)
     SET(KWSYS_TARGET_C_INTERFACE ${KWSYS_NAMESPACE}_c)
     SET(KWSYS_TARGET_C_OBJECT ${KWSYS_NAMESPACE}_c)
     SET(KWSYS_TARGET_C_LINK ${KWSYS_NAMESPACE}_c)
+    SET(KWSYS_TARGET_C_INSTALL ${KWSYS_TARGET_C_LINK})
     SET(KWSYS_LINK_DEPENDENCY PUBLIC)
     ADD_LIBRARY(${KWSYS_TARGET_C_INTERFACE} ${KWSYS_LIBRARY_TYPE}
       ${KWSYS_C_SRCS})
@@ -946,8 +964,8 @@ IF(KWSYS_ENABLE_C AND KWSYS_C_SRCS)
 
   # Create an install target for the library.
   IF(KWSYS_INSTALL_LIBRARY_RULE)
-    INSTALL(TARGETS ${KWSYS_TARGET_C_INTERFACE} ${KWSYS_INSTALL_LIBRARY_RULE})
-   ENDIF()
+    INSTALL(TARGETS ${KWSYS_TARGET_C_INSTALL})
+  ENDIF()
 ENDIF()
 
 # For building kwsys itself, we use a macro defined on the command
@@ -1022,6 +1040,7 @@ IF(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
       testSystemTools
       testCommandLineArguments
       testCommandLineArguments1
+      testDirectory
       )
     IF(KWSYS_STL_HAS_WSTRING)
       SET(KWSYS_CXX_TESTS ${KWSYS_CXX_TESTS}

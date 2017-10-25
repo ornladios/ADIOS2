@@ -32,6 +32,7 @@
 #   dashboard_cache           = Initial CMakeCache.txt file content
 
 #   dashboard_do_checkout  = True to enable source checkout via git
+#   dashboard_do_update    = True to enable source update
 #   dashboard_do_configure = True to enable the Configure step
 #   dashboard_do_build     = True to enable the Build step
 #   dashboard_do_test      = True to enable the Test step
@@ -65,6 +66,9 @@ set(CTEST_PROJECT_NAME "ADIOS2")
 set(CTEST_DROP_SITE "open.cdash.org")
 set(dashboard_git_url "https://github.com/ornladios/ADIOS2.git")
 
+if(NOT ADIOS_CTEST_SUBMIT_NOTES)
+  set(ADIOS_CTEST_SUBMIT_NOTES TRUE)
+endif()
 if(NOT dashboard_root_name)
   set(dashboard_root_name "Builds/My Tests")
 endif()

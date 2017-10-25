@@ -30,6 +30,9 @@
 #ifdef ADIOS2_HAVE_HDF5 // external dependencies
 #include "adios2/engine/hdf5/HDF5ReaderP.h"
 #include "adios2/engine/hdf5/HDF5WriterP.h"
+#if H5_VERSION_GE(1, 11, 0)
+#include "adios2/engine/mixer/HDFMixer.h"
+#endif
 #endif
 
 namespace adios2
@@ -192,6 +195,20 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
     else if (isDefaultReader || m_EngineType == "BPFileReader")
     {
         engine = std::make_shared<BPFileReader>(*this, name, openMode, mpiComm);
+    }
+    else if (m_EngineType == "HDFMixer")
+    {
+#ifdef ADIOS2_HAVE_HDF5
+#if H5_VERSION_GE(1, 11, 0)
+        engine = std::make_shared<HDFMixer>(*this, name, openMode, mpiComm);
+#else
+        throw std::invalid_argument(
+            "ERROR: update HDF5 >= 1.11 to support VDS.");
+#endif
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "HDF5 library, can't use HDF5\n");
+#endif
     }
     else if (m_EngineType == "DataManWriter")
     {

@@ -38,7 +38,9 @@ public:
 
     void SetBuffer(char *buffer, size_t size) final;
 
-    void Write(const char *buffer, size_t size) final;
+    void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
+
+    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
     void Flush() final;
 
@@ -50,11 +52,11 @@ private:
     const std::string m_IPAddress;
     std::string m_Port;
 
-    /** TODO: find out if is provided externally */
-    void *m_Context = NULL;
+    /** context handler created by zmq, thread safe */
+    void *m_Context = nullptr;
 
-    /** handler created by zmq */
-    void *m_Socket = NULL;
+    /** socket handler created by zmq */
+    void *m_Socket = nullptr;
 };
 
 } // end namespace transport

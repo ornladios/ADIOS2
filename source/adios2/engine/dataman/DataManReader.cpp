@@ -17,19 +17,11 @@ namespace adios2
 
 DataManReader::DataManReader(IO &io, const std::string &name,
                              const Mode openMode, MPI_Comm mpiComm)
-: Engine("DataManReader", io, name, openMode, mpiComm)
+: Engine("DataManReader", io, name, openMode, mpiComm),
+  m_Man(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
-}
-
-void DataManReader::SetCallBack(
-    std::function<void(const void *, std::string, std::string, std::string,
-                       Dims)>
-        callback)
-{
-    m_CallBack = callback;
-    m_Man.reg_callback(callback);
 }
 
 void DataManReader::Close(const int transportIndex) {}
@@ -74,31 +66,26 @@ void DataManReader::Init()
             }
         };
 
-        auto is_number = [](const std::string &s) {
-            return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) {
-                                     return !std::isdigit(c);
-                                 }) == s.end();
-        };
+        // try not to hardcode these things...
+        // shouldn't these be coming from the user IO.m_TransportParameters?
+        // unless you assign defaults
+        unsigned int transportsSize = 1;
 
-        json jmsg;
-        for (auto &i : m_IO.m_Parameters)
+        std::vector<Params> parameters(transportsSize);
+
+        for (unsigned int i = 0; i < parameters.size(); i++)
         {
-            if (is_number(i.second))
-            {
-                jmsg[i.first] = std::stoi(i.second);
-            }
-            else
-            {
-                jmsg[i.first] = i.second;
-            }
+            parameters[i]["type"] = "wan";
+            parameters[i]["transport"] = "zmq";
+            parameters[i]["name"] = "stream";
+            parameters[i]["ipaddress"] = "127.0.0.1";
         }
-        jmsg["stream_mode"] = "receiver";
-        m_Man.add_stream(jmsg);
+        m_Man.OpenWANTransports("zmq", Mode::Read, parameters, true);
 
-        std::string method_type;
-        int num_channels = 0;
-        lf_AssignString("method_type", method_type);
-        lf_AssignInt("num_channels", num_channels);
+        std::string methodType;
+        int numChannels = 0;
+        lf_AssignString("method_type", methodType);
+        lf_AssignInt("num_channels", numChannels);
     }
     else
     {
@@ -106,4 +93,4 @@ void DataManReader::Init()
     }
 }
 
-} // end namespace adios
+} // end namespace adios2

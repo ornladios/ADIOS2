@@ -22,18 +22,31 @@ function(message_pad msg out_len out_msg)
   endif()
 endfunction()
 
-function(python_add_test name script)
-  add_test(NAME ${name}
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${script} ${ARGN}
+function(python_add_test)
+  set(options)
+  set(oneValueArgs
+      NAME
   )
-  set_property(TEST ${name} PROPERTY
+  # EXEC_WRAPPER: Any extra arguments to pass on the command line before test case
+  # SCRIPT: Script name and corresponding comand line inputs
+  set(multiValueArgs EXEC_WRAPPER SCRIPT)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" "${ARGN}")
+  add_test(NAME ${ARGS_NAME}
+    COMMAND ${ARGS_EXEC_WRAPPER} ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SCRIPT}
+  )
+  set_property(TEST ${ARGS_NAME} PROPERTY
     ENVIRONMENT "PYTHONPATH=${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}:$ENV{PYTHONPATH}"
   )
 endfunction()
 
 function(GenerateADIOSHeaderConfig)
+  set(ADIOS2_CONFIG_DEFINES)
   foreach(OPT IN LISTS ARGN)
     string(TOUPPER ${OPT} OPT_UPPER)
+    string(APPEND ADIOS2_CONFIG_DEFINES "
+/* CMake Option: ADIOS_USE_${OPT}=OFF */
+#cmakedefine ADIOS2_HAVE_${OPT_UPPER}
+")
     if(ADIOS2_HAVE_${OPT})
       set(ADIOS2_HAVE_${OPT_UPPER} 1)
     else()
@@ -43,6 +56,10 @@ function(GenerateADIOSHeaderConfig)
 
   configure_file(
     ${ADIOS2_SOURCE_DIR}/source/adios2/ADIOSConfig.h.in
+    ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h.in
+  )
+  configure_file(
+    ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h.in
     ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   )
 endfunction()
