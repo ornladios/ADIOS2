@@ -50,8 +50,8 @@ void PluginEngine::RegisterPlugin(const std::string pluginName,
 
 /******************************************************************************/
 
-PluginEngine::PluginEngine(IO &io, const std::string &name,
-                           const Mode openMode, MPI_Comm mpiComm)
+PluginEngine::PluginEngine(IO &io, const std::string &name, const Mode openMode,
+                           MPI_Comm mpiComm)
 : Engine("Plugin", io, name, openMode, mpiComm), m_Impl(new Impl)
 {
     Init();
@@ -61,36 +61,13 @@ PluginEngine::PluginEngine(IO &io, const std::string &name,
 
 PluginEngine::~PluginEngine() { m_Impl->m_HandleDestroy(m_Impl->m_Plugin); }
 
-void PluginEngine::PerformReads(ReadMode mode)
-{
-    m_Impl->m_Plugin->PerformReads(mode);
-}
+void PluginEngine::BeginStep() { m_Impl->m_Plugin->BeginStep(); }
 
-void PluginEngine::Release() { m_Impl->m_Plugin->Release(); }
+void PluginEngine::PerformPuts() { m_Impl->m_Plugin->PerformPuts(); }
 
-void PluginEngine::Advance(const float timeoutSeconds)
-{
-    m_Impl->m_Plugin->Advance(timeoutSeconds);
-}
+void PluginEngine::PerformGets() { m_Impl->m_Plugin->PerformGets(); }
 
-void PluginEngine::Advance(const AdvanceMode mode, const float timeoutSeconds)
-{
-    m_Impl->m_Plugin->Advance(mode, timeoutSeconds);
-}
-
-void PluginEngine::AdvanceAsync(const AdvanceMode mode,
-                                AdvanceAsyncCallback callback)
-{
-    m_Impl->m_Plugin->AdvanceAsync(mode, callback);
-}
-
-void PluginEngine::SetCallBack(
-    std::function<void(const void *, std::string, std::string, std::string,
-                       std::vector<size_t>)>
-        callback)
-{
-    m_Impl->m_Plugin->SetCallBack(callback);
-}
+void PluginEngine::EndStep() { m_Impl->m_Plugin->EndStep(); }
 
 void PluginEngine::Close(const int transportIndex)
 {
@@ -153,39 +130,33 @@ void PluginEngine::Init()
     }
 }
 
-#define define(T)                                                              \
-    void PluginEngine::DoWrite(Variable<T> &variable, const T *values)         \
+#define declare(T)                                                             \
+    void PluginEngine::DoPutSync(Variable<T> &variable, const T *values)       \
     {                                                                          \
-        m_Impl->m_Plugin->DoWrite(variable, values);                           \
+        m_Impl->m_Plugin->DoPutSync(variable, values);                         \
     }                                                                          \
-    void PluginEngine::DoScheduleRead(Variable<T> &variable, const T *values)  \
+    void PluginEngine::DoPutDeferred(Variable<T> &variable, const T *values)   \
     {                                                                          \
-        m_Impl->m_Plugin->DoScheduleRead(variable, values);                    \
+        m_Impl->m_Plugin->DoPutDeferred(variable, values);                     \
     }                                                                          \
-    void PluginEngine::DoScheduleRead(const std::string &variableName,         \
-                                      const T *values)                         \
+    void PluginEngine::DoPutDeferred(Variable<T> &variable, const T &value)    \
     {                                                                          \
-        m_Impl->m_Plugin->DoScheduleRead(variableName, values);                \
-    }
-ADIOS2_FOREACH_TYPE_1ARG(define)
-#undef define
-void PluginEngine::DoWrite(VariableCompound &variable, const void *values)
-{
-    m_Impl->m_Plugin->DoWrite(variable, values);
-}
-
-#define define(T, L)                                                           \
-    Variable<T> *PluginEngine::InquireVariable##L(const std::string &name,     \
-                                                  const bool readIn)           \
+        m_Impl->m_Plugin->DoPutDeferred(variable, value);                      \
+    }                                                                          \
+    void PluginEngine::DoGetSync(Variable<T> &variable, T *values)             \
     {                                                                          \
-        return m_Impl->m_Plugin->InquireVariable##L(name, readIn);             \
+        m_Impl->m_Plugin->DoGetSync(variable, values);                         \
+    }                                                                          \
+    void PluginEngine::DoGetDeferred(Variable<T> &variable, T *values)         \
+    {                                                                          \
+        m_Impl->m_Plugin->DoGetDeferred(variable, values);                     \
+    }                                                                          \
+    void PluginEngine::DoGetDeferred(Variable<T> &variable, T &value)          \
+    {                                                                          \
+        m_Impl->m_Plugin->DoGetDeferred(variable, value);                      \
     }
-ADIOS2_FOREACH_TYPE_2ARGS(define)
-#undef define
-VariableBase *PluginEngine::InquireVariableUnknown(const std::string &name,
-                                                   const bool readIn)
-{
-    return m_Impl->m_Plugin->InquireVariableUnknown(name, readIn);
-}
 
-} // end namespace adios
+ADIOS2_FOREACH_TYPE_1ARG(declare)
+#undef declare
+
+} // end namespace adios2

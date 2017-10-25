@@ -11,6 +11,8 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(hello_bpTimeWriter ${MPI_C_LIBRARIES})
 else()
   add_executable(hello_bpTimeWriter helloBPTimeWriter_nompi.cpp)
+  add_executable(hello_bpWriteStep helloBPWriteStep_nompi.cpp)
 endif()
+
 target_link_libraries(hello_bpTimeWriter adios2)
 target_link_libraries(hello_bpWriteStep adios2)

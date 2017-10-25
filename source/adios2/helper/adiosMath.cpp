@@ -129,8 +129,8 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
         return linearIndex;
     };
 
-    auto lf_ColumnOne = [](const Dims &count,
-                           const Dims &normalizedPoint) -> size_t {};
+    //  TODO auto lf_ColumnOne = [](const Dims &count,
+    //                           const Dims &normalizedPoint) -> size_t {};
 
     const Dims &start = localBox.first;
     const Dims &count = localBox.second;

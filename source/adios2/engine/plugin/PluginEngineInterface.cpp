@@ -20,4 +20,4 @@ PluginEngineInterface::PluginEngineInterface(IO &io, const std::string &name,
 {
 }
 
-} // end namespace adios
+} // end namespace adios2

@@ -29,9 +29,8 @@ add_library(adios2
   engine/bp/BPFileReader.cpp engine/bp/BPFileReader.tcc
   engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
 
-#  engine/plugin/PluginEngine.h engine/plugin/PluginEngine.inl
-#  engine/plugin/PluginEngine.cpp
-#  engine/plugin/PluginEngineInterface.h engine/plugin/PluginEngineInterface.cpp
+  engine/plugin/PluginEngine.cpp
+  engine/plugin/PluginEngineInterface.cpp
 
   toolkit/format/BufferSTL.cpp
   

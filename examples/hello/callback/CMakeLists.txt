@@ -12,9 +12,10 @@ if(ADIOS2_HAVE_MPI)
   target_include_directories(hello_Callback2 PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_Callback2 ${MPI_C_LIBRARIES})
   
+  target_link_libraries(hello_Callback1 adios2)
+  target_link_libraries(hello_Callback2 adios2)
+  
 else()
-  #add_executable(hello_Callback helloBPZfpWrapper_nompi.cpp)
+  # TODO add_executable(hello_Callback helloBPZfpWrapper_nompi.cpp)
 endif()
 
-target_link_libraries(hello_Callback1 adios2)
-target_link_libraries(hello_Callback2 adios2)

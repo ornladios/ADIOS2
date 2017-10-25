@@ -34,6 +34,7 @@ else()
     add_executable(hello_bpWriter_f helloBPWriter_nompi.f90)
   endif()
   
+  add_executable(hello_bpPutDeferred helloBPPutDeferred_nompi.cpp)
 endif()
 
 target_link_libraries(hello_bpWriter adios2)

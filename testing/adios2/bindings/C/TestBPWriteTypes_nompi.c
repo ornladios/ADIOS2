@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
     // Set transport and parameters
     const unsigned int transportID = adios2_add_transport(ioH, "File");
-    adios2_set_transport_param(ioH, transportID, "library", "fstream");
+    adios2_set_transport_parameter(ioH, transportID, "library", "fstream");
 
     // count dims are allocated in stack
     size_t count[1];

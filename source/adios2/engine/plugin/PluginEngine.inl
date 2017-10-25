@@ -31,6 +31,6 @@ void PluginEngine::RegisterPlugin(const std::string name)
 
     RegisterPlugin(name, createFun, destroyFun);
 }
-}
+} // end namespace adios2
 
 #endif // ADIOS2_ENGINE_PLUGIN_ENGINE_INL_
