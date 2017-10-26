@@ -10,6 +10,7 @@
 
 #include "BPLS2.h"
 
+#include <iomanip>
 #include <iostream>
 
 #include "adios2/ADIOSMPICommOnly.h"
@@ -97,8 +98,8 @@ void BPLS2::ProcessParameters() const
             std::cout << "\n";
             std::cout << "Found --help , -h option, discarding others\n";
             std::cout << "Rerun without --help , -h option\n";
+            throw std::invalid_argument("");
         }
-        return;
     }
 
     if (m_FileName.empty())
@@ -118,8 +119,9 @@ void BPLS2::PrintUsage() const noexcept
     std::cout << "-l , --long        Print variables and attributes metadata\n";
     std::cout << "                   information, no overhead\n";
     std::cout << "-a , --attributes  List attributes metadata\n";
-
-    std::cout << "Example: bpls2 -lav bpfile\n";
+    std::cout << "-v , --verbose     Added file information\n";
+    std::cout << "\n";
+    std::cout << "Example: bpls2 -lav bpfile" << std::endl;
 }
 
 void BPLS2::PrintExamples() const noexcept {}
@@ -183,6 +185,63 @@ void BPLS2::SetParameters(const std::string argument, const bool isLong)
 
 void BPLS2::ProcessTransport() const
 {
+    auto lf_PrintVerboseHeader = [](const BPFileReader &bpFileReader,
+                                    const size_t variablesSize,
+                                    const size_t attributesSize) {
+
+        const auto &metadataSet = bpFileReader.m_BP3Deserializer.m_MetadataSet;
+        std::cout << "File info:\n";
+        std::cout << "  groups:     " << metadataSet.DataPGCount << "\n";
+        std::cout << "  variables:  " << variablesSize << "\n";
+        std::cout << "  attributes: " << attributesSize << "\n";
+        std::cout << "  meshes:     TODO\n";
+        std::cout << "  steps:      " << metadataSet.TimeStep << "\n";
+        std::cout << "  file size:  "
+                  << bpFileReader.m_FileManager.GetFileSize(0) << " bytes\n";
+
+        const auto &minifooter = bpFileReader.m_BP3Deserializer.m_Minifooter;
+        std::cout << "  bp version: " << std::to_string(minifooter.Version)
+                  << "\n";
+        std::string endianness("Little Endian");
+        if (!minifooter.IsLittleEndian)
+        {
+            endianness = "Big Endian";
+        }
+        std::cout << "  endianness: " << endianness << "\n";
+        std::cout << "  statistics: Min / Max / Avg / Std_dev\n" << std::endl;
+    };
+
+    auto lf_PrintVariables =
+        [&](const std::map<std::string, std::string> &variablesMap) {
+
+            // get maximum sizes
+            size_t maxTypeSize = 0;
+            size_t maxNameSize = 0;
+            for (const auto &variablePair : variablesMap)
+            {
+                const size_t nameSize = variablePair.first.size();
+                if (nameSize > maxNameSize)
+                {
+                    maxNameSize = nameSize;
+                }
+
+                const size_t typeSize = variablePair.second.size();
+                if (typeSize > maxTypeSize)
+                {
+                    maxTypeSize = typeSize;
+                }
+            }
+
+            for (const auto &variablePair : variablesMap)
+            {
+                std::cout << "  ";
+                std::cout << std::left << std::setw(maxTypeSize)
+                          << variablePair.second << "  ";
+                std::cout << std::left << std::setw(maxNameSize)
+                          << variablePair.first << std::endl;
+            }
+        };
+
     ADIOS adios(true);
     IO &io = adios.DeclareIO("bpls2");
     BPFileReader bpFileReader(io, m_FileName, Mode::Read, io.m_MPIComm);
@@ -191,26 +250,10 @@ void BPLS2::ProcessTransport() const
 
     if (m_Parameters.count("verbose") == 1)
     {
-        const auto &metadataSet = bpFileReader.m_BP3Deserializer.m_MetadataSet;
-        std::cout << "File info:\n";
-        std::cout << "    groups:     " << metadataSet.DataPGCount << "\n";
-        std::cout << "    variables:  " << variablesMap.size() << "\n";
-        std::cout << "    attributes: TODO\n";
-        std::cout << "    meshes:     TODO\n";
-        std::cout << "    time steps: " << metadataSet.TimeStep << "\n";
-        std::cout << "    file size:  "
-                  << bpFileReader.m_FileManager.GetFileSize(0) << " bytes\n";
-
-        const auto &minifooter = bpFileReader.m_BP3Deserializer.m_Minifooter;
-        std::cout << "    bp version: " << std::to_string(minifooter.Version)
-                  << "\n";
-        std::string endianness("Little Endian");
-        if (!minifooter.IsLittleEndian)
-        {
-            endianness = "Big Endian";
-        }
-        std::cout << "    Endianness: " << endianness << "\n";
+        lf_PrintVerboseHeader(bpFileReader, variablesMap.size(), 0);
     }
+
+    lf_PrintVariables(variablesMap);
 }
 
 } // end namespace utils

@@ -101,7 +101,7 @@ public:
     void WriteFiles(const char *buffer, const size_t size,
                     const int transportIndex = -1);
 
-    size_t GetFileSize(const size_t transportIndex = 0);
+    size_t GetFileSize(const size_t transportIndex = 0) const;
 
     /**
      * Read contents from a single file and assign it to buffer

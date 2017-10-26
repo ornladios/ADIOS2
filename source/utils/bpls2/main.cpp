@@ -25,7 +25,6 @@ int main(int argc, char *argv[])
     }
     catch (std::exception &e)
     {
-        std::cout << "bpls2 Caught an Exception\n";
         std::cout << e.what() << "\n";
     }
 

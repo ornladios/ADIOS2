@@ -93,8 +93,9 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
                 throw std::invalid_argument(
                     "ERROR: two IO AddTransport of the same type can't "
                     "have the same name : " +
-                    name + ", use Name=value parameter, in "
-                           "call to Open");
+                    name +
+                    ", use Name=value parameter, in "
+                    "call to Open");
             }
         }
         itType->second.insert(name);
@@ -154,7 +155,7 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
     }
 }
 
-size_t TransportMan::GetFileSize(const size_t transportIndex)
+size_t TransportMan::GetFileSize(const size_t transportIndex) const
 {
     auto itTransport = m_Transports.find(transportIndex);
     CheckFile(itTransport, ", in call to GetFileSize with index " +
