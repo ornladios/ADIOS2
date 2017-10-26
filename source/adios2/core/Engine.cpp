@@ -25,7 +25,22 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 
 IO &Engine::GetIO() noexcept { return m_IO; }
 
-void Engine::BeginStep() { ThrowUp("BeginStep"); }
+AdvanceStatus Engine::BeginStep()
+{
+    if (m_OpenMode == Mode::Read)
+    {
+        return BeginStep(AdvanceMode::NextAvailable, 0.0);
+    }
+    else
+    {
+        return BeginStep(AdvanceMode::Append, 0.0);
+    }
+}
+
+AdvanceStatus Engine::BeginStep(AdvanceMode mode, const float timeout_sec)
+{
+    ThrowUp("BeginStep");
+}
 void Engine::EndStep() { ThrowUp("EndStep"); }
 
 void Engine::PutSync(const std::string &variableName)

@@ -26,7 +26,7 @@ ADIOS1Reader::InquireVariableCommon(const std::string &variableName)
     // Variable<T>& variable = m_ADIOS.DefineVariable<T>( m_Name + "/" +
     // name, )
     // return &variable; //return address if success
-    ADIOS_VARINFO *vi = adios_inq_var(m_fh, variableName.c_str());
+    ADIOS_VARINFO *vi = m_ADIOS1.InqVar(variableName);
     adios2::Variable<T> *var = nullptr;
     if (vi != nullptr)
     {
@@ -41,7 +41,7 @@ ADIOS1Reader::InquireVariableCommon(const std::string &variableName)
             if (gdims[0] == JoinedDim)
             {
                 /* Joined Array */
-                adios_inq_var_blockinfo(m_fh, vi);
+                m_ADIOS1.InqVarBlockInfo(vi);
                 size_t joined_size = 0;
                 for (int i = 0; i < *vi->nblocks; i++)
                 {
@@ -82,16 +82,7 @@ ADIOS1Reader::InquireVariableCommon(const std::string &variableName)
         else /* Scalars */
         {
             /* scalar variable but global value or local value*/
-            std::string aname = variableName + "/ReadAsArray";
-            bool isLocalValue = false;
-            for (int i = 0; i < vi->nattrs; ++i)
-            {
-                if (!strcmp(m_fh->attr_namelist[vi->attr_ids[i]],
-                            aname.c_str()))
-                {
-                    isLocalValue = true;
-                }
-            }
+            bool isLocalValue = m_ADIOS1.IsVarLocalValue(vi);
             if (isLocalValue)
             {
                 /* Local Value */
@@ -124,7 +115,7 @@ ADIOS1Reader::InquireVariableCommon(const std::string &variableName)
             }
         }
         var->m_AvailableSteps = vi->nsteps;
-        adios_free_varinfo(vi);
+        m_ADIOS1.FreeVarInfo(vi);
     }
     return var;
 }

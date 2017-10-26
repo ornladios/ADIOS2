@@ -16,6 +16,7 @@
 namespace adios2
 {
 
+/*
 #define declare(T, L)                                                          \
     Variable<T> *ADIOS1Reader::DoInquireVariable##L(                           \
         const std::string &variableName)                                       \
@@ -25,5 +26,7 @@ namespace adios2
 
 ADIOS2_FOREACH_TYPE_2ARGS(declare)
 #undef declare
-
+*/
 } // end namespace adios2
+
+#endif // ADIOS2_ENGINE_ADIOS1_ADIOS1READER_TCC_

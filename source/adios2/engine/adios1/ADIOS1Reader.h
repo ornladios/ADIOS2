@@ -17,6 +17,7 @@
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/interop/adios1/ADIOS1CommonRead.h"
 
 // Fake out the include guard from ADIOS1's mpidummy.h to prevent it from
 // getting included
@@ -51,18 +52,16 @@ public:
                  MPI_Comm mpiComm);
 
     ~ADIOS1Reader();
-
+    AdvanceStatus BeginStep(AdvanceMode mode,
+                            const float timeout_sec = 0.0) final;
     void PerformGets() final;
-
     void EndStep() final;
-    void Advance(const float timeout_sec = 0.0);
-    void Advance(AdvanceMode mode, const float timeout_sec = 0.0);
 
     void Close(const int transportIndex = -1);
 
 private:
-    ADIOS_FILE *m_fh = nullptr; ///< ADIOS1 file handler
-    bool m_OpenAsFile = false;
+    interop::ADIOS1CommonRead m_ADIOS1;
+    // ADIOS_FILE *m_fh = nullptr; ///< ADIOS1 file handler
 
     void Init() final; ///< called from constructor, gets the selected ADIOS1
                        /// transport method from settings
@@ -70,28 +69,20 @@ private:
     void InitTransports() final;
 
 #define declare_type(T)                                                        \
+    void DoGetSync(Variable<T> &variable, T *values) final;                    \
     void DoGetDeferred(Variable<T> &variable, T *values) final;
+
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-
-    void ScheduleReadCommon(const std::string &name, const Dims &offs,
-                            const Dims &ldims, const int fromStep,
-                            const int nSteps, const bool readAsLocalValue,
-                            const bool readAsJoinedArray, void *data);
 
     void ReadJoinedArray(const std::string &name, const Dims &offs,
                          const Dims &ldims, const int fromStep,
                          const int nSteps, void *data);
 
-    bool CheckADIOS1TypeCompatibility(const std::string &name,
-                                      std::string adios2Type,
-                                      enum ADIOS_DATATYPES adios1Type);
-
     enum ADIOS_READ_METHOD m_ReadMethod = ADIOS_READ_METHOD_BP;
 
     template <class T>
-    Variable<T> *
-    ADIOS1Reader::InquireVariableCommon(const std::string &variableName);
+    Variable<T> *InquireVariableCommon(const std::string &variableName);
 };
 
 } // end namespace adios

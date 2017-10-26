@@ -27,7 +27,11 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     Init();
 }
 
-void DataManWriter::BeginStep() {}
+AdvanceStatus DataManWriter::BeginStep(AdvanceMode mode,
+                                       const float timeout_sec)
+{
+    return AdvanceStatus::OK;
+}
 void DataManWriter::EndStep() {}
 
 void DataManWriter::Close(const int transportIndex) {}

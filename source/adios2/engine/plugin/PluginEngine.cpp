@@ -61,7 +61,10 @@ PluginEngine::PluginEngine(IO &io, const std::string &name, const Mode openMode,
 
 PluginEngine::~PluginEngine() { m_Impl->m_HandleDestroy(m_Impl->m_Plugin); }
 
-void PluginEngine::BeginStep() { m_Impl->m_Plugin->BeginStep(); }
+AdvanceStatus PluginEngine::BeginStep(AdvanceMode mode, const float timeout_sec)
+{
+    return m_Impl->m_Plugin->BeginStep(mode, timeout_sec);
+}
 
 void PluginEngine::PerformPuts() { m_Impl->m_Plugin->PerformPuts(); }
 

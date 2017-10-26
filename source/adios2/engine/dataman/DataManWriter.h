@@ -27,7 +27,8 @@ public:
 
     ~DataManWriter() = default;
 
-    void BeginStep() final;
+    AdvanceStatus BeginStep(AdvanceMode mode,
+                            const float timeout_sec = 0.0) final;
     void EndStep() final;
 
     void Close(const int transportIndex = -1) final;

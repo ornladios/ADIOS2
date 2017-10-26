@@ -15,7 +15,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
-#include "adios2/toolkit/interop/adios1/ADIOS1Common.h"
+#include "adios2/toolkit/interop/adios1/ADIOS1CommonWrite.h"
 
 namespace adios2
 {
@@ -37,7 +37,9 @@ public:
 
     ~ADIOS1Writer() = default;
 
-    void BeginStep() final;
+    AdvanceStatus BeginStep(AdvanceMode mode,
+                            const float timeout_sec = 0.0) final;
+    void PerformPuts() final;
     void EndStep() final;
 
     /**
@@ -51,7 +53,7 @@ public:
     void Close(const int transportIndex = -1) final;
 
 private:
-    interop::ADIOS1Common m_ADIOS1;
+    interop::ADIOS1CommonWrite m_ADIOS1;
 
     void Init() final;
     void InitParameters() final;

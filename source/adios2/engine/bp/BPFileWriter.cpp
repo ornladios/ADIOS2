@@ -35,10 +35,11 @@ BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode openMode,
 
 BPFileWriter::~BPFileWriter() = default;
 
-void BPFileWriter::BeginStep()
+AdvanceStatus BPFileWriter::BeginStep(AdvanceMode mode, const float timeout_sec)
 {
     m_BP3Serializer.m_DeferredVariables.clear();
     m_BP3Serializer.m_DeferredVariablesDataSize = 0;
+    return AdvanceStatus::OK;
 }
 
 void BPFileWriter::PerformPuts()

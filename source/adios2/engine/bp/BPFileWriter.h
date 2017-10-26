@@ -34,7 +34,8 @@ public:
 
     ~BPFileWriter();
 
-    void BeginStep() final;
+    AdvanceStatus BeginStep(AdvanceMode mode,
+                            const float timeout_sec = 0.0) final;
     void PerformPuts() final;
     void EndStep() final;
 

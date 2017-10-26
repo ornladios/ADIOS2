@@ -21,28 +21,6 @@ namespace adios2
 namespace interop
 {
 
-template <class T>
-void ADIOS1Common::WriteVariable(const std::string &name, const ShapeID shapeID,
-                                 const Dims ldims, const Dims gdims,
-                                 const Dims offsets, const T *values)
-{
-    if (ReOpenAsNeeded())
-    {
-        if (GetADIOS1Type<T>() != adios_unknown)
-        {
-            DefineVariable(
-                name, shapeID, GetADIOS1Type<T>(), DimsToCSVLocalAware(ldims),
-                DimsToCSVLocalAware(gdims), DimsToCSVLocalAware(offsets));
-            adios_write(m_ADIOSFile, name.c_str(), values);
-        }
-        else
-        {
-            throw std::invalid_argument("ERROR: ADIOS1 doesn't support type " +
-                                        GetType<T>() + ", in call to Write\n");
-        }
-    }
-}
-
 template <>
 enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<char>() const {
     return adios_byte;
