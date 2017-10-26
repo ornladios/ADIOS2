@@ -29,17 +29,18 @@ AdvanceStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
     {
-        return BeginStep(AdvanceMode::NextAvailable, 0.0);
+        return BeginStep(AdvanceMode::NextAvailable, 0.0f);
     }
     else
     {
-        return BeginStep(AdvanceMode::Append, 0.0);
+        return BeginStep(AdvanceMode::Append, 0.0f);
     }
 }
 
-AdvanceStatus Engine::BeginStep(AdvanceMode mode, const float timeout_sec)
+AdvanceStatus Engine::BeginStep(AdvanceMode mode, const float timeoutSeconds)
 {
     ThrowUp("BeginStep");
+    return AdvanceStatus::OtherError;
 }
 void Engine::EndStep() { ThrowUp("EndStep"); }
 

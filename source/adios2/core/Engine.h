@@ -62,9 +62,9 @@ public:
      */
     IO &GetIO() noexcept;
 
-    virtual AdvanceStatus BeginStep() final;
+    AdvanceStatus BeginStep() final;
     virtual AdvanceStatus BeginStep(AdvanceMode mode,
-                                    const float timeout_sec = 0.0);
+                                    const float timeoutSeconds = 0.f);
 
     /**
      * Puts variable with pre-defined pointer at DefineVariable into adios2
