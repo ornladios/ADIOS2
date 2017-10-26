@@ -1,0 +1,25 @@
+#!/bin/bash
+#BSUB -P CSC143SUMMITDEV
+#BSUB -W 01:00
+#BSUB -nnodes 2
+
+module purge
+module load git cmake
+
+CTEST=$(which ctest)
+SCRIPT_DIR=${PWD}/source/scripts/dashboard/nightly
+
+${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-gcc-spectrum.cmake \
+  -Ddashboard_full=OFF \
+  -Ddashboard_do_test=ON \
+  -Ddashboard_do_submit=OFF 2>&1 1>>summitdev-gcc-spectrum.log
+
+${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-xl-spectrum.cmake \
+  -Ddashboard_full=OFF \
+  -Ddashboard_do_test=ON \
+  -Ddashboard_do_submit=OFF 2>&1 1>>summitdev-xl-spectrum.log
+
+${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-pgi-spectrum.cmake \
+  -Ddashboard_full=OFF \
+  -Ddashboard_do_test=ON \
+  -Ddashboard_do_submit=OFF 2>&1 1>>summitdev-pgi-spectrum.log
