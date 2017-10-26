@@ -145,6 +145,12 @@ public:
      * @param hint extra debugging info for the exception */
     void CheckDimensions(const std::string hint) const;
 
+    /**
+     * Gets the current (start, start+count = end) box
+     * @return box with current selection start and end points
+     */
+    Box<Dims> CurrentBoxSelection() const noexcept;
+
 protected:
     const bool m_DebugMode = false;
 

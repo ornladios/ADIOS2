@@ -54,10 +54,9 @@ public:
     std::map<std::string, SubFileInfoMap>
     PerformGetsVariablesSubFileInfo(IO &io);
 
-    template <class T>
-    void ClipContiguousMemory(const std::vector<char> &contiguousMemory,
-                              const Box<Dims> &intersectionBox,
-                              Variable<T> &variable);
+    void ClipContiguousMemory(const std::string &variableName, IO &io,
+                              const std::vector<char> &contiguousMemory,
+                              const Box<Dims> &intersectionBox);
 
 private:
     std::map<std::string, SubFileInfoMap> m_DeferredVariables;
@@ -84,6 +83,17 @@ private:
 
     template <class T>
     SubFileInfoMap GetSubFileInfo(const Variable<T> &variable) const;
+
+    template <class T>
+    void ClipContiguousMemoryCommon(Variable<T> &variable,
+                                    const std::vector<char> &contiguousMemory,
+                                    const Box<Dims> &intersectionBox);
+
+    template <class T>
+    void
+    ClipContiguousMemoryCommonRowZero(Variable<T> &variable,
+                                      const std::vector<char> &contiguousMemory,
+                                      const Box<Dims> &intersectionBox);
 };
 
 #define declare_template_instantiation(T)                                      \

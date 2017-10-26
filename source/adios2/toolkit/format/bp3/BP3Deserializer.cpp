@@ -36,6 +36,30 @@ void BP3Deserializer::ParseMetadata(IO &io)
     // ParseAttributesIndex(io);
 }
 
+void BP3Deserializer::ClipContiguousMemory(
+    const std::string &variableName, IO &io,
+    const std::vector<char> &contiguousMemory, const Box<Dims> &intersectionBox)
+{
+    // get variable pointer and set data in it with local dimensions
+    const std::string type(io.InquireVariableType(variableName));
+
+    if (type == "compound")
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        Variable<T> *variable = io.InquireVariable<T>(variableName);           \
+        if (variable != nullptr)                                               \
+        {                                                                      \
+            ClipContiguousMemoryCommon(*variable, contiguousMemory,            \
+                                       intersectionBox);                       \
+        }                                                                      \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+}
+
 // PRIVATE
 void BP3Deserializer::ParseMinifooter()
 {

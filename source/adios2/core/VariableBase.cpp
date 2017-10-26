@@ -187,6 +187,15 @@ void VariableBase::CheckDimensions(const std::string hint) const
     // TODO need to think more exceptions here
 }
 
+Box<Dims> VariableBase::CurrentBoxSelection() const noexcept
+{
+    Dims end;
+    std::transform(m_Start.begin(), m_Start.end(), m_Count.begin(),
+                   std::back_inserter(end), std::plus<size_t>());
+
+    return Box<Dims>{m_Start, end};
+}
+
 // PRIVATE
 void VariableBase::InitShapeType()
 {

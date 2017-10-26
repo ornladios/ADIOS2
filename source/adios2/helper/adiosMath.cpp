@@ -129,8 +129,22 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
         return linearIndex;
     };
 
-    //  TODO auto lf_ColumnOne = [](const Dims &count,
-    //                           const Dims &normalizedPoint) -> size_t {};
+    auto lf_ColumnOne = [](const Dims &count,
+                           const Dims &normalizedPoint) -> size_t {
+
+        const size_t countSize = count.size();
+        size_t linearIndex = 0;
+        size_t product = std::accumulate(count.begin(), count.end() - 1, 1,
+                                         std::multiplies<size_t>());
+
+        for (size_t p = 1; p < countSize; ++p)
+        {
+            linearIndex += (normalizedPoint[countSize - p] - 1) * product;
+            product /= count[countSize - p];
+        }
+        linearIndex += (normalizedPoint[0] - 1); // fastest
+        return linearIndex;
+    };
 
     const Dims &start = localBox.first;
     const Dims &count = localBox.second;
@@ -151,16 +165,11 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
     {
         linearIndex = lf_RowZero(count, normalizedPoint);
     }
-    else if (isRowMajor && !isZeroIndex)
-    {
-    }
     else if (!isRowMajor && !isZeroIndex)
     {
-        // TODO: Fortran Column-Major and 1-index
+        linearIndex = lf_ColumnOne(count, normalizedPoint);
     }
-    else // column-major and Zero index // who uses this?
-    {
-    }
+
     return linearIndex;
 }
 

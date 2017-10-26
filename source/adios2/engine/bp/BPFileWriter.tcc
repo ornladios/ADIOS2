@@ -55,7 +55,7 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     m_BP3Serializer.PutVariableMetadata(variable);
     m_BP3Serializer.PutVariablePayload(variable);
 
-    // variable.SetData(nullptr); // not needed after PutSync
+    // variable.SetData(nullptr); // not needed after PutSync?
 }
 
 template <class T>

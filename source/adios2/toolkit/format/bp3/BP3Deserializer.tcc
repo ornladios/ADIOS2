@@ -148,14 +148,16 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
                 continue;
             }
             // if they intersect get info Seeks (first: start, second: end)
-            // TODO: get row-major, zero-index for each language
+            // TODO: map to sizeof(T)?
             info.Seeks.first =
                 LinearIndex(blockDimensions, info.IntersectionBox.first,
-                            m_IsRowMajor, m_IsZeroIndex);
+                            m_IsRowMajor, m_IsZeroIndex) *
+                sizeof(T);
 
             info.Seeks.second =
                 LinearIndex(blockDimensions, info.IntersectionBox.second,
-                            m_IsRowMajor, m_IsZeroIndex);
+                            m_IsRowMajor, m_IsZeroIndex) *
+                sizeof(T);
 
             const size_t fileIndex = static_cast<const size_t>(
                 blockCharacteristics.Statistics.FileIndex);
@@ -165,6 +167,90 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
     }
 
     return infoMap;
+}
+
+template <class T>
+void BP3Deserializer::ClipContiguousMemoryCommon(
+    Variable<T> &variable, const std::vector<char> &contiguousMemory,
+    const Box<Dims> &intersectionBox)
+{
+    const Dims &start = intersectionBox.first;
+    if (start.size() == 1) // 1D copy memory
+    {
+        // normalize intersection start with variable.m_Start
+        const size_t normalizedStart =
+            (start[0] - variable.m_Start[0]) * sizeof(T);
+        char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
+
+        std::copy(contiguousMemory.begin(), contiguousMemory.end(),
+                  &rawVariableData[normalizedStart]);
+
+        return;
+    }
+
+    if (m_IsRowMajor && m_IsZeroIndex)
+    {
+        ClipContiguousMemoryCommonRowZero(variable, contiguousMemory,
+                                          intersectionBox);
+    }
+}
+
+template <class T>
+void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
+    Variable<T> &variable, const std::vector<char> &contiguousMemory,
+    const Box<Dims> &intersectionBox)
+{
+    const Dims &start = intersectionBox.first;
+    const Dims &end = intersectionBox.second;
+    const size_t dimensions = start.size();
+    const size_t stride = end[dimensions - 1] - start[dimensions - 1];
+
+    Dims currentPoint(start); // current point for memory copy
+
+    const Box<Dims> variableSelection = variable.CurrentBoxSelection();
+
+    bool run = true;
+
+    while (run)
+    {
+        // here copy current linear memory between currentPoint and end
+        const size_t contiguousStart =
+            LinearIndex(intersectionBox, currentPoint, true, true);
+
+        const size_t variableStart =
+            LinearIndex(variableSelection, currentPoint, true, true);
+
+        char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
+
+        std::copy(&contiguousMemory[contiguousStart],
+                  &contiguousMemory[contiguousStart + stride],
+                  &rawVariableData[variableStart]);
+
+        // here update each index recursively, always starting from the 2nd
+        // fastest changing index, since fastest changing index is the
+        // continuous part in the previous std::copy
+        size_t p = dimensions - 2;
+        while (true)
+        {
+            ++currentPoint[p];
+
+            if (currentPoint[p] == end[p])
+            {
+                if (p == 0)
+                {
+                    run = false; // we are done
+                }
+                else
+                {
+                    --p;
+                }
+            }
+            else
+            {
+                break; // break inner p loop
+            }
+        } // dimension index update
+    }     // run
 }
 
 } // end namespace format

@@ -108,8 +108,16 @@ size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
 Box<Dims> IntersectionBox(const Box<Dims> &box1,
                           const Box<Dims> &box2) noexcept;
 
+/**
+ * Get a linear index for a point inside a localBox
+ * @param localBox start and count
+ * @param point inside box
+ * @param isRowMajor
+ * @param isZeroIndex
+ * @return linear index for contiguous memory
+ */
 size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
-                   const bool isRowMajor = true, const bool isZeroIndex = true);
+                   const bool isRowMajor, const bool isZeroIndex);
 
 } // end namespace adios2
 
