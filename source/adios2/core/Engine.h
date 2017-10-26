@@ -62,7 +62,7 @@ public:
      */
     IO &GetIO() noexcept;
 
-    AdvanceStatus BeginStep() final;
+    AdvanceStatus BeginStep();
     virtual AdvanceStatus BeginStep(AdvanceMode mode,
                                     const float timeoutSeconds = 0.f);
 
