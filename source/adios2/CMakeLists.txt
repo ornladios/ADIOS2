@@ -102,7 +102,7 @@ if(ADIOS2_HAVE_ADIOS1)
     
     toolkit/interop/adios1/ADIOS1Common.cpp toolkit/interop/adios1/ADIOS1Common.tcc
     toolkit/interop/adios1/ADIOS1CommonWrite.cpp toolkit/interop/adios1/ADIOS1CommonWrite.tcc
-    toolkit/interop/adios1/ADIOS1CommonRead.cpp 
+    toolkit/interop/adios1/ADIOS1CommonRead.cpp toolkit/interop/adios1/ADIOS1CommonRead.tcc
   )
   target_link_libraries(adios2 PRIVATE adios1::adios)
 endif()
