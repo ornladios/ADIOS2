@@ -181,7 +181,7 @@ public:
      * Map with variables info: key: name, value: type
      * @return populate map with current variables
      */
-    std::map<std::string, std::string> GetAvailableVariables() const noexcept;
+    std::map<std::string, Params> GetAvailableVariables() noexcept;
 
     /**
      * Gets an existing variable of primitive type by name

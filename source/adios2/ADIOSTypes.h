@@ -262,7 +262,11 @@ struct FixedWidthInt<8, false>
 
 // Some core type information that may be useful at compile time
 template <typename T, typename Enable = void>
-struct TypeInfo;
+struct TypeInfo
+{
+    using IOType = T;
+    using ValueType = T;
+};
 
 template <typename T>
 struct TypeInfo<T, typename std::enable_if<std::is_integral<T>::value>::type>

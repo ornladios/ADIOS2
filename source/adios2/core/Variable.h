@@ -18,6 +18,7 @@
 #include <vector>
 /// \endcond
 
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
 
 namespace adios2
@@ -31,15 +32,10 @@ class Variable : public VariableBase
 {
 
 public:
-    /**
-     * Unique constructor
-     * @param name
-     * @param shape
-     * @param start
-     * @param count
-     * @param constantShape
-     * @param debugMode
-     */
+    typename TypeInfo<T>::ValueType m_Min;
+    typename TypeInfo<T>::ValueType m_Max;
+    typename TypeInfo<T>::ValueType m_Value;
+
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
                 const Dims &count, const bool constantShape, T *data,
                 const bool debugMode);

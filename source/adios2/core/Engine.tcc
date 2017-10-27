@@ -77,6 +77,14 @@ ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
     {                                                                          \
         if (m_DebugMode)                                                       \
         {                                                                      \
+            if (&variable == nullptr)                                          \
+            {                                                                  \
+                throw std::invalid_argument("ERROR: variable reference is "    \
+                                            "undefined, try using "            \
+                                            "IO::InquireVariable(name) "       \
+                                            "function first, in call to Get" + \
+                                            std::string(#L) + "\n");           \
+            }                                                                  \
             variable.CheckDimensions("Get" + std::string(#L));                 \
                                                                                \
             if (data == nullptr)                                               \

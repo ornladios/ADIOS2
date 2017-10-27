@@ -326,15 +326,17 @@ protected:
         uint64_t PayloadOffset;
         T Min;
         T Max;
+        T Value;
         uint32_t Step;
         uint32_t FileIndex;
         uint32_t MemberID;
+        bool IsValue = false;
     };
 
     template <class T>
     struct Characteristics
     {
-        Stats<T> Statistics;
+        Stats<typename TypeInfo<T>::ValueType> Statistics;
         Dims Shape;
         Dims Start;
         Dims Count;

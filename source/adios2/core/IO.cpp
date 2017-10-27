@@ -11,6 +11,8 @@
 #include "IO.h"
 #include "IO.tcc"
 
+#include <sstream>
+
 #include "adios2/ADIOSMPI.h"
 #include "adios2/engine/bp/BPFileReader.h"
 #include "adios2/engine/bp/BPFileWriter.h"
@@ -145,14 +147,38 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     return isRemoved;
 }
 
-std::map<std::string, std::string> IO::GetAvailableVariables() const noexcept
+std::map<std::string, Params> IO::GetAvailableVariables() noexcept
 {
-    std::map<std::string, std::string> variables;
+    std::map<std::string, Params> variablesInfo;
     for (const auto &variablePair : m_Variables)
     {
-        variables[variablePair.first] = variablePair.second.first;
+        const std::string name(variablePair.first);
+        const std::string type(variablePair.second.first);
+        variablesInfo[name]["Type"] = type;
+
+        if (type == "compound")
+        {
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        Variable<T> &variable = *InquireVariable<T>(name);                     \
+        std::ostringstream minSS;                                              \
+        minSS << variable.m_Min;                                               \
+        variablesInfo[name]["Min"] = minSS.str();                              \
+        std::ostringstream maxSS;                                              \
+        maxSS << variable.m_Max;                                               \
+        variablesInfo[name]["Max"] = maxSS.str();                              \
+        variablesInfo[name]["StepsStart"] =                                    \
+            std::to_string(variable.m_AvailableStepsStart);                    \
+        variablesInfo[name]["StepsCount"] =                                    \
+            std::to_string(variable.m_AvailableStepsCount);                    \
     }
-    return variables;
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+    // TODO: add dimensions
+    return variablesInfo;
 }
 
 std::string IO::InquireVariableType(const std::string &name) const noexcept

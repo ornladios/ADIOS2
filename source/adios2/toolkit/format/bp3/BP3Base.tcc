@@ -187,19 +187,23 @@ BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
 
         case (characteristic_value):
         { // TODO make sure it's string or string array
-            characteristics.Statistics.Min = ReadValue<T>(buffer, position);
+            characteristics.Statistics.Value =
+                ReadValue<typename TypeInfo<T>::ValueType>(buffer, position);
+            characteristics.Statistics.IsValue = true;
             break;
         }
 
         case (characteristic_min):
         {
-            characteristics.Statistics.Min = ReadValue<T>(buffer, position);
+            characteristics.Statistics.Min =
+                ReadValue<typename TypeInfo<T>::ValueType>(buffer, position);
             break;
         }
 
         case (characteristic_max):
         {
-            characteristics.Statistics.Max = ReadValue<T>(buffer, position);
+            characteristics.Statistics.Max =
+                ReadValue<typename TypeInfo<T>::ValueType>(buffer, position);
             break;
         }
 

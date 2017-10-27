@@ -55,12 +55,22 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
     }
 
     Variable<T> *variable = nullptr;
+    if (characteristics.Statistics.IsValue)
     {
-        // std::mutex portion
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        variable = &io.DefineVariable<T>(variableName);
+        variable->m_Min = characteristics.Statistics.Value;
+        variable->m_Max = characteristics.Statistics.Value;
+    }
+    else
+    {
         std::lock_guard<std::mutex> lock(m_Mutex);
         variable =
             &io.DefineVariable<T>(variableName, characteristics.Shape,
                                   characteristics.Start, characteristics.Count);
+
+        variable->m_Min = characteristics.Statistics.Min;
+        variable->m_Max = characteristics.Statistics.Max;
     }
 
     // going back to get variable index position
@@ -83,8 +93,9 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
         const size_t subsetPosition = position;
 
         // read until step is found
-        const Characteristics<T> subsetCharacteristics =
-            ReadElementIndexCharacteristics<T>(buffer, position, true);
+        const Characteristics<typename TypeInfo<T>::ValueType>
+            subsetCharacteristics = ReadElementIndexCharacteristics<
+                typename TypeInfo<T>::ValueType>(buffer, position, false);
 
         if (subsetCharacteristics.Statistics.Step > currentStep)
         {
@@ -92,6 +103,16 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
             variable->m_IndexStepBlockStarts[currentStep] = subsetPositions;
             ++variable->m_AvailableStepsCount;
             subsetPositions.clear();
+        }
+
+        if (subsetCharacteristics.Statistics.Min < variable->m_Min)
+        {
+            variable->m_Min = subsetCharacteristics.Statistics.Min;
+        }
+
+        if (subsetCharacteristics.Statistics.Max > variable->m_Max)
+        {
+            variable->m_Max = subsetCharacteristics.Statistics.Max;
         }
 
         subsetPositions.push_back(subsetPosition);

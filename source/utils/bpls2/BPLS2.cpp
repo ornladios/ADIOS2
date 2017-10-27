@@ -208,39 +208,53 @@ void BPLS2::ProcessTransport() const
             endianness = "Big Endian";
         }
         std::cout << "  endianness: " << endianness << "\n";
-        std::cout << "  statistics: Min / Max / Avg / Std_dev\n" << std::endl;
+        std::cout << "  statistics: Min / Max\n";
+        std::cout << "\n";
     };
 
     auto lf_PrintVariables =
-        [&](const std::map<std::string, std::string> &variablesMap) {
+        [&](const std::map<std::string, Params> &variablesMap)
 
-            // get maximum sizes
-            size_t maxTypeSize = 0;
-            size_t maxNameSize = 0;
-            for (const auto &variablePair : variablesMap)
+    {
+        // get maximum sizes
+        size_t maxTypeSize = 0;
+        size_t maxNameSize = 0;
+        for (const auto &variablePair : variablesMap)
+        {
+            const size_t nameSize = variablePair.first.size();
+            if (nameSize > maxNameSize)
             {
-                const size_t nameSize = variablePair.first.size();
-                if (nameSize > maxNameSize)
-                {
-                    maxNameSize = nameSize;
-                }
-
-                const size_t typeSize = variablePair.second.size();
-                if (typeSize > maxTypeSize)
-                {
-                    maxTypeSize = typeSize;
-                }
+                maxNameSize = nameSize;
             }
 
-            for (const auto &variablePair : variablesMap)
+            const Params &parameters = variablePair.second;
+            const size_t typeSize = parameters.at("Type").size();
+            if (typeSize > maxTypeSize)
             {
-                std::cout << "  ";
-                std::cout << std::left << std::setw(maxTypeSize)
-                          << variablePair.second << "  ";
-                std::cout << std::left << std::setw(maxNameSize)
-                          << variablePair.first << std::endl;
+                maxTypeSize = typeSize;
             }
-        };
+        }
+
+        for (const auto &variablePair : variablesMap)
+        {
+            const std::string name(variablePair.first);
+            const Params &parameters = variablePair.second;
+            const std::string type(parameters.at("Type"));
+
+            std::cout << "  ";
+            std::cout << std::left << std::setw(maxTypeSize) << type << "  ";
+            std::cout << std::left << std::setw(maxNameSize) << name << "  ";
+
+            // print min max
+            if (m_Parameters.count("long") == 1)
+            {
+                std::cout << parameters.at("Min") << " / "
+                          << parameters.at("Max");
+            }
+            std::cout << "\n";
+        }
+        std::cout << std::endl;
+    };
 
     ADIOS adios(true);
     IO &io = adios.DeclareIO("bpls2");

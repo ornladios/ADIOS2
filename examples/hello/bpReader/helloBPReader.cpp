@@ -41,13 +41,18 @@ int main(int argc, char *argv[])
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpReader = bpIO.Open("myVector.bp", adios2::Mode::Read);
-        const std::map<std::string, std::string> variables =
+        const std::map<std::string, adios2::Params> variables =
             bpIO.GetAvailableVariables();
 
-        for (const auto variablePair : variables)
+        for (const auto &variablePair : variables)
         {
-            std::cout << "Name: " << variablePair.first
-                      << "  type: " << variablePair.second << "\n";
+            std::cout << "Name: " << variablePair.first;
+
+            for (const auto &parameter : variablePair.second)
+            {
+                std::cout << "\t" << parameter.first << ": " << parameter.second
+                          << "\n";
+            }
         }
 
         /** Write variable for buffering */
@@ -60,7 +65,7 @@ int main(int argc, char *argv[])
             bpReader.GetSync<float>(*bpFloats, myFloats.data());
         }
 
-        if (bpFloats != nullptr) // means not found
+        if (bpInts != nullptr) // means not found
         {
             bpReader.GetSync<int>(*bpInts, myInts.data());
         }
