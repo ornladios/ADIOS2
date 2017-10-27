@@ -1,5 +1,6 @@
 /*
-    pybind11/iostream.h -- Tools to assist with redirecting cout and cerr to Python
+    pybind11/iostream.h -- Tools to assist with redirecting cout and cerr to
+   Python
 
     Copyright (c) 2017 Henry F. Schreiner
 
@@ -11,17 +12,18 @@
 
 #include "pybind11.h"
 
-#include <streambuf>
-#include <ostream>
-#include <string>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <ostream>
+#include <streambuf>
+#include <string>
 
 NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 NAMESPACE_BEGIN(detail)
 
 // Buffer that writes to Python instead of C++
-class pythonbuf : public std::streambuf {
+class pythonbuf : public std::streambuf
+{
 private:
     using traits_type = std::streambuf::traits_type;
 
@@ -29,16 +31,20 @@ private:
     object pywrite;
     object pyflush;
 
-    int overflow(int c) {
-        if (!traits_type::eq_int_type(c, traits_type::eof())) {
+    int overflow(int c)
+    {
+        if (!traits_type::eq_int_type(c, traits_type::eof()))
+        {
             *pptr() = traits_type::to_char_type(c);
             pbump(1);
         }
         return sync() ? traits_type::not_eof(c) : traits_type::eof();
     }
 
-    int sync() {
-        if (pbase() != pptr()) {
+    int sync()
+    {
+        if (pbase() != pptr())
+        {
             // This subtraction cannot be negative, so dropping the sign
             str line(pbase(), static_cast<size_t>(pptr() - pbase()));
 
@@ -52,19 +58,16 @@ private:
 
 public:
     pythonbuf(object pyostream)
-        : pywrite(pyostream.attr("write")),
-          pyflush(pyostream.attr("flush")) {
+    : pywrite(pyostream.attr("write")), pyflush(pyostream.attr("flush"))
+    {
         setp(d_buffer, d_buffer + sizeof(d_buffer) - 1);
     }
 
     /// Sync before destroy
-    ~pythonbuf() {
-        sync();
-    }
+    ~pythonbuf() { sync(); }
 };
 
 NAMESPACE_END(detail)
-
 
 /** \rst
     This a move-only guard that redirects output.
@@ -86,11 +89,13 @@ NAMESPACE_END(detail)
     .. code-block:: cpp
 
         {
-            py::scoped_ostream_redirect output{std::cerr, py::module::import("sys").attr("stderr")};
+            py::scoped_ostream_redirect output{std::cerr,
+ py::module::import("sys").attr("stderr")};
             std::cerr << "Hello, World!";
         }
  \endrst */
-class scoped_ostream_redirect {
+class scoped_ostream_redirect
+{
 protected:
     std::streambuf *old;
     std::ostream &costream;
@@ -98,22 +103,21 @@ protected:
 
 public:
     scoped_ostream_redirect(
-            std::ostream &costream = std::cout,
-            object pyostream = module::import("sys").attr("stdout"))
-        : costream(costream), buffer(pyostream) {
+        std::ostream &costream = std::cout,
+        object pyostream = module::import("sys").attr("stdout"))
+    : costream(costream), buffer(pyostream)
+    {
         old = costream.rdbuf(&buffer);
     }
 
-    ~scoped_ostream_redirect() {
-        costream.rdbuf(old);
-    }
+    ~scoped_ostream_redirect() { costream.rdbuf(old); }
 
     scoped_ostream_redirect(const scoped_ostream_redirect &) = delete;
     scoped_ostream_redirect(scoped_ostream_redirect &&other) = default;
-    scoped_ostream_redirect &operator=(const scoped_ostream_redirect &) = delete;
+    scoped_ostream_redirect &
+    operator=(const scoped_ostream_redirect &) = delete;
     scoped_ostream_redirect &operator=(scoped_ostream_redirect &&) = delete;
 };
-
 
 /** \rst
     Like `scoped_ostream_redirect`, but redirects cerr by default. This class
@@ -126,19 +130,22 @@ public:
                           scoped_estream_redirect>());
 
 \endrst */
-class scoped_estream_redirect : public scoped_ostream_redirect {
+class scoped_estream_redirect : public scoped_ostream_redirect
+{
 public:
     scoped_estream_redirect(
-            std::ostream &costream = std::cerr,
-            object pyostream = module::import("sys").attr("stderr"))
-        : scoped_ostream_redirect(costream,pyostream) {}
+        std::ostream &costream = std::cerr,
+        object pyostream = module::import("sys").attr("stderr"))
+    : scoped_ostream_redirect(costream, pyostream)
+    {
+    }
 };
-
 
 NAMESPACE_BEGIN(detail)
 
 // Class to redirect output as a context manager. C++ backend.
-class OstreamRedirect {
+class OstreamRedirect
+{
     bool do_stdout_;
     bool do_stderr_;
     std::unique_ptr<scoped_ostream_redirect> redirect_stdout;
@@ -146,16 +153,20 @@ class OstreamRedirect {
 
 public:
     OstreamRedirect(bool do_stdout = true, bool do_stderr = true)
-        : do_stdout_(do_stdout), do_stderr_(do_stderr) {}
+    : do_stdout_(do_stdout), do_stderr_(do_stderr)
+    {
+    }
 
-    void enter() {
+    void enter()
+    {
         if (do_stdout_)
             redirect_stdout.reset(new scoped_ostream_redirect());
         if (do_stderr_)
             redirect_stderr.reset(new scoped_estream_redirect());
     }
 
-    void exit() {
+    void exit()
+    {
         redirect_stdout.reset();
         redirect_stderr.reset();
     }
@@ -165,7 +176,8 @@ NAMESPACE_END(detail)
 
 /** \rst
     This is a helper function to add a C++ redirect context manager to Python
-    instead of using a C++ guard. To use it, add the following to your binding code:
+    instead of using a C++ guard. To use it, add the following to your binding
+ code:
 
     .. code-block:: cpp
 
@@ -190,11 +202,14 @@ NAMESPACE_END(detail)
             m.noisy_function_with_error_printing()
 
  \endrst */
-inline class_<detail::OstreamRedirect> add_ostream_redirect(module m, std::string name = "ostream_redirect") {
+inline class_<detail::OstreamRedirect>
+add_ostream_redirect(module m, std::string name = "ostream_redirect")
+{
     return class_<detail::OstreamRedirect>(m, name.c_str(), module_local())
-        .def(init<bool,bool>(), arg("stdout")=true, arg("stderr")=true)
+        .def(init<bool, bool>(), arg("stdout") = true, arg("stderr") = true)
         .def("__enter__", &detail::OstreamRedirect::enter)
-        .def("__exit__", [](detail::OstreamRedirect &self, args) { self.exit(); });
+        .def("__exit__",
+             [](detail::OstreamRedirect &self, args) { self.exit(); });
 }
 
 NAMESPACE_END(PYBIND11_NAMESPACE)

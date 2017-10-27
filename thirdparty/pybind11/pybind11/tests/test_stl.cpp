@@ -14,61 +14,85 @@
 #if PYBIND11_HAS_VARIANT
 using std::variant;
 #elif defined(PYBIND11_TEST_BOOST) && (!defined(_MSC_VER) || _MSC_VER >= 1910)
-#  include <boost/variant.hpp>
-#  define PYBIND11_HAS_VARIANT 1
+#include <boost/variant.hpp>
+#define PYBIND11_HAS_VARIANT 1
 using boost::variant;
 
-namespace pybind11 { namespace detail {
+namespace pybind11
+{
+namespace detail
+{
 template <typename... Ts>
-struct type_caster<boost::variant<Ts...>> : variant_caster<boost::variant<Ts...>> {};
+struct type_caster<boost::variant<Ts...>>
+    : variant_caster<boost::variant<Ts...>>
+{
+};
 
 template <>
-struct visit_helper<boost::variant> {
+struct visit_helper<boost::variant>
+{
     template <typename... Args>
-    static auto call(Args &&...args) -> decltype(boost::apply_visitor(args...)) {
+    static auto call(Args &&... args) -> decltype(boost::apply_visitor(args...))
+    {
         return boost::apply_visitor(args...);
     }
 };
-}} // namespace pybind11::detail
+}
+} // namespace pybind11::detail
 #endif
 
 /// Issue #528: templated constructor
-struct TplCtorClass {
-    template <typename T> TplCtorClass(const T &) { }
+struct TplCtorClass
+{
+    template <typename T>
+    TplCtorClass(const T &)
+    {
+    }
     bool operator==(const TplCtorClass &) const { return true; }
 };
 
-namespace std {
-    template <>
-    struct hash<TplCtorClass> { size_t operator()(const TplCtorClass &) const { return 0; } };
+namespace std
+{
+template <>
+struct hash<TplCtorClass>
+{
+    size_t operator()(const TplCtorClass &) const { return 0; }
+};
 }
 
-
-TEST_SUBMODULE(stl, m) {
+TEST_SUBMODULE(stl, m)
+{
     // test_vector
     m.def("cast_vector", []() { return std::vector<int>{1}; });
-    m.def("load_vector", [](const std::vector<int> &v) { return v.at(0) == 1 && v.at(1) == 2; });
-    // `std::vector<bool>` is special because it returns proxy objects instead of references
+    m.def("load_vector", [](const std::vector<int> &v) {
+        return v.at(0) == 1 && v.at(1) == 2;
+    });
+    // `std::vector<bool>` is special because it returns proxy objects instead
+    // of references
     m.def("cast_bool_vector", []() { return std::vector<bool>{true, false}; });
     m.def("load_bool_vector", [](const std::vector<bool> &v) {
         return v.at(0) == true && v.at(1) == false;
     });
-    // Unnumbered regression (caused by #936): pointers to stl containers aren't castable
+    // Unnumbered regression (caused by #936): pointers to stl containers aren't
+    // castable
     static std::vector<RValueCaster> lvv{2};
     m.def("cast_ptr_vector", []() { return &lvv; });
 
     // test_array
-    m.def("cast_array", []() { return std::array<int, 2> {{1 , 2}}; });
-    m.def("load_array", [](const std::array<int, 2> &a) { return a[0] == 1 && a[1] == 2; });
+    m.def("cast_array", []() { return std::array<int, 2>{{1, 2}}; });
+    m.def("load_array",
+          [](const std::array<int, 2> &a) { return a[0] == 1 && a[1] == 2; });
 
     // test_valarray
     m.def("cast_valarray", []() { return std::valarray<int>{1, 4, 9}; });
-    m.def("load_valarray", [](const std::valarray<int>& v) {
+    m.def("load_valarray", [](const std::valarray<int> &v) {
         return v.size() == 3 && v[0] == 1 && v[1] == 4 && v[2] == 9;
     });
 
     // test_map
-    m.def("cast_map", []() { return std::map<std::string, std::string>{{"key", "value"}}; });
+    m.def("cast_map", []() {
+        return std::map<std::string, std::string>{{"key", "value"}};
+    });
     m.def("load_map", [](const std::map<std::string, std::string> &map) {
         return map.at("key") == "value" && map.at("key2") == "value2";
     });
@@ -82,13 +106,20 @@ TEST_SUBMODULE(stl, m) {
     // test_recursive_casting
     m.def("cast_rv_vector", []() { return std::vector<RValueCaster>{2}; });
     m.def("cast_rv_array", []() { return std::array<RValueCaster, 3>(); });
-    // NB: map and set keys are `const`, so while we technically do move them (as `const Type &&`),
-    // casters don't typically do anything with that, which means they fall to the `const Type &`
+    // NB: map and set keys are `const`, so while we technically do move them
+    // (as `const Type &&`),
+    // casters don't typically do anything with that, which means they fall to
+    // the `const Type &`
     // caster.
-    m.def("cast_rv_map", []() { return std::unordered_map<std::string, RValueCaster>{{"a", RValueCaster{}}}; });
+    m.def("cast_rv_map", []() {
+        return std::unordered_map<std::string, RValueCaster>{
+            {"a", RValueCaster{}}};
+    });
     m.def("cast_rv_nested", []() {
-        std::vector<std::array<std::list<std::unordered_map<std::string, RValueCaster>>, 2>> v;
-        v.emplace_back(); // add an array
+        std::vector<std::array<
+            std::list<std::unordered_map<std::string, RValueCaster>>, 2>>
+            v;
+        v.emplace_back();           // add an array
         v.back()[0].emplace_back(); // add a map to the array
         v.back()[0].back().emplace("b", RValueCaster{});
         v.back()[0].back().emplace("c", RValueCaster{});
@@ -97,13 +128,16 @@ TEST_SUBMODULE(stl, m) {
         return v;
     });
     static std::array<RValueCaster, 2> lva;
-    static std::unordered_map<std::string, RValueCaster> lvm{{"a", RValueCaster{}}, {"b", RValueCaster{}}};
-    static std::unordered_map<std::string, std::vector<std::list<std::array<RValueCaster, 2>>>> lvn;
-    lvn["a"].emplace_back(); // add a list
+    static std::unordered_map<std::string, RValueCaster> lvm{
+        {"a", RValueCaster{}}, {"b", RValueCaster{}}};
+    static std::unordered_map<
+        std::string, std::vector<std::list<std::array<RValueCaster, 2>>>>
+        lvn;
+    lvn["a"].emplace_back();        // add a list
     lvn["a"].back().emplace_back(); // add an array
-    lvn["a"].emplace_back(); // another list
+    lvn["a"].emplace_back();        // another list
     lvn["a"].back().emplace_back(); // add an array
-    lvn["b"].emplace_back(); // add a list
+    lvn["b"].emplace_back();        // add a list
     lvn["b"].back().emplace_back(); // add an array
     lvn["b"].back().emplace_back(); // add another array
     m.def("cast_lv_vector", []() -> const decltype(lvv) & { return lvv; });
@@ -119,8 +153,12 @@ TEST_SUBMODULE(stl, m) {
     });
 
     // test_move_out_container
-    struct MoveOutContainer {
-        struct Value { int value; };
+    struct MoveOutContainer
+    {
+        struct Value
+        {
+            int value;
+        };
         std::list<Value> move_list() const { return {{0}, {1}, {2}}; }
     };
     py::class_<MoveOutContainer::Value>(m, "MoveOutContainerValue")
@@ -130,17 +168,19 @@ TEST_SUBMODULE(stl, m) {
         .def_property_readonly("move_list", &MoveOutContainer::move_list);
 
     // Class that can be move- and copy-constructed, but not assigned
-    struct NoAssign {
+    struct NoAssign
+    {
         int value;
 
-        explicit NoAssign(int value = 0) : value(value) { }
+        explicit NoAssign(int value = 0) : value(value) {}
         NoAssign(const NoAssign &) = default;
         NoAssign(NoAssign &&) = default;
 
         NoAssign &operator=(const NoAssign &) = delete;
         NoAssign &operator=(NoAssign &&) = delete;
     };
-    py::class_<NoAssign>(m, "NoAssign", "Class with no C++ assignment operators")
+    py::class_<NoAssign>(m, "NoAssign",
+                         "Class with no C++ assignment operators")
         .def(py::init<>())
         .def(py::init<int>());
 
@@ -150,18 +190,15 @@ TEST_SUBMODULE(stl, m) {
 
     using opt_int = std::optional<int>;
     using opt_no_assign = std::optional<NoAssign>;
-    m.def("double_or_zero", [](const opt_int& x) -> int {
-        return x.value_or(0) * 2;
-    });
-    m.def("half_or_none", [](int x) -> opt_int {
-        return x ? opt_int(x / 2) : opt_int();
-    });
-    m.def("test_nullopt", [](opt_int x) {
-        return x.value_or(42);
-    }, py::arg_v("x", std::nullopt, "None"));
-    m.def("test_no_assign", [](const opt_no_assign &x) {
-        return x ? x->value : 42;
-    }, py::arg_v("x", std::nullopt, "None"));
+    m.def("double_or_zero",
+          [](const opt_int &x) -> int { return x.value_or(0) * 2; });
+    m.def("half_or_none",
+          [](int x) -> opt_int { return x ? opt_int(x / 2) : opt_int(); });
+    m.def("test_nullopt", [](opt_int x) { return x.value_or(42); },
+          py::arg_v("x", std::nullopt, "None"));
+    m.def("test_no_assign",
+          [](const opt_no_assign &x) { return x ? x->value : 42; },
+          py::arg_v("x", std::nullopt, "None"));
 
     m.def("nodefer_none_optional", [](std::optional<int>) { return true; });
     m.def("nodefer_none_optional", [](py::none) { return false; });
@@ -173,25 +210,26 @@ TEST_SUBMODULE(stl, m) {
 
     using exp_opt_int = std::experimental::optional<int>;
     using exp_opt_no_assign = std::experimental::optional<NoAssign>;
-    m.def("double_or_zero_exp", [](const exp_opt_int& x) -> int {
-        return x.value_or(0) * 2;
-    });
+    m.def("double_or_zero_exp",
+          [](const exp_opt_int &x) -> int { return x.value_or(0) * 2; });
     m.def("half_or_none_exp", [](int x) -> exp_opt_int {
         return x ? exp_opt_int(x / 2) : exp_opt_int();
     });
-    m.def("test_nullopt_exp", [](exp_opt_int x) {
-        return x.value_or(42);
-    }, py::arg_v("x", std::experimental::nullopt, "None"));
-    m.def("test_no_assign_exp", [](const exp_opt_no_assign &x) {
-        return x ? x->value : 42;
-    }, py::arg_v("x", std::experimental::nullopt, "None"));
+    m.def("test_nullopt_exp", [](exp_opt_int x) { return x.value_or(42); },
+          py::arg_v("x", std::experimental::nullopt, "None"));
+    m.def("test_no_assign_exp",
+          [](const exp_opt_no_assign &x) { return x ? x->value : 42; },
+          py::arg_v("x", std::experimental::nullopt, "None"));
 #endif
 
 #ifdef PYBIND11_HAS_VARIANT
-    static_assert(std::is_same<py::detail::variant_caster_visitor::result_type, py::handle>::value,
-                  "visitor::result_type is required by boost::variant in C++11 mode");
+    static_assert(
+        std::is_same<py::detail::variant_caster_visitor::result_type,
+                     py::handle>::value,
+        "visitor::result_type is required by boost::variant in C++11 mode");
 
-    struct visitor {
+    struct visitor
+    {
         using result_type = const char *;
 
         result_type operator()(int) { return "int"; }
@@ -201,9 +239,10 @@ TEST_SUBMODULE(stl, m) {
     };
 
     // test_variant
-    m.def("load_variant", [](variant<int, std::string, double, std::nullptr_t> v) {
-        return py::detail::visit_helper<variant>::call(visitor(), v);
-    });
+    m.def("load_variant",
+          [](variant<int, std::string, double, std::nullptr_t> v) {
+              return py::detail::visit_helper<variant>::call(visitor(), v);
+          });
     m.def("load_variant_2pass", [](variant<double, int> v) {
         return py::detail::visit_helper<variant>::call(visitor(), v);
     });
@@ -216,23 +255,26 @@ TEST_SUBMODULE(stl, m) {
     // #528: templated constructor
     // (no python tests: the test here is that this compiles)
     m.def("tpl_ctor_vector", [](std::vector<TplCtorClass> &) {});
-    m.def("tpl_ctor_map", [](std::unordered_map<TplCtorClass, TplCtorClass> &) {});
+    m.def("tpl_ctor_map",
+          [](std::unordered_map<TplCtorClass, TplCtorClass> &) {});
     m.def("tpl_ctor_set", [](std::unordered_set<TplCtorClass> &) {});
 #if defined(PYBIND11_HAS_OPTIONAL)
     m.def("tpl_constr_optional", [](std::optional<TplCtorClass> &) {});
 #elif defined(PYBIND11_HAS_EXP_OPTIONAL)
-    m.def("tpl_constr_optional", [](std::experimental::optional<TplCtorClass> &) {});
+    m.def("tpl_constr_optional",
+          [](std::experimental::optional<TplCtorClass> &) {});
 #endif
 
     // test_vec_of_reference_wrapper
     // #171: Can't return STL structures containing reference wrapper
-    m.def("return_vec_of_reference_wrapper", [](std::reference_wrapper<UserType> p4) {
-        static UserType p1{1}, p2{2}, p3{3};
-        return std::vector<std::reference_wrapper<UserType>> {
-            std::ref(p1), std::ref(p2), std::ref(p3), p4
-        };
-    });
+    m.def("return_vec_of_reference_wrapper",
+          [](std::reference_wrapper<UserType> p4) {
+              static UserType p1{1}, p2{2}, p3{3};
+              return std::vector<std::reference_wrapper<UserType>>{
+                  std::ref(p1), std::ref(p2), std::ref(p3), p4};
+          });
 
     // test_stl_pass_by_pointer
-    m.def("stl_pass_by_pointer", [](std::vector<int>* v) { return *v; }, "v"_a=nullptr);
+    m.def("stl_pass_by_pointer", [](std::vector<int> *v) { return *v; },
+          "v"_a = nullptr);
 }

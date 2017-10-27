@@ -34,12 +34,6 @@ void DataMan::OpenWANTransports(const std::string &name,
     {
         std::shared_ptr<Transport> wanTransport, controlTransport;
 
-        // to be removed
-        for (auto &i : parameters)
-        {
-            std::cout << i.first << " " << i.second << std::endl;
-        }
-
         const std::string type(
             GetParameter("type", parameters, true, m_DebugMode, ""));
 
@@ -67,7 +61,7 @@ void DataMan::OpenWANTransports(const std::string &name,
             messageName = name;
         }
 
-        if (type == "wan") // need to create directory
+        if (type == "wan")
         {
             if (trans == "zmq")
             {
@@ -95,9 +89,16 @@ void DataMan::OpenWANTransports(const std::string &name,
         }
 
         wanTransport->Open(messageName, openMode);
-        m_Transports.push_back(std::move(wanTransport));
+        m_Transports.push_back(wanTransport);
         controlTransport->Open(messageName, openMode);
-        m_ControlTransports.push_back(std::move(controlTransport));
+        m_ControlTransports.push_back(controlTransport);
+
+        if (openMode == OpenMode::Read)
+        {
+            m_Listening = true;
+            m_ControlThreads.push_back(std::thread(
+                &DataMan::ReadThread, this, wanTransport, controlTransport));
+        }
     }
 }
 
@@ -108,6 +109,8 @@ void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
     m_Transports[m_CurrentTransport]->Write(static_cast<const char *>(buffer),
                                             jmsg["bytes"].get<size_t>());
 }
+
+void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
 
 void DataMan::SetCallback(std::function<void(const void *, std::string,
                                              std::string, std::string, Dims)>
@@ -121,18 +124,28 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
 {
     while (m_Listening)
     {
-        // Wait for Read API to be implemented
-        /*
-        if (ctl_trans->Read() >= 0)
+        char buffer[1024];
+        size_t bytes;
+        nlohmann::json jmsg;
+        ctl_trans->Read(buffer, 1024);
+        std::string smsg(buffer);
+        jmsg = nlohmann::json::parse(smsg);
+        bytes = jmsg.value("bytes", 0);
+
+        if (bytes > 0)
         {
-            std::string smsg;
-            nlohmann::json jmsg = json::parse(smsg);
+            char data[bytes];
+            trans->Read(data, bytes);
+            std::string doid = jmsg.value("doid", "Unknown Data Object");
+            std::string var = jmsg.value("var", "Unknown Variable");
+            std::string dtype = jmsg.value("dtype", "Unknown Data Type");
+            std::vector<size_t> putshape =
+                jmsg.value("putshape", std::vector<size_t>());
+            if (m_CallBack)
+            {
+                m_CallBack(data, doid, var, dtype, putshape);
+            }
         }
-        else
-        {
-            usleep(1);
-        }
-        */
     }
 }
 

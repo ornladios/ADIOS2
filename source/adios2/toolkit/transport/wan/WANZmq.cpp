@@ -122,12 +122,9 @@ void WANZmq::Write(const char *buffer, size_t size)
         m_Profiler.Timers.at("write").Resume();
     }
 
-    /*
-
     int status = zmq_send(m_Socket, buffer, size, 0);
     char ret[10];
     zmq_recv(m_Socket, ret, 10, 0);
-
 
     if (m_Profiler.IsActive)
     {
@@ -145,12 +142,12 @@ void WANZmq::Write(const char *buffer, size_t size)
                                          ", in call to WANZmq write\n");
         }
     }
-    */
 }
 
 void WANZmq::Read(char *buffer, size_t size)
 {
-    // TODO: Implement read function
+    zmq_recv(m_Socket, buffer, size, 0);
+    int status = zmq_send(m_Socket, "OK", 4, 0);
 }
 
 void WANZmq::Flush() {}
