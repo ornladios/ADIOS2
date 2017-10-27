@@ -134,8 +134,8 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
 
         if (bytes > 0)
         {
-            char data[bytes];
-            trans->Read(data, bytes);
+            std::vector<char> data(bytes);
+            trans->Read(data.data(), bytes);
             std::string doid = jmsg.value("doid", "Unknown Data Object");
             std::string var = jmsg.value("var", "Unknown Variable");
             std::string dtype = jmsg.value("dtype", "Unknown Data Type");
@@ -143,7 +143,7 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                 jmsg.value("putshape", std::vector<size_t>());
             if (m_CallBack)
             {
-                m_CallBack(data, doid, var, dtype, putshape);
+                m_CallBack(data.data(), doid, var, dtype, putshape);
             }
         }
     }
