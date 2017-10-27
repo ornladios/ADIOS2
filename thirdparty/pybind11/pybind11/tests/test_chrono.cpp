@@ -11,7 +11,8 @@
 #include "pybind11_tests.h"
 #include <pybind11/chrono.h>
 
-TEST_SUBMODULE(chrono, m) {
+TEST_SUBMODULE(chrono, m)
+{
     using system_time = std::chrono::system_clock::time_point;
     using steady_time = std::chrono::steady_clock::time_point;
     // test_chrono_system_clock
@@ -24,7 +25,8 @@ TEST_SUBMODULE(chrono, m) {
 
     // test_chrono_duration_roundtrip
     // Round trip the passed in duration
-    m.def("test_chrono3", [](std::chrono::system_clock::duration d) { return d; });
+    m.def("test_chrono3",
+          [](std::chrono::system_clock::duration d) { return d; });
 
     // test_chrono_duration_subtraction_equivalence
     // Difference between two passed in time_points
@@ -42,6 +44,8 @@ TEST_SUBMODULE(chrono, m) {
     // Roundtrip a duration in microseconds from a float argument
     m.def("test_chrono7", [](std::chrono::microseconds t) { return t; });
     // Float durations (issue #719)
-    m.def("test_chrono_float_diff", [](std::chrono::duration<float> a, std::chrono::duration<float> b) {
-        return a - b; });
+    m.def("test_chrono_float_diff",
+          [](std::chrono::duration<float> a, std::chrono::duration<float> b) {
+              return a - b;
+          });
 }

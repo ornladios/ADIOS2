@@ -9,9 +9,11 @@
 
 #include "pybind11_tests.h"
 
-TEST_SUBMODULE(enums, m) {
+TEST_SUBMODULE(enums, m)
+{
     // test_unscoped_enum
-    enum UnscopedEnum {
+    enum UnscopedEnum
+    {
         EOne = 1,
         ETwo
     };
@@ -21,7 +23,8 @@ TEST_SUBMODULE(enums, m) {
         .export_values();
 
     // test_scoped_enum
-    enum class ScopedEnum {
+    enum class ScopedEnum
+    {
         Two = 2,
         Three
     };
@@ -30,11 +33,13 @@ TEST_SUBMODULE(enums, m) {
         .value("Three", ScopedEnum::Three);
 
     m.def("test_scoped_enum", [](ScopedEnum z) {
-        return "ScopedEnum::" + std::string(z == ScopedEnum::Two ? "Two" : "Three");
+        return "ScopedEnum::" +
+               std::string(z == ScopedEnum::Two ? "Two" : "Three");
     });
 
     // test_binary_operators
-    enum Flags {
+    enum Flags
+    {
         Read = 4,
         Write = 2,
         Execute = 1
@@ -46,26 +51,27 @@ TEST_SUBMODULE(enums, m) {
         .export_values();
 
     // test_implicit_conversion
-    class ClassWithUnscopedEnum {
+    class ClassWithUnscopedEnum
+    {
     public:
-        enum EMode {
+        enum EMode
+        {
             EFirstMode = 1,
             ESecondMode
         };
 
-        static EMode test_function(EMode mode) {
-            return mode;
-        }
+        static EMode test_function(EMode mode) { return mode; }
     };
     py::class_<ClassWithUnscopedEnum> exenum_class(m, "ClassWithUnscopedEnum");
-    exenum_class.def_static("test_function", &ClassWithUnscopedEnum::test_function);
+    exenum_class.def_static("test_function",
+                            &ClassWithUnscopedEnum::test_function);
     py::enum_<ClassWithUnscopedEnum::EMode>(exenum_class, "EMode")
         .value("EFirstMode", ClassWithUnscopedEnum::EFirstMode)
         .value("ESecondMode", ClassWithUnscopedEnum::ESecondMode)
         .export_values();
 
     // test_enum_to_int
-    m.def("test_enum_to_int", [](int) { });
-    m.def("test_enum_to_uint", [](uint32_t) { });
-    m.def("test_enum_to_long_long", [](long long) { });
+    m.def("test_enum_to_int", [](int) {});
+    m.def("test_enum_to_uint", [](uint32_t) {});
+    m.def("test_enum_to_long_long", [](long long) {});
 }

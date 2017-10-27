@@ -33,6 +33,7 @@ public:
                            const bool profile);
 
     void WriteWAN(const void *buffer, nlohmann::json jmsg);
+    void ReadWAN(void *buffer, nlohmann::json jmsg);
 
     void SetCallback(std::function<void(const void *, std::string, std::string,
                                         std::string, Dims)>
@@ -49,7 +50,7 @@ private:
 
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
-        m_CallBack;
+        m_CallBack = nullptr;
 
     nlohmann::json m_JMessage;
 
