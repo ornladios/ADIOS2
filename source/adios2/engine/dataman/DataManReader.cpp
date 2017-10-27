@@ -23,7 +23,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     Init();
 }
 
-void DataManReader::SetCallback(
+void DataManReader::SetCallBack(
     std::function<void(const void *, std::string, std::string, std::string,
                        Dims)>
         callback)

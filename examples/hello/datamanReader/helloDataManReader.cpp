@@ -26,7 +26,7 @@ void UserCallBack(const void *data, std::string doid, std::string var,
     std::size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
                                           std::multiplies<std::size_t>());
 
-    for (unsigned int i = 0; i < varsize; ++i)
+    for (size_t i = 0; i < varsize; ++i)
         std::cout << ((float *)data)[i] << " ";
     std::cout << std::endl;
 }
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
         dataManReader->SetCallBack(UserCallBack);
 
-        for (unsigned int i = 0; i < 3; ++i)
+        for (unsigned int i = 0; i < 30; ++i)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
