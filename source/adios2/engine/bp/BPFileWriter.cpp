@@ -119,12 +119,12 @@ void BPFileWriter::InitTransports()
     }
 
     // Names passed to IO AddTransport option with key "Name"
-    std::vector<std::string> transportsNames =
+    const std::vector<std::string> transportsNames =
         m_FileDataManager.GetFilesBaseNames(m_Name,
                                             m_IO.m_TransportsParameters);
 
     // /path/name.bp.dir/name.bp.rank
-    std::vector<std::string> bpRankNames =
+    const std::vector<std::string> bpRankNames =
         m_BP3Serializer.GetBPRankNames(transportsNames);
 
     m_FileDataManager.OpenFiles(bpRankNames, m_OpenMode,
@@ -176,11 +176,11 @@ void BPFileWriter::WriteCollectiveMetadataFile()
     if (m_BP3Serializer.m_RankMPI == 0)
     {
         // first init metadata files
-        std::vector<std::string> transportsNames =
+        const std::vector<std::string> transportsNames =
             m_FileMetadataManager.GetFilesBaseNames(
                 m_Name, m_IO.m_TransportsParameters);
 
-        std::vector<std::string> bpMetadataFileNames =
+        const std::vector<std::string> bpMetadataFileNames =
             m_BP3Serializer.GetBPMetadataFileNames(transportsNames);
 
         m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,

@@ -14,6 +14,7 @@
 #include <sstream>
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/ADIOSMacros.h"
 #include "adios2/engine/bp/BPFileReader.h"
 #include "adios2/engine/bp/BPFileWriter.h"
 //#include "adios2/engine/plugin/PluginEngine.h"

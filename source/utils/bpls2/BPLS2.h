@@ -29,7 +29,7 @@ public:
 
 private:
     static const std::string m_HelpMessage;
-    static const std::map<std::string, std::string> m_Options;
+    static const Params m_Options;
 
     std::string m_FileName;
 

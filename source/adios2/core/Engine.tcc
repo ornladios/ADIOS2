@@ -28,6 +28,16 @@ namespace adios2
     {                                                                          \
         if (m_DebugMode)                                                       \
         {                                                                      \
+            if (&variable == nullptr)                                          \
+            {                                                                  \
+                throw std::invalid_argument(                                   \
+                    "ERROR: variable reference is "                            \
+                    "undefined, is good practice to check if "                 \
+                    "IO::InquireVariable(name) is nullptr first "              \
+                    ", in call to Put" +                                       \
+                    std::string(#L) + "\n");                                   \
+            }                                                                  \
+                                                                               \
             variable.CheckDimensions("Put" + std::string(#L));                 \
                                                                                \
             if (data == nullptr)                                               \
@@ -79,11 +89,12 @@ ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
         {                                                                      \
             if (&variable == nullptr)                                          \
             {                                                                  \
-                throw std::invalid_argument("ERROR: variable reference is "    \
-                                            "undefined, try using "            \
-                                            "IO::InquireVariable(name) "       \
-                                            "function first, in call to Get" + \
-                                            std::string(#L) + "\n");           \
+                throw std::invalid_argument(                                   \
+                    "ERROR: variable reference is "                            \
+                    "undefined, is good practice to check if "                 \
+                    "IO::InquireVariable(name) is nullptr first, in call to "  \
+                    "Get" +                                                    \
+                    std::string(#L) + "\n");                                   \
             }                                                                  \
             variable.CheckDimensions("Get" + std::string(#L));                 \
                                                                                \

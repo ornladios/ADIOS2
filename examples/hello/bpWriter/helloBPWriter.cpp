@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpFileWriter =
-            bpIO.Open("my Vector.bp", adios2::Mode::Write);
+            bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
 
         /** Put variables for buffering, template type is optional */
         bpFileWriter.PutSync<float>(bpFloats, myFloats.data());

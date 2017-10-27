@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpWriter =
-            bpIO.Open("myVector.bp", adios2::Mode::Write);
+            bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
 
         /** Write variable for buffering */
         bpWriter.PutSync<float>(bpFloats, myFloats.data());

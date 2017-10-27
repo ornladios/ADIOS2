@@ -127,7 +127,7 @@ void BPFileReader::ReadVariables(
                 m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
 
             m_SubFileManager.OpenFiles({subFile}, adios2::Mode::Read,
-                                       std::vector<Params>(), profile);
+                                       {{{"transport", "File"}}}, profile);
 
             for (const auto &stepPair : subFileIndexPair.second) // step
             {

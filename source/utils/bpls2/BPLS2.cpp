@@ -259,7 +259,8 @@ void BPLS2::ProcessTransport() const
     ADIOS adios(true);
     IO &io = adios.DeclareIO("bpls2");
     BPFileReader bpFileReader(io, m_FileName, Mode::Read, io.m_MPIComm);
-    const auto variablesMap = io.GetAvailableVariables();
+    const std::map<std::string, Params> variablesMap =
+        io.GetAvailableVariables();
     // const auto attributesMap = io.GetAvailableAttributes();
 
     if (m_Parameters.count("verbose") == 1)
