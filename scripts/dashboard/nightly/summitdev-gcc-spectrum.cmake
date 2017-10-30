@@ -1,5 +1,5 @@
 # Client maintainer: chuck.atkins@kitware.com
-set(CTEST_SITE "SummitDev")
+set(CTEST_SITE "summitdev.ccs.ornl.gov")
 set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j10")
