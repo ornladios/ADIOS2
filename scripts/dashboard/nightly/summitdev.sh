@@ -37,7 +37,7 @@ log "Running Serial XL"
 ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-pgi-nompi.cmake 2>&1 1>summitdev-pgi-nompi.log
 
 # Now run the configure and build steps for the MPI tests
-log "Running Parallel GCC Phase 1"
+log "Running Parallel GCC Build"
 ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-gcc-spectrum.cmake \
   -Ddashboard_full=OFF \
   -Ddashboard_fresh=ON \
@@ -46,7 +46,7 @@ ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-gcc-spectrum.cmake \
   -Ddashboard_do_configure=ON \
   -Ddashboard_do_build=ON 2>&1 1>summitdev-gcc-spectrum.log
 
-log "Running Parallel XL Phase 1"
+log "Running Parallel XL Build"
 ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-xl-spectrum.cmake \
   -Ddashboard_full=OFF \
   -Ddashboard_fresh=ON \
@@ -55,7 +55,7 @@ ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-xl-spectrum.cmake \
   -Ddashboard_do_configure=ON \
   -Ddashboard_do_build=ON 2>&1 1>summitdev-xl-spectrum.log
 
-log "Running Parallel PGI Phase 1"
+log "Running Parallel PGI Build"
 ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-pgi-spectrum.cmake \
   -Ddashboard_full=OFF \
   -Ddashboard_fresh=ON \
@@ -65,24 +65,33 @@ ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-pgi-spectrum.cmake \
   -Ddashboard_do_build=ON 2>&1 1>summitdev-pgi-spectrum.log
 
 # Now run the MPI tests in a batch job
-log "Running Parallel Phase 2"
-bsub -P CSC143SUMMITDEV -W 00:30 -nnodes 2 -I \
-  ${SCRIPT_DIR}/summitdev-spectrum-tests.lsf
+log "Submitting Parallel Tests"
+JOBID=$(bsub -J "adios2_nightly[1-3]" ${SCRIPT_DIR}/summitdev-spectrum-tests.lsf | awk '{print $2}' | sed 's|<\([0-9]*\)>|\1|')
+while true
+do
+  NJOBS=$(bjobs 2>/dev/null | grep "^${JOBID} " | wc -l) 
+  log "Test jobs active in queue for job array ${JOBID}: ${NJOBS}"
+  if [ ${NJOBS} -eq 0 ]
+  then
+    break
+  fi
+  sleep 30
+done
 
 # Finaly submit the test results from the batch job
-log "Running Parallel GCC Phase 3"
+log "Submitting Parallel GCC Test Results"
 ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-gcc-spectrum.cmake \
   -Ddashboard_full=OFF \
   -Ddashboard_do_test=ON \
   -Ddashboard_do_submit_only=ON 2>&1 1>>summitdev-gcc-spectrum.log
 
-log "Running Parallel XL Phase 3"
+log "Submitting Parallel XL Test Results"
 ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-xl-spectrum.cmake \
   -Ddashboard_full=OFF \
   -Ddashboard_do_test=ON \
   -Ddashboard_do_submit_only=ON 2>&1 1>>summitdev-xl-spectrum.log
 
-log "Running Parallel PGI Phase 3"
+log "Submitting Parallel PGI Test Results"
 ${CTEST} -VV -S ${SCRIPT_DIR}/summitdev-pgi-spectrum.cmake \
   -Ddashboard_full=OFF \
   -Ddashboard_do_test=ON \
