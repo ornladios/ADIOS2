@@ -45,20 +45,20 @@ AdvanceStatus ADIOS1Reader::BeginStep(AdvanceMode mode, const float timeout_sec)
 #define declare_type(T)                                                        \
     void ADIOS1Reader::DoGetSync(Variable<T> &variable, T *values)             \
     {                                                                          \
-        m_ADIOS1.ScheduleReadCommon(                                           \
-            variable.m_Name, variable.m_Start, variable.m_Count,               \
-            variable.GetAvailableStepsStart(),                                 \
-            variable.GetAvailableStepsStart(), variable.m_ReadAsLocalValue,    \
-            variable.m_ReadAsJoined, (void *)values);                          \
+        m_ADIOS1.ScheduleReadCommon(variable.m_Name, variable.m_Start,         \
+                                    variable.m_Count, variable.m_StepStart,    \
+                                    variable.m_StepCount,                      \
+                                    variable.m_ReadAsLocalValue,               \
+                                    variable.m_ReadAsJoined, (void *)values);  \
         m_ADIOS1.PerformReads();                                               \
     }                                                                          \
     void ADIOS1Reader::DoGetDeferred(Variable<T> &variable, T *values)         \
     {                                                                          \
-        m_ADIOS1.ScheduleReadCommon(                                           \
-            variable.m_Name, variable.m_Start, variable.m_Count,               \
-            variable.GetAvailableStepsStart(),                                 \
-            variable.GetAvailableStepsStart(), variable.m_ReadAsLocalValue,    \
-            variable.m_ReadAsJoined, (void *)values);                          \
+        m_ADIOS1.ScheduleReadCommon(variable.m_Name, variable.m_Start,         \
+                                    variable.m_Count, variable.m_StepStart,    \
+                                    variable.m_StepCount,                      \
+                                    variable.m_ReadAsLocalValue,               \
+                                    variable.m_ReadAsJoined, (void *)values);  \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
