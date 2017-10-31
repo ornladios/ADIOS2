@@ -111,7 +111,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 void BPFileReader::ReadVariables(
     IO &io, const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo)
 {
-    const bool &profile = m_BP3Deserializer.m_Profiler.IsActive;
+    const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
 
     // sequentially request bytes from transport manager
     // threaded here?
@@ -138,13 +138,14 @@ void BPFileReader::ReadVariables(
                     const auto &seek = blockInfo.Seeks;
                     const size_t blockStart = seek.first;
                     const size_t blockSize = seek.second - seek.first;
-                    std::vector<char> contiguousData(blockSize);
-                    m_SubFileManager.ReadFile(contiguousData.data(), blockStart,
-                                              blockSize, subFileIndex);
+                    std::vector<char> contiguousMemory(blockSize);
+                    m_SubFileManager.ReadFile(contiguousMemory.data(),
+                                              blockStart, blockSize,
+                                              subFileIndex);
 
-                    // will go to BP3Deserializer along with contiguous data
-                    // m_BP3Deserializer
-
+                    m_BP3Deserializer.ClipContiguousMemory(
+                        variableName, m_IO, contiguousMemory,
+                        blockInfo.IntersectionBox);
                 } // end block
             }     // end step
         }         // end subfile

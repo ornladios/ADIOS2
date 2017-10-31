@@ -135,7 +135,8 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
     const auto &buffer = m_Metadata.m_Buffer;
 
     const size_t stepStart = variable.m_StepStart;
-    const size_t stepEnd = stepStart + variable.m_StepCount;
+    const size_t stepEnd =
+        stepStart + variable.m_StepCount; // inclusive or exclusive?
 
     // selection, start and count
     const Box<Dims> selection{variable.m_Start, variable.m_Count};
@@ -171,14 +172,16 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             // if they intersect get info Seeks (first: start, second: end)
             // TODO: map to sizeof(T)?
             info.Seeks.first =
+                blockCharacteristics.Statistics.PayloadOffset +
                 LinearIndex(blockDimensions, info.IntersectionBox.first,
                             m_IsRowMajor, m_IsZeroIndex) *
-                sizeof(T);
+                    sizeof(T);
 
             info.Seeks.second =
+                blockCharacteristics.Statistics.PayloadOffset +
                 LinearIndex(blockDimensions, info.IntersectionBox.second,
                             m_IsRowMajor, m_IsZeroIndex) *
-                sizeof(T);
+                    sizeof(T);
 
             const size_t fileIndex = static_cast<const size_t>(
                 blockCharacteristics.Statistics.FileIndex);

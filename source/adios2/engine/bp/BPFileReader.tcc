@@ -20,6 +20,8 @@ template <class T>
 void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     // subfile info
+    variable.SetData(data);
+
     const std::map<std::string, SubFileInfoMap> variableSubfileInfo =
         m_BP3Deserializer.GetSyncVariableSubFileInfo(variable);
 
