@@ -31,7 +31,11 @@ void BPFileReader::PerformGets()
         m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
 }
 
-void BPFileReader::Close(const int /*transportIndex*/) {}
+void BPFileReader::Close(const int transportIndex)
+{
+    m_SubFileManager.CloseFiles();
+    m_FileManager.CloseFiles();
+}
 
 // PRIVATE
 void BPFileReader::Init()
@@ -154,8 +158,6 @@ void BPFileReader::ReadVariables(
             }     // end step
         }         // end subfile
     }             // end variable
-
-    m_SubFileManager.CloseFiles();
 }
 
 } // end namespace adios2

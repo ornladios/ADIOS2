@@ -100,9 +100,20 @@ size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
                            const float growthFactor) noexcept;
 
 /**
- * Returns the intersection box { start, end } from box1 and box2
- * @param box1
- * @param box2
+ * Converts a start, count box into a [start, end[ box where end = start + count
+ * @param start
+ * @param count
+ * @return [start, end[ box
+ */
+Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept;
+
+Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
+
+/**
+ * Returns the intersection box { start, end } where end is inclusive from box1
+ * and box2
+ * @param box1 {start, end} input (end is exclusive)
+ * @param box2 {start, end} input (end is exclusive)
  * @return empty if not interception, otherwise intersection box
  */
 Box<Dims> IntersectionBox(const Box<Dims> &box1,
@@ -117,7 +128,7 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1,
  * @return linear index for contiguous memory
  */
 size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
-                   const bool isRowMajor, const bool isZeroIndex);
+                   const bool isRowMajor, const bool isZeroIndex) noexcept;
 
 } // end namespace adios2
 

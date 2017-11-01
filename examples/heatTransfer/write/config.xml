@@ -16,7 +16,7 @@
 
             <!-- XXKb, XXMb, or XXXGb supported, default=16Kb 
                 (applications might choose an optimal value) -->
-            <!--<parameter key="InitialBufferSize" value="16Kb"/>  -->
+            <parameter key="InitialBufferSize" value="16Kb"/> 
             
             <!-- XXKb, XXMb, or XXXGb supported, default=Unlimited (until 
                  fails), maximum at each time step  
@@ -35,6 +35,18 @@
             
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
             <parameter key="Library" value="POSIX"/>
+            
+            <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
+                 Minutes, Hours. open/close always in Microseconds -->
+            <parameter key="ProfileUnits" value="Microseconds"/>
+            
+        </transport>
+         <transport type="WAN">
+            
+            <!-- POSIX, stdio (C FILE*), fstream (C++) -->
+            <!--  <parameter key="Library" value="GRPC"/> -->
+            <parameter key="Library" value="GRPC"/>
+            <parameter key="IPAddress" value="127.0.0.1"/>
             
             <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours. open/close always in Microseconds -->

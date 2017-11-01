@@ -59,6 +59,30 @@ size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
     return nextExponentialSize;
 }
 
+Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept
+{
+    Box<Dims> box;
+    box.first = start;
+    box.second.reserve(start.size());
+
+    std::transform(start.begin(), start.end(), count.begin(),
+                   std::back_inserter(box.second), std::plus<size_t>());
+
+    return box;
+}
+
+Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept
+{
+    Box<Dims> box;
+    box.first = start;
+    box.second.reserve(start.size());
+
+    std::transform(end.begin(), end.end(), start.begin(),
+                   std::back_inserter(box.second), std::minus<size_t>());
+
+    return box;
+}
+
 Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 {
     Box<Dims> intersectionBox;
@@ -66,11 +90,8 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 
     for (size_t d = 0; d < dimensionsSize; ++d)
     {
-        // start, count to  (start, end)
-        const Box<size_t> line1{box1.first[d], box1.first[d] + box1.second[d]};
-        const Box<size_t> line2{box2.first[d], box2.first[d] + box2.second[d]};
         // Don't intercept
-        if (line2.first >= line1.second || line2.second <= line1.first)
+        if (box2.first[d] >= box1.second[d] || box2.second[d] <= box1.first[d])
         {
             return intersectionBox;
         }
@@ -82,27 +103,24 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 
     for (size_t d = 0; d < dimensionsSize; ++d)
     {
-        const Box<size_t> line1{box1.first[d], box1.first[d] + box1.second[d]};
-        const Box<size_t> line2{box2.first[d], box2.first[d] + box2.second[d]};
-
         // start
-        if (line1.first < line2.first)
+        if (box1.first[d] < box2.first[d])
         {
-            intersectionBox.first.push_back(line2.first);
+            intersectionBox.first.push_back(box2.first[d]);
         }
         else
         {
-            intersectionBox.first.push_back(line1.first);
+            intersectionBox.first.push_back(box1.first[d]);
         }
 
-        // end
-        if (line1.second > line2.second)
+        // end, must be inclusive
+        if (box1.second[d] > box2.second[d])
         {
-            intersectionBox.second.push_back(line2.second);
+            intersectionBox.second.push_back(box2.second[d] - 1);
         }
         else
         {
-            intersectionBox.second.push_back(line1.second);
+            intersectionBox.second.push_back(box1.second[d] - 1);
         }
     }
 
@@ -110,7 +128,7 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 }
 
 size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
-                   const bool isRowMajor, const bool isZeroIndex)
+                   const bool isRowMajor, const bool isZeroIndex) noexcept
 {
     auto lf_RowZero = [](const Dims &count,
                          const Dims &normalizedPoint) -> size_t {
@@ -146,8 +164,11 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
         return linearIndex;
     };
 
-    const Dims &start = localBox.first;
-    const Dims &count = localBox.second;
+    const Box<Dims> localBoxStartCount =
+        StartCountBox(localBox.first, localBox.second);
+
+    const Dims &start = localBoxStartCount.first;
+    const Dims &count = localBoxStartCount.second;
 
     if (count.size() == 1)
     {
@@ -156,6 +177,7 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
 
     // normalize the point
     Dims normalizedPoint;
+    normalizedPoint.reserve(point.size());
     std::transform(point.begin(), point.end(), start.begin(),
                    std::back_inserter(normalizedPoint), std::minus<size_t>());
 

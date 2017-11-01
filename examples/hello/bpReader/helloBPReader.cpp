@@ -61,9 +61,11 @@ int main(int argc, char *argv[])
             bpIO.InquireVariable<float>("bpFloats");
         adios2::Variable<int> *bpInts = bpIO.InquireVariable<int>("bpInts");
 
-        if (bpFloats != nullptr) // means not found
+        if (bpFloats != nullptr) // means found
         {
+            // myFloats.data is pre-allocated
             bpReader.GetSync<float>(*bpFloats, myFloats.data());
+            std::cout << "MyFloats: \n";
             for (const auto number : myFloats)
             {
                 std::cout << number << " ";
@@ -73,6 +75,7 @@ int main(int argc, char *argv[])
 
         if (bpInts != nullptr) // means not found
         {
+            // myInts.data is pre-allocated
             bpReader.GetSync<int>(*bpInts, myInts.data());
 
             std::cout << "MyInts: \n";

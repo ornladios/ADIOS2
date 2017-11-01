@@ -169,8 +169,7 @@ size_t BytesFactor(const std::string units, const bool debugMode)
     return factor;
 }
 
-std::string OpenModeToString(const Mode openMode,
-                             const bool oneLetter) noexcept
+std::string OpenModeToString(const Mode openMode, const bool oneLetter) noexcept
 {
     std::string openModeString;
 
@@ -210,4 +209,4 @@ std::string OpenModeToString(const Mode openMode,
     return openModeString;
 }
 
-} // end namespace adios
+} // end namespace adios2

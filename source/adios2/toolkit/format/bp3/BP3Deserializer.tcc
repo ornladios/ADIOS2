@@ -138,8 +138,9 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
     const size_t stepEnd =
         stepStart + variable.m_StepCount; // inclusive or exclusive?
 
-    // selection, start and count
-    const Box<Dims> selection{variable.m_Start, variable.m_Count};
+    // selection = [start, end[
+    const Box<Dims> selectionBox =
+        StartEndBox(variable.m_Start, variable.m_Count);
 
     for (size_t step = stepStart; step < stepEnd; ++step)
     {
@@ -157,12 +158,12 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             const Characteristics<T> blockCharacteristics =
                 ReadElementIndexCharacteristics<T>(buffer, blockPosition);
 
-            const Box<Dims> blockDimensions{blockCharacteristics.Start,
-                                            blockCharacteristics.Count};
+            const Box<Dims> blockBox = StartEndBox(blockCharacteristics.Start,
+                                                   blockCharacteristics.Count);
 
             // check if they intersect
             SubFileInfo info;
-            info.IntersectionBox = IntersectionBox(selection, blockDimensions);
+            info.IntersectionBox = IntersectionBox(selectionBox, blockBox);
 
             if (info.IntersectionBox.first.empty() ||
                 info.IntersectionBox.second.empty())
@@ -171,16 +172,15 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             }
             // if they intersect get info Seeks (first: start, second: end)
             // TODO: map to sizeof(T)?
-            info.Seeks.first =
-                blockCharacteristics.Statistics.PayloadOffset +
-                LinearIndex(blockDimensions, info.IntersectionBox.first,
-                            m_IsRowMajor, m_IsZeroIndex) *
-                    sizeof(T);
+            info.Seeks.first = blockCharacteristics.Statistics.PayloadOffset +
+                               LinearIndex(blockBox, info.IntersectionBox.first,
+                                           m_IsRowMajor, m_IsZeroIndex) *
+                                   sizeof(T);
 
             info.Seeks.second =
                 blockCharacteristics.Statistics.PayloadOffset +
-                LinearIndex(blockDimensions, info.IntersectionBox.second,
-                            m_IsRowMajor, m_IsZeroIndex) *
+                LinearIndex(blockBox, info.IntersectionBox.second, m_IsRowMajor,
+                            m_IsZeroIndex) *
                     sizeof(T);
 
             const size_t fileIndex = static_cast<const size_t>(
