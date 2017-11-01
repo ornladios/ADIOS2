@@ -145,9 +145,12 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
 
     if (start != MaxSizeT)
     {
-        std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
+        const auto result =
+            std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
         CheckFile("couldn't move to start position " + std::to_string(start) +
-                  " in file " + m_Name + ", in call to stdio fseek for read");
+                  " in file " + m_Name +
+                  ", in call to stdio fseek for read, result=" +
+                  std::to_string(result));
     }
 
     if (size > DefaultMaxFileBatchSize)

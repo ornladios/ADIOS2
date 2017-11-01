@@ -165,7 +165,8 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
             throw std::ios_base::failure(
                 "ERROR: couldn't move to start position " +
                 std::to_string(start) + " in file " + m_Name +
-                ", in call to POSIX lseek\n");
+                ", in call to POSIX lseek errno " + std::to_string(errno) +
+                "\n");
         }
     }
 
