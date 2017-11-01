@@ -140,7 +140,7 @@ void BPFileReader::ReadVariables(
                     const size_t blockSize = seek.second - seek.first;
                     std::vector<char> contiguousMemory(blockSize);
                     m_SubFileManager.ReadFile(contiguousMemory.data(),
-                                              blockStart, blockSize,
+                                              blockSize, blockStart,
                                               subFileIndex);
 
                     m_BP3Deserializer.ClipContiguousMemory(
