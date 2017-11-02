@@ -268,8 +268,8 @@ void ADIOS1CommonRead::PerformReads()
     adios_perform_reads(m_fh, static_cast<int>(ReadMode::Blocking));
 }
 
-AdvanceStatus ADIOS1CommonRead::AdvanceStep(AdvanceMode mode,
-                                            const float timeout_sec)
+StepStatus ADIOS1CommonRead::AdvanceStep(const StepMode mode,
+                                         const float timeout_sec)
 {
     if (m_OpenAsFile)
     {
@@ -277,31 +277,30 @@ AdvanceStatus ADIOS1CommonRead::AdvanceStep(AdvanceMode mode,
                                     "Advance() on a file which was opened for "
                                     "read as File\n");
     }
-    if (mode != AdvanceMode::NextAvailable &&
-        mode != AdvanceMode::LatestAvailable)
+    if (mode != StepMode::NextAvailable && mode != StepMode::LatestAvailable)
     {
         throw std::invalid_argument(
             "ERROR: ADIOS1Reader.Advance() only allows "
             "for NextAvailable or LatestAvailable modes.\n");
     }
-    int last = (mode == AdvanceMode::NextAvailable ? 0 : 1);
+    int last = (mode == StepMode::NextAvailable ? 0 : 1);
     float *to = const_cast<float *>(&timeout_sec);
     adios_advance_step(m_fh, last, *to);
 
-    AdvanceStatus status;
+    StepStatus status;
     switch (adios_errno)
     {
     case err_no_error:
-        status = AdvanceStatus::OK;
+        status = StepStatus::OK;
         break;
     case err_end_of_stream:
-        status = AdvanceStatus::EndOfStream;
+        status = StepStatus::EndOfStream;
         break;
     case err_step_notready:
-        status = AdvanceStatus::StepNotReady;
+        status = StepStatus::NotReady;
         break;
     default:
-        status = AdvanceStatus::OtherError;
+        status = StepStatus::OtherError;
         break;
     }
     return status;

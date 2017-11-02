@@ -42,13 +42,16 @@ namespace adios2
 {
 
 IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
-       const bool debugMode)
+       const std::string hostLanguage, const bool debugMode)
 : m_Name(name), m_MPIComm(mpiComm), m_InConfigFile(inConfigFile),
-  m_DebugMode(debugMode)
+  m_HostLanguage(hostLanguage), m_DebugMode(debugMode)
 {
 }
 
-void IO::SetEngine(const std::string engineType) { m_EngineType = engineType; }
+void IO::SetEngine(const std::string engineType) noexcept
+{
+    m_EngineType = engineType;
+}
 void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
 void IO::SetParameters(const Params &parameters) noexcept

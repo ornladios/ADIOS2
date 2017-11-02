@@ -26,9 +26,9 @@ HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode openMode,
 
 HDF5WriterP::~HDF5WriterP() { Close(); }
 
-AdvanceStatus HDF5WriterP::BeginStep(AdvanceMode mode, const float timeout_sec)
+StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeout_sec)
 {
-    return AdvanceStatus::OK;
+    return StepStatus::OK;
 }
 
 void HDF5WriterP::EndStep() { m_H5File.Advance(); }

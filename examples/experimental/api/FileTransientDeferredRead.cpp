@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
             /** execute all the deferred Read instructions within step, pointer
              * data is only ready at Get */
-            if (bpReader.GetAdvanceStatus() == adios2::AdvanceStatus::OK)
+            if (bpReader.GetAdvanceStatus() == adios2::StepStatus::OK)
             {
                 bpReader.Get();
             }

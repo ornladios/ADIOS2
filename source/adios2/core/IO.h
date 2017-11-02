@@ -80,7 +80,7 @@ public:
      * @param debugMode true: extra exception checks (recommended)
      */
     IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
-       const bool debugMode);
+       const std::string hostLanguage, const bool debugMode);
 
     ~IO() = default;
 
@@ -88,7 +88,7 @@ public:
      * Sets the engine type for this IO class object
      * @param engine
      */
-    void SetEngine(const std::string engine);
+    void SetEngine(const std::string engine) noexcept;
 
     /** Set the IO mode (collective or independent)
      * @param IO mode */

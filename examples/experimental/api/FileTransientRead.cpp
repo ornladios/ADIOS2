@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 
             /** execute Read instructions within step one by one, pointer data
              * is available after Read*/
-            if (bpReader.GetAdvanceStatus() == adios2::AdvanceStatus::OK)
+            if (bpReader.GetAdvanceStatus() == adios2::StepStatus::OK)
             {
                 bpReader.Read<float>(*bpFloats, myFloats.data());
                 bpReader.Read<int>(*bpInts, myInts.data());

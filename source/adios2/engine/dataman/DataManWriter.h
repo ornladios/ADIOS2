@@ -27,7 +27,7 @@ public:
 
     ~DataManWriter() = default;
 
-    AdvanceStatus BeginStep(AdvanceMode mode,
+    StepStatus BeginStep(StepMode mode,
                             const float timeout_sec = 0.0) final;
     void EndStep() final;
 

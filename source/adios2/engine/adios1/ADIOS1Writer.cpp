@@ -31,9 +31,9 @@ ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name, const Mode openMode,
     Init();
 }
 
-AdvanceStatus ADIOS1Writer::BeginStep(AdvanceMode mode, const float timeout_sec)
+StepStatus ADIOS1Writer::BeginStep(StepMode mode, const float timeout_sec)
 {
-    return AdvanceStatus::OK;
+    return StepStatus::OK;
 }
 
 /* PutDeferred = PutSync, so nothing to be done in PerformPuts */

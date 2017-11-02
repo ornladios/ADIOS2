@@ -57,7 +57,7 @@ public:
                             const bool readAsJoinedArray, void *data);
 
     void PerformReads();
-    AdvanceStatus AdvanceStep(AdvanceMode mode, const float timeout_sec = 0.0);
+    StepStatus AdvanceStep(const StepMode mode, const float timeout_sec = 0.0);
     void ReleaseStep();
 
     ADIOS_VARINFO *InqVar(const std::string &varName);

@@ -63,7 +63,7 @@ Params InitParametersXML(const pugi::xml_node &node, const bool debugMode)
 }
 
 void InitIOXML(const pugi::xml_node &ioNode, MPI_Comm mpiComm,
-               const bool debugMode,
+               const std::string hostLanguage, const bool debugMode,
                std::map<std::string, std::shared_ptr<Operator>> &transforms,
                std::map<std::string, IO> &ios)
 {
@@ -82,7 +82,8 @@ void InitIOXML(const pugi::xml_node &ioNode, MPI_Comm mpiComm,
     const std::string ioName = nameAttr.value();
 
     // Build the IO object
-    auto ioIt = ios.emplace(ioName, IO(ioName, mpiComm, true, debugMode));
+    auto ioIt =
+        ios.emplace(ioName, IO(ioName, mpiComm, true, hostLanguage, debugMode));
     IO &io = ioIt.first->second;
 
     // Extract <engine> element
@@ -148,7 +149,7 @@ void InitIOXML(const pugi::xml_node &ioNode, MPI_Comm mpiComm,
 }
 
 void InitXML(const std::string configXML, MPI_Comm mpiComm,
-             const bool debugMode,
+             const std::string hostLanguage, const bool debugMode,
              std::map<std::string, std::shared_ptr<Operator>> &transforms,
              std::map<std::string, IO> &ios)
 {
@@ -193,7 +194,7 @@ void InitXML(const std::string configXML, MPI_Comm mpiComm,
 
     for (const pugi::xml_node ioNode : configNode.children("io"))
     {
-        InitIOXML(ioNode, mpiComm, debugMode, transforms, ios);
+        InitIOXML(ioNode, mpiComm, hostLanguage, debugMode, transforms, ios);
     }
 }
 

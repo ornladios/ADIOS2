@@ -17,9 +17,7 @@
 /// \endcond
 
 #include <adios2.h>
-
-#include "VariablePy.h"
-#include "adiosPyTypes.h" //pyArray
+#include <pybind11/numpy.h>
 
 namespace adios2
 {
@@ -29,30 +27,23 @@ class EnginePy
 
 public:
     EnginePy(IO &io, const std::string &name, const Mode openMode,
-             MPI_Comm mpiComm);
+             MPI_Comm mpiComm,
+             std::map<std::string, VariableBase> &variablesPlaceholder);
 
     ~EnginePy() = default;
 
-    void Write(VariablePy &variable, const pyArray &array);
+    void PutSync(VariableBase *variable, const pybind11::array &array);
 
-    void Advance(const float timeoutSeconds = 0.);
+    void EndStep();
 
     void Close(const int transportIndex = -1);
 
 private:
-    IO &m_IO;
     Engine &m_Engine;
+    std::map<std::string, VariableBase> &m_VariablesPlaceholder;
     const bool m_DebugMode;
-
-    template <class T>
-    void DefineVariableInIO(VariablePy &variable);
-
-    template <class T>
-    void WriteInIO(VariablePy &variable, const pyArray &array);
 };
 
-} // end namespace adios
-
-#include "EnginePy.inl"
+} // end namespace adios2
 
 #endif /* BINDINGS_PYTHON_SOURCE_ENGINEPY_H_ */

@@ -111,7 +111,7 @@ enum class ReadMode
     Blocking
 };
 
-enum class AdvanceMode
+enum class StepMode
 {
     Append,
     Update, // writer advance mode
@@ -119,10 +119,10 @@ enum class AdvanceMode
     LatestAvailable // reader advance mode
 };
 
-enum class AdvanceStatus
+enum class StepStatus
 {
     OK,
-    StepNotReady,
+    NotReady,
     EndOfStream,
     OtherError
 };

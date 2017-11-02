@@ -52,8 +52,8 @@ public:
                  MPI_Comm mpiComm);
 
     ~ADIOS1Reader();
-    AdvanceStatus BeginStep(AdvanceMode mode,
-                            const float timeout_sec = 0.0) final;
+    StepStatus BeginStep(const StepMode mode,
+                         const float timeoutSeconds = 0.f) final;
     void PerformGets() final;
     void EndStep() final;
 

@@ -34,7 +34,7 @@ namespace adios2
  * @param ios
  */
 void InitXML(const std::string configXML, MPI_Comm mpiComm,
-             const bool debugMode,
+             const std::string hostLanguage, const bool debugMode,
              std::map<std::string, std::shared_ptr<Operator>> &transforms,
              std::map<std::string, IO> &ios);
 }

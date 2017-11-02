@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
         adios2::Engine &bpStreamReader =
             streamingIO.Open("myVector.bp", adios2::Mode::Read);
 
-        while (bpStreamReader.GetAdvanceStatus() == adios2::AdvanceStatus::OK)
+        while (bpStreamReader.GetAdvanceStatus() == adios2::StepStatus::OK)
         {
             // Gets data until buffer is full (1Gb from SetParameters)
             bpStreamReader.Get(wanStream);

@@ -27,10 +27,10 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     Init();
 }
 
-AdvanceStatus DataManWriter::BeginStep(AdvanceMode mode,
+StepStatus DataManWriter::BeginStep(StepMode mode,
                                        const float timeout_sec)
 {
-    return AdvanceStatus::OK;
+    return StepStatus::OK;
 }
 void DataManWriter::EndStep() {}
 

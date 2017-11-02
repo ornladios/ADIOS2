@@ -49,7 +49,8 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
     {
         if (configFile.substr(configFile.size() - 3) == "xml")
         {
-            InitXML(configFile, m_MPIComm, m_DebugMode, m_Operators, m_IOs);
+            InitXML(configFile, m_MPIComm, m_HostLanguage, m_DebugMode,
+                    m_Operators, m_IOs);
         }
         // TODO expand for other formats
     }
@@ -77,7 +78,8 @@ IO &ADIOS::DeclareIO(const std::string name)
                                     " , in call to DeclareIO\n");
     }
 
-    auto ioPair = m_IOs.emplace(name, IO(name, m_MPIComm, false, m_DebugMode));
+    auto ioPair = m_IOs.emplace(
+        name, IO(name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
     return ioPair.first->second;
 }
 

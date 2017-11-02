@@ -62,8 +62,8 @@ public:
      */
     IO &GetIO() noexcept;
 
-    AdvanceStatus BeginStep();
-    virtual AdvanceStatus BeginStep(AdvanceMode mode,
+    StepStatus BeginStep();
+    virtual StepStatus BeginStep(StepMode mode,
                                     const float timeoutSeconds = 0.f);
 
     /**
@@ -215,7 +215,7 @@ protected:
     /** added to exceptions to improve debugging */
     std::string m_EndMessage;
 
-    AdvanceStatus m_AdvanceStatus = AdvanceStatus::OK;
+    StepStatus m_AdvanceStatus = StepStatus::OK;
 
     /** Called from constructors */
     virtual void Init();

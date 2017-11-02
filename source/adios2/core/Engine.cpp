@@ -25,22 +25,22 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 
 IO &Engine::GetIO() noexcept { return m_IO; }
 
-AdvanceStatus Engine::BeginStep()
+StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
     {
-        return BeginStep(AdvanceMode::NextAvailable, 0.0f);
+        return BeginStep(StepMode::NextAvailable, 0.0f);
     }
     else
     {
-        return BeginStep(AdvanceMode::Append, 0.0f);
+        return BeginStep(StepMode::Append, 0.0f);
     }
 }
 
-AdvanceStatus Engine::BeginStep(AdvanceMode mode, const float timeoutSeconds)
+StepStatus Engine::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     ThrowUp("BeginStep");
-    return AdvanceStatus::OtherError;
+    return StepStatus::OtherError;
 }
 void Engine::EndStep() { ThrowUp("EndStep"); }
 

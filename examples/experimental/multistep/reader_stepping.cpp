@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
         if (!bpReader)
         {
             int step = 0;
-            while (bpReader->GetAdvanceStatus() == adios2::AdvanceStatus::OK)
+            while (bpReader->GetAdvanceStatus() == adios2::StepStatus::OK)
             {
                 std::cout << "Process step " << std::to_string(step)
                           << std::endl;

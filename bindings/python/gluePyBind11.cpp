@@ -20,13 +20,10 @@
 #include "ADIOSPy.h"
 #include "EnginePy.h"
 #include "IOPy.h"
-#include "VariablePy.h"
-#include "adiosPyFunctions.h"
-#include "adiosPyTypes.h"
 
 #ifdef ADIOS2_HAVE_MPI
 adios2::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
-                                  adios2::pyObject &object,
+                                  pybind11::object &object,
                                   const bool debugMode)
 {
     MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
@@ -46,7 +43,7 @@ adios2::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
     return adios2::ADIOSPy(configFile, *mpiCommPtr, debugMode);
 }
 
-adios2::ADIOSPy ADIOSPyInit(adios2::pyObject &object, const bool debugMode)
+adios2::ADIOSPy ADIOSPyInit(pybind11::object &object, const bool debugMode)
 {
     MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
 
@@ -91,9 +88,27 @@ PYBIND11_PLUGIN(adios2)
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
-    m.attr("ModeWrite") = static_cast<int>(adios2::Mode::Write);
-    m.attr("ModeRead") = static_cast<int>(adios2::Mode::Read);
-    m.attr("ModeAppend") = static_cast<int>(adios2::Mode::Append);
+    // enum classes
+    pybind11::enum_<adios2::Mode>(m, "Mode")
+        .value("Write", adios2::Mode::Write)
+        .value("Read", adios2::Mode::Read)
+        .value("Append", adios2::Mode::Append)
+        .export_values();
+
+    pybind11::enum_<adios2::StepMode>(m, "StepMode")
+        .value("Append", adios2::StepMode::Append)
+        .value("Update", adios2::StepMode::Update)
+        .value("NextAvailable", adios2::StepMode::NextAvailable)
+        .value("LatestAvailable", adios2::StepMode::LatestAvailable)
+        .export_values();
+
+    pybind11::enum_<adios2::StepStatus>(m, "StepStatus")
+        .value("OK", adios2::StepStatus::OK)
+        .value("NotReady", adios2::StepStatus::NotReady)
+        .value("EndOfStream", adios2::StepStatus::EndOfStream)
+        .value("OtherError", adios2::StepStatus::OtherError)
+        .export_values();
+
     m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS class object");
     m.def("ADIOS", &ADIOSPyInitConfig,
           "Function that creates an ADIOS class object using a config file");
@@ -101,29 +116,29 @@ PYBIND11_PLUGIN(adios2)
     pybind11::class_<adios2::ADIOSPy>(m, "ADIOSPy")
         .def("DeclareIO", &adios2::ADIOSPy::DeclareIO);
 
+    pybind11::class_<adios2::VariableBase>(m, "Variable")
+        .def("SetSelection", &adios2::VariableBase::SetSelection);
+
     pybind11::class_<adios2::IOPy>(m, "IOPy")
         .def("SetEngine", &adios2::IOPy::SetEngine)
         .def("SetParameters", &adios2::IOPy::SetParameters)
-        .def("AddTransport", &adios2::IOPy::AddTransport)
+        //.def("AddTransport", &adios2::IOPy::AddTransport)
         .def("DefineVariable", &adios2::IOPy::DefineVariable,
              pybind11::return_value_policy::reference_internal,
-             pybind11::arg("name"), pybind11::arg("shape") = adios2::pyList(),
-             pybind11::arg("start") = adios2::pyList(),
-             pybind11::arg("count") = adios2::pyList(),
-             pybind11::arg("isConstantDims") = false)
-        .def("GetVariable", &adios2::IOPy::GetVariable,
+             pybind11::arg("name"), pybind11::arg("shape") = adios2::Dims(),
+             pybind11::arg("start") = adios2::Dims(),
+             pybind11::arg("count") = adios2::Dims(),
+             pybind11::arg("isConstantDims") = false,
+             pybind11::arg("array") = pybind11::array())
+        .def("InquireVariable", &adios2::IOPy::InquireVariable,
              pybind11::return_value_policy::reference_internal)
         .def("Open", (adios2::EnginePy (adios2::IOPy::*)(const std::string &,
                                                          const int)) &
                          adios2::IOPy::Open);
 
-    pybind11::class_<adios2::VariablePy>(m, "VariablePy")
-        .def("SetDimensions", &adios2::VariablePy::SetDimensions);
-
     pybind11::class_<adios2::EnginePy>(m, "EnginePy")
-        .def("Write", &adios2::EnginePy::Write)
-        .def("Advance", &adios2::EnginePy::Advance,
-             pybind11::arg("timeoutSeconds") = 0.)
+        .def("PutSync", &adios2::EnginePy::PutSync)
+        .def("EndStep", &adios2::EnginePy::EndStep)
         .def("Close", &adios2::EnginePy::Close,
              pybind11::arg("transportIndex") = -1);
 

@@ -35,7 +35,7 @@ ADIOS1Reader::~ADIOS1Reader()
     /* m_ADIOS1 deconstructor does close and finalize */
 }
 
-AdvanceStatus ADIOS1Reader::BeginStep(AdvanceMode mode, const float timeout_sec)
+StepStatus ADIOS1Reader::BeginStep(const StepMode mode, const float timeout_sec)
 {
     return m_ADIOS1.AdvanceStep(mode, timeout_sec);
 }
@@ -46,8 +46,8 @@ AdvanceStatus ADIOS1Reader::BeginStep(AdvanceMode mode, const float timeout_sec)
     void ADIOS1Reader::DoGetSync(Variable<T> &variable, T *values)             \
     {                                                                          \
         m_ADIOS1.ScheduleReadCommon(variable.m_Name, variable.m_Start,         \
-                                    variable.m_Count, variable.m_StepStart,    \
-                                    variable.m_StepCount,                      \
+                                    variable.m_Count, variable.m_StepsStart,   \
+                                    variable.m_StepsCount,                     \
                                     variable.m_ReadAsLocalValue,               \
                                     variable.m_ReadAsJoined, (void *)values);  \
         m_ADIOS1.PerformReads();                                               \
@@ -55,8 +55,8 @@ AdvanceStatus ADIOS1Reader::BeginStep(AdvanceMode mode, const float timeout_sec)
     void ADIOS1Reader::DoGetDeferred(Variable<T> &variable, T *values)         \
     {                                                                          \
         m_ADIOS1.ScheduleReadCommon(variable.m_Name, variable.m_Start,         \
-                                    variable.m_Count, variable.m_StepStart,    \
-                                    variable.m_StepCount,                      \
+                                    variable.m_Count, variable.m_StepsStart,   \
+                                    variable.m_StepsCount,                     \
                                     variable.m_ReadAsLocalValue,               \
                                     variable.m_ReadAsJoined, (void *)values);  \
     }
