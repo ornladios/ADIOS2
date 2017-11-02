@@ -2,17 +2,17 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloBPReaderHeatMap.cpp : Writes a regular heat map in a regular 2D mesh,
+ * helloBPReaderHeatMap.cpp : Writes a heat map in a regular 2D mesh,
  * values grow from 0 in increments of 1
  *
- * temperature[gNx, gNy]
- * where: gNx = MPI_size_x * Nx and gNy = MPI_size_y * Ny
+ * temperature[gNx, Ny]
+ * where: gNx = MPI_size_x * Nx
  *
- * 0               1       2   ...    gNy-1
- * gNy           gNy+1  gNy+2  ...   2*gNy-1
+ * 0                1       2  ...     Ny-1
+ * Ny            Ny+1    Ny+2  ...   2*Ny-1
  * ...
  * ...
- * (gNx-1)*gNy   ...                  gNx*gNy-1
+ * (gNx-1)*Ny   ...                  gNx*Ny-1
  *
  *
  *  Created on: Nov 1, 2017
@@ -40,8 +40,8 @@ int main(int argc, char *argv[])
     constexpr std::size_t Ny = 10;
 
     const adios2::Dims count{Nx, Ny};
-    const adios2::Dims start{rank * Nx, rank * Ny};
-    const adios2::Dims shape{size * Nx, size * Ny};
+    const adios2::Dims start{rank * Nx, 0};
+    const adios2::Dims shape{size * Nx, Ny};
 
     // populate local temperature values
     std::vector<unsigned int> temperatures(Nx * Ny);
@@ -51,8 +51,7 @@ int main(int argc, char *argv[])
 
         for (unsigned int j = 0; j < Ny; ++j)
         {
-            const unsigned int jGlobal = start[1] + j;
-            const unsigned int value = iGlobal * shape[1] + jGlobal;
+            const unsigned int value = iGlobal * shape[1] + j;
             temperatures[i * Ny + j] = value;
         }
     }
@@ -88,12 +87,15 @@ int main(int argc, char *argv[])
             // this just discovers in the metadata file that the variable exists
             adios2::Variable<unsigned int> *inTemperature =
                 getHeatMap.InquireVariable<unsigned int>("temperature");
-            inTemperature->SetSelection({{2, 2}, {4, 4}});
-
             // now read the variable
             if (inTemperature != nullptr)
             {
-                std::vector<unsigned int> inTemperatures(16);
+                inTemperature->SetSelection({{2, 2}, {6, 1}});
+                size_t elementsSize = inTemperature->GetElementsSize();
+                std::vector<unsigned int> inTemperatures(elementsSize);
+                std::cout << "Pre-allocated " << elementsSize << " elements, "
+                          << elementsSize * sizeof(unsigned int) << " bytes\n";
+
                 bpReader.GetSync(*inTemperature, inTemperatures.data());
 
                 std::cout << "Incoming temperature map:\n";
@@ -101,7 +103,7 @@ int main(int argc, char *argv[])
                 for (auto i = 0; i < inTemperatures.size(); ++i)
                 {
                     std::cout << inTemperatures[i] << " ";
-                    if ((i + 1) % 4 == 0)
+                    if ((i + 1) % inTemperature->m_Count.back() == 0)
                     {
                         std::cout << "\n";
                     }

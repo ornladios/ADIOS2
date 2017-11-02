@@ -134,9 +134,9 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
 
     const auto &buffer = m_Metadata.m_Buffer;
 
-    const size_t stepStart = variable.m_StepStart;
+    const size_t stepStart = variable.m_StepsStart;
     const size_t stepEnd =
-        stepStart + variable.m_StepCount; // inclusive or exclusive?
+        stepStart + variable.m_StepsCount; // inclusive or exclusive?
 
     // selection = [start, end[
     const Box<Dims> selectionBox =
@@ -158,12 +158,11 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             const Characteristics<T> blockCharacteristics =
                 ReadElementIndexCharacteristics<T>(buffer, blockPosition);
 
-            const Box<Dims> blockBox = StartEndBox(blockCharacteristics.Start,
-                                                   blockCharacteristics.Count);
-
             // check if they intersect
             SubFileInfo info;
-            info.IntersectionBox = IntersectionBox(selectionBox, blockBox);
+            info.BlockBox = StartEndBox(blockCharacteristics.Start,
+                                        blockCharacteristics.Count);
+            info.IntersectionBox = IntersectionBox(selectionBox, info.BlockBox);
 
             if (info.IntersectionBox.first.empty() ||
                 info.IntersectionBox.second.empty())
@@ -171,14 +170,15 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
                 continue;
             }
             // if they intersect get info Seeks (first: start, second: count)
-            info.Seeks.first = blockCharacteristics.Statistics.PayloadOffset +
-                               LinearIndex(blockBox, info.IntersectionBox.first,
-                                           m_IsRowMajor, m_IsZeroIndex) *
-                                   sizeof(T);
+            info.Seeks.first =
+                blockCharacteristics.Statistics.PayloadOffset +
+                LinearIndex(info.BlockBox, info.IntersectionBox.first,
+                            m_IsRowMajor, m_IsZeroIndex) *
+                    sizeof(T);
 
             info.Seeks.second =
                 blockCharacteristics.Statistics.PayloadOffset +
-                (LinearIndex(blockBox, info.IntersectionBox.second,
+                (LinearIndex(info.BlockBox, info.IntersectionBox.second,
                              m_IsRowMajor, m_IsZeroIndex) +
                  1) *
                     sizeof(T);
@@ -186,7 +186,7 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             const size_t fileIndex = static_cast<const size_t>(
                 blockCharacteristics.Statistics.FileIndex);
 
-            infoMap[fileIndex][step].push_back(info);
+            infoMap[fileIndex][step].push_back(std::move(info));
         }
     }
 
@@ -196,7 +196,7 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
 template <class T>
 void BP3Deserializer::ClipContiguousMemoryCommon(
     Variable<T> &variable, const std::vector<char> &contiguousMemory,
-    const Box<Dims> &intersectionBox)
+    const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
 {
     const Dims &start = intersectionBox.first;
     if (start.size() == 1) // 1D copy memory
@@ -214,7 +214,7 @@ void BP3Deserializer::ClipContiguousMemoryCommon(
 
     if (m_IsRowMajor && m_IsZeroIndex)
     {
-        ClipContiguousMemoryCommonRowZero(variable, contiguousMemory,
+        ClipContiguousMemoryCommonRowZero(variable, contiguousMemory, blockBox,
                                           intersectionBox);
     }
 }
@@ -222,7 +222,7 @@ void BP3Deserializer::ClipContiguousMemoryCommon(
 template <class T>
 void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
     Variable<T> &variable, const std::vector<char> &contiguousMemory,
-    const Box<Dims> &intersectionBox)
+    const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
 {
     const Dims &start = intersectionBox.first;
     const Dims &end = intersectionBox.second;
@@ -236,13 +236,15 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
     const size_t dimensions = start.size();
     bool run = true;
 
+    const size_t intersectionStart =
+        LinearIndex(blockBox, intersectionBox.first, true, true) * sizeof(T);
+
     while (run)
     {
         // here copy current linear memory between currentPoint and end
         const size_t contiguousStart =
-            LinearIndex(intersectionBox, currentPoint, true, true) *
-            sizeof(T); // TODO: FIX THIS, must be absolute box, not intersection
-                       // box
+            LinearIndex(blockBox, currentPoint, true, true) * sizeof(T) -
+            intersectionStart;
 
         const size_t variableStart =
             LinearIndex(selectionBox, currentPoint, true, true) * sizeof(T);
@@ -260,7 +262,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
         while (true)
         {
             ++currentPoint[p];
-            if (currentPoint[p] > end[p]) // TODO: fix end condition
+            if (currentPoint[p] > end[p]) // TODO: check end condition
             {
                 if (p == 0)
                 {

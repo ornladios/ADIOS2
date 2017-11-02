@@ -153,7 +153,7 @@ void BPFileReader::ReadVariables(
 
                     m_BP3Deserializer.ClipContiguousMemory(
                         variableName, m_IO, contiguousMemory,
-                        blockInfo.IntersectionBox);
+                        blockInfo.BlockBox, blockInfo.IntersectionBox);
                 } // end block
             }     // end step
         }         // end subfile

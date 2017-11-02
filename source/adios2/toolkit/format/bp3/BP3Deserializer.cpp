@@ -38,7 +38,8 @@ void BP3Deserializer::ParseMetadata(IO &io)
 
 void BP3Deserializer::ClipContiguousMemory(
     const std::string &variableName, IO &io,
-    const std::vector<char> &contiguousMemory, const Box<Dims> &intersectionBox)
+    const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
+    const Box<Dims> &intersectionBox) const
 {
     // get variable pointer and set data in it with local dimensions
     const std::string type(io.InquireVariableType(variableName));
@@ -52,7 +53,7 @@ void BP3Deserializer::ClipContiguousMemory(
         Variable<T> *variable = io.InquireVariable<T>(variableName);           \
         if (variable != nullptr)                                               \
         {                                                                      \
-            ClipContiguousMemoryCommon(*variable, contiguousMemory,            \
+            ClipContiguousMemoryCommon(*variable, contiguousMemory, blockBox,  \
                                        intersectionBox);                       \
         }                                                                      \
     }

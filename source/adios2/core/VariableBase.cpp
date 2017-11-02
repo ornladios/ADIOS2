@@ -137,8 +137,8 @@ void VariableBase::SetStepSelection(const std::pair<size_t, size_t> &boxSteps)
                                     ", in call to Setting Step Selection\n");
     }
 
-    m_StepStart = boxSteps.first;
-    m_StepCount = boxSteps.second;
+    m_StepsStart = boxSteps.first;
+    m_StepsCount = boxSteps.second;
 }
 
 // transforms related functions
@@ -183,6 +183,11 @@ void VariableBase::CheckDimensions(const std::string hint) const
 
     CheckDimensionsCommon(hint);
     // TODO need to think more exceptions here
+}
+
+size_t VariableBase::GetElementsSize() const
+{
+    return GetTotalSize(m_Count) * m_StepsCount;
 }
 
 // PRIVATE

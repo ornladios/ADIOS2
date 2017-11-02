@@ -56,7 +56,8 @@ public:
 
     void ClipContiguousMemory(const std::string &variableName, IO &io,
                               const std::vector<char> &contiguousMemory,
-                              const Box<Dims> &intersectionBox);
+                              const Box<Dims> &blockBox,
+                              const Box<Dims> &intersectionBox) const;
 
 private:
     std::map<std::string, SubFileInfoMap> m_DeferredVariables;
@@ -87,13 +88,13 @@ private:
     template <class T>
     void ClipContiguousMemoryCommon(Variable<T> &variable,
                                     const std::vector<char> &contiguousMemory,
-                                    const Box<Dims> &intersectionBox);
+                                    const Box<Dims> &blockBox,
+                                    const Box<Dims> &intersectionBox) const;
 
     template <class T>
-    void
-    ClipContiguousMemoryCommonRowZero(Variable<T> &variable,
-                                      const std::vector<char> &contiguousMemory,
-                                      const Box<Dims> &intersectionBox);
+    void ClipContiguousMemoryCommonRowZero(
+        Variable<T> &variable, const std::vector<char> &contiguousMemory,
+        const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
 };
 
 #define declare_template_instantiation(T)                                      \

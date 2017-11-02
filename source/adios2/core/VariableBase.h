@@ -68,8 +68,8 @@ public:
     size_t m_AvailableStepsStart = 1;
     size_t m_AvailableStepsCount = 0;
 
-    size_t m_StepStart = 1;
-    size_t m_StepCount = 1;
+    size_t m_StepsStart = 1;
+    size_t m_StepsCount = 1;
 
     /** Index Metadata Position in a serial metadata buffer */
     size_t m_IndexStart;
@@ -142,6 +142,13 @@ public:
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */
     void CheckDimensions(const std::string hint) const;
+
+    /**
+     * Returns the minimum required allocation for the current selection
+     * @return memory size to be allocated by a pointer/vector to read this
+     * variable
+     */
+    size_t GetElementsSize() const;
 
 protected:
     const bool m_DebugMode = false;

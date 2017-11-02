@@ -26,9 +26,11 @@ namespace adios2
 
 struct SubFileInfo
 {
+    /**  from characteristics, first = Start point, second =
+    End point of block of data */
+    Box<Dims> BlockBox;
     Box<Dims> IntersectionBox; ///< first = Start point, second = End point
     Box<size_t> Seeks;         ///< first = Start seek, second = End seek
-    std::vector<char> ContiguousData; /// TODO: check if needed
 };
 
 /**
