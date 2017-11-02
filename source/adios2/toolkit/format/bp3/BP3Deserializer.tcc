@@ -170,8 +170,7 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             {
                 continue;
             }
-            // if they intersect get info Seeks (first: start, second: end)
-            // TODO: map to sizeof(T)?
+            // if they intersect get info Seeks (first: start, second: count)
             info.Seeks.first = blockCharacteristics.Statistics.PayloadOffset +
                                LinearIndex(blockBox, info.IntersectionBox.first,
                                            m_IsRowMajor, m_IsZeroIndex) *
@@ -179,8 +178,9 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
 
             info.Seeks.second =
                 blockCharacteristics.Statistics.PayloadOffset +
-                LinearIndex(blockBox, info.IntersectionBox.second, m_IsRowMajor,
-                            m_IsZeroIndex) *
+                (LinearIndex(blockBox, info.IntersectionBox.second,
+                             m_IsRowMajor, m_IsZeroIndex) +
+                 1) *
                     sizeof(T);
 
             const size_t fileIndex = static_cast<const size_t>(
@@ -226,23 +226,26 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
 {
     const Dims &start = intersectionBox.first;
     const Dims &end = intersectionBox.second;
-    const size_t dimensions = start.size();
-    const size_t stride = end[dimensions - 1] - start[dimensions - 1];
+    const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
 
     Dims currentPoint(start); // current point for memory copy
 
-    const Box<Dims> variableSelection = variable.CurrentBoxSelection();
+    const Box<Dims> selectionBox =
+        StartEndBox(variable.m_Start, variable.m_Count);
 
+    const size_t dimensions = start.size();
     bool run = true;
 
     while (run)
     {
         // here copy current linear memory between currentPoint and end
         const size_t contiguousStart =
-            LinearIndex(intersectionBox, currentPoint, true, true);
+            LinearIndex(intersectionBox, currentPoint, true, true) *
+            sizeof(T); // TODO: FIX THIS, must be absolute box, not intersection
+                       // box
 
         const size_t variableStart =
-            LinearIndex(variableSelection, currentPoint, true, true);
+            LinearIndex(selectionBox, currentPoint, true, true) * sizeof(T);
 
         char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
 
@@ -257,12 +260,12 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
         while (true)
         {
             ++currentPoint[p];
-
-            if (currentPoint[p] == end[p])
+            if (currentPoint[p] > end[p]) // TODO: fix end condition
             {
                 if (p == 0)
                 {
                     run = false; // we are done
+                    break;
                 }
                 else
                 {

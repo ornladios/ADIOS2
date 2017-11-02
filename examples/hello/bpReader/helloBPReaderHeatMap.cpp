@@ -88,19 +88,20 @@ int main(int argc, char *argv[])
             // this just discovers in the metadata file that the variable exists
             adios2::Variable<unsigned int> *inTemperature =
                 getHeatMap.InquireVariable<unsigned int>("temperature");
-
-            // inTemperature->SetSelection({{,0})
+            inTemperature->SetSelection({{2, 2}, {4, 4}});
 
             // now read the variable
             if (inTemperature != nullptr)
             {
-                std::vector<unsigned int> inTemperatures(Nx * Ny);
+                std::vector<unsigned int> inTemperatures(16);
                 bpReader.GetSync(*inTemperature, inTemperatures.data());
+
+                std::cout << "Incoming temperature map:\n";
 
                 for (auto i = 0; i < inTemperatures.size(); ++i)
                 {
                     std::cout << inTemperatures[i] << " ";
-                    if (i % Nx == 0 && i > 0)
+                    if ((i + 1) % 4 == 0)
                     {
                         std::cout << "\n";
                     }

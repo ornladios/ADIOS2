@@ -41,8 +41,7 @@ size_t VariableBase::TotalSize() const noexcept
     return GetTotalSize(m_Count);
 }
 
-void VariableBase::SetSelection(const std::pair<Dims, Dims> &boxDims,
-                                const std::pair<size_t, size_t> &boxSteps)
+void VariableBase::SetSelection(const Box<Dims> &boxDims)
 {
     const Dims &start = boxDims.first;
     const Dims &count = boxDims.second;
@@ -88,7 +87,6 @@ void VariableBase::SetSelection(const std::pair<Dims, Dims> &boxDims,
 
     m_Start = start;
     m_Count = count;
-    SetStepSelection(boxSteps);
 }
 
 void VariableBase::SetMemorySelection(const std::pair<Dims, Dims> &boxDims)
@@ -185,15 +183,6 @@ void VariableBase::CheckDimensions(const std::string hint) const
 
     CheckDimensionsCommon(hint);
     // TODO need to think more exceptions here
-}
-
-Box<Dims> VariableBase::CurrentBoxSelection() const noexcept
-{
-    Dims end;
-    std::transform(m_Start.begin(), m_Start.end(), m_Count.begin(),
-                   std::back_inserter(end), std::plus<size_t>());
-
-    return Box<Dims>{m_Start, end};
 }
 
 // PRIVATE

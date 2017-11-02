@@ -63,10 +63,13 @@ Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept
 {
     Box<Dims> box;
     box.first = start;
-    box.second.reserve(start.size());
+    const size_t size = start.size();
+    box.second.reserve(size);
 
-    std::transform(start.begin(), start.end(), count.begin(),
-                   std::back_inserter(box.second), std::plus<size_t>());
+    for (auto d = 0; d < size; ++d)
+    {
+        box.second.push_back(start[d] + count[d] - 1); // end inclusive
+    }
 
     return box;
 }
@@ -75,10 +78,13 @@ Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept
 {
     Box<Dims> box;
     box.first = start;
-    box.second.reserve(start.size());
+    const size_t size = start.size();
+    box.second.reserve(size);
 
-    std::transform(end.begin(), end.end(), start.begin(),
-                   std::back_inserter(box.second), std::minus<size_t>());
+    for (auto d = 0; d < size; ++d)
+    {
+        box.second.push_back(end[d] - start[d] + 1); // end inclusive
+    }
 
     return box;
 }
@@ -116,11 +122,11 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
         // end, must be inclusive
         if (box1.second[d] > box2.second[d])
         {
-            intersectionBox.second.push_back(box2.second[d] - 1);
+            intersectionBox.second.push_back(box2.second[d]);
         }
         else
         {
-            intersectionBox.second.push_back(box1.second[d] - 1);
+            intersectionBox.second.push_back(box1.second[d]);
         }
     }
 

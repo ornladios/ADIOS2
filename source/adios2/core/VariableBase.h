@@ -103,9 +103,7 @@ public:
     size_t TotalSize() const noexcept;
 
     /** Set Dims and Time start and count */
-    void SetSelection(const std::pair<Dims, Dims> &boxDims,
-                      const std::pair<size_t, size_t> &boxSteps =
-                          std::pair<size_t, size_t>(0, 1));
+    void SetSelection(const Box<Dims> &boxDims);
 
     /**
      * Set the steps for the variable. The pointer passed at
@@ -113,14 +111,14 @@ public:
      * single read. For writing it changes the time step
      * @param boxSteps {startStep, countStep}
      */
-    void SetStepSelection(const std::pair<size_t, size_t> &boxSteps);
+    void SetStepSelection(const Box<size_t> &boxSteps);
 
     /**
      * Set the local dimension and global offset of the variable using a
      * selection
      * Only bounding boxes are allowed
      */
-    void SetMemorySelection(const std::pair<Dims, Dims> &boxDims);
+    void SetMemorySelection(const Box<Dims> &boxDims);
 
     size_t GetAvailableStepsStart() const;
 
@@ -144,12 +142,6 @@ public:
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */
     void CheckDimensions(const std::string hint) const;
-
-    /**
-     * Gets the current (start, start+count = end) box
-     * @return box with current selection start and end points
-     */
-    Box<Dims> CurrentBoxSelection() const noexcept;
 
 protected:
     const bool m_DebugMode = false;
