@@ -12,6 +12,7 @@
 
 #include <adios2.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi4py/mpi4py.h>
@@ -74,7 +75,7 @@ adios2::ADIOSPy ADIOSPyInit(const bool debugMode)
 }
 #endif
 
-PYBIND11_PLUGIN(adios2)
+PYBIND11_MODULE(adios2, m)
 {
 #ifdef ADIOS2_HAVE_MPI
     if (import_mpi4py() < 0)
@@ -84,7 +85,9 @@ PYBIND11_PLUGIN(adios2)
     }
 #endif
 
-    pybind11::module m("adios2", "ADIOS2 Python bindings using pybind11");
+    // pybind11::module m("adios2", "ADIOS2 Python bindings using pybind11");
+    m.doc() = "ADIOS2 Python bindings powered by pybind11";
+
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
@@ -108,10 +111,24 @@ PYBIND11_PLUGIN(adios2)
         .value("EndOfStream", adios2::StepStatus::EndOfStream)
         .value("OtherError", adios2::StepStatus::OtherError)
         .export_values();
+#ifdef ADIOS2_HAVE_MPI
+    m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS class object",
+          pybind11::arg("object") = nullptr, pybind11::arg("debugMode") = true);
 
-    m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS class object");
+    m.def("ADIOS", &ADIOSPyInitConfig, "Function that creates an ADIOS class "
+                                       "object using a config file",
+          pybind11::arg("configFile") = "", pybind11::arg("object") = nullptr,
+          pybind11::arg("debugMode") = true);
+#else
+    m.def("ADIOS", &ADIOSPyInit,
+          "Function that creates an ADIOS class object in non MPI mode",
+          pybind11::arg("debugMode") = true);
+
     m.def("ADIOS", &ADIOSPyInitConfig,
-          "Function that creates an ADIOS class object using a config file");
+          "Function that creates an ADIOS class "
+          "object using a config file in non MPI mode",
+          pybind11::arg("configFile") = "", pybind11::arg("debugMode") = true);
+#endif
 
     pybind11::class_<adios2::ADIOSPy>(m, "ADIOSPy")
         .def("DeclareIO", &adios2::ADIOSPy::DeclareIO);
@@ -141,6 +158,4 @@ PYBIND11_PLUGIN(adios2)
         .def("EndStep", &adios2::EnginePy::EndStep)
         .def("Close", &adios2::EnginePy::Close,
              pybind11::arg("transportIndex") = -1);
-
-    return m.ptr();
 }

@@ -42,7 +42,7 @@ VariableBase &IOPy::DefineVariable(const std::string &name, const Dims &shape,
 
     VariableBase *variable = nullptr;
 
-    if (array == pybind11::array())
+    if (array.is(pybind11::array()))
     {
         // put in placeholder
         auto itVariableEmplace = m_VariablesPlaceholder.emplace(

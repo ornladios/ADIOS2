@@ -30,7 +30,7 @@ void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
     {
         auto &io = m_Engine.GetIO();
 
-        if (array == pybind11::array())
+        if (array.is(pybind11::array()))
         {
             if (m_DebugMode)
             {
@@ -60,7 +60,7 @@ void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
 #define declare_type(T)                                                        \
     else if (variable->m_Type == GetType<T>())                                 \
     {                                                                          \
-        m_Engine.PutSync(dynamic_cast<adios2::Variable<T> &>(variable),        \
+        m_Engine.PutSync(*dynamic_cast<adios2::Variable<T> *>(variable),       \
                          reinterpret_cast<const T *>(array.data()));           \
     }
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
@@ -69,7 +69,7 @@ void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
     {
         if (m_DebugMode)
         {
-            throw std::invalid_argument("ERROR: variable " + variable.m_Name +
+            throw std::invalid_argument("ERROR: variable " + variable->m_Name +
                                         " numpy array type is not supported or "
                                         "is not memory contiguous "
                                         ", in call to PutSync\n");

@@ -18,7 +18,7 @@ import adios2
 data = SmallTestData()
 
 comm = MPI.COMM_WORLD
-adios = adios2.ADIOS(comm, adios2.DebugON)
+adios = adios2.ADIOS(comm)
 
 bpIO = adios.DeclareIO("NPTypes")
 
@@ -50,19 +50,19 @@ varR64 = bpIO.DefineVariable(
 
 
 # ADIOS Engine
-bpFileWriter = bpIO.Open("npTypes.bp", adios2.ModeWrite)
+bpFileWriter = bpIO.Open("npTypes.bp", adios2.Mode.Write)
 
-bpFileWriter.Write(varI8, data.I8)
-bpFileWriter.Write(varI16, data.I16)
-bpFileWriter.Write(varI32, data.I32)
-bpFileWriter.Write(varI64, data.I64)
+bpFileWriter.PutSync(varI8, data.I8)
+bpFileWriter.PutSync(varI16, data.I16)
+bpFileWriter.PutSync(varI32, data.I32)
+bpFileWriter.PutSync(varI64, data.I64)
 
-bpFileWriter.Write(varU8, data.U8)
-bpFileWriter.Write(varU16, data.U16)
-bpFileWriter.Write(varU32, data.U32)
-bpFileWriter.Write(varU64, data.U64)
+bpFileWriter.PutSync(varU8, data.U8)
+bpFileWriter.PutSync(varU16, data.U16)
+bpFileWriter.PutSync(varU32, data.U32)
+bpFileWriter.PutSync(varU64, data.U64)
 
-bpFileWriter.Write(varR32, data.R32)
-bpFileWriter.Write(varR64, data.R64)
+bpFileWriter.PutSync(varR32, data.R32)
+bpFileWriter.PutSync(varR64, data.R64)
 
 bpFileWriter.Close()
