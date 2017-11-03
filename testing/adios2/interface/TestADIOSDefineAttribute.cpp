@@ -420,10 +420,10 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     auto &attributeI16 = *io.InquireAttribute<int16_t>(i16_Single);
     auto &attributeI32 = *io.InquireAttribute<int32_t>(i32_Single);
     auto &attributeI64 = *io.InquireAttribute<int64_t>(i64_Single);
-    auto &attributeU8 = *io.InquireAttribute<uint8_t>(i8_Single);
-    auto &attributeU16 = *io.InquireAttribute<uint16_t>(i16_Single);
-    auto &attributeU32 = *io.InquireAttribute<uint32_t>(i32_Single);
-    auto &attributeU64 = *io.InquireAttribute<uint64_t>(i64_Single);
+    auto &attributeU8 = *io.InquireAttribute<uint8_t>(u8_Single);
+    auto &attributeU16 = *io.InquireAttribute<uint16_t>(u16_Single);
+    auto &attributeU32 = *io.InquireAttribute<uint32_t>(u32_Single);
+    auto &attributeU64 = *io.InquireAttribute<uint64_t>(u64_Single);
     auto &attributeFloat = *io.InquireAttribute<float>(float_Single);
     auto &attributeDouble = *io.InquireAttribute<double>(double_Single);
 

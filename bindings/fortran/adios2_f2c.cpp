@@ -10,6 +10,7 @@
  */
 
 #include "adios2_f2c.h"
+#include "adios2/adios2_c_glue.h"
 
 #include <stdexcept>
 #include <type_traits> //std::static_assert
@@ -32,10 +33,9 @@ void adios2_init_config_f2c_(adios2_ADIOS **adios, const char *config_file,
     *ierr = 0;
     try
     {
-        *adios =
-            adios2_init_config(config_file, MPI_Comm_f2c(*comm),
-                               static_cast<adios2_debug_mode>(*debug_mode));
-        adios2_set_host_language(*adios, "Fortran");
+        *adios = adios2_init_config_glue(
+            config_file, MPI_Comm_f2c(*comm),
+            static_cast<adios2_debug_mode>(*debug_mode), "Fortran");
     }
     catch (std::exception &e)
     {
@@ -54,9 +54,9 @@ void adios2_init_config_f2c_(adios2_ADIOS **adios, const char *config_file,
     *ierr = 0;
     try
     {
-        *adios = adios2_init_config_nompi(
-            config_file, static_cast<adios2_debug_mode>(*debug_mode));
-        adios2_set_host_language(*adios, "Fortran");
+        *adios = adios2_init_config_nompi_glue(
+            config_file, static_cast<adios2_debug_mode>(*debug_mode),
+            "Fortran");
     }
     catch (std::exception &e)
     {

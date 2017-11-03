@@ -8,10 +8,16 @@ if(ADIOS2_HAVE_MPI)
   target_include_directories(hello_bpReader PRIVATE ${MPI_C_INCLUDE_PATH})
   target_link_libraries(hello_bpReader ${MPI_C_LIBRARIES})
   
-  add_executable(hello_bpReaderHeatMap helloBPReaderHeatMap.cpp)
-  target_include_directories(hello_bpReaderHeatMap PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_link_libraries(hello_bpReaderHeatMap ${MPI_C_LIBRARIES})
-  target_link_libraries(hello_bpReaderHeatMap adios2)
+  add_executable(hello_bpReaderHeatMap2D helloBPReaderHeatMap2D.cpp)
+  target_include_directories(hello_bpReaderHeatMap2D PRIVATE ${MPI_C_INCLUDE_PATH})
+  target_link_libraries(hello_bpReaderHeatMap2D ${MPI_C_LIBRARIES})
+  target_link_libraries(hello_bpReaderHeatMap2D adios2)
+  
+  add_executable(hello_bpReaderHeatMap3D helloBPReaderHeatMap3D.cpp)
+  target_include_directories(hello_bpReaderHeatMap3D PRIVATE ${MPI_C_INCLUDE_PATH})
+  target_link_libraries(hello_bpReaderHeatMap3D ${MPI_C_LIBRARIES})
+  target_link_libraries(hello_bpReaderHeatMap3D adios2)
+  
   
 #  add_executable(hello_bpReader_c helloBPReader.c)
 #  target_include_directories(hello_bpReader_c PRIVATE ${MPI_C_INCLUDE_PATH})

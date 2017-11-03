@@ -38,21 +38,30 @@ int main(int argc, char *argv[])
     /** Application variable dimensions */
     constexpr std::size_t Nx = 10;
     constexpr std::size_t Ny = 10;
+    constexpr std::size_t Nz = 10;
 
-    const adios2::Dims count{Nx, Ny};
-    const adios2::Dims start{rank * Nx, 0};
-    const adios2::Dims shape{size * Nx, Ny};
+    const adios2::Dims count{Nx, Ny, Nz};
+    const adios2::Dims start{rank * Nx, 0, 0};
+    const adios2::Dims shape{size * Nx, Ny, Nz};
 
     // populate local temperature values
-    std::vector<unsigned int> temperatures(Nx * Ny);
-    for (unsigned int i = 0; i < Nx; ++i)
+    std::vector<unsigned int> temperatures(Nx * Ny * Nz);
+    for (unsigned int i = 0; i < count[0]; ++i)
     {
         const unsigned int iGlobal = start[0] + i;
 
-        for (unsigned int j = 0; j < Ny; ++j)
+        for (unsigned int j = 0; j < count[1]; ++j)
         {
-            const unsigned int value = iGlobal * shape[1] + j;
-            temperatures[i * Ny + j] = value;
+            for (unsigned int k = 0; k < count[2]; ++k)
+            {
+                const unsigned int value =
+                    iGlobal * shape[1] * shape[2] + j * shape[2] + k;
+
+                const std::size_t linearIndex =
+                    i * count[1] * count[2] + j * count[2] + k;
+
+                temperatures[linearIndex] = value;
+            }
         }
     }
 
@@ -72,7 +81,7 @@ int main(int argc, char *argv[])
 
         /** Will create HeatMap.bp */
         adios2::Engine &bpWriter =
-            putHeatMap.Open("HeatMap.bp", adios2::Mode::Write);
+            putHeatMap.Open("HeatMap3D.bp", adios2::Mode::Write);
 
         bpWriter.PutSync(outTemperature, temperatures.data());
         bpWriter.Close();
@@ -82,7 +91,7 @@ int main(int argc, char *argv[])
         {
             adios2::IO &getHeatMap = adios.DeclareIO("HeatMapReader");
             adios2::Engine &bpReader =
-                getHeatMap.Open("HeatMap.bp", adios2::Mode::Read);
+                getHeatMap.Open("HeatMap3D.bp", adios2::Mode::Read);
 
             // this just discovers in the metadata file that the variable exists
             adios2::Variable<unsigned int> *inTemperature =
@@ -90,7 +99,7 @@ int main(int argc, char *argv[])
             // now read the variable
             if (inTemperature != nullptr)
             {
-                inTemperature->SetSelection({{2, 2}, {6, 1}});
+                inTemperature->SetSelection({{2, 2, 2}, {4, 4, 4}});
                 size_t elementsSize = inTemperature->GetElementsSize();
                 std::vector<unsigned int> inTemperatures(elementsSize);
                 std::cout << "Pre-allocated " << elementsSize << " elements, "

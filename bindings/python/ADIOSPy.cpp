@@ -16,10 +16,9 @@ namespace adios2
 
 ADIOSPy::ADIOSPy(const std::string configFile, MPI_Comm mpiComm,
                  const bool debugMode)
-: m_DebugMode(debugMode),
-  m_ADIOS(std::make_shared<adios2::ADIOS>(configFile, mpiComm, debugMode))
+: m_DebugMode(debugMode), m_ADIOS(std::make_shared<adios2::ADIOS>(
+                              configFile, mpiComm, debugMode, "Python"))
 {
-    m_ADIOS->m_HostLanguage = "Python";
 }
 
 ADIOSPy::ADIOSPy(MPI_Comm mpiComm, const bool debugMode)

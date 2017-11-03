@@ -2,18 +2,23 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * adios2_c_enums.h
+ * adios2_c_types.h : basic adios2 types
  *
  *  Created on: Aug 7, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_BINDINGS_C_ADIOS2_C_ENUMS_H_
-#define ADIOS2_BINDINGS_C_ADIOS2_C_ENUMS_H_
+#ifndef ADIOS2_BINDINGS_C_ADIOS2_C_TYPES_H_
+#define ADIOS2_BINDINGS_C_ADIOS2_C_TYPES_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct adios2_ADIOS adios2_ADIOS;
+typedef struct adios2_IO adios2_IO;
+typedef struct adios2_Variable adios2_Variable;
+typedef struct adios2_Engine adios2_Engine;
 
 typedef enum {
     adios2_debug_mode_on = 0,
@@ -70,4 +75,4 @@ typedef enum {
 } // end extern C
 #endif
 
-#endif /* ADIOS2_BINDINGS_C_ADIOS2_C_ENUMS_H_ */
+#endif /* ADIOS2_BINDINGS_C_ADIOS2_C_TYPES_H_ */

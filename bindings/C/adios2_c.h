@@ -15,16 +15,12 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMPICommOnly.h"
-#include "adios2/adios2_c_enums.h"
+
+#include "adios2/adios2_c_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct adios2_ADIOS adios2_ADIOS;
-typedef struct adios2_IO adios2_IO;
-typedef struct adios2_Variable adios2_Variable;
-typedef struct adios2_Engine adios2_Engine;
 
 /**
  * Create an ADIOS struct pointer handler using a runtime config file in MPI
@@ -63,14 +59,6 @@ adios2_ADIOS *adios2_init_config_nompi(const char *config_file,
  * @return valid ADIOS* handler
  */
 adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode);
-
-/**
- * Function use by language bindings (Fortran) calling the C bindings. DO NOT
- * use this function in applications.
- * @param adios ADIOS* handler
- * @param host_language "Fortran"
- */
-void adios2_set_host_language(adios2_ADIOS *adios, const char *host_language);
 
 /**
  * Create an IO struct pointer handler from ADIOS* handler

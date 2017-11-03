@@ -4,7 +4,8 @@
 #------------------------------------------------------------------------------#
 
 
-target_sources(adios2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/adios2_c.cpp)
+target_sources(adios2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/adios2_c.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_glue.cpp)
 target_include_directories(adios2
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -15,6 +16,6 @@ install(
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 install(
-  FILES adios2/adios2_c_enums.h
+  FILES adios2/adios2_c_types.h adios2/adios2_c_glue.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )

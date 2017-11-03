@@ -11,15 +11,13 @@
 #include "ADIOS.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <fstream>
 #include <ios> //std::ios_base::failure
-#include <iostream>
-#include <sstream>
-#include <utility>
 /// \endcond
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey
+
+// OPERATORS
 
 // compress
 #ifdef ADIOS2_HAVE_BZIP2
@@ -38,8 +36,9 @@ namespace adios2
 {
 
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
-             const bool debugMode)
-: m_MPIComm(mpiComm), m_ConfigFile(configFile), m_DebugMode(debugMode)
+             const bool debugMode, const std::string hostLanguage)
+: m_MPIComm(mpiComm), m_ConfigFile(configFile), m_DebugMode(debugMode),
+  m_HostLanguage(hostLanguage)
 {
     if (m_DebugMode)
     {
@@ -56,17 +55,22 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
     }
 }
 
-ADIOS::ADIOS(const std::string configFile, const bool debugMode)
-: ADIOS(configFile, MPI_COMM_SELF, debugMode)
+ADIOS::ADIOS(const std::string configFile, const bool debugMode,
+             const std::string hostLanguage)
+: ADIOS(configFile, MPI_COMM_SELF, debugMode, hostLanguage)
 {
 }
 
-ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode)
-: ADIOS("", mpiComm, debugMode)
+ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode,
+             const std::string hostLanguage)
+: ADIOS("", mpiComm, debugMode, hostLanguage)
 {
 }
 
-ADIOS::ADIOS(const bool debugMode) : ADIOS("", MPI_COMM_SELF, debugMode) {}
+ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
+: ADIOS("", MPI_COMM_SELF, debugMode, hostLanguage)
+{
+}
 
 IO &ADIOS::DeclareIO(const std::string name)
 {

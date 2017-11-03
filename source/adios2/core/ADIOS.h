@@ -12,7 +12,7 @@
 #define ADIOS2_CORE_ADIOS_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <functional>
+#include <functional> //std::function
 #include <map>
 #include <memory> //std::shared_ptr
 #include <string>
@@ -36,9 +36,6 @@ public:
     /** Passed from parallel constructor, MPI_Comm is a pointer itself. */
     MPI_Comm m_MPIComm;
 
-    /** Changed by language bindings */
-    std::string m_HostLanguage = "C++";
-
     /**
      * @brief Constructor for MPI applications WITH a XML config file
      * @param configFile XML format (maybe support different formats in the
@@ -47,7 +44,7 @@ public:
      * @param debugMode true: extra exception checks (recommended)
      */
     ADIOS(const std::string configFile, MPI_Comm mpiComm,
-          const bool debugMode = true);
+          const bool debugMode = true, const std::string hostLanguage = "C++");
 
     /**
      * @brief Constructor for non-MPI applications WITH a XML config file
@@ -55,20 +52,22 @@ public:
      * future?)
      * @param debugMode true: extra exception checks (recommended)
      */
-    ADIOS(const std::string configFile, const bool debugMode = true);
+    ADIOS(const std::string configFile, const bool debugMode = true,
+          const std::string hostLanguage = "C++");
 
     /**
      * @brief Constructor for MPI apps WITHOUT a XML config file
      * @param mpiComm MPI communicator from application
      * @param debugMode true: extra exception checks (recommended)
      */
-    ADIOS(MPI_Comm mpiComm, const bool debugMode = true);
+    ADIOS(MPI_Comm mpiComm, const bool debugMode = true,
+          const std::string hostLanguage = "C++");
 
     /**
      *  @brief ADIOS no-MPI default empty constructor
      *  @param debugMode true: extra exception checks (recommended)
      */
-    ADIOS(const bool debugMode = true);
+    ADIOS(const bool debugMode = true, const std::string hostLanguage = "C++");
 
     /**
      * Delete copy constructor explicitly. Objects shouldn't be allowed to be
@@ -132,6 +131,9 @@ private:
 
     /** if true will do more checks, exceptions, warnings, expect slower code */
     const bool m_DebugMode = true;
+
+    /** Changed by language bindings in constructor */
+    const std::string m_HostLanguage = "C++";
 
     /**
      * @brief List of IO class objects defined from either ADIOS

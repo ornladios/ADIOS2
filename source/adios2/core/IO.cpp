@@ -74,6 +74,14 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     Params parametersMap(parameters);
     if (m_DebugMode)
     {
+        if (parameters.count("transport") == 1 ||
+            parameters.count("Transport") == 1)
+        {
+            throw std::invalid_argument("ERROR: key Transport (or transport) "
+                                        "is not valid for transport type " +
+                                        type + ", in call to AddTransport)");
+        }
+
         CheckTransportType(type);
     }
 

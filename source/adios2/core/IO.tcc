@@ -20,7 +20,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosFunctions.h" //GetType<T>
 
 namespace adios2
 {
@@ -54,14 +54,19 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
 template <class T>
 Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 {
-    Variable<T> *variable = nullptr;
+    auto itVariable = m_Variables.find(name);
 
-    const int index = GetMapIndex(name, m_Variables);
-    if (index >= 0)
+    if (itVariable == m_Variables.end())
     {
-        variable = &GetVariableMap<T>().at(index);
+        return nullptr;
     }
-    return variable;
+
+    if (itVariable->second.first != GetType<T>())
+    {
+        return nullptr;
+    }
+
+    return &GetVariableMap<T>().at(itVariable->second.second);
 }
 
 template <class T>
@@ -106,14 +111,19 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 template <class T>
 Attribute<T> *IO::InquireAttribute(const std::string &name) noexcept
 {
-    Attribute<T> *attribute = nullptr;
+    auto itAttribute = m_Attributes.find(name);
 
-    const int index = GetMapIndex(name, m_Attributes);
-    if (index >= 0)
+    if (itAttribute == m_Attributes.end())
     {
-        attribute = &GetAttributeMap<T>().at(index);
+        return nullptr;
     }
-    return attribute;
+
+    if (itAttribute->second.first != GetType<T>())
+    {
+        return nullptr;
+    }
+
+    return &GetAttributeMap<T>().at(itAttribute->second.second);
 }
 
 // PRIVATE
