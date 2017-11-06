@@ -220,8 +220,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
     std::shared_ptr<Engine> engine;
 
     const bool isDefaultWriter =
-        m_EngineType.empty() &&
-                (mode == Mode::Write || mode == Mode::Append)
+        m_EngineType.empty() && (mode == Mode::Write || mode == Mode::Append)
             ? true
             : false;
 
@@ -253,8 +252,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
     else if (m_EngineType == "DataManWriter")
     {
 #ifdef ADIOS2_HAVE_DATAMAN
-        engine =
-            std::make_shared<DataManWriter>(*this, name, mode, mpiComm);
+        engine = std::make_shared<DataManWriter>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
@@ -264,8 +262,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
     else if (m_EngineType == "DataManReader")
     {
 #ifdef ADIOS2_HAVE_DATAMAN
-        engine =
-            std::make_shared<DataManReader>(*this, name, mode, mpiComm);
+        engine = std::make_shared<DataManReader>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
