@@ -13,6 +13,7 @@
 #include <algorithm> //std::transform
 #include <cmath>
 #include <functional> //std::minus<T>
+#include <iterator>   //std::back_inserter
 #include <numeric>    //std::accumulate
 #include <utility>    //std::pair
 
@@ -66,7 +67,7 @@ Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept
     const size_t size = start.size();
     box.second.reserve(size);
 
-    for (auto d = 0; d < size; ++d)
+    for (size_t d = 0; d < size; ++d)
     {
         box.second.push_back(start[d] + count[d] - 1); // end inclusive
     }
@@ -81,7 +82,7 @@ Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept
     const size_t size = start.size();
     box.second.reserve(size);
 
-    for (auto d = 0; d < size; ++d)
+    for (size_t d = 0; d < size; ++d)
     {
         box.second.push_back(end[d] - start[d] + 1); // end inclusive
     }
