@@ -24,15 +24,15 @@ adios = adios2.ADIOS(comm, adios2.DebugON)
 # ADIOS IO
 bpIO = adios.DeclareIO("BPFile_N2N")
 bpIO.SetEngine('BPFileWriter')
-# bpIO.SetParameters( {"Threads" : "2", "ProfileUnits" : "Microseconds", 
+# bpIO.SetParameters( {"Threads" : "2", "ProfileUnits" : "Microseconds",
 #"InitialBufferSize" : "17Kb"} )
-bpIOParams = {}                     
+bpIOParams = {}
 bpIOParams['Threads'] = '2'
 bpIOParams['ProfileUnits'] = 'Microseconds'
 bpIOParams['InitialBufferSize'] = '17Kb'
 bpIO.SetParameters(bpIOParams)
 
-fileID = bpIO.AddTransport('File', {'Library' : 'fstream'} )
+fileID = bpIO.AddTransport('File', {'Library': 'fstream'})
 
 # ADIOS Variable name, shape, start, offset, constant dims
 bpIO.DefineVariable(
