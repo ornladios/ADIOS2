@@ -22,13 +22,12 @@ class DataManWriter : public Engine
 {
 
 public:
-    DataManWriter(IO &io, const std::string &name, const Mode openMode,
+    DataManWriter(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
     ~DataManWriter() = default;
 
-    StepStatus BeginStep(StepMode mode,
-                            const float timeout_sec = 0.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
 
     void Close(const int transportIndex = -1) final;

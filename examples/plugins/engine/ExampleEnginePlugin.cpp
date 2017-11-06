@@ -54,9 +54,8 @@ namespace adios2
 {
 
 ExampleEnginePlugin::ExampleEnginePlugin(IO &io, const std::string &name,
-                                         const Mode openMode,
-                                         MPI_Comm mpiComm)
-: adios2::PluginEngineInterface(io, name, openMode, mpiComm)
+                                         const Mode mode, MPI_Comm mpiComm)
+: adios2::PluginEngineInterface(io, name, mode, mpiComm)
 {
     Init();
 }
@@ -89,18 +88,13 @@ void ExampleEnginePlugin::Init()
 }
 
 #define define(T)                                                              \
-    void ExampleEnginePlugin::DoWrite(Variable<T> &variable, const T *values)  \
+    void ExampleEnginePlugin::DoPutSync(Variable<T> &variable,                 \
+                                        const T *values)                       \
     {                                                                          \
         m_Log << now() << " Writing variable \"" << variable.m_Name << "\""    \
               << std::endl;                                                    \
     }
 ADIOS2_FOREACH_TYPE_1ARG(define)
 #undef define
-void ExampleEnginePlugin::DoWrite(VariableCompound &variable,
-                                  const void *values)
-{
-    m_Log << now() << " Writing variable \"" << variable.m_Name << "\""
-          << std::endl;
-}
 
 } // end namespace adios2

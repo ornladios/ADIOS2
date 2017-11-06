@@ -18,17 +18,15 @@
 namespace adios2
 {
 
-DataManWriter::DataManWriter(IO &io, const std::string &name,
-                             const Mode openMode, MPI_Comm mpiComm)
-: Engine("DataManWriter", io, name, openMode, mpiComm),
-  m_Man(mpiComm, m_DebugMode)
+DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
+                             MPI_Comm mpiComm)
+: Engine("DataManWriter", io, name, mode, mpiComm), m_Man(mpiComm, m_DebugMode)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";
     Init();
 }
 
-StepStatus DataManWriter::BeginStep(StepMode mode,
-                                       const float timeout_sec)
+StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     return StepStatus::OK;
 }

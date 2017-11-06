@@ -61,7 +61,7 @@ PluginEngine::PluginEngine(IO &io, const std::string &name, const Mode openMode,
 
 PluginEngine::~PluginEngine() { m_Impl->m_HandleDestroy(m_Impl->m_Plugin); }
 
-StepStatus PluginEngine::BeginStep(StepMode mode, const float timeout_sec)
+StepStatus PluginEngine::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     return m_Impl->m_Plugin->BeginStep(mode, timeout_sec);
 }

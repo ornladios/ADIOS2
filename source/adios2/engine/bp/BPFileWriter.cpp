@@ -22,9 +22,9 @@
 namespace adios2
 {
 
-BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode openMode,
+BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
-: Engine("BPFileWriter", io, name, openMode, mpiComm),
+: Engine("BPFileWriter", io, name, mode, mpiComm),
   m_BP3Serializer(mpiComm, m_DebugMode),
   m_FileDataManager(mpiComm, m_DebugMode),
   m_FileMetadataManager(mpiComm, m_DebugMode)
@@ -35,7 +35,7 @@ BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode openMode,
 
 BPFileWriter::~BPFileWriter() = default;
 
-StepStatus BPFileWriter::BeginStep(StepMode mode, const float timeout_sec)
+StepStatus BPFileWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_BP3Serializer.m_DeferredVariables.clear();
     m_BP3Serializer.m_DeferredVariablesDataSize = 0;

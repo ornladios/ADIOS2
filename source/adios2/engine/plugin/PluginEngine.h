@@ -66,8 +66,7 @@ public:
                  MPI_Comm mpiComm);
     virtual ~PluginEngine();
 
-    StepStatus BeginStep(StepMode mode,
-                            const float timeout_sec = 0.0) override;
+    StepStatus BeginStep(StepMode mode, const float timeout_sec = 0.f) override;
     void PerformPuts() override;
     void PerformGets() override;
     void EndStep() override;

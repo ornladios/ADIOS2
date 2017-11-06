@@ -37,8 +37,7 @@ public:
 
     ~ADIOS1Writer() = default;
 
-    StepStatus BeginStep(StepMode mode,
-                            const float timeout_sec = 0.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void PerformPuts() final;
     void EndStep() final;
 
@@ -66,6 +65,6 @@ private:
 #undef declare_type
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_ADIOS1_ADIOS1WRITER_H_ */

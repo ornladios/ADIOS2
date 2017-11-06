@@ -16,9 +16,9 @@
 namespace adios2
 {
 
-HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode openMode,
+HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode,
                          MPI_Comm mpiComm)
-: Engine("HDF5Writer", io, name, openMode, mpiComm), m_H5File(io.m_DebugMode)
+: Engine("HDF5Writer", io, name, mode, mpiComm), m_H5File(io.m_DebugMode)
 {
     m_EndMessage = ", in call to IO HDF5Writer Open " + m_Name + "\n";
     Init();
@@ -26,7 +26,7 @@ HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode openMode,
 
 HDF5WriterP::~HDF5WriterP() { Close(); }
 
-StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeout_sec)
+StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     return StepStatus::OK;
 }

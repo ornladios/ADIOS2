@@ -17,7 +17,7 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/engine/bp/BPFileReader.h"
 #include "adios2/engine/bp/BPFileWriter.h"
-//#include "adios2/engine/plugin/PluginEngine.h"
+#include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
@@ -206,7 +206,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
     return itVariable->second.first;
 }
 
-Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
+Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
 {
     if (m_DebugMode)
     {
@@ -221,26 +221,26 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
 
     const bool isDefaultWriter =
         m_EngineType.empty() &&
-                (openMode == Mode::Write || openMode == Mode::Append)
+                (mode == Mode::Write || mode == Mode::Append)
             ? true
             : false;
 
     const bool isDefaultReader =
-        m_EngineType.empty() && (openMode == Mode::Read) ? true : false;
+        m_EngineType.empty() && (mode == Mode::Read) ? true : false;
 
     if (isDefaultWriter || m_EngineType == "BPFileWriter")
     {
-        engine = std::make_shared<BPFileWriter>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<BPFileWriter>(*this, name, mode, mpiComm);
     }
     else if (isDefaultReader || m_EngineType == "BPFileReader")
     {
-        engine = std::make_shared<BPFileReader>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<BPFileReader>(*this, name, mode, mpiComm);
     }
     else if (m_EngineType == "HDFMixer")
     {
 #ifdef ADIOS2_HAVE_HDF5
 #if H5_VERSION_GE(1, 11, 0)
-        engine = std::make_shared<HDFMixer>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<HDFMixer>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: update HDF5 >= 1.11 to support VDS.");
@@ -254,7 +254,7 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
     {
 #ifdef ADIOS2_HAVE_DATAMAN
         engine =
-            std::make_shared<DataManWriter>(*this, name, openMode, mpiComm);
+            std::make_shared<DataManWriter>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
@@ -265,7 +265,7 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
     {
 #ifdef ADIOS2_HAVE_DATAMAN
         engine =
-            std::make_shared<DataManReader>(*this, name, openMode, mpiComm);
+            std::make_shared<DataManReader>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
@@ -275,7 +275,7 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
     else if (m_EngineType == "ADIOS1Writer")
     {
 #ifdef ADIOS2_HAVE_ADIOS1
-        engine = std::make_shared<ADIOS1Writer>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<ADIOS1Writer>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with ADIOS "
@@ -285,7 +285,7 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
     else if (m_EngineType == "ADIOS1Reader")
     {
 #ifdef ADIOS2_HAVE_ADIOS1
-        engine = std::make_shared<ADIOS1Reader>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<ADIOS1Reader>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with ADIOS "
@@ -295,7 +295,7 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
     else if (m_EngineType == "HDF5Writer")
     {
 #ifdef ADIOS2_HAVE_HDF5
-        engine = std::make_shared<HDF5WriterP>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<HDF5WriterP>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5\n");
@@ -304,7 +304,7 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
     else if (m_EngineType == "HDF5Reader")
     {
 #ifdef ADIOS2_HAVE_HDF5
-        engine = std::make_shared<HDF5ReaderP>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<HDF5ReaderP>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5\n");
@@ -312,8 +312,7 @@ Engine &IO::Open(const std::string &name, const Mode openMode, MPI_Comm mpiComm)
     }
     else if (m_EngineType == "PluginEngine")
     {
-        // engine = std::make_shared<PluginEngine>(*this, name, openMode,
-        // mpiComm);
+        engine = std::make_shared<PluginEngine>(*this, name, mode, mpiComm);
     }
     else
     {

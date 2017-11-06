@@ -33,13 +33,12 @@ public:
      * @param mpiComm
      * @param method
      */
-    HDF5WriterP(IO &io, const std::string &name, const Mode openMode,
+    HDF5WriterP(IO &io, const std::string &name, const Mode mode,
                 MPI_Comm mpiComm);
 
     ~HDF5WriterP();
 
-    StepStatus BeginStep(StepMode mode,
-                            const float timeout_sec = 0.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
 
     void Close(const int transportIndex = -1) final;
@@ -58,6 +57,6 @@ private:
     void DoPutSyncCommon(Variable<T> &variable, const T *values);
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__ */

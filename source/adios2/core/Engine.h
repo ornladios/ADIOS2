@@ -64,7 +64,7 @@ public:
 
     StepStatus BeginStep();
     virtual StepStatus BeginStep(StepMode mode,
-                                    const float timeoutSeconds = 0.f);
+                                 const float timeoutSeconds = 0.f);
 
     /**
      * Puts variable with pre-defined pointer at DefineVariable into adios2

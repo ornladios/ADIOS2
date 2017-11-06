@@ -22,16 +22,16 @@
 namespace adios2
 {
 
-ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name, const Mode openMode,
+ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
-: Engine("ADIOS1Writer", io, name, openMode, mpiComm),
+: Engine("ADIOS1Writer", io, name, mode, mpiComm),
   m_ADIOS1(io.m_Name, name, mpiComm, io.m_DebugMode)
 {
     m_EndMessage = " in call to ADIOS1Writer " + m_Name + " Open\n";
     Init();
 }
 
-StepStatus ADIOS1Writer::BeginStep(StepMode mode, const float timeout_sec)
+StepStatus ADIOS1Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     return StepStatus::OK;
 }

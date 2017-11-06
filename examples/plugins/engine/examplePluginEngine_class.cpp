@@ -44,18 +44,13 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         io.SetEngine("PluginEngine");
         io.SetParameters({{"PluginName", "MyPlugin"}});
-        auto writer = io.Open("TestPlugin", adios2::Mode::Write);
-
-        if (!writer)
-        {
-            throw std::ios_base::failure("ERROR: writer not created at Open\n");
-        }
+        adios2::Engine &writer = io.Open("TestPlugin", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        writer->Write<float>(var, myFloats.data());
+        writer.PutSync<float>(var, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
-        writer->Close();
+        writer.Close();
     }
     catch (std::invalid_argument &e)
     {
