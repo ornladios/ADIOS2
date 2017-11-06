@@ -50,20 +50,20 @@ void PluginEngine::RegisterPlugin(const std::string pluginName,
 
 /******************************************************************************/
 
-PluginEngine::PluginEngine(IO &io, const std::string &name, const Mode openMode,
+PluginEngine::PluginEngine(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
-: Engine("Plugin", io, name, openMode, mpiComm), m_Impl(new Impl)
+: Engine("Plugin", io, name, mode, mpiComm), m_Impl(new Impl)
 {
     Init();
     m_Impl->m_Plugin =
-        m_Impl->m_HandleCreate(io, m_Impl->m_PluginName, openMode, mpiComm);
+        m_Impl->m_HandleCreate(io, m_Impl->m_PluginName, mode, mpiComm);
 }
 
 PluginEngine::~PluginEngine() { m_Impl->m_HandleDestroy(m_Impl->m_Plugin); }
 
 StepStatus PluginEngine::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    return m_Impl->m_Plugin->BeginStep(mode, timeout_sec);
+    return m_Impl->m_Plugin->BeginStep(mode, timeoutSeconds);
 }
 
 void PluginEngine::PerformPuts() { m_Impl->m_Plugin->PerformPuts(); }

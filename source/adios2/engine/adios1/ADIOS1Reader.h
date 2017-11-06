@@ -48,7 +48,7 @@ public:
      * @param debugMode
      * @param hostLanguage
      */
-    ADIOS1Reader(IO &adios, const std::string &name, const Mode openMode,
+    ADIOS1Reader(IO &adios, const std::string &name, const Mode mode,
                  MPI_Comm mpiComm);
 
     ~ADIOS1Reader();
@@ -85,7 +85,7 @@ private:
     Variable<T> *InquireVariableCommon(const std::string &variableName);
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #include "ADIOS1Reader.inl"
 

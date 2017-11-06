@@ -62,11 +62,12 @@ public:
     static void RegisterPlugin(const std::string name);
 
 public:
-    PluginEngine(IO &io, const std::string &name, const Mode openMode,
+    PluginEngine(IO &io, const std::string &name, const Mode mode,
                  MPI_Comm mpiComm);
     virtual ~PluginEngine();
 
-    StepStatus BeginStep(StepMode mode, const float timeout_sec = 0.f) override;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = 0.f) override;
     void PerformPuts() override;
     void PerformGets() override;
     void EndStep() override;

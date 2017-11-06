@@ -14,9 +14,8 @@ namespace adios2
 {
 
 PluginEngineInterface::PluginEngineInterface(IO &io, const std::string &name,
-                                             const Mode openMode,
-                                             MPI_Comm mpiComm)
-: Engine("PluginInterface", io, name, openMode, mpiComm)
+                                             const Mode mode, MPI_Comm mpiComm)
+: Engine("PluginInterface", io, name, mode, mpiComm)
 {
 }
 

@@ -37,7 +37,7 @@ public:
      * @param openMode only read
      * @param mpiComm
      */
-    BPFileReader(IO &io, const std::string &name, const Mode openMode,
+    BPFileReader(IO &io, const std::string &name, const Mode mode,
                  MPI_Comm mpiComm);
 
     virtual ~BPFileReader() = default;

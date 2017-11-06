@@ -19,7 +19,7 @@
 namespace adios2
 {
 
-HDFMixer::HDFMixer(IO &io, const std::string &name, const OpenMode openMode,
+HDFMixer::HDFMixer(IO &io, const std::string &name, const Mode mode,
                    MPI_Comm mpiComm)
 : Engine("HDFMixer", io, name, openMode, mpiComm),
   m_HDFVDSWriter(mpiComm, m_DebugMode),

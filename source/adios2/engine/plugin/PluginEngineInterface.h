@@ -31,7 +31,7 @@ class PluginEngineInterface : public Engine
     friend class PluginEngine;
 
 public:
-    PluginEngineInterface(IO &io, const std::string &name, const Mode openMode,
+    PluginEngineInterface(IO &io, const std::string &name, const Mode mode,
                           MPI_Comm mpiComm);
     virtual ~PluginEngineInterface() = default;
 };

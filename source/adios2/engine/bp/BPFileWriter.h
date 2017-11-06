@@ -29,7 +29,7 @@ public:
      * @param openMode w (supported), r, a from OpenMode in ADIOSTypes.h
      * @param mpiComm MPI communicator
      */
-    BPFileWriter(IO &io, const std::string &name, const Mode openMode,
+    BPFileWriter(IO &io, const std::string &name, const Mode mode,
                  MPI_Comm mpiComm);
 
     ~BPFileWriter();

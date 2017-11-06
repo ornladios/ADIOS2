@@ -43,4 +43,4 @@ void HDFMixer::DoWriteCommon(Variable<T> &variable, const T *values)
     }
 }
 
-} // end namespace adios
+} // end namespace adios2

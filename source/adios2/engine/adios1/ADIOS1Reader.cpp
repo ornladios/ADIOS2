@@ -18,9 +18,9 @@
 namespace adios2
 {
 
-ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name, const Mode openMode,
+ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
-: Engine("ADIOS1Reader", io, name, openMode, mpiComm),
+: Engine("ADIOS1Reader", io, name, mode, mpiComm),
   m_ADIOS1(name, mpiComm, io.m_DebugMode)
 {
     m_EndMessage = " in call to IO Open ADIOS1Reader " + m_Name + "\n";
@@ -35,9 +35,10 @@ ADIOS1Reader::~ADIOS1Reader()
     /* m_ADIOS1 deconstructor does close and finalize */
 }
 
-StepStatus ADIOS1Reader::BeginStep(const StepMode mode, const float timeout_sec)
+StepStatus ADIOS1Reader::BeginStep(const StepMode mode,
+                                   const float timeoutSeconds)
 {
-    return m_ADIOS1.AdvanceStep(mode, timeout_sec);
+    return m_ADIOS1.AdvanceStep(mode, timeoutSeconds);
 }
 
 // PRIVATE
@@ -97,4 +98,4 @@ void ADIOS1Reader::InitTransports()
     m_ADIOS1.InitTransports(m_IO.m_TransportsParameters);
 }
 
-} // end namespace
+} // end namespace adios2

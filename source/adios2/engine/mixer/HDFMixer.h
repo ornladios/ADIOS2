@@ -45,12 +45,12 @@ public:
      * @param openMode w (supported), r, a from OpenMode in ADIOSTypes.h
      * @param mpiComm MPI communicator
      */
-    HDFMixer(IO &io, const std::string &name, const OpenMode openMode,
+    HDFMixer(IO &io, const std::string &name, const Mode mode,
              MPI_Comm mpiComm);
 
     ~HDFMixer();
 
-    void Advance(const float timeoutSeconds = 0.0) final;
+    void Advance(const float timeoutSeconds = 0.f) final;
 
     /**
      * Closes a single transport or all transports
@@ -104,6 +104,6 @@ private:
     void WriteProfilingJSONFile();
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_H5_HDFMIXER_H_ */
