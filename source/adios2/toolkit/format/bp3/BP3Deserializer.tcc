@@ -271,6 +271,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
                 }
                 else
                 {
+                    currentPoint[p] = start[p];
                     --p;
                 }
             }

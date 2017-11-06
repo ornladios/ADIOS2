@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
             if (inTemperature != nullptr)
             {
                 inTemperature->SetSelection({{2, 2, 2}, {4, 4, 4}});
-                size_t elementsSize = inTemperature->GetElementsSize();
+                const size_t elementsSize = inTemperature->GetElementsSize();
                 std::vector<unsigned int> inTemperatures(elementsSize);
                 std::cout << "Pre-allocated " << elementsSize << " elements, "
                           << elementsSize * sizeof(unsigned int) << " bytes\n";
