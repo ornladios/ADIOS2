@@ -138,8 +138,12 @@ PYBIND11_MODULE(adios2, m)
 
     pybind11::class_<adios2::IOPy>(m, "IOPy")
         .def("SetEngine", &adios2::IOPy::SetEngine)
+        .def("SetParameters", &adios2::IOPy::SetParameters,
+             pybind11::arg("parameters") = adios2::Params())
         .def("SetParameters", &adios2::IOPy::SetParameters)
-        //.def("AddTransport", &adios2::IOPy::AddTransport)
+        .def("GetParameters", &adios2::IOPy::GetParameters,
+             pybind11::return_value_policy::reference_internal)
+        .def("AddTransport", &adios2::IOPy::AddTransport)
         .def("DefineVariable", &adios2::IOPy::DefineVariable,
              pybind11::return_value_policy::reference_internal,
              pybind11::arg("name"), pybind11::arg("shape") = adios2::Dims(),

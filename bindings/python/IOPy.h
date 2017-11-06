@@ -33,7 +33,11 @@ public:
     ~IOPy() = default;
 
     void SetEngine(const std::string type) noexcept;
+    unsigned int AddTransport(const std::string type, const Params &parameters);
     void SetParameters(const Params &parameters) noexcept;
+    void SetParameter(const std::string key, const std::string value) noexcept;
+
+    const Params &GetParameters() const noexcept;
 
     VariableBase &DefineVariable(const std::string &name, const Dims &shape,
                                  const Dims &start, const Dims &count,

@@ -737,6 +737,11 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
         // extract rank and index buffer size
         for (unsigned int t = 0; t < m_Threads; ++t)
         {
+            if (serializedPosition >= serializedSize)
+            {
+                break;
+            }
+
             const int rankSource = static_cast<const int>(
                 ReadValue<uint32_t>(serialized, serializedPosition));
             asyncRankSources[t] = rankSource;

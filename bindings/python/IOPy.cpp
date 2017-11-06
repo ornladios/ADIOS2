@@ -25,6 +25,22 @@ void IOPy::SetParameters(const Params &parameters) noexcept
     m_IO.SetParameters(parameters);
 }
 
+void IOPy::SetParameter(const std::string key, const std::string value) noexcept
+{
+    m_IO.SetParameter(key, value);
+}
+
+const Params &IOPy::GetParameters() const noexcept
+{
+    return m_IO.GetParameters();
+}
+
+unsigned int IOPy::AddTransport(const std::string type,
+                                const Params &parameters)
+{
+    return m_IO.AddTransport(type, parameters);
+}
+
 VariableBase &IOPy::DefineVariable(const std::string &name, const Dims &shape,
                                    const Dims &start, const Dims &count,
                                    const bool isConstantDims,

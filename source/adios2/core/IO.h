@@ -118,7 +118,7 @@ public:
      * @return transportIndex handler
      */
     unsigned int AddTransport(const std::string type,
-                              const Params &params = Params());
+                              const Params &parameters = Params());
 
     /**
      * Set a single parameter to an existing transport identified with a
