@@ -24,10 +24,12 @@ DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
 : TransportMan(mpiComm, debugMode)
 {
 }
-void DataMan::OpenWANTransports(const std::string &name, const Mode openMode,
+void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
 {
+    size_t counter = 0;
+
     for (const auto &parameters : parametersVector)
     {
         std::shared_ptr<Transport> wanTransport, controlTransport;
@@ -73,18 +75,19 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode openMode,
                 controlTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portControl, m_MPIComm, m_DebugMode);
 
-                wanTransport->Open(messageName, openMode);
+                wanTransport->Open(messageName, mode);
                 m_Transports.emplace(counter, std::move(wanTransport));
-                controlTransport->Open(messageName, openMode);
+                controlTransport->Open(messageName, mode);
                 m_ControlTransports.push_back(std::move(controlTransport));
 
-                if (openMode == OpenMode::Read)
+                if (mode == Mode::Read)
                 {
                     m_Listening = true;
                     m_ControlThreads.push_back(std::thread(&DataMan::ReadThread,
                                                            this, wanTransport,
                                                            controlTransport));
                 }
+                ++counter;
 
 #else
                 throw std::invalid_argument(
