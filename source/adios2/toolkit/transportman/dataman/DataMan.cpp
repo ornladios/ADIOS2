@@ -28,16 +28,9 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode openMode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
 {
-    unsigned int counter = 0;
     for (const auto &parameters : parametersVector)
     {
         std::shared_ptr<Transport> wanTransport, controlTransport;
-
-        // to be removed
-        for (auto &i : parameters)
-        {
-            std::cout << i.first << " " << i.second << std::endl;
-        }
 
         const std::string type(GetParameter(
             "type", parameters, true, m_DebugMode, "Transport Type Parameter"));
@@ -72,13 +65,27 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode openMode,
 
         if (type == "wan" || type == "WAN")
         {
-            if (library == "zmq")
+            if (library == "zmq" || library == "ZMQ")
             {
 #ifdef ADIOS2_HAVE_ZEROMQ
                 wanTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portData, m_MPIComm, m_DebugMode);
                 controlTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portControl, m_MPIComm, m_DebugMode);
+
+                wanTransport->Open(messageName, openMode);
+                m_Transports.emplace(counter, std::move(wanTransport));
+                controlTransport->Open(messageName, openMode);
+                m_ControlTransports.push_back(std::move(controlTransport));
+
+                if (openMode == OpenMode::Read)
+                {
+                    m_Listening = true;
+                    m_ControlThreads.push_back(std::thread(&DataMan::ReadThread,
+                                                           this, wanTransport,
+                                                           controlTransport));
+                }
+
 #else
                 throw std::invalid_argument(
                     "ERROR: this version of ADIOS2 didn't compile with "
@@ -96,12 +103,7 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode openMode,
                                                 "in call to Open\n");
                 }
             }
-            wanTransport->Open(messageName, openMode);
-            m_Transports.emplace(counter, std::move(wanTransport));
-            controlTransport->Open(messageName, openMode);
-            m_ControlTransports.push_back(std::move(controlTransport));
         }
-        ++counter;
     }
 }
 
@@ -112,6 +114,8 @@ void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
     m_Transports[m_CurrentTransport]->Write(static_cast<const char *>(buffer),
                                             jmsg["bytes"].get<size_t>());
 }
+
+void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
 
 void DataMan::SetCallback(std::function<void(const void *, std::string,
                                              std::string, std::string, Dims)>
@@ -125,20 +129,30 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
 {
     while (m_Listening)
     {
-        // Wait for Read API to be implemented
-        /*
-        if (ctl_trans->Read() >= 0)
+        char buffer[1024];
+        size_t bytes;
+        nlohmann::json jmsg;
+        ctl_trans->Read(buffer, 1024);
+        std::string smsg(buffer);
+        jmsg = nlohmann::json::parse(smsg);
+        bytes = jmsg.value("bytes", 0);
+
+        if (bytes > 0)
         {
-            std::string smsg;
-            nlohmann::json jmsg = json::parse(smsg);
+            std::vector<char> data(bytes);
+            trans->Read(data.data(), bytes);
+            std::string doid = jmsg.value("doid", "Unknown Data Object");
+            std::string var = jmsg.value("var", "Unknown Variable");
+            std::string dtype = jmsg.value("dtype", "Unknown Data Type");
+            std::vector<size_t> putshape =
+                jmsg.value("putshape", std::vector<size_t>());
+            if (m_CallBack)
+            {
+                m_CallBack(data.data(), doid, var, dtype, putshape);
+            }
         }
-        else
-        {
-            usleep(1);
-        }
-        */
     }
 }
 
 } // end namespace transportman
-} // end namespace adios
+} // end namespace adios2

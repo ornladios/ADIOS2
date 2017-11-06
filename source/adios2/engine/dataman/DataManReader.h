@@ -45,7 +45,7 @@ public:
      * @param callback function (get) provided by the user to be applied in
      * DataMan
      */
-    void SetCallback(std::function<void(const void *, std::string, std::string,
+    void SetCallBack(std::function<void(const void *, std::string, std::string,
                                         std::string, Dims)>
                          callback);
 
