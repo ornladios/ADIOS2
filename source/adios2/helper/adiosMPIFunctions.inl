@@ -62,6 +62,10 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
         try
         {
             out.resize(newSize);
+            if (newSize == 0)
+            {
+                return; // nothing to copy or do
+            }
         }
         catch (...)
         {

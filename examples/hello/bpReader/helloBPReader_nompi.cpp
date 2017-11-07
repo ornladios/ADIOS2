@@ -33,7 +33,8 @@ int main(int argc, char *argv[])
         adios2::IO &bpIO = adios.DeclareIO("ReadBP");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpReader = bpIO.Open("myVector.bp", adios2::Mode::Read);
+        adios2::Engine &bpReader =
+            bpIO.Open("myVector_cpp.bp", adios2::Mode::Read);
 
         /** Write variable for buffering */
         adios2::Variable<float> *bpFloats =
