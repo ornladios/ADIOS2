@@ -601,8 +601,8 @@ std::string BP3Base::GetBPRankName(const std::string &name,
     {
         bpRoot = bpName.substr(lastPathSeparator);
     }
-    const std::string bpRankName(bpName + ".dir" + std::string(PathSeparator) +
-                                 bpRoot + "." + std::to_string(rank));
+    const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
+                                 "." + std::to_string(rank));
     return bpRankName;
 }
 
