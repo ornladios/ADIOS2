@@ -24,7 +24,8 @@ protected:
 
 TEST_F(XMLConfigTest, TwoIOs)
 {
-    std::string configFile = configDir + "/config1.xml";
+    const std::string configFile(
+        configDir + std::string(adios2::PathSeparator) + "config1.xml");
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON);
@@ -56,7 +57,8 @@ TEST_F(XMLConfigTest, TwoIOs)
 
 TEST_F(XMLConfigTest, TwoEnginesException)
 {
-    std::string configFile = configDir + "/config2.xml";
+    const std::string configFile(
+        configDir + std::string(adios2::PathSeparator) + "config2.xml");
 
 #ifdef ADIOS2_HAVE_MPI
     EXPECT_THROW(
