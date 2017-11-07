@@ -101,11 +101,10 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
 
         io.AddTransport("file");
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         // Close the file
-        engine->Close();
+        engine.Close();
     }
 
     {
@@ -249,11 +248,10 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
 
         io.AddTransport("file");
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         // Close the file
-        engine->Close();
+        engine.Close();
     }
 
     {

@@ -23,7 +23,7 @@
 
 static int rank_saved;
 adios2::ADIOS *ad = nullptr;
-std::shared_ptr<adios2::Engine> bpWriter;
+adios2::Engine *bpWriter = nullptr;
 adios2::Variable<double> *varT = nullptr;
 adios2::Variable<unsigned int> *varGndx = nullptr;
 
@@ -36,7 +36,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     // Define method for engine creation
 
-    adios2::IO &bpio = ad->DeclareIO("output");
+    adios2::IO &bpio = *ad->InquireIO("output");
     if (!bpio.InConfigFile())
     {
         // if not defined by user, we can change the default settings
@@ -65,12 +65,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    bpWriter = bpio.Open(m_outputfilename, adios2::OpenMode::Write, comm);
-
-    if (!bpWriter)
-    {
-        throw std::ios_base::failure("ERROR: failed to open ADIOS bpWriter\n");
-    }
+    bpWriter = &bpio.Open(m_outputfilename, adios2::Mode::Write, comm);
 }
 
 IO::~IO()
@@ -84,14 +79,15 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
 {
 #if 1
 
+    bpWriter->BeginStep();
     /* This selection is redundant and not required, since we defined
      * the selection already in DefineVariable(). It is here just as an example.
      */
     // Make a selection to describe the local dimensions of the variable we
     // write and its offsets in the global spaces. This could have been done in
     // adios.DefineVariable()
-    adios2::SelectionBoundingBox sel({s.offsx, s.offsy}, {s.ndx, s.ndy});
-    varT->SetSelection(sel);
+    varT->SetSelection(
+        adios2::Box<adios2::Dims>({s.offsx, s.offsy}, {s.ndx, s.ndy}));
 
     /* Select the area that we want to write from the data pointer we pass to
        the
@@ -104,19 +100,18 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
        above.
        Default memspace is always the full selection.
     */
-    adios2::SelectionBoundingBox memspace =
-        adios2::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
-    varT->SetMemorySelection(memspace);
+    varT->SetMemorySelection(adios2::Box<adios2::Dims>({1, 1}, {s.ndx, s.ndy}));
 
-    bpWriter->Write<unsigned int>(*varGndx, s.gndx);
-    bpWriter->Write<unsigned int>("gndy", s.gndy);
-    bpWriter->Write<double>(*varT, ht.data_noghost().data());
-    bpWriter->Advance();
+    bpWriter->PutSync<unsigned int>(*varGndx, s.gndx);
+    bpWriter->PutSync<unsigned int>("gndy", s.gndy);
+    bpWriter->PutSync<double>(*varT, ht.data_noghost().data());
+
+    bpWriter->EndStep();
 
 #else
 
-    bpWriter->Write<double>(*varT, ht.data_noghost().data());
-    bpWriter->Advance();
+    bpWriter->PutSync<double>(*varT, ht.data_noghost().data());
+    bpWriter->EndStep();
 
 #endif
 }

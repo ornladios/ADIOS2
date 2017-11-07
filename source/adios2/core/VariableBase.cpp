@@ -31,7 +31,7 @@ VariableBase::VariableBase(const std::string &name, const std::string type,
     InitShapeType();
 }
 
-size_t VariableBase::PayLoadSize() const noexcept
+size_t VariableBase::PayloadSize() const noexcept
 {
     return GetTotalSize(m_Count) * m_ElementSize;
 }
@@ -41,8 +41,11 @@ size_t VariableBase::TotalSize() const noexcept
     return GetTotalSize(m_Count);
 }
 
-void VariableBase::SetSelection(const Dims &start, const Dims &count)
+void VariableBase::SetSelection(const Box<Dims> &boxDims)
 {
+    const Dims &start = boxDims.first;
+    const Dims &count = boxDims.second;
+
     if (m_DebugMode)
     {
         if (m_SingleValue)
@@ -82,17 +85,15 @@ void VariableBase::SetSelection(const Dims &start, const Dims &count)
         }
     }
 
-    m_Count = count;
     m_Start = start;
+    m_Count = count;
 }
 
-void VariableBase::SetSelection(const SelectionBoundingBox &selection)
+void VariableBase::SetMemorySelection(const std::pair<Dims, Dims> &boxDims)
 {
-    SetSelection(selection.m_Start, selection.m_Count);
-}
+    const Dims &start = boxDims.first;
+    const Dims &count = boxDims.second;
 
-void VariableBase::SetMemorySelection(const SelectionBoundingBox &selection)
-{
     if (m_DebugMode)
     {
         if (m_SingleValue)
@@ -102,34 +103,50 @@ void VariableBase::SetMemorySelection(const SelectionBoundingBox &selection)
                                         m_Name +
                                         ", in call to SetMemorySelection\n");
         }
-        if (m_Shape.size() != selection.m_Count.size() ||
-            m_Shape.size() != selection.m_Start.size())
+
+        if (m_Shape.size() != start.size() || m_Shape.size() != count.size())
         {
             throw std::invalid_argument(
-                "ERROR: selection argument m_Count and m_Start sizes must be "
-                "the "
-                "same as variable " +
+                "ERROR: selection Dims start, count sizes must be "
+                "the same as variable " +
                 m_Name + " m_Shape, in call to SetMemorySelction\n");
         }
     }
 
-    m_MemoryCount = selection.m_Count;
-    m_MemoryStart = selection.m_Start;
+    m_MemoryStart = start;
+    m_MemoryCount = count;
 }
 
-void VariableBase::SetStepSelection(const unsigned int startStep,
-                                    const unsigned int countStep)
+size_t VariableBase::GetAvailableStepsStart() const
 {
-    m_ReadFromStep = startStep;
-    m_ReadNSteps = countStep;
+    return m_AvailableStepsStart;
+}
+
+size_t VariableBase::GetAvailableStepsCount() const
+{
+    return m_AvailableStepsCount;
+}
+
+void VariableBase::SetStepSelection(const std::pair<size_t, size_t> &boxSteps)
+{
+    if (boxSteps.second == 0)
+    {
+        throw std::invalid_argument("ERROR: boxSteps.second count argument "
+                                    " can't be zero, from variable " +
+                                    m_Name +
+                                    ", in call to Setting Step Selection\n");
+    }
+
+    m_StepsStart = boxSteps.first;
+    m_StepsCount = boxSteps.second;
 }
 
 // transforms related functions
-unsigned int VariableBase::AddTransform(Transform &transform,
+unsigned int VariableBase::AddTransform(Operator &transform,
                                         const Params &parameters) noexcept
 {
-    m_TransformsInfo.push_back(TransformInfo{transform, parameters});
-    return static_cast<unsigned int>(m_TransformsInfo.size() - 1);
+    m_OperatorsInfo.push_back(OperatorInfo{transform, parameters});
+    return static_cast<unsigned int>(m_OperatorsInfo.size() - 1);
 }
 
 void VariableBase::ResetTransformParameters(const unsigned int transformIndex,
@@ -137,18 +154,41 @@ void VariableBase::ResetTransformParameters(const unsigned int transformIndex,
 {
     if (m_DebugMode)
     {
-        if (transformIndex < m_TransformsInfo.size())
+        if (transformIndex < m_OperatorsInfo.size())
         {
-            m_TransformsInfo[transformIndex].Parameters = parameters;
+            m_OperatorsInfo[transformIndex].Parameters = parameters;
         }
     }
     else
     {
-        m_TransformsInfo[transformIndex].Parameters = parameters;
+        m_OperatorsInfo[transformIndex].Parameters = parameters;
     }
 }
 
-void VariableBase::ClearTransforms() noexcept { m_TransformsInfo.clear(); }
+void VariableBase::ClearOperators() noexcept { m_OperatorsInfo.clear(); }
+
+void VariableBase::CheckDimensions(const std::string hint) const
+{
+    if (m_ShapeID == ShapeID::GlobalArray)
+    {
+        if (m_Start.empty() || m_Count.empty())
+        {
+            throw std::invalid_argument(
+                "ERROR: GlobalArray variable " + m_Name +
+                " start and count dimensions must be defined by either "
+                "DefineVariable or a Selection in call to " +
+                hint + "\n");
+        }
+    }
+
+    CheckDimensionsCommon(hint);
+    // TODO need to think more exceptions here
+}
+
+size_t VariableBase::GetElementsSize() const
+{
+    return GetTotalSize(m_Count) * m_StepsCount;
+}
 
 // PRIVATE
 void VariableBase::InitShapeType()
@@ -198,26 +238,30 @@ void VariableBase::InitShapeType()
         {
             if (m_DebugMode)
             {
-                auto lf_LargerThanError = [&](const unsigned int i,
-                                              const std::string dims1,
-                                              const std::string dims2) {
+                auto lf_LargerThanError =
+                    [&](const unsigned int i, const std::string dims1,
+                        const size_t dims1Value, const std::string dims2,
+                        const size_t dims2Value) {
 
-                    const std::string iString(std::to_string(i));
-                    throw std::invalid_argument(
-                        "ERROR: " + dims1 + "[" + iString + "] > " + dims2 +
-                        "[" + iString + "], in DefineVariable " + m_Name +
-                        "\n");
-                };
+                        const std::string iString(std::to_string(i));
+                        throw std::invalid_argument(
+                            "ERROR: " + dims1 + "[" + iString + "] = " +
+                            std::to_string(dims1Value) + " > " + dims2 + "[" +
+                            iString + "], = " + std::to_string(dims2Value) +
+                            " in DefineVariable " + m_Name + "\n");
+                    };
 
                 for (unsigned int i = 0; i < m_Shape.size(); ++i)
                 {
                     if (m_Count[i] > m_Shape[i])
                     {
-                        lf_LargerThanError(i, "count", "shape");
+                        lf_LargerThanError(i, "count", m_Count[i], "shape",
+                                           m_Shape[i]);
                     }
                     if (m_Start[i] > m_Shape[i])
                     {
-                        lf_LargerThanError(i, "start", "shape");
+                        lf_LargerThanError(i, "start", m_Start[i], "shape",
+                                           m_Shape[i]);
                     }
                 }
             }
@@ -232,7 +276,7 @@ void VariableBase::InitShapeType()
                                         m_Name + "\n");
         }
     }
-    else //(m_Shape.empty())
+    else
     {
         if (m_Start.empty())
         {
@@ -258,10 +302,12 @@ void VariableBase::InitShapeType()
 
     /* Extra checks for invalid settings */
     if (m_DebugMode)
-        CheckDimsCommon("DefineVariable(" + m_Name + ")");
+    {
+        CheckDimensionsCommon("DefineVariable(" + m_Name + ")");
+    }
 }
 
-void VariableBase::CheckDimsCommon(const std::string hint) const
+void VariableBase::CheckDimensionsCommon(const std::string hint) const
 {
     if (m_ShapeID != ShapeID::LocalValue)
     {
@@ -293,22 +339,4 @@ void VariableBase::CheckDimsCommon(const std::string hint) const
     }
 }
 
-void VariableBase::CheckDimsBeforeWrite(const std::string hint) const
-{
-    if (m_ShapeID == ShapeID::GlobalArray)
-    {
-        if (m_Start.empty() || m_Count.empty())
-        {
-            throw std::invalid_argument(
-                "ERROR: GlobalArray variable " + m_Name +
-                " start and count dimensions must be defined by either "
-                "DefineVariable or a Selection in call to " +
-                hint + "\n");
-        }
-    }
-
-    CheckDimsCommon(hint);
-    // TODO need to think more exceptions here
-}
-
-} // end namespace adios
+} // end namespace adios2

@@ -34,21 +34,21 @@ TEST_F(ADIOSZfpWrapper, Float100)
                                   adios2::Variable<float> &>();
 
     // Define bzip2 transform
-    adios2::Transform &adiosZfp = adios.GetTransform("Zfp");
+    adios2::Operator &adiosZfp = adios.DefineOperator("ZfpCompressor", "Zfp");
 
     const unsigned int zfpID =
         var_Floats.AddTransform(adiosZfp, {{"Rate", "8"}});
 
     const std::size_t estimatedSize =
         adiosZfp.BufferMaxSize(myFloats.data(), var_Floats.m_Count,
-                               var_Floats.m_TransformsInfo[zfpID].Parameters);
+                               var_Floats.m_OperatorsInfo[zfpID].Parameters);
 
     std::vector<char> compressedBuffer(estimatedSize);
 
     size_t compressedSize = adiosZfp.Compress(
         myFloats.data(), var_Floats.m_Count, var_Floats.m_ElementSize,
         var_Floats.m_Type, compressedBuffer.data(),
-        var_Floats.m_TransformsInfo[zfpID].Parameters);
+        var_Floats.m_OperatorsInfo[zfpID].Parameters);
 
     compressedBuffer.resize(compressedSize);
 
@@ -58,7 +58,7 @@ TEST_F(ADIOSZfpWrapper, Float100)
     size_t decompressedSize = adiosZfp.Decompress(
         compressedBuffer.data(), compressedBuffer.size(),
         decompressedBuffer.data(), var_Floats.m_Count, var_Floats.m_Type,
-        var_Floats.m_TransformsInfo[zfpID].Parameters);
+        var_Floats.m_OperatorsInfo[zfpID].Parameters);
 
     // testing data recovery for rate = 8
     for (size_t i = 0; i < Nx; ++i)
@@ -84,7 +84,7 @@ TEST_F(ADIOSZfpWrapper, UnsupportedCall)
                                   adios2::Variable<float> &>();
 
     // Define bzip2 transform
-    adios2::Transform &adiosZfp = adios.GetTransform("zfp");
+    adios2::Operator &adiosZfp = adios.DefineOperator("ZfpCompressor", "zfp");
 
     const unsigned int zfpID =
         var_Floats.AddTransform(adiosZfp, {{"Rate", "8"}});
@@ -112,12 +112,12 @@ TEST_F(ADIOSZfpWrapper, MissingMandatoryParameter)
                                   adios2::Variable<float> &>();
 
     // Define bzip2 transform
-    adios2::Transform &adiosZfp = adios.GetTransform("zfp");
+    adios2::Operator &adiosZfp = adios.DefineOperator("ZFPCompressor", "zfp");
 
     const unsigned int zfpID = var_Floats.AddTransform(adiosZfp);
 
     EXPECT_THROW(const std::size_t estimatedSize = adiosZfp.BufferMaxSize(
                      myFloats.data(), var_Floats.m_Count,
-                     var_Floats.m_TransformsInfo[zfpID].Parameters),
+                     var_Floats.m_OperatorsInfo[zfpID].Parameters),
                  std::invalid_argument);
 }

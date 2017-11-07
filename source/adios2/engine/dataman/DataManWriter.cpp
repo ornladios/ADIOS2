@@ -18,32 +18,21 @@
 namespace adios2
 {
 
-DataManWriter::DataManWriter(IO &io, const std::string &name,
-                             const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("DataManWriter", io, name, openMode, mpiComm), m_Man(mpiComm, true)
+DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
+                             MPI_Comm mpiComm)
+: Engine("DataManWriter", io, name, mode, mpiComm), m_Man(mpiComm, m_DebugMode)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";
     Init();
 }
 
-void DataManWriter::SetCallBack(
-    std::function<void(const void *, std::string, std::string, std::string,
-                       Dims)>
-        callback)
+StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
-    m_CallBack = callback;
-    //    m_Man.reg_callback(callback);
+    return StepStatus::OK;
 }
+void DataManWriter::EndStep() {}
 
-void DataManWriter::Advance(const float timeoutSeconds)
-{
-    //    m_Man.flush();
-}
-
-void DataManWriter::Close(const int transportIndex)
-{
-    //    m_Man.flush();
-}
+void DataManWriter::Close(const int transportIndex) {}
 
 // PRIVATE functions below
 void DataManWriter::Init()
@@ -97,39 +86,21 @@ void DataManWriter::Init()
             }
         };
 
-        auto lf_IsNumber = [](const std::string &s) {
-            return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) {
-                                     return !std::isdigit(c);
-                                 }) == s.end();
-        };
+        // try not to hardcode these things...
+        // shouldn't these be coming from the user IO.m_TransportParameters?
+        // unless you assign defaults
+        unsigned int n_Transports = 1;
+        std::vector<Params> parameters(n_Transports);
 
-        //        json jmsg;
-        //        for (const auto &i : m_IO.m_Parameters)
-        //        {
-        //            if (lf_IsNumber(i.second))
-        //            {
-        //                jmsg[i.first] = std::stoi(i.second);
-        //            }
-        //            else
-        //            {
-        //                jmsg[i.first] = i.second;
-        //            }
-        //        }
-        //        jmsg["stream_mode"] = "sender";
-        //        m_Man.add_stream(jmsg);
-
-        int n_Transports = 1;
-        std::vector<Params> para(n_Transports);
-
-        for (unsigned int i = 0; i < para.size(); i++)
+        for (unsigned int i = 0; i < parameters.size(); i++)
         {
-            para[i]["type"] = "wan";
-            para[i]["transport"] = "zmq";
-            para[i]["name"] = "stream";
-            para[i]["ipaddress"] = "127.0.0.1";
+            parameters[i]["type"] = "wan";
+            parameters[i]["transport"] = "zmq";
+            parameters[i]["name"] = "stream";
+            parameters[i]["ipaddress"] = "127.0.0.1";
         }
 
-        m_Man.OpenWANTransports("zmq", adios2::OpenMode::Write, para, true);
+        m_Man.OpenWANTransports("zmq", Mode::Write, parameters, true);
 
         std::string method_type;
         lf_AssignString("method_type", method_type);
@@ -140,11 +111,11 @@ void DataManWriter::Init()
 }
 
 #define declare_type(T)                                                        \
-    void DataManWriter::DoWrite(Variable<T> &variable, const T *values)        \
+    void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)      \
     {                                                                          \
-        DoWriteCommon(variable, values);                                       \
+        PutSyncCommon(variable, values);                                       \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-} // end namespace adios
+} // end namespace adios2

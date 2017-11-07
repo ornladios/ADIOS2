@@ -35,7 +35,7 @@ public:
      * @param nthreads
      */
     using json = nlohmann::json;
-    DataManReader(IO &io, const std::string &name, const OpenMode openMode,
+    DataManReader(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
     virtual ~DataManReader() = default;
@@ -48,15 +48,6 @@ public:
     void SetCallBack(std::function<void(const void *, std::string, std::string,
                                         std::string, Dims)>
                          callback);
-
-    /**
-     * Not implemented
-     * @param name
-     * @param readIn
-     * @return
-     */
-    VariableCompound *InquireVariableCompound(const std::string &name,
-                                              const bool readIn = true);
 
     void Close(const int transportIndex = -1);
 

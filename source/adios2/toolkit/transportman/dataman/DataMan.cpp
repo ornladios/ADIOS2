@@ -24,52 +24,71 @@ DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
 : TransportMan(mpiComm, debugMode)
 {
 }
-void DataMan::OpenWANTransports(const std::string &name,
-                                const OpenMode openMode,
+void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
 {
+    size_t counter = 0;
 
     for (const auto &parameters : parametersVector)
     {
         std::shared_ptr<Transport> wanTransport, controlTransport;
 
-        const std::string type(
-            GetParameter("type", parameters, true, m_DebugMode, ""));
+        const std::string type(GetParameter(
+            "type", parameters, true, m_DebugMode, "Transport Type Parameter"));
 
-        const std::string trans(
-            GetParameter("transport", parameters, true, m_DebugMode, ""));
+        const std::string library(GetParameter("Library", parameters, true,
+                                               m_DebugMode,
+                                               "Transport Library Parameter"));
 
         const std::string ipAddress(
-            GetParameter("ipaddress", parameters, true, m_DebugMode, ""));
+            GetParameter("IPAddress", parameters, true, m_DebugMode,
+                         "Transport IPAddress Parameter"));
 
-        std::string port_control(
-            GetParameter("port", parameters, false, m_DebugMode, ""));
+        std::string portControl(GetParameter("Port", parameters, false,
+                                             m_DebugMode,
+                                             "Transport Port Parameter"));
 
-        if (port_control.empty())
+        if (portControl.empty())
         {
-            port_control = std::to_string(m_DefaultPort);
+            portControl = std::to_string(m_DefaultPort);
         }
 
-        const std::string port_data(std::to_string(stoi(port_control) + 1));
+        const std::string portData(std::to_string(stoi(portControl) + 1));
 
-        std::string messageName(
-            GetParameter("name", parameters, false, m_DebugMode, ""));
+        std::string messageName(GetParameter("Name", parameters, false,
+                                             m_DebugMode,
+                                             "Transport Name Parameter"));
 
         if (messageName.empty())
         {
             messageName = name;
         }
 
-        if (type == "wan")
+        if (type == "wan" || type == "WAN")
         {
-            if (trans == "zmq")
+            if (library == "zmq" || library == "ZMQ")
             {
 #ifdef ADIOS2_HAVE_ZEROMQ
                 wanTransport = std::make_shared<transport::WANZmq>(
-                    ipAddress, port_data, m_MPIComm, m_DebugMode);
+                    ipAddress, portData, m_MPIComm, m_DebugMode);
                 controlTransport = std::make_shared<transport::WANZmq>(
-                    ipAddress, port_control, m_MPIComm, m_DebugMode);
+                    ipAddress, portControl, m_MPIComm, m_DebugMode);
+
+                wanTransport->Open(messageName, mode);
+                m_Transports.emplace(counter, std::move(wanTransport));
+                controlTransport->Open(messageName, mode);
+                m_ControlTransports.push_back(std::move(controlTransport));
+
+                if (mode == Mode::Read)
+                {
+                    m_Listening = true;
+                    m_ControlThreads.push_back(std::thread(&DataMan::ReadThread,
+                                                           this, wanTransport,
+                                                           controlTransport));
+                }
+                ++counter;
+
 #else
                 throw std::invalid_argument(
                     "ERROR: this version of ADIOS2 didn't compile with "
@@ -80,24 +99,13 @@ void DataMan::OpenWANTransports(const std::string &name,
             {
                 if (m_DebugMode)
                 {
-                    throw std::invalid_argument("ERROR: wan library " + trans +
+                    throw std::invalid_argument("ERROR: wan library " +
+                                                library +
                                                 " not supported or not "
                                                 "provided in IO AddTransport, "
                                                 "in call to Open\n");
                 }
             }
-        }
-
-        wanTransport->Open(messageName, openMode);
-        m_Transports.push_back(wanTransport);
-        controlTransport->Open(messageName, openMode);
-        m_ControlTransports.push_back(controlTransport);
-
-        if (openMode == OpenMode::Read)
-        {
-            m_Listening = true;
-            m_ControlThreads.push_back(std::thread(
-                &DataMan::ReadThread, this, wanTransport, controlTransport));
         }
     }
 }
@@ -150,4 +158,4 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
 }
 
 } // end namespace transportman
-} // end namespace adios
+} // end namespace adios2

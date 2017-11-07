@@ -32,10 +32,9 @@ module adios2_params
     logical, parameter :: adios2_constant_dims_false = .false.
 
     ! Open Mode
-    integer, parameter :: adios2_open_mode_undefined = 0
-    integer, parameter :: adios2_open_mode_write = 1
-    integer, parameter :: adios2_open_mode_read = 2
-    integer, parameter :: adios2_open_mode_append = 3
-    integer, parameter :: adios2_open_mode_read_write = 4
+    integer, parameter :: adios2_mode_undefined = 0
+    integer, parameter :: adios2_mode_write = 1
+    integer, parameter :: adios2_mode_read = 2
+    integer, parameter :: adios2_mode_append = 3
 
 end module

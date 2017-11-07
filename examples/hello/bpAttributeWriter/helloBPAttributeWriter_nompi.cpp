@@ -49,19 +49,14 @@ int main(int argc, char *argv[])
                                      myDoubles.size());
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios2::OpenMode::Write);
-
-        if (!bpWriter)
-        {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
-        }
+        adios2::Engine &bpWriter =
+            bpIO.Open("myVector.bp", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        bpWriter->Write<float>(bpFloats, myFloats.data());
+        bpWriter.PutSync<float>(bpFloats, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
-        bpWriter->Close();
+        bpWriter.Close();
     }
     catch (std::invalid_argument &e)
     {

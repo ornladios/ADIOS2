@@ -15,9 +15,9 @@
 namespace adios2
 {
 
-HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name,
-                         const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("HDF5Reader", io, name, openMode, mpiComm), m_H5File(io.m_DebugMode)
+HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode mode,
+                         MPI_Comm mpiComm)
+: Engine("HDF5Reader", io, name, mode, mpiComm), m_H5File(io.m_DebugMode)
 {
     m_EndMessage = ", in call to IO HDF5Reader Open " + m_Name + "\n";
     Init();
@@ -29,7 +29,7 @@ bool HDF5ReaderP::IsValid()
 {
     bool isValid = false;
 
-    if (m_OpenMode != OpenMode::Read)
+    if (m_OpenMode != Mode::Read)
     {
         return isValid;
     }
@@ -41,7 +41,7 @@ bool HDF5ReaderP::IsValid()
 }
 void HDF5ReaderP::Init()
 {
-    if (m_OpenMode != OpenMode::Read)
+    if (m_OpenMode != Mode::Read)
     {
         throw std::invalid_argument(
             "ERROR: HDF5Reader only supports OpenMode::Read "
@@ -122,7 +122,7 @@ void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
     H5Dclose(dataSetId);
 }
 
-void HDF5ReaderP::Advance(const float timeoutSeconds) { m_H5File.Advance(); }
+void HDF5ReaderP::EndStep() { m_H5File.Advance(); }
 
 void HDF5ReaderP::Close(const int transportIndex) { m_H5File.Close(); }
 

@@ -10,58 +10,78 @@
 
 #include "EnginePy.h"
 
-#include "adiosPyFunctions.h"
+#include "adios2/ADIOSMacros.h"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
 
-EnginePy::EnginePy(IO &io, const std::string &name, const OpenMode openMode,
-                   MPI_Comm mpiComm)
-: m_IO(io), m_Engine(m_IO.Open(name, openMode, mpiComm)),
-  m_DebugMode(m_IO.m_DebugMode)
+EnginePy::EnginePy(IO &io, const std::string &name, const Mode openMode,
+                   MPI_Comm mpiComm,
+                   std::map<std::string, VariableBase> &variablesPlaceholder)
+: m_Engine(io.Open(name, openMode, mpiComm)),
+  m_VariablesPlaceholder(variablesPlaceholder), m_DebugMode(io.m_DebugMode)
 {
 }
 
-void EnginePy::Write(VariablePy &variable, const pyArray &array)
+void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
 {
-    if (variable.m_IsDefined)
+    if (variable->m_Type.empty()) // Define in IO
     {
-        // do nothing, not supporting compound types in Python, yet
+        auto &io = m_Engine.GetIO();
+
+        if (array.is(pybind11::array()))
+        {
+            if (m_DebugMode)
+            {
+                throw std::invalid_argument(
+                    "ERROR: passing an empty numpy array for variable " +
+                    variable->m_Name + ", in call to PutSync");
+            }
+        }
+#define declare_type(T)                                                        \
+    else if (pybind11::isinstance<                                             \
+                 pybind11::array_t<T, pybind11::array::c_style>>(array))       \
+    {                                                                          \
+        variable = &io.DefineVariable<T>(variable->m_Name, variable->m_Shape,  \
+                                         variable->m_Start, variable->m_Count, \
+                                         variable->m_ConstantDims);            \
+        m_VariablesPlaceholder.erase(variable->m_Name);                        \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    // PutSync
+    if (variable->m_Type == "compound")
+    {
+        // not supported
     }
 #define declare_type(T)                                                        \
-    else if (pybind11::isinstance<pybind11::array_t<T>>(array))                \
+    else if (variable->m_Type == GetType<T>())                                 \
     {                                                                          \
-        DefineVariableInIO<T>(variable);                                       \
+        m_Engine.PutSync(*dynamic_cast<adios2::Variable<T> *>(variable),       \
+                         reinterpret_cast<const T *>(array.data()));           \
     }
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-
-    if (!variable.m_IsDefined)
+    else
     {
         if (m_DebugMode)
         {
-            throw std::runtime_error("ERROR: variable " + variable.m_Name +
-                                     " couldn't not be created in IO  " +
-                                     m_IO.m_Name + " , in call to Write\n");
+            throw std::invalid_argument("ERROR: variable " + variable->m_Name +
+                                        " numpy array type is not supported or "
+                                        "is not memory contiguous "
+                                        ", in call to PutSync\n");
         }
     }
-#define declare_type(T)                                                        \
-    else if (pybind11::isinstance<pybind11::array_t<T>>(array))                \
-    {                                                                          \
-        WriteInIO<T>(variable, array);                                         \
-    }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
 }
 
-void EnginePy::Advance(const float timeoutSeconds)
-{
-    m_Engine->Advance(timeoutSeconds);
-}
+void EnginePy::EndStep() { m_Engine.EndStep(); }
 
 void EnginePy::Close(const int transportIndex)
 {
-    m_Engine->Close(transportIndex);
+    m_Engine.Close(transportIndex);
 }
 
-} // end namespace adios
+} // end namespace adios2

@@ -11,19 +11,23 @@
 #include "BPFileWriter.h"
 #include "BPFileWriter.tcc"
 
+#include <iostream>
+
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
-#include "adios2/toolkit/transport/file/FileStream.h"
+#include "adios2/toolkit/transport/file/FileFStream.h"
 
 namespace adios2
 {
 
-BPFileWriter::BPFileWriter(IO &io, const std::string &name,
-                           const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("BPFileWriter", io, name, openMode, mpiComm),
-  m_BP1Writer(mpiComm, m_DebugMode), m_TransportsManager(mpiComm, m_DebugMode)
+BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode mode,
+                           MPI_Comm mpiComm)
+: Engine("BPFileWriter", io, name, mode, mpiComm),
+  m_BP3Serializer(mpiComm, m_DebugMode),
+  m_FileDataManager(mpiComm, m_DebugMode),
+  m_FileMetadataManager(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open BPFileWriter " + m_Name + "\n";
     Init();
@@ -31,6 +35,29 @@ BPFileWriter::BPFileWriter(IO &io, const std::string &name,
 
 BPFileWriter::~BPFileWriter() = default;
 
+StepStatus BPFileWriter::BeginStep(StepMode mode, const float timeoutSeconds)
+{
+    m_BP3Serializer.m_DeferredVariables.clear();
+    m_BP3Serializer.m_DeferredVariablesDataSize = 0;
+    return StepStatus::OK;
+}
+
+void BPFileWriter::PerformPuts()
+{
+    m_BP3Serializer.AllocateDeferredSize();
+
+    for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
+    {
+        PutSync(variableName);
+    }
+}
+
+void BPFileWriter::EndStep()
+{
+    m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
+}
+
+// PRIVATE
 void BPFileWriter::Init()
 {
     InitParameters();
@@ -39,52 +66,46 @@ void BPFileWriter::Init()
 }
 
 #define declare_type(T)                                                        \
-    void BPFileWriter::DoWrite(Variable<T> &variable, const T *values)         \
+    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
     {                                                                          \
-        DoWriteCommon(variable, values);                                       \
-    }
+        PutSyncCommon(variable, values);                                       \
+    }                                                                          \
+    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
+    {                                                                          \
+        PutDeferredCommon(variable, values);                                   \
+    }                                                                          \
+    void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void BPFileWriter::Advance(const float /*timeout_sec*/)
-{
-    m_BP1Writer.Advance(m_IO);
-}
-
 void BPFileWriter::Close(const int transportIndex)
 {
-    if (m_DebugMode)
-    {
-        if (!m_TransportsManager.CheckTransportIndex(transportIndex))
-        {
-            auto transportsSize = m_TransportsManager.m_Transports.size();
-            throw std::invalid_argument(
-                "ERROR: transport index " + std::to_string(transportIndex) +
-                " outside range, -1 (default) to " +
-                std::to_string(transportsSize - 1) + ", in call to Close\n");
-        }
-    }
-
-    // close bp buffer by flattening data and metadata
-    m_BP1Writer.Close(m_IO);
+    // close bp buffer by serializing data and metadata
+    m_BP3Serializer.CloseData(m_IO);
     // send data to corresponding transports
-    m_TransportsManager.WriteFiles(m_BP1Writer.m_HeapBuffer.GetData(),
-                                   m_BP1Writer.m_HeapBuffer.m_DataPosition,
-                                   transportIndex);
+    m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
+                                 m_BP3Serializer.m_Data.m_Position,
+                                 transportIndex);
 
-    m_TransportsManager.CloseFiles(transportIndex);
+    m_FileDataManager.CloseFiles(transportIndex);
 
-    if (m_BP1Writer.m_Profiler.IsActive &&
-        m_TransportsManager.AllTransportsClosed())
+    if (m_BP3Serializer.m_Profiler.IsActive &&
+        m_FileDataManager.AllTransportsClosed())
     {
         WriteProfilingJSONFile();
+    }
+
+    if (m_BP3Serializer.m_CollectiveMetadata &&
+        m_FileDataManager.AllTransportsClosed())
+    {
+        WriteCollectiveMetadataFile();
     }
 }
 
 // PRIVATE FUNCTIONS
 void BPFileWriter::InitParameters()
 {
-    m_BP1Writer.InitParameters(m_IO.m_Parameters);
+    m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 }
 
 void BPFileWriter::InitTransports()
@@ -97,20 +118,23 @@ void BPFileWriter::InitTransports()
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
 
-    // Names are std::vector<std::string>
-    auto transportsNames = m_TransportsManager.GetFilesBaseNames(
-        m_Name, m_IO.m_TransportsParameters);
-    auto bpBaseNames = m_BP1Writer.GetBPBaseNames(transportsNames);
-    auto bpNames = m_BP1Writer.GetBPNames(transportsNames);
+    // Names passed to IO AddTransport option with key "Name"
+    const std::vector<std::string> transportsNames =
+        m_FileDataManager.GetFilesBaseNames(m_Name,
+                                            m_IO.m_TransportsParameters);
 
-    m_TransportsManager.OpenFiles(bpBaseNames, bpNames, m_OpenMode,
-                                  m_IO.m_TransportsParameters,
-                                  m_BP1Writer.m_Profiler.IsActive);
+    // /path/name.bp.dir/name.bp.rank
+    const std::vector<std::string> bpRankNames =
+        m_BP3Serializer.GetBPRankNames(transportsNames);
+
+    m_FileDataManager.OpenFiles(bpRankNames, m_OpenMode,
+                                m_IO.m_TransportsParameters,
+                                m_BP3Serializer.m_Profiler.IsActive);
 }
 
 void BPFileWriter::InitBPBuffer()
 {
-    if (m_OpenMode == OpenMode::Append)
+    if (m_OpenMode == Mode::Append)
     {
         throw std::invalid_argument(
             "ADIOS2: OpenMode Append hasn't been implemented, yet");
@@ -118,31 +142,57 @@ void BPFileWriter::InitBPBuffer()
     }
     else
     {
-        m_BP1Writer.WriteProcessGroupIndex(
-            m_IO.m_HostLanguage, m_TransportsManager.GetTransportsTypes());
+        m_BP3Serializer.PutProcessGroupIndex(
+            m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
     }
 }
 
 void BPFileWriter::WriteProfilingJSONFile()
 {
-    auto transportTypes = m_TransportsManager.GetTransportsTypes();
-    auto transportProfilers = m_TransportsManager.GetTransportsProfilers();
+    auto transportTypes = m_FileDataManager.GetTransportsTypes();
+    auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
 
-    const std::string lineJSON(
-        m_BP1Writer.GetRankProfilingJSON(transportTypes, transportProfilers));
+    const std::string lineJSON(m_BP3Serializer.GetRankProfilingJSON(
+                                   transportTypes, transportProfilers) +
+                               ",\n");
 
-    const std::string profilingJSON(
-        m_BP1Writer.AggregateProfilingJSON(lineJSON));
+    const std::vector<char> profilingJSON(
+        m_BP3Serializer.AggregateProfilingJSON(lineJSON));
 
-    if (m_BP1Writer.m_BP1Aggregator.m_RankMPI == 0)
+    if (m_BP3Serializer.m_RankMPI == 0)
     {
-        transport::FileStream profilingJSONStream(m_MPIComm, m_DebugMode);
-        auto bpBaseNames = m_BP1Writer.GetBPBaseNames({m_Name});
+        transport::FileFStream profilingJSONStream(m_MPIComm, m_DebugMode);
+        auto bpBaseNames = m_BP3Serializer.GetBPBaseNames({m_Name});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
-                                 OpenMode::Write);
-        profilingJSONStream.Write(profilingJSON.c_str(), profilingJSON.size());
+                                 Mode::Write);
+        profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
         profilingJSONStream.Close();
     }
 }
 
-} // end namespace adios
+void BPFileWriter::WriteCollectiveMetadataFile()
+{
+    m_BP3Serializer.AggregateCollectiveMetadata();
+    if (m_BP3Serializer.m_RankMPI == 0)
+    {
+        // first init metadata files
+        const std::vector<std::string> transportsNames =
+            m_FileMetadataManager.GetFilesBaseNames(
+                m_Name, m_IO.m_TransportsParameters);
+
+        const std::vector<std::string> bpMetadataFileNames =
+            m_BP3Serializer.GetBPMetadataFileNames(transportsNames);
+
+        m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
+                                        m_IO.m_TransportsParameters,
+                                        m_BP3Serializer.m_Profiler.IsActive);
+
+        const auto &buffer = m_BP3Serializer.m_Metadata.m_Buffer;
+        const size_t size = m_BP3Serializer.m_Metadata.m_AbsolutePosition;
+
+        m_FileMetadataManager.WriteFiles(buffer.data(), size);
+        m_FileMetadataManager.CloseFiles();
+    }
+}
+
+} // end namespace adios2

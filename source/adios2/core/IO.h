@@ -14,8 +14,8 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <map>
 #include <memory> //std:shared_ptr
-#include <set>
 #include <string>
+#include <unordered_map>
 #include <utility> //std::pair
 #include <vector>
 /// \endcond
@@ -31,8 +31,9 @@
 namespace adios2
 {
 
-/** used for Variables and Attributes */
-using DataMap = std::map<std::string, std::pair<std::string, unsigned int>>;
+/** used for Variables and Attributes, name, type, type-index */
+using DataMap =
+    std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
@@ -43,6 +44,12 @@ class IO
 {
 
 public:
+    struct OperatorInfo
+    {
+        Operator &ADIOSOperator;
+        Params Parameters;
+    };
+
     /** unique identifier */
     const std::string m_Name;
 
@@ -54,13 +61,16 @@ public:
     const bool m_DebugMode = false;
 
     /** from ADIOS class passed to Engine created with Open */
-    std::string m_HostLanguage = "C++";
+    const std::string m_HostLanguage = "C++";
 
     /** From SetParameter, parameters for a particular engine from m_Type */
     Params m_Parameters;
 
     /** From AddTransport, parameters in map for each transport in vector */
     std::vector<Params> m_TransportsParameters;
+
+    /** From Add Operator */
+    std::vector<OperatorInfo> m_Operators;
 
     /**
      * Constructor called from ADIOS factory class
@@ -70,7 +80,7 @@ public:
      * @param debugMode true: extra exception checks (recommended)
      */
     IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
-       const bool debugMode);
+       const std::string hostLanguage, const bool debugMode);
 
     ~IO() = default;
 
@@ -78,7 +88,7 @@ public:
      * Sets the engine type for this IO class object
      * @param engine
      */
-    void SetEngine(const std::string engine);
+    void SetEngine(const std::string engine) noexcept;
 
     /** Set the IO mode (collective or independent)
      * @param IO mode */
@@ -89,20 +99,17 @@ public:
      * initializer list = { "param1", "value1" },  {"param2", "value2"},
      * @param params adios::Params std::map<std::string, std::string>
      */
-    void SetParameters(const Params &parameters = Params());
+    void SetParameters(const Params &parameters = Params()) noexcept;
 
     /**
      * Sets a single parameter overwriting value if key exists;
      * @param key parameter key
      * @param value parameter value
      */
-    void SetSingleParameter(const std::string key,
-                            const std::string value) noexcept;
+    void SetParameter(const std::string key, const std::string value) noexcept;
 
-    /**
-     * Retrieve existing parameter set
-     */
-    const Params &GetParameters() const;
+    /** Retrieve current parameters map */
+    Params &GetParameters() noexcept;
 
     /**
      * Adds a transport and its parameters for the IO Engine
@@ -111,7 +118,7 @@ public:
      * @return transportIndex handler
      */
     unsigned int AddTransport(const std::string type,
-                              const Params &params = Params());
+                              const Params &parameters = Params());
 
     /**
      * Set a single parameter to an existing transport identified with a
@@ -121,9 +128,8 @@ public:
      * @param key parameter key
      * @param value parameter value
      */
-    void SetTransportSingleParameter(const unsigned int transportIndex,
-                                     const std::string key,
-                                     const std::string value);
+    void SetTransportParameter(const unsigned int transportIndex,
+                               const std::string key, const std::string value);
 
     /**
      * Define a Variable of primitive data type for I/O.
@@ -141,33 +147,7 @@ public:
     Variable<T> &
     DefineVariable(const std::string &name, const Dims &shape = Dims{},
                    const Dims &start = Dims{}, const Dims &count = Dims{},
-                   const bool constantDims = false);
-
-    /**
-     * Define a Variable of primitive data type for I/O.
-     * Default (name only) is a local single value,
-     * in order to be compatible with ADIOS1.
-     * @param name variable name, must be unique within Method
-     * @param shape overall dimensions e.g. {Nx*size, Ny*size, Nz*size}
-     * @param start point (offset) for MPI rank e.g. {Nx*rank, Ny*rank, Nz*rank}
-     * @param count length for MPI rank e.g. {Nx, Ny, Nz}
-     * @param constantShape true if dimensions, offsets and local sizes don't
-     * change over time
-     * @return reference to Variable object
-     */
-    template <class T>
-    VariableCompound &DefineVariableCompound(const std::string &name,
-                                             const Dims &shape = Dims{},
-                                             const Dims &start = Dims{},
-                                             const Dims &count = Dims{},
-                                             const bool constantDims = false);
-
-    VariableCompound &DefineVariableCompound(const std::string &name,
-                                             const size_t sizeOfVariable,
-                                             const Dims &shape = Dims{},
-                                             const Dims &start = Dims{},
-                                             const Dims &count = Dims{},
-                                             const bool constantDims = false);
+                   const bool constantDims = false, T *data = nullptr);
 
     /**
      * Define attribute from contiguous data array owned by an application
@@ -190,13 +170,18 @@ public:
     Attribute<T> &DefineAttribute(const std::string &name, const T &value);
 
     /**
-     * Removes an existing Variable previously created with DefineVariable or
-     * DefineVariableCompound
+     * Removes an existing Variable previously created with DefineVariable
      * @param name
      * @return true: found and removed variable, false: not found, nothing to
      * remove
      */
     bool RemoveVariable(const std::string &name) noexcept;
+
+    /**
+     * Map with variables info: key: name, value: type
+     * @return populate map with current variables
+     */
+    std::map<std::string, Params> GetAvailableVariables() noexcept;
 
     /**
      * Gets an existing variable of primitive type by name
@@ -205,51 +190,54 @@ public:
      * throws an exception if Variable is not found
      */
     template <class T>
-    Variable<T> &GetVariable(const std::string &name);
+    Variable<T> *InquireVariable(const std::string &name) noexcept;
+
+    std::string InquireVariableType(const std::string &name) const noexcept;
 
     /**
-     * Runtime function: return a pointer to VariableBase
-     * @param name unique variable identifier
-     * @return nullptr if not found, pointer to VariableBase if variable is
-     * found
+     * Retrieves hash holding variable identifiers
+     * @return
+     * <pre>
+     * key: unique variable name,
+     * value: pair.first = string type
+     *        pair.second = order in the type bucket
+     * </pre>
      */
-    VariableBase *GetVariableBase(const std::string &name) noexcept;
+    const DataMap &GetVariablesDataMap() const noexcept;
 
     /**
-     * Gets an existing variable of compound type by name
-     * @param name of variable to be retrieved
-     * @return reference to an existing variable created with DefineVariable
-     * throws an exception if VariableCompound is not found
-     */
-    VariableCompound &GetVariableCompound(const std::string &name);
-
-    /**
-     * Return  map with attributes name and type info
-     * @return m_Attributes
+     * Retrieves hash holding Attributes identifiers
+     * @return
+     * <pre>
+     * key: unique attribute name,
+     * value: pair.first = string type
+     *        pair.second = order in the type bucket
+     * </pre>
      */
     const DataMap &GetAttributesDataMap() const noexcept;
 
     /**
      * Gets an existing attribute of primitive type by name
      * @param name of attribute to be retrieved
-     * @return reference to an existing attribute created with DefineAttribute
-     * throws an exception if Attribute is not found
+     * @return nullptr if not found, else pointer reference to exising attribute
      */
     template <class T>
-    Attribute<T> &GetAttribute(const std::string &name);
-
-    /**
-     * Get the type if variable (by name id) exists
-     * @param name input id
-     * @return type as string, if not found returns an empty string
-     */
-    std::string GetVariableType(const std::string &name) const;
+    Attribute<T> *InquireAttribute(const std::string &name) noexcept;
 
     /**
      * Check existence in config file passed to ADIOS class
      * @return true: defined in config file
      */
     bool InConfigFile() const;
+
+    /**
+     * Adds an operator defined by the ADIOS class. Could be a variable set
+     * transform, callback function, etc.
+     * @param adiosOperator operator created by the ADIOS class
+     * @param parameters specific parameters for IO
+     */
+    void AddOperator(Operator &adiosOperator,
+                     const Params &parameters = Params()) noexcept;
 
     /**
      * Creates a polymorphic object that derives the Engine class,
@@ -260,8 +248,8 @@ public:
      * @param mpiComm assigns a new communicator to the Engine
      * @return a smart pointer to a derived object of the Engine class
      */
-    std::shared_ptr<Engine> Open(const std::string &name,
-                                 const OpenMode openMode, MPI_Comm mpiComm);
+    Engine &Open(const std::string &name, const Mode openMode,
+                 MPI_Comm mpiComm);
 
     /**
      * Overloaded version that reuses the MPI_Comm object passed
@@ -271,8 +259,7 @@ public:
      * @param openMode write, read, append from ADIOSTypes.h OpenMode
      * @return a smart pointer to a derived object of the Engine class
      */
-    std::shared_ptr<Engine> Open(const std::string &name,
-                                 const OpenMode openMode);
+    Engine &Open(const std::string &name, const Mode openMode);
 
     // READ FUNCTIONS:
     void SetReadMultiplexPattern(const ReadMultiplexPattern pattern);
@@ -300,6 +287,7 @@ private:
     DataMap m_Variables;
 
     /** Variable containers based on fixed-size type */
+    std::map<unsigned int, Variable<std::string>> m_String;
     std::map<unsigned int, Variable<char>> m_Char;
     std::map<unsigned int, Variable<signed char>> m_SChar;
     std::map<unsigned int, Variable<unsigned char>> m_UChar;
@@ -354,21 +342,20 @@ private:
     template <class T>
     std::map<unsigned int, Attribute<T>> &GetAttributeMap();
 
+    std::map<std::string, std::shared_ptr<Engine>> m_Engines;
+
     /**
      * Gets map index for Variables or Attributes
      * @param name
      * @param dataMap m_Variables or m_Attributes
-     * @param hint "Variable", "Attribute", or "VariableCompound"
-     * @return index in type map
+     * @return index in type map, -1 if not found
      */
-    unsigned int GetMapIndex(const std::string &name, const DataMap &dataMap,
-                             const std::string hint) const;
+    int GetMapIndex(const std::string &name, const DataMap &dataMap) const
+        noexcept;
 
     /** Checks if attribute exists, called from DefineAttribute different
      * signatures */
     void CheckAttributeCommon(const std::string &name) const;
-
-    std::set<std::string> m_EngineNames;
 
     /**
      * Checks if iterator points to end. Used for Variables and Attributes.
@@ -385,8 +372,9 @@ private:
 #define declare_template_instantiation(T)                                      \
     extern template Variable<T> &IO::DefineVariable<T>(                        \
         const std::string &, const Dims &, const Dims &, const Dims &,         \
-        const bool);                                                           \
-    extern template Variable<T> &IO::GetVariable<T>(const std::string &name);
+        const bool, T *);                                                      \
+    extern template Variable<T> *IO::InquireVariable<T>(                       \
+        const std::string &name) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -396,13 +384,12 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
         const std::string &, const T *, const size_t);                         \
     extern template Attribute<T> &IO::DefineAttribute<T>(const std::string &,  \
                                                          const T &);           \
-    extern template Attribute<T> &IO::GetAttribute(const std::string &);
+    extern template Attribute<T> *IO::InquireAttribute<T>(                     \
+        const std::string &) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace adios2
-
-#include "adios2/core/IO.inl"
 
 #endif /* ADIOS2_CORE_IO_H_ */

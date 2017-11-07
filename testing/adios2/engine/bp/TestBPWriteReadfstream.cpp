@@ -93,8 +93,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
         // the cache in
         // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteADIOS1Read1D8.bp.dir,
         // then it works
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -103,20 +102,20 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<int8_t>("i8");
-            auto &var_i16 = io.GetVariable<int16_t>("i16");
-            auto &var_i32 = io.GetVariable<int32_t>("i32");
-            auto &var_i64 = io.GetVariable<int64_t>("i64");
-            auto &var_u8 = io.GetVariable<uint8_t>("u8");
-            auto &var_u16 = io.GetVariable<uint16_t>("u16");
-            auto &var_u32 = io.GetVariable<uint32_t>("u32");
-            auto &var_u64 = io.GetVariable<uint64_t>("u64");
-            auto &var_r32 = io.GetVariable<float>("r32");
-            auto &var_r64 = io.GetVariable<double>("r64");
+            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
+            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
+            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
+            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
+            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
+            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
+            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
+            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
+            auto &var_r32 = *io.InquireVariable<float>("r32");
+            auto &var_r64 = *io.InquireVariable<double>("r64");
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::SelectionBoundingBox sel({mpiRank * Nx}, {Nx});
+            adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -131,23 +130,22 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
             // Write each one
             // fill in the variable with values from starting index to
             // starting index + count
-            engine->Write(var_i8, currentTestData.I8.data());
-            engine->Write(var_i16, currentTestData.I16.data());
-            engine->Write(var_i32, currentTestData.I32.data());
-            engine->Write(var_i64, currentTestData.I64.data());
-            engine->Write(var_u8, currentTestData.U8.data());
-            engine->Write(var_u16, currentTestData.U16.data());
-            engine->Write(var_u32, currentTestData.U32.data());
-            engine->Write(var_u64, currentTestData.U64.data());
-            engine->Write(var_r32, currentTestData.R32.data());
-            engine->Write(var_r64, currentTestData.R64.data());
-
-            // Advance to the next time step
-            engine->Advance();
+            engine.BeginStep();
+            engine.PutSync(var_i8, currentTestData.I8.data());
+            engine.PutSync(var_i16, currentTestData.I16.data());
+            engine.PutSync(var_i32, currentTestData.I32.data());
+            engine.PutSync(var_i64, currentTestData.I64.data());
+            engine.PutSync(var_u8, currentTestData.U8.data());
+            engine.PutSync(var_u16, currentTestData.U16.data());
+            engine.PutSync(var_u32, currentTestData.U32.data());
+            engine.PutSync(var_u64, currentTestData.U64.data());
+            engine.PutSync(var_r32, currentTestData.R32.data());
+            engine.PutSync(var_r64, currentTestData.R64.data());
+            engine.EndStep();
         }
 
         // Close the file
-        engine->Close();
+        engine.Close();
     }
 
     {
@@ -381,8 +379,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
         io.SetEngine("BPFileWriter");
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -391,20 +388,20 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<int8_t>("i8");
-            auto &var_i16 = io.GetVariable<int16_t>("i16");
-            auto &var_i32 = io.GetVariable<int32_t>("i32");
-            auto &var_i64 = io.GetVariable<int64_t>("i64");
-            auto &var_u8 = io.GetVariable<uint8_t>("u8");
-            auto &var_u16 = io.GetVariable<uint16_t>("u16");
-            auto &var_u32 = io.GetVariable<uint32_t>("u32");
-            auto &var_u64 = io.GetVariable<uint64_t>("u64");
-            auto &var_r32 = io.GetVariable<float>("r32");
-            auto &var_r64 = io.GetVariable<double>("r64");
+            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
+            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
+            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
+            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
+            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
+            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
+            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
+            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
+            auto &var_r32 = *io.InquireVariable<float>("r32");
+            auto &var_r64 = *io.InquireVariable<double>("r64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::SelectionBoundingBox sel(
+            adios2::Box<adios2::Dims> sel(
                 {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
@@ -420,23 +417,21 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
             // Write each one
             // fill in the variable with values from starting index to
             // starting index + count
-            engine->Write(var_i8, currentTestData.I8.data());
-            engine->Write(var_i16, currentTestData.I16.data());
-            engine->Write(var_i32, currentTestData.I32.data());
-            engine->Write(var_i64, currentTestData.I64.data());
-            engine->Write(var_u8, currentTestData.U8.data());
-            engine->Write(var_u16, currentTestData.U16.data());
-            engine->Write(var_u32, currentTestData.U32.data());
-            engine->Write(var_u64, currentTestData.U64.data());
-            engine->Write(var_r32, currentTestData.R32.data());
-            engine->Write(var_r64, currentTestData.R64.data());
-
-            // Advance to the next time step
-            engine->Advance();
+            engine.BeginStep();
+            engine.PutSync(var_i8, currentTestData.I8.data());
+            engine.PutSync(var_i16, currentTestData.I16.data());
+            engine.PutSync(var_i32, currentTestData.I32.data());
+            engine.PutSync(var_i64, currentTestData.I64.data());
+            engine.PutSync(var_u8, currentTestData.U8.data());
+            engine.PutSync(var_u16, currentTestData.U16.data());
+            engine.PutSync(var_u32, currentTestData.U32.data());
+            engine.PutSync(var_u64, currentTestData.U64.data());
+            engine.PutSync(var_r32, currentTestData.R32.data());
+            engine.PutSync(var_r64, currentTestData.R64.data());
+            engine.EndStep();
         }
 
-        // Close the file
-        engine->Close();
+        engine.Close();
     }
 
     {
@@ -682,8 +677,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
         io.SetEngine("BPFileWriter");
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        auto engine = io.Open(fname, adios2::OpenMode::Write);
-        ASSERT_NE(engine.get(), nullptr);
+        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -692,20 +686,20 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = io.GetVariable<int8_t>("i8");
-            auto &var_i16 = io.GetVariable<int16_t>("i16");
-            auto &var_i32 = io.GetVariable<int32_t>("i32");
-            auto &var_i64 = io.GetVariable<int64_t>("i64");
-            auto &var_u8 = io.GetVariable<uint8_t>("u8");
-            auto &var_u16 = io.GetVariable<uint16_t>("u16");
-            auto &var_u32 = io.GetVariable<uint32_t>("u32");
-            auto &var_u64 = io.GetVariable<uint64_t>("u64");
-            auto &var_r32 = io.GetVariable<float>("r32");
-            auto &var_r64 = io.GetVariable<double>("r64");
+            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
+            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
+            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
+            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
+            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
+            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
+            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
+            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
+            auto &var_r32 = *io.InquireVariable<float>("r32");
+            auto &var_r64 = *io.InquireVariable<double>("r64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::SelectionBoundingBox sel(
+            adios2::Box<adios2::Dims> sel(
                 {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
@@ -721,23 +715,21 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
             // Write each one
             // fill in the variable with values from starting index to
             // starting index + count
-            engine->Write(var_i8, currentTestData.I8.data());
-            engine->Write(var_i16, currentTestData.I16.data());
-            engine->Write(var_i32, currentTestData.I32.data());
-            engine->Write(var_i64, currentTestData.I64.data());
-            engine->Write(var_u8, currentTestData.U8.data());
-            engine->Write(var_u16, currentTestData.U16.data());
-            engine->Write(var_u32, currentTestData.U32.data());
-            engine->Write(var_u64, currentTestData.U64.data());
-            engine->Write(var_r32, currentTestData.R32.data());
-            engine->Write(var_r64, currentTestData.R64.data());
-
-            // Advance to the next time step
-            engine->Advance();
+            engine.BeginStep();
+            engine.PutSync(var_i8, currentTestData.I8.data());
+            engine.PutSync(var_i16, currentTestData.I16.data());
+            engine.PutSync(var_i32, currentTestData.I32.data());
+            engine.PutSync(var_i64, currentTestData.I64.data());
+            engine.PutSync(var_u8, currentTestData.U8.data());
+            engine.PutSync(var_u16, currentTestData.U16.data());
+            engine.PutSync(var_u32, currentTestData.U32.data());
+            engine.PutSync(var_u64, currentTestData.U64.data());
+            engine.PutSync(var_r32, currentTestData.R32.data());
+            engine.PutSync(var_r64, currentTestData.R64.data());
+            engine.EndStep();
         }
 
-        // Close the file
-        engine->Close();
+        engine.Close();
     }
 
     {

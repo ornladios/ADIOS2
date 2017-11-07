@@ -62,14 +62,8 @@ int main(int argc, char *argv[])
         bpReaderIO.AddTransport("File", {{"verbose", "4"}});
     }
 
-    auto bpReader =
-        bpReaderIO.Open(inputfile, adios2::OpenMode::Read, mpiReaderComm);
-
-    if (!bpReader)
-    {
-        throw std::ios_base::failure("ERROR: failed to open " +
-                                     std::string(inputfile) + "\n");
-    }
+    adios2::Engine &bpReader =
+        bpReaderIO.Open(inputfile, adios2::Mode::Read, mpiReaderComm);
 
     unsigned int gndx;
     unsigned int gndy;
@@ -77,19 +71,20 @@ int main(int argc, char *argv[])
     // bpReader->Read<unsigned int>("gndy", &gndy);
 
     adios2::Variable<unsigned int> *vgndx =
-        bpReader->InquireVariable<unsigned int>("gndx");
+        bpReaderIO.InquireVariable<unsigned int>("gndx");
 
-    gndx = vgndx->m_Data[0];
+    gndx = vgndx->GetData()[0];
 
     adios2::Variable<unsigned int> *vgndy =
-        bpReader->InquireVariable<unsigned int>("gndy");
-    gndy = vgndy->m_Data[0];
+        bpReaderIO.InquireVariable<unsigned int>("gndy");
+    gndy = vgndy->GetData()[0];
 
     if (rank == 0)
     {
         std::cout << "gndx       = " << gndx << std::endl;
         std::cout << "gndy       = " << gndy << std::endl;
-        std::cout << "# of steps = " << vgndy->m_AvailableSteps << std::endl;
+        std::cout << "# of steps = " << vgndy->GetAvailableStepsCount()
+                  << std::endl;
     }
 
     // 1D decomposition of the columns, which is inefficient for reading!
@@ -104,21 +99,24 @@ int main(int argc, char *argv[])
     std::cout << "rank " << rank << " reads " << readsize[1]
               << " columns from offset " << offset[1] << std::endl;
 
-    adios2::Variable<double> *vT = bpReader->InquireVariable<double>("T");
+    adios2::Variable<double> *vT = bpReaderIO.InquireVariable<double>("T");
 
-    double *T = new double[vT->m_AvailableSteps * readsize[0] * readsize[1]];
+    double *T =
+        new double[vT->GetAvailableStepsCount() * readsize[0] * readsize[1]];
 
     // Create a 2D selection for the subset
-    vT->SetSelection(offset, readsize);
-    vT->SetStepSelection(0, vT->m_AvailableSteps);
+    vT->SetSelection(adios2::Box<adios2::Dims>(offset, readsize));
+    vT->SetStepSelection(
+        adios2::Box<std::size_t>(0, vT->GetAvailableStepsCount()));
 
     // Arrays are read by scheduling one or more of them
     // and performing the reads at once
-    bpReader->ScheduleRead<double>(*vT, T);
-    bpReader->PerformReads(adios2::ReadMode::Blocking);
+    // bpReader->ScheduleRead<double>(*vT, T);
+    // bpReader->PerformReads(adios2::ReadMode::Blocking);
 
-    printData(T, readsize.data(), offset.data(), rank, vT->m_AvailableSteps);
-    bpReader->Close();
+    printData(T, readsize.data(), offset.data(), rank,
+              vT->GetAvailableStepsCount());
+    bpReader.Close();
     delete[] T;
     MPI_Finalize();
     return 0;

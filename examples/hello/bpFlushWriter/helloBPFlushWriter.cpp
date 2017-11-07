@@ -50,24 +50,19 @@ int main(int argc, char *argv[])
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVectorFlush.bp", adios2::OpenMode::Write);
-
-        if (!bpWriter)
-        {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
-        }
+        adios2::Engine &bpWriter =
+            bpIO.Open("myVectorFlush.bp", adios2::Mode::Write);
 
         for (unsigned int t = 0; t < 100; ++t)
         {
             /** values to time step */
             myFloats.assign(myFloats.size(), t);
             /** Write variable for buffering */
-            bpWriter->Write<float>(bpFloats, myFloats.data());
+            bpWriter.PutSync<float>(bpFloats, myFloats.data());
         }
 
         /** Create bp file, engine becomes unreachable after this*/
-        bpWriter->Close();
+        bpWriter.Close();
     }
     catch (std::invalid_argument &e)
     {

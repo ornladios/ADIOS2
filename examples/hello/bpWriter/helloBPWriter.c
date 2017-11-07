@@ -47,9 +47,9 @@ int main(int argc, char *argv[])
         adios2_define_variable(ioH, "bpFloats", adios2_type_float, 1, shape,
                                start, count, adios2_constant_dims_true);
     adios2_Engine *engineH =
-        adios2_open(ioH, "myVector_c.bp", adios2_open_mode_write);
+        adios2_open(ioH, "myVector_c.bp", adios2_mode_write);
 
-    adios2_write(engineH, variableH, myFloats);
+    adios2_put_sync(engineH, variableH, myFloats);
     adios2_close(engineH);
     adios2_finalize(adiosH);
 

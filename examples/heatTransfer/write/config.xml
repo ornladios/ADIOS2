@@ -16,7 +16,7 @@
 
             <!-- XXKb, XXMb, or XXXGb supported, default=16Kb 
                 (applications might choose an optimal value) -->
-            <!--<parameter key="InitialBufferSize" value="16Kb"/>  -->
+            <parameter key="InitialBufferSize" value="16Kb"/> 
             
             <!-- XXKb, XXMb, or XXXGb supported, default=Unlimited (until 
                  fails), maximum at each time step  
@@ -27,7 +27,7 @@
                  1.05  is good for a few large variables, for many small
                  variables increase the value to 1.5 to 2 
                  (optimal value is application dependent)--> 
-            <parameter key="BufferGrowthFactor" value="1.05"/>
+            <!-- <parameter key="BufferGrowthFactor" value="1.05"/> -->
             
         </engine>
 
@@ -41,5 +41,6 @@
             <parameter key="ProfileUnits" value="Microseconds"/>
             
         </transport>
+        
     </io>
 </adios-config>

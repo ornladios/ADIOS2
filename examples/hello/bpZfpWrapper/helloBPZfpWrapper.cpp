@@ -39,7 +39,8 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
         // Get a Transform of type BZip2
-        adios2::Transform &adiosZfp = adios.GetTransform("zfp");
+        adios2::Operator &adiosZfp =
+            adios.DefineOperator("ZfpVariableCompressor", "zfp");
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
@@ -57,7 +58,7 @@ int main(int argc, char *argv[])
         // 2nd way: treat Transforms as wrappers to underlying library:
         const std::size_t estimatedSize =
             adiosZfp.BufferMaxSize(myFloats.data(), bpFloats.m_Count,
-                                   bpFloats.m_TransformsInfo[zfpID].Parameters);
+                                   bpFloats.m_OperatorsInfo[zfpID].Parameters);
 
         // Compress
         std::vector<char> compressedBuffer(estimatedSize);
@@ -65,7 +66,7 @@ int main(int argc, char *argv[])
         size_t compressedSize = adiosZfp.Compress(
             myFloats.data(), bpFloats.m_Count, bpFloats.m_ElementSize,
             bpFloats.m_Type, compressedBuffer.data(),
-            bpFloats.m_TransformsInfo[zfpID].Parameters);
+            bpFloats.m_OperatorsInfo[zfpID].Parameters);
 
         compressedBuffer.resize(compressedSize);
 
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
         size_t decompressedSize = adiosZfp.Decompress(
             compressedBuffer.data(), compressedBuffer.size(),
             decompressedBuffer.data(), bpFloats.m_Count, bpFloats.m_Type,
-            bpFloats.m_TransformsInfo[zfpID].Parameters);
+            bpFloats.m_OperatorsInfo[zfpID].Parameters);
 
         std::cout << "Decompression summary:\n";
         std::cout << "Decompressed size: " << decompressedSize << " bytes\n ";

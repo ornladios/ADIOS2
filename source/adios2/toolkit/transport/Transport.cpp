@@ -11,6 +11,7 @@
 #include "Transport.h"
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
 namespace adios2
 {
@@ -23,27 +24,27 @@ Transport::Transport(const std::string type, const std::string library,
     MPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
-void Transport::InitProfiler(const OpenMode openMode, const TimeUnit timeUnit)
+void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
 {
     m_Profiler.IsActive = true;
 
     m_Profiler.Timers.emplace(std::make_pair(
         "open", profiling::Timer("open", TimeUnit::Microseconds, m_DebugMode)));
 
-    if (openMode == OpenMode::Write)
+    if (openMode == Mode::Write)
     {
         m_Profiler.Timers.emplace(
             "write", profiling::Timer("write", timeUnit, m_DebugMode));
 
         m_Profiler.Bytes.emplace("write", 0);
     }
-    else if (openMode == OpenMode::Append)
+    else if (openMode == Mode::Append)
     {
         m_Profiler.Timers.emplace(
             "append", profiling::Timer("append", timeUnit, m_DebugMode));
         m_Profiler.Bytes.emplace("append", 0);
     }
-    else if (openMode == OpenMode::Read)
+    else if (openMode == Mode::Read)
     {
         m_Profiler.Timers.emplace(
             "read", profiling::Timer("read", timeUnit, m_DebugMode));
@@ -65,4 +66,53 @@ void Transport::SetBuffer(char * /*buffer*/, size_t /*size*/)
     }
 }
 
-} // end namespace adios
+void Transport::Flush()
+{
+    if (m_DebugMode)
+    {
+        std::invalid_argument("ERROR: " + m_Name + " transport type " + m_Type +
+                              " using library " + m_Library +
+                              " doesn't implement the Flush function\n");
+    }
+}
+
+size_t Transport::GetSize() { return 0; }
+
+void Transport::ProfilerStart(const std::string process) noexcept
+{
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at(process).Resume();
+    }
+}
+
+void Transport::ProfilerStop(const std::string process) noexcept
+{
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Timers.at(process).Pause();
+    }
+}
+
+void Transport::CheckName() const
+{
+    if (m_DebugMode && m_Name.empty())
+    {
+        throw std::invalid_argument("ERROR: name can't be empty for " +
+                                    m_Library + " transport \n");
+    }
+}
+
+void Transport::MkDir(const std::string &fileName)
+{
+    const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
+    if (lastPathSeparator == std::string::npos)
+    {
+        return;
+    }
+
+    const std::string path(fileName.substr(0, lastPathSeparator));
+    CreateDirectory(path);
+}
+
+} // end namespace adios2

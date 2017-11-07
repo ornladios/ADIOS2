@@ -16,7 +16,7 @@
 
 static int rank_saved;
 adios2::ADIOS *ad = nullptr;
-std::shared_ptr<adios2::Engine> h5writer;
+adios2::Engine *h5writer;
 adios2::Variable<double> *varT = nullptr;
 adios2::Variable<unsigned int> *varGndx = nullptr;
 
@@ -55,10 +55,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    h5writer = h5io.Open(m_outputfilename, adios2::OpenMode::Write, comm);
-
-    if (h5writer == nullptr)
-        throw std::ios_base::failure("ERROR: failed to open ADIOS h5writer\n");
+    h5writer = &(h5io.Open(m_outputfilename, adios2::Mode::Write, comm));
 }
 
 IO::~IO()
@@ -96,17 +93,18 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     //    adios2::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
     // varT->SetMemorySelection(memspace);
 
-    h5writer->Write<double>(*varT, ht.data_noghost().data());
+    h5writer->BeginStep();
+    h5writer->PutSync<double>(*varT, ht.data_noghost().data());
     // h5writer->Write(*varT, ht.data_noghost().data());
-    h5writer->Write<unsigned int>(*varGndx, &(s.gndx));
-    h5writer->Write("gndy", &(s.gndy));
+    h5writer->PutSync<unsigned int>(*varGndx, &(s.gndx));
+    h5writer->PutSync("gndy", &(s.gndy));
 
-    h5writer->Advance();
+    h5writer->EndStep();
 
 #else
-
-    h5writer->Write<double>(*varT, ht.data_noghost().data());
-    h5writer->Advance();
+    h5writer->BeginStep();
+    h5writer->PutSync<double>(*varT, ht.data_noghost().data());
+    h5writer->EndStep();
 
 #endif
 }

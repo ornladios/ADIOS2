@@ -16,10 +16,9 @@
 #include <string>
 /// \endcond
 
-#include <adios2.h>
-
 #include "IOPy.h"
 #include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/core/ADIOS.h"
 
 namespace adios2
 {
@@ -43,6 +42,6 @@ private:
     std::shared_ptr<adios2::ADIOS> m_ADIOS;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* BINDINGS_PYTHON_SOURCE_ADIOSPY_H_ */

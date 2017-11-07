@@ -15,8 +15,9 @@
 #include <string>
 /// \endcond
 
+#include <pybind11/numpy.h>
+
 #include "EnginePy.h"
-#include "adiosPyTypes.h"
 
 namespace adios2
 {
@@ -26,34 +27,36 @@ class IOPy
 
 public:
     IO &m_IO;
-    const bool m_DebugMode;
 
     IOPy(IO &io, const bool debugMode);
 
     ~IOPy() = default;
 
-    void SetEngine(const std::string engineType);
+    void SetEngine(const std::string type) noexcept;
+    unsigned int AddTransport(const std::string type, const Params &parameters);
+    void SetParameters(const Params &parameters) noexcept;
+    void SetParameter(const std::string key, const std::string value) noexcept;
 
-    void SetParameters(const pyKwargs &kwargs) noexcept;
-    unsigned int AddTransport(const std::string type,
-                              const pyKwargs &kwargs) noexcept;
+    const Params &GetParameters() const noexcept;
 
-    VariablePy &DefineVariable(const std::string &name, const pyList shape,
-                               const pyList start, const pyList count,
-                               const bool isConstantDims);
+    VariableBase &DefineVariable(const std::string &name, const Dims &shape,
+                                 const Dims &start, const Dims &count,
+                                 const bool isConstantDims,
+                                 pybind11::array &array);
 
-    VariablePy &GetVariable(const std::string &name);
+    VariableBase *InquireVariable(const std::string &name) noexcept;
 
     EnginePy Open(const std::string &name, const int openMode);
 
 private:
+    const bool m_DebugMode;
     /**
-     *  Extra map needed as Variables are not created in ADIOS at
-     *  DefineVariable, but until Write when type is known from numpy
+     *  Placeholder map needed as Variables are not created in ADIOS at
+     *  DefineVariable, but until Put when type is known from numpy
      */
-    std::map<std::string, VariablePy> m_Variables;
+    std::map<std::string, VariableBase> m_VariablesPlaceholder;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* BINDINGS_PYTHON_SOURCE_IOPY_H_ */

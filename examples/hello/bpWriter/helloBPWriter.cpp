@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 
     /** Application variable */
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<int> myInts = {0, -1, -2, -3, -4, -5, -6, -7, -8, -9};
     const std::size_t Nx = myFloats.size();
 
     try
@@ -36,26 +37,27 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+        // bpIO.SetParameters({{"Threads", "4"}});
 
-        /** global array : name, { shape (total) }, { start (local) }, { count
+        /** global array : name, { shape (total) }, { start (local) }, {
+         * count
          * (local) }, all are constant dimensions */
         adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
+        adios2::Variable<int> &bpInts = bpIO.DefineVariable<int>(
+            "bpInts", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios2::OpenMode::Write);
+        adios2::Engine &bpFileWriter =
+            bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
 
-        if (!bpWriter)
-        {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
-        }
-
-        /** Write variable for buffering */
-        bpWriter->Write<float>(bpFloats, myFloats.data());
+        /** Put variables for buffering, template type is optional */
+        bpFileWriter.PutSync<float>(bpFloats, myFloats.data());
+        bpFileWriter.PutSync(bpInts, myInts.data());
 
         /** Create bp file, engine becomes unreachable after this*/
-        bpWriter->Close();
+        bpFileWriter.Close();
     }
     catch (std::invalid_argument &e)
     {
@@ -65,9 +67,9 @@ int main(int argc, char *argv[])
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM "
+                     "from rank "
+                  << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

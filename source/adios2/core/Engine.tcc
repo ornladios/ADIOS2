@@ -13,164 +13,143 @@
 
 #include "Engine.h"
 
+#include <stdexcept>
+
+#include "adios2/helper/adiosFunctions.h" // IsLvalue
+
 namespace adios2
 {
 
-template <class T>
-void Engine::Write(Variable<T> &variable, const T *values)
-{
-    if (m_DebugMode)
-    {
-        variable.CheckDimsBeforeWrite("Write " + variable.m_Name);
+// Put
+#define declare_launch_mode(L)                                                 \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Put##L(Variable<T> &variable, const T *data)                  \
+    {                                                                          \
+        if (m_DebugMode)                                                       \
+        {                                                                      \
+            if (&variable == nullptr)                                          \
+            {                                                                  \
+                throw std::invalid_argument(                                   \
+                    "ERROR: variable reference is "                            \
+                    "undefined, is good practice to check if "                 \
+                    "IO::InquireVariable(name) is nullptr first "              \
+                    ", in call to Put" +                                       \
+                    std::string(#L) + "\n");                                   \
+            }                                                                  \
+                                                                               \
+            variable.CheckDimensions("Put" + std::string(#L));                 \
+                                                                               \
+            if (data == nullptr)                                               \
+            {                                                                  \
+                throw std::invalid_argument(                                   \
+                    "ERROR: found null pointer for Variable " +                \
+                    variable.m_Name + ", in call to Put" + std::string(#L) +   \
+                    "\n");                                                     \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        DoPut##L(variable, data);                                              \
+    }                                                                          \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Put##L(const std::string &variableName, const T *data)        \
+    {                                                                          \
+        Put##L(FindVariable<T>(variableName), data);                           \
+    }                                                                          \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Put##L(Variable<T> &variable)                                 \
+    {                                                                          \
+        Put##L(variable, variable.GetData());                                  \
+    }                                                                          \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Put##L(Variable<T> &variable, const T &value)                 \
+    {                                                                          \
+        const T valueLocal = value;                                            \
+        Put##L(variable, &valueLocal);                                         \
+    }                                                                          \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Put##L(const std::string &variableName, const T &value)       \
+    {                                                                          \
+        Put##L(FindVariable<T>(variableName), value);                          \
     }
+ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
+#undef declare_launch_mode
 
-    DoWrite(variable, values);
-}
+// Get
+#define declare_launch_mode(L)                                                 \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Get##L(Variable<T> &variable, T *data)                        \
+    {                                                                          \
+        if (m_DebugMode)                                                       \
+        {                                                                      \
+            if (&variable == nullptr)                                          \
+            {                                                                  \
+                throw std::invalid_argument(                                   \
+                    "ERROR: variable reference is "                            \
+                    "undefined, is good practice to check if "                 \
+                    "IO::InquireVariable(name) is nullptr first, in call to "  \
+                    "Get" +                                                    \
+                    std::string(#L) + "\n");                                   \
+            }                                                                  \
+            variable.CheckDimensions("Get" + std::string(#L));                 \
+                                                                               \
+            if (data == nullptr)                                               \
+            {                                                                  \
+                throw std::invalid_argument(                                   \
+                    "ERROR: found null pointer for Variable " +                \
+                    variable.m_Name + ", in call to Get" + std::string(#L) +   \
+                    "\n");                                                     \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        DoGet##L(variable, data);                                              \
+    }                                                                          \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Get##L(const std::string &variableName, T *data)              \
+    {                                                                          \
+        Get##L(FindVariable<T>(variableName), data);                           \
+    }                                                                          \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Get##L(Variable<T> &variable)                                 \
+    {                                                                          \
+        Get##L(variable, variable.GetData());                                  \
+    }                                                                          \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Get##L(Variable<T> &variable, T &value)                       \
+    {                                                                          \
+        Get##L(variable, &value);                                              \
+    }                                                                          \
+                                                                               \
+    template <class T>                                                         \
+    void Engine::Get##L(const std::string &variableName, T &value)             \
+    {                                                                          \
+        Get##L(FindVariable<T>(variableName), value);                          \
+    }
+ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
+#undef declare_launch_mode
 
+// PRIVATE
 template <class T>
-void Engine::Write(Variable<T> &variable, const T values)
+Variable<T> &Engine::FindVariable(const std::string &variableName)
 {
-    const T val = values; // need an address for memory copy
-    Write(variable, &values);
+    Variable<T> *variable = m_IO.InquireVariable<T>(variableName);
+    if (m_DebugMode && variable == nullptr)
+    {
+        throw std::invalid_argument("ERROR: Variable " + variableName +
+                                    " not found in IO " + m_IO.m_Name +
+                                    ", in call to Put Synch\n");
+    }
+    return *variable;
 }
 
-template <class T>
-void Engine::Write(const std::string &variableName, const T *values)
-{
-    Write(m_IO.GetVariable<T>(variableName), values);
-}
-
-template <class T>
-void Engine::Write(const std::string &variableName, const T values)
-{
-    const T val = values; // need an address for memory copy
-    Write(m_IO.GetVariable<T>(variableName), &values);
-}
-
-template <>
-Variable<char> *Engine::InquireVariable<char>(const std::string &variableName,
-                                              const bool readIn)
-{
-    return InquireVariableChar(variableName, readIn);
-}
-
-template <>
-Variable<unsigned char> *
-Engine::InquireVariable<unsigned char>(const std::string &variableName,
-                                       const bool readIn)
-{
-    return InquireVariableUChar(variableName, readIn);
-}
-
-template <>
-Variable<short> *Engine::InquireVariable<short>(const std::string &variableName,
-                                                const bool readIn)
-{
-    return InquireVariableShort(variableName, readIn);
-}
-
-template <>
-Variable<unsigned short> *
-Engine::InquireVariable<unsigned short>(const std::string &variableName,
-                                        const bool readIn)
-{
-    return InquireVariableUShort(variableName, readIn);
-}
-
-template <>
-Variable<int> *Engine::InquireVariable<int>(const std::string &variableName,
-                                            const bool readIn)
-{
-    return InquireVariableInt(variableName, readIn);
-}
-
-template <>
-Variable<unsigned int> *
-Engine::InquireVariable<unsigned int>(const std::string &variableName,
-                                      const bool readIn)
-{
-    return InquireVariableUInt(variableName, readIn);
-}
-
-template <>
-Variable<long int> *
-Engine::InquireVariable<long int>(const std::string &variableName,
-                                  const bool readIn)
-{
-    return InquireVariableLInt(variableName, readIn);
-}
-
-template <>
-Variable<long long int> *
-Engine::InquireVariable<long long int>(const std::string &variableName,
-                                       const bool readIn)
-{
-    return InquireVariableLLInt(variableName, readIn);
-}
-
-template <>
-Variable<unsigned long int> *
-Engine::InquireVariable<unsigned long int>(const std::string &variableName,
-                                           const bool readIn)
-{
-    return InquireVariableULInt(variableName, readIn);
-}
-
-template <>
-Variable<unsigned long long int> *
-Engine::InquireVariable<unsigned long long int>(const std::string &variableName,
-                                                const bool readIn)
-{
-    return InquireVariableULLInt(variableName, readIn);
-}
-
-template <>
-Variable<float> *Engine::InquireVariable<float>(const std::string &variableName,
-                                                const bool readIn)
-{
-    return InquireVariableFloat(variableName, readIn);
-}
-
-template <>
-Variable<double> *
-Engine::InquireVariable<double>(const std::string &variableName,
-                                const bool readIn)
-{
-    return InquireVariableDouble(variableName, readIn);
-}
-
-template <>
-Variable<long double> *
-Engine::InquireVariable<long double>(const std::string &variableName,
-                                     const bool readIn)
-{
-    return InquireVariableLDouble(variableName, readIn);
-}
-
-template <>
-Variable<cfloat> *
-Engine::InquireVariable<cfloat>(const std::string &variableName,
-                                const bool readIn)
-{
-    return InquireVariableCFloat(variableName, readIn);
-}
-
-template <>
-Variable<cdouble> *
-Engine::InquireVariable<cdouble>(const std::string &variableName,
-                                 const bool readIn)
-{
-    return InquireVariableCDouble(variableName, readIn);
-}
-
-template <>
-Variable<cldouble> *
-Engine::InquireVariable<cldouble>(const std::string &variableName,
-                                  const bool readIn)
-{
-    return InquireVariableCLDouble(variableName, readIn);
-}
-
-} // end namespace adios
+} // end namespace adios2
 
 #endif /** ADIOS2_CORE_ENGINE_TCC_ */

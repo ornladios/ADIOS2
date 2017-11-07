@@ -37,12 +37,12 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
                      io.DefineAttribute<std::string>(name, "0"),
                  std::invalid_argument);
 
-    EXPECT_THROW(auto &attributeString2 =
-                     io.GetAttribute<std::string>("NoExistingAttribute"),
-                 std::invalid_argument);
+    auto *attributeString2 =
+        io.InquireAttribute<std::string>("NoExistingAttribute");
+    EXPECT_EQ(attributeString2, nullptr);
 
-    EXPECT_NO_THROW(auto &attributeString3 =
-                        io.GetAttribute<std::string>(name));
+    auto *attributeString3 = io.InquireAttribute<std::string>(name);
+    EXPECT_NE(attributeString3, nullptr);
 }
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
@@ -415,17 +415,17 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
                                    numberOfElements);
     }
 
-    auto &attributeS3 = io.GetAttribute<std::string>(s3_Single);
-    auto &attributeI8 = io.GetAttribute<int8_t>(i8_Single);
-    auto &attributeI16 = io.GetAttribute<int16_t>(i16_Single);
-    auto &attributeI32 = io.GetAttribute<int32_t>(i32_Single);
-    auto &attributeI64 = io.GetAttribute<int64_t>(i64_Single);
-    auto &attributeU8 = io.GetAttribute<uint8_t>(i8_Single);
-    auto &attributeU16 = io.GetAttribute<uint16_t>(i16_Single);
-    auto &attributeU32 = io.GetAttribute<uint32_t>(i32_Single);
-    auto &attributeU64 = io.GetAttribute<uint64_t>(i64_Single);
-    auto &attributeFloat = io.GetAttribute<float>(float_Single);
-    auto &attributeDouble = io.GetAttribute<double>(double_Single);
+    auto &attributeS3 = *io.InquireAttribute<std::string>(s3_Single);
+    auto &attributeI8 = *io.InquireAttribute<int8_t>(i8_Single);
+    auto &attributeI16 = *io.InquireAttribute<int16_t>(i16_Single);
+    auto &attributeI32 = *io.InquireAttribute<int32_t>(i32_Single);
+    auto &attributeI64 = *io.InquireAttribute<int64_t>(i64_Single);
+    auto &attributeU8 = *io.InquireAttribute<uint8_t>(u8_Single);
+    auto &attributeU16 = *io.InquireAttribute<uint16_t>(u16_Single);
+    auto &attributeU32 = *io.InquireAttribute<uint32_t>(u32_Single);
+    auto &attributeU64 = *io.InquireAttribute<uint64_t>(u64_Single);
+    auto &attributeFloat = *io.InquireAttribute<float>(float_Single);
+    auto &attributeDouble = *io.InquireAttribute<double>(double_Single);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(attributeS3),

@@ -10,21 +10,22 @@
 
 #include "adiosMath.h"
 
+#include <algorithm> //std::transform
 #include <cmath>
+#include <functional> //std::minus<T>
+#include <iterator>   //std::back_inserter
+#include <numeric>    //std::accumulate
+#include <utility>    //std::pair
+
+#include "adios2/helper/adiosString.h" //DimsToString
 
 namespace adios2
 {
 
 size_t GetTotalSize(const Dims &dimensions) noexcept
 {
-    size_t product = 1;
-
-    for (const auto dimension : dimensions)
-    {
-        product *= dimension;
-    }
-
-    return product;
+    return std::accumulate(dimensions.begin(), dimensions.end(), 1,
+                           std::multiplies<size_t>());
 }
 
 bool CheckIndexRange(const int index, const int upperLimit,
@@ -59,4 +60,146 @@ size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
     return nextExponentialSize;
 }
 
-} // end namespace adios
+Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept
+{
+    Box<Dims> box;
+    box.first = start;
+    const size_t size = start.size();
+    box.second.reserve(size);
+
+    for (size_t d = 0; d < size; ++d)
+    {
+        box.second.push_back(start[d] + count[d] - 1); // end inclusive
+    }
+
+    return box;
+}
+
+Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept
+{
+    Box<Dims> box;
+    box.first = start;
+    const size_t size = start.size();
+    box.second.reserve(size);
+
+    for (size_t d = 0; d < size; ++d)
+    {
+        box.second.push_back(end[d] - start[d] + 1); // end inclusive
+    }
+
+    return box;
+}
+
+Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
+{
+    Box<Dims> intersectionBox;
+    const size_t dimensionsSize = box1.first.size();
+
+    for (size_t d = 0; d < dimensionsSize; ++d)
+    {
+        // Don't intercept
+        if (box2.first[d] >= box1.second[d] || box2.second[d] <= box1.first[d])
+        {
+            return intersectionBox;
+        }
+    }
+
+    // get the intersection box
+    intersectionBox.first.reserve(dimensionsSize);
+    intersectionBox.second.reserve(dimensionsSize);
+
+    for (size_t d = 0; d < dimensionsSize; ++d)
+    {
+        // start
+        if (box1.first[d] < box2.first[d])
+        {
+            intersectionBox.first.push_back(box2.first[d]);
+        }
+        else
+        {
+            intersectionBox.first.push_back(box1.first[d]);
+        }
+
+        // end, must be inclusive
+        if (box1.second[d] > box2.second[d])
+        {
+            intersectionBox.second.push_back(box2.second[d]);
+        }
+        else
+        {
+            intersectionBox.second.push_back(box1.second[d]);
+        }
+    }
+
+    return intersectionBox;
+}
+
+size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
+                   const bool isRowMajor, const bool isZeroIndex) noexcept
+{
+    auto lf_RowZero = [](const Dims &count,
+                         const Dims &normalizedPoint) -> size_t {
+
+        const size_t countSize = count.size();
+        size_t linearIndex = 0;
+        size_t product = std::accumulate(count.begin() + 1, count.end(), 1,
+                                         std::multiplies<size_t>());
+
+        for (size_t p = 0; p < countSize - 1; ++p)
+        {
+            linearIndex += normalizedPoint[p] * product;
+            product /= count[p + 1];
+        }
+        linearIndex += normalizedPoint[countSize - 1]; // fastest
+        return linearIndex;
+    };
+
+    auto lf_ColumnOne = [](const Dims &count,
+                           const Dims &normalizedPoint) -> size_t {
+
+        const size_t countSize = count.size();
+        size_t linearIndex = 0;
+        size_t product = std::accumulate(count.begin(), count.end() - 1, 1,
+                                         std::multiplies<size_t>());
+
+        for (size_t p = 1; p < countSize; ++p)
+        {
+            linearIndex += (normalizedPoint[countSize - p] - 1) * product;
+            product /= count[countSize - p];
+        }
+        linearIndex += (normalizedPoint[0] - 1); // fastest
+        return linearIndex;
+    };
+
+    const Box<Dims> localBoxStartCount =
+        StartCountBox(localBox.first, localBox.second);
+
+    const Dims &start = localBoxStartCount.first;
+    const Dims &count = localBoxStartCount.second;
+
+    if (count.size() == 1)
+    {
+        return (point[0] - start[0]);
+    }
+
+    // normalize the point
+    Dims normalizedPoint;
+    normalizedPoint.reserve(point.size());
+    std::transform(point.begin(), point.end(), start.begin(),
+                   std::back_inserter(normalizedPoint), std::minus<size_t>());
+
+    size_t linearIndex = MaxSizeT - 1;
+
+    if (isRowMajor && isZeroIndex)
+    {
+        linearIndex = lf_RowZero(count, normalizedPoint);
+    }
+    else if (!isRowMajor && !isZeroIndex)
+    {
+        linearIndex = lf_ColumnOne(count, normalizedPoint);
+    }
+
+    return linearIndex;
+}
+
+} // end namespace adios2

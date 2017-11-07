@@ -28,7 +28,6 @@ namespace adios2
  * @return true: directory exists, false: failed to create or access directory
  */
 bool CreateDirectory(const std::string &fullPath) noexcept;
-
 /**
  * Check if system is little endian
  * @return true: little endian, false: big endian

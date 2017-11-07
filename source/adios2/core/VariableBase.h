@@ -13,6 +13,7 @@
 #define ADIOS2_CORE_VARIABLEBASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <adios2/core/Operator.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -20,8 +21,6 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/core/SelectionBoundingBox.h"
-#include "adios2/core/Transform.h"
 
 namespace adios2
 {
@@ -30,6 +29,17 @@ class VariableBase
 {
 
 public:
+    /** Operators metadata info */
+    struct OperatorInfo
+    {
+        /** reference to object derived from Operator class */
+        Operator &ADIOSOperator;
+        /** Variable specific parameters */
+        Params Parameters;
+        /** resulting sizes from Operator */
+        Dims Sizes;
+    };
+
     /** unique identifier inside Method that creates a Variable */
     const std::string m_Name;
 
@@ -47,20 +57,31 @@ public:
     Dims m_Start; ///< starting point (offsets) in global shape
     Dims m_Count; ///< dimensions from m_Start in global shape
 
-    Dims m_MemoryStart; ///< offset of memory selection
-    Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)
-
-    /** Read from this step (must be 0 in staging) */
-    unsigned int m_ReadFromStep = 0;
-    /** Read this many steps at once (must be 1 in staging) */
-    unsigned int m_ReadNSteps = 1;
     /** Global array was written as Joined array, so read accordingly */
     bool m_ReadAsJoined = false;
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
-    /** number of steps available in a file (or 1 in staging) filled by
-     * InquireVariable*/
-    unsigned int m_AvailableSteps = 1;
+
+    /** Registered transforms */
+    std::vector<OperatorInfo> m_OperatorsInfo;
+
+    size_t m_AvailableStepsStart = 1;
+    size_t m_AvailableStepsCount = 0;
+
+    size_t m_StepsStart = 1;
+    size_t m_StepsCount = 1;
+
+    /** Index Metadata Position in a serial metadata buffer */
+    size_t m_IndexStart;
+
+    /** Index to Step and Subsets inside a step characteristics position in a
+     * serial metadata buffer
+     * <pre>
+     * key: step number (time_index in bp3 format)
+     * value:  vector of block starts for that step
+     * </pre>
+     * */
+    std::map<size_t, std::vector<size_t>> m_IndexStepBlockStarts;
 
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
@@ -73,7 +94,7 @@ public:
      * Returns the payload size in bytes
      * @return TotalSize * m_ElementSize
      */
-    size_t PayLoadSize() const noexcept;
+    size_t PayloadSize() const noexcept;
 
     /**
      * Returns the total number of elements
@@ -81,29 +102,27 @@ public:
      */
     size_t TotalSize() const noexcept;
 
-    /** Set the local dimension and global offset of the variable */
-    void SetSelection(const Dims &start, const Dims &count);
+    /** Set Dims and Time start and count */
+    void SetSelection(const Box<Dims> &boxDims);
 
-    /** Overloaded version of SetSelection using a SelectionBoundingBox */
-    void SetSelection(const SelectionBoundingBox &selection);
+    /**
+     * Set the steps for the variable. The pointer passed at
+     * reading must be able to hold enough memory to store multiple steps in a
+     * single read. For writing it changes the time step
+     * @param boxSteps {startStep, countStep}
+     */
+    void SetStepSelection(const Box<size_t> &boxSteps);
 
     /**
      * Set the local dimension and global offset of the variable using a
      * selection
      * Only bounding boxes are allowed
      */
-    void SetMemorySelection(const SelectionBoundingBox &selection);
+    void SetMemorySelection(const Box<Dims> &boxDims);
 
-    /**
-     * Set the steps for the variable to read from. The pointer passed at
-     * reading must be able to hold enough memory to store multiple steps in a
-     * single read.
-     * @param startStep  The first step to read. Steps start from 0
-     * @param countStep    Number of consecutive steps to read at once.
-     *
-     */
-    void SetStepSelection(const unsigned int startStep,
-                          const unsigned int countStep);
+    size_t GetAvailableStepsStart() const;
+
+    size_t GetAvailableStepsCount() const;
 
     /**
      * Pushed a new transform to a sequence of transports
@@ -111,47 +130,42 @@ public:
      * @param parameters transform specific parameters
      * @return transformID handler
      */
-    unsigned int AddTransform(Transform &transform,
+    unsigned int AddTransform(Operator &transform,
                               const Params &parameters = Params()) noexcept;
 
     void ResetTransformParameters(const unsigned int transformIndex,
                                   const Params &parameters = Params());
 
     /** Clears out the transform sequence defined by AddTransform */
-    void ClearTransforms() noexcept;
-
-    /** Apply current sequence of transforms defined by AddTransform */
-    virtual void ApplyTransforms() = 0;
-
-    /** Transforms metadata info */
-    struct TransformInfo
-    {
-        /** reference to object derived from Transform class */
-        Transform &Operator;
-        /** parameters from AddTransform */
-        Params Parameters;
-        /** resulting sizes from transformation */
-        Dims Sizes;
-    };
-
-    /** Registered transforms */
-    std::vector<TransformInfo> m_TransformsInfo;
-
-    /** Self-check dims according to type, called right after DefineVariable and
-     * SetSelection.
-     * @param hint extra debugging info for the exception */
-    void CheckDimsCommon(const std::string hint) const;
+    void ClearOperators() noexcept;
 
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */
-    void CheckDimsBeforeWrite(const std::string hint) const;
+    void CheckDimensions(const std::string hint) const;
 
-private:
+    /**
+     * Returns the minimum required allocation for the current selection
+     * @return memory size to be allocated by a pointer/vector to read this
+     * variable
+     */
+    size_t GetElementsSize() const;
+
+protected:
     const bool m_DebugMode = false;
 
+    Dims m_MemoryStart; ///< offset of memory selection
+    Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)
+
+    unsigned int m_DeferredCounter = 0;
+
     void InitShapeType();
+
+    /** Self-check dims according to type, called right after DefineVariable and
+     *  SetSelection.
+     * @param hint extra debugging info for the exception */
+    void CheckDimensionsCommon(const std::string hint) const;
 };
 
-} // end namespace
+} // end namespace adios2
 
 #endif /* ADIOS2_CORE_VARIABLEBASE_H_ */

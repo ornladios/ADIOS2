@@ -30,13 +30,14 @@ class TransportMan
 {
 
 public:
-    /** contains all transports from IO AddTransport
+    /**
+     * Contains all transports
      * <pre>
-     * key : unique id from IO AddTransport
-     * value : obejct derived from Transport.h class
+     * key : unique id
+     * value : object derived from Transport base class
      * </pre>
      */
-    std::vector<std::shared_ptr<Transport>> m_Transports;
+    std::unordered_map<size_t, std::shared_ptr<Transport>> m_Transports;
 
     /**
      * Unique base constructor
@@ -55,14 +56,18 @@ public:
      * @param parametersVector from IO
      * @param profile
      */
-    void OpenFiles(const std::vector<std::string> &baseNames,
-                   const std::vector<std::string> &names,
-                   const OpenMode openMode,
+    void OpenFiles(const std::vector<std::string> &fileNames,
+                   const Mode openMode,
                    const std::vector<Params> &parametersVector,
                    const bool profile);
 
+    void OpenFileID(const std::string &name, const unsigned int id,
+                    const Mode openMode, const Params &parameters,
+                    const bool profile);
+
     /**
-     * Gets each transport base name from either baseName at Open or name key in
+     * Gets each transport base name from either baseName at Open or name
+     * key in
      * parameters
      * Checks if transport name rules IO AddTransport have unique names for
      * every type (for now)
@@ -74,13 +79,6 @@ public:
     std::vector<std::string>
     GetFilesBaseNames(const std::string &baseName,
                       const std::vector<Params> &parametersVector) const;
-
-    /**
-     * Checks if index is in range
-     * @param index input to be checked against m_Transports range or it's -1
-     * @param true: in range, false: out of range
-     */
-    bool CheckTransportIndex(const int index) const noexcept;
 
     /**
      * m_Type from m_Transports based on derived classes of Transport
@@ -103,6 +101,18 @@ public:
     void WriteFiles(const char *buffer, const size_t size,
                     const int transportIndex = -1);
 
+    size_t GetFileSize(const size_t transportIndex = 0) const;
+
+    /**
+     * Read contents from a single file and assign it to buffer
+     * @param buffer
+     * @param size
+     * @param start
+     * @param transportIndex
+     */
+    void ReadFile(char *buffer, const size_t size, const size_t start = 0,
+                  const size_t transportIndex = 0);
+
     /**
      * Close file or files depending on transport index. Throws an exception
      * if transport is not a file when transportIndex > -1.
@@ -117,11 +127,18 @@ protected:
     MPI_Comm m_MPIComm;
     const bool m_DebugMode = false;
 
-    void OpenFileTransport(const std::string &fileName, const OpenMode openMode,
-                           const Params &parameters, const bool profile);
+    std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName,
+                                                 const Mode openMode,
+                                                 const Params &parameters,
+                                                 const bool profile);
+
+    void CheckFile(
+        std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
+            itTransport,
+        const std::string hint) const;
 };
 
 } // end namespace transport
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_ */

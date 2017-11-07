@@ -29,6 +29,7 @@
 #include <cinttypes>
 #include <cstdio>
 #include <cstring>
+#include <numeric>
 
 #include <chrono>
 #include <string>
@@ -110,9 +111,9 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 {
     int ier = MPI_SUCCESS;
     size_t n = 0, nsent = 0, nrecv = 0;
-    if (!sendbuf || !recvbuf)
+    if (!sendbuf && !recvbuf)
     {
-        ier = MPI_ERR_BUFFER;
+        return ier;
     }
     if (comm == MPI_COMM_NULL || root)
     {
@@ -121,8 +122,20 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
     switch (sendtype)
     {
+    case MPI_CHAR:
+        n = sizeof(char);
+        break;
     case MPI_INT:
         n = sizeof(int);
+        break;
+    case MPI_UNSIGNED:
+        n = sizeof(unsigned int);
+        break;
+    case MPI_UNSIGNED_LONG:
+        n = sizeof(unsigned long);
+        break;
+    case MPI_UNSIGNED_LONG_LONG:
+        n = sizeof(unsigned long long);
         break;
     default:
         return MPI_ERR_TYPE;
@@ -131,8 +144,20 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
     switch (recvtype)
     {
+    case MPI_CHAR:
+        nrecv = sizeof(char);
+        break;
     case MPI_INT:
         nrecv = sizeof(int);
+        break;
+    case MPI_UNSIGNED:
+        nrecv = sizeof(unsigned int);
+        break;
+    case MPI_UNSIGNED_LONG:
+        nrecv = sizeof(unsigned long);
+        break;
+    case MPI_UNSIGNED_LONG_LONG:
+        nrecv = sizeof(unsigned long long);
         break;
     default:
         return MPI_ERR_TYPE;
@@ -157,21 +182,18 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 }
 
 int MPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                void *recvbuf, const int *recvcnts, const int *displs,
+                void *recvbuf, const int *recvcnts, const int * /*displs */,
                 MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
     int ier = MPI_SUCCESS;
-    if (!recvcnts || !displs)
+    if (*recvcnts != sendcnt)
     {
         ier = MPI_ERR_BUFFER;
+        return ier;
     }
 
-    if (ier == MPI_SUCCESS)
-    {
-        ier = MPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, *recvcnts,
-                         recvtype, root, comm);
-    }
-
+    ier = MPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, *recvcnts, recvtype,
+                     root, comm);
     return ier;
 }
 
@@ -382,5 +404,64 @@ int MPI_Get_processor_name(char *name, int *resultlen)
     return 0;
 }
 
+int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
+               MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
+{
+    int n = 0;
+    switch (datatype)
+    {
+    case MPI_CHAR:
+        if (op == MPI_SUM)
+        {
+            char *recvBuffer = reinterpret_cast<char *>(recvbuf);
+            const char *sendBuffer = reinterpret_cast<const char *>(sendbuf);
+            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
+        }
+        break;
+    case MPI_INT:
+        if (op == MPI_SUM)
+        {
+            int *recvBuffer = reinterpret_cast<int *>(recvbuf);
+            const int *sendBuffer = reinterpret_cast<const int *>(sendbuf);
+            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
+        }
+        break;
+    case MPI_UNSIGNED:
+        if (op == MPI_SUM)
+        {
+            unsigned int *recvBuffer =
+                reinterpret_cast<unsigned int *>(recvbuf);
+            const unsigned int *sendBuffer =
+                reinterpret_cast<const unsigned int *>(sendbuf);
+            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
+        }
+        break;
+    case MPI_UNSIGNED_LONG:
+        if (op == MPI_SUM)
+        {
+            unsigned long int *recvBuffer =
+                reinterpret_cast<unsigned long int *>(recvbuf);
+            const unsigned long int *sendBuffer =
+                reinterpret_cast<const unsigned long int *>(sendbuf);
+            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
+        }
+        break;
+    case MPI_UNSIGNED_LONG_LONG:
+        if (op == MPI_SUM)
+        {
+            unsigned long long int *recvBuffer =
+                reinterpret_cast<unsigned long long int *>(recvbuf);
+            const unsigned long long int *sendBuffer =
+                reinterpret_cast<const unsigned long long int *>(sendbuf);
+            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
+        }
+        break;
+    default:
+        return MPI_ERR_TYPE;
+    }
+
+    return 0;
+}
+
 } // end namespace mpi
-} // end namespace adios
+} // end namespace adios2

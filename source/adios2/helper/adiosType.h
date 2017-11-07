@@ -15,6 +15,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 /// \endcond
 
@@ -22,6 +23,29 @@
 
 namespace adios2
 {
+
+struct SubFileInfo
+{
+    /**  from characteristics, first = Start point, second =
+    End point of block of data */
+    Box<Dims> BlockBox;
+    Box<Dims> IntersectionBox; ///< first = Start point, second = End point
+    Box<size_t> Seeks;         ///< first = Start seek, second = End seek
+};
+
+/**
+ * Structure that contains the seek info per variable
+ * <pre>
+ *   key: subfile index
+ *   value: (map)
+ *     key: step
+ *     value: (vector)
+ *       index : block ID within step
+ *       value : file seek box: first = seekStart, second = seekCount
+ * </pre>
+ */
+using SubFileInfoMap =
+    std::map<size_t, std::map<size_t, std::vector<SubFileInfo>>>;
 
 /**
  * Gets type from template parameter T
@@ -105,9 +129,35 @@ size_t BytesFactor(const std::string units, const bool debugMode);
  * @param oneLetter if true returns a one letter version ("w", "a" or "r")
  * @return string with open mode
  */
-std::string OpenModeToString(const OpenMode openMode,
+std::string OpenModeToString(const Mode openMode,
                              const bool oneLetter = false) noexcept;
-}
+
+template <class T, class U>
+std::vector<U> NewVectorType(const std::vector<T> &in);
+
+template <class T, class U>
+std::vector<U> NewVectorTypeFromArray(const T *in, const size_t inSize);
+
+template <class T>
+constexpr bool IsLvalue(T &&);
+
+/**
+ * Inquire for existing key and return value in a map
+ * @param input contains key, value pairs
+ * @return if found: a pointer to value, else a nullptr
+ */
+template <class T, class U>
+U *InquireKey(const T &key, std::map<T, U> &input) noexcept;
+
+/**
+ * Inquire for existing key and return value in an unordered_map
+ * @param input contains key, value pairs
+ * @return if found: a pointer to value, else a nullptr
+ */
+template <class T, class U>
+U *InquireKey(const T &key, std::unordered_map<T, U> &input) noexcept;
+
+} // end namespace adios2
 
 #include "adiosType.inl"
 

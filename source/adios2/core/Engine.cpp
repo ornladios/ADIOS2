@@ -11,144 +11,150 @@
 #include "Engine.h"
 #include "Engine.tcc"
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <ios> //std::ios_base::failure
-#include <set>
-/// \endcond
-
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include <stdexcept>
 
 namespace adios2
 {
 
 Engine::Engine(const std::string engineType, IO &io, const std::string &name,
-               const OpenMode openMode, MPI_Comm mpiComm)
+               const Mode openMode, MPI_Comm mpiComm)
 : m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode),
   m_MPIComm(mpiComm), m_DebugMode(io.m_DebugMode)
 {
 }
 
-void Engine::SetCallBack(
-    std::function<void(const void *, std::string, std::string, std::string,
-                       std::vector<size_t>)>
-        callback)
+IO &Engine::GetIO() noexcept { return m_IO; }
+
+StepStatus Engine::BeginStep()
 {
-}
-
-void Engine::Write(VariableBase &variable, const void *values)
-{
-    DoWrite(variable.m_Name, values);
-}
-
-void Engine::Write(const std::string &variableName, const void *values)
-{
-    DoWrite(variableName, values);
-}
-
-void Engine::Advance(const float /*timeout_sec*/) {}
-void Engine::Advance(const AdvanceMode /*mode*/, const float /*timeout_sec*/) {}
-void Engine::AdvanceAsync(
-    AdvanceMode /*mode*/,
-    std::function<void(std::shared_ptr<adios2::Engine>)> /*callback*/)
-{
-}
-
-AdvanceStatus Engine::GetAdvanceStatus() { return m_AdvanceStatus; }
-
-void Engine::Close(const int /*transportIndex*/) {}
-
-// READ
-void Engine::Release() {}
-void Engine::PerformReads(ReadMode /*mode*/){};
-
-// PROTECTED
-void Engine::Init() {}
-
-void Engine::InitParameters() {}
-
-void Engine::InitTransports() {}
-
-// DoWrite
-#define declare_type(T)                                                        \
-    void Engine::DoWrite(Variable<T> &variable, const T *values)               \
-    {                                                                          \
-        ThrowUp("Write");                                                      \
-    }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
-void Engine::DoWrite(VariableCompound &variable, const void *values)
-{ // TODO
-}
-
-void Engine::DoWrite(const std::string &variableName, const void *values)
-{
-    const std::string type(m_IO.GetVariableType(variableName));
-    if (m_DebugMode)
+    if (m_OpenMode == Mode::Read)
     {
-        if (type.empty())
-        {
-            throw std::invalid_argument(
-                "ERROR: variable " + variableName +
-                " was not created with IO.DefineVariable for Engine " + m_Name +
-                ", in call to Write\n");
-        }
+        return BeginStep(StepMode::NextAvailable, 0.0f);
     }
+    else
+    {
+        return BeginStep(StepMode::Append, 0.0f);
+    }
+}
+
+StepStatus Engine::BeginStep(StepMode mode, const float timeoutSeconds)
+{
+    ThrowUp("BeginStep");
+    return StepStatus::OtherError;
+}
+void Engine::EndStep() { ThrowUp("EndStep"); }
+
+void Engine::PutSync(const std::string &variableName)
+{
+    const std::string type(m_IO.InquireVariableType(variableName));
 
     if (type == "compound")
     {
-        VariableCompound &variable = m_IO.GetVariableCompound(variableName);
-
-        if (m_DebugMode)
-        {
-            variable.CheckDimsBeforeWrite("Write " + variable.m_Name);
-        }
-
-        DoWrite(variable, values);
+        // not supported
     }
-#define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
     {                                                                          \
-        Variable<T> &variable = m_IO.GetVariable<T>(variableName);             \
-                                                                               \
-        if (m_DebugMode)                                                       \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        if (m_DebugMode && variable == nullptr)                                \
         {                                                                      \
-            variable.CheckDimsBeforeWrite("Write " + variable.m_Name);         \
+            throw std::invalid_argument("ERROR: variable " + variableName +    \
+                                        " not found, in call to PutSync\n");   \
         }                                                                      \
-                                                                               \
-        DoWrite(variable, reinterpret_cast<const T *>(values));                \
+        PutSync<T>(*variable);                                                 \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-} // end DoWrite
 
-// READ
-VariableBase *Engine::InquireVariableUnknown(const std::string &name,
-                                             const bool readIn)
-{
-    return nullptr;
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 }
 
-#define define(T, L)                                                           \
-    Variable<T> *Engine::InquireVariable##L(const std::string &name,           \
-                                            const bool readIn)                 \
-    {                                                                          \
-        return nullptr;                                                        \
-    }
-ADIOS2_FOREACH_TYPE_2ARGS(define)
-#undef define
+void Engine::PutDeferred(const std::string &variableName)
+{
+    const std::string type(m_IO.InquireVariableType(variableName));
 
-#define declare_type(T)                                                        \
-    void Engine::DoScheduleRead(Variable<T> &variable, const T *values)        \
-    {                                                                          \
-        ThrowUp("ScheduleRead");                                               \
-    }                                                                          \
-                                                                               \
-    void Engine::DoScheduleRead(const std::string &variableName,               \
-                                const T *values)                               \
-    {                                                                          \
-        ThrowUp("ScheduleRead");                                               \
+    if (type == "compound")
+    {
+        // not supported
     }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        if (m_DebugMode && variable == nullptr)                                \
+        {                                                                      \
+            throw std::invalid_argument("ERROR: variable " + variableName +    \
+                                        " not found, in call to PutSync\n");   \
+        }                                                                      \
+        PutDeferred<T>(*variable);                                             \
+    }
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void Engine::PerformPuts() { ThrowUp("PerformPuts"); }
+void Engine::PerformGets() { ThrowUp("PerformGets"); }
+
+void Engine::WriteStep()
+{
+    BeginStep();
+
+    const auto &variablesDataMap = m_IO.GetVariablesDataMap();
+    for (const auto &variablePair : variablesDataMap)
+    {
+        const std::string variableName(variablePair.first);
+        const std::string type(variablePair.second.first);
+
+        if (type == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        if (variable->GetData() != nullptr)                                    \
+        {                                                                      \
+            PutDeferred<T>(*variable, variable->GetData());                    \
+        }                                                                      \
+    }
+
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+    PerformPuts();
+    EndStep();
+}
+void Engine::ReadStep() { ThrowUp("ReadStep"); }
+
+// PROTECTED
+void Engine::Init() {}
+void Engine::InitParameters() {}
+void Engine::InitTransports() {}
+
+// Put
+#define declare_type(T)                                                        \
+    void Engine::DoPutSync(Variable<T> &, const T *) { ThrowUp("DoPutSync"); } \
+    void Engine::DoPutDeferred(Variable<T> &, const T *)                       \
+    {                                                                          \
+        ThrowUp("DoPutDeferred");                                              \
+    }                                                                          \
+    void Engine::DoPutDeferred(Variable<T> &, const T &)                       \
+    {                                                                          \
+        ThrowUp("DoPutDeferred");                                              \
+    };
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+// Get
+#define declare_type(T)                                                        \
+    void Engine::DoGetSync(Variable<T> &, T *) { ThrowUp("DoGetSync"); }       \
+    void Engine::DoGetDeferred(Variable<T> &, T *)                             \
+    {                                                                          \
+        ThrowUp("DoGetDeferred");                                              \
+    }                                                                          \
+    void Engine::DoGetDeferred(Variable<T> &, T &) { ThrowUp("DoGetDeferred"); }
+
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -160,12 +166,33 @@ void Engine::ThrowUp(const std::string function) const
                                 "\n");
 }
 
+// PUBLIC TEMPLATE FUNCTIONS EXPANSION WITH SCOPED TYPES
 #define declare_template_instantiation(T)                                      \
-    template void Engine::Write<T>(Variable<T> &, const T *);                  \
-    template void Engine::Write<T>(Variable<T> &, const T);                    \
+    template void Engine::PutSync<T>(Variable<T> &);                           \
+    template void Engine::PutDeferred<T>(Variable<T> &);                       \
                                                                                \
-    template void Engine::Write<T>(const std::string &, const T *);            \
-    template void Engine::Write<T>(const std::string &, const T);
+    template void Engine::PutSync<T>(Variable<T> &, const T *);                \
+    template void Engine::PutDeferred<T>(Variable<T> &, const T *);            \
+    template void Engine::PutSync<T>(const std::string &, const T *);          \
+    template void Engine::PutDeferred<T>(const std::string &, const T *);      \
+                                                                               \
+    template void Engine::PutSync<T>(Variable<T> &, const T &);                \
+    template void Engine::PutDeferred<T>(Variable<T> &, const T &);            \
+    template void Engine::PutSync<T>(const std::string &, const T &);          \
+    template void Engine::PutDeferred<T>(const std::string &, const T &);      \
+                                                                               \
+    template void Engine::GetSync<T>(Variable<T> &);                           \
+    template void Engine::GetDeferred<T>(Variable<T> &);                       \
+                                                                               \
+    template void Engine::GetSync<T>(Variable<T> &, T *);                      \
+    template void Engine::GetDeferred<T>(Variable<T> &, T *);                  \
+    template void Engine::GetSync<T>(const std::string &, T *);                \
+    template void Engine::GetDeferred<T>(const std::string &, T *);            \
+                                                                               \
+    template void Engine::GetSync<T>(Variable<T> &, T &);                      \
+    template void Engine::GetDeferred<T>(Variable<T> &, T &);                  \
+    template void Engine::GetSync<T>(const std::string &, T &);                \
+    template void Engine::GetDeferred<T>(const std::string &, T &);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -34,7 +34,7 @@ program TestBPWriteTypes
         & shape_dims, start_dims, count_dims, adios2_constant_dims_true, ierr)
 
     ! Open myVector_f.bp in write mode, this launches an engine
-    call adios2_open(engine, io, "ftypes.bp", adios2_open_mode_write, ierr)
+    call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)
 
     ! Write myArray contents to bp buffer, based on var1 metadata
     call adios2_write(engine, variables(1), data_I8, ierr)

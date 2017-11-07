@@ -34,13 +34,13 @@ public:
 
     ~WANZmq();
 
-    void Open(const std::string &name, const OpenMode openMode) final;
+    void Open(const std::string &name, const Mode openMode) final;
 
     void SetBuffer(char *buffer, size_t size) final;
 
-    void Write(const char *buffer, size_t size) final;
+    void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
-    void Read(char *buffer, size_t size) final;
+    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
 
     void Flush() final;
 

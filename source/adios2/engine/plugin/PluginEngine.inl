@@ -23,7 +23,7 @@ template <typename T>
 void PluginEngine::RegisterPlugin(const std::string name)
 {
     EngineCreateFun createFun =
-        [](IO &io, const std::string &name, const OpenMode openMode,
+        [](IO &io, const std::string &name, const Mode openMode,
            MPI_Comm mpiComm) -> PluginEngineInterface * {
         return new T(io, name, openMode, mpiComm);
     };
@@ -31,6 +31,6 @@ void PluginEngine::RegisterPlugin(const std::string name)
 
     RegisterPlugin(name, createFun, destroyFun);
 }
-}
+} // end namespace adios2
 
 #endif // ADIOS2_ENGINE_PLUGIN_ENGINE_INL_

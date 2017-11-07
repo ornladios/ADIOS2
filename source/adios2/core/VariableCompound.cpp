@@ -26,8 +26,6 @@ VariableCompound::VariableCompound(const std::string name,
 {
 }
 
-void VariableCompound::ApplyTransforms() {}
-
 #define declare_template_instantiation(T)                                      \
     template void VariableCompound::InsertMember<T>(const std::string,         \
                                                     const size_t);

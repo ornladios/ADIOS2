@@ -9,7 +9,6 @@
  *      Author: Chuck Atkins chuck.atkins@kitware.com
  *              Norbert Podhorszki pnorbert@ornl.gov
  *              William F Godoy godoywf@ornl.gov
- *
  */
 
 #ifndef ADIOS2_ADIOSTYPES_H_
@@ -24,6 +23,7 @@
 #include <map>
 #include <string>
 #include <type_traits>
+#include <utility> //std::pair
 #include <vector>
 /// \endcond
 
@@ -51,13 +51,18 @@ enum class IOMode
 };
 
 /** OpenMode in IO Open */
-enum class OpenMode
+enum class Mode
 {
     Undefined,
     Write,
     Read,
-    Append,
-    ReadWrite,
+    Append
+};
+
+enum Launch
+{
+    Sync = 0,
+    Deferred = 1,
 };
 
 enum class ReadMultiplexPattern
@@ -106,7 +111,7 @@ enum class ReadMode
     Blocking
 };
 
-enum class AdvanceMode
+enum class StepMode
 {
     Append,
     Update, // writer advance mode
@@ -114,10 +119,10 @@ enum class AdvanceMode
     LatestAvailable // reader advance mode
 };
 
-enum class AdvanceStatus
+enum class StepStatus
 {
     OK,
-    StepNotReady,
+    NotReady,
     EndOfStream,
     OtherError
 };
@@ -134,13 +139,34 @@ enum class TimeUnit
 /** Type of selection */
 enum class SelectionType
 {
-    BoundingBox, ///< Contiguous block of data defined by offsets and counts per
-                 /// dimension
+    BoundingBox, ///< Contiguous block of data defined by offsets and counts
+                 /// per dimension
     Points,      ///< List of individual points
     WriteBlock,  ///< Selection of an individual block written by a writer
                  /// process
     Auto         ///< Let the engine decide what to return
 };
+
+// Types
+using std::size_t;
+
+using std::int8_t;
+using std::int16_t;
+using std::int32_t;
+using std::int64_t;
+
+using std::uint8_t;
+using std::uint16_t;
+using std::uint32_t;
+using std::uint64_t;
+
+// Complex
+using cfloat = std::complex<float>;
+using cdouble = std::complex<double>;
+using cldouble = std::complex<long double>;
+
+// Limit
+constexpr size_t MaxSizeT = std::numeric_limits<size_t>::max();
 
 // adios defaults
 #ifdef _WIN32
@@ -152,19 +178,19 @@ const std::string DefaultTimeUnit("Microseconds");
 constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::Microseconds);
 
 /** default initial bp buffer size, 16Kb, in bytes */
-constexpr size_t DefaultInitialBufferSize(16 * 1024);
+constexpr size_t DefaultInitialBufferSize = 16 * 1024;
 
 /** default maximum bp buffer size, unlimited, in bytes.
  *  Needs to be studied for optimizing applications */
-constexpr size_t DefaultMaxBufferSize(std::numeric_limits<size_t>::max() - 1);
+constexpr size_t DefaultMaxBufferSize = MaxSizeT - 1;
 
 /** default buffer growth factor. Needs to be studied
  * for optimizing applications*/
-constexpr float DefaultBufferGrowthFactor(1.05f);
+constexpr float DefaultBufferGrowthFactor = 1.05f;
 
 /** default size for writing/reading files using POSIX/fstream/stdio write
  *  2Gb - 100Kb (tolerance)*/
-constexpr size_t DefaultMaxFileBatchSize(2147381248);
+constexpr size_t DefaultMaxFileBatchSize = 2147381248;
 
 constexpr char PathSeparator =
 #ifdef _WIN32
@@ -177,34 +203,17 @@ constexpr char PathSeparator =
 constexpr bool DebugON = true;
 constexpr bool DebugOFF = false;
 constexpr size_t UnknownDim = 0;
-constexpr size_t JoinedDim = std::numeric_limits<size_t>::max() - 1;
-constexpr size_t LocalValueDim = std::numeric_limits<size_t>::max() - 2;
-constexpr size_t IrregularDim = std::numeric_limits<size_t>::max() - 3;
+constexpr size_t JoinedDim = MaxSizeT - 1;
+constexpr size_t LocalValueDim = MaxSizeT - 2;
+constexpr size_t IrregularDim = MaxSizeT - 3;
 constexpr bool ConstantDims = true;
-constexpr bool ReadIn = true;
-
-using std::size_t;
 
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;
+using Steps = size_t;
 
-// Primitives
-// using schar = signed char;
-using std::int8_t;
-using std::int16_t;
-using std::int32_t;
-using std::int64_t;
-
-// using uchar = unsigned char;
-using std::uint8_t;
-using std::uint16_t;
-using std::uint32_t;
-using std::uint64_t;
-
-// Complex
-using cfloat = std::complex<float>;
-using cdouble = std::complex<double>;
-using cldouble = std::complex<long double>;
+template <class T>
+using Box = std::pair<T, T>;
 
 // Get a fixed width integer type from a size specification
 template <size_t Bytes, bool Signed>
@@ -253,7 +262,11 @@ struct FixedWidthInt<8, false>
 
 // Some core type information that may be useful at compile time
 template <typename T, typename Enable = void>
-struct TypeInfo;
+struct TypeInfo
+{
+    using IOType = T;
+    using ValueType = T;
+};
 
 template <typename T>
 struct TypeInfo<T, typename std::enable_if<std::is_integral<T>::value>::type>
@@ -279,6 +292,6 @@ struct TypeInfo<T, typename std::enable_if<std::is_same<
     using ValueType = typename T::value_type;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ADIOSTYPES_H_ */

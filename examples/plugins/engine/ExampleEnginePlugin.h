@@ -28,8 +28,8 @@ namespace adios2
 class ExampleEnginePlugin : public PluginEngineInterface
 {
 public:
-    ExampleEnginePlugin(IO &io, const std::string &name,
-                        const OpenMode openMode, MPI_Comm mpiComm);
+    ExampleEnginePlugin(IO &io, const std::string &name, const Mode openMode,
+                        MPI_Comm mpiComm);
     virtual ~ExampleEnginePlugin();
 
     void Close(const int transportIndex = -1) override;
@@ -38,10 +38,9 @@ protected:
     void Init() override;
 
 #define declare(T)                                                             \
-    void DoWrite(Variable<T> &variable, const T *values) override;
+    void DoPutSync(Variable<T> &variable, const T *values) override;
     ADIOS2_FOREACH_TYPE_1ARG(declare)
 #undef declare
-    void DoWrite(VariableCompound &variable, const void *values) override;
 
 private:
     std::ofstream m_Log;

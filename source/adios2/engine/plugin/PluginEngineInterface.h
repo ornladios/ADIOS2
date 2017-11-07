@@ -31,11 +31,11 @@ class PluginEngineInterface : public Engine
     friend class PluginEngine;
 
 public:
-    PluginEngineInterface(IO &io, const std::string &name,
-                          const OpenMode openMode, MPI_Comm mpiComm);
+    PluginEngineInterface(IO &io, const std::string &name, const Mode mode,
+                          MPI_Comm mpiComm);
     virtual ~PluginEngineInterface() = default;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_PLUGIN_PLUGINENGINEINTERFACE_H_ */

@@ -99,7 +99,38 @@ bool CheckIndexRange(const int index, const int upperLimit,
 size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
                            const float growthFactor) noexcept;
 
-} // end namespace adios
+/**
+ * Converts a start, count box into a [start, end[ box where end = start + count
+ * @param start
+ * @param count
+ * @return [start, end[ box
+ */
+Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept;
+
+Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
+
+/**
+ * Returns the intersection box { start, end } where end is inclusive from box1
+ * and box2
+ * @param box1 {start, end} input (end is exclusive)
+ * @param box2 {start, end} input (end is exclusive)
+ * @return empty if not interception, otherwise intersection box
+ */
+Box<Dims> IntersectionBox(const Box<Dims> &box1,
+                          const Box<Dims> &box2) noexcept;
+
+/**
+ * Get a linear index for a point inside a localBox
+ * @param localBox start and count
+ * @param point inside box
+ * @param isRowMajor
+ * @param isZeroIndex
+ * @return linear index for contiguous memory
+ */
+size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
+                   const bool isRowMajor, const bool isZeroIndex) noexcept;
+
+} // end namespace adios2
 
 #include "adiosMath.inl"
 

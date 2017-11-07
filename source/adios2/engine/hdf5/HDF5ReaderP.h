@@ -29,14 +29,14 @@ public:
      * @param mpiComm
      * @param method
      */
-    HDF5ReaderP(IO &adios, const std::string &name, const OpenMode openMode,
+    HDF5ReaderP(IO &adios, const std::string &name, const Mode mode,
                 MPI_Comm mpiComm);
 
     ~HDF5ReaderP();
 
     bool IsValid();
 
-    void Advance(const float timeoutSeconds = 0.0) final;
+    void EndStep() final;
 
     void Close(const int transportIndex = -1) final;
 

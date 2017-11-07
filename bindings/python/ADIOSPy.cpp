@@ -9,9 +9,6 @@
  */
 
 #include "ADIOSPy.h"
-
-#include "adiosPyTypes.h"
-
 #include "adios2/ADIOSMPI.h"
 
 namespace adios2
@@ -19,8 +16,8 @@ namespace adios2
 
 ADIOSPy::ADIOSPy(const std::string configFile, MPI_Comm mpiComm,
                  const bool debugMode)
-: m_DebugMode(debugMode),
-  m_ADIOS(std::make_shared<adios2::ADIOS>(configFile, mpiComm, debugMode))
+: m_DebugMode(debugMode), m_ADIOS(std::make_shared<adios2::ADIOS>(
+                              configFile, mpiComm, debugMode, "Python"))
 {
 }
 
@@ -43,4 +40,4 @@ IOPy ADIOSPy::DeclareIO(const std::string name)
     return IOPy(m_ADIOS->DeclareIO(name), m_DebugMode);
 }
 
-} // end namespace adios
+} // end namespace adios2

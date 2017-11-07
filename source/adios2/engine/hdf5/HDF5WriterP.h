@@ -33,12 +33,13 @@ public:
      * @param mpiComm
      * @param method
      */
-    HDF5WriterP(IO &io, const std::string &name, const OpenMode openMode,
+    HDF5WriterP(IO &io, const std::string &name, const Mode mode,
                 MPI_Comm mpiComm);
 
     ~HDF5WriterP();
 
-    void Advance(const float timeoutSeconds = 0.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    void EndStep() final;
 
     void Close(const int transportIndex = -1) final;
 
@@ -48,14 +49,14 @@ private:
     void Init();
 
 #define declare_type(T)                                                        \
-    void DoWrite(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &variable, const T *values) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>
-    void DoWriteCommon(Variable<T> &variable, const T *values);
+    void DoPutSyncCommon(Variable<T> &variable, const T *values);
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_HDF5_HDF5WRITERP_H__ */

@@ -15,21 +15,12 @@
 namespace adios2
 {
 
-DataManReader::DataManReader(IO &io, const std::string &name,
-                             const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("DataManReader", io, name, openMode, mpiComm), m_Man(mpiComm, true)
+DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
+                             MPI_Comm mpiComm)
+: Engine("DataManReader", io, name, mode, mpiComm), m_Man(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
-}
-
-void DataManReader::SetCallBack(
-    std::function<void(const void *, std::string, std::string, std::string,
-                       Dims)>
-        callback)
-{
-    m_CallBack = callback;
-    m_Man.SetCallback(callback);
 }
 
 void DataManReader::Close(const int transportIndex) {}
@@ -74,39 +65,21 @@ void DataManReader::Init()
             }
         };
 
-        auto is_number = [](const std::string &s) {
-            return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) {
-                                     return !std::isdigit(c);
-                                 }) == s.end();
-        };
+        // try not to hardcode these things...
+        // shouldn't these be coming from the user IO.m_TransportParameters?
+        // unless you assign defaults
+        unsigned int transportsSize = 1;
 
-        /*
-        json jmsg;
-        for (auto &i : m_IO.m_Parameters)
+        std::vector<Params> parameters(transportsSize);
+
+        for (unsigned int i = 0; i < parameters.size(); i++)
         {
-            if (is_number(i.second))
-            {
-                jmsg[i.first] = std::stoi(i.second);
-            }
-            else
-            {
-                jmsg[i.first] = i.second;
-            }
+            parameters[i]["type"] = "wan";
+            parameters[i]["transport"] = "zmq";
+            parameters[i]["name"] = "stream";
+            parameters[i]["ipaddress"] = "127.0.0.1";
         }
-        jmsg["stream_mode"] = "receiver";
-        */
-
-        int n_Transports = 1;
-        std::vector<Params> para(n_Transports);
-
-        for (unsigned int i = 0; i < para.size(); i++)
-        {
-            para[i]["type"] = "wan";
-            para[i]["transport"] = "zmq";
-            para[i]["name"] = "stream";
-            para[i]["ipaddress"] = "127.0.0.1";
-        }
-        m_Man.OpenWANTransports("zmq", adios2::OpenMode::Read, para, true);
+        m_Man.OpenWANTransports("zmq", Mode::Read, parameters, true);
 
         std::string methodType;
         int numChannels = 0;
@@ -119,4 +92,4 @@ void DataManReader::Init()
     }
 }
 
-} // end namespace adios
+} // end namespace adios2

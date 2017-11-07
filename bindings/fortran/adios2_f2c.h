@@ -39,15 +39,16 @@ void adios2_init_config_f2c_(adios2_ADIOS **adios, const char *config_file,
 void adios2_declare_io_f2c_(adios2_IO **io, adios2_ADIOS **adios,
                             const char *io_name, int *ierr);
 
-void adios2_set_param_f2c_(adios2_IO **io, const char *key, const char *value,
-                           int *ierr);
+void adios2_set_parameter_f2c_(adios2_IO **io, const char *key,
+                               const char *value, int *ierr);
 
 void adios2_add_transport_f2c_(int *transport_index, adios2_IO **io,
                                const char *transport_type, int *ierr);
 
-void adios2_set_transport_param_f2c_(adios2_IO **io, const int *transport_index,
-                                     const char *key, const char *value,
-                                     int *ierr);
+void adios2_set_transport_parameter_f2c_(adios2_IO **io,
+                                         const int *transport_index,
+                                         const char *key, const char *value,
+                                         int *ierr);
 
 void adios2_define_variable_f2c_(adios2_Variable **variable, adios2_IO **io,
                                  const char *variable_name, const int *type,

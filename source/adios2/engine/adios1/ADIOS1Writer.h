@@ -15,7 +15,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
-#include "adios2/toolkit/interop/adios1/ADIOS1Common.h"
+#include "adios2/toolkit/interop/adios1/ADIOS1CommonWrite.h"
 
 namespace adios2
 {
@@ -32,12 +32,14 @@ public:
      * @param method
      * @param debugMode
      */
-    ADIOS1Writer(IO &adios, const std::string &name, const OpenMode openMode,
+    ADIOS1Writer(IO &adios, const std::string &name, const Mode openMode,
                  MPI_Comm mpiComm);
 
     ~ADIOS1Writer() = default;
 
-    void Advance(const float timeoutSeconds = 0.) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    void PerformPuts() final;
+    void EndStep() final;
 
     /**
      * Closes a single transport or all transports
@@ -50,18 +52,19 @@ public:
     void Close(const int transportIndex = -1) final;
 
 private:
-    interop::ADIOS1Common m_ADIOS1;
+    interop::ADIOS1CommonWrite m_ADIOS1;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
 
 #define declare_type(T)                                                        \
-    void DoWrite(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &variable, const T *values) final;              \
+    void DoPutDeferred(Variable<T> &variable, const T *values) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_ADIOS1_ADIOS1WRITER_H_ */

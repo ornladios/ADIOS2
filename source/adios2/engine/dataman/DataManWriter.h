@@ -11,8 +11,6 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
-#include <iostream> //std::cout must be removed, only used for hello example
-
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
@@ -24,16 +22,13 @@ class DataManWriter : public Engine
 {
 
 public:
-    DataManWriter(IO &io, const std::string &name, const OpenMode openMode,
+    DataManWriter(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
-    virtual ~DataManWriter() = default;
+    ~DataManWriter() = default;
 
-    void SetCallBack(std::function<void(const void *, std::string, std::string,
-                                        std::string, Dims)>
-                         callback) final;
-
-    void Advance(const float timeoutSeconds = 0.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    void EndStep() final;
 
     void Close(const int transportIndex = -1) final;
 
@@ -49,14 +44,14 @@ private:
                  /// called from constructor
 
 #define declare_type(T)                                                        \
-    void DoWrite(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &variable, const T *values) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>
-    void DoWriteCommon(Variable<T> &variable, const T *values);
+    void PutSyncCommon(Variable<T> &variable, const T *values);
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */

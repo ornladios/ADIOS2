@@ -13,10 +13,6 @@ public:
     ADIOSDefineVariableTest() : adios(true), io(adios.DeclareIO("TestIO")) {}
 
 protected:
-    // virtual void SetUp() { }
-
-    // virtual void TearDown() { }
-
     adios2::ADIOS adios;
     adios2::IO &io;
 };
@@ -136,7 +132,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
-    adios2::SelectionBoundingBox sel(start, count);
+    adios2::Box<adios2::Dims> sel(start, count);
     globalarray.SetSelection(sel);
 
     // Verify the dimensions, name, and type are correct
@@ -185,7 +181,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
-    adios2::SelectionBoundingBox sel(start, count);
+    adios2::Box<adios2::Dims> sel(start, count);
     EXPECT_THROW(globalarray.SetSelection(sel), std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -277,10 +273,10 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write
-    adios2::SelectionBoundingBox sel({}, {Nx, Ny, Nz});
+    adios2::Box<adios2::Dims> sel({}, {Nx, Ny, Nz});
     localArray.SetSelection(sel);
 
-    adios2::SelectionBoundingBox selbad(start, count);
+    adios2::Box<adios2::Dims> selbad(start, count);
     EXPECT_THROW(localArray.SetSelection(selbad), std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -315,7 +311,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
     ::testing::StaticAssertTypeEq<decltype(localArray),
                                   adios2::Variable<int> &>();
 
-    adios2::SelectionBoundingBox sel({}, count);
+    adios2::Box<adios2::Dims> sel({}, count);
     EXPECT_THROW(localArray.SetSelection(sel), std::invalid_argument);
 
     ASSERT_EQ(localArray.m_Shape.size(), 0);

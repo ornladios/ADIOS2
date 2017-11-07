@@ -9,14 +9,14 @@ add_library(adios2
   core/ADIOS.cpp
   core/Engine.cpp
   core/IO.cpp core/IO.tcc
-  core/Selection.cpp
-  core/SelectionBoundingBox.cpp
-  core/SelectionPoints.cpp
-  core/Transform.cpp core/Transform.tcc
+  core/Operator.cpp core/Operator.tcc
   core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
-  
+
+#operator callback
+  operator/callback/Signature2.cpp
+
 #helper
   helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
@@ -26,25 +26,23 @@ add_library(adios2
   helper/adiosType.cpp
   helper/adiosXML.cpp
   
-#  engine/bp/BPFileReader.cpp
+  engine/bp/BPFileReader.cpp engine/bp/BPFileReader.tcc
   engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
 
-  engine/plugin/PluginEngine.h engine/plugin/PluginEngine.inl
   engine/plugin/PluginEngine.cpp
-  engine/plugin/PluginEngineInterface.h engine/plugin/PluginEngineInterface.cpp
+  engine/plugin/PluginEngineInterface.cpp
 
-  toolkit/capsule/Capsule.cpp
-  toolkit/capsule/heap/STLVector.cpp 
- 
-  toolkit/format/bp1/BP1Base.cpp toolkit/format/bp1/BP1Base.tcc
-  toolkit/format/bp1/BP1Aggregator.cpp
-  toolkit/format/bp1/BP1Writer.cpp toolkit/format/bp1/BP1Writer.tcc
+  toolkit/format/BufferSTL.cpp
+  
+  toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
+  toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
+  toolkit/format/bp3/BP3Deserializer.cpp toolkit/format/bp3/BP3Deserializer.tcc
 
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp
-  toolkit/transport/file/FilePointer.cpp
-  toolkit/transport/file/FileStream.cpp
+  toolkit/transport/file/FileStdio.cpp
+  toolkit/transport/file/FileFStream.cpp
   
   toolkit/transportman/TransportMan.cpp
   toolkit/transportman/dataman/DataMan.cpp
@@ -60,11 +58,11 @@ target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 if(UNIX)
-  target_sources(adios2 PRIVATE toolkit/transport/file/FileDescriptor.cpp)
+  target_sources(adios2 PRIVATE toolkit/transport/file/FilePOSIX.cpp)
 endif()
 
 if(ADIOS2_HAVE_SysVShMem)
-  target_sources(adios2 PRIVATE toolkit/capsule/shmem/ShmSystemV.cpp)
+  target_sources(adios2 PRIVATE toolkit/transport/shm/ShmSystemV.cpp)
 endif()
 
 if(ADIOS2_HAVE_ZeroMQ)
@@ -82,12 +80,12 @@ target_link_libraries(adios2 PRIVATE NLohmannJson)
 
 
 if(ADIOS2_HAVE_BZip2)
-  target_sources(adios2 PRIVATE transform/compress/CompressBZip2.cpp)
+  target_sources(adios2 PRIVATE operator/compress/CompressBZip2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
 
 if(ADIOS2_HAVE_ZFP)
-  target_sources(adios2 PRIVATE transform/compress/CompressZfp.cpp)
+  target_sources(adios2 PRIVATE operator/compress/CompressZfp.cpp)
   target_link_libraries(adios2 PRIVATE zfp::zfp)
 endif()
 
@@ -103,7 +101,8 @@ if(ADIOS2_HAVE_ADIOS1)
     engine/adios1/ADIOS1Writer.cpp
     
     toolkit/interop/adios1/ADIOS1Common.cpp toolkit/interop/adios1/ADIOS1Common.tcc
-    
+    toolkit/interop/adios1/ADIOS1CommonWrite.cpp toolkit/interop/adios1/ADIOS1CommonWrite.tcc
+    toolkit/interop/adios1/ADIOS1CommonRead.cpp toolkit/interop/adios1/ADIOS1CommonRead.tcc
   )
   target_link_libraries(adios2 PRIVATE adios1::adios)
 endif()

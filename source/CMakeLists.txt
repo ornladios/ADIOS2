@@ -4,6 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_subdirectory(adios2)
+add_subdirectory(utils)
 
 install(
   FILES adios2.h

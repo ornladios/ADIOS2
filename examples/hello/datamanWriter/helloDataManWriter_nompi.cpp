@@ -33,17 +33,11 @@ int main(int argc, char *argv[])
 
         // Create engine smart pointer to DataMan Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
-        auto dataManWriter =
-            dataManIO.Open("myFloats.bp", adios2::OpenMode::Write);
+        adios2::Engine &dataManWriter =
+            dataManIO.Open("myFloats.bp", adios2::Mode::Write);
 
-        if (!dataManWriter)
-        {
-            throw std::ios_base::failure(
-                "ERROR: failed to create DataMan I/O engine at Open\n");
-        }
-
-        dataManWriter->Write<float>(bpFloats, myFloats.data());
-        dataManWriter->Close();
+        dataManWriter.PutSync<float>(bpFloats, myFloats.data());
+        dataManWriter.Close();
     }
     catch (std::invalid_argument &e)
     {

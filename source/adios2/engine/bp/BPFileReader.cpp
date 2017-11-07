@@ -9,148 +9,155 @@
  */
 
 #include "BPFileReader.h"
+#include "BPFileReader.tcc"
 
-#include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
 
 namespace adios2
 {
 
-BPFileReader::BPFileReader(IO &io, const std::string &name,
-                           const OpenMode openMode, MPI_Comm mpiComm)
-: Engine("BPFileReader", io, name, openMode, mpiComm)
+BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode mode,
+                           MPI_Comm mpiComm)
+: Engine("BPFileReader", io, name, mode, mpiComm),
+  m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
+  m_SubFileManager(mpiComm, m_DebugMode)
 {
     Init();
 }
 
-void BPFileReader::Close(const int /*transportIndex*/) {}
+void BPFileReader::PerformGets()
+{
+    const auto variablesSubFileInfo =
+        m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+}
+
+void BPFileReader::Close(const int transportIndex)
+{
+    m_SubFileManager.CloseFiles();
+    m_FileManager.CloseFiles();
+}
 
 // PRIVATE
 void BPFileReader::Init()
 {
     if (m_DebugMode)
     {
-        if (m_OpenMode != OpenMode::Read)
+        if (m_OpenMode != Mode::Read)
         {
             throw std::invalid_argument(
-                "ERROR: BPFileReader only supports OpenMode::r from" + m_Name +
-                " " + m_EndMessage);
+                "ERROR: BPFileReader only supports OpenMode::Read from" +
+                m_Name + " " + m_EndMessage);
         }
     }
 
     InitTransports();
+    InitBuffer();
 }
 
-void BPFileReader::InitTransports() {}
-
-VariableBase *BPFileReader::InquireVariableUnknown(const std::string & /*name*/,
-                                                   const bool /*readIn*/)
+void BPFileReader::InitTransports()
 {
-    // not yet implemented
-    return nullptr;
+    if (m_IO.m_TransportsParameters.empty())
+    {
+        Params defaultTransportParameters;
+        defaultTransportParameters["transport"] = "File";
+        m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
+    }
+    // TODO Set Parameters
+
+    if (m_BP3Deserializer.m_RankMPI == 0)
+    {
+        const std::string metadataFile(
+            m_BP3Deserializer.GetBPMetadataFileName(m_Name));
+
+        const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
+        m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
+                                m_IO.m_TransportsParameters, profile);
+    }
 }
 
-Variable<char> *BPFileReader::InquireVariableChar(const std::string &name,
-                                                  const bool readIn)
+void BPFileReader::InitBuffer()
 {
-    return InquireVariableCommon<char>(name, readIn);
+    // Put all metadata in buffer
+    if (m_BP3Deserializer.m_RankMPI == 0)
+    {
+        const size_t fileSize = m_FileManager.GetFileSize(0);
+        m_BP3Deserializer.m_Metadata.Resize(
+            fileSize,
+            "allocating metadata buffer, in call to BPFileReader Open");
+
+        m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
+                               fileSize);
+    }
+    // broadcast buffer to all ranks from zero
+    m_BP3Deserializer.m_Metadata.m_Buffer =
+        BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
+
+    // fills IO with Variables and Attributes
+    m_BP3Deserializer.ParseMetadata(m_IO);
 }
 
-Variable<unsigned char> *
-BPFileReader::InquireVariableUChar(const std::string &name, const bool readIn)
+#define declare_type(T)                                                        \
+    void BPFileReader::DoGetSync(Variable<T> &variable, T *data)               \
+    {                                                                          \
+        GetSyncCommon(variable, data);                                         \
+    }                                                                          \
+    void BPFileReader::DoGetDeferred(Variable<T> &variable, T *data)           \
+    {                                                                          \
+        GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    void BPFileReader::DoGetDeferred(Variable<T> &variable, T &data)           \
+    {                                                                          \
+        GetDeferredCommon(variable, &data);                                    \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+void BPFileReader::ReadVariables(
+    IO &io, const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo)
 {
-    return InquireVariableCommon<unsigned char>(name, readIn);
+    const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
+
+    // sequentially request bytes from transport manager
+    // threaded here?
+    for (const auto &variableNamePair : variablesSubFileInfo) // variable name
+    {
+        const std::string variableName(variableNamePair.first);
+
+        // or threaded here?
+        for (const auto &subFileIndexPair : variableNamePair.second)
+        {
+            const size_t subFileIndex = subFileIndexPair.first;
+            const std::string subFile(
+                m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
+
+            // TODO: fix this part
+            if (m_SubFileManager.m_Transports.count(subFileIndex) == 0)
+            {
+                m_SubFileManager.OpenFiles({subFile}, adios2::Mode::Read,
+                                           {{{"transport", "File"}}}, profile);
+            }
+
+            for (const auto &stepPair : subFileIndexPair.second) // step
+            {
+                const size_t step = stepPair.first;
+
+                for (const auto &blockInfo : stepPair.second)
+                {
+                    const auto &seek = blockInfo.Seeks;
+                    const size_t blockStart = seek.first;
+                    const size_t blockSize = seek.second - seek.first;
+                    std::vector<char> contiguousMemory(blockSize);
+                    m_SubFileManager.ReadFile(contiguousMemory.data(),
+                                              blockSize, blockStart,
+                                              subFileIndex);
+
+                    m_BP3Deserializer.ClipContiguousMemory(
+                        variableName, m_IO, contiguousMemory,
+                        blockInfo.BlockBox, blockInfo.IntersectionBox);
+                } // end block
+            }     // end step
+        }         // end subfile
+    }             // end variable
 }
 
-Variable<short> *BPFileReader::InquireVariableShort(const std::string &name,
-                                                    const bool readIn)
-{
-    return InquireVariableCommon<short>(name, readIn);
-}
-
-Variable<unsigned short> *
-BPFileReader::InquireVariableUShort(const std::string &name, const bool readIn)
-{
-    return InquireVariableCommon<unsigned short>(name, readIn);
-}
-
-Variable<int> *BPFileReader::InquireVariableInt(const std::string &name,
-                                                const bool readIn)
-{
-    return InquireVariableCommon<int>(name, readIn);
-}
-
-Variable<unsigned int> *
-BPFileReader::InquireVariableUInt(const std::string &name, const bool readIn)
-{
-    return InquireVariableCommon<unsigned int>(name, readIn);
-}
-
-Variable<long int> *BPFileReader::InquireVariableLInt(const std::string &name,
-                                                      const bool readIn)
-{
-    return InquireVariableCommon<long int>(name, readIn);
-}
-
-Variable<unsigned long int> *
-BPFileReader::InquireVariableULInt(const std::string &name, const bool readIn)
-{
-    return InquireVariableCommon<unsigned long int>(name, readIn);
-}
-
-Variable<long long int> *
-BPFileReader::InquireVariableLLInt(const std::string &name, const bool readIn)
-{
-    return InquireVariableCommon<long long int>(name, readIn);
-}
-
-Variable<unsigned long long int> *
-BPFileReader::InquireVariableULLInt(const std::string &name, const bool readIn)
-{
-    return InquireVariableCommon<unsigned long long int>(name, readIn);
-}
-
-Variable<float> *BPFileReader::InquireVariableFloat(const std::string &name,
-                                                    const bool readIn)
-{
-    return InquireVariableCommon<float>(name, readIn);
-}
-
-Variable<double> *BPFileReader::InquireVariableDouble(const std::string &name,
-                                                      const bool readIn)
-{
-    return InquireVariableCommon<double>(name, readIn);
-}
-
-Variable<long double> *
-BPFileReader::InquireVariableLDouble(const std::string &name, const bool readIn)
-{
-    return InquireVariableCommon<long double>(name, readIn);
-}
-
-Variable<std::complex<float>> *
-BPFileReader::InquireVariableCFloat(const std::string &name, const bool readIn)
-{
-    return InquireVariableCommon<std::complex<float>>(name, readIn);
-}
-
-Variable<std::complex<double>> *
-BPFileReader::InquireVariableCDouble(const std::string &name, const bool readIn)
-{
-    return InquireVariableCommon<std::complex<double>>(name, readIn);
-}
-
-Variable<std::complex<long double>> *
-BPFileReader::InquireVariableCLDouble(const std::string &name,
-                                      const bool readIn)
-{
-    return InquireVariableCommon<std::complex<long double>>(name, readIn);
-}
-
-VariableCompound *
-BPFileReader::InquireVariableCompound(const std::string & /*name*/,
-                                      const bool /*readIn*/)
-{
-    return nullptr;
-}
-
-} // end namespace adios
+} // end namespace adios2

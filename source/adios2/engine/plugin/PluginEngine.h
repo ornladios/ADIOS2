@@ -37,7 +37,7 @@ public:
     // Function pointers used for the plugin factory methods
 
     using EngineCreatePtr = std::add_pointer<PluginEngineInterface *(
-        IO &, const std::string &, const OpenMode, MPI_Comm)>::type;
+        IO &, const std::string &, const Mode, MPI_Comm)>::type;
     using EngineDestroyPtr =
         std::add_pointer<void(PluginEngineInterface *)>::type;
     using EngineCreateFun =
@@ -56,27 +56,21 @@ public:
     }
 
     // This is just a shortcut method to handle the case where the class type is
-    // directly available to the caller so a sim[ple new and delete call is
+    // directly available to the caller so a simple new and delete call is
     // sufficient to create and destroy the engine object
     template <typename T>
     static void RegisterPlugin(const std::string name);
 
 public:
-    PluginEngine(IO &io, const std::string &name, const OpenMode openMode,
+    PluginEngine(IO &io, const std::string &name, const Mode mode,
                  MPI_Comm mpiComm);
     virtual ~PluginEngine();
 
-    void PerformReads(ReadMode mode) override;
-    void Release() override;
-    void Advance(const float timeoutSeconds = 0.0) override;
-    void Advance(const AdvanceMode mode,
-                 const float timeoutSeconds = 0.0) override;
-    void AdvanceAsync(const AdvanceMode mode,
-                      AdvanceAsyncCallback callback) override;
-
-    void SetCallBack(std::function<void(const void *, std::string, std::string,
-                                        std::string, std::vector<size_t>)>
-                         callback) override;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = 0.f) override;
+    void PerformPuts() override;
+    void PerformGets() override;
+    void EndStep() override;
 
     void Close(const int transportIndex = -1) override;
 
@@ -84,28 +78,22 @@ protected:
     void Init() override;
 
 #define declare(T)                                                             \
-    void DoWrite(Variable<T> &variable, const T *values) override;             \
-    void DoScheduleRead(Variable<T> &variable, const T *values) override;      \
-    void DoScheduleRead(const std::string &variableName, const T *values)      \
-        override;
+    void DoPutSync(Variable<T> &, const T *) override;                         \
+    void DoPutDeferred(Variable<T> &, const T *) override;                     \
+    void DoPutDeferred(Variable<T> &, const T &) override;                     \
+    void DoGetSync(Variable<T> &, T *) override;                               \
+    void DoGetDeferred(Variable<T> &, T *) override;                           \
+    void DoGetDeferred(Variable<T> &, T &) override;
+
     ADIOS2_FOREACH_TYPE_1ARG(declare)
 #undef declare
-    void DoWrite(VariableCompound &variable, const void *values) override;
-
-#define declare(T, L)                                                          \
-    Variable<T> *InquireVariable##L(const std::string &name,                   \
-                                    const bool readIn) override;
-    ADIOS2_FOREACH_TYPE_2ARGS(declare)
-#undef declare
-    VariableBase *InquireVariableUnknown(const std::string &name,
-                                         const bool readIn) override;
 
 private:
     struct Impl;
     std::unique_ptr<Impl> m_Impl;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #include "PluginEngine.inl"
 

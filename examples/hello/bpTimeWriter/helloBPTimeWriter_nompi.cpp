@@ -39,25 +39,24 @@ int main(int argc, char *argv[])
             bpIO.DefineVariable<unsigned int>("timeStep");
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios2::OpenMode::Write);
-
-        if (!bpWriter)
-        {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
-        }
+        adios2::Engine &bpWriter =
+            bpIO.Open("myVector.bp", adios2::Mode::Write);
 
         for (unsigned int timeStep = 0; timeStep < 10; ++timeStep)
         {
-            // template type is optional but recommended
-            bpWriter->Write<unsigned int>(bpTimeStep, timeStep);
+            bpWriter.BeginStep();
 
+            // template type is optional but recommended
+            bpWriter.PutSync<unsigned int>(bpTimeStep, timeStep);
+
+            // modifying data
             myFloats[0] = timeStep;
-            bpWriter->Write<float>(bpFloats, myFloats.data());
-            bpWriter->Advance();
+            bpWriter.PutSync<float>(bpFloats, myFloats.data());
+
+            bpWriter.EndStep();
         }
 
-        bpWriter->Close();
+        bpWriter.Close();
     }
     catch (std::invalid_argument &e)
     {

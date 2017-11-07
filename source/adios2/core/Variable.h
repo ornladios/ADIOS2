@@ -18,6 +18,7 @@
 #include <vector>
 /// \endcond
 
+#include "adios2/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
 
 namespace adios2
@@ -31,30 +32,26 @@ class Variable : public VariableBase
 {
 
 public:
-    /** pointer to values passed from application in Engine Write*/
-    const T *m_AppValues = nullptr;
+    typename TypeInfo<T>::ValueType m_Min;
+    typename TypeInfo<T>::ValueType m_Max;
+    typename TypeInfo<T>::ValueType m_Value;
 
-    /** reference to non-const data, mostly used for reading */
-    T *m_AppPointer = nullptr;
-
-    std::vector<T> m_Data;
-
-    /**
-     * Unique constructor
-     * @param name
-     * @param shape
-     * @param start
-     * @param count
-     * @param constantShape
-     * @param debugMode
-     */
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
-                const Dims &count, const bool constantShape,
+                const Dims &count, const bool constantShape, T *data,
                 const bool debugMode);
 
     ~Variable<T>() = default;
 
-    void ApplyTransforms() final;
+    T *GetData() const noexcept;
+
+    void SetData(const T *) noexcept;
+
+private:
+    /** TODO: used for allocating memory from ADIOS2 */
+    std::vector<T> m_AllocatedData;
+
+    /** reference to data */
+    T *m_Data = nullptr;
 };
 
 } // end namespace adios2

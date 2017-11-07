@@ -32,46 +32,64 @@ int main(int argc, char *argv[])
 
     try
     {
-        /** ADIOS class factory of IO class objects, DebugON is recommended */
+        /** ADIOS class factory of IO class objects, DebugON (default) is
+         * recommended */
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+        bpIO.SetParameters({{"Threads", "2"}});
 
-        /** global array: name, { shape (total dimensions) }, { start (local) },
+        /** global array: name, { shape (total dimensions) }, { start
+         * (local) },
          * { count (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+        const unsigned int variablesSize = 800;
+        std::vector<adios2::Variable<float> *> bpFloats(variablesSize);
+
+        for (unsigned int v = 0; v < variablesSize; ++v)
+        {
+            std::string namev("bpFloats");
+            if (v < 10)
+            {
+                namev += "00";
+            }
+            else if (v < 100)
+            {
+                namev += "0";
+            }
+            namev += std::to_string(v);
+
+            bpFloats[v] = &bpIO.DefineVariable<float>(
+                namev, {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+        }
 
         /** global single value variable: name */
         adios2::Variable<unsigned int> &bpTimeStep =
             bpIO.DefineVariable<unsigned int>("timeStep");
 
         /** Engine derived class, spawned to start IO operations */
-        auto bpWriter = bpIO.Open("myVector.bp", adios2::OpenMode::Write);
+        adios2::Engine &bpWriter =
+            bpIO.Open("myVector.bp", adios2::Mode::Write);
 
-        if (!bpWriter)
+        for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
         {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
-        }
-
-        for (unsigned int timeStep = 0; timeStep < 10; ++timeStep)
-        {
+            // bpWriter.BeginStep();
             if (rank == 0) // global single value, only saved by rank 0
             {
-                bpWriter->Write<unsigned int>(bpTimeStep, timeStep);
+                bpWriter.PutSync<unsigned int>(bpTimeStep, timeStep);
             }
 
-            myFloats[0] = timeStep;
-
             // template type is optional, but recommended
-            bpWriter->Write<float>(bpFloats, myFloats.data());
-            bpWriter->Advance();
+            for (unsigned int v = 0; v < 800; ++v)
+            {
+                myFloats[0] = v + timeStep;
+                bpWriter.PutSync(*bpFloats[v], myFloats.data());
+            }
+            bpWriter.EndStep();
         }
 
-        bpWriter->Close();
+        bpWriter.Close();
     }
     catch (std::invalid_argument &e)
     {
@@ -81,9 +99,9 @@ int main(int argc, char *argv[])
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM "
+                     "from rank "
+                  << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

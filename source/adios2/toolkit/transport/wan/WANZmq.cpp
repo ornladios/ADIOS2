@@ -46,12 +46,12 @@ WANZmq::~WANZmq()
     }
 }
 
-void WANZmq::Open(const std::string &name, const OpenMode openMode)
+void WANZmq::Open(const std::string &name, const Mode openMode)
 {
     m_Name = name;
     m_OpenMode = openMode;
 
-    if (m_OpenMode == OpenMode::Write)
+    if (m_OpenMode == Mode::Write)
     {
         if (m_Profiler.IsActive)
         {
@@ -72,7 +72,7 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
             m_Profiler.Timers.at("open").Pause();
         }
     }
-    else if (m_OpenMode == OpenMode::Append)
+    else if (m_OpenMode == Mode::Append)
     {
         if (m_DebugMode)
         {
@@ -83,21 +83,14 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
                 "OpenMode:r (read/receiver), in call to Open\n");
         }
     }
-    else if (m_OpenMode == OpenMode::Read)
+    else if (m_OpenMode == Mode::Read)
     {
-        if (m_Profiler.IsActive)
-        {
-            m_Profiler.Timers.at("open").Resume();
-        }
-
+        ProfilerStart("open");
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
         zmq_bind(m_Socket, fullIP.c_str());
-
-        if (m_Profiler.IsActive)
-        {
-            m_Profiler.Timers.at("open").Pause();
-        }
+        // TODO need to capture return of zmq_bind function
+        ProfilerStop("open");
     }
 
     if (m_DebugMode)
@@ -114,51 +107,37 @@ void WANZmq::Open(const std::string &name, const OpenMode openMode)
 
 void WANZmq::SetBuffer(char *buffer, size_t size) {}
 
-void WANZmq::Write(const char *buffer, size_t size)
+void WANZmq::Write(const char *buffer, size_t size, size_t start)
 {
-
-    if (m_Profiler.IsActive)
-    {
-        m_Profiler.Timers.at("write").Resume();
-    }
-
-    int status = zmq_send(m_Socket, buffer, size, 0);
+    ProfilerStart("write");
+    const int status = zmq_send(m_Socket, buffer, size, 0);
     char ret[10];
     zmq_recv(m_Socket, ret, 10, 0);
+    ProfilerStop("write");
 
-    if (m_Profiler.IsActive)
+    const std::string retString(ret);
+
+    if (status == -1 || retString != "OK") // TODO : verify this
     {
-        m_Profiler.Timers.at("write").Pause();
-    }
-
-    if (m_DebugMode)
-    {
-        const std::string retString(ret);
-
-        if (status == -1 || retString != "OK") // TODO : verify this
-        {
-            throw std::ios_base::failure("ERROR: couldn't send message " +
-                                         m_Name +
-                                         ", in call to WANZmq write\n");
-        }
+        throw std::ios_base::failure("ERROR: couldn't send message " + m_Name +
+                                     ", in call to WANZmq write\n");
     }
 }
 
-void WANZmq::Read(char *buffer, size_t size)
+void WANZmq::Read(char *buffer, size_t size, size_t start)
 {
-    zmq_recv(m_Socket, buffer, size, 0);
-    int status = zmq_send(m_Socket, "OK", 4, 0);
+    // TODO: Implement read function
 }
 
 void WANZmq::Flush() {}
 
 void WANZmq::Close()
 {
-    if (m_Socket)
+    if (m_Socket != nullptr)
     {
         zmq_close(m_Socket);
     }
 }
 
 } // end namespace transport
-} // end namespace adios
+} // end namespace adios2

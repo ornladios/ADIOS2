@@ -13,113 +13,66 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/bp3/BP3.h" //format::BP1Deserializer
+#include "adios2/toolkit/transportman/TransportMan.h"
 
 namespace adios2
 {
 
+namespace utils
+{
+class BPLS2;
+}
+
 class BPFileReader : public Engine
 {
 
+    friend class utils::BPLS2;
+
 public:
     /**
-     *
+     * Unique constructor
+     * @param io
+     * @param name
+     * @param openMode only read
+     * @param mpiComm
      */
-    BPFileReader(IO &io, const std::string &name, const OpenMode openMode,
+    BPFileReader(IO &io, const std::string &name, const Mode mode,
                  MPI_Comm mpiComm);
 
     virtual ~BPFileReader() = default;
 
+    void PerformGets() final;
+
     void Close(const int transportIndex = -1);
 
 private:
-    void Init(); ///< calls InitCapsules and InitTransports based on Method,
-                 /// called from constructor
+    format::BP3Deserializer m_BP3Deserializer;
+    transportman::TransportMan m_FileManager;
+    transportman::TransportMan m_SubFileManager;
 
-    void InitTransports(); ///< from Transports
+    void Init();
+    void InitTransports();
+    void InitBuffer();
 
-    VariableBase *InquireVariableUnknown(const std::string &variableName,
-                                         const bool readIn = true);
-
-    Variable<char> *InquireVariableChar(const std::string &variableName,
-                                        const bool readIn = true);
-
-    Variable<unsigned char> *
-    InquireVariableUChar(const std::string &variableName,
-                         const bool readIn = true);
-
-    Variable<short> *InquireVariableShort(const std::string &variableName,
-                                          const bool readIn = true);
-
-    Variable<unsigned short> *
-    InquireVariableUShort(const std::string &variableName,
-                          const bool readIn = true);
-
-    Variable<int> *InquireVariableInt(const std::string &variableName,
-                                      const bool readIn = true);
-
-    Variable<unsigned int> *InquireVariableUInt(const std::string &variableName,
-                                                const bool readIn = true);
-
-    Variable<long int> *InquireVariableLInt(const std::string &variableName,
-                                            const bool readIn = true);
-
-    Variable<unsigned long int> *
-    InquireVariableULInt(const std::string &variableName,
-                         const bool readIn = true);
-
-    Variable<long long int> *
-    InquireVariableLLInt(const std::string &variableName,
-                         const bool readIn = true);
-
-    Variable<unsigned long long int> *
-    InquireVariableULLInt(const std::string &variableName,
-                          const bool readIn = true);
-
-    Variable<float> *InquireVariableFloat(const std::string &variableName,
-                                          const bool readIn = true);
-
-    Variable<double> *InquireVariableDouble(const std::string &variableName,
-                                            const bool readIn = true);
-    Variable<long double> *
-    InquireVariableLDouble(const std::string &variableName,
-                           const bool readIn = true);
-
-    Variable<std::complex<float>> *
-    InquireVariableCFloat(const std::string &variableName,
-                          const bool readIn = true);
-
-    Variable<std::complex<double>> *
-    InquireVariableCDouble(const std::string &variableName,
-                           const bool readIn = true);
-
-    Variable<std::complex<long double>> *
-    InquireVariableCLDouble(const std::string &variableName,
-                            const bool readIn = true);
-
-    /**
-     * Not implemented
-     * @param name
-     * @param readIn
-     * @return
-     */
-    VariableCompound *InquireVariableCompound(const std::string &variableName,
-                                              const bool readIn = true);
+#define declare_type(T)                                                        \
+    void DoGetSync(Variable<T> &, T *) final;                                  \
+    void DoGetDeferred(Variable<T> &, T *) final;                              \
+    void DoGetDeferred(Variable<T> &, T &) final;
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
     template <class T>
-    Variable<T> *InquireVariableCommon(const std::string &name,
-                                       const bool readIn)
-    {
-        std::cout << "Hello BPReaderCommon\n";
+    void GetSyncCommon(Variable<T> &variable, T *data);
 
-        // here read variable metadata (dimensions, type, etc.)...then create a
-        // Variable like below:
-        // Variable<T>& variable = m_ADIOS.DefineVariable<T>( m_Name + "/" +
-        // name, )
-        // return &variable; //return address if success
-        return nullptr; // on failure
-    }
+    template <class T>
+    void GetDeferredCommon(Variable<T> &variable, T *data);
+
+    void
+    ReadVariables(IO &io,
+                  const std::map<std::string, SubFileInfoMap> &variablesInfo);
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_BP_BPFILEREADER_H_ */

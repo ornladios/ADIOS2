@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * adios2_f.cpp :  C-header glue code implmentation for functions called from
+ * adios2_f.cpp :  C-header glue code implementation for functions called from
  * Fortran modules
  *
  *  Created on: Aug 14, 2017
@@ -10,6 +10,7 @@
  */
 
 #include "adios2_f2c.h"
+#include "adios2/adios2_c_glue.h"
 
 #include <stdexcept>
 #include <type_traits> //std::static_assert
@@ -32,9 +33,9 @@ void adios2_init_config_f2c_(adios2_ADIOS **adios, const char *config_file,
     *ierr = 0;
     try
     {
-        *adios =
-            adios2_init_config(config_file, MPI_Comm_f2c(*comm),
-                               static_cast<adios2_debug_mode>(*debug_mode));
+        *adios = adios2_init_config_glue(
+            config_file, MPI_Comm_f2c(*comm),
+            static_cast<adios2_debug_mode>(*debug_mode), "Fortran");
     }
     catch (std::exception &e)
     {
@@ -53,8 +54,9 @@ void adios2_init_config_f2c_(adios2_ADIOS **adios, const char *config_file,
     *ierr = 0;
     try
     {
-        *adios = adios2_init_config_nompi(
-            config_file, static_cast<adios2_debug_mode>(*debug_mode));
+        *adios = adios2_init_config_nompi_glue(
+            config_file, static_cast<adios2_debug_mode>(*debug_mode),
+            "Fortran");
     }
     catch (std::exception &e)
     {
@@ -78,14 +80,14 @@ void adios2_declare_io_f2c_(adios2_IO **io, adios2_ADIOS **adios,
     }
 }
 
-void adios2_set_param_f2c_(adios2_IO **io, const char *key, const char *value,
-                           int *ierr)
+void adios2_set_parameter_f2c_(adios2_IO **io, const char *key,
+                               const char *value, int *ierr)
 {
     *ierr = 0;
 
     try
     {
-        adios2_set_param(*io, key, value);
+        adios2_set_parameter(*io, key, value);
     }
     catch (std::exception &e)
     {
@@ -115,15 +117,16 @@ void adios2_add_transport_f2c_(int *transport_index, adios2_IO **io,
     }
 }
 
-void adios2_set_transport_param_f2c_(adios2_IO **io, const int *transport_index,
-                                     const char *key, const char *value,
-                                     int *ierr)
+void adios2_set_transport_parameter_f2c_(adios2_IO **io,
+                                         const int *transport_index,
+                                         const char *key, const char *value,
+                                         int *ierr)
 {
     *ierr = 0;
 
     try
     {
-        adios2_set_transport_param(
+        adios2_set_transport_parameter(
             *io, static_cast<unsigned int>(*transport_index), key, value);
     }
     catch (std::exception &e)
@@ -186,8 +189,7 @@ void adios2_open_f2c_(adios2_Engine **engine, adios2_IO **io, const char *name,
     *ierr = 0;
     try
     {
-        *engine =
-            adios2_open(*io, name, static_cast<adios2_open_mode>(*open_mode));
+        *engine = adios2_open(*io, name, static_cast<adios2_mode>(*open_mode));
     }
     catch (std::exception &e)
     {
@@ -203,9 +205,9 @@ void adios2_open_new_comm_f2c_(adios2_Engine **engine, adios2_IO **io,
     *ierr = 0;
     try
     {
-        *engine = adios2_open_new_comm(
-            *io, name, static_cast<adios2_open_mode>(*open_mode),
-            MPI_Comm_f2c(*comm));
+        *engine = adios2_open_new_comm(*io, name,
+                                       static_cast<adios2_mode>(*open_mode),
+                                       MPI_Comm_f2c(*comm));
     }
     catch (std::exception &e)
     {
@@ -220,7 +222,7 @@ void adios2_write_f2c_(adios2_Engine **engine, adios2_Variable **variable,
     *ierr = 0;
     try
     {
-        adios2_write(*engine, *variable, values);
+        adios2_put_sync(*engine, *variable, values);
     }
     catch (std::exception &e)
     {
@@ -233,7 +235,7 @@ void adios2_advance_f2c_(adios2_Engine **engine, int *ierr)
     *ierr = 0;
     try
     {
-        adios2_advance(*engine);
+        adios2_release_step(*engine);
     }
     catch (std::exception &e)
     {

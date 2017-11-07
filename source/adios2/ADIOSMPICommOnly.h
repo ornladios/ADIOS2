@@ -18,7 +18,7 @@ namespace mpi
 {
 using MPI_Comm = int;
 } // end namespace mpi
-} // end namespace adios
+} // end namespace adios2
 using adios2::mpi::MPI_Comm;
 #else
 typedef int MPI_Comm;

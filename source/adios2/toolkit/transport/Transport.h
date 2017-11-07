@@ -31,7 +31,7 @@ public:
     const std::string m_Type;    ///< transport type from derived class
     const std::string m_Library; ///< library implementation (POSIX, Mdtm, etc.)
     std::string m_Name; ///< from Open, unique identifier (e.g. filename)
-    OpenMode m_OpenMode = OpenMode::Undefined; ///< at Open from ADIOSTypes.h
+    Mode m_OpenMode = Mode::Undefined; ///< at Open from ADIOSTypes.h
     bool m_IsOpen = false; ///< true: open for communication, false: unreachable
     MPI_Comm m_MPIComm;    ///< current MPI communicator
     int m_RankMPI = 0;     ///< from MPI_Comm_Rank
@@ -49,14 +49,14 @@ public:
 
     virtual ~Transport() = default;
 
-    void InitProfiler(const OpenMode openMode, const TimeUnit timeUnit);
+    void InitProfiler(const Mode openMode, const TimeUnit timeUnit);
 
     /**
      * Opens transport, required before SetBuffer, Write, Read, Flush, Close
      * @param name
      * @param openMode
      */
-    virtual void Open(const std::string &name, const OpenMode openMode) = 0;
+    virtual void Open(const std::string &name, const Mode openMode) = 0;
 
     /**
      * If OS buffered (FILE* or fstream), sets the buffer size
@@ -66,21 +66,36 @@ public:
     virtual void SetBuffer(char *buffer, size_t size);
 
     /**
-     * Writes to file stream
-     * @param buffer raw data to be written to file stream
-     * @param size number of bytes to be written to file stream
+     * Writes to transport. Note that size is non-const due to the nature of
+     * underlying transport libraries
+     * @param buffer raw data to be written
+     * @param size number of bytes to be written
+     * @param start starting position for writing (to allow rewind), if not
+     * passed then start at current stream position
      */
-    virtual void Write(const char *buffer, size_t size) = 0;
+    virtual void Write(const char *buffer, size_t size,
+                       size_t start = MaxSizeT) = 0;
 
     /**
-     * Reads from file stream
-     * @param buffer raw data to read from file stream
-     * @param size number of bytes to read from file stream
+     * Reads from transport "size" bytes from a certain position. Note that size
+     * and position and non-const due to the nature of underlying transport
+     * libraries
+     * @param buffer raw data pointer to put the read bytes (must be
+     * preallocated)
+     * @param size number of bytes to be read
+     * @param start starting position for read, if not passed then start at
+     * current stream position
      */
-    virtual void Read(char *buffer, size_t size) = 0;
+    virtual void Read(char *buffer, size_t size, size_t start = MaxSizeT) = 0;
+
+    /**
+     * Returns the size of current data in transport
+     * @return size as size_t
+     */
+    virtual size_t GetSize();
 
     /** flushes current contents to physical medium without closing */
-    virtual void Flush() = 0;
+    virtual void Flush();
 
     /** closes current file, after this file becomes unreachable */
     virtual void Close() = 0;
@@ -88,8 +103,16 @@ public:
 protected:
     /** true: turn on exceptions */
     const bool m_DebugMode = false;
+
+    void MkDir(const std::string &fileName);
+
+    void ProfilerStart(const std::string process) noexcept;
+
+    void ProfilerStop(const std::string process) noexcept;
+
+    void CheckName() const;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_TOOLKIT_TRANSPORT_TRANSPORT_H_ */

@@ -38,7 +38,8 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
         // Get a Transform of type BZip2
-        adios2::Transform &adiosBZip2 = adios.GetTransform("bzip2");
+        adios2::Operator &adiosBZip2 =
+            adios.DefineOperator("BZip2VariableCompressor", "bzip2");
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */

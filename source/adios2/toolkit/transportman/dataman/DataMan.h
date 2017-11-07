@@ -28,7 +28,7 @@ public:
 
     virtual ~DataMan() = default;
 
-    void OpenWANTransports(const std::string &name, const OpenMode openMode,
+    void OpenWANTransports(const std::string &name, const Mode openMode,
                            const std::vector<Params> &parametersVector,
                            const bool profile);
 

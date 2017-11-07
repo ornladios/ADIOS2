@@ -11,7 +11,11 @@
 #include "IO.h"
 #include "IO.tcc"
 
+#include <sstream>
+
 #include "adios2/ADIOSMPI.h"
+#include "adios2/ADIOSMacros.h"
+#include "adios2/engine/bp/BPFileReader.h"
 #include "adios2/engine/bp/BPFileWriter.h"
 #include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
@@ -38,30 +42,48 @@ namespace adios2
 {
 
 IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
-       const bool debugMode)
+       const std::string hostLanguage, const bool debugMode)
 : m_Name(name), m_MPIComm(mpiComm), m_InConfigFile(inConfigFile),
-  m_DebugMode(debugMode)
+  m_HostLanguage(hostLanguage), m_DebugMode(debugMode)
 {
 }
 
-void IO::SetEngine(const std::string engineType) { m_EngineType = engineType; }
+void IO::SetEngine(const std::string engineType) noexcept
+{
+    m_EngineType = engineType;
+}
 void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
-void IO::SetParameters(const Params &parameters) { m_Parameters = parameters; }
+void IO::SetParameters(const Params &parameters) noexcept
+{
+    m_Parameters.clear();
 
-void IO::SetSingleParameter(const std::string key,
-                            const std::string value) noexcept
+    for (const auto &parameter : parameters)
+    {
+        m_Parameters[parameter.first] = parameter.second;
+    }
+}
+
+void IO::SetParameter(const std::string key, const std::string value) noexcept
 {
     m_Parameters[key] = value;
 }
 
-const Params &IO::GetParameters() const { return m_Parameters; }
+Params &IO::GetParameters() noexcept { return m_Parameters; }
 
 unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 {
     Params parametersMap(parameters);
     if (m_DebugMode)
     {
+        if (parameters.count("transport") == 1 ||
+            parameters.count("Transport") == 1)
+        {
+            throw std::invalid_argument("ERROR: key Transport (or transport) "
+                                        "is not valid for transport type " +
+                                        type + ", in call to AddTransport)");
+        }
+
         CheckTransportType(type);
     }
 
@@ -70,90 +92,35 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
 }
 
-void IO::SetTransportSingleParameter(const unsigned int transportIndex,
-                                     const std::string key,
-                                     const std::string value)
+void IO::AddOperator(Operator &adiosOperator, const Params &parameters) noexcept
+{
+    m_Operators.push_back(OperatorInfo{adiosOperator, parameters});
+}
+
+void IO::SetTransportParameter(const unsigned int transportIndex,
+                               const std::string key, const std::string value)
 {
     if (m_DebugMode)
     {
         if (transportIndex >=
             static_cast<unsigned int>(m_TransportsParameters.size()))
         {
-            throw std::invalid_argument("ERROR: transportIndex is larger than "
-                                        "transports created with AddTransport "
-                                        "function calls\n");
+            throw std::invalid_argument(
+                "ERROR: transportIndex is larger than "
+                "transports created with AddTransport, for key: " +
+                key + ", value: " + value + "in call to SetTransportParameter "
+                                            "\n");
         }
     }
 
     m_TransportsParameters[transportIndex][key] = value;
 }
 
-VariableCompound &
-IO::DefineVariableCompound(const std::string &name, const size_t sizeOfVariable,
-                           const Dims &shape, const Dims &start,
-                           const Dims &count, const bool constantDims)
-{
-    if (m_DebugMode)
-    {
-        auto itVariable = m_Variables.find(name);
-        if (!IsEnd(itVariable, m_Variables))
-        {
-            throw std::invalid_argument("ERROR: variable " + name +
-                                        " exists in IO object " + m_Name +
-                                        ", in call to DefineVariable\n");
-        }
-    }
-    const unsigned int size = m_Compound.size();
-    auto itVariableCompound = m_Compound.emplace(
-        size, VariableCompound(name, sizeOfVariable, shape, start, count,
-                               constantDims, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair("compound", size));
-    return itVariableCompound.first->second;
-}
-
-VariableCompound &IO::GetVariableCompound(const std::string &name)
-{
-    return m_Compound.at(GetMapIndex(name, m_Variables, "VariableCompound"));
-}
+const DataMap &IO::GetVariablesDataMap() const noexcept { return m_Variables; }
 
 const DataMap &IO::GetAttributesDataMap() const noexcept
 {
     return m_Attributes;
-}
-
-VariableBase *IO::GetVariableBase(const std::string &name) noexcept
-{
-    VariableBase *variableBase = nullptr;
-    auto itVariable = m_Variables.find(name);
-    if (itVariable == m_Variables.end())
-    {
-        return variableBase;
-    }
-
-    const std::string type(itVariable->second.first);
-    if (type == "compound")
-    {
-        variableBase = &GetVariableCompound(name);
-    }
-#define declare_type(T)                                                        \
-    else if (type == GetType<T>()) { variableBase = &GetVariable<T>(name); }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
-    return variableBase;
-}
-
-std::string IO::GetVariableType(const std::string &name) const
-{
-    std::string type;
-
-    auto itVariable = m_Variables.find(name);
-    if (itVariable != m_Variables.end())
-    {
-        type = itVariable->second.first;
-    }
-
-    return type;
 }
 
 bool IO::InConfigFile() const { return m_InConfigFile; };
@@ -194,49 +161,85 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     return isRemoved;
 }
 
-std::shared_ptr<Engine> IO::Open(const std::string &name,
-                                 const OpenMode openMode, MPI_Comm mpiComm)
+std::map<std::string, Params> IO::GetAvailableVariables() noexcept
+{
+    std::map<std::string, Params> variablesInfo;
+    for (const auto &variablePair : m_Variables)
+    {
+        const std::string name(variablePair.first);
+        const std::string type(variablePair.second.first);
+        variablesInfo[name]["Type"] = type;
+
+        if (type == "compound")
+        {
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        Variable<T> &variable = *InquireVariable<T>(name);                     \
+        std::ostringstream minSS;                                              \
+        minSS << variable.m_Min;                                               \
+        variablesInfo[name]["Min"] = minSS.str();                              \
+        std::ostringstream maxSS;                                              \
+        maxSS << variable.m_Max;                                               \
+        variablesInfo[name]["Max"] = maxSS.str();                              \
+        variablesInfo[name]["StepsStart"] =                                    \
+            std::to_string(variable.m_AvailableStepsStart);                    \
+        variablesInfo[name]["StepsCount"] =                                    \
+            std::to_string(variable.m_AvailableStepsCount);                    \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+    // TODO: add dimensions
+    return variablesInfo;
+}
+
+std::string IO::InquireVariableType(const std::string &name) const noexcept
+{
+    auto itVariable = m_Variables.find(name);
+    if (itVariable == m_Variables.end())
+    {
+        return std::string();
+    }
+
+    return itVariable->second.first;
+}
+
+Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
 {
     if (m_DebugMode)
     {
-        // Check if Engine already exists
-        if (m_EngineNames.count(name) == 1)
+        if (m_Engines.count(name) == 1)
         {
-            throw std::invalid_argument(
-                "ERROR: IO Engine with name " + name +
-                " already created by Open, in call from Open.\n");
+            throw std::invalid_argument("ERROR: IO Engine with name " + name +
+                                        " already created, in call to Open.\n");
         }
     }
 
     std::shared_ptr<Engine> engine;
-    m_EngineNames.insert(name);
 
     const bool isDefaultWriter =
-        m_EngineType.empty() &&
-                (openMode == OpenMode::Write || openMode == OpenMode::Append)
+        m_EngineType.empty() && (mode == Mode::Write || mode == Mode::Append)
             ? true
             : false;
 
     const bool isDefaultReader =
-        m_EngineType.empty() &&
-                (openMode == OpenMode::Read || openMode == OpenMode::ReadWrite)
-            ? true
-            : false;
+        m_EngineType.empty() && (mode == Mode::Read) ? true : false;
 
     if (isDefaultWriter || m_EngineType == "BPFileWriter")
     {
-        engine = std::make_shared<BPFileWriter>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<BPFileWriter>(*this, name, mode, mpiComm);
     }
     else if (isDefaultReader || m_EngineType == "BPFileReader")
     {
-        // engine = std::make_shared<BPFileReader>(*this, name, openMode,
-        // mpiComm);
+        engine = std::make_shared<BPFileReader>(*this, name, mode, mpiComm);
     }
     else if (m_EngineType == "HDFMixer")
     {
 #ifdef ADIOS2_HAVE_HDF5
 #if H5_VERSION_GE(1, 11, 0)
-        engine = std::make_shared<HDFMixer>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<HDFMixer>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: update HDF5 >= 1.11 to support VDS.");
@@ -249,8 +252,7 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     else if (m_EngineType == "DataManWriter")
     {
 #ifdef ADIOS2_HAVE_DATAMAN
-        engine =
-            std::make_shared<DataManWriter>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<DataManWriter>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
@@ -260,8 +262,7 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     else if (m_EngineType == "DataManReader")
     {
 #ifdef ADIOS2_HAVE_DATAMAN
-        engine =
-            std::make_shared<DataManReader>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<DataManReader>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
@@ -271,7 +272,7 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     else if (m_EngineType == "ADIOS1Writer")
     {
 #ifdef ADIOS2_HAVE_ADIOS1
-        engine = std::make_shared<ADIOS1Writer>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<ADIOS1Writer>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with ADIOS "
@@ -281,7 +282,7 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     else if (m_EngineType == "ADIOS1Reader")
     {
 #ifdef ADIOS2_HAVE_ADIOS1
-        engine = std::make_shared<ADIOS1Reader>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<ADIOS1Reader>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with ADIOS "
@@ -291,7 +292,7 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     else if (m_EngineType == "HDF5Writer")
     {
 #ifdef ADIOS2_HAVE_HDF5
-        engine = std::make_shared<HDF5WriterP>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<HDF5WriterP>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5\n");
@@ -300,7 +301,7 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     else if (m_EngineType == "HDF5Reader")
     {
 #ifdef ADIOS2_HAVE_HDF5
-        engine = std::make_shared<HDF5ReaderP>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<HDF5ReaderP>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5\n");
@@ -308,7 +309,7 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
     }
     else if (m_EngineType == "PluginEngine")
     {
-        engine = std::make_shared<PluginEngine>(*this, name, openMode, mpiComm);
+        engine = std::make_shared<PluginEngine>(*this, name, mode, mpiComm);
     }
     else
     {
@@ -321,32 +322,36 @@ std::shared_ptr<Engine> IO::Open(const std::string &name,
         }
     }
 
-    return engine;
+    auto itEngine = m_Engines.emplace(name, std::move(engine));
+
+    if (m_DebugMode)
+    {
+        if (!itEngine.second)
+        {
+            throw std::invalid_argument(
+                "ERROR: engine of type " + m_EngineType + " and name " + name +
+                " could not be created, in call to Open\n");
+        }
+    }
+    // return a reference
+    return *itEngine.first->second.get();
 }
 
-std::shared_ptr<Engine> IO::Open(const std::string &name,
-                                 const OpenMode openMode)
+Engine &IO::Open(const std::string &name, const Mode openMode)
 {
     return Open(name, openMode, m_MPIComm);
 }
 
-// PRIVATE Functions
-unsigned int IO::GetMapIndex(const std::string &name, const DataMap &dataMap,
-                             const std::string hint) const
+// PRIVATE
+int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
+    noexcept
 {
-    auto itDataMap = dataMap.find(name);
-
-    if (m_DebugMode)
+    auto itName = dataMap.find(name);
+    if (itName == dataMap.end())
     {
-        if (IsEnd(itDataMap, dataMap))
-        {
-            throw std::invalid_argument("ERROR: " + hint + " " + m_Name +
-                                        " wasn't created with Define " + hint +
-                                        ", in call to IO object " + m_Name +
-                                        " Get" + hint + "\n");
-        }
+        return -1;
     }
-    return itDataMap->second.second;
+    return itName->second.second;
 }
 
 void IO::CheckAttributeCommon(const std::string &name) const
@@ -383,10 +388,10 @@ void IO::CheckTransportType(const std::string type) const
 
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
-    template Variable<T> &IO::DefineVariable<T>(const std::string &,           \
-                                                const Dims &, const Dims &,    \
-                                                const Dims &, const bool);     \
-    template Variable<T> &IO::GetVariable<T>(const std::string &);
+    template Variable<T> &IO::DefineVariable<T>(                               \
+        const std::string &, const Dims &, const Dims &, const Dims &,         \
+        const bool, T *);                                                      \
+    template Variable<T> *IO::InquireVariable<T>(const std::string &) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
@@ -396,7 +401,8 @@ ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
                                                   const T *, const size_t);    \
     template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
                                                   const T &);                  \
-    template Attribute<T> &IO::GetAttribute(const std::string &);
+    template Attribute<T> *IO::InquireAttribute<T>(                            \
+        const std::string &) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

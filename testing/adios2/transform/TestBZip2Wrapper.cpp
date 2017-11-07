@@ -34,7 +34,8 @@ TEST_F(ADIOSBZip2Wrapper, UInt100)
                                   adios2::Variable<unsigned int> &>();
 
     // Define bzip2 transform
-    adios2::Transform &adiosBZip2 = adios.GetTransform("BZip2");
+    adios2::Operator &adiosBZip2 =
+        adios.DefineOperator("BZip2Compressor", "BZip2");
 
     const unsigned int bzip2ID =
         var_UInt.AddTransform(adiosBZip2, {{"BlockSize100K", "2"}});
@@ -45,7 +46,7 @@ TEST_F(ADIOSBZip2Wrapper, UInt100)
     size_t compressedSize = adiosBZip2.Compress(
         myUInts.data(), var_UInt.m_Count, var_UInt.m_ElementSize,
         var_UInt.m_Type, compressedBuffer.data(),
-        var_UInt.m_TransformsInfo[bzip2ID].Parameters);
+        var_UInt.m_OperatorsInfo[bzip2ID].Parameters);
 
     EXPECT_LE(compressedSize, estimatedSize);
 
@@ -81,7 +82,8 @@ TEST_F(ADIOSBZip2Wrapper, WrongParameterValue)
                                   adios2::Variable<unsigned int> &>();
 
     // Define bzip2 transform
-    adios2::Transform &adiosBZip2 = adios.GetTransform("BZip2");
+    adios2::Operator &adiosBZip2 =
+        adios.DefineOperator("BZip2Compressor", "BZip2");
 
     const unsigned int bzip2ID =
         var_UInt.AddTransform(adiosBZip2, {{"BlockSize100K", "10"}});
@@ -93,7 +95,7 @@ TEST_F(ADIOSBZip2Wrapper, WrongParameterValue)
     EXPECT_THROW(size_t compressedSize = adiosBZip2.Compress(
                      myUInts.data(), var_UInt.m_Count, var_UInt.m_ElementSize,
                      var_UInt.m_Type, compressedBuffer.data(),
-                     var_UInt.m_TransformsInfo[bzip2ID].Parameters),
+                     var_UInt.m_OperatorsInfo[bzip2ID].Parameters),
                  std::invalid_argument);
 }
 
@@ -114,12 +116,14 @@ TEST_F(ADIOSBZip2Wrapper, WrongBZip2Name)
                                   adios2::Variable<unsigned int> &>();
 
     // Check bzip2 lower case and camel case
-    EXPECT_NO_THROW(adios2::Transform &adiosBZip2 =
-                        adios.GetTransform("bzip2"));
-    EXPECT_NO_THROW(adios2::Transform &adiosBZip2 =
-                        adios.GetTransform("BZip2"));
-    EXPECT_THROW(adios2::Transform &adiosBZip2 = adios.GetTransform("bzip"),
+    EXPECT_NO_THROW(adios2::Operator &adiosBZip2 =
+                        adios.DefineOperator("BZip2Compressor1", "bzip2"));
+    EXPECT_NO_THROW(adios2::Operator &adiosBZip2 =
+                        adios.DefineOperator("BZip2Compressor2", "BZip2"));
+    EXPECT_THROW(adios2::Operator &adiosBZip2 =
+                     adios.DefineOperator("BZip2Compressor3", "bzip"),
                  std::invalid_argument);
-    EXPECT_THROW(adios2::Transform &adiosBZip2 = adios.GetTransform("BZIP2"),
+    EXPECT_THROW(adios2::Operator &adiosBZip2 =
+                     adios.DefineOperator("BZip2Compressor4", "BZIP2"),
                  std::invalid_argument);
 }

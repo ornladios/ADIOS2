@@ -12,6 +12,7 @@
 #define ADIOS2_HELPER_ADIOSXML_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <adios2/core/Operator.h>
 #include <map>
 #include <memory> //std::shared_ptr
 #include <string>
@@ -19,7 +20,6 @@
 /// \endcond
 
 #include "adios2/core/IO.h"
-#include "adios2/core/Transform.h"
 
 namespace adios2
 {
@@ -34,8 +34,8 @@ namespace adios2
  * @param ios
  */
 void InitXML(const std::string configXML, MPI_Comm mpiComm,
-             const bool debugMode,
-             std::map<std::string, std::shared_ptr<Transform>> &transforms,
+             const std::string hostLanguage, const bool debugMode,
+             std::map<std::string, std::shared_ptr<Operator>> &transforms,
              std::map<std::string, IO> &ios);
 }
 

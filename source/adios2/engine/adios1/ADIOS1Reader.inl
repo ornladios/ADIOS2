@@ -18,19 +18,20 @@ namespace adios2
 {
 
 template <class T>
-Variable<T> *ADIOS1Reader::InquireVariableCommon(const std::string &name,
-                                                 const bool readIn)
+Variable<T> *
+ADIOS1Reader::InquireVariableCommon(const std::string &variableName)
 {
     // here read variable metadata (dimensions, type, etc.)...then create a
     // Variable like below:
     // Variable<T>& variable = m_ADIOS.DefineVariable<T>( m_Name + "/" +
     // name, )
     // return &variable; //return address if success
-    ADIOS_VARINFO *vi = adios_inq_var(m_fh, name.c_str());
+    ADIOS_VARINFO *vi = m_ADIOS1.InqVar(variableName);
     adios2::Variable<T> *var = nullptr;
     if (vi != nullptr)
     {
-        CheckADIOS1TypeCompatibility(name, GetType<T>(), vi->type); // throws
+        CheckADIOS1TypeCompatibility(variableName, GetType<T>(),
+                                     vi->type); // throws
 
         if (vi->ndim > 0)
         {
@@ -40,7 +41,7 @@ Variable<T> *ADIOS1Reader::InquireVariableCommon(const std::string &name,
             if (gdims[0] == JoinedDim)
             {
                 /* Joined Array */
-                adios_inq_var_blockinfo(m_fh, vi);
+                m_ADIOS1.InqVarBlockInfo(vi);
                 size_t joined_size = 0;
                 for (int i = 0; i < *vi->nblocks; i++)
                 {
@@ -72,7 +73,7 @@ Variable<T> *ADIOS1Reader::InquireVariableCommon(const std::string &name,
                     }
                 }
             }
-            var = &m_IO.DefineVariable<T>(name, gdims);
+            var = &m_IO.DefineVariable<T>(variableName, gdims);
             if (joinedread)
             {
                 var->m_ReadAsJoined = true;
@@ -81,16 +82,7 @@ Variable<T> *ADIOS1Reader::InquireVariableCommon(const std::string &name,
         else /* Scalars */
         {
             /* scalar variable but global value or local value*/
-            std::string aname = name + "/ReadAsArray";
-            bool isLocalValue = false;
-            for (int i = 0; i < vi->nattrs; ++i)
-            {
-                if (!strcmp(m_fh->attr_namelist[vi->attr_ids[i]],
-                            aname.c_str()))
-                {
-                    isLocalValue = true;
-                }
-            }
+            bool isLocalValue = m_ADIOS1.IsVarLocalValue(vi);
             if (isLocalValue)
             {
                 /* Local Value */
@@ -102,19 +94,19 @@ Variable<T> *ADIOS1Reader::InquireVariableCommon(const std::string &name,
                 }
                 if (changingDims)
                 {
-                    var = &m_IO.DefineVariable<T>(name, {IrregularDim});
+                    var = &m_IO.DefineVariable<T>(variableName, {IrregularDim});
                 }
                 else
                 {
                     var = &m_IO.DefineVariable<T>(
-                        name, {(unsigned int)vi->nblocks[0]});
+                        variableName, {(unsigned int)vi->nblocks[0]});
                 }
                 var->m_ReadAsLocalValue = true;
             }
             else
             {
                 /* Global value: store only one value */
-                var = &m_IO.DefineVariable<T>(name);
+                var = &m_IO.DefineVariable<T>(variableName);
                 if (var)
                 {
                     var->m_Data = std::vector<T>(1);
@@ -123,11 +115,11 @@ Variable<T> *ADIOS1Reader::InquireVariableCommon(const std::string &name,
             }
         }
         var->m_AvailableSteps = vi->nsteps;
-        adios_free_varinfo(vi);
+        m_ADIOS1.FreeVarInfo(vi);
     }
     return var;
 }
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_ADIOS1_ADIOS1READER_INL_ */
