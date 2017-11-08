@@ -93,7 +93,7 @@ contains
         integer, intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -103,7 +103,7 @@ contains
         real, intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -113,7 +113,7 @@ contains
         real(kind=8), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -123,7 +123,7 @@ contains
         complex, intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -133,7 +133,7 @@ contains
         complex(kind=8), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -143,7 +143,7 @@ contains
         integer(kind=1), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -153,7 +153,7 @@ contains
         integer(kind=2), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -164,7 +164,7 @@ contains
         integer(kind=8), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -175,7 +175,7 @@ contains
         integer, dimension(:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -185,7 +185,7 @@ contains
         real, dimension(:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -195,7 +195,7 @@ contains
         real(kind=8), dimension(:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -205,7 +205,7 @@ contains
         complex, dimension(:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -215,7 +215,7 @@ contains
         complex(kind=8), dimension(:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -225,7 +225,7 @@ contains
         integer(kind=1), dimension(:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -235,7 +235,7 @@ contains
         integer(kind=2), dimension(:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -245,7 +245,7 @@ contains
         integer(kind=8), dimension(:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -256,7 +256,7 @@ contains
         integer, dimension(:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -266,7 +266,7 @@ contains
         real, dimension(:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -276,7 +276,7 @@ contains
         real(kind=8), dimension(:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -286,7 +286,7 @@ contains
         complex, dimension(:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -296,7 +296,7 @@ contains
         complex(kind=8), dimension(:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -306,7 +306,7 @@ contains
         integer(kind=1), dimension(:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -316,7 +316,7 @@ contains
         integer(kind=2), dimension(:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -326,7 +326,7 @@ contains
         integer(kind=8), dimension(:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -337,7 +337,7 @@ contains
         integer, dimension(:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -347,7 +347,7 @@ contains
         real, dimension(:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -357,7 +357,7 @@ contains
         real(kind=8), dimension(:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -367,7 +367,7 @@ contains
         complex, dimension(:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -377,7 +377,7 @@ contains
         complex(kind=8), dimension(:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -387,7 +387,7 @@ contains
         integer(kind=1), dimension(:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -397,7 +397,7 @@ contains
         integer(kind=2), dimension(:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -407,7 +407,7 @@ contains
         integer(kind=8), dimension(:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -419,7 +419,7 @@ contains
         integer, dimension(:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -429,7 +429,7 @@ contains
         real, dimension(:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -439,7 +439,7 @@ contains
         real(kind=8), dimension(:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -449,7 +449,7 @@ contains
         complex, dimension(:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -459,7 +459,7 @@ contains
         complex(kind=8), dimension(:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -469,7 +469,7 @@ contains
         integer(kind=1), dimension(:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -479,7 +479,7 @@ contains
         integer(kind=2), dimension(:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -489,7 +489,7 @@ contains
         integer(kind=8), dimension(:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -501,7 +501,7 @@ contains
         integer, dimension(:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -511,7 +511,7 @@ contains
         real, dimension(:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -521,7 +521,7 @@ contains
         real(kind=8), dimension(:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -531,7 +531,7 @@ contains
         complex, dimension(:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -541,7 +541,7 @@ contains
         complex(kind=8), dimension(:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -551,7 +551,7 @@ contains
         integer(kind=1), dimension(:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -561,7 +561,7 @@ contains
         integer(kind=2), dimension(:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -571,7 +571,7 @@ contains
         integer(kind=8), dimension(:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -583,7 +583,7 @@ contains
         integer, dimension(:,:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -593,7 +593,7 @@ contains
         real, dimension(:,:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -603,7 +603,7 @@ contains
         real(kind=8), dimension(:,:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -613,7 +613,7 @@ contains
         complex, dimension(:,:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -623,7 +623,7 @@ contains
         complex(kind=8), dimension(:,:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -633,7 +633,7 @@ contains
         integer(kind=1), dimension(:,:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -643,7 +643,7 @@ contains
         integer(kind=2), dimension(:,:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 
@@ -653,7 +653,7 @@ contains
         integer(kind=8), dimension(:,:,:,:,:,:), intent(in):: values
         integer, intent(out):: ierr
 
-        call adios2_write_f2c(engine, variable, values, ierr)
+        call adios2_put_sync_f2c(engine, variable, values, ierr)
 
     end subroutine
 

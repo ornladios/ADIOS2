@@ -2,7 +2,7 @@
 ! Distributed under the OSI-approved Apache License, Version 2.0.  See
 !  accompanying file Copyright.txt for details.
 !
-!  adios2_init_nompi_mod.f90 : ADIOS2 Fortran bindings nonMPI init functions
+!  adios2_init_mod.f90 : ADIOS2 Fortran bindings nonMPI init functions
 !
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov

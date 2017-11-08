@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * adios2_c_glue.h : used by languages, other than C, using the C-bindings API
+ * adios2_c_glue.h : used by languages other than C, using the C-bindings API
  * (e.g. Fortran), not meant to be for applications
  *
  *  Created on: Nov 3, 2017

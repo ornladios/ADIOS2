@@ -9,15 +9,16 @@
 !
 module adios2_engine
     use adios2_engine_write
+    use adios2_engine_iwrite
     implicit none
 
 contains
 
-    subroutine adios2_advance(engine, ierr)
+    subroutine adios2_end_step(engine, ierr)
         integer(kind=8), intent(in) :: engine
         integer, intent(out) :: ierr
 
-        call adios2_advance_f2c(engine, ierr)
+        call adios2_end_step_f2c(engine, ierr)
 
     end subroutine
 

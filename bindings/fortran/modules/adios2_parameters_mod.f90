@@ -7,7 +7,7 @@
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov
 !
-module adios2_params
+module adios2_parameters
     implicit none
 
     ! Debug mode
@@ -31,7 +31,7 @@ module adios2_params
     logical, parameter :: adios2_constant_dims_true = .true.
     logical, parameter :: adios2_constant_dims_false = .false.
 
-    ! Open Mode
+    ! Mode
     integer, parameter :: adios2_mode_undefined = 0
     integer, parameter :: adios2_mode_write = 1
     integer, parameter :: adios2_mode_read = 2
