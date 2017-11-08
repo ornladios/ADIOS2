@@ -352,6 +352,13 @@ private:
 
     std::vector<char>
     SetCollectiveProfilingJSON(const std::string &rankLog) const;
+
+    /**
+     * Specialized for string and other types
+     * @param variable input from which Payload is taken
+     */
+    template <class T>
+    void PutPayloadInBuffer(const Variable<T> &variable) noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \

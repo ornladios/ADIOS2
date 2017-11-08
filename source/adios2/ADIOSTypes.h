@@ -292,6 +292,14 @@ struct TypeInfo<T, typename std::enable_if<std::is_same<
     using ValueType = typename T::value_type;
 };
 
+template <typename T>
+struct TypeInfo<
+    T, typename std::enable_if<std::is_same<T, std::string>::value>::type>
+{
+    using IOType = T;
+    using ValueType = T;
+};
+
 } // end namespace adios2
 
 #endif /* ADIOS2_ADIOSTYPES_H_ */

@@ -33,6 +33,7 @@ public:
     ~EnginePy() = default;
 
     void PutSync(VariableBase *variable, const pybind11::array &array);
+    void PutSync(VariableBase *variable, const std::string &string);
 
     void EndStep();
 

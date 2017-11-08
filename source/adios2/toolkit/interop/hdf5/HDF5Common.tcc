@@ -118,6 +118,11 @@ void HDF5Common::Write(Variable<T> &variable, const T *values)
 }
 
 template <>
+hid_t HDF5Common::GetHDF5Type<std::string>()
+{
+    return H5T_STRING;
+}
+template <>
 hid_t HDF5Common::GetHDF5Type<char>()
 {
     return H5T_NATIVE_CHAR;

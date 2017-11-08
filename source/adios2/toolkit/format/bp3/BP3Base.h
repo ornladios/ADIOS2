@@ -324,9 +324,10 @@ protected:
     {
         uint64_t Offset;
         uint64_t PayloadOffset;
-        T Min;
-        T Max;
-        T Value;
+        T Min = T();
+        T Max = T();
+        T Value = T();
+        std::vector<T> Values;
         uint32_t Step;
         uint32_t FileIndex;
         uint32_t MemberID;
@@ -429,7 +430,7 @@ protected:
     template <class T>
     Characteristics<T>
     ReadElementIndexCharacteristics(const std::vector<char> &buffer,
-                                    size_t &position,
+                                    size_t &position, const DataTypes dataType,
                                     const bool untilTimeStep = false) const;
 
     /**
@@ -448,13 +449,22 @@ protected:
 private:
     std::string GetBPRankName(const std::string &name,
                               const unsigned int rank) const noexcept;
+
+    /**
+     * Specialized template for string and other types
+     */
+    template <class T>
+    void ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
+                              const DataTypes dataType,
+                              const bool untilTimeStep,
+                              Characteristics<T> &characteristics) const;
 };
 
 #define declare_template_instantiation(T)                                      \
     extern template BP3Base::Characteristics<T>                                \
-    BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
-                                             size_t &position,                 \
-                                             const bool untilTimeStep) const;
+    BP3Base::ReadElementIndexCharacteristics(                                  \
+        const std::vector<char> &buffer, size_t &position,                     \
+        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

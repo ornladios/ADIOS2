@@ -158,7 +158,12 @@ PYBIND11_MODULE(adios2, m)
                          adios2::IOPy::Open);
 
     pybind11::class_<adios2::EnginePy>(m, "EnginePy")
-        .def("PutSync", &adios2::EnginePy::PutSync)
+        .def("PutSync", (void (adios2::EnginePy::*)(adios2::VariableBase *,
+                                                    const pybind11::array &)) &
+                            adios2::EnginePy::PutSync)
+        .def("PutSync", (void (adios2::EnginePy::*)(adios2::VariableBase *,
+                                                    const std::string &)) &
+                            adios2::EnginePy::PutSync)
         .def("EndStep", &adios2::EnginePy::EndStep)
         .def("Close", &adios2::EnginePy::Close,
              pybind11::arg("transportIndex") = -1);

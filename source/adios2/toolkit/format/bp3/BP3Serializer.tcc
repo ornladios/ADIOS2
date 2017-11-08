@@ -21,7 +21,8 @@ namespace format
 {
 
 template <class T>
-void BP3Serializer::PutVariableMetadata(const Variable<T> &variable) noexcept
+inline void
+BP3Serializer::PutVariableMetadata(const Variable<T> &variable) noexcept
 {
     ProfilerStart("buffering");
 
@@ -33,12 +34,12 @@ void BP3Serializer::PutVariableMetadata(const Variable<T> &variable) noexcept
         variable.m_Name, m_MetadataSet.VarsIndices, isNew);
     stats.MemberID = variableIndex.MemberID;
 
-    auto &absolutePosition = m_Data.m_AbsolutePosition;
+    size_t &absolutePosition = m_Data.m_AbsolutePosition;
 
     // write metadata header in data and extract offsets
     stats.Offset = static_cast<uint64_t>(absolutePosition);
     PutVariableMetadataInData(variable, stats);
-    stats.PayloadOffset = absolutePosition;
+    stats.PayloadOffset = static_cast<uint64_t>(absolutePosition);
 
     // write to metadata  index
     PutVariableMetadataInIndex(variable, stats, isNew, variableIndex);
@@ -48,17 +49,12 @@ void BP3Serializer::PutVariableMetadata(const Variable<T> &variable) noexcept
 }
 
 template <class T>
-void BP3Serializer::PutVariablePayload(const Variable<T> &variable) noexcept
+inline void
+BP3Serializer::PutVariablePayload(const Variable<T> &variable) noexcept
 {
     ProfilerStart("buffering");
-    auto &buffer = m_Data.m_Buffer;
-    auto &position = m_Data.m_Position;
-
-    CopyToBufferThreads(buffer, position, variable.GetData(),
-                        variable.TotalSize(), m_Threads);
-
-    auto &absolutePosition = m_Data.m_AbsolutePosition;
-    absolutePosition += variable.PayloadSize();
+    PutPayloadInBuffer(variable);
+    m_Data.m_AbsolutePosition += variable.PayloadSize();
     ProfilerStop("buffering");
 }
 
@@ -319,6 +315,16 @@ void BP3Serializer::PutAttributeInIndex(const Attribute<T> &attribute,
     m_MetadataSet.AttributesIndices.emplace(attribute.m_Name, index);
 }
 
+template <>
+inline BP3Serializer::Stats<typename TypeInfo<std::string>::ValueType>
+BP3Serializer::GetStats(const Variable<std::string> &variable) const noexcept
+{
+    Stats<typename TypeInfo<std::string>::ValueType> stats;
+    stats.Step = m_MetadataSet.TimeStep;
+    stats.FileIndex = static_cast<uint32_t>(m_RankMPI);
+    return stats;
+}
+
 template <class T>
 BP3Serializer::Stats<typename TypeInfo<T>::ValueType>
 BP3Serializer::GetStats(const Variable<T> &variable) const noexcept
@@ -380,6 +386,53 @@ void BP3Serializer::PutVariableMetadataInData(
     // not need to remove its own size (8) from length from bpdump
     const uint64_t varLength = static_cast<const uint64_t>(
         position - varLengthPosition + variable.PayloadSize());
+
+    size_t backPosition = varLengthPosition;
+    CopyToBuffer(buffer, backPosition, &varLength);
+
+    absolutePosition += position - varLengthPosition;
+}
+
+template <>
+inline void BP3Serializer::PutVariableMetadataInData(
+    const Variable<std::string> &variable,
+    const Stats<typename TypeInfo<std::string>::ValueType> &stats) noexcept
+{
+    auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
+    auto &absolutePosition = m_Data.m_AbsolutePosition;
+
+    // for writing length at the end
+    const size_t varLengthPosition = position;
+    position += 8; // skip var length (8)
+
+    CopyToBuffer(buffer, position, &stats.MemberID);
+
+    PutNameRecord(variable.m_Name, buffer, position);
+    position += 2; // skip path
+
+    const uint8_t dataType = GetDataType<std::string>();
+    CopyToBuffer(buffer, position, &dataType);
+
+    constexpr char no = 'n'; // isDimension
+    CopyToBuffer(buffer, position, &no);
+
+    const uint8_t dimensions =
+        static_cast<const uint8_t>(variable.m_Count.size());
+    CopyToBuffer(buffer, position, &dimensions); // count
+
+    uint16_t dimensionsLength = 27 * dimensions;
+    CopyToBuffer(buffer, position, &dimensionsLength); // length
+
+    PutDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
+                        buffer, position);
+
+    position += 5; // skipping characteristics
+
+    // Back to varLength including payload size
+    // not need to remove its own size (8) from length from bpdump
+    const uint64_t varLength = static_cast<const uint64_t>(
+        position - varLengthPosition + variable.GetData()->size() + 2);
 
     size_t backPosition = varLengthPosition;
     CopyToBuffer(buffer, backPosition, &varLength);
@@ -502,6 +555,60 @@ void BP3Serializer::PutCharacteristicRecord(const uint8_t characteristicID,
     ++characteristicsCounter;
 }
 
+template <>
+inline void BP3Serializer::PutVariableCharacteristics(
+    const Variable<std::string> &variable,
+    const Stats<typename TypeInfo<std::string>::ValueType> &stats,
+    std::vector<char> &buffer) noexcept
+{
+    const size_t characteristicsCountPosition = buffer.size();
+    // skip characteristics count(1) + length (4)
+    buffer.insert(buffer.end(), 5, '\0');
+    uint8_t characteristicsCounter = 0;
+
+    PutCharacteristicRecord(characteristic_time_index, characteristicsCounter,
+                            stats.Step, buffer);
+
+    PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
+                            stats.FileIndex, buffer);
+
+    uint8_t characteristicID = characteristic_value;
+    InsertToBuffer(buffer, &characteristicID);
+    PutNameRecord(*variable.GetData(), buffer);
+    ++characteristicsCounter;
+
+    // TODO: keep dimensions or not
+    characteristicID = characteristic_dimensions;
+    InsertToBuffer(buffer, &characteristicID);
+    const uint8_t dimensions =
+        static_cast<const uint8_t>(variable.m_Count.size());
+    InsertToBuffer(buffer, &dimensions); // count
+    const uint16_t dimensionsLength =
+        static_cast<const uint16_t>(24 * dimensions);
+    InsertToBuffer(buffer, &dimensionsLength); // length
+    PutDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
+                        buffer);
+    ++characteristicsCounter;
+
+    PutCharacteristicRecord(characteristic_offset, characteristicsCounter,
+                            stats.Offset, buffer);
+
+    PutCharacteristicRecord(characteristic_payload_offset,
+                            characteristicsCounter, stats.PayloadOffset,
+                            buffer);
+    // END OF CHARACTERISTICS
+
+    // Back to characteristics count and length
+    size_t backPosition = characteristicsCountPosition;
+    CopyToBuffer(buffer, backPosition, &characteristicsCounter); // count (1)
+
+    // remove its own length (4) + characteristic counter (1)
+    const uint32_t characteristicsLength = static_cast<const uint32_t>(
+        buffer.size() - characteristicsCountPosition - 4 - 1);
+
+    CopyToBuffer(buffer, backPosition, &characteristicsLength); // length
+}
+
 template <class T>
 void BP3Serializer::PutVariableCharacteristics(
     const Variable<T> &variable,
@@ -524,7 +631,7 @@ void BP3Serializer::PutVariableCharacteristics(
     PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
                     buffer);
 
-    uint8_t characteristicID = characteristic_dimensions;
+    const uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
     const uint8_t dimensions =
         static_cast<const uint8_t>(variable.m_Count.size());
@@ -594,6 +701,20 @@ void BP3Serializer::PutVariableCharacteristics(
     const uint32_t characteristicsLength = static_cast<const uint32_t>(
         position - characteristicsCountPosition - 4 - 1);
     CopyToBuffer(buffer, backPosition, &characteristicsLength);
+}
+
+template <>
+inline void BP3Serializer::PutPayloadInBuffer(
+    const Variable<std::string> &variable) noexcept
+{
+    PutNameRecord(*variable.GetData(), m_Data.m_Buffer, m_Data.m_Position);
+}
+
+template <class T>
+void BP3Serializer::PutPayloadInBuffer(const Variable<T> &variable) noexcept
+{
+    CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position, variable.GetData(),
+                        variable.TotalSize(), m_Threads);
 }
 
 } // end namespace format

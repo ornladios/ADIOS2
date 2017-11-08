@@ -7,12 +7,11 @@
  *  Created on: Feb 7, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
+#include "BP3Base.h"
+#include "BP3Base.tcc"
 
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
-#include <adios2/toolkit/format/bp3/BP3Base.h>
-#include <adios2/toolkit/format/bp3/BP3Base.tcc>
-// ReadValue
 
 namespace adios2
 {
@@ -608,9 +607,9 @@ std::string BP3Base::GetBPRankName(const std::string &name,
 
 #define declare_template_instantiation(T)                                      \
     template BP3Base::Characteristics<T>                                       \
-    BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,  \
-                                             size_t &position,                 \
-                                             const bool untilTimeStep) const;
+    BP3Base::ReadElementIndexCharacteristics(                                  \
+        const std::vector<char> &buffer, size_t &position,                     \
+        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

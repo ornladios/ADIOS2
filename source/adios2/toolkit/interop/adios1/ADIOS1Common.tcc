@@ -22,6 +22,11 @@ namespace interop
 {
 
 template <>
+enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<std::string>() const {
+    return adios_string;
+}
+
+template <>
 enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<char>() const {
     return adios_byte;
 }
