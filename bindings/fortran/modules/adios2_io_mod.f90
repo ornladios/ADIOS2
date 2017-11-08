@@ -39,7 +39,8 @@ contains
     end subroutine
 
 
-    subroutine adios2_set_transport_param(io, transport_index, key, value, ierr)
+    subroutine adios2_set_transport_parameter(io, transport_index, key, value, &
+        & ierr)
         integer(kind=8), intent(in):: io
         integer, intent(in):: transport_index
         character*(*), intent(in) :: key
