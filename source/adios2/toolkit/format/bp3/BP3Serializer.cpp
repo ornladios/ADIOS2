@@ -792,6 +792,17 @@ void BP3Serializer::MergeSerializeIndices(
         switch (dataType)
         {
 
+        case (type_string):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<std::string>(buffer, position,
+                                                             type_string, true);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
         case (type_byte):
         {
             const auto characteristics = ReadElementIndexCharacteristics<char>(
@@ -896,7 +907,7 @@ void BP3Serializer::MergeSerializeIndices(
             timeStep = characteristics.Statistics.Step;
             break;
         }
-            // TODO: complex, string, string array, long double
+            // TODO: complex, string array, long double
         } // end switch
 
     };

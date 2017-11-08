@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
             "bpInts", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         adios2::Variable<std::string> &bpString =
-            bpIO.DefineVariable<std::string>("bpString", {}, {}, {1},
+            bpIO.DefineVariable<std::string>("bpString", {}, {}, {},
                                              adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
@@ -59,8 +59,8 @@ int main(int argc, char *argv[])
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
 
         /** Put variables for buffering, template type is optional */
-        // bpFileWriter.PutSync<float>(bpFloats, myFloats.data());
-        // bpFileWriter.PutSync(bpInts, myInts.data());
+        bpFileWriter.PutSync<float>(bpFloats, myFloats.data());
+        bpFileWriter.PutSync(bpInts, myInts.data());
         bpFileWriter.PutSync(bpString, myString);
 
         /** Create bp file, engine becomes unreachable after this*/

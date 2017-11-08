@@ -54,7 +54,6 @@ BP3Serializer::PutVariablePayload(const Variable<T> &variable) noexcept
 {
     ProfilerStart("buffering");
     PutPayloadInBuffer(variable);
-    m_Data.m_AbsolutePosition += variable.PayloadSize();
     ProfilerStop("buffering");
 }
 
@@ -708,6 +707,7 @@ inline void BP3Serializer::PutPayloadInBuffer(
     const Variable<std::string> &variable) noexcept
 {
     PutNameRecord(*variable.GetData(), m_Data.m_Buffer, m_Data.m_Position);
+    m_Data.m_AbsolutePosition += variable.GetData()->size() + 2;
 }
 
 template <class T>
@@ -715,6 +715,7 @@ void BP3Serializer::PutPayloadInBuffer(const Variable<T> &variable) noexcept
 {
     CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position, variable.GetData(),
                         variable.TotalSize(), m_Threads);
+    m_Data.m_AbsolutePosition += variable.PayloadSize();
 }
 
 } // end namespace format
