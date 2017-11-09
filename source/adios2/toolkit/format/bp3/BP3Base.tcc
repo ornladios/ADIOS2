@@ -300,7 +300,8 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
 
     while (localPosition < characteristics.EntryLength)
     {
-        const uint8_t id = ReadValue<uint8_t>(buffer, position);
+        const CharacteristicID id =
+            static_cast<CharacteristicID>(ReadValue<uint8_t>(buffer, position));
 
         switch (id)
         {
@@ -321,9 +322,21 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
 
         case (characteristic_value):
         {
-            characteristics.Statistics.Value =
-                ReadValue<typename TypeInfo<T>::ValueType>(buffer, position);
-            characteristics.Statistics.IsValue = true;
+            // we are relying that count contains the dimensions
+            if (characteristics.Count.empty() || characteristics.Count[0] == 1)
+            {
+                characteristics.Statistics.Value =
+                    ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                               position);
+                characteristics.Statistics.IsValue = true;
+            }
+            else // used for attributes
+            {
+                const size_t size = characteristics.Count[0];
+                characteristics.Statistics.Values.resize(size);
+                CopyFromBuffer(buffer, position,
+                               characteristics.Statistics.Values.data(), size);
+            }
             break;
         }
 

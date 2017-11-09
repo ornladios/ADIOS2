@@ -130,7 +130,6 @@ void BPFileReader::ReadVariables(
             const std::string subFile(
                 m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
 
-            // TODO: fix this part
             if (m_SubFileManager.m_Transports.count(subFileIndex) == 0)
             {
                 m_SubFileManager.OpenFiles({subFile}, adios2::Mode::Read,
