@@ -43,7 +43,8 @@ void FC_GLOBAL(adios2_init_f2c, ADIOS2_INIT_F2C)(adios2_ADIOS **adios,
                                                  const int *debug_mode,
                                                  int *ierr)
 {
-    adios2_init_config_f2c_(adios, "", debug_mode, ierr);
+    FC_GLOBAL(adios2_init_config_f2c, ADIOS2_INIT_CONFIG_F2C)
+    (adios, "", debug_mode, ierr);
 }
 
 void FC_GLOBAL(adios2_init_config_f2c,
