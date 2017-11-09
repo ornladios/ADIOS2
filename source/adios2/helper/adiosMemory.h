@@ -13,6 +13,7 @@
 #define ADIOS2_HELPER_ADIOSMEMORY_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
 #include <vector>
 /// \endcond
 

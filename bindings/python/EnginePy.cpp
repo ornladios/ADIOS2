@@ -9,6 +9,7 @@
  */
 
 #include "EnginePy.h"
+#include "typesPy.h"
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
@@ -48,7 +49,7 @@ void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
                                          variable->m_ConstantDims);            \
         m_VariablesPlaceholder.erase(variable->m_Name);                        \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -63,7 +64,7 @@ void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
         m_Engine.PutSync(*dynamic_cast<adios2::Variable<T> *>(variable),       \
                          reinterpret_cast<const T *>(array.data()));           \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
     else
     {
@@ -75,6 +76,12 @@ void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
                                         ", in call to PutSync\n");
         }
     }
+}
+
+void EnginePy::PutSync(VariableBase *variable, const std::string &string)
+{
+    m_Engine.PutSync(*dynamic_cast<adios2::Variable<std::string> *>(variable),
+                     string);
 }
 
 void EnginePy::EndStep() { m_Engine.EndStep(); }

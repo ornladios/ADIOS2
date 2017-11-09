@@ -62,6 +62,8 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
             adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
             adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
             adios2::Dims count{static_cast<unsigned int>(Nx)};
+
+            auto &var_iString = io.DefineVariable<std::string>("iString");
             auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             auto &var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
@@ -103,6 +105,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
+            auto &var_iString = *io.InquireVariable<std::string>("iString");
             auto &var_i8 = *io.InquireVariable<int8_t>("i8");
             auto &var_i16 = *io.InquireVariable<int16_t>("i16");
             auto &var_i32 = *io.InquireVariable<int32_t>("i32");
@@ -117,6 +120,8 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
             adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
+
+            EXPECT_THROW(var_iString.SetSelection(sel), std::invalid_argument);
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -132,6 +137,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
             // fill in the variable with values from starting index to
             // starting index + count
             engine.BeginStep();
+            engine.PutSync(var_iString, currentTestData.S1);
             engine.PutSync(var_i8, currentTestData.I8.data());
             engine.PutSync(var_i16, currentTestData.I16.data());
             engine.PutSync(var_i32, currentTestData.I32.data());
@@ -166,6 +172,12 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         ASSERT_NE(f, nullptr);
 
         // Check the variables exist
+        ADIOS_VARINFO *var_iString = adios_inq_var(f, "iString");
+        ASSERT_NE(var_iString, nullptr);
+        ASSERT_EQ(var_iString->ndim, 0);
+        ASSERT_EQ(var_iString->global, 0);
+        ASSERT_EQ(var_iString->nsteps, NSteps);
+
         ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
         ASSERT_NE(var_i8, nullptr);
         ASSERT_EQ(var_i8->ndim, 1);
@@ -227,6 +239,8 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
         ASSERT_EQ(var_r64->nsteps, NSteps);
         ASSERT_EQ(var_r64->dims[0], mpiSize * Nx);
 
+        SmallTestData testData;
+        std::vector<char> IString(testData.S1.size());
         std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
         std::array<int32_t, Nx> I32;
@@ -249,6 +263,9 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
             SmallTestData currentTestData =
                 generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
             // Read the current step
+            //  TODO   adios_schedule_read_byid(f, sel, var_iString->varid,
+            //            t, 1,
+            //                                     IString.data());
             adios_schedule_read_byid(f, sel, var_i8->varid, t, 1, I8.data());
             adios_schedule_read_byid(f, sel, var_i16->varid, t, 1, I16.data());
             adios_schedule_read_byid(f, sel, var_i32->varid, t, 1, I32.data());
@@ -262,6 +279,14 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
             adios_perform_reads(f, 1);
 
             // Check if it's correct
+            const std::string IStringData(IString.begin(), IString.end());
+            //            const std::string stringMessage("t=" +
+            //            std::to_string(t) +
+            //                                            " rank=" +
+            //                                            std::to_string(mpiRank));
+            //            EXPECT_EQ(IStringData, currentTestData.S1) <<
+            //            stringMessage;
+
             for (size_t i = 0; i < Nx; ++i)
             {
                 std::stringstream ss;

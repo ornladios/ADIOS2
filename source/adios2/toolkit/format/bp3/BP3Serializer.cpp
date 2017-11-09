@@ -792,10 +792,21 @@ void BP3Serializer::MergeSerializeIndices(
         switch (dataType)
         {
 
-        case (type_byte):
+        case (type_string):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<char>(buffer, position, true);
+                ReadElementIndexCharacteristics<std::string>(buffer, position,
+                                                             type_string, true);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
+        case (type_byte):
+        {
+            const auto characteristics = ReadElementIndexCharacteristics<char>(
+                buffer, position, type_byte, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -804,8 +815,8 @@ void BP3Serializer::MergeSerializeIndices(
 
         case (type_short):
         {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<short>(buffer, position, true);
+            const auto characteristics = ReadElementIndexCharacteristics<short>(
+                buffer, position, type_short, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -814,8 +825,8 @@ void BP3Serializer::MergeSerializeIndices(
 
         case (type_integer):
         {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<int>(buffer, position, true);
+            const auto characteristics = ReadElementIndexCharacteristics<int>(
+                buffer, position, type_integer, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -826,7 +837,7 @@ void BP3Serializer::MergeSerializeIndices(
         {
             const auto characteristics =
                 ReadElementIndexCharacteristics<long int>(buffer, position,
-                                                          true);
+                                                          type_long, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -836,8 +847,8 @@ void BP3Serializer::MergeSerializeIndices(
         case (type_unsigned_byte):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned char>(buffer, position,
-                                                               true);
+                ReadElementIndexCharacteristics<unsigned char>(
+                    buffer, position, type_unsigned_byte, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -847,8 +858,8 @@ void BP3Serializer::MergeSerializeIndices(
         case (type_unsigned_short):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned short>(buffer,
-                                                                position, true);
+                ReadElementIndexCharacteristics<unsigned short>(
+                    buffer, position, type_unsigned_short, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -858,8 +869,8 @@ void BP3Serializer::MergeSerializeIndices(
         case (type_unsigned_integer):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned int>(buffer, position,
-                                                              true);
+                ReadElementIndexCharacteristics<unsigned int>(
+                    buffer, position, type_unsigned_integer, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -870,7 +881,7 @@ void BP3Serializer::MergeSerializeIndices(
         {
             auto characteristics =
                 ReadElementIndexCharacteristics<unsigned long int>(
-                    buffer, position, true);
+                    buffer, position, type_unsigned_long, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -879,8 +890,8 @@ void BP3Serializer::MergeSerializeIndices(
 
         case (type_real):
         {
-            auto characteristics =
-                ReadElementIndexCharacteristics<float>(buffer, position, true);
+            auto characteristics = ReadElementIndexCharacteristics<float>(
+                buffer, position, type_real, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -889,14 +900,14 @@ void BP3Serializer::MergeSerializeIndices(
 
         case (type_double):
         {
-            auto characteristics =
-                ReadElementIndexCharacteristics<double>(buffer, position, true);
+            auto characteristics = ReadElementIndexCharacteristics<double>(
+                buffer, position, type_double, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
             break;
         }
-            // TODO: complex, string, string array, long double
+            // TODO: complex, string array, long double
         } // end switch
 
     };

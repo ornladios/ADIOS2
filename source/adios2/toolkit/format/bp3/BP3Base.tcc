@@ -150,15 +150,26 @@ int8_t BP3Base::GetDataType<cldouble>() const noexcept
 }
 
 template <class T>
-BP3Base::Characteristics<T>
-BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
-                                         size_t &position,
-                                         const bool untilTimeStep) const
+inline BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
+    const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
+    const bool untilTimeStep) const
 {
     Characteristics<T> characteristics;
     characteristics.EntryCount = ReadValue<uint8_t>(buffer, position);
     characteristics.EntryLength = ReadValue<uint32_t>(buffer, position);
 
+    ParseCharacteristics(buffer, position, dataType, untilTimeStep,
+                         characteristics);
+
+    return characteristics;
+}
+
+template <>
+inline void BP3Base::ParseCharacteristics(
+    const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
+    const bool untilTimeStep,
+    Characteristics<std::string> &characteristics) const
+{
     const size_t start = position;
     size_t localPosition = 0;
 
@@ -186,7 +197,130 @@ BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
         }
 
         case (characteristic_value):
-        { // TODO make sure it's string or string array
+        {
+            if (dataType == type_string)
+            {
+                // first get the length of the string
+                const size_t size = static_cast<const size_t>(
+                    ReadValue<uint16_t>(buffer, position));
+
+                characteristics.Statistics.Value =
+                    std::string(&buffer[position], size);
+
+                characteristics.Statistics.IsValue = true;
+            }
+            else if (dataType == type_string_array)
+            {
+                const size_t elements = static_cast<const size_t>(
+                    ReadValue<uint32_t>(buffer, position));
+
+                characteristics.Statistics.Values.reserve(elements);
+
+                for (size_t e = 0; e < elements; ++e)
+                {
+                    const size_t size = static_cast<const size_t>(
+                        ReadValue<uint16_t>(buffer, position));
+
+                    characteristics.Statistics.Values.push_back(
+                        std::string(&buffer[position], size));
+                }
+            }
+
+            break;
+        }
+
+        case (characteristic_offset):
+        {
+            characteristics.Statistics.Offset =
+                ReadValue<uint64_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_payload_offset):
+        {
+            characteristics.Statistics.PayloadOffset =
+                ReadValue<uint64_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_dimensions):
+        {
+            const unsigned int dimensionsSize =
+                static_cast<unsigned int>(ReadValue<uint8_t>(buffer, position));
+
+            characteristics.Shape.reserve(dimensionsSize);
+            characteristics.Start.reserve(dimensionsSize);
+            characteristics.Count.reserve(dimensionsSize);
+            position += 2; // skip length (not required)
+
+            for (unsigned int d = 0; d < dimensionsSize; ++d)
+            {
+                characteristics.Count.push_back(
+                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Shape.push_back(
+                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Start.push_back(
+                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+            }
+            break;
+        }
+        // TODO: implement compression and BP1 Stats characteristics
+        default:
+        {
+            throw std::invalid_argument("ERROR: characteristic ID " +
+                                        std::to_string(id) +
+                                        " not supported\n");
+            break;
+        }
+
+        } // end id switch
+
+        if (untilTimeStep && foundTimeStep)
+        {
+            break;
+        }
+
+        localPosition = position - start;
+    }
+}
+
+template <class T>
+inline void
+BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
+                              const DataTypes /*dataType*/,
+                              const bool untilTimeStep,
+                              Characteristics<T> &characteristics) const
+{
+    const size_t start = position;
+    size_t localPosition = 0;
+
+    bool foundTimeStep = false;
+
+    while (localPosition < characteristics.EntryLength)
+    {
+        const uint8_t id = ReadValue<uint8_t>(buffer, position);
+
+        switch (id)
+        {
+        case (characteristic_time_index):
+        {
+            characteristics.Statistics.Step =
+                ReadValue<uint32_t>(buffer, position);
+            foundTimeStep = true;
+            break;
+        }
+
+        case (characteristic_file_index):
+        {
+            characteristics.Statistics.FileIndex =
+                ReadValue<uint32_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_value):
+        {
             characteristics.Statistics.Value =
                 ReadValue<typename TypeInfo<T>::ValueType>(buffer, position);
             characteristics.Statistics.IsValue = true;
@@ -253,7 +387,7 @@ BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
             break;
         }
 
-        } // end switch
+        } // end id switch
 
         if (untilTimeStep && foundTimeStep)
         {
@@ -262,8 +396,6 @@ BP3Base::ReadElementIndexCharacteristics(const std::vector<char> &buffer,
 
         localPosition = position - start;
     }
-
-    return characteristics;
 }
 
 } // end namespace format

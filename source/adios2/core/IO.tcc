@@ -128,6 +128,12 @@ Attribute<T> *IO::InquireAttribute(const std::string &name) noexcept
 
 // PRIVATE
 template <>
+std::map<unsigned int, Variable<std::string>> &IO::GetVariableMap()
+{
+    return m_String;
+}
+
+template <>
 std::map<unsigned int, Variable<char>> &IO::GetVariableMap()
 {
     return m_Char;

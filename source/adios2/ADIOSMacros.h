@@ -32,6 +32,7 @@
  </pre>
 */
 #define ADIOS2_FOREACH_TYPE_1ARG(MACRO)                                        \
+    MACRO(std::string)                                                         \
     MACRO(char)                                                                \
     MACRO(signed char)                                                         \
     MACRO(unsigned char)                                                       \
@@ -59,16 +60,15 @@
     MACRO(int)                                                                 \
     MACRO(unsigned int)                                                        \
     MACRO(long int)                                                            \
-    MACRO(unsigned long int)                                                   \
     MACRO(long long int)                                                       \
+    MACRO(unsigned long int)                                                   \
     MACRO(unsigned long long int)                                              \
     MACRO(float)                                                               \
-    MACRO(double)
-
-#define ADIOS2_FOREACH_COMPLEX_TYPE_1ARG(MACRO)                                \
-    MACRO(float)                                                               \
     MACRO(double)                                                              \
-    MACRO(long double)
+    MACRO(long double)                                                         \
+    MACRO(std::complex<float>)                                                 \
+    MACRO(std::complex<double>)                                                \
+    MACRO(std::complex<long double>)
 
 #define ADIOS2_FOREACH_ZFP_TYPE_1ARG(MACRO)                                    \
     MACRO(int32_t)                                                             \

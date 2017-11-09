@@ -9,6 +9,7 @@
  */
 
 #include "IOPy.h"
+#include "typesPy.h"
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
@@ -74,7 +75,7 @@ VariableBase &IOPy::DefineVariable(const std::string &name, const Dims &shape,
             name, shape, start, count, isConstantDims,                         \
             reinterpret_cast<T *>(const_cast<void *>(array.data())));          \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
     else
     {
@@ -121,7 +122,7 @@ VariableBase *IOPy::InquireVariable(const std::string &name) noexcept
     {                                                                          \
         variable = m_IO.InquireVariable<T>(name);                              \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
     return variable;

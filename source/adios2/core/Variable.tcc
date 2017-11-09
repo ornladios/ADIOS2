@@ -28,7 +28,7 @@ namespace adios2
                           const bool debugMode)                                \
     : VariableBase(name, GetType<T>(), sizeof(T), shape, start, count,         \
                    constantDims, debugMode),                                   \
-      m_Data(data)                                                             \
+      m_Data(data), m_Min(), m_Max(), m_Value()                                \
     {                                                                          \
         if (data != nullptr && !constantDims)                                  \
         {                                                                      \

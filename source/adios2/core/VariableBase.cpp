@@ -48,6 +48,13 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     if (m_DebugMode)
     {
+        if (m_Type == GetType<std::string>())
+        {
+            throw std::invalid_argument("ERROR: string variable " + m_Name +
+                                        " is always LocalValue, can have a "
+                                        "selection, in call to SetSelection\n");
+        }
+
         if (m_SingleValue)
         {
             throw std::invalid_argument(
@@ -176,7 +183,7 @@ void VariableBase::CheckDimensions(const std::string hint) const
             throw std::invalid_argument(
                 "ERROR: GlobalArray variable " + m_Name +
                 " start and count dimensions must be defined by either "
-                "DefineVariable or a Selection in call to " +
+                "IO.DefineVariable or Variable.SetSelection in call to " +
                 hint + "\n");
         }
     }
@@ -303,12 +310,25 @@ void VariableBase::InitShapeType()
     /* Extra checks for invalid settings */
     if (m_DebugMode)
     {
-        CheckDimensionsCommon("DefineVariable(" + m_Name + ")");
+        CheckDimensionsCommon(", in call to DefineVariable(\"" + m_Name +
+                              "\",...");
     }
 }
 
 void VariableBase::CheckDimensionsCommon(const std::string hint) const
 {
+    if (m_Type == "string")
+    {
+        if (!(m_Shape.empty() && m_Start.empty() && m_Count.empty()))
+        {
+            throw std::invalid_argument("ERROR: string variable " + m_Name +
+                                        " can't have dimensions (shape, start, "
+                                        "count must be empty), string is "
+                                        "always defined as a LocalValue " +
+                                        hint + "\n");
+        }
+    }
+
     if (m_ShapeID != ShapeID::LocalValue)
     {
         if ((!m_Shape.empty() &&
@@ -318,10 +338,11 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
             (!m_Count.empty() &&
              std::count(m_Count.begin(), m_Count.end(), LocalValueDim) > 0))
         {
-            throw std::invalid_argument("ERROR: LocalValueDim is only "
-                                        "allowed in a {LocalValueDim} "
-                                        "shape in call to " +
-                                        hint + "\n");
+            throw std::invalid_argument(
+                "ERROR: LocalValueDim parameter is only "
+                "allowed in a {LocalValueDim} "
+                "shape in call to " +
+                hint + "\n");
         }
     }
 

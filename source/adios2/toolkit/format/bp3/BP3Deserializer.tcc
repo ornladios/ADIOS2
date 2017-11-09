@@ -46,7 +46,8 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
     const size_t initialPosition = position;
 
     const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(buffer, position);
+        ReadElementIndexCharacteristics<T>(
+            buffer, position, static_cast<DataTypes>(header.DataType));
 
     std::string variableName(header.Name);
     if (!header.Path.empty())
@@ -95,7 +96,9 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
         // read until step is found
         const Characteristics<typename TypeInfo<T>::ValueType>
             subsetCharacteristics = ReadElementIndexCharacteristics<
-                typename TypeInfo<T>::ValueType>(buffer, position, false);
+                typename TypeInfo<T>::ValueType>(
+                buffer, position, static_cast<DataTypes>(header.DataType),
+                false);
 
         if (subsetCharacteristics.Statistics.Step > currentStep)
         {
@@ -156,7 +159,9 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
         for (size_t blockPosition : blockStarts)
         {
             const Characteristics<T> blockCharacteristics =
-                ReadElementIndexCharacteristics<T>(buffer, blockPosition);
+                ReadElementIndexCharacteristics<T>(
+                    buffer, blockPosition,
+                    static_cast<DataTypes>(GetDataType<T>()));
 
             // check if they intersect
             SubFileInfo info;
