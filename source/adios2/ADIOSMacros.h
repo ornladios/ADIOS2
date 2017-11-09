@@ -118,6 +118,7 @@
   </pre>
 */
 #define ADIOS2_FOREACH_TYPE_2ARGS(MACRO)                                       \
+    MACRO(std::string, String)                                                 \
     MACRO(char, Char)                                                          \
     MACRO(signed char, SChar)                                                  \
     MACRO(unsigned char, UChar)                                                \

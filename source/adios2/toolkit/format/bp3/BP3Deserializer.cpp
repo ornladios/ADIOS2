@@ -239,8 +239,8 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
         for (unsigned int t = 0; t < m_Threads; ++t)
         {
             asyncPositions[t] = position;
-            const size_t elementIndexSize = static_cast<const size_t>(
-                ReadValue<uint32_t>(buffer, position));
+            const size_t elementIndexSize =
+                static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
             position += elementIndexSize;
             localPosition = position - startPosition;
 

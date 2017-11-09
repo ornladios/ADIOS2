@@ -138,8 +138,6 @@ void BPFileReader::ReadVariables(
 
             for (const auto &stepPair : subFileIndexPair.second) // step
             {
-                const size_t step = stepPair.first;
-
                 for (const auto &blockInfo : stepPair.second)
                 {
                     const auto &seek = blockInfo.Seeks;

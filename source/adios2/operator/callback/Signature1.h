@@ -18,30 +18,37 @@ namespace adios2
 namespace callback
 {
 
-template <class T>
 class Signature1 : public Operator
 {
 
 public:
-    Signature1<T>(const std::function<
-                      void(const T *, const std::string &, const std::string &,
-                           const std::string &, const Dims &)> &function,
-                  const Params &parameters, const bool debugMode);
+#define declare_type(T)                                                        \
+    Signature1(const std::function<void(                                       \
+                   const T *, const std::string &, const std::string &,        \
+                   const std::string &, const Dims &)> &function,              \
+               const Params &parameters, const bool debugMode);
 
-    ~Signature1<T>() = default;
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
-    void RunCallback1(const T *, const std::string &, const std::string &,
+    ~Signature1() = default;
+
+#define declare_type(T)                                                        \
+    void RunCallback1(const T *, const std::string &, const std::string &,     \
                       const std::string &, const Dims &) final;
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 private:
-    std::function<void(const T *, const std::string &, const std::string &,
-                       const std::string &, const Dims &)>
-        m_Function;
+#define declare_type(T, L)                                                     \
+    std::function<void(const T *, const std::string &, const std::string &,    \
+                       const std::string &, const Dims &)>                     \
+        m_Function##L;
+    ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
+#undef declare_type
 };
 
 } // end namespace callback
 } // end namespace adios2
-
-#include <adios2/operator/callback/Signature1.inl>
 
 #endif /* ADIOS2_OPERATOR_CALLBACK_CALLBACK1_H_ */

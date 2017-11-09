@@ -205,10 +205,9 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayInvalidLocalValueDim)
 {
     // Define ADIOS global array
     std::size_t n = 50;
-    adios2::Variable<int> *globalarray;
-    EXPECT_THROW(globalarray = &io.DefineVariable<int>(
-                     "globalarray", {100, adios2::LocalValueDim, 30},
-                     {50, n / 2, 0}, {10, n / 2, 30}),
+    EXPECT_THROW(io.DefineVariable<int>("globalarray",
+                                        {100, adios2::LocalValueDim, 30},
+                                        {50, n / 2, 0}, {10, n / 2, 30}),
                  std::invalid_argument);
 }
 
@@ -293,8 +292,8 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
 {
-    int mpiRank = 0, mpiSize = 1;
 #ifdef ADIOS2_HAVE_MPI
+    int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -330,9 +329,8 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayInvalidOffsets)
     // Define ADIOS local array but try to add offsets
     std::size_t n = 50;
 
-    adios2::Variable<int> *localarray;
-    EXPECT_THROW(localarray = &io.DefineVariable<int>(
-                     "localarray", {}, {50, n / 2, 0}, {10, n / 2, 30}),
+    EXPECT_THROW(io.DefineVariable<int>("localarray", {}, {50, n / 2, 0},
+                                        {10, n / 2, 30}),
                  std::invalid_argument);
 }
 
@@ -393,8 +391,8 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayTooManyJoinedDims)
 {
     // Define ADIOS joined array
     std::size_t n = 50;
-    adios2::Variable<int> *joinedarray;
-    EXPECT_THROW(joinedarray = &io.DefineVariable<int>(
+
+    EXPECT_THROW(io.DefineVariable<int>(
                      "joinedarray", {n, adios2::JoinedDim, adios2::JoinedDim},
                      {}, {n, 50, 30}),
                  std::invalid_argument);

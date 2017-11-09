@@ -28,7 +28,9 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
 {
-    size_t counter = 0;
+#ifdef ADIOS2_HAVE_ZEROMQ
+    size_t counter = 0; // remove MACRO when more libraries are added
+#endif
 
     for (const auto &parameters : parametersVector)
     {

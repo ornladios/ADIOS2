@@ -15,6 +15,7 @@ add_library(adios2
   core/VariableCompound.cpp core/VariableCompound.tcc
 
 #operator callback
+  operator/callback/Signature1.cpp
   operator/callback/Signature2.cpp
 
 #helper

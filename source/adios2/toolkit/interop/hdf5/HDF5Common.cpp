@@ -131,7 +131,7 @@ unsigned int HDF5Common::GetNumTimeSteps()
 {
     if (m_WriteMode)
     {
-        return -1;
+        return 0;
     }
 
     if (m_FileId < 0)
