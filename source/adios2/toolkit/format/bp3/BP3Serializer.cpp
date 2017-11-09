@@ -297,6 +297,8 @@ void BP3Serializer::PutAttributes(IO &io)
         Stats<T> stats;                                                        \
         stats.Offset = absolutePosition;                                       \
         stats.MemberID = memberID;                                             \
+        stats.Step = m_MetadataSet.TimeStep;                                   \
+        stats.FileIndex = static_cast<uint32_t>(m_RankMPI);                    \
         Attribute<T> &attribute = *io.InquireAttribute<T>(name);               \
         PutAttributeInData(attribute, stats);                                  \
         PutAttributeInIndex(attribute, stats);                                 \
@@ -789,7 +791,9 @@ void BP3Serializer::MergeSerializeIndices(
                                      uint32_t &timeStep)
 
     {
-        switch (dataType)
+        const DataTypes dataTypeEnum = static_cast<DataTypes>(dataType);
+
+        switch (dataTypeEnum)
         {
 
         case (type_string):
@@ -797,6 +801,17 @@ void BP3Serializer::MergeSerializeIndices(
             const auto characteristics =
                 ReadElementIndexCharacteristics<std::string>(buffer, position,
                                                              type_string, true);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
+        case (type_string_array):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<std::string>(
+                    buffer, position, type_string_array, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -907,7 +922,13 @@ void BP3Serializer::MergeSerializeIndices(
             timeStep = characteristics.Statistics.Step;
             break;
         }
+
+        default:
             // TODO: complex, string array, long double
+            throw std::invalid_argument("ERROR: type " +
+                                        std::to_string(dataType) +
+                                        " not supported in Merge\n");
+
         } // end switch
 
     };

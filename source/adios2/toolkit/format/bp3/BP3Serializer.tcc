@@ -272,6 +272,12 @@ void BP3Serializer::PutAttributeInIndex(const Attribute<T> &attribute,
     uint8_t characteristicsCounter = 0;
 
     // DIMENSIONS
+    PutCharacteristicRecord(characteristic_time_index, characteristicsCounter,
+                            stats.Step, buffer);
+
+    PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
+                            stats.FileIndex, buffer);
+
     uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
     constexpr uint8_t dimensions = 1;
@@ -284,13 +290,6 @@ void BP3Serializer::PutAttributeInIndex(const Attribute<T> &attribute,
     // VALUE
     PutAttributeCharacteristicValueInIndex(characteristicsCounter, attribute,
                                            buffer);
-
-    // TIME Index
-    PutCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                            stats.Step, buffer);
-
-    PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
-                            stats.FileIndex, buffer);
 
     PutCharacteristicRecord(characteristic_offset, characteristicsCounter,
                             stats.Offset, buffer);
