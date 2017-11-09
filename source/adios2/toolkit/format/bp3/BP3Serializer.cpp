@@ -59,7 +59,7 @@ void BP3Serializer::PutProcessGroupIndex(
     PutNameRecord(name, dataBuffer, dataPosition);
 
     // processID in metadata,
-    const uint32_t processID = static_cast<const uint32_t>(m_RankMPI);
+    const uint32_t processID = static_cast<uint32_t>(m_RankMPI);
     InsertToBuffer(metadataBuffer, &processID);
     // skip coordination var in data ....what is coordination var?
     dataPosition += 4;
@@ -77,7 +77,7 @@ void BP3Serializer::PutProcessGroupIndex(
     InsertU64(metadataBuffer, m_Data.m_AbsolutePosition);
 
     // Back to writing metadata pg index length (length of group)
-    const uint16_t metadataPGIndexLength = static_cast<const uint16_t>(
+    const uint16_t metadataPGIndexLength = static_cast<uint16_t>(
         metadataBuffer.size() - metadataPGLengthPosition - 2);
 
     size_t backPosition = metadataPGLengthPosition;
@@ -86,11 +86,10 @@ void BP3Serializer::PutProcessGroupIndex(
 
     // here write method in data
     const std::vector<uint8_t> methodIDs = GetTransportIDs(transportsTypes);
-    const uint8_t methodsCount = static_cast<const uint8_t>(methodIDs.size());
+    const uint8_t methodsCount = static_cast<uint8_t>(methodIDs.size());
     CopyToBuffer(dataBuffer, dataPosition, &methodsCount); // count
     // methodID (1) + method params length(2), no parameters for now
-    const uint16_t methodsLength =
-        static_cast<const uint16_t>(methodsCount * 3);
+    const uint16_t methodsLength = static_cast<uint16_t>(methodsCount * 3);
 
     CopyToBuffer(dataBuffer, dataPosition, &methodsLength); // length
 
@@ -272,7 +271,7 @@ void BP3Serializer::PutAttributes(IO &io)
 
     // count is known ahead of time, write
     const uint32_t attributesCount =
-        static_cast<const uint32_t>(attributesDataMap.size());
+        static_cast<uint32_t>(attributesDataMap.size());
     CopyToBuffer(buffer, position, &attributesCount);
 
     // will go back
@@ -311,7 +310,7 @@ void BP3Serializer::PutAttributes(IO &io)
 
     // complete attributes length
     const uint64_t attributesLength =
-        static_cast<const uint64_t>(position - attributesLengthPosition);
+        static_cast<uint64_t>(position - attributesLengthPosition);
 
     size_t backPosition = attributesLengthPosition;
     CopyToBuffer(buffer, backPosition, &attributesLength);
@@ -357,7 +356,7 @@ void BP3Serializer::PutDimensionsRecord(const Dims &localDimensions,
             CopyToBuffer(buffer, position, &no);
         }
 
-        const uint64_t dimension64 = static_cast<const uint64_t>(dimension);
+        const uint64_t dimension64 = static_cast<uint64_t>(dimension);
 
         CopyToBuffer(buffer, position, &dimension64);
     };
@@ -394,7 +393,7 @@ void BP3Serializer::PutDimensionsRecord(const Dims &localDimensions,
 void BP3Serializer::PutNameRecord(const std::string name,
                                   std::vector<char> &buffer) noexcept
 {
-    const uint16_t length = static_cast<const uint16_t>(name.length());
+    const uint16_t length = static_cast<uint16_t>(name.length());
     InsertToBuffer(buffer, &length);
     InsertToBuffer(buffer, name.c_str(), length);
 }
@@ -403,7 +402,7 @@ void BP3Serializer::PutNameRecord(const std::string name,
                                   std::vector<char> &buffer,
                                   size_t &position) noexcept
 {
-    const uint16_t length = static_cast<const uint16_t>(name.length());
+    const uint16_t length = static_cast<uint16_t>(name.length());
     CopyToBuffer(buffer, position, &length);
     CopyToBuffer(buffer, position, name.c_str(), length);
 }
@@ -416,7 +415,8 @@ BP3Serializer::SerialElementIndex &BP3Serializer::GetSerialElementIndex(
     auto itName = indices.find(name);
     if (itName == indices.end())
     {
-        indices.emplace(name, SerialElementIndex(indices.size()));
+        indices.emplace(
+            name, SerialElementIndex(static_cast<uint32_t>(indices.size())));
         isNew = true;
         return indices.at(name);
     }
@@ -465,12 +465,13 @@ void BP3Serializer::SerializeMetadataInData() noexcept
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
            uint32_t &count, uint64_t &length) {
 
-            count = indices.size();
+            count = static_cast<uint32_t>(indices.size());
             length = 0;
             for (auto &indexPair : indices) // set each index length
             {
                 auto &indexBuffer = indexPair.second.Buffer;
-                const uint32_t indexLength = indexBuffer.size() - 4;
+                const uint32_t indexLength =
+                    static_cast<uint32_t>(indexBuffer.size() - 4);
                 size_t indexLengthPosition = 0;
                 CopyToBuffer(indexBuffer, indexLengthPosition, &indexLength);
 
@@ -510,7 +511,7 @@ void BP3Serializer::SerializeMetadataInData() noexcept
     lf_SetIndexCountLength(m_MetadataSet.AttributesIndices, attributesCount,
                            attributesLength);
 
-    const size_t footerSize = static_cast<const size_t>(
+    const size_t footerSize = static_cast<size_t>(
         (pgLength + 16) + (varsLength + 12) + (attributesLength + 12) +
         m_MetadataSet.MiniFooterSize);
 
@@ -527,7 +528,7 @@ void BP3Serializer::SerializeMetadataInData() noexcept
     CopyToBuffer(buffer, position, &pgCount);
     CopyToBuffer(buffer, position, &pgLength);
     CopyToBuffer(buffer, position, m_MetadataSet.PGIndex.Buffer.data(),
-                 static_cast<const size_t>(pgLength));
+                 static_cast<size_t>(pgLength));
 
     // Vars indices
     lf_FlattenIndices(varsCount, varsLength, m_MetadataSet.VarsIndices, buffer,
@@ -537,11 +538,11 @@ void BP3Serializer::SerializeMetadataInData() noexcept
                       m_MetadataSet.AttributesIndices, buffer, position);
 
     // getting absolute offset start, minifooter is 28 bytes for now
-    const uint64_t pgIndexStart = static_cast<const uint64_t>(absolutePosition);
+    const uint64_t pgIndexStart = static_cast<uint64_t>(absolutePosition);
     const uint64_t variablesIndexStart =
-        static_cast<const uint64_t>(pgIndexStart + (pgLength + 16));
+        static_cast<uint64_t>(pgIndexStart + (pgLength + 16));
     const uint64_t attributesIndexStart =
-        static_cast<const uint64_t>(variablesIndexStart + (varsLength + 12));
+        static_cast<uint64_t>(variablesIndexStart + (varsLength + 12));
 
     PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
                   buffer, position);
@@ -597,7 +598,7 @@ void BP3Serializer::AggregateIndex(const SerialElementIndex &index,
         // Write count
         position += 16;
         m_Metadata.Resize(position, " in call to AggregateIndex bp1 metadata");
-        const uint64_t totalCountU64 = static_cast<const uint64_t>(totalCount);
+        const uint64_t totalCountU64 = static_cast<uint64_t>(totalCount);
         CopyToBuffer(buffer, countPosition, &totalCountU64);
     }
 
@@ -608,7 +609,7 @@ void BP3Serializer::AggregateIndex(const SerialElementIndex &index,
     if (m_RankMPI == 0)
     {
         const uint64_t totalLengthU64 =
-            static_cast<const uint64_t>(position - countPosition - 8);
+            static_cast<uint64_t>(position - countPosition - 8);
         CopyToBuffer(buffer, countPosition, &totalLengthU64);
     }
 }
@@ -649,7 +650,7 @@ void BP3Serializer::AggregateMergeIndex(
         m_Metadata.Resize(position,
                           ", in call to AggregateMergeIndex bp1 metadata");
         const uint32_t totalCountU32 =
-            static_cast<const uint32_t>(nameRankIndices.size());
+            static_cast<uint32_t>(nameRankIndices.size());
         CopyToBuffer(buffer, countPosition, &totalCountU32);
     }
 
@@ -659,7 +660,7 @@ void BP3Serializer::AggregateMergeIndex(
     {
         // Write length
         const uint64_t totalLengthU64 =
-            static_cast<const uint64_t>(position - countPosition - 8);
+            static_cast<uint64_t>(position - countPosition - 8);
         CopyToBuffer(buffer, countPosition, &totalLengthU64);
     }
 }
@@ -675,7 +676,7 @@ std::vector<char> BP3Serializer::SerializeIndices(
         const SerialElementIndex &index = indexPair.second;
 
         // add rank at the beginning
-        const uint32_t rankSource = static_cast<const uint32_t>(m_RankMPI);
+        const uint32_t rankSource = static_cast<uint32_t>(m_RankMPI);
         InsertToBuffer(serializedIndices, &rankSource);
 
         // insert buffer
@@ -690,31 +691,31 @@ std::unordered_map<std::string, std::vector<BP3Base::SerialElementIndex>>
 BP3Serializer::DeserializeIndicesPerRankThreads(
     const std::vector<char> &serialized) const noexcept
 {
-    auto lf_Deserialize = [&](
-        const int rankSource, const std::vector<char> &serialized,
-        const size_t serializedPosition,
-        std::unordered_map<std::string, std::vector<SerialElementIndex>>
-            &deserialized) {
+    auto lf_Deserialize =
+        [&](const int rankSource, const std::vector<char> &serialized,
+            const size_t serializedPosition,
+            std::unordered_map<std::string, std::vector<SerialElementIndex>>
+                &deserialized) {
 
-        size_t localPosition = serializedPosition;
-        ElementIndexHeader header =
-            ReadElementIndexHeader(serialized, localPosition);
+            size_t localPosition = serializedPosition;
+            ElementIndexHeader header =
+                ReadElementIndexHeader(serialized, localPosition);
 
-        // mutex portion
-        {
-            std::lock_guard<std::mutex> lock(m_Mutex);
-            if (deserialized.count(header.Name) == 0)
+            // mutex portion
             {
-                deserialized[header.Name] = std::vector<SerialElementIndex>(
-                    m_SizeMPI, SerialElementIndex(header.MemberID, 0));
+                std::lock_guard<std::mutex> lock(m_Mutex);
+                if (deserialized.count(header.Name) == 0)
+                {
+                    deserialized[header.Name] = std::vector<SerialElementIndex>(
+                        m_SizeMPI, SerialElementIndex(header.MemberID, 0));
+                }
             }
-        }
 
-        const size_t bufferSize = static_cast<const size_t>(header.Length) + 4;
-        SerialElementIndex &index = deserialized[header.Name][rankSource];
-        InsertToBuffer(index.Buffer, &serialized[serializedPosition],
-                       bufferSize);
-    };
+            const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
+            SerialElementIndex &index = deserialized[header.Name][rankSource];
+            InsertToBuffer(index.Buffer, &serialized[serializedPosition],
+                           bufferSize);
+        };
 
     // BODY OF FUNCTION starts here
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
@@ -744,12 +745,12 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
                 break;
             }
 
-            const int rankSource = static_cast<const int>(
+            const int rankSource = static_cast<int>(
                 ReadValue<uint32_t>(serialized, serializedPosition));
             asyncRankSources[t] = rankSource;
             asyncPositions[t] = serializedPosition;
 
-            const size_t bufferSize = static_cast<const size_t>(
+            const size_t bufferSize = static_cast<size_t>(
                 ReadValue<uint32_t>(serialized, serializedPosition));
             serializedPosition += bufferSize;
 
@@ -1029,7 +1030,8 @@ void BP3Serializer::MergeSerializeIndices(
             ++currentTimeStep;
         }
 
-        const uint32_t entryLength = headerSize + sorted.size() - 4;
+        const uint32_t entryLength =
+            static_cast<uint32_t>(headerSize + sorted.size() - 4);
         // Copy header to metadata buffer, need mutex here
         {
             std::lock_guard<std::mutex> lock(m_Mutex);

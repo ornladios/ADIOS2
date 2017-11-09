@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
             bpWriter.PutSync<unsigned int>(bpTimeStep, timeStep);
 
             // modifying data
-            myFloats[0] = timeStep;
+            myFloats[0] = static_cast<float>(timeStep);
             bpWriter.PutSync<float>(bpFloats, myFloats.data());
 
             bpWriter.EndStep();

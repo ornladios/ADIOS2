@@ -111,7 +111,7 @@ void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
 template <class T>
 void InsertU64(std::vector<char> &buffer, const T element) noexcept
 {
-    const uint64_t element64 = static_cast<const uint64_t>(element);
+    const uint64_t element64 = static_cast<uint64_t>(element);
     InsertToBuffer(buffer, &element64);
 }
 

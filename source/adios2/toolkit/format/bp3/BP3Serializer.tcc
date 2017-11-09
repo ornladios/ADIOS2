@@ -165,7 +165,8 @@ void BP3Serializer::PutAttributeInData(const Attribute<T> &attribute,
     // here record payload offset
     stats.PayloadOffset = absolutePosition + position - attributeLengthPosition;
 
-    const uint32_t dataSize = attribute.m_Elements * sizeof(T);
+    const uint32_t dataSize =
+        static_cast<uint32_t>(attribute.m_Elements * sizeof(T));
     CopyToBuffer(buffer, position, &dataSize);
 
     if (attribute.m_IsSingleValue) // single value

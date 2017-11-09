@@ -386,7 +386,7 @@ int MPI_Error_string(int /*errorcode*/, char *string, int *resultlen)
     // std::sprintf(string, "Dummy lib does not know error strings.
     // Code=%d\n",errorcode);
     std::strcpy(string, mpierrmsg);
-    *resultlen = std::strlen(string);
+    *resultlen = static_cast<int>(std::strlen(string));
     return MPI_SUCCESS;
 }
 

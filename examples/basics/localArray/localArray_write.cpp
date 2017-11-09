@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
             // random size per process per step, 5..10 each
             Nelems = rand() % 6 + 5;
             v2.reserve(Nelems);
-            for (int i = 0; i < Nelems; i++)
+            for (unsigned int i = 0; i < Nelems; i++)
             {
                 v2[i] = rank * 1.0 + step * 0.1;
             }

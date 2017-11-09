@@ -170,8 +170,7 @@ public:
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
 
     std::string GetBPSubFileName(const std::string &name,
-                                 const unsigned int subFileIndex) const
-        noexcept;
+                                 const size_t subFileIndex) const noexcept;
 
     /**
      * Returns the estimated variable index size. Used by ResizeBuffer public
@@ -447,8 +446,8 @@ protected:
     void ProfilerStop(const std::string process);
 
 private:
-    std::string GetBPRankName(const std::string &name,
-                              const unsigned int rank) const noexcept;
+    std::string GetBPRankName(const std::string &name, const size_t rank) const
+        noexcept;
 
     /**
      * Specialized template for string and other types

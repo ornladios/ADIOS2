@@ -24,7 +24,8 @@ std::vector<int> GetGathervDisplacements(const size_t *counts,
 
     for (size_t i = 1; i < countsSize; ++i)
     {
-        displacements[i] = displacements[i - 1] + counts[i - 1];
+        displacements[i] =
+            displacements[i - 1] + static_cast<int>(counts[i - 1]);
     }
     return displacements;
 }

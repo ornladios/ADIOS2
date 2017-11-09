@@ -50,8 +50,7 @@ std::vector<int> CSVToVectorInt(const std::string csv) noexcept
     }
     else
     {
-        int count = std::count(csv.begin(), csv.end(), ',');
-        numbers.reserve(count);
+        numbers.reserve(std::count(csv.begin(), csv.end(), ','));
 
         std::istringstream csvSS(csv);
         std::string value;
