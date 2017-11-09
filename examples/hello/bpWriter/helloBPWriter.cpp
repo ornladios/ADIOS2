@@ -29,7 +29,8 @@ int main(int argc, char *argv[])
     std::vector<int> myInts = {0, -1, -2, -3, -4, -5, -6, -7, -8, -9};
     const std::size_t Nx = myFloats.size();
 
-    const std::string myString("Hello_Variable_String");
+    const std::string myString("Hello Variable String from rank " +
+                               std::to_string(rank));
 
     try
     {
@@ -51,8 +52,7 @@ int main(int argc, char *argv[])
             "bpInts", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         adios2::Variable<std::string> &bpString =
-            bpIO.DefineVariable<std::string>("bpString", {}, {}, {},
-                                             adios2::ConstantDims);
+            bpIO.DefineVariable<std::string>("bpString");
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpFileWriter =

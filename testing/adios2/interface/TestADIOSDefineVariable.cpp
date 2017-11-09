@@ -413,6 +413,20 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayInvalidStart)
         std::invalid_argument);
 }
 
+TEST_F(ADIOSDefineVariableTest, DefineString)
+{
+    // Define ADIOS local array but try to add offsets
+    const std::size_t n = 50;
+    EXPECT_THROW(io.DefineVariable<std::string>(
+                     "invalidString1", {}, {50, n / 2, 0}, {10, n / 2, 30}),
+                 std::invalid_argument);
+    EXPECT_THROW(io.DefineVariable<std::string>("invalidString2", {}, {}, {1}),
+                 std::invalid_argument);
+
+    EXPECT_NO_THROW(io.DefineVariable<std::string>("validString1"));
+    EXPECT_NO_THROW(io.DefineVariable<std::string>("validString2", {}, {}, {}));
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

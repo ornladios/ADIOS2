@@ -44,8 +44,11 @@ int main(int argc, char *argv[])
         /** global array: name, { shape (total dimensions) }, { start
          * (local) },
          * { count (local) }, all are constant dimensions */
-        const unsigned int variablesSize = 800;
+        const unsigned int variablesSize = 1;
         std::vector<adios2::Variable<float> *> bpFloats(variablesSize);
+
+        adios2::Variable<std::string> &bpString =
+            bpIO.DefineVariable<std::string>("bpString");
 
         for (unsigned int v = 0; v < variablesSize; ++v)
         {
@@ -81,11 +84,17 @@ int main(int argc, char *argv[])
             }
 
             // template type is optional, but recommended
-            for (unsigned int v = 0; v < 800; ++v)
+            for (unsigned int v = 0; v < variablesSize; ++v)
             {
                 myFloats[0] = v + timeStep;
                 bpWriter.PutSync(*bpFloats[v], myFloats.data());
             }
+            const std::string myString(
+                "Hello from rank: " + std::to_string(rank) + " and timestep: " +
+                std::to_string(timeStep));
+
+            bpWriter.PutSync(bpString, myString);
+
             bpWriter.EndStep();
         }
 
