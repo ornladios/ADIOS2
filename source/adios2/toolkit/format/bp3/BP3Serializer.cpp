@@ -19,6 +19,10 @@
 #include "adios2/helper/adiosFunctions.h" //GetType<T>, ReadValue<T>,
                                           // ReduceValue<T>
 
+#ifdef _WIN32
+#pragma warning(disable : 4503) // Windows complains about SubFileInfoMap levels
+#endif
+
 namespace adios2
 {
 namespace format

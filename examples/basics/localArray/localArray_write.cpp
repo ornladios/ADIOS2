@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
         {
             writer.BeginStep();
 
-            for (int i = 0; i < Nx; i++)
+            for (unsigned int i = 0; i < Nx; i++)
             {
                 v1[i] = rank * 1.0 + step * 0.1;
             }
