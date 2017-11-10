@@ -53,7 +53,6 @@ Params InitParametersXML(const pugi::xml_node &node, const bool debugMode)
                                             "element,  for key " +
                                             std::string(key.value()) +
                                             ", in call to ADIOS constructor\n");
-                continue;
             }
         }
 

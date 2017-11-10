@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     unsigned int i;
     for (i = 0; i < Nx; ++i)
     {
-        myFloats[i] = i;
+        myFloats[i] = (float)i;
     }
 
     adios2_ADIOS *adiosH = adios2_init_nompi(adios2_debug_mode_on);

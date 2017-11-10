@@ -26,126 +26,126 @@ namespace format
 template <>
 int8_t BP3Base::GetDataType<std::string>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_string);
+    const int8_t type = static_cast<int8_t>(type_string);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<char>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_byte);
+    const int8_t type = static_cast<int8_t>(type_byte);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<signed char>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_byte);
+    const int8_t type = static_cast<int8_t>(type_byte);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<short>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_short);
+    const int8_t type = static_cast<int8_t>(type_short);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<int>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_integer);
+    const int8_t type = static_cast<int8_t>(type_integer);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<long int>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_long);
+    const int8_t type = static_cast<int8_t>(type_long);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<long long int>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_long);
+    const int8_t type = static_cast<int8_t>(type_long);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<unsigned char>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_unsigned_byte);
+    const int8_t type = static_cast<int8_t>(type_unsigned_byte);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<unsigned short>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_unsigned_short);
+    const int8_t type = static_cast<int8_t>(type_unsigned_short);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<unsigned int>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_unsigned_integer);
+    const int8_t type = static_cast<int8_t>(type_unsigned_integer);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<unsigned long int>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_unsigned_long);
+    const int8_t type = static_cast<int8_t>(type_unsigned_long);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<unsigned long long int>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_unsigned_long);
+    const int8_t type = static_cast<int8_t>(type_unsigned_long);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<float>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_real);
+    const int8_t type = static_cast<int8_t>(type_real);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<double>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_double);
+    const int8_t type = static_cast<int8_t>(type_double);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<long double>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_long_double);
+    const int8_t type = static_cast<int8_t>(type_long_double);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<cfloat>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_complex);
+    const int8_t type = static_cast<int8_t>(type_complex);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<cdouble>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_double_complex);
+    const int8_t type = static_cast<int8_t>(type_double_complex);
     return type;
 }
 
 template <>
 int8_t BP3Base::GetDataType<cldouble>() const noexcept
 {
-    const int8_t type = static_cast<const int8_t>(type_long_double_complex);
+    const int8_t type = static_cast<int8_t>(type_long_double_complex);
     return type;
 }
 
@@ -201,8 +201,8 @@ inline void BP3Base::ParseCharacteristics(
             if (dataType == type_string)
             {
                 // first get the length of the string
-                const size_t size = static_cast<const size_t>(
-                    ReadValue<uint16_t>(buffer, position));
+                const size_t size =
+                    static_cast<size_t>(ReadValue<uint16_t>(buffer, position));
 
                 characteristics.Statistics.Value =
                     std::string(&buffer[position], size);
@@ -211,14 +211,14 @@ inline void BP3Base::ParseCharacteristics(
             }
             else if (dataType == type_string_array)
             {
-                const size_t elements = static_cast<const size_t>(
-                    ReadValue<uint32_t>(buffer, position));
+                const size_t elements =
+                    static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
 
                 characteristics.Statistics.Values.reserve(elements);
 
                 for (size_t e = 0; e < elements; ++e)
                 {
-                    const size_t size = static_cast<const size_t>(
+                    const size_t size = static_cast<size_t>(
                         ReadValue<uint16_t>(buffer, position));
 
                     characteristics.Statistics.Values.push_back(

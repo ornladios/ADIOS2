@@ -42,8 +42,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
     }
 
     auto &variableMap = GetVariableMap<T>();
-    const unsigned int size =
-        static_cast<const unsigned int>(variableMap.size());
+    const unsigned int size = static_cast<unsigned int>(variableMap.size());
     auto itVariablePair =
         variableMap.emplace(size, Variable<T>(name, shape, start, count,
                                               constantDims, data, m_DebugMode));
@@ -78,8 +77,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value)
     }
 
     auto &attributeMap = GetAttributeMap<T>();
-    const unsigned int size =
-        static_cast<const unsigned int>(attributeMap.size());
+    const unsigned int size = static_cast<unsigned int>(attributeMap.size());
 
     auto itAttributePair =
         attributeMap.emplace(size, Attribute<T>(name, value));
@@ -98,8 +96,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     }
 
     auto &attributeMap = GetAttributeMap<T>();
-    const unsigned int size =
-        static_cast<const unsigned int>(attributeMap.size());
+    const unsigned int size = static_cast<unsigned int>(attributeMap.size());
 
     auto itAttributePair =
         attributeMap.emplace(size, Attribute<T>(name, array, elements));

@@ -91,7 +91,7 @@ void BP3Serializer::PutAttributeLengthInData(
 
     // back to attribute length
     const uint32_t attributeLength =
-        static_cast<const uint32_t>(position - attributeLengthPosition);
+        static_cast<uint32_t>(position - attributeLengthPosition);
     size_t backPosition = attributeLengthPosition;
     CopyToBuffer(buffer, backPosition, &attributeLengthPosition);
 
@@ -123,15 +123,14 @@ BP3Serializer::PutAttributeInData(const Attribute<std::string> &attribute,
     if (dataType == type_string)
     {
         const uint32_t dataSize =
-            static_cast<const uint32_t>(attribute.m_DataSingleValue.size());
+            static_cast<uint32_t>(attribute.m_DataSingleValue.size());
         CopyToBuffer(buffer, position, &dataSize);
         CopyToBuffer(buffer, position, attribute.m_DataSingleValue.data(),
                      attribute.m_DataSingleValue.size());
     }
     else if (dataType == type_string_array)
     {
-        const uint32_t elements =
-            static_cast<const uint32_t>(attribute.m_Elements);
+        const uint32_t elements = static_cast<uint32_t>(attribute.m_Elements);
         CopyToBuffer(buffer, position, &elements);
 
         for (size_t s = 0; s < attribute.m_Elements; ++s)
@@ -139,8 +138,7 @@ BP3Serializer::PutAttributeInData(const Attribute<std::string> &attribute,
             // include zero terminated
             const std::string element(attribute.m_DataArray[s] + '\0');
 
-            const uint32_t elementSize =
-                static_cast<const uint32_t>(element.size());
+            const uint32_t elementSize = static_cast<uint32_t>(element.size());
 
             CopyToBuffer(buffer, position, &elementSize);
             CopyToBuffer(buffer, position, element.data(), element.size());
@@ -167,7 +165,8 @@ void BP3Serializer::PutAttributeInData(const Attribute<T> &attribute,
     // here record payload offset
     stats.PayloadOffset = absolutePosition + position - attributeLengthPosition;
 
-    const uint32_t dataSize = attribute.m_Elements * sizeof(T);
+    const uint32_t dataSize =
+        static_cast<uint32_t>(attribute.m_Elements * sizeof(T));
     CopyToBuffer(buffer, position, &dataSize);
 
     if (attribute.m_IsSingleValue) // single value
@@ -189,14 +188,14 @@ inline void BP3Serializer::PutAttributeCharacteristicValueInIndex(
     std::vector<char> &buffer) noexcept
 {
     const uint8_t characteristicID =
-        static_cast<const uint8_t>(CharacteristicID::characteristic_value);
+        static_cast<uint8_t>(CharacteristicID::characteristic_value);
 
     InsertToBuffer(buffer, &characteristicID);
 
     if (attribute.m_IsSingleValue) // Single string
     {
         const uint16_t dataSize =
-            static_cast<const uint16_t>(attribute.m_DataSingleValue.size());
+            static_cast<uint16_t>(attribute.m_DataSingleValue.size());
         InsertToBuffer(buffer, &dataSize);
         InsertToBuffer(buffer, attribute.m_DataSingleValue.data(),
                        attribute.m_DataSingleValue.size());
@@ -208,8 +207,7 @@ inline void BP3Serializer::PutAttributeCharacteristicValueInIndex(
             // without zero terminated character
             const std::string element(attribute.m_DataArray[s]);
 
-            const uint16_t elementSize =
-                static_cast<const uint16_t>(element.size());
+            const uint16_t elementSize = static_cast<uint16_t>(element.size());
 
             InsertToBuffer(buffer, &elementSize);
             InsertToBuffer(buffer, element.data(), element.size());
@@ -304,7 +302,7 @@ void BP3Serializer::PutAttributeInIndex(const Attribute<T> &attribute,
     CopyToBuffer(buffer, backPosition, &characteristicsCounter); // count (1)
 
     // remove its own length (4) + characteristic counter (1)
-    const uint32_t characteristicsLength = static_cast<const uint32_t>(
+    const uint32_t characteristicsLength = static_cast<uint32_t>(
         buffer.size() - characteristicsCountPosition - 4 - 1);
 
     CopyToBuffer(buffer, backPosition, &characteristicsLength); // length
@@ -365,8 +363,7 @@ void BP3Serializer::PutVariableMetadataInData(
     constexpr char no = 'n'; // isDimension
     CopyToBuffer(buffer, position, &no);
 
-    const uint8_t dimensions =
-        static_cast<const uint8_t>(variable.m_Count.size());
+    const uint8_t dimensions = static_cast<uint8_t>(variable.m_Count.size());
     CopyToBuffer(buffer, position, &dimensions); // count
 
     // 27 is from 9 bytes for each: var y/n + local, var y/n + global dimension,
@@ -382,7 +379,7 @@ void BP3Serializer::PutVariableMetadataInData(
 
     // Back to varLength including payload size
     // not need to remove its own size (8) from length from bpdump
-    const uint64_t varLength = static_cast<const uint64_t>(
+    const uint64_t varLength = static_cast<uint64_t>(
         position - varLengthPosition + variable.PayloadSize());
 
     size_t backPosition = varLengthPosition;
@@ -415,8 +412,7 @@ inline void BP3Serializer::PutVariableMetadataInData(
     constexpr char no = 'n'; // isDimension
     CopyToBuffer(buffer, position, &no);
 
-    const uint8_t dimensions =
-        static_cast<const uint8_t>(variable.m_Count.size());
+    const uint8_t dimensions = static_cast<uint8_t>(variable.m_Count.size());
     CopyToBuffer(buffer, position, &dimensions); // count
 
     uint16_t dimensionsLength = 27 * dimensions;
@@ -429,7 +425,7 @@ inline void BP3Serializer::PutVariableMetadataInData(
 
     // Back to varLength including payload size
     // not need to remove its own size (8) from length from bpdump
-    const uint64_t varLength = static_cast<const uint64_t>(
+    const uint64_t varLength = static_cast<uint64_t>(
         position - varLengthPosition + variable.GetData()->size() + 2);
 
     size_t backPosition = varLengthPosition;
@@ -578,11 +574,9 @@ inline void BP3Serializer::PutVariableCharacteristics(
     // TODO: keep dimensions or not
     characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
-    const uint8_t dimensions =
-        static_cast<const uint8_t>(variable.m_Count.size());
+    const uint8_t dimensions = static_cast<uint8_t>(variable.m_Count.size());
     InsertToBuffer(buffer, &dimensions); // count
-    const uint16_t dimensionsLength =
-        static_cast<const uint16_t>(24 * dimensions);
+    const uint16_t dimensionsLength = static_cast<uint16_t>(24 * dimensions);
     InsertToBuffer(buffer, &dimensionsLength); // length
     PutDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
                         buffer);
@@ -601,7 +595,7 @@ inline void BP3Serializer::PutVariableCharacteristics(
     CopyToBuffer(buffer, backPosition, &characteristicsCounter); // count (1)
 
     // remove its own length (4) + characteristic counter (1)
-    const uint32_t characteristicsLength = static_cast<const uint32_t>(
+    const uint32_t characteristicsLength = static_cast<uint32_t>(
         buffer.size() - characteristicsCountPosition - 4 - 1);
 
     CopyToBuffer(buffer, backPosition, &characteristicsLength); // length
@@ -631,11 +625,9 @@ void BP3Serializer::PutVariableCharacteristics(
 
     const uint8_t characteristicID = characteristic_dimensions;
     InsertToBuffer(buffer, &characteristicID);
-    const uint8_t dimensions =
-        static_cast<const uint8_t>(variable.m_Count.size());
+    const uint8_t dimensions = static_cast<uint8_t>(variable.m_Count.size());
     InsertToBuffer(buffer, &dimensions); // count
-    const uint16_t dimensionsLength =
-        static_cast<const uint16_t>(24 * dimensions);
+    const uint16_t dimensionsLength = static_cast<uint16_t>(24 * dimensions);
     InsertToBuffer(buffer, &dimensionsLength); // length
     PutDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
                         buffer);
@@ -654,7 +646,7 @@ void BP3Serializer::PutVariableCharacteristics(
     CopyToBuffer(buffer, backPosition, &characteristicsCounter); // count (1)
 
     // remove its own length (4) + characteristic counter (1)
-    const uint32_t characteristicsLength = static_cast<const uint32_t>(
+    const uint32_t characteristicsLength = static_cast<uint32_t>(
         buffer.size() - characteristicsCountPosition - 4 - 1);
 
     CopyToBuffer(buffer, backPosition, &characteristicsLength); // length
@@ -676,11 +668,9 @@ void BP3Serializer::PutVariableCharacteristics(
     uint8_t characteristicID = characteristic_dimensions;
     CopyToBuffer(buffer, position, &characteristicID);
 
-    const uint8_t dimensions =
-        static_cast<const uint8_t>(variable.m_Count.size());
+    const uint8_t dimensions = static_cast<uint8_t>(variable.m_Count.size());
     CopyToBuffer(buffer, position, &dimensions); // count
-    const uint16_t dimensionsLength =
-        static_cast<const uint16_t>(24 * dimensions);
+    const uint16_t dimensionsLength = static_cast<uint16_t>(24 * dimensions);
     CopyToBuffer(buffer, position, &dimensionsLength); // length
     PutDimensionsRecord(variable.m_Count, variable.m_Shape, variable.m_Start,
                         buffer, position, true); // isCharacteristic = true
@@ -696,8 +686,8 @@ void BP3Serializer::PutVariableCharacteristics(
     CopyToBuffer(buffer, backPosition, &characteristicsCounter);
 
     // remove its own length (4) + characteristic counter (1)
-    const uint32_t characteristicsLength = static_cast<const uint32_t>(
-        position - characteristicsCountPosition - 4 - 1);
+    const uint32_t characteristicsLength =
+        static_cast<uint32_t>(position - characteristicsCountPosition - 4 - 1);
     CopyToBuffer(buffer, backPosition, &characteristicsLength);
 }
 

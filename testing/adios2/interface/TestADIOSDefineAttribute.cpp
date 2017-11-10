@@ -23,8 +23,10 @@ protected:
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
+
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -47,8 +49,8 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
 {
-
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
+    int mpiSize = 1;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);

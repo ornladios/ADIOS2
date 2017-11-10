@@ -68,7 +68,7 @@ size_t CompressBZip2::Compress(const void *dataIn, const Dims &dimensions,
     }
 
     const size_t sizeIn =
-        static_cast<const size_t>(GetTotalSize(dimensions) * elementSize);
+        static_cast<size_t>(GetTotalSize(dimensions) * elementSize);
     // Build inputs to BZip2 compression function
     char *dest = const_cast<char *>(reinterpret_cast<const char *>(bufferOut));
     unsigned int destLen = static_cast<unsigned int>(BufferMaxSize(sizeIn));

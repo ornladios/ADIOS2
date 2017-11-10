@@ -175,8 +175,8 @@ void ADIOS::CheckMPI() const
         const Params &parameters)                                              \
     {                                                                          \
         std::shared_ptr<Operator> callbackOperator =                           \
-            std::make_shared<callback::Signature1<T>>(function, parameters,    \
-                                                      m_DebugMode);            \
+            std::make_shared<callback::Signature1>(function, parameters,       \
+                                                   m_DebugMode);               \
                                                                                \
         auto itPair = m_Operators.emplace(name, std::move(callbackOperator));  \
         return *itPair.first->second;                                          \

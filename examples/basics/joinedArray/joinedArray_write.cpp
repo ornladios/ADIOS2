@@ -39,13 +39,13 @@
 
 int main(int argc, char *argv[])
 {
-    int rank = 0, nproc = 1;
+    int rank = 0;
 #ifdef ADIOS2_HAVE_MPI
+    int nproc = 1;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
-    const bool adiosDebug = true;
     const int NSTEPS = 5;
 
     // generate different random numbers on each process,
@@ -89,12 +89,12 @@ int main(int argc, char *argv[])
         {
             writer.BeginStep();
 
-            for (int row = 0; row < Nrows; row++)
+            for (unsigned int row = 0; row < Nrows; row++)
             {
-                for (int col = 0; col < Ncols; col++)
+                for (unsigned int col = 0; col < Ncols; col++)
                 {
-                    mytable[row * Ncols + col] =
-                        rank * 1.0 + row * 0.1 + col * 0.01;
+                    mytable[row * Ncols + col] = static_cast<double>(
+                        rank * 1.0 + row * 0.1 + col * 0.01);
                 }
             }
 

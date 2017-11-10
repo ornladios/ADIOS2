@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
             // template type is optional, but recommended
             for (unsigned int v = 0; v < variablesSize; ++v)
             {
-                myFloats[0] = v + timeStep;
+                myFloats[0] = static_cast<float>(v + timeStep);
                 bpWriter.PutSync(*bpFloats[v], myFloats.data());
             }
             const std::string myString(

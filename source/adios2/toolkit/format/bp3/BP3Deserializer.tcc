@@ -188,8 +188,8 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
                  1) *
                     sizeof(T);
 
-            const size_t fileIndex = static_cast<const size_t>(
-                blockCharacteristics.Statistics.FileIndex);
+            const size_t fileIndex =
+                static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
 
             infoMap[fileIndex][step].push_back(std::move(info));
         }

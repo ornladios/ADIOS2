@@ -386,7 +386,7 @@ int MPI_Error_string(int /*errorcode*/, char *string, int *resultlen)
     // std::sprintf(string, "Dummy lib does not know error strings.
     // Code=%d\n",errorcode);
     std::strcpy(string, mpierrmsg);
-    *resultlen = std::strlen(string);
+    *resultlen = static_cast<int>(std::strlen(string));
     return MPI_SUCCESS;
 }
 
@@ -407,7 +407,6 @@ int MPI_Get_processor_name(char *name, int *resultlen)
 int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
-    int n = 0;
     switch (datatype)
     {
     case MPI_CHAR:

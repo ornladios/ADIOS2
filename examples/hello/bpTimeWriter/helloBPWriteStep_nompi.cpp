@@ -50,8 +50,8 @@ int main(int argc, char *argv[])
 
         for (unsigned int timeStep = 0; timeStep < 10; ++timeStep)
         {
-            myFloats[0] = timeStep;
-            myInts[0] = timeStep;
+            myFloats[0] = static_cast<float>(timeStep);
+            myInts[0] = static_cast<int>(timeStep);
 
             bpWriter.WriteStep();
         }

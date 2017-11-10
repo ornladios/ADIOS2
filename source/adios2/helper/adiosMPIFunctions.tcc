@@ -50,7 +50,7 @@ std::string BroadcastValue(const std::string &input, MPI_Comm mpiComm,
     int rank;
     MPI_Comm_rank(mpiComm, &rank);
     const size_t inputSize = input.size();
-    size_t length = BroadcastValue(inputSize, mpiComm, rankSource);
+    const size_t length = BroadcastValue(inputSize, mpiComm, rankSource);
     std::string output;
 
     if (rank == rankSource)
@@ -62,8 +62,8 @@ std::string BroadcastValue(const std::string &input, MPI_Comm mpiComm,
         output.resize(length);
     }
 
-    MPI_Bcast(const_cast<char *>(output.data()), length, MPI_CHAR, rankSource,
-              mpiComm);
+    MPI_Bcast(const_cast<char *>(output.data()), static_cast<int>(length),
+              MPI_CHAR, rankSource, mpiComm);
 
     return output;
 }
@@ -237,9 +237,10 @@ void GathervArrays(const size_t *source, const size_t sourceCount,
     std::vector<int> displacementsInt =
         GetGathervDisplacements(counts, countsSize);
 
-    result = MPI_Gatherv(source, sourceCount, ADIOS2_MPI_SIZE_T, destination,
-                         countsInt.data(), displacementsInt.data(),
-                         ADIOS2_MPI_SIZE_T, rankDestination, mpiComm);
+    result =
+        MPI_Gatherv(source, static_cast<int>(sourceCount), ADIOS2_MPI_SIZE_T,
+                    destination, countsInt.data(), displacementsInt.data(),
+                    ADIOS2_MPI_SIZE_T, rankDestination, mpiComm);
 
     if (result != MPI_SUCCESS)
     {

@@ -24,9 +24,9 @@ protected:
 // 1x10
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_1x10)
 {
-    int mpiRank = 0, mpiSize = 1;
-
+    int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -57,9 +57,9 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_1x10)
 {
-    int mpiRank = 0, mpiSize = 1;
-
+    int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -90,9 +90,9 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_1x10)
 {
-    int mpiRank = 0, mpiSize = 1;
-
+    int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -123,9 +123,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_1x10)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -156,9 +157,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_1x10)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -189,9 +191,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_1x10)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -222,9 +225,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_1x10)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -255,9 +259,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_1x10)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_1x10)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -291,9 +296,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_1x10)
 // 2x5
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_2x5)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -325,9 +331,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_2x5)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -359,9 +366,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_2x5)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -393,9 +401,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_2x5)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -427,9 +436,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_2x5)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -461,9 +471,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_2x5)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -495,9 +506,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_2x5)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -529,9 +541,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
 {
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #ifdef ADIOS2_HAVE_MPI
+    int mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif

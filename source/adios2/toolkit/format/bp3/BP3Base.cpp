@@ -142,8 +142,7 @@ BP3Base::GetBPRankNames(const std::vector<std::string> &names) const noexcept
 }
 
 std::string BP3Base::GetBPSubFileName(const std::string &name,
-                                      const unsigned int subFileIndex) const
-    noexcept
+                                      const size_t subFileIndex) const noexcept
 {
     return GetBPRankName(name, subFileIndex);
 }
@@ -588,7 +587,7 @@ void BP3Base::ProfilerStop(const std::string process)
 }
 
 std::string BP3Base::GetBPRankName(const std::string &name,
-                                   const unsigned int rank) const noexcept
+                                   const size_t rank) const noexcept
 {
     const std::string bpName = AddExtension(name, ".bp");
 
