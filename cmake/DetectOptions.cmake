@@ -109,7 +109,10 @@ if(ADIOS2_USE_Python)
     set(python_find_args REQUIRED)
   endif()
   if(SHARED_LIBS_SUPPORTED AND ADIOS2_ENABLE_PIC)
-    set(Python_ADDITIONAL_VERSIONS 3 2.7)
+    set(Python_ADDITIONAL_VERSIONS "3;2.7"
+      CACHE STRING "Python versions to search for"
+    )
+    mark_as_advanced(Python_ADDITIONAL_VERSIONS)
     list(APPEND python_find_args COMPONENTS Interp Libs numpy)
     if(ADIOS2_HAVE_MPI)
       list(APPEND python_find_args "mpi4py\\\;mpi4py/mpi4py.h")

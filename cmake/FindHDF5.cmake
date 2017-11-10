@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 # This module is already included in new versions of CMake
-if(CMAKE_VERSION VERSION_LESS 3.9)
+if(CMAKE_VERSION VERSION_LESS 3.10)
   include(${CMAKE_CURRENT_LIST_DIR}/upstream/FindHDF5.cmake)
 else()
   include(${CMAKE_ROOT}/Modules/FindHDF5.cmake)
