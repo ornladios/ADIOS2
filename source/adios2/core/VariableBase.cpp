@@ -134,7 +134,7 @@ size_t VariableBase::GetAvailableStepsCount() const
     return m_AvailableStepsCount;
 }
 
-void VariableBase::SetStepSelection(const std::pair<size_t, size_t> &boxSteps)
+void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 {
     if (boxSteps.second == 0)
     {
@@ -176,7 +176,7 @@ void VariableBase::ClearOperators() noexcept { m_OperatorsInfo.clear(); }
 
 void VariableBase::CheckDimensions(const std::string hint) const
 {
-    if (m_ShapeID == ShapeID::GlobalArray)
+    if (m_DebugMode && m_ShapeID == ShapeID::GlobalArray)
     {
         if (m_Start.empty() || m_Count.empty())
         {
@@ -192,7 +192,7 @@ void VariableBase::CheckDimensions(const std::string hint) const
     // TODO need to think more exceptions here
 }
 
-size_t VariableBase::GetElementsSize() const
+size_t VariableBase::SelectionSize() const
 {
     return GetTotalSize(m_Count) * m_StepsCount;
 }
@@ -204,7 +204,7 @@ void VariableBase::InitShapeType()
     {
         if (std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) == 1)
         {
-            if (!m_Start.empty() &&
+            if (m_DebugMode && !m_Start.empty() &&
                 std::count(m_Start.begin(), m_Start.end(), 0) != m_Start.size())
             {
                 throw std::invalid_argument("ERROR: The Start array must be "
@@ -224,17 +224,15 @@ void VariableBase::InitShapeType()
             }
             else
             {
-                if (m_DebugMode)
+
+                if (m_DebugMode && m_ConstantDims)
                 {
-                    if (m_ConstantDims)
-                    {
-                        throw std::invalid_argument(
-                            "ERROR: isConstantShape (true) argument is invalid "
-                            "with empty start and count "
-                            "arguments in call to "
-                            "DefineVariable " +
-                            m_Name + "\n");
-                    }
+                    throw std::invalid_argument(
+                        "ERROR: isConstantShape (true) argument is invalid "
+                        "with empty start and count "
+                        "arguments in call to "
+                        "DefineVariable " +
+                        m_Name + "\n");
                 }
 
                 m_ShapeID = ShapeID::GlobalArray;
@@ -299,11 +297,14 @@ void VariableBase::InitShapeType()
         }
         else
         {
-            throw std::invalid_argument(
-                "ERROR: if the "
-                "shape is empty, start must be empty as well, in call to "
-                "DefineVariable " +
-                m_Name + "\n");
+            if (m_DebugMode)
+            {
+                throw std::invalid_argument(
+                    "ERROR: if the "
+                    "shape is empty, start must be empty as well, in call to "
+                    "DefineVariable " +
+                    m_Name + "\n");
+            }
         }
     }
 
@@ -317,6 +318,11 @@ void VariableBase::InitShapeType()
 
 void VariableBase::CheckDimensionsCommon(const std::string hint) const
 {
+    if (!m_DebugMode)
+    {
+        return;
+    }
+
     if (m_Type == "string")
     {
         if (!(m_Shape.empty() && m_Start.empty() && m_Count.empty()))

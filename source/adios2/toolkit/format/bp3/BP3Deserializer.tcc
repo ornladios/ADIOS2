@@ -217,10 +217,15 @@ void BP3Deserializer::ClipContiguousMemoryCommon(
         return;
     }
 
-    if (m_IsRowMajor && m_IsZeroIndex)
+    if (m_IsRowMajor && m_IsZeroIndex) // C, C++, Python
     {
         ClipContiguousMemoryCommonRowZero(variable, contiguousMemory, blockBox,
                                           intersectionBox);
+    }
+    else if (!m_IsRowMajor && !m_IsZeroIndex) // Fortran, R
+    {
+        ClipContiguousMemoryCommonColumnOne(variable, contiguousMemory,
+                                            blockBox, intersectionBox);
     }
 }
 
@@ -286,6 +291,70 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
             }
         } // dimension index update
     }     // run
+}
+
+template <class T>
+void BP3Deserializer::ClipContiguousMemoryCommonColumnOne(
+    Variable<T> &variable, const std::vector<char> &contiguousMemory,
+    const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
+{
+    const Dims &start = intersectionBox.first;
+    const Dims &end = intersectionBox.second;
+    const size_t stride = (end.front() - start.front() + 1) * sizeof(T);
+
+    Dims currentPoint(start); // current point for memory copy
+
+    const Box<Dims> selectionBox =
+        StartEndBox(variable.m_Start, variable.m_Count);
+
+    const size_t dimensions = start.size();
+    bool run = true;
+
+    const size_t intersectionStart =
+        LinearIndex(blockBox, intersectionBox.first, false, false) * sizeof(T);
+
+    while (run)
+    {
+        // here copy current linear memory between currentPoint and end
+        const size_t contiguousStart =
+            LinearIndex(blockBox, currentPoint, false, false) * sizeof(T) -
+            intersectionStart;
+
+        const size_t variableStart =
+            LinearIndex(selectionBox, currentPoint, false, false) * sizeof(T);
+
+        char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
+
+        std::copy(&contiguousMemory[contiguousStart],
+                  &contiguousMemory[contiguousStart + stride],
+                  &rawVariableData[variableStart]);
+
+        // here update each index recursively, always starting from the 2nd
+        // fastest changing index, since fastest changing index is the
+        // continuous part in the previous std::copy
+        size_t p = 1;
+        while (true)
+        {
+            ++currentPoint[p];
+            if (currentPoint[p] > end[p]) // TODO: check end condition
+            {
+                if (p == dimensions - 1)
+                {
+                    run = false; // we are done
+                    break;
+                }
+                else
+                {
+                    currentPoint[p] = start[p];
+                    ++p;
+                }
+            }
+            else
+            {
+                break; // break inner p loop
+            }
+        } // dimension index update
+    }
 }
 
 } // end namespace format

@@ -119,6 +119,7 @@ void BP3Deserializer::ParsePGIndex()
     m_MetadataSet.DataPGCount = ReadValue<uint64_t>(buffer, position);
     const uint64_t pgLength =
         ReadValue<uint64_t>(buffer, position); // not required
+    // TODO: here check for host language in first pg index
 }
 
 void BP3Deserializer::ParseVariablesIndex(IO &io)

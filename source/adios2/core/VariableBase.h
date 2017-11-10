@@ -148,7 +148,7 @@ public:
      * @return memory size to be allocated by a pointer/vector to read this
      * variable
      */
-    size_t GetElementsSize() const;
+    size_t SelectionSize() const;
 
 protected:
     const bool m_DebugMode = false;

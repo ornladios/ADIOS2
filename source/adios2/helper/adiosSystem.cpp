@@ -21,7 +21,7 @@
 
 // remove ctime warning on Windows
 #ifdef _WIN32
-#pragma warning(disable : 4996)
+#pragma warning(disable : 4996) // ctime warning
 #endif
 
 namespace adios2
@@ -46,4 +46,26 @@ std::string LocalTimeDate() noexcept
     return std::string(ctime(&now));
 }
 
-} // end namespace adios
+bool IsRowMajor(const std::string hostLanguage) noexcept
+{
+    bool isRowMajor = true;
+
+    if (hostLanguage == "Fortran" || hostLanguage == "R")
+    {
+        isRowMajor = false;
+    }
+    return isRowMajor;
+}
+
+bool IsZeroIndexed(const std::string hostLanguage) noexcept
+{
+    bool isZeroIndexed = true;
+
+    if (hostLanguage == "Fortran" || hostLanguage == "R")
+    {
+        isZeroIndexed = false;
+    }
+    return isZeroIndexed;
+}
+
+} // end namespace adios2

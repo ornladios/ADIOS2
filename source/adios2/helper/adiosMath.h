@@ -120,7 +120,7 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1,
                           const Box<Dims> &box2) noexcept;
 
 /**
- * Get a linear index for a point inside a localBox
+ * Get a linear index for a point inside a localBox depending on data layout
  * @param localBox start and count
  * @param point inside box
  * @param isRowMajor

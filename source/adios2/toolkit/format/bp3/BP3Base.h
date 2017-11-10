@@ -207,9 +207,9 @@ protected:
     unsigned int m_Threads = 1;
     const bool m_DebugMode = false;
 
-    /** from host language */
+    /** from host language in data information */
     bool m_IsRowMajor = true; // C, C++ defaults
-    /** from host language */
+    /** from host language in data information */
     bool m_IsZeroIndex = true; // C, C++
 
     /** method type for file I/O */
