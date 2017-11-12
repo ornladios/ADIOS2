@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
     std::vector<float> myFloats(100);
     std::iota(myFloats.begin(), myFloats.end(), 0.f);
     const std::size_t Nx = myFloats.size();
-    const std::size_t inputBytes = Nx * sizeof(float);
 
     try
     {

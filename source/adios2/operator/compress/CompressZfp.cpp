@@ -8,8 +8,9 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
+#include "CompressZfp.h"
+
 #include "adios2/helper/adiosFunctions.h"
-#include <adios2/operator/compress/CompressZfp.h>
 
 namespace adios2
 {

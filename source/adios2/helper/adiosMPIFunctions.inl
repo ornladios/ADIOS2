@@ -24,7 +24,6 @@ template <class T>
 std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
                             const int rankDestination)
 {
-    constexpr size_t count = 1;
     int rank, size;
     MPI_Comm_rank(mpiComm, &rank);
     MPI_Comm_size(mpiComm, &size);

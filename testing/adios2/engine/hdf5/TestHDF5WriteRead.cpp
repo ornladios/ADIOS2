@@ -144,7 +144,8 @@ bool HDF5NativeReader::Advance()
         return false;
     }
 
-    std::string tsName = "/TimeStep" + std::to_string(m_CurrentTimeStep + 1);
+    const std::string tsName =
+        "TimeStep" + std::to_string(m_CurrentTimeStep + 1);
     m_GroupId = H5Gopen(m_FileId, tsName.c_str(), H5P_DEFAULT);
     if (m_GroupId < 0)
     {
