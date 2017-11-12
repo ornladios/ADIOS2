@@ -14,7 +14,6 @@
 
 #include <adios2.h>
 
-static int rank_saved;
 adios2::ADIOS *ad = nullptr;
 adios2::Engine *h5writer;
 adios2::Variable<double> *varT = nullptr;
@@ -22,7 +21,6 @@ adios2::Variable<unsigned int> *varGndx = nullptr;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    rank_saved = s.rank;
     m_outputfilename = s.outputfile + ".h5";
     ad = new adios2::ADIOS(comm, adios2::DebugOFF);
 

@@ -403,12 +403,10 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayInvalidStart)
     // Define ADIOS joined array
     std::size_t n = 10;
     std::size_t WrongValue = 1;
-    adios2::Variable<int> *joinedarray;
     // Start must be empty or full zero array
-    EXPECT_THROW(
-        joinedarray = &io.DefineVariable<int>(
-            "joinedarray", {adios2::JoinedDim, 50}, {0, WrongValue}, {n, 50}),
-        std::invalid_argument);
+    EXPECT_THROW(io.DefineVariable<int>("joinedarray", {adios2::JoinedDim, 50},
+                                        {0, WrongValue}, {n, 50}),
+                 std::invalid_argument);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineString)

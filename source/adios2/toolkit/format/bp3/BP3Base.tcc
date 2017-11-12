@@ -272,7 +272,6 @@ inline void BP3Base::ParseCharacteristics(
             throw std::invalid_argument("ERROR: characteristic ID " +
                                         std::to_string(id) +
                                         " not supported\n");
-            break;
         }
 
         } // end id switch
@@ -397,7 +396,6 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
             throw std::invalid_argument("ERROR: characteristic ID " +
                                         std::to_string(id) +
                                         " not supported\n");
-            break;
         }
 
         } // end id switch

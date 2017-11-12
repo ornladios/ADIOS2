@@ -8,7 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include <adios2/operator/compress/CompressBZip2.h>
+#include "CompressBZip2.h"
+
 #include <cmath>     //std::ceil
 #include <ios>       //std::ios_base::failure
 #include <stdexcept> //std::invalid_argument
