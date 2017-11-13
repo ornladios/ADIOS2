@@ -8,6 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include <mpi.h>
+#include <stdio.h>  // TO BE REMOVED
 #include <stdlib.h> // malloc, free
 
 #include <adios2_c.h>
@@ -46,6 +47,10 @@ int main(int argc, char *argv[])
     adios2_Variable *variableH =
         adios2_define_variable(ioH, "bpFloats", adios2_type_float, 1, shape,
                                start, count, adios2_constant_dims_true);
+
+    const char *name = adios2_variable_name(variableH);
+    printf("Variable name %s\n", name);
+
     adios2_Engine *engineH =
         adios2_open(ioH, "myVector_c.bp", adios2_mode_write);
 

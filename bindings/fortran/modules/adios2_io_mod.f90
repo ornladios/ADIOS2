@@ -2,7 +2,7 @@
 ! Distributed under the OSI-approved Apache License, Version 2.0.  See
 !  accompanying file Copyright.txt for details.
 !
-!  adios2_io.f90 : ADIOS2 Fortran bindings for IO class
+!  adios2_io_mod.f90 : ADIOS2 Fortran bindings for IO class
 !
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov

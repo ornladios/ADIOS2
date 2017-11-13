@@ -38,9 +38,6 @@ void FC_GLOBAL(adios2_end_step_f2c, ADIOS2_END_STEP_F2C)(adios2_Engine **engine,
 void FC_GLOBAL(adios2_close_f2c, ADIOS2_CLOSE_F2C)(adios2_Engine **engine,
                                                    int *ierr);
 
-void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_ADIOS **adios,
-                                                         int *ierr);
-
 #ifdef __cplusplus
 }
 #endif

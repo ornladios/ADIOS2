@@ -50,7 +50,7 @@ void FC_GLOBAL(adios2_put_deferred_f2c,
     *ierr = 0;
     try
     {
-        adios2_put_sync(*engine, *variable, values);
+        adios2_put_deferred(*engine, *variable, values);
     }
     catch (std::exception &e)
     {
