@@ -13,18 +13,53 @@
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
 
-const char *adios2_variable_name(const adios2_Variable *variable)
+const std::map<std::string, std::vector<adios2_type>> adios2_types_map = {
+    {"char", {adios2_type_char}},
+    {"int", {adios2_type_int, adios2_type_int32_t}},
+    {"float", {adios2_type_float}},
+    {"double", {adios2_type_double}},
+    {"float complex", {adios2_type_float_complex}},
+    {"double complex", {adios2_type_double_complex}},
+    {"signed char", {adios2_type_int8_t, adios2_type_signed_char}},
+    {"short", {adios2_type_int16_t, adios2_type_short}},
+    {"long int", {adios2_type_int64_t, adios2_type_long_int}},
+    {"long long int", {adios2_type_int64_t, adios2_type_long_long_int}},
+    {"string", {adios2_type_string}},
+    {"string array", {adios2_type_string_array}},
+    {"unsigned char", {adios2_type_unsigned_char, adios2_type_uint8_t}},
+    {"unsigned short", {adios2_type_unsigned_short, adios2_type_uint16_t}},
+    {"unsigned int", {adios2_type_unsigned_int, adios2_type_uint32_t}},
+    {"unsigned long int",
+     {adios2_type_unsigned_long_int, adios2_type_uint64_t}},
+    {"unsigned long long int",
+     {adios2_type_unsigned_long_long_int, adios2_type_uint64_t}},
+};
+
+const char *adios2_variable_name(const adios2_Variable *variable,
+                                 size_t *length)
 {
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
+    if (length != nullptr)
+    {
+        *length = variableBase->m_Name.size();
+    }
     return variableBase->m_Name.c_str();
 }
 
-const char *adios2_variable_type(const adios2_Variable *variable)
+adios2_type adios2_variable_type(const adios2_Variable *variable)
 {
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
-    return variableBase->m_Type.c_str();
+
+    auto itType = adios2_types_map.find(variableBase->m_Type);
+
+    if (itType == adios2_types_map.end())
+    {
+        return adios2_type_unknown;
+    }
+
+    return itType->second.front();
 }
 
 int adios2_variable_is_constant_dims(const adios2_Variable *variable)
@@ -124,7 +159,9 @@ void adios2_set_step_selection(adios2_Variable *variable,
 
 void *adios2_get_data(const adios2_Variable *variable)
 {
-    const std::string type(adios2_variable_type(variable));
+    const adios2::VariableBase *variableBase =
+        reinterpret_cast<const adios2::VariableBase *>(variable);
+    const std::string type(variableBase->m_Type);
 
     void *data = nullptr;
     if (type == "compound")
@@ -146,15 +183,21 @@ void *adios2_get_data(const adios2_Variable *variable)
 
 void adios2_set_data(adios2_Variable *variable, const void *data)
 {
+    adios2::VariableBase *variableBase =
+        reinterpret_cast<adios2::VariableBase *>(variable);
     if (data == nullptr)
     {
-        const std::string name(adios2_variable_name(variable));
+
+        adios2::VariableBase *variableBase =
+            reinterpret_cast<adios2::VariableBase *>(variable);
+        const std::string name(variableBase->m_Name);
+
         throw std::invalid_argument(
             "ERROR: trying to pass a null pointer to variable " + name +
             ", in call to adios2_set_data");
     }
 
-    const std::string type(adios2_variable_type(variable));
+    const std::string type(variableBase->m_Type);
 
     if (type == "compound")
     {

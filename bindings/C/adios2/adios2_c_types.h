@@ -31,6 +31,7 @@ typedef enum {
 } adios2_constant_dims;
 
 typedef enum {
+    adios2_type_unknown = -1,
 
     adios2_type_char = 0,
     adios2_type_int = 1,
@@ -44,7 +45,9 @@ typedef enum {
     adios2_type_int32_t = 8,
     adios2_type_int64_t = 9,
 
-    adios2_type_string,
+    adios2_type_string = 10,
+    adios2_type_string_array = 11,
+
     adios2_type_signed_char,
 
     adios2_type_short,

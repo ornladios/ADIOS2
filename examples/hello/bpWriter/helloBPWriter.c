@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
         adios2_define_variable(ioH, "bpFloats", adios2_type_float, 1, shape,
                                start, count, adios2_constant_dims_true);
 
-    const char *name = adios2_variable_name(variableH);
+    const char *name = adios2_variable_name(variableH, NULL);
     printf("Variable name %s\n", name);
 
     adios2_Engine *engineH =

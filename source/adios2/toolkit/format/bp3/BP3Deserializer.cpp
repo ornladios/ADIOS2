@@ -117,9 +117,15 @@ void BP3Deserializer::ParsePGIndex()
     position = m_Minifooter.PGIndexStart;
 
     m_MetadataSet.DataPGCount = ReadValue<uint64_t>(buffer, position);
-    const uint64_t pgLength =
-        ReadValue<uint64_t>(buffer, position); // not required
-    // TODO: here check for host language in first pg index
+    position += 10;                                        // skipping lengths
+    position += 2 + ReadValue<uint16_t>(buffer, position); // skipping name
+    const char isFortran = ReadValue<char>(buffer, position);
+
+    if (isFortran == 'y')
+    {
+        m_IsRowMajor = false;
+        m_IsZeroIndex = false;
+    }
 }
 
 void BP3Deserializer::ParseVariablesIndex(IO &io)

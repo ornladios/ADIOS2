@@ -24,14 +24,15 @@ extern "C" {
  * @param variable handler
  * @return name
  */
-const char *adios2_variable_name(const adios2_Variable *variable);
+const char *adios2_variable_name(const adios2_Variable *variable,
+                                 size_t *length);
 
 /**
  * Retrieve variable type (read-only)
  * @param variable handler
  * @return type
  */
-const char *adios2_variable_type(const adios2_Variable *variable);
+adios2_type adios2_variable_type(const adios2_Variable *variable);
 
 /**
  * Check if dimensions are constant
@@ -56,6 +57,7 @@ const size_t *adios2_variable_shape(const adios2_Variable *variable);
  * @return
  */
 const size_t *adios2_variable_start(const adios2_Variable *variable);
+
 /**
  * Retrieve current variable shape (read-only)
  * @param variable
@@ -65,6 +67,7 @@ const size_t *adios2_variable_count(const adios2_Variable *variable);
 
 const size_t
 adios2_variable_available_steps_start(const adios2_Variable *variable);
+
 const size_t
 adios2_variable_available_steps_count(const adios2_Variable *variable);
 

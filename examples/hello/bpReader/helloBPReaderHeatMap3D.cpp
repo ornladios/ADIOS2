@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
             putHeatMap.DefineVariable<unsigned int>(
                 "temperature", shape, start, count, adios2::ConstantDims);
 
-        /** Will create HeatMap.bp */
+        /** Will create HeatMap3D.bp */
         adios2::Engine &bpWriter =
             putHeatMap.Open("HeatMap3D.bp", adios2::Mode::Write);
 

@@ -12,7 +12,52 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <string.h> //strcpy
 #include <vector>
+
+void FC_GLOBAL(adios2_variable_name_f2c,
+               ADIOS2_VARIABLE_NAME_F2C)(const adios2_Variable **variable,
+                                         char name[1024], int *length,
+                                         int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        size_t lengthC = 0;
+        const char *nameC = adios2_variable_name(*variable, &lengthC);
+
+        if (nameC == nullptr)
+        {
+            throw std::runtime_error("ERROR: null pointer\n");
+        }
+
+        for (size_t i = 0; i < lengthC; ++i)
+        {
+            name[i] = nameC[i];
+        }
+
+        *length = static_cast<int>(lengthC);
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
+
+void FC_GLOBAL(adios2_variable_type_f2c,
+               ADIOS2_VARIABLE_TYPE_F2C)(const adios2_Variable **variable,
+                                         int *type, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *type = static_cast<int>(adios2_variable_type(*variable));
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
 
 void FC_GLOBAL(adios2_set_selection_f2c,
                ADIOS2_SET_SELECTION_F2C)(adios2_Variable **variable,
