@@ -20,9 +20,9 @@ then
   git clone https://github.com/ornladios/adios2.git Source
 else
   pushd Source
-#  git fetch --all -p
-#  git checkout -f master
-#  git pull --ff-only
+  git fetch --all -p
+  git checkout -f master
+  git pull --ff-only
   popd
 fi
 SCRIPT_DIR=${PWD}/Source/scripts/dashboard/nightly
@@ -58,9 +58,10 @@ ${CTEST} -VV -S ${SCRIPT_DIR}/cori-cray-mpich.cmake \
 # Now run the MPI tests in a batch job
 log "Submitting Parallel Tests"
 JOBID=$(sbatch --array=1-3 ${SCRIPT_DIR}/cori-mpich-tests.slurm | awk '{print $4}')
+sleep 30
 while true
 do
-  NJOBS=$(sacct -j ${JOBID} | grep "^${JOBID} " | wc -l) 
+  NJOBS=$(sacct -n -P --delimiter ' ' -s CF,CG,PD,R,RS -j ${JOBID} | wc -l)
   log "Test jobs active in queue for job array ${JOBID}: ${NJOBS}"
   if [ ${NJOBS} -eq 0 ]
   then

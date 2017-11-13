@@ -6,7 +6,7 @@ set(CTEST_BUILD_FLAGS "-k -j10")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 10)
 
 set(CTEST_BUILD_NAME "Linux-CrayCLE6-KNL_Intel_MPICH")
-set(dashboard_model Experimental)
+set(dashboard_model Nightly)
 set(CTEST_DASHBOARD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${CTEST_BUILD_NAME})
 
 
