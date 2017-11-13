@@ -8,8 +8,9 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include "adios2/toolkit/transportman/dataman/DataMan.h"
-#include "adios2/helper/adiosString.h"
+#include "DataMan.h"
+
+#include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
 #include "adios2/toolkit/transport/wan/WANZmq.h"
@@ -24,6 +25,15 @@ DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
 : TransportMan(mpiComm, debugMode)
 {
 }
+
+DataMan::~DataMan()
+{
+    for (auto &controlThread : m_ControlThreads)
+    {
+        controlThread.join();
+    }
+}
+
 void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)

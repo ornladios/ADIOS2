@@ -47,26 +47,6 @@ private:
     transportman::DataMan m_Man;
 
     void Init();
-
-    template <class T>
-    Variable<T> *InquireVariableCommon(const std::string name,
-                                       const bool readIn)
-    {
-        // int rank = 0;
-        // MPI_Comm_rank(m_MPIComm, &rank);
-
-        // std::cout << "I am hooked to the DataMan library\n";
-        // std::cout << "Hello DatamanReader from rank " << rank << "\n";
-        // std::cout << "Trying to read variable " << name
-        //        << " from one of the variables coming from a WAN transport\n";
-
-        // here read variable metadata (dimensions, type, etc.)...then create a
-        // Variable like below:
-        // Variable<T>& variable = m_ADIOS.DefineVariable<T>( m_Name + "/" +
-        // name, )
-        // return &variable; //return address if success
-        return nullptr; // on failure
-    }
 };
 
 } // end namespace adios
