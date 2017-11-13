@@ -40,23 +40,11 @@ public:
 
     virtual ~DataManReader() = default;
 
-    /**
-     * Set callback function from user application
-     * @param callback function (get) provided by the user to be applied in
-     * DataMan
-     */
-    void SetCallBack(std::function<void(const void *, std::string, std::string,
-                                        std::string, Dims)>
-                         callback);
-
     void Close(const int transportIndex = -1);
 
 private:
     bool m_DoRealTime = false;
     transportman::DataMan m_Man;
-    std::function<void(const void *, std::string, std::string, std::string,
-                       Dims)>
-        m_CallBack; ///< call back function
 
     void Init();
 

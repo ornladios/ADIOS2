@@ -95,9 +95,9 @@ void DataManWriter::Init()
         for (unsigned int i = 0; i < parameters.size(); i++)
         {
             parameters[i]["type"] = "wan";
-            parameters[i]["transport"] = "zmq";
+            parameters[i]["Library"] = "zmq";
             parameters[i]["name"] = "stream";
-            parameters[i]["ipaddress"] = "127.0.0.1";
+            parameters[i]["IPAddress"] = "127.0.0.1";
         }
 
         m_Man.OpenWANTransports("zmq", Mode::Write, parameters, true);

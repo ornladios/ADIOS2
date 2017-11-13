@@ -36,10 +36,6 @@ private:
     bool m_DoRealTime = false;
     bool m_DoMonitor = false;
     transportman::DataMan m_Man;
-    std::function<void(const void *, std::string, std::string, std::string,
-                       Dims)>
-        m_CallBack; ///< call back function
-
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
 

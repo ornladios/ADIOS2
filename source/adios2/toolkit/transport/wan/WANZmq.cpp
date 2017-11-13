@@ -126,7 +126,8 @@ void WANZmq::Write(const char *buffer, size_t size, size_t start)
 
 void WANZmq::Read(char *buffer, size_t size, size_t start)
 {
-    // TODO: Implement read function
+    zmq_recv(m_Socket, buffer, size, 0);
+    int status = zmq_send(m_Socket, "OK", 4, 0);
 }
 
 void WANZmq::Flush() {}

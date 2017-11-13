@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         adios2::Engine &dataManReader =
             dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
 
-        for (unsigned int i = 0; i < 3; ++i)
+        for (unsigned int i = 0; i < 10; ++i)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
