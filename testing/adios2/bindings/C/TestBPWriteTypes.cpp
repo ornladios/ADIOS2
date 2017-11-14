@@ -26,8 +26,8 @@ public:
 
 TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
 {
-    int rank(0);
 #ifdef ADIOS2_HAVE_MPI
+    int rank(0);
     int size(0);
     adios2_ADIOS *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);

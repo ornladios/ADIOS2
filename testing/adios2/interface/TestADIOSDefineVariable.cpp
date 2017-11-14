@@ -19,11 +19,6 @@ protected:
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalValue)
 {
-    int mpiRank = 0, mpiSize = 1;
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
     std::string name = std::string("globalValue");
 
     // Define ADIOS global value
