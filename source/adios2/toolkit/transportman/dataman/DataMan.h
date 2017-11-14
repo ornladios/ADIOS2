@@ -27,7 +27,7 @@ class DataMan : public TransportMan
 public:
     DataMan(MPI_Comm mpiComm, const bool debugMode);
 
-    virtual ~DataMan() = default;
+    ~DataMan();
 
     void OpenWANTransports(const std::string &name, const Mode openMode,
                            const std::vector<Params> &parametersVector,
