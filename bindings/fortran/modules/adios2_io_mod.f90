@@ -22,7 +22,7 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_set_parameter_f2c( io, TRIM(ADJUSTL(key))//char(0), &
-            & TRIM(ADJUSTL(value))//char(0) )
+            & TRIM(ADJUSTL(value))//char(0), ierr )
 
     end subroutine
 

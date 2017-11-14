@@ -21,7 +21,6 @@
 #endif
 #define DEFAULT_CONFIG_STR str(DEFAULT_CONFIG)
 
-static int rank_saved;
 adios2::ADIOS *ad = nullptr;
 adios2::Engine *bpWriter = nullptr;
 adios2::Variable<double> *varT = nullptr;
@@ -29,7 +28,6 @@ adios2::Variable<unsigned int> *varGndx = nullptr;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    rank_saved = s.rank;
     m_outputfilename = s.outputfile + ".bp";
     ad = new adios2::ADIOS(std::string(DEFAULT_CONFIG_STR), comm,
                            adios2::DebugON);

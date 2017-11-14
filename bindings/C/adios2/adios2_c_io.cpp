@@ -48,7 +48,7 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
     switch (type)
     {
     case (adios2_type_string):
-        dynamic_cast<adios2::Variable<std::string> *>(
+        variable = dynamic_cast<adios2::Variable<std::string> *>(
             &ioCpp.DefineVariable<char>(name, shapeV, startV, countV,
                                         constantSizeBool));
         ;
