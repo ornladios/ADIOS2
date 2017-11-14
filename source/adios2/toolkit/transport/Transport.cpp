@@ -24,6 +24,17 @@ Transport::Transport(const std::string type, const std::string library,
     MPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
+void Transport::IWrite(const char *buffer, size_t size, Status &status,
+                       size_t start)
+{
+    throw std::invalid_argument("ERROR: this class doesn't implement IWrite\n");
+}
+
+void Transport::IRead(char *buffer, size_t size, Status &status, size_t start)
+{
+    throw std::invalid_argument("ERROR: this class doesn't implement IRead\n");
+}
+
 void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
 {
     m_Profiler.IsActive = true;

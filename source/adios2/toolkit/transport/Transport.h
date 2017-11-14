@@ -38,6 +38,14 @@ public:
     int m_SizeMPI = 1;     ///< from MPI_Comm_Size
     profiling::IOChrono m_Profiler; ///< profiles Open, Write/Read, Close
 
+    struct Status
+    {
+        size_t Bytes;
+        bool Running;
+        bool Successful;
+        // TODO add more thing...time?
+    };
+
     /**
      * Base constructor that all derived classes pass
      * @param type from derived class
@@ -76,6 +84,9 @@ public:
     virtual void Write(const char *buffer, size_t size,
                        size_t start = MaxSizeT) = 0;
 
+    virtual void IWrite(const char *buffer, size_t size, Status &status,
+                        size_t start = MaxSizeT);
+
     /**
      * Reads from transport "size" bytes from a certain position. Note that size
      * and position and non-const due to the nature of underlying transport
@@ -87,6 +98,9 @@ public:
      * current stream position
      */
     virtual void Read(char *buffer, size_t size, size_t start = MaxSizeT) = 0;
+
+    virtual void IRead(char *buffer, size_t size, Status &status,
+                       size_t start = MaxSizeT);
 
     /**
      * Returns the size of current data in transport

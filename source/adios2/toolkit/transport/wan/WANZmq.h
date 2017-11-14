@@ -40,7 +40,13 @@ public:
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
+    void IWrite(const char *buffer, size_t size, Status &status,
+                size_t start = MaxSizeT) final;
+
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
+
+    void IRead(char *buffer, size_t size, Status &status,
+               size_t start = MaxSizeT) final;
 
     void Flush() final;
 
