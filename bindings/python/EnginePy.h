@@ -32,8 +32,23 @@ public:
 
     ~EnginePy() = default;
 
+    void BeginStep();
+
     void PutSync(VariableBase *variable, const pybind11::array &array);
     void PutSync(VariableBase *variable, const std::string &string);
+
+    void PutDeferred(VariableBase *variable, const pybind11::array &array);
+    void PutDeferred(VariableBase *variable, const std::string &string);
+
+    void PerformPuts();
+
+    void GetSync(VariableBase *variable, pybind11::array &array);
+    void GetSync(VariableBase *variable, std::string &string);
+
+    void GetDeferred(VariableBase *variable, pybind11::array &array);
+    void GetDeferred(VariableBase *variable, std::string &string);
+
+    void PerformGets();
 
     void EndStep();
 
@@ -43,6 +58,9 @@ private:
     Engine &m_Engine;
     std::map<std::string, VariableBase> &m_VariablesPlaceholder;
     const bool m_DebugMode;
+
+    void DefineInIO(VariableBase *variable, const pybind11::array &array);
+    void DefineInIO(VariableBase *variable, const std::string &string);
 };
 
 } // end namespace adios2

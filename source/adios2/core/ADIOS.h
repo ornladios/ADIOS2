@@ -2,8 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * ADIOS.h : ADIOS library starting point, factory class for IO and
- * (polymorphic) Engines
+ * ADIOS.h : ADIOS library starting point, factory class for IO objects
  *  Created on: Oct 3, 2016
  *      Author: William F Godoy godoywf@ornl.gov
  */
@@ -107,11 +106,18 @@ public:
      * @param name must be unique for each operator created with DefineOperator
      * @param type from derived class
      * @param parameters optional parameters
-     * @return
+     * @return reference to Operator object
      */
     Operator &DefineOperator(const std::string name, const std::string type,
                              const Params &parameters = Params());
 
+    /**
+     * Signature for passing Callback functions as operators
+     * @param name unique operator name
+     * @param function callable function
+     * @param parameters
+     * @return reference to Operator object
+     */
     template <class R, class... Args>
     Operator &DefineOperator(const std::string name,
                              const std::function<R(Args...)> &function,

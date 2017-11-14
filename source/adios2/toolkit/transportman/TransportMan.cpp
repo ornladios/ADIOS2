@@ -54,12 +54,12 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
     }
 }
 
-void TransportMan::OpenFileID(const std::string &name, const unsigned int id,
-                              const Mode openMode, const Params &parameters,
+void TransportMan::OpenFileID(const std::string &name, const size_t id,
+                              const Mode mode, const Params &parameters,
                               const bool profile)
 {
     std::shared_ptr<Transport> file =
-        OpenFileTransport(name, openMode, parameters, profile);
+        OpenFileTransport(name, mode, parameters, profile);
     m_Transports.insert({id, file});
 }
 

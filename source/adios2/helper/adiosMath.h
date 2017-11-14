@@ -128,7 +128,7 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1,
  * @return linear index for contiguous memory
  */
 size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
-                   const bool isRowMajor, const bool isZeroIndex) noexcept;
+                   const bool isRowMajor) noexcept;
 
 } // end namespace adios2
 

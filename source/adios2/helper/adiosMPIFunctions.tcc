@@ -105,56 +105,29 @@ unsigned long long int ReduceValues(const unsigned long long int source,
 
 // BroadcastVector specializations
 template <>
-std::vector<char> BroadcastVector(const std::vector<char> &input,
-                                  MPI_Comm mpiComm, const int rankSource)
+void BroadcastVector(std::vector<char> &vector, MPI_Comm mpiComm,
+                     const int rankSource)
 {
+    int size;
+    MPI_Comm_size(mpiComm, &size);
+
+    if (size == 1)
+    {
+        return;
+    }
+
     // First Broadcast the size, then the contents
-    size_t inputSize = BroadcastValue(input.size(), mpiComm, rankSource);
+    size_t inputSize = BroadcastValue(vector.size(), mpiComm, rankSource);
     int rank;
     MPI_Comm_rank(mpiComm, &rank);
-    std::vector<char> output;
 
-    if (rank == rankSource)
+    if (rank != rankSource)
     {
-        MPI_Bcast(const_cast<char *>(input.data()), static_cast<int>(inputSize),
-                  MPI_CHAR, rankSource, mpiComm);
-        return input; // no copy
-    }
-    else
-    {
-        output.resize(inputSize);
-        MPI_Bcast(output.data(), static_cast<int>(inputSize), MPI_CHAR,
-                  rankSource, mpiComm);
+        vector.resize(inputSize);
     }
 
-    return output;
-}
-
-template <>
-std::vector<size_t> BroadcastVector(const std::vector<size_t> &input,
-                                    MPI_Comm mpiComm, const int rankSource)
-{
-    // First Broadcast the size, then the contents
-    size_t inputSize = BroadcastValue(input.size(), mpiComm, rankSource);
-    int rank;
-    MPI_Comm_rank(mpiComm, &rank);
-    std::vector<size_t> output;
-
-    if (rank == rankSource)
-    {
-        MPI_Bcast(const_cast<size_t *>(input.data()),
-                  static_cast<int>(inputSize), ADIOS2_MPI_SIZE_T, rankSource,
-                  mpiComm);
-        return input; // no copy in rankSource
-    }
-    else
-    {
-        output.resize(inputSize);
-        MPI_Bcast(output.data(), static_cast<int>(inputSize), ADIOS2_MPI_SIZE_T,
-                  rankSource, mpiComm);
-    }
-
-    return output;
+    MPI_Bcast(vector.data(), static_cast<int>(inputSize), MPI_CHAR, rankSource,
+              mpiComm);
 }
 
 // GatherArrays specializations

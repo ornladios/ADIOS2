@@ -144,7 +144,7 @@ void adios2_set_selection(adios2_Variable *variable, const size_t ndims,
         reinterpret_cast<adios2::VariableBase *>(variable);
 
     const adios2::Dims startV(start, start + ndims);
-    const adios2::Dims countV(start, start + ndims);
+    const adios2::Dims countV(count, count + ndims);
     variableBase->SetSelection({startV, countV});
     variableBase->CheckDimensions("in call to adios2_set_selection");
 }

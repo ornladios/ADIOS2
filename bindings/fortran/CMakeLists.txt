@@ -25,6 +25,8 @@ set(MODULES
      modules/adios2_engine_mod.f90 
      modules/adios2_engine_write_mod.f90 
      modules/adios2_engine_iwrite_mod.f90
+     modules/adios2_engine_read_mod.f90 
+     modules/adios2_engine_iread_mod.f90
 )
 
 add_library(adios2_f ${MODULES} ${F2C})

@@ -26,6 +26,7 @@ void FC_GLOBAL(adios2_begin_step_f2c,
     }
 }
 
+// ******** PUTS */
 void FC_GLOBAL(adios2_put_sync_f2c,
                ADIOS2_PUT_SYNC_F2C)(adios2_Engine **engine,
                                     adios2_Variable **variable,
@@ -51,6 +52,67 @@ void FC_GLOBAL(adios2_put_deferred_f2c,
     try
     {
         adios2_put_deferred(*engine, *variable, values);
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
+
+void FC_GLOBAL(adios2_perform_puts_f2c,
+               ADIOS2_PERFORM_PUTS_F2C)(adios2_Engine **engine, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_perform_puts(*engine);
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
+
+// ******** GETS */
+void FC_GLOBAL(adios2_get_sync_f2c,
+               ADIOS2_get_SYNC_F2C)(adios2_Engine **engine,
+                                    adios2_Variable **variable, void *values,
+                                    int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_get_sync(*engine, *variable, values);
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
+
+void FC_GLOBAL(adios2_get_deferred_f2c,
+               ADIOS2_get_DEFERRED_F2C)(adios2_Engine **engine,
+                                        adios2_Variable **variable,
+                                        void *values, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_get_deferred(*engine, *variable, values);
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
+
+void FC_GLOBAL(adios2_perform_gets_f2c,
+               ADIOS2_PERFORM_GETS_F2C)(adios2_Engine **engine, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_perform_gets(*engine);
     }
     catch (std::exception &e)
     {

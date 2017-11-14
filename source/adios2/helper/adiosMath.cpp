@@ -135,10 +135,10 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 }
 
 size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
-                   const bool isRowMajor, const bool isZeroIndex) noexcept
+                   const bool isRowMajor) noexcept
 {
-    auto lf_RowZero = [](const Dims &count,
-                         const Dims &normalizedPoint) -> size_t {
+    auto lf_RowMajor = [](const Dims &count,
+                          const Dims &normalizedPoint) -> size_t {
 
         const size_t countSize = count.size();
         size_t linearIndex = 0;
@@ -154,8 +154,8 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
         return linearIndex;
     };
 
-    auto lf_ColumnOne = [](const Dims &count,
-                           const Dims &normalizedPoint) -> size_t {
+    auto lf_ColumnMajor = [](const Dims &count,
+                             const Dims &normalizedPoint) -> size_t {
 
         const size_t countSize = count.size();
         size_t linearIndex = 0;
@@ -164,10 +164,10 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
 
         for (size_t p = 1; p < countSize; ++p)
         {
-            linearIndex += (normalizedPoint[countSize - p] - 1) * product;
+            linearIndex += (normalizedPoint[countSize - p]) * product;
             product /= count[countSize - p];
         }
-        linearIndex += (normalizedPoint[0] - 1); // fastest
+        linearIndex += normalizedPoint[0]; // fastest
         return linearIndex;
     };
 
@@ -190,13 +190,13 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
 
     size_t linearIndex = MaxSizeT - 1;
 
-    if (isRowMajor && isZeroIndex)
+    if (isRowMajor)
     {
-        linearIndex = lf_RowZero(count, normalizedPoint);
+        linearIndex = lf_RowMajor(count, normalizedPoint);
     }
-    else if (!isRowMajor && !isZeroIndex)
+    else
     {
-        linearIndex = lf_ColumnOne(count, normalizedPoint);
+        linearIndex = lf_ColumnMajor(count, normalizedPoint);
     }
 
     return linearIndex;

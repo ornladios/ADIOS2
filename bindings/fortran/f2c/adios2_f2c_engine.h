@@ -22,6 +22,7 @@ extern "C" {
 void FC_GLOBAL(adios2_begin_step_f2c,
                ADIOS2_BEGIN_STEP_F2C)(adios2_Engine **engine, int *ierr);
 
+// ************** PUT
 void FC_GLOBAL(adios2_put_sync_f2c,
                ADIOS2_PUT_SYNC_F2C)(adios2_Engine **engine,
                                     adios2_Variable **variable,
@@ -31,6 +32,23 @@ void FC_GLOBAL(adios2_put_deferred_f2c,
                ADIOS2_PUT_DEFERRED_F2C)(adios2_Engine **engine,
                                         adios2_Variable **variable,
                                         const void *values, int *ierr);
+
+void FC_GLOBAL(adios2_perform_puts_f2c,
+               ADIOS2_PERFORM_PUTS_F2C)(adios2_Engine **engine, int *ierr);
+
+// ************** GET
+void FC_GLOBAL(adios2_get_sync_f2c,
+               ADIOS2_get_SYNC_F2C)(adios2_Engine **engine,
+                                    adios2_Variable **variable, void *values,
+                                    int *ierr);
+
+void FC_GLOBAL(adios2_get_deferred_f2c,
+               ADIOS2_get_DEFERRED_F2C)(adios2_Engine **engine,
+                                        adios2_Variable **variable,
+                                        void *values, int *ierr);
+
+void FC_GLOBAL(adios2_perform_gets_f2c,
+               ADIOS2_PERFORM_GETS_F2C)(adios2_Engine **engine, int *ierr);
 
 void FC_GLOBAL(adios2_end_step_f2c, ADIOS2_END_STEP_F2C)(adios2_Engine **engine,
                                                          int *ierr);

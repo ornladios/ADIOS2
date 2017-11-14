@@ -61,9 +61,16 @@ public:
                    const std::vector<Params> &parametersVector,
                    const bool profile);
 
-    void OpenFileID(const std::string &name, const unsigned int id,
-                    const Mode openMode, const Params &parameters,
-                    const bool profile);
+    /**
+     * Used for sub-files defined by index
+     * @param name
+     * @param id
+     * @param openMode
+     * @param parameters
+     * @param profile
+     */
+    void OpenFileID(const std::string &name, const size_t id, const Mode mode,
+                    const Params &parameters, const bool profile);
 
     /**
      * Gets each transport base name from either baseName at Open or name

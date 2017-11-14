@@ -22,6 +22,8 @@ extern "C" {
  */
 void adios2_begin_step(adios2_Engine *engine);
 
+//***************** PUT *****************
+
 /**
  * Put a variable in IO using a adios2_Variable handler
  * @param engine handler for engine executing the write
@@ -33,7 +35,7 @@ void adios2_put_sync(adios2_Engine *engine, adios2_Variable *variable,
 
 void adios2_put_sync_self(adios2_Engine *engine, adios2_Variable *variable);
 
-void adios2_put_sync_by_name(adios2_Engine *engine, const char *variableName,
+void adios2_put_sync_by_name(adios2_Engine *engine, const char *variable_name,
                              const void *values);
 
 /**
@@ -48,9 +50,28 @@ void adios2_put_deferred(adios2_Engine *engine, adios2_Variable *variable,
 void adios2_put_deferred_self(adios2_Engine *engine, adios2_Variable *variable);
 
 void adios2_put_deferred_by_name(adios2_Engine *engine,
-                                 const char *variableName, const void *values);
+                                 const char *variable_name, const void *values);
 
 void adios2_perform_puts(adios2_Engine *engine);
+
+//***************** GET *****************
+void adios2_get_sync(adios2_Engine *engine, adios2_Variable *variable,
+                     void *values);
+
+void adios2_get_sync_self(adios2_Engine *engine, adios2_Variable *variable);
+
+void adios2_get_sync_by_name(adios2_Engine *engine, const char *variable_name,
+                             void *values);
+
+void adios2_get_deferred(adios2_Engine *engine, adios2_Variable *variable,
+                         void *values);
+
+void adios2_get_deferred_self(adios2_Engine *engine, adios2_Variable *variable);
+
+void adios2_get_deferred_by_name(adios2_Engine *engine,
+                                 const char *variable_name, void *values);
+
+void adios2_perform_gets(adios2_Engine *engine);
 
 /**
  * terminates interaction with current step

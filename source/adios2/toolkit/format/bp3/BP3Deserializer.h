@@ -99,7 +99,7 @@ private:
      * @param intersectionBox
      */
     template <class T>
-    void ClipContiguousMemoryCommonRowZero(
+    void ClipContiguousMemoryCommonRow(
         Variable<T> &variable, const std::vector<char> &contiguousMemory,
         const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
 
@@ -111,7 +111,7 @@ private:
      * @param intersectionBox
      */
     template <class T>
-    void ClipContiguousMemoryCommonColumnOne(
+    void ClipContiguousMemoryCommonColumn(
         Variable<T> &variable, const std::vector<char> &contiguousMemory,
         const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
 };

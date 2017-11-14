@@ -208,9 +208,7 @@ protected:
     const bool m_DebugMode = false;
 
     /** from host language in data information */
-    bool m_IsRowMajor = true; // C, C++ defaults
-    /** from host language in data information */
-    bool m_IsZeroIndex = true; // C, C++
+    bool m_IsRowMajor = true;
 
     /** method type for file I/O */
     enum IO_METHOD

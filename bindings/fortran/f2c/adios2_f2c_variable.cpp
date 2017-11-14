@@ -64,6 +64,33 @@ void FC_GLOBAL(adios2_set_selection_f2c,
                                          const int *ndims, const int *start,
                                          const int *count, int *ierr)
 {
+    auto lf_IntToSizeT = [](const int *dimensions, const int size,
+                            std::vector<std::size_t> &output,
+                            const bool offset) {
+
+        if (dimensions == nullptr)
+        {
+            return;
+        }
+
+        output.resize(size);
+
+        if (offset)
+        {
+            for (unsigned int d = 0; d < size; ++d)
+            {
+                output[d] = dimensions[d] - 1;
+            }
+        }
+        else
+        {
+            for (unsigned int d = 0; d < size; ++d)
+            {
+                output[d] = dimensions[d];
+            }
+        }
+    };
+
     *ierr = 0;
     if (start == nullptr || count == nullptr)
     {
@@ -71,8 +98,9 @@ void FC_GLOBAL(adios2_set_selection_f2c,
         return;
     }
 
-    std::vector<std::size_t> startV(start, start + *ndims);
-    std::vector<std::size_t> countV(count, count + *ndims);
+    std::vector<std::size_t> startV, countV;
+    lf_IntToSizeT(start, *ndims, startV, true);
+    lf_IntToSizeT(count, *ndims, countV, false);
 
     try
     {

@@ -117,14 +117,14 @@ void BP3Deserializer::ParsePGIndex()
     position = m_Minifooter.PGIndexStart;
 
     m_MetadataSet.DataPGCount = ReadValue<uint64_t>(buffer, position);
-    position += 10;                                        // skipping lengths
-    position += 2 + ReadValue<uint16_t>(buffer, position); // skipping name
+    position += 10; // skipping lengths
+    const uint16_t nameLength = ReadValue<uint16_t>(buffer, position);
+    position += static_cast<size_t>(nameLength); // skipping name
     const char isFortran = ReadValue<char>(buffer, position);
 
     if (isFortran == 'y')
     {
         m_IsRowMajor = false;
-        m_IsZeroIndex = false;
     }
 }
 
@@ -141,7 +141,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         case (type_byte):
         {
-            DefineVariableInIO<char>(header, io, buffer, position);
+            DefineVariableInIO<signed char>(header, io, buffer, position);
             break;
         }
 

@@ -80,4 +80,16 @@ contains
     end subroutine
 
 
+    subroutine adios2_inquire_variable(variable, io, variable_name, ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: variable_name
+        integer, intent(out) :: ierr
+
+        call adios2_inquire_variable_f2c(variable, io, &
+            & TRIM(ADJUSTL(variable_name))//char(0), ierr)
+
+    end subroutine
+
+
 end module

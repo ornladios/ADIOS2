@@ -134,7 +134,8 @@ PYBIND11_MODULE(adios2, m)
         .def("DeclareIO", &adios2::ADIOSPy::DeclareIO);
 
     pybind11::class_<adios2::VariableBase>(m, "Variable")
-        .def("SetSelection", &adios2::VariableBase::SetSelection);
+        .def("SetSelection", &adios2::VariableBase::SetSelection)
+        .def("SelectionSize", &adios2::VariableBase::SelectionSize);
 
     pybind11::class_<adios2::IOPy>(m, "IOPy")
         .def("SetEngine", &adios2::IOPy::SetEngine)
@@ -158,12 +159,34 @@ PYBIND11_MODULE(adios2, m)
                          adios2::IOPy::Open);
 
     pybind11::class_<adios2::EnginePy>(m, "EnginePy")
+        .def("BeginStep", &adios2::EnginePy::BeginStep)
         .def("PutSync", (void (adios2::EnginePy::*)(adios2::VariableBase *,
                                                     const pybind11::array &)) &
                             adios2::EnginePy::PutSync)
         .def("PutSync", (void (adios2::EnginePy::*)(adios2::VariableBase *,
                                                     const std::string &)) &
                             adios2::EnginePy::PutSync)
+        .def("PutDeferred",
+             (void (adios2::EnginePy::*)(adios2::VariableBase *,
+                                         const pybind11::array &)) &
+                 adios2::EnginePy::PutDeferred)
+        .def("PutDeferred", (void (adios2::EnginePy::*)(adios2::VariableBase *,
+                                                        const std::string &)) &
+                                adios2::EnginePy::PutDeferred)
+        .def("PerformPuts", &adios2::EnginePy::PerformPuts)
+        .def("GetSync", (void (adios2::EnginePy::*)(adios2::VariableBase *,
+                                                    pybind11::array &)) &
+                            adios2::EnginePy::GetSync)
+        .def("GetSync", (void (adios2::EnginePy::*)(adios2::VariableBase *,
+                                                    std::string &)) &
+                            adios2::EnginePy::GetSync)
+        .def("GetDeferred", (void (adios2::EnginePy::*)(adios2::VariableBase *,
+                                                        pybind11::array &)) &
+                                adios2::EnginePy::GetDeferred)
+        .def("GetDeferred", (void (adios2::EnginePy::*)(adios2::VariableBase *,
+                                                        std::string &)) &
+                                adios2::EnginePy::GetDeferred)
+        .def("PerformGets", &adios2::EnginePy::PerformGets)
         .def("EndStep", &adios2::EnginePy::EndStep)
         .def("Close", &adios2::EnginePy::Close,
              pybind11::arg("transportIndex") = -1);

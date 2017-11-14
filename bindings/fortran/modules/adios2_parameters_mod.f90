@@ -35,6 +35,10 @@ module adios2_parameters
     logical, parameter :: adios2_constant_dims_true = .true.
     logical, parameter :: adios2_constant_dims_false = .false.
 
+    ! Found or not found, ierr value
+    integer, parameter :: adios2_found = 0
+    integer, parameter :: adios2_not_found = 2
+
     ! Mode
     integer, parameter :: adios2_mode_undefined = 0
     integer, parameter :: adios2_mode_write = 1
