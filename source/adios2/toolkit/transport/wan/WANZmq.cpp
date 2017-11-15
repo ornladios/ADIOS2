@@ -125,7 +125,7 @@ void WANZmq::Write(const char *buffer, size_t size, size_t start)
 }
 
 void WANZmq::IWrite(const char *buffer, size_t size, Status &status,
-                    size_t start = MaxSizeT)
+                    size_t start)
 {
 }
 
@@ -135,7 +135,29 @@ void WANZmq::Read(char *buffer, size_t size, size_t start)
     int status = zmq_send(m_Socket, "OK", 4, 0);
 }
 
-void WANZmq::IRead(char *buffer, size_t size, Status &status, size_t start) {}
+void WANZmq::IRead(char *buffer, size_t size, Status &status, size_t start)
+{
+    int bytes = zmq_recv(m_Socket, buffer, size, ZMQ_DONTWAIT);
+    int ret = zmq_send(m_Socket, "OK", 4, 0);
+    if (bytes > 0)
+    {
+        status.Bytes = bytes;
+        status.Running = true;
+    }
+    else
+    {
+        status.Bytes = 0;
+        status.Running = true;
+    }
+    if (bytes == size)
+    {
+        status.Successful = true;
+    }
+    else
+    {
+        status.Successful = false;
+    }
+}
 
 void WANZmq::Flush() {}
 

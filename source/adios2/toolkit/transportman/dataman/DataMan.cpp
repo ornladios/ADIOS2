@@ -30,6 +30,7 @@ DataMan::~DataMan()
 {
     for (auto &controlThread : m_ControlThreads)
     {
+        m_Listening = false;
         controlThread.join();
     }
 }
@@ -143,23 +144,27 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
         char buffer[1024];
         size_t bytes = 0;
         nlohmann::json jmsg;
-        ctl_trans->Read(buffer, 1024, 0);
-        std::string smsg(buffer);
-        jmsg = nlohmann::json::parse(smsg);
-        bytes = jmsg.value("bytes", 0);
-        if (bytes > 0)
+        adios2::Transport::Status status;
+        ctl_trans->IRead(buffer, 1024, status, 0);
+        if (status.Bytes > 0)
         {
-            std::vector<char> data(bytes);
-            trans->Read(data.data(), bytes);
-            std::string doid = jmsg.value("doid", "Unknown Data Object");
-            std::string var = jmsg.value("var", "Unknown Variable");
-            std::string dtype = jmsg.value("dtype", "Unknown Data Type");
-            std::vector<size_t> putshape =
-                jmsg.value("putshape", std::vector<size_t>());
-            if (m_Callback != nullptr && m_Callback->m_Type == "Signature2")
+            std::string smsg(buffer);
+            jmsg = nlohmann::json::parse(smsg);
+            bytes = jmsg.value("bytes", 0);
+            if (bytes > 0)
             {
-                m_Callback->RunCallback2(data.data(), doid, var, dtype,
-                                         putshape);
+                std::vector<char> data(bytes);
+                trans->Read(data.data(), bytes);
+                std::string doid = jmsg.value("doid", "Unknown Data Object");
+                std::string var = jmsg.value("var", "Unknown Variable");
+                std::string dtype = jmsg.value("dtype", "Unknown Data Type");
+                std::vector<size_t> putshape =
+                    jmsg.value("putshape", std::vector<size_t>());
+                if (m_Callback != nullptr && m_Callback->m_Type == "Signature2")
+                {
+                    m_Callback->RunCallback2(data.data(), doid, var, dtype,
+                                             putshape);
+                }
             }
         }
     }
