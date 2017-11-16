@@ -15,7 +15,6 @@
 #include "adiosMPIFunctions.h"
 
 #include <algorithm> //std::foreach
-#include <iostream>  //TODO: remove
 #include <numeric>   //std::accumulate
 
 #include "adios2/ADIOSMPI.h"
@@ -73,7 +72,7 @@ template <>
 unsigned int ReduceValues(const unsigned int source, MPI_Comm mpiComm,
                           MPI_Op operation, const int rankDestination)
 {
-    const unsigned int sourceLocal = source;
+    unsigned int sourceLocal = source;
     unsigned int reduceValue = 0;
     MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED, operation,
                rankDestination, mpiComm);
@@ -84,7 +83,7 @@ template <>
 unsigned long int ReduceValues(const unsigned long int source, MPI_Comm mpiComm,
                                MPI_Op operation, const int rankDestination)
 {
-    const unsigned long int sourceLocal = source;
+    unsigned long int sourceLocal = source;
     unsigned long int reduceValue = 0;
     MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG, operation,
                rankDestination, mpiComm);
@@ -96,7 +95,7 @@ unsigned long long int ReduceValues(const unsigned long long int source,
                                     MPI_Comm mpiComm, MPI_Op operation,
                                     const int rankDestination)
 {
-    const unsigned long long int sourceLocal = source;
+    unsigned long long int sourceLocal = source;
     unsigned long long int reduceValue = 0;
     MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG_LONG, operation,
                rankDestination, mpiComm);
@@ -136,9 +135,10 @@ void GatherArrays(const char *source, const size_t sourceCount,
                   char *destination, MPI_Comm mpiComm,
                   const int rankDestination)
 {
-    const int countsInt = static_cast<int>(sourceCount);
-    int result = MPI_Gather(source, countsInt, MPI_CHAR, destination, countsInt,
-                            MPI_CHAR, rankDestination, mpiComm);
+    int countsInt = static_cast<int>(sourceCount);
+    int result =
+        MPI_Gather(const_cast<char *>(source), countsInt, MPI_CHAR, destination,
+                   countsInt, MPI_CHAR, rankDestination, mpiComm);
 
     if (result != MPI_SUCCESS)
     {
@@ -152,10 +152,10 @@ void GatherArrays(const size_t *source, const size_t sourceCount,
                   size_t *destination, MPI_Comm mpiComm,
                   const int rankDestination)
 {
-    const int countsInt = static_cast<int>(sourceCount);
-    int result =
-        MPI_Gather(source, countsInt, ADIOS2_MPI_SIZE_T, destination, countsInt,
-                   ADIOS2_MPI_SIZE_T, rankDestination, mpiComm);
+    int countsInt = static_cast<int>(sourceCount);
+    int result = MPI_Gather(const_cast<size_t *>(source), countsInt,
+                            ADIOS2_MPI_SIZE_T, destination, countsInt,
+                            ADIOS2_MPI_SIZE_T, rankDestination, mpiComm);
 
     if (result != MPI_SUCCESS)
     {
@@ -183,7 +183,8 @@ void GathervArrays(const char *source, const size_t sourceCount,
         displacementsInt = GetGathervDisplacements(counts, countsSize);
     }
 
-    result = MPI_Gatherv(source, static_cast<int>(sourceCount), MPI_CHAR,
+    int sourceCountInt = static_cast<int>(sourceCount);
+    result = MPI_Gatherv(const_cast<char *>(source), sourceCountInt, MPI_CHAR,
                          destination, countsInt.data(), displacementsInt.data(),
                          MPI_CHAR, rankDestination, mpiComm);
 
@@ -210,10 +211,12 @@ void GathervArrays(const size_t *source, const size_t sourceCount,
     std::vector<int> displacementsInt =
         GetGathervDisplacements(counts, countsSize);
 
-    result =
-        MPI_Gatherv(source, static_cast<int>(sourceCount), ADIOS2_MPI_SIZE_T,
-                    destination, countsInt.data(), displacementsInt.data(),
-                    ADIOS2_MPI_SIZE_T, rankDestination, mpiComm);
+    int sourceCountInt = static_cast<int>(sourceCount);
+
+    result = MPI_Gatherv(const_cast<size_t *>(source), sourceCountInt,
+                         ADIOS2_MPI_SIZE_T, destination, countsInt.data(),
+                         displacementsInt.data(), ADIOS2_MPI_SIZE_T,
+                         rankDestination, mpiComm);
 
     if (result != MPI_SUCCESS)
     {
