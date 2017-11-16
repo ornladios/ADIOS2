@@ -101,8 +101,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto &var_iString = *io.InquireVariable<std::string>("iString");
@@ -274,8 +274,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             var_r64->SetStepSelection({t + 1, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
@@ -388,8 +388,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto &var_i8 = *io.InquireVariable<int8_t>("i8");
@@ -577,8 +577,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -677,8 +677,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto &var_i8 = *io.InquireVariable<int8_t>("i8");
@@ -866,8 +866,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData =
-                generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {

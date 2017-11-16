@@ -159,7 +159,11 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         case (type_long):
         {
+#ifdef _WIN32
+            DefineVariableInIO<long long int>(header, io, buffer, position);
+#else
             DefineVariableInIO<long int>(header, io, buffer, position);
+#endif
             break;
         }
 
@@ -183,7 +187,12 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         case (type_unsigned_long):
         {
+#ifdef _WIN32
+            DefineVariableInIO<unsigned long long int>(header, io, buffer,
+                                                       position);
+#else
             DefineVariableInIO<unsigned long int>(header, io, buffer, position);
+#endif
             break;
         }
 

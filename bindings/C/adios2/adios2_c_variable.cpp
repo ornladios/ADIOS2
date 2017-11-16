@@ -185,17 +185,6 @@ void adios2_set_data(adios2_Variable *variable, const void *data)
 {
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
-    if (data == nullptr)
-    {
-
-        adios2::VariableBase *variableBase =
-            reinterpret_cast<adios2::VariableBase *>(variable);
-        const std::string name(variableBase->m_Name);
-
-        throw std::invalid_argument(
-            "ERROR: trying to pass a null pointer to variable " + name +
-            ", in call to adios2_set_data");
-    }
 
     const std::string type(variableBase->m_Type);
 
