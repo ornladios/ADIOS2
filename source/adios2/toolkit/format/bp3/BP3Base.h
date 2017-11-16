@@ -207,10 +207,8 @@ protected:
     unsigned int m_Threads = 1;
     const bool m_DebugMode = false;
 
-    /** from host language */
-    bool m_IsRowMajor = true; // C, C++ defaults
-    /** from host language */
-    bool m_IsZeroIndex = true; // C, C++
+    /** from host language in data information */
+    bool m_IsRowMajor = true;
 
     /** method type for file I/O */
     enum IO_METHOD

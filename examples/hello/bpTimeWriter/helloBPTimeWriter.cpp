@@ -36,69 +36,109 @@ int main(int argc, char *argv[])
          * recommended */
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
-        /*** IO class object: settings and factory of Settings: Variables,
-         * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
-        bpIO.SetParameters({{"Threads", "2"}});
-
-        /** global array: name, { shape (total dimensions) }, { start
-         * (local) },
-         * { count (local) }, all are constant dimensions */
-        const unsigned int variablesSize = 1;
-        std::vector<adios2::Variable<float> *> bpFloats(variablesSize);
-
-        adios2::Variable<std::string> &bpString =
-            bpIO.DefineVariable<std::string>("bpString");
-
-        for (unsigned int v = 0; v < variablesSize; ++v)
+        /// WRITE
         {
-            std::string namev("bpFloats");
-            if (v < 10)
-            {
-                namev += "00";
-            }
-            else if (v < 100)
-            {
-                namev += "0";
-            }
-            namev += std::to_string(v);
+            /*** IO class object: settings and factory of Settings: Variables,
+             * Parameters, Transports, and Execution: Engines */
+            adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+            bpIO.SetParameters({{"Threads", "2"}});
 
-            bpFloats[v] = &bpIO.DefineVariable<float>(
-                namev, {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
-        }
+            /** global array: name, { shape (total dimensions) }, { start
+             * (local) },
+             * { count (local) }, all are constant dimensions */
+            const unsigned int variablesSize = 1;
+            std::vector<adios2::Variable<float> *> bpFloats(variablesSize);
 
-        /** global single value variable: name */
-        adios2::Variable<unsigned int> &bpTimeStep =
-            bpIO.DefineVariable<unsigned int>("timeStep");
+            adios2::Variable<std::string> &bpString =
+                bpIO.DefineVariable<std::string>("bpString");
 
-        /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpWriter =
-            bpIO.Open("myVector.bp", adios2::Mode::Write);
-
-        for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
-        {
-            // bpWriter.BeginStep();
-            if (rank == 0) // global single value, only saved by rank 0
-            {
-                bpWriter.PutSync<unsigned int>(bpTimeStep, timeStep);
-            }
-
-            // template type is optional, but recommended
             for (unsigned int v = 0; v < variablesSize; ++v)
             {
-                myFloats[0] = static_cast<float>(v + timeStep);
-                bpWriter.PutSync(*bpFloats[v], myFloats.data());
+                std::string namev("bpFloats");
+                if (v < 10)
+                {
+                    namev += "00";
+                }
+                else if (v < 100)
+                {
+                    namev += "0";
+                }
+                namev += std::to_string(v);
+
+                bpFloats[v] =
+                    &bpIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
+                                                {Nx}, adios2::ConstantDims);
             }
-            const std::string myString(
-                "Hello from rank: " + std::to_string(rank) + " and timestep: " +
-                std::to_string(timeStep));
 
-            bpWriter.PutSync(bpString, myString);
+            /** global single value variable: name */
+            adios2::Variable<unsigned int> &bpTimeStep =
+                bpIO.DefineVariable<unsigned int>("timeStep");
 
-            bpWriter.EndStep();
+            /** Engine derived class, spawned to start IO operations */
+            adios2::Engine &bpWriter =
+                bpIO.Open("myVector.bp", adios2::Mode::Write);
+
+            for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
+            {
+                // bpWriter.BeginStep();
+                if (rank == 0) // global single value, only saved by rank 0
+                {
+                    bpWriter.PutSync<unsigned int>(bpTimeStep, timeStep);
+                }
+
+                // template type is optional, but recommended
+                for (unsigned int v = 0; v < variablesSize; ++v)
+                {
+                    myFloats[0] = static_cast<float>(v + timeStep);
+                    bpWriter.PutSync(*bpFloats[v], myFloats.data());
+                }
+                const std::string myString(
+                    "Hello from rank: " + std::to_string(rank) +
+                    " and timestep: " + std::to_string(timeStep));
+
+                bpWriter.PutSync(bpString, myString);
+
+                bpWriter.EndStep();
+            }
+
+            bpWriter.Close();
         }
+        MPI_Barrier(MPI_COMM_WORLD);
 
-        bpWriter.Close();
+        { /////////////////////READ
+            //            if (rank == 0)
+            //            {
+            adios2::IO &ioReader = adios.DeclareIO("bpReader");
+
+            adios2::Engine &bpReader =
+                ioReader.Open("myVector.bp", adios2::Mode::Read);
+
+            adios2::Variable<float> *bpFloats000 =
+                ioReader.InquireVariable<float>("bpFloats000");
+
+            if (bpFloats000 != nullptr)
+            {
+                bpFloats000->SetSelection({{rank * Nx}, {Nx}});
+                bpFloats000->SetStepSelection({3, 1});
+
+                std::vector<float> data(bpFloats000->SelectionSize());
+                bpReader.GetSync(*bpFloats000, data.data());
+
+                std::cout << "Data timestep " << bpFloats000->m_StepsStart
+                          << " from rank " << rank << "\n";
+                for (const auto datum : data)
+                {
+                    std::cout << datum << " ";
+                }
+                std::cout << "\n";
+            }
+            else
+            {
+                std::cout << "Variable bpFloats000 not found\n";
+            }
+            bpReader.Close();
+            //}
+        }
     }
     catch (std::invalid_argument &e)
     {

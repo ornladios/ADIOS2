@@ -84,10 +84,7 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
 
     position = initialPosition;
 
-    size_t currentStep = 1;
-
-    std::vector<size_t> subsetPositions; // per step
-    subsetPositions.reserve(1);          // expecting one subset per step
+    size_t currentStep = 0; // Starts at 1 in bp file
 
     while (position < endPosition)
     {
@@ -100,14 +97,6 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                 buffer, position, static_cast<DataTypes>(header.DataType),
                 false);
 
-        if (subsetCharacteristics.Statistics.Step > currentStep)
-        {
-            currentStep = subsetCharacteristics.Statistics.Step;
-            variable->m_IndexStepBlockStarts[currentStep] = subsetPositions;
-            ++variable->m_AvailableStepsCount;
-            subsetPositions.clear();
-        }
-
         if (subsetCharacteristics.Statistics.Min < variable->m_Min)
         {
             variable->m_Min = subsetCharacteristics.Statistics.Min;
@@ -118,14 +107,14 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
             variable->m_Max = subsetCharacteristics.Statistics.Max;
         }
 
-        subsetPositions.push_back(subsetPosition);
-        position = subsetPosition + subsetCharacteristics.EntryLength + 5;
-
-        if (position == endPosition) // check if last one
+        if (subsetCharacteristics.Statistics.Step > currentStep)
         {
-            variable->m_IndexStepBlockStarts[currentStep] = subsetPositions;
-            break;
+            currentStep = subsetCharacteristics.Statistics.Step;
+            variable->m_AvailableStepsCount =
+                subsetCharacteristics.Statistics.Step;
         }
+        variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
+        position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
 }
 
@@ -178,13 +167,13 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             info.Seeks.first =
                 blockCharacteristics.Statistics.PayloadOffset +
                 LinearIndex(info.BlockBox, info.IntersectionBox.first,
-                            m_IsRowMajor, m_IsZeroIndex) *
+                            m_IsRowMajor) *
                     sizeof(T);
 
             info.Seeks.second =
                 blockCharacteristics.Statistics.PayloadOffset +
                 (LinearIndex(info.BlockBox, info.IntersectionBox.second,
-                             m_IsRowMajor, m_IsZeroIndex) +
+                             m_IsRowMajor) +
                  1) *
                     sizeof(T);
 
@@ -217,15 +206,20 @@ void BP3Deserializer::ClipContiguousMemoryCommon(
         return;
     }
 
-    if (m_IsRowMajor && m_IsZeroIndex)
+    if (m_IsRowMajor) // stored with C, C++, Python
     {
-        ClipContiguousMemoryCommonRowZero(variable, contiguousMemory, blockBox,
-                                          intersectionBox);
+        ClipContiguousMemoryCommonRow(variable, contiguousMemory, blockBox,
+                                      intersectionBox);
+    }
+    else // stored with Fortran, R
+    {
+        ClipContiguousMemoryCommonColumn(variable, contiguousMemory, blockBox,
+                                         intersectionBox);
     }
 }
 
 template <class T>
-void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
+void BP3Deserializer::ClipContiguousMemoryCommonRow(
     Variable<T> &variable, const std::vector<char> &contiguousMemory,
     const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
 {
@@ -242,17 +236,17 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
     bool run = true;
 
     const size_t intersectionStart =
-        LinearIndex(blockBox, intersectionBox.first, true, true) * sizeof(T);
+        LinearIndex(blockBox, intersectionBox.first, true) * sizeof(T);
 
     while (run)
     {
         // here copy current linear memory between currentPoint and end
         const size_t contiguousStart =
-            LinearIndex(blockBox, currentPoint, true, true) * sizeof(T) -
+            LinearIndex(blockBox, currentPoint, true) * sizeof(T) -
             intersectionStart;
 
         const size_t variableStart =
-            LinearIndex(selectionBox, currentPoint, true, true) * sizeof(T);
+            LinearIndex(selectionBox, currentPoint, true) * sizeof(T);
 
         char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
 
@@ -267,7 +261,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
         while (true)
         {
             ++currentPoint[p];
-            if (currentPoint[p] > end[p]) // TODO: check end condition
+            if (currentPoint[p] > end[p])
             {
                 if (p == 0)
                 {
@@ -286,6 +280,70 @@ void BP3Deserializer::ClipContiguousMemoryCommonRowZero(
             }
         } // dimension index update
     }     // run
+}
+
+template <class T>
+void BP3Deserializer::ClipContiguousMemoryCommonColumn(
+    Variable<T> &variable, const std::vector<char> &contiguousMemory,
+    const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
+{
+    const Dims &start = intersectionBox.first;
+    const Dims &end = intersectionBox.second;
+    const size_t stride = (end.front() - start.front() + 1) * sizeof(T);
+
+    Dims currentPoint(start); // current point for memory copy
+
+    const Box<Dims> selectionBox =
+        StartEndBox(variable.m_Start, variable.m_Count);
+
+    const size_t dimensions = start.size();
+    bool run = true;
+
+    const size_t intersectionStart =
+        LinearIndex(blockBox, intersectionBox.first, false) * sizeof(T);
+
+    while (run)
+    {
+        // here copy current linear memory between currentPoint and end
+        const size_t contiguousStart =
+            LinearIndex(blockBox, currentPoint, false) * sizeof(T) -
+            intersectionStart;
+
+        const size_t variableStart =
+            LinearIndex(selectionBox, currentPoint, false) * sizeof(T);
+
+        char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
+
+        std::copy(&contiguousMemory[contiguousStart],
+                  &contiguousMemory[contiguousStart + stride],
+                  &rawVariableData[variableStart]);
+
+        // here update each index recursively, always starting from the 2nd
+        // fastest changing index, since fastest changing index is the
+        // continuous part in the previous std::copy
+        size_t p = 1;
+        while (true)
+        {
+            ++currentPoint[p];
+            if (currentPoint[p] > end[p])
+            {
+                if (p == dimensions - 1)
+                {
+                    run = false; // we are done
+                    break;
+                }
+                else
+                {
+                    currentPoint[p] = start[p];
+                    ++p;
+                }
+            }
+            else
+            {
+                break; // break inner p loop
+            }
+        } // dimension index update
+    }
 }
 
 } // end namespace format

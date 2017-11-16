@@ -6,8 +6,10 @@ program helloBPWriter
 
     integer, dimension(1) :: shape_dims, start_dims, count_dims
     real, dimension(:), allocatable :: myArray
-    integer :: inx, irank, isize, ierr, i
+    integer :: inx, irank, isize, ierr, i, var1_type
     integer(kind=8) :: adios, io, var1, engine1
+    character(len=:), allocatable :: var1_name
+
 
     ! Launch MPI
     call MPI_Init(ierr)
@@ -37,6 +39,11 @@ program helloBPWriter
     call adios2_define_variable(var1, io, "myArray", adios2_type_real, 1, &
         & shape_dims, start_dims, count_dims, adios2_constant_dims_true, ierr)
 
+
+    call adios2_variable_name( var1, var1_name, ierr )
+    call adios2_variable_type( var1, var1_type, ierr )
+    write(*,*) 'Variable name: ', var1_name, '  type: ', var1_type
+
     ! Open myVector_f.bp in write mode, this launches an engine
     call adios2_open(engine1, io, "myVector_f.bp", adios2_mode_write, ierr)
 
@@ -49,7 +56,8 @@ program helloBPWriter
     ! Deallocates adios and calls its destructor
     call adios2_finalize(adios, ierr)
 
-    deallocate(myArray)
+    if( allocated(myArray) ) deallocate(myArray)
+    if( allocated(var1_name) ) deallocate(var1_name)
 
     call MPI_Finalize(ierr)
 

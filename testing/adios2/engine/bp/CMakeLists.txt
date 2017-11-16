@@ -3,8 +3,16 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-# MPI versions of the test are not properly implemented at the moment
+add_executable(TestBPWriteReadADIOS2 TestBPWriteReadADIOS2.cpp)
+target_link_libraries(TestBPWriteReadADIOS2 adios2 gtest gtest_main)
 
+if(ADIOS2_HAVE_MPI)
+  target_link_libraries(TestBPWriteReadADIOS2 MPI::MPI_C)
+  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
+endif()
+
+gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args})
+  
 if (ADIOS2_HAVE_ADIOS1)
   add_executable(TestBPWriteRead TestBPWriteRead.cpp)
   target_link_libraries(TestBPWriteRead adios2 gtest adios1::adios)
@@ -29,8 +37,6 @@ if (ADIOS2_HAVE_ADIOS1)
     target_link_libraries(TestBPWriteReadstdio MPI::MPI_C)
     target_link_libraries(TestBPWriteReadfstream MPI::MPI_C)
     target_link_libraries(TestBPWriteProfilingJSON MPI::MPI_C)
-
-    set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
   endif()
 
   gtest_add_tests(TARGET TestBPWriteRead ${extra_test_args})

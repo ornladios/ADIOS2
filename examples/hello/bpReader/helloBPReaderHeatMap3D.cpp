@@ -2,17 +2,21 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloBPReaderHeatMap.cpp : Writes a heat map in a regular 2D mesh,
+ * helloBPReaderHeatMap3D.cpp : Writes a heat map in a regular 3D mesh,
  * values grow from 0 in increments of 1
  *
- * temperature[gNx, Ny]
+ * temperature[gNx, Ny, Nz]
  * where: gNx = MPI_size_x * Nx
  *
- * 0                1       2  ...     Ny-1
- * Ny            Ny+1    Ny+2  ...   2*Ny-1
+ * k Map:
+ *    k= Nz-1  .          .       .             .
+ *   k=1      .          .       .             .
+ *  k=0      .          .       .             .
+ *        0          1       2  ...     Nz-1
+ *       Nz        Nz+1    Nz+2  ...   2*Nz-1
  * ...
  * ...
- * (gNx-1)*Ny   ...                  gNx*Ny-1
+ *(Ny-1)*Nz   ...                      Ny*Nz-1
  *
  *
  *  Created on: Nov 1, 2017
@@ -73,13 +77,13 @@ int main(int argc, char *argv[])
         // ************************** WRITE
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &putHeatMap = adios.DeclareIO("HeatMapWriter");
+        adios2::IO &putHeatMap = adios.DeclareIO("HeatMapWrite");
 
         adios2::Variable<unsigned int> &outTemperature =
             putHeatMap.DefineVariable<unsigned int>(
                 "temperature", shape, start, count, adios2::ConstantDims);
 
-        /** Will create HeatMap.bp */
+        /** Will create HeatMap3D.bp */
         adios2::Engine &bpWriter =
             putHeatMap.Open("HeatMap3D.bp", adios2::Mode::Write);
 
@@ -89,7 +93,7 @@ int main(int argc, char *argv[])
         // ************************** READ
         if (rank == 0)
         {
-            adios2::IO &getHeatMap = adios.DeclareIO("HeatMapReader");
+            adios2::IO &getHeatMap = adios.DeclareIO("HeatMapRead");
             adios2::Engine &bpReader =
                 getHeatMap.Open("HeatMap3D.bp", adios2::Mode::Read);
 
@@ -100,14 +104,15 @@ int main(int argc, char *argv[])
             if (inTemperature != nullptr)
             {
                 inTemperature->SetSelection({{2, 2, 2}, {4, 4, 4}});
-                const size_t elementsSize = inTemperature->GetElementsSize();
+                const size_t elementsSize = inTemperature->SelectionSize();
                 std::vector<unsigned int> inTemperatures(elementsSize);
                 std::cout << "Pre-allocated " << elementsSize << " elements, "
                           << elementsSize * sizeof(unsigned int) << " bytes\n";
 
                 bpReader.GetSync(*inTemperature, inTemperatures.data());
 
-                std::cout << "Incoming temperature map:\n";
+                std::cout << "Temperature map selection: ";
+                std::cout << "{ start = [2,2,2], count = [4,4,4] }\n";
 
                 for (auto i = 0; i < inTemperatures.size(); ++i)
                 {

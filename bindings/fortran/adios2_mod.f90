@@ -13,7 +13,7 @@ module adios2
     use adios2_parameters
     use adios2_adios
     use adios2_io
-!    TODO use adios2_variable
+    use adios2_variable
     use adios2_engine
 
 end module

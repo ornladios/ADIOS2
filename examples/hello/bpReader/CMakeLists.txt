@@ -18,20 +18,17 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(hello_bpReaderHeatMap3D ${MPI_C_LIBRARIES})
   target_link_libraries(hello_bpReaderHeatMap3D adios2)
   
+  if(ADIOS2_HAVE_Fortran)
+    add_executable(hello_bpReaderHeatMap3D_f helloBPReaderHeatMap3D.f90)
+    target_link_libraries(hello_bpReaderHeatMap3D_f MPI::MPI_Fortran)
+    target_link_libraries(hello_bpReaderHeatMap3D_f adios2_f)
+  endif()
+  
   
 #  add_executable(hello_bpReader_c helloBPReader.c)
 #  target_include_directories(hello_bpReader_c PRIVATE ${MPI_C_INCLUDE_PATH})
 #  target_link_libraries(hello_bpReader_c ${MPI_C_LIBRARIES})
-#  
-#  if(ADIOS2_HAVE_Fortran)
-#    add_executable(hello_bpReader_f helloBPReader.f90)
-#    target_include_directories(hello_bpReader_f 
-#                               PRIVATE ${MPI_Fortran_INCLUDE_PATH} 
-#                                       ${MPI_C_INCLUDE_PATH})
-#                                               
-#    target_link_libraries(hello_bpReader_f PRIVATE ${MPI_Fortran_LIBRARIES} 
-#                                                   ${MPI_C_LIBRARIES})
-#  endif()
+
   
 else()
   add_executable(hello_bpReader helloBPReader_nompi.cpp)

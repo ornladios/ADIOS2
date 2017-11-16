@@ -3,7 +3,7 @@
  * accompanying file Copyright.txt for details.
  *
  * adios2_c_glue.h : used by languages other than C, using the C-bindings API
- * (e.g. Fortran), not meant to be for applications
+ * (e.g. Fortran), not meant to be used by applications
  *
  *  Created on: Nov 3, 2017
  *      Author: William F Godoy godoywf@ornl.gov

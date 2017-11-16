@@ -238,8 +238,8 @@ void BPLS2::ProcessTransport() const
         for (const auto &variablePair : variablesMap)
         {
             const std::string name(variablePair.first);
-            const Params &parameters = variablePair.second;
-            const std::string type(parameters.at("Type"));
+            const Params &variableParameters = variablePair.second;
+            const std::string type(variableParameters.at("Type"));
 
             std::cout << "  ";
             std::cout << std::left << std::setw(maxTypeSize) << type << "  ";
@@ -248,8 +248,8 @@ void BPLS2::ProcessTransport() const
             // print min max
             if (m_Parameters.count("long") == 1)
             {
-                std::cout << parameters.at("Min") << " / "
-                          << parameters.at("Max");
+                std::cout << variableParameters.at("Min") << " / "
+                          << variableParameters.at("Max");
             }
             std::cout << "\n";
         }

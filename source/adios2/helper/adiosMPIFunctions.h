@@ -25,8 +25,8 @@ template <class T>
 T BroadcastValue(const T &input, MPI_Comm mpiComm, const int rankSource = 0);
 
 template <class T>
-std::vector<T> BroadcastVector(const std::vector<T> &input, MPI_Comm mpiComm,
-                               const int rankSource = 0);
+void BroadcastVector(std::vector<T> &vector, MPI_Comm mpiComm,
+                     const int rankSource = 0);
 
 template <class T>
 T ReduceValues(const T source, MPI_Comm mpiComm, MPI_Op operation = MPI_SUM,

@@ -173,6 +173,26 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         if (type == "compound")
         {
         }
+// TODO : enable string, add dimensions
+#define declare_template_instantiation(C)                                      \
+    else if (type == GetType<C>())                                             \
+    {                                                                          \
+        Variable<C> &variable = *InquireVariable<C>(name);                     \
+                                                                               \
+        const int min = static_cast<int>(variable.m_Min);                      \
+        variablesInfo[name]["Min"] = std::to_string(min);                      \
+                                                                               \
+        const int max = static_cast<int>(variable.m_Max);                      \
+        variablesInfo[name]["Max"] = std::to_string(max);                      \
+                                                                               \
+        variablesInfo[name]["StepsStart"] =                                    \
+            std::to_string(variable.m_AvailableStepsStart);                    \
+        variablesInfo[name]["StepsCount"] =                                    \
+            std::to_string(variable.m_AvailableStepsCount);                    \
+    }
+        ADIOS2_FOREACH_CHAR_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
 #define declare_template_instantiation(T)                                      \
     else if (type == GetType<T>())                                             \
     {                                                                          \
@@ -188,10 +208,10 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         variablesInfo[name]["StepsCount"] =                                    \
             std::to_string(variable.m_AvailableStepsCount);                    \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_NUMERIC_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
-    // TODO: add dimensions
+
     return variablesInfo;
 }
 

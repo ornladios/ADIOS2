@@ -2,7 +2,7 @@
 ! Distributed under the OSI-approved Apache License, Version 2.0.  See
 !  accompanying file Copyright.txt for details.
 !
-!  adios2_io.f90 : ADIOS2 Fortran bindings for IO class
+!  adios2_io_mod.f90 : ADIOS2 Fortran bindings for IO class
 !
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov
@@ -76,6 +76,18 @@ contains
         call adios2_define_variable_f2c(variable, io, &
             & TRIM(ADJUSTL(variable_name))//char(0), adios2_type, ndims, &
             & shape_dims, start_dims, count_dims, constant_dims, ierr)
+
+    end subroutine
+
+
+    subroutine adios2_inquire_variable(variable, io, variable_name, ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: variable_name
+        integer, intent(out) :: ierr
+
+        call adios2_inquire_variable_f2c(variable, io, &
+            & TRIM(ADJUSTL(variable_name))//char(0), ierr)
 
     end subroutine
 

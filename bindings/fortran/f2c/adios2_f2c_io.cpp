@@ -78,7 +78,8 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     const int *count, const int *constant_dims, int *ierr)
 {
     auto lf_IntToSizeT = [](const int *dimensions, const int size,
-                            std::vector<std::size_t> &output) {
+                            std::vector<std::size_t> &output,
+                            const bool offset) {
 
         if (dimensions == nullptr)
         {
@@ -86,18 +87,29 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
         }
 
         output.resize(size);
-        for (unsigned int d = 0; d < size; ++d)
+
+        if (offset)
         {
-            output[d] = dimensions[d];
+            for (unsigned int d = 0; d < size; ++d)
+            {
+                output[d] = dimensions[d] - 1;
+            }
+        }
+        else
+        {
+            for (unsigned int d = 0; d < size; ++d)
+            {
+                output[d] = dimensions[d];
+            }
         }
     };
 
     *ierr = 0;
 
     std::vector<std::size_t> shapeV, startV, countV;
-    lf_IntToSizeT(shape, *ndims, shapeV);
-    lf_IntToSizeT(start, *ndims, startV);
-    lf_IntToSizeT(count, *ndims, countV);
+    lf_IntToSizeT(shape, *ndims, shapeV, false);
+    lf_IntToSizeT(start, *ndims, startV, true);
+    lf_IntToSizeT(count, *ndims, countV, false);
 
     try
     {
@@ -105,6 +117,27 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
             *io, variable_name, static_cast<adios2_type>(*type), *ndims,
             shapeV.data(), startV.data(), countV.data(),
             static_cast<adios2_constant_dims>(*constant_dims));
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
+
+void FC_GLOBAL(adios2_inquire_variable_f2c,
+               ADIOS2_INQUIRE_VARIABLE_F2C)(adios2_Variable **variable,
+                                            adios2_IO **io,
+                                            const char *variable_name,
+                                            int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *variable = adios2_inquire_variable(*io, variable_name);
+        if (*variable == nullptr)
+        {
+            *ierr = 2;
+        }
     }
     catch (std::exception &e)
     {

@@ -11,6 +11,7 @@ FortranCInterface_VERIFY(CXX QUIET)
 set(F2C
      f2c/adios2_f2c_adios.cpp  
      f2c/adios2_f2c_io.cpp 
+     f2c/adios2_f2c_variable.cpp
      f2c/adios2_f2c_engine.cpp
 )
 
@@ -20,9 +21,12 @@ set(MODULES
      modules/adios2_parameters_mod.f90 
      modules/adios2_adios_mod.f90 
      modules/adios2_io_mod.f90 
+     modules/adios2_variable_mod.f90
      modules/adios2_engine_mod.f90 
      modules/adios2_engine_write_mod.f90 
      modules/adios2_engine_iwrite_mod.f90
+     modules/adios2_engine_read_mod.f90 
+     modules/adios2_engine_iread_mod.f90
 )
 
 add_library(adios2_f ${MODULES} ${F2C})

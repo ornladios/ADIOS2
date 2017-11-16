@@ -8,6 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
+#include <iostream> //TODO will go away
+
 #include "BPFileReader.h"
 #include "BPFileReader.tcc"
 
@@ -27,8 +29,9 @@ BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode mode,
 
 void BPFileReader::PerformGets()
 {
-    const auto variablesSubFileInfo =
+    const std::map<std::string, SubFileInfoMap> variablesSubfileInfo =
         m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+    ReadVariables(m_IO, variablesSubfileInfo);
 }
 
 void BPFileReader::Close(const int transportIndex)
@@ -89,8 +92,7 @@ void BPFileReader::InitBuffer()
                                fileSize);
     }
     // broadcast buffer to all ranks from zero
-    m_BP3Deserializer.m_Metadata.m_Buffer =
-        BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
+    BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // fills IO with Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_IO);
@@ -127,13 +129,14 @@ void BPFileReader::ReadVariables(
         for (const auto &subFileIndexPair : variableNamePair.second)
         {
             const size_t subFileIndex = subFileIndexPair.first;
-            const std::string subFile(
-                m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
 
             if (m_SubFileManager.m_Transports.count(subFileIndex) == 0)
             {
-                m_SubFileManager.OpenFiles({subFile}, adios2::Mode::Read,
-                                           {{{"transport", "File"}}}, profile);
+                const std::string subFile(
+                    m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
+
+                m_SubFileManager.OpenFileID(subFile, subFileIndex, Mode::Read,
+                                            {{"transport", "File"}}, profile);
             }
 
             for (const auto &stepPair : subFileIndexPair.second) // step

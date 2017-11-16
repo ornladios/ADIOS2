@@ -70,8 +70,8 @@ private:
     void ParseAttributesIndex(IO &io);
 
     /**
-     * This function reads a variable index element (serialized) and calls IO
-     * DefineVariable to deserialize the data
+     * Reads a variable index element (serialized) and calls IO.DefineVariable
+     * to deserialize the Variable metadata
      * @param header serialize
      * @param io
      * @param buffer
@@ -91,8 +91,27 @@ private:
                                     const Box<Dims> &blockBox,
                                     const Box<Dims> &intersectionBox) const;
 
+    /**
+     * Row-major, zero-indexed data e.g. : C, C++
+     * @param variable
+     * @param contiguousMemory
+     * @param blockBox
+     * @param intersectionBox
+     */
     template <class T>
-    void ClipContiguousMemoryCommonRowZero(
+    void ClipContiguousMemoryCommonRow(
+        Variable<T> &variable, const std::vector<char> &contiguousMemory,
+        const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
+
+    /**
+     * Column-major, one indexed data e.g. : Fortran, R
+     * @param variable
+     * @param contiguousMemory
+     * @param blockBox
+     * @param intersectionBox
+     */
+    template <class T>
+    void ClipContiguousMemoryCommonColumn(
         Variable<T> &variable, const std::vector<char> &contiguousMemory,
         const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
 };

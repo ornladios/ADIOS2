@@ -156,6 +156,142 @@ void adios2_perform_puts(adios2_Engine *engine)
     engineCpp.PerformPuts();
 }
 
+void adios2_get_sync(adios2_Engine *engine, adios2_Variable *variable,
+                     void *values)
+{
+    adios2::VariableBase *variableBase =
+        reinterpret_cast<adios2::VariableBase *>(variable);
+    const std::string type(variableBase->m_Type);
+
+    adios2::Engine &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.GetSync(*dynamic_cast<adios2::Variable<T> *>(variableBase),  \
+                          reinterpret_cast<T *>(values));                      \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_get_sync_self(adios2_Engine *engine, adios2_Variable *variable)
+{
+    adios2::VariableBase *variableBase =
+        reinterpret_cast<adios2::VariableBase *>(variable);
+    const std::string type(variableBase->m_Type);
+
+    adios2::Engine &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.GetSync(*dynamic_cast<adios2::Variable<T> *>(variableBase)); \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_get_sync_by_name(adios2_Engine *engine, const char *variable_name,
+                             void *values)
+{
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    const std::string type(
+        engineCpp.GetIO().InquireVariableType(variable_name));
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.GetSync(variable_name, reinterpret_cast<T *>(values));       \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_get_deferred(adios2_Engine *engine, adios2_Variable *variable,
+                         void *values)
+{
+    adios2::VariableBase *variableBase =
+        reinterpret_cast<adios2::VariableBase *>(variable);
+    const std::string type(variableBase->m_Type);
+
+    adios2::Engine &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.GetDeferred(                                                 \
+            *dynamic_cast<adios2::Variable<T> *>(variableBase),                \
+            reinterpret_cast<T *>(values));                                    \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_get_deferred_self(adios2_Engine *engine, adios2_Variable *variable)
+{
+    adios2::VariableBase *variableBase =
+        reinterpret_cast<adios2::VariableBase *>(variable);
+    const std::string type(variableBase->m_Type);
+
+    adios2::Engine &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.GetDeferred(                                                 \
+            *dynamic_cast<adios2::Variable<T> *>(variableBase));               \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_get_deferred_by_name(adios2_Engine *engine,
+                                 const char *variable_name, void *values)
+{
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    const std::string type(
+        engineCpp.GetIO().InquireVariableType(variable_name));
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        engineCpp.GetDeferred(variable_name, reinterpret_cast<T *>(values));   \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void adios2_perform_gets(adios2_Engine *engine)
+{
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.PerformGets();
+}
+
 void adios2_end_step(adios2_Engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);

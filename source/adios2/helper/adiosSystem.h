@@ -40,6 +40,22 @@ bool IsLittleEndian() noexcept;
  */
 std::string LocalTimeDate() noexcept;
 
-} // end namespace adios
+/**
+ * Support for language bindings, identify if data is row-major (C, C++) or not
+ * (Fortran, R)
+ * @param hostLanguage input host language
+ * @return true: row-major, false: column-major
+ */
+bool IsRowMajor(const std::string hostLanguage) noexcept;
+
+/**
+ * Support for language bindings, identify if data is zero-indexed (C, C++) or
+ * not (Fortran, R)
+ * @param hostLanguage input host language
+ * @return true: zero-indexed, false: one-indexed
+ */
+bool IsZeroIndexed(const std::string hostLanguage) noexcept;
+
+} // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSSYSTEM_H_ */

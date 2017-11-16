@@ -14,7 +14,8 @@ module adios2_parameters
     logical, parameter :: adios2_debug_mode_on = .true.
     logical, parameter :: adios2_debug_mode_off = .false.
 
-    ! Type
+    ! Types
+    integer, parameter :: adios2_type_unknown = -1
     integer, parameter :: adios2_type_character = 0
     integer, parameter :: adios2_type_integer = 1
     integer, parameter :: adios2_type_real = 2
@@ -27,9 +28,16 @@ module adios2_parameters
     integer, parameter :: adios2_type_integer4 = 8
     integer, parameter :: adios2_type_integer8 = 9
 
+    integer, parameter :: adios2_type_string = 10
+    integer, parameter :: adios2_type_string_array = 11
+
     ! Constant dims
     logical, parameter :: adios2_constant_dims_true = .true.
     logical, parameter :: adios2_constant_dims_false = .false.
+
+    ! Found or not found, ierr value
+    integer, parameter :: adios2_found = 0
+    integer, parameter :: adios2_not_found = 2
 
     ! Mode
     integer, parameter :: adios2_mode_undefined = 0

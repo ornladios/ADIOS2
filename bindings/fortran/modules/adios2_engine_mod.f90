@@ -10,9 +10,38 @@
 module adios2_engine
     use adios2_engine_write
     use adios2_engine_iwrite
+    use adios2_engine_read
+    use adios2_engine_iread
     implicit none
 
 contains
+
+    subroutine adios2_begin_step(engine, ierr)
+        integer(kind=8), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_begin_step_f2c(engine, ierr)
+
+    end subroutine
+
+
+    subroutine adios2_perform_puts(engine, ierr)
+        integer(kind=8), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_perform_puts_f2c(engine, ierr)
+
+    end subroutine
+
+
+    subroutine adios2_perform_gets(engine, ierr)
+        integer(kind=8), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_perform_gets_f2c(engine, ierr)
+
+    end subroutine
+
 
     subroutine adios2_end_step(engine, ierr)
         integer(kind=8), intent(in) :: engine

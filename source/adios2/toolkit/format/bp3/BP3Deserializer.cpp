@@ -117,8 +117,15 @@ void BP3Deserializer::ParsePGIndex()
     position = m_Minifooter.PGIndexStart;
 
     m_MetadataSet.DataPGCount = ReadValue<uint64_t>(buffer, position);
-    const uint64_t pgLength =
-        ReadValue<uint64_t>(buffer, position); // not required
+    position += 10; // skipping lengths
+    const uint16_t nameLength = ReadValue<uint16_t>(buffer, position);
+    position += static_cast<size_t>(nameLength); // skipping name
+    const char isFortran = ReadValue<char>(buffer, position);
+
+    if (isFortran == 'y')
+    {
+        m_IsRowMajor = false;
+    }
 }
 
 void BP3Deserializer::ParseVariablesIndex(IO &io)
@@ -134,7 +141,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         case (type_byte):
         {
-            DefineVariableInIO<char>(header, io, buffer, position);
+            DefineVariableInIO<signed char>(header, io, buffer, position);
             break;
         }
 
@@ -152,7 +159,11 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         case (type_long):
         {
+#ifdef _WIN32
+            DefineVariableInIO<long long int>(header, io, buffer, position);
+#else
             DefineVariableInIO<long int>(header, io, buffer, position);
+#endif
             break;
         }
 
@@ -176,7 +187,12 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         case (type_unsigned_long):
         {
+#ifdef _WIN32
+            DefineVariableInIO<unsigned long long int>(header, io, buffer,
+                                                       position);
+#else
             DefineVariableInIO<unsigned long int>(header, io, buffer, position);
+#endif
             break;
         }
 
