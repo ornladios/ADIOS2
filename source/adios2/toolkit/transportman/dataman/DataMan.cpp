@@ -8,8 +8,9 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include "adios2/toolkit/transportman/dataman/DataMan.h"
-#include "adios2/helper/adiosString.h"
+#include "DataMan.h"
+
+#include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
 #include "adios2/toolkit/transport/wan/WANZmq.h"
@@ -24,6 +25,16 @@ DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
 : TransportMan(mpiComm, debugMode)
 {
 }
+
+DataMan::~DataMan()
+{
+    for (auto &controlThread : m_ControlThreads)
+    {
+        m_Listening = false;
+        controlThread.join();
+    }
+}
+
 void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
@@ -74,20 +85,20 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
 #ifdef ADIOS2_HAVE_ZEROMQ
                 wanTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portData, m_MPIComm, m_DebugMode);
+                wanTransport->Open(messageName, mode);
+                m_Transports.emplace(counter, wanTransport);
+
                 controlTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portControl, m_MPIComm, m_DebugMode);
-
-                wanTransport->Open(messageName, mode);
-                m_Transports.emplace(counter, std::move(wanTransport));
                 controlTransport->Open(messageName, mode);
-                m_ControlTransports.push_back(std::move(controlTransport));
+                m_ControlTransports.emplace_back(controlTransport);
 
                 if (mode == Mode::Read)
                 {
                     m_Listening = true;
-                    m_ControlThreads.push_back(std::thread(&DataMan::ReadThread,
-                                                           this, wanTransport,
-                                                           controlTransport));
+                    m_ControlThreads.emplace_back(
+                        std::thread(&DataMan::ReadThread, this, wanTransport,
+                                    controlTransport));
                 }
                 ++counter;
 
@@ -122,11 +133,9 @@ void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
 
 void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
 
-void DataMan::SetCallback(std::function<void(const void *, std::string,
-                                             std::string, std::string, Dims)>
-                              callback)
+void DataMan::SetCallback(adios2::Operator &callback)
 {
-    m_CallBack = callback;
+    m_Callback = &callback;
 }
 
 void DataMan::ReadThread(std::shared_ptr<Transport> trans,
@@ -135,25 +144,29 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
     while (m_Listening)
     {
         char buffer[1024];
-        size_t bytes;
+        size_t bytes = 0;
         nlohmann::json jmsg;
-        ctl_trans->Read(buffer, 1024);
-        std::string smsg(buffer);
-        jmsg = nlohmann::json::parse(smsg);
-        bytes = jmsg.value("bytes", 0);
-
-        if (bytes > 0)
+        adios2::Transport::Status status;
+        ctl_trans->IRead(buffer, 1024, status, 0);
+        if (status.Bytes > 0)
         {
-            std::vector<char> data(bytes);
-            trans->Read(data.data(), bytes);
-            std::string doid = jmsg.value("doid", "Unknown Data Object");
-            std::string var = jmsg.value("var", "Unknown Variable");
-            std::string dtype = jmsg.value("dtype", "Unknown Data Type");
-            std::vector<size_t> putshape =
-                jmsg.value("putshape", std::vector<size_t>());
-            if (m_CallBack)
+            std::string smsg(buffer);
+            jmsg = nlohmann::json::parse(smsg);
+            bytes = jmsg.value("bytes", 0);
+            if (bytes > 0)
             {
-                m_CallBack(data.data(), doid, var, dtype, putshape);
+                std::vector<char> data(bytes);
+                trans->Read(data.data(), bytes);
+                std::string doid = jmsg.value("doid", "Unknown Data Object");
+                std::string var = jmsg.value("var", "Unknown Variable");
+                std::string dtype = jmsg.value("dtype", "Unknown Data Type");
+                std::vector<size_t> putshape =
+                    jmsg.value("putshape", std::vector<size_t>());
+                if (m_Callback != nullptr && m_Callback->m_Type == "Signature2")
+                {
+                    m_Callback->RunCallback2(data.data(), doid, var, dtype,
+                                             putshape);
+                }
             }
         }
     }

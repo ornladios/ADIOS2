@@ -75,11 +75,19 @@ void DataManReader::Init()
         for (unsigned int i = 0; i < parameters.size(); i++)
         {
             parameters[i]["type"] = "wan";
-            parameters[i]["transport"] = "zmq";
+            parameters[i]["Library"] = "zmq";
             parameters[i]["name"] = "stream";
-            parameters[i]["ipaddress"] = "127.0.0.1";
+            parameters[i]["IPAddress"] = "127.0.0.1";
         }
         m_Man.OpenWANTransports("zmq", Mode::Read, parameters, true);
+        for (auto &j : m_IO.m_Operators)
+        {
+            if (j.ADIOSOperator.m_Type == "Signature2")
+            {
+                m_Man.SetCallback(j.ADIOSOperator);
+                break;
+            }
+        }
 
         std::string methodType;
         int numChannels = 0;

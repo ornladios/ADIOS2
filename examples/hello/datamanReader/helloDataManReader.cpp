@@ -43,6 +43,13 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    int timeout = 5;
+
+    if (argc == 2)
+    {
+        timeout = atoi(argv[1]);
+    }
+
     try
     {
         adios2::ADIOS adios(adios2::DebugON);
@@ -63,18 +70,7 @@ int main(int argc, char *argv[])
         adios2::Engine &dataManReader =
             dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
 
-        for (unsigned int i = 0; i < 3; ++i)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        }
-
-        adios2::Variable<double> *ioMyDoubles =
-            dataManIO.InquireVariable<double>("ioMyDoubles");
-
-        if (ioMyDoubles == nullptr)
-        {
-            std::cout << "Variable ioMyDoubles not read...yet\n";
-        }
+        std::this_thread::sleep_for(std::chrono::seconds(timeout));
 
         dataManReader.Close();
     }
