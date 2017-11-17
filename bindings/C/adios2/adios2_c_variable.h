@@ -42,7 +42,12 @@ adios2_type adios2_variable_type(const adios2_Variable *variable);
  */
 int adios2_variable_is_constant_dims(const adios2_Variable *variable);
 
-const size_t adios2_variable_ndims(const adios2_Variable *variable);
+/**
+ * Retrieve current variable number of dimensions (read-only)
+ * @param variable
+ * @return
+ */
+size_t adios2_variable_ndims(const adios2_Variable *variable);
 
 /**
  * Retrieve current variable shape (read-only)
@@ -59,17 +64,15 @@ const size_t *adios2_variable_shape(const adios2_Variable *variable);
 const size_t *adios2_variable_start(const adios2_Variable *variable);
 
 /**
- * Retrieve current variable shape (read-only)
+ * Retrieve current variable count (read-only)
  * @param variable
  * @return type
  */
 const size_t *adios2_variable_count(const adios2_Variable *variable);
 
-const size_t
-adios2_variable_available_steps_start(const adios2_Variable *variable);
+size_t adios2_variable_available_steps_start(const adios2_Variable *variable);
 
-const size_t
-adios2_variable_available_steps_count(const adios2_Variable *variable);
+size_t adios2_variable_available_steps_count(const adios2_Variable *variable);
 
 /**
  * Set new dimensions
