@@ -33,6 +33,7 @@ public:
     void Close(const int transportIndex = -1) final;
 
 private:
+    std::string m_UseFormat = "json";
     bool m_DoRealTime = false;
     bool m_DoMonitor = false;
     transportman::DataMan m_Man;

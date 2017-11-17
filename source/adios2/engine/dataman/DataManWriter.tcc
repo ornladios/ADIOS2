@@ -22,13 +22,8 @@ namespace adios2
 template <class T>
 void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
-    // here comes your magic at Writing now variable.m_UserValues has the
-    // data
-    // passed by the user
-    // set variable
-    variable.SetData(values);
 
-    // This part will go away, this is just to monitor variables per rank
+    variable.SetData(values);
 
     if (variable.m_Shape.empty())
     {
@@ -43,19 +38,28 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    nlohmann::json jmsg;
-    jmsg["doid"] = m_Name;
-    jmsg["var"] = variable.m_Name;
-    jmsg["dtype"] = GetType<T>();
-    jmsg["putshape"] = variable.m_Count;
-    jmsg["varshape"] = variable.m_Shape;
-    jmsg["offset"] = variable.m_Start;
-    jmsg["timestep"] = 0;
-    jmsg["bytes"] =
-        std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(),
-                        sizeof(T), std::multiplies<size_t>());
+    if(m_UseFormat == "json"){
 
-    m_Man.WriteWAN(values, jmsg);
+        nlohmann::json jmsg;
+        jmsg["doid"] = m_Name;
+        jmsg["var"] = variable.m_Name;
+        jmsg["dtype"] = GetType<T>();
+        jmsg["putshape"] = variable.m_Count;
+        jmsg["varshape"] = variable.m_Shape;
+        jmsg["offset"] = variable.m_Start;
+        jmsg["timestep"] = 0;
+        jmsg["bytes"] =
+            std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(),
+                    sizeof(T), std::multiplies<size_t>());
+
+        m_Man.WriteWAN(values, jmsg);
+    }
+
+    if(m_UseFormat == "bp"){
+
+        // add bp serialization
+
+    }
 
     if (m_DoMonitor)
     {
