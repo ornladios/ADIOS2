@@ -201,28 +201,35 @@ inline void BP3Base::ParseCharacteristics(
             if (dataType == type_string)
             {
                 // first get the length of the string
-                const size_t size =
+                const size_t length =
                     static_cast<size_t>(ReadValue<uint16_t>(buffer, position));
 
                 characteristics.Statistics.Value =
-                    std::string(&buffer[position], size);
+                    std::string(&buffer[position], length);
 
                 characteristics.Statistics.IsValue = true;
+                position += length;
             }
             else if (dataType == type_string_array)
             {
-                const size_t elements =
-                    static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+                if (characteristics.Count.size() != 1)
+                {
+                    // TODO: add exception here?
+                    break;
+                }
 
+                const size_t elements = characteristics.Count.front();
                 characteristics.Statistics.Values.reserve(elements);
 
                 for (size_t e = 0; e < elements; ++e)
                 {
-                    const size_t size = static_cast<size_t>(
+                    const size_t length = static_cast<size_t>(
                         ReadValue<uint16_t>(buffer, position));
 
                     characteristics.Statistics.Values.push_back(
-                        std::string(&buffer[position], size));
+                        std::string(&buffer[position], length));
+
+                    position += length;
                 }
             }
 

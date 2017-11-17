@@ -157,6 +157,12 @@ U *InquireKey(const T &key, std::map<T, U> &input) noexcept;
 template <class T, class U>
 U *InquireKey(const T &key, std::unordered_map<T, U> &input) noexcept;
 
+template <class T>
+std::string VectorToCSV(const std::vector<T> &input) noexcept;
+
+template <class T>
+std::string ValueToString(const T value) noexcept;
+
 } // end namespace adios2
 
 #include "adiosType.inl"

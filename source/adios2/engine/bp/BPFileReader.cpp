@@ -8,8 +8,6 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include <iostream> //TODO will go away
-
 #include "BPFileReader.h"
 #include "BPFileReader.tcc"
 

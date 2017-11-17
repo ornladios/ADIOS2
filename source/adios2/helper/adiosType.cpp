@@ -9,7 +9,6 @@
  */
 
 #include "adiosType.h"
-#include "adiosType.inl"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::transform, std::count

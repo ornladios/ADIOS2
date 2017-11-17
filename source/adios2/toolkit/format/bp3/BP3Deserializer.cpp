@@ -37,7 +37,7 @@ void BP3Deserializer::ParseMetadata(IO &io)
     ParseMinifooter();
     ParsePGIndex();
     ParseVariablesIndex(io);
-    // ParseAttributesIndex(io);
+    ParseAttributesIndex(io);
 }
 
 void BP3Deserializer::ClipContiguousMemory(
@@ -238,6 +238,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
         } // end switch
     };
 
+    // STARTS HERE
     const auto &buffer = m_Metadata.m_Buffer;
     size_t position = m_Minifooter.VarsIndexStart;
 
@@ -288,7 +289,127 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
     }
 }
 
-void BP3Deserializer::ParseAttributesIndex(IO &io) {}
+void BP3Deserializer::ParseAttributesIndex(IO &io)
+{
+    auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
+                                   size_t position) {
+
+        const ElementIndexHeader header =
+            ReadElementIndexHeader(buffer, position);
+
+        switch (header.DataType)
+        {
+
+        case (type_string):
+        {
+            DefineAttributeInIO<std::string>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_string_array):
+        {
+            DefineAttributeInIO<std::string>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_byte):
+        {
+            DefineAttributeInIO<signed char>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_short):
+        {
+            DefineAttributeInIO<short>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_integer):
+        {
+            DefineAttributeInIO<int>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_long):
+        {
+#ifdef _WIN32
+            DefineAttributeInIO<long long int>(header, io, buffer, position);
+#else
+            DefineAttributeInIO<long int>(header, io, buffer, position);
+#endif
+            break;
+        }
+
+        case (type_unsigned_byte):
+        {
+            DefineAttributeInIO<unsigned char>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_unsigned_short):
+        {
+            DefineAttributeInIO<unsigned short>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_unsigned_integer):
+        {
+            DefineAttributeInIO<unsigned int>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_unsigned_long):
+        {
+#ifdef _WIN32
+            DefineAttributeInIO<unsigned long long int>(header, io, buffer,
+                                                        position);
+#else
+            DefineAttributeInIO<unsigned long int>(header, io, buffer,
+                                                   position);
+#endif
+            break;
+        }
+
+        case (type_real):
+        {
+            DefineAttributeInIO<float>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_double):
+        {
+            DefineAttributeInIO<double>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_long_double):
+        {
+            DefineAttributeInIO<long double>(header, io, buffer, position);
+            break;
+        }
+
+        } // end switch
+    };
+
+    const auto &buffer = m_Metadata.m_Buffer;
+    size_t position = m_Minifooter.AttributesIndexStart;
+
+    const uint32_t count = ReadValue<uint32_t>(buffer, position);
+    const uint64_t length = ReadValue<uint64_t>(buffer, position);
+
+    const size_t startPosition = position;
+    size_t localPosition = 0;
+
+    // Read sequentially
+    while (localPosition < length)
+    {
+        lf_ReadElementIndex(io, buffer, position);
+        const size_t elementIndexSize =
+            static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+        position += elementIndexSize;
+        localPosition = position - startPosition;
+    }
+}
 
 std::map<std::string, SubFileInfoMap>
 BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
