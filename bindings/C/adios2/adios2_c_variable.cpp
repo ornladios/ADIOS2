@@ -70,7 +70,7 @@ int adios2_variable_is_constant_dims(const adios2_Variable *variable)
     return isConstantDims;
 }
 
-const size_t adios2_variable_ndims(const adios2_Variable *variable)
+size_t adios2_variable_ndims(const adios2_Variable *variable)
 {
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
@@ -98,16 +98,14 @@ const size_t *adios2_variable_count(const adios2_Variable *variable)
     return variableBase->m_Count.data();
 }
 
-const size_t
-adios2_variable_available_steps_start(const adios2_Variable *variable)
+size_t adios2_variable_available_steps_start(const adios2_Variable *variable)
 {
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     return variableBase->m_AvailableStepsStart;
 }
 
-const size_t
-adios2_variable_available_steps_count(const adios2_Variable *variable)
+size_t adios2_variable_available_steps_count(const adios2_Variable *variable)
 {
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
