@@ -64,6 +64,26 @@ int main(int argc, char *argv[])
 
         /** Create bp file, engine becomes unreachable after this*/
         bpWriter.Close();
+
+        adios2::IO &bpReader = adios.DeclareIO("BPReader");
+
+        adios2::Engine &bpReaderEngine =
+            bpReader.Open("fileAttributes.bp", adios2::Mode::Read);
+
+        const auto attributesInfo = bpReader.GetAvailableAttributes();
+
+        for (const auto &attributeInfoPair : attributesInfo)
+        {
+            std::cout << "Attribute: " << attributeInfoPair.first;
+            for (const auto &attributePair : attributeInfoPair.second)
+            {
+                std::cout << "\tKey: " << attributePair.first
+                          << "\tValue: " << attributePair.second << "\n";
+            }
+            std::cout << "\n";
+        }
+
+        bpReaderEngine.Close();
     }
     catch (std::invalid_argument &e)
     {

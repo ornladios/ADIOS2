@@ -225,6 +225,12 @@ public:
     Attribute<T> *InquireAttribute(const std::string &name) noexcept;
 
     /**
+     * Map with variables info: key: name, value: type
+     * @return populate map with current variables
+     */
+    std::map<std::string, Params> GetAvailableAttributes() noexcept;
+
+    /**
      * Check existence in config file passed to ADIOS class
      * @return true: defined in config file
      */

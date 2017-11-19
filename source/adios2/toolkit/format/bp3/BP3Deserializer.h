@@ -83,6 +83,11 @@ private:
                             size_t position) const;
 
     template <class T>
+    void DefineAttributeInIO(const ElementIndexHeader &header, IO &io,
+                             const std::vector<char> &buffer,
+                             size_t position) const;
+
+    template <class T>
     SubFileInfoMap GetSubFileInfo(const Variable<T> &variable) const;
 
     template <class T>

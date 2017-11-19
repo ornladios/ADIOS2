@@ -14,7 +14,10 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include <algorithm>
+#include <algorithm> //std::transform
+#include <sstream>   //std::ostringstream
+
+#include "adios2/ADIOSMacros.h"
 
 namespace adios2
 {
@@ -182,6 +185,69 @@ U *InquireKey(const T &key, std::unordered_map<T, U> &input) noexcept
         return nullptr;
     }
     return &itKey->second;
+}
+
+#define declare_template_instantiation(C)                                      \
+    template <>                                                                \
+    inline std::string ValueToString(const C value) noexcept                   \
+    {                                                                          \
+        const int valueInt = static_cast<int>(value);                          \
+        return std::to_string(valueInt);                                       \
+    }
+ADIOS2_FOREACH_CHAR_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+template <class T>
+inline std::string ValueToString(const T value) noexcept
+{
+    std::ostringstream valueSS;
+    valueSS << value;
+    const std::string valueStr(valueSS.str());
+    return valueStr;
+}
+
+#define declare_template_instantiation(C)                                      \
+    template <>                                                                \
+    inline std::string VectorToCSV(const std::vector<C> &input) noexcept       \
+    {                                                                          \
+        if (input.empty())                                                     \
+        {                                                                      \
+            return std::string();                                              \
+        }                                                                      \
+                                                                               \
+        std::ostringstream valueSS;                                            \
+        for (const auto value : input)                                         \
+        {                                                                      \
+            const int valueInt = static_cast<int>(value);                      \
+            valueSS << valueInt << ", ";                                       \
+        }                                                                      \
+        std::string csv(valueSS.str());                                        \
+        csv.pop_back();                                                        \
+        csv.pop_back();                                                        \
+                                                                               \
+        return csv;                                                            \
+    }
+ADIOS2_FOREACH_CHAR_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+template <class T>
+inline std::string VectorToCSV(const std::vector<T> &input) noexcept
+{
+    if (input.empty())
+    {
+        return std::string();
+    }
+
+    std::ostringstream valueSS;
+    for (const auto value : input)
+    {
+        valueSS << value << ", ";
+    }
+    std::string csv(valueSS.str());
+    csv.pop_back();
+    csv.pop_back();
+
+    return csv;
 }
 
 } // end namespace adios2

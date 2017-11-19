@@ -185,9 +185,9 @@ void BPLS2::SetParameters(const std::string argument, const bool isLong)
 
 void BPLS2::ProcessTransport() const
 {
-    auto lf_PrintVerboseHeader = [](const BPFileReader &bpFileReader,
-                                    const size_t variablesSize,
-                                    const size_t attributesSize) {
+    auto lf_PrintVerboseHeader = [](
+        const BPFileReader &bpFileReader, const size_t variablesSize,
+        const size_t attributesSize, const size_t stepsCount) {
 
         const auto &metadataSet = bpFileReader.m_BP3Deserializer.m_MetadataSet;
         std::cout << "File info:\n";
@@ -195,7 +195,7 @@ void BPLS2::ProcessTransport() const
         std::cout << "  variables:  " << variablesSize << "\n";
         std::cout << "  attributes: " << attributesSize << "\n";
         std::cout << "  meshes:     TODO\n";
-        std::cout << "  steps:      " << metadataSet.TimeStep << "\n";
+        std::cout << "  steps:      " << stepsCount << "\n";
         std::cout << "  file size:  "
                   << bpFileReader.m_FileManager.GetFileSize(0) << " bytes\n";
 
@@ -259,16 +259,29 @@ void BPLS2::ProcessTransport() const
     ADIOS adios(true);
     IO &io = adios.DeclareIO("bpls2");
     BPFileReader bpFileReader(io, m_FileName, Mode::Read, io.m_MPIComm);
-    const std::map<std::string, Params> variablesMap =
+    const std::map<std::string, Params> variablesInfo =
         io.GetAvailableVariables();
-    // const auto attributesMap = io.GetAvailableAttributes();
 
     if (m_Parameters.count("verbose") == 1)
     {
-        lf_PrintVerboseHeader(bpFileReader, variablesMap.size(), 0);
+        size_t stepsCount = 1;
+
+        for (const auto variableInfo : variablesInfo)
+        {
+            const size_t variableStepsCount = static_cast<size_t>(
+                std::stoul(variableInfo.second.at("AvailableStepsCount")));
+
+            if (variableStepsCount > stepsCount)
+            {
+                stepsCount = variableStepsCount;
+            }
+        }
+
+        lf_PrintVerboseHeader(bpFileReader, variablesInfo.size(), 0,
+                              stepsCount);
     }
 
-    lf_PrintVariables(variablesMap);
+    lf_PrintVariables(variablesInfo);
 }
 
 } // end namespace utils

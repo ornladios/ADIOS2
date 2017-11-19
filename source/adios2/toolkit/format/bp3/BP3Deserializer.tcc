@@ -119,6 +119,38 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
 }
 
 template <class T>
+void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
+                                          IO &io,
+                                          const std::vector<char> &buffer,
+                                          size_t position) const
+{
+    const size_t initialPosition = position;
+
+    const Characteristics<T> characteristics =
+        ReadElementIndexCharacteristics<T>(
+            buffer, position, static_cast<DataTypes>(header.DataType));
+
+    std::string attributeName(header.Name);
+    if (!header.Path.empty())
+    {
+        attributeName = header.Path + PathSeparator + header.Name;
+    }
+
+    Attribute<T> *attribute = nullptr;
+    if (characteristics.Statistics.IsValue)
+    {
+        attribute = &io.DefineAttribute<T>(attributeName,
+                                           characteristics.Statistics.Value);
+    }
+    else
+    {
+        attribute = &io.DefineAttribute<T>(
+            attributeName, characteristics.Statistics.Values.data(),
+            characteristics.Statistics.Values.size());
+    }
+}
+
+template <class T>
 SubFileInfoMap
 BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
 {
@@ -163,7 +195,8 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             {
                 continue;
             }
-            // if they intersect get info Seeks (first: start, second: count)
+            // if they intersect get info Seeks (first: start, second:
+            // count)
             info.Seeks.first =
                 blockCharacteristics.Statistics.PayloadOffset +
                 LinearIndex(info.BlockBox, info.IntersectionBox.first,
