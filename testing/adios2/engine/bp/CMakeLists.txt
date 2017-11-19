@@ -6,12 +6,19 @@
 add_executable(TestBPWriteReadADIOS2 TestBPWriteReadADIOS2.cpp)
 target_link_libraries(TestBPWriteReadADIOS2 adios2 gtest gtest_main)
 
+add_executable(TestBPWriteReadAttributesADIOS2 TestBPWriteReadAttributesADIOS2.cpp)
+target_link_libraries(TestBPWriteReadAttributesADIOS2 adios2 gtest gtest_main)
+
+
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPWriteReadADIOS2 MPI::MPI_C)
+  target_link_libraries(TestBPWriteReadAttributesADIOS2 MPI::MPI_C)
+  
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 endif()
 
 gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args})
+gtest_add_tests(TARGET TestBPWriteReadAttributesADIOS2 ${extra_test_args})
   
 if (ADIOS2_HAVE_ADIOS1)
   add_executable(TestBPWriteRead TestBPWriteRead.cpp)
