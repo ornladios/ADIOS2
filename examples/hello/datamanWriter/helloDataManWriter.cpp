@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
         dataManIO.SetParameters({{"peer-to-peer", "yes"},
                                  {"real_time", "yes"},
                                  {"compress", "no"},
-                                 {"method", "dump"}});
+                                 {"method", "dump"},
+                                 {"Format", "BP"}});
 
         // Define variable and local size
         auto bpFloats =

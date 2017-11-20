@@ -57,27 +57,6 @@ void BPFileWriter::EndStep()
     m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
 }
 
-// PRIVATE
-void BPFileWriter::Init()
-{
-    InitParameters();
-    InitTransports();
-    InitBPBuffer();
-}
-
-#define declare_type(T)                                                        \
-    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
-    {                                                                          \
-        PutSyncCommon(variable, values);                                       \
-    }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
-    {                                                                          \
-        PutDeferredCommon(variable, values);                                   \
-    }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
 void BPFileWriter::Close(const int transportIndex)
 {
     // close bp buffer by serializing data and metadata
@@ -101,6 +80,27 @@ void BPFileWriter::Close(const int transportIndex)
         WriteCollectiveMetadataFile();
     }
 }
+
+// PRIVATE
+void BPFileWriter::Init()
+{
+    InitParameters();
+    InitTransports();
+    InitBPBuffer();
+}
+
+#define declare_type(T)                                                        \
+    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
+    {                                                                          \
+        PutSyncCommon(variable, values);                                       \
+    }                                                                          \
+    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
+    {                                                                          \
+        PutDeferredCommon(variable, values);                                   \
+    }                                                                          \
+    void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 // PRIVATE FUNCTIONS
 void BPFileWriter::InitParameters()

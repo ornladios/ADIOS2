@@ -73,6 +73,13 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                              m_DebugMode,
                                              "Transport Name Parameter"));
 
+        std::string format(
+            GetParameter("Format", parameters, false, m_DebugMode, "Format"));
+        if (format.empty())
+        {
+            format = "json";
+        }
+
         if (messageName.empty())
         {
             messageName = name;
@@ -98,7 +105,7 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                     m_Listening = true;
                     m_ControlThreads.emplace_back(
                         std::thread(&DataMan::ReadThread, this, wanTransport,
-                                    controlTransport));
+                                    controlTransport, format));
                 }
                 ++counter;
 
@@ -131,7 +138,19 @@ void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
                                             jmsg["bytes"].get<size_t>());
 }
 
+void DataMan::WriteWAN(const char *buffer, size_t size)
+{
+    m_Transports[m_CurrentTransport]->Write(buffer, size);
+}
+
 void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
+
+void DataMan::SetBP3Deserializer(format::BP3Deserializer &bp3Deserializer)
+{
+    m_BP3Deserializer = &bp3Deserializer;
+}
+
+void DataMan::SetIO(IO &io) { m_IO = &io; }
 
 void DataMan::SetCallback(adios2::Operator &callback)
 {
@@ -139,33 +158,71 @@ void DataMan::SetCallback(adios2::Operator &callback)
 }
 
 void DataMan::ReadThread(std::shared_ptr<Transport> trans,
-                         std::shared_ptr<Transport> ctl_trans)
+                         std::shared_ptr<Transport> ctl_trans,
+                         const std::string format)
 {
-    while (m_Listening)
+    if (format == "json")
     {
-        char buffer[1024];
-        size_t bytes = 0;
-        nlohmann::json jmsg;
-        adios2::Transport::Status status;
-        ctl_trans->IRead(buffer, 1024, status, 0);
-        if (status.Bytes > 0)
+        while (m_Listening)
         {
-            std::string smsg(buffer);
-            jmsg = nlohmann::json::parse(smsg);
-            bytes = jmsg.value("bytes", 0);
-            if (bytes > 0)
+            char buffer[1024];
+            size_t bytes = 0;
+            nlohmann::json jmsg;
+            adios2::Transport::Status status;
+            ctl_trans->IRead(buffer, 1024, status, 0);
+            if (status.Bytes > 0)
             {
-                std::vector<char> data(bytes);
-                trans->Read(data.data(), bytes);
-                std::string doid = jmsg.value("doid", "Unknown Data Object");
-                std::string var = jmsg.value("var", "Unknown Variable");
-                std::string dtype = jmsg.value("dtype", "Unknown Data Type");
-                std::vector<size_t> putshape =
-                    jmsg.value("putshape", std::vector<size_t>());
-                if (m_Callback != nullptr && m_Callback->m_Type == "Signature2")
+                std::string smsg(buffer);
+                jmsg = nlohmann::json::parse(smsg);
+                bytes = jmsg.value("bytes", 0);
+                if (bytes > 0)
                 {
-                    m_Callback->RunCallback2(data.data(), doid, var, dtype,
-                                             putshape);
+                    std::vector<char> data(bytes);
+                    trans->Read(data.data(), bytes);
+                    std::string doid =
+                        jmsg.value("doid", "Unknown Data Object");
+                    std::string var = jmsg.value("var", "Unknown Variable");
+                    std::string dtype =
+                        jmsg.value("dtype", "Unknown Data Type");
+                    std::vector<size_t> putshape =
+                        jmsg.value("putshape", std::vector<size_t>());
+                    if (m_Callback != nullptr &&
+                        m_Callback->m_Type == "Signature2")
+                    {
+                        m_Callback->RunCallback2(data.data(), doid, var, dtype,
+                                                 putshape);
+                    }
+                }
+            }
+        }
+    }
+    else if (format == "bp" || format == "BP")
+    {
+        while (m_Listening)
+        {
+            uint64_t bufferSize = 0;
+            trans->Read(reinterpret_cast<char *>(&bufferSize), 8);
+
+            if (bufferSize > 0)
+            {
+                size_t size = static_cast<size_t>(bufferSize);
+                m_BP3Deserializer->m_Data.Resize(
+                    size, "in DataMan Streaming Listener");
+
+                trans->Read(m_BP3Deserializer->m_Data.m_Buffer.data(), size);
+                m_BP3Deserializer->ParseMetadata(*m_IO);
+
+                const auto variablesInfo = m_IO->GetAvailableVariables();
+                for (const auto &variableInfoPair : variablesInfo)
+                {
+                    std::cout << "Variable Name: " << variableInfoPair.first
+                              << "\n";
+
+                    for (const auto &parameter : variableInfoPair.second)
+                    {
+                        std::cout << "\tKey: " << parameter.first
+                                  << "\t Value: " << parameter.second << "\n";
+                    }
                 }
             }
         }

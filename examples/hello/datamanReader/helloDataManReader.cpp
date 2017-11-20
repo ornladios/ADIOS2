@@ -64,8 +64,9 @@ int main(int argc, char *argv[])
         dataManIO.SetEngine("DataManReader");
         dataManIO.SetParameters({{"real_time", "yes"},
                                  {"method_type", "stream"},
-                                 {"method", "dump"}});
-        dataManIO.AddOperator(callbackFloat); // progated to all Engines
+                                 {"method", "dump"},
+                                 {"Format", "BP"}});
+        dataManIO.AddOperator(callbackFloat); // propagate to all Engines
 
         adios2::Engine &dataManReader =
             dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
