@@ -856,8 +856,8 @@ void BP3Serializer::MergeSerializeIndices(
         case (type_long):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<long int>(buffer, position,
-                                                          type_long, true);
+                ReadElementIndexCharacteristics<int64_t>(buffer, position,
+                                                         type_long, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -899,9 +899,8 @@ void BP3Serializer::MergeSerializeIndices(
 
         case (type_unsigned_long):
         {
-            auto characteristics =
-                ReadElementIndexCharacteristics<unsigned long int>(
-                    buffer, position, type_unsigned_long, true);
+            auto characteristics = ReadElementIndexCharacteristics<uint64_t>(
+                buffer, position, type_unsigned_long, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;

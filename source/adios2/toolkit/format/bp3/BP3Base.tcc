@@ -61,7 +61,12 @@ int8_t BP3Base::GetDataType<int>() const noexcept
 template <>
 int8_t BP3Base::GetDataType<long int>() const noexcept
 {
-    const int8_t type = static_cast<int8_t>(type_long);
+    int8_t type = static_cast<int8_t>(type_long);
+    if (sizeof(long int) == sizeof(int))
+    {
+        type = static_cast<int8_t>(type_integer);
+    }
+
     return type;
 }
 
@@ -96,7 +101,12 @@ int8_t BP3Base::GetDataType<unsigned int>() const noexcept
 template <>
 int8_t BP3Base::GetDataType<unsigned long int>() const noexcept
 {
-    const int8_t type = static_cast<int8_t>(type_unsigned_long);
+    int8_t type = static_cast<int8_t>(type_unsigned_long);
+    if (sizeof(unsigned long int) == sizeof(unsigned int))
+    {
+        type = static_cast<int8_t>(type_unsigned_integer);
+    }
+
     return type;
 }
 

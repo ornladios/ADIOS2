@@ -52,7 +52,7 @@ using SubFileInfoMap =
  * @return string with type
  */
 template <class T>
-inline std::string GetType() noexcept;
+std::string GetType() noexcept;
 
 /**
  * Check in types set if "type" is one of the aliases for a certain type,

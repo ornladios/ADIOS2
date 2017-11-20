@@ -131,7 +131,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         ASSERT_NE(attr_i64, nullptr);
         ASSERT_EQ(attr_i64->m_Name, i64_Single);
         ASSERT_EQ(attr_i64->m_IsSingleValue, true);
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
         ASSERT_EQ(attr_i64->m_Type, "long long int");
 #else
         ASSERT_EQ(attr_i64->m_Type, "long int");
@@ -159,8 +159,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         ASSERT_NE(attr_u64, nullptr);
         ASSERT_EQ(attr_u64->m_Name, u64_Single);
         ASSERT_EQ(attr_u64->m_IsSingleValue, true);
-
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
         ASSERT_EQ(attr_u64->m_Type, "unsigned long long int");
 #else
         ASSERT_EQ(attr_u64->m_Type, "unsigned long int");
@@ -301,7 +300,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         ASSERT_NE(attr_i64, nullptr);
         ASSERT_EQ(attr_i64->m_Name, i64_Array);
         ASSERT_EQ(attr_i64->m_IsSingleValue, false);
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
         ASSERT_EQ(attr_i64->m_Type, "long long int");
 #else
         ASSERT_EQ(attr_i64->m_Type, "long int");
@@ -325,11 +324,12 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         ASSERT_NE(attr_u64, nullptr);
         ASSERT_EQ(attr_u64->m_Name, u64_Array);
         ASSERT_EQ(attr_u64->m_IsSingleValue, false);
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
         ASSERT_EQ(attr_u64->m_Type, "unsigned long long int");
 #else
         ASSERT_EQ(attr_u64->m_Type, "unsigned long int");
 #endif
+
         ASSERT_NE(attr_r32, nullptr);
         ASSERT_EQ(attr_r32->m_Name, r32_Array);
         ASSERT_EQ(attr_r32->m_IsSingleValue, false);
