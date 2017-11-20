@@ -136,17 +136,15 @@ void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
         attributeName = header.Path + PathSeparator + header.Name;
     }
 
-    Attribute<T> *attribute = nullptr;
     if (characteristics.Statistics.IsValue)
     {
-        attribute = &io.DefineAttribute<T>(attributeName,
-                                           characteristics.Statistics.Value);
+        io.DefineAttribute<T>(attributeName, characteristics.Statistics.Value);
     }
     else
     {
-        attribute = &io.DefineAttribute<T>(
-            attributeName, characteristics.Statistics.Values.data(),
-            characteristics.Statistics.Values.size());
+        io.DefineAttribute<T>(attributeName,
+                              characteristics.Statistics.Values.data(),
+                              characteristics.Statistics.Values.size());
     }
 }
 

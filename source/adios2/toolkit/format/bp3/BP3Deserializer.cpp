@@ -159,11 +159,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         case (type_long):
         {
-#ifdef _WIN32
-            DefineVariableInIO<long long int>(header, io, buffer, position);
-#else
-            DefineVariableInIO<long int>(header, io, buffer, position);
-#endif
+            DefineVariableInIO<int64_t>(header, io, buffer, position);
             break;
         }
 
@@ -187,12 +183,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         case (type_unsigned_long):
         {
-#ifdef _WIN32
-            DefineVariableInIO<unsigned long long int>(header, io, buffer,
-                                                       position);
-#else
-            DefineVariableInIO<unsigned long int>(header, io, buffer, position);
-#endif
+            DefineVariableInIO<uint64_t>(header, io, buffer, position);
             break;
         }
 
@@ -332,11 +323,7 @@ void BP3Deserializer::ParseAttributesIndex(IO &io)
 
         case (type_long):
         {
-#ifdef _WIN32
-            DefineAttributeInIO<long long int>(header, io, buffer, position);
-#else
-            DefineAttributeInIO<long int>(header, io, buffer, position);
-#endif
+            DefineAttributeInIO<int64_t>(header, io, buffer, position);
             break;
         }
 
@@ -360,13 +347,7 @@ void BP3Deserializer::ParseAttributesIndex(IO &io)
 
         case (type_unsigned_long):
         {
-#ifdef _WIN32
-            DefineAttributeInIO<unsigned long long int>(header, io, buffer,
-                                                        position);
-#else
-            DefineAttributeInIO<unsigned long int>(header, io, buffer,
-                                                   position);
-#endif
+            DefineAttributeInIO<uint64_t>(header, io, buffer, position);
             break;
         }
 
