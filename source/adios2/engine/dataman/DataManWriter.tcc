@@ -38,7 +38,8 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    if(m_UseFormat == "json"){
+    if (m_UseFormat == "json")
+    {
 
         nlohmann::json jmsg;
         jmsg["doid"] = m_Name;
@@ -50,15 +51,13 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         jmsg["timestep"] = 0;
         jmsg["bytes"] =
             std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(),
-                    sizeof(T), std::multiplies<size_t>());
+                            sizeof(T), std::multiplies<size_t>());
 
         m_Man.WriteWAN(values, jmsg);
     }
-
-    if(m_UseFormat == "bp"){
-
-        // add bp serialization
-
+    else if (m_UseFormat == "bp")
+    {
+        PutSyncCommonBP(variable, values);
     }
 
     if (m_DoMonitor)
@@ -85,6 +84,44 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     }
 }
 
-} // end namespace adios
+template <class T>
+void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
+{
+    // add bp serialization
+    variable.SetData(values);
+
+    // if first timestep Write create a new pg index
+    if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
+    {
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_Zmq"});
+    }
+
+    const size_t dataSize = variable.PayloadSize() +
+                            m_BP3Serializer.GetVariableBPIndexSize(
+                                variable.m_Name, variable.m_Count);
+    format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
+        dataSize, "in call to variable " + variable.m_Name + " PutSync");
+
+    if (resizeResult == format::BP3Base::ResizeResult::Flush)
+    {
+        // Close buffer here?
+        m_BP3Serializer.CloseStream(m_IO);
+        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
+        auto &position = m_BP3Serializer.m_Data.m_Position;
+
+        m_Man.WriteWAN(buffer.data(), position);
+
+        // set relative position to clear buffer
+        m_BP3Serializer.ResetBuffer();
+        // new group index
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_zmq"});
+    }
+
+    // WRITE INDEX to data buffer and metadata structure (in memory)//
+    m_BP3Serializer.PutVariableMetadata(variable);
+    m_BP3Serializer.PutVariablePayload(variable);
+}
+
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */

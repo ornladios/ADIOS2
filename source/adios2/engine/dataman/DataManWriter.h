@@ -13,6 +13,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
 namespace adios2
@@ -33,10 +34,13 @@ public:
     void Close(const int transportIndex = -1) final;
 
 private:
+    format::BP3Serializer m_BP3Serializer;
+    transportman::DataMan m_Man;
+
     std::string m_UseFormat = "json";
     bool m_DoRealTime = false;
     bool m_DoMonitor = false;
-    transportman::DataMan m_Man;
+
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
 
@@ -47,6 +51,9 @@ private:
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutSyncCommonBP(Variable<T> &variable, const T *values);
 };
 
 } // end namespace adios2

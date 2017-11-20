@@ -17,7 +17,8 @@ namespace adios2
 
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine("DataManReader", io, name, mode, mpiComm), m_Man(mpiComm, m_DebugMode)
+: Engine("DataManReader", io, name, mode, mpiComm),
+  m_BP3Deserializer(mpiComm, m_DebugMode), m_Man(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
@@ -79,7 +80,13 @@ void DataManReader::Init()
             parameters[i]["name"] = "stream";
             parameters[i]["IPAddress"] = "127.0.0.1";
         }
+
+        m_Man.SetBP3Deserializer(m_BP3Deserializer);
+        m_Man.SetIO(m_IO);
+
         m_Man.OpenWANTransports("zmq", Mode::Read, parameters, true);
+
+        // TODO: should this be before OpenWANTransports?
         for (auto &j : m_IO.m_Operators)
         {
             if (j.ADIOSOperator.m_Type == "Signature2")

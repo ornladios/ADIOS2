@@ -21,7 +21,8 @@ namespace adios2
 
 DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine("DataManWriter", io, name, mode, mpiComm), m_Man(mpiComm, m_DebugMode)
+: Engine("DataManWriter", io, name, mode, mpiComm),
+  m_BP3Serializer(mpiComm, m_DebugMode), m_Man(mpiComm, m_DebugMode)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";
     Init();
@@ -31,7 +32,7 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     return StepStatus::OK;
 }
-void DataManWriter::EndStep() {}
+void DataManWriter::EndStep() { m_BP3Serializer.SerializeData(m_IO, true); }
 
 void DataManWriter::Close(const int transportIndex) {}
 
@@ -108,6 +109,19 @@ void DataManWriter::Init()
 
         int num_channels = 0;
         lf_AssignInt("num_channels", num_channels);
+    }
+
+    // Check if using BP Format and initialize buffer
+    auto itFormat = m_IO.m_Parameters.find("Format");
+    if (itFormat != m_IO.m_Parameters.end())
+    {
+        if (itFormat->second == "BP" || itFormat->second == "bp")
+        {
+            m_UseFormat = "BP";
+            m_BP3Serializer.InitParameters(m_IO.m_Parameters);
+            m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage,
+                                                 {"WAN_Zmq"});
+        }
     }
 }
 
