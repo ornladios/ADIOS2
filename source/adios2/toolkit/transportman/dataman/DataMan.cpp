@@ -38,6 +38,7 @@ DataMan::~DataMan()
 void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
+
 {
 #ifdef ADIOS2_HAVE_ZEROMQ
     size_t counter = 0; // remove MACRO when more libraries are added
@@ -134,13 +135,14 @@ void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
 {
     m_ControlTransports[m_CurrentTransport]->Write(jmsg.dump().c_str(),
                                                    jmsg.dump().size());
-    m_Transports[m_CurrentTransport]->Write(static_cast<const char *>(buffer),
-                                            jmsg["bytes"].get<size_t>());
+    m_Transports[m_CurrentTransport]->Write(
+        reinterpret_cast<const char *>(buffer), jmsg["bytes"].get<size_t>());
 }
 
-void DataMan::WriteWAN(const char *buffer, size_t size)
+void DataMan::WriteWAN(const void *buffer, size_t size)
 {
-    m_Transports[m_CurrentTransport]->Write(buffer, size);
+    m_Transports[m_CurrentTransport]->Write(
+        reinterpret_cast<const char *>(buffer), size);
 }
 
 void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
@@ -205,11 +207,11 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
 
             if (bufferSize > 0)
             {
-                size_t size = static_cast<size_t>(bufferSize);
+                const size_t size = static_cast<size_t>(bufferSize) + 8;
                 m_BP3Deserializer->m_Data.Resize(
                     size, "in DataMan Streaming Listener");
 
-                trans->Read(m_BP3Deserializer->m_Data.m_Buffer.data(), size);
+                trans->Read(m_BP3Deserializer->m_Data.m_Buffer.data(), size, 0);
                 m_BP3Deserializer->ParseMetadata(*m_IO);
 
                 const auto variablesInfo = m_IO->GetAvailableVariables();
