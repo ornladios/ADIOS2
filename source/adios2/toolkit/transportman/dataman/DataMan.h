@@ -44,7 +44,7 @@ public:
      * @param buffer
      * @param size can't use const due to C libraries...
      */
-    void WriteWAN(const char *buffer, size_t size);
+    void WriteWAN(const void *buffer, size_t size);
 
     void ReadWAN(void *buffer, nlohmann::json jmsg);
 
