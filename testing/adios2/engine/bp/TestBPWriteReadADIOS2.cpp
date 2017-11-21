@@ -160,10 +160,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
 
-        //        auto var_iString = io.InquireVariable<std::string>("iString");
-        //        ASSERT_NE(var_iString, nullptr);
-        // ASSERT_EQ(var_iString->m_Shape.size(), 0);
-        // ASSERT_EQ(var_iString->m_AvailableStepsCount, NSteps);
+        auto var_iString = io.InquireVariable<std::string>("iString");
+        ASSERT_NE(var_iString, nullptr);
+        ASSERT_EQ(var_iString->m_Shape.size(), 0);
+        ASSERT_EQ(var_iString->m_AvailableStepsCount, NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         ASSERT_NE(var_i8, nullptr);
@@ -228,7 +228,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         // TODO: other types
 
         SmallTestData testData;
-        std::vector<char> IString(testData.S1.size());
+
+        std::string IString;
         std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
         std::array<int32_t, Nx> I32;
@@ -260,6 +261,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
+            var_iString->SetStepSelection({t + 1, 1});
+
             var_i8->SetStepSelection({t + 1, 1});
             var_i16->SetStepSelection({t + 1, 1});
             var_i32->SetStepSelection({t + 1, 1});
@@ -277,6 +280,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
+            bpReader.GetSync(*var_iString, IString);
+
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -291,6 +296,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             bpReader.GetDeferred(*var_r64, R64.data());
 
             bpReader.PerformGets();
+
+            EXPECT_EQ(IString, currentTestData.S1);
 
             for (size_t i = 0; i < Nx; ++i)
             {

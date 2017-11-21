@@ -59,6 +59,8 @@ public:
                               const Box<Dims> &blockBox,
                               const Box<Dims> &intersectionBox) const;
 
+    void GetStringFromMetadata(Variable<std::string> &variable) const;
+
 private:
     std::map<std::string, SubFileInfoMap> m_DeferredVariables;
 

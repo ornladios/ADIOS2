@@ -65,6 +65,36 @@ void BP3Deserializer::ClipContiguousMemory(
 #undef declare_type
 }
 
+void BP3Deserializer::GetStringFromMetadata(
+    Variable<std::string> &variable) const
+{
+    std::string *data = variable.GetData();
+    const auto &buffer = m_Metadata.m_Buffer;
+
+    for (size_t i = 0; i < variable.m_StepsCount; ++i)
+    {
+        *(data + i) = "";
+        const size_t step = variable.m_StepsStart + i;
+        auto itStep = variable.m_IndexStepBlockStarts.find(step);
+
+        if (itStep == variable.m_IndexStepBlockStarts.end())
+        {
+            continue;
+        }
+
+        for (auto position : itStep->second)
+        {
+            const Characteristics<std::string> characteristics =
+                ReadElementIndexCharacteristics<std::string>(
+                    buffer, position, type_string, false);
+
+            *(data + i) = characteristics.Statistics.Value;
+        }
+
+        variable.m_Value = *(data + i);
+    }
+}
+
 // PRIVATE
 void BP3Deserializer::ParseMinifooter()
 {
@@ -138,6 +168,13 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
         switch (header.DataType)
         {
+
+        // TODO: string
+        case (type_string):
+        {
+            DefineVariableInIO<std::string>(header, io, buffer, position);
+            break;
+        }
 
         case (type_byte):
         {
@@ -225,7 +262,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
                                                           position);
             break;
         }
-            // TODO: string
+
         } // end switch
     };
 

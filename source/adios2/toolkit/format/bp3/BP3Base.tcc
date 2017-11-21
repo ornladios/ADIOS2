@@ -160,7 +160,7 @@ int8_t BP3Base::GetDataType<cldouble>() const noexcept
 }
 
 template <class T>
-inline BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
+BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
     const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
     const bool untilTimeStep) const
 {
