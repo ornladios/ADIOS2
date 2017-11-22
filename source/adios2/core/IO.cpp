@@ -25,6 +25,11 @@
 #include "adios2/engine/dataman/DataManWriter.h"
 #endif
 
+#ifdef ADIOS2_HAVE_SST // external dependencies
+#include "adios2/engine/sst/SstReader.h"
+#include "adios2/engine/sst/SstWriter.h"
+#endif
+
 #ifdef ADIOS2_HAVE_ADIOS1 // external dependencies
 #include "adios2/engine/adios1/ADIOS1Reader.h"
 #include "adios2/engine/adios1/ADIOS1Writer.h"
@@ -302,6 +307,24 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
             "DataMan library, can't Open DataManReader\n");
+#endif
+    }
+    else if (m_EngineType == "SstWriter")
+    {
+#ifdef ADIOS2_HAVE_SST
+        engine = std::make_shared<SstWriter>(*this, name, mode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Sst library, can't Open SstWriter\n");
+#endif
+    }
+    else if (m_EngineType == "SstReader")
+    {
+#ifdef ADIOS2_HAVE_SST
+        engine = std::make_shared<SstReader>(*this, name, mode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Sst library, can't Open SstReader\n");
 #endif
     }
     else if (m_EngineType == "ADIOS1Writer")
