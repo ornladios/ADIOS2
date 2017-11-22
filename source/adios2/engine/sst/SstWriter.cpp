@@ -9,7 +9,6 @@
  */
 
 #include <mpi.h>
-#include <sst.h>
 
 #include "SstWriter.h"
 #include "SstWriter.tcc"
