@@ -14,6 +14,8 @@
 #include <iostream> //std::cout must be removed, only used for hello example
 #include <unistd.h> //sleep must be removed
 
+#include <mpi.h>
+
 #include "adios2/toolkit/sst/sst.h"
 
 #include "adios2/ADIOSConfig.h"

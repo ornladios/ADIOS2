@@ -13,8 +13,9 @@
 
 #include <iostream> //std::cout << Needs to go
 
-#include "adios2/toolkit/sst/sst.h"
 #include <mpi.h>
+
+#include "adios2/toolkit/sst/sst.h"
 
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
