@@ -193,9 +193,6 @@ function(GenerateADIOSPackageConfig)
         list(APPEND ADIOS2_CXX_INCS ${HDF5_INCLUDE_DIRS})
       endif()
     endif()
-    if(ADIOS2_HAVE_SST)
-      list(APPEND ADIOS2_CXX_LIBS ${EVPATH_LIBRARIES})
-    endif()
   endif()
 
   # Build the non-cmake config script

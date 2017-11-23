@@ -8,6 +8,9 @@
  *      Author: Greg Eisenhauer
  */
 
+#include <cstring>
+#include <string>
+
 #include "SstReader.h"
 
 namespace adios2
@@ -19,7 +22,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 {
     SstStream output;
     char *cstr = new char[name.length() + 1];
-    strcpy(cstr, name.c_str());
+    std::strcpy(cstr, name.c_str());
 
     m_Input = SstReaderOpen(cstr, NULL, mpiComm);
     Init();

@@ -11,7 +11,7 @@
                             # sequential (all are case insentative) 
 #   )
 #
-# Module that finds the includes and libraries for a working EVPATH 1.x install.
+# Module that finds the includes and libraries for a working EVPATH install.
 # This module invokes the `evpath_config` script that should be installed with
 # the other EVPATH tools.
 #
@@ -19,7 +19,7 @@
 # set the EVPATH_ROOT or EVPATH_DIR environment variable.
 #
 # If this variable is not set, make sure that at least the according `bin/`
-# directory of EVPATH 1.x is in your PATH environment variable.
+# directory of EVPATH is in your PATH environment variable.
 #
 # Set the following CMake variables BEFORE calling find_packages to
 # influence this module:
@@ -27,9 +27,9 @@
 #                           libraries.  Default: OFF
 #
 # This module will define the following variables:
-#   EVPATH_INCLUDE_DIRS    - Include directories for the EVPATH 1.x headers.
+#   EVPATH_INCLUDE_DIRS    - Include directories for the EVPATH headers.
 #   EVPATH_LIBRARY_PATH    - Full path of the libevpath library (.a or .so file)
-#   EVPATH_DEPENDENCY_LIBRARIES       - EVPATH 1.x dependency libraries.
+#   EVPATH_DEPENDENCY_LIBRARIES       - EVPATH dependency libraries.
 #   EVPATH_FOUND           - TRUE if FindEVPATH found a working install
 #   EVPATH_VERSION         - Version in format Major.Minor.Patch
 #
@@ -37,21 +37,6 @@
 #   EVPATH_DEFINITIONS     - Compiler definitions you should add with
 #                           add_definitions(${EVPATH_DEFINITIONS})
 #
-# Example to find EVPATH 1.x (default)
-# find_package(EVPATH)
-# if(EVPATH_FOUND)
-#   include_directories(${EVPATH_INCLUDE_DIRS})
-#   add_executable(foo foo.c)
-#   target_link_libraries(foo ${EVPATH_LIBRARY_PATH} EVPATH_DEPENDENCY_LIBRARIES)
-# endif()
-
-# Example to find EVPATH 1.x using component
-# find_package(EVPATH COMPONENTS fortran)
-# if(EVPATH_FOUND)
-#   include_directories(${EVPATH_INCLUDE_DIRS})
-#   add_executable(foo foo.c)
-#   target_link_libraries(foo ${EVPATH_LIBRARY_PATH} ${EVPATH_DEPENDENCY_LIBRARIES})
-# endif()
 ###############################################################################
 #Copyright (c) 2014, Axel Huebl and Felix Schmitt from http://picongpu.hzdr.de
 #All rights reserved.
@@ -133,8 +118,12 @@ if(EVPATH_CONFIG)
     foreach(OPT IN LISTS evpath_match)
       if(OPT MATCHES "^-L(.*)")
         list(APPEND evpath_lib_hints "${CMAKE_MATCH_1}")
+      elseif(OPT STREQUAL "-lstdc++")
+        list(APPEND evpath_lib_flags "${OPT}")
       elseif(OPT MATCHES "^-l(.*)")
         list(APPEND evpath_libs "${CMAKE_MATCH_1}")
+      elseif(OPT MATCHES "/*")
+        list(APPEND evpath_libs "${OPT}")
       else()
         list(APPEND evpath_lib_flags "${OPT}")
       endif()
@@ -188,7 +177,6 @@ find_package_handle_standard_args(EVPATH
 if(EVPATH_FOUND)
   set(EVPATH_INCLUDE_DIRS ${EVPATH_INCLUDE_DIR})
   set(EVPATH_LIBRARIES ${EVPATH_LIBRARY} ${EVPATH_DEPENDENCIES})
-
   ##########################################################################
   # Add target and dependencies to ADIOS2
   ##########################################################################

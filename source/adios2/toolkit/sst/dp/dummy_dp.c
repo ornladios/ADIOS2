@@ -7,8 +7,9 @@
 #include <evpath.h>
 #include <mpi.h>
 
-#include "dp_interface.h"
 #include "sst_data.h"
+
+#include "dp_interface.h"
 
 /*
  *  Some conventions:
