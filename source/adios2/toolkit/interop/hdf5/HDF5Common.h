@@ -18,6 +18,7 @@
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/IO.h" // for CreateVar
 #include "adios2/core/Variable.h"
 
 #include <stdexcept> // for Intel Compiler
@@ -26,6 +27,55 @@ namespace adios2
 {
 namespace interop
 {
+
+typedef enum {
+    E_H5_DATASET = 0,
+    E_H5_DATATYPE = 1,
+    E_H5_GROUP = 2,
+    E_H5_SPACE = 3,
+} ADIOS_ENUM_H5;
+
+class HDF5TypeGuard
+{
+public:
+    HDF5TypeGuard(hid_t key, ADIOS_ENUM_H5 type)
+    {
+        m_Key = key;
+        m_Type = type;
+        if (key < 0)
+        {
+            throw std::ios_base::failure("ERROR: HDF5 failure detected.");
+        }
+    }
+
+    ~HDF5TypeGuard()
+    {
+        if (m_Type == E_H5_DATASET)
+        {
+            H5Dclose(m_Key);
+        }
+        else if (m_Type == E_H5_GROUP)
+        {
+            H5Gclose(m_Key);
+        }
+        else if (m_Type == E_H5_SPACE)
+        {
+            H5Sclose(m_Key);
+        }
+        else if (m_Type == E_H5_DATATYPE)
+        {
+            H5Tclose(m_Key);
+        }
+        else
+        {
+            printf(" UNABLE to close \n");
+        }
+    }
+
+private:
+    ADIOS_ENUM_H5 m_Type;
+    hid_t m_Key;
+};
 
 class HDF5Common
 {
@@ -45,8 +95,17 @@ public:
     void Close();
     void Advance();
 
+    void SetTimeStep(int ts);
+
     unsigned int GetNumTimeSteps();
     void WriteTimeSteps();
+
+    void ReadVariables(unsigned int ts, IO &io);
+    void ReadAllVariables(IO &io);
+    void CreateVar(IO &io, hid_t h5Type, std::string const &name);
+
+    template <class T>
+    void AddVar(IO &io, std::string const &name, hid_t datasetId);
 
     static void StaticGetTimeStepString(std::string &timeStepName, int ts);
 
@@ -64,6 +123,9 @@ public:
 
     template <class T>
     hid_t GetHDF5Type(); // should this be public?
+
+    template <class T>
+    T GetADIOSType(hid_t);
 
 private:
     const bool m_DebugMode;

@@ -131,7 +131,7 @@ unsigned int HDF5Common::GetNumTimeSteps()
 {
     if (m_WriteMode)
     {
-        return 0;
+        return -1;
     }
 
     if (m_FileId < 0)
@@ -154,6 +154,167 @@ unsigned int HDF5Common::GetNumTimeSteps()
     return m_NumTimeSteps;
 }
 
+// read from all time steps
+void HDF5Common::ReadAllVariables(IO &io)
+{
+    int i = 0;
+    std::string timestepStr;
+    hsize_t numObj;
+    for (i = 0; i < m_NumTimeSteps; i++)
+    {
+        ReadVariables(i, io);
+    }
+}
+
+// read variables from the input timestep
+void HDF5Common::ReadVariables(unsigned int ts, IO &io)
+{
+    int i = 0;
+    std::string timestepStr;
+    hsize_t numObj;
+
+    StaticGetTimeStepString(timestepStr, ts);
+    hid_t gid = H5Gopen2(m_FileId, timestepStr.c_str(), H5P_DEFAULT);
+    HDF5TypeGuard g(gid, E_H5_GROUP);
+    ///    if (gid > 0) {
+    herr_t ret = H5Gget_num_objs(gid, &numObj);
+    if (ret >= 0)
+    {
+        int k = 0;
+        char name[50];
+        for (k = 0; k < numObj; k++)
+        {
+            ret = H5Gget_objname_by_idx(gid, (hsize_t)k, name, sizeof(name));
+            if (ret >= 0)
+            {
+                hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
+
+                HDF5TypeGuard d(datasetId, E_H5_DATASET);
+                CreateVar(io, datasetId, name);
+            }
+        }
+    }
+    /// H5Gclose(gid);
+    ///}
+}
+
+template <class T>
+void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
+{
+    Variable<T> *v = io.InquireVariable<T>(name);
+    if (NULL == v)
+    {
+        hid_t dspace = H5Dget_space(datasetId);
+        const int ndims = H5Sget_simple_extent_ndims(dspace);
+        hsize_t dims[ndims];
+        H5Sget_simple_extent_dims(dspace, dims, NULL);
+        H5Sclose(dspace);
+
+        Dims shape;
+        shape.resize(ndims);
+        if (ndims > 0)
+        {
+            // std::cout<<" ==> variable "<<name<<" is "<<ndims<<"D,
+            // "<<dims[0]<<", "<<dims[1]<<std::endl;
+            for (int i = 0; i < ndims; i++)
+                shape[i] = dims[i];
+        }
+
+        auto &foo = io.DefineVariable<T>(name, shape);
+        // default was set to 0 while m_AvailabelStepsStart is 1.
+        // correcting
+        if (0 == foo.m_AvailableStepsCount)
+        {
+            foo.m_AvailableStepsCount++;
+        }
+    }
+    else
+    {
+        /*    if (0 == v->m_AvailableStepsCount) { // default was set to 0 while
+        m_AvailabelStepsStart is 1. v->m_AvailableStepsCount ++;
+        }
+        */
+        v->m_AvailableStepsCount++;
+    }
+}
+
+void HDF5Common::CreateVar(IO &io, hid_t datasetId, std::string const &name)
+{
+    hid_t h5Type = H5Dget_type(datasetId);
+    HDF5TypeGuard t(h5Type, E_H5_DATATYPE);
+
+    if (H5Tequal(H5T_NATIVE_CHAR, h5Type))
+    {
+        AddVar<char>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_SCHAR, h5Type))
+    {
+        AddVar<signed char>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_UCHAR, h5Type))
+    {
+        AddVar<unsigned char>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_SHORT, h5Type))
+    {
+        AddVar<short>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_USHORT, h5Type))
+    {
+        AddVar<unsigned short>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_INT, h5Type))
+    {
+        AddVar<int>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_UINT, h5Type))
+    {
+        AddVar<unsigned int>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_LONG, h5Type))
+    {
+        AddVar<long>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_ULONG, h5Type))
+    {
+        AddVar<unsigned long>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_LLONG, h5Type))
+    {
+        AddVar<long long>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_ULLONG, h5Type))
+    {
+        AddVar<unsigned long long>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_FLOAT, h5Type))
+    {
+        AddVar<float>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_DOUBLE, h5Type))
+    {
+        AddVar<double>(io, name, datasetId);
+    }
+    else if (H5Tequal(H5T_NATIVE_LDOUBLE, h5Type))
+    {
+        AddVar<long double>(io, name, datasetId);
+    }
+    else if (H5Tequal(m_DefH5TypeComplexFloat, h5Type))
+    {
+        AddVar<std::complex<float>>(io, name, datasetId);
+    }
+    else if (H5Tequal(m_DefH5TypeComplexDouble, h5Type))
+    {
+        AddVar<std::complex<double>>(io, name, datasetId);
+    }
+    else if (H5Tequal(m_DefH5TypeComplexLongDouble, h5Type))
+    {
+        AddVar<std::complex<long double>>(io, name, datasetId);
+    }
+
+    // H5Tclose(h5Type);
+}
+
 void HDF5Common::Close()
 {
     if (m_FileId < 0)
@@ -171,6 +332,39 @@ void HDF5Common::Close()
     H5Fclose(m_FileId);
     m_FileId = -1;
     m_GroupId = -1;
+}
+
+void HDF5Common::SetTimeStep(int timeStep)
+{
+    if (m_WriteMode)
+        throw std::ios_base::failure(
+            "ERROR: unable to change timestep at Write MODE.");
+
+    if (timeStep < 0)
+        throw std::ios_base::failure(
+            "ERROR: unable to change to negative timestep.");
+
+    GetNumTimeSteps();
+
+    if (timeStep >= m_NumTimeSteps)
+        throw std::ios_base::failure(
+            "ERROR: given time step is more than actual known steps.");
+
+    if (m_CurrentTimeStep == timeStep)
+    {
+        return;
+    }
+
+    std::string timeStepName;
+    StaticGetTimeStepString(timeStepName, timeStep);
+    m_GroupId = H5Gopen(m_FileId, timeStepName.c_str(), H5P_DEFAULT);
+    if (m_GroupId < 0)
+    {
+        throw std::ios_base::failure("ERROR: unable to open HDF5 group " +
+                                     timeStepName + ", in call to Open\n");
+    }
+
+    m_CurrentTimeStep = timeStep;
 }
 
 void HDF5Common::Advance()
