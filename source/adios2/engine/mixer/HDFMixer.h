@@ -27,7 +27,7 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/capsule/heap/STLVector.h"
+//#include "adios2/toolkit/capsule/heap/STLVector.h"
 #include "adios2/toolkit/transportman/TransportMan.h" //transport::TransportsMan
 
 #include <iostream>
@@ -45,13 +45,15 @@ public:
      * @param openMode w (supported), r, a from OpenMode in ADIOSTypes.h
      * @param mpiComm MPI communicator
      */
-    HDFMixer(IO &io, const std::string &name, const Mode mode,
+    HDFMixer(IO &io, const std::string &name, const Mode openMode,
              MPI_Comm mpiComm);
 
     ~HDFMixer();
 
-    void Advance(const float timeoutSeconds = 0.f) final;
-
+    // void Advance(const float timeoutSeconds = 0.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeout_sec);
+    // void EndStep(const float /*timeout_sec*/);
+    void EndStep() final;
     /**
      * Closes a single transport or all transports
      * @param transportIndex, if -1 (default) closes all transports, otherwise
@@ -87,7 +89,7 @@ private:
     void InitBuffer();
 
 #define declare_type(T)                                                        \
-    void DoWrite(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &variable, const T *values) /*final */;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -97,13 +99,13 @@ private:
      * @param values
      */
     template <class T>
-    void DoWriteCommon(Variable<T> &variable, const T *values);
+    void DoPutSyncCommon(Variable<T> &variable, const T *values);
 
     /** Write a profiling.json file from m_H51Writer and m_TransportsManager
      * profilers*/
     void WriteProfilingJSONFile();
 };
 
-} // end namespace adios2
+} // end namespace adios
 
 #endif /* ADIOS2_ENGINE_H5_HDFMIXER_H_ */
