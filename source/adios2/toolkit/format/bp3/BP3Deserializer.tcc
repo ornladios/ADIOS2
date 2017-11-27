@@ -37,11 +37,74 @@ void BP3Deserializer::GetDeferredVariable(Variable<T> &variable, T *data)
 }
 
 // PRIVATE
+template <>
+inline void BP3Deserializer::DefineVariableInIO<std::string>(
+    const ElementIndexHeader &header, IO &io, const std::vector<char> &buffer,
+    size_t position) const
+{
+    const size_t initialPosition = position;
+
+    const Characteristics<std::string> characteristics =
+        ReadElementIndexCharacteristics<std::string>(
+            buffer, position, static_cast<DataTypes>(header.DataType));
+
+    std::string variableName(header.Name);
+    if (!header.Path.empty())
+    {
+        variableName = header.Path + PathSeparator + header.Name;
+    }
+
+    Variable<std::string> *variable = nullptr;
+    if (characteristics.Statistics.IsValue)
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        variable = &io.DefineVariable<std::string>(variableName);
+        variable->m_Value =
+            characteristics.Statistics.Value; // assigning first step
+    }
+    else
+    {
+        // TODO: throw exception?
+    }
+
+    // going back to get variable index position
+    variable->m_IndexStart =
+        initialPosition - (header.Name.size() + header.GroupName.size() +
+                           header.Path.size() + 23);
+
+    const size_t endPosition =
+        variable->m_IndexStart + static_cast<size_t>(header.Length) + 4;
+
+    position = initialPosition;
+
+    size_t currentStep = 0; // Starts at 1 in bp file
+
+    while (position < endPosition)
+    {
+        const size_t subsetPosition = position;
+
+        // read until step is found
+        const Characteristics<std::string> subsetCharacteristics =
+            ReadElementIndexCharacteristics<std::string>(
+                buffer, position, static_cast<DataTypes>(header.DataType),
+                false);
+
+        if (subsetCharacteristics.Statistics.Step > currentStep)
+        {
+            currentStep = subsetCharacteristics.Statistics.Step;
+            variable->m_AvailableStepsCount =
+                subsetCharacteristics.Statistics.Step;
+        }
+        variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
+        position = subsetPosition + subsetCharacteristics.EntryLength + 5;
+    }
+}
+
 template <class T>
-void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
-                                         IO &io,
-                                         const std::vector<char> &buffer,
-                                         size_t position) const
+inline void
+BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
+                                    const std::vector<char> &buffer,
+                                    size_t position) const
 {
     const size_t initialPosition = position;
 
