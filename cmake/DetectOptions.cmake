@@ -124,6 +124,17 @@ if(PythonFull_FOUND)
   set(ADIOS2_HAVE_Python ON)
 endif()
 
+# Sst
+if(ADIOS2_USE_SST STREQUAL AUTO)
+  find_package(EVPATH)
+elseif (ADIOS2_USE_SST)
+  find_package(EVPATH REQUIRED)
+endif()
+
+if (EVPATH_FOUND)
+  set (ADIOS2_HAVE_SST TRUE)
+endif()
+
 #SysV IPC
 if(UNIX)
   include(CheckSymbolExists)

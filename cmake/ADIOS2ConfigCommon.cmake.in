@@ -35,6 +35,11 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(HDF5 COMPONENTS C)
   endif()
 
+  set(ADIOS2_HAVE_SST @ADIOS2_HAVE_SST@)
+  if(ADIOS2_HAVE_SST)
+    find_dependency(SST COMPONENTS C)
+  endif()
+
   set(ADIOS2_HAVE_ADIOS1 @ADIOS2_HAVE_ADIOS1@)
   if(ADIOS2_HAVE_ADIOS1)
     if(ADIOS2_HAVE_MPI)

@@ -19,6 +19,11 @@ if(ADIOS2_HAVE_DataMan)
   add_subdirectory(datamanWriter)
 endif()
 
+if(ADIOS2_HAVE_SST)
+  add_subdirectory(sstReader)
+  add_subdirectory(sstWriter)
+endif()
+
 if(ADIOS2_HAVE_HDF5)
   add_subdirectory(hdf5Writer)
 endif()
