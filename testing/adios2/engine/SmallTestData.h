@@ -64,4 +64,19 @@ SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
     return in;
 }
 
+void UpdateSmallTestData(SmallTestData &in, int step, int rank, int size)
+{
+    int j = rank + 1 + step * size;
+    std::for_each(in.I8.begin(), in.I8.end(), [&](int8_t &v) { v += j; });
+    std::for_each(in.I16.begin(), in.I16.end(), [&](int16_t &v) { v += j; });
+    std::for_each(in.I32.begin(), in.I32.end(), [&](int32_t &v) { v += j; });
+    std::for_each(in.I64.begin(), in.I64.end(), [&](int64_t &v) { v += j; });
+    std::for_each(in.U8.begin(), in.U8.end(), [&](uint8_t &v) { v += j; });
+    std::for_each(in.U16.begin(), in.U16.end(), [&](uint16_t &v) { v += j; });
+    std::for_each(in.U32.begin(), in.U32.end(), [&](uint32_t &v) { v += j; });
+    std::for_each(in.U64.begin(), in.U64.end(), [&](uint64_t &v) { v += j; });
+    std::for_each(in.R32.begin(), in.R32.end(), [&](float &v) { v += j; });
+    std::for_each(in.R64.begin(), in.R64.end(), [&](double &v) { v += j; });
+}
+
 #endif // TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
