@@ -25,6 +25,43 @@ BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
+StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
+{
+    if (m_DebugMode && mode != StepMode::NextAvailable)
+    {
+        throw std::invalid_argument("ERROR: mode is not supported yet for "
+                                    "engine BPFileReader, in call to "
+                                    "BeginStep\n");
+    }
+
+    const auto &variablesData = m_IO.GetVariablesDataMap();
+
+    for (const auto &variableData : variablesData)
+    {
+        const std::string name = variableData.first;
+        const std::string type = m_IO.InquireVariableType(name);
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        auto variable = m_IO.InquireVariable<T>(name);                         \
+        if (mode == StepMode::NextAvailable)                                   \
+        {                                                                      \
+            variable->SetStepSelection({m_CurrentStep + 1, 1});                \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    return StepStatus::OK;
+}
+
+void BPFileReader::EndStep() { ++m_CurrentStep; }
+
 void BPFileReader::PerformGets()
 {
     const std::map<std::string, SubFileInfoMap> variablesSubfileInfo =
