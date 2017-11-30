@@ -234,7 +234,17 @@ public:
      * Check existence in config file passed to ADIOS class
      * @return true: defined in config file
      */
-    bool InConfigFile() const;
+    bool InConfigFile() const noexcept;
+
+    /** Sets declared to true if IO exists in code created with ADIOS DeclareIO
+     */
+    void SetDeclared() noexcept;
+
+    /**
+     * Check if declared in code
+     * @return true: created with ADIOS DeclareIO, false: dummy from config file
+     */
+    bool IsDeclared() const noexcept;
 
     /**
      * Adds an operator defined by the ADIOS class. Could be a variable set
@@ -274,6 +284,8 @@ public:
 private:
     /** true: exist in config file (XML) */
     const bool m_InConfigFile = false;
+
+    bool m_IsDeclared = false;
 
     /** BPFileWriter engine default if unknown */
     std::string m_EngineType;

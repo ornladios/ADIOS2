@@ -128,7 +128,11 @@ const DataMap &IO::GetAttributesDataMap() const noexcept
     return m_Attributes;
 }
 
-bool IO::InConfigFile() const { return m_InConfigFile; };
+bool IO::InConfigFile() const noexcept { return m_InConfigFile; };
+
+void IO::SetDeclared() noexcept { m_IsDeclared = true; };
+
+bool IO::IsDeclared() const noexcept { return m_IsDeclared; }
 
 bool IO::RemoveVariable(const std::string &name) noexcept
 {
