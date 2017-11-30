@@ -197,4 +197,4 @@ void InitXML(const std::string configXML, MPI_Comm mpiComm,
     }
 }
 
-} // end namespace adios
+} // end namespace adios2
