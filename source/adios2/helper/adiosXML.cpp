@@ -164,6 +164,13 @@ void InitXML(const std::string configXML, MPI_Comm mpiComm,
 
     fileContents = BroadcastValue(fileContents, mpiComm);
 
+    if (debugMode && fileContents.empty())
+    {
+        throw std::invalid_argument("ERROR: config xml file " + configXML +
+                                    " is either empty or file couldn't be "
+                                    "found, in call to ADIOS constructor\n");
+    }
+
     pugi::xml_document doc;
     auto parse_result = doc.load_buffer_inplace(
         const_cast<char *>(fileContents.data()), fileContents.size());

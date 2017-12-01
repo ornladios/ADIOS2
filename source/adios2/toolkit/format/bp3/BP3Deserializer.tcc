@@ -123,6 +123,7 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
         variable = &io.DefineVariable<T>(variableName);
+        variable->m_Value = characteristics.Statistics.Value;
         variable->m_Min = characteristics.Statistics.Value;
         variable->m_Max = characteristics.Statistics.Value;
     }
