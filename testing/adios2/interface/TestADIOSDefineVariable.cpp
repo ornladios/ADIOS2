@@ -418,6 +418,135 @@ TEST_F(ADIOSDefineVariableTest, DefineString)
     EXPECT_NO_THROW(io.DefineVariable<std::string>("validString2", {}, {}, {}));
 }
 
+TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
+{
+    auto lf_CheckRemove = [&](const std::string variableName) {
+
+        const bool isRemoved = io.RemoveVariable(variableName);
+        EXPECT_EQ(isRemoved, true);
+    };
+
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    io.DefineVariable<std::string>("iString");
+    io.DefineVariable<int8_t>("i8", shape, start, count);
+    io.DefineVariable<int16_t>("i16", shape, start, count);
+    io.DefineVariable<int32_t>("i32", shape, start, count);
+    io.DefineVariable<int64_t>("i64", shape, start, count);
+    io.DefineVariable<uint8_t>("u8", shape, start, count);
+    io.DefineVariable<uint16_t>("u16", shape, start, count);
+    io.DefineVariable<uint32_t>("u32", shape, start, count);
+    io.DefineVariable<uint64_t>("u64", shape, start, count);
+    io.DefineVariable<float>("r32", shape, start, count);
+    io.DefineVariable<double>("r64", shape, start, count);
+    io.DefineVariable<std::complex<float>>("c32", shape, start, count);
+    io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+
+    lf_CheckRemove("iString");
+    lf_CheckRemove("i8");
+    lf_CheckRemove("i16");
+    lf_CheckRemove("i32");
+    lf_CheckRemove("i64");
+
+    lf_CheckRemove("u8");
+    lf_CheckRemove("u16");
+    lf_CheckRemove("u32");
+    lf_CheckRemove("u64");
+
+    lf_CheckRemove("r32");
+    lf_CheckRemove("r64");
+
+    lf_CheckRemove("c32");
+    lf_CheckRemove("c64");
+
+    auto var_iString = io.InquireVariable<std::string>("iString");
+    auto var_i8 = io.InquireVariable<int8_t>("i8");
+    auto var_i16 = io.InquireVariable<int16_t>("i16");
+    auto var_i32 = io.InquireVariable<int32_t>("i32");
+    auto var_i64 = io.InquireVariable<int64_t>("i64");
+    auto var_u8 = io.InquireVariable<uint8_t>("u8");
+    auto var_u16 = io.InquireVariable<uint16_t>("u16");
+    auto var_u32 = io.InquireVariable<uint32_t>("u32");
+    auto var_u64 = io.InquireVariable<uint64_t>("u64");
+    auto var_r32 = io.InquireVariable<float>("r32");
+    auto var_r64 = io.InquireVariable<double>("r64");
+    auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
+    auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+
+    EXPECT_EQ(var_iString, nullptr);
+    EXPECT_EQ(var_i8, nullptr);
+    EXPECT_EQ(var_i16, nullptr);
+    EXPECT_EQ(var_i32, nullptr);
+    EXPECT_EQ(var_i64, nullptr);
+
+    EXPECT_EQ(var_u8, nullptr);
+    EXPECT_EQ(var_u16, nullptr);
+    EXPECT_EQ(var_u32, nullptr);
+    EXPECT_EQ(var_u64, nullptr);
+
+    EXPECT_EQ(var_r32, nullptr);
+    EXPECT_EQ(var_r64, nullptr);
+
+    EXPECT_EQ(var_c32, nullptr);
+    EXPECT_EQ(var_c64, nullptr);
+}
+
+TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
+{
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    io.DefineVariable<std::string>("iString");
+    io.DefineVariable<int8_t>("i8", shape, start, count);
+    io.DefineVariable<int16_t>("i16", shape, start, count);
+    io.DefineVariable<int32_t>("i32", shape, start, count);
+    io.DefineVariable<int64_t>("i64", shape, start, count);
+    io.DefineVariable<uint8_t>("u8", shape, start, count);
+    io.DefineVariable<uint16_t>("u16", shape, start, count);
+    io.DefineVariable<uint32_t>("u32", shape, start, count);
+    io.DefineVariable<uint64_t>("u64", shape, start, count);
+    io.DefineVariable<float>("r32", shape, start, count);
+    io.DefineVariable<double>("r64", shape, start, count);
+    io.DefineVariable<std::complex<float>>("c32", shape, start, count);
+    io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+
+    io.RemoveAllVariables();
+
+    auto var_iString = io.InquireVariable<std::string>("iString");
+    auto var_i8 = io.InquireVariable<int8_t>("i8");
+    auto var_i16 = io.InquireVariable<int16_t>("i16");
+    auto var_i32 = io.InquireVariable<int32_t>("i32");
+    auto var_i64 = io.InquireVariable<int64_t>("i64");
+    auto var_u8 = io.InquireVariable<uint8_t>("u8");
+    auto var_u16 = io.InquireVariable<uint16_t>("u16");
+    auto var_u32 = io.InquireVariable<uint32_t>("u32");
+    auto var_u64 = io.InquireVariable<uint64_t>("u64");
+    auto var_r32 = io.InquireVariable<float>("r32");
+    auto var_r64 = io.InquireVariable<double>("r64");
+    auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
+    auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+
+    EXPECT_EQ(var_iString, nullptr);
+    EXPECT_EQ(var_i8, nullptr);
+    EXPECT_EQ(var_i16, nullptr);
+    EXPECT_EQ(var_i32, nullptr);
+    EXPECT_EQ(var_i64, nullptr);
+
+    EXPECT_EQ(var_u8, nullptr);
+    EXPECT_EQ(var_u16, nullptr);
+    EXPECT_EQ(var_u32, nullptr);
+    EXPECT_EQ(var_u64, nullptr);
+
+    EXPECT_EQ(var_r32, nullptr);
+    EXPECT_EQ(var_r64, nullptr);
+
+    EXPECT_EQ(var_c32, nullptr);
+    EXPECT_EQ(var_c64, nullptr);
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

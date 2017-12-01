@@ -155,11 +155,10 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     {                                                                          \
         auto variableMap = GetVariableMap<T>();                                \
         variableMap.erase(index);                                              \
+        isRemoved = true;                                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-
-        isRemoved = true;
     }
 
     if (isRemoved)
@@ -168,6 +167,58 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     }
 
     return isRemoved;
+}
+
+void IO::RemoveAllVariables() noexcept
+{
+    m_Variables.clear();
+#define declare_type(T) GetVariableMap<T>().clear();
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    m_Compound.clear();
+}
+
+bool IO::RemoveAttribute(const std::string &name) noexcept
+{
+    bool isRemoved = false;
+    auto itAttribute = m_Attributes.find(name);
+    // attribute exists
+    if (itAttribute != m_Attributes.end())
+    {
+        // first remove the Variable object
+        const std::string type(itAttribute->second.first);
+        const unsigned int index(itAttribute->second.second);
+
+        if (type.empty())
+        {
+            // nothing to do
+        }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        auto variableMap = GetVariableMap<T>();                                \
+        variableMap.erase(index);                                              \
+        isRemoved = true;                                                      \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    if (isRemoved)
+    {
+        m_Attributes.erase(name);
+    }
+
+    return isRemoved;
+}
+
+void IO::RemoveAllAttributes() noexcept
+{
+    m_Attributes.clear();
+
+#define declare_type(T) GetAttributeMap<T>().clear();
+    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
 }
 
 std::map<std::string, Params> IO::GetAvailableVariables() noexcept

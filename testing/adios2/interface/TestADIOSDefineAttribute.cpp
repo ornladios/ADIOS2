@@ -540,6 +540,118 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     }
 }
 
+TEST_F(ADIOSDefineAttributeTest, DefineAndRemove)
+{
+    auto lf_CheckRemove = [&](const std::string variableName) {
+
+        const bool isRemoved = io.RemoveAttribute(variableName);
+        EXPECT_EQ(isRemoved, true);
+    };
+
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    io.DefineAttribute<std::string>("iString", "String Attribute");
+    io.DefineAttribute<int8_t>("i8", -8);
+    io.DefineAttribute<int16_t>("i16", -16);
+    io.DefineAttribute<int32_t>("i32", -32);
+    io.DefineAttribute<int64_t>("i64", -64);
+    io.DefineAttribute<uint8_t>("u8", 8);
+    io.DefineAttribute<uint16_t>("u16", 16);
+    io.DefineAttribute<uint32_t>("u32", 32);
+    io.DefineAttribute<uint64_t>("u64", 64);
+    io.DefineAttribute<float>("r32", 32);
+    io.DefineAttribute<double>("r64", 64);
+
+    lf_CheckRemove("iString");
+    lf_CheckRemove("i8");
+    lf_CheckRemove("i16");
+    lf_CheckRemove("i32");
+    lf_CheckRemove("i64");
+
+    lf_CheckRemove("u8");
+    lf_CheckRemove("u16");
+    lf_CheckRemove("u32");
+    lf_CheckRemove("u64");
+
+    lf_CheckRemove("r32");
+    lf_CheckRemove("r64");
+
+    auto attr_iString = io.InquireAttribute<std::string>("iString");
+    auto attr_i8 = io.InquireAttribute<int8_t>("i8");
+    auto attr_i16 = io.InquireAttribute<int16_t>("i16");
+    auto attr_i32 = io.InquireAttribute<int32_t>("i32");
+    auto attr_i64 = io.InquireAttribute<int64_t>("i64");
+    auto attr_u8 = io.InquireAttribute<uint8_t>("u8");
+    auto attr_u16 = io.InquireAttribute<uint16_t>("u16");
+    auto attr_u32 = io.InquireAttribute<uint32_t>("u32");
+    auto attr_u64 = io.InquireAttribute<uint64_t>("u64");
+    auto attr_r32 = io.InquireAttribute<float>("r32");
+    auto attr_r64 = io.InquireAttribute<double>("r64");
+
+    EXPECT_EQ(attr_iString, nullptr);
+    EXPECT_EQ(attr_i8, nullptr);
+    EXPECT_EQ(attr_i16, nullptr);
+    EXPECT_EQ(attr_i32, nullptr);
+    EXPECT_EQ(attr_i64, nullptr);
+
+    EXPECT_EQ(attr_u8, nullptr);
+    EXPECT_EQ(attr_u16, nullptr);
+    EXPECT_EQ(attr_u32, nullptr);
+    EXPECT_EQ(attr_u64, nullptr);
+
+    EXPECT_EQ(attr_r32, nullptr);
+    EXPECT_EQ(attr_r64, nullptr);
+}
+
+TEST_F(ADIOSDefineAttributeTest, DefineAndRemoveAll)
+{
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    io.DefineAttribute<std::string>("iString", "String Attribute");
+    io.DefineAttribute<int8_t>("i8", -8);
+    io.DefineAttribute<int16_t>("i16", -16);
+    io.DefineAttribute<int32_t>("i32", -32);
+    io.DefineAttribute<int64_t>("i64", -64);
+    io.DefineAttribute<uint8_t>("u8", 8);
+    io.DefineAttribute<uint16_t>("u16", 16);
+    io.DefineAttribute<uint32_t>("u32", 32);
+    io.DefineAttribute<uint64_t>("u64", 64);
+    io.DefineAttribute<float>("r32", 32);
+    io.DefineAttribute<double>("r64", 64);
+
+    io.RemoveAllAttributes();
+
+    auto attr_iString = io.InquireAttribute<std::string>("iString");
+    auto attr_i8 = io.InquireAttribute<int8_t>("i8");
+    auto attr_i16 = io.InquireAttribute<int16_t>("i16");
+    auto attr_i32 = io.InquireAttribute<int32_t>("i32");
+    auto attr_i64 = io.InquireAttribute<int64_t>("i64");
+    auto attr_u8 = io.InquireAttribute<uint8_t>("u8");
+    auto attr_u16 = io.InquireAttribute<uint16_t>("u16");
+    auto attr_u32 = io.InquireAttribute<uint32_t>("u32");
+    auto attr_u64 = io.InquireAttribute<uint64_t>("u64");
+    auto attr_r32 = io.InquireAttribute<float>("r32");
+    auto attr_r64 = io.InquireAttribute<double>("r64");
+
+    EXPECT_EQ(attr_iString, nullptr);
+    EXPECT_EQ(attr_i8, nullptr);
+    EXPECT_EQ(attr_i16, nullptr);
+    EXPECT_EQ(attr_i32, nullptr);
+    EXPECT_EQ(attr_i64, nullptr);
+
+    EXPECT_EQ(attr_u8, nullptr);
+    EXPECT_EQ(attr_u16, nullptr);
+    EXPECT_EQ(attr_u32, nullptr);
+    EXPECT_EQ(attr_u64, nullptr);
+
+    EXPECT_EQ(attr_r32, nullptr);
+    EXPECT_EQ(attr_r64, nullptr);
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
