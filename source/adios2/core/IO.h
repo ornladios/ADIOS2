@@ -170,12 +170,28 @@ public:
     Attribute<T> &DefineAttribute(const std::string &name, const T &value);
 
     /**
-     * Removes an existing Variable previously created with DefineVariable
-     * @param name
+     * Removes an existing Variable
+     * @param name unique identifier input
      * @return true: found and removed variable, false: not found, nothing to
      * remove
      */
     bool RemoveVariable(const std::string &name) noexcept;
+
+    /** Removes all existing variables in current IO object */
+    void RemoveAllVariables() noexcept;
+
+    /**
+     * Removes an existing Attribute. Dangerous function since references and
+     * pointers can be dangling after this call.
+     * @param name unique identifier input
+     * @return true: found and removed attribute, false: not found, nothing to
+     * remove
+      */
+    bool RemoveAttribute(const std::string &name) noexcept;
+
+    /** Removes all existing attributes in current IO object. Dangerous function
+     *  since references and pointers can be dangling after this call. */
+    void RemoveAllAttributes() noexcept;
 
     /**
      * Map with variables info: key: name, value: type
@@ -192,6 +208,11 @@ public:
     template <class T>
     Variable<T> *InquireVariable(const std::string &name) noexcept;
 
+    /**
+     * Returns the type of an existing variable as an string
+     * @param name input variable name
+     * @return type
+     */
     std::string InquireVariableType(const std::string &name) const noexcept;
 
     /**
@@ -372,7 +393,7 @@ private:
         noexcept;
 
     /** Checks if attribute exists, called from DefineAttribute different
-     * signatures */
+     *  signatures */
     void CheckAttributeCommon(const std::string &name) const;
 
     /**
