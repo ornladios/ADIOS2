@@ -22,29 +22,26 @@
 #include <vector>
 
 #include "PrintDataStep.h"
+#include "ReadSettings.h"
 
-#define str_helper(X) #X
-#define str(X) str_helper(X)
-#ifndef DEFAULT_CONFIG
-#define DEFAULT_CONFIG "../heat.xml"
-#endif
-#define DEFAULT_CONFIG_STR str(DEFAULT_CONFIG)
+void printUsage()
+{
+    std::cout << "Usage: heatRead  config  input  N  M \n"
+              << "  config: XML config file to use\n"
+              << "  input:  name of input data file/stream\n"
+              << "  N:      number of processes in X dimension\n"
+              << "  M:      number of processes in Y dimension\n\n";
+}
 
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
 
-    if (argc < 2)
-    {
-        std::cout << "Not enough arguments: need an input file\n";
-        return 1;
-    }
-    const char *inputfile = argv[1];
-
-    /* World comm spans all applications started with the same aprun command
-     on a Cray XK6. So we have to split and create the local
-     'world' communicator for the reader only.
-     In normal start-up, the communicator will just equal the MPI_COMM_WORLD.
+    /* When writer and reader is launched together with a single mpirun command,
+       the world comm spans all applications. We have to split and create the
+       local 'world' communicator for the reader only.
+       When writer and reader is launched separately, the mpiReaderComm
+       communicator will just equal the MPI_COMM_WORLD.
      */
 
     int wrank, wnproc;
@@ -60,100 +57,87 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(mpiReaderComm, &rank);
     MPI_Comm_size(mpiReaderComm, &nproc);
 
-    adios2::ADIOS ad(std::string(DEFAULT_CONFIG_STR), mpiReaderComm,
-                     adios2::DebugON);
-
-    // Define method for engine creation
-    // 1. Get method def from config file or define new one
-
-    adios2::IO &bpReaderIO = ad.DeclareIO("reader");
-    if (!bpReaderIO.InConfigFile())
+    try
     {
-        // if not defined by user, we can change the default settings
-        // BPFileWriter is the default engine
-        bpReaderIO.SetEngine("ADIOS1Reader");
-        bpReaderIO.SetParameters({{"num_threads", "2"}});
+        ReadSettings settings(argc, argv, rank, nproc);
+        adios2::ADIOS ad(settings.configfile, mpiReaderComm, adios2::DebugON);
 
-        // ISO-POSIX file output is the default transport (called "File")
-        // Passing parameters to the transport
-        bpReaderIO.AddTransport("File", {{"verbose", "4"}});
-    }
+        // Define method for engine creation
+        // 1. Get method def from config file or define new one
 
-    adios2::Engine &bpReader =
-        bpReaderIO.Open(inputfile, adios2::Mode::Read, mpiReaderComm);
-
-    unsigned int gndx;
-    unsigned int gndy;
-    double *T;
-    adios2::Dims readsize;
-    adios2::Dims offset;
-    adios2::Variable<double> *vT = nullptr;
-    bool firstStep = true;
-    int step = 0;
-
-    while (true)
-    {
-        adios2::StepStatus status =
-            bpReader.BeginStep(adios2::StepMode::NextAvailable);
-        if (status != adios2::StepStatus::OK)
-            break;
-
-        if (firstStep)
+        adios2::IO &bpReaderIO = ad.DeclareIO("reader");
+        if (!bpReaderIO.InConfigFile())
         {
-            adios2::Variable<unsigned int> *vgndx =
-                bpReaderIO.InquireVariable<unsigned int>("gndx");
-            gndx = vgndx->m_Value;
-            // bpReader.GetSync<unsigned int>("gndx", gndx);
+            // if not defined by user, we can change the default settings
+            // BPFileWriter is the default engine
+            bpReaderIO.SetEngine("ADIOS1Reader");
+            bpReaderIO.SetParameters({{"num_threads", "2"}});
 
-            adios2::Variable<unsigned int> *vgndy =
-                bpReaderIO.InquireVariable<unsigned int>("gndy");
-            gndy = vgndy->m_Value;
-            // bpReader.GetSync<unsigned int>("gndy", gndy);
-
-            if (rank == 0)
-            {
-                std::cout << "gndx       = " << gndx << std::endl;
-                std::cout << "gndy       = " << gndy << std::endl;
-            }
-
-            // 1D decomposition of the columns, which is inefficient for
-            // reading!
-            readsize.push_back(gndx);
-            readsize.push_back(gndy / nproc);
-            offset.push_back(0LL);
-            offset.push_back(rank * readsize[1]);
-            if (rank == nproc - 1)
-            {
-                // last process should read all the rest of columns
-                readsize[1] = gndy - readsize[1] * (nproc - 1);
-            }
-
-            std::cout << "rank " << rank << " reads " << readsize[1]
-                      << " columns from offset " << offset[1] << std::endl;
-
-            vT = bpReaderIO.InquireVariable<double>("T");
-            T = new double[readsize[0] * readsize[1]];
-
-            // Create a 2D selection for the subset
-            vT->SetSelection(adios2::Box<adios2::Dims>(offset, readsize));
-            firstStep = false;
+            // ISO-POSIX file output is the default transport (called "File")
+            // Passing parameters to the transport
+            bpReaderIO.AddTransport("File", {{"verbose", "4"}});
         }
 
-        if (!rank)
-        {
-            std::cout << "Processing step " << step << std::endl;
-        }
-        // Arrays are read by scheduling one or more of them
-        // and performing the reads at once
-        bpReader.GetDeferred<double>(*vT, T);
-        bpReader.PerformGets();
+        adios2::Engine &bpReader = bpReaderIO.Open(
+            settings.inputfile, adios2::Mode::Read, mpiReaderComm);
 
-        printDataStep(T, readsize.data(), offset.data(), rank, step);
-        bpReader.EndStep();
-        step++;
+        double *T;
+        adios2::Variable<double> *vT = nullptr;
+        bool firstStep = true;
+        int step = 0;
+
+        while (true)
+        {
+            adios2::StepStatus status =
+                bpReader.BeginStep(adios2::StepMode::NextAvailable);
+            if (status != adios2::StepStatus::OK)
+                break;
+
+            if (firstStep)
+            {
+                vT = bpReaderIO.InquireVariable<double>("T");
+                unsigned int gndx = vT->m_Shape[0];
+                unsigned int gndy = vT->m_Shape[1];
+
+                if (rank == 0)
+                {
+                    std::cout << "gndx       = " << gndx << std::endl;
+                    std::cout << "gndy       = " << gndy << std::endl;
+                }
+
+                settings.DecomposeArray(gndx, gndy);
+                T = new double[settings.readsize[0] * settings.readsize[1]];
+
+                // Create a 2D selection for the subset
+                vT->SetSelection(adios2::Box<adios2::Dims>(settings.offset,
+                                                           settings.readsize));
+                firstStep = false;
+                MPI_Barrier(mpiReaderComm); // sync processes just for stdout
+            }
+
+            if (!rank)
+            {
+                std::cout << "Processing step " << step << std::endl;
+            }
+            // Arrays are read by scheduling one or more of them
+            // and performing the reads at once
+            bpReader.GetDeferred<double>(*vT, T);
+            bpReader.PerformGets();
+
+            printDataStep(T, settings.readsize.data(), settings.offset.data(),
+                          rank, step);
+            bpReader.EndStep();
+            step++;
+        }
+        bpReader.Close();
+        delete[] T;
     }
-    bpReader.Close();
-    delete[] T;
+    catch (std::invalid_argument &e) // command-line argument errors
+    {
+        std::cout << e.what() << std::endl;
+        printUsage();
+    }
+
     MPI_Finalize();
     return 0;
 }
