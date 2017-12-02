@@ -14,13 +14,6 @@
 
 #include <adios2.h>
 
-#define str_helper(X) #X
-#define str(X) str_helper(X)
-#ifndef DEFAULT_CONFIG
-#define DEFAULT_CONFIG config.xml
-#endif
-#define DEFAULT_CONFIG_STR str(DEFAULT_CONFIG)
-
 adios2::ADIOS *ad = nullptr;
 adios2::Engine *bpWriter = nullptr;
 adios2::Variable<double> *varT = nullptr;
@@ -29,12 +22,11 @@ adios2::Variable<unsigned int> *varGndx = nullptr;
 IO::IO(const Settings &s, MPI_Comm comm)
 {
     m_outputfilename = s.outputfile + ".bp";
-    ad = new adios2::ADIOS(std::string(DEFAULT_CONFIG_STR), comm,
-                           adios2::DebugON);
+    ad = new adios2::ADIOS(s.configfile, comm, adios2::DebugON);
 
     // Define method for engine creation
 
-    adios2::IO &bpio = ad->DeclareIO("output");
+    adios2::IO &bpio = ad->DeclareIO("writer");
     if (!bpio.InConfigFile())
     {
         // if not defined by user, we can change the default settings
