@@ -4,16 +4,16 @@
  *
  * Settings.cpp
  *
- *  Created on: Feb 2017
+ *  Created on: Dec 2017
  *      Author: Norbert Podhorszki
  */
 
-#include "Settings.h"
-
-#include <errno.h>
+#include "ReadSettings.h"
 
 #include <cstdlib>
-
+#include <errno.h>
+#include <iomanip>
+#include <iostream>
 #include <stdexcept>
 
 static unsigned int convertToUint(std::string varName, char *arg)
@@ -33,54 +33,51 @@ static unsigned int convertToUint(std::string varName, char *arg)
     return (unsigned int)retval;
 }
 
-Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
+ReadSettings::ReadSettings(int argc, char *argv[], int rank, int nproc)
+: rank{rank}
 {
-    if (argc < 9)
+    if (argc < 5)
     {
         throw std::invalid_argument("Not enough arguments");
     }
     this->nproc = (unsigned int)nproc;
 
     configfile = argv[1];
-    outputfile = argv[2];
+    inputfile = argv[2];
     npx = convertToUint("N", argv[3]);
     npy = convertToUint("M", argv[4]);
-    ndx = convertToUint("nx", argv[5]);
-    ndy = convertToUint("ny", argv[6]);
-    steps = convertToUint("steps", argv[7]);
-    iterations = convertToUint("iterations", argv[8]);
 
     if (npx * npy != this->nproc)
     {
         throw std::invalid_argument("N*M must equal the number of processes");
     }
-
-    // calculate global array size and the local offsets in that global space
-    gndx = npx * ndx;
-    gndy = npy * ndy;
     posx = rank % npx;
     posy = rank / npx;
-    offsx = posx * ndx;
-    offsy = posy * ndy;
+}
 
-    // determine neighbors
-    if (posx == 0)
-        rank_up = -1;
-    else
-        rank_up = rank - 1;
-
+void ReadSettings::DecomposeArray(int gndx, int gndy)
+{
+    // 2D decomposition of global array reading
+    size_t ndx = gndx / npx;
+    size_t ndy = gndy / npy;
+    size_t offsx = ndx * posx;
+    size_t offsy = ndy * posy;
     if (posx == npx - 1)
-        rank_down = -1;
-    else
-        rank_down = rank + 1;
-
-    if (posy == 0)
-        rank_left = -1;
-    else
-        rank_left = rank - npx;
+    {
+        // right-most processes need to read all the rest of columns
+        ndx = gndy - ndx * (npx - 1);
+    }
 
     if (posy == npy - 1)
-        rank_right = -1;
-    else
-        rank_right = rank + npx;
+    {
+        // bottom processes need to read all the rest of rows
+        ndy = gndy - ndy * (npy - 1);
+    }
+    readsize.push_back(ndx);
+    readsize.push_back(ndy);
+    offset.push_back(offsx);
+    offset.push_back(offsy);
+
+    std::cout << "rank " << rank << " reads 2D slice " << ndx << " x " << ndy
+              << " from offset (" << offsx << "," << offsy << ")" << std::endl;
 }

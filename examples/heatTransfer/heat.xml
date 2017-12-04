@@ -11,7 +11,7 @@
         ====================================-->
 
     <io name="writer">
-        <engine type="BPFileWriter">
+        <engine type="ADIOS1Writer">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 

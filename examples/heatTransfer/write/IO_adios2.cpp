@@ -14,13 +14,6 @@
 
 #include <adios2.h>
 
-#define str_helper(X) #X
-#define str(X) str_helper(X)
-#ifndef DEFAULT_CONFIG
-#define DEFAULT_CONFIG config.xml
-#endif
-#define DEFAULT_CONFIG_STR str(DEFAULT_CONFIG)
-
 adios2::ADIOS *ad = nullptr;
 adios2::Engine *bpWriter = nullptr;
 adios2::Variable<double> *varT = nullptr;
@@ -29,12 +22,11 @@ adios2::Variable<unsigned int> *varGndx = nullptr;
 IO::IO(const Settings &s, MPI_Comm comm)
 {
     m_outputfilename = s.outputfile + ".bp";
-    ad = new adios2::ADIOS(std::string(DEFAULT_CONFIG_STR), comm,
-                           adios2::DebugON);
+    ad = new adios2::ADIOS(s.configfile, comm, adios2::DebugON);
 
     // Define method for engine creation
 
-    adios2::IO &bpio = *ad->InquireIO("output");
+    adios2::IO &bpio = ad->DeclareIO("writer");
     if (!bpio.InConfigFile())
     {
         // if not defined by user, we can change the default settings
@@ -75,8 +67,6 @@ IO::~IO()
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-#if 1
-
     bpWriter->BeginStep();
     /* This selection is redundant and not required, since we defined
      * the selection already in DefineVariable(). It is here just as an example.
@@ -87,29 +77,17 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     varT->SetSelection(
         adios2::Box<adios2::Dims>({s.offsx, s.offsy}, {s.ndx, s.ndy}));
 
-    /* Select the area that we want to write from the data pointer we pass to
-       the
-       writer.
-       Think HDF5 memspace, just not hyperslabs, only a bounding box selection.
-       Engine will copy this bounding box from the data pointer into the output
-       buffer.
-       Size of the bounding box should match the "space" selection which was
-       given
-       above.
-       Default memspace is always the full selection.
-    */
-    varT->SetMemorySelection(adios2::Box<adios2::Dims>({1, 1}, {s.ndx, s.ndy}));
-
-    bpWriter->PutSync<unsigned int>(*varGndx, s.gndx);
-    bpWriter->PutSync<unsigned int>("gndy", s.gndy);
+    if (!step)
+    {
+        int rank;
+        MPI_Comm_rank(comm, &rank);
+        if (!rank)
+        {
+            bpWriter->PutSync<unsigned int>(*varGndx, s.gndx);
+            bpWriter->PutSync<unsigned int>("gndy", s.gndy);
+        }
+    }
     bpWriter->PutSync<double>(*varT, ht.data_noghost().data());
-
+    // bpWriter->PerformPuts();
     bpWriter->EndStep();
-
-#else
-
-    bpWriter->PutSync<double>(*varT, ht.data_noghost().data());
-    bpWriter->EndStep();
-
-#endif
 }
