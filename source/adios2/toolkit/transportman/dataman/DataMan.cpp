@@ -38,6 +38,7 @@ DataMan::~DataMan()
 void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
+
 {
 #ifdef ADIOS2_HAVE_ZEROMQ
     size_t counter = 0; // remove MACRO when more libraries are added
@@ -143,8 +144,8 @@ void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
     }
     m_ControlTransports[m_CurrentTransport]->Write(jmsg.dump().c_str(),
                                                    jmsg.dump().size());
-    m_Transports[m_CurrentTransport]->Write(static_cast<const char *>(buffer),
-                                            jmsg["bytes"].get<size_t>());
+    m_Transports[m_CurrentTransport]->Write(
+        reinterpret_cast<const char *>(buffer), jmsg["bytes"].get<size_t>());
 }
 
 void DataMan::WriteWAN(const void *buffer, size_t size)
@@ -154,8 +155,11 @@ void DataMan::WriteWAN(const void *buffer, size_t size)
         throw std::runtime_error(
             "ERROR: No valid transports found, from DataMan::WriteWAN()");
     }
-    m_Transports[m_CurrentTransport]->Write(static_cast<const char *>(buffer),
-                                            size);
+    //    m_Transports[m_CurrentTransport]->Write(static_cast<const char
+    //    *>(buffer),                                            size);
+
+    m_Transports[m_CurrentTransport]->Write(
+        reinterpret_cast<const char *>(buffer), size);
 
     for (int i = 0; i < size / 4; i++)
     {
@@ -237,9 +241,9 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
 
                 m_Callback->RunCallback2(buffer, "ss", "rr", "char", {128});
 
-                /*
                 m_BP3Deserializer->ParseMetadata(*m_IO);
 
+                /*
                 const auto variablesInfo = m_IO->GetAvailableVariables();
                 for (const auto &variableInfoPair : variablesInfo)
                 {
