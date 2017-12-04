@@ -89,13 +89,18 @@ int main(int argc, char *argv[])
         while (true)
         {
             adios2::StepStatus status =
-                bpReader.BeginStep(adios2::StepMode::NextAvailable);
+                bpReader.BeginStep(adios2::StepMode::NextAvailable, 10.0f);
             if (status != adios2::StepStatus::OK)
+            {
                 break;
+            }
+
+            // Variable objects disappear between steps so we need this every
+            // step
+            vT = bpReaderIO.InquireVariable<double>("T");
 
             if (firstStep)
             {
-                vT = bpReaderIO.InquireVariable<double>("T");
                 unsigned int gndx = vT->m_Shape[0];
                 unsigned int gndy = vT->m_Shape[1];
 
@@ -108,9 +113,6 @@ int main(int argc, char *argv[])
                 settings.DecomposeArray(gndx, gndy);
                 T = new double[settings.readsize[0] * settings.readsize[1]];
 
-                // Create a 2D selection for the subset
-                vT->SetSelection(adios2::Box<adios2::Dims>(settings.offset,
-                                                           settings.readsize));
                 firstStep = false;
                 MPI_Barrier(mpiReaderComm); // sync processes just for stdout
             }
@@ -119,8 +121,14 @@ int main(int argc, char *argv[])
             {
                 std::cout << "Processing step " << step << std::endl;
             }
+
+            // Create a 2D selection for the subset
+            vT->SetSelection(
+                adios2::Box<adios2::Dims>(settings.offset, settings.readsize));
+
             // Arrays are read by scheduling one or more of them
             // and performing the reads at once
+
             bpReader.GetDeferred<double>(*vT, T);
             bpReader.PerformGets();
 

@@ -48,7 +48,7 @@ public:
 
     void InitParameters(const Params &parameters);
     void InitTransports(const std::vector<Params> &transportsParameters);
-    bool Open(); // return true if file is opened successfully
+    bool Open(IO &io); // return true if file is opened successfully
     void GenerateVariables(IO &io);
 
     void ScheduleReadCommon(const std::string &name, const Dims &offs,
@@ -57,7 +57,8 @@ public:
                             const bool readAsJoinedArray, void *data);
 
     void PerformReads();
-    StepStatus AdvanceStep(const StepMode mode, const float timeout_sec = 0.0);
+    StepStatus AdvanceStep(IO &io, const StepMode mode,
+                           const float timeout_sec = 0.0);
     void ReleaseStep();
 
     ADIOS_VARINFO *InqVar(const std::string &varName);
@@ -72,6 +73,11 @@ private:
     enum ADIOS_READ_METHOD m_ReadMethod;
     bool m_OpenAsFile = false;
     ADIOS_FILE *m_fh = nullptr; ///< ADIOS1 file handler
+
+    // In streaming mode, Open() does not generate the variable map.
+    // The first BeginStep() call does that to publish the variables of the
+    // first step
+    bool m_IsBeforeFirstStep = true;
 
     void Init();
 
