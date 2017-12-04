@@ -10,6 +10,4 @@ if(ADIOS2_HAVE_MPI)
      ReadSettings.cpp
   )
   target_link_libraries(heatTransfer_read adios2 MPI::MPI_C)
-  target_compile_definitions(heatTransfer_read PRIVATE
-   -DDEFAULT_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/../heat.xml)
 endif()
