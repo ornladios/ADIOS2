@@ -26,8 +26,7 @@ ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name, const Mode mode,
     m_EndMessage = " in call to IO Open ADIOS1Reader " + m_Name + "\n";
 
     Init();
-    m_ADIOS1.Open(); // adios_read_init_method(m_ReadMethod, mpiComm, "");
-    m_ADIOS1.GenerateVariables(io);
+    m_ADIOS1.Open(io);
 }
 
 ADIOS1Reader::~ADIOS1Reader()
@@ -38,7 +37,7 @@ ADIOS1Reader::~ADIOS1Reader()
 StepStatus ADIOS1Reader::BeginStep(const StepMode mode,
                                    const float timeoutSeconds)
 {
-    return m_ADIOS1.AdvanceStep(mode, timeoutSeconds);
+    return m_ADIOS1.AdvanceStep(m_IO, mode, timeoutSeconds);
 }
 
 // PRIVATE

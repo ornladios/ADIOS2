@@ -28,7 +28,6 @@ ADIOS1CommonRead::ADIOS1CommonRead(const std::string &fileName,
 : ADIOS1Common(fileName, mpiComm, debugMode)
 {
     Init();
-    adios_read_init_method(m_ReadMethod, m_MPIComm, "");
 }
 
 ADIOS1CommonRead::~ADIOS1CommonRead()
@@ -37,12 +36,13 @@ ADIOS1CommonRead::~ADIOS1CommonRead()
     adios_read_finalize_method(m_ReadMethod);
 }
 
-bool ADIOS1CommonRead::Open()
+bool ADIOS1CommonRead::Open(IO &io)
 {
     if (m_OpenAsFile)
     {
         m_fh =
             adios_read_open_file(m_FileName.c_str(), m_ReadMethod, m_MPIComm);
+        GenerateVariables(io);
     }
     else
     {
@@ -120,6 +120,8 @@ void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
 
 void ADIOS1CommonRead::GenerateVariables(IO &io)
 {
+    if (!m_fh)
+        return;
     /* Create a Variable for each variable in the file */
     for (int varid = 0; varid < m_fh->nvars; varid++)
     {
@@ -217,6 +219,7 @@ void ADIOS1CommonRead::ScheduleReadCommon(const std::string &name,
                                           const bool readAsJoinedArray,
                                           void *data)
 {
+    const int adios1FromStep = fromStep - 1;
     if (readAsLocalValue)
     {
         /* Get all the requested values from metadata now */
@@ -226,12 +229,12 @@ void ADIOS1CommonRead::ScheduleReadCommon(const std::string &name,
             adios_inq_var_stat(m_fh, vi, 0, 1);
             int elemsize = adios_type_size(vi->type, nullptr);
             long long blockidx = 0;
-            for (int i = 0; i < fromStep; i++)
+            for (int i = 0; i < adios1FromStep; i++)
             {
                 blockidx += vi->nblocks[i];
             }
             char *dest = (char *)data;
-            for (int i = fromStep; i < fromStep + nSteps; i++)
+            for (int i = adios1FromStep; i < adios1FromStep + nSteps; i++)
             {
                 for (int j = 0; j < vi->nblocks[i]; j++)
                 {
@@ -257,8 +260,8 @@ void ADIOS1CommonRead::ScheduleReadCommon(const std::string &name,
         {
             sel = adios_selection_boundingbox(ldims.size(), start, count);
         }
-        adios_schedule_read(m_fh, sel, name.c_str(), (int)fromStep, (int)nSteps,
-                            data);
+        adios_schedule_read(m_fh, sel, name.c_str(), (int)adios1FromStep,
+                            (int)nSteps, data);
         adios_selection_delete(sel);
     }
 }
@@ -268,7 +271,7 @@ void ADIOS1CommonRead::PerformReads()
     adios_perform_reads(m_fh, static_cast<int>(ReadMode::Blocking));
 }
 
-StepStatus ADIOS1CommonRead::AdvanceStep(const StepMode mode,
+StepStatus ADIOS1CommonRead::AdvanceStep(IO &io, const StepMode mode,
                                          const float timeout_sec)
 {
     if (m_OpenAsFile)
@@ -277,21 +280,41 @@ StepStatus ADIOS1CommonRead::AdvanceStep(const StepMode mode,
                                     "Advance() on a file which was opened for "
                                     "read as File\n");
     }
+
     if (mode != StepMode::NextAvailable && mode != StepMode::LatestAvailable)
     {
         throw std::invalid_argument(
             "ERROR: ADIOS1Reader.Advance() only allows "
             "for NextAvailable or LatestAvailable modes.\n");
     }
-    int last = (mode == StepMode::NextAvailable ? 0 : 1);
-    float *to = const_cast<float *>(&timeout_sec);
-    adios_advance_step(m_fh, last, *to);
+
+    if (m_IsBeforeFirstStep)
+    {
+        /* ADIOS1 already has the first step open after Open(), in ADIOS2 we
+         * wait for
+         * the first call to BeginStep(), which calls this function.
+         */
+
+        m_IsBeforeFirstStep = false;
+        adios_errno = err_no_error;
+    }
+    else
+    {
+        int last = (mode == StepMode::NextAvailable ? 0 : 1);
+        float *timeout = const_cast<float *>(&timeout_sec);
+        adios_advance_step(m_fh, last, *timeout);
+        if (adios_errno != err_step_notready)
+        {
+            io.RemoveAllVariables();
+        }
+    }
 
     StepStatus status;
     switch (adios_errno)
     {
     case err_no_error:
         status = StepStatus::OK;
+        GenerateVariables(io);
         break;
     case err_end_of_stream:
         status = StepStatus::EndOfStream;
@@ -403,6 +426,7 @@ void ADIOS1CommonRead::InitTransports(
             }
         }
     }
+    adios_read_init_method(m_ReadMethod, m_MPIComm, "");
 }
 
 /*
