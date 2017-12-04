@@ -8,6 +8,8 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
+#include <fstream> //TODO go away
+
 #include "DataMan.h"
 
 #include "adios2/helper/adiosFunctions.h"
@@ -161,8 +163,13 @@ void DataMan::WriteWAN(const void *buffer, size_t size)
     m_Transports[m_CurrentTransport]->Write(
         reinterpret_cast<const char *>(buffer), size);
 
+    std::ofstream bpfile("datamanW.bp", std::ios_base::binary);
+    bpfile.write(reinterpret_cast<const char *>(buffer), size);
+    bpfile.close();
+
     for (int i = 0; i < size / 4; i++)
     {
+
         std::cout << static_cast<const float *>(buffer)[i] << " ";
     }
 }
@@ -225,21 +232,29 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
     {
         while (m_Listening)
         {
-            char *buffer = new char[m_BufferSize];
+            // char *buffer = new char[m_BufferSize];
+            std::vector<char> buffer(m_BufferSize);
+
             Transport::Status status;
-            trans->IRead(buffer, m_BufferSize, status);
+            trans->IRead(buffer.data(), m_BufferSize, status);
 
             if (status.Bytes > 0)
             {
                 m_BP3Deserializer->m_Data.Resize(
                     status.Bytes, "in DataMan Streaming Listener");
 
-                std::memcpy(m_BP3Deserializer->m_Data.m_Buffer.data(), buffer,
-                            status.Bytes);
+                std::memcpy(m_BP3Deserializer->m_Data.m_Buffer.data(),
+                            buffer.data(), status.Bytes);
 
                 /* TODO: remove this part  */
 
-                m_Callback->RunCallback2(buffer, "ss", "rr", "char", {128});
+                m_Callback->RunCallback2(buffer.data(), "ss", "rr", "char",
+                                         adios2::Dims{128});
+
+                std::ofstream bpfile("datamanR.bp", std::ios_base::binary);
+                bpfile.write(m_BP3Deserializer->m_Data.m_Buffer.data(),
+                             m_BP3Deserializer->m_Data.m_Buffer.size());
+                bpfile.close();
 
                 m_BP3Deserializer->ParseMetadata(*m_IO);
 
@@ -258,7 +273,7 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                 }
                 */
             }
-            delete[] buffer;
+            // delete[] buffer;
         }
     }
 }

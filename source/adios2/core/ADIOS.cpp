@@ -187,8 +187,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 Operator &ADIOS::DefineCallBack(
     const std::string name,
-    const std::function<void(void *, const std::string, const std::string,
-                             const std::string, const Dims &)> &function,
+    const std::function<void(void *, const std::string &, const std::string &,
+                             const std::string &, const Dims &)> &function,
     const Params &parameters)
 {
     std::shared_ptr<Operator> callbackOperator =
