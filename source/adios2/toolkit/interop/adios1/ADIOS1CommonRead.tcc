@@ -44,6 +44,14 @@ void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
     }
 }
 
+template <class T>
+void ADIOS1CommonRead::DefineADIOS2Attribute(IO &io, const char *name,
+                                             void *value)
+{
+    adios2::Attribute<T> &attr = io.DefineAttribute<T>(
+        name, *(reinterpret_cast<typename TypeInfo<T>::ValueType *>(value)));
+}
+
 } // end namespace interop
 } // end namespace adios2
 

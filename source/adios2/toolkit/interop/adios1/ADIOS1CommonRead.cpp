@@ -43,6 +43,7 @@ bool ADIOS1CommonRead::Open(IO &io)
         m_fh =
             adios_read_open_file(m_FileName.c_str(), m_ReadMethod, m_MPIComm);
         GenerateVariables(io);
+        GenerateAttributes(io);
     }
     else
     {
@@ -71,12 +72,12 @@ void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
                                            isGlobal);
         break;
     case adios_unsigned_long:
-        DefineADIOS2Variable<unsigned long long int>(io, name, vi, gdims,
-                                                     isJoined, isGlobal);
+        DefineADIOS2Variable<uint64_t>(io, name, vi, gdims, isJoined, isGlobal);
         break;
 
     case adios_byte:
-        DefineADIOS2Variable<char>(io, name, vi, gdims, isJoined, isGlobal);
+        DefineADIOS2Variable<signed char>(io, name, vi, gdims, isJoined,
+                                          isGlobal);
         break;
     case adios_short:
         DefineADIOS2Variable<short>(io, name, vi, gdims, isJoined, isGlobal);
@@ -85,8 +86,7 @@ void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
         DefineADIOS2Variable<int>(io, name, vi, gdims, isJoined, isGlobal);
         break;
     case adios_long:
-        DefineADIOS2Variable<long long int>(io, name, vi, gdims, isJoined,
-                                            isGlobal);
+        DefineADIOS2Variable<int64_t>(io, name, vi, gdims, isJoined, isGlobal);
         break;
 
     case adios_real:
@@ -212,6 +212,89 @@ void ADIOS1CommonRead::GenerateVariables(IO &io)
     }
 }
 
+void ADIOS1CommonRead::DefineADIOS2Attribute(IO &io, const char *name,
+                                             enum ADIOS_DATATYPES type,
+                                             void *value)
+{
+    switch (type)
+    {
+    case adios_unsigned_byte:
+        DefineADIOS2Attribute<unsigned char>(io, name, value);
+        break;
+    case adios_unsigned_short:
+        DefineADIOS2Attribute<unsigned short>(io, name, value);
+        break;
+    case adios_unsigned_integer:
+        DefineADIOS2Attribute<unsigned int>(io, name, value);
+        break;
+    case adios_unsigned_long:
+        DefineADIOS2Attribute<uint64_t>(io, name, value);
+        break;
+
+    case adios_byte:
+        DefineADIOS2Attribute<signed char>(io, name, value);
+        break;
+    case adios_short:
+        DefineADIOS2Attribute<short>(io, name, value);
+        break;
+    case adios_integer:
+        DefineADIOS2Attribute<int>(io, name, value);
+        break;
+    case adios_long:
+        DefineADIOS2Attribute<int64_t>(io, name, value);
+        break;
+
+    case adios_real:
+        DefineADIOS2Attribute<float>(io, name, value);
+        break;
+    case adios_double:
+        DefineADIOS2Attribute<double>(io, name, value);
+        break;
+    case adios_long_double:
+        DefineADIOS2Attribute<long double>(io, name, value);
+        break;
+
+    case adios_string:
+    {
+        std::string str(reinterpret_cast<char *>(value));
+        io.DefineAttribute<std::string>(name, str);
+        break;
+    }
+    case adios_complex:
+        /*FIXME: DefineADIOS2Attribute<std::complex<float>>(io, name, value);*/
+        break;
+    case adios_double_complex:
+        /*FIXME: DefineADIOS2Attribute<std::complex<double>>(io, name, value);*/
+        break;
+    default:
+        break;
+    }
+}
+
+void ADIOS1CommonRead::GenerateAttributes(IO &io)
+{
+    if (!m_fh)
+        return;
+    /* Create a Variable for each variable in the file */
+    for (int attid = 0; attid < m_fh->nattrs; attid++)
+    {
+        // here read attribute metadata (dimensions, type, etc.)...then create a
+        // Variable like below:
+        // Variable<T>& variable = io.DefineVariable<T>( m_Name + "/" +
+        // name, )
+        // return &variable; //return address if success
+        enum ADIOS_DATATYPES atype;
+        int asize;
+        void *adata;
+        int status = adios_get_attr_byid(m_fh, attid, &atype, &asize, &adata);
+        if (status == err_no_error)
+        {
+            DefineADIOS2Attribute(io, m_fh->attr_namelist[attid], atype, adata);
+            free(adata);
+        }
+    }
+}
+
 void ADIOS1CommonRead::ScheduleReadCommon(const std::string &name,
                                           const Dims &offs, const Dims &ldims,
                                           const int fromStep, const int nSteps,
@@ -296,6 +379,7 @@ StepStatus ADIOS1CommonRead::AdvanceStep(IO &io, const StepMode mode,
          */
 
         m_IsBeforeFirstStep = false;
+        GenerateAttributes(io);
         adios_errno = err_no_error;
     }
     else

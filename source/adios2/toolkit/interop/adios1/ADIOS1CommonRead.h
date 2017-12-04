@@ -49,7 +49,6 @@ public:
     void InitParameters(const Params &parameters);
     void InitTransports(const std::vector<Params> &transportsParameters);
     bool Open(IO &io); // return true if file is opened successfully
-    void GenerateVariables(IO &io);
 
     void ScheduleReadCommon(const std::string &name, const Dims &offs,
                             const Dims &ldims, const int fromStep,
@@ -87,6 +86,16 @@ private:
     template <class T>
     void DefineADIOS2Variable(IO &io, const char *name, const ADIOS_VARINFO *vi,
                               Dims gdims, bool isJoined, bool isGlobal);
+
+    void GenerateVariables(IO &io);
+
+    void DefineADIOS2Attribute(IO &io, const char *name,
+                               enum ADIOS_DATATYPES type, void *value);
+
+    template <class T>
+    void DefineADIOS2Attribute(IO &io, const char *name, void *value);
+
+    void GenerateAttributes(IO &io);
 };
 
 } // end namespace interop
