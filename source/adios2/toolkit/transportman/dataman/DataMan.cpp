@@ -47,12 +47,12 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
     {
         std::shared_ptr<Transport> wanTransport, controlTransport;
 
-        const std::string type(GetParameter(
-            "type", parameters, true, m_DebugMode, "Transport Type Parameter"));
+        const std::string TransportType(
+            GetParameter("TransportType", parameters, true, m_DebugMode,
+                         "Transport Type Parameter"));
 
-        const std::string library(GetParameter("Library", parameters, true,
-                                               m_DebugMode,
-                                               "Transport Library Parameter"));
+        const std::string transport(GetParameter(
+            "Transport", parameters, true, m_DebugMode, "Transport Parameter"));
 
         const std::string ipAddress(
             GetParameter("IPAddress", parameters, true, m_DebugMode,
@@ -69,9 +69,9 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
 
         const std::string portData(std::to_string(stoi(portControl) + 1));
 
-        std::string messageName(GetParameter("Name", parameters, false,
-                                             m_DebugMode,
-                                             "Transport Name Parameter"));
+        std::string transportName(GetParameter("Name", parameters, false,
+                                               m_DebugMode,
+                                               "Transport Name Parameter"));
 
         std::string format(
             GetParameter("Format", parameters, false, m_DebugMode, "Format"));
@@ -80,24 +80,24 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
             format = "json";
         }
 
-        if (messageName.empty())
+        if (transportName.empty())
         {
-            messageName = name;
+            transportName = name;
         }
 
-        if (type == "wan" || type == "WAN")
+        if (TransportType == "wan" || TransportType == "WAN")
         {
-            if (library == "zmq" || library == "ZMQ")
+            if (transport == "zmq" || transport == "ZMQ")
             {
 #ifdef ADIOS2_HAVE_ZEROMQ
                 wanTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portData, m_MPIComm, m_DebugMode);
-                wanTransport->Open(messageName, mode);
+                wanTransport->Open(transportName, mode);
                 m_Transports.emplace(counter, wanTransport);
 
                 controlTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portControl, m_MPIComm, m_DebugMode);
-                controlTransport->Open(messageName, mode);
+                controlTransport->Open(transportName, mode);
                 m_ControlTransports.emplace_back(controlTransport);
 
                 if (mode == Mode::Read)
@@ -108,7 +108,6 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                     controlTransport, format));
                 }
                 ++counter;
-
 #else
                 throw std::invalid_argument(
                     "ERROR: this version of ADIOS2 didn't compile with "
@@ -119,8 +118,8 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
             {
                 if (m_DebugMode)
                 {
-                    throw std::invalid_argument("ERROR: wan library " +
-                                                library +
+                    throw std::invalid_argument("ERROR: wan transport " +
+                                                transport +
                                                 " not supported or not "
                                                 "provided in IO AddTransport, "
                                                 "in call to Open\n");
@@ -132,15 +131,36 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
 
 void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
 {
+    if (m_CurrentTransport >= m_ControlTransports.size())
+    {
+        throw std::runtime_error("ERROR: No valid control transports found, "
+                                 "from DataMan::WriteWAN()");
+    }
+    if (m_CurrentTransport >= m_Transports.size())
+    {
+        throw std::runtime_error(
+            "ERROR: No valid transports found, from DataMan::WriteWAN()");
+    }
     m_ControlTransports[m_CurrentTransport]->Write(jmsg.dump().c_str(),
                                                    jmsg.dump().size());
     m_Transports[m_CurrentTransport]->Write(static_cast<const char *>(buffer),
                                             jmsg["bytes"].get<size_t>());
 }
 
-void DataMan::WriteWAN(const char *buffer, size_t size)
+void DataMan::WriteWAN(const void *buffer, size_t size)
 {
-    m_Transports[m_CurrentTransport]->Write(buffer, size);
+    if (m_CurrentTransport >= m_Transports.size())
+    {
+        throw std::runtime_error(
+            "ERROR: No valid transports found, from DataMan::WriteWAN()");
+    }
+    m_Transports[m_CurrentTransport]->Write(static_cast<const char *>(buffer),
+                                            size);
+
+    for (int i = 0; i < size / 4; i++)
+    {
+        std::cout << static_cast<const float *>(buffer)[i] << " ";
+    }
 }
 
 void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
@@ -161,8 +181,9 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                          std::shared_ptr<Transport> ctl_trans,
                          const std::string format)
 {
-    if (format == "json")
+    if (format == "json" || format == "JSON")
     {
+        std::cout << "json" << std::endl;
         while (m_Listening)
         {
             char buffer[1024];
@@ -200,16 +221,23 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
     {
         while (m_Listening)
         {
-            uint64_t bufferSize = 0;
-            trans->Read(reinterpret_cast<char *>(&bufferSize), 8);
+            char *buffer = new char[m_BufferSize];
+            Transport::Status status;
+            trans->IRead(buffer, m_BufferSize, status);
 
-            if (bufferSize > 0)
+            if (status.Bytes > 0)
             {
-                size_t size = static_cast<size_t>(bufferSize);
                 m_BP3Deserializer->m_Data.Resize(
-                    size, "in DataMan Streaming Listener");
+                    status.Bytes, "in DataMan Streaming Listener");
 
-                trans->Read(m_BP3Deserializer->m_Data.m_Buffer.data(), size);
+                std::memcpy(m_BP3Deserializer->m_Data.m_Buffer.data(), buffer,
+                            status.Bytes);
+
+                /* TODO: remove this part  */
+
+                m_Callback->RunCallback2(buffer, "ss", "rr", "char", {128});
+
+                /*
                 m_BP3Deserializer->ParseMetadata(*m_IO);
 
                 const auto variablesInfo = m_IO->GetAvailableVariables();
@@ -224,7 +252,9 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                                   << "\t Value: " << parameter.second << "\n";
                     }
                 }
+                */
             }
+            delete[] buffer;
         }
     }
 }

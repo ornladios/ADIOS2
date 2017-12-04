@@ -37,8 +37,8 @@ private:
     format::BP3Serializer m_BP3Serializer;
     transportman::DataMan m_Man;
 
+    unsigned int m_NTransports = 1;
     std::string m_UseFormat = "json";
-    bool m_DoRealTime = false;
     bool m_DoMonitor = false;
 
     void Init(); ///< calls InitCapsules and InitTransports based on Method,

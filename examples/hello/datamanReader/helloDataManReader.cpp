@@ -62,10 +62,8 @@ int main(int argc, char *argv[])
 
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataManReader");
-        dataManIO.SetParameters({{"real_time", "yes"},
-                                 {"method_type", "stream"},
-                                 {"method", "dump"},
-                                 {"Format", "BP"}});
+        dataManIO.SetParameters(
+            {{"Transport", "zmq"}, {"TransportType", "wan"}, {"Format", "bp"}});
         dataManIO.AddOperator(callbackFloat); // propagate to all Engines
 
         adios2::Engine &dataManReader =

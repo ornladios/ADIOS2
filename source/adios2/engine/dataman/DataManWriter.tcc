@@ -38,7 +38,7 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    if (m_UseFormat == "json")
+    if (m_UseFormat == "json" || m_UseFormat == "JSON")
     {
 
         nlohmann::json jmsg;
@@ -55,7 +55,7 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
         m_Man.WriteWAN(values, jmsg);
     }
-    else if (m_UseFormat == "bp")
+    else if (m_UseFormat == "bp" || m_UseFormat == "BP")
     {
         PutSyncCommonBP(variable, values);
     }
@@ -120,6 +120,7 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     m_BP3Serializer.PutVariableMetadata(variable);
     m_BP3Serializer.PutVariablePayload(variable);
+
 }
 
 } // end namespace adios2

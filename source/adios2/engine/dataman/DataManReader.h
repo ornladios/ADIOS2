@@ -43,10 +43,11 @@ public:
     void Close(const int transportIndex = -1);
 
 private:
-    bool m_DoRealTime = false;
     format::BP3Deserializer m_BP3Deserializer;
     transportman::DataMan m_Man;
 
+    unsigned int m_NTransports = 1;
+    std::string m_UseFormat = "json";
     void Init();
 };
 
