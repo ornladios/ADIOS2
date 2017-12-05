@@ -46,7 +46,28 @@ void HDF5WriterP::Init()
             ", in call to ADIOS Open or HDF5Writer constructor\n");
     }
 
+#ifdef NEVER
     m_H5File.Init(m_Name, m_MPIComm, true);
+#else
+    // enforce .h5 ending
+    std::string suffix = ".h5";
+    std::string wrongSuffix = ".bp";
+
+    int ss = m_Name.size();
+    int wpos = m_Name.find(wrongSuffix);
+
+    if (wpos == ss - wrongSuffix.size())
+    {
+        // is a file with .bp ending
+        std::string updatedName = m_Name.substr(0, wpos) + suffix;
+        m_H5File.Init(updatedName, m_MPIComm, true);
+    }
+    else
+    {
+        m_H5File.Init(m_Name, m_MPIComm, true);
+    }
+
+#endif
 }
 
 #define declare_type(T)                                                        \
