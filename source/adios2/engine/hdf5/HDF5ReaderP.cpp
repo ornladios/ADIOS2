@@ -230,42 +230,49 @@ values); #endif
 }
 */
 
-StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds) 
+StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-  m_InStreamMode=true;
-  int ts = m_H5File.GetNumTimeSteps();  
-  if (m_StreamAt >= ts) {
-    return StepStatus::EndOfStream;
-  }
+    m_InStreamMode = true;
+    int ts = m_H5File.GetNumTimeSteps();
+    if (m_StreamAt >= ts)
+    {
+        return StepStatus::EndOfStream;
+    }
 
-  return StepStatus::OK;
+    return StepStatus::OK;
 }
 
-void HDF5ReaderP::EndStep() {   m_StreamAt ++; m_H5File.Advance(); }
+void HDF5ReaderP::EndStep()
+{
+    m_StreamAt++;
+    m_H5File.Advance();
+}
 
 void HDF5ReaderP::PerformGets()
 {
-  if (!m_InStreamMode) {
-    throw std::runtime_error("PerformGets() needs to follow stream read sequeuences.");
-  }
+    if (!m_InStreamMode)
+    {
+        throw std::runtime_error(
+            "PerformGets() needs to follow stream read sequeuences.");
+    }
 
 #define declare_type(T)                                                        \
-    for (std::string variableName : m_DeferredStack) { \
-        Variable<T>* var = m_IO.InquireVariable<T>(variableName);         \
-        if (var  != nullptr)					       \
-	  {                                                                    \
-	    var->m_StepsStart = m_StreamAt;                               \
-            var->m_StepsCount = 1;				\
-	    hid_t h5Type = m_H5File.GetHDF5Type<T>();                          \
-	    UseHDFRead(*var, var->GetData(), h5Type);	\
-	    break;						\
-	  } \
-    }    
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type  
+    for (std::string variableName : m_DeferredStack)                           \
+    {                                                                          \
+        Variable<T> *var = m_IO.InquireVariable<T>(variableName);              \
+        if (var != nullptr)                                                    \
+        {                                                                      \
+            var->m_StepsStart = m_StreamAt;                                    \
+            var->m_StepsCount = 1;                                             \
+            hid_t h5Type = m_H5File.GetHDF5Type<T>();                          \
+            UseHDFRead(*var, var->GetData(), h5Type);                          \
+            break;                                                             \
+        }                                                                      \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
-
-  m_DeferredStack.clear();
+    m_DeferredStack.clear();
 }
 
 void HDF5ReaderP::Close(const int transportIndex) { m_H5File.Close(); }
