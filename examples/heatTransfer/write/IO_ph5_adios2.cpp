@@ -21,14 +21,15 @@ adios2::Variable<unsigned int> *varGndx = nullptr;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    m_outputfilename = s.outputfile;
     std::string suffix = ".h5";
+    m_outputfilename = s.outputfile + suffix;
 
     int ss = s.outputfile.size();
-    if ((ss > suffix.size()) && s.outputfile.find(suffix) != ss - suffix.size())
+    int pos = s.outputfile.find(suffix);
+    if ((ss > suffix.size()) && (pos == ss - suffix.size()))
     {
         // Your code here
-        m_outputfilename += suffix;
+      m_outputfilename = s.outputfile;
     }
 
     ad = new adios2::ADIOS(comm, adios2::DebugOFF);
