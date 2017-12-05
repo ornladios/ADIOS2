@@ -65,6 +65,8 @@ private:
                     std::shared_ptr<Transport> ctl_trans,
                     const std::string format);
 
+    void RunCallback(void *buffer, std::string doid, std::string var,
+                     std::string dtype, std::vector<size_t> shape);
     std::vector<std::shared_ptr<Transport>> m_ControlTransports;
     std::vector<std::thread> m_ControlThreads;
     size_t m_CurrentTransport = 0;

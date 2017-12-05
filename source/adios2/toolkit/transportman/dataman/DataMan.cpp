@@ -232,8 +232,8 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
     {
         while (m_Listening)
         {
-            // char *buffer = new char[m_BufferSize];
-            std::vector<char> buffer(m_BufferSize);
+            std::vector<char> buffer;
+            buffer.reserve(m_BufferSize);
 
             Transport::Status status;
             trans->IRead(buffer.data(), m_BufferSize, status);
@@ -246,15 +246,13 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                 std::memcpy(m_BP3Deserializer->m_Data.m_Buffer.data(),
                             buffer.data(), status.Bytes);
 
-                /* TODO: remove this part  */
-
-                m_Callback->RunCallback2(buffer.data(), "ss", "rr", "char",
-                                         adios2::Dims{128});
-
+                /*    write bp file for debugging   */
+                /*
                 std::ofstream bpfile("datamanR.bp", std::ios_base::binary);
                 bpfile.write(m_BP3Deserializer->m_Data.m_Buffer.data(),
                              m_BP3Deserializer->m_Data.m_Buffer.size());
                 bpfile.close();
+                */
 
                 m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Data,
                                                  *m_IO);
@@ -262,17 +260,94 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                 const auto variablesInfo = m_IO->GetAvailableVariables();
                 for (const auto &variableInfoPair : variablesInfo)
                 {
-                    std::cout << "Variable Name: " << variableInfoPair.first
-                              << "\n";
 
+                    std::string var = variableInfoPair.first;
+                    std::string type = "null";
                     for (const auto &parameter : variableInfoPair.second)
                     {
                         std::cout << "\tKey: " << parameter.first
                                   << "\t Value: " << parameter.second << "\n";
+                        if (parameter.first == "Type")
+                        {
+                            type = parameter.second;
+                        }
                     }
+
+                    if (type == "string")
+                    {
+                    }
+                    else if (type == "char")
+                    {
+                    }
+                    else if (type == "unsigned char")
+                    {
+                    }
+                    else if (type == "short")
+                    {
+                    }
+                    else if (type == "unsigned short")
+                    {
+                    }
+                    else if (type == "int")
+                    {
+                        adios2::Variable<int> *v =
+                            m_IO->InquireVariable<int>(var);
+                        size_t size = std::accumulate(
+                            v->m_Shape.begin(), v->m_Shape.end(), 1,
+                            std::multiplies<size_t>());
+                        std::vector<int> x(size);
+                        v->SetData(x.data());
+                        /* TODO: add read variable */
+                        RunCallback(x.data(), "stream", var, type, v->m_Shape);
+                    }
+                    else if (type == "unsigned int")
+                    {
+                    }
+                    else if (type == "long int")
+                    {
+                    }
+                    else if (type == "unsigned long int")
+                    {
+                    }
+                    else if (type == "long long int")
+                    {
+                    }
+                    else if (type == "unsigned long long int")
+                    {
+                    }
+                    else if (type == "float")
+                    {
+                    }
+                    else if (type == "double")
+                    {
+                    }
+                    else if (type == "long double")
+                    {
+                    }
+                    else if (type == "float complex")
+                    {
+                    }
+                    else if (type == "double complex")
+                    {
+                    }
+                    else if (type == "long double complex")
+                    {
+                    }
+
+                    std::cout << "Variable Name: " << var << std::endl;
+                    std::cout << "Type: " << type << std::endl;
                 }
             }
         }
+    }
+}
+
+void DataMan::RunCallback(void *buffer, std::string doid, std::string var,
+                          std::string dtype, std::vector<size_t> shape)
+{
+    if (m_Callback != nullptr && m_Callback->m_Type == "Signature2")
+    {
+        m_Callback->RunCallback2(buffer, doid, var, dtype, shape);
     }
 }
 
