@@ -21,7 +21,17 @@ adios2::Variable<unsigned int> *varGndx = nullptr;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    m_outputfilename = s.outputfile + ".h5";
+    std::string suffix = ".h5";
+    m_outputfilename = s.outputfile + suffix;
+
+    int ss = s.outputfile.size();
+    int pos = s.outputfile.find(suffix);
+    if ((ss > suffix.size()) && (pos == ss - suffix.size()))
+    {
+        // Your code here
+        m_outputfilename = s.outputfile;
+    }
+
     ad = new adios2::ADIOS(comm, adios2::DebugOFF);
 
     // Define method for engine creation
