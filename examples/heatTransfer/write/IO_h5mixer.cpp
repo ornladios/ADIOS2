@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * IO_ADIOS2.cpp
+ * IO_h5mixer.cpp
  *
  *  Created on: Feb 2017
  *      Author: Norbert Podhorszki
@@ -50,7 +50,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     // Define method for engine creation
 
-    adios2::IO &h5io = ad->DeclareIO("output");
+    adios2::IO &h5io = ad->DeclareIO("writer");
     if (!h5io.InConfigFile())
     {
         // if not defined by user, we can change the default settings
