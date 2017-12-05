@@ -40,7 +40,7 @@ public:
 
     ~BP3Deserializer() = default;
 
-    void ParseMetadata(IO &io);
+    void ParseMetadata(const BufferSTL &bufferSTL, IO &io);
 
     // Sync functions
     template <class T>
@@ -64,9 +64,9 @@ private:
 
     static std::mutex m_Mutex;
 
-    void ParseMinifooter();
-    void ParsePGIndex();
-    void ParseVariablesIndex(IO &io);
+    void ParseMinifooter(const BufferSTL &bufferSTL);
+    void ParsePGIndex(const BufferSTL &bufferSTL);
+    void ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io);
     void ParseAttributesIndex(IO &io);
 
     /**

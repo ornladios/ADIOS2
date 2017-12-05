@@ -32,11 +32,11 @@ BP3Deserializer::BP3Deserializer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void BP3Deserializer::ParseMetadata(IO &io)
+void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, IO &io)
 {
-    ParseMinifooter();
-    ParsePGIndex();
-    ParseVariablesIndex(io);
+    ParseMinifooter(bufferSTL);
+    ParsePGIndex(bufferSTL);
+    ParseVariablesIndex(bufferSTL, io);
     // ParseAttributesIndex(io);
 }
 
@@ -66,7 +66,7 @@ void BP3Deserializer::ClipContiguousMemory(
 }
 
 // PRIVATE
-void BP3Deserializer::ParseMinifooter()
+void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
     auto lf_GetEndianness = [](const uint8_t endianness, bool &isLittleEndian) {
 
@@ -81,7 +81,7 @@ void BP3Deserializer::ParseMinifooter()
         }
     };
 
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
 
     size_t position = bufferSize - 4;
@@ -110,9 +110,9 @@ void BP3Deserializer::ParseMinifooter()
     m_Minifooter.AttributesIndexStart = ReadValue<uint64_t>(buffer, position);
 }
 
-void BP3Deserializer::ParsePGIndex()
+void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
 {
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     auto &position = m_Metadata.m_Position;
     position = m_Minifooter.PGIndexStart;
 
@@ -128,7 +128,7 @@ void BP3Deserializer::ParsePGIndex()
     }
 }
 
-void BP3Deserializer::ParseVariablesIndex(IO &io)
+void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
 {
     auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
                                    size_t position) {
@@ -238,7 +238,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
         } // end switch
     };
 
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.VarsIndexStart;
 
     const uint32_t count = ReadValue<uint32_t>(buffer, position);
