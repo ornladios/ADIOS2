@@ -29,7 +29,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     if ((ss > suffix.size()) && (pos == ss - suffix.size()))
     {
         // Your code here
-      m_outputfilename = s.outputfile;
+        m_outputfilename = s.outputfile;
     }
 
     ad = new adios2::ADIOS(comm, adios2::DebugOFF);
