@@ -135,6 +135,7 @@ PYBIND11_MODULE(adios2, m)
 
     pybind11::class_<adios2::VariableBase>(m, "Variable")
         .def("SetSelection", &adios2::VariableBase::SetSelection)
+        .def("SetStepSelection", &adios2::VariableBase::SetStepSelection)
         .def("SelectionSize", &adios2::VariableBase::SelectionSize);
 
     pybind11::class_<adios2::IOPy>(m, "IOPy")
@@ -188,6 +189,7 @@ PYBIND11_MODULE(adios2, m)
                                 adios2::EnginePy::GetDeferred)
         .def("PerformGets", &adios2::EnginePy::PerformGets)
         .def("EndStep", &adios2::EnginePy::EndStep)
+        .def("WriteStep", &adios2::EnginePy::WriteStep)
         .def("Close", &adios2::EnginePy::Close,
              pybind11::arg("transportIndex") = -1);
 }

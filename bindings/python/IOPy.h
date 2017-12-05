@@ -39,7 +39,7 @@ public:
 
     const Params &GetParameters() const noexcept;
 
-    VariableBase &DefineVariable(const std::string &name, const Dims &shape,
+    VariableBase *DefineVariable(const std::string &name, const Dims &shape,
                                  const Dims &start, const Dims &count,
                                  const bool isConstantDims,
                                  pybind11::array &array);
@@ -50,11 +50,6 @@ public:
 
 private:
     const bool m_DebugMode;
-    /**
-     *  Placeholder map needed as Variables are not created in ADIOS at
-     *  DefineVariable, but until Put when type is known from numpy
-     */
-    std::map<std::string, VariableBase> m_VariablesPlaceholder;
 };
 
 } // end namespace adios2
