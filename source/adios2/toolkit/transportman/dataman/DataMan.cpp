@@ -256,9 +256,9 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                              m_BP3Deserializer->m_Data.m_Buffer.size());
                 bpfile.close();
 
-                m_BP3Deserializer->ParseMetadata(*m_IO);
+                m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Data,
+                                                 *m_IO);
 
-                /*
                 const auto variablesInfo = m_IO->GetAvailableVariables();
                 for (const auto &variableInfoPair : variablesInfo)
                 {
@@ -271,9 +271,7 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                                   << "\t Value: " << parameter.second << "\n";
                     }
                 }
-                */
             }
-            // delete[] buffer;
         }
     }
 }

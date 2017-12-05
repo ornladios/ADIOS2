@@ -95,7 +95,7 @@ void BPFileReader::InitBuffer()
     BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // fills IO with Variables and Attributes
-    m_BP3Deserializer.ParseMetadata(m_IO);
+    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
 }
 
 #define declare_type(T)                                                        \
