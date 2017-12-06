@@ -74,8 +74,11 @@ void HDF5WriterP::Init()
     void HDF5WriterP::DoPutSync(Variable<T> &variable, const T *values)        \
     {                                                                          \
         DoPutSyncCommon(variable, values);                                     \
+    }                                                                          \
+    void HDF5WriterP::DoPutDeferred(Variable<T> &variable, const T *values)    \
+    {                                                                          \
+        DoPutSyncCommon(variable, values);                                     \
     }
-
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

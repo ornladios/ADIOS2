@@ -33,15 +33,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     rank_saved = s.rank;
 
-    m_outputfilename = s.outputfile;
-    std::string suffix = ".h5";
-
-    int ss = s.outputfile.size();
-    if ((ss > suffix.size()) && s.outputfile.find(suffix) != ss - suffix.size())
-    {
-        // Your code here
-        m_outputfilename += suffix;
-    }
+    m_outputfilename = MakeFilename(s.outputfile, ".h5");
 
     /*ad = new adios2::ADIOS(std::string(DEFAULT_CONFIG_STR), comm,
                            adios2::DebugON);
