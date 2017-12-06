@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3BASE_TCC_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP3BASE_TCC_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_TCC_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_TCC_
 
 #include "BP3Base.h"
 
@@ -429,4 +429,4 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP3Base_TCC_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_BP3Base_TCC_ */

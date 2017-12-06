@@ -220,7 +220,7 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
 
     const auto &buffer = m_Metadata.m_Buffer;
 
-    const size_t stepStart = variable.m_StepsStart;
+    const size_t stepStart = variable.m_StepsStart + 1;
     const size_t stepEnd =
         stepStart + variable.m_StepsCount; // inclusive or exclusive?
 

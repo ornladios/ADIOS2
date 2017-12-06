@@ -32,12 +32,12 @@ BP3Deserializer::BP3Deserializer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void BP3Deserializer::ParseMetadata(IO &io)
+void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, IO &io)
 {
-    ParseMinifooter();
-    ParsePGIndex();
-    ParseVariablesIndex(io);
-    ParseAttributesIndex(io);
+    ParseMinifooter(bufferSTL);
+    ParsePGIndex(bufferSTL);
+    ParseVariablesIndex(bufferSTL, io);
+    ParseAttributesIndex(bufferSTL, io);
 }
 
 void BP3Deserializer::ClipContiguousMemory(
@@ -96,7 +96,7 @@ void BP3Deserializer::GetStringFromMetadata(
 }
 
 // PRIVATE
-void BP3Deserializer::ParseMinifooter()
+void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
     auto lf_GetEndianness = [](const uint8_t endianness, bool &isLittleEndian) {
 
@@ -111,9 +111,8 @@ void BP3Deserializer::ParseMinifooter()
         }
     };
 
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
-
     size_t position = bufferSize - 4;
     const uint8_t endianess = ReadValue<uint8_t>(buffer, position);
     lf_GetEndianness(endianess, m_Minifooter.IsLittleEndian);
@@ -140,25 +139,35 @@ void BP3Deserializer::ParseMinifooter()
     m_Minifooter.AttributesIndexStart = ReadValue<uint64_t>(buffer, position);
 }
 
-void BP3Deserializer::ParsePGIndex()
+void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
 {
-    const auto &buffer = m_Metadata.m_Buffer;
-    auto &position = m_Metadata.m_Position;
-    position = m_Minifooter.PGIndexStart;
+    const auto &buffer = bufferSTL.m_Buffer;
+    size_t position = m_Minifooter.PGIndexStart;
 
     m_MetadataSet.DataPGCount = ReadValue<uint64_t>(buffer, position);
-    position += 10; // skipping lengths
-    const uint16_t nameLength = ReadValue<uint16_t>(buffer, position);
-    position += static_cast<size_t>(nameLength); // skipping name
-    const char isFortran = ReadValue<char>(buffer, position);
+    const size_t length = ReadValue<uint64_t>(buffer, position);
 
-    if (isFortran == 'y')
+    size_t localPosition = 0;
+
+    while (localPosition < length)
     {
-        m_IsRowMajor = false;
+        ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
+        if (index.IsFortran == 'y')
+        {
+            m_IsRowMajor = false;
+        }
+
+        const size_t currentStep = static_cast<size_t>(index.Step);
+        if (currentStep > m_MetadataSet.StepsCount)
+        {
+            m_MetadataSet.StepsCount = currentStep;
+        }
+
+        localPosition += index.Length + 2;
     }
 }
 
-void BP3Deserializer::ParseVariablesIndex(IO &io)
+void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
 {
     auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
                                    size_t position) {
@@ -169,7 +178,6 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
         switch (header.DataType)
         {
 
-        // TODO: string
         case (type_string):
         {
             DefineVariableInIO<std::string>(header, io, buffer, position);
@@ -267,7 +275,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
     };
 
     // STARTS HERE
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.VarsIndexStart;
 
     const uint32_t count = ReadValue<uint32_t>(buffer, position);
@@ -317,7 +325,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
     }
 }
 
-void BP3Deserializer::ParseAttributesIndex(IO &io)
+void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io)
 {
     auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
                                    size_t position) {
@@ -409,7 +417,7 @@ void BP3Deserializer::ParseAttributesIndex(IO &io)
         } // end switch
     };
 
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.AttributesIndexStart;
 
     const uint32_t count = ReadValue<uint32_t>(buffer, position);
