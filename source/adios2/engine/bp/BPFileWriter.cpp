@@ -56,39 +56,21 @@ void BPFileWriter::PerformPuts()
 
 void BPFileWriter::EndStep()
 {
-    if (m_DebugMode && m_BP3Serializer.m_DeferredVariables.size() > 0)
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
     {
-        throw std::invalid_argument("ERROR: existing variables subscribed with "
-                                    "PutDeferred, did you forget to call "
-                                    "PerformPuts()?, in call to EndStep\n");
+        PerformPuts();
     }
 
     m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
 }
 
-// PRIVATE
-void BPFileWriter::Init()
-{
-    InitParameters();
-    InitTransports();
-    InitBPBuffer();
-}
-
-#define declare_type(T)                                                        \
-    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
-    {                                                                          \
-        PutSyncCommon(variable, values);                                       \
-    }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
-    {                                                                          \
-        PutDeferredCommon(variable, values);                                   \
-    }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
 void BPFileWriter::Close(const int transportIndex)
 {
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
+    {
+        PerformPuts();
+    }
+
     // close bp buffer by serializing data and metadata
     m_BP3Serializer.CloseData(m_IO);
     // send data to corresponding transports
@@ -112,6 +94,27 @@ void BPFileWriter::Close(const int transportIndex)
 }
 
 // PRIVATE FUNCTIONS
+// PRIVATE
+void BPFileWriter::Init()
+{
+    InitParameters();
+    InitTransports();
+    InitBPBuffer();
+}
+
+#define declare_type(T)                                                        \
+    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
+    {                                                                          \
+        PutSyncCommon(variable, values);                                       \
+    }                                                                          \
+    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
+    {                                                                          \
+        PutDeferredCommon(variable, values);                                   \
+    }                                                                          \
+    void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 void BPFileWriter::InitParameters()
 {
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);

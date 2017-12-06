@@ -27,11 +27,39 @@ BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode mode,
 
 StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    if (m_DebugMode && mode != StepMode::NextAvailable)
+    if (m_DebugMode)
     {
-        throw std::invalid_argument("ERROR: mode is not supported yet for "
-                                    "engine BPFileReader, in call to "
-                                    "BeginStep\n");
+        if (mode != StepMode::NextAvailable)
+        {
+            throw std::invalid_argument("ERROR: mode is not supported yet, "
+                                        "only NextAvailable is valid for "
+                                        "engine BPFileReader, in call to "
+                                        "BeginStep\n");
+        }
+
+        if (!m_BP3Deserializer.m_PerformedGets)
+        {
+            throw std::invalid_argument(
+                "ERROR: existing variables subscribed with "
+                "GetDeferred, did you forget to call "
+                "PerformGets() or EndStep()?, in call to BeginStep\n");
+        }
+    }
+
+    StepStatus status = StepStatus::OK;
+
+    if (m_FirstStep)
+    {
+        m_FirstStep = false;
+    }
+    else
+    {
+        ++m_CurrentStep;
+    }
+
+    if (m_CurrentStep >= m_BP3Deserializer.m_MetadataSet.StepsCount - 1)
+    {
+        status = StepStatus::EndOfStream;
     }
 
     const auto &variablesData = m_IO.GetVariablesDataMap();
@@ -50,26 +78,22 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
         auto variable = m_IO.InquireVariable<T>(name);                         \
         if (mode == StepMode::NextAvailable)                                   \
         {                                                                      \
-            variable->SetStepSelection({m_CurrentStep + 1, 1});                \
+            variable->SetStepSelection({m_CurrentStep, 1});                    \
         }                                                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
     }
 
-    return StepStatus::OK;
+    return status;
 }
 
 void BPFileReader::EndStep()
 {
-    if (m_DebugMode && !m_BP3Deserializer.m_PerformedGets)
+    if (!m_BP3Deserializer.m_PerformedGets)
     {
-        throw std::invalid_argument("ERROR: existing variables subscribed with "
-                                    "GetDeferred, did you forget to call "
-                                    "PerformGets()?, in call to EndStep\n");
+        PerformGets();
     }
-
-    ++m_CurrentStep;
 }
 
 void BPFileReader::PerformGets()
@@ -82,6 +106,11 @@ void BPFileReader::PerformGets()
 
 void BPFileReader::Close(const int transportIndex)
 {
+    if (!m_BP3Deserializer.m_PerformedGets)
+    {
+        PerformGets();
+    }
+
     m_SubFileManager.CloseFiles();
     m_FileManager.CloseFiles();
 }
@@ -141,7 +170,7 @@ void BPFileReader::InitBuffer()
     BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // fills IO with Variables and Attributes
-    m_BP3Deserializer.ParseMetadata(m_IO);
+    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
 }
 
 #define declare_type(T)                                                        \

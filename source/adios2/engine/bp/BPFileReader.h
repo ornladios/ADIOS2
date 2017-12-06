@@ -56,8 +56,9 @@ private:
     transportman::TransportMan m_FileManager;
     transportman::TransportMan m_SubFileManager;
 
-    /** updates if step=1 in EndStep function, used for per-step reads */
+    /** used for per-step reads, TODO: to be moved to BP3Deserializer */
     size_t m_CurrentStep = 0;
+    bool m_FirstStep = true;
 
     void Init();
     void InitTransports();

@@ -538,6 +538,21 @@ size_t BP3Base::GetProcessGroupIndexSize(const std::string name,
     return pgSize;
 }
 
+BP3Base::ProcessGroupIndex
+BP3Base::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
+                                     size_t &position) const noexcept
+{
+    ProcessGroupIndex index;
+    index.Length = ReadValue<uint16_t>(buffer, position);
+    index.Name = ReadBP3String(buffer, position);
+    index.IsFortran = ReadValue<char>(buffer, position);
+    index.ProcessID = ReadValue<int32_t>(buffer, position);
+    index.StepName = ReadBP3String(buffer, position);
+    index.Step = ReadValue<uint32_t>(buffer, position);
+    index.Offset = ReadValue<uint64_t>(buffer, position);
+    return index;
+}
+
 BP3Base::ElementIndexHeader
 BP3Base::ReadElementIndexHeader(const std::vector<char> &buffer,
                                 size_t &position) const noexcept

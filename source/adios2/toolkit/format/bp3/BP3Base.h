@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Base.h  base class for BP1Writer and BP1Reader
+ * BP3Base.h  base class for BP3Serializer and BP3Deserializer
  *
  *  Created on: Feb 2, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_H_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -59,11 +59,12 @@ public:
         }
     };
 
+    /** Single struct containing metadata indices and tracking information */
     struct MetadataSet
     {
         /**
-         * updated with advance step, if append it will be updated to last,
-         * starts with one in ADIOS1
+         * updated with EndStep, if append it will be updated to last,
+         * starts with one in ADIOS1 BP3 format
          */
         uint32_t TimeStep = 1;
 
@@ -92,6 +93,12 @@ public:
         size_t DataPGVarsCountPosition = 0;
         /** true: currently writing to a pg, false: no current pg */
         bool DataPGIsOpen = false;
+
+        /** Used at Read, steps start at zero */
+        size_t StepsStart = 0;
+
+        /** Used at Read, number of total steps */
+        size_t StepsCount = 1;
     };
 
     struct Minifooter
@@ -316,6 +323,17 @@ protected:
         statistic_finite = 6
     };
 
+    struct ProcessGroupIndex
+    {
+        uint64_t Offset;
+        uint32_t Step;
+        int32_t ProcessID;
+        uint16_t Length;
+        std::string Name;
+        std::string StepName;
+        char IsFortran;
+    };
+
     template <class T>
     struct Stats
     {
@@ -414,6 +432,10 @@ protected:
                                     const std::string timeStepName,
                                     const size_t transportsSize) const noexcept;
 
+    ProcessGroupIndex
+    ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
+                                size_t &position) const noexcept;
+
     ElementIndexHeader ReadElementIndexHeader(const std::vector<char> &buffer,
                                               size_t &position) const noexcept;
 
@@ -469,4 +491,4 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_ */
