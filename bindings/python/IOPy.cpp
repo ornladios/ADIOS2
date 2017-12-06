@@ -42,30 +42,15 @@ unsigned int IOPy::AddTransport(const std::string type,
     return m_IO.AddTransport(type, parameters);
 }
 
-VariableBase &IOPy::DefineVariable(const std::string &name, const Dims &shape,
+VariableBase *IOPy::DefineVariable(const std::string &name, const Dims &shape,
                                    const Dims &start, const Dims &count,
                                    const bool isConstantDims,
                                    pybind11::array &array)
 {
-    if (m_DebugMode)
-    {
-        if (m_VariablesPlaceholder.count(name) == 1)
-        {
-            throw std::invalid_argument("ERROR: variable " + name +
-                                        " already exists, in "
-                                        "call to DefineVariable\n");
-        }
-    }
-
     VariableBase *variable = nullptr;
 
-    if (array.is(pybind11::array()))
+    if (false)
     {
-        // put in placeholder
-        auto itVariableEmplace = m_VariablesPlaceholder.emplace(
-            name, VariableBase(name, "unknown", 0, shape, start, count,
-                               isConstantDims, m_DebugMode));
-        variable = &itVariableEmplace.first->second;
     }
 #define declare_type(T)                                                        \
     else if (pybind11::isinstance<                                             \
@@ -89,33 +74,16 @@ VariableBase &IOPy::DefineVariable(const std::string &name, const Dims &shape,
         }
     }
 
-    return *variable;
+    return variable;
 }
 
 VariableBase *IOPy::InquireVariable(const std::string &name) noexcept
 {
-    // first check in placeholder
-    if (!m_VariablesPlaceholder.empty())
-    {
-        auto itVariablePlaceholder = m_VariablesPlaceholder.find(name);
-
-        if (itVariablePlaceholder != m_VariablesPlaceholder.end())
-        {
-            return &itVariablePlaceholder->second;
-        }
-    }
-
     const std::string type(m_IO.InquireVariableType(name));
-    if (type.empty())
-    {
-        return nullptr;
-    }
-
     adios2::VariableBase *variable = nullptr;
 
-    if (type == "compound")
+    if (type == "unknown")
     {
-        // not supported
     }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::GetType<T>())                                     \
@@ -131,7 +99,7 @@ VariableBase *IOPy::InquireVariable(const std::string &name) noexcept
 EnginePy IOPy::Open(const std::string &name, const int openMode)
 {
     return EnginePy(m_IO, name, static_cast<adios2::Mode>(openMode),
-                    m_IO.m_MPIComm, m_VariablesPlaceholder);
+                    m_IO.m_MPIComm);
 }
 
 } // end namespace adios2
