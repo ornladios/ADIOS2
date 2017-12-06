@@ -8,8 +8,8 @@ an application to the ADIOS2 library for its IO.
 1. write: illustrates the Write API as well as has implementations of other IO libraries
   
     * adios 1.x    
-    * hdf5
-    * phdf5
+    * hdf5 sequential, separate file per process per step
+    * phdf5 parallel, steps appended to the same one file
 
 2. read: illustrates the Read API that allows running the reader either as
 
@@ -38,7 +38,11 @@ Writer usage:  heatTransfer  config output  N  M   nx  ny   steps iterations
   steps:  the total number of steps to output
   iterations: one step consist of this many iterations
 
-$  mpirun -np 12 ./bin/heatTransfer_write_adios2 ../examples/heatTransfer/heat.xml  heat  4 3  5 10 10 10
+The ADIOS2 executable needs an XML config file to select the Engine used for the output. The engines are: BPFile, ADIOS1 and HDF5, the corresponding XML config files are in the examples/heatTransfer/ directory.
+
+The adios1, ph5 and hdf5 versions of the example do not use XML config files, so just type "none" for the config argument.
+
+$  mpirun -np 12 ./bin/heatTransfer_write_adios2 ../examples/heatTransfer/heat_bpfile.xml  heat  4 3  5 10 10 10
 
 
 2. Read the output step-by-step and print data into text files (data.<rank> per reader process)

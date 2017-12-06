@@ -276,18 +276,7 @@ std::shared_ptr<HDF5NativeWriter> h5writer;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    std::string suffix = ".h5";
-    m_outputfilename = s.outputfile + suffix;
-
-    int ss = s.outputfile.size();
-    int pos = s.outputfile.find(suffix);
-    if ((ss > suffix.size()) && (pos == ss - suffix.size()))
-    {
-        // Your code here
-        m_outputfilename = s.outputfile;
-    }
-
-    //    m_outputfilename = s.outputfile + ".h5";
+    m_outputfilename = MakeFilename(s.outputfile, ".h5");
 
     if (s.outputfile[0] == '0')
     {
