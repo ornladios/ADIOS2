@@ -178,6 +178,14 @@ size_t BP3Base::GetVariableBPIndexSize(const std::string &variableName,
     return indexSize + 12; // extra 12 bytes in case of attributes
 }
 
+void BP3Base::ResetBuffer()
+{
+    // set relative position to zero
+    m_Data.m_Position = 0;
+    // reset buffer to zero values to current size
+    m_Data.m_Buffer.assign(m_Data.m_Buffer.size(), '\0');
+}
+
 BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
                                             const std::string hint)
 {
@@ -510,6 +518,10 @@ BP3Base::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
         else if (method == "File_stdio")
         {
             id = METHOD_FILE;
+        }
+        else if (method == "WAN_zmq")
+        {
+            id = METHOD_ZMQ;
         }
 
         return static_cast<uint8_t>(id);

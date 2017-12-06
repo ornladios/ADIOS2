@@ -188,6 +188,12 @@ public:
     size_t GetVariableBPIndexSize(const std::string &variableName,
                                   const Dims &variableCount) const noexcept;
 
+    /**
+     * Sets current relative position to zero and fill buffer with zero char
+     * '\0'
+     */
+    void ResetBuffer();
+
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
     {

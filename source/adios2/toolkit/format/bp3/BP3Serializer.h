@@ -80,6 +80,8 @@ public:
      */
     void CloseData(IO &io);
 
+    void CloseStream(IO &io);
+
     /**
      * Get a string with profiling information for this rank
      * @param name stream name

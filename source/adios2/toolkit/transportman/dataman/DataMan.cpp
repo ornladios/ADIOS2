@@ -8,6 +8,8 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
+#include <fstream> //TODO go away
+
 #include "DataMan.h"
 
 #include "adios2/helper/adiosFunctions.h"
@@ -38,6 +40,7 @@ DataMan::~DataMan()
 void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                                 const std::vector<Params> &parametersVector,
                                 const bool profile)
+
 {
 #ifdef ADIOS2_HAVE_ZEROMQ
     size_t counter = 0; // remove MACRO when more libraries are added
@@ -47,12 +50,12 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
     {
         std::shared_ptr<Transport> wanTransport, controlTransport;
 
-        const std::string type(GetParameter(
-            "type", parameters, true, m_DebugMode, "Transport Type Parameter"));
+        const std::string TransportType(
+            GetParameter("TransportType", parameters, true, m_DebugMode,
+                         "Transport Type Parameter"));
 
-        const std::string library(GetParameter("Library", parameters, true,
-                                               m_DebugMode,
-                                               "Transport Library Parameter"));
+        const std::string transport(GetParameter(
+            "Transport", parameters, true, m_DebugMode, "Transport Parameter"));
 
         const std::string ipAddress(
             GetParameter("IPAddress", parameters, true, m_DebugMode,
@@ -69,28 +72,35 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
 
         const std::string portData(std::to_string(stoi(portControl) + 1));
 
-        std::string messageName(GetParameter("Name", parameters, false,
-                                             m_DebugMode,
-                                             "Transport Name Parameter"));
+        std::string transportName(GetParameter("Name", parameters, false,
+                                               m_DebugMode,
+                                               "Transport Name Parameter"));
 
-        if (messageName.empty())
+        std::string format(
+            GetParameter("Format", parameters, false, m_DebugMode, "Format"));
+        if (format.empty())
         {
-            messageName = name;
+            format = "json";
         }
 
-        if (type == "wan" || type == "WAN")
+        if (transportName.empty())
         {
-            if (library == "zmq" || library == "ZMQ")
+            transportName = name;
+        }
+
+        if (TransportType == "wan" || TransportType == "WAN")
+        {
+            if (transport == "zmq" || transport == "ZMQ")
             {
 #ifdef ADIOS2_HAVE_ZEROMQ
                 wanTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portData, m_MPIComm, m_DebugMode);
-                wanTransport->Open(messageName, mode);
+                wanTransport->Open(transportName, mode);
                 m_Transports.emplace(counter, wanTransport);
 
                 controlTransport = std::make_shared<transport::WANZmq>(
                     ipAddress, portControl, m_MPIComm, m_DebugMode);
-                controlTransport->Open(messageName, mode);
+                controlTransport->Open(transportName, mode);
                 m_ControlTransports.emplace_back(controlTransport);
 
                 if (mode == Mode::Read)
@@ -98,10 +108,9 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
                     m_Listening = true;
                     m_ControlThreads.emplace_back(
                         std::thread(&DataMan::ReadThread, this, wanTransport,
-                                    controlTransport));
+                                    controlTransport, format));
                 }
                 ++counter;
-
 #else
                 throw std::invalid_argument(
                     "ERROR: this version of ADIOS2 didn't compile with "
@@ -112,8 +121,8 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
             {
                 if (m_DebugMode)
                 {
-                    throw std::invalid_argument("ERROR: wan library " +
-                                                library +
+                    throw std::invalid_argument("ERROR: wan transport " +
+                                                transport +
                                                 " not supported or not "
                                                 "provided in IO AddTransport, "
                                                 "in call to Open\n");
@@ -125,13 +134,54 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
 
 void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
 {
+    if (m_CurrentTransport >= m_ControlTransports.size())
+    {
+        throw std::runtime_error("ERROR: No valid control transports found, "
+                                 "from DataMan::WriteWAN()");
+    }
+    if (m_CurrentTransport >= m_Transports.size())
+    {
+        throw std::runtime_error(
+            "ERROR: No valid transports found, from DataMan::WriteWAN()");
+    }
     m_ControlTransports[m_CurrentTransport]->Write(jmsg.dump().c_str(),
                                                    jmsg.dump().size());
-    m_Transports[m_CurrentTransport]->Write(static_cast<const char *>(buffer),
-                                            jmsg["bytes"].get<size_t>());
+    m_Transports[m_CurrentTransport]->Write(
+        reinterpret_cast<const char *>(buffer), jmsg["bytes"].get<size_t>());
+}
+
+void DataMan::WriteWAN(const void *buffer, size_t size)
+{
+    if (m_CurrentTransport >= m_Transports.size())
+    {
+        throw std::runtime_error(
+            "ERROR: No valid transports found, from DataMan::WriteWAN()");
+    }
+    //    m_Transports[m_CurrentTransport]->Write(static_cast<const char
+    //    *>(buffer),                                            size);
+
+    m_Transports[m_CurrentTransport]->Write(
+        reinterpret_cast<const char *>(buffer), size);
+
+    std::ofstream bpfile("datamanW.bp", std::ios_base::binary);
+    bpfile.write(reinterpret_cast<const char *>(buffer), size);
+    bpfile.close();
+
+    for (int i = 0; i < size / 4; i++)
+    {
+
+        std::cout << static_cast<const float *>(buffer)[i] << " ";
+    }
 }
 
 void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
+
+void DataMan::SetBP3Deserializer(format::BP3Deserializer &bp3Deserializer)
+{
+    m_BP3Deserializer = &bp3Deserializer;
+}
+
+void DataMan::SetIO(IO &io) { m_IO = &io; }
 
 void DataMan::SetCallback(adios2::Operator &callback)
 {
@@ -139,36 +189,165 @@ void DataMan::SetCallback(adios2::Operator &callback)
 }
 
 void DataMan::ReadThread(std::shared_ptr<Transport> trans,
-                         std::shared_ptr<Transport> ctl_trans)
+                         std::shared_ptr<Transport> ctl_trans,
+                         const std::string format)
 {
-    while (m_Listening)
+    if (format == "json" || format == "JSON")
     {
-        char buffer[1024];
-        size_t bytes = 0;
-        nlohmann::json jmsg;
-        adios2::Transport::Status status;
-        ctl_trans->IRead(buffer, 1024, status, 0);
-        if (status.Bytes > 0)
+        std::cout << "json" << std::endl;
+        while (m_Listening)
         {
-            std::string smsg(buffer);
-            jmsg = nlohmann::json::parse(smsg);
-            bytes = jmsg.value("bytes", 0);
-            if (bytes > 0)
+            char buffer[1024];
+            size_t bytes = 0;
+            nlohmann::json jmsg;
+            adios2::Transport::Status status;
+            ctl_trans->IRead(buffer, 1024, status, 0);
+            if (status.Bytes > 0)
             {
-                std::vector<char> data(bytes);
-                trans->Read(data.data(), bytes);
-                std::string doid = jmsg.value("doid", "Unknown Data Object");
-                std::string var = jmsg.value("var", "Unknown Variable");
-                std::string dtype = jmsg.value("dtype", "Unknown Data Type");
-                std::vector<size_t> putshape =
-                    jmsg.value("putshape", std::vector<size_t>());
-                if (m_Callback != nullptr && m_Callback->m_Type == "Signature2")
+                std::string smsg(buffer);
+                jmsg = nlohmann::json::parse(smsg);
+                bytes = jmsg.value("bytes", 0);
+                if (bytes > 0)
                 {
-                    m_Callback->RunCallback2(data.data(), doid, var, dtype,
-                                             putshape);
+                    std::vector<char> data(bytes);
+                    trans->Read(data.data(), bytes);
+                    std::string doid =
+                        jmsg.value("doid", "Unknown Data Object");
+                    std::string var = jmsg.value("var", "Unknown Variable");
+                    std::string dtype =
+                        jmsg.value("dtype", "Unknown Data Type");
+                    std::vector<size_t> putshape =
+                        jmsg.value("putshape", std::vector<size_t>());
+                    if (m_Callback != nullptr &&
+                        m_Callback->m_Type == "Signature2")
+                    {
+                        m_Callback->RunCallback2(data.data(), doid, var, dtype,
+                                                 putshape);
+                    }
                 }
             }
         }
+    }
+    else if (format == "bp" || format == "BP")
+    {
+        while (m_Listening)
+        {
+            std::vector<char> buffer;
+            buffer.reserve(m_BufferSize);
+
+            Transport::Status status;
+            trans->IRead(buffer.data(), m_BufferSize, status);
+
+            if (status.Bytes > 0)
+            {
+                m_BP3Deserializer->m_Data.Resize(
+                    status.Bytes, "in DataMan Streaming Listener");
+
+                std::memcpy(m_BP3Deserializer->m_Data.m_Buffer.data(),
+                            buffer.data(), status.Bytes);
+
+                /*    write bp file for debugging   */
+                /*
+                std::ofstream bpfile("datamanR.bp", std::ios_base::binary);
+                bpfile.write(m_BP3Deserializer->m_Data.m_Buffer.data(),
+                             m_BP3Deserializer->m_Data.m_Buffer.size());
+                bpfile.close();
+                */
+
+                m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Data,
+                                                 *m_IO);
+
+                const auto variablesInfo = m_IO->GetAvailableVariables();
+                for (const auto &variableInfoPair : variablesInfo)
+                {
+
+                    std::string var = variableInfoPair.first;
+                    std::string type = "null";
+                    for (const auto &parameter : variableInfoPair.second)
+                    {
+                        std::cout << "\tKey: " << parameter.first
+                                  << "\t Value: " << parameter.second << "\n";
+                        if (parameter.first == "Type")
+                        {
+                            type = parameter.second;
+                        }
+                    }
+
+                    if (type == "string")
+                    {
+                    }
+                    else if (type == "char")
+                    {
+                    }
+                    else if (type == "unsigned char")
+                    {
+                    }
+                    else if (type == "short")
+                    {
+                    }
+                    else if (type == "unsigned short")
+                    {
+                    }
+                    else if (type == "int")
+                    {
+                        adios2::Variable<int> *v =
+                            m_IO->InquireVariable<int>(var);
+                        size_t size = std::accumulate(
+                            v->m_Shape.begin(), v->m_Shape.end(), 1,
+                            std::multiplies<size_t>());
+                        std::vector<int> x(size);
+                        v->SetData(x.data());
+                        /* TODO: add read variable */
+                        RunCallback(x.data(), "stream", var, type, v->m_Shape);
+                    }
+                    else if (type == "unsigned int")
+                    {
+                    }
+                    else if (type == "long int")
+                    {
+                    }
+                    else if (type == "unsigned long int")
+                    {
+                    }
+                    else if (type == "long long int")
+                    {
+                    }
+                    else if (type == "unsigned long long int")
+                    {
+                    }
+                    else if (type == "float")
+                    {
+                    }
+                    else if (type == "double")
+                    {
+                    }
+                    else if (type == "long double")
+                    {
+                    }
+                    else if (type == "float complex")
+                    {
+                    }
+                    else if (type == "double complex")
+                    {
+                    }
+                    else if (type == "long double complex")
+                    {
+                    }
+
+                    std::cout << "Variable Name: " << var << std::endl;
+                    std::cout << "Type: " << type << std::endl;
+                }
+            }
+        }
+    }
+}
+
+void DataMan::RunCallback(void *buffer, std::string doid, std::string var,
+                          std::string dtype, std::vector<size_t> shape)
+{
+    if (m_Callback != nullptr && m_Callback->m_Type == "Signature2")
+    {
+        m_Callback->RunCallback2(buffer, doid, var, dtype, shape);
     }
 }
 

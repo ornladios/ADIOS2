@@ -15,6 +15,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
 namespace adios2
@@ -39,16 +40,17 @@ public:
                   MPI_Comm mpiComm);
 
     virtual ~DataManReader() = default;
-
     void Close(const int transportIndex = -1);
 
 private:
-    bool m_DoRealTime = false;
+    format::BP3Deserializer m_BP3Deserializer;
     transportman::DataMan m_Man;
 
+    unsigned int m_NTransports = 1;
+    std::string m_UseFormat = "json";
     void Init();
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_ */

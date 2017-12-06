@@ -274,7 +274,6 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
         } // end switch
     };
 
-    // STARTS HERE
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.VarsIndexStart;
 

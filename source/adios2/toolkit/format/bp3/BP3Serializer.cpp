@@ -178,6 +178,18 @@ void BP3Serializer::CloseData(IO &io)
     ProfilerStop("buffering");
 }
 
+void BP3Serializer::CloseStream(IO &io)
+{
+    ProfilerStart("buffering");
+    if (m_MetadataSet.DataPGIsOpen)
+    {
+        SerializeDataBuffer(io);
+    }
+    SerializeMetadataInData();
+    m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
+    ProfilerStop("buffering");
+}
+
 std::string BP3Serializer::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
     const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept
