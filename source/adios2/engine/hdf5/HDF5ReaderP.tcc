@@ -33,10 +33,21 @@ void HDF5ReaderP::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void HDF5ReaderP::GetDeferredCommon(Variable<T> &variable, T *data)
 {
+#ifdef NEVER
     // returns immediately
     // m_HDF53Deserializer.GetDeferredVariable(variable, data);
 
-    throw std::runtime_error("Todo: GetDefCommon");
+    if (m_InStreamMode)
+    {
+        variable.m_StepsStart = m_StreamAt; // current step
+        variable.m_StepsCount = 1;
+    }
+    hid_t h5Type = m_H5File.GetHDF5Type<T>();
+    UseHDFRead(variable, data, h5Type);
+#else
+    m_DeferredStack.push_back(variable.m_Name);
+    variable.SetData(data);
+#endif
 }
 
 } // end namespace adios2

@@ -68,13 +68,13 @@ namespace adios2
     void Engine::Put##L(Variable<T> &variable, const T &value)                 \
     {                                                                          \
         const T valueLocal = value;                                            \
-        Put##L(variable, &valueLocal);                                         \
+        PutSync(variable, &valueLocal);                                        \
     }                                                                          \
                                                                                \
     template <class T>                                                         \
     void Engine::Put##L(const std::string &variableName, const T &value)       \
     {                                                                          \
-        Put##L(FindVariable<T>(variableName), value);                          \
+        PutSync(FindVariable<T>(variableName), value);                         \
     }
 ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
 #undef declare_launch_mode
@@ -125,13 +125,13 @@ ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
     template <class T>                                                         \
     void Engine::Get##L(Variable<T> &variable, T &value)                       \
     {                                                                          \
-        Get##L(variable, &value);                                              \
+        GetSync(variable, &value);                                             \
     }                                                                          \
                                                                                \
     template <class T>                                                         \
     void Engine::Get##L(const std::string &variableName, T &value)             \
     {                                                                          \
-        Get##L(FindVariable<T>(variableName), value);                          \
+        GetSync(FindVariable<T>(variableName), value);                         \
     }
 ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
 #undef declare_launch_mode

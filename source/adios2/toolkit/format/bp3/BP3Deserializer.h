@@ -31,6 +31,8 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
+    bool m_PerformedGets = false;
+
     /**
      * Unique constructor
      * @param mpiComm

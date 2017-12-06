@@ -27,8 +27,7 @@ class EnginePy
 
 public:
     EnginePy(IO &io, const std::string &name, const Mode openMode,
-             MPI_Comm mpiComm,
-             std::map<std::string, VariableBase> &variablesPlaceholder);
+             MPI_Comm mpiComm);
 
     ~EnginePy() = default;
 
@@ -52,15 +51,13 @@ public:
 
     void EndStep();
 
+    void WriteStep();
+
     void Close(const int transportIndex = -1);
 
 private:
     Engine &m_Engine;
-    std::map<std::string, VariableBase> &m_VariablesPlaceholder;
     const bool m_DebugMode;
-
-    void DefineInIO(VariableBase *variable, const pybind11::array &array);
-    void DefineInIO(VariableBase *variable, const std::string &string);
 };
 
 } // end namespace adios2

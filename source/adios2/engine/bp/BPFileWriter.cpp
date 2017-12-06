@@ -50,10 +50,19 @@ void BPFileWriter::PerformPuts()
     {
         PutSync(variableName);
     }
+
+    m_BP3Serializer.m_DeferredVariables.clear();
 }
 
 void BPFileWriter::EndStep()
 {
+    if (m_DebugMode && m_BP3Serializer.m_DeferredVariables.size() > 0)
+    {
+        throw std::invalid_argument("ERROR: existing variables subscribed with "
+                                    "PutDeferred, did you forget to call "
+                                    "PerformPuts()?, in call to EndStep\n");
+    }
+
     m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
 }
 

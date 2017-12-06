@@ -60,13 +60,24 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
-void BPFileReader::EndStep() { ++m_CurrentStep; }
+void BPFileReader::EndStep()
+{
+    if (m_DebugMode && !m_BP3Deserializer.m_PerformedGets)
+    {
+        throw std::invalid_argument("ERROR: existing variables subscribed with "
+                                    "GetDeferred, did you forget to call "
+                                    "PerformGets()?, in call to EndStep\n");
+    }
+
+    ++m_CurrentStep;
+}
 
 void BPFileReader::PerformGets()
 {
     const std::map<std::string, SubFileInfoMap> variablesSubfileInfo =
         m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
     ReadVariables(m_IO, variablesSubfileInfo);
+    m_BP3Deserializer.m_PerformedGets = true;
 }
 
 void BPFileReader::Close(const int transportIndex)

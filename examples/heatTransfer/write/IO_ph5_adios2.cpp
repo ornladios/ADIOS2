@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * IO_ADIOS2.cpp
+ * IO_ph5_adios2.cpp
  *
  *  Created on: Feb 2017
  *      Author: Norbert Podhorszki
@@ -21,13 +21,23 @@ adios2::Variable<unsigned int> *varGndx = nullptr;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    m_outputfilename = s.outputfile + ".h5";
+    std::string suffix = ".h5";
+    m_outputfilename = s.outputfile + suffix;
+
+    int ss = s.outputfile.size();
+    int pos = s.outputfile.find(suffix);
+    if ((ss > suffix.size()) && (pos == ss - suffix.size()))
+    {
+        // Your code here
+        m_outputfilename = s.outputfile;
+    }
+
     ad = new adios2::ADIOS(comm, adios2::DebugOFF);
 
     // Define method for engine creation
     // 1. Get method def from config file or define new one
 
-    adios2::IO &h5io = ad->DeclareIO("output");
+    adios2::IO &h5io = ad->DeclareIO("writer");
     if (!h5io.InConfigFile())
     {
         // if not defined by user, we can change the default settings
@@ -59,7 +69,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 IO::~IO()
 {
     h5writer->Close();
-    // delete ad;
+    delete ad;
 }
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,

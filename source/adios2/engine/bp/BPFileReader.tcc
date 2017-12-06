@@ -40,6 +40,7 @@ void BPFileReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     // returns immediately
     m_BP3Deserializer.GetDeferredVariable(variable, data);
+    m_BP3Deserializer.m_PerformedGets = false;
 }
 
 } // end namespace adios2

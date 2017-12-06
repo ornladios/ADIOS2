@@ -36,7 +36,10 @@ public:
 
     bool IsValid();
 
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
+
+    void PerformGets() final;
 
     void Close(const int transportIndex = -1) final;
 
@@ -45,6 +48,7 @@ private:
     void Init() final;
 
     bool m_InStreamMode = false; // default is not streaming
+    unsigned int m_StreamAt = 0; // stream step counter
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \
@@ -62,6 +66,8 @@ private:
     // void UseHDFRead(const std::string &variableName, T *values, hid_t
     // h5Type);
     void UseHDFRead(Variable<T> &variable, T *values, hid_t h5Type);
+
+    std::vector<std::string> m_DeferredStack;
 };
 };
 #endif /* ADIOS2_ENGINE_HDF5_HDF5READERP_H_ */
