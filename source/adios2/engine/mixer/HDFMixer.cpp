@@ -14,12 +14,12 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
-#include "adios2/toolkit/transport/file/FileStream.h"
+#include "adios2/toolkit/transport/file/FileFStream.h"
 
 namespace adios2
 {
 
-HDFMixer::HDFMixer(IO &io, const std::string &name, const Mode mode,
+HDFMixer::HDFMixer(IO &io, const std::string &name, const Mode openMode,
                    MPI_Comm mpiComm)
 : Engine("HDFMixer", io, name, openMode, mpiComm),
   m_HDFVDSWriter(mpiComm, m_DebugMode),
@@ -40,14 +40,21 @@ void HDFMixer::Init()
 }
 
 #define declare_type(T)                                                        \
-    void HDFMixer::DoWrite(Variable<T> &variable, const T *values)             \
+    void HDFMixer::DoPutSync(Variable<T> &variable, const T *values)           \
     {                                                                          \
-        DoWriteCommon(variable, values);                                       \
+        DoPutSyncCommon(variable, values);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void HDFMixer::Advance(const float /*timeout_sec*/)
+StepStatus HDFMixer::BeginStep(StepMode mode, const float timeout_sec)
+{
+    return StepStatus::OK;
+}
+
+// void HDFMixer::Advance(const float /*timeout_sec*/)
+// void HDFMixer::EndStep(const float /*timeout_sec*/)
+void HDFMixer::EndStep()
 {
     m_HDFSerialWriter.Advance();
     m_HDFVDSWriter.Advance();
@@ -55,18 +62,18 @@ void HDFMixer::Advance(const float /*timeout_sec*/)
 
 void HDFMixer::Close(const int transportIndex)
 {
-    if (m_DebugMode)
-    {
-        if (!m_TransportsManager.CheckTransportIndex(transportIndex))
-        {
-            auto transportsSize = m_TransportsManager.m_Transports.size();
-            throw std::invalid_argument(
-                "ERROR: transport index " + std::to_string(transportIndex) +
-                " outside range, -1 (default) to " +
-                std::to_string(transportsSize - 1) + ", in call to Close\n");
-        }
-    }
-
+    /*if (m_DebugMode)
+      {
+          if (!m_TransportsManager.CheckTransportIndex(transportIndex))
+          {
+              auto transportsSize = m_TransportsManager.m_Transports.size();
+              throw std::invalid_argument(
+                  "ERROR: transport index " + std::to_string(transportIndex) +
+                  " outside range, -1 (default) to " +
+                  std::to_string(transportsSize - 1) + ", in call to Close\n");
+          }
+      }
+    */
     // close bp buffer by flattening data and metadata
     m_HDFSerialWriter.Close();
     m_HDFVDSWriter.Close();

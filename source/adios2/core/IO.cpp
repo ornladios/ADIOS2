@@ -25,6 +25,11 @@
 #include "adios2/engine/dataman/DataManWriter.h"
 #endif
 
+#ifdef ADIOS2_HAVE_SST // external dependencies
+#include "adios2/engine/sst/SstReader.h"
+#include "adios2/engine/sst/SstWriter.h"
+#endif
+
 #ifdef ADIOS2_HAVE_ADIOS1 // external dependencies
 #include "adios2/engine/adios1/ADIOS1Reader.h"
 #include "adios2/engine/adios1/ADIOS1Writer.h"
@@ -123,7 +128,11 @@ const DataMap &IO::GetAttributesDataMap() const noexcept
     return m_Attributes;
 }
 
-bool IO::InConfigFile() const { return m_InConfigFile; };
+bool IO::InConfigFile() const noexcept { return m_InConfigFile; };
+
+void IO::SetDeclared() noexcept { m_IsDeclared = true; };
+
+bool IO::IsDeclared() const noexcept { return m_IsDeclared; }
 
 bool IO::RemoveVariable(const std::string &name) noexcept
 {
@@ -146,11 +155,10 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     {                                                                          \
         auto variableMap = GetVariableMap<T>();                                \
         variableMap.erase(index);                                              \
+        isRemoved = true;                                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-
-        isRemoved = true;
     }
 
     if (isRemoved)
@@ -159,6 +167,58 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     }
 
     return isRemoved;
+}
+
+void IO::RemoveAllVariables() noexcept
+{
+    m_Variables.clear();
+#define declare_type(T) GetVariableMap<T>().clear();
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    m_Compound.clear();
+}
+
+bool IO::RemoveAttribute(const std::string &name) noexcept
+{
+    bool isRemoved = false;
+    auto itAttribute = m_Attributes.find(name);
+    // attribute exists
+    if (itAttribute != m_Attributes.end())
+    {
+        // first remove the Variable object
+        const std::string type(itAttribute->second.first);
+        const unsigned int index(itAttribute->second.second);
+
+        if (type.empty())
+        {
+            // nothing to do
+        }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        auto variableMap = GetVariableMap<T>();                                \
+        variableMap.erase(index);                                              \
+        isRemoved = true;                                                      \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    if (isRemoved)
+    {
+        m_Attributes.erase(name);
+    }
+
+    return isRemoved;
+}
+
+void IO::RemoveAllAttributes() noexcept
+{
+    m_Attributes.clear();
+
+#define declare_type(T) GetAttributeMap<T>().clear();
+    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
 }
 
 std::map<std::string, Params> IO::GetAvailableVariables() noexcept
@@ -173,46 +233,61 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         if (type == "compound")
         {
         }
-// TODO : enable string, add dimensions
-#define declare_template_instantiation(C)                                      \
-    else if (type == GetType<C>())                                             \
-    {                                                                          \
-        Variable<C> &variable = *InquireVariable<C>(name);                     \
-                                                                               \
-        const int min = static_cast<int>(variable.m_Min);                      \
-        variablesInfo[name]["Min"] = std::to_string(min);                      \
-                                                                               \
-        const int max = static_cast<int>(variable.m_Max);                      \
-        variablesInfo[name]["Max"] = std::to_string(max);                      \
-                                                                               \
-        variablesInfo[name]["StepsStart"] =                                    \
-            std::to_string(variable.m_AvailableStepsStart);                    \
-        variablesInfo[name]["StepsCount"] =                                    \
-            std::to_string(variable.m_AvailableStepsCount);                    \
-    }
-        ADIOS2_FOREACH_CHAR_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 #define declare_template_instantiation(T)                                      \
     else if (type == GetType<T>())                                             \
     {                                                                          \
         Variable<T> &variable = *InquireVariable<T>(name);                     \
-        std::ostringstream minSS;                                              \
-        minSS << variable.m_Min;                                               \
-        variablesInfo[name]["Min"] = minSS.str();                              \
-        std::ostringstream maxSS;                                              \
-        maxSS << variable.m_Max;                                               \
-        variablesInfo[name]["Max"] = maxSS.str();                              \
-        variablesInfo[name]["StepsStart"] =                                    \
-            std::to_string(variable.m_AvailableStepsStart);                    \
-        variablesInfo[name]["StepsCount"] =                                    \
-            std::to_string(variable.m_AvailableStepsCount);                    \
+        variablesInfo[name]["Min"] = ValueToString(variable.m_Min);            \
+        variablesInfo[name]["Max"] = ValueToString(variable.m_Max);            \
+        variablesInfo[name]["Value"] = ValueToString(variable.m_Value);        \
+        variablesInfo[name]["AvailableStepsStart"] =                           \
+            ValueToString(variable.m_AvailableStepsStart);                     \
+        variablesInfo[name]["AvailableStepsCount"] =                           \
+            ValueToString(variable.m_AvailableStepsCount);                     \
+        variablesInfo[name]["Shape"] = VectorToCSV(variable.m_Shape);          \
+        variablesInfo[name]["Start"] = VectorToCSV(variable.m_Start);          \
+        variablesInfo[name]["Count"] = VectorToCSV(variable.m_Count);          \
     }
-        ADIOS2_FOREACH_NUMERIC_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 
     return variablesInfo;
+}
+
+std::map<std::string, Params> IO::GetAvailableAttributes() noexcept
+{
+    std::map<std::string, Params> attributesInfo;
+    for (const auto &attributePair : m_Attributes)
+    {
+        const std::string name(attributePair.first);
+        const std::string type(attributePair.second.first);
+        attributesInfo[name]["Type"] = type;
+
+        if (type == "compound")
+        {
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        Attribute<T> &attribute = *InquireAttribute<T>(name);                  \
+                                                                               \
+        if (attribute.m_IsSingleValue)                                         \
+        {                                                                      \
+            attributesInfo[name]["Value"] =                                    \
+                ValueToString(attribute.m_DataSingleValue);                    \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            attributesInfo[name]["Value"] =                                    \
+                "{ " + VectorToCSV(attribute.m_DataArray) + " }";              \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+    } // end for
+    return attributesInfo;
 }
 
 std::string IO::InquireVariableType(const std::string &name) const noexcept
@@ -287,6 +362,24 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
             "DataMan library, can't Open DataManReader\n");
+#endif
+    }
+    else if (m_EngineType == "SstWriter")
+    {
+#ifdef ADIOS2_HAVE_SST
+        engine = std::make_shared<SstWriter>(*this, name, mode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Sst library, can't Open SstWriter\n");
+#endif
+    }
+    else if (m_EngineType == "SstReader")
+    {
+#ifdef ADIOS2_HAVE_SST
+        engine = std::make_shared<SstReader>(*this, name, mode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Sst library, can't Open SstReader\n");
 #endif
     }
     else if (m_EngineType == "ADIOS1Writer")
@@ -427,4 +520,4 @@ ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace adios
+} // end namespace adios2

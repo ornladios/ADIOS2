@@ -74,22 +74,48 @@ ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
 
 IO &ADIOS::DeclareIO(const std::string name)
 {
-    if (m_DebugMode && m_IOs.count(name) == 1)
+    auto itIO = m_IOs.find(name);
+
+    if (itIO != m_IOs.end())
     {
-        throw std::invalid_argument("ERROR: IO with name " + name +
-                                    " previously declared in config file or "
-                                    "with DeclareIO, name must be unique "
-                                    " , in call to DeclareIO\n");
+        IO &io = itIO->second;
+
+        if (!io.IsDeclared()) // exists from config xml
+        {
+            io.SetDeclared();
+            return io;
+        }
+        else
+        {
+            if (m_DebugMode)
+            {
+                throw std::invalid_argument(
+                    "ERROR: IO with name " + name +
+                    " previously declared with DeclareIO, name must be unique,"
+                    " in call to DeclareIO\n");
+            }
+        }
     }
 
     auto ioPair = m_IOs.emplace(
         name, IO(name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
-    return ioPair.first->second;
+    IO &io = ioPair.first->second;
+    io.SetDeclared();
+    return io;
 }
 
 IO *ADIOS::InquireIO(const std::string name) noexcept
 {
-    return InquireKey(name, m_IOs);
+    IO *io = InquireKey(name, m_IOs);
+    if (io != nullptr)
+    {
+        if (!io->IsDeclared())
+        {
+            io = nullptr;
+        }
+    }
+
+    return io;
 }
 
 Operator &ADIOS::DefineOperator(const std::string name, const std::string type,

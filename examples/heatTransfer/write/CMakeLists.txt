@@ -13,18 +13,25 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(heatTransfer_write_adios2
     adios2 MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
   )
-  target_compile_definitions(heatTransfer_write_adios2 PRIVATE
-   -DDEFAULT_CONFIG=${CMAKE_CURRENT_SOURCE_DIR}/config.xml
-  )
 
+  add_executable(heatTransfer_write_ascii
+    main.cpp
+    HeatTransfer.cpp
+    Settings.cpp
+    IO_ascii.cpp
+  )
+  target_link_libraries(heatTransfer_write_ascii
+    MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
+  )
+  
   if(ADIOS2_HAVE_ADIOS1)
-    add_executable(heatTransfer_write_adios1
+    add_executable(heatTransfer_write_adios1.x
       main.cpp
       HeatTransfer.cpp
       Settings.cpp
-      IO_adios1.cpp
+      IO_adios1.x.cpp
     )
-    target_link_libraries(heatTransfer_write_adios1
+    target_link_libraries(heatTransfer_write_adios1.x
       adios1::adios MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
     )
   endif()

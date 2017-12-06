@@ -114,6 +114,19 @@
     MACRO(double)                                                              \
     MACRO(long double)
 
+#define ADIOS2_FOREACH_NUMERIC_ATTRIBUTE_TYPE_1ARG(MACRO)                      \
+    MACRO(short)                                                               \
+    MACRO(unsigned short)                                                      \
+    MACRO(int)                                                                 \
+    MACRO(unsigned int)                                                        \
+    MACRO(long int)                                                            \
+    MACRO(long long int)                                                       \
+    MACRO(unsigned long int)                                                   \
+    MACRO(unsigned long long int)                                              \
+    MACRO(float)                                                               \
+    MACRO(double)                                                              \
+    MACRO(long double)
+
 /**
  <pre>
  The ADIOS_FOREACH_TYPE_2ARGS macro assumes the given argument is a macro

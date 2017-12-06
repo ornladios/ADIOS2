@@ -12,7 +12,6 @@
  */
 #include <mpi.h>
 
-#include <future> //std::future, std::async
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -24,26 +23,28 @@
 
 void printUsage()
 {
-    std::cout << "Usage: heatTransfer  output  N  M   nx  ny   steps "
-                 "iterations async\n"
-              << "  output: name of output file\n"
+    std::cout << "Usage: heatTransfer  config   output  N  M   nx  ny   steps "
+                 "iterations\n"
+              << "  config: XML config file to use\n"
+              << "  output: name of output data file/stream\n"
               << "  N:      number of processes in X dimension\n"
               << "  M:      number of processes in Y dimension\n"
               << "  nx:     local array size in X dimension per processor\n"
               << "  ny:     local array size in Y dimension per processor\n"
               << "  steps:  the total number of steps to output\n"
-              << "  iterations: one step consist of this many iterations\n"
-              << "  async: on or off (default) \n\n";
+              << "  iterations: one step consist of this many iterations\n\n";
 }
 
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
-    /* World comm spans all applications started with the same aprun command
-       on a Cray XK6. So we have to split and create the local
-       'world' communicator for heat_transfer only.
-       In normal start-up, the communicator will just equal the MPI_COMM_WORLD.
-    */
+
+    /* When writer and reader is launched together with a single mpirun command,
+       the world comm spans all applications. We have to split and create the
+       local 'world' communicator mpiHeatTransferComm for the writer only.
+       When writer and reader is launched separately, the mpiHeatTransferComm
+       communicator will just equal the MPI_COMM_WORLD.
+     */
 
     int wrank, wnproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
@@ -71,17 +72,7 @@ int main(int argc, char *argv[])
         ht.exchange(mpiHeatTransferComm);
         // ht.printT("Heated T:", mpiHeatTransferComm);
 
-        std::future<void> futureWrite;
-        if (settings.async)
-        {
-            futureWrite =
-                std::async(std::launch::async, &IO::write, &io, 0, std::ref(ht),
-                           std::ref(settings), mpiHeatTransferComm);
-        }
-        else
-        {
-            io.write(0, ht, settings, mpiHeatTransferComm);
-        }
+        io.write(0, ht, settings, mpiHeatTransferComm);
 
         for (unsigned int t = 1; t <= settings.steps; ++t)
         {
@@ -94,21 +85,7 @@ int main(int argc, char *argv[])
                 ht.heatEdges();
             }
 
-            if (settings.async)
-            {
-                futureWrite.get();
-                futureWrite = std::async(std::launch::async, &IO::write, &io, t,
-                                         std::ref(ht), std::ref(settings),
-                                         mpiHeatTransferComm);
-            }
-            else
-            {
-                io.write(t, ht, settings, mpiHeatTransferComm);
-            }
-        }
-        if (settings.async)
-        {
-            futureWrite.get();
+            io.write(t, ht, settings, mpiHeatTransferComm);
         }
         MPI_Barrier(mpiHeatTransferComm);
 

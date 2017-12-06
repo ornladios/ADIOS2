@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_H_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_H_
 
 #include <mutex>
 #include <set>
@@ -30,6 +30,8 @@ class BP3Deserializer : public BP3Base
 public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
+
+    bool m_PerformedGets = true;
 
     /**
      * Unique constructor
@@ -59,6 +61,8 @@ public:
                               const Box<Dims> &blockBox,
                               const Box<Dims> &intersectionBox) const;
 
+    void GetStringFromMetadata(Variable<std::string> &variable) const;
+
 private:
     std::map<std::string, SubFileInfoMap> m_DeferredVariables;
 
@@ -67,7 +71,7 @@ private:
     void ParseMinifooter(const BufferSTL &bufferSTL);
     void ParsePGIndex(const BufferSTL &bufferSTL);
     void ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io);
-    void ParseAttributesIndex(IO &io);
+    void ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io);
 
     /**
      * Reads a variable index element (serialized) and calls IO.DefineVariable
@@ -81,6 +85,11 @@ private:
     void DefineVariableInIO(const ElementIndexHeader &header, IO &io,
                             const std::vector<char> &buffer,
                             size_t position) const;
+
+    template <class T>
+    void DefineAttributeInIO(const ElementIndexHeader &header, IO &io,
+                             const std::vector<char> &buffer,
+                             size_t position) const;
 
     template <class T>
     SubFileInfoMap GetSubFileInfo(const Variable<T> &variable) const;
@@ -130,4 +139,4 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_H_ */

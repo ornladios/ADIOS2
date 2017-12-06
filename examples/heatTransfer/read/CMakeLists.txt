@@ -4,11 +4,10 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  add_executable(heatTransfer_read_adios2 heatRead_adios2.cpp PrintData.h)
-  target_link_libraries(heatTransfer_read_adios2 adios2 MPI::MPI_C)
-
-  if(ADIOS2_HAVE_ADIOS1)
-    add_executable(heatTransfer_read_adios1 heatRead_adios1.cpp PrintData.h)
-    target_link_libraries(heatTransfer_read_adios1 adios1::adios MPI::MPI_C)
-  endif()
+  add_executable(heatTransfer_read 
+     heatRead.cpp 
+     PrintDataStep.h 
+     ReadSettings.cpp
+  )
+  target_link_libraries(heatTransfer_read adios2 MPI::MPI_C)
 endif()

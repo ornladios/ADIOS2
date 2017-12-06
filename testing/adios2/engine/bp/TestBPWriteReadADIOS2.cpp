@@ -137,17 +137,20 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-            bpWriter.PutSync(var_iString, currentTestData.S1);
-            bpWriter.PutSync(var_i8, currentTestData.I8.data());
-            bpWriter.PutSync(var_i16, currentTestData.I16.data());
-            bpWriter.PutSync(var_i32, currentTestData.I32.data());
-            bpWriter.PutSync(var_i64, currentTestData.I64.data());
-            bpWriter.PutSync(var_u8, currentTestData.U8.data());
-            bpWriter.PutSync(var_u16, currentTestData.U16.data());
-            bpWriter.PutSync(var_u32, currentTestData.U32.data());
-            bpWriter.PutSync(var_u64, currentTestData.U64.data());
-            bpWriter.PutSync(var_r32, currentTestData.R32.data());
-            bpWriter.PutSync(var_r64, currentTestData.R64.data());
+
+            bpWriter.PutDeferred(var_iString, currentTestData.S1);
+            bpWriter.PutDeferred(var_i8, currentTestData.I8.data());
+            bpWriter.PutDeferred(var_i16, currentTestData.I16.data());
+            bpWriter.PutDeferred(var_i32, currentTestData.I32.data());
+            bpWriter.PutDeferred(var_i64, currentTestData.I64.data());
+            bpWriter.PutDeferred(var_u8, currentTestData.U8.data());
+            bpWriter.PutDeferred(var_u16, currentTestData.U16.data());
+            bpWriter.PutDeferred(var_u32, currentTestData.U32.data());
+            bpWriter.PutDeferred(var_u64, currentTestData.U64.data());
+            bpWriter.PutDeferred(var_r32, currentTestData.R32.data());
+            bpWriter.PutDeferred(var_r64, currentTestData.R64.data());
+            bpWriter.PerformPuts();
+
             bpWriter.EndStep();
         }
 
@@ -160,10 +163,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
 
-        //        auto var_iString = io.InquireVariable<std::string>("iString");
-        //        ASSERT_NE(var_iString, nullptr);
-        // ASSERT_EQ(var_iString->m_Shape.size(), 0);
-        // ASSERT_EQ(var_iString->m_AvailableStepsCount, NSteps);
+        auto var_iString = io.InquireVariable<std::string>("iString");
+        ASSERT_NE(var_iString, nullptr);
+        ASSERT_EQ(var_iString->m_Shape.size(), 0);
+        ASSERT_EQ(var_iString->m_AvailableStepsCount, NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         ASSERT_NE(var_i8, nullptr);
@@ -228,7 +231,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         // TODO: other types
 
         SmallTestData testData;
-        std::vector<char> IString(testData.S1.size());
+
+        std::string IString;
         std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
         std::array<int32_t, Nx> I32;
@@ -260,22 +264,24 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
-            var_i8->SetStepSelection({t + 1, 1});
-            var_i16->SetStepSelection({t + 1, 1});
-            var_i32->SetStepSelection({t + 1, 1});
-            var_i64->SetStepSelection({t + 1, 1});
+            var_i8->SetStepSelection({t, 1});
+            var_i16->SetStepSelection({t, 1});
+            var_i32->SetStepSelection({t, 1});
+            var_i64->SetStepSelection({t, 1});
 
-            var_u8->SetStepSelection({t + 1, 1});
-            var_u16->SetStepSelection({t + 1, 1});
-            var_u32->SetStepSelection({t + 1, 1});
-            var_u64->SetStepSelection({t + 1, 1});
+            var_u8->SetStepSelection({t, 1});
+            var_u16->SetStepSelection({t, 1});
+            var_u32->SetStepSelection({t, 1});
+            var_u64->SetStepSelection({t, 1});
 
-            var_r32->SetStepSelection({t + 1, 1});
-            var_r64->SetStepSelection({t + 1, 1});
+            var_r32->SetStepSelection({t, 1});
+            var_r64->SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+
+            bpReader.GetDeferred(*var_iString, IString);
 
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
@@ -291,6 +297,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             bpReader.GetDeferred(*var_r64, R64.data());
 
             bpReader.PerformGets();
+
+            EXPECT_EQ(IString, currentTestData.S1);
 
             for (size_t i = 0; i < Nx; ++i)
             {
@@ -358,6 +366,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
             const adios2::Dims count{Ny, Nx};
 
+            auto &var_iString = io.DefineVariable<std::string>("iString");
             auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             auto &var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
@@ -392,6 +401,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
+            auto &var_iString = *io.InquireVariable<std::string>("iString");
             auto &var_i8 = *io.InquireVariable<int8_t>("i8");
             auto &var_i16 = *io.InquireVariable<int16_t>("i16");
             auto &var_i32 = *io.InquireVariable<int32_t>("i32");
@@ -422,16 +432,19 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-            bpWriter.PutSync(var_i8, currentTestData.I8.data());
-            bpWriter.PutSync(var_i16, currentTestData.I16.data());
-            bpWriter.PutSync(var_i32, currentTestData.I32.data());
-            bpWriter.PutSync(var_i64, currentTestData.I64.data());
-            bpWriter.PutSync(var_u8, currentTestData.U8.data());
-            bpWriter.PutSync(var_u16, currentTestData.U16.data());
-            bpWriter.PutSync(var_u32, currentTestData.U32.data());
-            bpWriter.PutSync(var_u64, currentTestData.U64.data());
-            bpWriter.PutSync(var_r32, currentTestData.R32.data());
-            bpWriter.PutSync(var_r64, currentTestData.R64.data());
+            bpWriter.PutDeferred(var_iString, currentTestData.S1);
+            bpWriter.PutDeferred(var_i8, currentTestData.I8.data());
+            bpWriter.PutDeferred(var_i16, currentTestData.I16.data());
+            bpWriter.PutDeferred(var_i32, currentTestData.I32.data());
+            bpWriter.PutDeferred(var_i64, currentTestData.I64.data());
+            bpWriter.PutDeferred(var_u8, currentTestData.U8.data());
+            bpWriter.PutDeferred(var_u16, currentTestData.U16.data());
+            bpWriter.PutDeferred(var_u32, currentTestData.U32.data());
+            bpWriter.PutDeferred(var_u64, currentTestData.U64.data());
+            bpWriter.PutDeferred(var_r32, currentTestData.R32.data());
+            bpWriter.PutDeferred(var_r64, currentTestData.R64.data());
+            bpWriter.PerformPuts();
+
             bpWriter.EndStep();
         }
 
@@ -443,6 +456,11 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
         adios2::IO &io = adios.DeclareIO("ReadIO");
 
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
+
+        auto var_iString = io.InquireVariable<std::string>("iString");
+        ASSERT_NE(var_iString, nullptr);
+        ASSERT_EQ(var_iString->m_Shape.size(), 0);
+        ASSERT_EQ(var_iString->m_AvailableStepsCount, NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         ASSERT_NE(var_i8, nullptr);
@@ -514,9 +532,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
         ASSERT_EQ(var_r64->m_Shape[0], Ny);
         ASSERT_EQ(var_r64->m_Shape[1], static_cast<size_t>(mpiSize * Nx));
 
-        // If the size of the array is smaller than the data
-        // the result is weird... double and uint64_t would get
-        // completely garbage data
+        std::string IString;
         std::array<int8_t, Nx * Ny> I8;
         std::array<int16_t, Nx * Ny> I16;
         std::array<int32_t, Nx * Ny> I32;
@@ -548,18 +564,20 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
-            var_i8->SetStepSelection({t + 1, 1});
-            var_i16->SetStepSelection({t + 1, 1});
-            var_i32->SetStepSelection({t + 1, 1});
-            var_i64->SetStepSelection({t + 1, 1});
+            var_i8->SetStepSelection({t, 1});
+            var_i16->SetStepSelection({t, 1});
+            var_i32->SetStepSelection({t, 1});
+            var_i64->SetStepSelection({t, 1});
 
-            var_u8->SetStepSelection({t + 1, 1});
-            var_u16->SetStepSelection({t + 1, 1});
-            var_u32->SetStepSelection({t + 1, 1});
-            var_u64->SetStepSelection({t + 1, 1});
+            var_u8->SetStepSelection({t, 1});
+            var_u16->SetStepSelection({t, 1});
+            var_u32->SetStepSelection({t, 1});
+            var_u64->SetStepSelection({t, 1});
 
-            var_r32->SetStepSelection({t + 1, 1});
-            var_r64->SetStepSelection({t + 1, 1});
+            var_r32->SetStepSelection({t, 1});
+            var_r64->SetStepSelection({t, 1});
+
+            bpReader.GetDeferred(*var_iString, IString);
 
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
@@ -579,6 +597,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+
+            EXPECT_EQ(IString, currentTestData.S1);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -837,18 +857,18 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
-            var_i8->SetStepSelection({t + 1, 1});
-            var_i16->SetStepSelection({t + 1, 1});
-            var_i32->SetStepSelection({t + 1, 1});
-            var_i64->SetStepSelection({t + 1, 1});
+            var_i8->SetStepSelection({t, 1});
+            var_i16->SetStepSelection({t, 1});
+            var_i32->SetStepSelection({t, 1});
+            var_i64->SetStepSelection({t, 1});
 
-            var_u8->SetStepSelection({t + 1, 1});
-            var_u16->SetStepSelection({t + 1, 1});
-            var_u32->SetStepSelection({t + 1, 1});
-            var_u64->SetStepSelection({t + 1, 1});
+            var_u8->SetStepSelection({t, 1});
+            var_u16->SetStepSelection({t, 1});
+            var_u32->SetStepSelection({t, 1});
+            var_u64->SetStepSelection({t, 1});
 
-            var_r32->SetStepSelection({t + 1, 1});
-            var_r64->SetStepSelection({t + 1, 1});
+            var_r32->SetStepSelection({t, 1});
+            var_r64->SetStepSelection({t, 1});
 
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());

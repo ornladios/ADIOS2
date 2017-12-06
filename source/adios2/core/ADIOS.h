@@ -125,7 +125,7 @@ public:
 
     /**
      * Retrieve a reference pointer to an existing Operator object
-     * created with DeclareIO.
+     * created with DefineOperator.
      * @return if IO exists returns a reference to existing IO object inside
      * ADIOS, otherwise a nullptr
      */

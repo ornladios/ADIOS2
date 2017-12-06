@@ -88,7 +88,7 @@ program helloBPReaderHeatMap3D
             do k=1,sel_count(3)
               do j=1,sel_count(2)
                 do i=1,sel_count(1)
-                    write(6,'(I4) ', advance="no") sel_temperatures(i,j,k)
+                    write(6,'(I5) ', advance="no") sel_temperatures(i,j,k)
                 end do
                 write(*,*)
               end do
@@ -99,6 +99,10 @@ program helloBPReaderHeatMap3D
 
         end if
 
+        call adios2_close( bpReader, ierr )
+
     end if
+
+    call MPI_Finalize(ierr)
 
 end program helloBPReaderHeatMap3D

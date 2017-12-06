@@ -1,0 +1,170 @@
+#!/bin/bash
+
+cur_dir=${PWD##*/}
+
+qflag=no;
+vflag=no;
+transport="flx"
+timeout="60"
+nr="2"
+nw="2"
+debugger="gdb"
+
+gdb -v >/dev/null 2>&1 || { debugger="lldb"; }
+$debugger -v >/dev/null 2>&1 || { debugger="not found"; }
+
+usage() 
+{ 
+  cat << EO 
+        Usage: $PROGNAME [options] 
+               $PROGNAME -o <version> -c 
+
+	Run a test under flexpath_tests.
+        
+
+        Options: 
+EO
+  cat <<EO | column -s\& -t 
+        -h|--help & show this output 
+	-p <name> & prefix of Reader and Writer programs
+	-r <name> & name of reader-side program
+	-w <name> & name of writer-side program
+	-n <count> & number of nodes to run both sides
+	-nw <count> & number of nodes to run write side
+	-nr <count> & number of nodes to run read side
+	-q & be quiet
+	-timeout <seconds> & timeout in seconds
+EO
+}
+
+PROGNAME=${0##*/} 
+SHORTOPTS="p:r:w:n:t:o:qhv" 
+LONGOPTS="p:,nw:,nr:,help,timeout:" 
+
+ARGS=$(getopt -a -s bash --options $SHORTOPTS  \
+  --longoptions $LONGOPTS --name $PROGNAME -- "$@" ) 
+
+eval set -- "$ARGS" 
+
+reader_prog="UNSET"
+writer_prog="UNSET"
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+     -h|--help) 
+         usage 
+         exit 0 
+         ;; 
+    (-q) qflag=yes;;
+    (-v) vflag=yes;;
+    (-r) reader_prog="$2"; shift;;
+    (-w) writer_prog="$2"; shift;;
+    (-n) nw="$2"; nr="$2"; shift;;
+    (-p) prefix="$2"; shift;;
+    (--nw) nw="$2"; shift;;
+    (--nr) nr="$2"; shift;;
+    (--timeout) timeout="$2"; shift;;
+    (--) shift; break;;
+    (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
+    (*)  break;;
+    esac
+    shift
+done
+
+cd @CMAKE_RUNTIME_OUTPUT_DIRECTORY@
+
+if [ "$reader_prog" == "UNSET" ]; then
+   reader_prog="$prefix""Read"
+fi
+if [ "$writer_prog" == "UNSET" ]; then
+   writer_prog="$prefix""Write"
+fi
+
+# remove any lingering sst contact files
+rm -f *.bpflx
+
+# Spawn the writer
+if [ $vflag == "yes" ]; then
+    echo "Doing        (@MPIEXEC@ -q @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog ) & writer_pid=$!"
+fi
+(@MPIEXEC@ -q @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog ) & writer_pid=$!
+
+sleep 2
+
+# Spawn the reader
+if [ $vflag == "yes" ]; then
+    echo "Doing (@MPIEXEC@ -q @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog 2>&1 1>/dev/null) & reader_pid=$!"
+fi
+(@MPIEXEC@ -q @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog 2>&1 1>/dev/null) & reader_pid=$!
+
+
+# in the background, sleep for timeout secs then kill that processes
+    if [ $vflag == "yes" ]; then
+	echo -n "Background sleep before killing test is $timeout seconds   Starting at "
+	date
+    fi
+# (sleep $timeout ;kill -9 $reader_pid ; kill -9 $writer_pid ) 2>/dev/null & waiter=$!
+# echo "WAITER PID is $waiter"
+
+# wait on our worker process and return the exitcode
+    if [ $vflag == "yes" ]; then
+	echo -n "Wait for reader $reader_pid   "
+	date
+    fi
+wait $reader_pid
+reader_exitcode=$?
+
+# wait on our worker process and return the exitcode
+    if [ $vflag == "yes" ]; then
+	echo -n "Wait for writer $writer_pid   "
+	date
+    fi
+wait $writer_pid
+writer_exitcode=$?
+
+# kill the waiter subshell, if it still runs
+
+    if [ $vflag == "yes" ]; then
+	echo -n "Killing waiter $waiter   "
+	date
+    fi
+#kill -9 $waiter 2>/dev/null
+# 0 if we killed the waiter, cause that means the process finished before the waiter
+finished_gracefully=$?
+
+    if [ $vflag == "yes" ]; then
+	echo -n "Waiting for $waiter   "
+	date
+    fi
+sleep 1
+# wait for waiter so that we don't get a killed message
+wait $waiter 1>2 2>/dev/null
+
+    if [ $vflag == "yes" ]; then
+	echo -n "Done with for $waiter   "
+	date
+    fi
+exit_value=0
+if [ "$writer_exitcode" -ne "0" ]; then
+  echo "$writer_prog exited with error code $writer_exitcode"
+  exit_value=1
+fi
+if [ "$reader_exitcode" -ne "0" ]; then
+  echo "$reader_prog exited with error code $reader_exitcode"
+  exit_value=1
+fi
+if [ "$finished_gracefully" -ne "0" ]; then
+  echo "One or more processes had to be killed because of timeout"
+  exit_value=1
+fi
+
+if [ $qflag != "yes" ]; then
+  if [ $exit_value -eq "0" ]; then
+     echo "TEST PASSED";
+  else
+     echo "TEST FAILED";
+  fi
+fi
+
+exit $exit_value

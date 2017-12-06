@@ -73,6 +73,15 @@ if(ADIOS2_HAVE_ZeroMQ)
   target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()
 
+if(ADIOS2_HAVE_SST)
+  target_sources(adios2 PRIVATE
+    engine/sst/SstReader.cpp
+    engine/sst/SstWriter.cpp
+  )
+  target_link_libraries(adios2 PRIVATE sst evpath::evpath)
+  add_subdirectory(toolkit/sst)
+endif()
+
 target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
     engine/dataman/DataManWriter.cpp

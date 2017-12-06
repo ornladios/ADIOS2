@@ -18,3 +18,8 @@ endif()
 if(ADIOS2_HAVE_DataMan)
   add_subdirectory(dataman)
 endif()
+
+if(ADIOS2_HAVE_SST)
+  add_subdirectory(sst)
+endif()
+

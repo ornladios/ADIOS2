@@ -37,11 +37,74 @@ void BP3Deserializer::GetDeferredVariable(Variable<T> &variable, T *data)
 }
 
 // PRIVATE
+template <>
+inline void BP3Deserializer::DefineVariableInIO<std::string>(
+    const ElementIndexHeader &header, IO &io, const std::vector<char> &buffer,
+    size_t position) const
+{
+    const size_t initialPosition = position;
+
+    const Characteristics<std::string> characteristics =
+        ReadElementIndexCharacteristics<std::string>(
+            buffer, position, static_cast<DataTypes>(header.DataType));
+
+    std::string variableName(header.Name);
+    if (!header.Path.empty())
+    {
+        variableName = header.Path + PathSeparator + header.Name;
+    }
+
+    Variable<std::string> *variable = nullptr;
+    if (characteristics.Statistics.IsValue)
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        variable = &io.DefineVariable<std::string>(variableName);
+        variable->m_Value =
+            characteristics.Statistics.Value; // assigning first step
+    }
+    else
+    {
+        // TODO: throw exception?
+    }
+
+    // going back to get variable index position
+    variable->m_IndexStart =
+        initialPosition - (header.Name.size() + header.GroupName.size() +
+                           header.Path.size() + 23);
+
+    const size_t endPosition =
+        variable->m_IndexStart + static_cast<size_t>(header.Length) + 4;
+
+    position = initialPosition;
+
+    size_t currentStep = 0; // Starts at 1 in bp file
+
+    while (position < endPosition)
+    {
+        const size_t subsetPosition = position;
+
+        // read until step is found
+        const Characteristics<std::string> subsetCharacteristics =
+            ReadElementIndexCharacteristics<std::string>(
+                buffer, position, static_cast<DataTypes>(header.DataType),
+                false);
+
+        if (subsetCharacteristics.Statistics.Step > currentStep)
+        {
+            currentStep = subsetCharacteristics.Statistics.Step;
+            variable->m_AvailableStepsCount =
+                subsetCharacteristics.Statistics.Step;
+        }
+        variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
+        position = subsetPosition + subsetCharacteristics.EntryLength + 5;
+    }
+}
+
 template <class T>
-void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
-                                         IO &io,
-                                         const std::vector<char> &buffer,
-                                         size_t position) const
+inline void
+BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
+                                    const std::vector<char> &buffer,
+                                    size_t position) const
 {
     const size_t initialPosition = position;
 
@@ -60,6 +123,7 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
         variable = &io.DefineVariable<T>(variableName);
+        variable->m_Value = characteristics.Statistics.Value;
         variable->m_Min = characteristics.Statistics.Value;
         variable->m_Max = characteristics.Statistics.Value;
     }
@@ -119,6 +183,36 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
 }
 
 template <class T>
+void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
+                                          IO &io,
+                                          const std::vector<char> &buffer,
+                                          size_t position) const
+{
+    const size_t initialPosition = position;
+
+    const Characteristics<T> characteristics =
+        ReadElementIndexCharacteristics<T>(
+            buffer, position, static_cast<DataTypes>(header.DataType));
+
+    std::string attributeName(header.Name);
+    if (!header.Path.empty())
+    {
+        attributeName = header.Path + PathSeparator + header.Name;
+    }
+
+    if (characteristics.Statistics.IsValue)
+    {
+        io.DefineAttribute<T>(attributeName, characteristics.Statistics.Value);
+    }
+    else
+    {
+        io.DefineAttribute<T>(attributeName,
+                              characteristics.Statistics.Values.data(),
+                              characteristics.Statistics.Values.size());
+    }
+}
+
+template <class T>
 SubFileInfoMap
 BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
 {
@@ -126,7 +220,7 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
 
     const auto &buffer = m_Metadata.m_Buffer;
 
-    const size_t stepStart = variable.m_StepsStart;
+    const size_t stepStart = variable.m_StepsStart + 1;
     const size_t stepEnd =
         stepStart + variable.m_StepsCount; // inclusive or exclusive?
 
@@ -163,7 +257,8 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             {
                 continue;
             }
-            // if they intersect get info Seeks (first: start, second: count)
+            // if they intersect get info Seeks (first: start, second:
+            // count)
             info.Seeks.first =
                 blockCharacteristics.Statistics.PayloadOffset +
                 LinearIndex(info.BlockBox, info.IntersectionBox.first,

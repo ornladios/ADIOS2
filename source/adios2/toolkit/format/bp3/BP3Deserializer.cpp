@@ -37,7 +37,7 @@ void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, IO &io)
     ParseMinifooter(bufferSTL);
     ParsePGIndex(bufferSTL);
     ParseVariablesIndex(bufferSTL, io);
-    // ParseAttributesIndex(io);
+    ParseAttributesIndex(bufferSTL, io);
 }
 
 void BP3Deserializer::ClipContiguousMemory(
@@ -65,6 +65,36 @@ void BP3Deserializer::ClipContiguousMemory(
 #undef declare_type
 }
 
+void BP3Deserializer::GetStringFromMetadata(
+    Variable<std::string> &variable) const
+{
+    std::string *data = variable.GetData();
+    const auto &buffer = m_Metadata.m_Buffer;
+
+    for (size_t i = 0; i < variable.m_StepsCount; ++i)
+    {
+        *(data + i) = "";
+        const size_t step = variable.m_StepsStart + i;
+        auto itStep = variable.m_IndexStepBlockStarts.find(step);
+
+        if (itStep == variable.m_IndexStepBlockStarts.end())
+        {
+            continue;
+        }
+
+        for (auto position : itStep->second)
+        {
+            const Characteristics<std::string> characteristics =
+                ReadElementIndexCharacteristics<std::string>(
+                    buffer, position, type_string, false);
+
+            *(data + i) = characteristics.Statistics.Value;
+        }
+
+        variable.m_Value = *(data + i);
+    }
+}
+
 // PRIVATE
 void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
@@ -83,7 +113,6 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 
     const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
-
     size_t position = bufferSize - 4;
     const uint8_t endianess = ReadValue<uint8_t>(buffer, position);
     lf_GetEndianness(endianess, m_Minifooter.IsLittleEndian);
@@ -113,18 +142,28 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
 {
     const auto &buffer = bufferSTL.m_Buffer;
-    auto &position = m_Metadata.m_Position;
-    position = m_Minifooter.PGIndexStart;
+    size_t position = m_Minifooter.PGIndexStart;
 
     m_MetadataSet.DataPGCount = ReadValue<uint64_t>(buffer, position);
-    position += 10; // skipping lengths
-    const uint16_t nameLength = ReadValue<uint16_t>(buffer, position);
-    position += static_cast<size_t>(nameLength); // skipping name
-    const char isFortran = ReadValue<char>(buffer, position);
+    const size_t length = ReadValue<uint64_t>(buffer, position);
 
-    if (isFortran == 'y')
+    size_t localPosition = 0;
+
+    while (localPosition < length)
     {
-        m_IsRowMajor = false;
+        ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
+        if (index.IsFortran == 'y')
+        {
+            m_IsRowMajor = false;
+        }
+
+        const size_t currentStep = static_cast<size_t>(index.Step);
+        if (currentStep > m_MetadataSet.StepsCount)
+        {
+            m_MetadataSet.StepsCount = currentStep;
+        }
+
+        localPosition += index.Length + 2;
     }
 }
 
@@ -138,6 +177,12 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
 
         switch (header.DataType)
         {
+
+        case (type_string):
+        {
+            DefineVariableInIO<std::string>(header, io, buffer, position);
+            break;
+        }
 
         case (type_byte):
         {
@@ -159,11 +204,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
 
         case (type_long):
         {
-#ifdef _WIN32
-            DefineVariableInIO<long long int>(header, io, buffer, position);
-#else
-            DefineVariableInIO<long int>(header, io, buffer, position);
-#endif
+            DefineVariableInIO<int64_t>(header, io, buffer, position);
             break;
         }
 
@@ -187,12 +228,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
 
         case (type_unsigned_long):
         {
-#ifdef _WIN32
-            DefineVariableInIO<unsigned long long int>(header, io, buffer,
-                                                       position);
-#else
-            DefineVariableInIO<unsigned long int>(header, io, buffer, position);
-#endif
+            DefineVariableInIO<uint64_t>(header, io, buffer, position);
             break;
         }
 
@@ -234,7 +270,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
                                                           position);
             break;
         }
-            // TODO: string
+
         } // end switch
     };
 
@@ -288,7 +324,117 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
     }
 }
 
-void BP3Deserializer::ParseAttributesIndex(IO &io) {}
+void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io)
+{
+    auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
+                                   size_t position) {
+
+        const ElementIndexHeader header =
+            ReadElementIndexHeader(buffer, position);
+
+        switch (header.DataType)
+        {
+
+        case (type_string):
+        {
+            DefineAttributeInIO<std::string>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_string_array):
+        {
+            DefineAttributeInIO<std::string>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_byte):
+        {
+            DefineAttributeInIO<signed char>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_short):
+        {
+            DefineAttributeInIO<short>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_integer):
+        {
+            DefineAttributeInIO<int>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_long):
+        {
+            DefineAttributeInIO<int64_t>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_unsigned_byte):
+        {
+            DefineAttributeInIO<unsigned char>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_unsigned_short):
+        {
+            DefineAttributeInIO<unsigned short>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_unsigned_integer):
+        {
+            DefineAttributeInIO<unsigned int>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_unsigned_long):
+        {
+            DefineAttributeInIO<uint64_t>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_real):
+        {
+            DefineAttributeInIO<float>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_double):
+        {
+            DefineAttributeInIO<double>(header, io, buffer, position);
+            break;
+        }
+
+        case (type_long_double):
+        {
+            DefineAttributeInIO<long double>(header, io, buffer, position);
+            break;
+        }
+
+        } // end switch
+    };
+
+    const auto &buffer = bufferSTL.m_Buffer;
+    size_t position = m_Minifooter.AttributesIndexStart;
+
+    const uint32_t count = ReadValue<uint32_t>(buffer, position);
+    const uint64_t length = ReadValue<uint64_t>(buffer, position);
+
+    const size_t startPosition = position;
+    size_t localPosition = 0;
+
+    // Read sequentially
+    while (localPosition < length)
+    {
+        lf_ReadElementIndex(io, buffer, position);
+        const size_t elementIndexSize =
+            static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+        position += elementIndexSize;
+        localPosition = position - startPosition;
+    }
+}
 
 std::map<std::string, SubFileInfoMap>
 BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)

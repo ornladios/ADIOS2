@@ -8,8 +8,6 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include <iostream> //TODO will go away
-
 #include "BPFileReader.h"
 #include "BPFileReader.tcc"
 
@@ -27,15 +25,92 @@ BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
+StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
+{
+    if (m_DebugMode)
+    {
+        if (mode != StepMode::NextAvailable)
+        {
+            throw std::invalid_argument("ERROR: mode is not supported yet, "
+                                        "only NextAvailable is valid for "
+                                        "engine BPFileReader, in call to "
+                                        "BeginStep\n");
+        }
+
+        if (!m_BP3Deserializer.m_PerformedGets)
+        {
+            throw std::invalid_argument(
+                "ERROR: existing variables subscribed with "
+                "GetDeferred, did you forget to call "
+                "PerformGets() or EndStep()?, in call to BeginStep\n");
+        }
+    }
+
+    StepStatus status = StepStatus::OK;
+
+    if (m_FirstStep)
+    {
+        m_FirstStep = false;
+    }
+    else
+    {
+        ++m_CurrentStep;
+    }
+
+    if (m_CurrentStep >= m_BP3Deserializer.m_MetadataSet.StepsCount - 1)
+    {
+        status = StepStatus::EndOfStream;
+    }
+
+    const auto &variablesData = m_IO.GetVariablesDataMap();
+
+    for (const auto &variableData : variablesData)
+    {
+        const std::string name = variableData.first;
+        const std::string type = m_IO.InquireVariableType(name);
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        auto variable = m_IO.InquireVariable<T>(name);                         \
+        if (mode == StepMode::NextAvailable)                                   \
+        {                                                                      \
+            variable->SetStepSelection({m_CurrentStep, 1});                    \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    return status;
+}
+
+void BPFileReader::EndStep()
+{
+    if (!m_BP3Deserializer.m_PerformedGets)
+    {
+        PerformGets();
+    }
+}
+
 void BPFileReader::PerformGets()
 {
     const std::map<std::string, SubFileInfoMap> variablesSubfileInfo =
         m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
     ReadVariables(m_IO, variablesSubfileInfo);
+    m_BP3Deserializer.m_PerformedGets = true;
 }
 
 void BPFileReader::Close(const int transportIndex)
 {
+    if (!m_BP3Deserializer.m_PerformedGets)
+    {
+        PerformGets();
+    }
+
     m_SubFileManager.CloseFiles();
     m_FileManager.CloseFiles();
 }

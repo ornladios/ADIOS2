@@ -27,10 +27,8 @@ IO::IO(const Settings &s, MPI_Comm comm)
     }
     else
     {
-        int rank;
-        MPI_Comm_rank(comm, &rank);
-        std::string rs = std::to_string(rank);
-        of.open(m_outputfilename + rs + ".txt");
+        m_outputfilename = MakeFilename(s.outputfile, ".txt", s.rank);
+        of.open(m_outputfilename);
         buf = of.rdbuf();
     }
 }
@@ -67,12 +65,13 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
         out << std::endl;
     }
 
+    out << std::fixed;
     for (int i = 1; i <= s.ndx; ++i)
     {
         out << std::setw(5) << step << std::setw(5) << s.offsx + i - 1;
         for (int j = 1; j <= s.ndy; ++j)
         {
-            out << std::setw(9) << ht.T(i, j);
+            out << std::setw(9) << std::setprecision(5) << ht.T(i, j);
         }
         out << std::endl;
     }

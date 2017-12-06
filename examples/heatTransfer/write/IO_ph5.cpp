@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * IO_ADIOS2.cpp
+ * IO_ph5.cpp
  *
  *  Created on: Feb 2017
  *      Author: Norbert Podhorszki
@@ -276,7 +276,7 @@ std::shared_ptr<HDF5NativeWriter> h5writer;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
-    m_outputfilename = s.outputfile + ".h5";
+    m_outputfilename = MakeFilename(s.outputfile, ".h5");
 
     if (s.outputfile[0] == '0')
     {

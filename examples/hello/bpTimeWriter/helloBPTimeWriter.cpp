@@ -96,7 +96,10 @@ int main(int argc, char *argv[])
                     "Hello from rank: " + std::to_string(rank) +
                     " and timestep: " + std::to_string(timeStep));
 
-                bpWriter.PutSync(bpString, myString);
+                if (rank == 0)
+                {
+                    bpWriter.PutSync(bpString, myString);
+                }
 
                 bpWriter.EndStep();
             }
@@ -116,6 +119,9 @@ int main(int argc, char *argv[])
             adios2::Variable<float> *bpFloats000 =
                 ioReader.InquireVariable<float>("bpFloats000");
 
+            adios2::Variable<std::string> *bpString =
+                ioReader.InquireVariable<std::string>("bpString");
+
             if (bpFloats000 != nullptr)
             {
                 bpFloats000->SetSelection({{rank * Nx}, {Nx}});
@@ -125,7 +131,7 @@ int main(int argc, char *argv[])
                 bpReader.GetSync(*bpFloats000, data.data());
 
                 std::cout << "Data timestep " << bpFloats000->m_StepsStart
-                          << " from rank " << rank << "\n";
+                          << " from rank " << rank << ": ";
                 for (const auto datum : data)
                 {
                     std::cout << datum << " ";
@@ -136,8 +142,17 @@ int main(int argc, char *argv[])
             {
                 std::cout << "Variable bpFloats000 not found\n";
             }
+
+            if (bpString != nullptr)
+            {
+                bpString->SetStepSelection({3, 1});
+
+                std::string myString;
+                bpReader.GetSync(*bpString, myString);
+                std::cout << myString << "\n";
+            }
+
             bpReader.Close();
-            //}
         }
     }
     catch (std::invalid_argument &e)

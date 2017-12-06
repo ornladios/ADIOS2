@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3BASE_TCC_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP3BASE_TCC_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_TCC_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_TCC_
 
 #include "BP3Base.h"
 
@@ -61,7 +61,12 @@ int8_t BP3Base::GetDataType<int>() const noexcept
 template <>
 int8_t BP3Base::GetDataType<long int>() const noexcept
 {
-    const int8_t type = static_cast<int8_t>(type_long);
+    int8_t type = static_cast<int8_t>(type_long);
+    if (sizeof(long int) == sizeof(int))
+    {
+        type = static_cast<int8_t>(type_integer);
+    }
+
     return type;
 }
 
@@ -96,7 +101,12 @@ int8_t BP3Base::GetDataType<unsigned int>() const noexcept
 template <>
 int8_t BP3Base::GetDataType<unsigned long int>() const noexcept
 {
-    const int8_t type = static_cast<int8_t>(type_unsigned_long);
+    int8_t type = static_cast<int8_t>(type_unsigned_long);
+    if (sizeof(unsigned long int) == sizeof(unsigned int))
+    {
+        type = static_cast<int8_t>(type_unsigned_integer);
+    }
+
     return type;
 }
 
@@ -150,7 +160,7 @@ int8_t BP3Base::GetDataType<cldouble>() const noexcept
 }
 
 template <class T>
-inline BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
+BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
     const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
     const bool untilTimeStep) const
 {
@@ -201,28 +211,35 @@ inline void BP3Base::ParseCharacteristics(
             if (dataType == type_string)
             {
                 // first get the length of the string
-                const size_t size =
+                const size_t length =
                     static_cast<size_t>(ReadValue<uint16_t>(buffer, position));
 
                 characteristics.Statistics.Value =
-                    std::string(&buffer[position], size);
+                    std::string(&buffer[position], length);
 
                 characteristics.Statistics.IsValue = true;
+                position += length;
             }
             else if (dataType == type_string_array)
             {
-                const size_t elements =
-                    static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+                if (characteristics.Count.size() != 1)
+                {
+                    // TODO: add exception here?
+                    break;
+                }
 
+                const size_t elements = characteristics.Count.front();
                 characteristics.Statistics.Values.reserve(elements);
 
                 for (size_t e = 0; e < elements; ++e)
                 {
-                    const size_t size = static_cast<size_t>(
+                    const size_t length = static_cast<size_t>(
                         ReadValue<uint16_t>(buffer, position));
 
                     characteristics.Statistics.Values.push_back(
-                        std::string(&buffer[position], size));
+                        std::string(&buffer[position], length));
+
+                    position += length;
                 }
             }
 
@@ -412,4 +429,4 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP3Base_TCC_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_BP3Base_TCC_ */

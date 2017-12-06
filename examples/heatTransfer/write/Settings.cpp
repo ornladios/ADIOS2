@@ -35,37 +35,20 @@ static unsigned int convertToUint(std::string varName, char *arg)
 
 Settings::Settings(int argc, char *argv[], int rank, int nproc) : rank{rank}
 {
-    if (argc < 8)
+    if (argc < 9)
     {
         throw std::invalid_argument("Not enough arguments");
     }
     this->nproc = (unsigned int)nproc;
 
-    outputfile = argv[1];
-    npx = convertToUint("N", argv[2]);
-    npy = convertToUint("M", argv[3]);
-    ndx = convertToUint("nx", argv[4]);
-    ndy = convertToUint("ny", argv[5]);
-    steps = convertToUint("steps", argv[6]);
-    iterations = convertToUint("iterations", argv[7]);
-
-    if (argc == 9)
-    {
-        const std::string asyncArg(argv[8]);
-        if (asyncArg == "ON" || asyncArg == "on")
-        {
-            async = true;
-        }
-        else if (asyncArg == "OFF" || asyncArg == "off")
-        {
-            // nothing off is default
-        }
-        else
-        {
-            throw std::invalid_argument("ERROR: wrong async argument " +
-                                        asyncArg + " must be on or off\n");
-        }
-    }
+    configfile = argv[1];
+    outputfile = argv[2];
+    npx = convertToUint("N", argv[3]);
+    npy = convertToUint("M", argv[4]);
+    ndx = convertToUint("nx", argv[5]);
+    ndy = convertToUint("ny", argv[6]);
+    steps = convertToUint("steps", argv[7]);
+    iterations = convertToUint("iterations", argv[8]);
 
     if (npx * npy != this->nproc)
     {

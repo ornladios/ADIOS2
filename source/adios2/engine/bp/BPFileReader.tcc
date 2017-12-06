@@ -16,10 +16,17 @@
 namespace adios2
 {
 
-template <class T>
-void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
+template <>
+inline void BPFileReader::GetSyncCommon(Variable<std::string> &variable,
+                                        std::string *data)
 {
-    // subfile info
+    variable.SetData(data);
+    m_BP3Deserializer.GetStringFromMetadata(variable);
+}
+
+template <class T>
+inline void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
+{
     variable.SetData(data);
 
     const std::map<std::string, SubFileInfoMap> variableSubfileInfo =
@@ -33,6 +40,7 @@ void BPFileReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     // returns immediately
     m_BP3Deserializer.GetDeferredVariable(variable, data);
+    m_BP3Deserializer.m_PerformedGets = false;
 }
 
 } // end namespace adios2

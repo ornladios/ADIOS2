@@ -18,6 +18,7 @@ class Settings
 
 public:
     // user arguments
+    std::string configfile;
     std::string outputfile;
     unsigned int npx;        // Number of processes in X (slow) dimension
     unsigned int npy;        // Number of processes in Y (fast) dimension

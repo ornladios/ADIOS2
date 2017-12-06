@@ -50,15 +50,27 @@ void BPFileWriter::PerformPuts()
     {
         PutSync(variableName);
     }
+
+    m_BP3Serializer.m_DeferredVariables.clear();
 }
 
 void BPFileWriter::EndStep()
 {
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
+    {
+        PerformPuts();
+    }
+
     m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
 }
 
 void BPFileWriter::Close(const int transportIndex)
 {
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
+    {
+        PerformPuts();
+    }
+
     // close bp buffer by serializing data and metadata
     m_BP3Serializer.CloseData(m_IO);
     // send data to corresponding transports
@@ -81,6 +93,7 @@ void BPFileWriter::Close(const int transportIndex)
     }
 }
 
+// PRIVATE FUNCTIONS
 // PRIVATE
 void BPFileWriter::Init()
 {
@@ -102,7 +115,6 @@ void BPFileWriter::Init()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-// PRIVATE FUNCTIONS
 void BPFileWriter::InitParameters()
 {
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);

@@ -24,8 +24,8 @@ protected:
 
 TEST_F(XMLConfigTest, TwoIOs)
 {
-    const std::string configFile(configDir + adios2::PathSeparator +
-                                 "config1.xml");
+    const std::string configFile(
+        configDir + std::string(&adios2::PathSeparator, 1) + "config1.xml");
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON);
@@ -33,8 +33,11 @@ TEST_F(XMLConfigTest, TwoIOs)
     adios2::ADIOS adios(configFile, adios2::DebugON);
 #endif
 
+    // must be declared at least once
+    EXPECT_EQ(adios.InquireIO("Test IO 1"), nullptr);
+
     EXPECT_NO_THROW({
-        adios2::IO &io = *adios.InquireIO("Test IO 1");
+        adios2::IO &io = adios.DeclareIO("Test IO 1");
         const adios2::Params &params = io.GetParameters();
         ASSERT_EQ(params.size(), 5);
         EXPECT_THROW(params.at("DoesNotExist"), std::out_of_range);
@@ -46,19 +49,27 @@ TEST_F(XMLConfigTest, TwoIOs)
         adios2::Engine &engine =
             io.Open("Test BP Writer 1", adios2::Mode::Write);
         engine.Close();
+
+        EXPECT_NE(adios.InquireIO("Test IO 1"), nullptr);
     });
 
+    EXPECT_EQ(adios.InquireIO("Test IO 2"), nullptr);
     EXPECT_NO_THROW({
-        adios2::IO &io = *adios.InquireIO("Test IO 2");
+        adios2::IO &io = adios.DeclareIO("Test IO 2");
         const adios2::Params &params = io.GetParameters();
         ASSERT_EQ(params.size(), 0);
+        EXPECT_NE(adios.InquireIO("Test IO 2"), nullptr);
     });
+
+    // double declaring
+    EXPECT_THROW(adios.DeclareIO("Test IO 1"), std::invalid_argument);
+    EXPECT_THROW(adios.DeclareIO("Test IO 2"), std::invalid_argument);
 }
 
 TEST_F(XMLConfigTest, TwoEnginesException)
 {
-    const std::string configFile(configDir + adios2::PathSeparator +
-                                 "config2.xml");
+    const std::string configFile(
+        configDir + std::string(&adios2::PathSeparator, 1) + "config2.xml");
 
 #ifdef ADIOS2_HAVE_MPI
     EXPECT_THROW(

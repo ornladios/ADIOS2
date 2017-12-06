@@ -42,6 +42,11 @@ public:
 
     virtual ~BPFileReader() = default;
 
+    StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
+                         const float timeoutSeconds = 0.f) final;
+
+    void EndStep() final;
+
     void PerformGets() final;
 
     void Close(const int transportIndex = -1);
@@ -50,6 +55,10 @@ private:
     format::BP3Deserializer m_BP3Deserializer;
     transportman::TransportMan m_FileManager;
     transportman::TransportMan m_SubFileManager;
+
+    /** used for per-step reads, TODO: to be moved to BP3Deserializer */
+    size_t m_CurrentStep = 0;
+    bool m_FirstStep = true;
 
     void Init();
     void InitTransports();

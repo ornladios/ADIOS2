@@ -5,3 +5,4 @@
 
 add_subdirectory(write)
 add_subdirectory(read)
+add_subdirectory(read_fileonly)

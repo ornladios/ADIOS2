@@ -54,8 +54,6 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     m_BP3Serializer.PutVariableMetadata(variable);
     m_BP3Serializer.PutVariablePayload(variable);
-
-    // variable.SetData(nullptr); // not needed after PutSync?
 }
 
 template <class T>

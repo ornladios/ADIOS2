@@ -52,7 +52,7 @@ using SubFileInfoMap =
  * @return string with type
  */
 template <class T>
-inline std::string GetType() noexcept;
+std::string GetType() noexcept;
 
 /**
  * Check in types set if "type" is one of the aliases for a certain type,
@@ -156,6 +156,12 @@ U *InquireKey(const T &key, std::map<T, U> &input) noexcept;
  */
 template <class T, class U>
 U *InquireKey(const T &key, std::unordered_map<T, U> &input) noexcept;
+
+template <class T>
+std::string VectorToCSV(const std::vector<T> &input) noexcept;
+
+template <class T>
+std::string ValueToString(const T value) noexcept;
 
 } // end namespace adios2
 
