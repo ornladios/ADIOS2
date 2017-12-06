@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * IO_ADIOS2.cpp
+ * IO_ph5.cpp
  *
  *  Created on: Feb 2017
  *      Author: Norbert Podhorszki
