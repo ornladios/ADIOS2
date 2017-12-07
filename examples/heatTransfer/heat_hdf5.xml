@@ -11,7 +11,7 @@
         ====================================-->
 
     <io name="writer">
-        <engine type="HDF5Writer">
+        <engine type="HDF5">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
@@ -57,8 +57,7 @@
         ====================================-->
 
     <io name="reader">
-      <!-- <engine type="BPFileReader"> -->
-       <engine type="HDF5Reader"> 
+       <engine type="HDF5"> 
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 

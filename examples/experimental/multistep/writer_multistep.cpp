@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
         if (!bpWriterSettings.InConfigFile())
         {
             // if not defined by user, we can change the default settings
-            bpWriterSettings.SetEngine("ADIOS1Writer");
+            bpWriterSettings.SetEngine("ADIOS1");
             // ISO-POSIX file is the default transport
             // Passing parameters to the transport
             bpWriterSettings.AddTransport("file"

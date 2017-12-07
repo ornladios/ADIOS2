@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
         adios2::IO &sstIO = adios.DeclareIO("WAN");
-        sstIO.SetEngine("SstReader");
+        sstIO.SetEngine("Sst");
         sstIO.SetParameters({{"real_time", "yes"},
                              {"method_type", "stream"},
                              {"method", "dump"}});

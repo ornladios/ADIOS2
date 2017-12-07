@@ -32,8 +32,8 @@ IO::IO(const Settings &s, MPI_Comm comm)
     if (!h5io.InConfigFile())
     {
         // if not defined by user, we can change the default settings
-        // BPFileWriter is the default engine
-        h5io.SetEngine("HDF5Writer");
+        // BPFile is the default engine
+        h5io.SetEngine("HDF5");
     }
 
     varGndx = &h5io.DefineVariable<unsigned int>("gndx");

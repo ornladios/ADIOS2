@@ -55,9 +55,9 @@ int main(int argc, char *argv[])
         if (!h5ReaderIO.InConfigFile())
         {
             // if not defined by user, we can change the default settings
-            // BPFileWriter is the default engine
-            // h5ReaderIO.SetEngine("ADIOS1Reader");
-            h5ReaderIO.SetEngine("HDF5Reader");
+            // BPFile is the default engine
+            // h5ReaderIO.SetEngine("ADIOS1");
+            h5ReaderIO.SetEngine("HDF5");
             // h5ReaderIO.SetParameters({{"num_threads", "2"}});
 
             // ISO-POSIX file is the default transport
