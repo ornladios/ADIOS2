@@ -73,8 +73,8 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         io.DefineVariable<double>("r64", shape, start, count);
     }
 
-    // Create the ADIOS 1 Engine
-    io.SetEngine("SstWriter");
+    // Create the Engine
+    io.SetEngine("Sst");
 
     adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 

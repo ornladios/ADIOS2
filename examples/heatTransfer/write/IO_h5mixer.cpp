@@ -46,7 +46,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     if (!h5io.InConfigFile())
     {
         // if not defined by user, we can change the default settings
-        // BPFileWriter is the default engine
+        // BPFile is the default engine
 
         // Allow an extra thread for data processing
         // ISO-POSIX file is the default transport

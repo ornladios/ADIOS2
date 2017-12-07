@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
     if (!bpReaderIO.InConfigFile())
     {
         // if not defined by user, we can change the default settings
-        // BPFileWriter is the default engine
-        bpReaderIO.SetEngine("ADIOS1Reader");
+        // BPFile is the default engine
+        bpReaderIO.SetEngine("ADIOS1");
         bpReaderIO.SetParameters({{"num_threads", "2"}});
         bpReaderIO.SetParameter("OpenAsFile", "true");
 

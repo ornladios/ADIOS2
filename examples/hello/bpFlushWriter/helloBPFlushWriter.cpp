@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N_Flush");
-        bpIO.SetEngine("BPFileWriter");
+        bpIO.SetEngine("BPFile");
 
         //        bpIO.SetParameters({{"MaxBufferSize", "9Mb"},
         //                            {"BufferGrowthFactor", "1.5"},

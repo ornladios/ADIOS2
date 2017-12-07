@@ -97,7 +97,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
 
         io.AddTransport("file");
 
@@ -244,7 +244,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
 
         io.AddTransport("file");
 

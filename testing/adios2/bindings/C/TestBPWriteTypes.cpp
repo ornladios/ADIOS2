@@ -39,7 +39,7 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
     // IO
     adios2_IO *ioH = adios2_declare_io(adiosH, "CArrayTypes");
     // Set engine parameters
-    adios2_set_engine(ioH, "BPFileWriter");
+    adios2_set_engine(ioH, "BPFile");
     adios2_set_parameter(ioH, "ProfileUnits", "Microseconds");
     adios2_set_parameter(ioH, "Threads", "1");
 

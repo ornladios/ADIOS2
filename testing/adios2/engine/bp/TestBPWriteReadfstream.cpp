@@ -84,7 +84,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
         io.AddTransport("file", {{"Library", "fstream"}});
 
         // QUESTION: It seems that BPFilterWriter cannot overwrite existing
@@ -376,7 +376,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
         io.AddTransport("file", {{"Library", "fstream"}});
 
         adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
@@ -674,7 +674,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
         io.AddTransport("file", {{"Library", "fstream"}});
 
         adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);

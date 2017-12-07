@@ -63,17 +63,6 @@ if(ADIOS2_HAVE_MPI)
       ${HDF5_C_LIBRARIES} MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
     )
 
-    add_executable(heatTransfer_write_a2h5
-      main.cpp
-      HeatTransfer.cpp
-      Settings.cpp
-      IO_ph5_adios2.cpp
-    )
-
-    target_link_libraries(heatTransfer_write_a2h5
-      adios2 MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
-    )
-
     if(HDF5_VERSION VERSION_LESS 1.11)
     else()
       add_executable(heatTransfer_write_h5mixer

@@ -94,7 +94,7 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
         io.SetParameters({{"Threads", "2"}});
         io.AddTransport("file", {{"Library", "POSIX"}});
 

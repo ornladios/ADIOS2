@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &streamingIO = adios.DeclareIO("StreamingWrite");
-        streamingIO.SetEngine("DataManWriter");
+        streamingIO.SetEngine("DataMan");
 
         auto wanStream = streamingIO.AddTransport(
             "WAN", {{"IPAddress", "127.0.0.1"}, {"Port", "22"}});
