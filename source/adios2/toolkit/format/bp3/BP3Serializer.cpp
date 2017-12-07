@@ -576,6 +576,19 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
                                   std::vector<char> &buffer, size_t &position,
                                   const bool addSubfiles)
 {
+    auto lf_CopyVersionChar = [](const std::string version,
+                                 std::vector<char> &buffer, size_t &position) {
+        CopyToBuffer(buffer, position, version.c_str(), version.size());
+    };
+
+    const std::string versionLongTag("ADIOS2-BP v" +
+                                     std::string(ADIOS2_VERSION));
+    CopyToBuffer(buffer, position, versionLongTag.c_str(), 24);
+    lf_CopyVersionChar(std::string(ADIOS2_VERSION_MAJOR), buffer, position);
+    lf_CopyVersionChar(std::string(ADIOS2_VERSION_MINOR), buffer, position);
+    lf_CopyVersionChar(std::string(ADIOS2_VERSION_PATCH), buffer, position);
+    ++position;
+
     CopyToBuffer(buffer, position, &pgIndexStart);
     CopyToBuffer(buffer, position, &variablesIndexStart);
     CopyToBuffer(buffer, position, &attributesIndexStart);
@@ -940,7 +953,7 @@ void BP3Serializer::MergeSerializeIndices(
         }
 
         default:
-            // TODO: complex, string array, long double
+            // TODO: complex, long double
             throw std::invalid_argument("ERROR: type " +
                                         std::to_string(dataType) +
                                         " not supported in Merge\n");

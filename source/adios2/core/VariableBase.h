@@ -68,7 +68,7 @@ public:
     size_t m_AvailableStepsStart = 1;
     size_t m_AvailableStepsCount = 0;
 
-    size_t m_StepsStart = 1;
+    size_t m_StepsStart = 0;
     size_t m_StepsCount = 1;
 
     /** Index Metadata Position in a serial metadata buffer */

@@ -80,8 +80,8 @@ public:
 
         bool AreAttributesWritten = false;
 
-        /** Fixed size for mini footer */
-        const unsigned int MiniFooterSize = 28;
+        /** Fixed size for mini footer, adding 28 bytes for ADIOS version */
+        const unsigned int MiniFooterSize = 28 + 28;
 
         /** number of current PGs */
         uint64_t DataPGCount = 0;
@@ -103,6 +103,7 @@ public:
 
     struct Minifooter
     {
+        std::string VersionTag;
         uint64_t PGIndexStart;
         uint64_t VarsIndexStart;
         uint64_t AttributesIndexStart;
@@ -119,9 +120,10 @@ public:
     /** statistics verbosity, only 0 is supported */
     unsigned int m_Verbosity = 0;
 
-    /** contains data buffer and position */
-    // capsule::STLVector m_HeapBuffer;
+    /** contains data buffer for this rank */
     BufferSTL m_Data;
+
+    /** contains collective metadata buffer, only used by rank 0 */
     BufferSTL m_Metadata;
 
     /** memory growth factor,s set by the user */
