@@ -12,7 +12,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.0.0)
+project(ADIOS2 VERSION 2.1.0)
 
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
