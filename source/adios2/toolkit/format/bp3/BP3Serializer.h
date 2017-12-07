@@ -80,6 +80,11 @@ public:
      */
     void CloseData(IO &io);
 
+    /**
+     * Closes bp buffer for streaming mdoe...must reset metadata for the next
+     * step
+     * @param io
+     */
     void CloseStream(IO &io);
 
     /**

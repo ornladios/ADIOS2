@@ -15,7 +15,7 @@ class XMLConfigTest : public ::testing::Test
 public:
     XMLConfigTest() : configDir(str(XML_CONFIG_DIR)) {}
 
-protected:
+    // protected:
     // virtual void SetUp() { }
 
     // virtual void TearDown() { }
