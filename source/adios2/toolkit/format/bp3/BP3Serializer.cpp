@@ -578,15 +578,19 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
 {
     auto lf_CopyVersionChar = [](const std::string version,
                                  std::vector<char> &buffer, size_t &position) {
-        CopyToBuffer(buffer, position, version.c_str(), version.size());
+        CopyToBuffer(buffer, position, version.c_str());
     };
 
-    const std::string versionLongTag("ADIOS2-BP v" +
-                                     std::string(ADIOS2_VERSION));
+    const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
+    const std::string minorVersion(std::to_string(ADIOS2_VERSION_MINOR));
+    const std::string patchVersion(std::to_string(ADIOS2_VERSION_PATCH));
+
+    const std::string versionLongTag("ADIOS2-BP v" + majorVersion + "." +
+                                     minorVersion + "." + patchVersion);
     CopyToBuffer(buffer, position, versionLongTag.c_str(), 24);
-    lf_CopyVersionChar(std::string(ADIOS2_VERSION_MAJOR), buffer, position);
-    lf_CopyVersionChar(std::string(ADIOS2_VERSION_MINOR), buffer, position);
-    lf_CopyVersionChar(std::string(ADIOS2_VERSION_PATCH), buffer, position);
+    lf_CopyVersionChar(majorVersion, buffer, position);
+    lf_CopyVersionChar(minorVersion, buffer, position);
+    lf_CopyVersionChar(patchVersion, buffer, position);
     ++position;
 
     CopyToBuffer(buffer, position, &pgIndexStart);
