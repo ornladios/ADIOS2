@@ -247,13 +247,6 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                             buffer.data(), status.Bytes);
 
                 /*    write bp file for debugging   */
-                /*
-                std::ofstream bpfile("datamanR.bp", std::ios_base::binary);
-                bpfile.write(m_BP3Deserializer->m_Data.m_Buffer.data(),
-                             m_BP3Deserializer->m_Data.m_Buffer.size());
-                bpfile.close();
-                */
-
                 m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Data,
                                                  *m_IO);
 

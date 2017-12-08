@@ -5,10 +5,12 @@
  * DataManReader.cpp
  *
  *  Created on: Feb 21, 2017
- *      Author: wfg
+ *      Author: Jason Wang
+ *              William F Godoy
  */
 
 #include "DataManReader.h"
+#include "DataManReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
@@ -23,6 +25,20 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
 }
+
+StepStatus DataManReader::BeginStep(StepMode stepMode,
+                                    const float timeoutSeconds)
+{
+    StepStatus status = StepStatus::OK;
+    // here fill the logic for the while loop listener...
+    // m_BP3Deserializer.m_MetadataSet.StepsCount will have the number of steps
+    // per buffer
+    return status;
+}
+
+void DataManReader::PerformGets() {}
+
+void DataManReader::EndStep() {}
 
 void DataManReader::Close(const int transportIndex) {}
 
@@ -86,5 +102,21 @@ void DataManReader::Init()
     m_Man.SetIO(m_IO);
     m_Man.OpenWANTransports("zmq", Mode::Read, parameters, true);
 }
+
+#define declare_type(T)                                                        \
+    void DataManReader::DoGetSync(Variable<T> &variable, T *data)              \
+    {                                                                          \
+        GetSyncCommon(variable, data);                                         \
+    }                                                                          \
+    void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
+    {                                                                          \
+        GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    void DataManReader::DoGetDeferred(Variable<T> &variable, T &data)          \
+    {                                                                          \
+        GetDeferredCommon(variable, &data);                                    \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 } // end namespace adios2
