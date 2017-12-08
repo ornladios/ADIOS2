@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &adios1IO = adios.DeclareIO("ADIOS1IO");
-        adios1IO.SetEngine("ADIOS1Writer");
+        adios1IO.SetEngine("ADIOS1");
         adios1IO.AddTransport("file", {{"library", "MPI"}});
 
         /** global array : name, { shape (total) }, { start (local) }, { count

@@ -64,13 +64,13 @@ void ReadSettings::DecomposeArray(int gndx, int gndy)
     size_t offsy = ndy * posy;
     if (posx == npx - 1)
     {
-        // right-most processes need to read all the rest of columns
-        ndx = gndy - ndx * (npx - 1);
+        // right-most processes need to read all the rest of rows
+        ndx = gndx - ndx * (npx - 1);
     }
 
     if (posy == npy - 1)
     {
-        // bottom processes need to read all the rest of rows
+        // bottom processes need to read all the rest of columns
         ndy = gndy - ndy * (npy - 1);
     }
     readsize.push_back(ndx);

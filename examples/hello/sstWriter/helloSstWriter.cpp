@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     {
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
         adios2::IO &sstIO = adios.DeclareIO("WANIO");
-        sstIO.SetEngine("SstWriter");
+        sstIO.SetEngine("Sst");
         sstIO.SetParameters({{"peer-to-peer", "yes"},
                              {"real_time", "yes"},
                              {"compress", "no"},

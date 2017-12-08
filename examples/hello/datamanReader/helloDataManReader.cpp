@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
                 UserCallBack));
 
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
-        dataManIO.SetEngine("DataManReader");
+        dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters(
             {{"Transport", "zmq"}, {"TransportType", "wan"}, {"Format", "bp"}});
         dataManIO.AddOperator(callbackFloat); // propagate to all Engines

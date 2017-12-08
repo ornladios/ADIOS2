@@ -37,11 +37,11 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &bpIO = adios.DeclareIO("ReadBP");
-        //        /bpIO.SetParameter("Threads", "2");
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpReader =
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Read);
+
         const std::map<std::string, adios2::Params> variables =
             bpIO.GetAvailableVariables();
 
@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
         {
             // myFloats.data is pre-allocated
             bpReader.GetSync<float>(*bpFloats, myFloats.data());
+
             std::cout << "MyFloats: \n";
             for (const auto number : myFloats)
             {

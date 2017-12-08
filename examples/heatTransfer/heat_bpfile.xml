@@ -11,7 +11,7 @@
         ====================================-->
 
     <io name="writer">
-        <engine type="BPFileWriter">
+        <engine type="BPFile">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
@@ -57,7 +57,7 @@
         ====================================-->
 
     <io name="reader">
-        <engine type="BPFileReader">
+        <engine type="BPFile">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 

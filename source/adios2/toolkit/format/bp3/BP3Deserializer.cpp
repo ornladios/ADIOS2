@@ -74,7 +74,7 @@ void BP3Deserializer::GetStringFromMetadata(
     for (size_t i = 0; i < variable.m_StepsCount; ++i)
     {
         *(data + i) = "";
-        const size_t step = variable.m_StepsStart + i;
+        const size_t step = variable.m_StepsStart + i + 1;
         auto itStep = variable.m_IndexStepBlockStarts.find(step);
 
         if (itStep == variable.m_IndexStepBlockStarts.end())
@@ -134,6 +134,10 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     }
 
     position = bufferSize - m_MetadataSet.MiniFooterSize;
+
+    m_Minifooter.VersionTag.assign(&buffer[position], 28);
+    position += 28;
+
     m_Minifooter.PGIndexStart = ReadValue<uint64_t>(buffer, position);
     m_Minifooter.VarsIndexStart = ReadValue<uint64_t>(buffer, position);
     m_Minifooter.AttributesIndexStart = ReadValue<uint64_t>(buffer, position);
