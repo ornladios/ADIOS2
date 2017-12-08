@@ -78,25 +78,21 @@ public:
     ~ADIOS() = default;
 
     /**
-     * Declares a new IO class object. If IO object is defined in the user
-     * config file, by name, it will be already created during the processing
-     * the config file. So this function returns a reference to that object.
-     * Otherwise it will create and return a new IO object with default
-     * settings.
-     * Use function InConfigFile() to distinguish between the two cases.
+     * Declares a new IO class object and returns a reference to that object.
      * @param ioName must be unique
-     * @return reference to existing (or newly created) method inside ADIOS
+     * @return reference to newly created IO object inside ADIOS, if IO is
+     * declared it throws an exception
      */
     IO &DeclareIO(const std::string name);
 
     /**
-     * Retrieve a reference pointer to an existing Operator object
-     * created with DeclareIO.
+     * Retrieve a reference to an existing IO object created with DeclareIO.
+     * Follow the C++11 STL containers at function.
      * @param name of IO to look for
      * @return if IO exists returns a reference to existing IO object inside
-     * ADIOS, otherwise a nullptr
+     * ADIOS, otherwise throws an exception
      */
-    IO *InquireIO(const std::string name) noexcept;
+    IO &AtIO(const std::string name);
 
     /**
      * Declares a derived class of the Operator abstract class. If object is
