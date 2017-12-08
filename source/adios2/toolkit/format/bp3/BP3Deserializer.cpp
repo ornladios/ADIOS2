@@ -473,6 +473,9 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
     BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable)   \
         const;                                                                 \
                                                                                \
+    template void BP3Deserializer::GetSyncVariableDataFromStream(              \
+        Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
+                                                                               \
     template void BP3Deserializer::GetDeferredVariable(Variable<T> &variable,  \
                                                        T *data);
 

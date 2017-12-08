@@ -65,15 +65,17 @@ private:
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
+    /**
+     * All DoGetSync virtual functions call this function
+     * @param variable
+     * @param data
+     */
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 
+    // TODO: let's implement this after GetSyncCommon
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
-
-    void
-    ReadVariables(IO &io,
-                  const std::map<std::string, SubFileInfoMap> &variablesInfo);
 };
 
 } // end namespace adios2

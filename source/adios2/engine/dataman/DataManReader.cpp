@@ -33,6 +33,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     // here fill the logic for the while loop listener...
     // m_BP3Deserializer.m_MetadataSet.StepsCount will have the number of steps
     // per buffer
+    // Look at the BPFileReader.BeginStep implementation
     return status;
 }
 

@@ -285,13 +285,13 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                     {
                         adios2::Variable<int> *v =
                             m_IO->InquireVariable<int>(var);
-                        size_t size = std::accumulate(
-                            v->m_Shape.begin(), v->m_Shape.end(), 1,
-                            std::multiplies<size_t>());
-                        std::vector<int> x(size);
-                        v->SetData(x.data());
                         /* TODO: add read variable */
-                        RunCallback(x.data(), "stream", var, type, v->m_Shape);
+
+                        // TO DO: verify
+                        m_BP3Deserializer->GetSyncVariableDataFromStream(
+                            *v, m_BP3Deserializer->m_Data);
+                        RunCallback(v->GetData(), "stream", var, type,
+                                    v->m_Shape);
                     }
                     else if (type == "unsigned int")
                     {

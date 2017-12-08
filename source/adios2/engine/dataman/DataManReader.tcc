@@ -19,14 +19,16 @@ namespace adios2
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    variable.SetData(data);
-
-    const std::map<std::string, SubFileInfoMap> variableSubfileInfo =
-        m_BP3Deserializer.GetSyncVariableSubFileInfo(variable);
-
-    ReadVariables(m_IO, variableSubfileInfo);
+    if (m_UseFormat == "BP")
+    {
+        variable.SetData(data);
+        m_BP3Deserializer.GetSyncVariableDataFromStream(
+            variable, m_BP3Deserializer.m_Data);
+    }
 }
 
+// TODO: let;s try with GetSync first, GetDeferred, PerformGets is just a
+// wrapper
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {

@@ -49,6 +49,16 @@ public:
     std::map<std::string, SubFileInfoMap>
     GetSyncVariableSubFileInfo(const Variable<T> &variable) const;
 
+    /**
+     * Used to get the variable payload data for the current selection (dims and
+     * steps), used in single buffer for streaming
+     * @param variable
+     * @param bufferSTL bp buffer input that contains metadata and data
+     */
+    template <class T>
+    void GetSyncVariableDataFromStream(Variable<T> &variable,
+                                       BufferSTL &bufferSTL) const;
+
     // Deferred functions
     template <class T>
     void GetDeferredVariable(Variable<T> &variable, T *data);
@@ -129,6 +139,9 @@ private:
     extern template std::map<std::string, SubFileInfoMap>                      \
     BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable)   \
         const;                                                                 \
+                                                                               \
+    extern template void BP3Deserializer::GetSyncVariableDataFromStream(       \
+        Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
                                                                                \
     extern template void BP3Deserializer::GetDeferredVariable(                 \
         Variable<T> &variable, T *data);
