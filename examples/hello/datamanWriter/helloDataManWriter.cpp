@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     adios2::IO &dataManIO = adios.DeclareIO("WANIO");
-    dataManIO.SetEngine("DataManWriter");
+    dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({
         {"Compression", "no"},
         {"Transport", "zmq"},

@@ -15,7 +15,7 @@ class XMLConfigTest : public ::testing::Test
 public:
     XMLConfigTest() : configDir(str(XML_CONFIG_DIR)) {}
 
-protected:
+    // protected:
     // virtual void SetUp() { }
 
     // virtual void TearDown() { }
@@ -34,7 +34,7 @@ TEST_F(XMLConfigTest, TwoIOs)
 #endif
 
     // must be declared at least once
-    EXPECT_EQ(adios.InquireIO("Test IO 1"), nullptr);
+    EXPECT_THROW(adios.AtIO("Test IO 1"), std::invalid_argument);
 
     EXPECT_NO_THROW({
         adios2::IO &io = adios.DeclareIO("Test IO 1");
@@ -49,17 +49,16 @@ TEST_F(XMLConfigTest, TwoIOs)
         adios2::Engine &engine =
             io.Open("Test BP Writer 1", adios2::Mode::Write);
         engine.Close();
-
-        EXPECT_NE(adios.InquireIO("Test IO 1"), nullptr);
     });
+    EXPECT_NO_THROW(adios.AtIO("Test IO 1"));
 
-    EXPECT_EQ(adios.InquireIO("Test IO 2"), nullptr);
+    EXPECT_THROW(adios.AtIO("Test IO 2"), std::invalid_argument);
     EXPECT_NO_THROW({
         adios2::IO &io = adios.DeclareIO("Test IO 2");
         const adios2::Params &params = io.GetParameters();
         ASSERT_EQ(params.size(), 0);
-        EXPECT_NE(adios.InquireIO("Test IO 2"), nullptr);
     });
+    EXPECT_NO_THROW(adios.AtIO("Test IO 2"));
 
     // double declaring
     EXPECT_THROW(adios.DeclareIO("Test IO 1"), std::invalid_argument);
@@ -84,7 +83,7 @@ TEST_F(XMLConfigTest, TwoEnginesException)
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Init(nullptr, nullptr);
+    MPI_Init(&argc, &argv);
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);

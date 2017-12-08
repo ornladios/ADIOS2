@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(adios2::DebugON);
 
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
-        dataManIO.SetEngine("DataManReader");
+        dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters({{"real_time", "yes"},
                                  {"method_type", "stream"},
                                  {"method", "dump"}});

@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
         {
             // if not defined by user, we can change the default settings
             bpReaderSettings.SetEngine(
-                "ADIOS1Reader"); // BP is the default engine
+                "ADIOS1"); // BPFile is the default engine
             // see only one step at a time
             // this is default, nothing to be done
         }

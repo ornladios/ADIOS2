@@ -86,7 +86,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
 
         io.AddTransport("file");
 
@@ -281,7 +281,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
-            bpReader.GetDeferred(*var_iString, IString);
+            bpReader.GetSync(*var_iString, IString);
 
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
@@ -389,7 +389,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -688,7 +688,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
 
         io.AddTransport("file");
 

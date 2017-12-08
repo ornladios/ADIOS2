@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     {
         adios2::ADIOS adios(adios2::DebugON);
         adios2::IO &dataManIO = adios.DeclareIO("WANIO");
-        dataManIO.SetEngine("DataManWriter");
+        dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters(
             {{"compress", "no"}, {"method", "dump"}, {"type", "wan"}});
 

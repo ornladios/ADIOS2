@@ -104,18 +104,27 @@ IO &ADIOS::DeclareIO(const std::string name)
     return io;
 }
 
-IO *ADIOS::InquireIO(const std::string name) noexcept
+IO &ADIOS::AtIO(const std::string name)
 {
-    IO *io = InquireKey(name, m_IOs);
-    if (io != nullptr)
+    auto itIO = m_IOs.find(name);
+
+    if (itIO == m_IOs.end())
     {
-        if (!io->IsDeclared())
+        throw std::invalid_argument("ERROR: IO with name " + name +
+                                    " was not declared, did you previously "
+                                    "call DeclareIO?, in call to AtIO\n");
+    }
+    else
+    {
+        if (!itIO->second.IsDeclared())
         {
-            io = nullptr;
+            throw std::invalid_argument("ERROR: IO with name " + name +
+                                        " was not declared, did you previously "
+                                        "call DeclareIO ?, in call to AtIO\n");
         }
     }
 
-    return io;
+    return itIO->second;
 }
 
 Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
