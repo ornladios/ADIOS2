@@ -36,8 +36,8 @@ program TestBPWriteTypes
     ! Open myVector_f.bp in write mode, this launches an engine
     call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)
 
-    ! Write myArray contents to bp buffer, based on var1 metadata
-    call adios2_write(engine, variables(1), data_I8, ierr)
+    ! Put array contents to bp buffer, based on var1 metadata
+    call adios2_put_sync(engine, variables(1), data_I8, ierr)
 
     ! Closes engine1 and deallocates it, becomes unreachable
     call adios2_close(engine, ierr)

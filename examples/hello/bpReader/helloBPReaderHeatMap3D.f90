@@ -49,7 +49,7 @@ program helloBPReaderHeatMap3D
     call adios2_open( bpWriter, ioPut, 'HeatMap3D_f.bp', &
                     & adios2_mode_write, ierr )
 
-    call adios2_write( bpWriter, var_temperatures, temperatures, ierr )
+    call adios2_put_sync( bpWriter, var_temperatures, temperatures, ierr )
 
     call adios2_close( bpWriter, ierr )
 
@@ -77,8 +77,9 @@ program helloBPReaderHeatMap3D
             call adios2_set_selection( var_temperaturesIn, 3, sel_start, &
                                      & sel_count, ierr )
 
-            call adios2_read( bpReader, var_temperaturesIn, sel_temperatures, &
-                            & ierr )
+            call adios2_get_sync( bpReader, var_temperaturesIn, &
+                                & sel_temperatures, &
+                                & ierr )
 
             write(*,'(A,3(I1,A),A,3(I1,A),A)') 'Temperature map selection  &
                       & [ start = (', (sel_start(i),',',i=1,3) , ') &

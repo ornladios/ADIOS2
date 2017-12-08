@@ -8,10 +8,10 @@
 !       Author: William F Godoy godoywf@ornl.gov
 !
 module adios2_engine
-    use adios2_engine_write
-    use adios2_engine_iwrite
-    use adios2_engine_read
-    use adios2_engine_iread
+    use adios2_engine_put_sync
+    use adios2_engine_put_deferred
+    use adios2_engine_get_sync
+    use adios2_engine_get_deferred
     implicit none
 
 contains

@@ -34,8 +34,8 @@ program helloBPWriter
     ! Open myVector_f.bp in write mode
     call adios2_open(engine1, io, "myVector_f.bp", adios2_mode_write, ierr)
 
-    ! Write myArray contents to bp buffer, based on var1 metadata
-    call adios2_write(engine1, var1, myArray, ierr)
+    ! Put myArray contents to bp buffer, based on var1 metadata
+    call adios2_put_sync(engine1, var1, myArray, ierr)
 
     ! Closes engine1 and deallocates it, becomes unreachable
     call adios2_close(engine1, ierr)

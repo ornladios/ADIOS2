@@ -23,10 +23,10 @@ set(MODULES
      modules/adios2_io_mod.f90 
      modules/adios2_variable_mod.f90
      modules/adios2_engine_mod.f90 
-     modules/adios2_engine_write_mod.f90 
-     modules/adios2_engine_iwrite_mod.f90
-     modules/adios2_engine_read_mod.f90 
-     modules/adios2_engine_iread_mod.f90
+     modules/adios2_engine_put_sync_mod.f90 
+     modules/adios2_engine_put_deferred_mod.f90
+     modules/adios2_engine_get_sync_mod.f90 
+     modules/adios2_engine_get_deferred_mod.f90
 )
 
 add_library(adios2_f ${MODULES} ${F2C})
