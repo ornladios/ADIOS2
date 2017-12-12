@@ -158,8 +158,6 @@ void DataMan::WriteWAN(const void *buffer, size_t size)
         throw std::runtime_error(
             "ERROR: No valid transports found, from DataMan::WriteWAN()");
     }
-    //    m_Transports[m_CurrentTransport]->Write(static_cast<const char
-    //    *>(buffer),                                            size);
 
     m_Transports[m_CurrentTransport]->Write(
         reinterpret_cast<const char *>(buffer), size);
@@ -167,12 +165,6 @@ void DataMan::WriteWAN(const void *buffer, size_t size)
     std::ofstream bpfile("datamanW.bp", std::ios_base::binary);
     bpfile.write(reinterpret_cast<const char *>(buffer), size);
     bpfile.close();
-
-    for (int i = 0; i < size / 4; i++)
-    {
-
-        std::cout << static_cast<const float *>(buffer)[i] << " ";
-    }
 }
 
 void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
@@ -257,10 +249,15 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
 
                     std::string var = variableInfoPair.first;
                     std::string type = "null";
+
                     for (const auto &parameter : variableInfoPair.second)
                     {
-                        std::cout << "\tKey: " << parameter.first
-                                  << "\t Value: " << parameter.second << "\n";
+                        //  ** print out all parameters from BP metadata
+                        /*
+                            std::cout << "\tKey: " << parameter.first
+                                      << "\t Value: " << parameter.second <<
+                           "\n";
+                        */
                         if (parameter.first == "Type")
                         {
                             type = parameter.second;
@@ -277,13 +274,14 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
         adios2::Variable<T> *v = m_IO->InquireVariable<T>(var);                \
         m_BP3Deserializer->GetSyncVariableDataFromStream(                      \
             *v, m_BP3Deserializer->m_Data);                                    \
+        if (v->GetData() == nullptr)                                           \
+        {                                                                      \
+            throw("Data pointer obtained from BP deserializer is a nullptr");  \
+        }                                                                      \
         RunCallback(v->GetData(), "stream", var, type, v->m_Shape);            \
     }
                     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-
-                    std::cout << "Variable Name: " << var << std::endl;
-                    std::cout << "Type: " << type << std::endl;
                 }
             }
         }
