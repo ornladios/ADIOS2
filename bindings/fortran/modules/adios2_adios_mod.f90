@@ -17,13 +17,11 @@ contains
 
     end
 
-
     subroutine adios2_finalize(adios, ierr)
         integer(kind=8), intent(in) :: adios
         integer, intent(out) :: ierr
 
         call adios2_finalize_f2c(adios, ierr)
     end
-
 
 end module

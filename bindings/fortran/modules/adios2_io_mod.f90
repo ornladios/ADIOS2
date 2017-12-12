@@ -21,23 +21,21 @@ contains
         character*(*), intent(in) :: value
         integer, intent(out) :: ierr
 
-        call adios2_set_parameter_f2c( io, TRIM(ADJUSTL(key))//char(0), &
-            & TRIM(ADJUSTL(value))//char(0), ierr )
+        call adios2_set_parameter_f2c(io, TRIM(ADJUSTL(key))//char(0), &
+                                      TRIM(ADJUSTL(value))//char(0), ierr)
 
     end subroutine
 
-
-   subroutine adios2_add_transport(transport_index, io, transport_type, ierr)
+    subroutine adios2_add_transport(transport_index, io, transport_type, ierr)
         integer, intent(out):: transport_index
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: transport_type
         integer, intent(out) :: ierr
 
-        call adios2_add_transport_f2c( transport_index, io, &
-            & TRIM(ADJUSTL(transport_type))//char(0), ierr)
+        call adios2_add_transport_f2c(transport_index, io, &
+                                      TRIM(ADJUSTL(transport_type))//char(0), ierr)
 
     end subroutine
-
 
     subroutine adios2_set_transport_parameter(io, transport_index, key, value, &
         & ierr)
@@ -48,11 +46,10 @@ contains
         integer, intent(out):: ierr
 
         call adios2_set_transport_parameter_f2c(io, transport_index, &
-          & TRIM(ADJUSTL(key))//char(0), TRIM(ADJUSTL(value))//char(0), &
-          & ierr)
+                                                TRIM(ADJUSTL(key))//char(0), TRIM(ADJUSTL(value))//char(0), &
+                                                ierr)
 
     end subroutine
-
 
     subroutine adios2_define_variable(variable, io, variable_name, &
         & adios2_type, ndims, shape_dims, start_dims, count_dims, &
@@ -73,12 +70,10 @@ contains
 
         constant_dims = adios2_LogicalToInt(adios2_constant_dims)
 
-        call adios2_define_variable_f2c(variable, io, &
-            & TRIM(ADJUSTL(variable_name))//char(0), adios2_type, ndims, &
-            & shape_dims, start_dims, count_dims, constant_dims, ierr)
+        call adios2_define_variable_f2c(variable, io, TRIM(ADJUSTL(variable_name))//char(0), adios2_type, ndims,
+        shape_dims, start_dims, count_dims, constant_dims, ierr)
 
     end subroutine
-
 
     subroutine adios2_inquire_variable(variable, io, variable_name, ierr)
         integer(kind=8), intent(out) :: variable
@@ -87,9 +82,8 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_inquire_variable_f2c(variable, io, &
-            & TRIM(ADJUSTL(variable_name))//char(0), ierr)
+                                         TRIM(ADJUSTL(variable_name))//char(0), ierr)
 
     end subroutine
-
 
 end module

@@ -135,6 +135,15 @@ void adios2_set_dimensions(adios2_Variable *variable, const size_t ndims,
     variableBase->CheckDimensions("in call to adios2_set_selection");
 }
 
+void adios2_set_shape(adios2_Variable *variable, const size_t ndims,
+                      const size_t *shape)
+{
+    adios2::VariableBase *variableBase =
+        reinterpret_cast<adios2::VariableBase *>(variable);
+    const adios2::Dims shapeV(shape, shape + ndims);
+    variableBase->SetShape(shapeV);
+}
+
 void adios2_set_selection(adios2_Variable *variable, const size_t ndims,
                           const size_t *start, const size_t *count)
 {

@@ -28,14 +28,14 @@ program helloBPReaderHeatMap3D
     allocate( temperatures( inx, iny, inz ) )
     ! populate temperature
     do k=1, icount(3)
-        do j=1, icount(2)
-            do i=1, icount(1)
-                iglobal = istart(1) + (i-1)-1
-                value = (k-1) * ishape(1) * ishape(2) + (j-1) * ishape(1) + &
-                &       iglobal
-                temperatures(i,j,k) = value
-            end do
+      do j=1, icount(2)
+        do i=1, icount(1)
+            iglobal = istart(1) + (i-1)
+            value = (k-1) * ishape(1) * ishape(2) + (j-1) * ishape(1) + &
+                    &  iglobal-1
+            temperatures(i,j,k) = value
         end do
+      end do
     end do
 
     ! Start adios2 Writer
@@ -69,7 +69,7 @@ program helloBPReaderHeatMap3D
 
         if( ierr == adios2_found ) then
 
-            sel_start = (/ 3, 3, 3 /)
+            sel_start = (/ 2, 2, 2 /)
             sel_count = (/ 4, 4, 4 /)
             allocate( sel_temperatures( sel_count(1), sel_count(2), &
                                       & sel_count(3) ) )

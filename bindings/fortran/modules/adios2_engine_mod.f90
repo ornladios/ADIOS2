@@ -24,7 +24,6 @@ contains
 
     end subroutine
 
-
     subroutine adios2_perform_puts(engine, ierr)
         integer(kind=8), intent(in) :: engine
         integer, intent(out) :: ierr
@@ -32,7 +31,6 @@ contains
         call adios2_perform_puts_f2c(engine, ierr)
 
     end subroutine
-
 
     subroutine adios2_perform_gets(engine, ierr)
         integer(kind=8), intent(in) :: engine
@@ -42,7 +40,6 @@ contains
 
     end subroutine
 
-
     subroutine adios2_end_step(engine, ierr)
         integer(kind=8), intent(in) :: engine
         integer, intent(out) :: ierr
@@ -50,7 +47,6 @@ contains
         call adios2_end_step_f2c(engine, ierr)
 
     end subroutine
-
 
     subroutine adios2_close(engine, ierr)
         integer(kind=8), intent(in) :: engine
