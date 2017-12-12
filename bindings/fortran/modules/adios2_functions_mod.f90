@@ -7,9 +7,9 @@ contains
     integer function adios2_LogicalToInt(logical_value)
         logical, value, intent(in) :: logical_value
 
-        adios2_LogicalToInt = 0
+        adios2_LogicalToInt = 1
         if (logical_value) then
-            adios2_LogicalToInt = 1
+            adios2_LogicalToInt = 0
         end if
 
     end function

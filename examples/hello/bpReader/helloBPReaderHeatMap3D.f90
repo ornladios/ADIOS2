@@ -42,12 +42,12 @@ program helloBPReaderHeatMap3D
     call adios2_init( adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr )
     call adios2_declare_io( ioPut, adios, 'HeatMapWrite', ierr )
 
-    call adios2_define_variable( var_temperatures, ioPut, 'temperatures', &
-        & adios2_type_integer, 3, ishape, istart, icount, &
-        & adios2_constant_dims_true, ierr )
+    call adios2_define_variable( var_temperatures, ioPut, 'temperatures', 3, &
+                                 ishape, istart, icount, adios2_constant_dims, &
+                                 temperatures, ierr )
 
-    call adios2_open( bpWriter, ioPut, 'HeatMap3D_f.bp', &
-                    & adios2_mode_write, ierr )
+    call adios2_open( bpWriter, ioPut, 'HeatMap3D_f.bp', adios2_mode_write, &
+                      ierr )
 
     call adios2_put_sync( bpWriter, var_temperatures, temperatures, ierr )
 
@@ -104,6 +104,8 @@ program helloBPReaderHeatMap3D
 
     end if
 
+
+    call adios2_finalize(adios, ierr)
     call MPI_Finalize(ierr)
 
 end program helloBPReaderHeatMap3D

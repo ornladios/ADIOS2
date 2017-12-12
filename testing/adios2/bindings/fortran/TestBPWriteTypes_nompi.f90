@@ -14,7 +14,7 @@ program TestBPWriteTypes
 
     ! Variable dimensions
     shape_dims(1) = inx
-    start_dims(1) = 0
+    start_dims(1) = 1
     count_dims(1) = inx
 
     ! Create adios handler passing the communicator, debug mode and error flag
@@ -24,9 +24,9 @@ program TestBPWriteTypes
     call adios2_declare_io(io, adios, "bpIO", ierr)
 
     ! Defines a variable to be written in bp format
-    call adios2_define_variable(variables(1), io, "var_I8", &
-        & adios2_type_integer1, 1, shape_dims, start_dims, count_dims, &
-        & adios2_constant_dims_true, ierr)
+    call adios2_define_variable(variables(1), io, "var_I8", 1, shape_dims, &
+                                start_dims, count_dims, adios2_constant_dims, &
+                                data_I8, ierr)
 
     ! Open myVector_f.bp in write mode, this launches an engine
     call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)

@@ -27,6 +27,11 @@ void FC_GLOBAL(adios2_variable_type_f2c,
                ADIOS2_VARIABLE_TYPE_F2C)(const adios2_Variable **variable,
                                          int *c_type, int *ierr);
 
+void FC_GLOBAL(adios2_set_shape_f2c,
+               ADIOS2_SET_SHAPE_F2C)(adios2_Variable **variable,
+                                     const int *ndims, const int *shape,
+                                     int *ierr);
+
 void FC_GLOBAL(adios2_set_selection_f2c,
                ADIOS2_SET_SELECTION_F2C)(adios2_Variable **variable,
                                          const int *ndims, const int *start,

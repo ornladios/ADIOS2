@@ -10,6 +10,8 @@
 !
 module adios2_engine_get_sync
 
+    implicit none
+
     interface adios2_get_sync
 
         ! Single Value
