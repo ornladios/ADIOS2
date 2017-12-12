@@ -12,6 +12,7 @@
 
 #include "DataMan.h"
 
+#include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
@@ -266,66 +267,20 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                         }
                     }
 
-                    if (type == "string")
+                    if (type == "compound")
                     {
+                        // not supported
                     }
-                    else if (type == "char")
-                    {
-                    }
-                    else if (type == "unsigned char")
-                    {
-                    }
-                    else if (type == "short")
-                    {
-                    }
-                    else if (type == "unsigned short")
-                    {
-                    }
-                    else if (type == "int")
-                    {
-                        adios2::Variable<int> *v =
-                            m_IO->InquireVariable<int>(var);
-                        /* TODO: add read variable */
-
-                        // TO DO: verify
-                        m_BP3Deserializer->GetSyncVariableDataFromStream(
-                            *v, m_BP3Deserializer->m_Data);
-                        RunCallback(v->GetData(), "stream", var, type,
-                                    v->m_Shape);
-                    }
-                    else if (type == "unsigned int")
-                    {
-                    }
-                    else if (type == "long int")
-                    {
-                    }
-                    else if (type == "unsigned long int")
-                    {
-                    }
-                    else if (type == "long long int")
-                    {
-                    }
-                    else if (type == "unsigned long long int")
-                    {
-                    }
-                    else if (type == "float")
-                    {
-                    }
-                    else if (type == "double")
-                    {
-                    }
-                    else if (type == "long double")
-                    {
-                    }
-                    else if (type == "float complex")
-                    {
-                    }
-                    else if (type == "double complex")
-                    {
-                    }
-                    else if (type == "long double complex")
-                    {
-                    }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        adios2::Variable<T> *v = m_IO->InquireVariable<T>(var);                \
+        m_BP3Deserializer->GetSyncVariableDataFromStream(                      \
+            *v, m_BP3Deserializer->m_Data);                                    \
+        RunCallback(v->GetData(), "stream", var, type, v->m_Shape);            \
+    }
+                    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
                     std::cout << "Variable Name: " << var << std::endl;
                     std::cout << "Type: " << type << std::endl;

@@ -33,7 +33,8 @@ template <class T>
 void BP3Deserializer::GetSyncVariableDataFromStream(Variable<T> &variable,
                                                     BufferSTL &bufferSTL) const
 {
-    auto itStep = variable.m_IndexStepBlockStarts.find(variable.m_StepsStart);
+    auto itStep =
+        variable.m_IndexStepBlockStarts.find(variable.m_StepsStart + 1);
 
     if (itStep == variable.m_IndexStepBlockStarts.end())
     {
@@ -44,8 +45,8 @@ void BP3Deserializer::GetSyncVariableDataFromStream(Variable<T> &variable,
     auto &buffer = bufferSTL.m_Buffer;
     size_t position = itStep->second.front();
 
-    const Characteristics<std::string> characteristics =
-        ReadElementIndexCharacteristics<std::string>(
+    const Characteristics<T> characteristics =
+        ReadElementIndexCharacteristics<T>(
             buffer, position, static_cast<DataTypes>(GetDataType<T>()), false);
 
     const size_t payloadOffset = characteristics.Statistics.PayloadOffset;
