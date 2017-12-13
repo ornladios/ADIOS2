@@ -38,7 +38,7 @@ contains
         integer debug_mode
 
         debug_mode = adios2_LogicalToInt(adios2_debug_mode)
-        call adios2_init_config_f2c(adios, config_file, comm, debug_mode, ierr)
+        call adios2_init_config_f2c(adios, TRIM(ADJUSTL(config_file))//char(0), comm, debug_mode, ierr)
 
     end subroutine
 
