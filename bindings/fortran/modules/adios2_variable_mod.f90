@@ -63,4 +63,16 @@ contains
 
     end subroutine
 
+    subroutine adios2_set_step_selection(variable, start_step, count_step, &
+        & ierr)
+        integer(kind=8), intent(out) :: variable
+        integer, dimension(:), intent(in) :: start_step
+        integer, dimension(:), intent(in) :: count_step
+        integer, intent(out) :: ierr
+
+        call adios2_set_step_selection_f2c(variable, start_step, count_step, &
+            &  ierr)
+
+    end subroutine
+
 end module

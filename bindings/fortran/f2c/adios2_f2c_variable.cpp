@@ -23,7 +23,7 @@ void FC_GLOBAL(adios2_variable_name_f2c,
     *ierr = 0;
     try
     {
-        size_t lengthC = 0;
+        std::size_t lengthC = 0;
         const char *nameC = adios2_variable_name(*variable, &lengthC);
 
         if (nameC == nullptr)
@@ -31,7 +31,7 @@ void FC_GLOBAL(adios2_variable_name_f2c,
             throw std::runtime_error("ERROR: null pointer\n");
         }
 
-        for (size_t i = 0; i < lengthC; ++i)
+        for (std::size_t i = 0; i < lengthC; ++i)
         {
             name[i] = nameC[i];
         }
@@ -88,34 +88,19 @@ void FC_GLOBAL(adios2_set_selection_f2c,
                                          const int *count, int *ierr)
 {
     auto lf_IntToSizeT = [](const int *dimensions, const int size,
-                            std::vector<std::size_t> &output,
-                            const bool offset) {
-
-        if (dimensions == nullptr)
-        {
-            return;
-        }
+                            std::vector<std::size_t> &output) {
 
         output.resize(size);
 
-        if (offset)
+        for (unsigned int d = 0; d < size; ++d)
         {
-            for (unsigned int d = 0; d < size; ++d)
-            {
-                output[d] = dimensions[d] - 1;
-            }
+            output[d] = dimensions[d];
         }
-        else
-        {
-            for (unsigned int d = 0; d < size; ++d)
-            {
-                output[d] = dimensions[d];
-            }
-        }
+
     };
 
     *ierr = 0;
-    if (start == nullptr || count == nullptr)
+    if (start == nullptr || count == nullptr || ndims == nullptr)
     {
         *ierr = 1;
         return;
@@ -124,9 +109,44 @@ void FC_GLOBAL(adios2_set_selection_f2c,
     try
     {
         std::vector<std::size_t> startV, countV;
-        lf_IntToSizeT(start, *ndims, startV, true);
-        lf_IntToSizeT(count, *ndims, countV, false);
+        lf_IntToSizeT(start, *ndims, startV);
+        lf_IntToSizeT(count, *ndims, countV);
         adios2_set_selection(*variable, *ndims, startV.data(), countV.data());
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
+
+void FC_GLOBAL(adios2_set_step_selection_f2c,
+               ADIOS2_SET_STEP_SELECTION_F2C)(adios2_Variable **variable,
+                                              const int *step_start,
+                                              const int *step_count, int *ierr)
+{
+    if (step_start == nullptr || step_count == nullptr)
+    {
+        *ierr = 1;
+        return;
+    }
+
+    if (step_start[0] < 0)
+    {
+        throw std::invalid_argument("ERROR: negative step_start in call to "
+                                    "adios2_set_step_selection\n");
+    }
+
+    if (step_count[0] < 0)
+    {
+        throw std::invalid_argument("ERROR: negative step_count in call to "
+                                    "adios2_set_step_selection\n");
+    }
+
+    try
+    {
+        const std::size_t stepStart = step_start[0];
+        const std::size_t stepCount = step_count[0];
+        adios2_set_step_selection(*variable, stepStart, stepCount);
     }
     catch (std::exception &e)
     {

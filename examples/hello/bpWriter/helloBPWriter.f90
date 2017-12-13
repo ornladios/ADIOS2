@@ -25,7 +25,7 @@ program helloBPWriter
 
     ! Variable dimensions
     shape_dims(1) = isize * inx
-    start_dims(1) = irank * inx + 1
+    start_dims(1) = irank * inx
     count_dims(1) = inx
 
     ! Create adios handler passing the communicator, debug mode and error flag

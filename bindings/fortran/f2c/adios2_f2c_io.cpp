@@ -78,54 +78,32 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     const int *count, const int *constant_dims, void *data, int *ierr)
 {
     auto lf_IntToSizeT = [](const int *dimensions, const int size,
-                            std::vector<std::size_t> &output,
-                            const bool offset) {
+                            std::vector<std::size_t> &output) {
 
-        if (dimensions == nullptr)
-        {
-            return;
-        }
-
-        if (size == 0)
+        if (dimensions == nullptr || size == 0)
         {
             return;
         }
 
         output.resize(size);
 
-        if (offset)
+        for (unsigned int d = 0; d < size; ++d)
         {
-            for (unsigned int d = 0; d < size; ++d)
+            if (dimensions[d] < 0)
             {
-                if (dimensions[d] <= 0)
-                {
-                    throw std::invalid_argument(
-                        "ERROR: 0 in start dimension in Fortran\n");
-                }
-
-                output[d] = dimensions[d] - 1;
+                throw std::invalid_argument("ERROR: negative shape, start, or "
+                                            "count dimension in Fortran\n");
             }
-        }
-        else
-        {
-            for (unsigned int d = 0; d < size; ++d)
-            {
-                if (dimensions[d] <= 0)
-                {
-                    throw std::invalid_argument(
-                        "ERROR: 0 in shape or count dimension in Fortran\n");
-                }
-                output[d] = dimensions[d];
-            }
+            output[d] = dimensions[d];
         }
     };
 
     *ierr = 0;
 
     std::vector<std::size_t> shapeV, startV, countV;
-    lf_IntToSizeT(shape, *ndims, shapeV, false);
-    lf_IntToSizeT(start, *ndims, startV, true);
-    lf_IntToSizeT(count, *ndims, countV, false);
+    lf_IntToSizeT(shape, *ndims, shapeV);
+    lf_IntToSizeT(start, *ndims, startV);
+    lf_IntToSizeT(count, *ndims, countV);
 
     try
     {

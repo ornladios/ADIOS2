@@ -37,6 +37,11 @@ void FC_GLOBAL(adios2_set_selection_f2c,
                                          const int *ndims, const int *start,
                                          const int *count, int *ierr);
 
+void FC_GLOBAL(adios2_set_step_selection_f2c,
+               ADIOS2_SET_STEP_SELECTION_F2C)(adios2_Variable **variable,
+                                              const int *step_start,
+                                              const int *step_count, int *ierr);
+
 #ifdef __cplusplus
 }
 #endif

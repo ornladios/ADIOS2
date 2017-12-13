@@ -14,7 +14,7 @@ program TestBPWriteTypes
 
     ! Variable dimensions
     shape_dims(1) = inx
-    start_dims(1) = 1
+    start_dims(1) = 0
     count_dims(1) = inx
 
     ! Create adios handler passing the communicator, debug mode and error flag

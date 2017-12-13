@@ -18,7 +18,7 @@ program helloBPWriter
     end do
 
     shape_dims(1) = inx
-    start_dims(1) = 1
+    start_dims(1) = 0
     count_dims(1) = inx
 
     ! Initialize adios handler
