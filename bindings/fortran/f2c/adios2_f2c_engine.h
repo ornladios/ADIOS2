@@ -20,7 +20,9 @@ extern "C" {
 #endif
 
 void FC_GLOBAL(adios2_begin_step_f2c,
-               ADIOS2_BEGIN_STEP_F2C)(adios2_Engine **engine, int *ierr);
+               ADIOS2_BEGIN_STEP_F2C)(adios2_Engine **engine,
+                                      const adios2_step_mode mode,
+                                      const float timeout_seconds, int *ierr);
 
 // ************** PUT
 void FC_GLOBAL(adios2_put_sync_f2c,

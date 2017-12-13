@@ -13,10 +13,13 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
-void adios2_begin_step(adios2_Engine *engine)
+adios2_step_status adios2_begin_step(adios2_Engine *engine,
+                                     const adios2_step_mode mode,
+                                     const float timeout_seconds)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
-    engineCpp.BeginStep();
+    return static_cast<adios2_step_status>(engineCpp.BeginStep(
+        static_cast<adios2::StepMode>(mode), timeout_seconds));
 }
 
 void adios2_put_sync(adios2_Engine *engine, adios2_Variable *variable,

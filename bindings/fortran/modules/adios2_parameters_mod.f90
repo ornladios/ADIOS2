@@ -45,4 +45,17 @@ module adios2_parameters
     integer, parameter :: adios2_mode_read = 2
     integer, parameter :: adios2_mode_append = 3
 
+    ! Step Mode
+    integer, parameter :: adios2_step_mode_append = 0
+    integer, parameter :: adios2_step_mode_update = 1
+    integer, parameter :: adios2_step_mode_next_available = 2
+    integer, parameter :: adios2_step_mode_latest_available = 3
+
+    ! Step Status
+    integer, parameter :: adios2_step_status_other_error = -1
+    integer, parameter :: adios2_step_status_ok = 0
+    integer, parameter :: adios2_step_status_not_ready = 1
+    integer, parameter :: adios2_step_status_end_of_stream = 2
+
+
 end module
