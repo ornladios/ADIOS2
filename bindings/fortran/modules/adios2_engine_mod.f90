@@ -50,6 +50,14 @@ contains
 
     end subroutine
 
+    subroutine adios2_write_step(engine, ierr)
+        integer(kind=8), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_write_step_f2c(engine, ierr)
+
+    end subroutine
+
     subroutine adios2_close(engine, ierr)
         integer(kind=8), intent(in) :: engine
         integer, intent(out) :: ierr

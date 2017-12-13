@@ -84,6 +84,13 @@ void adios2_perform_gets(adios2_Engine *engine);
 void adios2_end_step(adios2_Engine *engine);
 
 /**
+ * Convenience function to write all current variables
+ * defined in IO
+ * @param engine handler executing IO tasks
+ */
+void adios2_write_step(adios2_Engine *engine);
+
+/**
  * Close all transports in adios2_Engine
  * @param engine handler containing all transports to
  * be closed. engine Becomes NULL after this function is called.

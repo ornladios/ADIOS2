@@ -301,6 +301,12 @@ void adios2_end_step(adios2_Engine *engine)
     engineCpp.EndStep();
 }
 
+void adios2_write_step(adios2_Engine *engine)
+{
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.WriteStep();
+}
+
 void adios2_close(adios2_Engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
