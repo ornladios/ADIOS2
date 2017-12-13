@@ -30,6 +30,30 @@ BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable) const
 }
 
 template <class T>
+void BP3Deserializer::GetSyncVariableDataFromStream(Variable<T> &variable,
+                                                    BufferSTL &bufferSTL) const
+{
+    auto itStep =
+        variable.m_IndexStepBlockStarts.find(variable.m_StepsStart + 1);
+
+    if (itStep == variable.m_IndexStepBlockStarts.end())
+    {
+        variable.SetData(nullptr);
+        return;
+    }
+
+    auto &buffer = bufferSTL.m_Buffer;
+    size_t position = itStep->second.front();
+
+    const Characteristics<T> characteristics =
+        ReadElementIndexCharacteristics<T>(
+            buffer, position, static_cast<DataTypes>(GetDataType<T>()), false);
+
+    const size_t payloadOffset = characteristics.Statistics.PayloadOffset;
+    variable.SetData(reinterpret_cast<T *>(&buffer[payloadOffset]));
+}
+
+template <class T>
 void BP3Deserializer::GetDeferredVariable(Variable<T> &variable, T *data)
 {
     variable.SetData(data);
