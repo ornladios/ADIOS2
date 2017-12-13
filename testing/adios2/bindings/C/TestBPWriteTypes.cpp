@@ -89,7 +89,6 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
     adios2_Variable *varR32 = adios2_inquire_variable(ioH, "varR32");
     adios2_Variable *varR64 = adios2_inquire_variable(ioH, "varR64");
 
-    // Open Engine handler, Write and Close
     adios2_Engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
     adios2_put_sync(engineH, varI8, data_I8);
