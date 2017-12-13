@@ -18,8 +18,8 @@ contains
 
     subroutine adios2_begin_step(engine, step_mode, timeout_seconds, ierr)
         integer(kind=8), intent(in) :: engine
-        integer, intent(in) :: step_mode
-        real, intent(in) :: timeout_seconds
+        integer, value, intent(in) :: step_mode
+        real, value, intent(in) :: timeout_seconds
         integer, intent(out) :: ierr
 
         call adios2_begin_step_f2c(engine, step_mode, timeout_seconds, ierr)
