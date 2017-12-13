@@ -20,24 +20,24 @@ adios2_Variable *
 adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
                        const size_t ndims, const size_t *shape,
                        const size_t *start, const size_t *count,
-                       const adios2_constant_dims constant_dims)
+                       const adios2_constant_dims constant_dims, void *data)
 {
     const bool constantSizeBool =
         (constant_dims == adios2_constant_dims_true) ? true : false;
 
     std::vector<size_t> shapeV, startV, countV;
 
-    if (shape != NULL)
+    if (shape != nullptr)
     {
         shapeV.assign(shape, shape + ndims);
     }
 
-    if (start != NULL)
+    if (start != nullptr)
     {
         startV.assign(start, start + ndims);
     }
 
-    if (count != NULL)
+    if (count != nullptr)
     {
         countV.assign(count, count + ndims);
     }
@@ -47,151 +47,176 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
 
     switch (type)
     {
+
     case (adios2_type_string):
-        variable = dynamic_cast<adios2::Variable<std::string> *>(
-            &ioCpp.DefineVariable<char>(name, shapeV, startV, countV,
-                                        constantSizeBool));
-        ;
+    {
+        variable = &ioCpp.DefineVariable<std::string>(name, shapeV, startV,
+                                                      countV, constantSizeBool);
         break;
-
+    }
     case (adios2_type_char):
-        variable =
-            dynamic_cast<adios2::Variable<char> *>(&ioCpp.DefineVariable<char>(
-                name, shapeV, startV, countV, constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<char>(name, shapeV, startV, countV,
+                                               constantSizeBool,
+                                               reinterpret_cast<char *>(data));
         break;
-
+    }
     case (adios2_type_signed_char):
-        variable = dynamic_cast<adios2::Variable<signed char> *>(
-            &ioCpp.DefineVariable<char>(name, shapeV, startV, countV,
-                                        constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<signed char>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<signed char *>(data));
         break;
-
+    }
     case (adios2_type_short):
-        variable = dynamic_cast<adios2::Variable<short> *>(
-            &ioCpp.DefineVariable<short>(name, shapeV, startV, countV,
-                                         constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<short>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<short *>(data));
         break;
-
+    }
     case (adios2_type_int):
-        variable =
-            dynamic_cast<adios2::Variable<int> *>(&ioCpp.DefineVariable<int>(
-                name, shapeV, startV, countV, constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<int>(name, shapeV, startV, countV,
+                                              constantSizeBool,
+                                              reinterpret_cast<int *>(data));
         break;
-
+    }
     case (adios2_type_long_int):
-        variable = dynamic_cast<adios2::Variable<long int> *>(
-            &ioCpp.DefineVariable<long int>(name, shapeV, startV, countV,
-                                            constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<long int>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<long int *>(data));
         break;
-
+    }
     case (adios2_type_long_long_int):
-        variable = dynamic_cast<adios2::Variable<long long int> *>(
-            &ioCpp.DefineVariable<long long int>(name, shapeV, startV, countV,
-                                                 constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<long long int>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<long long int *>(data));
         break;
-
+    }
     case (adios2_type_unsigned_char):
-        variable = dynamic_cast<adios2::Variable<unsigned char> *>(
-            &ioCpp.DefineVariable<unsigned char>(name, shapeV, startV, countV,
-                                                 constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<unsigned char>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<unsigned char *>(data));
         break;
-
+    }
     case (adios2_type_unsigned_short):
-        variable = dynamic_cast<adios2::Variable<unsigned short> *>(
-            &ioCpp.DefineVariable<unsigned short>(name, shapeV, startV, countV,
-                                                  constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<unsigned short>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<unsigned short *>(data));
         break;
-
+    }
     case (adios2_type_unsigned_int):
-        variable = dynamic_cast<adios2::Variable<unsigned int> *>(
-            &ioCpp.DefineVariable<unsigned int>(name, shapeV, startV, countV,
-                                                constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<unsigned int>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<unsigned int *>(data));
         break;
+    }
     case (adios2_type_unsigned_long_int):
-        variable = dynamic_cast<adios2::Variable<unsigned long int> *>(
-            &ioCpp.DefineVariable<unsigned long int>(name, shapeV, startV,
-                                                     countV, constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<unsigned long int>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<unsigned long int *>(data));
         break;
-
+    }
     case (adios2_type_unsigned_long_long_int):
-        variable = dynamic_cast<adios2::Variable<unsigned long long int> *>(
-            &ioCpp.DefineVariable<unsigned long long int>(
-                name, shapeV, startV, countV, constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<unsigned long long int>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<unsigned long long int *>(data));
         break;
-
+    }
     case (adios2_type_float):
-        variable = dynamic_cast<adios2::Variable<float> *>(
-            &ioCpp.DefineVariable<float>(name, shapeV, startV, countV,
-                                         constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<float>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<float *>(data));
         break;
-
+    }
     case (adios2_type_double):
-        variable = dynamic_cast<adios2::Variable<double> *>(
-            &ioCpp.DefineVariable<double>(name, shapeV, startV, countV,
-                                          constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<double>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<double *>(data));
         break;
-
+    }
     case (adios2_type_float_complex):
-        variable = dynamic_cast<adios2::Variable<std::complex<float>> *>(
-            &ioCpp.DefineVariable<std::complex<float>>(
-                name, shapeV, startV, countV, constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<std::complex<float>>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<std::complex<float> *>(data));
         break;
-
+    }
     case (adios2_type_double_complex):
-        variable = dynamic_cast<adios2::Variable<std::complex<double>> *>(
-            &ioCpp.DefineVariable<std::complex<double>>(
-                name, shapeV, startV, countV, constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<std::complex<double>>(
+            name, shapeV, startV, countV, constantSizeBool);
         break;
-
+    }
     case (adios2_type_int8_t):
+    {
 
-        variable = dynamic_cast<adios2::Variable<int8_t> *>(
-            &ioCpp.DefineVariable<int8_t>(name, shapeV, startV, countV,
-                                          constantSizeBool));
+        variable = &ioCpp.DefineVariable<int8_t>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<int8_t *>(data));
         break;
-
+    }
     case (adios2_type_int16_t):
-        variable = dynamic_cast<adios2::Variable<int16_t> *>(
-            &ioCpp.DefineVariable<int16_t>(name, shapeV, startV, countV,
-                                           constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<int16_t>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<int16_t *>(data));
         break;
-
+    }
     case (adios2_type_int32_t):
-        variable = dynamic_cast<adios2::Variable<int32_t> *>(
-            &ioCpp.DefineVariable<int32_t>(name, shapeV, startV, countV,
-                                           constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<int32_t>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<int32_t *>(data));
         break;
-
+    }
     case (adios2_type_int64_t):
-        variable = dynamic_cast<adios2::Variable<int64_t> *>(
-            &ioCpp.DefineVariable<int64_t>(name, shapeV, startV, countV,
-                                           constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<int64_t>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<int64_t *>(data));
         break;
-
+    }
     case (adios2_type_uint8_t):
+    {
 
-        variable = dynamic_cast<adios2::Variable<uint8_t> *>(
-            &ioCpp.DefineVariable<uint8_t>(name, shapeV, startV, countV,
-                                           constantSizeBool));
+        variable = &ioCpp.DefineVariable<uint8_t>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<uint8_t *>(data));
         break;
-
+    }
     case (adios2_type_uint16_t):
+    {
         variable = dynamic_cast<adios2::Variable<uint16_t> *>(
-            &ioCpp.DefineVariable<uint16_t>(name, shapeV, startV, countV,
-                                            constantSizeBool));
+            &ioCpp.DefineVariable<uint16_t>(
+                name, shapeV, startV, countV, constantSizeBool,
+                reinterpret_cast<uint16_t *>(data)));
         break;
-
+    }
     case (adios2_type_uint32_t):
-        variable = dynamic_cast<adios2::Variable<uint32_t> *>(
-            &ioCpp.DefineVariable<uint32_t>(name, shapeV, startV, countV,
-                                            constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<uint32_t>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<uint32_t *>(data));
         break;
-
+    }
     case (adios2_type_uint64_t):
-        variable = dynamic_cast<adios2::Variable<uint64_t> *>(
-            &ioCpp.DefineVariable<uint64_t>(name, shapeV, startV, countV,
-                                            constantSizeBool));
+    {
+        variable = &ioCpp.DefineVariable<uint64_t>(
+            name, shapeV, startV, countV, constantSizeBool,
+            reinterpret_cast<uint64_t *>(data));
         break;
+    }
     }
 
     return reinterpret_cast<adios2_Variable *>(variable);

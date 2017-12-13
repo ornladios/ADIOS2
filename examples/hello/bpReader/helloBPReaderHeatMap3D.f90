@@ -28,28 +28,28 @@ program helloBPReaderHeatMap3D
     allocate( temperatures( inx, iny, inz ) )
     ! populate temperature
     do k=1, icount(3)
-        do j=1, icount(2)
-            do i=1, icount(1)
-                iglobal = istart(1) + (i-1)-1
-                value = (k-1) * ishape(1) * ishape(2) + (j-1) * ishape(1) + &
-                &       iglobal
-                temperatures(i,j,k) = value
-            end do
+      do j=1, icount(2)
+        do i=1, icount(1)
+            iglobal = istart(1) + (i-1)
+            value = (k-1) * ishape(1) * ishape(2) + (j-1) * ishape(1) + &
+                    &  iglobal-1
+            temperatures(i,j,k) = value
         end do
+      end do
     end do
 
     ! Start adios2 Writer
     call adios2_init( adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr )
     call adios2_declare_io( ioPut, adios, 'HeatMapWrite', ierr )
 
-    call adios2_define_variable( var_temperatures, ioPut, 'temperatures', &
-        & adios2_type_integer, 3, ishape, istart, icount, &
-        & adios2_constant_dims_true, ierr )
+    call adios2_define_variable( var_temperatures, ioPut, 'temperatures', 3, &
+                                 ishape, istart, icount, adios2_constant_dims, &
+                                 temperatures, ierr )
 
-    call adios2_open( bpWriter, ioPut, 'HeatMap3D_f.bp', &
-                    & adios2_mode_write, ierr )
+    call adios2_open( bpWriter, ioPut, 'HeatMap3D_f.bp', adios2_mode_write, &
+                      ierr )
 
-    call adios2_write( bpWriter, var_temperatures, temperatures, ierr )
+    call adios2_put_sync( bpWriter, var_temperatures, temperatures, ierr )
 
     call adios2_close( bpWriter, ierr )
 
@@ -69,7 +69,7 @@ program helloBPReaderHeatMap3D
 
         if( ierr == adios2_found ) then
 
-            sel_start = (/ 3, 3, 3 /)
+            sel_start = (/ 2, 2, 2 /)
             sel_count = (/ 4, 4, 4 /)
             allocate( sel_temperatures( sel_count(1), sel_count(2), &
                                       & sel_count(3) ) )
@@ -77,8 +77,9 @@ program helloBPReaderHeatMap3D
             call adios2_set_selection( var_temperaturesIn, 3, sel_start, &
                                      & sel_count, ierr )
 
-            call adios2_read( bpReader, var_temperaturesIn, sel_temperatures, &
-                            & ierr )
+            call adios2_get_sync( bpReader, var_temperaturesIn, &
+                                & sel_temperatures, &
+                                & ierr )
 
             write(*,'(A,3(I1,A),A,3(I1,A),A)') 'Temperature map selection  &
                       & [ start = (', (sel_start(i),',',i=1,3) , ') &
@@ -103,6 +104,8 @@ program helloBPReaderHeatMap3D
 
     end if
 
+
+    call adios2_finalize(adios, ierr)
     call MPI_Finalize(ierr)
 
 end program helloBPReaderHeatMap3D

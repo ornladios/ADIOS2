@@ -102,7 +102,16 @@ public:
      */
     size_t TotalSize() const noexcept;
 
-    /** Set Dims and Time start and count */
+    /**
+     * Set new shape
+     * @param shape input shape to be applied to this variable
+     */
+    void SetShape(const adios2::Dims &shape);
+
+    /**
+     * Set new start and count dimensions
+     * @param boxDims = {start, count}
+     */
     void SetSelection(const Box<Dims> &boxDims);
 
     /**
