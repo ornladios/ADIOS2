@@ -7,7 +7,7 @@ program helloBPWriter
     integer :: inx, i, ierr
     integer(kind=8) :: adios, io, var1, engine1
     real, dimension(:), allocatable :: myArray
-    integer, dimension(1) :: shape_dims, start_dims, count_dims
+    integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
 
     !application variables
     inx = 10

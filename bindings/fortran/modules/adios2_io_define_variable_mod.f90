@@ -99,9 +99,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer, dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -125,9 +125,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real, dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -151,9 +151,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real(kind=8), dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -177,9 +177,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex, dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -203,9 +203,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex(kind=8), dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -229,9 +229,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=1), dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -255,9 +255,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=2), dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -281,9 +281,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=4), dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -307,9 +307,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=8), dimension(:), intent(in):: data
         integer, intent(out) :: ierr
@@ -333,9 +333,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer, dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -359,9 +359,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real, dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -385,9 +385,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real(kind=8), dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -411,9 +411,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex, dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -437,9 +437,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex(kind=8), dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -463,9 +463,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=1), dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -489,9 +489,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=2), dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -515,9 +515,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=4), dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -541,9 +541,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=8), dimension(:, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -567,9 +567,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer, dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -593,9 +593,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real, dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -619,9 +619,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real(kind=8), dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -645,9 +645,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex, dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -671,9 +671,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex(kind=8), dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -697,9 +697,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=1), dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -723,9 +723,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=2), dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -749,9 +749,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=4), dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -775,9 +775,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=8), dimension(:, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -801,9 +801,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer, dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -827,9 +827,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real, dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -853,9 +853,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real(kind=8), dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -879,9 +879,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex, dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -905,9 +905,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex(kind=8), dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -931,9 +931,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=1), dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -957,9 +957,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=2), dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -983,9 +983,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=4), dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1009,9 +1009,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=8), dimension(:, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1035,9 +1035,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer, dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1061,9 +1061,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real, dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1087,9 +1087,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real(kind=8), dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1113,9 +1113,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex, dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1139,9 +1139,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex(kind=8), dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1165,9 +1165,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=1), dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1191,9 +1191,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=2), dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1217,9 +1217,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=4), dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1243,9 +1243,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=8), dimension(:, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1269,9 +1269,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer, dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1295,9 +1295,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real, dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1321,9 +1321,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         real(kind=8), dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1347,9 +1347,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex, dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1373,9 +1373,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         complex(kind=8), dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1399,9 +1399,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=1), dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1425,9 +1425,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=2), dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1451,9 +1451,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=4), dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr
@@ -1477,9 +1477,9 @@ contains
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: ndims
-        integer, dimension(:), intent(in) :: shape_dims
-        integer, dimension(:), intent(in) :: start_dims
-        integer, dimension(:), intent(in) :: count_dims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer(kind=8), dimension(:), intent(in) :: start_dims
+        integer(kind=8), dimension(:), intent(in) :: count_dims
         logical, intent(in) :: is_constant_dims
         integer(kind=8), dimension(:, :, :, :, :, :), intent(in):: data
         integer, intent(out) :: ierr

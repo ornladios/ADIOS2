@@ -4,7 +4,7 @@ program helloBPWriter
 
     implicit none
 
-    integer, dimension(1) :: shape_dims, start_dims, count_dims
+    integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
     real, dimension(:), allocatable :: myArray
     integer :: inx, irank, isize, ierr, i, var1_type
     integer(kind=8) :: adios, io, var1, engine1

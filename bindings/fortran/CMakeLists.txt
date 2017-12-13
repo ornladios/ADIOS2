@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 include(FortranCInterface)
 FortranCInterface_HEADER(FC.h MACRO_NAMESPACE "FC_")
 FortranCInterface_VERIFY(CXX QUIET)
@@ -33,7 +33,7 @@ set(MODULES
 add_library(adios2_f ${MODULES} ${F2C})
 target_include_directories(adios2_f PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
                                            ${CMAKE_CURRENT_BINARY_DIR}
-                          )
+)
 
 target_link_libraries(adios2_f PRIVATE adios2)
 
@@ -56,4 +56,12 @@ install(
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+        
+install(
+  DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY} 
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES_MATCHING 
+  PATTERN "adios2*.mod" 
+  PATTERN "CMakeFiles" EXCLUDE
 )

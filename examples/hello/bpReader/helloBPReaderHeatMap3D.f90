@@ -8,8 +8,8 @@ program helloBPReaderHeatMap3D
     integer(kind=8) :: ioPut, var_temperatures, bpWriter
     integer(kind=8) :: ioGet, var_temperaturesIn, bpReader
     integer, dimension(:,:,:), allocatable :: temperatures, sel_temperatures
-    integer, dimension(3) :: ishape, istart, icount
-    integer, dimension(3) :: sel_start, sel_count
+    integer(kind=8), dimension(3) :: ishape, istart, icount
+    integer(kind=8), dimension(3) :: sel_start, sel_count
     integer :: ierr, irank, isize, inx, iny, inz
     integer :: i, j, k, iglobal, value, ilinear, icounter
 

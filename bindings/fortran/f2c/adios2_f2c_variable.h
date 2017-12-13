@@ -14,6 +14,8 @@
 #include <FC.h>
 #include <adios2_c.h>
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,13 +31,13 @@ void FC_GLOBAL(adios2_variable_type_f2c,
 
 void FC_GLOBAL(adios2_set_shape_f2c,
                ADIOS2_SET_SHAPE_F2C)(adios2_Variable **variable,
-                                     const int *ndims, const int *shape,
+                                     const int *ndims, const int64_t *shape,
                                      int *ierr);
 
 void FC_GLOBAL(adios2_set_selection_f2c,
                ADIOS2_SET_SELECTION_F2C)(adios2_Variable **variable,
-                                         const int *ndims, const int *start,
-                                         const int *count, int *ierr);
+                                         const int *ndims, const int64_t *start,
+                                         const int64_t *count, int *ierr);
 
 void FC_GLOBAL(adios2_set_step_selection_f2c,
                ADIOS2_SET_STEP_SELECTION_F2C)(adios2_Variable **variable,

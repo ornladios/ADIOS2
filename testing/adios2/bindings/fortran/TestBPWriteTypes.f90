@@ -4,7 +4,7 @@ program TestBPWriteTypes
     use adios2
     implicit none
 
-    integer, dimension(1) :: shape_dims, start_dims, count_dims
+    integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
     integer :: inx, irank, isize, ierr, i
 
     integer(kind=8) :: adios, ioWrite, bpWriter, ioRead, bpReader

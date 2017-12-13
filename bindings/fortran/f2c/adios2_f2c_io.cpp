@@ -74,20 +74,22 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
 
 void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     adios2_Variable **variable, adios2_IO **io, const char *variable_name,
-    const int *type, const int *ndims, const int *shape, const int *start,
-    const int *count, const int *constant_dims, void *data, int *ierr)
+    const int *type, const int *ndims, const int64_t *shape,
+    const int64_t *start, const int64_t *count, const int *constant_dims,
+    void *data, int *ierr)
 {
-    auto lf_IntToSizeT = [](const int *dimensions, const int size,
+    auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
 
-        if (dimensions == nullptr || size == 0)
+        if (dimensions == nullptr || size <= 0)
         {
-            return;
+            throw std::invalid_argument("ERROR: corrupted ndims or shape, "
+                                        "start, count dimensions in Fortran ");
         }
 
         output.resize(size);
 
-        for (unsigned int d = 0; d < size; ++d)
+        for (int d = 0; d < size; ++d)
         {
             if (dimensions[d] < 0)
             {
