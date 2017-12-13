@@ -26,7 +26,7 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_open_f2c(engine, io, TRIM(ADJUSTL(name))//char(0), &
-            & adios2_mode, ierr)
+                             adios2_mode, ierr)
 
     end subroutine
 
@@ -39,7 +39,8 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_open_new_comm_f2c(engine, io, &
-            & TRIM(ADJUSTL(name))//char(0), adios2_mode, comm, ierr)
+                                      TRIM(ADJUSTL(name))//char(0), &
+                                      adios2_mode, comm, ierr)
 
     end subroutine
 
