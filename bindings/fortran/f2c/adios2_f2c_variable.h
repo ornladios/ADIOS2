@@ -14,7 +14,8 @@
 #include <FC.h>
 #include <adios2_c.h>
 
-#include <stdint.h>
+#include <iostream> //std::cerr
+#include <stdint.h> // int64_t
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +23,7 @@ extern "C" {
 
 void FC_GLOBAL(adios2_variable_name_f2c,
                ADIOS2_VARIABLE_NAME_F2C)(const adios2_Variable **variable,
-                                         char name[1024], int *length,
+                                         char name[4096], int *length,
                                          int *ierr);
 
 void FC_GLOBAL(adios2_variable_type_f2c,

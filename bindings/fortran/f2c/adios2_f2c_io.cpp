@@ -10,7 +10,8 @@
 
 #include "adios2_f2c_io.h"
 
-#include <cstddef> //std::size_t
+#include <cstddef>  //std::size_t
+#include <iostream> //std::cerr
 #include <stdexcept>
 #include <vector>
 
@@ -26,7 +27,8 @@ void FC_GLOBAL(adios2_set_parameter_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -41,15 +43,18 @@ void FC_GLOBAL(adios2_add_transport_f2c,
     {
         *transport_index =
             static_cast<int>(adios2_add_transport(*io, transport_type));
+
+        if (*transport_index == -1)
+        {
+            throw std::invalid_argument("ERROR: transport_index handler not "
+                                        "set, in call to "
+                                        "adios2_add_transport\n");
+        }
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
-    }
-
-    if (*transport_index == -1)
-    {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -68,7 +73,8 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -102,13 +108,13 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
 
     *ierr = 0;
 
-    std::vector<std::size_t> shapeV, startV, countV;
-    lf_IntToSizeT(shape, *ndims, shapeV);
-    lf_IntToSizeT(start, *ndims, startV);
-    lf_IntToSizeT(count, *ndims, countV);
-
     try
     {
+        std::vector<std::size_t> shapeV, startV, countV;
+        lf_IntToSizeT(shape, *ndims, shapeV);
+        lf_IntToSizeT(start, *ndims, startV);
+        lf_IntToSizeT(count, *ndims, countV);
+
         *variable = adios2_define_variable(
             *io, variable_name, static_cast<adios2_type>(*type), *ndims,
             shapeV.data(), startV.data(), countV.data(),
@@ -116,7 +122,8 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -132,12 +139,13 @@ void FC_GLOBAL(adios2_inquire_variable_f2c,
         *variable = adios2_inquire_variable(*io, variable_name);
         if (*variable == nullptr)
         {
-            *ierr = 2;
+            *ierr = 1;
         }
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -153,7 +161,8 @@ void FC_GLOBAL(adios2_open_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -172,7 +181,8 @@ void FC_GLOBAL(adios2_open_new_comm_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 #endif

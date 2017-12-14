@@ -10,6 +10,7 @@
 
 #include "adios2_f2c_engine.h"
 
+#include <iostream> //std::cerr
 #include <stdexcept>
 
 void FC_GLOBAL(adios2_begin_step_f2c,
@@ -26,7 +27,8 @@ void FC_GLOBAL(adios2_begin_step_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -43,7 +45,8 @@ void FC_GLOBAL(adios2_put_sync_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -59,7 +62,8 @@ void FC_GLOBAL(adios2_put_deferred_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -73,7 +77,8 @@ void FC_GLOBAL(adios2_perform_puts_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -90,7 +95,8 @@ void FC_GLOBAL(adios2_get_sync_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -106,7 +112,8 @@ void FC_GLOBAL(adios2_get_deferred_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -120,7 +127,8 @@ void FC_GLOBAL(adios2_perform_gets_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -134,7 +142,8 @@ void FC_GLOBAL(adios2_end_step_f2c, ADIOS2_END_STEP_F2C)(adios2_Engine **engine,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -148,7 +157,8 @@ void FC_GLOBAL(adios2_write_step_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -162,6 +172,7 @@ void FC_GLOBAL(adios2_close_f2c, ADIOS2_CLOSE_F2C)(adios2_Engine **engine,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2: " << e.what() << "\n";
+        *ierr = -1;
     }
 }

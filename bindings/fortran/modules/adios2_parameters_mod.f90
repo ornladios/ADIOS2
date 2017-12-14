@@ -36,8 +36,8 @@ module adios2_parameters
     logical, parameter :: adios2_variable_dims = .false.
 
     ! Variable Found or not found, ierr value
+    integer, parameter :: adios2_not_found = -1
     integer, parameter :: adios2_found = 0
-    integer, parameter :: adios2_not_found = 2
 
     ! Mode
     integer, parameter :: adios2_mode_undefined = 0

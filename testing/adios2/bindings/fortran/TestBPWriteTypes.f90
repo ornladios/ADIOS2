@@ -1,4 +1,4 @@
-program TestBPWriteTypes
+ program TestBPWriteTypes
     use small_test_data
     use mpi
     use adios2
@@ -73,15 +73,30 @@ program TestBPWriteTypes
     call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_read, ierr)
 
     call adios2_inquire_variable( variables(1), ioRead, "var_I8", ierr)
+    call adios2_variable_name( variables(1), variable_name, ierr )
+    if( variable_name /= 'var_I8' ) stop 'var_I8 not recognized'
 
-    if( ierr == adios2_found ) then
+    call adios2_inquire_variable( variables(2), ioRead, "var_I16", ierr)
+    call adios2_variable_name( variables(2), variable_name, ierr )
+    if( variable_name /= 'var_I16' ) stop 'var_I16 not recognized'
 
-        call adios2_variable_name( variables(1), variable_name, ierr )
-        if( variable_name /= 'var_I8') then
-            stop 'error'
-        end if
-    end if
+    call adios2_inquire_variable( variables(3), ioRead, "var_I32", ierr)
+    call adios2_variable_name( variables(3), variable_name, ierr )
+    if( variable_name /= 'var_I32' ) stop 'var_I32 not recognized'
 
+    call adios2_inquire_variable( variables(4), ioRead, "var_I64", ierr)
+    call adios2_variable_name( variables(4), variable_name, ierr )
+    if( variable_name /= 'var_I64' ) stop 'var_I64 not recognized'
+
+    call adios2_inquire_variable( variables(5), ioRead, "var_R32", ierr)
+    call adios2_variable_name( variables(5), variable_name, ierr )
+    if( variable_name /= 'var_R32' ) stop 'var_R32 not recognized'
+
+    call adios2_inquire_variable( variables(6), ioRead, "var_R64", ierr)
+    call adios2_variable_name( variables(6), variable_name, ierr )
+    if( variable_name /= 'var_R64' ) stop 'var_R64 not recognized'
+
+    call adios2_close( bpReader, ierr )
     ! Deallocates adios and calls its destructor
     call adios2_finalize(adios, ierr)
 
