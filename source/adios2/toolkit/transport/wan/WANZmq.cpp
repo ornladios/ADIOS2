@@ -30,7 +30,8 @@ WANZmq::WANZmq(const std::string ipAddress, const std::string port,
     }
     if (m_DebugMode)
     {
-        // TODO verify port is unsigned int
+        std::cout << "[WANZmq] IP Address " << ipAddress << std::endl;
+        std::cout << "[WANZmq] Port " << port << std::endl;
     }
 }
 
@@ -71,11 +72,17 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
         {
             m_Profiler.Timers.at("open").Pause();
         }
+        if (m_DebugMode)
+        {
+            std::cout << "[WANZmq] Open Mode Write"  << std::endl;
+        }
     }
+
     else if (m_OpenMode == Mode::Append)
     {
         if (m_DebugMode)
         {
+            std::cout << "[WANZmq] Open Mode Append"  << std::endl;
             throw std::invalid_argument(
                 "ERROR: WAN transport " + m_Name +
                 " only supports "
@@ -91,6 +98,9 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
         zmq_bind(m_Socket, fullIP.c_str());
         // TODO need to capture return of zmq_bind function
         ProfilerStop("open");
+        if (m_DebugMode){
+            std::cout << "[WANZmq] Open Mode Read"  << std::endl;
+        }
     }
 
     if (m_DebugMode)
@@ -117,7 +127,7 @@ void WANZmq::Write(const char *buffer, size_t size, size_t start)
 
     const std::string retString(ret);
 
-    if (status == -1 || retString != "OK") // TODO : verify this
+    if (status == -1 || retString != "OK")
     {
         throw std::ios_base::failure("ERROR: couldn't send message " + m_Name +
                                      ", in call to WANZmq write\n");

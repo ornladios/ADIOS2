@@ -83,8 +83,12 @@ int main(int argc, char *argv[])
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters({
-            {"Transport", "zmq"}, {"TransportType", "wan"}, {"Format", "bp"},
+            {"Format", "bp"},
         });
+        dataManIO.AddTransport("WAN", {
+                {"Library", "ZMQ"},
+                {"IPAddress", "127.0.0.1"},
+                });
         dataManIO.AddOperator(callbackFloat); // propagate to all Engines
 
         adios2::Engine &dataManReader =

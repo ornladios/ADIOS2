@@ -22,7 +22,8 @@ namespace adios2
 DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : Engine("DataManWriter", io, name, mode, mpiComm),
-  m_BP3Serializer(mpiComm, m_DebugMode), m_Man(mpiComm, m_DebugMode)
+  m_BP3Serializer(mpiComm, m_DebugMode), m_Man(mpiComm, m_DebugMode),
+    m_Name(name)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";
     Init();
@@ -49,75 +50,76 @@ void DataManWriter::Close(const int transportIndex)
 }
 
 // PRIVATE functions below
-void DataManWriter::Init()
-{
 
-    auto lf_GetBoolParameter = [&](const std::string key, bool &value) {
 
-        auto itKey = m_IO.m_Parameters.find(key);
-        if (itKey != m_IO.m_Parameters.end())
+bool DataManWriter::GetBoolParameter(Params &params, std::string key, bool &value){
+    auto itKey = params.find(key);
+    if (itKey != params.end())
+    {
+        if (itKey->second == "yes" || itKey->second == "YES" || itKey->second == "Yes" || itKey->second == "true" || itKey->second == "TRUE" || itKey->second == "True")
         {
-            if (itKey->second == "yes" || itKey->second == "true")
-            {
-                value = true;
-            }
-            else if (itKey->second == "no" || itKey->second == "false")
-            {
-                value = false;
-            }
+            value = true;
+            return true;
         }
-    };
-
-    auto lf_GetStringParameter = [&](const std::string key,
-                                     std::string &value) {
-        auto it = m_IO.m_Parameters.find(key);
-        if (it != m_IO.m_Parameters.end())
+        if (itKey->second == "no" || itKey->second == "NO" || itKey->second == "No" || itKey->second == "false" || itKey->second == "FALSE" || itKey->second == "False")
         {
-            value = it->second;
+            value = false;
+            return true;
         }
-    };
+    }
+    return false;
+}
 
-    auto lf_GetUIntParameter = [&](const std::string key, unsigned int &value) {
-        auto it = m_IO.m_Parameters.find(key);
-        if (it != m_IO.m_Parameters.end())
-        {
-            value = std::stoi(it->second);
-        }
-    };
+bool DataManWriter::GetStringParameter(Params &params, std::string key, std::string &value){
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = it->second;
+        return true;
+    }
+    return false;
+}
 
-    lf_GetBoolParameter("Monitoring", m_DoMonitor);
-    lf_GetUIntParameter("NTransports", m_NTransports);
-    std::string TransportType;
-    lf_GetStringParameter("TransportType", TransportType);
-    std::string Transport;
-    lf_GetStringParameter("Transport", Transport);
+bool DataManWriter::GetUIntParameter(Params &params, std::string key, unsigned int &value){
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = std::stoi(it->second);
+        return true;
+    }
+    return false;
+}
+
+void DataManWriter::InitParameters() {
+
+    GetBoolParameter(m_IO.m_Parameters, "Monitoring", m_DoMonitor);
+    GetUIntParameter(m_IO.m_Parameters, "NTransports", m_NChannels);
 
     // Check if using BP Format and initialize buffer
-    lf_GetStringParameter("Format", m_UseFormat);
-
+    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
     if (m_UseFormat == "BP" || m_UseFormat == "bp")
     {
         m_BP3Serializer.InitParameters(m_IO.m_Parameters);
         m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_Zmq"});
     }
 
-    if (TransportType.empty() && Transport.empty())
-    {
-        throw std::runtime_error(
-            "ERROR: No transports specified in user application!");
+}
+
+void DataManWriter::InitTransports() {
+
+    size_t channels = m_IO.m_TransportsParameters.size();
+    std::vector<std::string> names;
+    for (size_t i = 0;  i < channels; ++i){
+        names.push_back(m_Name + std::to_string(i));
     }
 
-    std::vector<Params> parameters(m_NTransports);
-    for (unsigned int i = 0; i < parameters.size(); i++)
-    {
-        parameters[i]["TransportType"] = TransportType;
-        parameters[i]["Transport"] = "zmq";
-        parameters[i]["name"] = "stream";
-        parameters[i]["IPAddress"] = "127.0.0.1";
-        parameters[i]["Format"] = m_UseFormat;
-    }
+    m_Man.OpenWANTransports(names, Mode::Write, m_IO.m_TransportsParameters, true);
+}
 
-    m_Man.OpenWANTransports("zmq", Mode::Write, parameters, true);
+void DataManWriter::Init()
+{
+    InitParameters();
+    InitTransports();
 }
 
 #define declare_type(T)                                                        \

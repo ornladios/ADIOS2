@@ -36,13 +36,19 @@ public:
 private:
     format::BP3Serializer m_BP3Serializer;
     transportman::DataMan m_Man;
+    std::string m_Name;
 
-    unsigned int m_NTransports = 1;
+    unsigned int m_NChannels = 1;
     std::string m_UseFormat = "json";
     bool m_DoMonitor = false;
 
-    void Init(); ///< calls InitCapsules and InitTransports based on Method,
-                 /// called from constructor
+    void Init();
+    void InitParameters();
+    void InitTransports();
+
+    bool GetBoolParameter(Params &params, std::string key, bool &value);
+    bool GetStringParameter(Params &params, std::string key, std::string &value);
+    bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &variable, const T *values) final;

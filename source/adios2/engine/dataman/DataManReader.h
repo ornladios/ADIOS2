@@ -54,9 +54,17 @@ private:
     format::BP3Deserializer m_BP3Deserializer;
     transportman::DataMan m_Man;
 
-    unsigned int m_NTransports = 1;
+    unsigned int m_NChannels = 1;
     std::string m_UseFormat = "json";
+    bool m_DoMonitor = false;
+
     void Init();
+    void InitParameters();
+    void InitTransports();
+
+    bool GetBoolParameter(Params &params, std::string key, bool &value);
+    bool GetStringParameter(Params &params, std::string key, std::string &value);
+    bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

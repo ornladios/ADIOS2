@@ -31,10 +31,13 @@ int main(int argc, char *argv[])
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({
         {"Compression", "no"},
-        {"Transport", "zmq"},
-        {"TransportType", "wan"},
         {"Format", "bp"},
     });
+    dataManIO.AddTransport("WAN", {
+            {"Library", "ZMQ"},
+            {"IPAddress", "127.0.0.1"},
+            });
+
 
     // Define variable and local size
     auto bpFloats = dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
