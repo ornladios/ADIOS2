@@ -36,8 +36,15 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
                                                    const char *value,
                                                    int *ierr);
 
+void FC_GLOBAL(adios2_define_global_variable_f2c,
+               ADIOS2_DEFINE_GLOBAL_VARIABLE_F2C)(adios2_Variable **variable,
+                                                  adios2_IO **io,
+                                                  const char *name,
+                                                  const int *type, void *data,
+                                                  int *ierr);
+
 void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
-    adios2_Variable **variable, adios2_IO **io, const char *variable_name,
+    adios2_Variable **variable, adios2_IO **io, const char *name,
     const int *type, const int *ndims, const int64_t *shape,
     const int64_t *start, const int64_t *count, const int *constant_dims,
     void *data, int *ierr);

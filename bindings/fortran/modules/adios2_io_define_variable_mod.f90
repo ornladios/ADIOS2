@@ -16,15 +16,15 @@ module adios2_io_define_variable
     interface adios2_define_variable
 
         ! Global value
-!        module procedure adios2_define_variable_string
-!        module procedure adios2_define_variable_integer
-!        module procedure adios2_define_variable_real
-!        module procedure adios2_define_variable_dp
-!        module procedure adios2_define_variable_complex
-!        module procedure adios2_define_variable_complex_dp
-!        module procedure adios2_define_variable_integer1
-!        module procedure adios2_define_variable_integer2
-!        module procedure adios2_define_variable_integer8
+        ! module procedure adios2_define_variable_string
+        module procedure adios2_define_variable_integer
+        module procedure adios2_define_variable_real
+        module procedure adios2_define_variable_dp
+        module procedure adios2_define_variable_complex
+        module procedure adios2_define_variable_complex_dp
+        module procedure adios2_define_variable_integer1
+        module procedure adios2_define_variable_integer2
+        module procedure adios2_define_variable_integer8
 
         ! 1D Array
         module procedure adios2_define_variable_integer_1d
@@ -89,6 +89,113 @@ module adios2_io_define_variable
     end interface
 
 contains
+
+    subroutine adios2_define_variable_integer(variable, io, name, data, &
+                                             ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer, intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_global_variable_f2c(variable, io, &
+                                               TRIM(ADJUSTL(name))//char(0), &
+                                               adios2_type_integer, data, ierr)
+    end subroutine
+
+    subroutine adios2_define_variable_real(variable, io, name, data, &
+                                           ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        real, intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_global_variable_f2c(variable, io, &
+                                               TRIM(ADJUSTL(name))//char(0), &
+                                               adios2_type_real, data, ierr)
+    end subroutine
+
+    subroutine adios2_define_variable_dp(variable, io, name, data, &
+                                           ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        real(kind=8), intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_global_variable_f2c(variable, io, &
+                                               TRIM(ADJUSTL(name))//char(0), &
+                                               adios2_type_dp, data, ierr)
+    end subroutine
+
+    subroutine adios2_define_variable_complex(variable, io, name, data, &
+                                             ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        complex, intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_global_variable_f2c(variable, io, &
+                                               TRIM(ADJUSTL(name))//char(0), &
+                                               adios2_type_complex, data, ierr)
+    end subroutine
+
+    subroutine adios2_define_variable_complex_dp(variable, io, name, data, &
+                                             ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        complex(kind=8), intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_global_variable_f2c(variable, io, &
+                                               TRIM(ADJUSTL(name))//char(0), &
+                                               adios2_type_complex_dp, data, &
+                                               ierr)
+    end subroutine
+
+    subroutine adios2_define_variable_integer1(variable, io, name, data, &
+                                               ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer(kind=1), intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_global_variable_f2c(variable, io, &
+                                               TRIM(ADJUSTL(name))//char(0), &
+                                               adios2_type_integer1, data, ierr)
+    end subroutine
+
+    subroutine adios2_define_variable_integer2(variable, io, name, data, &
+                                               ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer(kind=2), intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_global_variable_f2c(variable, io, &
+                                               TRIM(ADJUSTL(name))//char(0), &
+                                               adios2_type_integer2, data, ierr)
+    end subroutine
+
+
+    subroutine adios2_define_variable_integer8(variable, io, name, data, &
+                                               ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer(kind=8), intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_global_variable_f2c(variable, io, &
+                                               TRIM(ADJUSTL(name))//char(0), &
+                                               adios2_type_integer8, data, ierr)
+    end subroutine
+
 
     subroutine adios2_define_variable_integer_1d(variable, io, name, ndims, &
                                                  shape_dims, start_dims, &

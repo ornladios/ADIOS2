@@ -36,7 +36,7 @@ void FC_GLOBAL(adios2_init_config_f2c,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 init_config: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -63,7 +63,7 @@ void FC_GLOBAL(adios2_init_config_f2c,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 init_config: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -81,7 +81,7 @@ void FC_GLOBAL(adios2_declare_io_f2c,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 declare_io: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -96,7 +96,7 @@ void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_ADIOS **adios,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 finalize: " << e.what() << "\n";
         *ierr = -1;
     }
 }

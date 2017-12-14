@@ -37,16 +37,10 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
         m_BP3Serializer.SerializeData(m_IO);
-        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
-        auto &position = m_BP3Serializer.m_Data.m_Position;
-
-        m_FileDataManager.WriteFiles(buffer.data(), position);
-        // set relative position to zero
-        position = 0;
-        // reset buffer to zero values to current size
-        buffer.assign(buffer.size(), '\0');
-
-        // new group index
+        m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
+                                     m_BP3Serializer.m_Data.m_Position);
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
+        // new group index for incoming variable
         m_BP3Serializer.PutProcessGroupIndex(
             m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
     }

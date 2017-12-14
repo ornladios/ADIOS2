@@ -40,7 +40,7 @@ void FC_GLOBAL(adios2_variable_name_f2c,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 variable_name: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -56,7 +56,7 @@ void FC_GLOBAL(adios2_variable_type_f2c,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 variable_type: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -67,20 +67,20 @@ void FC_GLOBAL(adios2_set_shape_f2c,
                                      int *ierr)
 {
     *ierr = 0;
-    if (shape == nullptr || ndims == nullptr)
-    {
-        *ierr = -1;
-        return;
-    }
-
     try
     {
+        if (shape == nullptr || ndims == nullptr)
+        {
+            throw std::invalid_argument(
+                "ERROR: either shape_dims or ndims is a null pointer, in call "
+                "to adios2_set_selection\n");
+        }
         std::vector<std::size_t> shapeV(shape, shape + *ndims);
         adios2_set_shape(*variable, shapeV.size(), shapeV.data());
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 set_shape: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -118,7 +118,7 @@ void FC_GLOBAL(adios2_set_selection_f2c,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 set_selection: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -158,7 +158,7 @@ void FC_GLOBAL(adios2_set_step_selection_f2c,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2: " << e.what() << "\n";
+        std::cerr << "ADIOS2 set_step_selection: " << e.what() << "\n";
         *ierr = -1;
     }
 }

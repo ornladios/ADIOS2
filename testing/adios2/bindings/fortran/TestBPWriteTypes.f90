@@ -8,7 +8,7 @@
     integer :: inx, irank, isize, ierr, i
 
     integer(kind=8) :: adios, ioWrite, bpWriter, ioRead, bpReader
-    integer(kind=8), dimension(6) :: variables
+    integer(kind=8), dimension(12) :: variables
     character(len=:), allocatable :: variable_name, variable_type
 
     ! Launch MPI
@@ -56,15 +56,53 @@
                                 shape_dims, start_dims, count_dims, &
                                 adios2_constant_dims, data_R64, ierr)
 
+    ! Global variables
+    call adios2_define_variable(variables(7), ioWrite, "gvar_I8", data_I8(1), &
+                                ierr)
+
+    call adios2_define_variable(variables(8), ioWrite, "gvar_I16", &
+                                data_I16(1), ierr)
+
+    call adios2_define_variable(variables(9), ioWrite, "gvar_I32", &
+                                data_I32(1), ierr)
+
+    call adios2_define_variable(variables(10), ioWrite, "gvar_I64", &
+                                data_I64(1), ierr)
+
+    call adios2_define_variable(variables(11), ioWrite, "gvar_R32", &
+                                data_R32(1), ierr)
+
+    call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
+                                data_R64(1), ierr)
+
     ! Open myVector_f.bp in write mode, this launches an engine
     call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
 
+
     ! Put array contents to bp buffer, based on var1 metadata
-    call adios2_write_step(bpWriter, ierr)
+    if( irank == 0 ) then
+        call adios2_put_sync( bpWriter, variables(7), data_I8(1), ierr )
+        call adios2_put_sync( bpWriter, variables(8), data_I16(1), ierr )
+        call adios2_put_sync( bpWriter, variables(9), data_I32(1), ierr )
+        call adios2_put_sync( bpWriter, variables(10), data_I64(1), ierr )
+        call adios2_put_sync( bpWriter, variables(11), data_R32(1), ierr )
+        call adios2_put_sync( bpWriter, variables(12), data_R64(1), ierr )
+    end if
+
+
+    do i=1,3
+        call adios2_begin_step( bpWriter, adios2_step_mode_append, 0.0, ierr )
+        call adios2_put_sync( bpWriter, variables(1), data_I8, ierr )
+        call adios2_put_sync( bpWriter, variables(2), data_I16, ierr )
+        call adios2_put_sync( bpWriter, variables(3), data_I32, ierr )
+        call adios2_put_sync( bpWriter, variables(4), data_I64, ierr )
+        call adios2_put_sync( bpWriter, variables(5), data_R32, ierr )
+        call adios2_put_sync( bpWriter, variables(6), data_R64, ierr )
+        call adios2_end_step( bpWriter, ierr )
+    end do
 
     ! Closes engine1 and deallocates it, becomes unreachable
     call adios2_close(bpWriter, ierr)
-
 
     !!!!!!!!!!!!!!!!!!!!!!!!! READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! Declare io reader

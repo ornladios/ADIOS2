@@ -71,6 +71,10 @@ void BP3Base::InitParameters(const Params &parameters)
         {
             InitParameterCollectiveMetadata(value);
         }
+        else if (key == "FlushStepsCount")
+        {
+            InitParameterFlushStepsCount(value);
+        }
     }
 
     // default timer for buffering
@@ -178,20 +182,21 @@ size_t BP3Base::GetVariableBPIndexSize(const std::string &variableName,
     return indexSize + 12; // extra 12 bytes in case of attributes
 }
 
-void BP3Base::ResetBuffer()
+void BP3Base::ResetBuffer(BufferSTL &bufferSTL,
+                          const bool resetAbsolutePosition)
 {
-    // set relative position to zero
-    m_Data.m_Position = 0;
-    // reset buffer to zero values to current size
-    m_Data.m_Buffer.assign(m_Data.m_Buffer.size(), '\0');
+    bufferSTL.m_Position = 0;
+    if (resetAbsolutePosition)
+    {
+        bufferSTL.m_AbsolutePosition = 0;
+    }
+    bufferSTL.m_Buffer.assign(bufferSTL.m_Buffer.size(), '\0');
 }
 
 BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
                                             const std::string hint)
 {
     const size_t currentCapacity = m_Data.m_Buffer.capacity();
-    //    size_t variableData =
-    //        GetVariableIndexSize(variable) + variable.PayLoadSize();
     const size_t requiredCapacity = dataIn + m_Data.m_Position;
 
     ResizeResult result = ResizeResult::Unchanged;
@@ -494,6 +499,41 @@ void BP3Base::InitParameterCollectiveMetadata(const std::string value)
 {
     InitOnOffParameter(value, m_CollectiveMetadata,
                        "valid: CollectiveMetadata On or Off");
+}
+
+void BP3Base::InitParameterFlushStepsCount(const std::string value)
+{
+    long long int flushStepsCount = -1;
+
+    if (m_DebugMode)
+    {
+        bool success = true;
+        std::string description;
+
+        try
+        {
+            flushStepsCount = std::stoll(value);
+        }
+        catch (std::exception &e)
+        {
+            success = false;
+            description = std::string(e.what());
+        }
+
+        if (!success || flushStepsCount < 1)
+        {
+            throw std::invalid_argument(
+                "ERROR: value in FlushStepscount=value in IO SetParameters "
+                "must be an integer >= 1 (default) \nadditional description: " +
+                description + "\n, in call to Open\n");
+        }
+    }
+    else
+    {
+        flushStepsCount = std::stoll(value);
+    }
+
+    m_FlushStepsCount = static_cast<size_t>(flushStepsCount);
 }
 
 std::vector<uint8_t>
