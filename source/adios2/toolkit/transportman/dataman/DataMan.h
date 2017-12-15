@@ -33,8 +33,9 @@ public:
 
     ~DataMan();
 
-    void OpenWANTransports(const std::string &name, const Mode openMode,
-                           const std::vector<Params> &parametersVector,
+    void OpenWANTransports(const std::vector<std::string> &streamNames,
+                           const Mode openMode,
+                           const std::vector<Params> &params,
                            const bool profile);
 
     void WriteWAN(const void *buffer, nlohmann::json jmsg);
