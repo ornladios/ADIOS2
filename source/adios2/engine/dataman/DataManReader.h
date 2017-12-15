@@ -63,7 +63,8 @@ private:
     void InitTransports();
 
     bool GetBoolParameter(Params &params, std::string key, bool &value);
-    bool GetStringParameter(Params &params, std::string key, std::string &value);
+    bool GetStringParameter(Params &params, std::string key,
+                            std::string &value);
     bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
 
 #define declare_type(T)                                                        \

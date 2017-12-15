@@ -33,7 +33,8 @@ public:
 
     ~DataMan();
 
-    void OpenWANTransports(const std::vector<std::string> &streamNames, const Mode openMode,
+    void OpenWANTransports(const std::vector<std::string> &streamNames,
+                           const Mode openMode,
                            const std::vector<Params> &params,
                            const bool profile);
 

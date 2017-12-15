@@ -30,14 +30,12 @@ int main(int argc, char *argv[])
     adios2::IO &dataManIO = adios.DeclareIO("WANIO");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({
-        {"Compression", "no"},
-        {"Format", "bp"},
+        {"Compression", "no"}, {"Format", "bp"},
     });
-    dataManIO.AddTransport("WAN", {
-            {"Library", "ZMQ"},
-            {"IPAddress", "127.0.0.1"},
-            });
-
+    dataManIO.AddTransport("WAN",
+                           {
+                               {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"},
+                           });
 
     // Define variable and local size
     auto bpFloats = dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});

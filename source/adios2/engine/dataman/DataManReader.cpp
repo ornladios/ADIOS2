@@ -44,16 +44,22 @@ void DataManReader::EndStep() {}
 void DataManReader::Close(const int transportIndex) {}
 
 // PRIVATE
-bool DataManReader::GetBoolParameter(Params &params, std::string key, bool &value){
+bool DataManReader::GetBoolParameter(Params &params, std::string key,
+                                     bool &value)
+{
     auto itKey = params.find(key);
     if (itKey != params.end())
     {
-        if (itKey->second == "yes" || itKey->second == "YES" || itKey->second == "Yes" || itKey->second == "true" || itKey->second == "TRUE" || itKey->second == "True")
+        if (itKey->second == "yes" || itKey->second == "YES" ||
+            itKey->second == "Yes" || itKey->second == "true" ||
+            itKey->second == "TRUE" || itKey->second == "True")
         {
             value = true;
             return true;
         }
-        if (itKey->second == "no" || itKey->second == "NO" || itKey->second == "No" || itKey->second == "false" || itKey->second == "FALSE" || itKey->second == "False")
+        if (itKey->second == "no" || itKey->second == "NO" ||
+            itKey->second == "No" || itKey->second == "false" ||
+            itKey->second == "FALSE" || itKey->second == "False")
         {
             value = false;
             return true;
@@ -62,7 +68,9 @@ bool DataManReader::GetBoolParameter(Params &params, std::string key, bool &valu
     return false;
 }
 
-bool DataManReader::GetStringParameter(Params &params, std::string key, std::string &value){
+bool DataManReader::GetStringParameter(Params &params, std::string key,
+                                       std::string &value)
+{
     auto it = params.find(key);
     if (it != params.end())
     {
@@ -72,7 +80,9 @@ bool DataManReader::GetStringParameter(Params &params, std::string key, std::str
     return false;
 }
 
-bool DataManReader::GetUIntParameter(Params &params, std::string key, unsigned int &value){
+bool DataManReader::GetUIntParameter(Params &params, std::string key,
+                                     unsigned int &value)
+{
     auto it = params.find(key);
     if (it != params.end())
     {
@@ -81,22 +91,26 @@ bool DataManReader::GetUIntParameter(Params &params, std::string key, unsigned i
     }
     return false;
 }
-void DataManReader::InitParameters() {
+void DataManReader::InitParameters()
+{
 
     GetUIntParameter(m_IO.m_Parameters, "NChannels", m_NChannels);
 
     GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
 }
 
-void DataManReader::InitTransports() {
+void DataManReader::InitTransports()
+{
 
     size_t channels = m_IO.m_TransportsParameters.size();
     std::vector<std::string> names;
-    for (size_t i = 0;  i < channels; ++i){
+    for (size_t i = 0; i < channels; ++i)
+    {
         names.push_back(m_Name + std::to_string(i));
     }
 
-    m_Man.OpenWANTransports(names, Mode::Read, m_IO.m_TransportsParameters, true);
+    m_Man.OpenWANTransports(names, Mode::Read, m_IO.m_TransportsParameters,
+                            true);
 }
 void DataManReader::Init()
 {

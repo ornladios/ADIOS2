@@ -74,7 +74,7 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
         }
         if (m_DebugMode)
         {
-            std::cout << "[WANZmq] Open Mode Write"  << std::endl;
+            std::cout << "[WANZmq] Open Mode Write" << std::endl;
         }
     }
 
@@ -82,7 +82,7 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
     {
         if (m_DebugMode)
         {
-            std::cout << "[WANZmq] Open Mode Append"  << std::endl;
+            std::cout << "[WANZmq] Open Mode Append" << std::endl;
             throw std::invalid_argument(
                 "ERROR: WAN transport " + m_Name +
                 " only supports "
@@ -98,8 +98,9 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
         zmq_bind(m_Socket, fullIP.c_str());
         // TODO need to capture return of zmq_bind function
         ProfilerStop("open");
-        if (m_DebugMode){
-            std::cout << "[WANZmq] Open Mode Read"  << std::endl;
+        if (m_DebugMode)
+        {
+            std::cout << "[WANZmq] Open Mode Read" << std::endl;
         }
     }
 
