@@ -75,8 +75,9 @@ size_t adios2_variable_available_steps_start(const adios2_Variable *variable);
 size_t adios2_variable_available_steps_count(const adios2_Variable *variable);
 
 /**
- * Set new dimensions
+ * Set new dimensions: shape, start and count
  * @param variable
+ * @param ndims
  * @param shape
  * @param start
  * @param count
@@ -86,7 +87,16 @@ void adios2_set_dimensions(adios2_Variable *variable, const size_t ndims,
                            const size_t *count);
 
 /**
- * Set new selection using start and count
+ * Set a new shape dimension
+ * @param variable
+ * @param ndims
+ * @param shape
+ */
+void adios2_set_shape(adios2_Variable *variable, const size_t ndims,
+                      const size_t *shape);
+
+/**
+ * Set new start and count dimensions
  * @param variable
  * @param start
  * @param count

@@ -59,6 +59,29 @@ void FC_GLOBAL(adios2_variable_type_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_set_shape_f2c,
+               ADIOS2_SET_SHAPE_F2C)(adios2_Variable **variable,
+                                     const int *ndims, const int *shape,
+                                     int *ierr)
+{
+    *ierr = 0;
+    if (shape == nullptr || ndims == nullptr)
+    {
+        *ierr = 1;
+        return;
+    }
+
+    try
+    {
+        std::vector<std::size_t> shapeV(shape, shape + *ndims);
+        adios2_set_shape(*variable, shapeV.size(), shapeV.data());
+    }
+    catch (std::exception &e)
+    {
+        *ierr = 1;
+    }
+}
+
 void FC_GLOBAL(adios2_set_selection_f2c,
                ADIOS2_SET_SELECTION_F2C)(adios2_Variable **variable,
                                          const int *ndims, const int *start,
@@ -98,12 +121,11 @@ void FC_GLOBAL(adios2_set_selection_f2c,
         return;
     }
 
-    std::vector<std::size_t> startV, countV;
-    lf_IntToSizeT(start, *ndims, startV, true);
-    lf_IntToSizeT(count, *ndims, countV, false);
-
     try
     {
+        std::vector<std::size_t> startV, countV;
+        lf_IntToSizeT(start, *ndims, startV, true);
+        lf_IntToSizeT(count, *ndims, countV, false);
         adios2_set_selection(*variable, *ndims, startV.data(), countV.data());
     }
     catch (std::exception &e)
