@@ -8,10 +8,10 @@
 !       Author: William F Godoy godoywf@ornl.gov
 !
 module adios2_engine
-    use adios2_engine_write
-    use adios2_engine_iwrite
-    use adios2_engine_read
-    use adios2_engine_iread
+    use adios2_engine_put_sync
+    use adios2_engine_put_deferred
+    use adios2_engine_get_sync
+    use adios2_engine_get_deferred
     implicit none
 
 contains
@@ -24,7 +24,6 @@ contains
 
     end subroutine
 
-
     subroutine adios2_perform_puts(engine, ierr)
         integer(kind=8), intent(in) :: engine
         integer, intent(out) :: ierr
@@ -32,7 +31,6 @@ contains
         call adios2_perform_puts_f2c(engine, ierr)
 
     end subroutine
-
 
     subroutine adios2_perform_gets(engine, ierr)
         integer(kind=8), intent(in) :: engine
@@ -42,7 +40,6 @@ contains
 
     end subroutine
 
-
     subroutine adios2_end_step(engine, ierr)
         integer(kind=8), intent(in) :: engine
         integer, intent(out) :: ierr
@@ -50,7 +47,6 @@ contains
         call adios2_end_step_f2c(engine, ierr)
 
     end subroutine
-
 
     subroutine adios2_close(engine, ierr)
         integer(kind=8), intent(in) :: engine

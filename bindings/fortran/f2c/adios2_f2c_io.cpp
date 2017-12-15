@@ -75,7 +75,7 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
 void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     adios2_Variable **variable, adios2_IO **io, const char *variable_name,
     const int *type, const int *ndims, const int *shape, const int *start,
-    const int *count, const int *constant_dims, int *ierr)
+    const int *count, const int *constant_dims, void *data, int *ierr)
 {
     auto lf_IntToSizeT = [](const int *dimensions, const int size,
                             std::vector<std::size_t> &output,
@@ -86,12 +86,23 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
             return;
         }
 
+        if (size == 0)
+        {
+            return;
+        }
+
         output.resize(size);
 
         if (offset)
         {
             for (unsigned int d = 0; d < size; ++d)
             {
+                if (dimensions[d] <= 0)
+                {
+                    throw std::invalid_argument(
+                        "ERROR: 0 in start dimension in Fortran\n");
+                }
+
                 output[d] = dimensions[d] - 1;
             }
         }
@@ -99,6 +110,11 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
         {
             for (unsigned int d = 0; d < size; ++d)
             {
+                if (dimensions[d] <= 0)
+                {
+                    throw std::invalid_argument(
+                        "ERROR: 0 in shape or count dimension in Fortran\n");
+                }
                 output[d] = dimensions[d];
             }
         }
@@ -116,7 +132,7 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
         *variable = adios2_define_variable(
             *io, variable_name, static_cast<adios2_type>(*type), *ndims,
             shapeV.data(), startV.data(), countV.data(),
-            static_cast<adios2_constant_dims>(*constant_dims));
+            static_cast<adios2_constant_dims>(*constant_dims), data);
     }
     catch (std::exception &e)
     {
