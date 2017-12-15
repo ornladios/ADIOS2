@@ -125,6 +125,7 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
+    PutSyncCommon(variable, values);
 }
 
 } // end namespace adios2

@@ -11,7 +11,7 @@
         ====================================-->
 
     <io name="writer">
-        <engine type="DataManWriter">
+        <engine type="DataMan">
 
             <!-- Microseconds (default), Milliseconds, Seconds,
                  Minutes, Hours -->
@@ -45,7 +45,7 @@
         ====================================-->
 
     <io name="reader">
-        <engine type="DataManReader">
+        <engine type="DataMan">
 
             <!-- Microseconds (default), Milliseconds, Seconds,
                  Minutes, Hours -->

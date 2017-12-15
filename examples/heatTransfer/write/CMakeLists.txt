@@ -24,16 +24,6 @@ if(ADIOS2_HAVE_MPI)
     MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
   )
 
-  add_executable(heatTransfer_write_dataman
-    main.cpp
-    HeatTransfer.cpp
-    Settings.cpp
-    IO_dataman.cpp
-  )
-  target_link_libraries(heatTransfer_write_dataman
-    adios2 MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT}
-  )
-
   if(ADIOS2_HAVE_ADIOS1)
     add_executable(heatTransfer_write_adios1.x
       main.cpp
