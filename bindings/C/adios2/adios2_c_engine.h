@@ -19,8 +19,12 @@ extern "C" {
 /**
  * starts interaction with current step
  * @param engine handler executing IO tasks
+ * @param mode
+ * @param timeout_seconds
  */
-void adios2_begin_step(adios2_Engine *engine);
+adios2_step_status adios2_begin_step(adios2_Engine *engine,
+                                     const adios2_step_mode mode,
+                                     const float timeout_seconds);
 
 //***************** PUT *****************
 
@@ -78,6 +82,13 @@ void adios2_perform_gets(adios2_Engine *engine);
  * @param engine handler executing IO tasks
  */
 void adios2_end_step(adios2_Engine *engine);
+
+/**
+ * Convenience function to write all current variables
+ * defined in IO
+ * @param engine handler executing IO tasks
+ */
+void adios2_write_step(adios2_Engine *engine);
 
 /**
  * Close all transports in adios2_Engine

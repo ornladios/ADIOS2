@@ -14,13 +14,16 @@
 #include <FC.h>
 #include <adios2_c.h>
 
+#include <iostream> //std::cerr
+#include <stdint.h> // int64_t
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void FC_GLOBAL(adios2_variable_name_f2c,
                ADIOS2_VARIABLE_NAME_F2C)(const adios2_Variable **variable,
-                                         char name[1024], int *length,
+                                         char name[4096], int *length,
                                          int *ierr);
 
 void FC_GLOBAL(adios2_variable_type_f2c,
@@ -29,13 +32,18 @@ void FC_GLOBAL(adios2_variable_type_f2c,
 
 void FC_GLOBAL(adios2_set_shape_f2c,
                ADIOS2_SET_SHAPE_F2C)(adios2_Variable **variable,
-                                     const int *ndims, const int *shape,
+                                     const int *ndims, const int64_t *shape,
                                      int *ierr);
 
 void FC_GLOBAL(adios2_set_selection_f2c,
                ADIOS2_SET_SELECTION_F2C)(adios2_Variable **variable,
-                                         const int *ndims, const int *start,
-                                         const int *count, int *ierr);
+                                         const int *ndims, const int64_t *start,
+                                         const int64_t *count, int *ierr);
+
+void FC_GLOBAL(adios2_set_step_selection_f2c,
+               ADIOS2_SET_STEP_SELECTION_F2C)(adios2_Variable **variable,
+                                              const int *step_start,
+                                              const int *step_count, int *ierr);
 
 #ifdef __cplusplus
 }

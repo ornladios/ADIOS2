@@ -16,11 +16,13 @@ module adios2_engine
 
 contains
 
-    subroutine adios2_begin_step(engine, ierr)
+    subroutine adios2_begin_step(engine, step_mode, timeout_seconds, ierr)
         integer(kind=8), intent(in) :: engine
+        integer, value, intent(in) :: step_mode
+        real, value, intent(in) :: timeout_seconds
         integer, intent(out) :: ierr
 
-        call adios2_begin_step_f2c(engine, ierr)
+        call adios2_begin_step_f2c(engine, step_mode, timeout_seconds, ierr)
 
     end subroutine
 
@@ -45,6 +47,14 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_end_step_f2c(engine, ierr)
+
+    end subroutine
+
+    subroutine adios2_write_step(engine, ierr)
+        integer(kind=8), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_write_step_f2c(engine, ierr)
 
     end subroutine
 

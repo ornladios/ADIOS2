@@ -13,10 +13,58 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
-void adios2_begin_step(adios2_Engine *engine)
+adios2_step_status adios2_begin_step(adios2_Engine *engine,
+                                     const adios2_step_mode mode,
+                                     const float timeout_seconds)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
-    engineCpp.BeginStep();
+
+    adios2::StepStatus statusCpp = adios2::StepStatus::OK;
+
+    switch (mode)
+    {
+    case (adios2_step_mode_append):
+        statusCpp =
+            engineCpp.BeginStep(adios2::StepMode::Append, timeout_seconds);
+        break;
+
+    case (adios2_step_mode_update):
+        statusCpp =
+            engineCpp.BeginStep(adios2::StepMode::Update, timeout_seconds);
+        break;
+
+    case (adios2_step_mode_next_available):
+        statusCpp = engineCpp.BeginStep(adios2::StepMode::NextAvailable,
+                                        timeout_seconds);
+        break;
+
+    case (adios2_step_mode_latest_available):
+        statusCpp = engineCpp.BeginStep(adios2::StepMode::LatestAvailable,
+                                        timeout_seconds);
+        break;
+    }
+
+    adios2_step_status status = adios2_step_status_ok;
+    switch (statusCpp)
+    {
+    case (adios2::StepStatus::OK):
+        status = adios2_step_status_ok;
+        break;
+
+    case (adios2::StepStatus::NotReady):
+        status = adios2_step_status_not_ready;
+        break;
+
+    case (adios2::StepStatus::EndOfStream):
+        status = adios2_step_status_end_of_stream;
+        break;
+
+    case (adios2::StepStatus::OtherError):
+        status = adios2_step_status_other_error;
+        break;
+    }
+
+    return status;
 }
 
 void adios2_put_sync(adios2_Engine *engine, adios2_Variable *variable,
@@ -296,6 +344,12 @@ void adios2_end_step(adios2_Engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.EndStep();
+}
+
+void adios2_write_step(adios2_Engine *engine)
+{
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.WriteStep();
 }
 
 void adios2_close(adios2_Engine *engine)

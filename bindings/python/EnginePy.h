@@ -31,7 +31,7 @@ public:
 
     ~EnginePy() = default;
 
-    void BeginStep();
+    StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = 0.f);
 
     void PutSync(VariableBase *variable, const pybind11::array &array);
     void PutSync(VariableBase *variable, const std::string &string);
