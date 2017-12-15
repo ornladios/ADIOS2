@@ -18,6 +18,7 @@ extern "C" {
 typedef struct adios2_ADIOS adios2_ADIOS;
 typedef struct adios2_IO adios2_IO;
 typedef struct adios2_Variable adios2_Variable;
+typedef struct adios2_Attribute adios2_Attribute;
 typedef struct adios2_Engine adios2_Engine;
 
 typedef enum {

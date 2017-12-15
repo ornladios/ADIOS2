@@ -49,6 +49,12 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     const int64_t *start, const int64_t *count, const int *constant_dims,
     void *data, int *ierr);
 
+void FC_GLOBAL(adios2_define_attribute_f2c,
+               ADIOS2_DEFINE_ATTRIBUTE_F2C)(adios2_Attribute **attribute,
+                                            adios2_IO **io, const char *name,
+                                            const int *type, const void *data,
+                                            const int *elements, int *ierr);
+
 void FC_GLOBAL(adios2_inquire_variable_f2c,
                ADIOS2_INQUIRE_VARIABLE_F2C)(adios2_Variable **variable,
                                             adios2_IO **io,

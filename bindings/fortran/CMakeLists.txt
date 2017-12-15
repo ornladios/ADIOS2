@@ -22,6 +22,7 @@ set(MODULES
      modules/adios2_adios_mod.f90 
      modules/adios2_io_mod.f90 
      modules/adios2_io_define_variable_mod.f90
+     modules/adios2_io_define_attribute_mod.f90
      modules/adios2_variable_mod.f90
      modules/adios2_engine_mod.f90 
      modules/adios2_engine_put_sync_mod.f90 
