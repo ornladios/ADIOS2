@@ -48,6 +48,8 @@ varR32 = bpIO.DefineVariable(
 varR64 = bpIO.DefineVariable(
     "varR64", [], [], [data.R64.size], adios2.ConstantDims, data.R64)
 
+attString = bpIO.DefineAttribute("attString", ["hello attribute"])
+attI8 = bpIO.DefineAttribute("attI8", data.I8)
 
 # ADIOS Engine
 bpFileWriter = bpIO.Open("npTypes.bp", adios2.Mode.Write)

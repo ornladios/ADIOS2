@@ -36,9 +36,10 @@ public:
     ~ADIOSPy() = default;
 
     IOPy DeclareIO(const std::string name);
+    IOPy AtIO(const std::string name);
 
 private:
-    const bool m_DebugMode;
+    const bool m_DebugMode = true;
     std::shared_ptr<adios2::ADIOS> m_ADIOS;
 };
 
