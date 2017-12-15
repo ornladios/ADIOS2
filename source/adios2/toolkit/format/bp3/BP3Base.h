@@ -145,6 +145,10 @@ public:
     /** Default: write collective metadata in Capsule metadata. */
     bool m_CollectiveMetadata = true;
 
+    /** Parameter to flush transports at every number of steps, to be used at
+     * EndStep */
+    size_t m_FlushStepsCount = 1;
+
     /**
      * Unique constructor
      * @param mpiComm for m_BP1Aggregator
@@ -191,10 +195,15 @@ public:
                                   const Dims &variableCount) const noexcept;
 
     /**
-     * Sets current relative position to zero and fill buffer with zero char
-     * '\0'
+     * Sets buffer's positions to zero and fill buffer with zero char
+     * @param bufferSTL buffer to be reset
+     * @param resetAbsolutePosition true: both bufferSTL.m_Position and
+     * bufferSTL.m_AbsolutePosition set to 0,   false(default): only
+     * bufferSTL.m_Position
+     * is set to zero,
      */
-    void ResetBuffer();
+    void ResetBuffer(BufferSTL &bufferSTL,
+                     const bool resetAbsolutePosition = false);
 
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
@@ -409,11 +418,14 @@ protected:
     /** Set available number of threads for vector operations */
     void InitParameterThreads(const std::string value);
 
-    /** verbose file level=0 (default), not active */
+    /** verbose file level=0 (default), not active yet */
     void InitParameterVerbose(const std::string value);
 
     /** verbose file level=0 (default) */
     void InitParameterCollectiveMetadata(const std::string value);
+
+    /** set steps count to flush */
+    void InitParameterFlushStepsCount(const std::string value);
 
     /**
      * Returns data type index from enum Datatypes

@@ -46,6 +46,12 @@ public:
 
     VariableBase *InquireVariable(const std::string &name) noexcept;
 
+    AttributeBase *DefineAttribute(const std::string &name,
+                                   pybind11::array &array);
+
+    AttributeBase *DefineAttribute(const std::string &name,
+                                   const std::vector<std::string> &strings);
+
     EnginePy Open(const std::string &name, const int openMode);
 
 private:
@@ -54,4 +60,4 @@ private:
 
 } // end namespace adios2
 
-#endif /* BINDINGS_PYTHON_SOURCE_IOPY_H_ */
+#endif /* ADIOS2_BINDINGS_PYTHON_SOURCE_IOPY_H_ */

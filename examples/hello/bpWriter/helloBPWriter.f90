@@ -4,7 +4,7 @@ program helloBPWriter
 
     implicit none
 
-    integer, dimension(1) :: shape_dims, start_dims, count_dims
+    integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
     real, dimension(:), allocatable :: myArray
     integer :: inx, irank, isize, ierr, i, var1_type
     integer(kind=8) :: adios, io, var1, engine1
@@ -25,7 +25,7 @@ program helloBPWriter
 
     ! Variable dimensions
     shape_dims(1) = isize * inx
-    start_dims(1) = irank * inx + 1
+    start_dims(1) = irank * inx
     count_dims(1) = inx
 
     ! Create adios handler passing the communicator, debug mode and error flag

@@ -8,8 +8,8 @@ program helloBPReaderHeatMap3D
     integer(kind=8) :: ioPut, var_temperatures, bpWriter
     integer(kind=8) :: ioGet, var_temperaturesIn, bpReader
     integer, dimension(:,:,:), allocatable :: temperatures, sel_temperatures
-    integer, dimension(3) :: ishape, istart, icount
-    integer, dimension(3) :: sel_start, sel_count
+    integer(kind=8), dimension(3) :: ishape, istart, icount
+    integer(kind=8), dimension(3) :: sel_start, sel_count
     integer :: ierr, irank, isize, inx, iny, inz
     integer :: i, j, k, iglobal, value, ilinear, icounter
 
@@ -22,7 +22,7 @@ program helloBPReaderHeatMap3D
     inz = 10
 
     icount = (/         inx,   iny, inz  /)
-    istart = (/ irank * inx+1,   1,   1  /)
+    istart = (/ irank * inx,     0,   0  /)
     ishape = (/ isize * inx,   iny, inz  /)
 
     allocate( temperatures( inx, iny, inz ) )
@@ -30,9 +30,9 @@ program helloBPReaderHeatMap3D
     do k=1, icount(3)
       do j=1, icount(2)
         do i=1, icount(1)
-            iglobal = istart(1) + (i-1)
+            iglobal = istart(1) + i
             value = (k-1) * ishape(1) * ishape(2) + (j-1) * ishape(1) + &
-                    &  iglobal-1
+                    &  (iglobal-1)
             temperatures(i,j,k) = value
         end do
       end do
@@ -69,7 +69,7 @@ program helloBPReaderHeatMap3D
 
         if( ierr == adios2_found ) then
 
-            sel_start = (/ 2, 2, 2 /)
+            sel_start = (/ 0, 0, 0 /)
             sel_count = (/ 4, 4, 4 /)
             allocate( sel_temperatures( sel_count(1), sel_count(2), &
                                       & sel_count(3) ) )

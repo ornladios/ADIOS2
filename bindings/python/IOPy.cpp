@@ -96,6 +96,45 @@ VariableBase *IOPy::InquireVariable(const std::string &name) noexcept
     return variable;
 }
 
+AttributeBase *IOPy::DefineAttribute(const std::string &name,
+                                     pybind11::array &array)
+{
+    AttributeBase *attribute = nullptr;
+
+    if (false)
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (pybind11::isinstance<                                             \
+                 pybind11::array_t<T, pybind11::array::c_style>>(array))       \
+    {                                                                          \
+        attribute = &m_IO.DefineAttribute<T>(                                  \
+            name, reinterpret_cast<T *>(const_cast<void *>(array.data())),     \
+            array.size());                                                     \
+    }
+    ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        if (m_DebugMode)
+        {
+            throw std::invalid_argument(
+                "ERROR: attribute " + name +
+                " can't be defined, either type is not "
+                "supported or is not memory "
+                "contiguous, in call to DefineAttribute\n");
+        }
+    }
+
+    return attribute;
+}
+
+AttributeBase *IOPy::DefineAttribute(const std::string &name,
+                                     const std::vector<std::string> &strings)
+{
+    return &m_IO.DefineAttribute(name, strings.data(), strings.size());
+}
+
 EnginePy IOPy::Open(const std::string &name, const int openMode)
 {
     return EnginePy(m_IO, name, static_cast<adios2::Mode>(openMode),

@@ -44,7 +44,8 @@ StepStatus BPFileWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void BPFileWriter::PerformPuts()
 {
-    m_BP3Serializer.AllocateDeferredSize();
+    m_BP3Serializer.ResizeBuffer(m_BP3Serializer.m_DeferredVariablesDataSize,
+                                 "in call to PerformPuts");
 
     for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
     {
@@ -62,6 +63,18 @@ void BPFileWriter::EndStep()
     }
 
     m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
+
+    const size_t currentStep = m_BP3Serializer.m_MetadataSet.TimeStep - 1;
+    const size_t flushStepsCount = m_BP3Serializer.m_FlushStepsCount;
+
+    if (currentStep % flushStepsCount)
+    {
+        m_BP3Serializer.SerializeData(m_IO);
+        m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
+                                     m_BP3Serializer.m_Data.m_Position);
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
+        WriteCollectiveMetadataFile();
+    }
 }
 
 void BPFileWriter::Close(const int transportIndex)
@@ -199,11 +212,12 @@ void BPFileWriter::WriteCollectiveMetadataFile()
                                         m_IO.m_TransportsParameters,
                                         m_BP3Serializer.m_Profiler.IsActive);
 
-        const auto &buffer = m_BP3Serializer.m_Metadata.m_Buffer;
-        const size_t size = m_BP3Serializer.m_Metadata.m_AbsolutePosition;
-
-        m_FileMetadataManager.WriteFiles(buffer.data(), size);
+        m_FileMetadataManager.WriteFiles(
+            m_BP3Serializer.m_Metadata.m_Buffer.data(),
+            m_BP3Serializer.m_Metadata.m_Position);
         m_FileMetadataManager.CloseFiles();
+
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
     }
 }
 

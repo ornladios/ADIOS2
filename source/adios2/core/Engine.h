@@ -181,10 +181,15 @@ public:
     /** Execute all Get<Deferred,T> starting from a previous PerformGets */
     virtual void PerformGets();
 
-    /** Convenience function to write all variables in IO */
+    /**
+     * Convenience function to write all variables defined with constant
+     * dimensions that are non-nullptr (with Variable.SetData(nullptr)) at once
+     * in IO. This functions is only used in very straight-forward cases when
+     * all variable dimensions are constant. Resizing (reallocation) generated
+     * dangling pointers.
+     * @exception if a variable in IO doesn't have constant dimensions it throws
+     * an invalid_argument */
     void WriteStep();
-    /** Convenience function to read all variables in IO */
-    void ReadStep();
 
     /**
      * Closes a particular transport, or all if -1

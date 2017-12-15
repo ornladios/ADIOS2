@@ -15,6 +15,8 @@
 #include <FC.h>
 #include <adios2_c.h>
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,10 +36,18 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
                                                    const char *value,
                                                    int *ierr);
 
+void FC_GLOBAL(adios2_define_global_variable_f2c,
+               ADIOS2_DEFINE_GLOBAL_VARIABLE_F2C)(adios2_Variable **variable,
+                                                  adios2_IO **io,
+                                                  const char *name,
+                                                  const int *type, void *data,
+                                                  int *ierr);
+
 void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
-    adios2_Variable **variable, adios2_IO **io, const char *variable_name,
-    const int *type, const int *ndims, const int *shape, const int *start,
-    const int *count, const int *constant_dims, void *data, int *ierr);
+    adios2_Variable **variable, adios2_IO **io, const char *name,
+    const int *type, const int *ndims, const int64_t *shape,
+    const int64_t *start, const int64_t *count, const int *constant_dims,
+    void *data, int *ierr);
 
 void FC_GLOBAL(adios2_inquire_variable_f2c,
                ADIOS2_INQUIRE_VARIABLE_F2C)(adios2_Variable **variable,

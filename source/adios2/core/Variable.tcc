@@ -30,14 +30,6 @@ namespace adios2
                    constantDims, debugMode),                                   \
       m_Data(data), m_Min(), m_Max(), m_Value()                                \
     {                                                                          \
-        if (data != nullptr && !constantDims)                                  \
-        {                                                                      \
-            throw std::invalid_argument(                                       \
-                "ERROR: variable " + name +                                    \
-                " can only accept a data* pointer if "                         \
-                "constantDims = true"                                          \
-                ", in call to Variable constructor\n");                        \
-        }                                                                      \
     }                                                                          \
                                                                                \
     template <>                                                                \

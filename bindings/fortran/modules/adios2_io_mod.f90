@@ -34,14 +34,14 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_add_transport_f2c(transport_index, io, &
-                                      TRIM(ADJUSTL(type))//char(0), &
-                                      ierr)
+                                      TRIM(ADJUSTL(type))//char(0), ierr)
+
 
     end subroutine
 
 
     subroutine adios2_set_transport_parameter(io, transport_index, key, value, &
-        & ierr)
+                                              ierr)
         integer(kind=8), intent(in):: io
         integer, intent(in):: transport_index
         character*(*), intent(in) :: key
