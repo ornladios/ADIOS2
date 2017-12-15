@@ -116,9 +116,8 @@ PYBIND11_MODULE(adios2, m)
     m.def("ADIOS", &ADIOSPyInit, "Function that creates an ADIOS class object",
           pybind11::arg("object") = nullptr, pybind11::arg("debugMode") = true);
 
-    m.def("ADIOS", &ADIOSPyInitConfig,
-          "Function that creates an ADIOS class "
-          "object using a config file",
+    m.def("ADIOS", &ADIOSPyInitConfig, "Function that creates an ADIOS class "
+                                       "object using a config file",
           pybind11::arg("configFile") = "", pybind11::arg("object") = nullptr,
           pybind11::arg("debugMode") = true);
 #else
@@ -172,8 +171,8 @@ PYBIND11_MODULE(adios2, m)
                                 const std::vector<std::string> &)) &
                  adios2::IOPy::DefineAttribute,
              pybind11::return_value_policy::reference_internal)
-        .def("Open", (adios2::EnginePy(adios2::IOPy::*)(const std::string &,
-                                                        const int)) &
+        .def("Open", (adios2::EnginePy (adios2::IOPy::*)(const std::string &,
+                                                         const int)) &
                          adios2::IOPy::Open);
 
     pybind11::class_<adios2::EnginePy>(m, "EnginePy")
