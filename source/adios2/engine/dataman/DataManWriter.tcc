@@ -120,7 +120,11 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     m_BP3Serializer.PutVariableMetadata(variable);
     m_BP3Serializer.PutVariablePayload(variable);
+}
 
+template <class T>
+void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
+{
 }
 
 } // end namespace adios2

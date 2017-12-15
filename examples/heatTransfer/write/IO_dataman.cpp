@@ -5,11 +5,13 @@
  * IO_ADIOS2.cpp
  *
  *  Created on: Feb 2017
- *      Author: Norbert Podhorszki
+ *      Authors: Norbert Podhorszki
+ *               Jason Wang
  */
 
 #include "IO.h"
 
+#include <iostream>
 #include <string>
 
 #include <adios2.h>
@@ -21,6 +23,7 @@ adios2::Variable<unsigned int> *varGndx = nullptr;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
+
     m_outputfilename = MakeFilename(s.outputfile, ".bp");
 
     ad = new adios2::ADIOS(s.configfile, comm, adios2::DebugON);
@@ -44,7 +47,8 @@ IO::IO(const Settings &s, MPI_Comm comm)
         // local size, could be defined later using SetSelection()
         {s.ndx, s.ndy});
 
-    datamanWriter = &datamanIO.Open(m_outputfilename, adios2::Mode::Write, comm);
+    datamanWriter =
+        &datamanIO.Open(m_outputfilename, adios2::Mode::Write, comm);
 }
 
 IO::~IO()
@@ -62,6 +66,6 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     // We need to have the vector object here not to destruct here until the end
     // of function.
     std::vector<double> v = ht.data_noghost();
-    datamanWriter->PutDeferred<double>(*varT, v.data());
+    datamanWriter->PutSync<double>(*varT, v.data());
     datamanWriter->EndStep();
 }

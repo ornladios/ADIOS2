@@ -39,7 +39,7 @@ private:
     std::string m_Name;
 
     unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "json";
+    std::string m_UseFormat = "bp";
     bool m_DoMonitor = false;
 
     void Init();
@@ -47,16 +47,22 @@ private:
     void InitTransports();
 
     bool GetBoolParameter(Params &params, std::string key, bool &value);
-    bool GetStringParameter(Params &params, std::string key, std::string &value);
+    bool GetStringParameter(Params &params, std::string key,
+                            std::string &value);
     bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
 
 #define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &, const T *) final;                            \
+    void DoPutDeferred(Variable<T> &, const T *) final;                        \
+    void DoPutDeferred(Variable<T> &, const T &) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutDeferredCommon(Variable<T> &variable, const T *values);
 
     template <class T>
     void PutSyncCommonBP(Variable<T> &variable, const T *values);

@@ -28,6 +28,9 @@
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
             <parameter key="Library" value="ZMQ"/>
 
+            <!-- IP Address for network transfer -->
+            <parameter key="IPAddress" value="127.0.0.1"/>
+
             <!-- For read/write, Microseconds (default), Milliseconds, Seconds,
                  Minutes, Hours. open/close always in Microseconds -->
             <parameter key="ProfileUnits" value="Microseconds"/>
@@ -54,6 +57,9 @@
 
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
             <parameter key="Library" value="POSIX"/>
+
+            <!-- IP Address for network transfer -->
+            <parameter key="IPAddress" value="127.0.0.1"/>
 
             <!-- For read/write, Microseconds (default), Milliseconds, Seconds,
                  Minutes, Hours. open/close always in Microseconds -->

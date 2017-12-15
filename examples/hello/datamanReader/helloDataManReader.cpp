@@ -40,12 +40,18 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
     size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
                                      std::multiplies<std::size_t>());
 
+    size_t dumpsize = 128;
+    if (varsize < dumpsize)
+    {
+        dumpsize = varsize;
+    }
+
     std::cout << "Data : " << std::endl;
 
 #define declare_type(T)                                                        \
     if (dtype == adios2::GetType<T>())                                         \
     {                                                                          \
-        for (size_t i = 0; i < varsize; ++i)                                   \
+        for (size_t i = 0; i < dumpsize; ++i)                                  \
         {                                                                      \
             std::cout << (reinterpret_cast<T *>(data))[i] << " ";              \
         }                                                                      \
@@ -85,10 +91,10 @@ int main(int argc, char *argv[])
         dataManIO.SetParameters({
             {"Format", "bp"},
         });
-        dataManIO.AddTransport("WAN", {
-                {"Library", "ZMQ"},
-                {"IPAddress", "127.0.0.1"},
-                });
+        dataManIO.AddTransport(
+            "WAN", {
+                       {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"},
+                   });
         dataManIO.AddOperator(callbackFloat); // propagate to all Engines
 
         adios2::Engine &dataManReader =
