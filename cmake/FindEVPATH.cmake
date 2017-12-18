@@ -74,7 +74,7 @@
 # get flags for evpath_config, -s (static) is the default
 
 set(evpath_config_hints)
-foreach(PREFIX_VAR IN ITEMS EVPATH_ROOT EVPATH_DIR INSTALL_PREFIX)
+foreach(PREFIX_VAR IN ITEMS EVPATH_ROOT INSTALL_PREFIX)
   if(${PREFIX_VAR})
     list(APPEND evpath_config_hints "${${PREFIX_VAR}}/bin")
   elseif(NOT ("$ENV{${PREFIX_VAR}}" STREQUAL ""))
