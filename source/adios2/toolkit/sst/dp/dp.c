@@ -3,7 +3,6 @@
 
 #include <evpath.h>
 #include <fm.h>
-#include <mpi.h>
 
 #include "sst_data.h"
 
