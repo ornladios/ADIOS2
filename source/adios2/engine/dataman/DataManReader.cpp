@@ -5,10 +5,12 @@
  * DataManReader.cpp
  *
  *  Created on: Feb 21, 2017
- *      Author: wfg
+ *      Author: Jason Wang
+ *              William F Godoy
  */
 
 #include "DataManReader.h"
+#include "DataManReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
@@ -24,27 +26,94 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
+StepStatus DataManReader::BeginStep(StepMode stepMode,
+                                    const float timeoutSeconds)
+{
+    StepStatus status = StepStatus::OK;
+    // here fill the logic for the while loop listener...
+    // m_BP3Deserializer.m_MetadataSet.StepsCount will have the number of steps
+    // per buffer
+    // Look at the BPFileReader.BeginStep implementation
+    return status;
+}
+
+void DataManReader::PerformGets() {}
+
+void DataManReader::EndStep() {}
+
 void DataManReader::Close(const int transportIndex) {}
 
 // PRIVATE
+bool DataManReader::GetBoolParameter(Params &params, std::string key,
+                                     bool &value)
+{
+    auto itKey = params.find(key);
+    if (itKey != params.end())
+    {
+        if (itKey->second == "yes" || itKey->second == "YES" ||
+            itKey->second == "Yes" || itKey->second == "true" ||
+            itKey->second == "TRUE" || itKey->second == "True")
+        {
+            value = true;
+            return true;
+        }
+        if (itKey->second == "no" || itKey->second == "NO" ||
+            itKey->second == "No" || itKey->second == "false" ||
+            itKey->second == "FALSE" || itKey->second == "False")
+        {
+            value = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DataManReader::GetStringParameter(Params &params, std::string key,
+                                       std::string &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = it->second;
+        return true;
+    }
+    return false;
+}
+
+bool DataManReader::GetUIntParameter(Params &params, std::string key,
+                                     unsigned int &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = std::stoi(it->second);
+        return true;
+    }
+    return false;
+}
+void DataManReader::InitParameters()
+{
+
+    GetUIntParameter(m_IO.m_Parameters, "NChannels", m_NChannels);
+
+    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
+}
+
+void DataManReader::InitTransports()
+{
+
+    size_t channels = m_IO.m_TransportsParameters.size();
+    std::vector<std::string> names;
+    for (size_t i = 0; i < channels; ++i)
+    {
+        names.push_back(m_Name + std::to_string(i));
+    }
+
+    m_Man.OpenWANTransports(names, Mode::Read, m_IO.m_TransportsParameters,
+                            true);
+}
 void DataManReader::Init()
 {
-    auto lf_GetStringParameter = [&](const std::string key,
-                                     std::string &value) {
-        auto it = m_IO.m_Parameters.find(key);
-        if (it != m_IO.m_Parameters.end())
-        {
-            value = it->second;
-        }
-    };
-
-    auto lf_GetUIntParameter = [&](const std::string key, unsigned int &value) {
-        auto it = m_IO.m_Parameters.find(key);
-        if (it != m_IO.m_Parameters.end())
-        {
-            value = std::stoi(it->second);
-        }
-    };
 
     for (auto &j : m_IO.m_Operators)
     {
@@ -55,36 +124,33 @@ void DataManReader::Init()
         }
     }
 
-    lf_GetUIntParameter("NTransports", m_NTransports);
-    std::vector<Params> parameters(m_NTransports);
-
-    std::string TransportType;
-    lf_GetStringParameter("TransportType", TransportType);
-
-    std::string Transport;
-    lf_GetStringParameter("Transport", Transport);
-
-    // Check if using BP Format and initialize buffer
-
-    lf_GetStringParameter("Format", m_UseFormat);
+    InitParameters();
 
     if (m_UseFormat == "BP" || m_UseFormat == "bp")
     {
         m_BP3Deserializer.InitParameters(m_IO.m_Parameters);
     }
 
-    for (unsigned int i = 0; i < parameters.size(); i++)
-    {
-        parameters[i]["TransportType"] = TransportType;
-        parameters[i]["Transport"] = Transport;
-        parameters[i]["Name"] = "stream";
-        parameters[i]["IPAddress"] = "127.0.0.1";
-        parameters[i]["Format"] = m_UseFormat;
-    }
-
     m_Man.SetBP3Deserializer(m_BP3Deserializer);
     m_Man.SetIO(m_IO);
-    m_Man.OpenWANTransports("zmq", Mode::Read, parameters, true);
+
+    InitTransports();
 }
+
+#define declare_type(T)                                                        \
+    void DataManReader::DoGetSync(Variable<T> &variable, T *data)              \
+    {                                                                          \
+        GetSyncCommon(variable, data);                                         \
+    }                                                                          \
+    void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
+    {                                                                          \
+        GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    void DataManReader::DoGetDeferred(Variable<T> &variable, T &data)          \
+    {                                                                          \
+        GetDeferredCommon(variable, &data);                                    \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 } // end namespace adios2

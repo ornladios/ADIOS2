@@ -65,8 +65,6 @@ public:
     template <class T>
     void PutVariablePayload(const Variable<T> &variable) noexcept;
 
-    void AllocateDeferredSize();
-
     /**
      *  Serializes data buffer and close current process group
      * @param io : attributes written in first step

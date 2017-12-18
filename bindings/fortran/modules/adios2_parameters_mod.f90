@@ -31,18 +31,31 @@ module adios2_parameters
     integer, parameter :: adios2_type_string = 10
     integer, parameter :: adios2_type_string_array = 11
 
-    ! Constant dims
-    logical, parameter :: adios2_constant_dims_true = .true.
-    logical, parameter :: adios2_constant_dims_false = .false.
+    ! is_constant_dims
+    logical, parameter :: adios2_constant_dims = .true.
+    logical, parameter :: adios2_variable_dims = .false.
 
-    ! Found or not found, ierr value
+    ! Variable Found or not found, ierr value
+    integer, parameter :: adios2_not_found = -1
     integer, parameter :: adios2_found = 0
-    integer, parameter :: adios2_not_found = 2
 
     ! Mode
     integer, parameter :: adios2_mode_undefined = 0
     integer, parameter :: adios2_mode_write = 1
     integer, parameter :: adios2_mode_read = 2
     integer, parameter :: adios2_mode_append = 3
+
+    ! Step Mode
+    integer, parameter :: adios2_step_mode_append = 0
+    integer, parameter :: adios2_step_mode_update = 1
+    integer, parameter :: adios2_step_mode_next_available = 2
+    integer, parameter :: adios2_step_mode_latest_available = 3
+
+    ! Step Status
+    integer, parameter :: adios2_step_status_other_error = -1
+    integer, parameter :: adios2_step_status_ok = 0
+    integer, parameter :: adios2_step_status_not_ready = 1
+    integer, parameter :: adios2_step_status_end_of_stream = 2
+
 
 end module

@@ -8,22 +8,23 @@
 !       Author: William F Godoy godoywf@ornl.gov
 !
 module adios2_engine
-    use adios2_engine_write
-    use adios2_engine_iwrite
-    use adios2_engine_read
-    use adios2_engine_iread
+    use adios2_engine_put_sync
+    use adios2_engine_put_deferred
+    use adios2_engine_get_sync
+    use adios2_engine_get_deferred
     implicit none
 
 contains
 
-    subroutine adios2_begin_step(engine, ierr)
+    subroutine adios2_begin_step(engine, step_mode, timeout_seconds, ierr)
         integer(kind=8), intent(in) :: engine
+        integer, value, intent(in) :: step_mode
+        real, value, intent(in) :: timeout_seconds
         integer, intent(out) :: ierr
 
-        call adios2_begin_step_f2c(engine, ierr)
+        call adios2_begin_step_f2c(engine, step_mode, timeout_seconds, ierr)
 
     end subroutine
-
 
     subroutine adios2_perform_puts(engine, ierr)
         integer(kind=8), intent(in) :: engine
@@ -33,7 +34,6 @@ contains
 
     end subroutine
 
-
     subroutine adios2_perform_gets(engine, ierr)
         integer(kind=8), intent(in) :: engine
         integer, intent(out) :: ierr
@@ -41,7 +41,6 @@ contains
         call adios2_perform_gets_f2c(engine, ierr)
 
     end subroutine
-
 
     subroutine adios2_end_step(engine, ierr)
         integer(kind=8), intent(in) :: engine
@@ -51,6 +50,13 @@ contains
 
     end subroutine
 
+    subroutine adios2_write_step(engine, ierr)
+        integer(kind=8), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_write_step_f2c(engine, ierr)
+
+    end subroutine
 
     subroutine adios2_close(engine, ierr)
         integer(kind=8), intent(in) :: engine

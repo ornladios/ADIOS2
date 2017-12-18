@@ -23,7 +23,10 @@ EnginePy::EnginePy(IO &io, const std::string &name, const Mode openMode,
 {
 }
 
-void EnginePy::BeginStep() { m_Engine.BeginStep(); }
+StepStatus EnginePy::BeginStep(const StepMode mode, const float timeoutSeconds)
+{
+    return m_Engine.BeginStep(mode, timeoutSeconds);
+}
 
 void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
 {

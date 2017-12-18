@@ -112,7 +112,7 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
         m_Man.WriteWAN(buffer.data(), position);
 
         // set relative position to clear buffer
-        m_BP3Serializer.ResetBuffer();
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
         // new group index
         m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_zmq"});
     }
@@ -120,6 +120,12 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     m_BP3Serializer.PutVariableMetadata(variable);
     m_BP3Serializer.PutVariablePayload(variable);
+}
+
+template <class T>
+void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
+{
+    PutSyncCommon(variable, values);
 
 }
 

@@ -40,4 +40,9 @@ IOPy ADIOSPy::DeclareIO(const std::string name)
     return IOPy(m_ADIOS->DeclareIO(name), m_DebugMode);
 }
 
+IOPy ADIOSPy::AtIO(const std::string name)
+{
+    return IOPy(m_ADIOS->AtIO(name), m_DebugMode);
+}
+
 } // end namespace adios2

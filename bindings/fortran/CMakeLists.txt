@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 include(FortranCInterface)
 FortranCInterface_HEADER(FC.h MACRO_NAMESPACE "FC_")
 FortranCInterface_VERIFY(CXX QUIET)
@@ -21,18 +21,19 @@ set(MODULES
      modules/adios2_parameters_mod.f90 
      modules/adios2_adios_mod.f90 
      modules/adios2_io_mod.f90 
+     modules/adios2_io_define_variable_mod.f90
      modules/adios2_variable_mod.f90
      modules/adios2_engine_mod.f90 
-     modules/adios2_engine_write_mod.f90 
-     modules/adios2_engine_iwrite_mod.f90
-     modules/adios2_engine_read_mod.f90 
-     modules/adios2_engine_iread_mod.f90
+     modules/adios2_engine_put_sync_mod.f90 
+     modules/adios2_engine_put_deferred_mod.f90
+     modules/adios2_engine_get_sync_mod.f90 
+     modules/adios2_engine_get_deferred_mod.f90
 )
 
 add_library(adios2_f ${MODULES} ${F2C})
 target_include_directories(adios2_f PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
                                            ${CMAKE_CURRENT_BINARY_DIR}
-                          )
+)
 
 target_link_libraries(adios2_f PRIVATE adios2)
 
@@ -55,4 +56,12 @@ install(
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+        
+install(
+  DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY} 
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES_MATCHING 
+  PATTERN "adios2*.mod" 
+  PATTERN "CMakeFiles" EXCLUDE
 )

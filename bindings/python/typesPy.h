@@ -33,6 +33,22 @@ namespace adios2
     MACRO(std::complex<double>)                                                \
     MACRO(std::complex<long double>)
 
+#define ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(MACRO)                        \
+    MACRO(char)                                                                \
+    MACRO(signed char)                                                         \
+    MACRO(unsigned char)                                                       \
+    MACRO(short)                                                               \
+    MACRO(unsigned short)                                                      \
+    MACRO(int)                                                                 \
+    MACRO(unsigned int)                                                        \
+    MACRO(long int)                                                            \
+    MACRO(long long int)                                                       \
+    MACRO(unsigned long int)                                                   \
+    MACRO(unsigned long long int)                                              \
+    MACRO(float)                                                               \
+    MACRO(double)                                                              \
+    MACRO(long double)
+
 } // end namespace adios2
 
 #endif /* BINDINGS_PYTHON_TYPESPY_H_ */

@@ -74,6 +74,20 @@ typedef enum {
     adios2_mode_append = 3,
 } adios2_mode;
 
+typedef enum {
+    adios2_step_mode_append = 0,
+    adios2_step_mode_update = 1,
+    adios2_step_mode_next_available = 2,
+    adios2_step_mode_latest_available = 3
+} adios2_step_mode;
+
+typedef enum {
+    adios2_step_status_other_error = -1,
+    adios2_step_status_ok = 0,
+    adios2_step_status_not_ready = 1,
+    adios2_step_status_end_of_stream = 2
+} adios2_step_status;
+
 #ifdef __cplusplus
 } // end extern C
 #endif

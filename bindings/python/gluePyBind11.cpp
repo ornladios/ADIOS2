@@ -91,6 +91,7 @@ PYBIND11_MODULE(adios2, m)
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
+    m.attr("VariableDims") = false;
     // enum classes
     pybind11::enum_<adios2::Mode>(m, "Mode")
         .value("Write", adios2::Mode::Write)
@@ -131,12 +132,16 @@ PYBIND11_MODULE(adios2, m)
 #endif
 
     pybind11::class_<adios2::ADIOSPy>(m, "ADIOSPy")
-        .def("DeclareIO", &adios2::ADIOSPy::DeclareIO);
+        .def("DeclareIO", &adios2::ADIOSPy::DeclareIO)
+        .def("AtIO", &adios2::ADIOSPy::AtIO);
 
     pybind11::class_<adios2::VariableBase>(m, "Variable")
+        .def("SetShape", &adios2::VariableBase::SetShape)
         .def("SetSelection", &adios2::VariableBase::SetSelection)
         .def("SetStepSelection", &adios2::VariableBase::SetStepSelection)
         .def("SelectionSize", &adios2::VariableBase::SelectionSize);
+
+    pybind11::class_<adios2::AttributeBase>(m, "Attribute");
 
     pybind11::class_<adios2::IOPy>(m, "IOPy")
         .def("SetEngine", &adios2::IOPy::SetEngine)
@@ -155,12 +160,25 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("array") = pybind11::array())
         .def("InquireVariable", &adios2::IOPy::InquireVariable,
              pybind11::return_value_policy::reference_internal)
+        .def("DefineAttribute",
+             (adios2::AttributeBase *
+              (adios2::IOPy::*)(const std::string &, pybind11::array &)) &
+                 adios2::IOPy::DefineAttribute,
+             pybind11::return_value_policy::reference_internal)
+        .def("DefineAttribute",
+             (adios2::AttributeBase *
+              (adios2::IOPy::*)(const std::string &,
+                                const std::vector<std::string> &)) &
+                 adios2::IOPy::DefineAttribute,
+             pybind11::return_value_policy::reference_internal)
         .def("Open", (adios2::EnginePy (adios2::IOPy::*)(const std::string &,
                                                          const int)) &
                          adios2::IOPy::Open);
 
     pybind11::class_<adios2::EnginePy>(m, "EnginePy")
-        .def("BeginStep", &adios2::EnginePy::BeginStep)
+        .def("BeginStep", &adios2::EnginePy::BeginStep,
+             pybind11::arg("mode") = adios2::StepMode::NextAvailable,
+             pybind11::arg("timeoutSeconds") = 0.f)
         .def("PutSync", (void (adios2::EnginePy::*)(adios2::VariableBase *,
                                                     const pybind11::array &)) &
                             adios2::EnginePy::PutSync)

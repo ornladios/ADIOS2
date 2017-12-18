@@ -229,7 +229,6 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         const std::string name(variablePair.first);
         const std::string type(variablePair.second.first);
         variablesInfo[name]["Type"] = type;
-
         if (type == "compound")
         {
         }

@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
             if (bpFloats000 != nullptr)
             {
                 bpFloats000->SetSelection({{rank * Nx}, {Nx}});
-                bpFloats000->SetStepSelection({3, 1});
+                bpFloats000->SetStepSelection({2, 1});
 
                 std::vector<float> data(bpFloats000->SelectionSize());
                 bpReader.GetSync(*bpFloats000, data.data());
