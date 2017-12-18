@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloSstReader_nompi.cpp
+ * helloSstReader.cpp
  *
  *  Created on: Aug 17, 2017
 v *      Author: Greg Eisenhauer
@@ -15,6 +15,10 @@ v *      Author: Greg Eisenhauer
 #include <vector>
 
 #include <adios2.h>
+
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
 
 void UserCallBack(const void *data, std::string doid, std::string var,
                   std::string dtype, std::vector<std::size_t> varshape)
@@ -34,10 +38,16 @@ void UserCallBack(const void *data, std::string doid, std::string var,
 int main(int argc, char *argv[])
 {
     // Application variable
-    MPI_Init(&argc, &argv);
     int rank, size;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+    rank = 0;
+    size = 1;
+#endif
 
     int timeout = 5;
 
@@ -48,7 +58,11 @@ int main(int argc, char *argv[])
 
     try
     {
+#ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+        adios2::ADIOS adios(adios2::DebugON);
+#endif
 
         adios2::IO &sstIO = adios.DeclareIO("WAN");
         sstIO.SetEngine("Sst");
@@ -82,7 +96,9 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }
