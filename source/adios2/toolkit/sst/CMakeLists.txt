@@ -7,7 +7,7 @@ add_library(sst
 
 target_compile_features(sst PRIVATE c_std_99)
 target_include_directories(sst PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(sst PRIVATE evpath::evpath)
+target_link_libraries(sst PRIVATE EVPath::EVPath)
 target_link_libraries(sst PUBLIC MPI::MPI_C)
 
 install(TARGETS sst EXPORT adios2Exports
