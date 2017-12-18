@@ -5,7 +5,6 @@
 
 #include <atl.h>
 #include <evpath.h>
-#include <mpi.h>
 
 #include "sst_data.h"
 

@@ -16,7 +16,7 @@
 # the other ADIOS tools.
 #
 # To provide a hint to the module where to find the ADIOS installation,
-# set the ADIOS1_ROOT or ADIOS1_DIR environment variable.
+# set the ADIOS1_ROOT environment variable.
 #
 # If this variable is not set, make sure that at least the according `bin/`
 # directory of ADIOS 1.x is in your PATH environment variable.
@@ -104,7 +104,7 @@ if(ADIOS1_FIND_COMPONENTS)
 endif()
 
 set(adios1_config_hints)
-foreach(PREFIX_VAR IN ITEMS ADIOS1_ROOT ADIOS1_DIR INSTALL_PREFIX)
+foreach(PREFIX_VAR IN ITEMS ADIOS1_ROOT INSTALL_PREFIX)
   if(${PREFIX_VAR})
     list(APPEND adios1_config_hints "${${PREFIX_VAR}}/bin")
   elseif(NOT ("$ENV{${PREFIX_VAR}}" STREQUAL ""))
