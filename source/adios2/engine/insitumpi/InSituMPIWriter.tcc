@@ -22,10 +22,8 @@ void InSituMPIWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
     // set variable
     variable.SetData(values);
-    if (m_Verbosity == 5)
-    {
-        std::cout << "InSituMPI Writer PutSync(" << variable.m_Name << ")\n";
-    }
+    throw std::runtime_error(
+        "ERROR: InSituMPI engine does not allow for PutSync().");
 }
 
 template <class T>
@@ -34,9 +32,10 @@ void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     variable.SetData(values);
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Writer PutDeferred(" << variable.m_Name
-                  << ")\n";
+        std::cout << "InSituMPI Writer " << m_WriterRank << " PutDeferred("
+                  << variable.m_Name << ")\n";
     }
+    m_NDeferredPuts++;
 }
 
 } // end namespace adios2

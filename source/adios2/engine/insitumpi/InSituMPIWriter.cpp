@@ -29,28 +29,55 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
     Init();
 
-    m_ReaderPeers = insitumpi::FindPeers(mpiComm, m_Name, true);
+    m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, true);
     MPI_Comm_rank(MPI_COMM_WORLD, &m_GlobalRank);
     MPI_Comm_size(MPI_COMM_WORLD, &m_GlobalNproc);
     MPI_Comm_rank(mpiComm, &m_WriterRank);
     MPI_Comm_size(mpiComm, &m_WriterNproc);
-    m_ReaderNproc = m_ReaderPeers.size();
+    m_RankDirectPeers =
+        insitumpi::AssignPeers(m_WriterRank, m_WriterNproc, m_RankAllPeers);
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " Open(" << m_Name
                   << "). Fixed schedule = " << (m_FixedSchedule ? "yes" : "no")
-                  << ". #readers=" << m_ReaderNproc
+                  << ". #readers=" << m_RankAllPeers.size()
                   << " #writers=" << m_WriterNproc
-                  << " #appsize=" << m_GlobalNproc << std::endl;
+                  << " #appsize=" << m_GlobalNproc
+                  << " #direct peers=" << m_RankDirectPeers.size() << std::endl;
     }
+    insitumpi::ConnectDirectPeers(true, m_GlobalRank, m_RankDirectPeers);
 }
 
 StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Writer BeginStep()\n";
+        std::cout << "InSituMPI Writer " << m_WriterRank << " BeginStep()\n";
     }
+    if (mode != StepMode::Append)
+    {
+        throw std::invalid_argument(
+            "ERROR: InSituMPI engine only supports appending steps "
+            "(BeginStep(adios2::StepMode::Append)");
+    }
+
+    m_CurrentStep++; // 0 is the first step
+    if (m_Verbosity == 5)
+    {
+        std::cout << "InSituMPI Writer " << m_WriterRank << " new step "
+                  << m_CurrentStep << " for " << m_Name << ". Notify peers..."
+                  << std::endl;
+    }
+    // Send the step to all reader peers, asynchronously
+    MPI_Request request;
+    for (auto peerRank : m_RankDirectPeers)
+    {
+        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
+                  insitumpi::MpiTags::Step, MPI_COMM_WORLD, &request);
+    }
+
+    m_NCallsPerformPuts = 0;
+    m_NDeferredPuts = 0;
     return StepStatus::OK;
 }
 
@@ -58,23 +85,45 @@ void InSituMPIWriter::PerformPuts()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Writer PerformPuts()\n";
+        std::cout << "InSituMPI Writer " << m_WriterRank << " PerformPuts()\n";
     }
+    if (m_NCallsPerformPuts > 0)
+    {
+        throw std::runtime_error("ERROR: InSituMPI engine only allows for 1 "
+                                 "PerformPuts() per step.");
+    }
+    m_NCallsPerformPuts++;
+    m_NDeferredPuts = 0;
 }
 
 void InSituMPIWriter::EndStep()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Writer EndStep()\n";
+        std::cout << "InSituMPI Writer " << m_WriterRank << " EndStep()\n";
     }
+    if (m_NDeferredPuts == 0)
+    {
+        PerformPuts();
+    }
+
+    // TODO: Blocking wait for all data transfers to finish
 }
 
 void InSituMPIWriter::Close(const int transportIndex)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Writer Close(" << m_Name << ")\n";
+        std::cout << "InSituMPI Writer " << m_WriterRank << " Close(" << m_Name
+                  << ")\n";
+    }
+    m_CurrentStep = -1; // -1 will indicate end of stream
+    // Send -1 to all reader peers, asynchronously
+    MPI_Request request;
+    for (auto peerRank : m_RankDirectPeers)
+    {
+        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
+                  insitumpi::MpiTags::Step, MPI_COMM_WORLD, &request);
     }
 }
 
