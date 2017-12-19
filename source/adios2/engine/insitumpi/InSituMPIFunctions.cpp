@@ -24,7 +24,8 @@ namespace adios2
 namespace insitumpi
 {
 
-std::vector<int> FindPeers(MPI_Comm comm, std::string name, bool amIWriter)
+std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
+                           const bool amIWriter)
 {
     std::vector<int> mylist;   // 'our' ranks in the world comm
     std::vector<int> peerlist; // 'their' ranks in the world comm
@@ -108,6 +109,91 @@ std::vector<int> FindPeers(MPI_Comm comm, std::string name, bool amIWriter)
     }
 
     return peerlist;
+}
+
+std::vector<int> AssignPeers(const int rank, const int nproc,
+                             const std::vector<int> &allPeers)
+{
+    int nAllPeers = allPeers.size();
+
+    std::vector<int> directPeers;
+
+    if (nproc == nAllPeers)
+    {
+        // one-to-one direct assignment
+        directPeers.push_back(allPeers[rank]);
+    }
+    else if (nproc < nAllPeers)
+    {
+        int nDirectPeers = nAllPeers / nproc;
+        int startPos = rank * nDirectPeers;
+        if (rank < nAllPeers % nproc)
+        {
+            nDirectPeers++;
+            startPos += rank;
+        }
+        else
+        {
+            startPos += nAllPeers % nproc;
+        }
+        auto first = allPeers.begin() + startPos;
+        auto last = allPeers.begin() + startPos + nDirectPeers;
+        directPeers.insert(directPeers.begin(), first, last);
+        // std::cout << "rank " << rank << ": nproc=" << nproc
+        //          << " npeers=" << nDirectPeers << " start=" << startPos
+        //          << " peers=[";
+        // for (const auto i : directPeers)
+        //    std::cout << i << " ";
+        // std::cout << "]" << std::endl;
+    }
+    else if (nproc > nAllPeers)
+    {
+        int base = nproc / nAllPeers;
+        int peerRank = -1;
+        int pos = 0;
+        // std::cout << "rank " << rank << ": nproc=" << nproc
+        //          << " npeers=" << nAllPeers << " base=" << base << std::endl;
+
+        while (peerRank < nAllPeers && pos <= rank)
+        {
+            peerRank++;
+            pos += base;
+            if (peerRank < nproc % nAllPeers)
+            {
+                pos++;
+            }
+            // std::cout << " peerRank=" << peerRank << " pos=" << pos
+            //          << std::endl;
+        }
+        // std::cout << " final peerRank=" << peerRank << " pos=" << pos
+        //          << std::endl;
+        directPeers.push_back(allPeers[peerRank]);
+    }
+    return directPeers;
+}
+
+void ConnectDirectPeers(const bool IAmSender, const int rank,
+                        const std::vector<int> peers)
+{
+    int token = rank;
+    MPI_Status status;
+    for (auto peerRank : peers)
+    {
+        if (IAmSender)
+        {
+            // std::cout << " Send from " << rank << " to " << peerRank
+            //          << std::endl;
+            MPI_Send(&token, 1, MPI_INT, peerRank, MpiTags::Connect,
+                     MPI_COMM_WORLD);
+        }
+        else
+        {
+            // std::cout << " Recv from " << peerRank << " by " << rank
+            //          << std::endl;
+            MPI_Recv(&token, 1, MPI_INT, peerRank, MpiTags::Connect,
+                     MPI_COMM_WORLD, &status);
+        }
+    }
 }
 
 } // end namespace insitumpi

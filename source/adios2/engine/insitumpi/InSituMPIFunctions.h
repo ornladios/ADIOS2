@@ -24,10 +24,34 @@ namespace adios2
 namespace insitumpi
 {
 
+// Message tags to distinguish from tags used in the application
+// BaseTag and LastTag is intended for checking tag values only, not
+// for tagging messages
+enum MpiTags
+{
+    BaseTag = 78934248,
+    Connect,
+    Step,
+    LastTag
+};
+
 // Generate the list of the other processes in MPI_COMM_WORLD who are
 // the partner in Write--Read. comm is 'our' communicator.
-// name is the output/input name the Open() was called with
-std::vector<int> FindPeers(MPI_Comm comm, std::string name, bool amIWriter);
+// name is the output/input name the Open() was called with.
+// This is collective & blocking function and must be called both
+// on the Writer and Reader side at the same time.
+std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
+                           const bool amIWriter);
+
+// Select the peers that I need to communicate directly.
+// There is no communication in this function.
+std::vector<int> AssignPeers(const int rank, const int nproc,
+                             const std::vector<int> &allPeers);
+
+// This is collective & blocking function and must be called both
+// on the Writer and Reader side at the same time.
+void ConnectDirectPeers(const bool IAmSender, const int rank,
+                        const std::vector<int> peers);
 
 } // end namespace insitumpi
 

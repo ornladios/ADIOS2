@@ -54,11 +54,20 @@ public:
 private:
     int m_Verbosity = 0;
     bool m_FixedSchedule = false; // true: metadata in steps does NOT change
-    MPI_Comm m_WriterComm;
+
     int m_GlobalRank; // my rank in the global comm
     int m_WriterRank; // my rank in the writers' comm
-    int m_GlobalNproc, m_WriterNproc, m_ReaderNproc;
-    std::vector<int> m_ReaderPeers; // Global ranks of the writers
+    int m_GlobalNproc, m_WriterNproc;
+
+    // Global ranks of all the readers
+    std::vector<int> m_RankAllPeers;
+    // Global ranks of the readers directly assigned to me
+    std::vector<int> m_RankDirectPeers;
+
+    int m_CurrentStep = -1; // steps start from 0
+
+    int m_NCallsPerformPuts; // 1 and only 1 PerformPuts() allowed per step
+    int m_NDeferredPuts;     // number of outstanding requests used in EndStep()
 
     void Init() final;
     void InitParameters() final;

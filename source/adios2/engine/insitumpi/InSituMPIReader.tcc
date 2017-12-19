@@ -25,8 +25,10 @@ inline void InSituMPIReader::GetSyncCommon(Variable<std::string> &variable,
     variable.SetData(data);
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Reader GetSync(" << variable.m_Name << ")\n";
+        std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
+                  << variable.m_Name << ")\n";
     }
+    m_NDeferredGets++;
 }
 
 template <class T>
@@ -35,8 +37,10 @@ inline void InSituMPIReader::GetSyncCommon(Variable<T> &variable, T *data)
     variable.SetData(data);
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Reader GetSync(" << variable.m_Name << ")\n";
+        std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
+                  << variable.m_Name << ")\n";
     }
+    m_NDeferredGets++;
 }
 
 template <class T>
@@ -45,9 +49,10 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
     // returns immediately
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Reader GetDeferred(" << variable.m_Name
-                  << ")\n";
+        std::cout << "InSituMPI Reader " << m_ReaderRank << " GetDeferred("
+                  << variable.m_Name << ")\n";
     }
+    m_NDeferredGets++;
 }
 
 } // end namespace adios2
