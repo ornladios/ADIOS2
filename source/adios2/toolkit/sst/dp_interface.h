@@ -1,6 +1,8 @@
 #ifndef _DP_INTERFACE_H
 #define _DP_INTERFACE_H
 
+#include <mpi.h>
+
 /*!
  *
  * CP_DP_Interface is the set of data format descriptions and function

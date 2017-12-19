@@ -11,17 +11,25 @@
 #include <iostream>
 #include <vector>
 
-#include <mpi.h>
-
 #include <adios2.h>
+
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
 
 int main(int argc, char *argv[])
 {
     // Application variable
-    MPI_Init(&argc, &argv);
     int rank, size;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+    rank = 0;
+    size = 1;
+#endif
 
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     const std::size_t Nx = myFloats.size();
@@ -66,7 +74,9 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }
