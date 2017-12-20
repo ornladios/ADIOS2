@@ -8,19 +8,20 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include <stdexcept>
-
-#include <adios2.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi4py/mpi4py.h>
-#endif
 
 #include "ADIOSPy.h"
 #include "EnginePy.h"
 #include "IOPy.h"
+
+#include <stdexcept>
+
+#include <adios2.h>
+
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi4py/mpi4py.h>
+#endif
 
 #ifdef ADIOS2_HAVE_MPI
 adios2::ADIOSPy ADIOSPyInitConfig(const std::string configFile,
