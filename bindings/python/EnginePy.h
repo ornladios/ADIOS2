@@ -11,13 +11,14 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_ENGINEPY_H_
 #define ADIOS2_BINDINGS_PYTHON_SOURCE_ENGINEPY_H_
 
+#include <pybind11/numpy.h>
+
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <memory> //std::shared_ptr
 #include <string>
 /// \endcond
 
 #include <adios2.h>
-#include <pybind11/numpy.h>
 
 namespace adios2
 {
