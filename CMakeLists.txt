@@ -40,6 +40,19 @@ endif()
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
 #------------------------------------------------------------------------------#
+# Silence MSVC warnings
+#------------------------------------------------------------------------------#
+
+if(MSVC)
+  add_definitions(
+    -D_CRT_SECURE_NO_DEPRECATE
+    -D_CRT_SECURE_NO_WARNINGS
+    -D_SCL_SECURE_NO_DEPRECATE
+    -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+  )
+endif()
+
+#------------------------------------------------------------------------------#
 # Top level options
 #------------------------------------------------------------------------------#
 include(ADIOSFunctions)

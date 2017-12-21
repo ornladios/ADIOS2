@@ -74,12 +74,12 @@ if(ADIOS2_HAVE_ZeroMQ)
 endif()
 
 if(ADIOS2_HAVE_SST)
+  add_subdirectory(toolkit/sst)
   target_sources(adios2 PRIVATE
     engine/sst/SstReader.cpp
     engine/sst/SstWriter.cpp
   )
-  target_link_libraries(adios2 PRIVATE sst evpath::evpath)
-  add_subdirectory(toolkit/sst)
+  target_link_libraries(adios2 PRIVATE sst)
 endif()
 
 target_sources(adios2 PRIVATE

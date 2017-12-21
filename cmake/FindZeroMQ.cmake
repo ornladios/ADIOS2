@@ -18,7 +18,7 @@
 #   ZeroMQ::ZMQ - The core ZMQ library
 #
 # You can also set the following variable to help guide the search:
-#   ZeroMQ_ROOT_DIR - The install prefix for ZeroMQ containing the
+#   ZeroMQ_ROOT - The install prefix for ZeroMQ containing the
 #                     include and lib folders
 #                     Note: this can be set as a CMake variable or an
 #                           environment variable.  If specified as a CMake
@@ -26,13 +26,13 @@
 #                           as an environment variable.
 
 if(NOT ZeroMQ_FOUND)
-  if((NOT ZeroMQ_ROOT_DIR) AND (NOT (ENV{ZeroMQ_ROOT_DIR} STREQUAL "")))
-    set(ZeroMQ_ROOT_DIR "$ENV{ZeroMQ_ROOT_DIR}")
+  if((NOT ZeroMQ_ROOT) AND (NOT (ENV{ZeroMQ_ROOT} STREQUAL "")))
+    set(ZeroMQ_ROOT "$ENV{ZeroMQ_ROOT}")
   endif()
-  if(ZeroMQ_ROOT_DIR)
-    set(ZeroMQ_INCLUDE_OPTS HINTS ${ZeroMQ_ROOT_DIR}/include NO_DEFAULT_PATHS)
+  if(ZeroMQ_ROOT)
+    set(ZeroMQ_INCLUDE_OPTS HINTS ${ZeroMQ_ROOT}/include NO_DEFAULT_PATHS)
     set(ZeroMQ_LIBRARY_OPTS
-      HINTS ${ZeroMQ_ROOT_DIR}/lib ${ZeroMQ_ROOT_DIR}/lib64
+      HINTS ${ZeroMQ_ROOT}/lib ${ZeroMQ_ROOT}/lib64
       NO_DEFAULT_PATHS
     )
   endif()

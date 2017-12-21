@@ -38,31 +38,34 @@ DataMan::~DataMan()
     }
 }
 
-void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
-                                const std::vector<Params> &parametersVector,
+void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
+                                const Mode mode,
+                                const std::vector<Params> &paramsVector,
                                 const bool profile)
-
 {
 #ifdef ADIOS2_HAVE_ZEROMQ
     size_t counter = 0; // remove MACRO when more libraries are added
 #endif
 
-    for (const auto &parameters : parametersVector)
+    if (streamNames.size() == 0)
     {
+        throw("No streams to open from DataMan::OpenWANTransports");
+    }
+
+    for (size_t i = 0; i < streamNames.size(); ++i)
+    {
+
         std::shared_ptr<Transport> wanTransport, controlTransport;
 
-        const std::string TransportType(
-            GetParameter("TransportType", parameters, true, m_DebugMode,
-                         "Transport Type Parameter"));
-
-        const std::string transport(GetParameter(
-            "Transport", parameters, true, m_DebugMode, "Transport Parameter"));
+        const std::string library(GetParameter("Library", paramsVector[i], true,
+                                               m_DebugMode,
+                                               "Transport Library Parameter"));
 
         const std::string ipAddress(
-            GetParameter("IPAddress", parameters, true, m_DebugMode,
+            GetParameter("IPAddress", paramsVector[i], true, m_DebugMode,
                          "Transport IPAddress Parameter"));
 
-        std::string portControl(GetParameter("Port", parameters, false,
+        std::string portControl(GetParameter("Port", paramsVector[i], false,
                                              m_DebugMode,
                                              "Transport Port Parameter"));
 
@@ -73,61 +76,48 @@ void DataMan::OpenWANTransports(const std::string &name, const Mode mode,
 
         const std::string portData(std::to_string(stoi(portControl) + 1));
 
-        std::string transportName(GetParameter("Name", parameters, false,
-                                               m_DebugMode,
-                                               "Transport Name Parameter"));
-
-        std::string format(
-            GetParameter("Format", parameters, false, m_DebugMode, "Format"));
+        std::string format(GetParameter("Format", paramsVector[i], false,
+                                        m_DebugMode, "Format"));
         if (format.empty())
         {
-            format = "json";
+            format = "bp";
         }
 
-        if (transportName.empty())
+        if (library == "zmq" || library == "ZMQ")
         {
-            transportName = name;
-        }
-
-        if (TransportType == "wan" || TransportType == "WAN")
-        {
-            if (transport == "zmq" || transport == "ZMQ")
-            {
 #ifdef ADIOS2_HAVE_ZEROMQ
-                wanTransport = std::make_shared<transport::WANZmq>(
-                    ipAddress, portData, m_MPIComm, m_DebugMode);
-                wanTransport->Open(transportName, mode);
-                m_Transports.emplace(counter, wanTransport);
+            wanTransport = std::make_shared<transport::WANZmq>(
+                ipAddress, portData, m_MPIComm, m_DebugMode);
+            wanTransport->Open(streamNames[i], mode);
+            m_Transports.emplace(counter, wanTransport);
 
-                controlTransport = std::make_shared<transport::WANZmq>(
-                    ipAddress, portControl, m_MPIComm, m_DebugMode);
-                controlTransport->Open(transportName, mode);
-                m_ControlTransports.emplace_back(controlTransport);
+            controlTransport = std::make_shared<transport::WANZmq>(
+                ipAddress, portControl, m_MPIComm, m_DebugMode);
+            controlTransport->Open(streamNames[i], mode);
+            m_ControlTransports.emplace_back(controlTransport);
 
-                if (mode == Mode::Read)
-                {
-                    m_Listening = true;
-                    m_ControlThreads.emplace_back(
-                        std::thread(&DataMan::ReadThread, this, wanTransport,
-                                    controlTransport, format));
-                }
-                ++counter;
-#else
-                throw std::invalid_argument(
-                    "ERROR: this version of ADIOS2 didn't compile with "
-                    "ZMQ library, in call to Open\n");
-#endif
-            }
-            else
+            if (mode == Mode::Read)
             {
-                if (m_DebugMode)
-                {
-                    throw std::invalid_argument("ERROR: wan transport " +
-                                                transport +
-                                                " not supported or not "
-                                                "provided in IO AddTransport, "
-                                                "in call to Open\n");
-                }
+                m_Listening = true;
+                m_ControlThreads.emplace_back(
+                    std::thread(&DataMan::ReadThread, this, wanTransport,
+                                controlTransport, format));
+            }
+            ++counter;
+#else
+            throw std::invalid_argument(
+                "ERROR: this version of ADIOS2 didn't compile with "
+                "ZMQ library, in call to Open\n");
+#endif
+        }
+        else
+        {
+            if (m_DebugMode)
+            {
+                throw std::invalid_argument("ERROR: wan transport " + library +
+                                            " not supported or not "
+                                            "provided in IO AddTransport, "
+                                            "in call to Open\n");
             }
         }
     }
@@ -162,9 +152,12 @@ void DataMan::WriteWAN(const void *buffer, size_t size)
     m_Transports[m_CurrentTransport]->Write(
         reinterpret_cast<const char *>(buffer), size);
 
+    /*
+    //  dumping file for debugging
     std::ofstream bpfile("datamanW.bp", std::ios_base::binary);
     bpfile.write(reinterpret_cast<const char *>(buffer), size);
     bpfile.close();
+    */
 }
 
 void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
@@ -187,7 +180,6 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
 {
     if (format == "json" || format == "JSON")
     {
-        std::cout << "json" << std::endl;
         while (m_Listening)
         {
             char buffer[1024];

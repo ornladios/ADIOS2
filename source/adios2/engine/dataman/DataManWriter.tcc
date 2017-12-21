@@ -122,6 +122,13 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
     m_BP3Serializer.PutVariablePayload(variable);
 }
 
+template <class T>
+void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
+{
+    PutSyncCommon(variable, values);
+
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */
