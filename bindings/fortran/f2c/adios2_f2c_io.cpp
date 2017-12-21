@@ -189,6 +189,26 @@ void FC_GLOBAL(adios2_open_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_define_attribute_f2c,
+               ADIOS2_DEFINE_ATTRIBUTE_F2C)(adios2_Attribute **attribute,
+                                            adios2_IO **io, const char *name,
+                                            const int *type, const void *data,
+                                            const int *elements, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *attribute =
+            adios2_define_attribute(*io, name, static_cast<adios2_type>(*type),
+                                    data, static_cast<std::size_t>(*elements));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 define_attribute: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 #ifdef ADIOS2_HAVE_MPI_F
 void FC_GLOBAL(adios2_open_new_comm_f2c,
                ADIOS2_OPEN_NEW_COMM_F2C)(adios2_Engine **engine, adios2_IO **io,

@@ -11,6 +11,7 @@ module adios2_io
 
     use adios2_io_open
     use adios2_io_define_variable
+    use adios2_io_define_attribute
     implicit none
 
 contains
