@@ -128,7 +128,7 @@ contains
     end subroutine
 
     subroutine adios2_define_attribute_string_1d(attribute, io, name, &
-                                                    data, elements, ierr)
+                                                 data, elements, ierr)
         integer(kind=8), intent(out) :: attribute
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
@@ -137,18 +137,21 @@ contains
         integer, intent(out) :: ierr
 
         ! local data with zero terminated character
-        character(len=128), dimension(elements) :: data_zero
+        character(len=adios2_string_array_element_max_size), &
+        dimension(elements):: data_null_terminated
+
         integer :: i
 
         do i=1,elements
-            data_zero(i) = TRIM(ADJUSTL(data(i)))//char(0)
+            data_null_terminated(i) = TRIM(ADJUSTL(data(i)))//char(0)
         end do
-
 
         call adios2_define_attribute_f2c(attribute, io, &
                                          TRIM(ADJUSTL(name))//char(0), &
-                                         adios2_type_string, &
-                                         data_zero, elements, ierr)
+                                         adios2_type_string_array, &
+                                         data_null_terminated, elements, &
+                                         ierr)
+
     end subroutine
 
 

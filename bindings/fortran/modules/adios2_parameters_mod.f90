@@ -57,5 +57,8 @@ module adios2_parameters
     integer, parameter :: adios2_step_status_not_ready = 1
     integer, parameter :: adios2_step_status_end_of_stream = 2
 
+    !> Fixed size for string array, used in attributes,
+    !! must be less or equal than C equivalent in adios2_c_types.h
+    integer, parameter :: adios2_string_array_element_max_size = 256
 
 end module

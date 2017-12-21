@@ -270,11 +270,12 @@ adios2_Attribute *adios2_define_attribute(adios2_IO *io, const char *name,
     }
     case (adios2_type_string_array):
     {
-        const char **chars2D = reinterpret_cast<const char **>(&data);
         std::vector<std::string> arrayStrings(elements);
+        const char *char2D = reinterpret_cast<const char *>(data);
         for (auto i = 0; i < elements; ++i)
         {
-            arrayStrings[i] = std::string(chars2D[i]);
+            arrayStrings[i] =
+                std::string(&char2D[i * adios2_string_array_element_max_size]);
         }
 
         attribute = &ioCpp.DefineAttribute<std::string>(
