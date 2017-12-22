@@ -32,6 +32,8 @@ enum MpiTags
     BaseTag = 78934248,
     Connect,
     Step,
+    MetadataLength,
+    Metadata,
     LastTag
 };
 
@@ -41,7 +43,7 @@ enum MpiTags
 // This is collective & blocking function and must be called both
 // on the Writer and Reader side at the same time.
 std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
-                           const bool amIWriter);
+                           const bool amIWriter, const MPI_Comm commWorld);
 
 // Select the peers that I need to communicate directly.
 // There is no communication in this function.
@@ -50,8 +52,13 @@ std::vector<int> AssignPeers(const int rank, const int nproc,
 
 // This is collective & blocking function and must be called both
 // on the Writer and Reader side at the same time.
-void ConnectDirectPeers(const bool IAmSender, const int rank,
-                        const std::vector<int> peers);
+// IAmSender is true on the writers, false on the readers.
+// IAmWriterRoot is true only on one writer who will send the global metadata.
+// return global rank of writer root on the reader who is connected to writer
+// root, -1 everywhere else.
+int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
+                       const bool IAmWriterRoot, const int globalRank,
+                       const std::vector<int> peers);
 
 } // end namespace insitumpi
 
