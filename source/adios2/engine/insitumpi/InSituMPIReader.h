@@ -18,6 +18,7 @@
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/format/bp3/BP3.h"
 
 namespace adios2
 {
@@ -48,6 +49,7 @@ public:
     void Close(const int transportIndex = -1);
 
 private:
+    MPI_Comm m_CommWorld;
     int m_Verbosity = 0;
     bool m_FixedSchedule = false; // true: metadata in steps does NOT change
 
@@ -60,10 +62,21 @@ private:
     // Global ranks of the writers directly assigned to me
     std::vector<int> m_RankDirectPeers;
 
+    // one reader is receiving metadata
+    bool m_ConnectedToWriteRoot = false;
+    // global rank of write root (-1 if not connected to root)
+    int m_WriteRootGlobalRank = -1;
+    // local rank of the reader who is connected to write root
+    int m_ReaderRootRank;
+
     int m_CurrentStep = -1; // steps start from 0
 
     int m_NCallsPerformGets; // 1 and only 1 PerformGets() allowed per step
     int m_NDeferredGets;     // number of outstanding requests used in EndStep()
+
+    /** Single object controlling BP buffering used only for metadata in this
+     * engine */
+    format::BP3Deserializer m_BP3Deserializer;
 
     void Init() final;
     void InitParameters() final;
@@ -81,6 +94,8 @@ private:
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
+
+    void ClearMetadataBuffer();
 };
 
 } // end namespace adios2

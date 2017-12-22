@@ -35,7 +35,26 @@ void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         std::cout << "InSituMPI Writer " << m_WriterRank << " PutDeferred("
                   << variable.m_Name << ")\n";
     }
-    m_NDeferredPuts++;
+
+    const size_t dataSize = m_BP3Serializer.GetVariableBPIndexSize(
+        variable.m_Name, variable.m_Count);
+    format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
+        dataSize, "in call to variable " + variable.m_Name + " PutSync");
+
+    if (resizeResult == format::BP3Base::ResizeResult::Flush)
+    {
+        throw std::runtime_error("ERROR: InSituMPI write engine PutDeferred(" +
+                                 variable.m_Name +
+                                 ") caused Flush which is not handled).");
+    }
+
+    // WRITE INDEX to data buffer and metadata structure (in memory)
+    // we only need the metadata structure but this is the granularity of the
+    // function call
+    m_BP3Serializer.PutVariableMetadata(variable);
+
+    // Remember this variable to make the send request in PerformPuts()
+    m_BP3Serializer.m_DeferredVariables.push_back(variable.m_Name);
 }
 
 } // end namespace adios2

@@ -25,7 +25,7 @@ namespace insitumpi
 {
 
 std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
-                           const bool amIWriter)
+                           const bool amIWriter, const MPI_Comm commWorld)
 {
     std::vector<int> mylist;   // 'our' ranks in the world comm
     std::vector<int> peerlist; // 'their' ranks in the world comm
@@ -35,8 +35,8 @@ std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
     MPI_Comm_size(comm, &nproc);
 
     int wrank, wnproc;
-    MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
-    MPI_Comm_size(MPI_COMM_WORLD, &wnproc);
+    MPI_Comm_rank(commWorld, &wrank);
+    MPI_Comm_size(commWorld, &wnproc);
 
     if (wnproc == nproc)
     {
@@ -172,10 +172,12 @@ std::vector<int> AssignPeers(const int rank, const int nproc,
     return directPeers;
 }
 
-void ConnectDirectPeers(const bool IAmSender, const int rank,
-                        const std::vector<int> peers)
+int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
+                       const bool IAmWriterRoot, const int globalRank,
+                       const std::vector<int> peers)
 {
-    int token = rank;
+    int token = (IAmWriterRoot ? 1 : 0);
+    int writeRootGlobalRank = -1;
     MPI_Status status;
     for (auto peerRank : peers)
     {
@@ -183,17 +185,19 @@ void ConnectDirectPeers(const bool IAmSender, const int rank,
         {
             // std::cout << " Send from " << rank << " to " << peerRank
             //          << std::endl;
-            MPI_Send(&token, 1, MPI_INT, peerRank, MpiTags::Connect,
-                     MPI_COMM_WORLD);
+            MPI_Send(&token, 1, MPI_INT, peerRank, MpiTags::Connect, commWorld);
         }
         else
         {
             // std::cout << " Recv from " << peerRank << " by " << rank
             //          << std::endl;
-            MPI_Recv(&token, 1, MPI_INT, peerRank, MpiTags::Connect,
-                     MPI_COMM_WORLD, &status);
+            MPI_Recv(&token, 1, MPI_INT, peerRank, MpiTags::Connect, commWorld,
+                     &status);
+            if (token == 1)
+                writeRootGlobalRank = peerRank;
         }
     }
+    return writeRootGlobalRank;
 }
 
 } // end namespace insitumpi

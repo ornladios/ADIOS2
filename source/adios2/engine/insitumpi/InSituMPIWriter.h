@@ -16,6 +16,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/bp3/BP3.h"
 
 namespace adios2
 {
@@ -35,7 +36,7 @@ public:
     InSituMPIWriter(IO &adios, const std::string &name, const Mode openMode,
                     MPI_Comm mpiComm);
 
-    ~InSituMPIWriter() = default;
+    ~InSituMPIWriter();
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void PerformPuts() final;
@@ -52,6 +53,7 @@ public:
     void Close(const int transportIndex = -1) final;
 
 private:
+    MPI_Comm m_CommWorld;
     int m_Verbosity = 0;
     bool m_FixedSchedule = false; // true: metadata in steps does NOT change
 
@@ -67,7 +69,10 @@ private:
     int m_CurrentStep = -1; // steps start from 0
 
     int m_NCallsPerformPuts; // 1 and only 1 PerformPuts() allowed per step
-    int m_NDeferredPuts;     // number of outstanding requests used in EndStep()
+
+    /** Single object controlling BP buffering used only for metadata in this
+     * engine */
+    format::BP3Serializer m_BP3Serializer;
 
     void Init() final;
     void InitParameters() final;

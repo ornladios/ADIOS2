@@ -24,14 +24,17 @@ namespace adios2
 
 InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
                                  const Mode mode, MPI_Comm mpiComm)
-: Engine("InSituMPIWriter", io, name, mode, mpiComm)
+: Engine("InSituMPIWriter", io, name, mode, mpiComm),
+  m_BP3Serializer(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
+    MPI_Comm_dup(MPI_COMM_WORLD, &m_CommWorld);
     Init();
+    m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 
-    m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, true);
-    MPI_Comm_rank(MPI_COMM_WORLD, &m_GlobalRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &m_GlobalNproc);
+    m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, true, m_CommWorld);
+    MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
+    MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
     MPI_Comm_rank(mpiComm, &m_WriterRank);
     MPI_Comm_size(mpiComm, &m_WriterNproc);
     m_RankDirectPeers =
@@ -45,8 +48,12 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
                   << " #appsize=" << m_GlobalNproc
                   << " #direct peers=" << m_RankDirectPeers.size() << std::endl;
     }
-    insitumpi::ConnectDirectPeers(true, m_GlobalRank, m_RankDirectPeers);
+    insitumpi::ConnectDirectPeers(m_CommWorld, true,
+                                  (m_BP3Serializer.m_RankMPI == 0),
+                                  m_GlobalRank, m_RankDirectPeers);
 }
+
+InSituMPIWriter::~InSituMPIWriter() { MPI_Comm_free(&m_CommWorld); }
 
 StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
@@ -69,15 +76,26 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
                   << std::endl;
     }
     // Send the step to all reader peers, asynchronously
+    // we don't care about keeping these requests
     MPI_Request request;
     for (auto peerRank : m_RankDirectPeers)
     {
         MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, MPI_COMM_WORLD, &request);
+                  insitumpi::MpiTags::Step, m_CommWorld, &request);
     }
 
     m_NCallsPerformPuts = 0;
-    m_NDeferredPuts = 0;
+    m_BP3Serializer.m_DeferredVariables.clear();
+    m_BP3Serializer.m_DeferredVariablesDataSize = 0;
+
+    // start a fresh buffer with a new Process Group
+    m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
+    if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
+    {
+        std::vector<std::string> empty;
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, empty);
+    }
+
     return StepStatus::OK;
 }
 
@@ -93,7 +111,56 @@ void InSituMPIWriter::PerformPuts()
                                  "PerformPuts() per step.");
     }
     m_NCallsPerformPuts++;
-    m_NDeferredPuts = 0;
+
+    if (m_CurrentStep == 0 || !m_FixedSchedule)
+    {
+        // Create local metadata and send to reader peers
+        // std::vector<char> mdVar = m_BP3Serializer.SerializeIndices(
+        //    m_BP3Serializer.m_MetadataSet.VarsIndices);
+        // Create Global metadata and send to readers
+        m_BP3Serializer.AggregateCollectiveMetadata();
+        std::vector<char> &md = m_BP3Serializer.m_Metadata.m_Buffer;
+
+        std::cout << "InSituMPI Writer " << m_WriterRank << " Metadata has = "
+                  << m_BP3Serializer.m_MetadataSet.DataPGVarsCount
+                  << " variables. size = "
+                  << m_BP3Serializer.m_Metadata.m_Position << std::endl;
+
+        // Send the metadata to all reader peers, asynchronously
+        // we don't care about keeping these requests because
+        // we will wait next for response from all readers
+        if (m_BP3Serializer.m_RankMPI == 0)
+        {
+            // FIXME: Which reader is actually listening for this request?
+            if (m_Verbosity == 5)
+            {
+                std::cout << "InSituMPI Writer " << m_WriterRank
+                          << " World rank = " << m_GlobalRank
+                          << " sends metadata to Reader World rank = "
+                          << m_RankDirectPeers[0] << std::endl;
+            }
+            MPI_Request request;
+            // for (auto peerRank : m_RankDirectPeers)
+            auto peerRank = m_RankDirectPeers[0];
+            unsigned long mdLen = m_BP3Serializer.m_Metadata.m_Position;
+            MPI_Isend(&mdLen, 1, MPI_UNSIGNED_LONG, peerRank,
+                      insitumpi::MpiTags::MetadataLength, m_CommWorld,
+                      &request);
+            MPI_Isend(m_BP3Serializer.m_Metadata.m_Buffer.data(), mdLen,
+                      MPI_CHAR, peerRank, insitumpi::MpiTags::Metadata,
+                      m_CommWorld, &request);
+        }
+    }
+
+    // Collect the read requests from ALL readers
+
+    // Make the send requests for each variable for each matching peer request
+    for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
+    {
+        // Create the async send for the variable
+    }
+
+    m_BP3Serializer.m_DeferredVariables.clear();
 }
 
 void InSituMPIWriter::EndStep()
@@ -102,7 +169,7 @@ void InSituMPIWriter::EndStep()
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " EndStep()\n";
     }
-    if (m_NDeferredPuts == 0)
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
     {
         PerformPuts();
     }
@@ -123,7 +190,7 @@ void InSituMPIWriter::Close(const int transportIndex)
     for (auto peerRank : m_RankDirectPeers)
     {
         MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, MPI_COMM_WORLD, &request);
+                  insitumpi::MpiTags::Step, m_CommWorld, &request);
     }
 }
 
