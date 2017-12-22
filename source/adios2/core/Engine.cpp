@@ -23,6 +23,8 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 {
 }
 
+Engine::~Engine() { MPI_Comm_free(&m_MPIComm); };
+
 IO &Engine::GetIO() noexcept { return m_IO; }
 
 StepStatus Engine::BeginStep()

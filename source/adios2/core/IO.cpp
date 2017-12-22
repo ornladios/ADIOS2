@@ -305,7 +305,8 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
     return itVariable->second.first;
 }
 
-Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
+Engine &IO::Open(const std::string &name, const Mode mode,
+                 MPI_Comm mpiComm_orig)
 {
     if (m_DebugMode)
     {
@@ -316,6 +317,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
         }
     }
 
+    MPI_Comm mpiComm;
+    MPI_Comm_dup(mpiComm_orig, &mpiComm);
     std::shared_ptr<Engine> engine;
     const bool isDefaultEngine = m_EngineType.empty() ? true : false;
     std::string engineTypeLC = m_EngineType;
