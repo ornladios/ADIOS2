@@ -73,7 +73,9 @@ typedef struct _CPTimestepEntry
     long Timestep;
     SstData Data;
     void **DP_TimestepInfo;
-    SstMetadata *MetadataArray;
+    SstBlock *MetadataArray;
+    void (*DataFreeFunc)(void *);
+    void *FreeClientData;
     struct _CPTimestepEntry *Next;
 } * CPTimestepList;
 
@@ -105,6 +107,7 @@ struct _SstStream
 
     /* WRITER-SIDE FIELDS */
     int WriterTimestep;
+    int ReaderTimestep;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int LastProvidedTimestep;
@@ -116,6 +119,13 @@ struct _SstStream
     int ReaderCount;
     WS_ReaderInfo *Readers;
 
+    /* writer side marshal info */
+    void *MarshalData;
+    size_t MetadataSize;
+    void *M; // building metadata block
+    size_t DataSize;
+    void *D; // building data block
+
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
     int WriterCohortSize;
@@ -124,6 +134,14 @@ struct _SstStream
     enum StreamStatus Status;
     int FinalTimestep;
     int CurrentWorkingTimestep;
+
+    /* reader side marshal info */
+    FFSContext ReaderFFSContext;
+    VarSetupUpcallFunc VarSetupUpcall;
+    ArraySetupUpcallFunc ArraySetupUpcall;
+    void *SetupUpcallReader;
+
+    void *ReaderMarshalData;
 };
 
 /*
@@ -148,13 +166,29 @@ struct _CP_DP_PairInfo
 };
 
 /*
+ * This is the structure that holds information about FFSformats for data
+ * and metadata.  We transmit format ID and server reps from writers (who
+ * encode) to readers (who decode) so that we don't need a third party
+ * format server.
+ */
+typedef struct FFSFormatBlock
+{
+    char *FormatServerRep;
+    int FormatServerRepLen;
+    char *FormatIDRep;
+    int FormatIDRepLen;
+    struct FFSFormatBlock *Next;
+} * FFSFormatList;
+
+/*
  * This is the structure that holds local metadata and the DP info related to
  * it.
  * This is gathered on writer side before distribution to readers.
  */
 struct _MetadataPlusDPInfo
 {
-    SstMetadata Metadata;
+    SstBlock Metadata;
+    FFSFormatList Formats;
     void *DP_TimestepInfo;
 };
 
@@ -219,14 +253,15 @@ struct _ReaderActivateMsg
  * The timestepMetadata message carries the metadata from all writer ranks.
  * One is sent to each reader.
  */
-struct _TimestepMetadataMsg
+typedef struct _TimestepMetadataMsg
 {
     void *RS_Stream;
     int Timestep;
     int CohortSize;
-    SstMetadata *Metadata;
+    FFSFormatList Formats;
+    SstBlock *Metadata;
     void **DP_TimestepInfo;
-};
+} * TSMetadataMsg;
 
 /*
  * The ReleaseTimestep message informs the writers that this reader is done with
@@ -270,6 +305,11 @@ extern atom_t CM_TRANSPORT_ATOM;
 void CP_parseParams(SstStream stream, const char *params);
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo);
 extern SstStream CP_newStream();
+extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
+                                       SstData Data, long Timestep,
+                                       FFSFormatList Formats,
+                                       void *DataFreeFunc,
+                                       void *FreeClientData);
 
 void **CP_consolidateDataToRankZero(SstStream stream, void *local_info,
                                     FFSTypeHandle type, void **ret_data_block);
@@ -294,3 +334,6 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
                                       attr_list attrs);
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
                                   void *client_data, attr_list attrs);
+
+extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
+extern void FFSClearTimestepData(SstStream Stream);

@@ -10,7 +10,7 @@ typedef enum { SST_UINT = 1, SST_INT = 2, SST_FLOAT = 3 } SST_BASE_TYPE;
 struct _SstFullMetadata
 {
     int WriterCohortSize;
-    struct _SstMetadata **WriterMetadata;
+    struct _SstBlock **WriterMetadata;
     void **DP_TimestepInfo;
 };
 
@@ -30,6 +30,12 @@ struct _SstData
     size_t DataSize;
     char *block;
 };
+
+typedef struct _SstBlock
+{
+    size_t BlockSize;
+    char *BlockData;
+} * SstBlock;
 
 struct _SstVarMeta
 {
