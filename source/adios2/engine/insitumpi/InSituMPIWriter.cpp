@@ -127,8 +127,6 @@ void InSituMPIWriter::PerformPuts()
         // we will wait next for response from all readers
         if (m_BP3Serializer.m_RankMPI == 0)
         {
-            std::vector<char> &md = m_BP3Serializer.m_Metadata.m_Buffer;
-
             if (m_Verbosity == 5)
             {
                 std::cout << "InSituMPI Writer " << m_WriterRank
@@ -157,9 +155,35 @@ void InSituMPIWriter::PerformPuts()
                       MPI_CHAR, peerRank, insitumpi::MpiTags::Metadata,
                       m_CommWorld, &request);
         }
-    }
 
-    // Collect the read requests from ALL readers
+        // Collect the read requests from ALL readers
+        // FIXME: How do we make this Irecv from all readers
+        // std::vector<MPI_Request> requests(m_RankAllPeers.size());
+        std::vector<MPI_Status> statuses(m_RankAllPeers.size());
+        std::vector<std::vector<char>> serializedSchedules(
+            m_RankAllPeers.size());
+        for (int peerID = 0; peerID < m_RankAllPeers.size(); peerID++)
+        {
+            int mdLen;
+            MPI_Recv(&mdLen, 1, MPI_INT, m_RankAllPeers[peerID],
+                     insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
+                     &statuses[peerID]);
+            serializedSchedules[peerID].resize(mdLen);
+            MPI_Recv(serializedSchedules[peerID].data(), mdLen, MPI_CHAR,
+                     m_RankAllPeers[peerID], insitumpi::MpiTags::ReadSchedule,
+                     m_CommWorld, &statuses[peerID]);
+            if (m_Verbosity == 5)
+            {
+                std::cout << "InSituMPI Writer " << m_WriterRank
+                          << " received read schedule from Reader  " << peerID
+                          << " global rank " << m_RankAllPeers[peerID]
+                          << " length = " << mdLen << std::endl;
+            }
+        }
+        // MPI_Waitall(m_RankAllPeers.size(), requests.data(), statuses.data());
+
+        // build (and remember for fixed schedule) the read request table
+    }
 
     // Make the send requests for each variable for each matching peer request
     for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)

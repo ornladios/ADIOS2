@@ -11,6 +11,7 @@
 #include "InSituMPIReader.h"
 #include "InSituMPIFunctions.h"
 #include "InSituMPIReader.tcc"
+#include "InSituMPISchedules.h"
 
 #include <adios_error.h>
 
@@ -142,7 +143,6 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     }
 
     m_NCallsPerformGets = 0;
-    m_NDeferredGets = 0;
 
     // Sync. recv. the global metadata
     if (m_CurrentStep == 0 || !m_FixedSchedule)
@@ -184,7 +184,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
                       << " attributes in metadata" << std::endl;
         }
     }
-    return StepStatus::OK; // EndOfStream; // FIXME: this should be OK
+    return StepStatus::OK;
 }
 
 void InSituMPIReader::PerformGets()
@@ -200,11 +200,18 @@ void InSituMPIReader::PerformGets()
     }
     m_NCallsPerformGets++;
 
-    // Collect local metadata from peers
+    if (m_CurrentStep == 0 || !m_FixedSchedule)
+    {
+        // Create read schedule per writer
+        // const std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
+        variablesSubFileInfo.clear();
+        variablesSubFileInfo =
+            m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
 
-    // Create global metadata on all readers
-
-    m_NDeferredGets = 0;
+        // Send schedules to writers
+        SendReadRequests(variablesSubFileInfo);
+    }
+    m_BP3Deserializer.m_PerformedGets = true;
 }
 
 void InSituMPIReader::EndStep()
@@ -213,7 +220,7 @@ void InSituMPIReader::EndStep()
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " EndStep()\n";
     }
-    if (m_NDeferredGets > 0)
+    if (!m_BP3Deserializer.m_PerformedGets)
     {
         PerformGets();
     }
@@ -230,6 +237,35 @@ void InSituMPIReader::Close(const int transportIndex)
 }
 
 // PRIVATE
+
+void InSituMPIReader::SendReadRequests(
+    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo)
+{
+    const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
+
+    // serialized schedules, one per-writer
+    std::vector<std::vector<char>> serializedSchedules =
+        insitumpi::SerializeLocalReadSchedule(m_RankAllPeers.size(),
+                                              variablesSubFileInfo);
+
+    MPI_Request request;
+    for (int i = 0; i < m_RankAllPeers.size(); i++)
+    {
+        int mdLen = serializedSchedules[i].size();
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Reader " << m_ReaderRank
+                      << " Send Read Schedule len = " << mdLen << " to Writer "
+                      << i << " global rank " << m_RankAllPeers[i] << std::endl;
+        }
+        MPI_Isend(&mdLen, 1, MPI_INT, m_RankAllPeers[i],
+                  insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
+                  &request);
+        MPI_Isend(serializedSchedules[i].data(), mdLen, MPI_CHAR,
+                  m_RankAllPeers[i], insitumpi::MpiTags::ReadSchedule,
+                  m_CommWorld, &request);
+    }
+}
 
 #define declare_type(T)                                                        \
     void InSituMPIReader::DoGetSync(Variable<T> &variable, T *data)            \

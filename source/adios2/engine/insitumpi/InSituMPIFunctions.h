@@ -10,8 +10,8 @@
  *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_INSITUMPIFunctions_H_
-#define ADIOS2_ENGINE_INSITUMPIFunctions_H_
+#ifndef ADIOS2_ENGINE_INSITUMPIFUNCTIONS_H_
+#define ADIOS2_ENGINE_INSITUMPIFUNCTIONS_H_
 
 #include <mpi.h>
 
@@ -34,6 +34,8 @@ enum MpiTags
     Step,
     MetadataLength,
     Metadata,
+    ReadScheduleLength,
+    ReadSchedule,
     LastTag
 };
 
