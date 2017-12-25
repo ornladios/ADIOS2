@@ -73,6 +73,12 @@ public:
     void SerializeData(IO &io, const bool advanceStep = false);
 
     /**
+     * Serializes the metadata indices appending it into the data buffer inside
+     * m_HeapBuffer
+     */
+    void SerializeMetadataInData() noexcept;
+
+    /**
      * Finishes bp buffer by serializing data and adding trailing metadata
      * @param io
      */
@@ -299,12 +305,6 @@ private:
      * @param io object containing all attributes
      */
     void SerializeDataBuffer(IO &io) noexcept;
-
-    /**
-     * Serializes the metadata indices appending it into the data buffer inside
-     * m_HeapBuffer
-     */
-    void SerializeMetadataInData() noexcept;
 
     void PutMinifooter(const uint64_t pgIndexStart,
                        const uint64_t variablesIndexStart,
