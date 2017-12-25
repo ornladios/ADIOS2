@@ -103,7 +103,7 @@ if(ADIOS2_HAVE_MPI)
   target_sources(adios2 PRIVATE
     engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
     engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
-    engine/insitumpi/InSituMPIFunctions.cpp
+    engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
   )
   target_link_libraries(adios2 PUBLIC MPI::MPI_C)
 else()

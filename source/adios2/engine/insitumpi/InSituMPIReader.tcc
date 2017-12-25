@@ -28,7 +28,7 @@ inline void InSituMPIReader::GetSyncCommon(Variable<std::string> &variable,
         std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
                   << variable.m_Name << ")\n";
     }
-    m_NDeferredGets++;
+    // FIXME: this call is only allowed for Global Values
 }
 
 template <class T>
@@ -40,7 +40,6 @@ inline void InSituMPIReader::GetSyncCommon(Variable<T> &variable, T *data)
         std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
                   << variable.m_Name << ")\n";
     }
-    m_NDeferredGets++;
 }
 
 template <class T>
@@ -52,7 +51,8 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::cout << "InSituMPI Reader " << m_ReaderRank << " GetDeferred("
                   << variable.m_Name << ")\n";
     }
-    m_NDeferredGets++;
+    m_BP3Deserializer.GetDeferredVariable(variable, data);
+    m_BP3Deserializer.m_PerformedGets = false;
 }
 
 } // end namespace adios2

@@ -72,7 +72,6 @@ private:
     int m_CurrentStep = -1; // steps start from 0
 
     int m_NCallsPerformGets; // 1 and only 1 PerformGets() allowed per step
-    int m_NDeferredGets;     // number of outstanding requests used in EndStep()
 
     /** Single object controlling BP buffering used only for metadata in this
      * engine */
@@ -96,6 +95,12 @@ private:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
     void ClearMetadataBuffer();
+
+    // BP3 format style read schedule, keeping it around in fixed schedule
+    std::map<std::string, SubFileInfoMap> variablesSubFileInfo;
+
+    void SendReadRequests(
+        const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo);
 };
 
 } // end namespace adios2
