@@ -118,19 +118,26 @@ void InSituMPIWriter::PerformPuts()
         // std::vector<char> mdVar = m_BP3Serializer.SerializeIndices(
         //    m_BP3Serializer.m_MetadataSet.VarsIndices);
         // Create Global metadata and send to readers
+        m_BP3Serializer.SerializeData(m_IO, true); // advance timestep
+        m_BP3Serializer.SerializeMetadataInData();
         m_BP3Serializer.AggregateCollectiveMetadata();
-        std::vector<char> &md = m_BP3Serializer.m_Metadata.m_Buffer;
-
-        std::cout << "InSituMPI Writer " << m_WriterRank << " Metadata has = "
-                  << m_BP3Serializer.m_MetadataSet.DataPGVarsCount
-                  << " variables. size = "
-                  << m_BP3Serializer.m_Metadata.m_Position << std::endl;
 
         // Send the metadata to all reader peers, asynchronously
         // we don't care about keeping these requests because
         // we will wait next for response from all readers
         if (m_BP3Serializer.m_RankMPI == 0)
         {
+            std::vector<char> &md = m_BP3Serializer.m_Metadata.m_Buffer;
+
+            if (m_Verbosity == 5)
+            {
+                std::cout << "InSituMPI Writer " << m_WriterRank
+                          << " Metadata has = "
+                          << m_BP3Serializer.m_MetadataSet.DataPGVarsCount
+                          << " variables. size = "
+                          << m_BP3Serializer.m_Metadata.m_Position << std::endl;
+            }
+
             // FIXME: Which reader is actually listening for this request?
             if (m_Verbosity == 5)
             {
@@ -161,6 +168,12 @@ void InSituMPIWriter::PerformPuts()
     }
 
     m_BP3Serializer.m_DeferredVariables.clear();
+    if (m_CurrentStep == 0 || !m_FixedSchedule)
+    {
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data, true);
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
+        // FIXME: Somehow m_MetadataSet should be clean up too
+    }
 }
 
 void InSituMPIWriter::EndStep()

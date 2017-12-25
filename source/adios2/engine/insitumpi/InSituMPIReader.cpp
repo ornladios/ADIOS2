@@ -82,7 +82,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank
-                  << "  figured that the Reader root is rank = "
+                  << "  figured that the Reader root is Reader "
                   << m_ReaderRootRank << std::endl;
     }
 }
@@ -145,43 +145,46 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     m_NDeferredGets = 0;
 
     // Sync. recv. the global metadata
-    unsigned long mdLen;
-    if (m_ConnectedToWriteRoot)
+    if (m_CurrentStep == 0 || !m_FixedSchedule)
     {
+        unsigned long mdLen;
+        if (m_ConnectedToWriteRoot)
+        {
 
-        MPI_Status status;
-        MPI_Recv(&mdLen, 1, MPI_UNSIGNED_LONG, m_WriteRootGlobalRank,
-                 insitumpi::MpiTags::MetadataLength, m_CommWorld, &status);
+            MPI_Status status;
+            MPI_Recv(&mdLen, 1, MPI_UNSIGNED_LONG, m_WriteRootGlobalRank,
+                     insitumpi::MpiTags::MetadataLength, m_CommWorld, &status);
+            if (m_Verbosity == 5)
+            {
+                std::cout << "InSituMPI Reader " << m_ReaderRank
+                          << " receiving metadata size = " << mdLen
+                          << " from writer world rank " << m_WriteRootGlobalRank
+                          << std::endl;
+            }
+            m_BP3Deserializer.m_Metadata.m_Buffer.resize(mdLen);
+            MPI_Recv(m_BP3Deserializer.m_Metadata.m_Buffer.data(), mdLen,
+                     MPI_CHAR, m_WriteRootGlobalRank,
+                     insitumpi::MpiTags::Metadata, m_CommWorld, &status);
+        }
+
+        // broadcast metadata to every reader
+        MPI_Bcast(&mdLen, 1, MPI_UNSIGNED_LONG, m_ReaderRootRank, m_MPIComm);
+        m_BP3Deserializer.m_Metadata.m_Buffer.resize(mdLen);
+        MPI_Bcast(m_BP3Deserializer.m_Metadata.m_Buffer.data(), mdLen, MPI_CHAR,
+                  m_ReaderRootRank, m_MPIComm);
+
+        // Parse metadata into Variables and Attributes maps
+        m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
+
         if (m_Verbosity == 5)
         {
-            std::cout << "InSituMPI Reader " << m_ReaderRank
-                      << " receiving metadata size = " << mdLen
-                      << " from writer world rank " << m_WriteRootGlobalRank
-                      << std::endl;
+            std::cout << "InSituMPI Reader " << m_ReaderRank << " found "
+                      << m_IO.GetVariablesDataMap().size() << " variables and "
+                      << m_IO.GetAttributesDataMap().size()
+                      << " attributes in metadata" << std::endl;
         }
-        m_BP3Deserializer.m_Metadata.m_Buffer.resize(mdLen);
-        MPI_Recv(m_BP3Deserializer.m_Metadata.m_Buffer.data(), mdLen, MPI_CHAR,
-                 m_WriteRootGlobalRank, insitumpi::MpiTags::Metadata,
-                 m_CommWorld, &status);
     }
-
-    // broadcast metadata to every reader
-    MPI_Bcast(&mdLen, 1, MPI_UNSIGNED_LONG, m_ReaderRootRank, m_MPIComm);
-    m_BP3Deserializer.m_Metadata.m_Buffer.resize(mdLen);
-    MPI_Bcast(m_BP3Deserializer.m_Metadata.m_Buffer.data(), mdLen, MPI_CHAR,
-              m_ReaderRootRank, m_MPIComm);
-
-    // Parse metadata into Variables and Attributes maps
-    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
-
-    if (m_Verbosity == 5)
-    {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " found "
-                  << m_IO.GetVariablesDataMap().size() << " variables and "
-                  << m_IO.GetAttributesDataMap().size()
-                  << " attributes in metadata" << std::endl;
-    }
-    return StepStatus::EndOfStream; // FIXME: this should be OK
+    return StepStatus::OK; // EndOfStream; // FIXME: this should be OK
 }
 
 void InSituMPIReader::PerformGets()
@@ -210,7 +213,7 @@ void InSituMPIReader::EndStep()
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " EndStep()\n";
     }
-    if (m_NDeferredGets == 0)
+    if (m_NDeferredGets > 0)
     {
         PerformGets();
     }
