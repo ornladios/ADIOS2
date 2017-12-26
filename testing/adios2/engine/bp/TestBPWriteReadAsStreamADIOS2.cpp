@@ -218,11 +218,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
         var_r64->SetSelection(sel);
 
         unsigned int t = 0;
-        adios2::StepStatus status = adios2::StepStatus::OK;
-        while (status == adios2::StepStatus::OK)
-        {
-            status = bpReader.BeginStep();
 
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        {
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -470,11 +468,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
         var_r64->SetSelection(sel);
 
         unsigned int t = 0;
-        adios2::StepStatus status = adios2::StepStatus::OK;
-        while (status == adios2::StepStatus::OK)
-        {
-            status = bpReader.BeginStep();
 
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        {
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -727,11 +723,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
         var_r64->SetSelection(sel);
 
         unsigned int t = 0;
-        adios2::StepStatus status = adios2::StepStatus::OK;
-        while (status == adios2::StepStatus::OK)
-        {
-            status = bpReader.BeginStep();
 
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        {
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -968,10 +962,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
         var_r64->SetSelection(sel);
 
         unsigned int t = 0;
-        adios2::StepStatus status = adios2::StepStatus::OK;
-        while (status == adios2::StepStatus::OK)
+
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
-            status = bpReader.BeginStep();
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -1218,11 +1211,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
         var_r64->SetSelection(sel);
 
         unsigned int t = 0;
-        adios2::StepStatus status = adios2::StepStatus::OK;
-        while (status == adios2::StepStatus::OK)
-        {
-            status = bpReader.BeginStep();
 
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        {
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -1475,11 +1466,8 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2MissingPerformGets)
         var_r64->SetSelection(sel);
 
         unsigned int t = 0;
-        adios2::StepStatus status = adios2::StepStatus::OK;
-        while (status == adios2::StepStatus::OK)
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
-            status = bpReader.BeginStep();
-
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
