@@ -540,8 +540,6 @@ static FFSVarRec CreateVarRec(SstStream Stream, const char *ArrayName)
     return &Info->VarList[Info->VarCount++];
 }
 
-// GSE - should be exported from FFS/FM, but isn't
-extern int struct_size_field_list(FMFieldList list, int pointer_size);
 extern void CP_verbose(SstStream Stream, char *Format, ...);
 
 extern int SstWriterBeginStep(SstStream Stream, int mode,
@@ -929,7 +927,7 @@ extern void SstWriterEndStep(SstStream Stream)
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
         FMFormat Format = FMregister_simple_format(
             Info->LocalFMContext, "MetaData", Info->MetaFields,
-            struct_size_field_list(Info->MetaFields, sizeof(char *)));
+            FMstruct_size_field_list(Info->MetaFields, sizeof(char *)));
         Info->MetaFormat = Format;
         Block->FormatServerRep =
             get_server_rep_FMformat(Format, &Block->FormatServerRepLen);
@@ -943,7 +941,7 @@ extern void SstWriterEndStep(SstStream Stream)
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
         FMFormat Format = FMregister_simple_format(
             Info->LocalFMContext, "Data", Info->DataFields,
-            struct_size_field_list(Info->DataFields, sizeof(char *)));
+            FMstruct_size_field_list(Info->DataFields, sizeof(char *)));
         Info->DataFormat = Format;
         Block->FormatServerRep =
             get_server_rep_FMformat(Format, &Block->FormatServerRepLen);
