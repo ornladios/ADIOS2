@@ -369,9 +369,9 @@ void BP3Deserializer::ClipContiguousMemoryCommonRow(
 
         char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
 
-        std::copy(&contiguousMemory[contiguousStart],
-                  &contiguousMemory[contiguousStart + stride],
-                  &rawVariableData[variableStart]);
+        std::copy(contiguousMemory.begin() + contiguousStart,
+                  contiguousMemory.begin() + contiguousStart + stride,
+                  rawVariableData + variableStart);
 
         // here update each index recursively, always starting from the 2nd
         // fastest changing index, since fastest changing index is the

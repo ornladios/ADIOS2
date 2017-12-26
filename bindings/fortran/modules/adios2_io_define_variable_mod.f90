@@ -10,6 +10,7 @@
 !
 module adios2_io_define_variable
 
+    use adios2_parameters
     use adios2_functions
     implicit none
 

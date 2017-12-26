@@ -57,7 +57,7 @@ void adios2_set_transport_parameter(adios2_IO *io,
                                     const char *key, const char *value);
 
 /**
- *
+ * Defines a variable inside a corresponding io handler
  * @param io handler that owns the variable
  * @param name unique variable name inside IO handler
  * @param type primitive type
@@ -75,6 +75,21 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
                        const size_t ndims, const size_t *shape,
                        const size_t *start, const size_t *count,
                        const adios2_constant_dims constant_dims, void *data);
+
+/**
+ * Defines an attribute inside a corresponding io handler
+ * @param io handler that owns the variable
+ * @param name unique attribute name inside IO handler
+ * @param type primitive type
+ * @param data attribute data single value or array
+ * @param elements size of data, if 1 it's a single value attribute, else
+ * accepts arrays
+ * @return attribute handler
+ */
+adios2_Attribute *adios2_define_attribute(adios2_IO *io, const char *name,
+                                          const adios2_type type,
+                                          const void *data,
+                                          const size_t elements);
 
 /**
  * Returns a handler to a previously defined variable identified by a unique

@@ -11,12 +11,13 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPY_H_
 #define ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPY_H_
 
+#include "IOPy.h"
+
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <memory> //std::shared_ptr
 #include <string>
 /// \endcond
 
-#include "IOPy.h"
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/ADIOS.h"
 
