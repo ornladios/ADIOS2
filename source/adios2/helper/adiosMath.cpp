@@ -134,6 +134,19 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
     return intersectionBox;
 }
 
+bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
+{
+    const size_t dimensionsSize = box1.first.size();
+    for (size_t d = 0; d < dimensionsSize; ++d)
+    {
+        if (box1.first[d] != box2.first[d] || box1.second[d] != box2.second[d])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
                    const bool isRowMajor) noexcept
 {

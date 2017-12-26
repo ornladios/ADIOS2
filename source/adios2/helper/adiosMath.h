@@ -120,6 +120,14 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1,
                           const Box<Dims> &box2) noexcept;
 
 /**
+ * Returns the true if the two boxes are identical
+ * @param box1 {start, end} input
+ * @param box2 {start, end} input
+ * @return true if not boxes are identical, false otherwise
+ */
+bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept;
+
+/**
  * Get a linear index for a point inside a localBox depending on data layout
  * @param localBox start and count
  * @param point inside box
