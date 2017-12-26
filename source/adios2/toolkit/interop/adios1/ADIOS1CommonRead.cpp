@@ -302,7 +302,7 @@ void ADIOS1CommonRead::ScheduleReadCommon(const std::string &name,
                                           const bool readAsJoinedArray,
                                           void *data)
 {
-    const int adios1FromStep = fromStep - 1;
+    const int adios1FromStep = fromStep;
     if (readAsLocalValue)
     {
         /* Get all the requested values from metadata now */
