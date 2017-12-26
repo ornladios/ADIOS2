@@ -11,11 +11,12 @@
  *      Author: Norbert Podhorszki pnorbert@ornl.gov
  */
 
-#include "InSituMPIWriter.h"
-#include "InSituMPIFunctions.h"
-#include "InSituMPIWriter.tcc"
+#include "adios2/helper/adiosMath.h"
 
-#include "adios2/helper/adiosFunctions.h"
+#include "InSituMPIFunctions.h"
+#include "InSituMPISchedules.h"
+#include "InSituMPIWriter.h"
+#include "InSituMPIWriter.tcc"
 
 #include <iostream>
 
@@ -183,12 +184,24 @@ void InSituMPIWriter::PerformPuts()
         // MPI_Waitall(m_RankAllPeers.size(), requests.data(), statuses.data());
 
         // build (and remember for fixed schedule) the read request table
-    }
+        // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>> map
+        m_WriteScheduleMap.clear();
+        m_WriteScheduleMap =
+            insitumpi::DeserializeReadSchedule(serializedSchedules);
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank << " schedule:  ";
+            insitumpi::PrintReadScheduleMap(m_WriteScheduleMap);
+            std::cout << std::endl;
+        }
 
-    // Make the send requests for each variable for each matching peer request
-    for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
-    {
-        // Create the async send for the variable
+        // Make the send requests for each variable for each matching peer
+        // request
+        for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
+        {
+            // Create the async send for the variable
+            AsyncSendVariable(variableName);
+        }
     }
 
     m_BP3Serializer.m_DeferredVariables.clear();
@@ -198,6 +211,31 @@ void InSituMPIWriter::PerformPuts()
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
         // FIXME: Somehow m_MetadataSet should be clean up too
     }
+}
+
+void InSituMPIWriter::AsyncSendVariable(std::string variableName)
+{
+    const std::string type(m_IO.InquireVariableType(variableName));
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        if (m_DebugMode && variable == nullptr)                                \
+        {                                                                      \
+            throw std::invalid_argument(                                       \
+                "ERROR: variable " + variableName +                            \
+                " not found, in call to AsyncSendVariable\n");                 \
+        }                                                                      \
+        AsyncSendVariable<T>(*variable);                                       \
+    }
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 }
 
 void InSituMPIWriter::EndStep()

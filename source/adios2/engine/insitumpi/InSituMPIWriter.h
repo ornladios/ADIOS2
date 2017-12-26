@@ -14,6 +14,7 @@
 #ifndef ADIOS2_ENGINE_INSITUMPIMPIWRITER_H_
 #define ADIOS2_ENGINE_INSITUMPIMPIWRITER_H_
 
+#include "InSituMPISchedules.h"
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
@@ -74,6 +75,11 @@ private:
      * engine */
     format::BP3Serializer m_BP3Serializer;
 
+    /** Collection of all read requests. Created at first PerformPuts().
+     * Recreated at every PerformPuts() if do not have fixed schedule.
+     */
+    insitumpi::WriteScheduleMap m_WriteScheduleMap;
+
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
@@ -95,6 +101,15 @@ private:
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
+
+    /** Send data asynchronously of a variable to all readers that
+     * has requested a piece
+     * void AsyncSendVariable(const std::string &varName);
+     */
+    template <class T>
+    void AsyncSendVariable(Variable<T> &);
+
+    void AsyncSendVariable(std::string variableName);
 };
 
 } // end namespace adios2

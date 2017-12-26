@@ -24,6 +24,12 @@ namespace adios2
 namespace insitumpi
 {
 
+// Recalculate in each SubFileInfo the Seek parameters as
+// if the payload offset was always 0
+void FixSeeksToZeroOffset(
+    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
+void FixSeeksToZeroOffset(SubFileInfo &record) noexcept;
+
 // Serialize the read requests on a reader.
 // Creates a separate buffer for each writer.
 // Each buffer's format is the following:
@@ -34,7 +40,7 @@ namespace insitumpi
 //         SerializeLocalReadSchedule (variable, lrs)
 std::vector<std::vector<char>> SerializeLocalReadSchedule(
     const int nWriters,
-    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo);
+    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
 
 // per-variable per rank schedule
 using LocalReadSchedule = std::vector<SubFileInfo>;
@@ -47,35 +53,50 @@ using LocalReadSchedule = std::vector<SubFileInfo>;
 //         serialize SubFileInfo
 void SerializeLocalReadSchedule(std::vector<char> &buffer,
                                 const std::string varName,
-                                const LocalReadSchedule lrs);
+                                const LocalReadSchedule lrs) noexcept;
 
 // Box<Dims> BlockBox;
 // Box<Dims> IntersectionBox; ///< first = Start point, second = End point
 // Box<size_t> Seeks;
-void SerializeSubFileInfo(std::vector<char> &buffer, const SubFileInfo record);
+void SerializeSubFileInfo(std::vector<char> &buffer,
+                          const SubFileInfo record) noexcept;
 
-void SerializeBox(std::vector<char> &buffer, const Box<Dims> box);
-void SerializeBox(std::vector<char> &buffer, const Box<size_t> box);
+void SerializeBox(std::vector<char> &buffer, const Box<Dims> box) noexcept;
+void SerializeBox(std::vector<char> &buffer, const Box<size_t> box) noexcept;
 
 // Read schedule map on a writer:"
 // For all variables
 //    for all readers that requested it
 //       the blocks
-using ReadScheduleMap =
+using WriteScheduleMap =
     std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>>;
 
 // One readers' schedule for all variables on a writer
 using LocalReadScheduleMap = std::map<std::string, std::vector<SubFileInfo>>;
 
 // Deserialize buffers from all readers
-ReadScheduleMap
-DeserializeReadSchedule(const std::vector<std::vector<char>> &buffers);
+WriteScheduleMap
+DeserializeReadSchedule(const std::vector<std::vector<char>> &buffers) noexcept;
 
 // Deserialize buffer from one reader
-LocalReadScheduleMap DeserializeReadSchedule(const std::vector<char> &buffer);
+LocalReadScheduleMap
+DeserializeReadSchedule(const std::vector<char> &buffer) noexcept;
 
 // Deserialize one variable from one reader
 // LocalReadSchedule DeserializeReadSchedule(const std::vector<char> &buffer);
+
+SubFileInfo DeserializeSubFileInfo(const std::vector<char> &buffer,
+                                   size_t &position) noexcept;
+Box<Dims> DeserializeBoxDims(const std::vector<char> &buffer,
+                             size_t &position) noexcept;
+Box<size_t> DeserializeBoxSizet(const std::vector<char> &buffer,
+                                size_t &position) noexcept;
+
+void PrintReadScheduleMap(const WriteScheduleMap &map) noexcept;
+void PrintSubFileInfo(const SubFileInfo &sfi) noexcept;
+void PrintBox(const Box<Dims> &box) noexcept;
+void PrintBox(const Box<size_t> &box) noexcept;
+void PrintDims(const Dims &dims) noexcept;
 
 } // end namespace insitumpi
 

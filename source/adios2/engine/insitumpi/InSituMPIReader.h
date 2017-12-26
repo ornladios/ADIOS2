@@ -97,10 +97,21 @@ private:
     void ClearMetadataBuffer();
 
     // BP3 format style read schedule, keeping it around in fixed schedule
-    std::map<std::string, SubFileInfoMap> variablesSubFileInfo;
+    std::map<std::string, SubFileInfoMap> m_ReadScheduleMap;
 
     void SendReadRequests(
         const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo);
+
+    void AsyncReadVariables();
+
+    /** Send data asynchronously of a variable to all readers that
+     * has requested a piece
+     * void AsyncSendVariable(const std::string &varName);
+     */
+    template <class T>
+    void AsyncRecvVariable(Variable<T> &);
+
+    void AsyncRecvVariable(std::string variableName);
 };
 
 } // end namespace adios2
