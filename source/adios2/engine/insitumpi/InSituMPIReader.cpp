@@ -10,8 +10,9 @@
 
 #include "InSituMPIReader.h"
 #include "InSituMPIFunctions.h"
-#include "InSituMPIReader.tcc"
 #include "InSituMPISchedules.h"
+
+#include "InSituMPIReader.tcc"
 
 #include <adios_error.h>
 
@@ -204,14 +205,50 @@ void InSituMPIReader::PerformGets()
     {
         // Create read schedule per writer
         // const std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
-        variablesSubFileInfo.clear();
-        variablesSubFileInfo =
+        m_ReadScheduleMap.clear();
+        m_ReadScheduleMap =
             m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+        // recalculate seek offsets to payload offset 0 (beginning of blocks)
+        insitumpi::FixSeeksToZeroOffset(m_ReadScheduleMap);
 
         // Send schedules to writers
-        SendReadRequests(variablesSubFileInfo);
+        SendReadRequests(m_ReadScheduleMap);
+
+        // Make the receive requests for each variable
+        AsyncReadVariables();
+
+        /*for (const auto &variablePair : m_BP3Deserializer.m_DeferredVariables)
+        {
+            // Create the async send for the variable
+            AsyncRecvVariable(variablePair.first);
+        }*/
     }
     m_BP3Deserializer.m_PerformedGets = true;
+}
+
+void InSituMPIReader::AsyncRecvVariable(std::string variableName)
+{
+    const std::string type(m_IO.InquireVariableType(variableName));
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        if (m_DebugMode && variable == nullptr)                                \
+        {                                                                      \
+            throw std::invalid_argument(                                       \
+                "ERROR: variable " + variableName +                            \
+                " not found, in call to AsyncSendVariable\n");                 \
+        }                                                                      \
+        AsyncRecvVariable<T>(*variable);                                       \
+    }
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 }
 
 void InSituMPIReader::EndStep()
@@ -264,6 +301,37 @@ void InSituMPIReader::SendReadRequests(
         MPI_Isend(serializedSchedules[i].data(), mdLen, MPI_CHAR,
                   m_RankAllPeers[i], insitumpi::MpiTags::ReadSchedule,
                   m_CommWorld, &request);
+    }
+}
+
+void InSituMPIReader::AsyncReadVariables()
+{
+    // <variable, <writer, <steps, SubFileInfo>>>
+    for (const auto &variablePair : m_ReadScheduleMap)
+    {
+        // <writer, <steps, SubFileInfo>>
+        for (const auto &subFileIndexPair : variablePair.second)
+        {
+            const size_t writerRank = subFileIndexPair.first; // writer
+            // <steps, SubFileInfo>  but there is only one step
+            for (const auto &stepPair : subFileIndexPair.second)
+            {
+                const std::vector<SubFileInfo> &sfis = stepPair.second;
+                for (const auto &sfi : sfis)
+                {
+                    if (m_Verbosity == 5)
+                    {
+                        std::cout << "InSituMPI Reader " << m_ReaderRank
+                                  << " async recv var = " << variablePair.first
+                                  << " from writer " << writerRank;
+                        std::cout << " info = ";
+                        insitumpi::PrintSubFileInfo(sfi);
+                        std::cout << std::endl;
+                    }
+                }
+                break; // there is only one step here
+            }
+        }
     }
 }
 

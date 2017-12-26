@@ -51,8 +51,50 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::cout << "InSituMPI Reader " << m_ReaderRank << " GetDeferred("
                   << variable.m_Name << ")\n";
     }
-    m_BP3Deserializer.GetDeferredVariable(variable, data);
-    m_BP3Deserializer.m_PerformedGets = false;
+    if (m_FixedSchedule && m_CurrentStep > 0)
+    {
+        // Create the async send for the variable now
+        AsyncRecvVariable(variable);
+    }
+    else
+    {
+        m_BP3Deserializer.GetDeferredVariable(variable, data);
+        m_BP3Deserializer.m_PerformedGets = false;
+    }
+}
+
+template <class T>
+void InSituMPIReader::AsyncRecvVariable(Variable<T> &variable)
+{
+    const auto it = m_ReadScheduleMap.find(variable.m_Name);
+    if (it != m_ReadScheduleMap.end())
+    {
+        SubFileInfoMap requests = it->second;
+
+        // <writer, <steps, SubFileInfo>>
+        for (const auto &subFileIndexPair : requests)
+        {
+            const size_t writerRank = subFileIndexPair.first; // writer
+            // <steps, SubFileInfo>  but there is only one step
+            for (const auto &stepPair : subFileIndexPair.second)
+            {
+                const std::vector<SubFileInfo> &sfis = stepPair.second;
+                for (const auto &sfi : sfis)
+                {
+                    if (m_Verbosity == 5)
+                    {
+                        std::cout << "InSituMPI Reader " << m_ReaderRank
+                                  << " async recv var = " << variable.m_Name
+                                  << " from writer " << writerRank;
+                        std::cout << " info = ";
+                        insitumpi::PrintSubFileInfo(sfi);
+                        std::cout << std::endl;
+                    }
+                }
+                break; // there is only one step here
+            }
+        }
+    }
 }
 
 } // end namespace adios2
