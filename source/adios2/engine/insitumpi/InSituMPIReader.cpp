@@ -175,6 +175,8 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
                   m_ReaderRootRank, m_MPIComm);
 
         // Parse metadata into Variables and Attributes maps
+        m_IO.RemoveAllVariables();
+        m_IO.RemoveAllAttributes();
         m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
 
         if (m_Verbosity == 5)
@@ -222,7 +224,6 @@ void InSituMPIReader::PerformGets()
         AsyncRecvAllVariables();
     }
 
-    /* FIXME: Wait for all receives and process them */
     ProcessReceives();
 
     m_BP3Deserializer.m_PerformedGets = true;
@@ -286,59 +287,10 @@ void InSituMPIReader::AsyncRecvAllVariables()
     // <variable, <writer, <steps, <SubFileInfo>>>>
     for (const auto &variablePair : m_ReadScheduleMap)
     {
-        const std::string &variableName = variablePair.first;
-        // AsyncRecvVariable(variablePair.first, variablePair.second);
-        const std::string type(m_IO.InquireVariableType(variableName));
-
-        if (type == "compound")
-        {
-            // not supported
-        }
-#define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
-    {                                                                          \
-        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
-        if (m_DebugMode && variable == nullptr)                                \
-        {                                                                      \
-            throw std::invalid_argument(                                       \
-                "ERROR: variable " + variableName +                            \
-                " not found, in call to AsyncSendVariable\n");                 \
-        }                                                                      \
-        AsyncRecvVariable<T>(*variable, variablePair.second);                  \
-    }
-
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+        AsyncRecvVariable(variablePair.first, variablePair.second);
     }
 }
 
-/*void InSituMPIReader::AsyncRecvVariable(const std::string &variableName,
-                                        const SubFileInfoMap &subFileInfoMap)
-{
-    const std::string type(m_IO.InquireVariableType(variableName));
-
-    if (type == "compound")
-    {
-        // not supported
-    }
-#define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
-    {                                                                          \
-        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
-        if (m_DebugMode && variable == nullptr)                                \
-        {                                                                      \
-            throw std::invalid_argument(                                       \
-                "ERROR: variable " + variableName +                            \
-                " not found, in call to AsyncSendVariable\n");                 \
-        }                                                                      \
-        AsyncRecvVariable<T>(*variable, subFileInfoMap);                       \
-    }
-
-    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-}*/
-
-#if 0
 void InSituMPIReader::AsyncRecvVariable(const std::string &variableName,
                                         const SubFileInfoMap &subFileInfoMap)
 {
@@ -365,26 +317,20 @@ void InSituMPIReader::AsyncRecvVariable(const std::string &variableName,
                 const auto &seek = sfi.Seeks;
                 const size_t blockStart = seek.first;
                 const size_t blockSize = seek.second - seek.first;
-                std::vector<char> mem(blockSize);
-                m_OngoingReceives.emplace_back(&sfi, &variableName, mem);
+                m_OngoingReceives.emplace_back(&sfi, &variableName);
                 m_MPIRequests.emplace_back();
                 const int index = m_OngoingReceives.size() - 1;
-
-                /* FIXME: Need the element size here */
+                m_OngoingReceives[index].incomingDataArray.resize(blockSize);
 
                 MPI_Irecv(m_OngoingReceives[index].incomingDataArray.data(),
-                          static_cast<int>(blockSize), MPI_CHAR, writerRank,
+                          blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
                           insitumpi::MpiTags::Data, m_CommWorld,
                           m_MPIRequests.data() + index);
-                /*m_SubFileManager.ReadFile(contiguousMemory.data(),
-                                          blockSize, blockStart,
-                                          writerRank);*/
             }
             break; // there is only one step here
         }
     }
 }
-#endif
 
 void InSituMPIReader::ProcessReceives()
 {
