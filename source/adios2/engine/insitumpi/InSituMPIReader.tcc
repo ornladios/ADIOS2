@@ -61,7 +61,7 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
          * SubFileInfoMap contains ALL read schedules for the variable.
          * We should do this call per SubFileInfo that matches the request
          */
-        AsyncRecvVariable(variable, sfim);
+        AsyncRecvVariable(variable.m_Name, sfim);
     }
     else
     {
@@ -72,50 +72,6 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
          */
         m_BP3Deserializer.GetDeferredVariable(variable, data);
         m_BP3Deserializer.m_PerformedGets = false;
-    }
-}
-
-template <class T>
-void InSituMPIReader::AsyncRecvVariable(Variable<T> &variable,
-                                        const SubFileInfoMap &subFileInfoMap)
-{
-    // <writer, <steps, <SubFileInfo>>>
-    for (const auto &subFileIndexPair : subFileInfoMap)
-    {
-        const size_t writerRank = subFileIndexPair.first; // writer
-        // <steps, <SubFileInfo>>  but there is only one step
-        for (const auto &stepPair : subFileIndexPair.second)
-        {
-            const std::vector<SubFileInfo> &sfis = stepPair.second;
-            for (const auto &sfi : sfis)
-            {
-                if (m_Verbosity == 5)
-                {
-                    std::cout << "InSituMPI Reader " << m_ReaderRank
-                              << " async recv var = " << variable.m_Name
-                              << " from writer " << writerRank;
-                    std::cout << " info = ";
-                    insitumpi::PrintSubFileInfo(sfi);
-                    std::cout << std::endl;
-                }
-
-                const auto &seek = sfi.Seeks;
-                const size_t blockStart = seek.first;
-                const size_t blockSize = seek.second - seek.first;
-                const int recvSize = blockSize * variable.m_ElementSize;
-                m_OngoingReceives.emplace_back(&sfi, &variable.m_Name);
-                m_MPIRequests.emplace_back();
-                const int index = m_OngoingReceives.size() - 1;
-                m_OngoingReceives[index].incomingDataArray.resize(recvSize);
-                // MPI_Request *req = &m_MPIRequests[index];
-
-                MPI_Irecv(m_OngoingReceives[index].incomingDataArray.data(),
-                          recvSize, MPI_CHAR, m_RankAllPeers[writerRank],
-                          insitumpi::MpiTags::Data, m_CommWorld,
-                          m_MPIRequests.data() + index);
-            }
-            break; // there is only one step here
-        }
     }
 }
 

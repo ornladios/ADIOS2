@@ -105,11 +105,8 @@ private:
     // Make an async receive request for all variables
     void AsyncRecvAllVariables();
 
-    template <class T>
-    void AsyncRecvVariable(Variable<T> &, const SubFileInfoMap &);
-
-    // void AsyncRecvVariable(const std::string &variableName,
-    //                       const SubFileInfoMap &subFileInfoMap);
+    void AsyncRecvVariable(const std::string &variableName,
+                           const SubFileInfoMap &subFileInfoMap);
 
     // Wait for all async receives to arrive and process them
     void ProcessReceives();
