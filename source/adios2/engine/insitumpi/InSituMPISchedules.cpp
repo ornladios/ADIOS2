@@ -23,25 +23,51 @@ namespace adios2
 namespace insitumpi
 {
 
-void FixSeeksToZeroOffset(
+int GetNumberOfRequests(
     std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
 {
+    int n;
     for (auto &variableNamePair : variablesSubFileInfo)
     {
-        // <writer, <steps, SubFileInfo>>
+        // <writer, <steps, <SubFileInfo>>>
         for (auto &subFileIndexPair : variableNamePair.second)
         {
-            // <steps, SubFileInfo>  but there is only one step
+            // <steps, <SubFileInfo>>  but there is only one step
+            for (auto &stepPair : subFileIndexPair.second)
+            {
+                // <SubFileInfo>
+                for (auto &sfi : stepPair.second)
+                {
+                    n++;
+                }
+            }
+        }
+    }
+    return n;
+}
+
+int FixSeeksToZeroOffset(
+    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
+{
+    int n;
+    for (auto &variableNamePair : variablesSubFileInfo)
+    {
+        // <writer, <steps, <SubFileInfo>>>
+        for (auto &subFileIndexPair : variableNamePair.second)
+        {
+            // <steps, <SubFileInfo>>  but there is only one step
             for (auto &stepPair : subFileIndexPair.second)
             {
                 // <SubFileInfo>
                 for (auto &sfi : stepPair.second)
                 {
                     FixSeeksToZeroOffset(sfi);
+                    n++;
                 }
             }
         }
     }
+    return n;
 }
 
 void FixSeeksToZeroOffset(SubFileInfo &record) noexcept
@@ -71,12 +97,12 @@ std::vector<std::vector<char>> SerializeLocalReadSchedule(
     for (const auto &variableNamePair : variablesSubFileInfo)
     {
         const std::string variableName(variableNamePair.first);
-        // <writer, <steps, SubFileInfo>>
+        // <writer, <steps, <SubFileInfo>>>
         for (const auto &subFileIndexPair : variableNamePair.second)
         {
             const size_t subFileIndex = subFileIndexPair.first; // writer
             auto &lrs = buffers[subFileIndex];
-            // <steps, SubFileInfo>  but there is only one step
+            // <steps, <SubFileInfo>>  but there is only one step
             for (const auto &stepPair : subFileIndexPair.second)
             {
                 // LocalReadSchedule sfi = subFileIndexPair.second[0];
@@ -135,6 +161,25 @@ void SerializeBox(std::vector<char> &buffer, const Box<size_t> box) noexcept
     InsertToBuffer(buffer, &box.second, 1);
 }
 
+int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept
+{
+    int n;
+    //<variable <reader, <SubFileInfo>>>
+    for (auto &variableNamePair : map)
+    {
+        // <reader, <SubFileInfo>>
+        for (auto &readerPair : variableNamePair.second)
+        {
+            // <SubFileInfo>
+            for (auto &sfi : readerPair.second)
+            {
+                n++;
+            }
+        }
+    }
+    return n;
+}
+
 WriteScheduleMap
 DeserializeReadSchedule(const std::vector<std::vector<char>> &buffers) noexcept
 {
@@ -165,13 +210,13 @@ DeserializeReadSchedule(const std::vector<char> &buffer) noexcept
         CopyFromBuffer(buffer, pos, name, nameLen);
         name[nameLen] = '\0';
         int nSubFileInfos = ReadValue<int>(buffer, pos);
-        std::vector<SubFileInfo> sfi;
-        sfi.reserve(nSubFileInfos);
+        std::vector<SubFileInfo> sfis;
+        sfis.reserve(nSubFileInfos);
         for (int j = 0; j < nSubFileInfos; j++)
         {
-            sfi.push_back(DeserializeSubFileInfo(buffer, pos));
+            sfis.push_back(DeserializeSubFileInfo(buffer, pos));
         }
-        map[name] = sfi;
+        map[name] = sfis;
     }
     return map;
 }

@@ -36,6 +36,7 @@ enum MpiTags
     Metadata,
     ReadScheduleLength,
     ReadSchedule,
+    Data,
     LastTag
 };
 

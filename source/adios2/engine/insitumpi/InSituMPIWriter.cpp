@@ -195,6 +195,10 @@ void InSituMPIWriter::PerformPuts()
             std::cout << std::endl;
         }
 
+        const int nRequests = insitumpi::GetNumberOfRequestsInWriteScheduleMap(
+            m_WriteScheduleMap);
+        m_MPIRequests.reserve(nRequests);
+
         // Make the send requests for each variable for each matching peer
         // request
         for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
@@ -250,6 +254,34 @@ void InSituMPIWriter::EndStep()
     }
 
     // TODO: Blocking wait for all data transfers to finish
+    const int nRequests = m_MPIRequests.size();
+    std::vector<MPI_Status> statuses(nRequests);
+    int ierr;
+
+    ierr = MPI_Waitall(nRequests, m_MPIRequests.data(), statuses.data());
+
+    if (ierr == MPI_ERR_IN_STATUS)
+    {
+        for (int i = 0; i < nRequests; i++)
+        {
+            if (statuses[i].MPI_ERROR == MPI_ERR_PENDING)
+            {
+                std::cerr << "InSituMPI Writer " << m_WriterRank
+                          << " Pending transfer error when waiting for all "
+                             "data transfers to complete. request id = "
+                          << i << std::endl;
+            }
+            else if (statuses[i].MPI_ERROR != MPI_SUCCESS)
+            {
+                std::cerr << "InSituMPI Writer " << m_WriterRank
+                          << " MPI Error when waiting for all data transfers "
+                             "to complete. Error code = "
+                          << ierr << std::endl;
+            }
+        }
+    }
+
+    m_MPIRequests.clear();
 }
 
 void InSituMPIWriter::Close(const int transportIndex)

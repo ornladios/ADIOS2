@@ -99,19 +99,37 @@ private:
     // BP3 format style read schedule, keeping it around in fixed schedule
     std::map<std::string, SubFileInfoMap> m_ReadScheduleMap;
 
-    void SendReadRequests(
+    void SendReadSchedule(
         const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo);
 
-    void AsyncReadVariables();
+    // Make an async receive request for all variables
+    void AsyncRecvAllVariables();
 
-    /** Send data asynchronously of a variable to all readers that
-     * has requested a piece
-     * void AsyncSendVariable(const std::string &varName);
-     */
     template <class T>
-    void AsyncRecvVariable(Variable<T> &);
+    void AsyncRecvVariable(Variable<T> &, const SubFileInfoMap &);
 
-    void AsyncRecvVariable(std::string variableName);
+    // void AsyncRecvVariable(const std::string &variableName,
+    //                       const SubFileInfoMap &subFileInfoMap);
+
+    // Wait for all async receives to arrive and process them
+    void ProcessReceives();
+
+    struct OngoingReceive
+    {
+        const SubFileInfo *sfiPointer;
+        const std::string *varNamePointer;
+        std::vector<char> incomingDataArray;
+        OngoingReceive(const SubFileInfo *p, const std::string *v)
+        : sfiPointer(p), varNamePointer(v){};
+        OngoingReceive(const SubFileInfo *p, const std::string *v,
+                       std::vector<char> d)
+        : sfiPointer(p), varNamePointer(v), incomingDataArray(std::move(d)){};
+    };
+
+    std::vector<OngoingReceive> m_OngoingReceives;
+    // We need a contiguous array of MPI_Requests, so we
+    // have it here separately from OnGoingReceive struct
+    std::vector<MPI_Request> m_MPIRequests;
 };
 
 } // end namespace adios2
