@@ -80,6 +80,8 @@ private:
      */
     insitumpi::WriteScheduleMap m_WriteScheduleMap;
 
+    std::vector<MPI_Request> m_MPIRequests; // for MPI_Waitall in EndStep()
+
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;

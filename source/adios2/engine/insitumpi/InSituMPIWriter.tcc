@@ -90,6 +90,19 @@ void InSituMPIWriter::AsyncSendVariable(Variable<T> &variable)
                         insitumpi::PrintSubFileInfo(sfi);
                         std::cout << std::endl;
                     }
+
+                    m_MPIRequests.emplace_back();
+                    const int index = m_MPIRequests.size() - 1;
+
+                    const auto &seek = sfi.Seeks;
+                    const size_t blockStart = seek.first;
+                    const size_t blockSize = seek.second - seek.first;
+
+                    MPI_Isend(variable.GetData() + blockStart,
+                              blockSize * variable.m_ElementSize, MPI_CHAR,
+                              m_RankAllPeers[readerPair.first],
+                              insitumpi::MpiTags::Data, m_CommWorld,
+                              m_MPIRequests.data() + index);
                 }
             }
         }

@@ -24,9 +24,14 @@ namespace adios2
 namespace insitumpi
 {
 
+// Count the requests in the map
+int GetNumberOfRequests(
+    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
+
 // Recalculate in each SubFileInfo the Seek parameters as
 // if the payload offset was always 0
-void FixSeeksToZeroOffset(
+// This function also returns the number of requests in the map
+int FixSeeksToZeroOffset(
     std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
 void FixSeeksToZeroOffset(SubFileInfo &record) noexcept;
 
@@ -73,6 +78,9 @@ using WriteScheduleMap =
 
 // One readers' schedule for all variables on a writer
 using LocalReadScheduleMap = std::map<std::string, std::vector<SubFileInfo>>;
+
+// Get the number of read requests to be served on a particular writer
+int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept;
 
 // Deserialize buffers from all readers
 WriteScheduleMap
