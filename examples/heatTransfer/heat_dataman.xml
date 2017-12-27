@@ -56,7 +56,10 @@
         <transport type="WAN">
 
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="POSIX"/>
+            <parameter key="Library" value="ZMQ"/>
+
+            <!-- Dump file on receiver side -->
+            <parameter key="DumpFile" value="YES"/>
 
             <!-- IP Address for network transfer -->
             <parameter key="IPAddress" value="127.0.0.1"/>

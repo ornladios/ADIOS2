@@ -64,12 +64,15 @@ private:
     Operator *m_Callback = nullptr;
     void ReadThread(std::shared_ptr<Transport> trans,
                     std::shared_ptr<Transport> ctl_trans,
-                    const std::string format);
+                    const std::string stream_name, const Params trans_params);
 
     void RunCallback(void *buffer, std::string doid, std::string var,
                      std::string dtype, std::vector<size_t> shape);
+
     std::vector<std::shared_ptr<Transport>> m_ControlTransports;
     std::vector<std::thread> m_ControlThreads;
+    std::vector<Params> m_TransportsParameters;
+
     size_t m_CurrentTransport = 0;
     bool m_Listening = false;
     nlohmann::json m_JMessage;

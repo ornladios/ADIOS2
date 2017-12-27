@@ -76,13 +76,6 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
 
         const std::string portData(std::to_string(stoi(portControl) + 1));
 
-        std::string format(GetParameter("Format", paramsVector[i], false,
-                                        m_DebugMode, "Format"));
-        if (format.empty())
-        {
-            format = "bp";
-        }
-
         if (library == "zmq" || library == "ZMQ")
         {
 #ifdef ADIOS2_HAVE_ZEROMQ
@@ -99,9 +92,9 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             if (mode == Mode::Read)
             {
                 m_Listening = true;
-                m_ControlThreads.emplace_back(
-                    std::thread(&DataMan::ReadThread, this, wanTransport,
-                                controlTransport, format));
+                m_ControlThreads.emplace_back(std::thread(
+                    &DataMan::ReadThread, this, wanTransport, controlTransport,
+                    streamNames[i], paramsVector[i]));
             }
             ++counter;
 #else
@@ -151,13 +144,6 @@ void DataMan::WriteWAN(const void *buffer, size_t size)
 
     m_Transports[m_CurrentTransport]->Write(
         reinterpret_cast<const char *>(buffer), size);
-
-    /*
-    //  dumping file for debugging
-    std::ofstream bpfile("datamanW.bp", std::ios_base::binary);
-    bpfile.write(reinterpret_cast<const char *>(buffer), size);
-    bpfile.close();
-    */
 }
 
 void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
@@ -176,8 +162,17 @@ void DataMan::SetCallback(adios2::Operator &callback)
 
 void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                          std::shared_ptr<Transport> ctl_trans,
-                         const std::string format)
+                         const std::string stream_name,
+                         const Params trans_params)
 {
+    std::string format(GetParameter("Format", trans_params, false, m_DebugMode,
+                                    "Transport Format Parameter"));
+
+    if (format.empty())
+    {
+        format = "bp";
+    }
+
     if (format == "json" || format == "JSON")
     {
         while (m_Listening)
@@ -231,7 +226,24 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                 std::memcpy(m_BP3Deserializer->m_Data.m_Buffer.data(),
                             buffer.data(), status.Bytes);
 
-                /*    write bp file for debugging   */
+                const std::string dumpFile(
+                    GetParameter("DumpFile", trans_params, false, m_DebugMode,
+                                 "Transport DumpFile Parameter"));
+
+                for (auto &i : trans_params)
+                {
+                    std::cout << i.first << " ===== " << i.second << std::endl;
+                }
+                // TODO: Aggregation
+                if (dumpFile == "yes" || dumpFile == "YES" ||
+                    dumpFile == "TRUE" || dumpFile == "true")
+                {
+                    std::ofstream bpfile(stream_name, std::ios_base::binary);
+                    bpfile.write(reinterpret_cast<const char *>(buffer.data()),
+                                 status.Bytes);
+                    bpfile.close();
+                }
+
                 m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Data,
                                                  *m_IO);
 
