@@ -216,6 +216,12 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
             reinterpret_cast<uint64_t *>(data));
         break;
     }
+    default:
+    {
+        throw std::invalid_argument(
+            "ERROR: type not yet supported for variable " + std::string(name) +
+            ", in call to adios2_define_variable\n");
+    }
     }
 
     return reinterpret_cast<adios2_Variable *>(variable);
@@ -413,6 +419,12 @@ adios2_Attribute *adios2_define_attribute(adios2_IO *io, const char *name,
     case (adios2_type_unknown):
     {
         break;
+    }
+    default:
+    {
+        throw std::invalid_argument("ERROR: type not supported for attribute " +
+                                    std::string(name) +
+                                    ", in call to adios2_define_attribute\n");
     }
     }
 

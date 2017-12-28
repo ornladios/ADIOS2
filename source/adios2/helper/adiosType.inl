@@ -187,6 +187,12 @@ U *InquireKey(const T &key, std::unordered_map<T, U> &input) noexcept
     return &itKey->second;
 }
 
+template <>
+inline std::string ValueToString(const std::string value) noexcept
+{
+    return "\"" + value + "\"";
+}
+
 #define declare_template_instantiation(C)                                      \
     template <>                                                                \
     inline std::string ValueToString(const C value) noexcept                   \
@@ -204,6 +210,26 @@ inline std::string ValueToString(const T value) noexcept
     valueSS << value;
     const std::string valueStr(valueSS.str());
     return valueStr;
+}
+
+template <>
+inline std::string VectorToCSV(const std::vector<std::string> &input) noexcept
+{
+    if (input.empty())
+    {
+        return std::string();
+    }
+
+    std::ostringstream valueSS;
+    for (const auto value : input)
+    {
+        valueSS << "\"" << value << "\", ";
+    }
+    std::string csv(valueSS.str());
+    csv.pop_back();
+    csv.pop_back();
+
+    return csv;
 }
 
 #define declare_template_instantiation(C)                                      \

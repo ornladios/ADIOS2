@@ -14,9 +14,11 @@
 #include <iostream>
 
 #include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSMacros.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/IO.h"
 #include "adios2/engine/bp/BPFileReader.h"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
@@ -45,7 +47,8 @@ void BPLS2::ParseArguments()
 {
     if (m_Arguments.size() == 1)
     {
-        throw std::invalid_argument("ERROR: Missing bpfile\n" + m_HelpMessage);
+        throw std::invalid_argument(
+            "ERROR: Missing adios2 bp file or arguments\n" + m_HelpMessage);
     }
 
     bool isFileSet = false;
@@ -98,8 +101,8 @@ void BPLS2::ProcessParameters() const
             std::cout << "\n";
             std::cout << "Found --help , -h option, discarding others\n";
             std::cout << "Rerun without --help , -h option\n";
-            throw std::invalid_argument("");
         }
+        throw std::invalid_argument("");
     }
 
     if (m_FileName.empty())
@@ -133,7 +136,6 @@ void BPLS2::SetParameters(const std::string argument, const bool isLong)
         throw std::invalid_argument("ERROR: invalid argument: -" + argument +
                                     "\n");
     }
-
     bool isOption = false;
 
     if (m_Options.count(argument) == 1 && isLong)
@@ -185,17 +187,21 @@ void BPLS2::SetParameters(const std::string argument, const bool isLong)
 
 void BPLS2::ProcessTransport() const
 {
-    auto lf_PrintVerboseHeader = [](
-        const BPFileReader &bpFileReader, const size_t variablesSize,
-        const size_t attributesSize, const size_t stepsCount) {
+    auto lf_PrintVerboseHeader = [](const BPFileReader &bpFileReader) {
+
+        const std::map<std::string, Params> variablesInfo =
+            bpFileReader.m_IO.GetAvailableVariables();
+
+        const std::map<std::string, Params> attributesInfo =
+            bpFileReader.m_IO.GetAvailableAttributes();
 
         const auto &metadataSet = bpFileReader.m_BP3Deserializer.m_MetadataSet;
         std::cout << "File info:\n";
         std::cout << "  groups:     " << metadataSet.DataPGCount << "\n";
-        std::cout << "  variables:  " << variablesSize << "\n";
-        std::cout << "  attributes: " << attributesSize << "\n";
+        std::cout << "  variables:  " << variablesInfo.size() << "\n";
+        std::cout << "  attributes: " << attributesInfo.size() << "\n";
         std::cout << "  meshes:     TODO\n";
-        std::cout << "  steps:      " << stepsCount << "\n";
+        std::cout << "  steps:      " << metadataSet.StepsCount << "\n";
         std::cout << "  file size:  "
                   << bpFileReader.m_FileManager.GetFileSize(0) << " bytes\n";
 
@@ -212,14 +218,14 @@ void BPLS2::ProcessTransport() const
         std::cout << "\n";
     };
 
-    auto lf_PrintVariables =
-        [&](const std::map<std::string, Params> &variablesMap)
+    auto lf_PrintVariables = [&](BPFileReader &bpFileReader) {
 
-    {
-        // get maximum sizes
+        const std::map<std::string, Params> &variablesInfo =
+            bpFileReader.m_IO.GetAvailableVariables();
+
         size_t maxTypeSize = 0;
         size_t maxNameSize = 0;
-        for (const auto &variablePair : variablesMap)
+        for (const auto &variablePair : variablesInfo)
         {
             const size_t nameSize = variablePair.first.size();
             if (nameSize > maxNameSize)
@@ -235,7 +241,7 @@ void BPLS2::ProcessTransport() const
             }
         }
 
-        for (const auto &variablePair : variablesMap)
+        for (const auto &variablePair : variablesInfo)
         {
             const std::string name(variablePair.first);
             const Params &variableParameters = variablePair.second;
@@ -248,9 +254,57 @@ void BPLS2::ProcessTransport() const
             // print min max
             if (m_Parameters.count("long") == 1)
             {
-                std::cout << variableParameters.at("Min") << " / "
-                          << variableParameters.at("Max");
+                if (variableParameters.at("SingleValue") == "false")
+                {
+                    std::cout << variableParameters.at("AvailableStepsCount")
+                              << "*{" << variableParameters.at("Shape")
+                              << "}  ";
+                    std::cout << variableParameters.at("Min") << " / "
+                              << variableParameters.at("Max");
+                }
+                else
+                {
+                    std::cout << variableParameters.at("AvailableStepsCount")
+                              << "*scalar " << variableParameters.at("Value");
+                }
             }
+            std::cout << "\n";
+        }
+        std::cout << std::endl;
+    };
+
+    auto lf_PrintAttributes = [&](IO &io) {
+        const std::map<std::string, Params> &attributesInfo =
+            io.GetAvailableAttributes();
+
+        size_t maxTypeSize = 0;
+        size_t maxNameSize = 0;
+        for (const auto &attributePair : attributesInfo)
+        {
+            const size_t nameSize = attributePair.first.size();
+            if (nameSize > maxNameSize)
+            {
+                maxNameSize = nameSize;
+            }
+
+            const Params &parameters = attributePair.second;
+            const size_t typeSize = parameters.at("Type").size();
+            if (typeSize > maxTypeSize)
+            {
+                maxTypeSize = typeSize;
+            }
+        }
+
+        for (const auto &attributePair : attributesInfo)
+        {
+            const std::string name(attributePair.first);
+            const Params &parameters = attributePair.second;
+            const std::string type(parameters.at("Type"));
+
+            std::cout << "  ";
+            std::cout << std::left << std::setw(maxTypeSize) << type << "  ";
+            std::cout << std::left << std::setw(maxNameSize) << name << "  ";
+            std::cout << "attribute = " << parameters.at("Value");
             std::cout << "\n";
         }
         std::cout << std::endl;
@@ -259,29 +313,22 @@ void BPLS2::ProcessTransport() const
     ADIOS adios(true);
     IO &io = adios.DeclareIO("bpls2");
     BPFileReader bpFileReader(io, m_FileName, Mode::Read, io.m_MPIComm);
-    const std::map<std::string, Params> variablesInfo =
-        io.GetAvailableVariables();
 
     if (m_Parameters.count("verbose") == 1)
     {
-        size_t stepsCount = 1;
-
-        for (const auto variableInfo : variablesInfo)
-        {
-            const size_t variableStepsCount = static_cast<size_t>(
-                std::stoul(variableInfo.second.at("AvailableStepsCount")));
-
-            if (variableStepsCount > stepsCount)
-            {
-                stepsCount = variableStepsCount;
-            }
-        }
-
-        lf_PrintVerboseHeader(bpFileReader, variablesInfo.size(), 0,
-                              stepsCount);
+        lf_PrintVerboseHeader(bpFileReader);
     }
 
-    lf_PrintVariables(variablesInfo);
+    if (m_Parameters.count("attrsonly") == 0)
+    {
+        lf_PrintVariables(bpFileReader);
+    }
+
+    if (m_Parameters.count("attrs") == 1 ||
+        m_Parameters.count("attrsonly") == 1)
+    {
+        lf_PrintAttributes(io);
+    }
 }
 
 } // end namespace utils
