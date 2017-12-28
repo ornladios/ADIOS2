@@ -21,9 +21,13 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     if (m_UseFormat == "BP" || m_UseFormat == "bp" )
     {
-        variable.SetData(data);
         m_BP3Deserializer.GetSyncVariableDataFromStream(
             variable, m_BP3Deserializer.m_Data);
+
+        size_t varsize = std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(), 1,
+                std::multiplies<std::size_t>());
+
+        std::memcpy(data, variable.GetData(), varsize);
     }
 }
 
