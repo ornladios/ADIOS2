@@ -102,10 +102,15 @@ private:
     void SendReadSchedule(
         const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo);
 
+    uint64_t m_BytesReceivedInPlace = 0; // bytes that were arriving in place
+    uint64_t m_BytesReceivedInTemporary = 0; // bytes that needed copy
+    int Statistics(uint64_t bytesInPlace, uint64_t bytesCopied);
+
     // Make an async receive request for all variables
     void AsyncRecvAllVariables();
 
-    void AsyncRecvVariable(const std::string &variableName,
+    template <class T>
+    void AsyncRecvVariable(const Variable<T> &variable,
                            const SubFileInfoMap &subFileInfoMap);
 
     // Wait for all async receives to arrive and process them
@@ -115,12 +120,12 @@ private:
     {
         const SubFileInfo *sfiPointer;
         const std::string *varNamePointer;
-        std::vector<char> incomingDataArray;
+        std::vector<char> temporaryDataArray; // allocated in engine
+        char *inPlaceDataArray;               // pointer to user data
         OngoingReceive(const SubFileInfo *p, const std::string *v)
-        : sfiPointer(p), varNamePointer(v){};
-        OngoingReceive(const SubFileInfo *p, const std::string *v,
-                       std::vector<char> d)
-        : sfiPointer(p), varNamePointer(v), incomingDataArray(std::move(d)){};
+        : sfiPointer(p), varNamePointer(v), inPlaceDataArray(nullptr){};
+        OngoingReceive(const SubFileInfo *p, const std::string *v, char *ptr)
+        : sfiPointer(p), varNamePointer(v), inPlaceDataArray(ptr){};
     };
 
     std::vector<OngoingReceive> m_OngoingReceives;
