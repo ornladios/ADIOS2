@@ -19,7 +19,7 @@ namespace adios2
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    if (m_UseFormat == "BP")
+    if (m_UseFormat == "BP" || m_UseFormat == "bp" )
     {
         variable.SetData(data);
         m_BP3Deserializer.GetSyncVariableDataFromStream(
@@ -27,13 +27,10 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
     }
 }
 
-// TODO: let;s try with GetSync first, GetDeferred, PerformGets is just a
-// wrapper
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    m_BP3Deserializer.GetDeferredVariable(variable, data);
-    m_BP3Deserializer.m_PerformedGets = false;
+    GetSyncCommon(variable, data);
 }
 
 } // end namespace adios2

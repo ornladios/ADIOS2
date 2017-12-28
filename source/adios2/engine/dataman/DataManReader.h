@@ -54,8 +54,9 @@ private:
     format::BP3Deserializer m_BP3Deserializer;
     transportman::DataMan m_Man;
 
+    size_t m_BufferSize = 1024 * 1024 * 1024;
     unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "json";
+    std::string m_UseFormat = "BP";
     bool m_DoMonitor = false;
 
     void Init();

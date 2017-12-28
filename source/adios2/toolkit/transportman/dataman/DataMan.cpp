@@ -61,6 +61,10 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                                                m_DebugMode,
                                                "Transport Library Parameter"));
 
+        const std::string callback(
+            GetParameter("Callback", paramsVector[i], false, m_DebugMode,
+                         "Transport Callback Parameter"));
+
         const std::string ipAddress(
             GetParameter("IPAddress", paramsVector[i], true, m_DebugMode,
                          "Transport IPAddress Parameter"));
@@ -91,10 +95,14 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
 
             if (mode == Mode::Read)
             {
-                m_Listening = true;
-                m_ControlThreads.emplace_back(std::thread(
-                    &DataMan::ReadThread, this, wanTransport, controlTransport,
-                    streamNames[i], paramsVector[i]));
+                if (callback == "YES" || callback == "yes" ||
+                    callback == "TRUE" || callback == "true")
+                {
+                    m_Listening = true;
+                    m_ControlThreads.emplace_back(std::thread(
+                        &DataMan::ReadThread, this, wanTransport,
+                        controlTransport, streamNames[i], paramsVector[i]));
+                }
             }
             ++counter;
 #else
@@ -146,7 +154,22 @@ void DataMan::WriteWAN(const void *buffer, size_t size)
         reinterpret_cast<const char *>(buffer), size);
 }
 
-void DataMan::ReadWAN(void *buffer, nlohmann::json jmsg) {}
+void DataMan::ReadWAN(void *buffer, size_t &size)
+{
+
+    Transport::Status status;
+    for (int i = 0; i < 3000; ++i)
+    {
+        m_Transports[m_CurrentTransport]->IRead(static_cast<char *>(buffer),
+                                                m_BufferSize, status);
+        if (status.Bytes > 0)
+        {
+            size = status.Bytes;
+            return;
+        }
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+}
 
 void DataMan::SetBP3Deserializer(format::BP3Deserializer &bp3Deserializer)
 {
@@ -230,10 +253,6 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
                     GetParameter("DumpFile", trans_params, false, m_DebugMode,
                                  "Transport DumpFile Parameter"));
 
-                for (auto &i : trans_params)
-                {
-                    std::cout << i.first << " ===== " << i.second << std::endl;
-                }
                 // TODO: Aggregation
                 if (dumpFile == "yes" || dumpFile == "YES" ||
                     dumpFile == "TRUE" || dumpFile == "true")

@@ -47,7 +47,7 @@ public:
      */
     void WriteWAN(const void *buffer, size_t size);
 
-    void ReadWAN(void *buffer, nlohmann::json jmsg);
+    void ReadWAN(void *buffer, size_t &size);
 
     /**
      * Set BP3 deserializer private pointer m_BP3Deserializer, from Engine

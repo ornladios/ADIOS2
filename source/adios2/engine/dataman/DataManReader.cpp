@@ -29,11 +29,30 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    StepStatus status = StepStatus::OK;
-    // here fill the logic for the while loop listener...
-    // m_BP3Deserializer.m_MetadataSet.StepsCount will have the number of steps
-    // per buffer
-    // Look at the BPFileReader.BeginStep implementation
+    std::vector<char> buffer;
+    buffer.reserve(m_BufferSize);
+    size_t size = 0;
+
+    m_Man.ReadWAN(buffer.data(), size);
+
+    StepStatus status;
+
+    if (size > 0)
+    {
+        status = StepStatus::OK;
+
+        m_BP3Deserializer.m_Data.Resize(size, "in DataMan Streaming Listener");
+
+        std::memcpy(m_BP3Deserializer.m_Data.m_Buffer.data(), buffer.data(),
+                    size);
+
+        m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Data, m_IO);
+    }
+    else
+    {
+        status = StepStatus::EndOfStream;
+    }
+
     return status;
 }
 
@@ -93,15 +112,12 @@ bool DataManReader::GetUIntParameter(Params &params, std::string key,
 }
 void DataManReader::InitParameters()
 {
-
     GetUIntParameter(m_IO.m_Parameters, "NChannels", m_NChannels);
-
     GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
 }
 
 void DataManReader::InitTransports()
 {
-
     size_t channels = m_IO.m_TransportsParameters.size();
     std::vector<std::string> names;
     for (size_t i = 0; i < channels; ++i)
@@ -114,7 +130,6 @@ void DataManReader::InitTransports()
 }
 void DataManReader::Init()
 {
-
     for (auto &j : m_IO.m_Operators)
     {
         if (j.ADIOSOperator.m_Type == "Signature2")

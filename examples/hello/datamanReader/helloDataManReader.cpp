@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
                                           {"Library", "ZMQ"},
                                           {"IPAddress", "127.0.0.1"},
                                           {"DumpFile", "YES"},
+                                          {"Callback", "YES"},
                                       });
         dataManIO.AddOperator(callbackFloat); // propagate to all Engines
 
