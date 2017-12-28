@@ -46,8 +46,6 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
         }
     }
 
-    StepStatus status = StepStatus::OK;
-
     if (m_FirstStep)
     {
         m_FirstStep = false;
@@ -57,9 +55,9 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
         ++m_CurrentStep;
     }
 
-    if (m_CurrentStep >= m_BP3Deserializer.m_MetadataSet.StepsCount - 1)
+    if (m_CurrentStep >= m_BP3Deserializer.m_MetadataSet.StepsCount)
     {
-        status = StepStatus::EndOfStream;
+        return StepStatus::EndOfStream;
     }
 
     const auto &variablesData = m_IO.GetVariablesDataMap();
@@ -85,7 +83,7 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
 #undef declare_type
     }
 
-    return status;
+    return StepStatus::OK;
 }
 
 void BPFileReader::EndStep()
