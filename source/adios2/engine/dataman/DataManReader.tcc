@@ -24,7 +24,7 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
         m_BP3Deserializer.GetSyncVariableDataFromStream(
             variable, m_BP3Deserializer.m_Data);
 
-        size_t varsize = std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(), 1,
+        size_t varsize = std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(), sizeof(T),
                 std::multiplies<std::size_t>());
 
         std::memcpy(data, variable.GetData(), varsize);
