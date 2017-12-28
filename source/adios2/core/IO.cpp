@@ -114,8 +114,7 @@ void IO::SetTransportParameter(const unsigned int transportIndex,
                 "ERROR: transportIndex is larger than "
                 "transports created with AddTransport, for key: " +
                 key + ", value: " + value +
-                "in call to SetTransportParameter "
-                "\n");
+                "in call to SetTransportParameter\n");
         }
     }
 
