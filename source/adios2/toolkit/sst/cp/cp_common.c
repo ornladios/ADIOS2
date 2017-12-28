@@ -172,7 +172,7 @@ static FMField FFSFormatBlockList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField SstBlockList[] = {
-    {"BlockSize", "integer", 1, FMOffset(struct _SstBlock *, BlockSize)},
+    {"BlockSize", "integer", sizeof(size_t), FMOffset(struct _SstBlock *, BlockSize)},
     {"BlockData", "char[BlockSize]", 1,
      FMOffset(struct _SstBlock *, BlockData)},
     {NULL, NULL, 0, 0}};
@@ -503,11 +503,6 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
     {
         FFSdecode_in_place(context, RecvBuffer + Displs[i],
                            (void **)&Pointers[i]);
-        //    FFSTypeHandle ffs_type = FFSTypeHandle_from_encode(context,
-        //    RecvBuffer);
-        //        printf("Decode for rank %d :\n", i);
-        //        FMdump_data(FMFormat_of_original(ffs_type), Pointers[i],
-        //        1024000);
     }
     free(Displs);
     free(RecvCounts);
