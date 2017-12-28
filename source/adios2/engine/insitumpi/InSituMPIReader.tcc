@@ -61,7 +61,7 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
          * SubFileInfoMap contains ALL read schedules for the variable.
          * We should do this call per SubFileInfo that matches the request
          */
-        AsyncRecvVariable(variable.m_Name, sfim);
+        AsyncRecvVariable(variable, sfim);
     }
     else
     {
@@ -72,6 +72,90 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
          */
         m_BP3Deserializer.GetDeferredVariable(variable, data);
         m_BP3Deserializer.m_PerformedGets = false;
+    }
+}
+
+template <class T>
+void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
+                                        const SubFileInfoMap &subFileInfoMap)
+{
+    // <writer, <steps, <SubFileInfo>>>
+    for (const auto &subFileIndexPair : subFileInfoMap)
+    {
+        const size_t writerRank = subFileIndexPair.first; // writer
+        // <steps, <SubFileInfo>>  but there is only one step
+        for (const auto &stepPair : subFileIndexPair.second)
+        {
+            const std::vector<SubFileInfo> &sfis = stepPair.second;
+            for (const auto &sfi : sfis)
+            {
+                if (m_Verbosity == 5)
+                {
+                    std::cout << "InSituMPI Reader " << m_ReaderRank
+                              << " async recv var = " << variable.m_Name
+                              << " from writer " << writerRank;
+                    std::cout << " info = ";
+                    insitumpi::PrintSubFileInfo(sfi);
+                    std::cout << std::endl;
+                }
+
+                const auto &seek = sfi.Seeks;
+                const size_t blockStart = seek.first;
+                const size_t blockSize = seek.second - seek.first;
+                m_MPIRequests.emplace_back();
+                const int index = m_MPIRequests.size() - 1;
+                size_t elementOffset, dummy;
+
+                // Do we read a contiguous piece from the source?
+                // and do we write a contiguous piece into the user data?
+                if (IsIntersectionContiguousSubarray(
+                        sfi.BlockBox, sfi.IntersectionBox, dummy) &&
+                    IsIntersectionContiguousSubarray(
+                        StartEndBox(variable.m_Start, variable.m_Count),
+                        sfi.IntersectionBox, elementOffset))
+                {
+                    // Receive in place (of user data pointer)
+                    // const size_t startOffset =
+                    //    elementOffset * variable.m_ElementSize;
+                    T *inPlacePointer = variable.GetData() + elementOffset;
+                    T *ptrT = const_cast<T *>(inPlacePointer);
+                    char *ptr = reinterpret_cast<char *>(ptrT);
+                    m_OngoingReceives.emplace_back(&sfi, &variable.m_Name, ptr);
+                    MPI_Irecv(m_OngoingReceives[index].inPlaceDataArray,
+                              blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
+                              insitumpi::MpiTags::Data, m_CommWorld,
+                              m_MPIRequests.data() + index);
+                    if (m_Verbosity == 5)
+                    {
+                        std::cout
+                            << "InSituMPI Reader " << m_ReaderRank
+                            << " requested in-place receive to element offset "
+                            << elementOffset << std::endl;
+                    }
+                    m_BytesReceivedInPlace += blockSize;
+                }
+                else
+                {
+                    // Receive in temporary array and copy in later
+                    m_OngoingReceives.emplace_back(&sfi, &variable.m_Name);
+                    m_OngoingReceives[index].temporaryDataArray.resize(
+                        blockSize);
+                    MPI_Irecv(
+                        m_OngoingReceives[index].temporaryDataArray.data(),
+                        blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
+                        insitumpi::MpiTags::Data, m_CommWorld,
+                        m_MPIRequests.data() + index);
+                    if (m_Verbosity == 5)
+                    {
+                        std::cout << "InSituMPI Reader " << m_ReaderRank
+                                  << " requested receive into temporary area"
+                                  << std::endl;
+                    }
+                    m_BytesReceivedInTemporary += blockSize;
+                }
+            }
+            break; // there is only one step here
+        }
     }
 }
 

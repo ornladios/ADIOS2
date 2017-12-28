@@ -187,6 +187,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
                       << " attributes in metadata" << std::endl;
         }
     }
+
     return StepStatus::OK;
 }
 
@@ -229,11 +230,22 @@ void InSituMPIReader::PerformGets()
     m_BP3Deserializer.m_PerformedGets = true;
 }
 
+int InSituMPIReader::Statistics(uint64_t bytesInPlace, uint64_t bytesCopied)
+{
+    if (bytesInPlace == 0)
+        return 0;
+    return ((bytesInPlace + bytesCopied) * 100) / bytesInPlace;
+}
+
 void InSituMPIReader::EndStep()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " EndStep()\n";
+        std::cout << "InSituMPI Reader " << m_ReaderRank
+                  << " EndStep(): received "
+                  << Statistics(m_BytesReceivedInPlace,
+                                m_BytesReceivedInTemporary)
+                  << "% of data in place (zero-copy)" << std::endl;
     }
     if (!m_BP3Deserializer.m_PerformedGets)
     {
@@ -248,6 +260,20 @@ void InSituMPIReader::Close(const int transportIndex)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " Close(" << m_Name
                   << ")\n";
+    }
+    if (m_Verbosity > 2)
+    {
+        std::vector<uint64_t> bytes(
+            {m_BytesReceivedInPlace, m_BytesReceivedInTemporary});
+        std::vector<uint64_t> sumbytes(2);
+        MPI_Reduce(bytes.data(), sumbytes.data(), m_ReaderNproc,
+                   MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
+        if (m_ReaderRank == 0)
+        {
+            std::cout << "ADIOS InSituMPI Reader for " << m_Name << " received "
+                      << Statistics(sumbytes[0], sumbytes[1])
+                      << "% of data in place (zero-copy)" << std::endl;
+        }
     }
 }
 
@@ -287,48 +313,28 @@ void InSituMPIReader::AsyncRecvAllVariables()
     // <variable, <writer, <steps, <SubFileInfo>>>>
     for (const auto &variablePair : m_ReadScheduleMap)
     {
-        AsyncRecvVariable(variablePair.first, variablePair.second);
-    }
-}
+        // AsyncRecvVariable(variablePair.first, variablePair.second);
+        const std::string type(m_IO.InquireVariableType(variablePair.first));
 
-void InSituMPIReader::AsyncRecvVariable(const std::string &variableName,
-                                        const SubFileInfoMap &subFileInfoMap)
-{
-    // <writer, <steps, <SubFileInfo>>>
-    for (const auto &subFileIndexPair : subFileInfoMap)
-    {
-        const size_t writerRank = subFileIndexPair.first; // writer
-        // <steps, <SubFileInfo>>  but there is only one step
-        for (const auto &stepPair : subFileIndexPair.second)
+        if (type == "compound")
         {
-            const std::vector<SubFileInfo> &sfis = stepPair.second;
-            for (const auto &sfi : sfis)
-            {
-                if (m_Verbosity == 5)
-                {
-                    std::cout << "InSituMPI Reader " << m_ReaderRank
-                              << " async recv var = " << variableName
-                              << " from writer " << writerRank;
-                    std::cout << " info = ";
-                    insitumpi::PrintSubFileInfo(sfi);
-                    std::cout << std::endl;
-                }
-
-                const auto &seek = sfi.Seeks;
-                const size_t blockStart = seek.first;
-                const size_t blockSize = seek.second - seek.first;
-                m_OngoingReceives.emplace_back(&sfi, &variableName);
-                m_MPIRequests.emplace_back();
-                const int index = m_OngoingReceives.size() - 1;
-                m_OngoingReceives[index].incomingDataArray.resize(blockSize);
-
-                MPI_Irecv(m_OngoingReceives[index].incomingDataArray.data(),
-                          blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
-                          insitumpi::MpiTags::Data, m_CommWorld,
-                          m_MPIRequests.data() + index);
-            }
-            break; // there is only one step here
+            // not supported
         }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(variablePair.first);   \
+        if (m_DebugMode && variable == nullptr)                                \
+        {                                                                      \
+            throw std::invalid_argument(                                       \
+                "ERROR: variable " + variablePair.first +                      \
+                " not found, in call to AsyncSendVariable\n");                 \
+        }                                                                      \
+        AsyncRecvVariable<T>(*variable, variablePair.second);                  \
+    }
+
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
     }
 }
 
@@ -345,16 +351,21 @@ void InSituMPIReader::ProcessReceives()
         {
             if (0 <= index && index < nRequests)
             {
-                const std::vector<char> &rawData =
-                    m_OngoingReceives[index].incomingDataArray;
-                const SubFileInfo *sfi = m_OngoingReceives[index].sfiPointer;
-                const std::string *name =
-                    m_OngoingReceives[index].varNamePointer;
+                if (m_OngoingReceives[index].inPlaceDataArray == nullptr)
+                {
+                    const std::vector<char> &rawData =
+                        m_OngoingReceives[index].temporaryDataArray;
+                    const SubFileInfo *sfi =
+                        m_OngoingReceives[index].sfiPointer;
+                    const std::string *name =
+                        m_OngoingReceives[index].varNamePointer;
 
-                m_BP3Deserializer.ClipContiguousMemory(
-                    *name, m_IO, rawData, sfi->BlockBox, sfi->IntersectionBox);
-                // MPI_Request_free(&m_MPIRequests[index]);
-                m_MPIRequests[index] = MPI_REQUEST_NULL;
+                    m_BP3Deserializer.ClipContiguousMemory(
+                        *name, m_IO, rawData, sfi->BlockBox,
+                        sfi->IntersectionBox);
+                }
+                // MPI_Request_free(&m_MPIRequests[index]); // not required???
+                // m_MPIRequests[index] = MPI_REQUEST_NULL; // not required???
                 ++nCompletedRequests;
             }
             else
