@@ -113,8 +113,8 @@ void IO::SetTransportParameter(const unsigned int transportIndex,
             throw std::invalid_argument(
                 "ERROR: transportIndex is larger than "
                 "transports created with AddTransport, for key: " +
-                key + ", value: " + value + "in call to SetTransportParameter "
-                                            "\n");
+                key + ", value: " + value +
+                "in call to SetTransportParameter\n");
         }
     }
 
@@ -246,6 +246,14 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         variablesInfo[name]["Shape"] = VectorToCSV(variable.m_Shape);          \
         variablesInfo[name]["Start"] = VectorToCSV(variable.m_Start);          \
         variablesInfo[name]["Count"] = VectorToCSV(variable.m_Count);          \
+        if (variable.m_SingleValue)                                            \
+        {                                                                      \
+            variablesInfo[name]["SingleValue"] = "true";                       \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            variablesInfo[name]["SingleValue"] = "false";                      \
+        }                                                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -270,6 +278,8 @@ std::map<std::string, Params> IO::GetAvailableAttributes() noexcept
     else if (type == GetType<T>())                                             \
     {                                                                          \
         Attribute<T> &attribute = *InquireAttribute<T>(name);                  \
+        attributesInfo[name]["Elements"] =                                     \
+            std::to_string(attribute.m_Elements);                              \
                                                                                \
         if (attribute.m_IsSingleValue)                                         \
         {                                                                      \
