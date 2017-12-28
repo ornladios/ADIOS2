@@ -29,8 +29,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     auto varCallback = [](void *reader, const char *variableName,
                           const char *type, void *data) {
         std::string Type(type);
-        SstReader::SstReader *Reader =
-            reinterpret_cast<SstReader::SstReader *>(reader);
+        typename SstReader::SstReader *Reader =
+            reinterpret_cast<typename SstReader::SstReader *>(reader);
         if (Type == "compound")
         {
             return (void *)NULL;
