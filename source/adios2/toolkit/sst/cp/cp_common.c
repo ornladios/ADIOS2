@@ -171,11 +171,11 @@ static FMField FFSFormatBlockList[] = {
      FMOffset(struct FFSFormatBlock *, Next)},
     {NULL, NULL, 0, 0}};
 
-static FMField SstBlockList[] = {
-    {"BlockSize", "integer", sizeof(size_t), FMOffset(struct _SstBlock *, BlockSize)},
-    {"BlockData", "char[BlockSize]", 1,
-     FMOffset(struct _SstBlock *, BlockData)},
-    {NULL, NULL, 0, 0}};
+static FMField SstBlockList[] = {{"BlockSize", "integer", sizeof(size_t),
+                                  FMOffset(struct _SstBlock *, BlockSize)},
+                                 {"BlockData", "char[BlockSize]", 1,
+                                  FMOffset(struct _SstBlock *, BlockData)},
+                                 {NULL, NULL, 0, 0}};
 
 static FMStructDescRec MetaDataPlusDPInfoStructs[] = {
     {"MetaDataPlusDPInfo", MetaDataPlusDPInfoList,
