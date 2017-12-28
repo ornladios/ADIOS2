@@ -120,12 +120,27 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1,
                           const Box<Dims> &box2) noexcept;
 
 /**
- * Returns the true if the two boxes are identical
+ * Returns true if the two boxes are identical
  * @param box1 {start, end} input
  * @param box2 {start, end} input
  * @return true if not boxes are identical, false otherwise
  */
 bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept;
+
+/**
+ * Returns true if the intersection box is a contiguous subarray
+ * of the block box. It also returns the starting offset in element number (not
+ * in bytes) in an output argument
+ * @param blockBox {start, end} input
+ * @param intersectionBox {start, end} input
+ * @param startOffset output argument indicating the starting element of
+ * intersection box in the block box
+ * @return true if intersection box is a contiguous subarray
+ * of the block box, false otherwise
+ */
+bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
+                                      const Box<Dims> &intersectionBox,
+                                      size_t &startOffset) noexcept;
 
 /**
  * Get a linear index for a point inside a localBox depending on data layout
