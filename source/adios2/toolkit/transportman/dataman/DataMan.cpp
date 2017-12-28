@@ -31,10 +31,10 @@ DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
 
 DataMan::~DataMan()
 {
-    for (auto &controlThread : m_ControlThreads)
+    for (auto &readThread : m_ReadThreads)
     {
         m_Listening = false;
-        controlThread.join();
+        readThread.join();
     }
 }
 
@@ -69,29 +69,26 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             GetParameter("IPAddress", paramsVector[i], true, m_DebugMode,
                          "Transport IPAddress Parameter"));
 
-        std::string portControl(GetParameter("Port", paramsVector[i], false,
-                                             m_DebugMode,
-                                             "Transport Port Parameter"));
+        std::string port(GetParameter("Port", paramsVector[i], false,
+                                      m_DebugMode, "Transport Port Parameter"));
 
-        if (portControl.empty())
+        if (port.empty())
         {
-            portControl = std::to_string(m_DefaultPort);
+            port = std::to_string(m_DefaultPort);
         }
 
-        const std::string portData(std::to_string(stoi(portControl) + 1));
+        int mpiRank;
+        MPI_Comm_rank(m_MPIComm, &mpiRank);
+
+        port = std::to_string(stoi(port) + mpiRank);
 
         if (library == "zmq" || library == "ZMQ")
         {
 #ifdef ADIOS2_HAVE_ZEROMQ
             wanTransport = std::make_shared<transport::WANZmq>(
-                ipAddress, portData, m_MPIComm, m_DebugMode);
+                ipAddress, port, m_MPIComm, m_DebugMode);
             wanTransport->Open(streamNames[i], mode);
             m_Transports.emplace(counter, wanTransport);
-
-            controlTransport = std::make_shared<transport::WANZmq>(
-                ipAddress, portControl, m_MPIComm, m_DebugMode);
-            controlTransport->Open(streamNames[i], mode);
-            m_ControlTransports.emplace_back(controlTransport);
 
             if (mode == Mode::Read)
             {
@@ -99,9 +96,9 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                     callback == "TRUE" || callback == "true")
                 {
                     m_Listening = true;
-                    m_ControlThreads.emplace_back(std::thread(
-                        &DataMan::ReadThread, this, wanTransport,
-                        controlTransport, streamNames[i], paramsVector[i]));
+                    m_ReadThreads.emplace_back(
+                        std::thread(&DataMan::ReadThread, this, wanTransport,
+                                    streamNames[i], paramsVector[i]));
                 }
             }
             ++counter;
@@ -124,24 +121,6 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void DataMan::WriteWAN(const void *buffer, nlohmann::json jmsg)
-{
-    if (m_CurrentTransport >= m_ControlTransports.size())
-    {
-        throw std::runtime_error("ERROR: No valid control transports found, "
-                                 "from DataMan::WriteWAN()");
-    }
-    if (m_CurrentTransport >= m_Transports.size())
-    {
-        throw std::runtime_error(
-            "ERROR: No valid transports found, from DataMan::WriteWAN()");
-    }
-    m_ControlTransports[m_CurrentTransport]->Write(jmsg.dump().c_str(),
-                                                   jmsg.dump().size());
-    m_Transports[m_CurrentTransport]->Write(
-        reinterpret_cast<const char *>(buffer), jmsg["bytes"].get<size_t>());
-}
-
 void DataMan::WriteWAN(const void *buffer, size_t size)
 {
     if (m_CurrentTransport >= m_Transports.size())
@@ -158,7 +137,7 @@ void DataMan::ReadWAN(void *buffer, size_t &size)
 {
 
     Transport::Status status;
-    for (int i = 0; i < 3000; ++i)
+    for (int i = 0; i < m_Timeout * 1000; ++i)
     {
         m_Transports[m_CurrentTransport]->IRead(static_cast<char *>(buffer),
                                                 m_BufferSize, status);
@@ -167,7 +146,7 @@ void DataMan::ReadWAN(void *buffer, size_t &size)
             size = status.Bytes;
             return;
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
 }
 
@@ -184,7 +163,6 @@ void DataMan::SetCallback(adios2::Operator &callback)
 }
 
 void DataMan::ReadThread(std::shared_ptr<Transport> trans,
-                         std::shared_ptr<Transport> ctl_trans,
                          const std::string stream_name,
                          const Params trans_params)
 {
@@ -196,42 +174,7 @@ void DataMan::ReadThread(std::shared_ptr<Transport> trans,
         format = "bp";
     }
 
-    if (format == "json" || format == "JSON")
-    {
-        while (m_Listening)
-        {
-            char buffer[1024];
-            size_t bytes = 0;
-            nlohmann::json jmsg;
-            adios2::Transport::Status status;
-            ctl_trans->IRead(buffer, 1024, status, 0);
-            if (status.Bytes > 0)
-            {
-                std::string smsg(buffer);
-                jmsg = nlohmann::json::parse(smsg);
-                bytes = jmsg.value("bytes", 0);
-                if (bytes > 0)
-                {
-                    std::vector<char> data(bytes);
-                    trans->Read(data.data(), bytes);
-                    std::string doid =
-                        jmsg.value("doid", "Unknown Data Object");
-                    std::string var = jmsg.value("var", "Unknown Variable");
-                    std::string dtype =
-                        jmsg.value("dtype", "Unknown Data Type");
-                    std::vector<size_t> putshape =
-                        jmsg.value("putshape", std::vector<size_t>());
-                    if (m_Callback != nullptr &&
-                        m_Callback->m_Type == "Signature2")
-                    {
-                        m_Callback->RunCallback2(data.data(), doid, var, dtype,
-                                                 putshape);
-                    }
-                }
-            }
-        }
-    }
-    else if (format == "bp" || format == "BP")
+    if (format == "bp" || format == "BP")
     {
         while (m_Listening)
         {

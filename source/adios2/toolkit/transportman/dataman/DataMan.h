@@ -18,8 +18,6 @@
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
-#include <json.hpp>
-
 namespace adios2
 {
 namespace transportman
@@ -37,8 +35,6 @@ public:
                            const Mode openMode,
                            const std::vector<Params> &params,
                            const bool profile);
-
-    void WriteWAN(const void *buffer, nlohmann::json jmsg);
 
     /**
      * For BP Format
@@ -63,23 +59,19 @@ private:
     IO *m_IO = nullptr;
     Operator *m_Callback = nullptr;
     void ReadThread(std::shared_ptr<Transport> trans,
-                    std::shared_ptr<Transport> ctl_trans,
                     const std::string stream_name, const Params trans_params);
 
     void RunCallback(void *buffer, std::string doid, std::string var,
                      std::string dtype, std::vector<size_t> shape);
 
-    std::vector<std::shared_ptr<Transport>> m_ControlTransports;
-    std::vector<std::thread> m_ControlThreads;
+    std::vector<std::thread> m_ReadThreads;
     std::vector<Params> m_TransportsParameters;
 
     size_t m_CurrentTransport = 0;
     bool m_Listening = false;
-    nlohmann::json m_JMessage;
     size_t m_BufferSize = 1024 * 1024 * 1024;
-
-    /** Pick the appropriate default */
     const int m_DefaultPort = 12306;
+    int m_Timeout = 5;
 };
 
 } // end namespace transportman
