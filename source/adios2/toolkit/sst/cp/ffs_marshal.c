@@ -116,7 +116,10 @@ static void BreakdownArrayName(const char *Name, char **base_name_p,
     char *TypeStart = index(Name, '_') + 1;
     const char *NameStart;
     sscanf(Name, "SST%d_", &TypeLen);
-    NameStart = Name + TypeLen + 6;
+    NameStart = Name + TypeLen + 5;
+    while (*NameStart != '_')
+        NameStart++;
+    NameStart++;
     *type_p = malloc(TypeLen + 1);
     strncpy(*type_p, TypeStart, TypeLen);
     (*type_p)[TypeLen] = 0;
@@ -400,7 +403,6 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         Rec->MetaOffset =
             Info->MetaFields[Info->MetaFieldCount - 1].field_offset;
         Rec->SingleValue = 0;
-        RecalcMarshalStorageSize(Stream);
         AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
                            ConcatName(Name, "Shape"), "integer", sizeof(size_t),
                            DimCount);
@@ -410,15 +412,17 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
                            ConcatName(Name, "Offsets"), "integer",
                            sizeof(size_t), DimCount);
+        RecalcMarshalStorageSize(Stream);
+
         // To Data, add FMFields for ElemCount and Array matching _ArrayRec
         AddField(&Info->DataFields, &Info->DataFieldCount,
                  ConcatName(Name, "ElemCount"), "integer", sizeof(size_t));
-        RecalcMarshalStorageSize(Stream);
         Rec->DataOffset =
             Info->DataFields[Info->DataFieldCount - 1].field_offset;
         AddVarArrayField(&Info->DataFields, &Info->DataFieldCount,
                          ConcatName(Name, ""), Type, ElemSize,
                          ConcatName(Name, "ElemCount"));
+        RecalcMarshalStorageSize(Stream);
         // Changing the formats renders these invalid
         Info->MetaFormat = NULL;
         Info->DataFormat = NULL;
@@ -981,7 +985,7 @@ extern void SstWriterEndStep(SstStream Stream)
 
     // Call SstInternalProvideStep with Metadata block, Data block and (any new)
     // formatID and formatBody
-    //    printf("MetaDatablock is :\n");
+    //    printf("MetaDatablock is (Length %d):\n", MetaDataSize);
     //    FMdump_encoded_data(Info->MetaFormat, MetaDataRec->block, 1024000);
     //    printf("\nDatablock is :\n");
     //    FMdump_encoded_data(Info->DataFormat, DataRec->block, 1024000);
@@ -995,9 +999,14 @@ static void LoadFormats(SstStream Stream, FFSFormatList Formats)
     FFSFormatList Entry = Formats;
     while (Entry)
     {
+        char *FormatID = malloc(Entry->FormatIDRepLen);
+        char *FormatServerRep = malloc(Entry->FormatServerRepLen);
+        memcpy(FormatID, Entry->FormatIDRep, Entry->FormatIDRepLen);
+        memcpy(FormatServerRep, Entry->FormatServerRep,
+               Entry->FormatServerRepLen);
         load_external_format_FMcontext(
-            FMContext_from_FFS(Stream->ReaderFFSContext), Entry->FormatIDRep,
-            Entry->FormatIDRepLen, Entry->FormatServerRep);
+            FMContext_from_FFS(Stream->ReaderFFSContext), FormatID,
+            Entry->FormatIDRepLen, FormatServerRep);
         Entry = Entry->Next;
     }
 }
@@ -1091,6 +1100,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
         FMlocalize_structs(List);
         establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
     }
+
     if (FFSdecode_in_place_possible(FFSformat))
     {
         FFSdecode_in_place(Stream->ReaderFFSContext,
