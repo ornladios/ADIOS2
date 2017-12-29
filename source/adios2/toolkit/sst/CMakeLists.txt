@@ -3,6 +3,7 @@ add_library(sst
   dp/dummy_dp.c
   cp/cp.c
   cp/cp_common.c
+  cp/ffs_marshal.c
 )
 
 target_compile_features(sst PRIVATE c_std_99)

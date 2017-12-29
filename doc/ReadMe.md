@@ -1,4 +1,4 @@
-# Documentation for the Adaptable Input / Output System (ADIOS) v2.0
+# Documentation for the Adaptable Input / Output System (ADIOS) v2.1.0
 
 # Generate Doxygen API
 

@@ -38,18 +38,24 @@ public:
     /**
      * @brief Constructor for MPI applications WITH a XML config file
      * @param configFile XML format (maybe support different formats in the
-     * future?)
-     * @param mpiComm MPI communicator from application
-     * @param debugMode true: extra exception checks (recommended)
+     * future (json)?)
+     * @param mpiComm MPI communicator from application, make sure is valid
+     * through the scope of adios2 calls
+     * @param debugMode true (default): extra exception checks (recommended),
+     * false: optional feature to turn off checks on user input data,
+     * recommended in stable flows
      */
     ADIOS(const std::string configFile, MPI_Comm mpiComm,
           const bool debugMode = true, const std::string hostLanguage = "C++");
 
     /**
-     * @brief Constructor for non-MPI applications WITH a XML config file
+     * @brief Constructor for non-MPI applications WITH a XML config file (it
+     * must end with extension .xml)
      * @param configFile XML format (maybe support different formats in the
-     * future?)
-     * @param debugMode true: extra exception checks (recommended)
+     * future (json)?)
+     * @param debugMode true (default): extra exception checks (recommended),
+     * false: optional feature to turn off checks on user input data,
+     * recommended in stable flows
      */
     ADIOS(const std::string configFile, const bool debugMode = true,
           const std::string hostLanguage = "C++");
@@ -57,14 +63,18 @@ public:
     /**
      * @brief Constructor for MPI apps WITHOUT a XML config file
      * @param mpiComm MPI communicator from application
-     * @param debugMode true: extra exception checks (recommended)
+     * @param debugMode true (default): extra exception checks (recommended),
+     * false: optional feature to turn off checks on user input data,
+     * recommended in stable flows
      */
     ADIOS(MPI_Comm mpiComm, const bool debugMode = true,
           const std::string hostLanguage = "C++");
 
     /**
      *  @brief ADIOS no-MPI default empty constructor
-     *  @param debugMode true: extra exception checks (recommended)
+     * @param debugMode true (default): extra exception checks (recommended),
+     * false: optional feature to turn off checks on user input data,
+     * recommended in stable flows
      */
     ADIOS(const bool debugMode = true, const std::string hostLanguage = "C++");
 
@@ -80,8 +90,9 @@ public:
     /**
      * Declares a new IO class object and returns a reference to that object.
      * @param ioName must be unique
-     * @return reference to newly created IO object inside ADIOS, if IO is
-     * declared it throws an exception
+     * @return reference to newly created IO object inside current ADIOS object
+     * @exception std::invalid_argument if IO with unique name is already
+     * declared, in debug mode only
      */
     IO &DeclareIO(const std::string name);
 
@@ -90,7 +101,9 @@ public:
      * Follow the C++11 STL containers at function.
      * @param name of IO to look for
      * @return if IO exists returns a reference to existing IO object inside
-     * ADIOS, otherwise throws an exception
+     * ADIOS
+     * @exception std::invalid_argument if IO was not created with DeclareIO, in
+     * debug mode only
      */
     IO &AtIO(const std::string name);
 
@@ -103,6 +116,8 @@ public:
      * @param type from derived class
      * @param parameters optional parameters
      * @return reference to Operator object
+     * @exception std::invalid_argument if Operator with unique name is already
+     * defined, in debug mode only
      */
     Operator &DefineOperator(const std::string name, const std::string type,
                              const Params &parameters = Params());
@@ -111,8 +126,10 @@ public:
      * Signature for passing Callback functions as operators
      * @param name unique operator name
      * @param function callable function
-     * @param parameters
+     * @param parameters optional key-value pairs parameters
      * @return reference to Operator object
+     * @exception std::invalid_argument if Operator with unique name is already
+     * defined, in debug mode only
      */
     template <class R, class... Args>
     Operator &DefineOperator(const std::string name,
