@@ -3,7 +3,7 @@ set(CTEST_SITE "cori.nersc.gov")
 set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j10")
-set(CTEST_TEST_ARGS PARALLEL_LEVEL 10)
+set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
 
 set(CTEST_BUILD_NAME "Linux-CrayCLE6-KNL_GCC_MPICH")
 set(dashboard_model Nightly)
