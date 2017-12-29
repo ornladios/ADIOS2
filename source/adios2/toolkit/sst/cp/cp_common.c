@@ -117,14 +117,18 @@ static FMStructDescRec CP_WriterResponseStructs[] = {
      NULL},
     {NULL, NULL, 0, NULL}};
 
-static FMField SstMetadataList[] = {{"DataSize", "integer", sizeof(size_t),
-                                     FMOffset(struct _SstMetadata *, DataSize)},
-                                    {"VarCount", "integer", sizeof(int),
-                                     FMOffset(struct _SstMetadata *, VarCount)},
-                                    {"Vars", "VarMetadata[VarCount]",
-                                     sizeof(struct _SstVarMeta),
-                                     FMOffset(struct _SstMetadata *, Vars)},
-                                    {NULL, NULL, 0, 0}};
+/* static FMField SstMetadataList[] = {{"DataSize", "integer", sizeof(size_t),
+ */
+/*                                      FMOffset(struct _SstMetadata *,
+ * DataSize)}, */
+/*                                     {"VarCount", "integer", sizeof(int), */
+/*                                      FMOffset(struct _SstMetadata *,
+ * VarCount)}, */
+/*                                     {"Vars", "VarMetadata[VarCount]", */
+/*                                      sizeof(struct _SstVarMeta), */
+/*                                      FMOffset(struct _SstMetadata *, Vars)},
+ */
+/*                                     {NULL, NULL, 0, 0}}; */
 
 static FMField SstVarMetaList[] = {
     {"VarName", "string", sizeof(char *),
@@ -146,18 +150,42 @@ static FMField SstDimenMetaList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField MetaDataPlusDPInfoList[] = {
-    {"Metadata", "*SstMetadata", sizeof(struct _SstMetadata),
+    {"Metadata", "*SstBlock", sizeof(struct _SstBlock),
      FMOffset(struct _MetadataPlusDPInfo *, Metadata)},
+    {"Formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
+     FMOffset(struct _MetadataPlusDPInfo *, Formats)},
     {"DP_TimestepInfo", "*DP_STRUCT", 0,
      FMOffset(struct _MetadataPlusDPInfo *, DP_TimestepInfo)},
     {NULL, NULL, 0, 0}};
 
+static FMField FFSFormatBlockList[] = {
+    {"FormatServerRep", "char[FormatServerRepLen]", 1,
+     FMOffset(struct FFSFormatBlock *, FormatServerRep)},
+    {"FormatServerRepLen", "integer", sizeof(int),
+     FMOffset(struct FFSFormatBlock *, FormatServerRepLen)},
+    {"FormatIDRep", "char[FormatIDRepLen]", 1,
+     FMOffset(struct FFSFormatBlock *, FormatIDRep)},
+    {"FormatIDRepLen", "integer", sizeof(int),
+     FMOffset(struct FFSFormatBlock *, FormatIDRepLen)},
+    {"Next", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
+     FMOffset(struct FFSFormatBlock *, Next)},
+    {NULL, NULL, 0, 0}};
+
+static FMField SstBlockList[] = {{"BlockSize", "integer", sizeof(size_t),
+                                  FMOffset(struct _SstBlock *, BlockSize)},
+                                 {"BlockData", "char[BlockSize]", 1,
+                                  FMOffset(struct _SstBlock *, BlockData)},
+                                 {NULL, NULL, 0, 0}};
+
 static FMStructDescRec MetaDataPlusDPInfoStructs[] = {
     {"MetaDataPlusDPInfo", MetaDataPlusDPInfoList,
      sizeof(struct _MetadataPlusDPInfo), NULL},
-    {"SstMetadata", SstMetadataList, sizeof(struct _SstMetadata), NULL},
-    {"VarMetadata", SstVarMetaList, sizeof(struct _SstVarMeta), NULL},
-    {"VarDimension", SstDimenMetaList, sizeof(struct _SstDimenMeta), NULL},
+    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
+    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
+    //    {"SstMetadata", SstMetadataList, sizeof(struct _SstMetadata), NULL},
+    //    {"VarMetadata", SstVarMetaList, sizeof(struct _SstVarMeta), NULL},
+    //    {"VarDimension", SstDimenMetaList, sizeof(struct _SstDimenMeta),
+    //    NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField TimestepMetadataList[] = {
@@ -167,7 +195,9 @@ static FMField TimestepMetadataList[] = {
      FMOffset(struct _TimestepMetadataMsg *, Timestep)},
     {"cohort_size", "integer", sizeof(int),
      FMOffset(struct _TimestepMetadataMsg *, CohortSize)},
-    {"metadata", "(*SstMetadata)[cohort_size]", sizeof(struct _SstMetadata),
+    {"formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
+     FMOffset(struct _TimestepMetadataMsg *, Formats)},
+    {"metadata", "(*SstBlock)[cohort_size]", sizeof(struct _SstBlock),
      FMOffset(struct _TimestepMetadataMsg *, Metadata)},
     {"TP_TimestepInfo", "(*DP_STRUCT)[cohort_size]", 0,
      FMOffset(struct _TimestepMetadataMsg *, DP_TimestepInfo)},
@@ -176,9 +206,8 @@ static FMField TimestepMetadataList[] = {
 static FMStructDescRec TimestepMetadataStructs[] = {
     {"timestepMetadata", TimestepMetadataList,
      sizeof(struct _TimestepMetadataMsg), NULL},
-    {"SstMetadata", SstMetadataList, sizeof(struct _SstMetadata), NULL},
-    {"VarMetadata", SstVarMetaList, sizeof(struct _SstVarMeta), NULL},
-    {"VarDimension", SstDimenMetaList, sizeof(struct _SstDimenMeta), NULL},
+    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
+    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField ReleaseTimestepList[] = {
@@ -474,11 +503,6 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
     {
         FFSdecode_in_place(context, RecvBuffer + Displs[i],
                            (void **)&Pointers[i]);
-        //    FFSTypeHandle ffs_type = FFSTypeHandle_from_encode(context,
-        //    RecvBuffer);
-        //        printf("Decode for rank %d :\n", i);
-        //        FMdump_data(FMFormat_of_original(ffs_type), Pointers[i],
-        //        1024000);
     }
     free(Displs);
     free(RecvCounts);
@@ -617,6 +641,8 @@ SstStream CP_newStream()
     memset(Stream, 0, sizeof(*Stream));
     pthread_mutex_init(&Stream->DataLock, NULL);
     pthread_cond_init(&Stream->DataCondition, NULL);
+    Stream->WriterTimestep = -1; // first beginstep will get us timestep 0
+    Stream->ReaderTimestep = -1; // first beginstep will get us timestep 0
     if (getenv("SstVerbose"))
     {
         Stream->Verbose = 1;

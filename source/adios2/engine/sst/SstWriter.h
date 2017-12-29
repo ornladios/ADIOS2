@@ -34,6 +34,7 @@ public:
     virtual ~SstWriter() = default;
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    void PerformPuts() final;
     void EndStep() final;
 
     void Close(const int transportIndex = -1) final;
@@ -43,14 +44,20 @@ private:
                  /// called from constructor
 
 #define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &variable, const T *values) final;              \
+    void DoPutDeferred(Variable<T> &, const T *) final;                        \
+    void DoPutDeferred(Variable<T> &, const T &) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable, const T *values);
 
+    template <class T>
+    void PutDeferredCommon(Variable<T> &variable, const T *values);
+
     SstStream m_Output;
+    bool m_FFSmarshal = true;
 };
 
 } // end namespace adios
