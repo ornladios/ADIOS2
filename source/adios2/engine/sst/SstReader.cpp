@@ -58,8 +58,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
         std::string Type(type);
-        SstReader::SstReader *Reader =
-            reinterpret_cast<SstReader::SstReader *>(reader);
+        typename SstReader::SstReader *Reader =
+            reinterpret_cast<typename SstReader::SstReader *>(reader);
         for (int i = 0; i < DimCount; i++)
         {
             VecShape.push_back(Shape[i]);
