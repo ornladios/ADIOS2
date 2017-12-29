@@ -32,11 +32,33 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
+    if (m_FFSmarshal)
+    {
+        return (StepStatus)SstWriterBeginStep(m_Output, (int)mode, timeout_sec);
+    }
+    else
+    {
+        // When BP marshalling/unmarshaling complete, this should call
+        // SstProvideTimestep and clean up at this level
+    }
     return StepStatus::OK;
 }
-void SstWriter::EndStep() {}
+
+void SstWriter::EndStep()
+{
+    if (m_FFSmarshal)
+    {
+        SstWriterEndStep(m_Output);
+    }
+    else
+    {
+        // When BP marshalling/unmarshaling complete, this should call
+        // SstProvideTimestep and clean up at this level
+    }
+}
 
 void SstWriter::Close(const int transportIndex) { SstWriterClose(m_Output); }
+void SstWriter::PerformPuts() {}
 
 // PRIVATE functions below
 void SstWriter::Init()
@@ -56,75 +78,19 @@ void SstWriter::Init()
             }
         }
     };
-
-    // lf_SetBoolParameter("real_time", m_DoRealTime);
-    // lf_SetBoolParameter("monitoring", m_DoMonitor);
-
-    // if (m_DoRealTime)
-    // {
-    //     /**
-    //      * Lambda function that assigns a parameter in m_Method to a
-    //      * localVariable
-    //      * of type std::string
-    //      */
-    //     auto lf_AssignString = [&](const std::string parameter,
-    //                                std::string &localVariable) {
-    //         auto it = m_IO.m_Parameters.find(parameter);
-    //         if (it != m_IO.m_Parameters.end())
-    //         {
-    //             localVariable = it->second;
-    //         }
-    //     };
-
-    //     /**
-    //      * Lambda function that assigns a parameter in m_Method to a
-    //      * localVariable
-    //      * of type int
-    //      */
-    //     auto lf_AssignInt = [&](const std::string parameter,
-    //                             int &localVariable) {
-    //         auto it = m_IO.m_Parameters.find(parameter);
-    //         if (it != m_IO.m_Parameters.end())
-    //         {
-    //             localVariable = std::stoi(it->second);
-    //         }
-    //     };
-
-    //     auto lf_IsNumber = [](const std::string &s) {
-    //         return !s.empty() && std::find_if(s.begin(), s.end(), [](char c)
-    //         {
-    //                                  return !std::isdigit(c);
-    //                              }) == s.end();
-    //     };
-
-    // json jmsg;
-    // for (const auto &i : m_IO.m_Parameters)
-    // {
-    //     if (lf_IsNumber(i.second))
-    //     {
-    //         jmsg[i.first] = std::stoi(i.second);
-    //     }
-    //     else
-    //     {
-    //         jmsg[i.first] = i.second;
-    //     }
-    // }
-    // jmsg["stream_mode"] = "sender";
-    // m_Man.add_stream(jmsg);
-
-    // std::string method_type;
-    // lf_AssignString("method_type", method_type);
-
-    // int num_channels = 0;
-    // lf_AssignInt("num_channels", num_channels);
-    //    }
+    lf_SetBoolParameter("FFSmarshal", m_FFSmarshal);
 }
 
 #define declare_type(T)                                                        \
     void SstWriter::DoPutSync(Variable<T> &variable, const T *values)          \
     {                                                                          \
         PutSyncCommon(variable, values);                                       \
-    }
+    }                                                                          \
+    void SstWriter::DoPutDeferred(Variable<T> &variable, const T *values)      \
+    {                                                                          \
+        PutSyncCommon(variable, values);                                       \
+    }                                                                          \
+    void SstWriter::DoPutDeferred(Variable<T> &, const T &value) {}
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

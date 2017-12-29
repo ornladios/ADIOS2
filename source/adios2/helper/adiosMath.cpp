@@ -98,7 +98,7 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
     for (size_t d = 0; d < dimensionsSize; ++d)
     {
         // Don't intercept
-        if (box2.first[d] >= box1.second[d] || box2.second[d] <= box1.first[d])
+        if (box2.first[d] > box1.second[d] || box2.second[d] < box1.first[d])
         {
             return intersectionBox;
         }
