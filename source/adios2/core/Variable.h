@@ -42,8 +42,10 @@ public:
 
     ~Variable<T>() = default;
 
+    /** Gets current data pointer for this Variable object */
     T *GetData() const noexcept;
 
+    /** Sets current data pointer for this Variable object */
     void SetData(const T *) noexcept;
 
 private:

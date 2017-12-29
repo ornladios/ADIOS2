@@ -69,14 +69,16 @@ public:
     /** From AddTransport, parameters in map for each transport in vector */
     std::vector<Params> m_TransportsParameters;
 
-    /** From Add Operator */
+    /** From AddOperator, contains operators added to this IO */
     std::vector<OperatorInfo> m_Operators;
 
     /**
-     * Constructor called from ADIOS factory class
+     * @brief Constructor called from ADIOS factory class DeclareIO function.
+     * Not to be used direclty in applications.
      * @param name unique identifier for this IO object
      * @param mpiComm MPI communicator from ADIOS factory class
      * @param inConfigFile IO defined in config file (XML)
+     * @param hostLanguage current language using the adios2 library
      * @param debugMode true: extra exception checks (recommended)
      */
     IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
@@ -85,34 +87,35 @@ public:
     ~IO() = default;
 
     /**
-     * Sets the engine type for this IO class object
-     * @param engine
+     * @brief Sets the engine type for this IO class object
+     * @param engine predefined engine type, default is bpfile
      */
     void SetEngine(const std::string engine) noexcept;
 
-    /** Set the IO mode (collective or independent)
+    /**
+     * @brief Set the IO mode (collective or independent), not yet implemented
      * @param IO mode */
     void SetIOMode(const IOMode mode);
 
     /**
-     * Version that passes a map to fill out parameters
+     * @brief Version that passes a map to fill out parameters
      * initializer list = { "param1", "value1" },  {"param2", "value2"},
      * @param params adios::Params std::map<std::string, std::string>
      */
     void SetParameters(const Params &parameters = Params()) noexcept;
 
     /**
-     * Sets a single parameter overwriting value if key exists;
+     * @brief Sets a single parameter overwriting value if key exists;
      * @param key parameter key
      * @param value parameter value
      */
     void SetParameter(const std::string key, const std::string value) noexcept;
 
-    /** Retrieve current parameters map */
+    /** @brief Retrieve current parameters map */
     Params &GetParameters() noexcept;
 
     /**
-     * Adds a transport and its parameters for the IO Engine
+     * @brief Adds a transport and its parameters for the IO Engine
      * @param type must be a supported transport type
      * @param params acceptable parameters for a particular transport
      * @return transportIndex handler
@@ -121,9 +124,10 @@ public:
                               const Params &parameters = Params());
 
     /**
-     * Set a single parameter to an existing transport identified with a
-     * transportIndex handler from AddTransport. This function overwrites
-     * existing parameter.
+     * @brief Sets a single parameter to an existing transport identified with a
+     * transportIndex handler from AddTransport.
+     * This function overwrites
+     * existing parameter with the same key.
      * @param transportIndex index handler from AddTransport
      * @param key parameter key
      * @param value parameter value
@@ -132,7 +136,7 @@ public:
                                const std::string key, const std::string value);
 
     /**
-     * Define a Variable of primitive data type for I/O.
+     * @brief Define a Variable of primitive data type for current IO.
      * Default (name only) is a local single value,
      * in order to be compatible with ADIOS1.
      * @param name variable name, must be unique within Method
@@ -142,6 +146,8 @@ public:
      * @param constantShape true if dimensions, offsets and local sizes don't
      * change over time
      * @return reference to Variable object
+     * @exception std::invalid_argument if Variable with unique name is already
+     * defined, in debug mode only
      */
     template <class T>
     Variable<T> &
@@ -150,73 +156,90 @@ public:
                    const bool constantDims = false, T *data = nullptr);
 
     /**
-     * Define attribute from contiguous data array owned by an application
+     * @brief Define attribute from contiguous data array owned by an
+     * application
      * @param name must be unique for the IO object
      * @param array pointer to user data
      * @param elements number of data elements
      * @return reference to internal Attribute
+     * @exception std::invalid_argument if Attribute with unique name is already
+     * defined, in debug mode only
      */
     template <class T>
     Attribute<T> &DefineAttribute(const std::string &name, const T *array,
                                   const size_t elements);
 
     /**
-     * Define attribute from a single variable making a copy
+     * @brief Define attribute from a single variable making a copy
      * @param name must be unique for the IO object
      * @param value single data value
      * @return reference to internal Attribute
+     * @exception std::invalid_argument if Attribute with unique name is already
+     * defined, in debug mode only
      */
     template <class T>
     Attribute<T> &DefineAttribute(const std::string &name, const T &value);
 
     /**
-     * Removes an existing Variable
+     * @brief Removes an existing Variable in current IO object.
+     * Dangerous function since references and
+     * pointers can be dangling after this call.
      * @param name unique identifier input
      * @return true: found and removed variable, false: not found, nothing to
      * remove
      */
     bool RemoveVariable(const std::string &name) noexcept;
 
-    /** Removes all existing variables in current IO object */
+    /**
+     * @brief Removes all existing variables in current IO object.
+     * Dangerous function since references and
+     * pointers can be dangling after this call.
+     */
     void RemoveAllVariables() noexcept;
 
     /**
-     * Removes an existing Attribute. Dangerous function since references and
+     * @brief Removes an existing Attribute in current IO object.
+     * Dangerous function since references and
      * pointers can be dangling after this call.
      * @param name unique identifier input
      * @return true: found and removed attribute, false: not found, nothing to
      * remove
-      */
+     */
     bool RemoveAttribute(const std::string &name) noexcept;
 
-    /** Removes all existing attributes in current IO object. Dangerous function
-     *  since references and pointers can be dangling after this call. */
+    /**
+     * @brief Removes all existing attributes in current IO object.
+     * Dangerous function since references and
+     * pointers can be dangling after this call.
+     */
     void RemoveAllAttributes() noexcept;
 
     /**
-     * Map with variables info: key: name, value: type
-     * @return populate map with current variables
+     * @brief Retrieve map with variables info. Use when reading.
+     * @return map with current variables and info
+     * keys: Type, Min, Max, Value, AvailableStepsStart,
+     * AvailableStepsCount, Shape, Start, Count, SingleValue
      */
     std::map<std::string, Params> GetAvailableVariables() noexcept;
 
     /**
-     * Gets an existing variable of primitive type by name
+     * @brief Gets an existing variable of primitive type by name
      * @param name of variable to be retrieved
-     * @return reference to an existing variable created with DefineVariable
-     * throws an exception if Variable is not found
+     * @return pointer to an existing variable in current IO, nullptr if not
+     * found
      */
     template <class T>
     Variable<T> *InquireVariable(const std::string &name) noexcept;
 
     /**
-     * Returns the type of an existing variable as an string
+     * @brief Returns the type of an existing variable as an string
      * @param name input variable name
-     * @return type
+     * @return type primitive type
      */
     std::string InquireVariableType(const std::string &name) const noexcept;
 
     /**
-     * Retrieves hash holding variable identifiers
+     * Retrieves hash holding internal variable identifiers
      * @return
      * <pre>
      * key: unique variable name,
@@ -227,7 +250,7 @@ public:
     const DataMap &GetVariablesDataMap() const noexcept;
 
     /**
-     * Retrieves hash holding Attributes identifiers
+     * Retrieves hash holding internal Attributes identifiers
      * @return
      * <pre>
      * key: unique attribute name,
@@ -240,24 +263,27 @@ public:
     /**
      * Gets an existing attribute of primitive type by name
      * @param name of attribute to be retrieved
-     * @return nullptr if not found, else pointer reference to exising attribute
+     * @return pointer to an existing attribute in current IO, nullptr if not
+     * found
      */
     template <class T>
     Attribute<T> *InquireAttribute(const std::string &name) noexcept;
 
     /**
-     * Map with variables info: key: name, value: type
-     * @return populate map with current variables
+     * @brief Retrieve map with attributes info. Use when reading.
+     * @return map with current attributes and info
+     * keys: Type, Elements, Value
      */
     std::map<std::string, Params> GetAvailableAttributes() noexcept;
 
     /**
-     * Check existence in config file passed to ADIOS class
-     * @return true: defined in config file
+     * @brief Check existence in config file passed to ADIOS class constructor
+     * @return true: defined in config file, false: not found in config file
      */
     bool InConfigFile() const noexcept;
 
-    /** Sets declared to true if IO exists in code created with ADIOS DeclareIO
+    /**
+     * Sets declared to true if IO exists in code created with ADIOS DeclareIO
      */
     void SetDeclared() noexcept;
 
@@ -271,35 +297,47 @@ public:
      * Adds an operator defined by the ADIOS class. Could be a variable set
      * transform, callback function, etc.
      * @param adiosOperator operator created by the ADIOS class
-     * @param parameters specific parameters for IO
+     * @param parameters specific parameters for current IO
      */
     void AddOperator(Operator &adiosOperator,
                      const Params &parameters = Params()) noexcept;
 
     /**
-     * Creates a polymorphic object that derives the Engine class,
+     * @brief Creates a polymorphic object that derives the Engine class,
      * based on the SetEngine function or config file input
      * @param name unique engine identifier within IO object
-     * (file name in case of File transports)
-     * @param openMode write, read, append from ADIOSTypes.h OpenMode
+     * (e.g. file name in case of Files)
+     * @param mode write, read, append from ADIOSTypes.h Mode
      * @param mpiComm assigns a new communicator to the Engine
-     * @return a smart pointer to a derived object of the Engine class
+     * @return a reference to a derived object of the Engine class
+     * @exception std::invalid_argument if Engine with unique name is already
+     * created with another Open, in debug mode only
      */
-    Engine &Open(const std::string &name, const Mode openMode,
-                 MPI_Comm mpiComm);
+    Engine &Open(const std::string &name, const Mode mode, MPI_Comm mpiComm);
 
     /**
      * Overloaded version that reuses the MPI_Comm object passed
      * from the ADIOS class to the IO class
      * @param name unique engine identifier within IO object
      * (file name in case of File transports)
-     * @param openMode write, read, append from ADIOSTypes.h OpenMode
-     * @return a smart pointer to a derived object of the Engine class
+     * @param mode write, read, append from ADIOSTypes.h OpenMode
+     * @return a reference to a derived object of the Engine class
+     * @exception std::invalid_argument if Engine with unique name is already
+     * created with another Open, in debug mode only
      */
-    Engine &Open(const std::string &name, const Mode openMode);
+    Engine &Open(const std::string &name, const Mode mode);
 
-    // READ FUNCTIONS:
+    // READ FUNCTIONS, not yet implemented:
+    /**
+     * not yet implented
+     * @param pattern
+     */
     void SetReadMultiplexPattern(const ReadMultiplexPattern pattern);
+
+    /**
+     * not yet implemented
+     * @param mode
+     */
     void SetStreamOpenMode(const StreamOpenMode mode);
 
 private:

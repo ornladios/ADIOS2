@@ -134,7 +134,7 @@ public:
     size_t GetAvailableStepsCount() const;
 
     /**
-     * Pushed a new transform to a sequence of transports
+     * Pushed a new transform to a sequence of transports. Not yet implemented.
      * @param transform reference to an object derived from the Transform class
      * @param parameters transform specific parameters
      * @return transformID handler
