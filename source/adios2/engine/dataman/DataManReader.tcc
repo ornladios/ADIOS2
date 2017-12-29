@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_TCC_
 
 #include "DataManReader.h"
+#include <iostream>
 
 namespace adios2
 {
@@ -19,21 +20,22 @@ namespace adios2
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    if (m_UseFormat == "BP")
+    if (m_UseFormat == "BP" || m_UseFormat == "bp" )
     {
-        variable.SetData(data);
+        int mpiSize;
+        MPI_Comm_size(m_MPIComm, &mpiSize);
         m_BP3Deserializer.GetSyncVariableDataFromStream(
             variable, m_BP3Deserializer.m_Data);
+        size_t varsize = std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(), sizeof(T),
+                std::multiplies<std::size_t>());
+        std::memcpy(data, variable.GetData(), varsize/mpiSize);
     }
 }
 
-// TODO: let;s try with GetSync first, GetDeferred, PerformGets is just a
-// wrapper
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    m_BP3Deserializer.GetDeferredVariable(variable, data);
-    m_BP3Deserializer.m_PerformedGets = false;
+    GetSyncCommon(variable, data);
 }
 
 } // end namespace adios2
