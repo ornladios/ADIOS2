@@ -37,7 +37,7 @@ void DataManWriter::EndStep()
 {
     if (m_UseFormat == "bp" || m_UseFormat == "BP")
     {
-        //        m_BP3Serializer.SerializeData(m_IO, true);
+        m_BP3Serializer.SerializeData(m_IO, true);
     }
 }
 

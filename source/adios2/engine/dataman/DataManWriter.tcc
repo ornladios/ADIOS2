@@ -16,6 +16,8 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
+#include <iostream>
+
 namespace adios2
 {
 
@@ -38,24 +40,7 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    if (m_UseFormat == "json" || m_UseFormat == "JSON")
-    {
-
-        nlohmann::json jmsg;
-        jmsg["doid"] = m_Name;
-        jmsg["var"] = variable.m_Name;
-        jmsg["dtype"] = GetType<T>();
-        jmsg["putshape"] = variable.m_Count;
-        jmsg["varshape"] = variable.m_Shape;
-        jmsg["offset"] = variable.m_Start;
-        jmsg["timestep"] = 0;
-        jmsg["bytes"] =
-            std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(),
-                            sizeof(T), std::multiplies<size_t>());
-
-        m_Man.WriteWAN(values, jmsg);
-    }
-    else if (m_UseFormat == "bp" || m_UseFormat == "BP")
+    if (m_UseFormat == "bp" || m_UseFormat == "BP")
     {
         PutSyncCommonBP(variable, values);
     }
