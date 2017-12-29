@@ -62,11 +62,10 @@ private:
     // Global ranks of the writers directly assigned to me
     std::vector<int> m_RankDirectPeers;
 
-    // one reader is receiving metadata
-    bool m_ConnectedToWriteRoot = false;
     // global rank of write root (-1 if not connected to root)
     int m_WriteRootGlobalRank = -1;
     // local rank of the reader who is connected to write root
+    // the Reader Root receives the metadata from the Write root
     int m_ReaderRootRank;
 
     int m_CurrentStep = -1; // steps start from 0

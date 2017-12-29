@@ -53,7 +53,6 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
         m_CommWorld, false, false, m_GlobalRank, m_RankDirectPeers);
     if (m_WriteRootGlobalRank > -1)
     {
-        m_ConnectedToWriteRoot = true;
         m_ReaderRootRank = m_ReaderRank;
         if (m_Verbosity == 5)
         {
@@ -81,6 +80,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
             break;
         }
     }
+
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank
@@ -149,7 +149,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     if (m_CurrentStep == 0 || !m_FixedSchedule)
     {
         unsigned long mdLen;
-        if (m_ConnectedToWriteRoot)
+        if (m_ReaderRootRank == m_ReaderRank)
         {
 
             MPI_Status status;
