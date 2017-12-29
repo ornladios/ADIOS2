@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -A m1248
+#SBATCH -A m2886
 #SBATCH -p debug
 #SBATCH -N 2
-#SBATCH -t 0:01:00
+#SBATCH -t 0:30:00
 #SBATCH -n 8
 #SBATCH -J adios_nightly
 #SBATCH -C knl,quad,cache
