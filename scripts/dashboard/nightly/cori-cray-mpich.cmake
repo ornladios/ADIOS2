@@ -3,7 +3,7 @@ set(CTEST_SITE "cori.nersc.gov")
 set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j10")
-set(CTEST_TEST_ARGS PARALLEL_LEVEL 10)
+set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
 
 set(CTEST_BUILD_NAME "Linux-CrayCLE6-KNL_Cray_MPICH")
 set(dashboard_model Nightly)
@@ -15,6 +15,7 @@ module(purge)
 module(load modules)
 module(load craype)
 module(load PrgEnv-cray)
+module(swap cce cce/8.6.2)
 module(load craype-mic-knl)
 module(load cray-mpich)
 module(load cray-hdf5-parallel)
@@ -24,7 +25,6 @@ module(load git)
 set(ENV{CC}  cc)
 set(ENV{CXX} CC)
 set(ENV{FC}  ftn)
-set(ENV{CRAYPE_LINK_TYPE} dynamic)
 
 set(dashboard_cache "
 #ADIOS2_USE_ADIOS1:STRING=ON
@@ -33,7 +33,7 @@ ADIOS2_USE_DataMan:STRING=ON
 ADIOS2_USE_Fortran:STRING=ON
 ADIOS2_USE_HDF5:STRING=ON
 ADIOS2_USE_MPI:STRING=ON
-ADIOS2_USE_Python:STRING=ON
+#ADIOS2_USE_Python:STRING=ON
 #ADIOS2_USE_ZFP:STRING=ON
 #ADIOS2_USE_ZeroMQ:STRING=ON
 
