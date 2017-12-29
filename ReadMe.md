@@ -6,8 +6,8 @@
 [![Travis CI](https://travis-ci.org/ornladios/ADIOS2.svg)](https://travis-ci.org/ornladios/ADIOS2)
 [![AppVeyor CI](https://ci.appveyor.com/api/projects/status/0s2a3qp57hgbvlhj?svg=true)](https://ci.appveyor.com/project/ornladios/adios2)
 
-# Adaptable Input / Output System (ADIOS) v2.0
-This is v2.0 of the ADIOS I/O system, developed as part of the
+# Adaptable Input / Output System (ADIOS) v2.1.0
+This is v2.1.0 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
 
 ## License
@@ -19,8 +19,10 @@ Copyright.txt for more details.
 * cmake - Project specific CMake modules
 * examples - ADIOS2 Examples
 * scripts - Project maintenance and development scripts
-* source - Main ADIOS2 source
-* bindings - Additional language bindings (currently only Python is available)
+* source - Main ADIOS2 source  
+    * adios2 - source directory for the ADIOS2 library to be installed    under install-dir/lib/libadios2.  
+    * utils  - source directory for the binary utilities, to be installed under install-dir/bin  
+* bindings - Additional language bindings (C, Fortran and Python)
 * testing - Tests
 
 ## Documentation
@@ -56,13 +58,13 @@ $ mkdir build
 
 ```bash
 $ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.0.0/gnu/openmpi ../source
+$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.1.0/gnu/openmpi ../source
 -- The C compiler identification is GNU 6.3.1
 -- The CXX compiler identification is GNU 6.3.1
 ...
 
 ADIOS2 build configuration:
-  ADIOS Version: 2.0.0
+  ADIOS Version: 2.1.0
   C++ Compiler : GNU 6.3.1
     /usr/bin/c++
 
@@ -101,9 +103,8 @@ The following options can be specified with CMake's `-DVAR=VALUE` syntax to cont
 | `ADIOS2_USE_HDF5`    | **`AUTO`**/``ON``/``OFF`` | Enable the [HDF5](https://www.hdfgroup.org) engine.                              |
 | `ADIOS2_USE_ADIOS1`  | **`AUTO`**/``ON``/``OFF`` | Enable the [ADIOS 1.x](https://www.olcf.ornl.gov/center-projects/adios/) engine. |
 | `ADIOS2_USE_Python`  | **`AUTO`**/``ON``/``OFF`` | Enable the Python >= 2.7 bindings. |
-| `ADIOS2_USE_C`       | **`AUTO`**/``ON``/``OFF`` | Enable the C bindings library libadios2_c.so or libadios2_c.a |
 
-Note: The `ADIOS2_USE_HDF5` and `ADIOS2_USE_ADIOS1` options require the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  SImilary, enabling MPI and Python bindings requires the presence of `mpi4py`.
+Note: The `ADIOS2_USE_HDF5` and `ADIOS2_USE_ADIOS1` options require the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similary, enabling MPI and Python bindings requires the presence of `mpi4py`.
 
 In addition to the `ADIOS2_USE_Feature` options, the following options are also available to control how the library get's built:
 
@@ -168,15 +169,15 @@ $ make install
 ...
 Install the project...
 -- Install configuration: "Debug"
--- Installing: /opt/adios2/2.0.0/gnu/openmpi/include/adios2/ADIOSConfig.h
+-- Installing: /opt/adios2/2.1.0/gnu/openmpi/include/adios2/ADIOSConfig.h
 ...
--- Installing: /opt/adios2/2.0.0/gnu/openmpi/bin/adios2-config
+-- Installing: /opt/adios2/2.1.0/gnu/openmpi/bin/adios2-config
 ...
--- Installing: /opt/adios2/2.0.0/gnu/openmpi/include/adios2.h
+-- Installing: /opt/adios2/2.1.0/gnu/openmpi/include/adios2.h
 ...
--- Installing: /opt/adios2/2.0.0/gnu/openmpi/lib/libadios2.so.2.0.0
--- Installing: /opt/adios2/2.0.0/gnu/openmpi/lib/libadios2.so.2
--- Installing: /opt/adios2/2.0.0/gnu/openmpi/lib/libadios2.so
+-- Installing: /opt/adios2/2.1.0/gnu/openmpi/lib/libadios2.so.2.0.0
+-- Installing: /opt/adios2/2.1.0/gnu/openmpi/lib/libadios2.so.2
+-- Installing: /opt/adios2/2.1.0/gnu/openmpi/lib/libadios2.so
 ...
 $
 ```

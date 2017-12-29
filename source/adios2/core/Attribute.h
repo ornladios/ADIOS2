@@ -21,8 +21,8 @@ class Attribute : public AttributeBase
 {
 
 public:
-    std::vector<T> m_DataArray;
-    T m_DataSingleValue;
+    std::vector<T> m_DataArray; ///< holds data for array attributes
+    T m_DataSingleValue;        ///< holds data for single value attributes
 
     /**
      * Data array constructor

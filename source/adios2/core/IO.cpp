@@ -433,9 +433,9 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
     return *itEngine.first->second.get();
 }
 
-Engine &IO::Open(const std::string &name, const Mode openMode)
+Engine &IO::Open(const std::string &name, const Mode mode)
 {
-    return Open(name, openMode, m_MPIComm);
+    return Open(name, mode, m_MPIComm);
 }
 
 // PRIVATE
