@@ -261,15 +261,15 @@ void InSituMPIReader::Close(const int transportIndex)
     }
     if (m_Verbosity > 2)
     {
-        std::vector<uint64_t> bytes(
-            {m_BytesReceivedInPlace, m_BytesReceivedInTemporary});
-        std::vector<uint64_t> sumbytes(2);
-        MPI_Reduce(bytes.data(), sumbytes.data(), m_ReaderNproc,
+        uint64_t inPlaceBytes, inTempBytes;
+        MPI_Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1,
+                   MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
+        MPI_Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1,
                    MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
         if (m_ReaderRank == 0)
         {
             std::cout << "ADIOS InSituMPI Reader for " << m_Name << " received "
-                      << Statistics(sumbytes[0], sumbytes[1])
+                      << Statistics(inPlaceBytes, inTempBytes)
                       << "% of data in place (zero-copy)" << std::endl;
         }
     }
