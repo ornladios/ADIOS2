@@ -262,8 +262,8 @@ void InSituMPIReader::Close(const int transportIndex)
     if (m_Verbosity > 2)
     {
         uint64_t inPlaceBytes, inTempBytes;
-        MPI_Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1,
-                   MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
+        MPI_Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1, MPI_LONG_LONG_INT,
+                   MPI_SUM, 0, m_MPIComm);
         MPI_Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1,
                    MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
         if (m_ReaderRank == 0)
