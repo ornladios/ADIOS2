@@ -30,6 +30,9 @@ add_library(adios2
   engine/bp/BPFileReader.cpp engine/bp/BPFileReader.tcc
   engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
 
+  engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
+  engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
+
   engine/plugin/PluginEngine.cpp
   engine/plugin/PluginEngineInterface.cpp
 
