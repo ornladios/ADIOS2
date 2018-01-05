@@ -8,8 +8,8 @@
 !   Created on: Aug 22, 2017
 !       Author: William F Godoy godoywf@ornl.gov
 !
-module adios2_engine_get_sync
 
+module adios2_engine_get_sync
     implicit none
 
     interface adios2_get_sync
@@ -158,7 +158,7 @@ module adios2_engine_get_sync
 
 contains
 
-    include'contains/adios2_engine_get_sync.f90'
-    include'contains/adios2_engine_get_sync_by_name.f90'
+    include 'contains/adios2_engine_get_sync.f90'
+    include 'contains/adios2_engine_get_sync_by_name.f90'
 
 end module

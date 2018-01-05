@@ -69,6 +69,12 @@ BP3Deserializer::GetSubFileInfoMap(const std::string &variableName)
     return m_DeferredVariables[variableName];
 }
 
+template <class T>
+void BP3Deserializer::GetValueFromMetadata(Variable<T> &variable) const
+{
+    GetValueFromMetadataCommon(variable);
+}
+
 // PRIVATE
 template <>
 inline void BP3Deserializer::DefineVariableInIO<std::string>(
@@ -127,7 +133,7 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
         {
             currentStep = subsetCharacteristics.Statistics.Step;
         }
-        if(stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
         {
             ++variable->m_AvailableStepsCount;
         }
@@ -218,7 +224,7 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
         {
             currentStep = subsetCharacteristics.Statistics.Step;
         }
-        if(stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
         {
             ++variable->m_AvailableStepsCount;
         }
@@ -481,6 +487,67 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
                 break; // break inner p loop
             }
         } // dimension index update
+    }
+}
+
+template <>
+inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
+    Variable<std::string> &variable) const
+{
+    std::string *data = variable.GetData();
+    const auto &buffer = m_Metadata.m_Buffer;
+
+    for (size_t i = 0; i < variable.m_StepsCount; ++i)
+    {
+        *(data + i) = "";
+        const size_t step = variable.m_StepsStart + i + 1;
+        auto itStep = variable.m_IndexStepBlockStarts.find(step);
+
+        if (itStep == variable.m_IndexStepBlockStarts.end())
+        {
+            continue;
+        }
+
+        for (const size_t position : itStep->second)
+        {
+            size_t localPosition = position;
+            const Characteristics<std::string> characteristics =
+                ReadElementIndexCharacteristics<std::string>(
+                    buffer, localPosition, type_string, false);
+
+            *(data + i) = characteristics.Statistics.Value;
+        }
+
+        variable.m_Value = *(data + i);
+    }
+}
+
+template <class T>
+inline void
+BP3Deserializer::GetValueFromMetadataCommon(Variable<T> &variable) const
+{
+    T *data = variable.GetData();
+    const auto &buffer = m_Metadata.m_Buffer;
+
+    const size_t step = variable.m_StepsStart + 1;
+    auto itStep = variable.m_IndexStepBlockStarts.find(step);
+
+    if (itStep == variable.m_IndexStepBlockStarts.end())
+    {
+        data = nullptr;
+        return;
+    }
+
+    for (const size_t position : itStep->second)
+    {
+        size_t localPosition = position;
+
+        const Characteristics<T> characteristics =
+            ReadElementIndexCharacteristics<T>(
+                buffer, localPosition, static_cast<DataTypes>(GetDataType<T>()),
+                false);
+
+        *data = characteristics.Statistics.Value;
     }
 }
 

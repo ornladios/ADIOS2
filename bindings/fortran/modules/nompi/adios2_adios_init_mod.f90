@@ -9,7 +9,6 @@
 !
 
 module adios2_adios_init
-
     use adios2_functions
     implicit none
 

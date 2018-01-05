@@ -12,4 +12,5 @@ if(ADIOS2_HAVE_MPI)
       EXEC_WRAPPER
       ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS})
     python_add_test(NAME PythonBPWrite ${test_parameters} SCRIPT TestBPWriteTypes.py)
+    python_add_test(NAME PythonBPWriteReadHighLevelAPI ${test_parameters} SCRIPT TestBPWriteTypesHighLevelAPI.py)
 endif()

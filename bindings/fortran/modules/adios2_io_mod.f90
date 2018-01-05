@@ -7,8 +7,8 @@
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov
 !
-module adios2_io
 
+module adios2_io
     use adios2_io_open
     use adios2_io_define_variable
     use adios2_io_define_attribute

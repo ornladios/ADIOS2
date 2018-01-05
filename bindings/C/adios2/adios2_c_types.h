@@ -17,21 +17,24 @@
 extern "C" {
 #endif
 
-typedef struct adios2_ADIOS adios2_ADIOS;
-typedef struct adios2_IO adios2_IO;
-typedef struct adios2_Variable adios2_Variable;
-typedef struct adios2_Attribute adios2_Attribute;
-typedef struct adios2_Engine adios2_Engine;
+typedef struct adios2_adios adios2_adios;
+typedef struct adios2_io adios2_io;
+typedef struct adios2_variable adios2_variable;
+typedef struct adios2_attribute adios2_attribute;
+typedef struct adios2_engine adios2_engine;
+typedef struct adios2_FILE adios2_FILE;
 
 typedef enum {
-    adios2_debug_mode_on = 0,
-    adios2_debug_mode_off = 1,
+    adios2_debug_mode_off = 0,
+    adios2_debug_mode_on = 1,
 } adios2_debug_mode;
 
 typedef enum {
-    adios2_constant_dims_true = 0,
-    adios2_constant_dims_false = 1,
+    adios2_constant_dims_false = 0,
+    adios2_constant_dims_true = 1,
 } adios2_constant_dims;
+
+const int adios2_advance_step = 1;
 
 typedef enum {
     adios2_type_unknown = -1,

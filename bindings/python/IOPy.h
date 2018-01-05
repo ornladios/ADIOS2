@@ -39,6 +39,9 @@ public:
 
     const Params &GetParameters() const noexcept;
 
+    VariableBase *DefineVariable(const std::string &name,
+                                 std::string &stringValue);
+
     VariableBase *DefineVariable(const std::string &name, const Dims &shape,
                                  const Dims &start, const Dims &count,
                                  const bool isConstantDims,

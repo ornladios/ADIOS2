@@ -8,7 +8,9 @@
 !   Created on: Aug 22, 2017
 !       Author: William F Godoy godoywf@ornl.gov
 !
+
 module adios2_engine_put_deferred
+    implicit none
 
     interface adios2_put_deferred
 
@@ -156,7 +158,7 @@ module adios2_engine_put_deferred
 
 contains
 
-    include'contains/adios2_engine_put_deferred.f90'
-    include'contains/adios2_engine_put_deferred_by_name.f90'
+    include 'contains/adios2_engine_put_deferred.f90'
+    include 'contains/adios2_engine_put_deferred_by_name.f90'
 
 end module

@@ -192,6 +192,23 @@ void Engine::ThrowUp(const std::string function) const
                                 "\n");
 }
 
+void Engine::CheckWriteMode(const std::string hint) const
+{
+    if (m_OpenMode != adios2::Mode::Write && m_OpenMode != adios2::Mode::Append)
+    {
+        throw std::invalid_argument(
+            "ERROR: mode in open is not write or append, " + hint);
+    }
+}
+
+void Engine::CheckReadMode(const std::string hint) const
+{
+    if (m_OpenMode != adios2::Mode::Read)
+    {
+        throw std::invalid_argument("ERROR: mode in open is not read, " + hint);
+    }
+}
+
 // PUBLIC TEMPLATE FUNCTIONS EXPANSION WITH SCOPED TYPES
 #define declare_template_instantiation(T)                                      \
     template void Engine::PutSync<T>(Variable<T> &);                           \

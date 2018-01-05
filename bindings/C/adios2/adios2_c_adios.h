@@ -26,7 +26,7 @@ extern "C" {
  * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
  * @return valid ADIOS* handler
  */
-adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
+adios2_adios *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
                                  const adios2_debug_mode debug_mode);
 
 /**
@@ -35,7 +35,7 @@ adios2_ADIOS *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
  * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
  * @return valid ADIOS* handler
  */
-adios2_ADIOS *adios2_init(MPI_Comm mpi_comm,
+adios2_adios *adios2_init(MPI_Comm mpi_comm,
                           const adios2_debug_mode debug_mode);
 
 /**
@@ -46,7 +46,7 @@ adios2_ADIOS *adios2_init(MPI_Comm mpi_comm,
  * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
  * @return valid ADIOS* handler
  */
-adios2_ADIOS *adios2_init_config_nompi(const char *config_file,
+adios2_adios *adios2_init_config_nompi(const char *config_file,
                                        const adios2_debug_mode debug_mode);
 
 /**
@@ -54,7 +54,7 @@ adios2_ADIOS *adios2_init_config_nompi(const char *config_file,
  * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
  * @return valid ADIOS* handler
  */
-adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode);
+adios2_adios *adios2_init_nompi(const adios2_debug_mode debug_mode);
 
 /**
  * Create an IO struct pointer handler from ADIOS* handler
@@ -62,14 +62,14 @@ adios2_ADIOS *adios2_init_nompi(const adios2_debug_mode debug_mode);
  * @param io_name unique name for the newly declared io handler
  * @return valid IO* handler
  */
-adios2_IO *adios2_declare_io(adios2_ADIOS *adios, const char *io_name);
+adios2_io *adios2_declare_io(adios2_adios *adios, const char *io_name);
 
 /**
  * Final point for adios2_ADIOS handler.
  * Deallocate adios pointer. Required to avoid memory leaks.
  * @param adios input to be deallocated
  */
-void adios2_finalize(adios2_ADIOS *adios);
+void adios2_finalize(adios2_adios *adios);
 
 #ifdef __cplusplus
 } // end extern C

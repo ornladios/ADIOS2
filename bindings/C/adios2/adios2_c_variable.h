@@ -24,7 +24,7 @@ extern "C" {
  * @param variable handler
  * @return name
  */
-const char *adios2_variable_name(const adios2_Variable *variable,
+const char *adios2_variable_name(const adios2_variable *variable,
                                  size_t *length);
 
 /**
@@ -32,7 +32,7 @@ const char *adios2_variable_name(const adios2_Variable *variable,
  * @param variable handler
  * @return type
  */
-adios2_type adios2_variable_type(const adios2_Variable *variable);
+adios2_type adios2_variable_type(const adios2_variable *variable);
 
 /**
  * Check if dimensions are constant
@@ -40,39 +40,39 @@ adios2_type adios2_variable_type(const adios2_Variable *variable);
  * @return 0: false (dimensions are not constant), 1: true dimensions are
  * declared constant
  */
-int adios2_variable_is_constant_dims(const adios2_Variable *variable);
+int adios2_variable_is_constant_dims(const adios2_variable *variable);
 
 /**
  * Retrieve current variable number of dimensions (read-only)
  * @param variable
  * @return
  */
-size_t adios2_variable_ndims(const adios2_Variable *variable);
+size_t adios2_variable_ndims(const adios2_variable *variable);
 
 /**
  * Retrieve current variable shape (read-only)
  * @param variable handler
  * @return shape
  */
-const size_t *adios2_variable_shape(const adios2_Variable *variable);
+const size_t *adios2_variable_shape(const adios2_variable *variable);
 
 /**
  * Retrieve current variable start (read-only)
  * @param variable handler
  * @return
  */
-const size_t *adios2_variable_start(const adios2_Variable *variable);
+const size_t *adios2_variable_start(const adios2_variable *variable);
 
 /**
  * Retrieve current variable count (read-only)
  * @param variable
  * @return type
  */
-const size_t *adios2_variable_count(const adios2_Variable *variable);
+const size_t *adios2_variable_count(const adios2_variable *variable);
 
-size_t adios2_variable_available_steps_start(const adios2_Variable *variable);
+size_t adios2_variable_available_steps_start(const adios2_variable *variable);
 
-size_t adios2_variable_available_steps_count(const adios2_Variable *variable);
+size_t adios2_variable_available_steps_count(const adios2_variable *variable);
 
 /**
  * Set new dimensions: shape, start and count
@@ -82,7 +82,7 @@ size_t adios2_variable_available_steps_count(const adios2_Variable *variable);
  * @param start
  * @param count
  */
-void adios2_set_dimensions(adios2_Variable *variable, const size_t ndims,
+void adios2_set_dimensions(adios2_variable *variable, const size_t ndims,
                            const size_t *shape, const size_t *start,
                            const size_t *count);
 
@@ -92,7 +92,7 @@ void adios2_set_dimensions(adios2_Variable *variable, const size_t ndims,
  * @param ndims
  * @param shape
  */
-void adios2_set_shape(adios2_Variable *variable, const size_t ndims,
+void adios2_set_shape(adios2_variable *variable, const size_t ndims,
                       const size_t *shape);
 
 /**
@@ -101,7 +101,7 @@ void adios2_set_shape(adios2_Variable *variable, const size_t ndims,
  * @param start
  * @param count
  */
-void adios2_set_selection(adios2_Variable *variable, const size_t ndims,
+void adios2_set_selection(adios2_variable *variable, const size_t ndims,
                           const size_t *start, const size_t *count);
 
 /**
@@ -110,7 +110,7 @@ void adios2_set_selection(adios2_Variable *variable, const size_t ndims,
  * @param step_start
  * @param step_count
  */
-void adios2_set_step_selection(adios2_Variable *variable,
+void adios2_set_step_selection(adios2_variable *variable,
                                const size_t step_start,
                                const size_t step_count);
 
@@ -121,20 +121,20 @@ void adios2_set_step_selection(adios2_Variable *variable,
  * @param variable
  * @return memory size to be allocated by a pointer/vector to read this
  */
-size_t adios2_selection_size(const adios2_Variable *variable);
+size_t adios2_selection_size(const adios2_variable *variable);
 
 /**
  * Get current data pointer, types must match
  * @param variable
  */
-void *adios2_get_data(const adios2_Variable *variable);
+void *adios2_get_data(const adios2_variable *variable);
 
 /**
  * Sets current data pointer, types must match
  * @param variable
  * @param data
  */
-void adios2_set_data(adios2_Variable *variable, const void *data);
+void adios2_set_data(adios2_variable *variable, const void *data);
 
 #ifdef __cplusplus
 } // end extern C

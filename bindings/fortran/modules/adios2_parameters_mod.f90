@@ -7,6 +7,7 @@
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov
 !
+
 module adios2_parameters
     implicit none
 
@@ -60,5 +61,10 @@ module adios2_parameters
     !> Fixed size for string array, used in attributes,
     !! must be less or equal than C equivalent in adios2_c_types.h
     integer, parameter :: adios2_string_array_element_max_size = 256
+
+    ! Debug mode
+    logical, parameter :: adios2_advance_yes = .true.
+    logical, parameter :: adios2_advance_no  = .false.
+
 
 end module

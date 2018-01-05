@@ -21,13 +21,19 @@ inline void BPFileReader::GetSyncCommon(Variable<std::string> &variable,
                                         std::string *data)
 {
     variable.SetData(data);
-    m_BP3Deserializer.GetStringFromMetadata(variable);
+    m_BP3Deserializer.GetValueFromMetadata(variable);
 }
 
 template <class T>
 inline void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     variable.SetData(data);
+
+    if (variable.m_SingleValue)
+    {
+        m_BP3Deserializer.GetValueFromMetadata(variable);
+        return;
+    }
 
     const std::map<std::string, SubFileInfoMap> variableSubfileInfo =
         m_BP3Deserializer.GetSyncVariableSubFileInfo(variable);

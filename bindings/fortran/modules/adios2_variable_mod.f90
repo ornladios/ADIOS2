@@ -83,13 +83,13 @@ contains
 
     end subroutine
 
-    subroutine adios2_set_step_selection(variable, start_step, count_step, ierr)
+    subroutine adios2_set_step_selection(variable, step_start, step_count, ierr)
         integer(kind=8), intent(out) :: variable
-        integer, dimension(:), intent(in) :: start_step
-        integer, dimension(:), intent(in) :: count_step
+        integer(kind=8), intent(in) :: step_start
+        integer(kind=8), intent(in) :: step_count
         integer, intent(out) :: ierr
 
-        call adios2_set_step_selection_f2c(variable, start_step, count_step, &
+        call adios2_set_step_selection_f2c(variable, step_start, step_count, &
                                            ierr)
 
     end subroutine

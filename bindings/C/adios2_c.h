@@ -14,6 +14,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/adios2_c_adios.h"
 #include "adios2/adios2_c_engine.h"
+#include "adios2/adios2_c_FILE.h"
 #include "adios2/adios2_c_glue.h"
 #include "adios2/adios2_c_io.h"
 #include "adios2/adios2_c_variable.h"

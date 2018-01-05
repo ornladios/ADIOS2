@@ -14,7 +14,7 @@
 #include <stdexcept>
 
 void FC_GLOBAL(adios2_begin_step_f2c,
-               ADIOS2_BEGIN_STEP_F2C)(adios2_Engine **engine,
+               ADIOS2_BEGIN_STEP_F2C)(adios2_engine **engine,
                                       const int *step_mode,
                                       const float *timeout_seconds, int *ierr)
 {
@@ -34,8 +34,8 @@ void FC_GLOBAL(adios2_begin_step_f2c,
 
 // ******** PUTS */
 void FC_GLOBAL(adios2_put_sync_f2c,
-               ADIOS2_PUT_SYNC_F2C)(adios2_Engine **engine,
-                                    adios2_Variable **variable,
+               ADIOS2_PUT_SYNC_F2C)(adios2_engine **engine,
+                                    adios2_variable **variable,
                                     const void *values, int *ierr)
 {
     *ierr = 0;
@@ -51,7 +51,7 @@ void FC_GLOBAL(adios2_put_sync_f2c,
 }
 
 void FC_GLOBAL(adios2_put_sync_by_name_f2c,
-               ADIOS2_PUT_SYNC_BY_NAME_F2C)(adios2_Engine **engine,
+               ADIOS2_PUT_SYNC_BY_NAME_F2C)(adios2_engine **engine,
                                             const char *name,
                                             const void *values, int *ierr)
 {
@@ -68,8 +68,8 @@ void FC_GLOBAL(adios2_put_sync_by_name_f2c,
 }
 
 void FC_GLOBAL(adios2_put_deferred_f2c,
-               ADIOS2_PUT_DEFERRED_F2C)(adios2_Engine **engine,
-                                        adios2_Variable **variable,
+               ADIOS2_PUT_DEFERRED_F2C)(adios2_engine **engine,
+                                        adios2_variable **variable,
                                         const void *values, int *ierr)
 {
     *ierr = 0;
@@ -85,7 +85,7 @@ void FC_GLOBAL(adios2_put_deferred_f2c,
 }
 
 void FC_GLOBAL(adios2_put_deferred_by_name_f2c,
-               ADIOS2_PUT_DEFERRED_BY_NAME_F2C)(adios2_Engine **engine,
+               ADIOS2_PUT_DEFERRED_BY_NAME_F2C)(adios2_engine **engine,
                                                 const char *name,
                                                 const void *values, int *ierr)
 {
@@ -102,7 +102,7 @@ void FC_GLOBAL(adios2_put_deferred_by_name_f2c,
 }
 
 void FC_GLOBAL(adios2_perform_puts_f2c,
-               ADIOS2_PERFORM_PUTS_F2C)(adios2_Engine **engine, int *ierr)
+               ADIOS2_PERFORM_PUTS_F2C)(adios2_engine **engine, int *ierr)
 {
     *ierr = 0;
     try
@@ -118,8 +118,8 @@ void FC_GLOBAL(adios2_perform_puts_f2c,
 
 // ******** GETS */
 void FC_GLOBAL(adios2_get_sync_f2c,
-               ADIOS2_get_SYNC_F2C)(adios2_Engine **engine,
-                                    adios2_Variable **variable, void *values,
+               ADIOS2_get_SYNC_F2C)(adios2_engine **engine,
+                                    adios2_variable **variable, void *values,
                                     int *ierr)
 {
     *ierr = 0;
@@ -135,7 +135,7 @@ void FC_GLOBAL(adios2_get_sync_f2c,
 }
 
 void FC_GLOBAL(adios2_get_sync_by_name_f2c,
-               ADIOS2_get_SYNC_BY_NAME_F2C)(adios2_Engine **engine,
+               ADIOS2_get_SYNC_BY_NAME_F2C)(adios2_engine **engine,
                                             const char *name, void *values,
                                             int *ierr)
 {
@@ -152,8 +152,8 @@ void FC_GLOBAL(adios2_get_sync_by_name_f2c,
 }
 
 void FC_GLOBAL(adios2_get_deferred_f2c,
-               ADIOS2_get_DEFERRED_F2C)(adios2_Engine **engine,
-                                        adios2_Variable **variable,
+               ADIOS2_get_DEFERRED_F2C)(adios2_engine **engine,
+                                        adios2_variable **variable,
                                         void *values, int *ierr)
 {
     *ierr = 0;
@@ -169,7 +169,7 @@ void FC_GLOBAL(adios2_get_deferred_f2c,
 }
 
 void FC_GLOBAL(adios2_get_deferred_by_name_f2c,
-               ADIOS2_get_DEFERRED_BY_NAME_F2C)(adios2_Engine **engine,
+               ADIOS2_get_DEFERRED_BY_NAME_F2C)(adios2_engine **engine,
                                                 const char *name, void *values,
                                                 int *ierr)
 {
@@ -186,7 +186,7 @@ void FC_GLOBAL(adios2_get_deferred_by_name_f2c,
 }
 
 void FC_GLOBAL(adios2_perform_gets_f2c,
-               ADIOS2_PERFORM_GETS_F2C)(adios2_Engine **engine, int *ierr)
+               ADIOS2_PERFORM_GETS_F2C)(adios2_engine **engine, int *ierr)
 {
     *ierr = 0;
     try
@@ -200,7 +200,7 @@ void FC_GLOBAL(adios2_perform_gets_f2c,
     }
 }
 
-void FC_GLOBAL(adios2_end_step_f2c, ADIOS2_END_STEP_F2C)(adios2_Engine **engine,
+void FC_GLOBAL(adios2_end_step_f2c, ADIOS2_END_STEP_F2C)(adios2_engine **engine,
                                                          int *ierr)
 {
     *ierr = 0;
@@ -216,7 +216,7 @@ void FC_GLOBAL(adios2_end_step_f2c, ADIOS2_END_STEP_F2C)(adios2_Engine **engine,
 }
 
 void FC_GLOBAL(adios2_write_step_f2c,
-               ADIOS2_WRITE_STEP_F2C)(adios2_Engine **engine, int *ierr)
+               ADIOS2_WRITE_STEP_F2C)(adios2_engine **engine, int *ierr)
 {
     *ierr = 0;
     try
@@ -230,7 +230,7 @@ void FC_GLOBAL(adios2_write_step_f2c,
     }
 }
 
-void FC_GLOBAL(adios2_close_f2c, ADIOS2_CLOSE_F2C)(adios2_Engine **engine,
+void FC_GLOBAL(adios2_close_f2c, ADIOS2_CLOSE_F2C)(adios2_engine **engine,
                                                    int *ierr)
 {
     *ierr = 0;
