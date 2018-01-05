@@ -29,7 +29,7 @@ namespace insitumpi
 // for tagging messages
 enum MpiTags
 {
-    BaseTag = 78934248,
+    BaseTag = 27950,
     Connect,
     Step,
     MetadataLength,
