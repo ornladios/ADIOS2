@@ -287,6 +287,20 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
     const size_t startPosition = position;
     size_t localPosition = 0;
 
+    if (m_Threads == 1)
+    {
+        while (localPosition < length)
+        {
+            lf_ReadElementIndex(io, buffer, position);
+
+            const size_t elementIndexSize =
+                static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+            position += elementIndexSize;
+            localPosition = position - startPosition;
+        }
+        return;
+    }
+
     // threads for reading Variables
     std::vector<std::future<void>> asyncs(m_Threads);
     std::vector<size_t> asyncPositions(m_Threads);
