@@ -746,6 +746,32 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
 
     size_t serializedPosition = 0;
 
+    if (m_Threads == 1)
+    {
+        while (serializedPosition < serializedSize)
+        {
+            if (serializedPosition >= serializedSize)
+            {
+                break;
+            }
+
+            const int rankSource = static_cast<int>(
+                ReadValue<uint32_t>(serialized, serializedPosition));
+
+            if (serializedPosition <= serializedSize)
+            {
+                lf_Deserialize(rankSource, serialized, serializedPosition,
+                               deserialized);
+            }
+
+            const size_t bufferSize = static_cast<size_t>(
+                ReadValue<uint32_t>(serialized, serializedPosition));
+            serializedPosition += bufferSize;
+        }
+
+        return deserialized;
+    }
+
     std::vector<std::future<void>> asyncs(m_Threads);
     std::vector<size_t> asyncPositions(m_Threads);
     std::vector<int> asyncRankSources(m_Threads);
