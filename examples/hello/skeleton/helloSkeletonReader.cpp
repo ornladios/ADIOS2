@@ -58,10 +58,11 @@ int main(int argc, char *argv[])
                 vMyArray = io.InquireVariable<float>("myArray");
                 if (vMyArray == nullptr)
                 {
-                    std::cout << 
-                        "Missing 'myArray' variable. The Skeleton reader "
-                        "engine must retrieve variables from the writer and "
-                        "create Variable objects before they can be inquired\n";
+                    std::cout
+                        << "Missing 'myArray' variable. The Skeleton reader "
+                           "engine must retrieve variables from the writer and "
+                           "create Variable objects before they can be "
+                           "inquired\n";
                     count.push_back(0);
                     count.push_back(0);
                     start.push_back(0);
@@ -71,7 +72,8 @@ int main(int argc, char *argv[])
                 {
                     // now read the variable
                     // Get the read decomposition
-                    settings.DecomposeArray(vMyArray->m_Shape[0], vMyArray->m_Shape[1]);
+                    settings.DecomposeArray(vMyArray->m_Shape[0],
+                                            vMyArray->m_Shape[1]);
                     count.push_back(settings.ndx);
                     count.push_back(settings.ndy);
                     start.push_back(settings.offsx);
