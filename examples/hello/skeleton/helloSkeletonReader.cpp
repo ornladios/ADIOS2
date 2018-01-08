@@ -1,7 +1,6 @@
 #include <algorithm>
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
-#include <mpi.h>
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
@@ -12,18 +11,21 @@
 
 int main(int argc, char *argv[])
 {
+    int wrank = 0, wnproc = 1;
+    int rank = 0, nproc = 1;
+    MPI_Comm mpiReaderComm;
+
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
-    int wrank, wnproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
     MPI_Comm_size(MPI_COMM_WORLD, &wnproc);
 
     const unsigned int color = 2;
-    MPI_Comm mpiReaderComm;
     MPI_Comm_split(MPI_COMM_WORLD, color, wrank, &mpiReaderComm);
 
-    int rank, nproc;
     MPI_Comm_rank(mpiReaderComm, &rank);
     MPI_Comm_size(mpiReaderComm, &nproc);
+#endif
 
     try
     {
@@ -116,7 +118,9 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }

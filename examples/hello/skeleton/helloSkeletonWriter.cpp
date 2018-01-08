@@ -7,9 +7,8 @@
  */
 
 #include <chrono>
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
-#include <mpi.h>
+#include <ios>       //std::ios_base::failure
+#include <iostream>  //std::cout
 #include <stdexcept> //std::invalid_argument std::exception
 #include <thread>
 #include <vector>
@@ -20,18 +19,21 @@
 
 int main(int argc, char *argv[])
 {
+    int wrank = 0, wnproc = 1;
+    int rank = 0, nproc = 1;
+    MPI_Comm mpiWriterComm;
+
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
-    int wrank, wnproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
     MPI_Comm_size(MPI_COMM_WORLD, &wnproc);
 
     const unsigned int color = 1;
-    MPI_Comm mpiWriterComm;
     MPI_Comm_split(MPI_COMM_WORLD, color, wrank, &mpiWriterComm);
 
-    int rank, nproc;
     MPI_Comm_rank(mpiWriterComm, &rank);
     MPI_Comm_size(mpiWriterComm, &nproc);
+#endif
 
     try
     {
@@ -90,7 +92,9 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }
