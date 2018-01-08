@@ -134,6 +134,46 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
     return intersectionBox;
 }
 
+bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
+{
+    const size_t dimensionsSize = box1.first.size();
+    for (size_t d = 0; d < dimensionsSize; ++d)
+    {
+        if (box1.first[d] != box2.first[d] || box1.second[d] != box2.second[d])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
+                                      const Box<Dims> &intersectionBox,
+                                      size_t &startOffset) noexcept
+{
+    bool itIs = true;
+    const size_t dimensionsSize = blockBox.first.size();
+    size_t nElements = 1; // number of elements in dim 1..n-1
+    if (dimensionsSize == 0)
+    {
+        startOffset = 0;
+        return true;
+    }
+    // It is a contiguous subarray iff the dimensions are equal everywhere
+    // except in the first dimension
+    for (size_t d = 1; d < dimensionsSize; ++d)
+    {
+        if (blockBox.first[d] != intersectionBox.first[d] ||
+            blockBox.second[d] != intersectionBox.second[d])
+        {
+            return false;
+        }
+        nElements *= (blockBox.second[d] - blockBox.first[d] + 1);
+    }
+    startOffset = (intersectionBox.first[0] - blockBox.first[0]) * nElements;
+    return true;
+}
+
 size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
                    const bool isRowMajor) noexcept
 {

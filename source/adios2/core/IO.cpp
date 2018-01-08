@@ -43,6 +43,11 @@
 #endif
 #endif
 
+#ifdef ADIOS2_HAVE_MPI // external dependencies
+#include "adios2/engine/insitumpi/InSituMPIReader.h"
+#include "adios2/engine/insitumpi/InSituMPIWriter.h"
+#endif
+
 namespace adios2
 {
 
@@ -310,7 +315,8 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
     return itVariable->second.first;
 }
 
-Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
+Engine &IO::Open(const std::string &name, const Mode mode,
+                 MPI_Comm mpiComm_orig)
 {
     if (m_DebugMode)
     {
@@ -321,6 +327,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
         }
     }
 
+    MPI_Comm mpiComm;
+    MPI_Comm_dup(mpiComm_orig, &mpiComm);
     std::shared_ptr<Engine> engine;
     const bool isDefaultEngine = m_EngineType.empty() ? true : false;
     std::string engineTypeLC = m_EngineType;
@@ -401,6 +409,20 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5 engine\n");
+#endif
+    }
+    else if (engineTypeLC == "insitumpi")
+    {
+#ifdef ADIOS2_HAVE_MPI
+        if (mode == Mode::Read)
+            engine =
+                std::make_shared<InSituMPIReader>(*this, name, mode, mpiComm);
+        else
+            engine =
+                std::make_shared<InSituMPIWriter>(*this, name, mode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "MPI, can't use InSituMPI engine\n");
 #endif
     }
     else if (engineTypeLC == "pluginengine")

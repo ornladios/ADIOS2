@@ -55,7 +55,7 @@ public:
     Engine(const std::string engineType, IO &io, const std::string &name,
            const Mode mode, MPI_Comm mpiComm);
 
-    virtual ~Engine() = default;
+    virtual ~Engine();
 
     /**
      * Gets the factory IO object
