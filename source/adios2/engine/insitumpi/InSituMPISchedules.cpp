@@ -26,7 +26,7 @@ namespace insitumpi
 int GetNumberOfRequests(
     const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
 {
-    int n;
+    int n = 0;
     for (const auto &variableNamePair : variablesSubFileInfo)
     {
         // <writer, <steps, <SubFileInfo>>>
@@ -49,7 +49,7 @@ int GetNumberOfRequests(
 int FixSeeksToZeroOffset(
     std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
 {
-    int n;
+    int n = 0;
     for (auto &variableNamePair : variablesSubFileInfo)
     {
         // <writer, <steps, <SubFileInfo>>>
