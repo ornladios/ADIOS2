@@ -287,23 +287,27 @@ void InSituMPIReader::SendReadSchedule(
         insitumpi::SerializeLocalReadSchedule(m_RankAllPeers.size(),
                                               variablesSubFileInfo);
 
-    MPI_Request request;
+    std::vector<MPI_Request> request(m_RankAllPeers.size());
+    std::vector<int> mdLen(m_RankAllPeers.size());
     for (int i = 0; i < m_RankAllPeers.size(); i++)
     {
-        int mdLen = serializedSchedules[i].size();
+        mdLen[i] = serializedSchedules[i].size();
         if (m_Verbosity == 5)
         {
             std::cout << "InSituMPI Reader " << m_ReaderRank
-                      << " Send Read Schedule len = " << mdLen << " to Writer "
-                      << i << " global rank " << m_RankAllPeers[i] << std::endl;
+                      << " Send Read Schedule len = " << mdLen[i]
+                      << " to Writer " << i << " global rank "
+                      << m_RankAllPeers[i] << std::endl;
         }
-        MPI_Isend(&mdLen, 1, MPI_INT, m_RankAllPeers[i],
+        MPI_Isend(&(mdLen[i]), 1, MPI_INT, m_RankAllPeers[i],
                   insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
-                  &request);
-        MPI_Isend(serializedSchedules[i].data(), mdLen, MPI_CHAR,
+                  &(request[i]));
+        MPI_Isend(serializedSchedules[i].data(), mdLen[i], MPI_CHAR,
                   m_RankAllPeers[i], insitumpi::MpiTags::ReadSchedule,
-                  m_CommWorld, &request);
+                  m_CommWorld, &(request[i]));
     }
+    std::vector<MPI_Status> status(m_RankAllPeers.size());
+    MPI_Waitall(m_RankAllPeers.size(), request.data(), status.data());
 }
 
 void InSituMPIReader::AsyncRecvAllVariables()
