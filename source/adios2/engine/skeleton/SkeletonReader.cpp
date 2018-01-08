@@ -11,8 +11,6 @@
 #include "SkeletonReader.h"
 #include "SkeletonReader.tcc"
 
-#include <adios_error.h>
-
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 
 #include <iostream>
