@@ -123,6 +123,10 @@ void InSituMPIWriter::PerformPuts()
         m_BP3Serializer.SerializeMetadataInData();
         m_BP3Serializer.AggregateCollectiveMetadata();
 
+        // store length long enough to survive Isend() completion
+        // so don't move this into the next if branch
+        unsigned long mdLen = m_BP3Serializer.m_Metadata.m_Position;
+
         // Send the metadata to all reader peers, asynchronously
         // we don't care about keeping these requests because
         // we will wait next for response from all readers
@@ -148,7 +152,6 @@ void InSituMPIWriter::PerformPuts()
             MPI_Request request;
             // for (auto peerRank : m_RankDirectPeers)
             auto peerRank = m_RankDirectPeers[0];
-            unsigned long mdLen = m_BP3Serializer.m_Metadata.m_Position;
             MPI_Isend(&mdLen, 1, MPI_UNSIGNED_LONG, peerRank,
                       insitumpi::MpiTags::MetadataLength, m_CommWorld,
                       &request);
@@ -165,12 +168,12 @@ void InSituMPIWriter::PerformPuts()
             m_RankAllPeers.size());
         for (int peerID = 0; peerID < m_RankAllPeers.size(); peerID++)
         {
-            int mdLen;
-            MPI_Recv(&mdLen, 1, MPI_INT, m_RankAllPeers[peerID],
+            int rsLen;
+            MPI_Recv(&rsLen, 1, MPI_INT, m_RankAllPeers[peerID],
                      insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
                      &statuses[peerID]);
-            serializedSchedules[peerID].resize(mdLen);
-            MPI_Recv(serializedSchedules[peerID].data(), mdLen, MPI_CHAR,
+            serializedSchedules[peerID].resize(rsLen);
+            MPI_Recv(serializedSchedules[peerID].data(), rsLen, MPI_CHAR,
                      m_RankAllPeers[peerID], insitumpi::MpiTags::ReadSchedule,
                      m_CommWorld, &statuses[peerID]);
             if (m_Verbosity == 5)
@@ -178,10 +181,9 @@ void InSituMPIWriter::PerformPuts()
                 std::cout << "InSituMPI Writer " << m_WriterRank
                           << " received read schedule from Reader  " << peerID
                           << " global rank " << m_RankAllPeers[peerID]
-                          << " length = " << mdLen << std::endl;
+                          << " length = " << rsLen << std::endl;
             }
         }
-        // MPI_Waitall(m_RankAllPeers.size(), requests.data(), statuses.data());
 
         // build (and remember for fixed schedule) the read request table
         // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>> map
