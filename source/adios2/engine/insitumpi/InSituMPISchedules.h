@@ -26,7 +26,7 @@ namespace insitumpi
 
 // Count the requests in the map
 int GetNumberOfRequests(
-    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
+    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
 
 // Recalculate in each SubFileInfo the Seek parameters as
 // if the payload offset was always 0

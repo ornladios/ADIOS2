@@ -64,8 +64,9 @@ std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
     if (!rank)
     {
         std::ofstream outf(ofName, std::ios::out | std::ios::binary);
-        outf.write((char *)&nproc, sizeof(int));
-        outf.write((char *)mylist.data(), nproc * sizeof(int));
+        outf.write(reinterpret_cast<char *>(&nproc), sizeof(int));
+        outf.write(reinterpret_cast<char *>(mylist.data()),
+                   nproc * sizeof(int));
         outf.close();
         // std::cout << "rank " << wrank << ": Created info file " << ofName
         //          << std::endl;
@@ -174,12 +175,12 @@ std::vector<int> AssignPeers(const int rank, const int nproc,
 
 int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
                        const bool IAmWriterRoot, const int globalRank,
-                       const std::vector<int> peers)
+                       const std::vector<int> &peers)
 {
     int token = (IAmWriterRoot ? 1 : 0);
     int writeRootGlobalRank = -1;
     MPI_Status status;
-    for (auto peerRank : peers)
+    for (const auto peerRank : peers)
     {
         if (IAmSender)
         {

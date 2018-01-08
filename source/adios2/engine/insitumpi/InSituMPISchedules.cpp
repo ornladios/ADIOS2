@@ -24,19 +24,19 @@ namespace insitumpi
 {
 
 int GetNumberOfRequests(
-    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
+    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
 {
     int n;
-    for (auto &variableNamePair : variablesSubFileInfo)
+    for (const auto &variableNamePair : variablesSubFileInfo)
     {
         // <writer, <steps, <SubFileInfo>>>
-        for (auto &subFileIndexPair : variableNamePair.second)
+        for (const auto &subFileIndexPair : variableNamePair.second)
         {
             // <steps, <SubFileInfo>>  but there is only one step
-            for (auto &stepPair : subFileIndexPair.second)
+            for (const auto &stepPair : subFileIndexPair.second)
             {
                 // <SubFileInfo>
-                for (auto &sfi : stepPair.second)
+                for (const auto &sfi : stepPair.second)
                 {
                     n++;
                 }
@@ -116,7 +116,7 @@ std::vector<std::vector<char>> SerializeLocalReadSchedule(
     }
 
     // Record the number of actually requested variables for each buffer
-    for (size_t i = 0; i < nWriters; i++)
+    for (int i = 0; i < nWriters; i++)
     {
         size_t pos = 0;
         CopyToBuffer(buffers[i], pos, &nVarPerWriter[i]);

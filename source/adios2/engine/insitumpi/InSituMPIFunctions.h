@@ -61,7 +61,7 @@ std::vector<int> AssignPeers(const int rank, const int nproc,
 // root, -1 everywhere else.
 int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
                        const bool IAmWriterRoot, const int globalRank,
-                       const std::vector<int> peers);
+                       const std::vector<int> &peers);
 
 } // end namespace insitumpi
 
