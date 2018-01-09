@@ -18,6 +18,8 @@
 #include "adios2/engine/bp/BPFileReader.h"
 #include "adios2/engine/bp/BPFileWriter.h"
 #include "adios2/engine/plugin/PluginEngine.h"
+#include "adios2/engine/skeleton/SkeletonReader.h"
+#include "adios2/engine/skeleton/SkeletonWriter.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
@@ -428,6 +430,15 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     else if (engineTypeLC == "pluginengine")
     {
         engine = std::make_shared<PluginEngine>(*this, name, mode, mpiComm);
+    }
+    else if (engineTypeLC == "skeleton")
+    {
+        if (mode == Mode::Read)
+            engine =
+                std::make_shared<SkeletonReader>(*this, name, mode, mpiComm);
+        else
+            engine =
+                std::make_shared<SkeletonWriter>(*this, name, mode, mpiComm);
     }
     else
     {
