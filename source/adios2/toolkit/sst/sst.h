@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-#include<stdlib.h>
+#include <stdlib.h>
 
 /*!
  * SstStream is the basic type of a stream connecting an ADIOS2 reader

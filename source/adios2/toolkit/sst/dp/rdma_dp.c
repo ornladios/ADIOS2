@@ -9,9 +9,9 @@
 #include <mpi.h>
 
 #include <rdma/fabric.h>
+#include <rdma/fi_cm.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
-#include <rdma/fi_cm.h>
 #include <rdma/fi_rma.h>
 
 #include "sst_data.h"
@@ -22,16 +22,17 @@
 
 pthread_mutex_t fabric_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-struct fabric_state {
-	struct fi_context *ctx;
-	//struct fi_context *lctx;
-	struct fi_info *info;
-	//struct fi_info *linfo;
-	int local_mr_req;
-	size_t addr_len;
-	size_t msg_prefix_size;
-	//size_t lmsg_prefix_size;
-    struct	fid_fabric *fabric;
+struct fabric_state
+{
+    struct fi_context *ctx;
+    // struct fi_context *lctx;
+    struct fi_info *info;
+    // struct fi_info *linfo;
+    int local_mr_req;
+    size_t addr_len;
+    size_t msg_prefix_size;
+    // size_t lmsg_prefix_size;
+    struct fid_fabric *fabric;
     struct fid_domain *domain;
     struct fid_ep *signal;
     struct fid_cq *cq_signal;
@@ -75,80 +76,93 @@ struct fabric_state {
  *   plane would replace one or both of these with RDMA functionality.
  */
 
-
 static void init_fabric(struct fabric_state *fabric)
 {
-	struct fi_info *hints, *info;
-	struct fi_av_attr av_attr = {0};
-	struct fi_cq_attr cq_attr = {0};
-	char *ifname;
+    struct fi_info *hints, *info;
+    struct fi_av_attr av_attr = {0};
+    struct fi_cq_attr cq_attr = {0};
+    char *ifname;
 
-	hints = fi_allocinfo();
-	hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ | FI_REMOTE_WRITE | FI_RMA | FI_READ | FI_WRITE;
-	hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX | FI_ASYNC_IOV | FI_RX_CQ_DATA;
-	hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints = fi_allocinfo();
+    hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ |
+                  FI_REMOTE_WRITE | FI_RMA | FI_READ | FI_WRITE;
+    hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
+                  FI_ASYNC_IOV | FI_RX_CQ_DATA;
+    hints->domain_attr->mr_mode = FI_MR_BASIC;
 
-	ifname = getenv("FABRIC_IFACE");
+    ifname = getenv("FABRIC_IFACE");
 
-	fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
-	fi_freeinfo(hints);
+    fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
+    fi_freeinfo(hints);
 
-	if(!info) {
-		fabric->info = NULL;
-		return;
-	}
-	if(info->mode & FI_CONTEXT2) {
-		fabric->ctx = calloc(2, sizeof(*fabric->ctx));
-	} else if(info->mode & FI_CONTEXT) {
-		fabric->ctx = calloc(1, sizeof(*fabric->ctx));
-	} else {
-		fabric->ctx = NULL;
-	}
+    if (!info)
+    {
+        fabric->info = NULL;
+        return;
+    }
+    if (info->mode & FI_CONTEXT2)
+    {
+        fabric->ctx = calloc(2, sizeof(*fabric->ctx));
+    }
+    else if (info->mode & FI_CONTEXT)
+    {
+        fabric->ctx = calloc(1, sizeof(*fabric->ctx));
+    }
+    else
+    {
+        fabric->ctx = NULL;
+    }
 
-	if(info->mode & FI_LOCAL_MR) {
-		fabric->local_mr_req = 1;
-	} else {
-		fabric->local_mr_req = 0;
-	}
+    if (info->mode & FI_LOCAL_MR)
+    {
+        fabric->local_mr_req = 1;
+    }
+    else
+    {
+        fabric->local_mr_req = 0;
+    }
 
-	if(info->mode & FI_MSG_PREFIX) {
-		fabric->msg_prefix_size = info->ep_attr->msg_prefix_size;
-	} else {
-		fabric->msg_prefix_size = 0;
-	}
+    if (info->mode & FI_MSG_PREFIX)
+    {
+        fabric->msg_prefix_size = info->ep_attr->msg_prefix_size;
+    }
+    else
+    {
+        fabric->msg_prefix_size = 0;
+    }
 
-	while(info->next) {
-		if(ifname && strcmp(ifname, info->domain_attr->name) == 0) {
-			break;
-		}
-		info = info->next;
-	}
+    while (info->next)
+    {
+        if (ifname && strcmp(ifname, info->domain_attr->name) == 0)
+        {
+            break;
+        }
+        info = info->next;
+    }
 
+    fabric->info = fi_dupinfo(info);
+    fabric->addr_len = info->src_addrlen;
 
-	fabric->info = fi_dupinfo(info);
-	fabric->addr_len = info->src_addrlen;
+    info->domain_attr->mr_mode = FI_MR_BASIC;
+    fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
+    fi_domain(fabric->fabric, info, &fabric->domain, fabric->ctx);
+    info->ep_attr->type = FI_EP_RDM;
+    fi_endpoint(fabric->domain, info, &fabric->signal, fabric->ctx);
 
-	info->domain_attr->mr_mode = FI_MR_BASIC;
-	fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
-	fi_domain(fabric->fabric, info, &fabric->domain, fabric->ctx);
-	info->ep_attr->type = FI_EP_RDM;
-	fi_endpoint(fabric->domain, info, &fabric->signal, fabric->ctx);
+    av_attr.type = FI_AV_MAP;
+    av_attr.count = DP_AV_DEF_SIZE;
+    av_attr.ep_per_node = 0;
+    fi_av_open(fabric->domain, &av_attr, &fabric->av, fabric->ctx);
+    fi_ep_bind(fabric->signal, &fabric->av->fid, 0);
 
-	av_attr.type = FI_AV_MAP;
-	av_attr.count = DP_AV_DEF_SIZE;
-	av_attr.ep_per_node = 0;
-	fi_av_open(fabric->domain, &av_attr, &fabric->av, fabric->ctx);
-	fi_ep_bind(fabric->signal, &fabric->av->fid, 0);
+    cq_attr.size = 0;
+    cq_attr.format = FI_CQ_FORMAT_DATA;
+    cq_attr.wait_obj = FI_WAIT_MUTEX_COND;
+    cq_attr.wait_cond = FI_CQ_COND_NONE;
+    fi_cq_open(fabric->domain, &cq_attr, &fabric->cq_signal, fabric->ctx);
+    fi_ep_bind(fabric->signal, &fabric->cq_signal->fid, FI_TRANSMIT | FI_RECV);
 
-	cq_attr.size = 0;
-	cq_attr.format = FI_CQ_FORMAT_DATA;
-	cq_attr.wait_obj = FI_WAIT_MUTEX_COND;
-	cq_attr.wait_cond = FI_CQ_COND_NONE;
-	fi_cq_open(fabric->domain, &cq_attr, &fabric->cq_signal, fabric->ctx);
-	fi_ep_bind(fabric->signal, &fabric->cq_signal->fid, FI_TRANSMIT | FI_RECV);
-
-	fi_enable(fabric->signal);
-
+    fi_enable(fabric->signal);
 }
 
 typedef struct fabric_state *FabricState;
@@ -228,10 +242,8 @@ typedef struct _RdmaReadRequestMsg
 static FMField RdmaReadRequestList[] = {
     {"Timestep", "integer", sizeof(long),
      FMOffset(RdmaReadRequestMsg, Timestep)},
-    {"Offset", "integer", sizeof(size_t),
-     FMOffset(RdmaReadRequestMsg, Offset)},
-    {"Length", "integer", sizeof(size_t),
-     FMOffset(RdmaReadRequestMsg, Length)},
+    {"Offset", "integer", sizeof(size_t), FMOffset(RdmaReadRequestMsg, Offset)},
+    {"Length", "integer", sizeof(size_t), FMOffset(RdmaReadRequestMsg, Length)},
     {"WS_Stream", "integer", sizeof(void *),
      FMOffset(RdmaReadRequestMsg, WS_Stream)},
     {"RS_Stream", "integer", sizeof(void *),
@@ -243,8 +255,8 @@ static FMField RdmaReadRequestList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec RdmaReadRequestStructs[] = {
-    {"RdmaReadRequest", RdmaReadRequestList,
-     sizeof(struct _RdmaReadRequestMsg), NULL},
+    {"RdmaReadRequest", RdmaReadRequestList, sizeof(struct _RdmaReadRequestMsg),
+     NULL},
     {NULL, NULL, 0, NULL}};
 
 typedef struct _RdmaReadReplyMsg
@@ -260,10 +272,8 @@ static FMField RdmaReadReplyList[] = {
      FMOffset(RdmaReadReplyMsg, RS_Stream)},
     {"NotifyCondition", "integer", sizeof(int),
      FMOffset(RdmaReadReplyMsg, NotifyCondition)},
-	{"Key", "integer", sizeof(uint64_t),
-	 FMOffset(RdmaReadReplyMsg, Key)},
-	{"Addr", "integer", sizeof(void *),
-	 FMOffset(RdmaReadReplyMsg, Addr)},
+    {"Key", "integer", sizeof(uint64_t), FMOffset(RdmaReadReplyMsg, Key)},
+    {"Addr", "integer", sizeof(void *), FMOffset(RdmaReadReplyMsg, Addr)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec RdmaReadReplyStructs[] = {
@@ -272,10 +282,10 @@ static FMStructDescRec RdmaReadReplyStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_Data, attr_list attrs);
+                                 void *client_Data, attr_list attrs);
 
 static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
-                                    void **ReaderContactInfoPtr)
+                                   void **ReaderContactInfoPtr)
 {
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
     RdmaReaderContactInfo Contact =
@@ -292,10 +302,11 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
     init_fabric(Stream->Fabric);
     Fabric = Stream->Fabric;
-    if(!Fabric->info) {
-    	Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
-    	free(Stream);
-    	return(NULL);
+    if (!Fabric->info)
+    {
+        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
+        free(Stream);
+        return (NULL);
     }
 
     /*
@@ -323,7 +334,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
 }
 
 static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
-                                    void *client_Data, attr_list attrs)
+                                   void *client_Data, attr_list attrs)
 {
     RdmaReadRequestMsg ReadRequestMsg = (RdmaReadRequestMsg)msg_v;
     Rdma_WSR_Stream WSR_Stream = ReadRequestMsg->WS_Stream;
@@ -344,9 +355,10 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
             struct _RdmaReadReplyMsg ReadReplyMsg;
             /* memset avoids uninit byte warnings from valgrind */
             memset(&ReadReplyMsg, 0, sizeof(ReadReplyMsg));
-//            ReadReplyMsg.Timestep = ReadRequestMsg->Timestep;
-//            ReadReplyMsg.DataLength = ReadRequestMsg->Length;
-//            ReadReplyMsg.Data = tmp->Data->block + ReadRequestMsg->Offset;
+            //            ReadReplyMsg.Timestep = ReadRequestMsg->Timestep;
+            //            ReadReplyMsg.DataLength = ReadRequestMsg->Length;
+            //            ReadReplyMsg.Data = tmp->Data->block +
+            //            ReadRequestMsg->Offset;
             ReadReplyMsg.RS_Stream = ReadRequestMsg->RS_Stream;
             ReadReplyMsg.NotifyCondition = ReadRequestMsg->NotifyCondition;
             ReadReplyMsg.Key = tmp->Key;
@@ -386,7 +398,7 @@ typedef struct _RdmaCompletionHandle
 } * RdmaCompletionHandle;
 
 static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_Data, attr_list attrs)
+                                 void *client_Data, attr_list attrs)
 {
     RdmaReadReplyMsg ReadReplyMsg = (RdmaReadReplyMsg)msg_v;
     Rdma_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
@@ -412,16 +424,20 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
      * data to the buffer area given by the request
      */
     pthread_mutex_lock(&fabric_mutex);
-    if(Fabric->local_mr_req) {
-        	//register dest buffer
-    	fi_mr_reg(Fabric->domain, Handle->Buffer, Handle->Length, FI_READ,
-    	    		0, 0, 0, &LocalMR, Fabric->ctx);
-    	LocalDesc = fi_mr_desc(LocalMR);
+    if (Fabric->local_mr_req)
+    {
+        // register dest buffer
+        fi_mr_reg(Fabric->domain, Handle->Buffer, Handle->Length, FI_READ, 0, 0,
+                  0, &LocalMR, Fabric->ctx);
+        LocalDesc = fi_mr_desc(LocalMR);
     }
-    fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc, SrcAddress, (uint64_t)ReadReplyMsg->Addr, ReadReplyMsg->Key, Fabric->ctx);
+    fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
+            SrcAddress, (uint64_t)ReadReplyMsg->Addr, ReadReplyMsg->Key,
+            Fabric->ctx);
     fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
-    //error handling
-    if(Fabric->local_mr_req) {
+    // error handling
+    if (Fabric->local_mr_req)
+    {
         fi_close(LocalMR);
     }
     pthread_mutex_unlock(&fabric_mutex);
@@ -445,10 +461,11 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream)
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
     init_fabric(Stream->Fabric);
     Fabric = Stream->Fabric;
-    if(!Fabric->info) {
-    	Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
-    	free(Stream);
-    	return(NULL);
+    if (!Fabric->info)
+    {
+        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
+        free(Stream);
+        return (NULL);
     }
 
     MPI_Comm_rank(comm, &Stream->Rank);
@@ -473,11 +490,11 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream)
 }
 
 static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
-                                              DP_WS_Stream WS_Stream_v,
-                                              int readerCohortSize,
-                                              CP_PeerCohort PeerCohort,
-                                              void **providedReaderInfo_v,
-                                              void **WriterContactInfoPtr)
+                                             DP_WS_Stream WS_Stream_v,
+                                             int readerCohortSize,
+                                             CP_PeerCohort PeerCohort,
+                                             void **providedReaderInfo_v,
+                                             void **WriterContactInfoPtr)
 {
     Rdma_WS_Stream WS_Stream = (Rdma_WS_Stream)WS_Stream_v;
     Rdma_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
@@ -530,7 +547,8 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
 
     ContactInfo->Length = Fabric->info->src_addrlen;
     ContactInfo->Address = malloc(ContactInfo->Length);
-    fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length);
+    fi_getname((fid_t)Fabric->signal, ContactInfo->Address,
+               &ContactInfo->Length);
 
     *WriterContactInfoPtr = ContactInfo;
 
@@ -538,10 +556,10 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
 }
 
 static void RdmaProvideWriterDataToReader(CP_Services Svcs,
-                                           DP_RS_Stream RS_Stream_v,
-                                           int writerCohortSize,
-                                           CP_PeerCohort PeerCohort,
-                                           void **providedWriterInfo_v)
+                                          DP_RS_Stream RS_Stream_v,
+                                          int writerCohortSize,
+                                          CP_PeerCohort PeerCohort,
+                                          void **providedWriterInfo_v)
 {
     Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)RS_Stream_v;
     FabricState Fabric = RS_Stream->Fabric;
@@ -550,7 +568,8 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
 
     RS_Stream->PeerCohort = PeerCohort;
     RS_Stream->WriterCohortSize = writerCohortSize;
-    RS_Stream->WriterAddr = calloc(writerCohortSize, sizeof(*RS_Stream->WriterAddr));
+    RS_Stream->WriterAddr =
+        calloc(writerCohortSize, sizeof(*RS_Stream->WriterAddr));
 
     /*
      * make a copy of writer contact information (original will not be
@@ -564,7 +583,8 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
             strdup(providedWriterInfo[i]->ContactString);
         RS_Stream->WriterContactInfo[i].WS_Stream =
             providedWriterInfo[i]->WS_Stream;
-        fi_av_insert(Fabric->av, providedWriterInfo[i]->Address, 1, &RS_Stream->WriterAddr[i], 0, NULL);
+        fi_av_insert(Fabric->av, providedWriterInfo[i]->Address, 1,
+                     &RS_Stream->WriterAddr[i], 0, NULL);
         Svcs->verbose(
             RS_Stream->CP_Stream,
             "Received contact info \"%s\", WS_stream %p for WSR Rank %d\n",
@@ -581,9 +601,9 @@ typedef struct _RdmaPerTimestepInfo
 } * RdmaPerTimestepInfo;
 
 static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                   int Rank, long Timestep, size_t Offset,
-                                   size_t Length, void *Buffer,
-                                   void *DP_TimestepInfo)
+                                  int Rank, long Timestep, size_t Offset,
+                                  size_t Length, void *Buffer,
+                                  void *DP_TimestepInfo)
 {
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)
         Stream_v; /* DP_RS_Stream is the return from InitReader */
@@ -647,9 +667,9 @@ static void RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
 }
 
 static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                 struct _SstData *Data,
-                                 struct _SstMetadata *LocalMetadata,
-                                 long Timestep, void **TimestepInfoPtr)
+                                struct _SstData *Data,
+                                struct _SstMetadata *LocalMetadata,
+                                long Timestep, void **TimestepInfoPtr)
 {
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
@@ -665,8 +685,8 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     Entry->Timestep = Timestep;
     Entry->DP_TimestepInfo = Info;
 
-    fi_mr_reg(Fabric->domain, Data->block, Data->DataSize, FI_REMOTE_READ,
-    		0, 0, 0, &Entry->mr, Fabric->ctx);
+    fi_mr_reg(Fabric->domain, Data->block, Data->DataSize, FI_REMOTE_READ, 0, 0,
+              0, &Entry->mr, Fabric->ctx);
     Entry->Key = fi_mr_key(Entry->mr);
     Entry->Next = Stream->Timesteps;
     Stream->Timesteps = Entry;
@@ -674,7 +694,7 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
 }
 
 static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                 long Timestep)
+                                long Timestep)
 {
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
     TimestepList List = Stream->Timesteps;
@@ -728,10 +748,9 @@ static FMField RdmaWriterContactList[] = {
      FMOffset(RdmaWriterContactInfo, ContactString)},
     {"writer_ID", "integer", sizeof(void *),
      FMOffset(RdmaWriterContactInfo, WS_Stream)},
-	{"Length", "integer", sizeof(int),
-	 FMOffset(RdmaWriterContactInfo, Length)},
-	{"Address", "integer[Length]", sizeof(char),
-	 FMOffset(RdmaWriterContactInfo, Address)},
+    {"Length", "integer", sizeof(int), FMOffset(RdmaWriterContactInfo, Length)},
+    {"Address", "integer[Length]", sizeof(char),
+     FMOffset(RdmaWriterContactInfo, Address)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec RdmaWriterContactStructs[] = {
