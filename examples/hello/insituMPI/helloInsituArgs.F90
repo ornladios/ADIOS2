@@ -33,13 +33,11 @@ end subroutine usage
 !!***************************
 subroutine processArgs(rank, nproc, isWriter)
 
-#ifndef __GFORTRAN__
-#ifndef __GNUC__
+#if defined(_CRAYFTN) || !defined(__GFORTRAN__) && !defined(__GNUC__)
     interface
          integer function iargc()
          end function iargc
     end interface
-#endif
 #endif
 
     integer, intent(in) :: rank
