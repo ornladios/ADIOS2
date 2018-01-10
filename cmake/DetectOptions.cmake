@@ -127,8 +127,10 @@ endif()
 # Sst
 if(ADIOS2_USE_SST STREQUAL AUTO)
   find_package(EVPATH)
+  find_package(LibFabric)
 elseif (ADIOS2_USE_SST)
   find_package(EVPATH REQUIRED)
+  find_package(LibFabric REQUIRED)
 endif()
 
 if (EVPATH_FOUND)
