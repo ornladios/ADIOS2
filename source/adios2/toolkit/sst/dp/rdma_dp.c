@@ -438,7 +438,7 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
     // error handling
     if (Fabric->local_mr_req)
     {
-        fi_close(LocalMR);
+        fi_close((struct fid *)LocalMR);
     }
     pthread_mutex_unlock(&fabric_mutex);
 
@@ -625,7 +625,7 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     CMCondition_set_client_data(cm, ret->CMcondition, ret);
 
     Svcs->verbose(Stream->CP_Stream,
-                  "Adios requesting to read remote memory for Timestep %d "
+                  "ADIOS requesting to read remote memory for Timestep %d "
                   "from Rank %d, WSR_Stream = %p\n",
                   Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream);
 
@@ -668,8 +668,8 @@ static void RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
 
 static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                 struct _SstData *Data,
-                                struct _SstMetadata *LocalMetadata,
-                                long Timestep, void **TimestepInfoPtr)
+                                struct _SstData *LocalMetadata, long Timestep,
+                                void **TimestepInfoPtr)
 {
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
@@ -714,7 +714,7 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
             if (List->Timestep == Timestep)
             {
                 last->Next = List->Next;
-                fi_close(List->mr); // to be expanded
+                fi_close((struct fid *)List->mr); // to be expanded
                 free(List);
                 return;
             }

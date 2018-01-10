@@ -1,6 +1,8 @@
 #ifndef _DP_INTERFACE_H
 #define _DP_INTERFACE_H
 
+#include <sst_data.h>
+
 #include <evpath.h>
 #include <mpi.h>
 
