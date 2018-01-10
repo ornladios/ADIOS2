@@ -110,7 +110,7 @@ public:
   size_t GetAvailablePhysicalMemory();
 
   // returns an informative general description if the installed and
-  // available ram on this system. See the  GetHostMmeoryTotal, and
+  // available ram on this system. See the GetHostMemoryTotal, and
   // Get{Host,Proc}MemoryAvailable methods for more information.
   std::string GetMemoryDescription(const char* hostLimitEnvVarName = NULL,
                                    const char* procLimitEnvVarName = NULL);
@@ -124,7 +124,7 @@ public:
   // are the processes comprising an mpi program which is running in
   // parallel. The amount of memory reported may differ from the host
   // total if a host wide resource limit is applied. Such reource limits
-  // are reported to us via an applicaiton specified environment variable.
+  // are reported to us via an application specified environment variable.
   LongLong GetHostMemoryAvailable(const char* hostLimitEnvVarName = NULL);
 
   // Get total system RAM in units of KiB available to this process.
