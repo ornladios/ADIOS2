@@ -77,11 +77,13 @@ ${CTEST} -VV -S ${SCRIPT_DIR}/cori-gcc-mpich.cmake \
   -Ddashboard_do_test=ON \
   -Ddashboard_do_submit_only=ON 2>&1 1>>Logs/cori-gcc-mpich.log
 
+log "Submitting Parallel Intel Test Results"
 ${CTEST} -VV -S ${SCRIPT_DIR}/cori-intel-mpich.cmake \
   -Ddashboard_full=OFF \
   -Ddashboard_do_test=ON \
   -Ddashboard_do_submit_only=ON 2>&1 1>>Logs/cori-intel-mpich.log
 
+log "Submitting Parallel Cray Test Results"
 ${CTEST} -VV -S ${SCRIPT_DIR}/cori-cray-mpich.cmake \
   -Ddashboard_full=OFF \
   -Ddashboard_do_test=ON \

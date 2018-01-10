@@ -69,8 +69,8 @@ int main(int argc, char *argv[])
         if (!bpReaderIO.InConfigFile())
         {
             // if not defined by user, we can change the default settings
-            // BPFileWriter is the default engine
-            bpReaderIO.SetEngine("ADIOS1Reader");
+            // BPFile is the default engine
+            bpReaderIO.SetEngine("ADIOS1");
             bpReaderIO.SetParameters({{"num_threads", "2"}});
 
             // ISO-POSIX file output is the default transport (called "File")
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         adios2::Engine &bpReader = bpReaderIO.Open(
             settings.inputfile, adios2::Mode::Read, mpiReaderComm);
 
-        double *T;
+        double *T = nullptr;
         adios2::Variable<double> *vT = nullptr;
         bool firstStep = true;
         int step = 0;
@@ -138,7 +138,8 @@ int main(int argc, char *argv[])
             step++;
         }
         bpReader.Close();
-        delete[] T;
+        if (!T)
+            delete[] T;
     }
     catch (std::invalid_argument &e) // command-line argument errors
     {

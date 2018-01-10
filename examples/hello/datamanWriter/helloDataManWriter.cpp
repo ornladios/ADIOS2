@@ -26,27 +26,29 @@ int main(int argc, char *argv[])
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     const std::size_t Nx = myFloats.size();
 
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::IO &dataManIO = adios.DeclareIO("WANIO");
+    dataManIO.SetEngine("DataMan");
+    dataManIO.SetParameters({
+        {"Compression", "no"}, {"Format", "bp"},
+    });
+    dataManIO.AddTransport("WAN",
+                           {
+                               {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"},
+                           });
+
+    // Define variable and local size
+    auto bpFloats = dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
+
+    // Create engine smart pointer to DataMan Engine due to polymorphism,
+    // Open returns a smart pointer to Engine containing the Derived class
+    adios2::Engine &dataManWriter =
+        dataManIO.Open("myFloats.bp", adios2::Mode::Write);
+
+    dataManWriter.PutSync<float>(bpFloats, myFloats.data());
+    dataManWriter.Close();
     try
     {
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-        adios2::IO &dataManIO = adios.DeclareIO("WANIO");
-        dataManIO.SetEngine("DataManWriter");
-        dataManIO.SetParameters({{"peer-to-peer", "yes"},
-                                 {"real_time", "yes"},
-                                 {"compress", "no"},
-                                 {"method", "dump"}});
-
-        // Define variable and local size
-        auto bpFloats =
-            dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
-
-        // Create engine smart pointer to DataMan Engine due to polymorphism,
-        // Open returns a smart pointer to Engine containing the Derived class
-        adios2::Engine &dataManWriter =
-            dataManIO.Open("myFloats.bp", adios2::Mode::Write);
-
-        dataManWriter.PutSync<float>(bpFloats, myFloats.data());
-        dataManWriter.Close();
     }
     catch (std::invalid_argument &e)
     {

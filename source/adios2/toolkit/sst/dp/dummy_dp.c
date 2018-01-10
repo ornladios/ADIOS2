@@ -5,7 +5,6 @@
 
 #include <atl.h>
 #include <evpath.h>
-#include <mpi.h>
 
 #include "sst_data.h"
 
@@ -484,8 +483,8 @@ static void DummyWaitForCompletion(CP_Services Svcs, void *Handle_v)
 
 static void DummyProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                  struct _SstData *Data,
-                                 struct _SstMetadata *LocalMetadata,
-                                 long Timestep, void **TimestepInfoPtr)
+                                 struct _SstData *LocalMetadata, long Timestep,
+                                 void **TimestepInfoPtr)
 {
     Dummy_WS_Stream Stream = (Dummy_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));

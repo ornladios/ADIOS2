@@ -18,19 +18,18 @@ namespace adios2
 {
 
 EnginePy::EnginePy(IO &io, const std::string &name, const Mode openMode,
-                   MPI_Comm mpiComm,
-                   std::map<std::string, VariableBase> &variablesPlaceholder)
-: m_Engine(io.Open(name, openMode, mpiComm)),
-  m_VariablesPlaceholder(variablesPlaceholder), m_DebugMode(io.m_DebugMode)
+                   MPI_Comm mpiComm)
+: m_Engine(io.Open(name, openMode, mpiComm)), m_DebugMode(io.m_DebugMode)
 {
 }
 
-void EnginePy::BeginStep() { m_Engine.BeginStep(); }
+StepStatus EnginePy::BeginStep(const StepMode mode, const float timeoutSeconds)
+{
+    return m_Engine.BeginStep(mode, timeoutSeconds);
+}
 
 void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
 {
-    DefineInIO(variable, array);
-
     if (variable->m_Type == "compound")
     {
         // not supported
@@ -57,15 +56,12 @@ void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
 
 void EnginePy::PutSync(VariableBase *variable, const std::string &string)
 {
-    DefineInIO(variable, string);
     m_Engine.PutSync(*dynamic_cast<adios2::Variable<std::string> *>(variable),
                      string);
 }
 
 void EnginePy::PutDeferred(VariableBase *variable, const pybind11::array &array)
 {
-    DefineInIO(variable, array);
-
     if (variable->m_Type == "compound")
     {
         // not supported
@@ -92,7 +88,6 @@ void EnginePy::PutDeferred(VariableBase *variable, const pybind11::array &array)
 
 void EnginePy::PutDeferred(VariableBase *variable, const std::string &string)
 {
-    DefineInIO(variable, string);
     m_Engine.PutDeferred(
         *dynamic_cast<adios2::Variable<std::string> *>(variable), string);
 }
@@ -196,51 +191,11 @@ void EnginePy::PerformGets() { m_Engine.PerformGets(); }
 
 void EnginePy::EndStep() { m_Engine.EndStep(); }
 
+void EnginePy::WriteStep() { m_Engine.WriteStep(); }
+
 void EnginePy::Close(const int transportIndex)
 {
     m_Engine.Close(transportIndex);
-}
-
-// PRIVATE
-void EnginePy::DefineInIO(VariableBase *variable, const pybind11::array &array)
-{
-    if (variable->m_Type.empty()) // Define in IO
-    {
-        auto &io = m_Engine.GetIO();
-
-        if (array.is(pybind11::array()))
-        {
-            if (m_DebugMode)
-            {
-                throw std::invalid_argument(
-                    "ERROR: passing an empty numpy array for variable " +
-                    variable->m_Name + ", in call to Put/Get");
-            }
-        }
-#define declare_type(T)                                                        \
-    else if (pybind11::isinstance<                                             \
-                 pybind11::array_t<T, pybind11::array::c_style>>(array))       \
-    {                                                                          \
-        variable = &io.DefineVariable<T>(variable->m_Name, variable->m_Shape,  \
-                                         variable->m_Start, variable->m_Count, \
-                                         variable->m_ConstantDims);            \
-        m_VariablesPlaceholder.erase(variable->m_Name);                        \
-    }
-        ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
-#undef declare_type
-    }
-}
-
-void EnginePy::DefineInIO(VariableBase *variable, const std::string &string)
-{
-    if (variable->m_Type.empty()) // Define in IO
-    {
-        auto &io = m_Engine.GetIO();
-        variable = &io.DefineVariable<std::string>(
-            variable->m_Name, variable->m_Shape, variable->m_Start,
-            variable->m_Count, variable->m_ConstantDims);
-        m_VariablesPlaceholder.erase(variable->m_Name);
-    }
 }
 
 } // end namespace adios2

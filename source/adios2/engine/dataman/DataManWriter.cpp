@@ -21,7 +21,9 @@ namespace adios2
 
 DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine("DataManWriter", io, name, mode, mpiComm), m_Man(mpiComm, m_DebugMode)
+: Engine("DataManWriter", io, name, mode, mpiComm),
+  m_BP3Serializer(mpiComm, m_DebugMode), m_Man(mpiComm, m_DebugMode),
+  m_Name(name)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";
     Init();
@@ -31,91 +33,123 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     return StepStatus::OK;
 }
-void DataManWriter::EndStep() {}
+void DataManWriter::EndStep()
+{
+    if (m_UseFormat == "bp" || m_UseFormat == "BP")
+    {
+        m_BP3Serializer.SerializeData(m_IO, true);
+    }
+}
 
-void DataManWriter::Close(const int transportIndex) {}
+void DataManWriter::Close(const int transportIndex)
+{
+    if (m_UseFormat == "bp" || m_UseFormat == "BP")
+    {
+        m_BP3Serializer.CloseData(m_IO);
+        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
+        auto &position = m_BP3Serializer.m_Data.m_Position;
+        if (position > 0)
+        {
+            m_Man.WriteWAN(buffer.data(), position);
+        }
+    }
+}
 
 // PRIVATE functions below
+
+bool DataManWriter::GetBoolParameter(Params &params, std::string key,
+                                     bool &value)
+{
+    auto itKey = params.find(key);
+    if (itKey != params.end())
+    {
+        if (itKey->second == "yes" || itKey->second == "YES" ||
+            itKey->second == "Yes" || itKey->second == "true" ||
+            itKey->second == "TRUE" || itKey->second == "True")
+        {
+            value = true;
+            return true;
+        }
+        if (itKey->second == "no" || itKey->second == "NO" ||
+            itKey->second == "No" || itKey->second == "false" ||
+            itKey->second == "FALSE" || itKey->second == "False")
+        {
+            value = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DataManWriter::GetStringParameter(Params &params, std::string key,
+                                       std::string &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = it->second;
+        return true;
+    }
+    return false;
+}
+
+bool DataManWriter::GetUIntParameter(Params &params, std::string key,
+                                     unsigned int &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = std::stoi(it->second);
+        return true;
+    }
+    return false;
+}
+
+void DataManWriter::InitParameters()
+{
+
+    GetBoolParameter(m_IO.m_Parameters, "Monitoring", m_DoMonitor);
+    GetUIntParameter(m_IO.m_Parameters, "NTransports", m_NChannels);
+
+    // Check if using BP Format and initialize buffer
+    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
+    if (m_UseFormat == "BP" || m_UseFormat == "bp")
+    {
+        m_BP3Serializer.InitParameters(m_IO.m_Parameters);
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_Zmq"});
+    }
+}
+
+void DataManWriter::InitTransports()
+{
+
+    size_t channels = m_IO.m_TransportsParameters.size();
+    std::vector<std::string> names;
+    for (size_t i = 0; i < channels; ++i)
+    {
+        names.push_back(m_Name + std::to_string(i));
+    }
+
+    m_Man.OpenWANTransports(names, Mode::Write, m_IO.m_TransportsParameters,
+                            true);
+}
+
 void DataManWriter::Init()
 {
-    auto lf_SetBoolParameter = [&](const std::string key, bool &parameter) {
-
-        auto itKey = m_IO.m_Parameters.find(key);
-        if (itKey != m_IO.m_Parameters.end())
-        {
-            if (itKey->second == "yes" || itKey->second == "true")
-            {
-                parameter = true;
-            }
-            else if (itKey->second == "no" || itKey->second == "false")
-            {
-                parameter = false;
-            }
-        }
-    };
-
-    lf_SetBoolParameter("real_time", m_DoRealTime);
-    lf_SetBoolParameter("monitoring", m_DoMonitor);
-
-    if (m_DoRealTime)
-    {
-        /**
-         * Lambda function that assigns a parameter in m_Method to a
-         * localVariable
-         * of type std::string
-         */
-        auto lf_AssignString = [&](const std::string parameter,
-                                   std::string &localVariable) {
-            auto it = m_IO.m_Parameters.find(parameter);
-            if (it != m_IO.m_Parameters.end())
-            {
-                localVariable = it->second;
-            }
-        };
-
-        /**
-         * Lambda function that assigns a parameter in m_Method to a
-         * localVariable
-         * of type int
-         */
-        auto lf_AssignInt = [&](const std::string parameter,
-                                int &localVariable) {
-            auto it = m_IO.m_Parameters.find(parameter);
-            if (it != m_IO.m_Parameters.end())
-            {
-                localVariable = std::stoi(it->second);
-            }
-        };
-
-        // try not to hardcode these things...
-        // shouldn't these be coming from the user IO.m_TransportParameters?
-        // unless you assign defaults
-        unsigned int n_Transports = 1;
-        std::vector<Params> parameters(n_Transports);
-
-        for (unsigned int i = 0; i < parameters.size(); i++)
-        {
-            parameters[i]["type"] = "wan";
-            parameters[i]["Library"] = "zmq";
-            parameters[i]["name"] = "stream";
-            parameters[i]["IPAddress"] = "127.0.0.1";
-        }
-
-        m_Man.OpenWANTransports("zmq", Mode::Write, parameters, true);
-
-        std::string method_type;
-        lf_AssignString("method_type", method_type);
-
-        int num_channels = 0;
-        lf_AssignInt("num_channels", num_channels);
-    }
+    InitParameters();
+    InitTransports();
 }
 
 #define declare_type(T)                                                        \
     void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)      \
     {                                                                          \
         PutSyncCommon(variable, values);                                       \
-    }
+    }                                                                          \
+    void DataManWriter::DoPutDeferred(Variable<T> &variable, const T *values)  \
+    {                                                                          \
+        PutDeferredCommon(variable, values);                                   \
+    }                                                                          \
+    void DataManWriter::DoPutDeferred(Variable<T> &, const T &value) {}
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

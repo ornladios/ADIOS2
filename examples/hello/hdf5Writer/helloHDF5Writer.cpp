@@ -36,8 +36,7 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &hdf5IO = adios.DeclareIO("HDFFileIO");
-        hdf5IO.SetEngine("HDF5Writer");
-        hdf5IO.AddTransport("File");
+        hdf5IO.SetEngine("HDF5");
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */

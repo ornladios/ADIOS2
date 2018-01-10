@@ -27,7 +27,8 @@ static int rank_saved;
 IO::IO(const Settings &s, MPI_Comm comm)
 {
     rank_saved = s.rank;
-    m_outputfilename = s.outputfile + ".bp";
+    m_outputfilename = MakeFilename(s.outputfile, ".bp");
+
     adios_init_noxml(comm);
     adios_declare_group(&group, "heat", "", adios_stat_default);
     adios_select_method(group, "POSIX", "", "");

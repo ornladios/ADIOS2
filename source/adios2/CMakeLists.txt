@@ -30,6 +30,9 @@ add_library(adios2
   engine/bp/BPFileReader.cpp engine/bp/BPFileReader.tcc
   engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
 
+  engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
+  engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
+
   engine/plugin/PluginEngine.cpp
   engine/plugin/PluginEngineInterface.cpp
 
@@ -74,12 +77,12 @@ if(ADIOS2_HAVE_ZeroMQ)
 endif()
 
 if(ADIOS2_HAVE_SST)
+  add_subdirectory(toolkit/sst)
   target_sources(adios2 PRIVATE
     engine/sst/SstReader.cpp
     engine/sst/SstWriter.cpp
   )
-  target_link_libraries(adios2 PRIVATE sst evpath::evpath)
-  add_subdirectory(toolkit/sst)
+  target_link_libraries(adios2 PRIVATE sst)
 endif()
 
 target_sources(adios2 PRIVATE
@@ -100,6 +103,11 @@ if(ADIOS2_HAVE_ZFP)
 endif()
 
 if(ADIOS2_HAVE_MPI)
+  target_sources(adios2 PRIVATE
+    engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc
+    engine/insitumpi/InSituMPIReader.cpp engine/insitumpi/InSituMPIReader.tcc
+    engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
+  )
   target_link_libraries(adios2 PUBLIC MPI::MPI_C)
 else()
   target_sources(adios2 PRIVATE mpidummy.cpp)

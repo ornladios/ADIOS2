@@ -46,15 +46,16 @@ public:
 public:
     /**
      * Unique Base class constructor
+     * @param engineType derived class identifier
      * @param io object that generates this Engine
      * @param name unique engine name within IO class object
-     * @param openMode  open mode from ADIOSTypes.h OpenMode
+     * @param mode  open mode from ADIOSTypes.h Mode
      * @param mpiComm new communicator passed at Open or from ADIOS class
      */
     Engine(const std::string engineType, IO &io, const std::string &name,
-           const Mode openMode, MPI_Comm mpiComm);
+           const Mode mode, MPI_Comm mpiComm);
 
-    virtual ~Engine() = default;
+    virtual ~Engine();
 
     /**
      * Gets the factory IO object
@@ -63,6 +64,14 @@ public:
     IO &GetIO() noexcept;
 
     StepStatus BeginStep();
+
+    /**
+     * Indicates the beginning of a step. Typically used for streaming and
+     * inside step loops.
+     * @param mode stepping mode
+     * @param timeoutSeconds (not yet implemented)
+     * @return current step status
+     */
     virtual StepStatus BeginStep(StepMode mode,
                                  const float timeoutSeconds = 0.f);
 
@@ -119,7 +128,7 @@ public:
      *               not reusable until PerformPuts
      * </pre>
      * @param variable input object with metadata
-     * @param value single value passed by value
+     * @param value single value passed by value, allows rvalues
      */
     template <class T>
     void PutSync(Variable<T> &variable, const T &value);
@@ -178,16 +187,23 @@ public:
 
     /** Execute all Put<Deferred,T> starting from a previous PerformPuts */
     virtual void PerformPuts();
+
     /** Execute all Get<Deferred,T> starting from a previous PerformGets */
     virtual void PerformGets();
 
-    /** Convenience function to write all variables in IO */
+    /**
+     * Convenience function to write all variables defined with constant
+     * dimensions that are non-nullptr (with Variable.SetData(nullptr)) at once
+     * in IO. This functions is only used in very straight-forward cases when
+     * all variable dimensions are constant. Resizing (reallocation) generated
+     * dangling pointers.
+     * @exception if a variable in IO doesn't have constant dimensions it throws
+     * an invalid_argument */
     void WriteStep();
-    /** Convenience function to read all variables in IO */
-    void ReadStep();
 
     /**
-     * Closes a particular transport, or all if -1
+     * Closes a particular transport, or all if -1. This is a purely virtual
+     * function that all engines must implement.
      * @param transportIndex order from IO AddTransport
      */
     virtual void Close(const int transportIndex = -1) = 0;

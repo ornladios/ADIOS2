@@ -38,7 +38,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
     const std::size_t Nx = 8;
 
     // Number of steps
-    const std::size_t NSteps = 3;
+    const std::size_t NSteps = 0;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -73,8 +73,8 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         io.DefineVariable<double>("r64", shape, start, count);
     }
 
-    // Create the ADIOS 1 Engine
-    io.SetEngine("SstWriter");
+    // Create the Engine
+    io.SetEngine("Sst");
 
     adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
 
@@ -84,6 +84,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         SmallTestData currentTestData =
             generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
+        engine.BeginStep();
         // Retrieve the variables that previously went out of scope
         auto &var_i8 = *io.InquireVariable<int8_t>("i8");
         auto &var_i16 = *io.InquireVariable<int16_t>("i16");
@@ -113,7 +114,6 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         // Write each one
         // fill in the variable with values from starting index to
         // starting index + count
-        // engine.BeginStep();
         engine.PutSync(var_i8, currentTestData.I8.data());
         engine.PutSync(var_i16, currentTestData.I16.data());
         engine.PutSync(var_i32, currentTestData.I32.data());

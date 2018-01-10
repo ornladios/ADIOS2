@@ -84,7 +84,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8stdio)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
 
 #ifdef ADIOS2_HAVE_MPI
         io.AddTransport("file", {{"Library", "stdio"}});
@@ -381,7 +381,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4stdio)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
 #ifdef ADIOS2_HAVE_MPI
         io.AddTransport("file", {{"Library", "stdio"}});
 #else
@@ -685,7 +685,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2stdio)
         }
 
         // Create the BP Engine
-        io.SetEngine("BPFileWriter");
+        io.SetEngine("BPFile");
 
 #ifdef ADIOS2_HAVE_MPI
         io.AddTransport("file", {{"Library", "stdio"}});

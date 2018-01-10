@@ -61,10 +61,34 @@ extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  size_t offset, size_t length, void *buffer,
                                  void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
-extern void SstReleaseStep(SstStream stream, long timestep);
-extern SstStatusValue SstAdvanceStep(SstStream stream, long timestep);
+extern void SstReleaseStep(SstStream stream);
+extern SstStatusValue SstAdvanceStep(SstStream stream, int mode,
+                                     const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
 
+typedef void *(*VarSetupUpcallFunc)(void *Reader, const char *Name,
+                                    const char *Type, void *Data);
+typedef void *(*ArraySetupUpcallFunc)(void *Reader, const char *Name,
+                                      const char *Type, int DimsCount,
+                                      size_t *Shape, size_t *Start,
+                                      size_t *Count);
+extern void SstReaderInitCallback(SstStream stream, void *Reader,
+                                  VarSetupUpcallFunc VarCallback,
+                                  ArraySetupUpcallFunc ArrayCallback);
+
+extern void SstMarshal(SstStream Stream, void *Variable, const char *Name,
+                       const char *Type, size_t ElemSize, size_t DimCount,
+                       const unsigned long *Shape, const unsigned long *Count,
+                       const unsigned long *Offsets, const void *data);
+extern void SstGetDeferred(SstStream Stream, void *Variable, const char *Name,
+                           size_t DimCount, const unsigned long *Start,
+                           const unsigned long *Count, void *Data);
+
+extern void SstPerformGets(SstStream Stream);
+
+extern int SstWriterBeginStep(SstStream Stream, int mode,
+                              const float timeout_sec);
+extern void SstWriterEndStep(SstStream Stream);
 /*
  *  General Operations
  */

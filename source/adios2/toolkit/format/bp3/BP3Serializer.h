@@ -65,8 +65,6 @@ public:
     template <class T>
     void PutVariablePayload(const Variable<T> &variable) noexcept;
 
-    void AllocateDeferredSize();
-
     /**
      *  Serializes data buffer and close current process group
      * @param io : attributes written in first step
@@ -75,10 +73,23 @@ public:
     void SerializeData(IO &io, const bool advanceStep = false);
 
     /**
+     * Serializes the metadata indices appending it into the data buffer inside
+     * m_HeapBuffer
+     */
+    void SerializeMetadataInData() noexcept;
+
+    /**
      * Finishes bp buffer by serializing data and adding trailing metadata
      * @param io
      */
     void CloseData(IO &io);
+
+    /**
+     * Closes bp buffer for streaming mdoe...must reset metadata for the next
+     * step
+     * @param io
+     */
+    void CloseStream(IO &io);
 
     /**
      * Get a string with profiling information for this rank
@@ -294,12 +305,6 @@ private:
      * @param io object containing all attributes
      */
     void SerializeDataBuffer(IO &io) noexcept;
-
-    /**
-     * Serializes the metadata indices appending it into the data buffer inside
-     * m_HeapBuffer
-     */
-    void SerializeMetadataInData() noexcept;
 
     void PutMinifooter(const uint64_t pgIndexStart,
                        const uint64_t variablesIndexStart,

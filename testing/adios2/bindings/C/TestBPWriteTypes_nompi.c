@@ -34,26 +34,29 @@ int main(int argc, char *argv[])
     // Define variables in ioH
     {
         adios2_define_variable(ioH, "varI8", adios2_type_char, 1, NULL, NULL,
-                               count, adios2_constant_dims_true);
+                               count, adios2_constant_dims_true, NULL);
         adios2_define_variable(ioH, "varI16", adios2_type_short, 1, NULL, NULL,
-                               count, adios2_constant_dims_true);
+                               count, adios2_constant_dims_true, NULL);
         adios2_define_variable(ioH, "varI32", adios2_type_int, 1, NULL, NULL,
-                               count, adios2_constant_dims_true);
+                               count, adios2_constant_dims_true, NULL);
         adios2_define_variable(ioH, "varI64", adios2_type_long_int, 1, NULL,
-                               NULL, count, adios2_constant_dims_true);
+                               NULL, count, adios2_constant_dims_true, NULL);
 
         adios2_define_variable(ioH, "varU8", adios2_type_unsigned_char, 1, NULL,
-                               NULL, count, adios2_constant_dims_true);
+                               NULL, count, adios2_constant_dims_true, NULL);
         adios2_define_variable(ioH, "varU16", adios2_type_unsigned_short, 1,
-                               NULL, NULL, count, adios2_constant_dims_true);
+                               NULL, NULL, count, adios2_constant_dims_true,
+                               NULL);
         adios2_define_variable(ioH, "varU32", adios2_type_unsigned_int, 1, NULL,
-                               NULL, count, adios2_constant_dims_true);
+                               NULL, count, adios2_constant_dims_true, NULL);
         adios2_define_variable(ioH, "varU64", adios2_type_unsigned_long_int, 1,
-                               NULL, NULL, count, adios2_constant_dims_true);
+                               NULL, NULL, count, adios2_constant_dims_true,
+                               NULL);
+
         adios2_define_variable(ioH, "varR32", adios2_type_float, 1, NULL, NULL,
-                               count, adios2_constant_dims_true);
+                               count, adios2_constant_dims_true, NULL);
         adios2_define_variable(ioH, "varR64", adios2_type_double, 1, NULL, NULL,
-                               count, adios2_constant_dims_true);
+                               count, adios2_constant_dims_true, NULL);
     }
     // get variables
     adios2_Variable *varI8 = adios2_inquire_variable(ioH, "varI8");

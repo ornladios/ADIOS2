@@ -1,8 +1,8 @@
 #ifndef _DP_INTERFACE_H
 #define _DP_INTERFACE_H
 
-#include<evpath.h>
-#include<mpi.h>
+#include <evpath.h>
+#include <mpi.h>
 
 /*!
  *
@@ -173,7 +173,7 @@ typedef void (*CP_DP_WaitForCompletionFunc)(CP_Services Svcs,
  */
 typedef void (*CP_DP_ProvideTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
                                           struct _SstData *Data,
-                                          struct _SstMetadata *LocalMetadata,
+                                          struct _SstData *LocalMetadata,
                                           long Timestep,
                                           void **TimestepInfoPtr);
 

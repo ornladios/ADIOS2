@@ -73,8 +73,8 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         io.DefineVariable<double>("r64", shape, start, count);
     }
 
-    // Create the ADIOS 1 Engine
-    io.SetEngine("SstReader");
+    // Create the Engine
+    io.SetEngine("Sst");
 
     adios2::Engine &engine = io.Open(fname, adios2::Mode::Read);
 

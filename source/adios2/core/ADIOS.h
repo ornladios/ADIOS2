@@ -38,18 +38,24 @@ public:
     /**
      * @brief Constructor for MPI applications WITH a XML config file
      * @param configFile XML format (maybe support different formats in the
-     * future?)
-     * @param mpiComm MPI communicator from application
-     * @param debugMode true: extra exception checks (recommended)
+     * future (json)?)
+     * @param mpiComm MPI communicator from application, make sure is valid
+     * through the scope of adios2 calls
+     * @param debugMode true (default): extra exception checks (recommended),
+     * false: optional feature to turn off checks on user input data,
+     * recommended in stable flows
      */
     ADIOS(const std::string configFile, MPI_Comm mpiComm,
           const bool debugMode = true, const std::string hostLanguage = "C++");
 
     /**
-     * @brief Constructor for non-MPI applications WITH a XML config file
+     * @brief Constructor for non-MPI applications WITH a XML config file (it
+     * must end with extension .xml)
      * @param configFile XML format (maybe support different formats in the
-     * future?)
-     * @param debugMode true: extra exception checks (recommended)
+     * future (json)?)
+     * @param debugMode true (default): extra exception checks (recommended),
+     * false: optional feature to turn off checks on user input data,
+     * recommended in stable flows
      */
     ADIOS(const std::string configFile, const bool debugMode = true,
           const std::string hostLanguage = "C++");
@@ -57,14 +63,18 @@ public:
     /**
      * @brief Constructor for MPI apps WITHOUT a XML config file
      * @param mpiComm MPI communicator from application
-     * @param debugMode true: extra exception checks (recommended)
+     * @param debugMode true (default): extra exception checks (recommended),
+     * false: optional feature to turn off checks on user input data,
+     * recommended in stable flows
      */
     ADIOS(MPI_Comm mpiComm, const bool debugMode = true,
           const std::string hostLanguage = "C++");
 
     /**
      *  @brief ADIOS no-MPI default empty constructor
-     *  @param debugMode true: extra exception checks (recommended)
+     * @param debugMode true (default): extra exception checks (recommended),
+     * false: optional feature to turn off checks on user input data,
+     * recommended in stable flows
      */
     ADIOS(const bool debugMode = true, const std::string hostLanguage = "C++");
 
@@ -78,25 +88,24 @@ public:
     ~ADIOS() = default;
 
     /**
-     * Declares a new IO class object. If IO object is defined in the user
-     * config file, by name, it will be already created during the processing
-     * the config file. So this function returns a reference to that object.
-     * Otherwise it will create and return a new IO object with default
-     * settings.
-     * Use function InConfigFile() to distinguish between the two cases.
+     * Declares a new IO class object and returns a reference to that object.
      * @param ioName must be unique
-     * @return reference to existing (or newly created) method inside ADIOS
+     * @return reference to newly created IO object inside current ADIOS object
+     * @exception std::invalid_argument if IO with unique name is already
+     * declared, in debug mode only
      */
     IO &DeclareIO(const std::string name);
 
     /**
-     * Retrieve a reference pointer to an existing Operator object
-     * created with DeclareIO.
+     * Retrieve a reference to an existing IO object created with DeclareIO.
+     * Follow the C++11 STL containers at function.
      * @param name of IO to look for
      * @return if IO exists returns a reference to existing IO object inside
-     * ADIOS, otherwise a nullptr
+     * ADIOS
+     * @exception std::invalid_argument if IO was not created with DeclareIO, in
+     * debug mode only
      */
-    IO *InquireIO(const std::string name) noexcept;
+    IO &AtIO(const std::string name);
 
     /**
      * Declares a derived class of the Operator abstract class. If object is
@@ -107,6 +116,8 @@ public:
      * @param type from derived class
      * @param parameters optional parameters
      * @return reference to Operator object
+     * @exception std::invalid_argument if Operator with unique name is already
+     * defined, in debug mode only
      */
     Operator &DefineOperator(const std::string name, const std::string type,
                              const Params &parameters = Params());
@@ -115,8 +126,10 @@ public:
      * Signature for passing Callback functions as operators
      * @param name unique operator name
      * @param function callable function
-     * @param parameters
+     * @param parameters optional key-value pairs parameters
      * @return reference to Operator object
+     * @exception std::invalid_argument if Operator with unique name is already
+     * defined, in debug mode only
      */
     template <class R, class... Args>
     Operator &DefineOperator(const std::string name,
@@ -173,8 +186,9 @@ private:
     /** define CallBack2 */
     Operator &DefineCallBack(
         const std::string name,
-        const std::function<void(void *, const std::string, const std::string,
-                                 const std::string, const Dims &)> &function,
+        const std::function<void(void *, const std::string &,
+                                 const std::string &, const std::string &,
+                                 const Dims &)> &function,
         const Params &parameters);
 };
 

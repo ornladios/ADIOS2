@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_H_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_H_
 
 #include <mutex>
 #include <set>
@@ -31,7 +31,7 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
-    bool m_PerformedGets = false;
+    bool m_PerformedGets = true;
 
     /**
      * Unique constructor
@@ -42,16 +42,29 @@ public:
 
     ~BP3Deserializer() = default;
 
-    void ParseMetadata(IO &io);
+    void ParseMetadata(const BufferSTL &bufferSTL, IO &io);
 
     // Sync functions
     template <class T>
     std::map<std::string, SubFileInfoMap>
     GetSyncVariableSubFileInfo(const Variable<T> &variable) const;
 
+    /**
+     * Used to get the variable payload data for the current selection (dims and
+     * steps), used in single buffer for streaming
+     * @param variable
+     * @param bufferSTL bp buffer input that contains metadata and data
+     */
+    template <class T>
+    void GetSyncVariableDataFromStream(Variable<T> &variable,
+                                       BufferSTL &bufferSTL) const;
+
     // Deferred functions
     template <class T>
     void GetDeferredVariable(Variable<T> &variable, T *data);
+
+    /* Return the read schedule of a variable stored at GetDeferred() calls */
+    SubFileInfoMap &GetSubFileInfoMap(const std::string &variableName);
 
     std::map<std::string, SubFileInfoMap>
     PerformGetsVariablesSubFileInfo(IO &io);
@@ -68,10 +81,10 @@ private:
 
     static std::mutex m_Mutex;
 
-    void ParseMinifooter();
-    void ParsePGIndex();
-    void ParseVariablesIndex(IO &io);
-    void ParseAttributesIndex(IO &io);
+    void ParseMinifooter(const BufferSTL &bufferSTL);
+    void ParsePGIndex(const BufferSTL &bufferSTL);
+    void ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io);
+    void ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io);
 
     /**
      * Reads a variable index element (serialized) and calls IO.DefineVariable
@@ -130,6 +143,9 @@ private:
     BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable)   \
         const;                                                                 \
                                                                                \
+    extern template void BP3Deserializer::GetSyncVariableDataFromStream(       \
+        Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
+                                                                               \
     extern template void BP3Deserializer::GetDeferredVariable(                 \
         Variable<T> &variable, T *data);
 
@@ -139,4 +155,4 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_H_ */

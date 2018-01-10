@@ -11,7 +11,7 @@
         ====================================-->
 
     <io name="writer">
-        <engine type="BPFileWriter">
+        <engine type="BPFile">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
@@ -36,6 +36,11 @@
                  (optimal value is application dependent)--> 
             <!-- <parameter key="BufferGrowthFactor" value="1.05"/> -->
             
+            <!-- Indicates how often (in number of steps), pick a large 
+                 number so metadata will only be written at Close  
+                (applications might choose an optimal value) -->
+            <parameter key="FlushStepsCount" value="1"/> 
+            
         </engine>
 
         <transport type="File">
@@ -57,7 +62,7 @@
         ====================================-->
 
     <io name="reader">
-        <engine type="BPFileReader">
+        <engine type="BPFile">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 

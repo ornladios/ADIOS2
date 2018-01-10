@@ -10,6 +10,7 @@
 
 #include "adios2_f2c_adios.h"
 
+#include <iostream> //std::cerr
 #include <stdexcept>
 
 #ifdef ADIOS2_HAVE_MPI_F
@@ -35,7 +36,8 @@ void FC_GLOBAL(adios2_init_config_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2 init_config: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 #else
@@ -61,7 +63,8 @@ void FC_GLOBAL(adios2_init_config_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2 init_config: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 #endif
@@ -78,7 +81,8 @@ void FC_GLOBAL(adios2_declare_io_f2c,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2 declare_io: " << e.what() << "\n";
+        *ierr = -1;
     }
 }
 
@@ -92,6 +96,7 @@ void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_ADIOS **adios,
     }
     catch (std::exception &e)
     {
-        *ierr = 1;
+        std::cerr << "ADIOS2 finalize: " << e.what() << "\n";
+        *ierr = -1;
     }
 }

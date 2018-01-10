@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Base.h  base class for BP1Writer and BP1Reader
+ * BP3Base.h  base class for BP3Serializer and BP3Deserializer
  *
  *  Created on: Feb 2, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_H_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -59,11 +59,12 @@ public:
         }
     };
 
+    /** Single struct containing metadata indices and tracking information */
     struct MetadataSet
     {
         /**
-         * updated with advance step, if append it will be updated to last,
-         * starts with one in ADIOS1
+         * updated with EndStep, if append it will be updated to last,
+         * starts with one in ADIOS1 BP3 format
          */
         uint32_t TimeStep = 1;
 
@@ -79,8 +80,8 @@ public:
 
         bool AreAttributesWritten = false;
 
-        /** Fixed size for mini footer */
-        const unsigned int MiniFooterSize = 28;
+        /** Fixed size for mini footer, adding 28 bytes for ADIOS version */
+        const unsigned int MiniFooterSize = 28 + 28;
 
         /** number of current PGs */
         uint64_t DataPGCount = 0;
@@ -92,10 +93,17 @@ public:
         size_t DataPGVarsCountPosition = 0;
         /** true: currently writing to a pg, false: no current pg */
         bool DataPGIsOpen = false;
+
+        /** Used at Read, steps start at zero */
+        size_t StepsStart = 0;
+
+        /** Used at Read, number of total steps */
+        size_t StepsCount = 1;
     };
 
     struct Minifooter
     {
+        std::string VersionTag;
         uint64_t PGIndexStart;
         uint64_t VarsIndexStart;
         uint64_t AttributesIndexStart;
@@ -112,9 +120,10 @@ public:
     /** statistics verbosity, only 0 is supported */
     unsigned int m_Verbosity = 0;
 
-    /** contains data buffer and position */
-    // capsule::STLVector m_HeapBuffer;
+    /** contains data buffer for this rank */
     BufferSTL m_Data;
+
+    /** contains collective metadata buffer, only used by rank 0 */
     BufferSTL m_Metadata;
 
     /** memory growth factor,s set by the user */
@@ -135,6 +144,10 @@ public:
 
     /** Default: write collective metadata in Capsule metadata. */
     bool m_CollectiveMetadata = true;
+
+    /** Parameter to flush transports at every number of steps, to be used at
+     * EndStep */
+    size_t m_FlushStepsCount = 1;
 
     /**
      * Unique constructor
@@ -180,6 +193,17 @@ public:
      */
     size_t GetVariableBPIndexSize(const std::string &variableName,
                                   const Dims &variableCount) const noexcept;
+
+    /**
+     * Sets buffer's positions to zero and fill buffer with zero char
+     * @param bufferSTL buffer to be reset
+     * @param resetAbsolutePosition true: both bufferSTL.m_Position and
+     * bufferSTL.m_AbsolutePosition set to 0,   false(default): only
+     * bufferSTL.m_Position
+     * is set to zero,
+     */
+    void ResetBuffer(BufferSTL &bufferSTL,
+                     const bool resetAbsolutePosition = false);
 
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
@@ -316,6 +340,17 @@ protected:
         statistic_finite = 6
     };
 
+    struct ProcessGroupIndex
+    {
+        uint64_t Offset;
+        uint32_t Step;
+        int32_t ProcessID;
+        uint16_t Length;
+        std::string Name;
+        std::string StepName;
+        char IsFortran;
+    };
+
     template <class T>
     struct Stats
     {
@@ -383,11 +418,14 @@ protected:
     /** Set available number of threads for vector operations */
     void InitParameterThreads(const std::string value);
 
-    /** verbose file level=0 (default), not active */
+    /** verbose file level=0 (default), not active yet */
     void InitParameterVerbose(const std::string value);
 
     /** verbose file level=0 (default) */
     void InitParameterCollectiveMetadata(const std::string value);
+
+    /** set steps count to flush */
+    void InitParameterFlushStepsCount(const std::string value);
 
     /**
      * Returns data type index from enum Datatypes
@@ -413,6 +451,10 @@ protected:
     size_t GetProcessGroupIndexSize(const std::string name,
                                     const std::string timeStepName,
                                     const size_t transportsSize) const noexcept;
+
+    ProcessGroupIndex
+    ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
+                                size_t &position) const noexcept;
 
     ElementIndexHeader ReadElementIndexHeader(const std::vector<char> &buffer,
                                               size_t &position) const noexcept;
@@ -469,4 +511,4 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP1_BP1BASE_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_ */

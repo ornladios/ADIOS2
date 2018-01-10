@@ -14,10 +14,13 @@ namespace adios2
 {
 
 AttributeBase::AttributeBase(const std::string &name, const std::string type,
-                             const size_t elements, const bool isSingleValue)
-: m_Name(name), m_Type(type), m_Elements(elements),
-  m_IsSingleValue(isSingleValue)
+                             const size_t elements)
+: m_Name(name), m_Type(type), m_Elements(elements)
 {
+    if (m_Elements == 1)
+    {
+        m_IsSingleValue = true;
+    }
 }
 
 } // end namespace adios2

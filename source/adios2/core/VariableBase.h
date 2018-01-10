@@ -68,7 +68,7 @@ public:
     size_t m_AvailableStepsStart = 1;
     size_t m_AvailableStepsCount = 0;
 
-    size_t m_StepsStart = 1;
+    size_t m_StepsStart = 0;
     size_t m_StepsCount = 1;
 
     /** Index Metadata Position in a serial metadata buffer */
@@ -102,7 +102,16 @@ public:
      */
     size_t TotalSize() const noexcept;
 
-    /** Set Dims and Time start and count */
+    /**
+     * Set new shape
+     * @param shape input shape to be applied to this variable
+     */
+    void SetShape(const adios2::Dims &shape);
+
+    /**
+     * Set new start and count dimensions
+     * @param boxDims = {start, count}
+     */
     void SetSelection(const Box<Dims> &boxDims);
 
     /**
@@ -125,7 +134,7 @@ public:
     size_t GetAvailableStepsCount() const;
 
     /**
-     * Pushed a new transform to a sequence of transports
+     * Pushed a new transform to a sequence of transports. Not yet implemented.
      * @param transform reference to an object derived from the Transform class
      * @param parameters transform specific parameters
      * @return transformID handler

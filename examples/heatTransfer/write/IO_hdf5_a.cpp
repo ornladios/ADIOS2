@@ -27,9 +27,7 @@ IO::~IO() {}
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    std::string rs = std::to_string(s.rank);
-    std::string ts = std::to_string(step);
-    std::string fname = s.outputfile + "." + rs + "." + ts + ".h5";
+    m_outputfilename = MakeFilename(s.outputfile, ".h5", s.rank, step);
 
     // for time measurements, let's synchronize the processes
     MPI_Barrier(comm);
@@ -39,8 +37,8 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                        static_cast<hsize_t>(s.ndy)};
 
     hid_t space = H5Screate_simple(2, dims, NULL);
-    hid_t file =
-        H5Fcreate(fname.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t file = H5Fcreate(m_outputfilename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
+                           H5P_DEFAULT);
     hid_t dset = H5Dcreate(file, "T", H5T_NATIVE_DOUBLE, space, H5P_DEFAULT,
                            H5P_DEFAULT, H5P_DEFAULT);
 

@@ -12,7 +12,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.0.0)
+project(ADIOS2 VERSION 2.1.0)
 
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
@@ -38,6 +38,19 @@ endif()
 
 # Let windows builds auto-export dll symbols
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+
+#------------------------------------------------------------------------------#
+# Silence MSVC warnings
+#------------------------------------------------------------------------------#
+
+if(MSVC)
+  add_definitions(
+    -D_CRT_SECURE_NO_DEPRECATE
+    -D_CRT_SECURE_NO_WARNINGS
+    -D_SCL_SECURE_NO_DEPRECATE
+    -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
+  )
+endif()
 
 #------------------------------------------------------------------------------#
 # Top level options

@@ -44,7 +44,8 @@ StepStatus BPFileWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void BPFileWriter::PerformPuts()
 {
-    m_BP3Serializer.AllocateDeferredSize();
+    m_BP3Serializer.ResizeBuffer(m_BP3Serializer.m_DeferredVariablesDataSize,
+                                 "in call to PerformPuts");
 
     for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
     {
@@ -56,39 +57,33 @@ void BPFileWriter::PerformPuts()
 
 void BPFileWriter::EndStep()
 {
-    if (m_DebugMode && m_BP3Serializer.m_DeferredVariables.size() > 0)
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
     {
-        throw std::invalid_argument("ERROR: existing variables subscribed with "
-                                    "PutDeferred, did you forget to call "
-                                    "PerformPuts()?, in call to EndStep\n");
+        PerformPuts();
     }
 
     m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
-}
 
-// PRIVATE
-void BPFileWriter::Init()
-{
-    InitParameters();
-    InitTransports();
-    InitBPBuffer();
-}
+    const size_t currentStep = m_BP3Serializer.m_MetadataSet.TimeStep - 1;
+    const size_t flushStepsCount = m_BP3Serializer.m_FlushStepsCount;
 
-#define declare_type(T)                                                        \
-    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
-    {                                                                          \
-        PutSyncCommon(variable, values);                                       \
-    }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
-    {                                                                          \
-        PutDeferredCommon(variable, values);                                   \
-    }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
+    if (currentStep % flushStepsCount)
+    {
+        m_BP3Serializer.SerializeData(m_IO);
+        m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
+                                     m_BP3Serializer.m_Data.m_Position);
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
+        WriteCollectiveMetadataFile();
+    }
+}
 
 void BPFileWriter::Close(const int transportIndex)
 {
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
+    {
+        PerformPuts();
+    }
+
     // close bp buffer by serializing data and metadata
     m_BP3Serializer.CloseData(m_IO);
     // send data to corresponding transports
@@ -112,6 +107,27 @@ void BPFileWriter::Close(const int transportIndex)
 }
 
 // PRIVATE FUNCTIONS
+// PRIVATE
+void BPFileWriter::Init()
+{
+    InitParameters();
+    InitTransports();
+    InitBPBuffer();
+}
+
+#define declare_type(T)                                                        \
+    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
+    {                                                                          \
+        PutSyncCommon(variable, values);                                       \
+    }                                                                          \
+    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
+    {                                                                          \
+        PutDeferredCommon(variable, values);                                   \
+    }                                                                          \
+    void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 void BPFileWriter::InitParameters()
 {
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
@@ -196,11 +212,12 @@ void BPFileWriter::WriteCollectiveMetadataFile()
                                         m_IO.m_TransportsParameters,
                                         m_BP3Serializer.m_Profiler.IsActive);
 
-        const auto &buffer = m_BP3Serializer.m_Metadata.m_Buffer;
-        const size_t size = m_BP3Serializer.m_Metadata.m_AbsolutePosition;
-
-        m_FileMetadataManager.WriteFiles(buffer.data(), size);
+        m_FileMetadataManager.WriteFiles(
+            m_BP3Serializer.m_Metadata.m_Buffer.data(),
+            m_BP3Serializer.m_Metadata.m_Position);
         m_FileMetadataManager.CloseFiles();
+
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
     }
 }
 

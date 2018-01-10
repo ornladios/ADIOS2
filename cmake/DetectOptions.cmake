@@ -126,15 +126,19 @@ endif()
 
 # Sst
 if(ADIOS2_USE_SST STREQUAL AUTO)
-  find_package(EVPATH)
-  find_package(LibFabric)
-elseif (ADIOS2_USE_SST)
-  find_package(EVPATH REQUIRED)
+  if(ADIOS2_HAVE_MPI)
+    find_package(EVPath)
+    find_package(LibFabric)
+  endif()
+elseif(ADIOS2_USE_SST)
+  if(NOT ADIOS2_HAVE_MPI)
+    message(FATAL_ERROR "SST currently requires MPI to be available")
+  endif()
+  find_package(EVPath REQUIRED)
   find_package(LibFabric REQUIRED)
 endif()
-
-if (EVPATH_FOUND)
-  set (ADIOS2_HAVE_SST TRUE)
+if(EVPath_FOUND)
+  set(ADIOS2_HAVE_SST TRUE)
 endif()
 
 #SysV IPC

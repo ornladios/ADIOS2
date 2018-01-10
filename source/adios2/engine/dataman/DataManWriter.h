@@ -13,6 +13,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
 namespace adios2
@@ -33,19 +34,38 @@ public:
     void Close(const int transportIndex = -1) final;
 
 private:
-    bool m_DoRealTime = false;
-    bool m_DoMonitor = false;
+    format::BP3Serializer m_BP3Serializer;
     transportman::DataMan m_Man;
-    void Init(); ///< calls InitCapsules and InitTransports based on Method,
-                 /// called from constructor
+    std::string m_Name;
+
+    unsigned int m_NChannels = 1;
+    std::string m_UseFormat = "bp";
+    bool m_DoMonitor = false;
+
+    void Init();
+    void InitParameters();
+    void InitTransports();
+
+    bool GetBoolParameter(Params &params, std::string key, bool &value);
+    bool GetStringParameter(Params &params, std::string key,
+                            std::string &value);
+    bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
 
 #define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &variable, const T *values) final;
+    void DoPutSync(Variable<T> &, const T *) final;                            \
+    void DoPutDeferred(Variable<T> &, const T *) final;                        \
+    void DoPutDeferred(Variable<T> &, const T &) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutDeferredCommon(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutSyncCommonBP(Variable<T> &variable, const T *values);
 };
 
 } // end namespace adios2

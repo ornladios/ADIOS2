@@ -119,39 +119,12 @@ void BP3Serializer::PutProcessGroupIndex(
     ProfilerStop("buffering");
 }
 
-void BP3Serializer::AllocateDeferredSize()
-{
-    if (m_MaxBufferSize == DefaultMaxBufferSize)
-    {
-        if (m_DeferredVariablesDataSize > DefaultInitialBufferSize)
-        {
-            m_MaxBufferSize = m_DeferredVariablesDataSize;
-        }
-        else
-        {
-            m_MaxBufferSize = DefaultInitialBufferSize;
-        }
-    }
-    else if (m_MaxBufferSize > m_DeferredVariablesDataSize)
-    {
-        // must be a multiple integer
-        const size_t times = m_MaxBufferSize / m_DeferredVariablesDataSize;
-        m_MaxBufferSize = times * m_DeferredVariablesDataSize;
-    }
-
-    ResizeBuffer(m_MaxBufferSize, "in call to PerformPuts");
-}
-
 void BP3Serializer::SerializeData(IO &io, const bool advanceStep)
 {
     ProfilerStart("buffering");
     SerializeDataBuffer(io);
     if (advanceStep)
     {
-        if (m_MaxBufferSize == DefaultMaxBufferSize)
-        {
-            m_MaxBufferSize = m_Data.m_Position + 64;
-        }
         ++m_MetadataSet.TimeStep;
     }
     ProfilerStop("buffering");
@@ -175,6 +148,18 @@ void BP3Serializer::CloseData(IO &io)
         m_IsClosed = true;
     }
 
+    ProfilerStop("buffering");
+}
+
+void BP3Serializer::CloseStream(IO &io)
+{
+    ProfilerStart("buffering");
+    if (m_MetadataSet.DataPGIsOpen)
+    {
+        SerializeDataBuffer(io);
+    }
+    SerializeMetadataInData();
+    m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
     ProfilerStop("buffering");
 }
 
@@ -564,6 +549,34 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
                                   std::vector<char> &buffer, size_t &position,
                                   const bool addSubfiles)
 {
+    auto lf_CopyVersionChar = [](const std::string version,
+                                 std::vector<char> &buffer, size_t &position) {
+        CopyToBuffer(buffer, position, version.c_str());
+    };
+
+    const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
+    const std::string minorVersion(std::to_string(ADIOS2_VERSION_MINOR));
+    const std::string patchVersion(std::to_string(ADIOS2_VERSION_PATCH));
+
+    const std::string versionLongTag("ADIOS-BP v" + majorVersion + "." +
+                                     minorVersion + "." + patchVersion);
+    const size_t versionLongTagSize = versionLongTag.size();
+    if (versionLongTagSize < 24)
+    {
+        CopyToBuffer(buffer, position, versionLongTag.c_str(),
+                     versionLongTagSize);
+        position += 24 - versionLongTagSize;
+    }
+    else
+    {
+        CopyToBuffer(buffer, position, versionLongTag.c_str(), 24);
+    }
+
+    lf_CopyVersionChar(majorVersion, buffer, position);
+    lf_CopyVersionChar(minorVersion, buffer, position);
+    lf_CopyVersionChar(patchVersion, buffer, position);
+    ++position;
+
     CopyToBuffer(buffer, position, &pgIndexStart);
     CopyToBuffer(buffer, position, &variablesIndexStart);
     CopyToBuffer(buffer, position, &attributesIndexStart);
@@ -732,6 +745,32 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
     }
 
     size_t serializedPosition = 0;
+
+    if (m_Threads == 1)
+    {
+        while (serializedPosition < serializedSize)
+        {
+            if (serializedPosition >= serializedSize)
+            {
+                break;
+            }
+
+            const int rankSource = static_cast<int>(
+                ReadValue<uint32_t>(serialized, serializedPosition));
+
+            if (serializedPosition <= serializedSize)
+            {
+                lf_Deserialize(rankSource, serialized, serializedPosition,
+                               deserialized);
+            }
+
+            const size_t bufferSize = static_cast<size_t>(
+                ReadValue<uint32_t>(serialized, serializedPosition));
+            serializedPosition += bufferSize;
+        }
+
+        return deserialized;
+    }
 
     std::vector<std::future<void>> asyncs(m_Threads);
     std::vector<size_t> asyncPositions(m_Threads);
@@ -928,7 +967,7 @@ void BP3Serializer::MergeSerializeIndices(
         }
 
         default:
-            // TODO: complex, string array, long double
+            // TODO: complex, long double
             throw std::invalid_argument("ERROR: type " +
                                         std::to_string(dataType) +
                                         " not supported in Merge\n");

@@ -11,13 +11,13 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_IOPY_H_
 #define ADIOS2_BINDINGS_PYTHON_SOURCE_IOPY_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <string>
-/// \endcond
-
 #include <pybind11/numpy.h>
 
 #include "EnginePy.h"
+
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <string>
+/// \endcond
 
 namespace adios2
 {
@@ -39,24 +39,25 @@ public:
 
     const Params &GetParameters() const noexcept;
 
-    VariableBase &DefineVariable(const std::string &name, const Dims &shape,
+    VariableBase *DefineVariable(const std::string &name, const Dims &shape,
                                  const Dims &start, const Dims &count,
                                  const bool isConstantDims,
                                  pybind11::array &array);
 
     VariableBase *InquireVariable(const std::string &name) noexcept;
 
+    AttributeBase *DefineAttribute(const std::string &name,
+                                   pybind11::array &array);
+
+    AttributeBase *DefineAttribute(const std::string &name,
+                                   const std::vector<std::string> &strings);
+
     EnginePy Open(const std::string &name, const int openMode);
 
 private:
     const bool m_DebugMode;
-    /**
-     *  Placeholder map needed as Variables are not created in ADIOS at
-     *  DefineVariable, but until Put when type is known from numpy
-     */
-    std::map<std::string, VariableBase> m_VariablesPlaceholder;
 };
 
 } // end namespace adios2
 
-#endif /* BINDINGS_PYTHON_SOURCE_IOPY_H_ */
+#endif /* ADIOS2_BINDINGS_PYTHON_SOURCE_IOPY_H_ */

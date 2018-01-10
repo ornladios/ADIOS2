@@ -11,6 +11,8 @@
 #ifndef ADIOS2_BINDINGS_C_ADIOS2_C_TYPES_H_
 #define ADIOS2_BINDINGS_C_ADIOS2_C_TYPES_H_
 
+#include <stddef.h> //std::size_t
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -18,6 +20,7 @@ extern "C" {
 typedef struct adios2_ADIOS adios2_ADIOS;
 typedef struct adios2_IO adios2_IO;
 typedef struct adios2_Variable adios2_Variable;
+typedef struct adios2_Attribute adios2_Attribute;
 typedef struct adios2_Engine adios2_Engine;
 
 typedef enum {
@@ -73,6 +76,22 @@ typedef enum {
     adios2_mode_read = 2,
     adios2_mode_append = 3,
 } adios2_mode;
+
+typedef enum {
+    adios2_step_mode_append = 0,
+    adios2_step_mode_update = 1,
+    adios2_step_mode_next_available = 2,
+    adios2_step_mode_latest_available = 3
+} adios2_step_mode;
+
+typedef enum {
+    adios2_step_status_other_error = -1,
+    adios2_step_status_ok = 0,
+    adios2_step_status_not_ready = 1,
+    adios2_step_status_end_of_stream = 2
+} adios2_step_status;
+
+static size_t adios2_string_array_element_max_size = 256;
 
 #ifdef __cplusplus
 } // end extern C

@@ -32,12 +32,12 @@ BP3Deserializer::BP3Deserializer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void BP3Deserializer::ParseMetadata(IO &io)
+void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, IO &io)
 {
-    ParseMinifooter();
-    ParsePGIndex();
-    ParseVariablesIndex(io);
-    ParseAttributesIndex(io);
+    ParseMinifooter(bufferSTL);
+    ParsePGIndex(bufferSTL);
+    ParseVariablesIndex(bufferSTL, io);
+    ParseAttributesIndex(bufferSTL, io);
 }
 
 void BP3Deserializer::ClipContiguousMemory(
@@ -74,7 +74,7 @@ void BP3Deserializer::GetStringFromMetadata(
     for (size_t i = 0; i < variable.m_StepsCount; ++i)
     {
         *(data + i) = "";
-        const size_t step = variable.m_StepsStart + i;
+        const size_t step = variable.m_StepsStart + i + 1;
         auto itStep = variable.m_IndexStepBlockStarts.find(step);
 
         if (itStep == variable.m_IndexStepBlockStarts.end())
@@ -96,7 +96,7 @@ void BP3Deserializer::GetStringFromMetadata(
 }
 
 // PRIVATE
-void BP3Deserializer::ParseMinifooter()
+void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
     auto lf_GetEndianness = [](const uint8_t endianness, bool &isLittleEndian) {
 
@@ -111,9 +111,8 @@ void BP3Deserializer::ParseMinifooter()
         }
     };
 
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
-
     size_t position = bufferSize - 4;
     const uint8_t endianess = ReadValue<uint8_t>(buffer, position);
     lf_GetEndianness(endianess, m_Minifooter.IsLittleEndian);
@@ -135,30 +134,44 @@ void BP3Deserializer::ParseMinifooter()
     }
 
     position = bufferSize - m_MetadataSet.MiniFooterSize;
+
+    m_Minifooter.VersionTag.assign(&buffer[position], 28);
+    position += 28;
+
     m_Minifooter.PGIndexStart = ReadValue<uint64_t>(buffer, position);
     m_Minifooter.VarsIndexStart = ReadValue<uint64_t>(buffer, position);
     m_Minifooter.AttributesIndexStart = ReadValue<uint64_t>(buffer, position);
 }
 
-void BP3Deserializer::ParsePGIndex()
+void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
 {
-    const auto &buffer = m_Metadata.m_Buffer;
-    auto &position = m_Metadata.m_Position;
-    position = m_Minifooter.PGIndexStart;
+    const auto &buffer = bufferSTL.m_Buffer;
+    size_t position = m_Minifooter.PGIndexStart;
 
     m_MetadataSet.DataPGCount = ReadValue<uint64_t>(buffer, position);
-    position += 10; // skipping lengths
-    const uint16_t nameLength = ReadValue<uint16_t>(buffer, position);
-    position += static_cast<size_t>(nameLength); // skipping name
-    const char isFortran = ReadValue<char>(buffer, position);
+    const size_t length = ReadValue<uint64_t>(buffer, position);
 
-    if (isFortran == 'y')
+    size_t localPosition = 0;
+
+    while (localPosition < length)
     {
-        m_IsRowMajor = false;
+        ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
+        if (index.IsFortran == 'y')
+        {
+            m_IsRowMajor = false;
+        }
+
+        const size_t currentStep = static_cast<size_t>(index.Step);
+        if (currentStep > m_MetadataSet.StepsCount)
+        {
+            m_MetadataSet.StepsCount = currentStep;
+        }
+
+        localPosition += index.Length + 2;
     }
 }
 
-void BP3Deserializer::ParseVariablesIndex(IO &io)
+void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
 {
     auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
                                    size_t position) {
@@ -169,7 +182,6 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
         switch (header.DataType)
         {
 
-        // TODO: string
         case (type_string):
         {
             DefineVariableInIO<std::string>(header, io, buffer, position);
@@ -266,8 +278,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
         } // end switch
     };
 
-    // STARTS HERE
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.VarsIndexStart;
 
     const uint32_t count = ReadValue<uint32_t>(buffer, position);
@@ -275,6 +286,20 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
 
     const size_t startPosition = position;
     size_t localPosition = 0;
+
+    if (m_Threads == 1)
+    {
+        while (localPosition < length)
+        {
+            lf_ReadElementIndex(io, buffer, position);
+
+            const size_t elementIndexSize =
+                static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+            position += elementIndexSize;
+            localPosition = position - startPosition;
+        }
+        return;
+    }
 
     // threads for reading Variables
     std::vector<std::future<void>> asyncs(m_Threads);
@@ -317,7 +342,7 @@ void BP3Deserializer::ParseVariablesIndex(IO &io)
     }
 }
 
-void BP3Deserializer::ParseAttributesIndex(IO &io)
+void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io)
 {
     auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
                                    size_t position) {
@@ -409,7 +434,7 @@ void BP3Deserializer::ParseAttributesIndex(IO &io)
         } // end switch
     };
 
-    const auto &buffer = m_Metadata.m_Buffer;
+    const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.AttributesIndexStart;
 
     const uint32_t count = ReadValue<uint32_t>(buffer, position);
@@ -461,6 +486,9 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
     template std::map<std::string, SubFileInfoMap>                             \
     BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable)   \
         const;                                                                 \
+                                                                               \
+    template void BP3Deserializer::GetSyncVariableDataFromStream(              \
+        Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
                                                                                \
     template void BP3Deserializer::GetDeferredVariable(Variable<T> &variable,  \
                                                        T *data);

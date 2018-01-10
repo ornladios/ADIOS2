@@ -23,6 +23,8 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 {
 }
 
+Engine::~Engine() { MPI_Comm_free(&m_MPIComm); };
+
 IO &Engine::GetIO() noexcept { return m_IO; }
 
 StepStatus Engine::BeginStep()
@@ -102,7 +104,7 @@ void Engine::WriteStep()
     const auto &variablesDataMap = m_IO.GetVariablesDataMap();
     for (const auto &variablePair : variablesDataMap)
     {
-        const std::string variableName(variablePair.first);
+        const std::string name(variablePair.first);
         const std::string type(variablePair.second.first);
 
         if (type == "compound")
@@ -112,9 +114,17 @@ void Engine::WriteStep()
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::GetType<T>())                                     \
     {                                                                          \
-        Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
+        Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
         if (variable->GetData() != nullptr)                                    \
         {                                                                      \
+            if (m_DebugMode && !variable->m_ConstantDims)                      \
+            {                                                                  \
+                throw std::invalid_argument(                                   \
+                    "ERROR: variable " + name +                                \
+                    " is defined with variable dimensions, use PutSync or "    \
+                    "PutDeferred functions instead, as only variables with "   \
+                    "constant dimensions are valid, in call to WriteStep\n");  \
+            }                                                                  \
             PutDeferred<T>(*variable, variable->GetData());                    \
         }                                                                      \
     }
@@ -125,7 +135,6 @@ void Engine::WriteStep()
     PerformPuts();
     EndStep();
 }
-void Engine::ReadStep() { ThrowUp("ReadStep"); }
 
 // PROTECTED
 void Engine::Init() {}

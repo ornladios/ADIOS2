@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * IO_ADIOS2.cpp
+ * IO_h5mixer.cpp
  *
  *  Created on: Feb 2017
  *      Author: Norbert Podhorszki
@@ -33,15 +33,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 {
     rank_saved = s.rank;
 
-    m_outputfilename = s.outputfile;
-    std::string suffix = ".h5";
-
-    int ss = s.outputfile.size();
-    if ((ss > suffix.size()) && s.outputfile.find(suffix) != ss - suffix.size())
-    {
-        // Your code here
-        m_outputfilename += suffix;
-    }
+    m_outputfilename = MakeFilename(s.outputfile, ".h5");
 
     /*ad = new adios2::ADIOS(std::string(DEFAULT_CONFIG_STR), comm,
                            adios2::DebugON);
@@ -50,11 +42,11 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     // Define method for engine creation
 
-    adios2::IO &h5io = ad->DeclareIO("output");
+    adios2::IO &h5io = ad->DeclareIO("writer");
     if (!h5io.InConfigFile())
     {
         // if not defined by user, we can change the default settings
-        // BPFileWriter is the default engine
+        // BPFile is the default engine
 
         // Allow an extra thread for data processing
         // ISO-POSIX file is the default transport

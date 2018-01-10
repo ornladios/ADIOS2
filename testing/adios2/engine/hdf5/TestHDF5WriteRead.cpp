@@ -267,8 +267,8 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
         io.DefineVariable<double>("r64", shape, start, count);
     }
 
-    // Create the ADIOS 1 Engine
-    io.SetEngine("HDF5Writer");
+    // Create the HDF5 Engine
+    io.SetEngine("HDF5");
 
     // HDf5 engine calls the HDF5 common object that calls the hDF5 library.
     // The IO functionality, SetParameters and AddTransports will be added
@@ -530,8 +530,8 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the ADIOS 1 Engine
-        io.SetEngine("HDF5Writer");
+        // Create the HDF5 Engine
+        io.SetEngine("HDF5");
 
         // HDf5 engine calls the HDF5 common object that calls the hDF5 library.
         // The IO functionality, SetParameters and AddTransports will be added
@@ -805,8 +805,8 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the ADIOS 1 Engine
-        io.SetEngine("HDF5Writer");
+        // Create the HDF5 Engine
+        io.SetEngine("HDF5");
 
         // HDf5 engine calls the HDF5 common object that calls the hDF5 library.
         // The IO functionality, SetParameters and AddTransports will be added

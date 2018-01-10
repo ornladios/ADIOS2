@@ -11,13 +11,14 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_ENGINEPY_H_
 #define ADIOS2_BINDINGS_PYTHON_SOURCE_ENGINEPY_H_
 
+#include <pybind11/numpy.h>
+
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <memory> //std::shared_ptr
 #include <string>
 /// \endcond
 
 #include <adios2.h>
-#include <pybind11/numpy.h>
 
 namespace adios2
 {
@@ -27,12 +28,11 @@ class EnginePy
 
 public:
     EnginePy(IO &io, const std::string &name, const Mode openMode,
-             MPI_Comm mpiComm,
-             std::map<std::string, VariableBase> &variablesPlaceholder);
+             MPI_Comm mpiComm);
 
     ~EnginePy() = default;
 
-    void BeginStep();
+    StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = 0.f);
 
     void PutSync(VariableBase *variable, const pybind11::array &array);
     void PutSync(VariableBase *variable, const std::string &string);
@@ -52,15 +52,13 @@ public:
 
     void EndStep();
 
+    void WriteStep();
+
     void Close(const int transportIndex = -1);
 
 private:
     Engine &m_Engine;
-    std::map<std::string, VariableBase> &m_VariablesPlaceholder;
     const bool m_DebugMode;
-
-    void DefineInIO(VariableBase *variable, const pybind11::array &array);
-    void DefineInIO(VariableBase *variable, const std::string &string);
 };
 
 } // end namespace adios2

@@ -8,7 +8,7 @@ readonly name="pugixml"
 readonly ownership="pugixml Upstream <robot@adios2>"
 readonly subtree="thirdparty/pugixml/pugixml"
 readonly repo="https://github.com/zeux/pugixml.git"
-readonly tag="v1.8.1"
+readonly tag="master"
 readonly shortlog="true"
 readonly paths="
 src/pugiconfig.hpp

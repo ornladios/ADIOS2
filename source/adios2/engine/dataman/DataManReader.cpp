@@ -5,10 +5,12 @@
  * DataManReader.cpp
  *
  *  Created on: Feb 21, 2017
- *      Author: wfg
+ *      Author: Jason Wang
+ *              William F Godoy
  */
 
 #include "DataManReader.h"
+#include "DataManReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
@@ -17,87 +19,153 @@ namespace adios2
 
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine("DataManReader", io, name, mode, mpiComm), m_Man(mpiComm, m_DebugMode)
+: Engine("DataManReader", io, name, mode, mpiComm),
+  m_BP3Deserializer(mpiComm, m_DebugMode), m_Man(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
 }
 
-void DataManReader::Close(const int transportIndex) {}
-
-// PRIVATE
-void DataManReader::Init()
+StepStatus DataManReader::BeginStep(StepMode stepMode,
+                                    const float timeoutSeconds)
 {
-    auto itRealTime = m_IO.m_Parameters.find("real_time");
-    if (itRealTime != m_IO.m_Parameters.end())
+    std::vector<char> buffer;
+    buffer.reserve(m_BufferSize);
+    size_t size = 0;
+
+    m_Man.ReadWAN(buffer.data(), size);
+
+    StepStatus status;
+
+    if (size > 0)
     {
-        if (itRealTime->second == "yes" || itRealTime->second == "true")
-            m_DoRealTime = true;
-    }
+        status = StepStatus::OK;
 
-    if (m_DoRealTime)
-    {
-        /**
-         * Lambda function that assigns a parameter in m_Method to a
-         * localVariable
-         * of type std::string
-         */
-        auto lf_AssignString = [this](const std::string parameter,
-                                      std::string &localVariable) {
-            auto it = m_IO.m_Parameters.find(parameter);
-            if (it != m_IO.m_Parameters.end())
-            {
-                localVariable = it->second;
-            }
-        };
+        m_BP3Deserializer.m_Data.Resize(size, "in DataMan Streaming Listener");
 
-        /**
-         * Lambda function that assigns a parameter in m_Method to a
-         * localVariable
-         * of type int
-         */
-        auto lf_AssignInt = [this](const std::string parameter,
-                                   int &localVariable) {
-            auto it = m_IO.m_Parameters.find(parameter);
-            if (it != m_IO.m_Parameters.end())
-            {
-                localVariable = std::stoi(it->second);
-            }
-        };
+        std::memcpy(m_BP3Deserializer.m_Data.m_Buffer.data(), buffer.data(),
+                    size);
 
-        // try not to hardcode these things...
-        // shouldn't these be coming from the user IO.m_TransportParameters?
-        // unless you assign defaults
-        unsigned int transportsSize = 1;
-
-        std::vector<Params> parameters(transportsSize);
-
-        for (unsigned int i = 0; i < parameters.size(); i++)
-        {
-            parameters[i]["type"] = "wan";
-            parameters[i]["Library"] = "zmq";
-            parameters[i]["name"] = "stream";
-            parameters[i]["IPAddress"] = "127.0.0.1";
-        }
-        m_Man.OpenWANTransports("zmq", Mode::Read, parameters, true);
-        for (auto &j : m_IO.m_Operators)
-        {
-            if (j.ADIOSOperator.m_Type == "Signature2")
-            {
-                m_Man.SetCallback(j.ADIOSOperator);
-                break;
-            }
-        }
-
-        std::string methodType;
-        int numChannels = 0;
-        lf_AssignString("method_type", methodType);
-        lf_AssignInt("num_channels", numChannels);
+        m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Data, m_IO);
     }
     else
     {
-        InitTransports();
+        status = StepStatus::EndOfStream;
     }
+
+    return status;
 }
+
+void DataManReader::PerformGets() {}
+
+void DataManReader::EndStep() {}
+
+void DataManReader::Close(const int transportIndex) {}
+
+// PRIVATE
+bool DataManReader::GetBoolParameter(Params &params, std::string key,
+                                     bool &value)
+{
+    auto itKey = params.find(key);
+    if (itKey != params.end())
+    {
+        if (itKey->second == "yes" || itKey->second == "YES" ||
+            itKey->second == "Yes" || itKey->second == "true" ||
+            itKey->second == "TRUE" || itKey->second == "True")
+        {
+            value = true;
+            return true;
+        }
+        if (itKey->second == "no" || itKey->second == "NO" ||
+            itKey->second == "No" || itKey->second == "false" ||
+            itKey->second == "FALSE" || itKey->second == "False")
+        {
+            value = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DataManReader::GetStringParameter(Params &params, std::string key,
+                                       std::string &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = it->second;
+        return true;
+    }
+    return false;
+}
+
+bool DataManReader::GetUIntParameter(Params &params, std::string key,
+                                     unsigned int &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = std::stoi(it->second);
+        return true;
+    }
+    return false;
+}
+void DataManReader::InitParameters()
+{
+    GetUIntParameter(m_IO.m_Parameters, "NChannels", m_NChannels);
+    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
+}
+
+void DataManReader::InitTransports()
+{
+    size_t channels = m_IO.m_TransportsParameters.size();
+    std::vector<std::string> names;
+    for (size_t i = 0; i < channels; ++i)
+    {
+        names.push_back(m_Name + std::to_string(i));
+    }
+
+    m_Man.OpenWANTransports(names, Mode::Read, m_IO.m_TransportsParameters,
+                            true);
+}
+void DataManReader::Init()
+{
+    for (auto &j : m_IO.m_Operators)
+    {
+        if (j.ADIOSOperator.m_Type == "Signature2")
+        {
+            m_Man.SetCallback(j.ADIOSOperator);
+            break;
+        }
+    }
+
+    InitParameters();
+
+    if (m_UseFormat == "BP" || m_UseFormat == "bp")
+    {
+        m_BP3Deserializer.InitParameters(m_IO.m_Parameters);
+    }
+
+    m_Man.SetBP3Deserializer(m_BP3Deserializer);
+    m_Man.SetIO(m_IO);
+
+    InitTransports();
+}
+
+#define declare_type(T)                                                        \
+    void DataManReader::DoGetSync(Variable<T> &variable, T *data)              \
+    {                                                                          \
+        GetSyncCommon(variable, data);                                         \
+    }                                                                          \
+    void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
+    {                                                                          \
+        GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    void DataManReader::DoGetDeferred(Variable<T> &variable, T &data)          \
+    {                                                                          \
+        GetDeferredCommon(variable, &data);                                    \
+    }
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 } // end namespace adios2
