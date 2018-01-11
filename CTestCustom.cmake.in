@@ -5,4 +5,5 @@
 
 list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   "H5PL\\.c.*dlopen.*glibc"
+  "gtest\\.cc.*getaddrinfo.*glibc"
 )
