@@ -29,7 +29,6 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
   m_BP3Serializer(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
-    MPI_Comm_dup(MPI_COMM_WORLD, &m_CommWorld);
     Init();
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 
@@ -54,7 +53,7 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
                                   m_GlobalRank, m_RankDirectPeers);
 }
 
-InSituMPIWriter::~InSituMPIWriter() { MPI_Comm_free(&m_CommWorld); }
+InSituMPIWriter::~InSituMPIWriter() {}
 
 StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
@@ -186,7 +185,8 @@ void InSituMPIWriter::PerformPuts()
         }
 
         // build (and remember for fixed schedule) the read request table
-        // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>> map
+        // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>>
+        // map
         m_WriteScheduleMap.clear();
         m_WriteScheduleMap =
             insitumpi::DeserializeReadSchedule(serializedSchedules);
