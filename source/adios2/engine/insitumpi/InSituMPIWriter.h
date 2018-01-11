@@ -54,7 +54,7 @@ public:
     void Close(const int transportIndex = -1) final;
 
 private:
-    MPI_Comm m_CommWorld;
+    MPI_Comm m_CommWorld = MPI_COMM_WORLD;
     int m_Verbosity = 0;
     bool m_FixedSchedule = false; // true: metadata in steps does NOT change
 

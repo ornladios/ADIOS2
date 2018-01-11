@@ -27,7 +27,6 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
   m_BP3Deserializer(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open InSituMPIReader " + m_Name + "\n";
-    MPI_Comm_dup(MPI_COMM_WORLD, &m_CommWorld);
     Init();
 
     m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, false, m_CommWorld);
@@ -94,7 +93,6 @@ InSituMPIReader::~InSituMPIReader()
         std::cout << "InSituMPI Reader " << m_ReaderRank << " Deconstructor on "
                   << m_Name << "\n";
     }
-    MPI_Comm_free(&m_CommWorld);
 }
 
 void InSituMPIReader::ClearMetadataBuffer()
