@@ -11,10 +11,10 @@
 #include <iostream> //std::cout
 #include <numeric>
 #include <stdexcept> //std::invalid_argument std::exception
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
-#include <string>
 
 #include <gtest/gtest.h>
 
@@ -249,10 +249,10 @@ int main(int argc, char **argv)
 
     engineName = std::string(argv[1]);
 
-    if (!wrank) 
+    if (!wrank)
     {
-        std::cout << "Test " << engineName << " engine with "
-            << numprocs << " processes " << std::endl;
+        std::cout << "Test " << engineName << " engine with " << numprocs
+                  << " processes " << std::endl;
     }
 
     int result = RUN_ALL_TESTS();
