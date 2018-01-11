@@ -6,14 +6,21 @@
 set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 
 add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
-target_link_libraries(TestStagingMPMD adios2 gtest MPI::MPI_C)
+target_link_libraries(TestStagingMPMD adios2 gtest)
+if(ADIOS2_HAVE_MPI)
+    target_link_libraries(TestStagingMPMD adios2 gtest MPI::MPI_C)
+endif()
 
+if(ADIOS2_HAVE_SST)
 gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
                 EXTRA_ARGS "SST"
                 TEST_SUFFIX _SST)
+endif()
 
+if(ADIOS2_HAVE_MPI)
 gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
                 EXTRA_ARGS "InSituMPI"
                 TEST_SUFFIX _InSituMPI)
+endif()
 
 
