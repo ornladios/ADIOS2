@@ -117,6 +117,11 @@ set(ADIOS2_CONFIG_OPTS
   BZip2 ZFP MPI DataMan SST ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
+configure_file(
+  ${ADIOS2_SOURCE_DIR}/CTestCustom.cmake.in
+  ${ADIOS2_BINARY_DIR}/CTestCustom.cmake
+  @ONLY
+)
 
 install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2

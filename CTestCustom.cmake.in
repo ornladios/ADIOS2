@@ -1,0 +1,8 @@
+#------------------------------------------------------------------------------#
+# Distributed under the OSI-approved Apache License, Version 2.0.  See
+# accompanying file Copyright.txt for details.
+#------------------------------------------------------------------------------#
+
+list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
+  "H5PL\\.c.*dlopen.*glibc"
+)
