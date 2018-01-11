@@ -292,7 +292,7 @@ TEST_F(InSituMPIFunctionAssignPeersTest, 3x13)
 
 int main(int argc, char **argv)
 {
-    MPI_Init(nullptr, nullptr);
+    MPI_Init(&argc, &argv);
 
     ::testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
