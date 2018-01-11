@@ -180,7 +180,7 @@ class TestInSituMPIWriteRead : public ::testing::TestWithParam<RunParams>
 
 };
 
-TEST_P(TestInSituMPIWriteRead, single)
+TEST_P(TestInSituMPIWriteRead, P)
 {
     RunParams p = GetParam();
     std::cout << "test " 
@@ -241,8 +241,6 @@ TEST_P(TestInSituMPIWriteRead, single)
 }
 
 INSTANTIATE_TEST_CASE_P(NxM, TestInSituMPIWriteRead, ::testing::ValuesIn(CreateRunParams())); 
-//INSTANTIATE_TEST_CASE_P(Writers, TestInSituMPIWriteRead, ::testing::Range(1,numprocs-1)); 
-//INSTANTIATE_TEST_CASE_P(Writers, TestInSituMPIWriteRead, ::testing::Values(1,2)); 
 
 
 //******************************************************************************
@@ -256,20 +254,7 @@ int main(int argc, char **argv)
 
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
-    //char *end;
-    //numprocs = std::strtoll(argv[1], &end, 10);
     std::cout << "numprocs = " << numprocs << std::endl;
-
-    /*
-    range.resize(numprocs-1);
-    std::iota(range.begin(), range.end(), 1);
-    std::cout << "range = " ;
-    for (const auto i : range)
-    {
-        std::cout << i << " ";
-    }
-    std::cout << std::endl;
-    */
 
     int result = RUN_ALL_TESTS();
 
