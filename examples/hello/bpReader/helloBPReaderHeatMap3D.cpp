@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
         if (rank == 0)
         {
             adios2::IO &getHeatMap = adios.DeclareIO("HeatMapRead");
-            adios2::Engine &bpReader =
-                getHeatMap.Open("HeatMap3D.bp", adios2::Mode::Read);
+            adios2::Engine &bpReader = getHeatMap.Open(
+                "HeatMap3D.bp", adios2::Mode::Read, MPI_COMM_SELF);
 
             // this just discovers in the metadata file that the variable exists
             adios2::Variable<unsigned int> *inTemperature =
