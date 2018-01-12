@@ -25,12 +25,15 @@ std::string engineName; // comes from command line
 
 struct RunParams
 {
-    unsigned int npx_w;
-    unsigned int npy_w;
-    unsigned int npx_r;
-    unsigned int npy_r;
-    RunParams(unsigned int xw, unsigned int yw, unsigned int xr,
-              unsigned int yr)
+    /* 2D decomposition of processes
+     * npx_w x npy_w Writers
+     * npx_r x npy_r Readers
+     */
+    size_t npx_w;
+    size_t npy_w;
+    size_t npx_r;
+    size_t npy_r;
+    RunParams(size_t xw, size_t yw, size_t xr, size_t yr)
     : npx_w{xw}, npy_w{yw}, npx_r{xr}, npy_r{yr} {};
 };
 
@@ -46,7 +49,16 @@ std::vector<RunParams> CreateRunParams()
     params.push_back(RunParams(1, 2, 1, 1));
     params.push_back(RunParams(1, 1, 2, 1));
     params.push_back(RunParams(1, 1, 1, 2));
-
+    // 4 process tests
+    params.push_back(RunParams(2, 1, 2, 1));
+    params.push_back(RunParams(2, 1, 1, 2));
+    // 8 process tests
+    params.push_back(RunParams(1, 1, 1, 7));
+    params.push_back(RunParams(1, 7, 1, 1));
+    params.push_back(RunParams(2, 2, 2, 2));
+    // 16 process tests
+    params.push_back(RunParams(3, 5, 1, 1));
+    params.push_back(RunParams(1, 1, 5, 3));
     return params;
 }
 
@@ -56,24 +68,24 @@ public:
     TestStagingMPMD() = default;
     const std::string streamName = "TestStream";
 
-    int MainWriters(MPI_Comm comm, unsigned int npx, unsigned int npy,
-                    int steps, unsigned int sleeptime)
+    void MainWriters(MPI_Comm comm, size_t npx, size_t npy, int steps,
+                     unsigned int sleeptime)
     {
         int rank, nproc;
         MPI_Comm_rank(comm, &rank);
         MPI_Comm_size(comm, &nproc);
         if (!rank)
         {
-            std::cout << "There are " << nproc << "Writers" << std::endl;
+            std::cout << "There are " << nproc << " Writers" << std::endl;
         }
-        unsigned int ndx = 5;
-        unsigned int ndy = 6;
-        unsigned int gndx = npx * ndx;
-        unsigned int gndy = npy * ndy;
-        unsigned int posx = rank % npx;
-        unsigned int posy = rank / npx;
-        unsigned int offsx = posx * ndx;
-        unsigned int offsy = posy * ndy;
+        size_t ndx = 50;
+        size_t ndy = 60;
+        size_t gndx = npx * ndx;
+        size_t gndy = npy * ndy;
+        size_t posx = rank % npx;
+        size_t posy = rank / npx;
+        size_t offsx = posx * ndx;
+        size_t offsy = posy * ndy;
 
         std::vector<float> myArray(ndx * ndy);
 
@@ -90,11 +102,12 @@ public:
         for (int step = 0; step < steps; ++step)
         {
             int idx = 0;
-            for (int j = 0; j < ndy; ++j)
+            for (int j = 0; j < ndx; ++j)
             {
-                for (int i = 0; i < ndx; ++i)
+                for (int i = 0; i < ndy; ++i)
                 {
-                    myArray[idx] = rank + (step / 100.0f);
+                    myArray[idx] =
+                        GetValue(gndx, gndy, offsx + j, offsy + i, step);
                     ++idx;
                 }
             }
@@ -106,15 +119,62 @@ public:
         writer.Close();
     }
 
-    int MainReaders(MPI_Comm comm, unsigned int npx, unsigned int npy,
-                    unsigned int sleeptime)
+    /* encode position x,y as x.y floating point value in each array cell
+     * add 1000*step to each value
+     *
+     * A 2 by 2 example with 3x3 local arrays
+     *   0.0    0.001  0.002 |  0.003  0.004  0.005
+     *   1.0    1.001  1.002 |  1.003  1.004  1.005
+     *   2.0    2.001  2.002 |  2.003  2.004  2.005
+     *   --------------------+---------------------
+     *   3.0    3.001  3.002 |  3.003  3.004  3.005
+     *   4.0    4.001  4.002 |  4.003  4.004  4.005
+     *   5.0    5.001  5.002 |  5.003  5.004  5.005
+     *
+     * Next step each value is bigger by 1000
+     */
+    float GetValue(size_t gndx, size_t gndy, size_t offsx, size_t offsy,
+                   int step)
+    {
+        return 1000.0f * step + offsx * gndx + offsy / 1000.0f;
+    }
+
+    void CheckData(const float *array, size_t gndx, size_t gndy, size_t offsx,
+                   size_t offsy, size_t ndx, size_t ndy, int step, int rank)
+    {
+        float expectedValue;
+        int idx = 0;
+        for (int j = 0; j < ndx; ++j)
+        {
+            for (int i = 0; i < ndy; ++i)
+            {
+                expectedValue =
+                    GetValue(gndx, gndy, offsx + j, offsy + i, step);
+                if (array[idx] != expectedValue)
+                {
+                    throw std::ios_base::failure(
+                        "Error in read, did not receive the expected value: "
+                        "rank " +
+                        std::to_string(rank) + " step " + std::to_string(step) +
+                        " offs {" + std::to_string(offsx) + "," +
+                        std::to_string(offsy) + "} received = " +
+                        std::to_string(array[idx]) + "  expected = " +
+                        std::to_string(expectedValue) + "\n");
+                }
+                ++idx;
+            }
+        }
+    }
+
+    void MainReaders(MPI_Comm comm, size_t npx, size_t npy,
+                     unsigned int sleeptime)
     {
         int rank, nproc;
         MPI_Comm_rank(comm, &rank);
         MPI_Comm_size(comm, &nproc);
         if (!rank)
         {
-            std::cout << "There are " << nproc << "Readers" << std::endl;
+            std::cout << "There are " << nproc << " Readers" << std::endl;
         }
 
         adios2::ADIOS adios(comm);
@@ -122,8 +182,8 @@ public:
         io.SetEngine(engineName);
         adios2::Engine &reader = io.Open(streamName, adios2::Mode::Read, comm);
 
-        unsigned int posx = rank % npx;
-        unsigned int posy = rank / npx;
+        size_t posx = rank % npx;
+        size_t posy = rank / npx;
         int step = 0;
         adios2::Variable<float> *vMyArray = nullptr;
         std::vector<float> myArray;
@@ -171,65 +231,95 @@ public:
 
             reader.GetDeferred(*vMyArray, myArray.data());
             reader.EndStep();
-            // checkData(myArray.data(), count, start, rank, step);
+            CheckData(myArray.data(), gndx, gndy, offsx, offsy, ndx, ndy, step,
+                      rank);
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
             ++step;
         }
         reader.Close();
     }
+
+    void TestCommon(RunParams p, int steps, unsigned int writer_sleeptime,
+                    unsigned int reader_sleeptime)
+    {
+        std::cout << "test " << p.npx_w << "x" << p.npy_w << " writers "
+                  << p.npx_r << "x" << p.npy_r << " readers " << std::endl;
+
+        int nwriters = p.npx_w * p.npy_w;
+        int nreaders = p.npx_r * p.npy_r;
+        if (nwriters + nreaders > numprocs)
+        {
+            if (!wrank)
+            {
+                std::cout
+                    << "skip test: writers+readers > available processors "
+                    << std::endl;
+            }
+            return;
+        }
+
+        int rank;
+        MPI_Comm comm;
+
+        unsigned int color;
+        if (wrank < nwriters)
+        {
+            color = 0; // writers
+        }
+        else if (wrank < nwriters + nreaders)
+        {
+            color = 1; // readers
+        }
+        else
+        {
+            color = 2; // not participating in test
+        }
+        MPI_Comm_split(MPI_COMM_WORLD, color, wrank, &comm);
+        MPI_Comm_rank(comm, &rank);
+
+        if (color == 0)
+        {
+            std::cout << "Process wrank " << wrank << " rank " << rank
+                      << " calls MainWriters " << std::endl;
+            MainWriters(comm, p.npx_w, p.npy_w, steps, writer_sleeptime);
+        }
+        else if (color == 1)
+        {
+            std::cout << "Process wrank " << wrank << " rank " << rank
+                      << " calls MainReaders " << std::endl;
+            MainReaders(comm, p.npx_r, p.npy_r, reader_sleeptime);
+        }
+        std::cout << "Process wrank " << wrank << " rank " << rank
+                  << " enters MPI barrier..." << std::endl;
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        // Separate each individual test with a big gap in time
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
 };
 
-TEST_P(TestStagingMPMD, P)
+TEST_P(TestStagingMPMD, SingleStep)
 {
     RunParams p = GetParam();
-    std::cout << "test " << p.npx_w << "x" << p.npy_w << " writers " << p.npx_r
-              << "x" << p.npy_r << " readers " << std::endl;
+    TestCommon(p, 1, 0, 0);
+}
 
-    int nwriters = p.npx_w * p.npy_w;
-    int nreaders = p.npx_r * p.npy_r;
-    if (nwriters + nreaders > numprocs)
-    {
-        if (!wrank)
-        {
-            std::cout << "skip test: writers+readers > available processors "
-                      << std::endl;
-        }
-        return;
-    }
+TEST_P(TestStagingMPMD, MultipleSteps)
+{
+    RunParams p = GetParam();
+    TestCommon(p, 10, 0, 0);
+}
 
-    int rank;
-    MPI_Comm comm;
+TEST_P(TestStagingMPMD, SlowWriter)
+{
+    RunParams p = GetParam();
+    TestCommon(p, 5, 1000, 0);
+}
 
-    unsigned int color;
-    if (wrank < nwriters)
-    {
-        color = 0; // writers
-    }
-    else if (wrank < nwriters + nreaders)
-    {
-        color = 1; // readers
-    }
-    else
-    {
-        color = 2; // not participating in test
-    }
-    MPI_Comm_split(MPI_COMM_WORLD, color, wrank, &comm);
-    MPI_Comm_rank(comm, &rank);
-
-    if (color == 0)
-    {
-        std::cout << "Process wrank " << wrank << " rank " << rank
-                  << " calls MainWriters " << std::endl;
-        MainWriters(comm, p.npx_w, p.npy_w, 10, 1);
-    }
-    else if (color == 1)
-    {
-        std::cout << "Process wrank " << wrank << " rank " << rank
-                  << " calls MainReaders " << std::endl;
-        MainReaders(comm, p.npx_r, p.npy_r, 1);
-    }
-    std::cout << "Process wrank " << wrank << " rank " << rank
-              << " enters MPI barrier..." << std::endl;
-    MPI_Barrier(MPI_COMM_WORLD);
+TEST_P(TestStagingMPMD, SlowReader)
+{
+    RunParams p = GetParam();
+    TestCommon(p, 5, 0, 1000);
 }
 
 INSTANTIATE_TEST_CASE_P(NxM, TestStagingMPMD,
