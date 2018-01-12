@@ -102,6 +102,11 @@ if(ADIOS2_HAVE_ZFP)
   target_link_libraries(adios2 PRIVATE zfp::zfp)
 endif()
 
+if(ADIOS2_HAVE_SZ)
+  target_sources(adios2 PRIVATE operator/compress/CompressSZ.cpp)
+  target_link_libraries(adios2 PRIVATE SZ::SZ)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   target_sources(adios2 PRIVATE
     engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc

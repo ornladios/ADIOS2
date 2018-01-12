@@ -97,6 +97,7 @@ mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
 
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
+adios_option(SZ        "Enable support for SZ transforms" AUTO)
 adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(DataMan   "Enable support for DataMan" AUTO)
 adios_option(SST       "Enable support for SST" AUTO)
@@ -114,7 +115,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-  BZip2 ZFP MPI DataMan SST ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem
+  BZip2 ZFP SZ MPI DataMan SST ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 

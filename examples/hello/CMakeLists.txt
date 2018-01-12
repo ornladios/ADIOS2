@@ -37,6 +37,10 @@ if(ADIOS2_HAVE_ZFP)
   add_subdirectory(bpZfpWrapper)
 endif()
 
+if(ADIOS2_HAVE_SZ)
+  add_subdirectory(bpSZWrapper)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(insituMPI)
 endif()
