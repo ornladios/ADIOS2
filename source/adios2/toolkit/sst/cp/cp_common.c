@@ -353,7 +353,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
         RecvCounts = malloc(Stream->CohortSize * sizeof(int));
     }
     MPI_Gather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT, 0,
-               MPI_COMM_WORLD);
+               Stream->mpiComm);
 
     /*
      * Figure out the total length of block
@@ -387,7 +387,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
      */
 
     MPI_Gatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                MPI_CHAR, 0, MPI_COMM_WORLD);
+                MPI_CHAR, 0, Stream->mpiComm);
 
     if (Stream->Rank == 0)
     {
@@ -424,17 +424,17 @@ void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
         FFSBuffer Buf = create_FFSBuffer();
         char *tmp =
             FFSencode(Buf, FMFormat_of_original(Type), root_info, &DataSize);
-        MPI_Bcast(&DataSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(tmp, DataSize, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        MPI_Bcast(tmp, DataSize, MPI_CHAR, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
         memcpy(Buffer, tmp, DataSize);
         free_FFSBuffer(Buf);
     }
     else
     {
-        MPI_Bcast(&DataSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
-        MPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, Stream->mpiComm);
     }
 
     FFSContext context = Stream->CPInfo->ffs_c;
@@ -462,7 +462,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
     RecvCounts = malloc(Stream->CohortSize * sizeof(int));
 
     MPI_Allgather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT,
-                  MPI_COMM_WORLD);
+                  Stream->mpiComm);
 
     /*
      * Figure out the total length of block
@@ -494,7 +494,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
      */
 
     MPI_Allgatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                   MPI_CHAR, MPI_COMM_WORLD);
+                   MPI_CHAR, Stream->mpiComm);
 
     FFSContext context = Stream->CPInfo->ffs_c;
 
