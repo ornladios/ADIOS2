@@ -294,7 +294,7 @@ public:
         MPI_Barrier(MPI_COMM_WORLD);
 
         // Separate each individual test with a big gap in time
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 };
 
@@ -313,13 +313,13 @@ TEST_P(TestStagingMPMD, MultipleSteps)
 TEST_P(TestStagingMPMD, SlowWriter)
 {
     RunParams p = GetParam();
-    TestCommon(p, 5, 1000, 0);
+    TestCommon(p, 5, 500, 0);
 }
 
 TEST_P(TestStagingMPMD, SlowReader)
 {
     RunParams p = GetParam();
-    TestCommon(p, 5, 0, 1000);
+    TestCommon(p, 5, 0, 500);
 }
 
 INSTANTIATE_TEST_CASE_P(NxM, TestStagingMPMD,
