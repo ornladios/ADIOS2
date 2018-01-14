@@ -128,8 +128,8 @@ int main(int argc, char *argv[])
                     "T", {gndx, gndy}, settings.offset, settings.readsize);
                 vdT = &outIO.DefineVariable<double>(
                     "dT", {gndx, gndy}, settings.offset, settings.readsize);
-                writer = &outIO.Open(settings.outputfile, adios2::Mode::Write, mpiReaderComm);
-
+                writer = &outIO.Open(settings.outputfile, adios2::Mode::Write,
+                                     mpiReaderComm);
 
                 MPI_Barrier(mpiReaderComm); // sync processes just for stdout
             }
@@ -151,7 +151,8 @@ int main(int argc, char *argv[])
             reader.EndStep();
 
             /* Compute dT and
-             * copy Tin into Tout as it will be used for calculating dT in the next step
+             * copy Tin into Tout as it will be used for calculating dT in the
+             * next step
              */
             if (firstStep)
             {
@@ -169,7 +170,7 @@ int main(int argc, char *argv[])
                     Tout[i] = Tin[i];
                 }
             }
-          
+
             /* Output Tout and dT */
             writer->BeginStep();
             writer->PutDeferred<double>(*vTout, Tout.data());
@@ -182,7 +183,6 @@ int main(int argc, char *argv[])
         reader.Close();
         if (writer != nullptr)
             writer->Close();
-
     }
     catch (std::invalid_argument &e) // command-line argument errors
     {
