@@ -26,11 +26,12 @@
 
 void printUsage()
 {
-    std::cout << "Usage: heatRead  config  input  N  M \n"
-              << "  config: XML config file to use\n"
-              << "  input:  name of input data file/stream\n"
-              << "  N:      number of processes in X dimension\n"
-              << "  M:      number of processes in Y dimension\n\n";
+    std::cout << "Usage: heatRead  config  input  output N  M \n"
+              << "  config:  XML config file to use\n"
+              << "  input:   name of input data file/stream\n"
+              << "  output:  name of output data file/stream\n"
+              << "  N:       number of processes in X dimension\n"
+              << "  M:       number of processes in Y dimension\n\n";
 }
 
 int main(int argc, char *argv[])
@@ -65,31 +66,38 @@ int main(int argc, char *argv[])
         // Define method for engine creation
         // 1. Get method def from config file or define new one
 
-        adios2::IO &bpReaderIO = ad.DeclareIO("reader");
-        if (!bpReaderIO.InConfigFile())
+        adios2::IO &inIO = ad.DeclareIO("readerInput");
+        if (!inIO.InConfigFile())
         {
             // if not defined by user, we can change the default settings
             // BPFile is the default engine
-            bpReaderIO.SetEngine("ADIOS1");
-            bpReaderIO.SetParameters({{"num_threads", "2"}});
+            inIO.SetEngine("BPFile");
+            inIO.SetParameters({{"num_threads", "1"}});
 
             // ISO-POSIX file output is the default transport (called "File")
             // Passing parameters to the transport
-            bpReaderIO.AddTransport("File", {{"verbose", "4"}});
+            inIO.AddTransport("File", {{"verbose", "4"}});
         }
 
-        adios2::Engine &bpReader = bpReaderIO.Open(
-            settings.inputfile, adios2::Mode::Read, mpiReaderComm);
+        adios2::IO &outIO = ad.DeclareIO("readerOutput");
 
-        double *T = nullptr;
-        adios2::Variable<double> *vT = nullptr;
+        adios2::Engine &reader =
+            inIO.Open(settings.inputfile, adios2::Mode::Read, mpiReaderComm);
+
+        std::vector<double> Tin;
+        std::vector<double> Tout;
+        std::vector<double> dT;
+        adios2::Variable<double> *vTin = nullptr;
+        adios2::Variable<double> *vTout = nullptr;
+        adios2::Variable<double> *vdT = nullptr;
+        adios2::Engine *writer = nullptr;
         bool firstStep = true;
         int step = 0;
 
         while (true)
         {
             adios2::StepStatus status =
-                bpReader.BeginStep(adios2::StepMode::NextAvailable, 10.0f);
+                reader.BeginStep(adios2::StepMode::NextAvailable, 0.0f);
             if (status != adios2::StepStatus::OK)
             {
                 break;
@@ -97,12 +105,12 @@ int main(int argc, char *argv[])
 
             // Variable objects disappear between steps so we need this every
             // step
-            vT = bpReaderIO.InquireVariable<double>("T");
+            vTin = inIO.InquireVariable<double>("T");
 
             if (firstStep)
             {
-                unsigned int gndx = vT->m_Shape[0];
-                unsigned int gndy = vT->m_Shape[1];
+                unsigned int gndx = vTin->m_Shape[0];
+                unsigned int gndy = vTin->m_Shape[1];
 
                 if (rank == 0)
                 {
@@ -111,9 +119,18 @@ int main(int argc, char *argv[])
                 }
 
                 settings.DecomposeArray(gndx, gndy);
-                T = new double[settings.readsize[0] * settings.readsize[1]];
+                Tin.resize(settings.readsize[0] * settings.readsize[1]);
+                Tout.resize(settings.readsize[0] * settings.readsize[1]);
+                dT.resize(settings.readsize[0] * settings.readsize[1]);
 
-                firstStep = false;
+                /* Create output variables and open output stream */
+                vTout = &outIO.DefineVariable<double>(
+                    "T", {gndx, gndy}, settings.offset, settings.readsize);
+                vdT = &outIO.DefineVariable<double>(
+                    "dT", {gndx, gndy}, settings.offset, settings.readsize);
+                writer = &outIO.Open(settings.outputfile, adios2::Mode::Write, mpiReaderComm);
+
+
                 MPI_Barrier(mpiReaderComm); // sync processes just for stdout
             }
 
@@ -123,23 +140,49 @@ int main(int argc, char *argv[])
             }
 
             // Create a 2D selection for the subset
-            vT->SetSelection(
+            vTin->SetSelection(
                 adios2::Box<adios2::Dims>(settings.offset, settings.readsize));
 
             // Arrays are read by scheduling one or more of them
             // and performing the reads at once
+            reader.GetDeferred<double>(*vTin, Tin.data());
+            /*printDataStep(Tin.data(), settings.readsize.data(),
+                          settings.offset.data(), rank, step); */
+            reader.EndStep();
 
-            bpReader.GetDeferred<double>(*vT, T);
-            bpReader.PerformGets();
+            /* Compute dT and
+             * copy Tin into Tout as it will be used for calculating dT in the next step
+             */
+            if (firstStep)
+            {
+                for (int i = 0; i < dT.size(); i++)
+                {
+                    dT[i] = 0;
+                    Tout[i] = Tin[i];
+                }
+            }
+            else
+            {
+                for (int i = 0; i < dT.size(); i++)
+                {
+                    dT[i] = Tout[i] - Tin[i];
+                    Tout[i] = Tin[i];
+                }
+            }
+          
+            /* Output Tout and dT */
+            writer->BeginStep();
+            writer->PutDeferred<double>(*vTout, Tout.data());
+            writer->PutDeferred<double>(*vdT, dT.data());
+            writer->EndStep();
 
-            printDataStep(T, settings.readsize.data(), settings.offset.data(),
-                          rank, step);
-            bpReader.EndStep();
             step++;
+            firstStep = false;
         }
-        bpReader.Close();
-        if (!T)
-            delete[] T;
+        reader.Close();
+        if (writer != nullptr)
+            writer->Close();
+
     }
     catch (std::invalid_argument &e) // command-line argument errors
     {
