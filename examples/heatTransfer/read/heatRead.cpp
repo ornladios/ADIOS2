@@ -34,7 +34,8 @@ void printUsage()
               << "  M:       number of processes in Y dimension\n\n";
 }
 
-void Compute(const std::vector<double> & Tin, std::vector<double> & Tout, std::vector<double> & dT, bool firstStep)
+void Compute(const std::vector<double> &Tin, std::vector<double> &Tout,
+             std::vector<double> &dT, bool firstStep)
 {
     /* Compute dT and
      * copy Tin into Tout as it will be used for calculating dT in the
