@@ -63,6 +63,9 @@ private:
     interop::ADIOS1CommonRead m_ADIOS1;
     // ADIOS_FILE *m_fh = nullptr; ///< ADIOS1 file handler
 
+    // EndStep must call PerformGets if necessary
+    bool m_NeedPerformGets = false;
+
     void Init() final; ///< called from constructor, gets the selected ADIOS1
                        /// transport method from settings
     void InitParameters() final;

@@ -59,14 +59,26 @@ StepStatus ADIOS1Reader::BeginStep(const StepMode mode,
                                     variable.m_StepsCount,                     \
                                     variable.m_ReadAsLocalValue,               \
                                     variable.m_ReadAsJoined, (void *)values);  \
+        m_NeedPerformGets = true;                                              \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void ADIOS1Reader::PerformGets() { m_ADIOS1.PerformReads(); }
+void ADIOS1Reader::PerformGets()
+{
+    m_ADIOS1.PerformReads();
+    m_NeedPerformGets = false;
+}
 
-void ADIOS1Reader::EndStep() { m_ADIOS1.ReleaseStep(); }
+void ADIOS1Reader::EndStep()
+{
+    if (m_NeedPerformGets)
+    {
+        PerformGets();
+    }
+    m_ADIOS1.ReleaseStep();
+}
 
 void ADIOS1Reader::Close(const int transportIndex) { m_ADIOS1.Close(); }
 
