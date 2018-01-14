@@ -34,6 +34,30 @@ void printUsage()
               << "  M:       number of processes in Y dimension\n\n";
 }
 
+void Compute(const std::vector<double> & Tin, std::vector<double> & Tout, std::vector<double> & dT, bool firstStep)
+{
+    /* Compute dT and
+     * copy Tin into Tout as it will be used for calculating dT in the
+     * next step
+     */
+    if (firstStep)
+    {
+        for (int i = 0; i < dT.size(); i++)
+        {
+            dT[i] = 0;
+            Tout[i] = Tin[i];
+        }
+    }
+    else
+    {
+        for (int i = 0; i < dT.size(); i++)
+        {
+            dT[i] = Tout[i] - Tin[i];
+            Tout[i] = Tin[i];
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
@@ -150,26 +174,10 @@ int main(int argc, char *argv[])
                           settings.offset.data(), rank, step); */
             reader.EndStep();
 
-            /* Compute dT and
-             * copy Tin into Tout as it will be used for calculating dT in the
-             * next step
+            /* Compute dT from current T (Tin) and previous T (Tout)
+             * and save Tin in Tout for output and for future computation
              */
-            if (firstStep)
-            {
-                for (int i = 0; i < dT.size(); i++)
-                {
-                    dT[i] = 0;
-                    Tout[i] = Tin[i];
-                }
-            }
-            else
-            {
-                for (int i = 0; i < dT.size(); i++)
-                {
-                    dT[i] = Tout[i] - Tin[i];
-                    Tout[i] = Tin[i];
-                }
-            }
+            Compute(Tin, Tout, dT, firstStep);
 
             /* Output Tout and dT */
             writer->BeginStep();
