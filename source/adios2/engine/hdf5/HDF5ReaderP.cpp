@@ -244,6 +244,10 @@ StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void HDF5ReaderP::EndStep()
 {
+    if (m_DeferredStack.size() > 0)
+    {
+        PerformGets();
+    }
     m_StreamAt++;
     m_H5File.Advance();
 }

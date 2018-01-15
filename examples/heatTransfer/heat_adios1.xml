@@ -12,58 +12,40 @@
 
     <io name="writer">
         <engine type="ADIOS1">
-
-            <!-- for vectorized memory operations, make sure your system 
-                 enables threads--> 
-            <parameter key="Threads" value="2"/>
-
-            <!-- Microseconds (default), Milliseconds, Seconds, 
-                 Minutes, Hours -->
-            <parameter key="ProfileUnits" value="Microseconds"/>
-            
         </engine>
 
         <transport type="File">
-            
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
             <parameter key="Library" value="MPI"/>
-            
-            <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
-                 Minutes, Hours. open/close always in Microseconds -->
-            <parameter key="ProfileUnits" value="Microseconds"/>
-            
         </transport>
-        
     </io>
 
 
-    <!--====================================
-           Configuration for the Reader 
-        ====================================-->
+    <!--=======================================
+           Configuration for the Reader input
+        =======================================-->
 
-    <io name="reader">
+    <io name="readerInput">
         <engine type="ADIOS1">
-            
-            <!-- for vectorized memory operations, make sure your system 
-                 enables threads--> 
-            <parameter key="Threads" value="2"/>
-
-            <!-- Microseconds (default), Milliseconds, Seconds, 
-                 Minutes, Hours -->
-            <parameter key="ProfileUnits" value="Microseconds"/>
-
-        </engine>
+	    </engine>
 
         <transport type="File">
-            
+        </transport>
+    </io>
+    
+    
+    <!--=======================================
+           Configuration for the Reader output
+        =======================================-->
+
+    <io name="readerOutput">
+        <engine type="ADIOS1">
+	    </engine>
+
+        <transport type="File">
             <!-- POSIX, stdio (C FILE*), fstream (C++) -->
             <parameter key="Library" value="POSIX"/>
-            
-            <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
-                 Minutes, Hours. open/close always in Microseconds -->
-            <parameter key="ProfileUnits" value="Microseconds"/>
-            
         </transport>
-        
     </io>
+    
 </adios-config>
