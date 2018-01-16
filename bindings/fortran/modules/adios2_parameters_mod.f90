@@ -17,7 +17,7 @@ module adios2_parameters
     ! Types
     integer, parameter :: adios2_type_unknown = -1
     integer, parameter :: adios2_type_character = 0
-    integer, parameter :: adios2_type_integer = 1
+    ! integer, parameter :: adios2_type_integer = 1
     integer, parameter :: adios2_type_real = 2
     integer, parameter :: adios2_type_dp = 3
     integer, parameter :: adios2_type_complex = 4
