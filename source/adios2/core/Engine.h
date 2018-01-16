@@ -202,11 +202,11 @@ public:
     void WriteStep();
 
     /**
-     * Closes a particular transport, or all if -1. This is a purely virtual
-     * function that all engines must implement.
-     * @param transportIndex order from IO AddTransport
+     * Closes a particular transport, or all if -1.
+     * @param transportIndex index returned from IO AddTransport, default (-1) =
+     * all
      */
-    virtual void Close(const int transportIndex = -1) = 0;
+    void Close(const int transportIndex = -1);
 
 protected:
     /** from derived class */
@@ -256,6 +256,8 @@ protected:
     virtual void DoGetDeferred(Variable<T> &, T &);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+    virtual void DoClose(const int transportIndex) = 0;
 
 private:
     /** Throw exception by Engine virtual functions not implemented/supported by

@@ -80,8 +80,6 @@ void ADIOS1Reader::EndStep()
     m_ADIOS1.ReleaseStep();
 }
 
-void ADIOS1Reader::Close(const int transportIndex) { m_ADIOS1.Close(); }
-
 // PRIVATE
 void ADIOS1Reader::Init()
 {
@@ -108,5 +106,7 @@ void ADIOS1Reader::InitTransports()
 {
     m_ADIOS1.InitTransports(m_IO.m_TransportsParameters);
 }
+
+void ADIOS1Reader::DoClose(const int transportIndex) { m_ADIOS1.Close(); }
 
 } // end namespace adios2

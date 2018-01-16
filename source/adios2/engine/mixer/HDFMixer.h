@@ -54,15 +54,6 @@ public:
     StepStatus BeginStep(StepMode mode, const float timeout_sec);
     // void EndStep(const float /*timeout_sec*/);
     void EndStep() final;
-    /**
-     * Closes a single transport or all transports
-     * @param transportIndex, if -1 (default) closes all transports, otherwise
-     * it
-     * closes a transport in m_Transport[transportIndex]. In debug mode the
-     * latter
-     * is bounds-checked.
-     */
-    void Close(const int transportIndex = -1) final;
 
     void CreateName(std::string &pathName, std::string &rootName,
                     std::string &fullH5Name, int rank);
@@ -94,6 +85,15 @@ private:
 #undef declare_type
 
     /**
+     * Closes a single transport or all transports
+     * @param transportIndex, if -1 (default) closes all transports,
+     * otherwise it
+     * closes a transport in m_Transport[transportIndex]. In debug mode the
+     * latter is bounds-checked.
+     */
+    void DoClose(const int transportIndex = -1) final;
+
+    /**
      * Common function for primitive (including std::complex) writes
      * @param variable
      * @param values
@@ -106,6 +106,6 @@ private:
     void WriteProfilingJSONFile();
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_H5_HDFMIXER_H_ */

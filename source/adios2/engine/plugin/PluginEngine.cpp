@@ -72,11 +72,6 @@ void PluginEngine::PerformGets() { m_Impl->m_Plugin->PerformGets(); }
 
 void PluginEngine::EndStep() { m_Impl->m_Plugin->EndStep(); }
 
-void PluginEngine::Close(const int transportIndex)
-{
-    m_Impl->m_Plugin->Close(transportIndex);
-}
-
 void PluginEngine::Init()
 {
     auto paramPluginNameIt = m_IO.m_Parameters.find("PluginName");
@@ -161,5 +156,10 @@ void PluginEngine::Init()
 
 ADIOS2_FOREACH_TYPE_1ARG(declare)
 #undef declare
+
+void PluginEngine::DoClose(const int transportIndex)
+{
+    m_Impl->m_Plugin->Close(transportIndex);
+}
 
 } // end namespace adios2

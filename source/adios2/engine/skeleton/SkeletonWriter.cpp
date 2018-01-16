@@ -67,15 +67,6 @@ void SkeletonWriter::EndStep()
     }
 }
 
-void SkeletonWriter::Close(const int transportIndex)
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Skeleton Writer " << m_WriterRank << " Close(" << m_Name
-                  << ")\n";
-    }
-}
-
 // PRIVATE
 
 #define declare_type(T)                                                        \
@@ -118,6 +109,15 @@ void SkeletonWriter::InitParameters()
 void SkeletonWriter::InitTransports()
 {
     // Nothing to process from m_IO.m_TransportsParameters
+}
+
+void SkeletonWriter::DoClose(const int transportIndex)
+{
+    if (m_Verbosity == 5)
+    {
+        std::cout << "Skeleton Writer " << m_WriterRank << " Close(" << m_Name
+                  << ")\n";
+    }
 }
 
 } // end namespace adios2

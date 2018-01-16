@@ -57,8 +57,6 @@ public:
     void PerformGets() final;
     void EndStep() final;
 
-    void Close(const int transportIndex = -1);
-
 private:
     interop::ADIOS1CommonRead m_ADIOS1;
     // ADIOS_FILE *m_fh = nullptr; ///< ADIOS1 file handler
@@ -77,6 +75,8 @@ private:
 
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+    void DoClose(const int transportIndex = -1) final;
 
     void ReadJoinedArray(const std::string &name, const Dims &offs,
                          const Dims &ldims, const int fromStep,

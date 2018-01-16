@@ -43,8 +43,6 @@ public:
     void PerformGets() final;
     void EndStep() final;
 
-    void Close(const int transportIndex = -1);
-
 private:
     int m_Verbosity = 0;
     int m_ReaderRank; // my rank in the readers' comm
@@ -66,6 +64,8 @@ private:
     void DoGetDeferred(Variable<T> &, T &) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+    void DoClose(const int transportIndex = -1);
 
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);

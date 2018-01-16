@@ -37,8 +37,6 @@ public:
     void PerformPuts() final;
     void EndStep() final;
 
-    void Close(const int transportIndex = -1) final;
-
 private:
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
@@ -58,8 +56,10 @@ private:
 
     SstStream m_Output;
     bool m_FFSmarshal = true;
+
+    void DoClose(const int transportIndex = -1) final;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SST_SST_WRITER_H_ */

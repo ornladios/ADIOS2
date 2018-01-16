@@ -62,12 +62,6 @@ ExampleEnginePlugin::ExampleEnginePlugin(IO &io, const std::string &name,
 
 ExampleEnginePlugin::~ExampleEnginePlugin() { m_Log.close(); }
 
-void ExampleEnginePlugin::Close(const int transportIndex)
-{
-    m_Log << now() << " Close with transportIndex " << transportIndex
-          << std::endl;
-}
-
 void ExampleEnginePlugin::Init()
 {
     std::string logName = "ExamplePlugin.log";
@@ -96,5 +90,11 @@ void ExampleEnginePlugin::Init()
     }
 ADIOS2_FOREACH_TYPE_1ARG(define)
 #undef define
+
+void ExampleEnginePlugin::DoClose(const int transportIndex)
+{
+    m_Log << now() << " Close with transportIndex " << transportIndex
+          << std::endl;
+}
 
 } // end namespace adios2

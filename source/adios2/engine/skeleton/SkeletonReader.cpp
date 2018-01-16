@@ -99,15 +99,6 @@ void SkeletonReader::EndStep()
     }
 }
 
-void SkeletonReader::Close(const int transportIndex)
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Skeleton Reader " << m_ReaderRank << " Close(" << m_Name
-                  << ")\n";
-    }
-}
-
 // PRIVATE
 
 #define declare_type(T)                                                        \
@@ -153,6 +144,15 @@ void SkeletonReader::InitParameters()
 void SkeletonReader::InitTransports()
 {
     // Nothing to process from m_IO.m_TransportsParameters
+}
+
+void SkeletonReader::DoClose(const int transportIndex)
+{
+    if (m_Verbosity == 5)
+    {
+        std::cout << "Skeleton Reader " << m_ReaderRank << " Close(" << m_Name
+                  << ")\n";
+    }
 }
 
 } // end namespace adios2

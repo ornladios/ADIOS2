@@ -41,8 +41,6 @@ public:
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
 
-    void Close(const int transportIndex = -1) final;
-
 private:
     interop::HDF5Common m_H5File;
 
@@ -56,6 +54,8 @@ private:
 
     template <class T>
     void DoPutSyncCommon(Variable<T> &variable, const T *values);
+
+    void DoClose(const int transportIndex = -1) final;
 };
 
 } // end namespace adios2

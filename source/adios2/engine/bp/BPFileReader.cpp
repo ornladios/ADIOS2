@@ -102,17 +102,6 @@ void BPFileReader::PerformGets()
     m_BP3Deserializer.m_PerformedGets = true;
 }
 
-void BPFileReader::Close(const int transportIndex)
-{
-    if (!m_BP3Deserializer.m_PerformedGets)
-    {
-        PerformGets();
-    }
-
-    m_SubFileManager.CloseFiles();
-    m_FileManager.CloseFiles();
-}
-
 // PRIVATE
 void BPFileReader::Init()
 {
@@ -231,6 +220,17 @@ void BPFileReader::ReadVariables(
             }     // end step
         }         // end subfile
     }             // end variable
+}
+
+void BPFileReader::DoClose(const int transportIndex)
+{
+    if (!m_BP3Deserializer.m_PerformedGets)
+    {
+        PerformGets();
+    }
+
+    m_SubFileManager.CloseFiles();
+    m_FileManager.CloseFiles();
 }
 
 } // end namespace adios2

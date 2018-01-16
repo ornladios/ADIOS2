@@ -23,7 +23,7 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 {
 }
 
-Engine::~Engine() { MPI_Comm_free(&m_MPIComm); };
+Engine::~Engine(){};
 
 IO &Engine::GetIO() noexcept { return m_IO; }
 
@@ -134,6 +134,16 @@ void Engine::WriteStep()
     }
     PerformPuts();
     EndStep();
+}
+
+void Engine::Close(const int transportIndex)
+{
+    DoClose(transportIndex);
+
+    if (transportIndex == -1)
+    {
+        MPI_Comm_free(&m_MPIComm);
+    }
 }
 
 // PROTECTED
