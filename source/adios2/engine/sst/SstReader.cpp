@@ -100,8 +100,6 @@ void SstReader::EndStep()
     SstReleaseStep(m_Input);
 }
 
-void SstReader::Close(const int transportIndex) { SstReaderClose(m_Input); }
-
 // PRIVATE
 void SstReader::Init()
 {
@@ -133,4 +131,6 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void SstReader::PerformGets() { SstPerformGets(m_Input); }
 
-} // end namespace adios
+void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
+
+} // end namespace adios2

@@ -32,8 +32,6 @@ public:
                         MPI_Comm mpiComm);
     virtual ~ExampleEnginePlugin();
 
-    void Close(const int transportIndex = -1) override;
-
 protected:
     void Init() override;
 
@@ -41,6 +39,8 @@ protected:
     void DoPutSync(Variable<T> &variable, const T *values) override;
     ADIOS2_FOREACH_TYPE_1ARG(declare)
 #undef declare
+
+    void DoClose(const int transportIndex = -1) override;
 
 private:
     std::ofstream m_Log;

@@ -24,7 +24,7 @@ HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
     Init();
 }
 
-HDF5ReaderP::~HDF5ReaderP() { Close(); }
+HDF5ReaderP::~HDF5ReaderP() { DoClose(); }
 
 bool HDF5ReaderP::IsValid()
 {
@@ -279,8 +279,6 @@ void HDF5ReaderP::PerformGets()
     m_DeferredStack.clear();
 }
 
-void HDF5ReaderP::Close(const int transportIndex) { m_H5File.Close(); }
-
 #define declare_type(T)                                                        \
     void HDF5ReaderP::DoGetSync(Variable<T> &variable, T *data)                \
     {                                                                          \
@@ -297,4 +295,6 @@ void HDF5ReaderP::Close(const int transportIndex) { m_H5File.Close(); }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-} // end namespace adios
+void HDF5ReaderP::DoClose(const int transportIndex) { m_H5File.Close(); }
+
+} // end namespace adios2

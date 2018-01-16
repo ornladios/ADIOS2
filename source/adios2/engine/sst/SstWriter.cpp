@@ -57,7 +57,6 @@ void SstWriter::EndStep()
     }
 }
 
-void SstWriter::Close(const int transportIndex) { SstWriterClose(m_Output); }
 void SstWriter::PerformPuts() {}
 
 // PRIVATE functions below
@@ -94,4 +93,6 @@ void SstWriter::Init()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-} // end namespace adios
+void SstWriter::DoClose(const int transportIndex) { SstWriterClose(m_Output); }
+
+} // end namespace adios2

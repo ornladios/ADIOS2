@@ -77,35 +77,6 @@ void BPFileWriter::EndStep()
     }
 }
 
-void BPFileWriter::Close(const int transportIndex)
-{
-    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
-    {
-        PerformPuts();
-    }
-
-    // close bp buffer by serializing data and metadata
-    m_BP3Serializer.CloseData(m_IO);
-    // send data to corresponding transports
-    m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
-                                 m_BP3Serializer.m_Data.m_Position,
-                                 transportIndex);
-
-    m_FileDataManager.CloseFiles(transportIndex);
-
-    if (m_BP3Serializer.m_Profiler.IsActive &&
-        m_FileDataManager.AllTransportsClosed())
-    {
-        WriteProfilingJSONFile();
-    }
-
-    if (m_BP3Serializer.m_CollectiveMetadata &&
-        m_FileDataManager.AllTransportsClosed())
-    {
-        WriteCollectiveMetadataFile();
-    }
-}
-
 // PRIVATE FUNCTIONS
 // PRIVATE
 void BPFileWriter::Init()
@@ -169,6 +140,35 @@ void BPFileWriter::InitBPBuffer()
     {
         m_BP3Serializer.PutProcessGroupIndex(
             m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
+    }
+}
+
+void BPFileWriter::DoClose(const int transportIndex)
+{
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
+    {
+        PerformPuts();
+    }
+
+    // close bp buffer by serializing data and metadata
+    m_BP3Serializer.CloseData(m_IO);
+    // send data to corresponding transports
+    m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
+                                 m_BP3Serializer.m_Data.m_Position,
+                                 transportIndex);
+
+    m_FileDataManager.CloseFiles(transportIndex);
+
+    if (m_BP3Serializer.m_Profiler.IsActive &&
+        m_FileDataManager.AllTransportsClosed())
+    {
+        WriteProfilingJSONFile();
+    }
+
+    if (m_BP3Serializer.m_CollectiveMetadata &&
+        m_FileDataManager.AllTransportsClosed())
+    {
+        WriteCollectiveMetadataFile();
     }
 }
 

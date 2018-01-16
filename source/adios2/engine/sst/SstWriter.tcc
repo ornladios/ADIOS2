@@ -86,6 +86,6 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     }
 }
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SST_SST_WRITER_H_ */

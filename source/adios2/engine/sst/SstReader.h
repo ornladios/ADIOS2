@@ -46,7 +46,6 @@ public:
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f);
 
     void EndStep();
-    void Close(const int transportIndex = -1);
     void PerformGets();
 
 private:
@@ -60,6 +59,8 @@ private:
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
+    void DoClose(const int transportIndex = -1) final;
+
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 
@@ -67,6 +68,6 @@ private:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SST_SSTREADER_H_ */

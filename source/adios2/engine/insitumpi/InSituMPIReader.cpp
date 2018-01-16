@@ -250,29 +250,6 @@ void InSituMPIReader::EndStep()
     ClearMetadataBuffer();
 }
 
-void InSituMPIReader::Close(const int transportIndex)
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " Close(" << m_Name
-                  << ")\n";
-    }
-    if (m_Verbosity > 2)
-    {
-        uint64_t inPlaceBytes, inTempBytes;
-        MPI_Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1, MPI_LONG_LONG_INT,
-                   MPI_SUM, 0, m_MPIComm);
-        MPI_Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1,
-                   MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
-        if (m_ReaderRank == 0)
-        {
-            std::cout << "ADIOS InSituMPI Reader for " << m_Name << " received "
-                      << Statistics(inPlaceBytes, inTempBytes)
-                      << "% of data in place (zero-copy)" << std::endl;
-        }
-    }
-}
-
 // PRIVATE
 
 void InSituMPIReader::SendReadSchedule(
@@ -442,6 +419,29 @@ void InSituMPIReader::InitParameters()
 void InSituMPIReader::InitTransports()
 {
     // Nothing to process from m_IO.m_TransportsParameters
+}
+
+void InSituMPIReader::DoClose(const int transportIndex)
+{
+    if (m_Verbosity == 5)
+    {
+        std::cout << "InSituMPI Reader " << m_ReaderRank << " Close(" << m_Name
+                  << ")\n";
+    }
+    if (m_Verbosity > 2)
+    {
+        uint64_t inPlaceBytes, inTempBytes;
+        MPI_Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1, MPI_LONG_LONG_INT,
+                   MPI_SUM, 0, m_MPIComm);
+        MPI_Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1,
+                   MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
+        if (m_ReaderRank == 0)
+        {
+            std::cout << "ADIOS InSituMPI Reader for " << m_Name << " received "
+                      << Statistics(inPlaceBytes, inTempBytes)
+                      << "% of data in place (zero-copy)" << std::endl;
+        }
+    }
 }
 
 } // end namespace adios2

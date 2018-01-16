@@ -286,23 +286,6 @@ void InSituMPIWriter::EndStep()
     m_MPIRequests.clear();
 }
 
-void InSituMPIWriter::Close(const int transportIndex)
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "InSituMPI Writer " << m_WriterRank << " Close(" << m_Name
-                  << ")\n";
-    }
-    m_CurrentStep = -1; // -1 will indicate end of stream
-    // Send -1 to all reader peers, asynchronously
-    MPI_Request request;
-    for (auto peerRank : m_RankDirectPeers)
-    {
-        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, m_CommWorld, &request);
-    }
-}
-
 // PRIVATE
 
 #define declare_type(T)                                                        \
@@ -356,6 +339,23 @@ void InSituMPIWriter::InitParameters()
 void InSituMPIWriter::InitTransports()
 {
     // Nothing to process from m_IO.m_TransportsParameters
+}
+
+void InSituMPIWriter::DoClose(const int transportIndex)
+{
+    if (m_Verbosity == 5)
+    {
+        std::cout << "InSituMPI Writer " << m_WriterRank << " Close(" << m_Name
+                  << ")\n";
+    }
+    m_CurrentStep = -1; // -1 will indicate end of stream
+    // Send -1 to all reader peers, asynchronously
+    MPI_Request request;
+    for (auto peerRank : m_RankDirectPeers)
+    {
+        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
+                  insitumpi::MpiTags::Step, m_CommWorld, &request);
+    }
 }
 
 } // end namespace adios2
