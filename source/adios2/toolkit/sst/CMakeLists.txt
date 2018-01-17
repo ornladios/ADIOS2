@@ -1,6 +1,7 @@
 add_library(sst
   dp/dp.c
   dp/dummy_dp.c
+  dp/rdma_dp.c
   cp/cp.c
   cp/cp_common.c
   cp/ffs_marshal.c
@@ -9,6 +10,7 @@ add_library(sst
 target_compile_features(sst PRIVATE c_std_99)
 target_include_directories(sst PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(sst PRIVATE EVPath::EVPath)
+target_link_libraries(sst PRIVATE ${LIBFABRIC_LIBRARY})
 target_link_libraries(sst PUBLIC MPI::MPI_C)
 
 install(TARGETS sst EXPORT adios2Exports

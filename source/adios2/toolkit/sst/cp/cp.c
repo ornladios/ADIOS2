@@ -270,7 +270,7 @@ SstStream SstWriterOpen(const char *Name, const char *params, MPI_Comm comm)
     CP_parseParams(Stream, params);
 
     char *Filename = TrimSuffix(Name);
-    Stream->DP_Interface = LoadDP("dummy");
+    Stream->DP_Interface = LoadDP("rdma");
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
@@ -520,7 +520,7 @@ SstStream SstReaderOpen(const char *Name, const char *params, MPI_Comm comm)
 
     CP_parseParams(Stream, params);
 
-    Stream->DP_Interface = LoadDP("dummy");
+    Stream->DP_Interface = LoadDP("rdma");
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
