@@ -143,7 +143,7 @@ void BP3Serializer::CloseData(IO &io)
 
         SerializeMetadataInData();
 
-        m_Profiler.Bytes.at("buffering") += m_Data.m_AbsolutePosition;
+        m_Profiler.Bytes.at("buffering") = m_Data.m_AbsolutePosition;
 
         m_IsClosed = true;
     }
@@ -158,7 +158,7 @@ void BP3Serializer::CloseStream(IO &io)
     {
         SerializeDataBuffer(io);
     }
-    SerializeMetadataInData();
+    SerializeMetadataInData(false);
     m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
     ProfilerStop("buffering");
 }
@@ -448,7 +448,8 @@ void BP3Serializer::SerializeDataBuffer(IO &io) noexcept
     m_MetadataSet.DataPGIsOpen = false;
 }
 
-void BP3Serializer::SerializeMetadataInData() noexcept
+void BP3Serializer::SerializeMetadataInData(
+    const bool updateAbsolutePosition) noexcept
 {
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
@@ -536,7 +537,11 @@ void BP3Serializer::SerializeMetadataInData() noexcept
     PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
                   buffer, position);
 
-    absolutePosition += footerSize;
+    if (updateAbsolutePosition)
+    {
+        absolutePosition += footerSize;
+    }
+
     if (m_Profiler.IsActive)
     {
         m_Profiler.Bytes.emplace("buffering", absolutePosition);
