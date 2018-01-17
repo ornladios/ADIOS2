@@ -62,18 +62,26 @@ void BPFileWriter::EndStep()
         PerformPuts();
     }
 
-    m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
-
     const size_t currentStep = m_BP3Serializer.m_MetadataSet.TimeStep - 1;
     const size_t flushStepsCount = m_BP3Serializer.m_FlushStepsCount;
 
-    if (currentStep % flushStepsCount)
+    m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
+
+    // must be explicit
+    if (currentStep % flushStepsCount == 0)
     {
-        m_BP3Serializer.SerializeData(m_IO);
+        const size_t dataSize = m_BP3Serializer.m_Data.m_Position;
+        m_BP3Serializer.CloseStream(m_IO);
         m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
-                                     m_BP3Serializer.m_Data.m_Position);
+                                     dataSize);
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
         WriteCollectiveMetadataFile();
+
+        //        if (currentStep == 5)
+        //        {
+        //            throw std::runtime_error("STOPPING AT 5 to test METADATA
+        //            FILE");
+        //        }
     }
 }
 

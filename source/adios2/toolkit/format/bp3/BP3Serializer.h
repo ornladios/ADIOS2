@@ -74,9 +74,13 @@ public:
 
     /**
      * Serializes the metadata indices appending it into the data buffer inside
-     * m_HeapBuffer
+     * m_Data
+     * @param updateAbsolutePosition true: adds footer size to absolute position
+     * used for Close,
+     * false: doesn't update absolute, used for partial buffer
      */
-    void SerializeMetadataInData() noexcept;
+    void
+    SerializeMetadataInData(const bool updateAbsolutePosition = true) noexcept;
 
     /**
      * Finishes bp buffer by serializing data and adding trailing metadata
@@ -85,7 +89,7 @@ public:
     void CloseData(IO &io);
 
     /**
-     * Closes bp buffer for streaming mdoe...must reset metadata for the next
+     * Closes bp buffer for streaming mode...must reset metadata for the next
      * step
      * @param io
      */
