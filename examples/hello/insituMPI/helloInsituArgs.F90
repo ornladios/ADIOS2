@@ -4,7 +4,9 @@ module helloInsituArgs
     ! arguments
     character(len=256) :: xmlfile
     integer :: npx, npy    ! # of processors in x-y direction
-    integer :: ndx, ndy    ! size of array per processor (without ghost cells)
+    integer :: posx, posy  ! position of rank in 2D decomposition
+    integer(kind=8) :: ndx, ndy    ! size of array per processor (without ghost cells)
+    integer(kind=8) :: offx, offy  ! Offsets of local array in this process
     integer :: steps       ! number of steps to write
     integer :: sleeptime   ! wait time between steps in seconds
     
@@ -86,6 +88,32 @@ subroutine processArgs(rank, nproc, isWriter)
     endif
 
 end subroutine processArgs
+
+!!******************************************************
+subroutine DecomposeArray(gndx, gndy, rank, nproc)
+    integer(kind=8), intent(in) :: gndx
+    integer(kind=8), intent(in) :: gndy
+    integer, intent(in) :: rank
+    integer, intent(in) :: nproc
+
+    posx = mod(rank, npx);
+    posy = rank / npx;
+
+    ! 2D decomposition of global array reading
+    ndx = gndx / npx;
+    ndy = gndy / npy;
+    offx = ndx * posx;
+    offy = ndy * posy;
+    if (posx == npx - 1) then
+        ! right-most processes need to read all the rest of rows
+        ndx = gndx - ndx * (npx - 1);
+    endif
+
+    if (posy == npy - 1) then
+        ! bottom processes need to read all the rest of columns
+        ndy = gndy - ndy * (npy - 1);
+    endif
+end subroutine DecomposeArray
 
     
 end module helloInsituArgs 

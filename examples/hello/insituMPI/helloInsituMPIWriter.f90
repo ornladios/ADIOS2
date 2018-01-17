@@ -11,7 +11,6 @@ program helloInsituMPIWriter
     integer :: ierr, i, j, step
     integer(kind=8) :: adios, io, engine
     integer(kind=8) :: varArray
-    integer :: posx, posy, offx, offy
     integer :: comm, color
 
 
