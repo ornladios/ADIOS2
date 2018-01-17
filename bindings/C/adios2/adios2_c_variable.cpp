@@ -15,7 +15,7 @@
 
 const std::map<std::string, std::vector<adios2_type>> adios2_types_map = {
     {"char", {adios2_type_char}},
-    {"int", {adios2_type_int, adios2_type_int32_t}},
+    {"int", {adios2_type_int32_t, adios2_type_int}},
     {"float", {adios2_type_float}},
     {"double", {adios2_type_double}},
     {"float complex", {adios2_type_float_complex}},

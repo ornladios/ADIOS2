@@ -17,20 +17,20 @@ module adios2_io_define_attribute
 
         ! Global value
         module procedure adios2_define_attribute_string
-        module procedure adios2_define_attribute_integer
         module procedure adios2_define_attribute_real
         module procedure adios2_define_attribute_dp
         module procedure adios2_define_attribute_integer1
         module procedure adios2_define_attribute_integer2
+        module procedure adios2_define_attribute_integer4
         module procedure adios2_define_attribute_integer8
 
         ! 1D Array
         module procedure adios2_define_attribute_string_1d
-        module procedure adios2_define_attribute_integer_1d
         module procedure adios2_define_attribute_real_1d
         module procedure adios2_define_attribute_dp_1d
         module procedure adios2_define_attribute_integer1_1d
         module procedure adios2_define_attribute_integer2_1d
+        module procedure adios2_define_attribute_integer4_1d
         module procedure adios2_define_attribute_integer8_1d
 
     end interface
@@ -48,18 +48,6 @@ contains
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_string, &
                                          TRIM(ADJUSTL(data))//char(0), 1, ierr)
-    end subroutine
-
-    subroutine adios2_define_attribute_integer(attribute, io, name, data, ierr)
-        integer(kind=8), intent(out) :: attribute
-        integer(kind=8), intent(in) :: io
-        character*(*), intent(in) :: name
-        integer, intent(in):: data
-        integer, intent(out) :: ierr
-
-        call adios2_define_attribute_f2c(attribute, io, &
-                                         TRIM(ADJUSTL(name))//char(0), &
-                                         adios2_type_integer, data, 1, ierr)
     end subroutine
 
     subroutine adios2_define_attribute_real(attribute, io, name, data, ierr)
@@ -113,6 +101,17 @@ contains
                                          adios2_type_integer2, data, 1, ierr)
     end subroutine
 
+    subroutine adios2_define_attribute_integer4(attribute, io, name, data, ierr)
+        integer(kind=8), intent(out) :: attribute
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer(kind=4), intent(in):: data
+        integer, intent(out) :: ierr
+
+        call adios2_define_attribute_f2c(attribute, io, &
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         adios2_type_integer4, data, 1, ierr)
+    end subroutine
 
     subroutine adios2_define_attribute_integer8(attribute, io, name, data, ierr)
 
@@ -127,6 +126,7 @@ contains
                                          adios2_type_integer8, data, 1, ierr)
     end subroutine
 
+    ! 1D
     subroutine adios2_define_attribute_string_1d(attribute, io, name, &
                                                  data, elements, ierr)
         integer(kind=8), intent(out) :: attribute
@@ -152,22 +152,6 @@ contains
                                          data_null_terminated, elements, &
                                          ierr)
 
-    end subroutine
-
-
-    subroutine adios2_define_attribute_integer_1d(attribute, io, name, &
-                                                  data, elements, ierr )
-        integer(kind=8), intent(out) :: attribute
-        integer(kind=8), intent(in) :: io
-        character*(*), intent(in) :: name
-        integer, dimension(:), intent(in):: data
-        integer, intent(in) :: elements
-        integer, intent(out) :: ierr
-
-        call adios2_define_attribute_f2c(attribute, io, &
-                                        TRIM(ADJUSTL(name))//char(0), &
-                                        adios2_type_integer, data, elements, &
-                                        ierr)
     end subroutine
 
     subroutine adios2_define_attribute_real_1d(attribute, io, name, data, &
@@ -229,6 +213,21 @@ contains
                                         TRIM(ADJUSTL(name))//char(0), &
                                         adios2_type_integer2, &
                                         data, elements, ierr)
+    end subroutine
+
+    subroutine adios2_define_attribute_integer4_1d(attribute, io, name, &
+                                                   data, elements, ierr )
+        integer(kind=8), intent(out) :: attribute
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer(kind=4), dimension(:), intent(in):: data
+        integer, intent(in) :: elements
+        integer, intent(out) :: ierr
+
+        call adios2_define_attribute_f2c(attribute, io, &
+                                        TRIM(ADJUSTL(name))//char(0), &
+                                        adios2_type_integer4, data, elements, &
+                                        ierr)
     end subroutine
 
     subroutine adios2_define_attribute_integer8_1d(attribute, io, name, &

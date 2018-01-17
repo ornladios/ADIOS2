@@ -61,6 +61,44 @@ void FC_GLOBAL(adios2_variable_type_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_variable_ndims_f2c,
+               ADIOS2_VARIABLE_NDIMS_F2C)(const adios2_Variable **variable,
+                                          int *ndims, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *ndims = static_cast<int>(adios2_variable_ndims(*variable));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 variable_ndims: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_variable_shape_f2c,
+               ADIOS2_VARIABLE_SHAPE_F2C)(const adios2_Variable **variable,
+                                          int64_t *shape, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        const size_t ndims = adios2_variable_ndims(*variable);
+        const size_t *shapeC = adios2_variable_shape(*variable);
+
+        for (auto d = 0; d < ndims; ++d)
+        {
+            shape[d] = static_cast<int64_t>(shapeC[d]);
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 variable_shape: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_set_shape_f2c,
                ADIOS2_SET_SHAPE_F2C)(adios2_Variable **variable,
                                      const int *ndims, const int64_t *shape,

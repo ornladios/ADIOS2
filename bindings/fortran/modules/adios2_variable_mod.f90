@@ -41,6 +41,26 @@ contains
 
     end subroutine
 
+    subroutine adios2_variable_ndims(variable, ndims, ierr)
+        integer(kind=8), intent(out) :: variable
+        integer, intent(out) :: ndims
+        integer, intent(out) :: ierr
+
+        call adios2_variable_ndims_f2c(variable, ndims, ierr)
+    end subroutine
+
+    subroutine adios2_variable_shape(variable, ndims, shape_dims, ierr)
+        integer(kind=8), intent(out) :: variable
+        integer, intent(out) :: ndims
+        integer(kind=8), dimension(:), allocatable, intent(out) :: shape_dims
+        integer, intent(out) :: ierr
+
+        call adios2_variable_ndims_f2c(variable, ndims, ierr)
+        allocate(shape_dims(ndims))
+        call adios2_variable_shape_f2c(variable, shape_dims, ierr)
+
+    end subroutine
+
     subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)
         integer(kind=8), intent(out) :: variable
         integer, intent(in) :: ndims
