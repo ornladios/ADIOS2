@@ -11,6 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORTMAN_DATAMAN_DATAMAN_H_
 #define ADIOS2_TOOLKIT_TRANSPORTMAN_DATAMAN_DATAMAN_H_
 
+#include <queue>
 #include <thread>
 
 #include "adios2/core/IO.h"
@@ -36,40 +37,34 @@ public:
                            const std::vector<Params> &params,
                            const bool profile);
 
-    /**
-     * For BP Format
-     * @param buffer
-     * @param size can't use const due to C libraries...
-     */
-    void WriteWAN(const void *buffer, size_t size);
+    void WriteWAN(std::vector<char> &buffer, size_t size);
 
-    void ReadWAN(void *buffer, size_t &size);
+    std::shared_ptr<std::vector<char>> ReadWAN();
 
-    /**
-     * Set BP3 deserializer private pointer m_BP3Deserializer, from Engine
-     * @param bp3Deserializer comes from engine
-     */
     void SetBP3Deserializer(format::BP3Deserializer &bp3Deserializer);
     void SetIO(IO &io);
 
-    void SetCallback(adios2::Operator &callback);
+    void SetCallback(std::function<void(std::vector<char>)> callback);
+    void SetMaxReceiveBuffer(size_t size);
 
 private:
-    format::BP3Deserializer *m_BP3Deserializer = nullptr;
-    IO *m_IO = nullptr;
-    Operator *m_Callback = nullptr;
-    void ReadThread(std::shared_ptr<Transport> trans,
-                    const std::string stream_name, const Params trans_params);
+    std::function<void(std::vector<char>)> m_Callback;
+    void ReadThread(std::shared_ptr<Transport> trans);
 
-    void RunCallback(void *buffer, std::string doid, std::string var,
-                     std::string dtype, std::vector<size_t> shape);
+    std::queue<std::shared_ptr<std::vector<char>>> m_BufferQueue;
+    void PushBufferQueue(std::shared_ptr<std::vector<char>> v);
+    std::shared_ptr<std::vector<char>> PopBufferQueue();
+    std::mutex m_Mutex;
+
+    bool GetBoolParameter(const Params &params, std::string key);
 
     std::vector<std::thread> m_ReadThreads;
     std::vector<Params> m_TransportsParameters;
 
+    size_t m_MaxReceiveBuffer = 128 * 1024 * 1024;
+
     size_t m_CurrentTransport = 0;
     bool m_Listening = false;
-    size_t m_BufferSize = 1024 * 1024 * 1024;
     const int m_DefaultPort = 12306;
     int m_Timeout = 5;
 };

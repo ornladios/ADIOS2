@@ -12,6 +12,7 @@
 #include "DataManReader.h"
 #include "DataManReader.tcc"
 
+#include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
@@ -19,8 +20,7 @@ namespace adios2
 
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine("DataManReader", io, name, mode, mpiComm),
-  m_BP3Deserializer(mpiComm, m_DebugMode), m_Man(mpiComm, m_DebugMode)
+: Engine("DataManReader", io, name, mode, mpiComm), m_Man(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
@@ -29,31 +29,85 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    std::vector<char> buffer;
-    buffer.reserve(m_BufferSize);
-    size_t size = 0;
-
-    m_Man.ReadWAN(buffer.data(), size);
 
     StepStatus status;
+    status = StepStatus::OK;
 
-    if (size > 0)
-    {
-        status = StepStatus::OK;
-
-        m_BP3Deserializer.m_Data.Resize(size, "in DataMan Streaming Listener");
-
-        std::memcpy(m_BP3Deserializer.m_Data.m_Buffer.data(), buffer.data(),
-                    size);
-
-        m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Data, m_IO);
-    }
-    else
-    {
-        status = StepStatus::EndOfStream;
-    }
+    status = StepStatus::EndOfStream;
 
     return status;
+}
+
+void DataManReader::ReadThread()
+{
+
+    if (m_UseFormat == "BP" || m_UseFormat == "bp")
+    {
+        while (m_Listening)
+        {
+            std::shared_ptr<std::vector<char>> buffer = m_Man.ReadWAN();
+            if (buffer != nullptr)
+            {
+                if (buffer->size() > 0)
+                {
+                    std::shared_ptr<format::BP3Deserializer> deserializer =
+                        std::make_shared<format::BP3Deserializer>(m_MPIComm,
+                                                                  m_DebugMode);
+
+                    deserializer->InitParameters(m_IO.m_Parameters);
+                    deserializer->m_Data.Resize(
+                        buffer->size(), "in DataMan Streaming Listener");
+
+                    std::memcpy(deserializer->m_Data.m_Buffer.data(),
+                                buffer->data(), buffer->size());
+
+                    deserializer->ParseMetadata(deserializer->m_Data, m_IO);
+                    const auto variablesInfo = m_IO.GetAvailableVariables();
+                    for (const auto &variableInfoPair : variablesInfo)
+                    {
+
+                        std::string var = variableInfoPair.first;
+                        std::string type = "null";
+
+                        for (const auto &parameter : variableInfoPair.second)
+                        {
+                            if (parameter.first == "Type")
+                            {
+                                type = parameter.second;
+                            }
+                        }
+
+                        std::shared_ptr<DataManVar> dmv =
+                            std::make_shared<DataManVar>();
+
+                        dmv->datatype = type;
+                        dmv->deserializer = deserializer;
+
+                        if (type == "compound")
+                        {
+                            throw("Compound type is not supported yet.");
+                        }
+
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        adios2::Variable<T> *v = m_IO.InquireVariable<T>(var);                 \
+        deserializer->GetSyncVariableDataFromStream(*v, deserializer->m_Data); \
+        if (v->GetData() == nullptr)                                           \
+        {                                                                      \
+            throw("Data pointer obtained from BP deserializer is anullptr");   \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+        }                                                                      \
+    }
+                        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+                    }
+                }
+            }
+        }
+    }
 }
 
 void DataManReader::PerformGets() {}
@@ -69,16 +123,14 @@ bool DataManReader::GetBoolParameter(Params &params, std::string key,
     auto itKey = params.find(key);
     if (itKey != params.end())
     {
-        if (itKey->second == "yes" || itKey->second == "YES" ||
-            itKey->second == "Yes" || itKey->second == "true" ||
-            itKey->second == "TRUE" || itKey->second == "True")
+        std::transform(itKey->second.begin(), itKey->second.end(),
+                       itKey->second.begin(), ::tolower);
+        if (itKey->second == "yes" || itKey->second == "true")
         {
             value = true;
             return true;
         }
-        if (itKey->second == "no" || itKey->second == "NO" ||
-            itKey->second == "No" || itKey->second == "false" ||
-            itKey->second == "FALSE" || itKey->second == "False")
+        if (itKey->second == "no" || itKey->second == "false")
         {
             value = false;
             return true;
@@ -123,6 +175,7 @@ void DataManReader::InitTransports()
     for (size_t i = 0; i < channels; ++i)
     {
         names.push_back(m_Name + std::to_string(i));
+        m_IO.m_TransportsParameters[i]["Name"] = std::to_string(i);
     }
 
     m_Man.OpenWANTransports(names, Mode::Read, m_IO.m_TransportsParameters,
@@ -134,22 +187,23 @@ void DataManReader::Init()
     {
         if (j.ADIOSOperator.m_Type == "Signature2")
         {
-            m_Man.SetCallback(j.ADIOSOperator);
+            m_Callback = &j.ADIOSOperator;
             break;
         }
     }
 
     InitParameters();
 
-    if (m_UseFormat == "BP" || m_UseFormat == "bp")
-    {
-        m_BP3Deserializer.InitParameters(m_IO.m_Parameters);
-    }
-
-    m_Man.SetBP3Deserializer(m_BP3Deserializer);
-    m_Man.SetIO(m_IO);
-
     InitTransports();
+}
+
+void DataManReader::RunCallback(void *buffer, std::string doid, std::string var,
+                                std::string dtype, std::vector<size_t> shape)
+{
+    if (m_Callback != nullptr && m_Callback->m_Type == "Signature2")
+    {
+        m_Callback->RunCallback2(buffer, doid, var, dtype, shape);
+    }
 }
 
 #define declare_type(T)                                                        \

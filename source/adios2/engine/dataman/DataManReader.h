@@ -50,18 +50,35 @@ public:
     void Close(const int transportIndex = -1);
 
 private:
-    format::BP3Deserializer m_BP3Deserializer;
     transportman::DataMan m_Man;
 
     size_t m_BufferSize = 1024 * 1024 * 1024;
     unsigned int m_NChannels = 1;
     std::string m_UseFormat = "BP";
     bool m_DoMonitor = false;
+    adios2::Operator *m_Callback = nullptr;
+
+    struct DataManVar
+    {
+        std::shared_ptr<format::BP3Deserializer> deserializer;
+        std::shared_ptr<std::vector<char>> data;
+        std::string datatype;
+        Dims shape;
+    };
+
+    std::unordered_map<
+        size_t, std::unordered_map<std::string, std::shared_ptr<DataManVar>>>
+        m_VariableMap;
+    std::mutex m_Mutex;
+    void ReadThread();
+    bool m_Listening = false;
 
     void Init();
     void InitParameters();
     void InitTransports();
 
+    void RunCallback(void *buffer, std::string doid, std::string var,
+                     std::string dtype, std::vector<size_t> shape);
     bool GetBoolParameter(Params &params, std::string key, bool &value);
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);

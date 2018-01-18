@@ -94,7 +94,7 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
         auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
         auto &position = m_BP3Serializer.m_Data.m_Position;
 
-        m_Man.WriteWAN(buffer.data(), position);
+        m_Man.WriteWAN(buffer, position);
 
         // set relative position to clear buffer
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);

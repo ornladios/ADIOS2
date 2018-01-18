@@ -22,6 +22,7 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     if (m_UseFormat == "BP" || m_UseFormat == "bp" )
     {
+    /*
         int mpiSize;
         MPI_Comm_size(m_MPIComm, &mpiSize);
         m_BP3Deserializer.GetSyncVariableDataFromStream(
@@ -29,6 +30,7 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
         size_t varsize = std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(), sizeof(T),
                 std::multiplies<std::size_t>());
         std::memcpy(data, variable.GetData(), varsize/mpiSize);
+	*/
     }
 }
 
