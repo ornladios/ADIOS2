@@ -154,6 +154,12 @@ public:
      * EndStep */
     size_t m_FlushStepsCount = 1;
 
+    /** from host language in data information */
+    bool m_IsRowMajor = true;
+
+    /** if reader and writer have different ordering (column vs row major) */
+    bool m_ReverseDimensions = false;
+
     /**
      * Unique constructor
      * @param mpiComm for m_BP1Aggregator
@@ -235,9 +241,6 @@ protected:
     /** might be used in large payload copies to buffer */
     unsigned int m_Threads = 1;
     const bool m_DebugMode = false;
-
-    /** from host language in data information */
-    bool m_IsRowMajor = true;
 
     /** method type for file I/O */
     enum IO_METHOD
@@ -353,7 +356,7 @@ protected:
         uint16_t Length;
         std::string Name;
         std::string StepName;
-        char IsFortran;
+        char IsColumnMajor;
     };
 
     template <class T>

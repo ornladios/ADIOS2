@@ -53,12 +53,13 @@ void BP3Serializer::PutProcessGroupIndex(
 
     // write name to metadata
     const std::string name(std::to_string(m_RankMPI));
-
     PutNameRecord(name, metadataBuffer);
-    // write if host language Fortran in metadata and data
-    const char hostFortran = (hostLanguage == "Fortran") ? 'y' : 'n';
-    InsertToBuffer(metadataBuffer, &hostFortran);
-    CopyToBuffer(dataBuffer, dataPosition, &hostFortran);
+
+    // write if data is column major in metadata and data
+    const char columnMajor = (IsRowMajor(hostLanguage) == false) ? 'y' : 'n';
+    InsertToBuffer(metadataBuffer, &columnMajor);
+    CopyToBuffer(dataBuffer, dataPosition, &columnMajor);
+
     // write name in data
     PutNameRecord(name, dataBuffer, dataPosition);
 

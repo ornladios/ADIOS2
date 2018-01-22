@@ -13,6 +13,8 @@
 
 #include "BP3Deserializer.h"
 
+#include <algorithm> //std::reverse
+
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -138,9 +140,8 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
 {
     const size_t initialPosition = position;
 
-    const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(header.DataType));
+    Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
+        buffer, position, static_cast<DataTypes>(header.DataType));
 
     std::string variableName(header.Name);
     if (!header.Path.empty())
@@ -160,6 +161,17 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
     else
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
+        // reverse dimensions
+        if (m_ReverseDimensions)
+        {
+            std::reverse(characteristics.Shape.begin(),
+                         characteristics.Shape.end());
+            std::reverse(characteristics.Start.begin(),
+                         characteristics.Start.end());
+            std::reverse(characteristics.Count.begin(),
+                         characteristics.Count.end());
+        }
+
         variable =
             &io.DefineVariable<T>(variableName, characteristics.Shape,
                                   characteristics.Start, characteristics.Count);
@@ -254,9 +266,14 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
     const size_t stepEnd =
         stepStart + variable.m_StepsCount; // inclusive or exclusive?
 
-    // selection = [start, end[
-    const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count);
+    Dims start = variable.m_Start;
+    Dims count = variable.m_Count;
+    if (m_ReverseDimensions)
+    {
+        std::reverse(start.begin(), start.end());
+        std::reverse(count.begin(), count.end());
+    }
+    const Box<Dims> selectionBox = StartEndBox(start, count);
 
     for (size_t step = stepStart; step < stepEnd; ++step)
     {

@@ -597,7 +597,7 @@ BP3Base::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
     ProcessGroupIndex index;
     index.Length = ReadValue<uint16_t>(buffer, position);
     index.Name = ReadBP3String(buffer, position);
-    index.IsFortran = ReadValue<char>(buffer, position);
+    index.IsColumnMajor = ReadValue<char>(buffer, position);
     index.ProcessID = ReadValue<int32_t>(buffer, position);
     index.StepName = ReadBP3String(buffer, position);
     index.Step = ReadValue<uint32_t>(buffer, position);
