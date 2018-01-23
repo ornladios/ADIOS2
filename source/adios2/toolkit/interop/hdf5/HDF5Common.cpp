@@ -158,7 +158,7 @@ unsigned int HDF5Common::GetNumAdiosSteps()
 void HDF5Common::ReadAllVariables(IO &io)
 {
     int i = 0;
-    //std::string timestepStr;
+    // std::string timestepStr;
     hsize_t numObj;
     for (i = 0; i < m_NumAdiosSteps; i++)
     {
@@ -420,8 +420,8 @@ void HDF5Common::CheckWriteGroup()
     // std::to_string(m_CurrentAdiosStep);
     std::string stepName;
     StaticGetAdiosStepString(stepName, m_CurrentAdiosStep);
-    m_GroupId = H5Gcreate2(m_FileId, stepName.c_str(), H5P_DEFAULT,
-                           H5P_DEFAULT, H5P_DEFAULT);
+    m_GroupId = H5Gcreate2(m_FileId, stepName.c_str(), H5P_DEFAULT, H5P_DEFAULT,
+                           H5P_DEFAULT);
 
     if (m_DebugMode)
     {
