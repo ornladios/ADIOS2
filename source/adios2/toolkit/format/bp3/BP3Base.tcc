@@ -407,6 +407,67 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
             }
             break;
         }
+        case (characteristic_bitmap):
+        {
+            characteristics.Statistics.Bitmap =
+                std::bitset<32>(ReadValue<uint32_t>(buffer, position));
+            break;
+        }
+        case (characteristic_stat):
+        {
+            if (characteristics.Statistics.Bitmap.none())
+            {
+                break;
+            }
+
+            for (unsigned int i = 0; i <= 6; ++i)
+            {
+                if (!characteristics.Statistics.Bitmap.test(i))
+                {
+                    continue;
+                }
+
+                const VariableStatistics bitStat =
+                    static_cast<VariableStatistics>(i);
+
+                switch (bitStat)
+                {
+                case (statistic_min):
+                {
+                    characteristics.Statistics.Min =
+                        ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                                   position);
+                    break;
+                }
+                case (statistic_max):
+                {
+                    characteristics.Statistics.Max =
+                        ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                                   position);
+                    break;
+                }
+                case (statistic_sum):
+                {
+                    characteristics.Statistics.BitSum =
+                        ReadValue<double>(buffer, position);
+                    break;
+                }
+                case (statistic_sum_square):
+                {
+                    characteristics.Statistics.BitSumSquare =
+                        ReadValue<double>(buffer, position);
+                    break;
+                }
+                case (statistic_finite):
+                {
+                    characteristics.Statistics.BitFinite =
+                        ReadValue<uint8_t>(buffer, position);
+                    break;
+                }
+                } // switch
+            }     // for
+            break;
+        }
         // TODO: implement compression and BP1 Stats characteristics
         default:
         {
