@@ -41,6 +41,13 @@ private:
         {
             // add suffix if not present already
             name = outputfile;
+
+	    // if it is a short filename, add directly
+	    if (ss <= suffix.size()) {
+	      name += suffix;
+	    }
+
+	    // otherwise check whether suffix is already there
             if ((ss > suffix.size()) &&
                 outputfile.find(suffix) != ss - suffix.size())
             {

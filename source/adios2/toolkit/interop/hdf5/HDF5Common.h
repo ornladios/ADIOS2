@@ -95,10 +95,10 @@ public:
     void Close();
     void Advance();
 
-    void SetTimeStep(int ts);
+    void SetAdiosStep(int ts);
 
-    unsigned int GetNumTimeSteps();
-    void WriteTimeSteps();
+    unsigned int GetNumAdiosSteps();
+    void WriteAdiosSteps();
 
     void ReadVariables(unsigned int ts, IO &io);
     void ReadAllVariables(IO &io);
@@ -107,7 +107,7 @@ public:
     template <class T>
     void AddVar(IO &io, std::string const &name, hid_t datasetId);
 
-    static void StaticGetTimeStepString(std::string &timeStepName, int ts);
+    static void StaticGetAdiosStepString(std::string &adiosStepName, int ts);
 
     hid_t m_PropertyListId = -1;
     hid_t m_FileId = -1;
@@ -117,7 +117,7 @@ public:
     hid_t m_DefH5TypeComplexFloat;
     hid_t m_DefH5TypeComplexLongDouble;
 
-    unsigned int m_CurrentTimeStep = 0;
+    unsigned int m_CurrentAdiosStep = 0;
 
     void CheckWriteGroup();
 
@@ -130,7 +130,7 @@ public:
 private:
     const bool m_DebugMode;
     bool m_WriteMode = false;
-    unsigned int m_NumTimeSteps = 0;
+    unsigned int m_NumAdiosSteps = 0;
 };
 
 // Explicit declaration of the public template methods

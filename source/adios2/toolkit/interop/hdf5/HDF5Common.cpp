@@ -54,9 +54,9 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
     H5Pset_fapl_mpio(m_PropertyListId, comm, MPI_INFO_NULL);
 #endif
 
-    // std::string ts0 = "/TimeStep0";
+    // std::string ts0 = "/AdiosStep0";
     std::string ts0;
-    StaticGetTimeStepString(ts0, 0);
+    StaticGetAdiosStepString(ts0, 0);
 
     if (toWrite)
     {
@@ -94,14 +94,14 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
     H5Pclose(m_PropertyListId);
 }
 
-void HDF5Common::WriteTimeSteps()
+void HDF5Common::WriteAdiosSteps()
 {
     if (m_FileId < 0)
     {
         if (m_DebugMode)
         {
             throw std::invalid_argument("ERROR: invalid HDF5 file to record "
-                                        "timestep to, in call to Write\n");
+                                        "steps, in call to Write\n");
         }
     }
 
@@ -112,22 +112,22 @@ void HDF5Common::WriteTimeSteps()
 
     hid_t s = H5Screate(H5S_SCALAR);
 
-    hid_t attr = H5Acreate(m_FileId, "NumTimeSteps", H5T_NATIVE_UINT, s,
+    hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s,
                            H5P_DEFAULT, H5P_DEFAULT);
-    uint totalTimeSteps = m_CurrentTimeStep + 1;
+    uint totalAdiosSteps = m_CurrentAdiosStep + 1;
 
     if (m_GroupId < 0)
     {
-        totalTimeSteps = m_CurrentTimeStep;
+        totalAdiosSteps = m_CurrentAdiosStep;
     }
 
-    H5Awrite(attr, H5T_NATIVE_UINT, &totalTimeSteps);
+    H5Awrite(attr, H5T_NATIVE_UINT, &totalAdiosSteps);
 
     H5Sclose(s);
     H5Aclose(attr);
 }
 
-unsigned int HDF5Common::GetNumTimeSteps()
+unsigned int HDF5Common::GetNumAdiosSteps()
 {
     if (m_WriteMode)
     {
@@ -139,28 +139,28 @@ unsigned int HDF5Common::GetNumTimeSteps()
         if (m_DebugMode)
         {
             throw std::invalid_argument(
-                "ERROR: invalid HDF5 file to read timestep attribute.\n");
+                "ERROR: invalid HDF5 file to read step attribute.\n");
         }
     }
 
-    if (m_NumTimeSteps <= 0)
+    if (m_NumAdiosSteps <= 0)
     {
-        hid_t attr = H5Aopen(m_FileId, "NumTimeSteps", H5P_DEFAULT);
+        hid_t attr = H5Aopen(m_FileId, "NumSteps", H5P_DEFAULT);
 
-        H5Aread(attr, H5T_NATIVE_UINT, &m_NumTimeSteps);
+        H5Aread(attr, H5T_NATIVE_UINT, &m_NumAdiosSteps);
         H5Aclose(attr);
     }
 
-    return m_NumTimeSteps;
+    return m_NumAdiosSteps;
 }
 
 // read from all time steps
 void HDF5Common::ReadAllVariables(IO &io)
 {
     int i = 0;
-    std::string timestepStr;
+    //std::string timestepStr;
     hsize_t numObj;
-    for (i = 0; i < m_NumTimeSteps; i++)
+    for (i = 0; i < m_NumAdiosSteps; i++)
     {
         ReadVariables(i, io);
     }
@@ -170,11 +170,11 @@ void HDF5Common::ReadAllVariables(IO &io)
 void HDF5Common::ReadVariables(unsigned int ts, IO &io)
 {
     int i = 0;
-    std::string timestepStr;
+    std::string stepStr;
     hsize_t numObj;
 
-    StaticGetTimeStepString(timestepStr, ts);
-    hid_t gid = H5Gopen2(m_FileId, timestepStr.c_str(), H5P_DEFAULT);
+    StaticGetAdiosStepString(stepStr, ts);
+    hid_t gid = H5Gopen2(m_FileId, stepStr.c_str(), H5P_DEFAULT);
     HDF5TypeGuard g(gid, E_H5_GROUP);
     ///    if (gid > 0) {
     herr_t ret = H5Gget_num_objs(gid, &numObj);
@@ -322,7 +322,7 @@ void HDF5Common::Close()
         return;
     }
 
-    WriteTimeSteps();
+    WriteAdiosSteps();
 
     if (m_GroupId >= 0)
     {
@@ -334,37 +334,37 @@ void HDF5Common::Close()
     m_GroupId = -1;
 }
 
-void HDF5Common::SetTimeStep(int timeStep)
+void HDF5Common::SetAdiosStep(int step)
 {
     if (m_WriteMode)
         throw std::ios_base::failure(
-            "ERROR: unable to change timestep at Write MODE.");
+            "ERROR: unable to change step at Write MODE.");
 
-    if (timeStep < 0)
+    if (step < 0)
         throw std::ios_base::failure(
-            "ERROR: unable to change to negative timestep.");
+            "ERROR: unable to change to negative step.");
 
-    GetNumTimeSteps();
+    GetNumAdiosSteps();
 
-    if (timeStep >= m_NumTimeSteps)
+    if (step >= m_NumAdiosSteps)
         throw std::ios_base::failure(
             "ERROR: given time step is more than actual known steps.");
 
-    if (m_CurrentTimeStep == timeStep)
+    if (m_CurrentAdiosStep == step)
     {
         return;
     }
 
-    std::string timeStepName;
-    StaticGetTimeStepString(timeStepName, timeStep);
-    m_GroupId = H5Gopen(m_FileId, timeStepName.c_str(), H5P_DEFAULT);
+    std::string stepName;
+    StaticGetAdiosStepString(stepName, step);
+    m_GroupId = H5Gopen(m_FileId, stepName.c_str(), H5P_DEFAULT);
     if (m_GroupId < 0)
     {
         throw std::ios_base::failure("ERROR: unable to open HDF5 group " +
-                                     timeStepName + ", in call to Open\n");
+                                     stepName + ", in call to Open\n");
     }
 
-    m_CurrentTimeStep = timeStep;
+    m_CurrentAdiosStep = step;
 }
 
 void HDF5Common::Advance()
@@ -382,27 +382,27 @@ void HDF5Common::Advance()
     }
     else
     {
-        if (m_NumTimeSteps == 0)
+        if (m_NumAdiosSteps == 0)
         {
-            GetNumTimeSteps();
+            GetNumAdiosSteps();
         }
-        if (m_CurrentTimeStep + 1 >= m_NumTimeSteps)
+        if (m_CurrentAdiosStep + 1 >= m_NumAdiosSteps)
         {
             return;
         }
 
-        // std::string timeStepName =
-        //    "/TimeStep" + std::to_string(m_CurrentTimeStep + 1);
-        std::string timeStepName;
-        StaticGetTimeStepString(timeStepName, m_CurrentTimeStep + 1);
-        m_GroupId = H5Gopen(m_FileId, timeStepName.c_str(), H5P_DEFAULT);
+        // std::string stepName =
+        //    "/AdiosStep" + std::to_string(m_CurrentAdiosStep + 1);
+        std::string stepName;
+        StaticGetAdiosStepString(stepName, m_CurrentAdiosStep + 1);
+        m_GroupId = H5Gopen(m_FileId, stepName.c_str(), H5P_DEFAULT);
         if (m_GroupId < 0)
         {
             throw std::ios_base::failure("ERROR: unable to open HDF5 group " +
-                                         timeStepName + ", in call to Open\n");
+                                         stepName + ", in call to Open\n");
         }
     }
-    ++m_CurrentTimeStep;
+    ++m_CurrentAdiosStep;
 }
 
 void HDF5Common::CheckWriteGroup()
@@ -416,11 +416,11 @@ void HDF5Common::CheckWriteGroup()
         return;
     }
 
-    // std::string timeStepName = "/TimeStep" +
-    // std::to_string(m_CurrentTimeStep);
-    std::string timeStepName;
-    StaticGetTimeStepString(timeStepName, m_CurrentTimeStep);
-    m_GroupId = H5Gcreate2(m_FileId, timeStepName.c_str(), H5P_DEFAULT,
+    // std::string stepName = "/AdiosStep" +
+    // std::to_string(m_CurrentAdiosStep);
+    std::string stepName;
+    StaticGetAdiosStepString(stepName, m_CurrentAdiosStep);
+    m_GroupId = H5Gcreate2(m_FileId, stepName.c_str(), H5P_DEFAULT,
                            H5P_DEFAULT, H5P_DEFAULT);
 
     if (m_DebugMode)
@@ -428,14 +428,14 @@ void HDF5Common::CheckWriteGroup()
         if (m_GroupId < 0)
         {
             throw std::ios_base::failure(
-                "ERROR: HDF5: Unable to create group " + timeStepName);
+                "ERROR: HDF5: Unable to create group " + stepName);
         }
     }
 }
 
-void HDF5Common::StaticGetTimeStepString(std::string &timeStepName, int ts)
+void HDF5Common::StaticGetAdiosStepString(std::string &stepName, int ts)
 {
-    timeStepName = "/TimeStep" + std::to_string(ts);
+    stepName = "/Step" + std::to_string(ts);
 }
 
 #define declare_template_instantiation(T)                                      \

@@ -51,7 +51,7 @@ void HDF5ReaderP::Init()
     }
 
     m_H5File.Init(m_Name, m_MPIComm, false);
-    int ts = m_H5File.GetNumTimeSteps();
+    int ts = m_H5File.GetNumAdiosSteps();
     if (ts == 0)
     {
         throw std::runtime_error("This h5 file is NOT written by ADIOS2");
@@ -83,7 +83,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
     while (ts < variable.m_StepsCount)
     {
         // m_H5File.SetTimeStep(variable.m_StepsStart + ts);
-        m_H5File.SetTimeStep(variableStart + ts);
+        m_H5File.SetAdiosStep(variableStart + ts);
 
         hid_t dataSetId =
             H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
@@ -233,7 +233,7 @@ values); #endif
 StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_InStreamMode = true;
-    int ts = m_H5File.GetNumTimeSteps();
+    int ts = m_H5File.GetNumAdiosSteps();
     if (m_StreamAt >= ts)
     {
         return StepStatus::EndOfStream;
