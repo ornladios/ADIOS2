@@ -12,6 +12,7 @@
 #define ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <bitset>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -358,6 +359,8 @@ protected:
     template <class T>
     struct Stats
     {
+        double BitSum;
+        double BitSumSquare;
         uint64_t Offset;
         uint64_t PayloadOffset;
         T Min;
@@ -367,6 +370,9 @@ protected:
         uint32_t Step;
         uint32_t FileIndex;
         uint32_t MemberID;
+        uint32_t BitCount;
+        std::bitset<32> Bitmap;
+        uint8_t BitFinite;
         bool IsValue = false;
     };
 
