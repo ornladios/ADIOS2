@@ -164,7 +164,8 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
         const size_t currentStep = static_cast<size_t>(index.Step);
         if (currentStep > m_MetadataSet.StepsCount)
         {
-            m_MetadataSet.StepsCount = currentStep;
+            ++m_MetadataSet.StepsCount;
+            // m_MetadataSet.StepsCount = currentStep;
         }
 
         localPosition += index.Length + 2;

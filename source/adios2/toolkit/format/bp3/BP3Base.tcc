@@ -464,6 +464,13 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
                         ReadValue<uint8_t>(buffer, position);
                     break;
                 }
+                case (statistic_hist):
+                {
+                    throw std::invalid_argument(
+                        "ERROR: ADIOS2 default BP engine doesn't support "
+                        "histogram statistics, use ADIOS1 Engine\n");
+                }
+
                 } // switch
             }     // for
             break;
