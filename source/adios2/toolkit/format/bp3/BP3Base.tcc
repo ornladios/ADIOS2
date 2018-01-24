@@ -13,7 +13,7 @@
 
 #include "BP3Base.h"
 
-#include <cmath> //std::min
+#include <algorithm> //std::all_of
 
 #include "adios2/helper/adiosFunctions.h" //NextExponentialSize, CopyFromBuffer
 
@@ -405,6 +405,93 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
                 characteristics.Start.push_back(
                     static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
             }
+            // check for local variables (Start and Shape must be all zero)
+            const bool emptyShape = std::all_of(
+                characteristics.Shape.begin(), characteristics.Shape.end(),
+                [](const size_t dimension) { return dimension == 0; });
+
+            if (emptyShape)
+            {
+                characteristics.Shape.clear();
+            }
+
+            const bool emptyStart = std::all_of(
+                characteristics.Start.begin(), characteristics.Start.end(),
+                [](const size_t dimension) { return dimension == 0; });
+
+            if (emptyShape && emptyStart)
+            {
+                characteristics.Start.clear();
+            }
+
+            break;
+        }
+        case (characteristic_bitmap):
+        {
+            characteristics.Statistics.Bitmap =
+                std::bitset<32>(ReadValue<uint32_t>(buffer, position));
+            break;
+        }
+        case (characteristic_stat):
+        {
+            if (characteristics.Statistics.Bitmap.none())
+            {
+                break;
+            }
+
+            for (unsigned int i = 0; i <= 6; ++i)
+            {
+                if (!characteristics.Statistics.Bitmap.test(i))
+                {
+                    continue;
+                }
+
+                const VariableStatistics bitStat =
+                    static_cast<VariableStatistics>(i);
+
+                switch (bitStat)
+                {
+                case (statistic_min):
+                {
+                    characteristics.Statistics.Min =
+                        ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                                   position);
+                    break;
+                }
+                case (statistic_max):
+                {
+                    characteristics.Statistics.Max =
+                        ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                                   position);
+                    break;
+                }
+                case (statistic_sum):
+                {
+                    characteristics.Statistics.BitSum =
+                        ReadValue<double>(buffer, position);
+                    break;
+                }
+                case (statistic_sum_square):
+                {
+                    characteristics.Statistics.BitSumSquare =
+                        ReadValue<double>(buffer, position);
+                    break;
+                }
+                case (statistic_finite):
+                {
+                    characteristics.Statistics.BitFinite =
+                        ReadValue<uint8_t>(buffer, position);
+                    break;
+                }
+                case (statistic_hist):
+                {
+                    throw std::invalid_argument(
+                        "ERROR: ADIOS2 default BP engine doesn't support "
+                        "histogram statistics, use ADIOS1 Engine\n");
+                }
+
+                } // switch
+            }     // for
             break;
         }
         // TODO: implement compression and BP1 Stats characteristics
