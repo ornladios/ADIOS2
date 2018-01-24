@@ -76,6 +76,12 @@ public:
                                  const float timeoutSeconds = 0.f);
 
     /**
+     * Returns current step information for each engine.
+     * @return current step
+     */
+    virtual size_t CurrentStep() const;
+
+    /**
      * Puts variable with pre-defined pointer at DefineVariable into adios2
      * buffer.
      * Launch policy:

@@ -44,6 +44,13 @@ StepStatus Engine::BeginStep(StepMode mode, const float timeoutSeconds)
     ThrowUp("BeginStep");
     return StepStatus::OtherError;
 }
+
+size_t Engine::CurrentStep() const
+{
+    ThrowUp("CurrentStep");
+    return 0;
+}
+
 void Engine::EndStep() { ThrowUp("EndStep"); }
 
 void Engine::PutSync(const std::string &variableName)
