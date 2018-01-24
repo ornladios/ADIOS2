@@ -11,8 +11,6 @@
 #include "BPFileWriter.h"
 #include "BPFileWriter.tcc"
 
-#include <iostream>
-
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/IO.h"
@@ -42,6 +40,11 @@ StepStatus BPFileWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
+size_t BPFileWriter::CurrentStep() const
+{
+    return m_BP3Serializer.m_MetadataSet.CurrentStep;
+}
+
 void BPFileWriter::PerformPuts()
 {
     m_BP3Serializer.ResizeBuffer(m_BP3Serializer.m_DeferredVariablesDataSize,
@@ -62,7 +65,7 @@ void BPFileWriter::EndStep()
         PerformPuts();
     }
 
-    const size_t currentStep = m_BP3Serializer.m_MetadataSet.TimeStep - 1;
+    const size_t currentStep = CurrentStep();
     const size_t flushStepsCount = m_BP3Serializer.m_FlushStepsCount;
 
     m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
