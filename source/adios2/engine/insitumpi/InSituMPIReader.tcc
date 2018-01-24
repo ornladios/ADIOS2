@@ -62,6 +62,7 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
          * We should do this call per SubFileInfo that matches the request
          */
         AsyncRecvVariable(variable, sfim);
+        m_BP3Deserializer.m_PerformedGets = false;
     }
     else
     {
