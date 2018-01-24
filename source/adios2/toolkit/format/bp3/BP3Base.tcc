@@ -13,7 +13,7 @@
 
 #include "BP3Base.h"
 
-#include <cmath> //std::min
+#include <algorithm> //std::all_of
 
 #include "adios2/helper/adiosFunctions.h" //NextExponentialSize, CopyFromBuffer
 
@@ -405,6 +405,25 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
                 characteristics.Start.push_back(
                     static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
             }
+            // check for local variables (Start and Shape must be all zero)
+            const bool emptyShape = std::all_of(
+                characteristics.Shape.begin(), characteristics.Shape.end(),
+                [](const size_t dimension) { return dimension == 0; });
+
+            if (emptyShape)
+            {
+                characteristics.Shape.clear();
+            }
+
+            const bool emptyStart = std::all_of(
+                characteristics.Start.begin(), characteristics.Start.end(),
+                [](const size_t dimension) { return dimension == 0; });
+
+            if (emptyShape && emptyStart)
+            {
+                characteristics.Start.clear();
+            }
+
             break;
         }
         case (characteristic_bitmap):
