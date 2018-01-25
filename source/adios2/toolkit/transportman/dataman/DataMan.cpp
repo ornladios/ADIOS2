@@ -8,7 +8,8 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include <fstream> //TODO go away
+#include <fstream>  //TODO go away
+#include <iostream> //TODO go away
 
 #include "DataMan.h"
 
@@ -59,10 +60,6 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                                                m_DebugMode,
                                                "Transport Library Parameter"));
 
-        const std::string name(GetParameter("Name", paramsVector[i], true,
-                                            m_DebugMode,
-                                            "Transport Name Parameter"));
-
         const std::string ipAddress(
             GetParameter("IPAddress", paramsVector[i], true, m_DebugMode,
                          "Transport IPAddress Parameter"));
@@ -91,7 +88,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             wanTransport = std::make_shared<transport::WANZmq>(
                 ipAddress, port, m_MPIComm, m_DebugMode);
             wanTransport->Open(streamNames[i], mode);
-            m_Transports.emplace(stoi(name), wanTransport);
+            m_Transports.emplace(i, wanTransport);
 
             if (mode == Mode::Read)
             {

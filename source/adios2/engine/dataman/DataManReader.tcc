@@ -20,18 +20,11 @@ namespace adios2
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    if (m_UseFormat == "BP" || m_UseFormat == "bp" )
-    {
-    /*
-        int mpiSize;
-        MPI_Comm_size(m_MPIComm, &mpiSize);
-        m_BP3Deserializer.GetSyncVariableDataFromStream(
-            variable, m_BP3Deserializer.m_Data);
-        size_t varsize = std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(), sizeof(T),
-                std::multiplies<std::size_t>());
-        std::memcpy(data, variable.GetData(), varsize/mpiSize);
-	*/
-    }
+	auto iter = m_VariableMap[0].find(variable.m_Name);
+	if( iter != m_VariableMap[0].end() ){
+		std::memcpy(data, iter->second->data.data(), iter->second->data.size());
+		m_VariableMap[0].erase( iter );
+	}
 }
 
 template <class T>
