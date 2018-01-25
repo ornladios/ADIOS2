@@ -41,7 +41,6 @@ void DataManWriter::EndStep()
     }
 }
 
-
 void DataManWriter::Close(const int transportIndex)
 {
     if (m_UseFormat == "bp" || m_UseFormat == "BP")
@@ -55,7 +54,6 @@ void DataManWriter::Close(const int transportIndex)
         }
     }
 }
-
 
 // PRIVATE functions below
 
