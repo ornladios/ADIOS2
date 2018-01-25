@@ -28,7 +28,9 @@ void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
 {
     if (vi != nullptr)
     {
-        adios2::Variable<T> &var = io.DefineVariable<T>(name, gdims);
+        Dims zeros(gdims.size(), 0);
+        adios2::Variable<T> &var =
+            io.DefineVariable<T>(name, gdims, zeros, gdims);
         if (vi->ndim == 0 && isGlobal)
         {
             /* Global value: store the value now */
