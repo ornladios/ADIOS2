@@ -45,6 +45,8 @@ public:
     StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
                          const float timeoutSeconds = 0.f) final;
 
+    size_t CurrentStep() const final;
+
     void EndStep() final;
 
     void PerformGets() final;

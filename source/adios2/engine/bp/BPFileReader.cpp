@@ -86,6 +86,8 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
+size_t BPFileReader::CurrentStep() const { return m_CurrentStep; }
+
 void BPFileReader::EndStep()
 {
     if (!m_BP3Deserializer.m_PerformedGets)

@@ -126,6 +126,7 @@ void BP3Serializer::SerializeData(IO &io, const bool advanceStep)
     if (advanceStep)
     {
         ++m_MetadataSet.TimeStep;
+        ++m_MetadataSet.CurrentStep;
     }
     ProfilerStop("buffering");
 }
