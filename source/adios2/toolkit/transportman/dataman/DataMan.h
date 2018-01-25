@@ -37,7 +37,7 @@ public:
                            const std::vector<Params> &params,
                            const bool profile);
 
-    void WriteWAN(std::vector<char> &buffer, size_t size);
+    void WriteWAN(const std::vector<char> &buffer, size_t size);
 
     std::shared_ptr<std::vector<char>> ReadWAN();
 

@@ -41,6 +41,7 @@ void DataManWriter::EndStep()
     }
 }
 
+/*
 void DataManWriter::Close(const int transportIndex)
 {
     if (m_UseFormat == "bp" || m_UseFormat == "BP")
@@ -54,6 +55,7 @@ void DataManWriter::Close(const int transportIndex)
         }
     }
 }
+*/
 
 // PRIVATE functions below
 
@@ -160,7 +162,7 @@ void DataManWriter::DoClose(const int transportIndex)
         auto &position = m_BP3Serializer.m_Data.m_Position;
         if (position > 0)
         {
-            m_Man.WriteWAN(buffer.data(), position);
+            m_Man.WriteWAN(buffer, position);
         }
     }
 }

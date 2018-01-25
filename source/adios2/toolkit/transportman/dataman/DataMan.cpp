@@ -117,7 +117,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void DataMan::WriteWAN(std::vector<char> &buffer, size_t size)
+void DataMan::WriteWAN(const std::vector<char> &buffer, size_t size)
 {
     if (m_CurrentTransport >= m_Transports.size())
     {
