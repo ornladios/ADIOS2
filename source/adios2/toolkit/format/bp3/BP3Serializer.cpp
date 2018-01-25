@@ -126,6 +126,7 @@ void BP3Serializer::SerializeData(IO &io, const bool advanceStep)
     if (advanceStep)
     {
         ++m_MetadataSet.TimeStep;
+        ++m_MetadataSet.CurrentStep;
     }
     ProfilerStop("buffering");
 }
@@ -143,7 +144,7 @@ void BP3Serializer::CloseData(IO &io)
 
         SerializeMetadataInData();
 
-        m_Profiler.Bytes.at("buffering") += m_Data.m_AbsolutePosition;
+        m_Profiler.Bytes.at("buffering") = m_Data.m_AbsolutePosition;
 
         m_IsClosed = true;
     }
@@ -158,7 +159,7 @@ void BP3Serializer::CloseStream(IO &io)
     {
         SerializeDataBuffer(io);
     }
-    SerializeMetadataInData();
+    SerializeMetadataInData(false);
     m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
     ProfilerStop("buffering");
 }
@@ -448,7 +449,8 @@ void BP3Serializer::SerializeDataBuffer(IO &io) noexcept
     m_MetadataSet.DataPGIsOpen = false;
 }
 
-void BP3Serializer::SerializeMetadataInData() noexcept
+void BP3Serializer::SerializeMetadataInData(
+    const bool updateAbsolutePosition) noexcept
 {
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
@@ -536,7 +538,11 @@ void BP3Serializer::SerializeMetadataInData() noexcept
     PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
                   buffer, position);
 
-    absolutePosition += footerSize;
+    if (updateAbsolutePosition)
+    {
+        absolutePosition += footerSize;
+    }
+
     if (m_Profiler.IsActive)
     {
         m_Profiler.Bytes.emplace("buffering", absolutePosition);
@@ -745,6 +751,32 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
     }
 
     size_t serializedPosition = 0;
+
+    if (m_Threads == 1)
+    {
+        while (serializedPosition < serializedSize)
+        {
+            if (serializedPosition >= serializedSize)
+            {
+                break;
+            }
+
+            const int rankSource = static_cast<int>(
+                ReadValue<uint32_t>(serialized, serializedPosition));
+
+            if (serializedPosition <= serializedSize)
+            {
+                lf_Deserialize(rankSource, serialized, serializedPosition,
+                               deserialized);
+            }
+
+            const size_t bufferSize = static_cast<size_t>(
+                ReadValue<uint32_t>(serialized, serializedPosition));
+            serializedPosition += bufferSize;
+        }
+
+        return deserialized;
+    }
 
     std::vector<std::future<void>> asyncs(m_Threads);
     std::vector<size_t> asyncPositions(m_Threads);

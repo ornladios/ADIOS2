@@ -24,7 +24,7 @@ HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
     Init();
 }
 
-HDF5ReaderP::~HDF5ReaderP() { Close(); }
+HDF5ReaderP::~HDF5ReaderP() { DoClose(); }
 
 bool HDF5ReaderP::IsValid()
 {
@@ -51,7 +51,7 @@ void HDF5ReaderP::Init()
     }
 
     m_H5File.Init(m_Name, m_MPIComm, false);
-    int ts = m_H5File.GetNumTimeSteps();
+    int ts = m_H5File.GetNumAdiosSteps();
     if (ts == 0)
     {
         throw std::runtime_error("This h5 file is NOT written by ADIOS2");
@@ -83,7 +83,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
     while (ts < variable.m_StepsCount)
     {
         // m_H5File.SetTimeStep(variable.m_StepsStart + ts);
-        m_H5File.SetTimeStep(variableStart + ts);
+        m_H5File.SetAdiosStep(variableStart + ts);
 
         hid_t dataSetId =
             H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
@@ -233,7 +233,7 @@ values); #endif
 StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_InStreamMode = true;
-    int ts = m_H5File.GetNumTimeSteps();
+    int ts = m_H5File.GetNumAdiosSteps();
     if (m_StreamAt >= ts)
     {
         return StepStatus::EndOfStream;
@@ -244,6 +244,10 @@ StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void HDF5ReaderP::EndStep()
 {
+    if (m_DeferredStack.size() > 0)
+    {
+        PerformGets();
+    }
     m_StreamAt++;
     m_H5File.Advance();
 }
@@ -275,8 +279,6 @@ void HDF5ReaderP::PerformGets()
     m_DeferredStack.clear();
 }
 
-void HDF5ReaderP::Close(const int transportIndex) { m_H5File.Close(); }
-
 #define declare_type(T)                                                        \
     void HDF5ReaderP::DoGetSync(Variable<T> &variable, T *data)                \
     {                                                                          \
@@ -293,4 +295,6 @@ void HDF5ReaderP::Close(const int transportIndex) { m_H5File.Close(); }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-} // end namespace adios
+void HDF5ReaderP::DoClose(const int transportIndex) { m_H5File.Close(); }
+
+} // end namespace adios2

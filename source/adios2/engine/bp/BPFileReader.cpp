@@ -86,6 +86,8 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
+size_t BPFileReader::CurrentStep() const { return m_CurrentStep; }
+
 void BPFileReader::EndStep()
 {
     if (!m_BP3Deserializer.m_PerformedGets)
@@ -100,17 +102,6 @@ void BPFileReader::PerformGets()
         m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
     ReadVariables(m_IO, variablesSubfileInfo);
     m_BP3Deserializer.m_PerformedGets = true;
-}
-
-void BPFileReader::Close(const int transportIndex)
-{
-    if (!m_BP3Deserializer.m_PerformedGets)
-    {
-        PerformGets();
-    }
-
-    m_SubFileManager.CloseFiles();
-    m_FileManager.CloseFiles();
 }
 
 // PRIVATE
@@ -231,6 +222,17 @@ void BPFileReader::ReadVariables(
             }     // end step
         }         // end subfile
     }             // end variable
+}
+
+void BPFileReader::DoClose(const int transportIndex)
+{
+    if (!m_BP3Deserializer.m_PerformedGets)
+    {
+        PerformGets();
+    }
+
+    m_SubFileManager.CloseFiles();
+    m_FileManager.CloseFiles();
 }
 
 } // end namespace adios2

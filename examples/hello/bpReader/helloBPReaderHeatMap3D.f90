@@ -62,7 +62,7 @@ program helloBPReaderHeatMap3D
         call adios2_declare_io( ioGet, adios, 'HeatMapRead', ierr )
 
         call adios2_open( bpReader, ioGet, 'HeatMap3D_f.bp', &
-                        & adios2_mode_read, ierr)
+                        & adios2_mode_read, MPI_COMM_SELF, ierr)
 
         call adios2_inquire_variable( var_temperaturesIn, ioGet, &
                                     & 'temperatures', ierr )

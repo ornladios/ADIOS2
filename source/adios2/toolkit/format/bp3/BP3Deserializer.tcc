@@ -60,6 +60,12 @@ void BP3Deserializer::GetDeferredVariable(Variable<T> &variable, T *data)
     m_DeferredVariables[variable.m_Name] = SubFileInfoMap();
 }
 
+SubFileInfoMap &
+BP3Deserializer::GetSubFileInfoMap(const std::string &variableName)
+{
+    return m_DeferredVariables[variableName];
+}
+
 // PRIVATE
 template <>
 inline void BP3Deserializer::DefineVariableInIO<std::string>(

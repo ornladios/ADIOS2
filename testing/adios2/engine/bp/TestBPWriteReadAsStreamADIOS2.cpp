@@ -104,18 +104,13 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 
         io.AddTransport("file");
 
-        // QUESTION: It seems that BPFilterWriter cannot overwrite existing
-        // files
-        // Ex. if you tune Nx and NSteps, the test would fail. But if you clear
-        // the cache in
-        // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteADIOS1Read1D8.bp.dir,
-        // then it works
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
             UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
                                 mpiSize);
+            EXPECT_EQ(bpWriter.CurrentStep(), step);
             bpWriter.WriteStep();
         }
 
@@ -221,6 +216,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const size_t currentStep = bpReader.CurrentStep();
+            EXPECT_EQ(currentStep, static_cast<size_t>(t));
+
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -356,10 +354,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
         {
             UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
                                 mpiSize);
+            EXPECT_EQ(bpWriter.CurrentStep(), step);
             bpWriter.WriteStep();
         }
 
-        // Close the file
         bpWriter.Close();
     }
 
@@ -471,6 +469,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const size_t currentStep = bpReader.CurrentStep();
+            EXPECT_EQ(currentStep, static_cast<size_t>(t));
+
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -608,10 +609,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
             // Generate test data for each process uniquely
             UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
                                 mpiSize);
+            EXPECT_EQ(bpWriter.CurrentStep(), step);
             bpWriter.WriteStep();
         }
 
-        // Close the file
         bpWriter.Close();
     }
 
@@ -726,6 +727,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const size_t currentStep = bpReader.CurrentStep();
+            EXPECT_EQ(currentStep, static_cast<size_t>(t));
+
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -860,6 +864,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
         {
             UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
                                 mpiSize);
+            EXPECT_EQ(bpWriter.CurrentStep(), step);
             bpWriter.WriteStep();
         }
 
@@ -965,6 +970,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const size_t currentStep = bpReader.CurrentStep();
+            EXPECT_EQ(currentStep, static_cast<size_t>(t));
+
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -1099,10 +1107,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
         {
             UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
                                 mpiSize);
+            EXPECT_EQ(bpWriter.CurrentStep(), step);
             bpWriter.WriteStep();
         }
 
-        // Close the file
         bpWriter.Close();
     }
 
@@ -1214,6 +1222,9 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const size_t currentStep = bpReader.CurrentStep();
+            EXPECT_EQ(currentStep, static_cast<size_t>(t));
+
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());
@@ -1351,10 +1362,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2MissingPerformGets)
             // Generate test data for each process uniquely
             UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
                                 mpiSize);
+            EXPECT_EQ(bpWriter.CurrentStep(), step);
             bpWriter.WriteStep();
         }
 
-        // Close the file
         bpWriter.Close();
     }
 
@@ -1466,8 +1477,12 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2MissingPerformGets)
         var_r64->SetSelection(sel);
 
         unsigned int t = 0;
+
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const size_t currentStep = bpReader.CurrentStep();
+            EXPECT_EQ(currentStep, static_cast<size_t>(t));
+
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
             bpReader.GetDeferred(*var_i32, I32.data());

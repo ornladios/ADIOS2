@@ -66,7 +66,7 @@ HDF5NativeReader::HDF5NativeReader(const std::string fileName)
         throw std::runtime_error("Unable to open " + fileName + " for reading");
     }
 
-    std::string ts0 = "/TimeStep0";
+    std::string ts0 = "/Step0";
     m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
     if (m_GroupId < 0)
     {
@@ -74,10 +74,10 @@ HDF5NativeReader::HDF5NativeReader(const std::string fileName)
                                  " for reading");
     }
 
-    hid_t attrId = H5Aopen(m_FileId, "NumTimeSteps", H5P_DEFAULT);
+    hid_t attrId = H5Aopen(m_FileId, "NumSteps", H5P_DEFAULT);
     if (attrId < 0)
     {
-        throw std::runtime_error("Unable to open attribute NumTimeSteps");
+        throw std::runtime_error("Unable to open attribute NumSteps");
     }
     H5Aread(attrId, H5T_NATIVE_UINT, &m_TotalTimeSteps);
     H5Aclose(attrId);
@@ -144,8 +144,7 @@ bool HDF5NativeReader::Advance()
         return false;
     }
 
-    const std::string tsName =
-        "TimeStep" + std::to_string(m_CurrentTimeStep + 1);
+    const std::string tsName = "Step" + std::to_string(m_CurrentTimeStep + 1);
     m_GroupId = H5Gopen(m_FileId, tsName.c_str(), H5P_DEFAULT);
     if (m_GroupId < 0)
     {

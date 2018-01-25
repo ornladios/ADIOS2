@@ -41,6 +41,7 @@ void DataManWriter::EndStep()
     }
 }
 
+
 void DataManWriter::Close(const int transportIndex)
 {
     if (m_UseFormat == "bp" || m_UseFormat == "BP")
@@ -54,6 +55,7 @@ void DataManWriter::Close(const int transportIndex)
         }
     }
 }
+
 
 // PRIVATE functions below
 
@@ -150,5 +152,19 @@ void DataManWriter::Init()
     void DataManWriter::DoPutDeferred(Variable<T> &, const T &value) {}
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+void DataManWriter::DoClose(const int transportIndex)
+{
+    if (m_UseFormat == "bp" || m_UseFormat == "BP")
+    {
+        m_BP3Serializer.CloseData(m_IO);
+        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
+        auto &position = m_BP3Serializer.m_Data.m_Position;
+        if (position > 0)
+        {
+            m_Man.WriteWAN(buffer.data(), position);
+        }
+    }
+}
 
 } // end namespace adios2

@@ -41,7 +41,7 @@ void ADIOS1Writer::PerformPuts() {}
 
 void ADIOS1Writer::EndStep() { m_ADIOS1.Advance(); }
 
-void ADIOS1Writer::Close(const int transportIndex) { m_ADIOS1.Close(); }
+void ADIOS1Writer::DoClose(const int transportIndex) { m_ADIOS1.Close(); }
 
 // PRIVATE
 void ADIOS1Writer::Init()

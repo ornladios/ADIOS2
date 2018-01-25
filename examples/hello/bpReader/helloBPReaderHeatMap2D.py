@@ -53,7 +53,7 @@ obpStream.Close()
 if rank == 0:
     ioRead = adios.DeclareIO("ioReader")
 
-    ibpStream = ioRead.Open('HeatMap2D_py.bp', adios2.Mode.Read)
+    ibpStream = ioRead.Open('HeatMap2D_py.bp', adios2.Mode.Read, MPI.COMM_SELF)
 
     var_inTemperature = ioRead.InquireVariable("temperature2D")
 

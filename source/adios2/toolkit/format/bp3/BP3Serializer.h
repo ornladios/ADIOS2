@@ -73,13 +73,23 @@ public:
     void SerializeData(IO &io, const bool advanceStep = false);
 
     /**
+     * Serializes the metadata indices appending it into the data buffer inside
+     * m_Data
+     * @param updateAbsolutePosition true: adds footer size to absolute position
+     * used for Close,
+     * false: doesn't update absolute, used for partial buffer
+     */
+    void
+    SerializeMetadataInData(const bool updateAbsolutePosition = true) noexcept;
+
+    /**
      * Finishes bp buffer by serializing data and adding trailing metadata
      * @param io
      */
     void CloseData(IO &io);
 
     /**
-     * Closes bp buffer for streaming mdoe...must reset metadata for the next
+     * Closes bp buffer for streaming mode...must reset metadata for the next
      * step
      * @param io
      */
@@ -299,12 +309,6 @@ private:
      * @param io object containing all attributes
      */
     void SerializeDataBuffer(IO &io) noexcept;
-
-    /**
-     * Serializes the metadata indices appending it into the data buffer inside
-     * m_HeapBuffer
-     */
-    void SerializeMetadataInData() noexcept;
 
     void PutMinifooter(const uint64_t pgIndexStart,
                        const uint64_t variablesIndexStart,

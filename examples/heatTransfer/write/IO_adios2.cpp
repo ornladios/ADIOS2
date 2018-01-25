@@ -30,7 +30,12 @@ IO::IO(const Settings &s, MPI_Comm comm)
     {
         // if not defined by user, we can change the default settings
         // BPFile is the default engine
-        // ISO-POSIX file is the default transport
+        bpio.SetEngine("BPFile");
+        bpio.SetParameters({{"num_threads", "1"}});
+
+        // ISO-POSIX file output is the default transport (called "File")
+        // Passing parameters to the transport
+        bpio.AddTransport("File", {{"Library", "POSIX"}});
     }
 
     // define T as 2D global array

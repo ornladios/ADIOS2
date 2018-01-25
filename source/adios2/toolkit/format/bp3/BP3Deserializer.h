@@ -63,6 +63,9 @@ public:
     template <class T>
     void GetDeferredVariable(Variable<T> &variable, T *data);
 
+    /* Return the read schedule of a variable stored at GetDeferred() calls */
+    SubFileInfoMap &GetSubFileInfoMap(const std::string &variableName);
+
     std::map<std::string, SubFileInfoMap>
     PerformGetsVariablesSubFileInfo(IO &io);
 

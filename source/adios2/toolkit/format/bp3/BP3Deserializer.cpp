@@ -161,10 +161,11 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
             m_IsRowMajor = false;
         }
 
-        const size_t currentStep = static_cast<size_t>(index.Step);
-        if (currentStep > m_MetadataSet.StepsCount)
+        m_MetadataSet.CurrentStep = static_cast<size_t>(index.Step - 1);
+        const size_t bpStep = static_cast<size_t>(index.Step);
+        if (bpStep > m_MetadataSet.StepsCount)
         {
-            m_MetadataSet.StepsCount = currentStep;
+            m_MetadataSet.StepsCount = bpStep;
         }
 
         localPosition += index.Length + 2;
@@ -286,6 +287,20 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
 
     const size_t startPosition = position;
     size_t localPosition = 0;
+
+    if (m_Threads == 1)
+    {
+        while (localPosition < length)
+        {
+            lf_ReadElementIndex(io, buffer, position);
+
+            const size_t elementIndexSize =
+                static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+            position += elementIndexSize;
+            localPosition = position - startPosition;
+        }
+        return;
+    }
 
     // threads for reading Variables
     std::vector<std::future<void>> asyncs(m_Threads);

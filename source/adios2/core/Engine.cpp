@@ -23,6 +23,8 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 {
 }
 
+Engine::~Engine(){};
+
 IO &Engine::GetIO() noexcept { return m_IO; }
 
 StepStatus Engine::BeginStep()
@@ -42,6 +44,13 @@ StepStatus Engine::BeginStep(StepMode mode, const float timeoutSeconds)
     ThrowUp("BeginStep");
     return StepStatus::OtherError;
 }
+
+size_t Engine::CurrentStep() const
+{
+    ThrowUp("CurrentStep");
+    return 0;
+}
+
 void Engine::EndStep() { ThrowUp("EndStep"); }
 
 void Engine::PutSync(const std::string &variableName)
@@ -132,6 +141,16 @@ void Engine::WriteStep()
     }
     PerformPuts();
     EndStep();
+}
+
+void Engine::Close(const int transportIndex)
+{
+    DoClose(transportIndex);
+
+    if (transportIndex == -1)
+    {
+        MPI_Comm_free(&m_MPIComm);
+    }
 }
 
 // PROTECTED

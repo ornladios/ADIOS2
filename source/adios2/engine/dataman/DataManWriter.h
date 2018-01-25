@@ -31,8 +31,6 @@ public:
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
 
-    void Close(const int transportIndex = -1) final;
-
 private:
     format::BP3Serializer m_BP3Serializer;
     transportman::DataMan m_Man;
@@ -66,6 +64,8 @@ private:
 
     template <class T>
     void PutSyncCommonBP(Variable<T> &variable, const T *values);
+
+    void DoClose(const int transportIndex = -1) final;
 };
 
 } // end namespace adios2

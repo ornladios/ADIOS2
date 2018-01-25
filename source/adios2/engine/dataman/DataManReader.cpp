@@ -160,8 +160,6 @@ void DataManReader::PerformGets() {}
 
 void DataManReader::EndStep() {}
 
-void DataManReader::Close(const int transportIndex) {}
-
 // PRIVATE
 bool DataManReader::GetBoolParameter(Params &params, std::string key,
                                      bool &value)
@@ -285,5 +283,7 @@ void DataManReader::RunCallback(void *buffer, std::string doid, std::string var,
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+void DataManReader::DoClose(const int transportIndex) {}
 
 } // end namespace adios2

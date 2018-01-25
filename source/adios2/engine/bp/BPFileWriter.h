@@ -35,10 +35,9 @@ public:
     ~BPFileWriter();
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
-
-    void Close(const int transportIndex = -1) final;
 
 private:
     /** Single object controlling BP buffering */
@@ -76,6 +75,8 @@ private:
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
+
+    void DoClose(const int transportIndex = -1) final;
 
     /** Write a profiling.json file from m_BP1Writer and m_TransportsManager
      * profilers*/
