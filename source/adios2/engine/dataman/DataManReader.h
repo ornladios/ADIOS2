@@ -38,7 +38,7 @@ public:
     DataManReader(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
-    virtual ~DataManReader() = default;
+    virtual ~DataManReader();
 
     StepStatus BeginStep(StepMode stepMode,
                          const float timeoutSeconds = 0.f) final;
@@ -48,18 +48,43 @@ public:
     void EndStep() final;
 
 private:
-    format::BP3Deserializer m_BP3Deserializer;
-    transportman::DataMan m_Man;
+    std::shared_ptr<transportman::DataMan> m_DataMan;
+    std::vector<std::thread> m_DataThreads;
+    size_t m_DataChannels = 1;
+
+    std::shared_ptr<transportman::DataMan> m_ControlMan;
+    std::vector<std::thread> m_ControlThreads;
+    size_t m_ControlChannels = 0;
 
     size_t m_BufferSize = 1024 * 1024 * 1024;
     unsigned int m_NChannels = 1;
     std::string m_UseFormat = "BP";
     bool m_DoMonitor = false;
+    std::vector<adios2::Operator *> m_Callbacks;
+
+    struct DataManVar
+    {
+        std::vector<char> data;
+        std::string datatype;
+        Dims shape;
+        Dims start;
+        Dims count;
+    };
+
+    std::unordered_map<
+        size_t, std::unordered_map<std::string, std::shared_ptr<DataManVar>>>
+        m_VariableMap;
+
+    std::mutex m_MutexIO;
+    std::mutex m_MutexMap;
+
+    void ReadThread(std::shared_ptr<transportman::DataMan> man);
+    bool m_Listening = false;
 
     void Init();
-    void InitParameters();
-    void InitTransports();
 
+    void RunCallback(void *buffer, std::string doid, std::string var,
+                     std::string dtype, std::vector<size_t> shape);
     bool GetBoolParameter(Params &params, std::string key, bool &value);
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);

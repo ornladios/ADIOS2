@@ -41,6 +41,22 @@ void DataManWriter::EndStep()
     }
 }
 
+/*
+void DataManWriter::Close(const int transportIndex)
+{
+    if (m_UseFormat == "bp" || m_UseFormat == "BP")
+    {
+        m_BP3Serializer.CloseData(m_IO);
+        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
+        auto &position = m_BP3Serializer.m_Data.m_Position;
+        if (position > 0)
+        {
+            m_Man.WriteWAN(buffer, position);
+        }
+    }
+}
+*/
+
 // PRIVATE functions below
 
 bool DataManWriter::GetBoolParameter(Params &params, std::string key,
@@ -49,16 +65,14 @@ bool DataManWriter::GetBoolParameter(Params &params, std::string key,
     auto itKey = params.find(key);
     if (itKey != params.end())
     {
-        if (itKey->second == "yes" || itKey->second == "YES" ||
-            itKey->second == "Yes" || itKey->second == "true" ||
-            itKey->second == "TRUE" || itKey->second == "True")
+        std::transform(itKey->second.begin(), itKey->second.end(),
+                       itKey->second.begin(), ::tolower);
+        if (itKey->second == "yes" || itKey->second == "true")
         {
             value = true;
             return true;
         }
-        if (itKey->second == "no" || itKey->second == "NO" ||
-            itKey->second == "No" || itKey->second == "false" ||
-            itKey->second == "FALSE" || itKey->second == "False")
+        if (itKey->second == "no" || itKey->second == "false")
         {
             value = false;
             return true;
@@ -148,7 +162,7 @@ void DataManWriter::DoClose(const int transportIndex)
         auto &position = m_BP3Serializer.m_Data.m_Position;
         if (position > 0)
         {
-            m_Man.WriteWAN(buffer.data(), position);
+            m_Man.WriteWAN(buffer, position);
         }
     }
 }
