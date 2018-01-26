@@ -94,6 +94,11 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     return (StepStatus)SstAdvanceStep(m_Input, (int)mode, timeout_sec);
 }
 
+size_t SstReader::CurrentStep() const
+{
+    return 0; /* should return something like m_Input.GetReaderTimestep() ??? */
+}
+
 void SstReader::EndStep()
 {
     m_IO.RemoveAllVariables();

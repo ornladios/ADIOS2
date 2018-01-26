@@ -58,6 +58,7 @@ public:
     void PerformReads();
     StepStatus AdvanceStep(IO &io, const StepMode mode,
                            const float timeout_sec = 0.0);
+    size_t CurrentStep() const;
     void ReleaseStep();
 
     ADIOS_VARINFO *InqVar(const std::string &varName);
