@@ -55,6 +55,7 @@ public:
     StepStatus BeginStep(const StepMode mode,
                          const float timeoutSeconds = 0.f) final;
     void PerformGets() final;
+    size_t CurrentStep() const final;
     void EndStep() final;
 
 private:

@@ -242,6 +242,8 @@ StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
+size_t HDF5ReaderP::CurrentStep() const { return m_StreamAt; }
+
 void HDF5ReaderP::EndStep()
 {
     if (m_DeferredStack.size() > 0)

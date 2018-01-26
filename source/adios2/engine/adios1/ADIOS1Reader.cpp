@@ -71,6 +71,8 @@ void ADIOS1Reader::PerformGets()
     m_NeedPerformGets = false;
 }
 
+size_t ADIOS1Reader::CurrentStep() const { return m_ADIOS1.CurrentStep(); }
+
 void ADIOS1Reader::EndStep()
 {
     if (m_NeedPerformGets)

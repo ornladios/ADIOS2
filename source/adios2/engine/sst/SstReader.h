@@ -44,7 +44,7 @@ public:
 
     StepStatus BeginStep();
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f);
-
+    size_t CurrentStep() const final;
     void EndStep();
     void PerformGets();
 

@@ -226,6 +226,8 @@ void InSituMPIReader::PerformGets()
     m_BP3Deserializer.m_PerformedGets = true;
 }
 
+size_t InSituMPIReader::CurrentStep() const { return m_CurrentStep; }
+
 int InSituMPIReader::Statistics(uint64_t bytesInPlace, uint64_t bytesCopied)
 {
     if (bytesInPlace == 0)
