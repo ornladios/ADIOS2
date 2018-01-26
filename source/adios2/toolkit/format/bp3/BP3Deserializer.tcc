@@ -273,6 +273,7 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
         std::reverse(start.begin(), start.end());
         std::reverse(count.begin(), count.end());
     }
+
     const Box<Dims> selectionBox = StartEndBox(start, count);
 
     for (size_t step = stepStart; step < stepEnd; ++step)

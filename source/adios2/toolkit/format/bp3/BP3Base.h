@@ -154,7 +154,7 @@ public:
      * EndStep */
     size_t m_FlushStepsCount = 1;
 
-    /** from host language in data information */
+    /** from host language in data information at read */
     bool m_IsRowMajor = true;
 
     /** if reader and writer have different ordering (column vs row major) */

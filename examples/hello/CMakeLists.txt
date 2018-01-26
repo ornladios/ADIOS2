@@ -39,4 +39,5 @@ endif()
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(insituMPI)
+  add_subdirectory(bpFWriteCRead)
 endif()
