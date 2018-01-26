@@ -163,10 +163,10 @@ static FMStructDescRec EvpathReadReplyStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_Data, attr_list attrs);
+                                   void *client_Data, attr_list attrs);
 
 static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
-                                    void **ReaderContactInfoPtr)
+                                     void **ReaderContactInfoPtr)
 {
     Evpath_RS_Stream Stream = malloc(sizeof(struct _Evpath_RS_Stream));
     EvpathReaderContactInfo Contact =
@@ -188,7 +188,8 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
 
     MPI_Comm_rank(comm, &Stream->Rank);
 
-    set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"), "sockets");
+    set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
+                    "sockets");
 
     CMlisten_specific(CM, ListenAttrs);
     attr_list ContactList = CMget_specific_contact_list(CM, ListenAttrs);
@@ -210,8 +211,9 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     return Stream;
 }
 
-static void EvpathReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
-                                    void *client_Data, attr_list attrs)
+static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
+                                     void *msg_v, void *client_Data,
+                                     attr_list attrs)
 {
     EvpathReadRequestMsg ReadRequestMsg = (EvpathReadRequestMsg)msg_v;
     Evpath_WSR_Stream WSR_Stream = ReadRequestMsg->WS_Stream;
@@ -241,13 +243,21 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn, void *msg_v
                 WS_Stream->CP_Stream,
                 "Sending a reply to reader rank %d for remote memory read\n",
                 ReadRequestMsg->RequestingRank);
-            if (!WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank].Conn) {
-                attr_list List = attr_list_from_string(WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank].ContactString);
+            if (!WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank]
+                     .Conn)
+            {
+                attr_list List = attr_list_from_string(
+                    WSR_Stream
+                        ->ReaderContactInfo[ReadRequestMsg->RequestingRank]
+                        .ContactString);
                 CMConnection Conn = CMget_conn(cm, List);
-                WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank].Conn = Conn;
+                WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank]
+                    .Conn = Conn;
             }
-            CMwrite(WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank].Conn,
-                    WS_Stream->ReadReplyFormat, &ReadReplyMsg);
+            CMwrite(
+                WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank]
+                    .Conn,
+                WS_Stream->ReadReplyFormat, &ReadReplyMsg);
 
             return;
         }
@@ -276,7 +286,7 @@ typedef struct _EvpathCompletionHandle
 } * EvpathCompletionHandle;
 
 static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_Data, attr_list attrs)
+                                   void *client_Data, attr_list attrs)
 {
     EvpathReadReplyMsg ReadReplyMsg = (EvpathReadReplyMsg)msg_v;
     Evpath_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
@@ -333,11 +343,11 @@ static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream)
 }
 
 static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
-                                              DP_WS_Stream WS_Stream_v,
-                                              int readerCohortSize,
-                                              CP_PeerCohort PeerCohort,
-                                              void **providedReaderInfo_v,
-                                              void **WriterContactInfoPtr)
+                                               DP_WS_Stream WS_Stream_v,
+                                               int readerCohortSize,
+                                               CP_PeerCohort PeerCohort,
+                                               void **providedReaderInfo_v,
+                                               void **WriterContactInfoPtr)
 {
     Evpath_WS_Stream WS_Stream = (Evpath_WS_Stream)WS_Stream_v;
     Evpath_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
@@ -393,10 +403,10 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
 }
 
 static void EvpathProvideWriterDataToReader(CP_Services Svcs,
-                                           DP_RS_Stream RS_Stream_v,
-                                           int writerCohortSize,
-                                           CP_PeerCohort PeerCohort,
-                                           void **providedWriterInfo_v)
+                                            DP_RS_Stream RS_Stream_v,
+                                            int writerCohortSize,
+                                            CP_PeerCohort PeerCohort,
+                                            void **providedWriterInfo_v)
 {
     Evpath_RS_Stream RS_Stream = (Evpath_RS_Stream)RS_Stream_v;
     EvpathWriterContactInfo *providedWriterInfo =
@@ -432,9 +442,9 @@ typedef struct _EvpathPerTimestepInfo
 } * EvpathPerTimestepInfo;
 
 static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                   int Rank, long Timestep, size_t Offset,
-                                   size_t Length, void *Buffer,
-                                   void *DP_TimestepInfo)
+                                    int Rank, long Timestep, size_t Offset,
+                                    size_t Length, void *Buffer,
+                                    void *DP_TimestepInfo)
 {
     Evpath_RS_Stream Stream = (Evpath_RS_Stream)
         Stream_v; /* DP_RS_Stream is the return from InitReader */
@@ -496,9 +506,9 @@ static void EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
 }
 
 static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                 struct _SstData *Data,
-                                 struct _SstData *LocalMetadata, long Timestep,
-                                 void **TimestepInfoPtr)
+                                  struct _SstData *Data,
+                                  struct _SstData *LocalMetadata, long Timestep,
+                                  void **TimestepInfoPtr)
 {
     Evpath_WS_Stream Stream = (Evpath_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
@@ -519,7 +529,7 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
 }
 
 static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                 long Timestep)
+                                  long Timestep)
 {
     Evpath_WS_Stream Stream = (Evpath_WS_Stream)Stream_v;
     TimestepList List = Stream->Timesteps;
@@ -602,7 +612,8 @@ extern CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.initReader = EvpathInitReader;
     evpathDPInterface.initWriter = EvpathInitWriter;
     evpathDPInterface.initWriterPerReader = EvpathInitWriterPerReader;
-    evpathDPInterface.provideWriterDataToReader = EvpathProvideWriterDataToReader;
+    evpathDPInterface.provideWriterDataToReader =
+        EvpathProvideWriterDataToReader;
     evpathDPInterface.readRemoteMemory = EvpathReadRemoteMemory;
     evpathDPInterface.waitForCompletion = EvpathWaitForCompletion;
     evpathDPInterface.provideTimestep = EvpathProvideTimestep;
