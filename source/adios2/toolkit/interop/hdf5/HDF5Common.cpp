@@ -209,8 +209,8 @@ void HDF5Common::ReadNativeDatasets(IO &io, hid_t top_id, const char *gname,
                     hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
                     HDF5TypeGuard d(datasetId, E_H5_DATASET);
 
-                    char longName[strlen(heritage) + strlen(gname) +
-                                  strlen(name) + 10];
+                    char longName[std::strlen(heritage) + std::strlen(gname) +
+                                  std::strlen(name) + 10];
                     sprintf(longName, "%s/%s/%s", heritage, gname, name);
                     // CreateVar(io, datasetId, name);
                     CreateVar(io, datasetId, longName);
