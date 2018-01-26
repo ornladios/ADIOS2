@@ -321,8 +321,6 @@ void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
         Dims zeros(shape.size(), 0);
 
         auto &foo = io.DefineVariable<T>(name, shape, zeros, shape);
-        // auto &foo = io.DefineVariable<T>(name, shape, defaultStart,
-        // defaultCount);
         // default was set to 0 while m_AvailabelStepsStart is 1.
         // correcting
         if (0 == foo.m_AvailableStepsCount)
