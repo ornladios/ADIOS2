@@ -2,12 +2,11 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloHDF5Reader_nompi.cpp
+ * helloHDF5Reader.cpp
  *
  *  Created on: Jan 24, 2018
  *      Author: Junmin Gu
  */
-
 
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout
@@ -16,7 +15,53 @@
 
 #include <adios2.h>
 
+template <class T>
+void ReadData(adios2::IO &h5IO, adios2::Engine &h5Reader,
+              const std::string &name)
+{
+    adios2::Variable<T> *var = h5IO.InquireVariable<T>(name);
 
+    if (var != nullptr)
+    {
+        int nDims = var->m_Shape.size();
+        size_t totalSize = 1;
+        for (int i = 0; i < nDims; i++)
+        {
+            totalSize *= var->m_Shape[i];
+        }
+        std::vector<T> myValues(totalSize);
+        // myFloats.data is pre-allocated
+        h5Reader.GetSync<T>(*var, myValues.data());
+
+        // std::cout << "\tValues of "<<name<<": ";
+        std::cout << "\tPeek Values: ";
+
+        if (totalSize < 20)
+        { // print all
+            for (const auto number : myValues)
+            {
+                std::cout << number << " ";
+            }
+        }
+        else
+        {
+            size_t counter = 0;
+            for (const auto number : myValues)
+            {
+                if ((counter < 5) || (counter > totalSize - 5))
+                {
+                    std::cout << number << " ";
+                }
+                else if (counter == 5)
+                {
+                    std::cout << " ......  ";
+                }
+                counter++;
+            }
+        }
+        std::cout << "\n";
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +70,13 @@ int main(int argc, char *argv[])
     std::vector<float> myFloats(Nx);
     std::vector<int> myInts(Nx);
 
+    const char *filename = "myVector.h5";
+    if (argc > 1)
+    {
+        filename = argv[1];
+    }
+
+    std::cout << " Using file: " << filename << std::endl;
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
@@ -34,47 +86,67 @@ int main(int argc, char *argv[])
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &h5IO = adios.DeclareIO("ReadHDF5");
 
+        h5IO.SetEngine("HDF5");
+
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &h5Reader =
-            h5IO.Open("myVector_cpp.h5", adios2::Mode::Read);
+        adios2::Engine &h5Reader = h5IO.Open(filename, adios2::Mode::Read);
 
-	h5IO.SetEngine("HDF5");
-        /** Write variable for buffering */
-        adios2::Variable<float> *h5Floats =
-            h5IO.InquireVariable<float>("h5Floats");
+        const std::map<std::string, adios2::Params> variables =
+            h5IO.GetAvailableVariables();
 
-        adios2::Variable<int> *h5Ints = h5IO.InquireVariable<int>("h5Ints");
-
-        if (h5Floats != nullptr)
+        for (const auto &variablePair : variables)
         {
-            h5Reader.GetSync<float>(*h5Floats, myFloats.data());
+            std::cout << "Name: " << variablePair.first;
+            std::cout << std::endl;
+
+            for (const auto &parameter : variablePair.second)
+            {
+                std::cout << "\t" << parameter.first << ": " << parameter.second
+                          << "\n";
+                if (parameter.second == "double")
+                {
+                    ReadData<double>(h5IO, h5Reader, variablePair.first);
+                }
+                else if (parameter.second == "float")
+                {
+                    ReadData<float>(h5IO, h5Reader, variablePair.first);
+                }
+                else if (parameter.second == "unsigned int")
+                {
+                    ReadData<unsigned int>(h5IO, h5Reader, variablePair.first);
+                }
+                else if (parameter.second == "int")
+                {
+                    ReadData<int>(h5IO, h5Reader, variablePair.first);
+                }
+                //... add more types if needed
+            }
         }
 
-        if (h5Floats != nullptr)
-        {
-            h5Reader.GetSync<int>(*h5Ints, myInts.data());
-        }
+        // ReadData<float>(h5IO, h5Reader, "h5Floats");
+        // ReadData<int>(h5IO, h5Reader, "h5Ints");
 
         /** Close h5 file, engine becomes unreachable after this*/
         h5Reader.Close();
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
+                  << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM "
+                     "from rank "
+                  << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM\n";
+        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
 
     return 0;
 }
-
-

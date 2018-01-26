@@ -16,49 +16,53 @@
 
 #include <adios2.h>
 
-
 template <class T>
-void ReadData(adios2::IO& h5IO, adios2::Engine& h5Reader, const std::string& name)
+void ReadData(adios2::IO &h5IO, adios2::Engine &h5Reader,
+              const std::string &name)
 {
-        adios2::Variable<T> *var =
-            h5IO.InquireVariable<T>(name);
+    adios2::Variable<T> *var = h5IO.InquireVariable<T>(name);
 
-        if (var != nullptr) 
+    if (var != nullptr)
+    {
+        int nDims = var->m_Shape.size();
+        size_t totalSize = 1;
+        for (int i = 0; i < nDims; i++)
         {
-	    int nDims = var->m_Shape.size();
-	    size_t totalSize = 1;
-	    for (int i=0; i<nDims; i++) {
-	      totalSize *= var->m_Shape[i];
-	    }
-	    std::vector<T> myValues(totalSize);
-            // myFloats.data is pre-allocated
-            h5Reader.GetSync<T>(*var, myValues.data());
-
-            //std::cout << "\tValues of "<<name<<": ";
-	    std::cout << "\tPeek Values: ";
-
-	    if (totalSize < 20) { // print all
-	      for (const auto number : myValues)
-		{
-		  std::cout << number << " ";
-		}
-	    } else {
-	      size_t counter = 0;
-	      for (const auto number : myValues)
-		{
-		  if ((counter < 5) || (counter > totalSize - 5)) {
-		    std::cout << number << " ";
-		  } else if(counter == 5) {
-		    std::cout <<" ......  ";
-		  }
-		  counter ++;
-		}
-	    }
-            std::cout << "\n";
+            totalSize *= var->m_Shape[i];
         }
+        std::vector<T> myValues(totalSize);
+        // myFloats.data is pre-allocated
+        h5Reader.GetSync<T>(*var, myValues.data());
 
+        // std::cout << "\tValues of "<<name<<": ";
+        std::cout << "\tPeek Values: ";
+
+        if (totalSize < 20)
+        { // print all
+            for (const auto number : myValues)
+            {
+                std::cout << number << " ";
+            }
+        }
+        else
+        {
+            size_t counter = 0;
+            for (const auto number : myValues)
+            {
+                if ((counter < 5) || (counter > totalSize - 5))
+                {
+                    std::cout << number << " ";
+                }
+                else if (counter == 5)
+                {
+                    std::cout << " ......  ";
+                }
+                counter++;
+            }
+        }
+        std::cout << "\n";
+    }
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -72,15 +76,13 @@ int main(int argc, char *argv[])
     std::vector<float> myFloats(Nx);
     std::vector<int> myInts(Nx);
 
-
-    const char* filename="myVector.h5";
-    if (argc > 1) {
-      filename = argv[1];
+    const char *filename = "myVector.h5";
+    if (argc > 1)
+    {
+        filename = argv[1];
     }
 
-    std::string doubleVarName="";
-
-    std::cout<<" Using file: "<<filename<<std::endl;
+    std::cout << " Using file: " << filename << std::endl;
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
@@ -90,44 +92,45 @@ int main(int argc, char *argv[])
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &h5IO = adios.DeclareIO("ReadHDF5");
 
-	h5IO.SetEngine("HDF5");
+        h5IO.SetEngine("HDF5");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &h5Reader =
-            h5IO.Open(filename, adios2::Mode::Read);
+        adios2::Engine &h5Reader = h5IO.Open(filename, adios2::Mode::Read);
 
         const std::map<std::string, adios2::Params> variables =
             h5IO.GetAvailableVariables();
 
         for (const auto &variablePair : variables)
         {
-	    std::cout << "Name: " << variablePair.first;
-	    std::cout << std::endl;
+            std::cout << "Name: " << variablePair.first;
+            std::cout << std::endl;
 
             for (const auto &parameter : variablePair.second)
-            {	      
+            {
                 std::cout << "\t" << parameter.first << ": " << parameter.second
-                          << "\n";		
-		if (parameter.second == "double") {
-		  ReadData<double>(h5IO, h5Reader, variablePair.first);
-		} else if (parameter.second == "float") {
-		  ReadData<float>(h5IO, h5Reader, variablePair.first);
-		} else if (parameter.second == "unsigned int") {
-		  ReadData<unsigned int>(h5IO, h5Reader, variablePair.first); 
-		} else if (parameter.second == "int") {
-		  ReadData<int>(h5IO, h5Reader, variablePair.first); 
-		} 
-		//... add more types if needed 
+                          << "\n";
+                if (parameter.second == "double")
+                {
+                    ReadData<double>(h5IO, h5Reader, variablePair.first);
+                }
+                else if (parameter.second == "float")
+                {
+                    ReadData<float>(h5IO, h5Reader, variablePair.first);
+                }
+                else if (parameter.second == "unsigned int")
+                {
+                    ReadData<unsigned int>(h5IO, h5Reader, variablePair.first);
+                }
+                else if (parameter.second == "int")
+                {
+                    ReadData<int>(h5IO, h5Reader, variablePair.first);
+                }
+                //... add more types if needed
             }
-
         }
 
-	//ReadData<float>(h5IO, h5Reader, "h5Floats");
-	//ReadData<int>(h5IO, h5Reader, "h5Ints");
-	
-	//if (doubleVarName.size() > 0) {
-	//ReadData<double>(h5IO, h5Reader, doubleVarName.c_str());
-	//}
+        // ReadData<float>(h5IO, h5Reader, "h5Floats");
+        // ReadData<int>(h5IO, h5Reader, "h5Ints");
 
         /** Close h5 file, engine becomes unreachable after this*/
         h5Reader.Close();
