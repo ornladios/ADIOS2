@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "adios2/ADIOSMPI.h"
+#include <cstring> // strlen
 
 namespace adios2
 {
