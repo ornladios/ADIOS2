@@ -91,6 +91,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
 StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
 {
+    m_IO.RemoveAllVariables();
+    m_IO.RemoveAllAttributes();
     return (StepStatus)SstAdvanceStep(m_Input, (int)mode, timeout_sec);
 }
 
@@ -101,7 +103,7 @@ size_t SstReader::CurrentStep() const
 
 void SstReader::EndStep()
 {
-    m_IO.RemoveAllVariables();
+    SstPerformGets(m_Input);
     SstReleaseStep(m_Input);
 }
 

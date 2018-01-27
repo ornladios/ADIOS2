@@ -9,8 +9,5 @@ add_executable(TestInSituMPIFunctionAssignPeers  TestInSituMPIFunctionAssignPeer
 target_link_libraries(TestInSituMPIFunctionAssignPeers adios2 gtest MPI::MPI_C)
 gtest_add_tests(TARGET TestInSituMPIFunctionAssignPeers ${extra_test_args})
 
-#  add_executable(TestInSituMPIOneToOne  TestInSituMPIOneToOne.cpp)
-#  target_link_libraries(TestInSituMPIOneToOne adios2 gtest MPI::MPI_C)
-#  gtest_add_tests(TARGET TestInSituOneToOne ${extra_test_args})
 
 
