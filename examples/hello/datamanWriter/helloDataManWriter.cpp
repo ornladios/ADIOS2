@@ -24,31 +24,53 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<float> myFloats1 = {11, 21, 2, 3, 4, 5, 6, 7, 8, 9};
     const std::size_t Nx = myFloats.size();
 
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-    adios2::IO &dataManIO = adios.DeclareIO("WANIO");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters({
-        {"Compression", "no"}, {"Format", "bp"},
-    });
-    dataManIO.AddTransport("WAN",
-                           {
-                               {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"},
-                           });
-
-    // Define variable and local size
-    auto bpFloats = dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
-
-    // Create engine smart pointer to DataMan Engine due to polymorphism,
-    // Open returns a smart pointer to Engine containing the Derived class
-    adios2::Engine &dataManWriter =
-        dataManIO.Open("myFloats.bp", adios2::Mode::Write);
-
-    dataManWriter.PutSync<float>(bpFloats, myFloats.data());
-    dataManWriter.Close();
     try
     {
+
+        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+        adios2::IO &dataManIO = adios.DeclareIO("WANIO");
+        dataManIO.SetEngine("DataMan");
+        dataManIO.SetParameters({
+            {"Compression", "no"}, {"Format", "bp"},
+        });
+        dataManIO.AddTransport(
+            "WAN", {
+                       {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"},
+                   });
+
+        // Define variable and local size
+        auto bpFloats =
+            dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
+
+        // Create engine smart pointer to DataMan Engine due to polymorphism,
+        // Open returns a smart pointer to Engine containing the Derived class
+        adios2::Engine &dataManWriter =
+            dataManIO.Open("myFloats.bp", adios2::Mode::Write);
+
+        /*
+        for(int i=0; i<10; ++i){
+            dataManWriter.BeginStep();
+            for (auto &j : myFloats){
+                j *= 2;
+                std::cout << j << " ";
+            }
+            std::cout << std::endl;
+            dataManWriter.PutSync<float>(bpFloats, myFloats.data());
+            dataManWriter.EndStep();
+        }
+        */
+
+        dataManWriter.BeginStep();
+        dataManWriter.PutSync<float>(bpFloats, myFloats.data());
+        dataManWriter.EndStep();
+        dataManWriter.BeginStep();
+        dataManWriter.PutSync<float>(bpFloats, myFloats1.data());
+        dataManWriter.EndStep();
+
+        dataManWriter.Close();
     }
     catch (std::invalid_argument &e)
     {

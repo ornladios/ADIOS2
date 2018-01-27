@@ -41,22 +41,6 @@ void DataManWriter::EndStep()
     }
 }
 
-/*
-void DataManWriter::Close(const int transportIndex)
-{
-    if (m_UseFormat == "bp" || m_UseFormat == "BP")
-    {
-        m_BP3Serializer.CloseData(m_IO);
-        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
-        auto &position = m_BP3Serializer.m_Data.m_Position;
-        if (position > 0)
-        {
-            m_Man.WriteWAN(buffer, position);
-        }
-    }
-}
-*/
-
 // PRIVATE functions below
 
 bool DataManWriter::GetBoolParameter(Params &params, std::string key,

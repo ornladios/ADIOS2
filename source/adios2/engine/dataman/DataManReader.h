@@ -62,6 +62,12 @@ private:
     bool m_DoMonitor = false;
     std::vector<adios2::Operator *> m_Callbacks;
 
+    // The current time step that the reader app is reading
+    size_t m_CurrentStep = 0;
+
+    // The oldest time step contained in m_VariableMap
+    size_t m_OldestStep = 0;
+
     struct DataManVar
     {
         std::vector<char> data;

@@ -20,11 +20,28 @@ namespace adios2
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-	auto iter = m_VariableMap[0].find(variable.m_Name);
-	if( iter != m_VariableMap[0].end() ){
-		std::memcpy(data, iter->second->data.data(), iter->second->data.size());
-		m_VariableMap[0].erase( iter );
-	}
+
+    // delete any time steps older than the current step
+    if(m_CurrentStep > m_OldestStep){
+        for(int m = m_OldestStep; m < m_CurrentStep; ++m){
+            auto k = m_VariableMap.find(m);
+            if( k != m_VariableMap.end() ){
+                m_VariableMap.erase(k);
+            }
+        }
+        m_OldestStep = m_CurrentStep;
+    }
+
+    // copy data
+    auto i = m_VariableMap.find(m_CurrentStep);
+    if( i != m_VariableMap.end() ){
+        auto j = i->second.find(variable.m_Name);
+        if( j != i->second.end() ){
+            std::memcpy(data, j->second->data.data(), j->second->data.size());
+            i->second.erase( j );
+        }
+    }
+
 }
 
 template <class T>
