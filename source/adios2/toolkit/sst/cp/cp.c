@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include <atl.h>
 #include <evpath.h>
@@ -47,6 +48,14 @@ static void writeContactInfo(const char *Name, SstStream Stream)
     rename(TmpName, FileName);
     free(TmpName);
     free(FileName);
+}
+
+static void removeContactInfo(const char *Name)
+{
+    char *FileName = malloc(strlen(Name) + strlen(".bpflx") + 1);
+    FILE *WriterInfo;
+    sprintf(FileName, "%s.bpflx", Name);
+    unlink(FileName);
 }
 
 static char *readContactInfo(const char *Name, SstStream Stream)
@@ -324,6 +333,12 @@ SstStream SstWriterOpen(const char *Name, const char *params, MPI_Comm comm)
         Stream->OpenTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
         MPI_Barrier(Stream->mpiComm);
         gettimeofday(&Stream->ValidStartTime, NULL);
+
+        /*
+         *  We'll go ahead and remove the contact info since multiple
+         *  readers is not yet implemented
+         */
+        removeContactInfo(Filename);
     }
     CP_verbose(Stream, "Finish opening Stream \"%s\"\n", Filename);
     return Stream;
@@ -453,10 +468,6 @@ extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
     }
     Msg.Formats = XmitFormats;
 
-    CP_verbose(s,
-               "Sending TimestepMetadata for timestep %d, one to each reader\n",
-               Timestep);
-
     /*
      * lock this Stream's data and queue the timestep
      */
@@ -474,6 +485,20 @@ extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
     /* no one waits on timesteps being added, so no condition signal to note
      * change */
     pthread_mutex_unlock(&s->DataLock);
+
+    /*
+     * This barrier deals with a possible race condition on the return
+     * of relase timestep messages.  It's possible for one rank to get
+     * far enough ahead that it has sent metadata and received a
+     * release timestep message before another rank even gets to the
+     * point of enqueueing its timestep.  We'll try to eliminate this
+     * barrier in another way in the future.
+     */
+    MPI_Barrier(s->mpiComm);
+
+    CP_verbose(s,
+               "Sending TimestepMetadata for timestep %d, one to each reader\n",
+               Timestep);
 
     sendOneToEachReaderRank(s, s->CPInfo->DeliverTimestepMetadataFormat, &Msg,
                             &Msg.RS_Stream);
