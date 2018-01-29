@@ -164,6 +164,12 @@ void BP3Serializer::CloseStream(IO &io)
     ProfilerStop("buffering");
 }
 
+void BP3Serializer::ResetIndices()
+{
+    m_MetadataSet.AttributesIndices.clear();
+    m_MetadataSet.VarsIndices.clear();
+}
+
 std::string BP3Serializer::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
     const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept

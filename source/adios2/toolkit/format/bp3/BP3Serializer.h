@@ -95,6 +95,8 @@ public:
      */
     void CloseStream(IO &io);
 
+    void ResetIndices();
+
     /**
      * Get a string with profiling information for this rank
      * @param name stream name

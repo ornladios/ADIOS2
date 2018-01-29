@@ -41,7 +41,8 @@ void DataManWriter::EndStep()
         m_BP3Serializer.CloseStream(m_IO);
         m_Man.WriteWAN(m_BP3Serializer.m_Data.m_Buffer,
                        m_BP3Serializer.m_Data.m_Position);
-        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data, true);
+        m_BP3Serializer.ResetIndices();
     }
 }
 

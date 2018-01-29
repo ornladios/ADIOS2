@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
                        {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"},
                    });
 
-        // Define variable and local size
         auto bpFloats =
             dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
 
@@ -60,6 +59,7 @@ int main(int argc, char *argv[])
 
         for (int i = 0; i < 1000; ++i)
         {
+            // Define variable and local size
             dataManWriter.BeginStep();
             for (auto &j : myFloats)
             {

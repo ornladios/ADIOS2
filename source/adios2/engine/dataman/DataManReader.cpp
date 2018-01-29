@@ -67,7 +67,7 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
             // implementation needs multiple threads then this has to be
             // rewriten by manually removing variables one by one and it
             // has to be protected by mutex.
-            //                                m_IO.RemoveAllVariables();
+
             std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
             if (buffer != nullptr)
             {
@@ -80,6 +80,8 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                                 buffer->data(), buffer->size());
 
                     m_MutexIO.lock();
+                    m_IO.RemoveAllVariables();
+                    m_IO.RemoveAllAttributes();
                     std::cout << "ParseMetadata ===\n";
                     deserializer.ParseMetadata(deserializer.m_Data, m_IO);
                     m_MutexIO.unlock();
