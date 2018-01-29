@@ -16,6 +16,8 @@
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
+#include <json.hpp>
+
 namespace adios2
 {
 
@@ -39,6 +41,7 @@ private:
     unsigned int m_NChannels = 1;
     std::string m_UseFormat = "bp";
     bool m_DoMonitor = false;
+    size_t m_StepsPerWrite = 10;
 
     void Init();
     void InitParameters();

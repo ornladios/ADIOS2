@@ -15,6 +15,15 @@
 
 #include <adios2.h>
 
+void Dump(std::vector<float> &data)
+{
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        std::cout << data[i] << " ";
+    }
+    std::cout << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     // Application variable
@@ -49,15 +58,14 @@ int main(int argc, char *argv[])
         adios2::Engine &dataManWriter =
             dataManIO.Open("myFloats.bp", adios2::Mode::Write);
 
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             dataManWriter.BeginStep();
             for (auto &j : myFloats)
             {
-                j *= 2;
-                std::cout << j << " ";
+                j += 1;
             }
-            std::cout << std::endl;
+            Dump(myFloats);
             dataManWriter.PutSync<float>(bpFloats, myFloats.data());
             dataManWriter.EndStep();
         }

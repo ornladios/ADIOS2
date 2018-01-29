@@ -87,7 +87,11 @@ endif()
 
 target_sources(adios2 PRIVATE
     engine/dataman/DataManReader.cpp
+    engine/dataman/DataManReader.h
+    engine/dataman/DataManReader.tcc
     engine/dataman/DataManWriter.cpp
+    engine/dataman/DataManWriter.h
+    engine/dataman/DataManWriter.tcc
 )
 target_link_libraries(adios2 PRIVATE NLohmannJson)
 

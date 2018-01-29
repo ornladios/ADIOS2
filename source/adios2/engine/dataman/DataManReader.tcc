@@ -33,14 +33,18 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
     }
 
     // copy data
-    auto i = m_VariableMap.find(m_CurrentStep);
-    if( i != m_VariableMap.end() ){
-        auto j = i->second.find(variable.m_Name);
-        if( j != i->second.end() ){
-            std::memcpy(data, j->second->data.data(), j->second->data.size());
-            i->second.erase( j );
-        }
-    }
+	for(int m=0; m<10; ++m){
+		auto i = m_VariableMap.find(m_CurrentStep);
+		if( i != m_VariableMap.end() ){
+			auto j = i->second.find(variable.m_Name);
+			if( j != i->second.end() ){
+				std::memcpy(data, j->second->data.data(), j->second->data.size());
+				i->second.erase( j );
+				return;
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
 
 }
 

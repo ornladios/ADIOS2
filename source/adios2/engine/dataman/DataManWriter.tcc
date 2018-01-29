@@ -67,6 +67,7 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
 
     if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
+		std::cout << "reset ----\n";
         // Close buffer here?
         m_BP3Serializer.CloseStream(m_IO);
         auto &buffer = m_BP3Serializer.m_Data.m_Buffer;

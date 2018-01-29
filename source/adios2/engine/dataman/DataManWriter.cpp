@@ -38,6 +38,10 @@ void DataManWriter::EndStep()
     if (m_UseFormat == "bp" || m_UseFormat == "BP")
     {
         m_BP3Serializer.SerializeData(m_IO, true);
+        m_BP3Serializer.CloseStream(m_IO);
+        m_Man.WriteWAN(m_BP3Serializer.m_Data.m_Buffer,
+                       m_BP3Serializer.m_Data.m_Position);
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
     }
 }
 

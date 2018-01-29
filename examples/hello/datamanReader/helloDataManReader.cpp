@@ -10,10 +10,11 @@
 
 #include <chrono>
 #include <iostream>
-#include <mpi.h>
 #include <numeric>
 #include <thread>
 #include <vector>
+
+#include <mpi.h>
 
 #include <adios2.h>
 
@@ -63,7 +64,7 @@ int main(int argc, char *argv[])
 
         else
         {
-            for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < 1000; ++i)
             {
                 dataManReader.BeginStep();
                 dataManReader.GetSync<float>(*bpFloats, myFloats.data());
