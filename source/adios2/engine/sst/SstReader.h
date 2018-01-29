@@ -44,13 +44,14 @@ public:
 
     StepStatus BeginStep();
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f);
-
+    size_t CurrentStep() const final;
     void EndStep();
     void PerformGets();
 
 private:
     void Init();
     SstStream m_Input;
+    size_t m_CurrentStep = -1;
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

@@ -19,7 +19,7 @@
 
             <!-- XXKb, XXMb, or XXXGb supported, default=16Kb
                 (applications might choose an optimal value) -->
-            <parameter key="InitialBufferSize" value="128Mb"/>
+            <parameter key="InitialBufferSize" value="1Gb"/>
 
         </engine>
 
@@ -50,6 +50,10 @@
             <!-- Microseconds (default), Milliseconds, Seconds,
                  Minutes, Hours -->
             <parameter key="ProfileUnits" value="Microseconds"/>
+
+            <!-- XXKb, XXMb, or XXXGb supported, default=16Kb
+                (applications might choose an optimal value) -->
+            <parameter key="InitialBufferSize" value="1Gb"/>
 
         </engine>
 

@@ -101,6 +101,8 @@ public:
     void WriteAdiosSteps();
 
     void ReadVariables(unsigned int ts, IO &io);
+    void ReadNativeDatasets(IO &io, hid_t gid, const char *name,
+                            const char *heritage);
     void ReadAllVariables(IO &io);
     void CreateVar(IO &io, hid_t h5Type, std::string const &name);
 
@@ -126,6 +128,8 @@ public:
 
     template <class T>
     T GetADIOSType(hid_t);
+
+    bool m_IsGeneratedByAdios = false;
 
 private:
     const bool m_DebugMode;

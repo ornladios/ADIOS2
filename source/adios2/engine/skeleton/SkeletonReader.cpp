@@ -84,6 +84,8 @@ void SkeletonReader::PerformGets()
     m_NeedPerformGets = false;
 }
 
+size_t SkeletonReader::CurrentStep() const { return m_CurrentStep; }
+
 void SkeletonReader::EndStep()
 {
     // EndStep should call PerformGets() if there are unserved GetDeferred()

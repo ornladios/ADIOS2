@@ -170,7 +170,7 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
 
         variable = &io.DefineVariable<T>(variableName, characteristics.Shape,
                                          Dims(characteristics.Shape.size(), 0),
-                                         Dims(characteristics.Shape.size(), 0));
+                                         characteristics.Shape);
 
         variable->m_Min = characteristics.Statistics.Min;
         variable->m_Max = characteristics.Statistics.Max;

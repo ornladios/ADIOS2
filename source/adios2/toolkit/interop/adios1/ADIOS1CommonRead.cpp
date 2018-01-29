@@ -413,6 +413,11 @@ StepStatus ADIOS1CommonRead::AdvanceStep(IO &io, const StepMode mode,
     return status;
 }
 
+size_t ADIOS1CommonRead::CurrentStep() const
+{
+    return static_cast<size_t>(m_fh->current_step);
+}
+
 void ADIOS1CommonRead::ReleaseStep() { adios_release_step(m_fh); }
 
 ADIOS_VARINFO *ADIOS1CommonRead::InqVar(const std::string &varName)

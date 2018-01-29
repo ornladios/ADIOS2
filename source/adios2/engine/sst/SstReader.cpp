@@ -60,11 +60,15 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         std::string Type(type);
         typename SstReader::SstReader *Reader =
             reinterpret_cast<typename SstReader::SstReader *>(reader);
+        /*
+         * setup shape of array variable as global (I.E. Count == Shape,
+         * Start == 0)
+         */
         for (int i = 0; i < DimCount; i++)
         {
             VecShape.push_back(Shape[i]);
-            VecStart.push_back(Start[i]);
-            VecCount.push_back(Count[i]);
+            VecStart.push_back(0);
+            VecCount.push_back(Shape[i]);
         }
         if (Type == "compound")
         {
@@ -91,12 +95,30 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
 StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
 {
-    return (StepStatus)SstAdvanceStep(m_Input, (int)mode, timeout_sec);
+    SstStatusValue result;
+    m_IO.RemoveAllVariables();
+    m_IO.RemoveAllAttributes();
+    result = SstAdvanceStep(m_Input, (int)mode, timeout_sec);
+    if (result == SstSuccess)
+    {
+        m_CurrentStep++;
+        return StepStatus::OK;
+    }
+    else if (result == SstEndOfStream)
+    {
+        return StepStatus::EndOfStream;
+    }
+    else
+    {
+        return StepStatus::OtherError;
+    }
 }
+
+size_t SstReader::CurrentStep() const { return m_CurrentStep; }
 
 void SstReader::EndStep()
 {
-    m_IO.RemoveAllVariables();
+    SstPerformGets(m_Input);
     SstReleaseStep(m_Input);
 }
 

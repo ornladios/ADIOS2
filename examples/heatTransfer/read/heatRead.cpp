@@ -132,6 +132,14 @@ int main(int argc, char *argv[])
             // step
             vTin = inIO.InquireVariable<double>("T");
 
+            if (vTin == nullptr)
+            {
+                std::cout << "Error: NO variable T found. Unable to proceed. "
+                             "Exiting. "
+                          << std::endl;
+                break;
+            }
+
             if (firstStep)
             {
                 unsigned int gndx = vTin->m_Shape[0];
