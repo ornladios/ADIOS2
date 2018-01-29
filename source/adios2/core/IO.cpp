@@ -245,17 +245,13 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["Min"] = ValueToString(variable.m_Min);            \
         variablesInfo[name]["Max"] = ValueToString(variable.m_Max);            \
-        variablesInfo[name]["Value"] = ValueToString(variable.m_Value);        \
-        variablesInfo[name]["AvailableStepsStart"] =                           \
-            ValueToString(variable.m_AvailableStepsStart);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             ValueToString(variable.m_AvailableStepsCount);                     \
         variablesInfo[name]["Shape"] = VectorToCSV(variable.m_Shape);          \
-        variablesInfo[name]["Start"] = VectorToCSV(variable.m_Start);          \
-        variablesInfo[name]["Count"] = VectorToCSV(variable.m_Count);          \
         if (variable.m_SingleValue)                                            \
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "true";                       \
+            variablesInfo[name]["Value"] = ValueToString(variable.m_Value);    \
         }                                                                      \
         else                                                                   \
         {                                                                      \

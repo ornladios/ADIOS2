@@ -13,6 +13,8 @@
 
 #include "BP3Deserializer.h"
 
+#include <algorithm> //std::reverse
+
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -138,9 +140,8 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
 {
     const size_t initialPosition = position;
 
-    const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(header.DataType));
+    Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
+        buffer, position, static_cast<DataTypes>(header.DataType));
 
     std::string variableName(header.Name);
     if (!header.Path.empty())
@@ -160,9 +161,16 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
     else
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
-        Dims zeros(characteristics.Shape.size(), 0);
+
+        if (m_ReverseDimensions)
+        {
+            std::reverse(characteristics.Shape.begin(),
+                         characteristics.Shape.end());
+        }
+
         variable = &io.DefineVariable<T>(variableName, characteristics.Shape,
-                                         zeros, characteristics.Shape);
+                                         Dims(characteristics.Shape.size(), 0),
+                                         characteristics.Shape);
 
         variable->m_Min = characteristics.Statistics.Min;
         variable->m_Max = characteristics.Statistics.Max;
@@ -251,12 +259,10 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
     const auto &buffer = m_Metadata.m_Buffer;
 
     const size_t stepStart = variable.m_StepsStart + 1;
-    const size_t stepEnd =
-        stepStart + variable.m_StepsCount; // inclusive or exclusive?
+    const size_t stepEnd = stepStart + variable.m_StepsCount; // exclusive
 
-    // selection = [start, end[
     const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count);
+        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     for (size_t step = stepStart; step < stepEnd; ++step)
     {
@@ -355,7 +361,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonRow(
     Dims currentPoint(start); // current point for memory copy
 
     const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count);
+        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     const size_t dimensions = start.size();
     bool run = true;
@@ -419,7 +425,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
     Dims currentPoint(start); // current point for memory copy
 
     const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count);
+        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     const size_t dimensions = start.size();
     bool run = true;
