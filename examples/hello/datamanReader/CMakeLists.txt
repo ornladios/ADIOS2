@@ -3,10 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-if(ADIOS2_HAVE_MPI)
-  add_executable(hello_datamanReader helloDataManReader.cpp)
-  target_link_libraries(hello_datamanReader MPI::MPI_C)
-else()
-  add_executable(hello_datamanReader helloDataManReader_nompi.cpp)
-endif()
-target_link_libraries(hello_datamanReader adios2)
+add_executable(DataManCallbackReceiver DataManCallbackReceiver.cpp)
+target_link_libraries(DataManCallbackReceiver adios2 MPI::MPI_C)
+
+add_executable(hello_datamanReader helloDataManReader.cpp)
+target_link_libraries(hello_datamanReader adios2 MPI::MPI_C)

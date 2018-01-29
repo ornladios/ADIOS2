@@ -49,6 +49,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
 
     if (streamNames.size() == 0)
     {
+        std::cout << streamNames.size() << std::endl;
         throw("No streams to open from DataMan::OpenWANTransports");
     }
 

@@ -45,28 +45,6 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         PutSyncCommonBP(variable, values);
     }
 
-    if (m_DoMonitor)
-    {
-        MPI_Barrier(m_MPIComm);
-        std::cout << "I am hooked to the DataMan library\n";
-        std::cout << "Variable " << variable.m_Name << "\n";
-        std::cout << "putshape " << variable.m_Count.size() << "\n";
-        std::cout << "varshape " << variable.m_Shape.size() << "\n";
-        std::cout << "offset " << variable.m_Start.size() << "\n";
-
-        int rank = 0, size = 1;
-        MPI_Comm_size(m_MPIComm, &size);
-
-        for (int i = 0; i < size; ++i)
-        {
-            if (i == rank)
-            {
-                std::cout << "Rank: " << i << "\n";
-                std::cout << std::endl;
-            }
-        }
-        MPI_Barrier(m_MPIComm);
-    }
 }
 
 template <class T>

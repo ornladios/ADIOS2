@@ -24,7 +24,6 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    std::vector<float> myFloats1 = {11, 21, 2, 3, 4, 5, 6, 7, 8, 9};
     const std::size_t Nx = myFloats.size();
 
     try
@@ -50,10 +49,11 @@ int main(int argc, char *argv[])
         adios2::Engine &dataManWriter =
             dataManIO.Open("myFloats.bp", adios2::Mode::Write);
 
-        /*
-        for(int i=0; i<10; ++i){
+        for (int i = 0; i < 10; ++i)
+        {
             dataManWriter.BeginStep();
-            for (auto &j : myFloats){
+            for (auto &j : myFloats)
+            {
                 j *= 2;
                 std::cout << j << " ";
             }
@@ -61,14 +61,6 @@ int main(int argc, char *argv[])
             dataManWriter.PutSync<float>(bpFloats, myFloats.data());
             dataManWriter.EndStep();
         }
-        */
-
-        dataManWriter.BeginStep();
-        dataManWriter.PutSync<float>(bpFloats, myFloats.data());
-        dataManWriter.EndStep();
-        dataManWriter.BeginStep();
-        dataManWriter.PutSync<float>(bpFloats, myFloats1.data());
-        dataManWriter.EndStep();
 
         dataManWriter.Close();
     }
