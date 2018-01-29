@@ -10,7 +10,7 @@
 
 #include "adiosMath.h"
 
-#include <algorithm> //std::transform
+#include <algorithm> //std::transform, std::reverse
 #include <cmath>
 #include <functional> //std::minus<T>
 #include <iterator>   //std::back_inserter
@@ -60,7 +60,8 @@ size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
     return nextExponentialSize;
 }
 
-Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept
+Box<Dims> StartEndBox(const Dims &start, const Dims &count,
+                      const bool reverse) noexcept
 {
     Box<Dims> box;
     box.first = start;
@@ -70,6 +71,12 @@ Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept
     for (size_t d = 0; d < size; ++d)
     {
         box.second.push_back(start[d] + count[d] - 1); // end inclusive
+    }
+
+    if (reverse)
+    {
+        std::reverse(box.first.begin(), box.first.end());
+        std::reverse(box.second.begin(), box.second.end());
     }
 
     return box;

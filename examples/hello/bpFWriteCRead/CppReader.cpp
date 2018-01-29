@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
         }
 
         auto bpData = bpIO.InquireVariable<float>("data2D");
-        bpData->SetSelection({{0, 0}, {2, 3}});
+        bpData->SetSelection({{1, 1}, {3, 2}});
         std::vector<float> data(bpData->SelectionSize());
 
         bpReader.GetSync(*bpData, data.data());

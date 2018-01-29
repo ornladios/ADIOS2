@@ -103,9 +103,12 @@ size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
  * Converts a start, count box into a [start, end[ box where end = start + count
  * @param start
  * @param count
+ * @param reverse call std::reverse on start and count. Needed for Column-Major,
+ * Row-Major interoperability
  * @return [start, end[ box
  */
-Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept;
+Box<Dims> StartEndBox(const Dims &start, const Dims &count,
+                      const bool reverse = false) noexcept;
 
 Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
 

@@ -16,8 +16,8 @@ program FWriter
     call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
 
     ! Application variables
-    inx = 5
-    iny = 3
+    inx = 3
+    iny = 4
     allocate( data(inx, iny) )
 
     do j=1,iny
