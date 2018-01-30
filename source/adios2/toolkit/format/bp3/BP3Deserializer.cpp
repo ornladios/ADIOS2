@@ -35,7 +35,7 @@ BP3Deserializer::BP3Deserializer(MPI_Comm mpiComm, const bool debugMode)
 void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, IO &io)
 {
     ParseMinifooter(bufferSTL);
-    ParsePGIndex(bufferSTL);
+    ParsePGIndex(bufferSTL, io);
     ParseVariablesIndex(bufferSTL, io);
     ParseAttributesIndex(bufferSTL, io);
 }
@@ -143,7 +143,7 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     m_Minifooter.AttributesIndexStart = ReadValue<uint64_t>(buffer, position);
 }
 
-void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
+void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL, const IO &io)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.PGIndexStart;
@@ -156,7 +156,7 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
     while (localPosition < length)
     {
         ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
-        if (index.IsFortran == 'y')
+        if (index.IsColumnMajor == 'y')
         {
             m_IsRowMajor = false;
         }
@@ -169,6 +169,11 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
         }
 
         localPosition += index.Length + 2;
+    }
+
+    if (m_IsRowMajor != IsRowMajor(io.m_HostLanguage))
+    {
+        m_ReverseDimensions = true;
     }
 }
 

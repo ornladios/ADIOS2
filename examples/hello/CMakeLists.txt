@@ -27,6 +27,7 @@ endif()
 
 if(ADIOS2_HAVE_HDF5)
   add_subdirectory(hdf5Writer)
+  add_subdirectory(hdf5Reader)
 endif()
 
 if(ADIOS2_HAVE_BZip2)
@@ -39,4 +40,5 @@ endif()
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(insituMPI)
+  add_subdirectory(bpFWriteCRead)
 endif()

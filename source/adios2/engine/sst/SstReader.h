@@ -51,6 +51,7 @@ public:
 private:
     void Init();
     SstStream m_Input;
+    size_t m_CurrentStep = -1;
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

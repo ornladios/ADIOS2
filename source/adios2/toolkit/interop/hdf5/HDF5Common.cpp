@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "adios2/ADIOSMPI.h"
+#include <cstring> // strlen
 
 namespace adios2
 {
@@ -87,7 +88,11 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
         m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
         if (m_FileId >= 0)
         {
-            m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
+            if (H5Lexists(m_FileId, ts0.c_str(), H5P_DEFAULT) != 0)
+            {
+                m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
+                m_IsGeneratedByAdios = true;
+            }
         }
     }
 
@@ -143,6 +148,11 @@ unsigned int HDF5Common::GetNumAdiosSteps()
         }
     }
 
+    if (!m_IsGeneratedByAdios)
+    {
+        return 1;
+    }
+
     if (m_NumAdiosSteps <= 0)
     {
         hid_t attr = H5Aopen(m_FileId, "NumSteps", H5P_DEFAULT);
@@ -157,14 +167,102 @@ unsigned int HDF5Common::GetNumAdiosSteps()
 // read from all time steps
 void HDF5Common::ReadAllVariables(IO &io)
 {
+    if (!m_IsGeneratedByAdios)
+    {
+        ReadNativeDatasets(io, m_FileId, "/", "");
+        return;
+    }
+
     int i = 0;
-    // std::string timestepStr;
-    hsize_t numObj;
+
     for (i = 0; i < m_NumAdiosSteps; i++)
     {
         ReadVariables(i, io);
     }
 }
+
+void HDF5Common::ReadNativeDatasets(IO &io, hid_t top_id, const char *gname,
+                                    const char *heritage)
+{
+    // int i = 0;
+    // std::string stepStr;
+    hsize_t numObj;
+
+    // StaticGetAdiosStepString(stepStr, ts);
+    hid_t gid = H5Gopen2(top_id, gname, H5P_DEFAULT);
+    HDF5TypeGuard g(gid, E_H5_GROUP);
+    ///    if (gid > 0) {
+    herr_t ret = H5Gget_num_objs(gid, &numObj);
+    if (ret >= 0)
+    {
+        int k = 0;
+        char name[100];
+        for (k = 0; k < numObj; k++)
+        {
+            ret = H5Gget_objname_by_idx(gid, (hsize_t)k, name, sizeof(name));
+            if (ret >= 0)
+            {
+                int currType = H5Gget_objtype_by_idx(gid, k);
+                if ((currType == H5G_DATASET) || (currType == H5G_TYPE))
+                {
+                    // std::cout<<" ... handling native: "<<name<<" from
+                    // :"<<heritage<<"/"<<gname<<std::endl;
+                    hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
+                    HDF5TypeGuard d(datasetId, E_H5_DATASET);
+
+                    char longName[std::strlen(heritage) + std::strlen(gname) +
+                                  std::strlen(name) + 10];
+                    sprintf(longName, "%s/%s/%s", heritage, gname, name);
+                    // CreateVar(io, datasetId, name);
+                    CreateVar(io, datasetId, longName);
+                }
+                else if (currType == H5G_GROUP)
+                {
+                    std::string heritageNext = heritage;
+                    if (top_id != m_FileId)
+                    {
+                        heritageNext += "/";
+                        heritageNext += gname;
+                    }
+                    ReadNativeDatasets(io, gid, name, heritageNext.c_str());
+                }
+            }
+        }
+    }
+}
+/*
+void HDF5Common::ReadNativeGroup(hid_t hid, IO& io)
+{
+H5G_info_t group_info;
+herr_t result = H5Gget_info(hid, &group_info);
+
+if (result < 0) {
+  // error
+  throw std::ios_base::failure("Unable to get group info.");
+}
+
+if (group_info.nlinks == 0) {
+  return;
+}
+
+char tmpstr[1024];
+
+hsize_t idx;
+for (idx=0; idx<group_info.nlinks; idx++) {
+  int currType = H5Gget_objtype_by_idx(hid, idx);
+  if (currType < 0) {
+    throw std::ios_base::failure("unable to get type info of idx"+idx);
+  }
+
+
+  ssize_t curr= H5Gget_objname_by_idx(hid, idx, tmpstr, sizeof(tmpstr));
+  if (curr > 0) { // got a name
+    std::cout<<" ... printing a name: "<<tmpstr<<",
+type:[0=G/1=D/2=T/3=L/4=UDL]"<<currType<<std::endl;
+  }
+}
+}
+*/
 
 // read variables from the input timestep
 void HDF5Common::ReadVariables(unsigned int ts, IO &io)
@@ -214,10 +312,10 @@ void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
         shape.resize(ndims);
         if (ndims > 0)
         {
-            // std::cout<<" ==> variable "<<name<<" is "<<ndims<<"D,
-            // "<<dims[0]<<", "<<dims[1]<<std::endl;
             for (int i = 0; i < ndims; i++)
+            {
                 shape[i] = dims[i];
+            }
         }
 
         Dims zeros(shape.size(), 0);
@@ -242,6 +340,7 @@ void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
 
 void HDF5Common::CreateVar(IO &io, hid_t datasetId, std::string const &name)
 {
+    // std::cout<<" creating var: "<<name<<std::endl;
     hid_t h5Type = H5Dget_type(datasetId);
     HDF5TypeGuard t(h5Type, E_H5_DATATYPE);
 

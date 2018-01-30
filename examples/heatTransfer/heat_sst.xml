@@ -12,58 +12,27 @@
 
     <io name="writer">
         <engine type="SST">
-
-            <!-- for vectorized memory operations, make sure your system 
-                 enables threads--> 
-            <parameter key="Threads" value="2"/>
-
-            <!-- Microseconds (default), Milliseconds, Seconds, 
-                 Minutes, Hours -->
-            <parameter key="ProfileUnits" value="Microseconds"/>
-            
         </engine>
-
-        <transport type="File">
-            
-            <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="MPI"/>
-            
-            <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
-                 Minutes, Hours. open/close always in Microseconds -->
-            <parameter key="ProfileUnits" value="Microseconds"/>
-            
-        </transport>
-        
     </io>
 
 
-    <!--====================================
-           Configuration for the Reader 
-        ====================================-->
+    <!--======================================
+           Configuration for the Reader Input
+        ======================================-->
 
-    <io name="reader">
+    <io name="readerInput">
         <engine type="SST">
-            
-            <!-- for vectorized memory operations, make sure your system 
-                 enables threads--> 
-            <parameter key="Threads" value="2"/>
-
-            <!-- Microseconds (default), Milliseconds, Seconds, 
-                 Minutes, Hours -->
-            <parameter key="ProfileUnits" value="Microseconds"/>
-
         </engine>
-
-        <transport type="File">
-            
-            <!-- POSIX, stdio (C FILE*), fstream (C++) -->
-            <parameter key="Library" value="POSIX"/>
-            
-            <!-- For read/write, Microseconds (default), Milliseconds, Seconds, 
-                 Minutes, Hours. open/close always in Microseconds -->
-            <parameter key="ProfileUnits" value="Microseconds"/>
-            
-        </transport>
-        
     </io>
+    
+    
+    <!--=======================================
+           Configuration for the Reader output
+        =======================================-->
+    
+    <io name="readerOutput">
+        <engine type="BPFile">
+        </engine>
+    </io>
+
 </adios-config>

@@ -82,7 +82,7 @@ private:
     static std::mutex m_Mutex;
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
-    void ParsePGIndex(const BufferSTL &bufferSTL);
+    void ParsePGIndex(const BufferSTL &bufferSTL, const IO &io);
     void ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io);
     void ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io);
 

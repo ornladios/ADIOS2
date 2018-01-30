@@ -51,12 +51,15 @@ void HDF5ReaderP::Init()
     }
 
     m_H5File.Init(m_Name, m_MPIComm, false);
+
     int ts = m_H5File.GetNumAdiosSteps();
+    /*
+    //
     if (ts == 0)
     {
         throw std::runtime_error("This h5 file is NOT written by ADIOS2");
     }
-
+    */
     /*
      */
     if (!m_InStreamMode)
@@ -72,8 +75,69 @@ void HDF5ReaderP::Init()
 template <class T>
 void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 {
-    int ts = 0;
+
     T *values = data;
+
+    if (!m_H5File.m_IsGeneratedByAdios)
+    {
+        // printf("Will read by Native reader ..%s\n", variable.m_Name.c_str());
+        hid_t dataSetId =
+            H5Dopen(m_H5File.m_FileId, variable.m_Name.c_str(), H5P_DEFAULT);
+        if (dataSetId < 0)
+        {
+            return;
+        }
+
+        hid_t fileSpace = H5Dget_space(dataSetId);
+        if (fileSpace < 0)
+        {
+            return;
+        }
+
+        size_t slabsize = 1;
+
+        int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
+        if (0 == ndims)
+        { // is scalar
+            hid_t ret = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL,
+                                H5P_DEFAULT, values);
+        }
+        else
+        {
+            hsize_t start[ndims], count[ndims], stride[ndims];
+
+            for (int i = 0; i < ndims; i++)
+            {
+                count[i] = variable.m_Count[i];
+                start[i] = variable.m_Start[i];
+                slabsize *= count[i];
+                stride[i] = 1;
+            }
+            hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start,
+                                            stride, count, NULL);
+            if (ret < 0)
+                return;
+
+            hid_t memDataSpace = H5Screate_simple(ndims, count, NULL);
+            int elementsRead = 1;
+            for (int i = 0; i < ndims; i++)
+            {
+                elementsRead *= count[i];
+            }
+
+            ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace,
+                          H5P_DEFAULT, values);
+            H5Sclose(memDataSpace);
+        }
+
+        H5Sclose(fileSpace);
+        H5Dclose(dataSetId);
+
+        return;
+    }
+
+    int ts = 0;
+    // T *values = data;
     size_t variableStart = variable.m_StepsStart;
     if (!m_InStreamMode && (variableStart == 1))
     { // variableBase::m_StepsStart min=1
@@ -82,9 +146,10 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 
     while (ts < variable.m_StepsCount)
     {
-        // m_H5File.SetTimeStep(variable.m_StepsStart + ts);
-        m_H5File.SetAdiosStep(variableStart + ts);
-
+        if (m_H5File.m_IsGeneratedByAdios)
+        {
+            m_H5File.SetAdiosStep(variableStart + ts);
+        }
         hid_t dataSetId =
             H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
         if (dataSetId < 0)
@@ -232,6 +297,7 @@ values); #endif
 
 StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    printf(".... in begin step: \n");
     m_InStreamMode = true;
     int ts = m_H5File.GetNumAdiosSteps();
     if (m_StreamAt >= ts)

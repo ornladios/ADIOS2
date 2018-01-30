@@ -184,12 +184,12 @@ void BPFileReader::ReadVariables(
     const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
 
     // sequentially request bytes from transport manager
-    // threaded here?
+    // threaded per variable?
     for (const auto &variableNamePair : variablesSubFileInfo) // variable name
     {
         const std::string variableName(variableNamePair.first);
 
-        // or threaded here?
+        // or threaded per file?
         for (const auto &subFileIndexPair : variableNamePair.second)
         {
             const size_t subFileIndex = subFileIndexPair.first;
