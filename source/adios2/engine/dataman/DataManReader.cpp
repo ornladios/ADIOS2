@@ -107,51 +107,14 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                         }
 
 // for debug
-/*
-else if (type == GetType<float>())
-{
-adios2::Variable<float> *v =
-m_IO.InquireVariable<float>(var);
-deserializer.GetSyncVariableDataFromStream(
-*v, deserializer.m_Data);
-if (v->GetData() == nullptr)
-{
-throw("Data pointer obtained from BP "
-"deserializer is anullptr");
-}
-else
-{
-for (auto &step : v->m_IndexStepBlockStarts)
-{
-std::shared_ptr<DataManVar> dmv =
-std::make_shared<DataManVar>();
-dmv->datatype = type;
-dmv->shape = v->m_Shape;
-dmv->start = v->m_Start;
-dmv->count = v->m_Count;
-dmv->data.resize(v->PayloadSize());
-v->SetStepSelection({step.first - 1, 1});
-deserializer.GetSyncVariableDataFromStream(
-*v, deserializer.m_Data);
-std::memcpy(dmv->data.data(), v->GetData(),
-v->PayloadSize());
-RunCallback(v->GetData(), "stream", var,
-type, v->m_Shape);
-m_VariableMap[step.first - 1][var] = dmv;
-}
-}
-}
-*/
-
 #define declare_type(T)                                                        \
     else if (type == GetType<T>())                                             \
     {                                                                          \
         adios2::Variable<T> *v = m_IO.InquireVariable<T>(var);                 \
-        deserializer.GetSyncVariableDataFromStream(*v, deserializer.m_Data);   \
-        if (v->GetData() == nullptr)                                           \
+        if (v == nullptr)                                                      \
         {                                                                      \
-            throw("Data pointer obtained from BP "                             \
-                  "deserializer is anullptr");                                 \
+            throw std::runtime_error("Data pointer obtained from BP "          \
+                                     "deserializer is anullptr");              \
         }                                                                      \
         else                                                                   \
         {                                                                      \
