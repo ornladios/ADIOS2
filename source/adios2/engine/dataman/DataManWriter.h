@@ -39,13 +39,12 @@ private:
     std::string m_Name;
 
     unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "bp";
+    std::string m_UseFormat = "json";
     bool m_DoMonitor = false;
     size_t m_StepsPerWrite = 10;
+    size_t m_CurrentStep = 0;
 
     void Init();
-    void InitParameters();
-    void InitTransports();
 
     bool GetBoolParameter(Params &params, std::string key, bool &value);
     bool GetStringParameter(Params &params, std::string key,
@@ -67,6 +66,9 @@ private:
 
     template <class T>
     void PutSyncCommonBP(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutSyncCommonJson(Variable<T> &variable, const T *values);
 
     void DoClose(const int transportIndex = -1) final;
 };

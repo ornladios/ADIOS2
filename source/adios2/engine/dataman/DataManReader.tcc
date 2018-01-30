@@ -22,30 +22,33 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
 
     // delete any time steps older than the current step
-    if(m_CurrentStep > m_OldestStep){
-        for(int m = m_OldestStep; m < m_CurrentStep; ++m){
-            auto k = m_VariableMap.find(m);
-            if( k != m_VariableMap.end() ){
-                m_VariableMap.erase(k);
-            }
-        }
-        m_OldestStep = m_CurrentStep;
-    }
+	if(m_CurrentStep > m_OldestStep){
+		for(int m = m_OldestStep; m < m_CurrentStep; ++m){
+			auto k = m_VariableMap.find(m);
+			if( k != m_VariableMap.end() ){
+				m_MutexMap.lock();											    
+				m_VariableMap.erase(k);
+				m_MutexMap.unlock();											    
+			}
+		}
+		m_OldestStep = m_CurrentStep;
+	}
 
-    // copy data
+	// copy data
 	for(int m=0; m<10; ++m){
 		auto i = m_VariableMap.find(m_CurrentStep);
 		if( i != m_VariableMap.end() ){
 			auto j = i->second.find(variable.m_Name);
 			if( j != i->second.end() ){
 				std::memcpy(data, j->second->data.data(), j->second->data.size());
+				m_MutexMap.lock();											    
 				i->second.erase( j );
+				m_MutexMap.unlock();											    
 				return;
 			}
 		}
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
-
 }
 
 template <class T>

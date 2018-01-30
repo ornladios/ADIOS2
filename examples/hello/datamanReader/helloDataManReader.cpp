@@ -47,32 +47,28 @@ int main(int argc, char *argv[])
         adios2::Engine &dataManReader =
             dataManIO.Open("myFloats.bp", adios2::Mode::Read);
 
-        for (unsigned int i = 0; i < 3; ++i)
+        adios2::Variable<float> *bpFloats;
+
+        std::vector<float> myFloats(10);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        bpFloats = dataManIO.InquireVariable<float>("bpFloats");
+        if (bpFloats == nullptr)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+            std::cout << "Variable bpFloats not read...yet\n";
         }
 
-        //        adios2::Variable<float> *bpFloats;
-        //
-        //        std::vector<float> myFloats(10);
-        //
-        //        bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-        //        if (bpFloats == nullptr)
-        //        {
-        //            std::cout << "Variable bpFloats not read...yet\n";
-        //        }
-        //
-        //        else
-        //        {
-        //            for (int i = 0; i < 1000; ++i)
-        //            {
-        //                dataManReader.BeginStep();
-        //                dataManReader.GetSync<float>(*bpFloats,
-        //                myFloats.data());
-        //                Dump(myFloats);
-        //                dataManReader.EndStep();
-        //            }
-        //        }
+        else
+        {
+            for (int i = 0; i < 1000; ++i)
+            {
+                dataManReader.BeginStep();
+                dataManReader.GetSync<float>(*bpFloats, myFloats.data());
+                Dump(myFloats);
+                dataManReader.EndStep();
+            }
+        }
 
         dataManReader.Close();
     }

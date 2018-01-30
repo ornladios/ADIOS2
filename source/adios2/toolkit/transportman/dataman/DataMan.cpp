@@ -118,7 +118,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void DataMan::WriteWAN(const std::vector<char> &buffer, size_t size)
+void DataMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer)
 {
     if (m_CurrentTransport >= m_Transports.size())
     {
@@ -127,7 +127,19 @@ void DataMan::WriteWAN(const std::vector<char> &buffer, size_t size)
     }
 
     m_Transports[m_CurrentTransport]->Write(
-        reinterpret_cast<const char *>(buffer.data()), size);
+        reinterpret_cast<const char *>(buffer->data()), buffer->size());
+}
+
+void DataMan::WriteWAN(const std::vector<char> &buffer)
+{
+    if (m_CurrentTransport >= m_Transports.size())
+    {
+        throw std::runtime_error(
+            "ERROR: No valid transports found, from DataMan::WriteWAN()");
+    }
+
+    m_Transports[m_CurrentTransport]->Write(
+        reinterpret_cast<const char *>(buffer.data()), buffer.size());
 }
 
 std::shared_ptr<std::vector<char>> DataMan::ReadWAN()

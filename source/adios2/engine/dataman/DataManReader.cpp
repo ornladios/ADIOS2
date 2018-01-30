@@ -43,11 +43,23 @@ DataManReader::~DataManReader()
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-
     StepStatus status;
-    status = StepStatus::OK;
 
-    status = StepStatus::EndOfStream;
+    int s = 0;
+    while (m_VariableMap.empty() && s < 100)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        s++;
+    }
+
+    if (m_VariableMap.empty())
+    {
+        status = StepStatus::EndOfStream;
+    }
+    else
+    {
+        status = StepStatus::OK;
+    }
 
     return status;
 }
@@ -57,17 +69,12 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
 
     if (m_UseFormat == "BP" || m_UseFormat == "bp")
     {
+        std::cout << "using bp\n";
         format::BP3Deserializer deserializer(m_MPIComm, m_DebugMode);
-
         deserializer.InitParameters(m_IO.m_Parameters);
 
         while (m_Listening)
         {
-            // TODO: This is absolutely not thread safe. If future
-            // implementation needs multiple threads then this has to be
-            // rewriten by manually removing variables one by one and it
-            // has to be protected by mutex.
-
             std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
             if (buffer != nullptr)
             {
@@ -82,7 +89,6 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                     m_MutexIO.lock();
                     m_IO.RemoveAllVariables();
                     m_IO.RemoveAllAttributes();
-                    std::cout << "ParseMetadata ===\n";
                     deserializer.ParseMetadata(deserializer.m_Data, m_IO);
                     m_MutexIO.unlock();
 
@@ -106,7 +112,6 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                             throw("Compound type is not supported yet.");
                         }
 
-// for debug
 #define declare_type(T)                                                        \
     else if (type == GetType<T>())                                             \
     {                                                                          \
@@ -122,7 +127,7 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
             {                                                                  \
                 std::shared_ptr<DataManVar> dmv =                              \
                     std::make_shared<DataManVar>();                            \
-                dmv->datatype = type;                                          \
+                dmv->type = type;                                              \
                 dmv->shape = v->m_Shape;                                       \
                 dmv->start = v->m_Start;                                       \
                 dmv->count = v->m_Count;                                       \
@@ -132,12 +137,63 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                     *v, deserializer.m_Data);                                  \
                 std::memcpy(dmv->data.data(), v->GetData(), v->PayloadSize()); \
                 RunCallback(v->GetData(), "stream", var, type, v->m_Shape);    \
+                m_MutexMap.lock();                                             \
                 m_VariableMap[step.first - 1][var] = dmv;                      \
+                m_MutexMap.unlock();                                           \
             }                                                                  \
         }                                                                      \
     }
                         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+                    }
+                }
+            }
+        }
+    }
+
+    else if (m_UseFormat == "json")
+    {
+
+        while (m_Listening)
+        {
+            std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
+            if (buffer != nullptr)
+            {
+                size_t flagsize = sizeof(size_t);
+                if (buffer->size() > flagsize)
+                {
+                    size_t metasize;
+                    std::memcpy(&metasize, buffer->data(), flagsize);
+
+                    if (metasize > 0)
+                    {
+                        char metastr[metasize + 1];
+                        std::memcpy(metastr, buffer->data() + flagsize,
+                                    metasize);
+                        metastr[metasize] = '\0';
+                        std::cout << metastr << "\n";
+                        nlohmann::json metaj = nlohmann::json::parse(metastr);
+
+                        std::shared_ptr<DataManVar> dmv =
+                            std::make_shared<DataManVar>();
+
+                        dmv->shape = metaj["S"].get<std::vector<size_t>>();
+                        dmv->count = metaj["C"].get<std::vector<size_t>>();
+                        dmv->start = metaj["O"].get<std::vector<size_t>>();
+                        size_t step = metaj["T"].get<size_t>();
+                        std::string name = metaj["N"].get<std::string>();
+                        dmv->type = metaj["Y"].get<std::string>();
+                        dmv->size = metaj["I"].get<size_t>();
+
+                        dmv->data.resize(metaj["I"].get<size_t>());
+                        std::memcpy(dmv->data.data(),
+                                    buffer->data() + flagsize + metasize,
+                                    dmv->size);
+                        RunCallback(dmv->data.data(), "stream", name, dmv->type,
+                                    dmv->shape);
+                        m_MutexMap.lock();
+                        m_VariableMap[step][name] = dmv;
+                        m_MutexMap.unlock();
                     }
                 }
             }
@@ -210,7 +266,7 @@ void DataManReader::Init()
 
     // get parameters
     GetUIntParameter(m_IO.m_Parameters, "NChannels", m_NChannels);
-    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
+    //    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
 
     // initialize transports
 

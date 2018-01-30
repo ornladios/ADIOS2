@@ -60,7 +60,7 @@ private:
 
     size_t m_BufferSize = 1024 * 1024 * 1024;
     unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "BP";
+    std::string m_UseFormat = "json";
     bool m_DoMonitor = false;
     std::vector<adios2::Operator *> m_Callbacks;
 
@@ -73,10 +73,11 @@ private:
     struct DataManVar
     {
         std::vector<char> data;
-        std::string datatype;
+        std::string type;
         Dims shape;
         Dims start;
         Dims count;
+        size_t size;
     };
 
     std::unordered_map<
