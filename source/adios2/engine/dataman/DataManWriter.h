@@ -34,14 +34,18 @@ public:
     void EndStep() final;
 
 private:
+    unsigned int m_nDataThreads = 1;
+    unsigned int m_nControlThreads = 0;
+    unsigned int m_TransportChannels = 1;
+    size_t m_BufferSize = 1024 * 1024 * 1024;
+    std::string m_UseFormat = "json";
+    bool m_DoMonitor = false;
+    bool m_Blocking = true;
+    size_t m_StepsPerBuffer = 10;
+
     format::BP3Serializer m_BP3Serializer;
     transportman::DataMan m_Man;
     std::string m_Name;
-
-    unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "json";
-    bool m_DoMonitor = false;
-    size_t m_StepsPerWrite = 10;
     size_t m_CurrentStep = 0;
 
     void Init();

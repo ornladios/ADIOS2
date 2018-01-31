@@ -76,7 +76,7 @@ void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
 	std::memcpy(buffer->data() + flagsize, metastr.c_str(), metasize);
 	std::memcpy(buffer->data() + flagsize + metasize, values, datasize);
 
-	m_Man.WriteWAN(buffer);
+	m_Man.WriteWAN(buffer, m_Blocking);
 }
 
 

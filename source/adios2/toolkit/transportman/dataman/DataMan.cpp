@@ -44,7 +44,7 @@ void DataMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                                 const Mode mode,
                                 const std::vector<Params> &paramsVector,
-                                const bool profile)
+                                const bool profile, const bool blocking)
 {
 
     if (streamNames.size() == 0)
@@ -87,7 +87,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
 #ifdef ADIOS2_HAVE_ZEROMQ
 
             wanTransport = std::make_shared<transport::WANZmq>(
-                ipAddress, port, m_MPIComm, m_DebugMode);
+                ipAddress, port, m_MPIComm, blocking, m_DebugMode);
             wanTransport->Open(streamNames[i], mode);
             m_Transports.emplace(i, wanTransport);
 
@@ -118,19 +118,12 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void DataMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer)
+void DataMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer, bool blocking)
 {
-    if (m_CurrentTransport >= m_Transports.size())
-    {
-        throw std::runtime_error(
-            "ERROR: No valid transports found, from DataMan::WriteWAN()");
-    }
-
-    m_Transports[m_CurrentTransport]->Write(
-        reinterpret_cast<const char *>(buffer->data()), buffer->size());
+    WriteWAN(*buffer, blocking);
 }
 
-void DataMan::WriteWAN(const std::vector<char> &buffer)
+void DataMan::WriteWAN(const std::vector<char> &buffer, bool blocking)
 {
     if (m_CurrentTransport >= m_Transports.size())
     {
@@ -138,8 +131,18 @@ void DataMan::WriteWAN(const std::vector<char> &buffer)
             "ERROR: No valid transports found, from DataMan::WriteWAN()");
     }
 
-    m_Transports[m_CurrentTransport]->Write(
-        reinterpret_cast<const char *>(buffer.data()), buffer.size());
+    if (blocking)
+    {
+        m_Transports[m_CurrentTransport]->Write(
+            reinterpret_cast<const char *>(buffer.data()), buffer.size());
+    }
+    else
+    {
+        Transport::Status status;
+        m_Transports[m_CurrentTransport]->IWrite(
+            reinterpret_cast<const char *>(buffer.data()), buffer.size(),
+            status);
+    }
 }
 
 std::shared_ptr<std::vector<char>> DataMan::ReadWAN()
@@ -189,76 +192,55 @@ void DataMan::ReadThread(std::shared_ptr<Transport> transport)
 
             std::shared_ptr<std::vector<char>> bufferQ =
                 std::make_shared<std::vector<char>>(status.Bytes);
-
             std::memcpy(bufferQ->data(), buffer.data(), status.Bytes);
-
             PushBufferQueue(bufferQ);
 
             /*
-                            // TODO: move to engine
-                            if (GetBoolParameter(trans_params, "DumpFile"))
-                            {
-                                std::ofstream bpfile(stream_name,
-            std::ios_base::binary);
-                                bpfile.write(reinterpret_cast<const char
-            *>(buffer->data()),
-                                             status.Bytes);
-                                bpfile.close();
-                            }
-
-                            m_BP3Deserializer->m_Data.Resize(
-                                status.Bytes, "in DataMan Streaming Listener");
-                            std::memcpy(m_BP3Deserializer->m_Data.m_Buffer.data(),
-                                        buffer.data(), status.Bytes);
-                            m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Data,
-                                                             *m_IO);
-
-                            const auto variablesInfo =
-            m_IO->GetAvailableVariables();
-                            for (const auto &variableInfoPair : variablesInfo)
-                            {
-
-                                std::string var = variableInfoPair.first;
-                                std::string type = "null";
-
-                                for (const auto &parameter :
-            variableInfoPair.second)
-                                {
-                                    //  ** print out all parameters from BP
-            metadata
-                                        std::cout << "\tKey: " <<
-            parameter.first
-                                                  << "\t Value: " <<
-            parameter.second <<
-                                       "\n";
-                                    if (parameter.first == "Type")
+                                    // TODO: move to engine
+                                    if (GetBoolParameter(trans_params,
+               "DumpFile"))
                                     {
-                                        type = parameter.second;
+                                            std::ofstream bpfile(stream_name,
+                                                            std::ios_base::binary);
+                                            bpfile.write(reinterpret_cast<const
+               char
+                                                            *>(buffer->data()),
+                                                            status.Bytes);
+                                            bpfile.close();
                                     }
-                                }
 
-                                if (type == "compound")
-                                {
-                                    // not supported
-                                }
-            #define declare_type(T) \
-                else if (type == GetType<T>()) \
-                { \
-                    adios2::Variable<T> *v = m_IO->InquireVariable<T>(var); \
-                    m_BP3Deserializer->GetSyncVariableDataFromStream( \
-                        *v, m_BP3Deserializer->m_Data); \
-                    if (v->GetData() == nullptr) \
-                    { \
-                        throw("Data pointer obtained from BP deserializer is a
-            nullptr");  \
-                    } \
-                    RunCallback(v->GetData(), "stream", var, type, v->m_Shape);
-            \
-                }
-                                ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-            #undef declare_type
-                            }
-                                    */
+
+                                    const auto variablesInfo =
+                                            m_IO->GetAvailableVariables();
+                                    for (const auto &variableInfoPair :
+               variablesInfo)
+                                    {
+
+                                            std::string var =
+               variableInfoPair.first;
+                                            std::string type = "null";
+
+                                            for (const auto &parameter :
+                                                            variableInfoPair.second)
+                                            {
+                                                    //  ** print out all
+               parameters from BP metadata
+                                                            std::cout << "\tKey:
+               " <<
+                                                            parameter.first
+                                                            << "\t Value: " <<
+                                                            parameter.second <<
+                                                            "\n";
+                                                    if (parameter.first ==
+               "Type")
+                                                    {
+                                                            type =
+               parameter.second;
+                                                    }
+                                            }
+
+                                    }
+            */
         }
     }
 }

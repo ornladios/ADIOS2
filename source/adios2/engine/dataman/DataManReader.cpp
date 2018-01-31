@@ -283,7 +283,11 @@ void DataManReader::Init()
     }
 
     // get parameters
-    GetUIntParameter(m_IO.m_Parameters, "NChannels", m_NChannels);
+    GetUIntParameter(m_IO.m_Parameters, "DataThreads", m_nDataThreads);
+    GetUIntParameter(m_IO.m_Parameters, "ControlThreads", m_nControlThreads);
+    GetUIntParameter(m_IO.m_Parameters, "TransportChannels",
+                     m_TransportChannels);
+    GetBoolParameter(m_IO.m_Parameters, "Blocking", m_Blocking);
     //    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
 
     // initialize transports
@@ -299,17 +303,17 @@ void DataManReader::Init()
     }
 
     m_DataMan->OpenWANTransports(names, Mode::Read, m_IO.m_TransportsParameters,
-                                 true);
+                                 true, m_Blocking);
 
     // start threads
 
     m_Listening = true;
-    for (size_t i = 0; i < m_DataChannels; ++i)
+    for (size_t i = 0; i < m_nDataThreads; ++i)
     {
         m_DataThreads.emplace_back(
             std::thread(&DataManReader::ReadThread, this, m_DataMan));
     }
-    for (size_t i = 0; i < m_ControlChannels; ++i)
+    for (size_t i = 0; i < m_nControlThreads; ++i)
     {
         m_ControlThreads.emplace_back(
             std::thread(&DataManReader::ReadThread, this, m_ControlMan));

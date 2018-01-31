@@ -40,7 +40,7 @@ void DataManWriter::EndStep()
     {
         m_BP3Serializer.SerializeData(m_IO, true);
         m_BP3Serializer.CloseStream(m_IO);
-        m_Man.WriteWAN(m_BP3Serializer.m_Data.m_Buffer);
+        m_Man.WriteWAN(m_BP3Serializer.m_Data.m_Buffer, m_Blocking);
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data, true);
         m_BP3Serializer.ResetIndices();
     }
@@ -98,7 +98,11 @@ bool DataManWriter::GetUIntParameter(Params &params, std::string key,
 void DataManWriter::Init()
 {
     GetBoolParameter(m_IO.m_Parameters, "Monitoring", m_DoMonitor);
-    GetUIntParameter(m_IO.m_Parameters, "NTransports", m_NChannels);
+    GetUIntParameter(m_IO.m_Parameters, "DataThreads", m_nDataThreads);
+    GetUIntParameter(m_IO.m_Parameters, "ControlThreads", m_nControlThreads);
+    GetUIntParameter(m_IO.m_Parameters, "TransportChannels",
+                     m_TransportChannels);
+    GetBoolParameter(m_IO.m_Parameters, "Blocking", m_Blocking);
 
     // Check if using BP Format and initialize buffer
     //    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
@@ -116,7 +120,7 @@ void DataManWriter::Init()
     }
 
     m_Man.OpenWANTransports(names, Mode::Write, m_IO.m_TransportsParameters,
-                            true);
+                            true, m_Blocking);
 }
 
 #define declare_type(T)                                                        \

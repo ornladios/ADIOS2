@@ -51,18 +51,20 @@ public:
     size_t CurrentStep() const;
 
 private:
+    unsigned int m_nDataThreads = 1;
+    unsigned int m_nControlThreads = 0;
+    unsigned int m_TransportChannels = 1;
+    size_t m_BufferSize = 1024 * 1024 * 1024;
+    std::string m_UseFormat = "json";
+    bool m_DoMonitor = false;
+    bool m_Blocking = true;
+
     std::shared_ptr<transportman::DataMan> m_DataMan;
     std::vector<std::thread> m_DataThreads;
-    size_t m_DataChannels = 1;
 
     std::shared_ptr<transportman::DataMan> m_ControlMan;
     std::vector<std::thread> m_ControlThreads;
-    size_t m_ControlChannels = 0;
 
-    size_t m_BufferSize = 1024 * 1024 * 1024;
-    unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "json";
-    bool m_DoMonitor = false;
     std::vector<adios2::Operator *> m_Callbacks;
 
     // The current time step that the reader app is reading
@@ -70,6 +72,8 @@ private:
 
     // The oldest time step contained in m_VariableMap
     size_t m_OldestStep = 0;
+
+    bool m_Listening = false;
 
     struct DataManVar
     {
@@ -88,10 +92,7 @@ private:
     std::mutex m_MutexIO;
     std::mutex m_MutexMap;
 
-    bool m_Blocking = true;
-
     void ReadThread(std::shared_ptr<transportman::DataMan> man);
-    bool m_Listening = false;
 
     void Init();
 
@@ -102,6 +103,8 @@ private:
                             std::string &value);
     bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
 
+    void DoClose(const int transportIndex = -1) final;
+
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \
@@ -109,17 +112,14 @@ private:
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-    void DoClose(const int transportIndex = -1) final;
-
     /**
-     * All DoGetSync virtual functions call this function
+     * All GetSync virtual functions call this function
      * @param variable
      * @param data
      */
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 
-    // TODO: let's implement this after GetSyncCommon
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 };

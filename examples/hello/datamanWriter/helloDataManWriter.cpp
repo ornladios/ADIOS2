@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
         adios2::IO &dataManIO = adios.DeclareIO("WANIO");
         dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters({
-            {"Compression", "no"}, {"Format", "bp"},
+            {"Blocking", "yes"}, {"Format", "bp"},
         });
         dataManIO.AddTransport(
             "WAN", {
@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
             Dump(myFloats);
             dataManWriter.PutSync<float>(bpFloats, myFloats.data());
             dataManWriter.EndStep();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
         dataManWriter.Close();
