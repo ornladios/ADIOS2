@@ -50,8 +50,9 @@ static void writeContactInfo(const char *Name, SstStream Stream)
     free(FileName);
 }
 
-static void removeContactInfo(const char *Name)
+static void removeContactInfo(SstStream Stream)
 {
+    const char *Name = Stream->Filename;
     char *FileName = malloc(strlen(Name) + strlen(".bpflx") + 1);
     FILE *WriterInfo;
     sprintf(FileName, "%s.bpflx", Name);
@@ -76,9 +77,7 @@ redo:
     int Size = Buf.st_size;
     if (Size == 0)
     {
-        //        printf("Size of writer contact file is zero, but it shouldn't
-        //        be! "
-        //               "Retrying!\n");
+        //  Try again, it might look zero momentarily, but shouldn't stay that way.
         goto redo;
     }
 
@@ -334,12 +333,8 @@ SstStream SstWriterOpen(const char *Name, const char *params, MPI_Comm comm)
         MPI_Barrier(Stream->mpiComm);
         gettimeofday(&Stream->ValidStartTime, NULL);
 
-        /*
-         *  We'll go ahead and remove the contact info since multiple
-         *  readers is not yet implemented
-         */
-        removeContactInfo(Filename);
     }
+    Stream->Filename = Filename;
     CP_verbose(Stream, "Finish opening Stream \"%s\"\n", Filename);
     return Stream;
 }
@@ -390,6 +385,11 @@ void SstWriterClose(SstStream Stream)
         Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
     CP_verbose(Stream, "All timesteps are released in WriterClose\n");
+    /*
+     *  We'll go ahead and remove the contact info since multiple
+     *  readers is not yet implemented
+     */
+    removeContactInfo(Stream);
 }
 
 static FFSFormatList AddUniqueFormats(FFSFormatList List,

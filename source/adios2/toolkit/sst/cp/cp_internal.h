@@ -118,6 +118,7 @@ struct _SstStream
 
     int ReaderCount;
     WS_ReaderInfo *Readers;
+    const char *Filename;
 
     /* writer side marshal info */
     void *MarshalData;
