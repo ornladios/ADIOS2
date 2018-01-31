@@ -48,6 +48,7 @@ public:
     void PerformGets() final;
 
     void EndStep() final;
+    size_t CurrentStep() const;
 
 private:
     std::shared_ptr<transportman::DataMan> m_DataMan;
@@ -86,6 +87,8 @@ private:
 
     std::mutex m_MutexIO;
     std::mutex m_MutexMap;
+
+    bool m_Blocking = true;
 
     void ReadThread(std::shared_ptr<transportman::DataMan> man);
     bool m_Listening = false;

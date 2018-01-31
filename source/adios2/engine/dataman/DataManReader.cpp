@@ -45,11 +45,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 {
     StepStatus status;
 
-    int s = 0;
-    while (m_VariableMap.empty() && s < 100)
+    while (m_VariableMap.empty())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        s++;
     }
 
     if (m_VariableMap.empty())
@@ -64,12 +62,15 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     return status;
 }
 
+size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
+
+void DataManReader::EndStep() { ++m_CurrentStep; }
+
 void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
 {
 
     if (m_UseFormat == "BP" || m_UseFormat == "bp")
     {
-        std::cout << "using bp\n";
         format::BP3Deserializer deserializer(m_MPIComm, m_DebugMode);
         deserializer.InitParameters(m_IO.m_Parameters);
 
@@ -171,7 +172,6 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                         std::memcpy(metastr, buffer->data() + flagsize,
                                     metasize);
                         metastr[metasize] = '\0';
-                        std::cout << metastr << "\n";
                         nlohmann::json metaj = nlohmann::json::parse(metastr);
 
                         std::shared_ptr<DataManVar> dmv =
@@ -185,15 +185,35 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                         dmv->type = metaj["Y"].get<std::string>();
                         dmv->size = metaj["I"].get<size_t>();
 
+                        if (dmv->type == "compound")
+                        {
+                            throw("Compound type is not supported yet.");
+                        }
+#define declare_type(T)                                                        \
+    else if (dmv->type == GetType<T>())                                        \
+    {                                                                          \
+        adios2::Variable<T> *v = m_IO.InquireVariable<T>(name);                \
+        if (v == nullptr)                                                      \
+        {                                                                      \
+            m_IO.DefineVariable<T>(name, dmv->shape, dmv->start, dmv->count);  \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+        }                                                                      \
+    }
+                        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
                         dmv->data.resize(metaj["I"].get<size_t>());
                         std::memcpy(dmv->data.data(),
                                     buffer->data() + flagsize + metasize,
                                     dmv->size);
-                        RunCallback(dmv->data.data(), "stream", name, dmv->type,
-                                    dmv->shape);
+
                         m_MutexMap.lock();
                         m_VariableMap[step][name] = dmv;
                         m_MutexMap.unlock();
+                        RunCallback(dmv->data.data(), "stream", name, dmv->type,
+                                    dmv->shape);
                     }
                 }
             }
@@ -202,8 +222,6 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
 }
 
 void DataManReader::PerformGets() {}
-
-void DataManReader::EndStep() { ++m_CurrentStep; }
 
 // PRIVATE
 bool DataManReader::GetBoolParameter(Params &params, std::string key,

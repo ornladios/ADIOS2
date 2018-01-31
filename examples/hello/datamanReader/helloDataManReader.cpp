@@ -45,25 +45,25 @@ int main(int argc, char *argv[])
                        {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"},
                    });
         adios2::Engine &dataManReader =
-            dataManIO.Open("myFloats.bp", adios2::Mode::Read);
+            dataManIO.Open("stream", adios2::Mode::Read);
 
         adios2::Variable<float> *bpFloats;
 
         std::vector<float> myFloats(10);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
         bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-        if (bpFloats == nullptr)
+        while (bpFloats == nullptr)
         {
-            std::cout << "Variable bpFloats not read...yet\n";
+            std::cout << "Variable bpFloats not read yet. Waiting...\n";
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            bpFloats = dataManIO.InquireVariable<float>("bpFloats");
         }
 
-        else
+        for (int i = 0; i < 100000; ++i)
         {
-            for (int i = 0; i < 1000; ++i)
+            adios2::StepStatus status = dataManReader.BeginStep();
+            if (status == adios2::StepStatus::OK)
             {
-                dataManReader.BeginStep();
                 dataManReader.GetSync<float>(*bpFloats, myFloats.data());
                 Dump(myFloats);
                 dataManReader.EndStep();
