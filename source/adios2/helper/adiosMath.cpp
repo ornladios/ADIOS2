@@ -156,6 +156,7 @@ bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 
 bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
                                       const Box<Dims> &intersectionBox,
+                                      const bool isRowMajor,
                                       size_t &startOffset) noexcept
 {
     bool itIs = true;
@@ -167,8 +168,24 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
         return true;
     }
     // It is a contiguous subarray iff the dimensions are equal everywhere
-    // except in the first dimension
-    for (size_t d = 1; d < dimensionsSize; ++d)
+    // except in the slowest dimension
+    int dStart, dEnd, dSlowest;
+    if (isRowMajor)
+    {
+        // first dimension is slowest
+        dSlowest = 0;
+        dStart = 1;
+        dEnd = dimensionsSize - 1;
+    }
+    else
+    {
+        // last dimension is slowest
+        dStart = 0;
+        dEnd = dimensionsSize - 2;
+        dSlowest = dimensionsSize - 1;
+    }
+
+    for (size_t d = dStart; d <= dEnd; ++d)
     {
         if (blockBox.first[d] != intersectionBox.first[d] ||
             blockBox.second[d] != intersectionBox.second[d])
@@ -177,7 +194,8 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
         }
         nElements *= (blockBox.second[d] - blockBox.first[d] + 1);
     }
-    startOffset = (intersectionBox.first[0] - blockBox.first[0]) * nElements;
+    startOffset = (intersectionBox.first[dSlowest] - blockBox.first[dSlowest]) *
+                  nElements;
     return true;
 }
 

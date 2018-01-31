@@ -180,7 +180,8 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
             std::cout << "InSituMPI Reader " << m_ReaderRank << " found "
                       << m_IO.GetVariablesDataMap().size() << " variables and "
                       << m_IO.GetAttributesDataMap().size()
-                      << " attributes in metadata" << std::endl;
+                      << " attributes in metadata. Is source row major = "
+                      << m_BP3Deserializer.m_IsRowMajor << std::endl;
         }
     }
 
@@ -207,8 +208,11 @@ void InSituMPIReader::PerformGets()
         m_ReadScheduleMap.clear();
         m_ReadScheduleMap =
             m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+        // bool reader_IsRowMajor = IsRowMajor(m_IO.m_HostLanguage);
+        // bool writer_IsRowMajor = m_BP3Deserializer.m_IsRowMajor;
         // recalculate seek offsets to payload offset 0 (beginning of blocks)
-        int nRequests = insitumpi::FixSeeksToZeroOffset(m_ReadScheduleMap);
+        int nRequests = insitumpi::FixSeeksToZeroOffset(
+            m_ReadScheduleMap, IsRowMajor(m_IO.m_HostLanguage));
 
         // Send schedule to writers
         SendReadSchedule(m_ReadScheduleMap);
