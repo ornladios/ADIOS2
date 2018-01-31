@@ -78,7 +78,8 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
     // if first timestep Write create a new pg index
     if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
     {
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_Zmq"});
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                             {"WAN_Zmq"});
     }
 
     const size_t dataSize = variable.PayloadSize() +
@@ -99,7 +100,8 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
         // set relative position to clear buffer
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
         // new group index
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_zmq"});
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                             {"WAN_zmq"});
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
@@ -111,7 +113,6 @@ template <class T>
 void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
     PutSyncCommon(variable, values);
-
 }
 
 } // end namespace adios2

@@ -150,7 +150,8 @@ void BPFileWriter::InitBPBuffer()
     else
     {
         m_BP3Serializer.PutProcessGroupIndex(
-            m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
+            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_FileDataManager.GetTransportsTypes());
     }
 }
 
