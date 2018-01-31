@@ -44,11 +44,12 @@ public:
     /**
      * Writes a process group index PGIndex and list of methods (from
      * transports). Done at Open or Advance.
+     * @param ioName from IO class, identify Process Group with IO name
      * @param hostLanguage from ADIOS class passed to IO
      * @param transportsTypes passed to get list of transport "bp methods"
      */
     void PutProcessGroupIndex(
-        const std::string hostLanguage,
+        const std::string &ioName, const std::string hostLanguage,
         const std::vector<std::string> &transportsTypes) noexcept;
 
     /**

@@ -116,7 +116,8 @@ void DataManWriter::InitParameters()
     if (m_UseFormat == "BP" || m_UseFormat == "bp")
     {
         m_BP3Serializer.InitParameters(m_IO.m_Parameters);
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_Zmq"});
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                             {"WAN_Zmq"});
     }
 }
 
