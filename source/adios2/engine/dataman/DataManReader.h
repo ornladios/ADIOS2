@@ -82,7 +82,7 @@ private:
         Dims shape;
         Dims start;
         Dims count;
-        size_t size;
+        size_t rank;
     };
 
     std::unordered_map<

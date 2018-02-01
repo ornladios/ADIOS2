@@ -69,16 +69,15 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                                       m_DebugMode, "Transport Port Parameter"));
 
         // Calculate port number
+        int mpiRank, mpiSize;
+        MPI_Comm_rank(m_MPIComm, &mpiRank);
+        MPI_Comm_size(m_MPIComm, &mpiSize);
         if (port.empty())
         {
             port = std::to_string(m_DefaultPort);
-
-            int mpiRank, mpiSize;
-            MPI_Comm_rank(m_MPIComm, &mpiRank);
-            MPI_Comm_size(m_MPIComm, &mpiSize);
-
-            port = std::to_string(stoi(port) + mpiRank + i * mpiSize);
+            port = std::to_string(stoi(port) + i * mpiSize);
         }
+        port = std::to_string(stoi(port) + mpiRank);
 
         std::shared_ptr<Transport> wanTransport;
 

@@ -8,19 +8,21 @@
  *      Author: Jason Wang
  */
 
+#include <adios2.h>
 #include <chrono>
 #include <iostream>
+#include <mpi.h>
 #include <numeric>
 #include <thread>
 #include <vector>
 
-#include <mpi.h>
-
-#include <adios2.h>
+int rank, size;
+std::string ip = "127.0.0.1";
+int port = 22306;
 
 void Dump(std::vector<float> &data, size_t step)
 {
-    std::cout << "Step: " << step << " [";
+    std::cout << "Rank: " << rank << " Step: " << step << " [";
     for (size_t i = 0; i < data.size(); ++i)
     {
         std::cout << data[i] << " ";
@@ -31,20 +33,33 @@ void Dump(std::vector<float> &data, size_t step)
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int nThreads = 1;
 
     try
     {
+        if (argc == 2)
+        {
+            nThreads = atoi(argv[1]);
+        }
+
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataMan");
-        dataManIO.SetParameters({
-            {"Blocking", "no"}, {"Format", "bp"},
-        });
-        dataManIO.AddTransport(
-            "WAN", {
-                       {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"},
-                   });
+        dataManIO.SetParameters({{"Blocking", "no"}});
+
+        for (int i = 0; i < nThreads; ++i)
+        {
+            int port_thread = port + i;
+            dataManIO.AddTransport("WAN",
+                                   {{"Library", "ZMQ"},
+                                    {"IPAddress", ip},
+                                    {"Port", std::to_string(port_thread)}});
+        }
+
         adios2::Engine &dataManReader =
             dataManIO.Open("stream", adios2::Mode::Read);
 
@@ -66,8 +81,7 @@ int main(int argc, char *argv[])
             if (status == adios2::StepStatus::OK)
             {
                 dataManReader.GetSync<float>(*bpFloats, myFloats.data());
-                size_t currentStep = dataManReader.CurrentStep();
-                Dump(myFloats, currentStep);
+                Dump(myFloats, dataManReader.CurrentStep());
                 dataManReader.EndStep();
             }
             else if (status == adios2::StepStatus::NotReady)
@@ -97,6 +111,8 @@ int main(int argc, char *argv[])
         std::cout << "Exception, STOPPING PROGRAM\n";
         std::cout << e.what() << "\n";
     }
+
+    MPI_Finalize();
 
     return 0;
 }

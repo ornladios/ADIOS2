@@ -55,6 +55,8 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
 {
+	int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	nlohmann::json metaj;
 	
 	metaj["S"] = variable.m_Shape;
@@ -64,6 +66,7 @@ void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
 	metaj["N"] = variable.m_Name;
 	metaj["Y"] = variable.m_Type;
 	metaj["I"] = variable.PayloadSize();
+	metaj["R"] = rank;
 
 	std::string metastr = metaj.dump();
 	size_t flagsize = sizeof(size_t);

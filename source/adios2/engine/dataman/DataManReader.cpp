@@ -224,7 +224,7 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                         size_t step = metaj["T"].get<size_t>();
                         std::string name = metaj["N"].get<std::string>();
                         dmv->type = metaj["Y"].get<std::string>();
-                        dmv->size = metaj["I"].get<size_t>();
+                        dmv->rank = metaj["R"].get<size_t>();
 
                         if (dmv->type == "compound")
                         {
@@ -248,7 +248,7 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                         dmv->data.resize(metaj["I"].get<size_t>());
                         std::memcpy(dmv->data.data(),
                                     buffer->data() + flagsize + metasize,
-                                    dmv->size);
+                                    dmv->data.size());
 
                         m_MutexMap.lock();
                         m_VariableMap[step][name] = dmv;
