@@ -64,7 +64,28 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
 size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
-void DataManReader::EndStep() { ++m_CurrentStep; }
+void DataManReader::EndStep()
+{
+
+    // delete any time steps older than the current step
+    if (m_CurrentStep > m_OldestStep)
+    {
+        for (int m = m_OldestStep; m < m_CurrentStep; ++m)
+        {
+            m_MutexMap.lock();
+            auto k = m_VariableMap.find(m);
+            m_MutexMap.unlock();
+            if (k != m_VariableMap.end())
+            {
+                m_MutexMap.lock();
+                m_VariableMap.erase(k);
+                m_MutexMap.unlock();
+            }
+        }
+        m_OldestStep = m_CurrentStep;
+    }
+    ++m_CurrentStep;
+}
 
 void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
 {
@@ -214,6 +235,10 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
                         m_MutexMap.unlock();
                         RunCallback(dmv->data.data(), "stream", name, dmv->type,
                                     dmv->shape);
+                        if (!m_Blocking)
+                        {
+                            m_CurrentStep = step;
+                        }
                     }
                 }
             }

@@ -21,20 +21,6 @@ template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
 
-    // delete any time steps older than the current step
-	if(m_CurrentStep > m_OldestStep){
-		for(int m = m_OldestStep; m < m_CurrentStep; ++m){
-			m_MutexMap.lock();						    
-			auto k = m_VariableMap.find(m);
-			m_MutexMap.unlock();											    
-			if( k != m_VariableMap.end() ){
-				m_MutexMap.lock();						    
-				m_VariableMap.erase(k);
-				m_MutexMap.unlock();
-			}
-		}
-		m_OldestStep = m_CurrentStep;
-	}
 
 	bool looping = true;
 	while(looping){

@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
         adios2::IO &dataManIO = adios.DeclareIO("WANIO");
         dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters({
-            {"Blocking", "yes"}, {"Format", "bp"},
+            {"Blocking", "no"}, {"Format", "bp"},
         });
         dataManIO.AddTransport(
             "WAN", {
