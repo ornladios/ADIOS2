@@ -45,18 +45,38 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 {
     StepStatus status;
 
-    while (m_VariableMap.empty())
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    m_MutexMap.lock();
+    bool vmap_empty = m_VariableMap.empty();
+    m_MutexMap.unlock();
 
-    if (m_VariableMap.empty())
+    if (vmap_empty)
     {
-        status = StepStatus::EndOfStream;
+        status = StepStatus::NotReady;
     }
     else
     {
         status = StepStatus::OK;
+    }
+
+    if (!m_Blocking)
+    {
+        m_OldestStep = 0xffffff;
+        size_t p_old = m_OldestStep;
+        for (auto &i : m_VariableMap)
+        {
+            if (i.first < m_OldestStep)
+            {
+                m_OldestStep = i.first;
+            }
+        }
+        if (p_old == m_OldestStep)
+        {
+            status = StepStatus::NotReady;
+        }
+        else if (p_old > m_OldestStep)
+        {
+            status = StepStatus::OK;
+        }
     }
 
     return status;
@@ -66,25 +86,25 @@ size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
 void DataManReader::EndStep()
 {
-
     // delete any time steps older than the current step
-    if (m_CurrentStep > m_OldestStep)
+    for (int m = m_OldestStep; m <= m_CurrentStep; ++m)
     {
-        for (int m = m_OldestStep; m < m_CurrentStep; ++m)
+        m_MutexMap.lock();
+        auto k = m_VariableMap.find(m);
+        m_MutexMap.unlock();
+        if (k != m_VariableMap.end())
         {
             m_MutexMap.lock();
-            auto k = m_VariableMap.find(m);
+            m_VariableMap.erase(k);
             m_MutexMap.unlock();
-            if (k != m_VariableMap.end())
-            {
-                m_MutexMap.lock();
-                m_VariableMap.erase(k);
-                m_MutexMap.unlock();
-            }
         }
-        m_OldestStep = m_CurrentStep;
     }
-    ++m_CurrentStep;
+
+    if (m_Blocking)
+    {
+        m_OldestStep = m_CurrentStep;
+        ++m_CurrentStep;
+    }
 }
 
 void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
@@ -232,13 +252,22 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
 
                         m_MutexMap.lock();
                         m_VariableMap[step][name] = dmv;
+                        /*
+                        if (!m_Blocking)
+                        {
+                            if (m_CurrentStep == step)
+                            {
+                                ++m_CurrentStep;
+                            }
+                            else
+                            {
+                                m_CurrentStep = step;
+                            }
+                        }
+                        */
                         m_MutexMap.unlock();
                         RunCallback(dmv->data.data(), "stream", name, dmv->type,
                                     dmv->shape);
-                        if (!m_Blocking)
-                        {
-                            m_CurrentStep = step;
-                        }
                     }
                 }
             }

@@ -47,6 +47,7 @@ void DataManWriter::EndStep()
     ++m_CurrentStep;
 }
 
+size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 // PRIVATE functions below
 
 bool DataManWriter::GetBoolParameter(Params &params, std::string key,

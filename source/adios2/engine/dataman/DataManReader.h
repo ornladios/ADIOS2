@@ -71,7 +71,7 @@ private:
     size_t m_CurrentStep = 0;
 
     // The oldest time step contained in m_VariableMap
-    size_t m_OldestStep = 0;
+    size_t m_OldestStep = 0xffffffff;
 
     bool m_Listening = false;
 

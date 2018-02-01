@@ -32,6 +32,7 @@ public:
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
+    size_t CurrentStep() const;
 
 private:
     unsigned int m_nDataThreads = 1;

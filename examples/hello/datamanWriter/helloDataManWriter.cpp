@@ -15,13 +15,14 @@
 
 #include <adios2.h>
 
-void Dump(std::vector<float> &data)
+void Dump(std::vector<float> &data, size_t step)
 {
+    std::cout << "Step: " << step << " [";
     for (size_t i = 0; i < data.size(); ++i)
     {
         std::cout << data[i] << " ";
     }
-    std::cout << std::endl;
+    std::cout << "]" << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -61,14 +62,14 @@ int main(int argc, char *argv[])
         {
             // Define variable and local size
             dataManWriter.BeginStep();
+            Dump(myFloats, dataManWriter.CurrentStep());
+            dataManWriter.PutSync<float>(bpFloats, myFloats.data());
+            dataManWriter.EndStep();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             for (auto &j : myFloats)
             {
                 j += 1;
             }
-            Dump(myFloats);
-            dataManWriter.PutSync<float>(bpFloats, myFloats.data());
-            dataManWriter.EndStep();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
         dataManWriter.Close();
