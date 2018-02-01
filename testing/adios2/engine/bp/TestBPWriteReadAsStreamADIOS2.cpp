@@ -101,7 +101,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
-
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -346,6 +346,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -599,7 +600,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
-
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -849,7 +850,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
-
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         // QUESTION: It seems that BPFilterWriter cannot overwrite existing
@@ -1099,6 +1100,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -1352,7 +1354,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2MissingPerformGets)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
-
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
