@@ -36,7 +36,7 @@ BP3Serializer::BP3Serializer(MPI_Comm mpiComm, const bool debugMode)
 }
 
 void BP3Serializer::PutProcessGroupIndex(
-    const std::string hostLanguage,
+    const std::string &ioName, const std::string hostLanguage,
     const std::vector<std::string> &transportsTypes) noexcept
 {
     ProfilerStart("buffering");
@@ -52,8 +52,7 @@ void BP3Serializer::PutProcessGroupIndex(
     metadataBuffer.insert(metadataBuffer.end(), 2, '\0'); // skip pg length (2)
 
     // write name to metadata
-    const std::string name(std::to_string(m_RankMPI));
-    PutNameRecord(name, metadataBuffer);
+    PutNameRecord(ioName, metadataBuffer);
 
     // write if data is column major in metadata and data
     const char columnMajor = (IsRowMajor(hostLanguage) == false) ? 'y' : 'n';
@@ -61,7 +60,7 @@ void BP3Serializer::PutProcessGroupIndex(
     CopyToBuffer(dataBuffer, dataPosition, &columnMajor);
 
     // write name in data
-    PutNameRecord(name, dataBuffer, dataPosition);
+    PutNameRecord(ioName, dataBuffer, dataPosition);
 
     // processID in metadata,
     const uint32_t processID = static_cast<uint32_t>(m_RankMPI);

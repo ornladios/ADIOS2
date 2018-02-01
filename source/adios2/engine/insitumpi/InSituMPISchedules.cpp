@@ -47,7 +47,8 @@ int GetNumberOfRequests(
 }
 
 int FixSeeksToZeroOffset(
-    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
+    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo,
+    bool isRowMajor) noexcept
 {
     int n = 0;
     for (auto &variableNamePair : variablesSubFileInfo)
@@ -61,7 +62,7 @@ int FixSeeksToZeroOffset(
                 // <SubFileInfo>
                 for (auto &sfi : stepPair.second)
                 {
-                    FixSeeksToZeroOffset(sfi);
+                    FixSeeksToZeroOffset(sfi, isRowMajor);
                     n++;
                 }
             }
@@ -70,11 +71,11 @@ int FixSeeksToZeroOffset(
     return n;
 }
 
-void FixSeeksToZeroOffset(SubFileInfo &record) noexcept
+void FixSeeksToZeroOffset(SubFileInfo &record, bool isRowMajor) noexcept
 {
     size_t nElements = record.Seeks.second - record.Seeks.first + 1;
     size_t pos =
-        LinearIndex(record.BlockBox, record.IntersectionBox.first, true);
+        LinearIndex(record.BlockBox, record.IntersectionBox.first, isRowMajor);
     record.Seeks.first = pos;
     record.Seeks.second = pos + nElements - 1;
 }
