@@ -96,10 +96,10 @@ subroutine print_array(xy,offset,rank, step)
 
     write (100+rank, '("rank=",i0," size=",i0,"x",i0," offsets=",i0,":",i0," step=",i0)') &
         rank, size1, size2, offset(1), offset(2), step
-    write (100+rank, '(" time   row   columns ",i0,"...",i0)'), offset(2), offset(2)+size2-1
+    write (100+rank, '(" time   row   columns ",i0,"...",i0)') offset(2), offset(2)+size2-1
     write (100+rank, '("        ",$)')
     do j=1,size2
-        write (100+rank, '(i9,$)'), offset(2)+j-1
+        write (100+rank, '(i9,$)') offset(2)+j-1
     enddo
     write (100+rank, '(" ")')
     write (100+rank, '("--------------------------------------------------------------")')
