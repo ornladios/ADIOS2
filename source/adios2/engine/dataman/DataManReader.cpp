@@ -209,8 +209,8 @@ void DataManReader::ReadThread(std::shared_ptr<transportman::DataMan> man)
 
                     if (metasize > 0)
                     {
-                        char metastr[metasize + 1];
-                        std::memcpy(metastr, buffer->data() + flagsize,
+                        std::vector<char> metastr(metasize + 1);
+                        std::memcpy(metastr.data(), buffer->data() + flagsize,
                                     metasize);
                         metastr[metasize] = '\0';
                         nlohmann::json metaj = nlohmann::json::parse(metastr);
