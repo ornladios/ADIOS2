@@ -31,6 +31,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
+
     return StepStatus::OK;
 }
 void DataManWriter::EndStep()
@@ -38,25 +39,15 @@ void DataManWriter::EndStep()
     if (m_UseFormat == "bp" || m_UseFormat == "BP")
     {
         m_BP3Serializer.SerializeData(m_IO, true);
+        m_BP3Serializer.CloseStream(m_IO);
+        m_Man.WriteWAN(m_BP3Serializer.m_Data.m_Buffer, m_Blocking);
+        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data, true);
+        m_BP3Serializer.ResetIndices();
     }
+    ++m_CurrentStep;
 }
 
-/*
-void DataManWriter::Close(const int transportIndex)
-{
-    if (m_UseFormat == "bp" || m_UseFormat == "BP")
-    {
-        m_BP3Serializer.CloseData(m_IO);
-        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
-        auto &position = m_BP3Serializer.m_Data.m_Position;
-        if (position > 0)
-        {
-            m_Man.WriteWAN(buffer, position);
-        }
-    }
-}
-*/
-
+size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 // PRIVATE functions below
 
 bool DataManWriter::GetBoolParameter(Params &params, std::string key,
@@ -105,24 +96,23 @@ bool DataManWriter::GetUIntParameter(Params &params, std::string key,
     return false;
 }
 
-void DataManWriter::InitParameters()
+void DataManWriter::Init()
 {
-
     GetBoolParameter(m_IO.m_Parameters, "Monitoring", m_DoMonitor);
-    GetUIntParameter(m_IO.m_Parameters, "NTransports", m_NChannels);
+    GetUIntParameter(m_IO.m_Parameters, "DataThreads", m_nDataThreads);
+    GetUIntParameter(m_IO.m_Parameters, "ControlThreads", m_nControlThreads);
+    GetUIntParameter(m_IO.m_Parameters, "TransportChannels",
+                     m_TransportChannels);
+    GetBoolParameter(m_IO.m_Parameters, "Blocking", m_Blocking);
 
     // Check if using BP Format and initialize buffer
-    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
+    //    GetStringParameter(m_IO.m_Parameters, "Format", m_UseFormat);
     if (m_UseFormat == "BP" || m_UseFormat == "bp")
     {
         m_BP3Serializer.InitParameters(m_IO.m_Parameters);
         m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
                                              {"WAN_Zmq"});
     }
-}
-
-void DataManWriter::InitTransports()
-{
 
     size_t channels = m_IO.m_TransportsParameters.size();
     std::vector<std::string> names;
@@ -132,13 +122,7 @@ void DataManWriter::InitTransports()
     }
 
     m_Man.OpenWANTransports(names, Mode::Write, m_IO.m_TransportsParameters,
-                            true);
-}
-
-void DataManWriter::Init()
-{
-    InitParameters();
-    InitTransports();
+                            true, m_Blocking);
 }
 
 #define declare_type(T)                                                        \
@@ -163,7 +147,7 @@ void DataManWriter::DoClose(const int transportIndex)
         auto &position = m_BP3Serializer.m_Data.m_Position;
         if (position > 0)
         {
-            m_Man.WriteWAN(buffer, position);
+            m_Man.WriteWAN(buffer);
         }
     }
 }

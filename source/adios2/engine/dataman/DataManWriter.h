@@ -16,6 +16,8 @@
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
+#include <json.hpp>
+
 namespace adios2
 {
 
@@ -30,19 +32,24 @@ public:
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
+    size_t CurrentStep() const;
 
 private:
+    unsigned int m_nDataThreads = 1;
+    unsigned int m_nControlThreads = 0;
+    unsigned int m_TransportChannels = 1;
+    size_t m_BufferSize = 1024 * 1024 * 1024;
+    std::string m_UseFormat = "json";
+    bool m_DoMonitor = false;
+    bool m_Blocking = true;
+    size_t m_StepsPerBuffer = 10;
+
     format::BP3Serializer m_BP3Serializer;
     transportman::DataMan m_Man;
     std::string m_Name;
-
-    unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "bp";
-    bool m_DoMonitor = false;
+    size_t m_CurrentStep = 0;
 
     void Init();
-    void InitParameters();
-    void InitTransports();
 
     bool GetBoolParameter(Params &params, std::string key, bool &value);
     bool GetStringParameter(Params &params, std::string key,
@@ -64,6 +71,9 @@ private:
 
     template <class T>
     void PutSyncCommonBP(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutSyncCommonJson(Variable<T> &variable, const T *values);
 
     void DoClose(const int transportIndex = -1) final;
 };

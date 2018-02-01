@@ -30,7 +30,7 @@ public:
      * @param debugMode
      */
     WANZmq(const std::string ipAddress, const std::string port,
-           MPI_Comm mpiComm, const bool debugMode);
+           MPI_Comm mpiComm, const bool blocking, const bool debugMode);
 
     ~WANZmq();
 
@@ -57,6 +57,7 @@ public:
 private:
     const std::string m_IPAddress;
     std::string m_Port;
+    bool m_Blocking;
 
     /** context handler created by zmq, thread safe */
     void *m_Context = nullptr;

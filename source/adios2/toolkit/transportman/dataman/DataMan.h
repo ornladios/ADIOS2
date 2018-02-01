@@ -35,9 +35,11 @@ public:
     void OpenWANTransports(const std::vector<std::string> &streamNames,
                            const Mode openMode,
                            const std::vector<Params> &params,
-                           const bool profile);
+                           const bool profile, const bool blocking);
 
-    void WriteWAN(const std::vector<char> &buffer, size_t size);
+    void WriteWAN(const std::vector<char> &buffer, bool blocking = true);
+    void WriteWAN(std::shared_ptr<std::vector<char>> buffer,
+                  bool blocking = true);
 
     std::shared_ptr<std::vector<char>> ReadWAN();
 
@@ -48,6 +50,7 @@ public:
     void SetMaxReceiveBuffer(size_t size);
 
 private:
+    bool m_Blocking = true;
     std::function<void(std::vector<char>)> m_Callback;
     void ReadThread(std::shared_ptr<Transport> trans);
 

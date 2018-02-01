@@ -40,34 +40,48 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    if (m_UseFormat == "bp" || m_UseFormat == "BP")
+    if (m_UseFormat == "bp")
     {
         PutSyncCommonBP(variable, values);
     }
 
-    if (m_DoMonitor)
+    else if (m_UseFormat == "json")
     {
-        MPI_Barrier(m_MPIComm);
-        std::cout << "I am hooked to the DataMan library\n";
-        std::cout << "Variable " << variable.m_Name << "\n";
-        std::cout << "putshape " << variable.m_Count.size() << "\n";
-        std::cout << "varshape " << variable.m_Shape.size() << "\n";
-        std::cout << "offset " << variable.m_Start.size() << "\n";
-
-        int rank = 0, size = 1;
-        MPI_Comm_size(m_MPIComm, &size);
-
-        for (int i = 0; i < size; ++i)
-        {
-            if (i == rank)
-            {
-                std::cout << "Rank: " << i << "\n";
-                std::cout << std::endl;
-            }
-        }
-        MPI_Barrier(m_MPIComm);
+        PutSyncCommonJson(variable, values);
     }
+
 }
+
+template <class T>
+void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
+{
+	int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	nlohmann::json metaj;
+	
+	metaj["S"] = variable.m_Shape;
+	metaj["C"] = variable.m_Count;
+	metaj["O"] = variable.m_Start;
+	metaj["T"] = m_CurrentStep;
+	metaj["N"] = variable.m_Name;
+	metaj["Y"] = variable.m_Type;
+	metaj["I"] = variable.PayloadSize();
+	metaj["R"] = rank;
+
+	std::string metastr = metaj.dump();
+	size_t flagsize = sizeof(size_t);
+	size_t metasize = metastr.size();
+	size_t datasize = variable.PayloadSize();
+	size_t totalsize = flagsize + metasize + datasize;
+
+	std::shared_ptr<std::vector<char>> buffer = std::make_shared<std::vector<char>>(totalsize);
+	std::memcpy(buffer->data(), &metasize, flagsize);
+	std::memcpy(buffer->data() + flagsize, metastr.c_str(), metasize);
+	std::memcpy(buffer->data() + flagsize + metasize, values, datasize);
+
+	m_Man.WriteWAN(buffer, m_Blocking);
+}
+
 
 template <class T>
 void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
@@ -95,7 +109,7 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
         auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
         auto &position = m_BP3Serializer.m_Data.m_Position;
 
-        m_Man.WriteWAN(buffer, position);
+        m_Man.WriteWAN(buffer);
 
         // set relative position to clear buffer
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);

@@ -13,6 +13,7 @@
 
 #include "DataManReader.h"
 #include <iostream>
+#include <limits>
 
 namespace adios2
 {
@@ -20,11 +21,36 @@ namespace adios2
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-	auto iter = m_VariableMap[0].find(variable.m_Name);
-	if( iter != m_VariableMap[0].end() ){
-		std::memcpy(data, iter->second->data.data(), iter->second->data.size());
-		m_VariableMap[0].erase( iter );
+    if(m_Blocking)
+    {
+    // TODO: add timeout
+	while(true){
+	    m_MutexMap.lock();
+	    auto i = m_VariableMap.find(m_CurrentStep);
+	    m_MutexMap.unlock();
+	    if( i != m_VariableMap.end() ){
+		m_MutexMap.lock();
+		auto j = i->second.find(variable.m_Name);
+		m_MutexMap.unlock();
+		if( j != i->second.end() ){
+		    std::memcpy(data, j->second->data.data(), j->second->data.size());
+		    return;
+		}
+	    }
 	}
+    }
+    else{
+
+	m_MutexMap.lock();
+	auto j = m_VariableMap[m_OldestStep].find(variable.m_Name);
+	m_MutexMap.unlock();
+	if( j != m_VariableMap[m_OldestStep].end() ){
+	    std::memcpy(data, j->second->data.data(), j->second->data.size());
+	    m_CurrentStep = m_OldestStep;
+	    return;
+	}
+
+    }
 }
 
 template <class T>
@@ -32,6 +58,7 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     GetSyncCommon(variable, data);
 }
+
 
 } // end namespace adios2
 
