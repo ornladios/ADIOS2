@@ -32,8 +32,9 @@ int GetNumberOfRequests(
 // if the payload offset was always 0
 // This function also returns the number of requests in the map
 int FixSeeksToZeroOffset(
-    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
-void FixSeeksToZeroOffset(SubFileInfo &record) noexcept;
+    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo,
+    bool isRowMajor) noexcept;
+void FixSeeksToZeroOffset(SubFileInfo &record, bool isRowMajor) noexcept;
 
 // Serialize the read requests on a reader.
 // Creates a separate buffer for each writer.

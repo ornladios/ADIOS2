@@ -97,6 +97,10 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
                               << " from writer " << writerRank;
                     std::cout << " info = ";
                     insitumpi::PrintSubFileInfo(sfi);
+                    std::cout << " my allocation = ";
+                    insitumpi::PrintBox(
+                        StartEndBox(variable.m_Start, variable.m_Count,
+                                    m_BP3Deserializer.m_ReverseDimensions));
                     std::cout << std::endl;
                 }
 
@@ -110,10 +114,13 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
                 // Do we read a contiguous piece from the source?
                 // and do we write a contiguous piece into the user data?
                 if (IsIntersectionContiguousSubarray(
-                        sfi.BlockBox, sfi.IntersectionBox, dummy) &&
+                        sfi.BlockBox, sfi.IntersectionBox,
+                        m_BP3Deserializer.m_IsRowMajor, dummy) &&
                     IsIntersectionContiguousSubarray(
-                        StartEndBox(variable.m_Start, variable.m_Count),
-                        sfi.IntersectionBox, elementOffset))
+                        StartEndBox(variable.m_Start, variable.m_Count,
+                                    m_BP3Deserializer.m_ReverseDimensions),
+                        sfi.IntersectionBox, m_BP3Deserializer.m_IsRowMajor,
+                        elementOffset))
                 {
                     // Receive in place (of user data pointer)
                     // const size_t startOffset =

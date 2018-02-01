@@ -136,6 +136,7 @@ bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept;
  * in bytes) in an output argument
  * @param blockBox {start, end} input
  * @param intersectionBox {start, end} input
+ * @param isRowMajor
  * @param startOffset output argument indicating the starting element of
  * intersection box in the block box
  * @return true if intersection box is a contiguous subarray
@@ -143,6 +144,7 @@ bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept;
  */
 bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
                                       const Box<Dims> &intersectionBox,
+                                      const bool isRowMajor,
                                       size_t &startOffset) noexcept;
 
 /**
