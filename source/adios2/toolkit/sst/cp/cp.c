@@ -109,6 +109,30 @@ static int *setupPeerArray(int MySize, int MyRank, int PeerSize)
     return MyPeers;
 }
 
+static void
+WriterConnCloseHandler(CManager cm, CMConnection closed_conn, void *client_data)
+{
+    WS_ReaderInfo WSreader = (WS_ReaderInfo) client_data;
+    SstStream ParentWriterStream = WSreader->ParentStream;
+
+    if (WSreader->ReaderStatus == Established) {
+        /*
+         * tag our reader instance as failed.  
+         * If any instance is failed, we should remove all, but that requires a global operation, so prep.
+         */
+        CP_verbose(s, "Writer-side Rank received a connection-close event during normal operations, peer likely failed\n");
+        WSreader->ReaderStatus = PeerFailed;
+        ParentWriterStream->GlobalOpRequired = 1;
+    } else if ((WSreader->ReaderStatus == PeerClosed) || (WSreader->ReaderStatus == Closed)) {
+        /* ignore this.  We expect a close after the connection is marked closed */
+        CP_verbose(s, "Writer-side Rank received a connection-close event after close, not unexpected\n");
+    } else {
+        fprintf(stderr, "Got an unexpected connection close event\n");
+        CP_verbose(s, "Writer-side Rank received a connection-close event in unexpected state %d\n", WSreader->ReaderStatus);
+        WSreader->ReaderStatus = PeerFailed;
+    }
+}
+
 static void initWSReader(WS_ReaderInfo reader, int ReaderSize,
                          CP_ReaderInitInfo *reader_info)
 {
@@ -132,6 +156,8 @@ static void initWSReader(WS_ReaderInfo reader, int ReaderSize,
         reader->Connections[peer].CMconn =
             CMget_conn(reader->ParentStream->CPInfo->cm,
                        reader->Connections[peer].ContactList);
+        CMconn_register_close_handler(reader->Connections[peer].CMconn,
+                                      WriterConnCloseHandler, (void*)reader);
         i++;
     }
 }
@@ -346,6 +372,10 @@ void sendOneToEachReaderRank(SstStream s, CMFormat f, void *Msg,
     {
         int j = 0;
         WS_ReaderInfo CP_WSR_Stream = s->Readers[i];
+        if (CP_WSR_Stream->ReaderStatus != Established) {
+            CP_verbose(s, "Skipping reader cohort %d\n", i);
+            continue;
+        }
         while (CP_WSR_Stream->Peers[j] != -1)
         {
             int peer = CP_WSR_Stream->Peers[j];
