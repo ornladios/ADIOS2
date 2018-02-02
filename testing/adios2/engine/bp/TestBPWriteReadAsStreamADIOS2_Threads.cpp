@@ -14,10 +14,10 @@
 
 #include "../SmallTestData.h"
 
-class BPWriteReadAsStreamTestADIOS2 : public ::testing::Test
+class BPWriteReadAsStreamTestADIOS2_Threads : public ::testing::Test
 {
 public:
-    BPWriteReadAsStreamTestADIOS2() = default;
+    BPWriteReadAsStreamTestADIOS2_Threads() = default;
 
     SmallTestData m_TestData;
     SmallTestData m_OriginalData;
@@ -28,7 +28,7 @@ public:
 //******************************************************************************
 
 // ADIOS2 BP write, native ADIOS1 read
-TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
+TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -101,7 +101,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
-
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -119,7 +119,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 
     {
         adios2::IO &io = adios.DeclareIO("ReadIO");
-
+        io.SetParameter("Threads", "2");
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -270,7 +270,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 //******************************************************************************
 
 // ADIOS2 BP write, native ADIOS1 read
-TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
+TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
@@ -300,7 +300,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 #endif
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-
+        io.SetParameter("Threads", "2");
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
         // before Write().
@@ -346,6 +346,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -363,7 +364,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
     {
         adios2::IO &io = adios.DeclareIO("ReadIO");
-
+        io.SetParameter("Threads", "2");
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -521,7 +522,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 // 2D 4x2 test data
 //******************************************************************************
 
-TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
+TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
@@ -550,7 +551,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
 #endif
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-
+        io.SetParameter("Threads", "2");
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later
         // before Write().
@@ -599,7 +600,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
-
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -618,7 +619,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
     {
         adios2::IO &io = adios.DeclareIO("ReadIO");
-
+        io.SetParameter("Threads", "2");
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -775,7 +776,8 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
     }
 }
 
-TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
+TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
+       ADIOS2BPWriteRead1D8MissingPerformGets)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -803,7 +805,6 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
 #endif
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
         // before Write().
@@ -849,7 +850,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
-
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         // QUESTION: It seems that BPFilterWriter cannot overwrite existing
@@ -873,6 +874,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
 
     {
         adios2::IO &io = adios.DeclareIO("ReadIO");
+        io.SetParameter("Threads", "2");
 
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -1022,7 +1024,8 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8MissingPerformGets)
 //******************************************************************************
 
 // ADIOS2 BP write, native ADIOS1 read
-TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
+TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
+       ADIOS2BPWriteRead2D2x4MissingPerformGets)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
@@ -1053,7 +1056,6 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
 #endif
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
         // before Write().
@@ -1099,6 +1101,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -1116,7 +1119,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
 
     {
         adios2::IO &io = adios.DeclareIO("ReadIO");
-
+        io.SetParameter("Threads", "2");
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -1273,7 +1276,8 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4MissingPerformGets)
 // 2D 4x2 test data
 //******************************************************************************
 
-TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2MissingPerformGets)
+TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
+       ADIOS2BPWriteRead2D4x2MissingPerformGets)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
@@ -1303,7 +1307,6 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2MissingPerformGets)
 #endif
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later
         // before Write().
@@ -1352,7 +1355,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2MissingPerformGets)
 
         // Create the BP Engine
         io.SetEngine("BPFile");
-
+        io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
         adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -1371,7 +1374,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2MissingPerformGets)
 
     {
         adios2::IO &io = adios.DeclareIO("ReadIO");
-
+        io.SetParameter("Threads", "2");
         adios2::Engine &bpReader = io.Open(fname, adios2::Mode::Read);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
