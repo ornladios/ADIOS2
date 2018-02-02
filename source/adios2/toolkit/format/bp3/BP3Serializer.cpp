@@ -1111,14 +1111,15 @@ void BP3Serializer::MergeSerializeIndices(
         const size_t end)
 
     {
-        for (size_t i = start; i < end; ++i)
+        for (auto i = start; i < end; ++i)
         {
             auto itIndex = nameRankIndices.find(names[i]);
             lf_MergeRank(itIndex->second);
         }
     };
+
     // BODY OF FUNCTION STARTS HERE
-    // if (m_Threads == 1) // enforcing serial version for now
+    if (m_Threads == 1) // enforcing serial version for now
     {
         for (const auto &rankIndices : nameRankIndices)
         {
@@ -1126,48 +1127,43 @@ void BP3Serializer::MergeSerializeIndices(
         }
         return;
     }
+
     // TODO need to debug this part, if threaded per variable
-    //    const size_t elements = nameRankIndices.size();
-    //    const size_t stride = elements / m_Threads;        // elements per
-    //    thread
-    //    const size_t last = stride + elements % m_Threads; // remainder to
-    //    last
-    //
-    //    std::vector<std::thread> threads;
-    //    threads.reserve(m_Threads);
-    //
-    //    // copy names in order to use threads
-    //    std::vector<std::string> names;
-    //    names.reserve(nameRankIndices.size());
-    //
-    //    for (const auto &nameRankIndexPair : nameRankIndices)
-    //    {
-    //        names.push_back(nameRankIndexPair.first);
-    //    }
-    //
-    //    for (unsigned int t = 0; t < m_Threads; ++t)
-    //    {
-    //        const size_t start = stride * t;
-    //        size_t end;
-    //
-    //        if (t == m_Threads - 1)
-    //        {
-    //            end = start + stride;
-    //        }
-    //        else
-    //        {
-    //            end = start + last;
-    //        }
-    //
-    //        threads.push_back(std::thread(lf_MergeRankRange,
-    //                                      std::ref(nameRankIndices),
-    //                                      std::ref(names), start, end));
-    //    }
-    //
-    //    for (auto &thread : threads)
-    //    {
-    //        thread.join();
-    //    }
+    const size_t elements = nameRankIndices.size();
+    const size_t stride = elements / m_Threads;        // elements per thread
+    const size_t last = stride + elements % m_Threads; // remainder to last
+
+    std::vector<std::thread> threads;
+    threads.reserve(m_Threads);
+
+    // copy names in order to use threads
+    std::vector<std::string> names;
+    names.reserve(nameRankIndices.size());
+
+    for (const auto &nameRankIndexPair : nameRankIndices)
+    {
+        names.push_back(nameRankIndexPair.first);
+    }
+
+    for (unsigned int t = 0; t < m_Threads; ++t)
+    {
+        const size_t start = stride * t;
+        size_t end = start + stride;
+
+        if (t == m_Threads - 1)
+        {
+            end = start + last;
+        }
+
+        threads.push_back(std::thread(lf_MergeRankRange,
+                                      std::ref(nameRankIndices),
+                                      std::ref(names), start, end));
+    }
+
+    for (auto &thread : threads)
+    {
+        thread.join();
+    }
 }
 
 std::vector<char>

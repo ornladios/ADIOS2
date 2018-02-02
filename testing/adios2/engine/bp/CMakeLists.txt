@@ -9,6 +9,9 @@ target_link_libraries(TestBPWriteReadADIOS2 adios2 gtest gtest_main)
 add_executable(TestBPWriteReadAsStreamADIOS2 TestBPWriteReadAsStreamADIOS2.cpp)
 target_link_libraries(TestBPWriteReadAsStreamADIOS2 adios2 gtest gtest_main)
 
+add_executable(TestBPWriteReadAsStreamADIOS2_Threads TestBPWriteReadAsStreamADIOS2_Threads.cpp)
+target_link_libraries(TestBPWriteReadAsStreamADIOS2_Threads adios2 gtest gtest_main)
+
 add_executable(TestBPWriteReadAttributesADIOS2 TestBPWriteReadAttributesADIOS2.cpp)
 target_link_libraries(TestBPWriteReadAttributesADIOS2 adios2 gtest gtest_main)
 
@@ -16,6 +19,7 @@ target_link_libraries(TestBPWriteReadAttributesADIOS2 adios2 gtest gtest_main)
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPWriteReadADIOS2 MPI::MPI_C)
   target_link_libraries(TestBPWriteReadAsStreamADIOS2 MPI::MPI_C)
+  target_link_libraries(TestBPWriteReadAsStreamADIOS2_Threads MPI::MPI_C)
   target_link_libraries(TestBPWriteReadAttributesADIOS2 MPI::MPI_C)
   
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
@@ -23,6 +27,7 @@ endif()
 
 gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2 ${extra_test_args})
+gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2_Threads ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteReadAttributesADIOS2 ${extra_test_args})
   
 if (ADIOS2_HAVE_ADIOS1)
