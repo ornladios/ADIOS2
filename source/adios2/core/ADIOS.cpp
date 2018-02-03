@@ -174,8 +174,8 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_SZ
         auto itPair = m_Operators.emplace(
-                                          name, std::make_shared<adios2::compress::CompressSZ>(parameters,
-                                                                                               m_DebugMode));
+            name, std::make_shared<adios2::compress::CompressSZ>(parameters,
+                                                                 m_DebugMode));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(
