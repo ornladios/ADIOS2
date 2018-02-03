@@ -25,65 +25,64 @@ int main(int argc, char *argv[])
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    
+
     /** Application variable uints from 0 to 1000 */
     std::vector<double> myvars(1000);
     std::iota(myvars.begin(), myvars.end(), 0.f);
     const std::size_t Nx = myvars.size();
     const std::size_t inputBytes = Nx * sizeof(double);
-    
+
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-        
+
         // Get a Transform of type SZ
         adios2::Operator &adiosSZ =
-        adios.DefineOperator("SZVariableCompressor", "SZ");
-        
+            adios.DefineOperator("SZVariableCompressor", "SZ");
+
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N_SZ");
-        
+
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<double> &var =
-        bpIO.DefineVariable<double>("var", {size * Nx},
-                                    {rank * Nx}, {Nx},
-                                    adios2::ConstantDims);
-        
+        adios2::Variable<double> &var = bpIO.DefineVariable<double>(
+            "var", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+
         // 1st way: adding transform metadata to variable to Engine can decide:
         // &adiosSZ gets mapped to bpUInts.TransformInfo[SZID].Operator
         const unsigned int SZID = var.AddTransform(adiosSZ, {{"foo", "0.01"}});
-        
+
         // 2nd way: treat Transforms as wrappers to underlying library.
         // you can redefine parameters
-        const std::size_t estimatedSize = adiosSZ.BufferMaxSize(Nx * var.m_ElementSize);
+        const std::size_t estimatedSize =
+            adiosSZ.BufferMaxSize(Nx * var.m_ElementSize);
         std::vector<char> compressedBuffer(estimatedSize);
-        size_t compressedSize = adiosSZ.Compress(myvars.data(), var.m_Count, var.m_ElementSize,
-                                                 var.m_Type, compressedBuffer.data(), {{"accuracy", "0.01"}});
-        
+        size_t compressedSize = adiosSZ.Compress(
+            myvars.data(), var.m_Count, var.m_ElementSize, var.m_Type,
+            compressedBuffer.data(), {{"accuracy", "0.01"}});
+
         compressedBuffer.resize(compressedSize);
-        
+
         std::cout << "Rank " << rank << "\n";
         std::cout << "Compression summary:\n";
         std::cout << "Input data size: " << inputBytes << " bytes\n";
         std::cout << "SZ estimated output size: " << estimatedSize
-        << " bytes\n";
-        std::cout << "SZ final output size: " << compressedSize
-        << " bytes\n\n";
-        
+                  << " bytes\n";
+        std::cout << "SZ final output size: " << compressedSize << " bytes\n\n";
+
         // Allocate original data size
         std::vector<double> decompressedBuffer(Nx);
-        size_t decompressedSize = adiosSZ.Decompress(compressedBuffer.data(), compressedSize,
-                                                     decompressedBuffer.data(), var.m_Count, var.m_Type,
-                                                     var.m_OperatorsInfo[SZID].Parameters);
-        
+        size_t decompressedSize = adiosSZ.Decompress(
+            compressedBuffer.data(), compressedSize, decompressedBuffer.data(),
+            var.m_Count, var.m_Type, var.m_OperatorsInfo[SZID].Parameters);
+
         std::cout << "Decompression summary:\n";
         std::cout << "Decompressed size: " << decompressedSize << " bytes\n";
         std::cout << "Data:\n";
 
-        for (int i=0; i<decompressedBuffer.size(); i++)
+        for (int i = 0; i < decompressedBuffer.size(); i++)
         {
             if (i % 25 == 0)
             {
@@ -96,14 +95,14 @@ int main(int argc, char *argv[])
     catch (std::invalid_argument &e)
     {
         std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-        << rank << "\n";
+                  << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
         std::cout
-        << "IO System base failure exception, STOPPING PROGRAM from rank "
-        << rank << "\n";
+            << "IO System base failure exception, STOPPING PROGRAM from rank "
+            << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
@@ -111,8 +110,8 @@ int main(int argc, char *argv[])
         std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
-    
+
     MPI_Finalize();
-    
+
     return 0;
 }
