@@ -11,8 +11,7 @@
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSSZ_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSSZ_H_
 
-extern "C"
-{
+extern "C" {
 #include <sz.h>
 }
 
