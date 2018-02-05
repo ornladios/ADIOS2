@@ -33,6 +33,16 @@ if(ZFP_FOUND)
   set(ADIOS2_HAVE_ZFP TRUE)
 endif()
 
+# SZ
+if(ADIOS2_USE_SZ STREQUAL AUTO)
+  find_package(SZ)
+elseif(ADIOS2_USE_SZ)
+  find_package(SZ REQUIRED)
+endif()
+if(SZ_FOUND)
+  set(ADIOS2_HAVE_SZ TRUE)
+endif()
+
 set(mpi_find_components C)
 
 # Fortran
