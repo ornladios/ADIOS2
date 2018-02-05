@@ -434,14 +434,16 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                            "Sending Queued TimestepMetadata for timestep %d\n",
                            TS);
 
-                if (TS == Reader->StartingTimestep) {
+                if (TS == Reader->StartingTimestep)
+                {
                     /* For first Msg, send all previous formats */
                     List->Msg->Formats = Stream->PreviousFormats;
                 }
                 sendOneToWSRCohort(
                     Reader, Stream->CPInfo->DeliverTimestepMetadataFormat,
                     List->Msg, &List->Msg->RS_Stream);
-                if (TS == Reader->StartingTimestep) {
+                if (TS == Reader->StartingTimestep)
+                {
                     /* restore Msg format list */
                     List->Msg->Formats = SavedFormats;
                 }
