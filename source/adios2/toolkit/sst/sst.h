@@ -63,6 +63,7 @@ extern void SstReleaseStep(SstStream stream);
 extern SstStatusValue SstAdvanceStep(SstStream stream, int mode,
                                      const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
+extern long SstCurrentStep(SstStream s);
 
 typedef void *(*VarSetupUpcallFunc)(void *Reader, const char *Name,
                                     const char *Type, void *Data);

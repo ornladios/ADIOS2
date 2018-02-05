@@ -101,7 +101,6 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     result = SstAdvanceStep(m_Input, (int)mode, timeout_sec);
     if (result == SstSuccess)
     {
-        m_CurrentStep++;
         return StepStatus::OK;
     }
     else if (result == SstEndOfStream)
@@ -114,7 +113,7 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     }
 }
 
-size_t SstReader::CurrentStep() const { return m_CurrentStep; }
+size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {

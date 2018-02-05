@@ -49,6 +49,7 @@ typedef struct _WS_ReaderInfo
 {
     SstStream ParentStream;
     enum StreamStatus ReaderStatus;
+    long StartingTimestep;
     void *DP_WSR_Stream;
     void *RS_StreamID;
     int ReaderCohortSize;
@@ -72,12 +73,16 @@ typedef struct _CPTimestepEntry
 {
     long Timestep;
     SstData Data;
+    struct _TimestepMetadataMsg *Msg;
+    int ReferenceCount;
     void **DP_TimestepInfo;
     SstBlock *MetadataArray;
     void (*DataFreeFunc)(void *);
     void *FreeClientData;
     struct _CPTimestepEntry *Next;
 } * CPTimestepList;
+
+typedef struct FFSFormatBlock *FFSFormatList;
 
 struct _SstStream
 {
@@ -110,7 +115,9 @@ struct _SstStream
     int ReaderTimestep;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
+    int QueuedTimestepLimit;
     int LastProvidedTimestep;
+    int NewReaderPresent;
 
     /* rendezvous condition */
     int FirstReaderCondition;
@@ -118,6 +125,8 @@ struct _SstStream
 
     int ReaderCount;
     WS_ReaderInfo *Readers;
+    const char *Filename;
+    int GlobalOpRequired;
 
     /* writer side marshal info */
     void *MarshalData;
@@ -125,6 +134,7 @@ struct _SstStream
     void *M; // building metadata block
     size_t DataSize;
     void *D; // building data block
+    FFSFormatList PreviousFormats;
 
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
@@ -171,14 +181,14 @@ struct _CP_DP_PairInfo
  * encode) to readers (who decode) so that we don't need a third party
  * format server.
  */
-typedef struct FFSFormatBlock
+struct FFSFormatBlock
 {
     char *FormatServerRep;
     int FormatServerRepLen;
     char *FormatIDRep;
     int FormatIDRepLen;
     struct FFSFormatBlock *Next;
-} * FFSFormatList;
+};
 
 /*
  * This is the structure that holds local metadata and the DP info related to
@@ -187,6 +197,7 @@ typedef struct FFSFormatBlock
  */
 struct _MetadataPlusDPInfo
 {
+    int RequestGlobalOp;
     SstBlock Metadata;
     FFSFormatList Formats;
     void *DP_TimestepInfo;
@@ -235,6 +246,7 @@ struct _WriterResponseMsg
 {
     int WriterResponseCondition;
     int WriterCohortSize;
+    size_t NextStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
 };
@@ -294,6 +306,7 @@ typedef struct _WriterCloseMsg
 typedef struct _CombinedWriterInfo
 {
     int WriterCohortSize;
+    size_t StartingStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
 } * writer_data_t;

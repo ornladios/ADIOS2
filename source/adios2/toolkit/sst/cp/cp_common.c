@@ -14,6 +14,7 @@
 void CP_parseParams(SstStream Stream, const char *Params)
 {
     Stream->WaitForFirstReader = 1;
+    Stream->QueuedTimestepLimit = 0;
 }
 
 static FMField CP_ReaderInitList[] = {
@@ -69,6 +70,8 @@ static FMStructDescRec CP_DP_ReaderArrayStructs[] = {
 static FMField CP_DP_ArrayWriterList[] = {
     {"WriterCohortSize", "integer", sizeof(int),
      FMOffset(struct _CombinedWriterInfo *, WriterCohortSize)},
+    {"StartingStepNumber", "integer", sizeof(size_t),
+     FMOffset(struct _CombinedWriterInfo *, StartingStepNumber)},
     {"CP_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]",
      sizeof(struct _CP_WriterInitInfo),
      FMOffset(struct _CombinedWriterInfo *, CP_WriterInfo)},
@@ -105,6 +108,8 @@ static FMField CP_WriterResponseList[] = {
      FMOffset(struct _WriterResponseMsg *, WriterResponseCondition)},
     {"WriterCohortSize", "integer", sizeof(int),
      FMOffset(struct _WriterResponseMsg *, WriterCohortSize)},
+    {"NextStepNumber", "integer", sizeof(size_t),
+     FMOffset(struct _WriterResponseMsg *, NextStepNumber)},
     {"cp_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]",
      sizeof(struct _CP_WriterInitInfo),
      FMOffset(struct _WriterResponseMsg *, CP_WriterInfo)},
@@ -150,6 +155,8 @@ static FMField SstDimenMetaList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField MetaDataPlusDPInfoList[] = {
+    {"RequestGlobalOp", "integer", sizeof(int),
+     FMOffset(struct _MetadataPlusDPInfo *, RequestGlobalOp)},
     {"Metadata", "*SstBlock", sizeof(struct _SstBlock),
      FMOffset(struct _MetadataPlusDPInfo *, Metadata)},
     {"Formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
