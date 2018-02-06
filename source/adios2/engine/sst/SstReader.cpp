@@ -152,7 +152,7 @@ void SstReader::Init()
     };
 
 #define get_params(Param, Type, Typedecl, Default)                             \
-    lf_Set##Type##Parameter("##Param##", m_##Param);
+    lf_Set##Type##Parameter(#Param, m_##Param);
     SST_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
 #undef get_params
 #define set_params(Param, Type, Typedecl, Default) Params.Param = m_##Param;

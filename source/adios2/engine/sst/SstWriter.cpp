@@ -26,9 +26,6 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
     strcpy(cstr, name.c_str());
 
     Init();
-#define set_params(Param, Type, Typedecl, Default) Params.Param = m_##Param;
-    SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
-#undef set_params
 
     m_Output = SstWriterOpen(cstr, &Params, mpiComm);
     delete[] cstr;
@@ -93,7 +90,7 @@ void SstWriter::Init()
     };
 
 #define get_params(Param, Type, Typedecl, Default)                             \
-    lf_Set##Type##Parameter("##Param##", m_##Param);
+    lf_Set##Type##Parameter(#Param, m_##Param);
     SST_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
 #undef get_params
 #define set_params(Param, Type, Typedecl, Default) Params.Param = m_##Param;
