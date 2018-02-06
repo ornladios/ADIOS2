@@ -228,6 +228,7 @@ void BPFileWriter::WriteCollectiveMetadataFile()
             m_BP3Serializer.m_Metadata.m_Buffer.data(),
             m_BP3Serializer.m_Metadata.m_Position);
         m_FileMetadataManager.CloseFiles();
+        m_FileMetadataManager.m_Transports.clear();
 
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
     }
