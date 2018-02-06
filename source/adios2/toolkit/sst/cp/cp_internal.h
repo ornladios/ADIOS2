@@ -50,6 +50,7 @@ typedef struct _WS_ReaderInfo
     SstStream ParentStream;
     enum StreamStatus ReaderStatus;
     long StartingTimestep;
+    long LastSentTimestep;
     void *DP_WSR_Stream;
     void *RS_StreamID;
     int ReaderCohortSize;
@@ -116,6 +117,7 @@ struct _SstStream
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int QueueLimit;
+    int DiscardOnQueueFull;
     int LastProvidedTimestep;
     int NewReaderPresent;
 
@@ -321,7 +323,7 @@ extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
                                        SstData Data, long Timestep,
                                        FFSFormatList Formats,
-                                       void *DataFreeFunc,
+                                       void DataFreeFunc(void *),
                                        void *FreeClientData);
 
 void **CP_consolidateDataToRankZero(SstStream stream, void *local_info,

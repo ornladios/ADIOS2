@@ -33,6 +33,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
                 "Invalid QueueLimit parameter value (%d) for SST Stream %s\n",
                 Params->QueueLimit, Stream->Filename);
     }
+    Stream->DiscardOnQueueFull = Params->DiscardOnQueueFull;
 }
 
 static FMField CP_ReaderInitList[] = {
