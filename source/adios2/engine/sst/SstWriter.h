@@ -55,7 +55,11 @@ private:
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
     SstStream m_Output;
-    bool m_FFSmarshal = true;
+    struct _SstParams Params;
+#define declare_locals(Param, Type, Typedecl, Default)                         \
+    Typedecl m_##Param = Default;
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals);
+#undef declare_locals
 
     void DoClose(const int transportIndex = -1) final;
 };

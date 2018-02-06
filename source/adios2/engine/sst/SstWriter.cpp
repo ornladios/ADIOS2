@@ -25,8 +25,12 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
     char *cstr = new char[name.length() + 1];
     strcpy(cstr, name.c_str());
 
-    m_Output = SstWriterOpen(cstr, NULL, mpiComm);
     Init();
+#define set_params(Param, Type, Typedecl, Default) Params.Param = m_##Param;
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
+#undef set_params
+
+    m_Output = SstWriterOpen(cstr, &Params, mpiComm);
     delete[] cstr;
 }
 
@@ -62,22 +66,39 @@ void SstWriter::PerformPuts() {}
 // PRIVATE functions below
 void SstWriter::Init()
 {
-    auto lf_SetBoolParameter = [&](const std::string key, bool &parameter) {
+    auto lf_SetBoolParameter = [&](const std::string key, int &parameter) {
 
         auto itKey = m_IO.m_Parameters.find(key);
         if (itKey != m_IO.m_Parameters.end())
         {
             if (itKey->second == "yes" || itKey->second == "true")
             {
-                parameter = true;
+                parameter = 1;
             }
             else if (itKey->second == "no" || itKey->second == "false")
             {
-                parameter = false;
+                parameter = 0;
             }
         }
     };
-    lf_SetBoolParameter("FFSmarshal", m_FFSmarshal);
+    auto lf_SetIntParameter = [&](const std::string key, int &parameter) {
+
+        auto itKey = m_IO.m_Parameters.find(key);
+        if (itKey != m_IO.m_Parameters.end())
+        {
+            parameter = std::stoi(itKey->second);
+            return true;
+        }
+        return false;
+    };
+
+#define get_params(Param, Type, Typedecl, Default)                             \
+    lf_Set##Type##Parameter("##Param##", m_##Param);
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
+#undef get_params
+#define set_params(Param, Type, Typedecl, Default) Params.Param = m_##Param;
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
+#undef set_params
 }
 
 #define declare_type(T)                                                        \

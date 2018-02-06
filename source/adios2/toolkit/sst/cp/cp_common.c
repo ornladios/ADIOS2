@@ -11,10 +11,28 @@
 
 #include "cp_internal.h"
 
-void CP_parseParams(SstStream Stream, const char *Params)
+void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 {
-    Stream->WaitForFirstReader = 1;
-    Stream->QueuedTimestepLimit = 0;
+    if (Params->RendezvousReaderCount >= 0)
+    {
+        Stream->RendezvousReaderCount = Params->RendezvousReaderCount;
+    }
+    else
+    {
+        fprintf(stderr, "Invalid RendezvousReaderCount parameter value (%d) "
+                        "for SST Stream %s\n",
+                Params->RendezvousReaderCount, Stream->Filename);
+    }
+    if (Params->QueueLimit >= 0)
+    {
+        Stream->QueueLimit = Params->QueueLimit;
+    }
+    else
+    {
+        fprintf(stderr,
+                "Invalid QueueLimit parameter value (%d) for SST Stream %s\n",
+                Params->QueueLimit, Stream->Filename);
+    }
 }
 
 static FMField CP_ReaderInitList[] = {

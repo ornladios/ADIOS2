@@ -40,10 +40,12 @@ typedef struct _SstStats
     size_t BytesTransferred;
 } * SstStats;
 
+typedef struct _SstParams *SstParams;
+
 /*
  *  Writer-side operations
  */
-extern SstStream SstWriterOpen(const char *filename, const char *params,
+extern SstStream SstWriterOpen(const char *filename, SstParams Params,
                                MPI_Comm comm);
 extern void SstProvideTimestep(SstStream s, SstMetadata local_metadata,
                                SstData data, long timestep);
@@ -52,7 +54,7 @@ extern void SstWriterClose(SstStream stream);
 /*
  *  Reader-side operations
  */
-extern SstStream SstReaderOpen(const char *filename, const char *params,
+extern SstStream SstReaderOpen(const char *filename, SstParams Params,
                                MPI_Comm comm);
 extern SstFullMetadata SstGetMetadata(SstStream stream, long timestep);
 extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
@@ -94,6 +96,20 @@ extern void SstWriterEndStep(SstStream Stream);
 extern void SstSetStatsSave(SstStream Stream, SstStats Save);
 
 #include "sst_data.h"
+
+#define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
+    MACRO(FFSmarshal, Bool, int, true)                                         \
+    MACRO(BPmarshal, Bool, int, false)                                         \
+    MACRO(RendezvousReaderCount, Int, int, 1)                                  \
+    MACRO(QueueLimit, Int, int, 0)                                             \
+    MACRO(DiscardOnQueueFull, Bool, int, 1)
+
+struct _SstParams
+{
+#define declare_struct(Param, Type, Typedecl, Default) Typedecl Param;
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_struct);
+#undef declare_struct
+};
 
 #ifdef __cplusplus
 }

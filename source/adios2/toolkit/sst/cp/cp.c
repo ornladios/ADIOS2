@@ -239,7 +239,8 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
                 Last->Next = List->Next;
             }
             CP_verbose(Stream, "Step %d reference count reached zero, "
-                               "releasing from DP and freeing\n");
+                               "releasing from DP and freeing\n",
+                       List->Timestep);
             Stream->DP_Interface->releaseTimestep(&Svcs, Stream->DP_Stream,
                                                   List->Timestep);
 
@@ -462,13 +463,13 @@ static char *TrimSuffix(const char *Name)
     return Ret;
 }
 
-SstStream SstWriterOpen(const char *Name, const char *params, MPI_Comm comm)
+SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
 {
     SstStream Stream;
 
     Stream = CP_newStream();
     Stream->Role = WriterRole;
-    CP_parseParams(Stream, params);
+    CP_validateParams(Stream, Params, 1 /* Writer */);
 
     char *Filename = TrimSuffix(Name);
     Stream->DP_Interface = LoadDP("dummy");
@@ -476,7 +477,7 @@ SstStream SstWriterOpen(const char *Name, const char *params, MPI_Comm comm)
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
     Stream->mpiComm = comm;
-    if (Stream->WaitForFirstReader)
+    if (Stream->RendezvousReaderCount > 0)
     {
         Stream->FirstReaderCondition =
             CMCondition_get(Stream->CPInfo->cm, NULL);
@@ -498,12 +499,11 @@ SstStream SstWriterOpen(const char *Name, const char *params, MPI_Comm comm)
 
     CP_verbose(Stream, "Opening Stream \"%s\"\n", Filename);
 
-    if (Stream->WaitForFirstReader)
+    while (Stream->RendezvousReaderCount > 0)
     {
         WS_ReaderInfo reader;
-        CP_verbose(
-            Stream,
-            "Stream parameter requires rendezvous, waiting for first reader\n");
+        CP_verbose(Stream, "Stream \"%s\" waiting for %d readers\n", Filename,
+                   Stream->RendezvousReaderCount);
         if (Stream->Rank == 0)
         {
             pthread_mutex_lock(&Stream->DataLock);
@@ -525,6 +525,7 @@ SstStream SstWriterOpen(const char *Name, const char *params, MPI_Comm comm)
         Stream->OpenTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
         MPI_Barrier(Stream->mpiComm);
         gettimeofday(&Stream->ValidStartTime, NULL);
+        Stream->RendezvousReaderCount--;
     }
     Stream->Filename = Filename;
     CP_verbose(Stream, "Finish opening Stream \"%s\"\n", Filename);
@@ -679,15 +680,15 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     int GlobalOpRequested = 0;
 
     pthread_mutex_lock(&Stream->DataLock);
-    if (Stream->QueuedTimestepLimit > 0)
+    if (Stream->QueueLimit > 0)
     {
-        while (Stream->QueuedTimestepCount >= Stream->QueuedTimestepLimit)
+        while (Stream->QueuedTimestepCount >= Stream->QueueLimit)
         {
             CP_verbose(Stream, "Provide Timestep for Step %d paused because of "
                                "queueing limit.\n",
                        Timestep);
             pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
-            if (Stream->QueuedTimestepCount < Stream->QueuedTimestepLimit)
+            if (Stream->QueuedTimestepCount < Stream->QueueLimit)
             {
                 CP_verbose(Stream, "Provide Timestep for Step %d is now "
                                    "released to continue.\n",
@@ -821,7 +822,7 @@ static void **participate_in_reader_init_data_exchange(SstStream Stream,
     return (void **)pointers;
 }
 
-SstStream SstReaderOpen(const char *Name, const char *params, MPI_Comm comm)
+SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 {
     SstStream Stream;
     void *dpInfo;
@@ -837,7 +838,7 @@ SstStream SstReaderOpen(const char *Name, const char *params, MPI_Comm comm)
     Stream = CP_newStream();
     Stream->Role = ReaderRole;
 
-    CP_parseParams(Stream, params);
+    CP_validateParams(Stream, Params, 0 /* reader */);
 
     Stream->DP_Interface = LoadDP("dummy");
 

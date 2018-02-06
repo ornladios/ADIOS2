@@ -92,7 +92,7 @@ struct _SstStream
     enum StreamRole Role;
 
     /* params */
-    int WaitForFirstReader;
+    int RendezvousReaderCount;
 
     /* state */
     int Verbose;
@@ -115,7 +115,7 @@ struct _SstStream
     int ReaderTimestep;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
-    int QueuedTimestepLimit;
+    int QueueLimit;
     int LastProvidedTimestep;
     int NewReaderPresent;
 
@@ -315,7 +315,7 @@ typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 
 extern atom_t CM_TRANSPORT_ATOM;
 
-void CP_parseParams(SstStream stream, const char *params);
+void CP_validateParams(SstStream stream, SstParams Params, int Writer);
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo);
 extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
