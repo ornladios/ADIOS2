@@ -112,6 +112,7 @@ struct _SstStream
     pthread_cond_t DataCondition;
 
     /* WRITER-SIDE FIELDS */
+    SstParams WriterParams;
     int WriterTimestep;
     int ReaderTimestep;
     CPTimestepList QueuedTimesteps;
@@ -248,6 +249,7 @@ struct _WriterResponseMsg
 {
     int WriterResponseCondition;
     int WriterCohortSize;
+    struct _SstParams *WriterConfigParams;
     size_t NextStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
@@ -308,6 +310,7 @@ typedef struct _WriterCloseMsg
 typedef struct _CombinedWriterInfo
 {
     int WriterCohortSize;
+    SstParams WriterConfigParams;
     size_t StartingStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;

@@ -450,6 +450,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
         memset(&response, 0, sizeof(response));
         response.WriterResponseCondition = WriterResponseCondition;
         response.WriterCohortSize = Stream->CohortSize;
+        response.WriterConfigParams = Stream->WriterParams;
         response.NextStepNumber = GlobalStartingTimestep;
         response.CP_WriterInfo =
             malloc(response.WriterCohortSize * sizeof(void *));
@@ -551,6 +552,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream = CP_newStream();
     Stream->Role = WriterRole;
     CP_validateParams(Stream, Params, 1 /* Writer */);
+    Stream->WriterParams = Params;
 
     char *Filename = TrimSuffix(Name);
     Stream->DP_Interface = LoadDP("dummy");
@@ -1136,6 +1138,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         assert(response);
         struct _CombinedWriterInfo WriterData;
         WriterData.WriterCohortSize = response->WriterCohortSize;
+        WriterData.WriterConfigParams = response->WriterConfigParams;
         WriterData.StartingStepNumber = response->NextStepNumber;
         WriterData.CP_WriterInfo = response->CP_WriterInfo;
         WriterData.DP_WriterInfo = response->DP_WriterInfo;
@@ -1155,6 +1158,10 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     //    printf("\n");
 
     Stream->WriterCohortSize = ReturnData->WriterCohortSize;
+    if (ReturnData->WriterConfigParams->FFSmarshal)
+    {
+        CP_verbose(Stream, "Writer is doing FFS-based marshalling\n");
+    }
     Stream->ReaderTimestep = ReturnData->StartingStepNumber - 1;
     Stream->ConnectionsToWriter =
         calloc(sizeof(CP_PeerConnection), ReturnData->WriterCohortSize);
