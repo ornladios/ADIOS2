@@ -157,7 +157,7 @@ static void init_fabric(struct fabric_state *fabric)
 
     cq_attr.size = 0;
     cq_attr.format = FI_CQ_FORMAT_DATA;
-    cq_attr.wait_obj = FI_WAIT_MUTEX_COND;
+    cq_attr.wait_obj = FI_WAIT_UNSPEC;
     cq_attr.wait_cond = FI_CQ_COND_NONE;
     fi_cq_open(fabric->domain, &cq_attr, &fabric->cq_signal, fabric->ctx);
     fi_ep_bind(fabric->signal, &fabric->cq_signal->fid, FI_TRANSMIT | FI_RECV);
@@ -410,6 +410,7 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
     fi_addr_t SrcAddress;
     struct fid_mr *LocalMR;
     struct fi_cq_data_entry CQEntry = {0};
+    ssize_t rc;
 
     Svcs->verbose(
         RS_Stream->CP_Stream,
@@ -418,11 +419,6 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
 
     SrcAddress = RS_Stream->WriterAddr[Handle->Rank];
 
-    /*
-     * `Handle` contains the full request info and is `client_data`
-     * associated with the CMCondition.  Once we get it, copy the incoming
-     * data to the buffer area given by the request
-     */
     pthread_mutex_lock(&fabric_mutex);
     if (Fabric->local_mr_req)
     {
@@ -431,11 +427,23 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                   0, &LocalMR, Fabric->ctx);
         LocalDesc = fi_mr_desc(LocalMR);
     }
-    fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
+
+    rc = fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
             SrcAddress, (uint64_t)ReadReplyMsg->Addr, ReadReplyMsg->Key,
             Fabric->ctx);
-    fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
-    // error handling
+
+    do {
+    	rc = fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
+    			SrcAddress, (uint64_t)ReadReplyMsg->Addr, ReadReplyMsg->Key,
+    	        Fabric->ctx);
+    }while(rc == -EAGAIN);
+
+    if(rc != 0) {
+    	Svcs->verbose(RS_Stream->CP_Stream, "fi_readmsg failed with code %d.\n", rc);
+    } else {
+    	fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
+    }
+
     if (Fabric->local_mr_req)
     {
         fi_close((struct fid *)LocalMR);
