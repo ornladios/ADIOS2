@@ -50,6 +50,7 @@ typedef struct _WS_ReaderInfo
     SstStream ParentStream;
     enum StreamStatus ReaderStatus;
     long StartingTimestep;
+    long LastSentTimestep;
     void *DP_WSR_Stream;
     void *RS_StreamID;
     int ReaderCohortSize;
@@ -92,7 +93,7 @@ struct _SstStream
     enum StreamRole Role;
 
     /* params */
-    int WaitForFirstReader;
+    int RendezvousReaderCount;
 
     /* state */
     int Verbose;
@@ -111,11 +112,13 @@ struct _SstStream
     pthread_cond_t DataCondition;
 
     /* WRITER-SIDE FIELDS */
+    SstParams WriterParams;
     int WriterTimestep;
     int ReaderTimestep;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
-    int QueuedTimestepLimit;
+    int QueueLimit;
+    int DiscardOnQueueFull;
     int LastProvidedTimestep;
     int NewReaderPresent;
 
@@ -246,6 +249,7 @@ struct _WriterResponseMsg
 {
     int WriterResponseCondition;
     int WriterCohortSize;
+    struct _SstParams *WriterConfigParams;
     size_t NextStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
@@ -306,6 +310,7 @@ typedef struct _WriterCloseMsg
 typedef struct _CombinedWriterInfo
 {
     int WriterCohortSize;
+    SstParams WriterConfigParams;
     size_t StartingStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
@@ -315,13 +320,13 @@ typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 
 extern atom_t CM_TRANSPORT_ATOM;
 
-void CP_parseParams(SstStream stream, const char *params);
+void CP_validateParams(SstStream stream, SstParams Params, int Writer);
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo);
 extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
                                        SstData Data, long Timestep,
                                        FFSFormatList Formats,
-                                       void *DataFreeFunc,
+                                       void DataFreeFunc(void *),
                                        void *FreeClientData);
 
 void **CP_consolidateDataToRankZero(SstStream stream, void *local_info,

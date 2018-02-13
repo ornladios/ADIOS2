@@ -11,11 +11,38 @@
 
 #include "cp_internal.h"
 
-void CP_parseParams(SstStream Stream, const char *Params)
+void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 {
-    Stream->WaitForFirstReader = 1;
-    Stream->QueuedTimestepLimit = 0;
+    if (Params->RendezvousReaderCount >= 0)
+    {
+        Stream->RendezvousReaderCount = Params->RendezvousReaderCount;
+    }
+    else
+    {
+        fprintf(stderr, "Invalid RendezvousReaderCount parameter value (%d) "
+                        "for SST Stream %s\n",
+                Params->RendezvousReaderCount, Stream->Filename);
+    }
+    if (Params->QueueLimit >= 0)
+    {
+        Stream->QueueLimit = Params->QueueLimit;
+    }
+    else
+    {
+        fprintf(stderr,
+                "Invalid QueueLimit parameter value (%d) for SST Stream %s\n",
+                Params->QueueLimit, Stream->Filename);
+    }
+    Stream->DiscardOnQueueFull = Params->DiscardOnQueueFull;
 }
+
+static FMField CP_SstParamsList_RAW[] = {
+#define declare_field(Param, Type, Typedecl, Default)                          \
+    {#Param, #Typedecl, sizeof(Typedecl), FMOffset(struct _SstParams *, Param)},
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_field)
+#undef declare_field
+        {NULL, NULL, 0, 0}};
+static FMField *CP_SstParamsList = NULL;
 
 static FMField CP_ReaderInitList[] = {
     {"ContactInfo", "string", sizeof(char *),
@@ -70,6 +97,8 @@ static FMStructDescRec CP_DP_ReaderArrayStructs[] = {
 static FMField CP_DP_ArrayWriterList[] = {
     {"WriterCohortSize", "integer", sizeof(int),
      FMOffset(struct _CombinedWriterInfo *, WriterCohortSize)},
+    {"WriterConfigParams", "*SstParams", sizeof(struct _SstParams),
+     FMOffset(struct _CombinedWriterInfo *, WriterConfigParams)},
     {"StartingStepNumber", "integer", sizeof(size_t),
      FMOffset(struct _CombinedWriterInfo *, StartingStepNumber)},
     {"CP_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]",
@@ -82,6 +111,7 @@ static FMField CP_DP_ArrayWriterList[] = {
 static FMStructDescRec CP_DP_WriterArrayStructs[] = {
     {"CombinedWriterInfo", CP_DP_ArrayWriterList,
      sizeof(struct _CombinedWriterInfo), NULL},
+    {"SstParams", NULL, sizeof(struct _SstParams), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField CP_ReaderRegisterList[] = {
@@ -108,6 +138,8 @@ static FMField CP_WriterResponseList[] = {
      FMOffset(struct _WriterResponseMsg *, WriterResponseCondition)},
     {"WriterCohortSize", "integer", sizeof(int),
      FMOffset(struct _WriterResponseMsg *, WriterCohortSize)},
+    {"WriterConfigParams", "*SstParams", sizeof(struct _SstParams),
+     FMOffset(struct _WriterResponseMsg *, WriterConfigParams)},
     {"NextStepNumber", "integer", sizeof(size_t),
      FMOffset(struct _WriterResponseMsg *, NextStepNumber)},
     {"cp_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]",
@@ -120,6 +152,7 @@ static FMField CP_WriterResponseList[] = {
 static FMStructDescRec CP_WriterResponseStructs[] = {
     {"WriterResponse", CP_WriterResponseList, sizeof(struct _WriterResponseMsg),
      NULL},
+    {"SstParams", NULL, sizeof(struct _SstParams), NULL},
     {NULL, NULL, 0, NULL}};
 
 /* static FMField SstMetadataList[] = {{"DataSize", "integer", sizeof(size_t),
@@ -636,6 +669,43 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
 
     CPInfo->fm_c = CMget_FMcontext(CPInfo->cm);
     CPInfo->ffs_c = create_FFSContext_FM(CPInfo->fm_c);
+
+    if (!CP_SstParamsList)
+    {
+        int i = 0;
+        /* need to pre-process the CP_SstParamsList to fix typedecl values */
+        CP_SstParamsList = copy_field_list(CP_SstParamsList_RAW);
+        while (CP_SstParamsList[i].field_name)
+        {
+            if (strcmp(CP_SstParamsList[i].field_type, "int") == 0)
+            {
+                free((void *)CP_SstParamsList[i].field_type);
+                CP_SstParamsList[i].field_type = strdup("integer");
+            }
+            i++;
+        }
+    }
+    for (int i = 0; i < sizeof(CP_DP_WriterArrayStructs) /
+                            sizeof(CP_DP_WriterArrayStructs[0]);
+         i++)
+    {
+        if (CP_DP_WriterArrayStructs[i].format_name &&
+            (strcmp(CP_DP_WriterArrayStructs[i].format_name, "SstParams") == 0))
+        {
+            CP_DP_WriterArrayStructs[i].field_list = CP_SstParamsList;
+        }
+    }
+
+    for (int i = 0; i < sizeof(CP_WriterResponseStructs) /
+                            sizeof(CP_WriterResponseStructs[0]);
+         i++)
+    {
+        if (CP_WriterResponseStructs[i].format_name &&
+            (strcmp(CP_WriterResponseStructs[i].format_name, "SstParams") == 0))
+        {
+            CP_WriterResponseStructs[i].field_list = CP_SstParamsList;
+        }
+    }
 
     doFormatRegistration(CPInfo, DPInfo);
 
