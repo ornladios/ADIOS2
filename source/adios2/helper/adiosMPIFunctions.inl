@@ -58,37 +58,23 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
     {
         gatheredSize = std::accumulate(counts.begin(), counts.end(), 0);
 
-        MPI_Bcast(&gatheredSize, 1, ADIOS2_MPI_SIZE_T, rankDestination,
-                  mpiComm);
-
-        if (gatheredSize > 0)
+        const size_t newSize = out.size() + gatheredSize;
+        try
         {
-            const size_t newSize = out.size() + gatheredSize;
-            try
-            {
-                out.resize(newSize);
-            }
-            catch (...)
-            {
-                std::throw_with_nested(std::runtime_error(
-                    "ERROR: buffer overflow when resizing to " +
-                    std::to_string(newSize) +
-                    " bytes, in call to GathervVectors\n"));
-            }
+            out.resize(newSize);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(
+                std::runtime_error("ERROR: buffer overflow when resizing to " +
+                                   std::to_string(newSize) +
+                                   " bytes, in call to GathervVectors\n"));
         }
     }
-    else
-    {
-        MPI_Bcast(&gatheredSize, 1, ADIOS2_MPI_SIZE_T, rankDestination,
-                  mpiComm);
-    }
 
-    if (gatheredSize > 0)
-    {
-        GathervArrays(in.data(), in.size(), counts.data(), counts.size(),
-                      &out[position], mpiComm);
-        position += gatheredSize;
-    }
+    GathervArrays(in.data(), in.size(), counts.data(), counts.size(),
+                  &out[position], mpiComm);
+    position += gatheredSize;
 }
 
 } // end namespace adios2
