@@ -37,6 +37,7 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
     if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
+        // TODO: refactor
         m_BP3Serializer.SerializeData(m_IO);
         m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
                                      m_BP3Serializer.m_Data.m_Position);

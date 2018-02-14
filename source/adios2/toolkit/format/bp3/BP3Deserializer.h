@@ -20,7 +20,6 @@
 
 namespace adios2
 {
-
 namespace format
 {
 

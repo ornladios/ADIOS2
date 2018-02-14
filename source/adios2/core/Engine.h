@@ -208,11 +208,19 @@ public:
     void WriteStep();
 
     /**
-     * Closes a particular transport, or all if -1.
+     * Closes a particular transport, or all if -1 (default).
      * @param transportIndex index returned from IO AddTransport, default (-1) =
      * all
      */
     void Close(const int transportIndex = -1);
+
+    /**
+     * Flushes data and metadata (if on) to a particular transport, or all if -1
+     * (default).
+     * @param transportIndex index returned from IO AddTransport, default (-1) =
+     * all
+     */
+    virtual void Flush(const int transportIndex = -1);
 
 protected:
     /** from derived class */

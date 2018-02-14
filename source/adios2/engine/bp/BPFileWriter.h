@@ -38,6 +38,7 @@ public:
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
+    void Flush(const int transportIndex = -1) final;
 
 private:
     /** Single object controlling BP buffering */
@@ -76,6 +77,8 @@ private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
+    void DoFlush(const bool isFinal = false, const int transportIndex = -1);
+
     void DoClose(const int transportIndex = -1) final;
 
     /** Write a profiling.json file from m_BP1Writer and m_TransportsManager
@@ -83,6 +86,18 @@ private:
     void WriteProfilingJSONFile();
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);
+
+    /**
+     * N-to-N data buffers writes, including metadata file
+     * @param transportIndex
+     */
+    void WriteData(const bool isFinal, const int transportIndex = -1);
+
+    /**
+     * N-to-M (aggregation) data buffers writes, including metadata file
+     * @param transportIndex
+     */
+    void AggregateWriteData(const bool isFinal, const int transportIndex = -1);
 };
 
 } // end namespace adios2

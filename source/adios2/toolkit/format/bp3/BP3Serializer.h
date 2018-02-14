@@ -79,9 +79,11 @@ public:
      * @param updateAbsolutePosition true: adds footer size to absolute position
      * used for Close,
      * false: doesn't update absolute, used for partial buffer
+     * @param inData true: serialize in data , false: only update metadata
+     * indices, do not serialize in data
      */
-    void
-    SerializeMetadataInData(const bool updateAbsolutePosition = true) noexcept;
+    void SerializeMetadataInData(const bool updateAbsolutePosition = true,
+                                 const bool inData = true);
 
     /**
      * Finishes bp buffer by serializing data and adding trailing metadata
@@ -92,9 +94,11 @@ public:
     /**
      * Closes bp buffer for streaming mode...must reset metadata for the next
      * step
-     * @param io
+     * @param io object containing all attributes
+     * @param addMetadata true: process metadata and add to data buffer
+     * (minifooter)
      */
-    void CloseStream(IO &io);
+    void CloseStream(IO &io, const bool addMetadata = true);
 
     void ResetIndices();
 
@@ -121,6 +125,33 @@ public:
      * from all ranks
      */
     void AggregateCollectiveMetadata();
+
+    /**
+     * Updates data absolute position based on data from other producers in
+     * aggregation
+     */
+    void AggregatorsUpdateDataAbsolutePosition();
+
+    /** Updates variable and payload offsets in metadata characteristics with
+     * the updated Buffer m_DataAbsolutePosition. This is a local (non-MPI)
+     * operation */
+    void AggregatorsUpdateOffsetsInMetadata();
+
+    /** Sends aggregation data in non-blocking mode according to the strategy
+     * used */
+    void AggregatorsISend(const int step);
+
+    /**
+     * reference to buffer ready to be consumed (used by transports via a
+     * transport manager).
+     * This function should be only used by aggregator with rank 0.
+     * @return reference to buffer ready for consumption
+     */
+    BufferSTL &AggregatorConsumerBuffer();
+
+    /** Receive aggregation data in non-blocking mode according to the strategy
+     * used */
+    void AggregatorsIReceive(const int step);
 
 private:
     /** BP format version */
@@ -371,6 +402,19 @@ private:
      */
     template <class T>
     void PutPayloadInBuffer(const Variable<T> &variable) noexcept;
+
+    /**
+     * Updates variable and payload offsets with buffer m_DataAbsolutePosition
+     * @param index
+     */
+    void UpdateIndexOffsets(SerialElementIndex &index);
+
+    template <class T>
+    void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
+                                           const DataTypes dataType,
+                                           std::vector<char> &buffer);
+
+    uint32_t GetFileIndex() const noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \

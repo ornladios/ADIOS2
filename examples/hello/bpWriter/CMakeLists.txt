@@ -18,6 +18,9 @@ if(ADIOS2_HAVE_MPI)
   add_executable(hello_bpPutDeferred helloBPPutDeferred.cpp)
   target_link_libraries(hello_bpPutDeferred MPI::MPI_C)
   
+  add_executable(hello_bpSubStreams helloBPSubStreams.cpp)
+  target_link_libraries(hello_bpSubStreams MPI::MPI_C adios2)
+  
 else()
   add_executable(hello_bpWriter helloBPWriter_nompi.cpp)
   add_executable(hello_bpWriter_c helloBPWriter_nompi.c)
