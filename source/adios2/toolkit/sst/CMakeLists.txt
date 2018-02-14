@@ -1,7 +1,8 @@
 add_library(sst
   dp/dp.c
   dp/dummy_dp.c
-  cp/cp.c
+  cp/cp_reader.c
+  cp/cp_writer.c
   cp/cp_common.c
   cp/ffs_marshal.c
 )

@@ -64,14 +64,10 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(adios2::DebugON);
 #endif
 
-        adios2::IO &sstIO = adios.DeclareIO("WAN");
+        adios2::IO &sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
-        sstIO.SetParameters({{"real_time", "yes"},
-                             {"method_type", "stream"},
-                             {"method", "dump"}});
 
-        adios2::Engine &sstReader =
-            sstIO.Open("helloSst.bp", adios2::Mode::Read);
+        adios2::Engine &sstReader = sstIO.Open("helloSst", adios2::Mode::Read);
 
         std::this_thread::sleep_for(std::chrono::seconds(timeout));
 

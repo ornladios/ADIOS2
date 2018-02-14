@@ -28,6 +28,14 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     Init();
 
     m_Input = SstReaderOpen(cstr, &Params, mpiComm);
+    if (!m_Input)
+    {
+        throw std::invalid_argument("ERROR: SstReader did not find active "
+                                    "Writer contact info in file \"" +
+                                    m_Name + SST_POSTFIX +
+                                    "\".  Non-current SST contact file?" +
+                                    m_EndMessage);
+    }
     auto varCallback = [](void *reader, const char *variableName,
                           const char *type, void *data) {
         std::string Type(type);
