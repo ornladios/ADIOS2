@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -729,4 +730,94 @@ SstStream CP_newStream()
         Stream->Verbose = 0;
     }
     return Stream;
+}
+
+static void DP_verbose(SstStream Stream, char *Format, ...);
+static CManager CP_getCManager(SstStream Stream);
+static void CP_sendToPeer(SstStream Stream, CP_PeerCohort cohort, int rank,
+                          CMFormat Format, void *data);
+static MPI_Comm CP_getMPIComm(SstStream Stream);
+
+struct _CP_Services Svcs = {
+    (CP_VerboseFunc)DP_verbose, (CP_GetCManagerFunc)CP_getCManager,
+    (CP_SendToPeerFunc)CP_sendToPeer, (CP_GetMPICommFunc)CP_getMPIComm};
+
+extern int *setupPeerArray(int MySize, int MyRank, int PeerSize)
+{
+    int PortionSize = PeerSize / MySize;
+    int Leftovers = PeerSize - PortionSize * MySize;
+    int StartOffset = Leftovers;
+    int Start;
+    if (MyRank < Leftovers)
+    {
+        PortionSize++;
+        StartOffset = 0;
+    }
+    Start = PortionSize * MyRank + StartOffset;
+    int *MyPeers = malloc((PortionSize + 1) * sizeof(int));
+    for (int i = 0; i < PortionSize; i++)
+    {
+        MyPeers[i] = Start + i;
+    }
+    MyPeers[PortionSize] = -1;
+
+    return MyPeers;
+}
+
+extern void SstSetStatsSave(SstStream Stream, SstStats Stats)
+{
+    Stats->OpenTimeSecs = Stream->OpenTimeSecs;
+    Stream->Stats = Stats;
+}
+
+static void DP_verbose(SstStream s, char *Format, ...)
+{
+    if (s->Verbose)
+    {
+        va_list Args;
+        va_start(Args, Format);
+        if (s->Role == ReaderRole)
+        {
+            fprintf(stderr, "DP Reader %d (%p): ", s->Rank, s);
+        }
+        else
+        {
+            fprintf(stderr, "DP Writer %d (%p): ", s->Rank, s);
+        }
+        vfprintf(stderr, Format, Args);
+        va_end(Args);
+    }
+}
+extern void CP_verbose(SstStream s, char *Format, ...)
+{
+    if (s->Verbose)
+    {
+        va_list Args;
+        va_start(Args, Format);
+        if (s->Role == ReaderRole)
+        {
+            fprintf(stderr, "Reader %d (%p): ", s->Rank, s);
+        }
+        else
+        {
+            fprintf(stderr, "Writer %d (%p): ", s->Rank, s);
+        }
+        vfprintf(stderr, Format, Args);
+        va_end(Args);
+    }
+}
+
+static CManager CP_getCManager(SstStream Stream) { return Stream->CPInfo->cm; }
+
+static MPI_Comm CP_getMPIComm(SstStream Stream) { return Stream->mpiComm; }
+
+static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
+                          CMFormat Format, void *Data)
+{
+    CP_PeerConnection *Peers = (CP_PeerConnection *)Cohort;
+    if (Peers[Rank].CMconn == NULL)
+    {
+        Peers[Rank].CMconn = CMget_conn(s->CPInfo->cm, Peers[Rank].ContactList);
+    }
+    CMwrite(Peers[Rank].CMconn, Format, Data);
 }

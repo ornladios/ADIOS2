@@ -97,6 +97,8 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Save);
 
 #include "sst_data.h"
 
+#define SST_POSTFIX ".sst"
+
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(FFSmarshal, Bool, int, true)                                         \
     MACRO(BPmarshal, Bool, int, false)                                         \

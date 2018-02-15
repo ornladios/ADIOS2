@@ -37,20 +37,15 @@ int main(int argc, char *argv[])
     try
     {
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-        adios2::IO &sstIO = adios.DeclareIO("WANIO");
+        adios2::IO &sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
-        sstIO.SetParameters({{"peer-to-peer", "yes"},
-                             {"real_time", "yes"},
-                             {"compress", "no"},
-                             {"method", "dump"}});
 
         // Define variable and local size
         auto bpFloats = sstIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
 
         // Create engine smart pointer to Sst Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
-        adios2::Engine &sstWriter =
-            sstIO.Open("helloSst.bp", adios2::Mode::Write);
+        adios2::Engine &sstWriter = sstIO.Open("helloSst", adios2::Mode::Write);
 
         sstWriter.PutSync<float>(bpFloats, myFloats.data());
         sstWriter.Close();
