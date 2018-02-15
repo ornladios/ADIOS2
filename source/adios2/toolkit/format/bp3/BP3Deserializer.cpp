@@ -12,6 +12,7 @@
 #include "BP3Deserializer.tcc"
 
 #include <future>
+#include <unordered_set>
 #include <vector>
 
 #include "adios2/helper/adiosFunctions.h" //ReadValue<T>
@@ -153,6 +154,9 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL, const IO &io)
 
     size_t localPosition = 0;
 
+    std::unordered_set<uint32_t> stepsFound;
+    m_MetadataSet.StepsCount = 0;
+
     while (localPosition < length)
     {
         ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
@@ -162,10 +166,11 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL, const IO &io)
         }
 
         m_MetadataSet.CurrentStep = static_cast<size_t>(index.Step - 1);
-        const size_t bpStep = static_cast<size_t>(index.Step);
-        if (bpStep > m_MetadataSet.StepsCount)
+
+        // Count the number of unseen steps
+        if (stepsFound.insert(index.Step).second)
         {
-            m_MetadataSet.StepsCount = bpStep;
+            ++m_MetadataSet.StepsCount;
         }
 
         localPosition += index.Length + 2;

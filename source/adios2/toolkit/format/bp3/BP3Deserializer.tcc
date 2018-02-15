@@ -14,6 +14,7 @@
 #include "BP3Deserializer.h"
 
 #include <algorithm> //std::reverse
+#include <unordered_set>
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -110,7 +111,8 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
     position = initialPosition;
 
     size_t currentStep = 0; // Starts at 1 in bp file
-
+    std::unordered_set<uint32_t> stepsFound;
+    variable->m_AvailableStepsCount = 0;
     while (position < endPosition)
     {
         const size_t subsetPosition = position;
@@ -124,8 +126,10 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
         if (subsetCharacteristics.Statistics.Step > currentStep)
         {
             currentStep = subsetCharacteristics.Statistics.Step;
-            variable->m_AvailableStepsCount =
-                subsetCharacteristics.Statistics.Step;
+        }
+        if(stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        {
+            ++variable->m_AvailableStepsCount;
         }
         variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
@@ -187,7 +191,8 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
     position = initialPosition;
 
     size_t currentStep = 0; // Starts at 1 in bp file
-
+    std::unordered_set<uint32_t> stepsFound;
+    variable->m_AvailableStepsCount = 0;
     while (position < endPosition)
     {
         const size_t subsetPosition = position;
@@ -212,8 +217,10 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
         if (subsetCharacteristics.Statistics.Step > currentStep)
         {
             currentStep = subsetCharacteristics.Statistics.Step;
-            variable->m_AvailableStepsCount =
-                subsetCharacteristics.Statistics.Step;
+        }
+        if(stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        {
+            ++variable->m_AvailableStepsCount;
         }
         variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
