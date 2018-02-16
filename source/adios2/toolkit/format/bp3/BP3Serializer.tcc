@@ -311,7 +311,7 @@ void BP3Serializer::PutAttributeInIndex(const Attribute<T> &attribute,
 
 template <>
 inline BP3Serializer::Stats<typename TypeInfo<std::string>::ValueType>
-BP3Serializer::GetStats(const Variable<std::string> &variable) const noexcept
+BP3Serializer::GetStats(const Variable<std::string> &variable) noexcept
 {
     Stats<typename TypeInfo<std::string>::ValueType> stats;
     stats.Step = m_MetadataSet.TimeStep;
@@ -321,15 +321,17 @@ BP3Serializer::GetStats(const Variable<std::string> &variable) const noexcept
 
 template <class T>
 BP3Serializer::Stats<typename TypeInfo<T>::ValueType>
-BP3Serializer::GetStats(const Variable<T> &variable) const noexcept
+BP3Serializer::GetStats(const Variable<T> &variable) noexcept
 {
     Stats<typename TypeInfo<T>::ValueType> stats;
     const std::size_t valuesSize = variable.TotalSize();
 
     if (m_Verbosity == 0)
     {
+        ProfilerStart("minmax");
         GetMinMaxThreads(variable.GetData(), valuesSize, stats.Min, stats.Max,
                          m_Threads);
+        ProfilerStop("minmax");
     }
 
     stats.Step = m_MetadataSet.TimeStep;
@@ -700,8 +702,10 @@ inline void BP3Serializer::PutPayloadInBuffer(
 template <class T>
 void BP3Serializer::PutPayloadInBuffer(const Variable<T> &variable) noexcept
 {
+    ProfilerStart("memcpy");
     CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position, variable.GetData(),
                         variable.TotalSize(), m_Threads);
+    ProfilerStop("memcpy");
     m_Data.m_AbsolutePosition += variable.PayloadSize();
 }
 

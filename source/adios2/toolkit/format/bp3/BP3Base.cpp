@@ -84,6 +84,14 @@ void BP3Base::InitParameters(const Params &parameters)
             "buffering",
             profiling::Timer("buffering", DefaultTimeUnitEnum, m_DebugMode));
 
+        m_Profiler.Timers.emplace(
+            "memcpy",
+            profiling::Timer("memcpy", DefaultTimeUnitEnum, m_DebugMode));
+
+        m_Profiler.Timers.emplace(
+            "minmax",
+            profiling::Timer("minmax", DefaultTimeUnitEnum, m_DebugMode));
+
         m_Profiler.Bytes.emplace("buffering", 0);
     }
 
@@ -277,13 +285,14 @@ void BP3Base::InitParameterProfileUnits(const std::string value)
 {
     TimeUnit timeUnit = StringToTimeUnit(value, m_DebugMode);
 
-    if (m_Profiler.Timers.count("buffering") == 1)
-    {
-        m_Profiler.Timers.erase("buffering");
-    }
-
     m_Profiler.Timers.emplace(
         "buffering", profiling::Timer("buffering", timeUnit, m_DebugMode));
+
+    m_Profiler.Timers.emplace(
+        "memcpy", profiling::Timer("memcpy", timeUnit, m_DebugMode));
+
+    m_Profiler.Timers.emplace(
+        "minmax", profiling::Timer("minmax", timeUnit, m_DebugMode));
 
     m_Profiler.Bytes.emplace("buffering", 0);
 }
@@ -637,7 +646,7 @@ std::string BP3Base::ReadBP3String(const std::vector<char> &buffer,
     return values;
 }
 
-void BP3Base::ProfilerStart(const std::string process)
+void BP3Base::ProfilerStart(const std::string process) noexcept
 {
     if (m_Profiler.IsActive)
     {
@@ -645,7 +654,7 @@ void BP3Base::ProfilerStart(const std::string process)
     }
 }
 
-void BP3Base::ProfilerStop(const std::string process)
+void BP3Base::ProfilerStop(const std::string process) noexcept
 {
     if (m_Profiler.IsActive)
     {
