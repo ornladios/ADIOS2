@@ -195,6 +195,8 @@ std::string BP3Serializer::GetRankProfilingJSON(
     rankLog +=
         "\"bytes\": " + std::to_string(profiler.Bytes.at("buffering")) + ", ";
     lf_WriterTimer(rankLog, profiler.Timers.at("buffering"));
+    lf_WriterTimer(rankLog, profiler.Timers.at("memcpy"));
+    lf_WriterTimer(rankLog, profiler.Timers.at("minmax"));
 
     const size_t transportsSize = transportsTypes.size();
 

@@ -196,7 +196,7 @@ private:
      */
     template <class T>
     Stats<typename TypeInfo<T>::ValueType>
-    GetStats(const Variable<T> &variable) const noexcept;
+    GetStats(const Variable<T> &variable) noexcept;
 
     template <class T>
     void PutVariableMetadataInData(

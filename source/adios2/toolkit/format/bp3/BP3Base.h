@@ -494,9 +494,9 @@ protected:
     std::string ReadBP3String(const std::vector<char> &buffer,
                               size_t &position) const noexcept;
 
-    void ProfilerStart(const std::string process);
+    void ProfilerStart(const std::string process) noexcept;
 
-    void ProfilerStop(const std::string process);
+    void ProfilerStop(const std::string process) noexcept;
 
 private:
     std::string GetBPRankName(const std::string &name, const size_t rank) const
