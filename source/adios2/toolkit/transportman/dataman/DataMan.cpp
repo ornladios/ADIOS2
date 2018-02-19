@@ -34,8 +34,13 @@ DataMan::~DataMan()
 {
     for (auto &readThread : m_ReadThreads)
     {
-        m_Listening = false;
+        m_Reading = false;
         readThread.join();
+    }
+    for (auto &writeThread : m_WriteThreads)
+    {
+        m_Writing = false;
+        writeThread.join();
     }
 }
 
@@ -44,12 +49,11 @@ void DataMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                                 const Mode mode,
                                 const std::vector<Params> &paramsVector,
-                                const bool profile, const bool blocking)
+                                const bool profile)
 {
 
     if (streamNames.size() == 0)
     {
-        std::cout << streamNames.size() << std::endl;
         throw("No streams to open from DataMan::OpenWANTransports");
     }
 
@@ -57,16 +61,21 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     {
 
         // Get parameters
-        const std::string library(GetParameter("Library", paramsVector[i], true,
-                                               m_DebugMode,
-                                               "Transport Library Parameter"));
 
-        const std::string ipAddress(
-            GetParameter("IPAddress", paramsVector[i], true, m_DebugMode,
-                         "Transport IPAddress Parameter"));
+        std::string library;
+        GetStringParameter(paramsVector[i], "Library", library,
+                           m_DefaultLibrary);
 
-        std::string port(GetParameter("Port", paramsVector[i], false,
-                                      m_DebugMode, "Transport Port Parameter"));
+        std::string ip;
+        GetStringParameter(paramsVector[i], "IPAddress", ip,
+                           m_DefaultIPAddress);
+
+        std::string port;
+        GetStringParameter(paramsVector[i], "Port", port, m_DefaultPort);
+
+        std::string transportMode;
+        GetStringParameter(paramsVector[i], "TransportMode", transportMode,
+                           m_DefaultTransportMode);
 
         // Calculate port number
         int mpiRank, mpiSize;
@@ -74,11 +83,12 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         MPI_Comm_size(m_MPIComm, &mpiSize);
         if (port.empty())
         {
-            port = std::to_string(m_DefaultPort);
+            port = m_DefaultPort;
             port = std::to_string(stoi(port) + i * mpiSize);
         }
         port = std::to_string(stoi(port) + mpiRank);
 
+        // Create transports
         std::shared_ptr<Transport> wanTransport;
 
         if (library == "zmq" || library == "ZMQ")
@@ -86,16 +96,22 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
 #ifdef ADIOS2_HAVE_ZEROMQ
 
             wanTransport = std::make_shared<transport::WANZmq>(
-                ipAddress, port, m_MPIComm, blocking, m_DebugMode);
+                ip, port, m_MPIComm, transportMode, m_DebugMode);
             wanTransport->Open(streamNames[i], mode);
             m_Transports.emplace(i, wanTransport);
 
             if (mode == Mode::Read)
             {
-
-                m_Listening = true;
+                m_Reading = true;
                 m_ReadThreads.emplace_back(
                     std::thread(&DataMan::ReadThread, this, wanTransport));
+            }
+
+            else if (mode == Mode::Write)
+            {
+                m_Writing = true;
+                m_WriteThreads.emplace_back(
+                    std::thread(&DataMan::WriteThread, this, wanTransport));
             }
 
 #else
@@ -117,12 +133,12 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void DataMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer, bool blocking)
+void DataMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer)
 {
-    WriteWAN(*buffer, blocking);
+    PushBufferQueue(buffer);
 }
 
-void DataMan::WriteWAN(const std::vector<char> &buffer, bool blocking)
+void DataMan::WriteWAN(const std::vector<char> &buffer)
 {
     if (m_CurrentTransport >= m_Transports.size())
     {
@@ -130,18 +146,8 @@ void DataMan::WriteWAN(const std::vector<char> &buffer, bool blocking)
             "ERROR: No valid transports found, from DataMan::WriteWAN()");
     }
 
-    if (blocking)
-    {
-        m_Transports[m_CurrentTransport]->Write(
-            reinterpret_cast<const char *>(buffer.data()), buffer.size());
-    }
-    else
-    {
-        Transport::Status status;
-        m_Transports[m_CurrentTransport]->IWrite(
-            reinterpret_cast<const char *>(buffer.data()), buffer.size(),
-            status);
-    }
+    m_Transports[m_CurrentTransport]->Write(
+        reinterpret_cast<const char *>(buffer.data()), buffer.size());
 }
 
 std::shared_ptr<std::vector<char>> DataMan::ReadWAN()
@@ -167,79 +173,34 @@ std::shared_ptr<std::vector<char>> DataMan::PopBufferQueue()
     return nullptr;
 }
 
-void DataMan::SetBP3Deserializer(format::BP3Deserializer &bp3Deserializer) {}
-
-void DataMan::SetIO(IO &io) {}
-
-void DataMan::SetCallback(std::function<void(std::vector<char>)> callback) {}
+void DataMan::WriteThread(std::shared_ptr<Transport> transport)
+{
+    while (m_Writing)
+    {
+        std::shared_ptr<std::vector<char>> buffer = PopBufferQueue();
+        if (buffer != nullptr)
+        {
+            if (buffer->size() > 0)
+            {
+                transport->Write(buffer->data(), buffer->size());
+            }
+        }
+    }
+}
 
 void DataMan::ReadThread(std::shared_ptr<Transport> transport)
 {
-
-    // Initialize buffer
     std::vector<char> buffer(m_MaxReceiveBuffer);
-
-    // Main loop
-    while (m_Listening)
+    while (m_Reading)
     {
-
         Transport::Status status;
         transport->IRead(buffer.data(), m_MaxReceiveBuffer, status);
-
         if (status.Bytes > 0)
         {
-
             std::shared_ptr<std::vector<char>> bufferQ =
                 std::make_shared<std::vector<char>>(status.Bytes);
             std::memcpy(bufferQ->data(), buffer.data(), status.Bytes);
             PushBufferQueue(bufferQ);
-
-            /*
-                                    // TODO: move to engine
-                                    if (GetBoolParameter(trans_params,
-               "DumpFile"))
-                                    {
-                                            std::ofstream bpfile(stream_name,
-                                                            std::ios_base::binary);
-                                            bpfile.write(reinterpret_cast<const
-               char
-                                                            *>(buffer->data()),
-                                                            status.Bytes);
-                                            bpfile.close();
-                                    }
-
-
-                                    const auto variablesInfo =
-                                            m_IO->GetAvailableVariables();
-                                    for (const auto &variableInfoPair :
-               variablesInfo)
-                                    {
-
-                                            std::string var =
-               variableInfoPair.first;
-                                            std::string type = "null";
-
-                                            for (const auto &parameter :
-                                                            variableInfoPair.second)
-                                            {
-                                                    //  ** print out all
-               parameters from BP metadata
-                                                            std::cout << "\tKey:
-               " <<
-                                                            parameter.first
-                                                            << "\t Value: " <<
-                                                            parameter.second <<
-                                                            "\n";
-                                                    if (parameter.first ==
-               "Type")
-                                                    {
-                                                            type =
-               parameter.second;
-                                                    }
-                                            }
-
-                                    }
-            */
         }
     }
 }
@@ -260,6 +221,19 @@ bool DataMan::GetBoolParameter(const Params &params, std::string key)
             return false;
         }
     }
+    return false;
+}
+
+bool DataMan::GetStringParameter(const Params &params, std::string key,
+                                 std::string &value, std::string default_value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = it->second;
+        return true;
+    }
+    value = default_value;
     return false;
 }
 

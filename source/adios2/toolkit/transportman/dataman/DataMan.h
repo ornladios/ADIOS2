@@ -34,42 +34,47 @@ public:
 
     void OpenWANTransports(const std::vector<std::string> &streamNames,
                            const Mode openMode,
-                           const std::vector<Params> &params,
-                           const bool profile, const bool blocking);
+                           const std::vector<Params> &parametersVector,
+                           const bool profile);
 
-    void WriteWAN(const std::vector<char> &buffer, bool blocking = true);
-    void WriteWAN(std::shared_ptr<std::vector<char>> buffer,
-                  bool blocking = true);
+    void WriteWAN(const std::vector<char> &buffer);
+    void WriteWAN(std::shared_ptr<std::vector<char>> buffer);
 
     std::shared_ptr<std::vector<char>> ReadWAN();
 
-    void SetBP3Deserializer(format::BP3Deserializer &bp3Deserializer);
-    void SetIO(IO &io);
-
-    void SetCallback(std::function<void(std::vector<char>)> callback);
     void SetMaxReceiveBuffer(size_t size);
 
 private:
     bool m_Blocking = true;
     std::function<void(std::vector<char>)> m_Callback;
-    void ReadThread(std::shared_ptr<Transport> trans);
 
+    // Objects for buffer queue
     std::queue<std::shared_ptr<std::vector<char>>> m_BufferQueue;
     void PushBufferQueue(std::shared_ptr<std::vector<char>> v);
     std::shared_ptr<std::vector<char>> PopBufferQueue();
     std::mutex m_Mutex;
 
+    // Functions for parsing parameters
     bool GetBoolParameter(const Params &params, std::string key);
+    bool GetStringParameter(const Params &params, std::string key,
+                            std::string &value, std::string default_value);
 
+    void ReadThread(std::shared_ptr<Transport> transport);
     std::vector<std::thread> m_ReadThreads;
+    bool m_Reading = false;
+
+    void WriteThread(std::shared_ptr<Transport> transport);
+    std::vector<std::thread> m_WriteThreads;
+    bool m_Writing = false;
+
     std::vector<Params> m_TransportsParameters;
-
     size_t m_MaxReceiveBuffer = 128 * 1024 * 1024;
-
     size_t m_CurrentTransport = 0;
-    bool m_Listening = false;
-    const int m_DefaultPort = 12306;
     int m_Timeout = 5;
+    const std::string m_DefaultLibrary = "zmq";
+    const std::string m_DefaultIPAddress = "127.0.0.1";
+    const std::string m_DefaultPort = "12306";
+    const std::string m_DefaultTransportMode = "broadcast";
 };
 
 } // end namespace transportman

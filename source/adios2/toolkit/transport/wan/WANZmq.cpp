@@ -19,9 +19,10 @@ namespace transport
 {
 
 WANZmq::WANZmq(const std::string ipAddress, const std::string port,
-               MPI_Comm mpiComm, const bool blocking, const bool debugMode)
+               MPI_Comm mpiComm, const std::string transportMode,
+               const bool debugMode)
 : Transport("wan", "zmq", mpiComm, debugMode), m_IPAddress(ipAddress),
-  m_Port(port), m_Blocking(blocking)
+  m_Port(port), m_TransportMode(transportMode)
 {
     m_Context = zmq_ctx_new();
     if (m_Context == nullptr || m_Context == NULL)
@@ -47,10 +48,34 @@ WANZmq::~WANZmq()
     }
 }
 
+int WANZmq::OpenPubSub(const std::string &name, const Mode openMode,
+                       const std::string ip)
+{
+    // PubSub mode uses the ZeroMQ Pub/Sub scheme and requires the IP address
+    // and port of the publisher (sender). Multiple subscriptors are allowed to
+    // subscribe to the same publisher.
+    m_Socket = zmq_socket(m_Context, ZMQ_REQ);
+    return zmq_connect(m_Socket, ip.c_str());
+}
+
+int WANZmq::OpenSenderDriven(const std::string &name, const Mode openMode,
+                             const std::string ip)
+{
+    m_Socket = zmq_socket(m_Context, ZMQ_PUB);
+    return zmq_bind(m_Socket, ip.c_str());
+}
+
+int WANZmq::OpenReceiverDriven(const std::string &name, const Mode openMode,
+                               const std::string ip)
+{
+    return 0;
+}
+
 void WANZmq::Open(const std::string &name, const Mode openMode)
 {
     m_Name = name;
     m_OpenMode = openMode;
+    const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
 
     if (m_OpenMode == Mode::Write)
     {
@@ -58,18 +83,25 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
         {
             m_Profiler.Timers.at("open").Resume();
         }
-        const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
 
         int err;
-        if (m_Blocking)
+        if (m_TransportMode == "broadcast")
         {
-            m_Socket = zmq_socket(m_Context, ZMQ_REQ);
-            err = zmq_connect(m_Socket, fullIP.c_str());
+            err = OpenPubSub(name, openMode, fullIP);
+        }
+        else if (m_TransportMode == "push")
+        {
+            err = OpenSenderDriven(name, openMode, fullIP);
+        }
+        else if (m_TransportMode == "query")
+        {
+            err = OpenReceiverDriven(name, openMode, fullIP);
         }
         else
         {
-            m_Socket = zmq_socket(m_Context, ZMQ_PUB);
-            err = zmq_bind(m_Socket, fullIP.c_str());
+            throw std::runtime_error(
+                "WANZmq::Open received wrong transport mode parameter" +
+                m_TransportMode + ". Should be broadcast, push or query");
         }
 
         if (err)
@@ -91,19 +123,29 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
     else if (m_OpenMode == Mode::Read)
     {
         ProfilerStart("open");
-        const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
 
         int err;
-        if (m_Blocking)
+        if (m_TransportMode == "broadcast")
         {
+            std::cout << "b" << fullIP << std::endl;
             m_Socket = zmq_socket(m_Context, ZMQ_REP);
             err = zmq_bind(m_Socket, fullIP.c_str());
         }
-        else
+        else if (m_TransportMode == "push")
         {
+            std::cout << "p" << fullIP << std::endl;
             m_Socket = zmq_socket(m_Context, ZMQ_SUB);
             err = zmq_connect(m_Socket, fullIP.c_str());
             zmq_setsockopt(m_Socket, ZMQ_SUBSCRIBE, "", 0);
+        }
+        else if (m_TransportMode == "query")
+        {
+        }
+        else
+        {
+            throw std::runtime_error(
+                "WANZmq::Open received wrong transport mode parameter" +
+                m_TransportMode + ". Should be broadcast, push or query");
         }
 
         ProfilerStop("open");

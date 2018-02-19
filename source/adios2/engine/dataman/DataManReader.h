@@ -12,9 +12,9 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
+#include "DataManCommon.h"
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
-#include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
@@ -23,7 +23,7 @@
 namespace adios2
 {
 
-class DataManReader : public Engine
+class DataManReader : public DataManCommon
 {
 
 public:
@@ -51,20 +51,6 @@ public:
     size_t CurrentStep() const;
 
 private:
-    unsigned int m_nDataThreads = 1;
-    unsigned int m_nControlThreads = 0;
-    unsigned int m_TransportChannels = 1;
-    size_t m_BufferSize = 1024 * 1024 * 1024;
-    std::string m_UseFormat = "json";
-    bool m_DoMonitor = false;
-    bool m_Blocking = true;
-
-    std::shared_ptr<transportman::DataMan> m_DataMan;
-    std::vector<std::thread> m_DataThreads;
-
-    std::shared_ptr<transportman::DataMan> m_ControlMan;
-    std::vector<std::thread> m_ControlThreads;
-
     std::vector<adios2::Operator *> m_Callbacks;
 
     // The current time step that the reader app is reading
@@ -92,16 +78,13 @@ private:
     std::mutex m_MutexIO;
     std::mutex m_MutexMap;
 
-    void ReadThread(std::shared_ptr<transportman::DataMan> man);
+    void IOThread(std::shared_ptr<transportman::DataMan> man) final;
+    void IOThreadBP(std::shared_ptr<transportman::DataMan> man);
 
     void Init();
 
     void RunCallback(void *buffer, std::string doid, std::string var,
                      std::string dtype, std::vector<size_t> shape);
-    bool GetBoolParameter(Params &params, std::string key, bool &value);
-    bool GetStringParameter(Params &params, std::string key,
-                            std::string &value);
-    bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
 
     void DoClose(const int transportIndex = -1) final;
 
