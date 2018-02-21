@@ -27,7 +27,6 @@ contains
 
     end subroutine
 
-
     subroutine adios2_add_transport(transport_index, io, type, ierr)
         integer, intent(out):: transport_index
         integer(kind=8), intent(in) :: io
@@ -37,9 +36,7 @@ contains
         call adios2_add_transport_f2c(transport_index, io, &
                                       TRIM(ADJUSTL(type))//char(0), ierr)
 
-
     end subroutine
-
 
     subroutine adios2_set_transport_parameter(io, transport_index, key, value, &
                                               ierr)

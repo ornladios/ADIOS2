@@ -15,12 +15,30 @@ if(ADIOS2_HAVE_MPI)
   target_sources(TestBPWriteAttributes_f PRIVATE TestBPWriteAttributes.f90)
   target_link_libraries(TestBPWriteAttributes_f MPI::MPI_Fortran)
   
+  add_executable(TestBPWriteTypesByName_f SmallTestData_mod.f90)
+  target_link_libraries(TestBPWriteTypesByName_f adios2_f)
+  target_sources(TestBPWriteTypesByName_f PRIVATE TestBPWriteTypesByName.f90)
+  target_link_libraries(TestBPWriteTypesByName_f MPI::MPI_Fortran)
+  
+  add_executable(TestBPWriteStep_f SmallTestData_mod.f90)
+  target_link_libraries(TestBPWriteStep_f adios2_f)
+  target_sources(TestBPWriteStep_f PRIVATE TestBPWriteStep.f90)
+  target_link_libraries(TestBPWriteStep_f MPI::MPI_Fortran)
+  
   set(test_parameters
     ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
   )
   
   add_test(NAME BPWriteAttributes_f
     COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteAttributes_f>
+  )
+  
+  add_test(NAME BPWriteReadTypesByName_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteTypesByName_f>
+  )
+  
+  add_test(NAME BPWriteStep_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteStep_f>
   )
   
 else()

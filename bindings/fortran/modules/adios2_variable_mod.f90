@@ -56,7 +56,7 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_variable_ndims_f2c(variable, ndims, ierr)
-        allocate(shape_dims(ndims))
+        allocate (shape_dims(ndims))
         call adios2_variable_shape_f2c(variable, shape_dims, ierr)
 
     end subroutine

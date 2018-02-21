@@ -90,7 +90,7 @@ void FC_GLOBAL(adios2_define_global_variable_f2c,
     {
         *variable = adios2_define_variable(
             *io, name, static_cast<adios2_type>(*type), 0, nullptr, nullptr,
-            nullptr, adios2_constant_dims_false, data);
+            nullptr, adios2_constant_dims_true, data);
     }
     catch (std::exception &e)
     {

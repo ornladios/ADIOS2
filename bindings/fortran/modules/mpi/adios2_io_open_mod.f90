@@ -12,8 +12,8 @@ module adios2_io_open
     implicit none
 
     interface adios2_open
-         module procedure adios2_open_old_comm
-         module procedure adios2_open_new_comm
+        module procedure adios2_open_old_comm
+        module procedure adios2_open_new_comm
     end interface
 
 contains

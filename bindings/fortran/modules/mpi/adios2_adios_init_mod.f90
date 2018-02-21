@@ -26,9 +26,8 @@ contains
 
     end subroutine
 
-
     subroutine adios2_init_config(adios, config_file, comm, adios2_debug_mode, &
-        & ierr)
+                                  ierr)
         integer(kind=8), intent(out) :: adios
         character*(*), intent(in) :: config_file
         integer, intent(in) :: comm

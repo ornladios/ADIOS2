@@ -105,7 +105,7 @@ contains
     end subroutine
 
     subroutine adios2_define_variable_dp(variable, io, name, data, &
-                                           ierr)
+                                         ierr)
         integer(kind=8), intent(out) :: variable
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
@@ -118,7 +118,7 @@ contains
     end subroutine
 
     subroutine adios2_define_variable_complex(variable, io, name, data, &
-                                             ierr)
+                                              ierr)
         integer(kind=8), intent(out) :: variable
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
@@ -131,7 +131,7 @@ contains
     end subroutine
 
     subroutine adios2_define_variable_complex_dp(variable, io, name, data, &
-                                             ierr)
+                                                 ierr)
         integer(kind=8), intent(out) :: variable
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
@@ -404,7 +404,6 @@ contains
                                         shape_dims, start_dims, count_dims, &
                                         is_constant_dims_int, data, ierr)
     end subroutine
-
 
     !2D
     subroutine adios2_define_variable_real_2d(variable, io, name, ndims, &

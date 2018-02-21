@@ -138,11 +138,11 @@ contains
 
         ! local data with zero terminated character
         character(len=adios2_string_array_element_max_size), &
-        dimension(elements):: data_null_terminated
+            dimension(elements):: data_null_terminated
 
         integer :: i
 
-        do i=1,elements
+        do i = 1, elements
             data_null_terminated(i) = TRIM(ADJUSTL(data(i)))//char(0)
         end do
 
@@ -164,8 +164,8 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_define_attribute_f2c(attribute, io, &
-                                        TRIM(ADJUSTL(name))//char(0), &
-                                        adios2_type_real, data, elements, ierr)
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         adios2_type_real, data, elements, ierr)
     end subroutine
 
     subroutine adios2_define_attribute_dp_1d(attribute, io, name, data, &
@@ -178,10 +178,9 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_define_attribute_f2c(attribute, io, &
-                                        TRIM(ADJUSTL(name))//char(0), &
-                                        adios2_type_dp, data, elements, ierr)
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         adios2_type_dp, data, elements, ierr)
     end subroutine
-
 
     subroutine adios2_define_attribute_integer1_1d(attribute, io, name, &
                                                    data, elements, ierr)
@@ -194,9 +193,9 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_define_attribute_f2c(attribute, io, &
-                                        TRIM(ADJUSTL(name))//char(0), &
-                                        adios2_type_integer1, &
-                                        data, elements, ierr)
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         adios2_type_integer1, &
+                                         data, elements, ierr)
     end subroutine
 
     subroutine adios2_define_attribute_integer2_1d(attribute, io, name, &
@@ -210,13 +209,13 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_define_attribute_f2c(attribute, io, &
-                                        TRIM(ADJUSTL(name))//char(0), &
-                                        adios2_type_integer2, &
-                                        data, elements, ierr)
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         adios2_type_integer2, &
+                                         data, elements, ierr)
     end subroutine
 
     subroutine adios2_define_attribute_integer4_1d(attribute, io, name, &
-                                                   data, elements, ierr )
+                                                   data, elements, ierr)
         integer(kind=8), intent(out) :: attribute
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
@@ -225,9 +224,9 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_define_attribute_f2c(attribute, io, &
-                                        TRIM(ADJUSTL(name))//char(0), &
-                                        adios2_type_integer4, data, elements, &
-                                        ierr)
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         adios2_type_integer4, data, elements, &
+                                         ierr)
     end subroutine
 
     subroutine adios2_define_attribute_integer8_1d(attribute, io, name, &
@@ -241,9 +240,9 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_define_attribute_f2c(attribute, io, &
-                                        TRIM(ADJUSTL(name))//char(0), &
-                                        adios2_type_integer8, &
-                                        data, elements, ierr)
+                                         TRIM(ADJUSTL(name))//char(0), &
+                                         adios2_type_integer8, &
+                                         data, elements, ierr)
     end subroutine
 
 end module
