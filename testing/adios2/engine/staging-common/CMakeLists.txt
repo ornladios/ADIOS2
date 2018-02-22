@@ -12,13 +12,13 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 if(ADIOS2_HAVE_SST)
-gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args}
                 EXTRA_ARGS "SST"
                 TEST_SUFFIX _SST)
 endif()
 
 if(ADIOS2_HAVE_MPI)
-gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args}
                 EXTRA_ARGS "InSituMPI"
                 TEST_SUFFIX _InSituMPI)
 endif()
