@@ -30,10 +30,20 @@ void FC_GLOBAL(adios2_put_sync_f2c,
                                     adios2_Variable **variable,
                                     const void *values, int *ierr);
 
+void FC_GLOBAL(adios2_put_sync_by_name_f2c,
+               ADIOS2_PUT_SYNC_BY_NAME_F2C)(adios2_Engine **engine,
+                                            const char *name,
+                                            const void *values, int *ierr);
+
 void FC_GLOBAL(adios2_put_deferred_f2c,
                ADIOS2_PUT_DEFERRED_F2C)(adios2_Engine **engine,
                                         adios2_Variable **variable,
                                         const void *values, int *ierr);
+
+void FC_GLOBAL(adios2_put_deferred_by_name_f2c,
+               ADIOS2_PUT_DEFERRED_BY_NAME_F2C)(adios2_Engine **engine,
+                                                const char *name,
+                                                const void *values, int *ierr);
 
 void FC_GLOBAL(adios2_perform_puts_f2c,
                ADIOS2_PERFORM_PUTS_F2C)(adios2_Engine **engine, int *ierr);
@@ -44,10 +54,20 @@ void FC_GLOBAL(adios2_get_sync_f2c,
                                     adios2_Variable **variable, void *values,
                                     int *ierr);
 
+void FC_GLOBAL(adios2_get_sync_by_name_f2c,
+               ADIOS2_get_SYNC_BY_NAME_F2C)(adios2_Engine **engine,
+                                            const char *name, void *values,
+                                            int *ierr);
+
 void FC_GLOBAL(adios2_get_deferred_f2c,
                ADIOS2_get_DEFERRED_F2C)(adios2_Engine **engine,
                                         adios2_Variable **variable,
                                         void *values, int *ierr);
+
+void FC_GLOBAL(adios2_get_deferred_by_name_f2c,
+               ADIOS2_get_DEFERRED_BY_NAME_F2C)(adios2_Engine **engine,
+                                                const char *name, void *values,
+                                                int *ierr);
 
 void FC_GLOBAL(adios2_perform_gets_f2c,
                ADIOS2_PERFORM_GETS_F2C)(adios2_Engine **engine, int *ierr);

@@ -13,7 +13,7 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_declare_io_f2c(io, adios, TRIM(ADJUSTL(io_name))//char(0), &
-        & ierr)
+                                   ierr)
 
     end
 
