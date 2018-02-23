@@ -109,15 +109,9 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
 
-        if (dimensions == nullptr || size <= 0)
-        {
-            throw std::invalid_argument("ERROR: corrupted ndims or shape, "
-                                        "start, count dimensions in Fortran ");
-        }
-
         output.resize(size);
 
-        for (int d = 0; d < size; ++d)
+        for (unsigned int d = 0; d < size; ++d)
         {
             if (dimensions[d] < 0)
             {
@@ -132,6 +126,31 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
 
     try
     {
+        if (*ndims <= 0)
+        {
+            throw std::invalid_argument("ERROR: negative ndims in Fortran ");
+        }
+
+        // Check for local variables
+        if (shape[0] == -1)
+        {
+            if (start[0] != -1)
+            {
+                throw std::invalid_argument("ERROR: shape and start must be "
+                                            "adios2_null_dims when declaring "
+                                            "local variables in Fortran ");
+            }
+
+            std::vector<std::size_t> countV;
+            lf_IntToSizeT(count, *ndims, countV);
+
+            *variable = adios2_define_variable(
+                *io, name, static_cast<adios2_type>(*type), *ndims, NULL, NULL,
+                countV.data(),
+                static_cast<adios2_constant_dims>(*constant_dims), data);
+            return;
+        }
+
         std::vector<std::size_t> shapeV, startV, countV;
         lf_IntToSizeT(shape, *ndims, shapeV);
         lf_IntToSizeT(start, *ndims, startV);

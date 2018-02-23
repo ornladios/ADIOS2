@@ -5,7 +5,6 @@
      implicit none
 
      integer(kind=8), dimension(1) :: count_dims
-     integer(kind=8), dimension(0) :: empty_dims
      integer :: inx, irank, isize, ierr, i
 
      integer(kind=8) :: adios, ioWrite, bpWriter, ioRead, bpReader
@@ -35,27 +34,27 @@
 
      ! Defines a variable to be written in bp format
      call adios2_define_variable(variables(1), ioWrite, "var_I8", 1, &
-                                 empty_dims, empty_dims, count_dims, &
+                                 adios2_null_dims, adios2_null_dims, count_dims, &
                                  adios2_constant_dims, data_I8, ierr)
 
      call adios2_define_variable(variables(2), ioWrite, "var_I16", 1, &
-                                 empty_dims, empty_dims, count_dims, &
+                                 adios2_null_dims, adios2_null_dims, count_dims, &
                                  adios2_constant_dims, data_I16, ierr)
 
      call adios2_define_variable(variables(3), ioWrite, "var_I32", 1, &
-                                 empty_dims, empty_dims, count_dims, &
+                                 adios2_null_dims, adios2_null_dims, count_dims, &
                                  adios2_constant_dims, data_I32, ierr)
 
      call adios2_define_variable(variables(4), ioWrite, "var_I64", 1, &
-                                 empty_dims, empty_dims, count_dims, &
+                                 adios2_null_dims, adios2_null_dims, count_dims, &
                                  adios2_constant_dims, data_I64, ierr)
 
      call adios2_define_variable(variables(5), ioWrite, "var_R32", 1, &
-                                 empty_dims, empty_dims, count_dims, &
+                                 adios2_null_dims, adios2_null_dims, count_dims, &
                                  adios2_constant_dims, data_R32, ierr)
 
      call adios2_define_variable(variables(6), ioWrite, "var_R64", 1, &
-                                 empty_dims, empty_dims, count_dims, &
+                                 adios2_null_dims, adios2_null_dims, count_dims, &
                                  adios2_constant_dims, data_R64, ierr)
 
      ! Global variables
