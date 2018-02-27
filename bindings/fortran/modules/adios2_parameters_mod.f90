@@ -61,4 +61,6 @@ module adios2_parameters
     !! must be less or equal than C equivalent in adios2_c_types.h
     integer, parameter :: adios2_string_array_element_max_size = 256
 
+    integer(kind=8),parameter,dimension(1) :: adios2_null_dims = (/-1/)
+
 end module
