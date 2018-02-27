@@ -191,19 +191,33 @@ void FC_GLOBAL(adios2_inquire_variable_f2c,
     }
 }
 
-void FC_GLOBAL(adios2_open_f2c,
-               ADIOS2_OPEN_F2C)(adios2_Engine **engine, adios2_IO **io,
-                                const char *name, const int *open_mode,
-                                int *ierr)
+void FC_GLOBAL(adios2_remove_variable_f2c,
+               ADIOS2_REMOVE_VARIABLE_F2C)(adios2_IO **io, const char *name,
+                                           int *ierr)
 {
     *ierr = 0;
     try
     {
-        *engine = adios2_open(*io, name, static_cast<adios2_mode>(*open_mode));
+        *ierr = adios2_remove_variable(*io, name);
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 open: " << e.what() << "\n";
+        std::cerr << "ADIOS2 remove_variable: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_remove_all_variables_f2c,
+               ADIOS2_REMOVE_ALL_VARIABLES_F2C)(adios2_IO **io, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_remove_all_variables(*io);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 remove_all_variables: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -228,6 +242,37 @@ void FC_GLOBAL(adios2_define_attribute_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_remove_attribute_f2c,
+               ADIOS2_REMOVE_ATTRIBUTE_F2C)(adios2_IO **io, const char *name,
+                                            int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *ierr = adios2_remove_attribute(*io, name);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 remove_attribute: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_remove_all_attributes_f2c,
+               ADIOS2_REMOVE_ALL_ATTRIBUTES_F2C)(adios2_IO **io, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_remove_all_attributes(*io);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 remove_all_attributes: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 #ifdef ADIOS2_HAVE_MPI_F
 void FC_GLOBAL(adios2_open_new_comm_f2c,
                ADIOS2_OPEN_NEW_COMM_F2C)(adios2_Engine **engine, adios2_IO **io,
@@ -248,3 +293,20 @@ void FC_GLOBAL(adios2_open_new_comm_f2c,
     }
 }
 #endif
+
+void FC_GLOBAL(adios2_open_f2c,
+               ADIOS2_OPEN_F2C)(adios2_Engine **engine, adios2_IO **io,
+                                const char *name, const int *open_mode,
+                                int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *engine = adios2_open(*io, name, static_cast<adios2_mode>(*open_mode));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 open: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
