@@ -156,7 +156,7 @@ module adios2_engine_put_sync
 
 contains
 
-    include'contains/adios2_engine_put_sync.f90'
-    include'contains/adios2_engine_put_sync_by_name.f90'
+    include 'contains/adios2_engine_put_sync.f90'
+    include 'contains/adios2_engine_put_sync_by_name.f90'
 
 end module

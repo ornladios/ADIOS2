@@ -157,7 +157,7 @@ module adios2_engine_get_deferred
 
 contains
 
-    include'contains/adios2_engine_get_deferred.f90'
-    include'contains/adios2_engine_get_deferred_by_name.f90'
+    include 'contains/adios2_engine_get_deferred.f90'
+    include 'contains/adios2_engine_get_deferred_by_name.f90'
 
 end module
