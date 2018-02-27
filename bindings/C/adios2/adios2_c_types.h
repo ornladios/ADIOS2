@@ -91,7 +91,7 @@ typedef enum {
     adios2_step_status_end_of_stream = 2
 } adios2_step_status;
 
-static size_t adios2_string_array_element_max_size = 256;
+static size_t adios2_string_array_element_max_size = 4096;
 
 #ifdef __cplusplus
 } // end extern C

@@ -15,13 +15,14 @@ contains
         call adios2_declare_io_f2c(io, adios, TRIM(ADJUSTL(io_name))//char(0), &
                                    ierr)
 
-    end
+    end subroutine
 
     subroutine adios2_finalize(adios, ierr)
         integer(kind=8), intent(in) :: adios
         integer, intent(out) :: ierr
 
         call adios2_finalize_f2c(adios, ierr)
-    end
+
+    end subroutine
 
 end module

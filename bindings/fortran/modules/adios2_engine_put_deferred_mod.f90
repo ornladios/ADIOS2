@@ -156,7 +156,7 @@ module adios2_engine_put_deferred
 
 contains
 
-    include'contains/adios2_engine_put_deferred.f90'
-    include'contains/adios2_engine_put_deferred_by_name.f90'
+    include 'contains/adios2_engine_put_deferred.f90'
+    include 'contains/adios2_engine_put_deferred_by_name.f90'
 
 end module
