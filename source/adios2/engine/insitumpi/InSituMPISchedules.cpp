@@ -164,7 +164,7 @@ void SerializeBox(std::vector<char> &buffer, const Box<size_t> box) noexcept
 
 int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept
 {
-    int n;
+    int n = 0;
     //<variable <reader, <SubFileInfo>>>
     for (auto &variableNamePair : map)
     {
