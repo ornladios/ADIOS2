@@ -58,16 +58,23 @@ std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
         ofName = name + "_insitumpi_readers";
         ifName = name + "_insitumpi_writers";
     }
+    std::string ofNameTmp = ofName + ".tmp";
 
     int pnproc; // peer nproc
 
     if (!rank)
     {
-        std::ofstream outf(ofName, std::ios::out | std::ios::binary);
+        std::ofstream outf(ofNameTmp, std::ios::out | std::ios::binary);
         outf.write(reinterpret_cast<char *>(&nproc), sizeof(int));
         outf.write(reinterpret_cast<char *>(mylist.data()),
                    nproc * sizeof(int));
         outf.close();
+        int result = std::rename(ofNameTmp.c_str(), ofName.c_str());
+        if (result != 0)
+        {
+            std::cerr << "ADIOS2 FindPeers error renaming file " << ofNameTmp
+                      << " to " << ofNameTmp << std::endl;
+        }
         // std::cout << "rank " << wrank << ": Created info file " << ofName
         //          << std::endl;
 
@@ -118,6 +125,9 @@ std::vector<int> AssignPeers(const int rank, const int nproc,
     int nAllPeers = allPeers.size();
 
     std::vector<int> directPeers;
+
+    std::cout << "AssignPeers: nAllPeers = " << nAllPeers
+              << ", nproc = " << nproc << std::endl;
 
     if (nproc == nAllPeers)
     {
