@@ -77,6 +77,30 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
                        const adios2_constant_dims constant_dims, void *data);
 
 /**
+ * Returns a handler to a previously defined variable identified by a unique
+ * name
+ * @param io handler to variable io owner
+ * @param name unique name input
+ * @return variable handler if found, else NULL
+ */
+adios2_Variable *adios2_inquire_variable(adios2_IO *io, const char *name);
+
+/**
+ * Remove a variable, DANGEROUS function as it creates dangling pointers
+ * @param io handler to variable owner
+ * @param name unique variable name input to be removed
+ * @return 0: not removed, 1: removed
+ */
+int adios2_remove_variable(adios2_IO *io, const char *name);
+
+/**
+ * Remove all variable definitions, DANGEROUS function as it creates dangling
+ * pointers
+ * @param io handler to variables owner
+ */
+void adios2_remove_all_variables(adios2_IO *io);
+
+/**
  * Defines an attribute inside a corresponding io handler
  * @param io handler that owns the variable
  * @param name unique attribute name inside IO handler
@@ -92,13 +116,19 @@ adios2_Attribute *adios2_define_attribute(adios2_IO *io, const char *name,
                                           const size_t elements);
 
 /**
- * Returns a handler to a previously defined variable identified by a unique
- * name
- * @param io handler to variable io owner
- * @param name unique name input
- * @return variable handler if found, else NULL
+ * Remove an attribute, DANGEROUS function as it creates dangling pointers
+ * @param io handler to attribute owner
+ * @param name unique attribute name input to be removed
+ * @return 0: not removed, 1: removed
  */
-adios2_Variable *adios2_inquire_variable(adios2_IO *io, const char *name);
+int adios2_remove_attribute(adios2_IO *io, const char *name);
+
+/**
+ * Remove all attribute definitions, DANGEROUS function as it creates dangling
+ * pointers
+ * @param io handler to attributes owner
+ */
+void adios2_remove_all_attributes(adios2_IO *io);
 
 /**
  * Create an adios2_Engine, from adios2_IO, that executes all IO operations.
