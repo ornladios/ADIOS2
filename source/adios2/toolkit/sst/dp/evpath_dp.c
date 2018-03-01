@@ -243,16 +243,12 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn, void *msg_v
                 ReadRequestMsg->RequestingRank);
             if (!WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank].Conn) {
                 attr_list List = attr_list_from_string(WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank].ContactString);
-                printf("Getting socket conn\n");
                 CMConnection Conn = CMget_conn(cm, List);
                 WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank].Conn = Conn;
             }
-            printf("Writing with socket conn\n");
             CMwrite(WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank].Conn,
                     WS_Stream->ReadReplyFormat, &ReadReplyMsg);
-//            Svcs->sendToPeer(WS_Stream->CP_Stream, WSR_Stream->PeerCohort,
-//                             ReadRequestMsg->RequestingRank,
-//                             WS_Stream->ReadReplyFormat, &ReadReplyMsg);
+
             return;
         }
         tmp = tmp->Next;
