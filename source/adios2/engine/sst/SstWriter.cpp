@@ -89,6 +89,17 @@ void SstWriter::Init()
         return false;
     };
 
+    auto lf_SetStringParameter = [&](const std::string key, char *&parameter) {
+
+        auto itKey = m_IO.m_Parameters.find(key);
+        if (itKey != m_IO.m_Parameters.end())
+        {
+            parameter = strdup(itKey->second.c_str());
+            return true;
+        }
+        return false;
+    };
+
 #define get_params(Param, Type, Typedecl, Default)                             \
     lf_Set##Type##Parameter(#Param, m_##Param);
     SST_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
