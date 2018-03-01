@@ -43,6 +43,10 @@ void HDFMixer::Init()
     void HDFMixer::DoPutSync(Variable<T> &variable, const T *values)           \
     {                                                                          \
         DoPutSyncCommon(variable, values);                                     \
+    }                                                                          \
+    void HDFMixer::DoPutDeferred(Variable<T> &variable, const T *values)       \
+    {                                                                          \
+        DoPutSyncCommon(variable, values);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
