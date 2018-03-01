@@ -101,6 +101,7 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Save);
 
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(FFSmarshal, Bool, int, true)                                         \
+    MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(BPmarshal, Bool, int, false)                                         \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
     MACRO(QueueLimit, Int, int, 0)                                             \

@@ -450,7 +450,15 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->WriterParams = Params;
 
     char *Filename = strdup(Name);
-    Stream->DP_Interface = LoadDP("dummy");
+    CP_verbose(Stream, "Loading DataPlane \"%s\"\n", Stream->DataTransport);
+    Stream->DP_Interface = LoadDP(Stream->DataTransport);
+
+    if (!Stream->DP_Interface)
+    {
+        CP_verbose(Stream, "Failed to load DataPlane %s for Stream \"%s\"\n",
+                   Stream->DataTransport, Filename);
+        return NULL;
+    }
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
@@ -949,6 +957,23 @@ void queueReaderRegisterMsgAndNotify(SstStream Stream,
     }
     pthread_cond_signal(&Stream->DataCondition);
     pthread_mutex_unlock(&Stream->DataLock);
+}
+
+void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
+                           void *client_data, attr_list attrs)
+{
+    struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
+
+    WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
+
+    CP_verbose(CP_WSR_Stream->ParentStream,
+               "Reader Close message received for stream %p.  Setting state to "
+               "PeerClosed and releasing timesteps.",
+               CP_WSR_Stream);
+    CP_WSR_Stream->ReaderStatus = PeerClosed;
+    SubRefRangeTimestep(CP_WSR_Stream->ParentStream,
+                        CP_WSR_Stream->StartingTimestep,
+                        CP_WSR_Stream->LastSentTimestep);
 }
 
 void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *Msg_v,

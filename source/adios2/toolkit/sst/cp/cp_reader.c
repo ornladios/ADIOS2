@@ -127,7 +127,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     CP_validateParams(Stream, Params, 0 /* reader */);
 
-    Stream->DP_Interface = LoadDP("dummy");
+    Stream->DP_Interface = LoadDP(Stream->DataTransport);
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
@@ -621,8 +621,13 @@ extern void SstReaderClose(SstStream Stream)
      * a little while to makes sure our release message for the last timestep
      * got received */
     struct timeval CloseTime, Diff;
+    struct _ReaderCloseMsg Msg;
+    /* wait until each reader rank has done SstReaderClose() */
+    MPI_Barrier(Stream->mpiComm);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
+    sendOneToEachWriterRank(Stream, Stream->CPInfo->ReaderCloseFormat, &Msg,
+                            &Msg.WSR_Stream);
     if (Stream->Stats)
         Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
