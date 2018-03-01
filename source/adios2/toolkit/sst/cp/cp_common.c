@@ -725,7 +725,8 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
                 free((void *)CP_SstParamsList[i].field_type);
                 CP_SstParamsList[i].field_type = strdup("integer");
             }
-            else if (strcmp(CP_SstParamsList[i].field_type, "char*") == 0)
+            else if ((strcmp(CP_SstParamsList[i].field_type, "char*") == 0) ||
+                     (strcmp(CP_SstParamsList[i].field_type, "char *") == 0))
             {
                 free((void *)CP_SstParamsList[i].field_type);
                 CP_SstParamsList[i].field_type = strdup("string");
