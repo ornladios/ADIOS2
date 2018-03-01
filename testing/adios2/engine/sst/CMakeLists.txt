@@ -22,5 +22,5 @@ endif()
 
 configure_file(run_staging_test.in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test @ONLY)
 
-ADD_TEST(ADIOSSstTest.Connection_1x1 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -nr 1 -nw 1 -v -p TestSst)
-set_tests_properties(ADIOSSstTest.Connection_1x1 PROPERTIES TIMEOUT 60)
+ADD_TEST(ADIOSSstTest.Simple_1x1 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -nr 1 -nw 1 -v -p TestSst)
+set_tests_properties(ADIOSSstTest.Simple_1x1 PROPERTIES TIMEOUT 60)
