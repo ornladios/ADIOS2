@@ -347,10 +347,10 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_HDF5
 #if H5_VERSION_GE(1, 11, 0)
-      if (mode == Mode::Read) 
-	engine = std::make_shared<HDF5ReaderP>(*this, name, mode, mpiComm);
-      else
-        engine = std::make_shared<HDFMixer>(*this, name, mode, mpiComm);
+        if (mode == Mode::Read)
+            engine = std::make_shared<HDF5ReaderP>(*this, name, mode, mpiComm);
+        else
+            engine = std::make_shared<HDFMixer>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: update HDF5 >= 1.11 to support VDS.");
