@@ -9,7 +9,6 @@
  *  Created on: Jul 26, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
-#include <mpi.h>
 
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout
@@ -19,12 +18,20 @@
 
 #include <adios2.h>
 
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
+
 int main(int argc, char *argv[])
 {
+
+    int rank = 0, size = 1;
+
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
-    int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif
 
     /** Application variable uints from 0 to 1000 */
     std::vector<double> myvars(1000);
@@ -34,8 +41,12 @@ int main(int argc, char *argv[])
 
     try
     {
+#ifdef ADIOS2_HAVE_MPI
         /** ADIOS class factory of IO class objects, DebugON is recommended */
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+        adios2::ADIOS adios(true);
+#endif
 
         // Get a Transform of type SZ
         adios2::Operator &adiosSZ =
@@ -111,7 +122,9 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }
