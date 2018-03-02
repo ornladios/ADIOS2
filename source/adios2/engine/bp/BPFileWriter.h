@@ -82,7 +82,7 @@ private:
      * profilers*/
     void WriteProfilingJSONFile();
 
-    void WriteCollectiveMetadataFile();
+    void WriteCollectiveMetadataFile(const bool isFinal = false);
 };
 
 } // end namespace adios2
