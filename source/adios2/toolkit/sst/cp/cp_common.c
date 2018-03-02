@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +36,38 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
                 Params->QueueLimit, Stream->Filename);
     }
     Stream->DiscardOnQueueFull = Params->DiscardOnQueueFull;
+    char *SelectedTransport = NULL;
+    if (Params->DataTransport != NULL)
+    {
+        int i = 0;
+        SelectedTransport = malloc(strlen(Params->DataTransport) + 1);
+        while (Params->DataTransport[i] != 0)
+        {
+            SelectedTransport[i] = tolower(Params->DataTransport[i]);
+        }
+        SelectedTransport[i] = 0;
+
+        /* canonicalize SelectedTransport */
+        if ((strcmp(SelectedTransport, "wan") == 0) ||
+            (strcmp(SelectedTransport, "evpath") == 0))
+        {
+            free(SelectedTransport);
+            SelectedTransport = strdup("evpath");
+        }
+        else if ((strcmp(SelectedTransport, "rdma") == 0) ||
+                 (strcmp(SelectedTransport, "ib") == 0) ||
+                 (strcmp(SelectedTransport, "fabric") == 0))
+        {
+            free(SelectedTransport);
+            SelectedTransport = strdup("rdma");
+        }
+    }
+    if (Params->DataTransport == NULL)
+    {
+        /* determine reasonable default, now "evpath" since "rdma" is not yet
+         * integrated */
+        Stream->DataTransport = strdup("evpath");
+    }
 }
 
 static FMField CP_SstParamsList_RAW[] = {
@@ -268,6 +301,11 @@ static FMField WriterCloseList[] = {
      FMOffset(struct _WriterCloseMsg *, RS_Stream)},
     {"FinalTimestep", "integer", sizeof(int),
      FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
+    {NULL, NULL, 0, 0}};
+
+static FMField ReaderCloseList[] = {
+    {"WSR_Stream", "integer", sizeof(void *),
+     FMOffset(struct _ReaderCloseMsg *, WSR_Stream)},
     {NULL, NULL, 0, 0}};
 
 static void replaceFormatNameInFieldList(FMStructDescList l, char *orig,
@@ -646,6 +684,10 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
         CMregister_simple_format(CPInfo->cm, "WriterClose", WriterCloseList,
                                  sizeof(struct _WriterCloseMsg));
     CMregister_handler(CPInfo->WriterCloseFormat, CP_WriterCloseHandler, NULL);
+    CPInfo->ReaderCloseFormat =
+        CMregister_simple_format(CPInfo->cm, "ReaderClose", ReaderCloseList,
+                                 sizeof(struct _ReaderCloseMsg));
+    CMregister_handler(CPInfo->ReaderCloseFormat, CP_ReaderCloseHandler, NULL);
 }
 
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
@@ -682,6 +724,12 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
             {
                 free((void *)CP_SstParamsList[i].field_type);
                 CP_SstParamsList[i].field_type = strdup("integer");
+            }
+            else if ((strcmp(CP_SstParamsList[i].field_type, "char*") == 0) ||
+                     (strcmp(CP_SstParamsList[i].field_type, "char *") == 0))
+            {
+                free((void *)CP_SstParamsList[i].field_type);
+                CP_SstParamsList[i].field_type = strdup("string");
             }
             i++;
         }

@@ -1,6 +1,6 @@
 add_library(sst
   dp/dp.c
-  dp/dummy_dp.c
+  dp/evpath_dp.c
   cp/cp_reader.c
   cp/cp_writer.c
   cp/cp_common.c
