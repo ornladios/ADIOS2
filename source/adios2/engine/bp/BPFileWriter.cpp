@@ -171,16 +171,16 @@ void BPFileWriter::DoClose(const int transportIndex)
 
     m_FileDataManager.CloseFiles(transportIndex);
 
+    if (m_BP3Serializer.m_CollectiveMetadata &&
+        m_FileDataManager.AllTransportsClosed())
+    {
+        WriteCollectiveMetadataFile(true);
+    }
+
     if (m_BP3Serializer.m_Profiler.IsActive &&
         m_FileDataManager.AllTransportsClosed())
     {
         WriteProfilingJSONFile();
-    }
-
-    if (m_BP3Serializer.m_CollectiveMetadata &&
-        m_FileDataManager.AllTransportsClosed())
-    {
-        WriteCollectiveMetadataFile();
     }
 }
 
@@ -188,6 +188,16 @@ void BPFileWriter::WriteProfilingJSONFile()
 {
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
+
+    auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
+    auto transportProfilersMD = m_FileMetadataManager.GetTransportsProfilers();
+
+    transportTypes.insert(transportTypes.end(), transportTypesMD.begin(),
+                          transportTypesMD.end());
+
+    transportProfilers.insert(transportProfilers.end(),
+                              transportProfilersMD.begin(),
+                              transportProfilersMD.end());
 
     const std::string lineJSON(m_BP3Serializer.GetRankProfilingJSON(
                                    transportTypes, transportProfilers) +
@@ -207,7 +217,7 @@ void BPFileWriter::WriteProfilingJSONFile()
     }
 }
 
-void BPFileWriter::WriteCollectiveMetadataFile()
+void BPFileWriter::WriteCollectiveMetadataFile(const bool isFinal)
 {
     m_BP3Serializer.AggregateCollectiveMetadata();
     if (m_BP3Serializer.m_RankMPI == 0)
@@ -228,9 +238,12 @@ void BPFileWriter::WriteCollectiveMetadataFile()
             m_BP3Serializer.m_Metadata.m_Buffer.data(),
             m_BP3Serializer.m_Metadata.m_Position);
         m_FileMetadataManager.CloseFiles();
-        m_FileMetadataManager.m_Transports.clear();
 
-        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
+        if (!isFinal)
+        {
+            m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
+            m_FileMetadataManager.m_Transports.clear();
+        }
     }
 }
 

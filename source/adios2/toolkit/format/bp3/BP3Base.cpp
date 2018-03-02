@@ -92,13 +92,20 @@ void BP3Base::InitParameters(const Params &parameters)
             "minmax",
             profiling::Timer("minmax", DefaultTimeUnitEnum, m_DebugMode));
 
+        m_Profiler.Timers.emplace("meta_sort_merge",
+                                  profiling::Timer("meta_sort_merge",
+                                                   DefaultTimeUnitEnum,
+                                                   m_DebugMode));
+
         m_Profiler.Bytes.emplace("buffering", 0);
     }
 
+    ProfilerStart("buffering");
     if (useDefaultInitialBufferSize)
     {
         m_Data.Resize(DefaultInitialBufferSize, "in call to Open");
     }
+    ProfilerStop("buffering");
 }
 
 std::vector<std::string>
@@ -193,17 +200,20 @@ size_t BP3Base::GetVariableBPIndexSize(const std::string &variableName,
 void BP3Base::ResetBuffer(BufferSTL &bufferSTL,
                           const bool resetAbsolutePosition)
 {
+    ProfilerStart("buffering");
     bufferSTL.m_Position = 0;
     if (resetAbsolutePosition)
     {
         bufferSTL.m_AbsolutePosition = 0;
     }
     bufferSTL.m_Buffer.assign(bufferSTL.m_Buffer.size(), '\0');
+    ProfilerStop("buffering");
 }
 
 BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
                                             const std::string hint)
 {
+    ProfilerStart("buffering");
     const size_t currentCapacity = m_Data.m_Buffer.capacity();
     const size_t requiredCapacity = dataIn + m_Data.m_Position;
 
@@ -250,6 +260,7 @@ BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
         }
     }
 
+    ProfilerStop("buffering");
     return result;
 }
 
@@ -293,6 +304,10 @@ void BP3Base::InitParameterProfileUnits(const std::string value)
 
     m_Profiler.Timers.emplace(
         "minmax", profiling::Timer("minmax", timeUnit, m_DebugMode));
+
+    m_Profiler.Timers.emplace(
+        "meta_sort_merge",
+        profiling::Timer("meta_sort_merge", timeUnit, m_DebugMode));
 
     m_Profiler.Bytes.emplace("buffering", 0);
 }
@@ -377,7 +392,6 @@ void BP3Base::InitParameterInitBufferSize(const std::string value)
         bufferSize = static_cast<size_t>(std::stoul(number) * factor);
     }
 
-    // m_HeapBuffer.ResizeData(bufferSize);
     m_Data.Resize(bufferSize, "bufferSize " + std::to_string(bufferSize) +
                                   ", in call to Open");
 }
