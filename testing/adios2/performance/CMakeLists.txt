@@ -3,9 +3,5 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(interface)
-add_subdirectory(engine)
-add_subdirectory(bindings)
-add_subdirectory(xml)
-add_subdirectory(transform)
-add_subdirectory(performance)
+add_subdirectory(manyvars)
+
