@@ -96,6 +96,7 @@ struct _SstStream
     /* params */
     int RendezvousReaderCount;
     char *DataTransport;
+    SstRegistrationMethod RegistrationMethod;
 
     /* state */
     int Verbose;
