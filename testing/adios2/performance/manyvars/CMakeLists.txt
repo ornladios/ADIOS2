@@ -11,10 +11,10 @@ endif()
 
 gtest_add_tests(TARGET TestManyVars)
 
-# Pure C code, not added to test, 
-# just for executing manually for performance studies
-add_executable(PerfManyVars manyVars.c)
-target_link_libraries(PerfManyVars adios2)
 if(ADIOS2_HAVE_MPI)
+  # Pure C code, not added to test, 
+  # just for executing manually for performance studies
+  add_executable(PerfManyVars manyVars.c)
+  target_link_libraries(PerfManyVars adios2)
   target_link_libraries(PerfManyVars MPI::MPI_C)
 endif()
