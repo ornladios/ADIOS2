@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@
 
 #include "cp_internal.h"
 
-static char *readContactInfo(const char *Name, SstStream Stream)
+static char *readContactInfoFile(const char *Name, SstStream Stream)
 {
     char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
     FILE *WriterInfo;
@@ -43,6 +44,37 @@ redo:
     (void)fread(Buffer, Size, 1, WriterInfo);
     fclose(WriterInfo);
     return Buffer;
+}
+
+static char *readContactInfoScreen(const char *Name, SstStream Stream)
+{
+    char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
+    char Input[10240];
+    char *Skip = Input;
+    fprintf(stdout, "Please enter the contact information associated with SST "
+                    "input stream \"%s\":\n",
+            Name);
+    fgets(Input, sizeof(Input), stdin);
+    while (isspace(*Skip))
+        Skip++;
+    return strdup(Skip);
+}
+
+static char *readContactInfo(const char *Name, SstStream Stream)
+{
+    switch (Stream->RegistrationMethod)
+    {
+    case SstRegisterFile:
+        return readContactInfoFile(Name, Stream);
+        break;
+    case SstRegisterScreen:
+        return readContactInfoScreen(Name, Stream);
+        break;
+    case SstRegisterCloud:
+        /* not yet */
+        return NULL;
+        break;
+    }
 }
 
 static void ReaderConnCloseHandler(CManager cm, CMConnection closed_conn,

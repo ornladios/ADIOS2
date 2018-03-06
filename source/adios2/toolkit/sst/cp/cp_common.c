@@ -36,6 +36,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
                 Params->QueueLimit, Stream->Filename);
     }
     Stream->DiscardOnQueueFull = Params->DiscardOnQueueFull;
+    Stream->RegistrationMethod = Params->RegistrationMethod;
     char *SelectedTransport = NULL;
     if (Params->DataTransport != NULL)
     {
