@@ -313,8 +313,6 @@ public:
 
     int write_file(int step)
     {
-        int64_t fh;
-        uint64_t groupsize = 0, totalsize;
         int block, v, i;
         double tb, te;
         size_t count[2] = {ldim1, ldim2};
@@ -364,9 +362,9 @@ public:
         double tb, te, tsched;
         double tsb, ts; // time for just scheduling for one step/block
 
-        uint64_t start[2] = {offs1, offs2};
-        uint64_t count[2] = {ldim1, ldim2};
-        uint64_t ndim;
+        size_t start[2] = {offs1, offs2};
+        size_t count[2] = {ldim1, ldim2};
+        size_t ndim;
 
         reset_readvars();
 
@@ -406,7 +404,6 @@ public:
             }
             for (block = 0; block < NBLOCKS; block++)
             {
-
                 if (status == adios2_step_status_ok)
                 {
                     v = VALUE(rank, step, block);
