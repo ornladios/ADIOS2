@@ -374,12 +374,13 @@ void HDF5Common::CreateVar(IO &io, hid_t datasetId, std::string const &name)
     }
     else if (H5Tequal(H5T_STD_I64LE, h5Type))
     {
-        // testing
-        AddVar<long long int>(io, name, datasetId);
+        /*
+         */
+        AddVar<int64_t>(io, name, datasetId);
     }
     else if (H5Tequal(H5T_STD_U64LE, h5Type))
     {
-        AddVar<unsigned long long int>(io, name, datasetId);
+        AddVar<uint64_t>(io, name, datasetId);
     }
     else if (H5Tequal(H5T_NATIVE_LONG, h5Type))
     {
