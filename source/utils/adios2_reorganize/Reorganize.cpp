@@ -21,6 +21,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
@@ -30,14 +31,8 @@
 #include "adios2/helper/adiosFunctions.h"
 
 // C headers
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <cerrno>
+#include <cstdlib>
 
 namespace adios2
 {
@@ -70,7 +65,7 @@ Reorganize::Reorganize(int argc, char *argv[])
     while (argc > j && j < 13)
     { // get max 6 dimensions
         errno = 0;
-        decomp_values[nd] = strtol(argv[j], &end, 10);
+        decomp_values[nd] = std::strtol(argv[j], &end, 10);
         if (errno || (end != 0 && *end != '\0'))
         {
             std::string errmsg(
