@@ -30,7 +30,6 @@
 #include "adios2/helper/adiosFunctions.h"
 
 // C headers
-#include "mpi.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>

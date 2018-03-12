@@ -12,6 +12,7 @@
 #define UTILS_REORGANIZE_REORGANIZE_H_
 
 #include "adios2.h"
+#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/IO.h" // DataMap
 #include "utils/Utils.h"
 
@@ -82,7 +83,7 @@ private:
     // Global variables
     int rank = 0;
     int numproc = 1;
-    MPI_Comm comm = MPI_COMM_WORLD;
+    MPI_Comm comm;
 
     uint64_t write_total = 0;   // data size read/written by one processor
     uint64_t largest_block = 0; // the largest variable block one process reads
