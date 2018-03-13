@@ -10,6 +10,7 @@
 !
 
 module adios2_fread_mod
+    use adios2_parameters
     use adios2_functions
     implicit none
 

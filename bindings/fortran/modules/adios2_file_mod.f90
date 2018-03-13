@@ -8,6 +8,7 @@
 !       Author: William F Godoy godoywf@ornl.gov
 !
 module adios2_file_mod
+    use adios2_parameters
     use adios2_fopen_mod
     use adios2_fwrite_mod
     use adios2_fread_mod
@@ -16,10 +17,10 @@ module adios2_file_mod
 contains
 
     subroutine adios2_fclose(unit, ierr)
-        integer(kind=8), intent(in) :: unit
+        type(adios2_file), intent(in) :: unit
         integer, intent(out) :: ierr
 
-        call adios2_fclose_f2c(unit, ierr)
+        call adios2_fclose_f2c(unit%fh, ierr)
 
     end subroutine
 

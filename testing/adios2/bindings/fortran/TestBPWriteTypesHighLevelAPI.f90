@@ -4,11 +4,12 @@
    use adios2
    implicit none
 
+
    integer(kind=8) :: adios, ioRead, bpReader
    integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
    integer :: inx, irank, isize, ierr, i, n
 
-   integer(kind=8) :: adios2_fhw, adios2_fhr
+   type(adios2_file) :: adios2_fhw, adios2_fhr
    integer(kind=8), dimension(12) :: variables
    ! read handlers
    character(len=:), allocatable :: variable_name

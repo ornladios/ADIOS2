@@ -66,5 +66,8 @@ module adios2_parameters
     logical, parameter :: adios2_advance_yes = .true.
     logical, parameter :: adios2_advance_no  = .false.
 
+    type adios2_file
+        integer(kind=8):: fh
+    end type
 
 end module
