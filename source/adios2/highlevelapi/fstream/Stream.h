@@ -110,10 +110,6 @@ public:
                         const bool endStep = false);
 
     template <class T>
-    std::vector<T> Read(const std::string &name,
-                        const Box<size_t> &stepSelection);
-
-    template <class T>
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
                         const Box<size_t> &stepSelection);
 
@@ -165,9 +161,6 @@ private:
                                                                                \
     extern template std::vector<T> Stream::Read<T>(const std::string &,        \
                                                    const bool);                \
-                                                                               \
-    extern template std::vector<T> Stream::Read(const std::string &,           \
-                                                const Box<size_t> &);          \
                                                                                \
     extern template std::vector<T> Stream::Read<T>(                            \
         const std::string &, const Box<Dims> &, const Box<size_t> &);          \

@@ -142,9 +142,6 @@ void Stream::ThrowIfOpen(const std::string hint) const
                                                                                \
     template std::vector<T> Stream::Read<T>(const std::string &, const bool);  \
                                                                                \
-    template std::vector<T> Stream::Read(const std::string &,                  \
-                                         const Box<size_t> &);                 \
-                                                                               \
     template std::vector<T> Stream::Read<T>(                                   \
         const std::string &, const Box<Dims> &, const Box<size_t> &);          \
                                                                                \

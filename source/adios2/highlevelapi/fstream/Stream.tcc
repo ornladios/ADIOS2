@@ -142,12 +142,12 @@ std::vector<T> Stream::Read(const std::string &name, const bool endStep)
     return GetCommon(*variable, endStep);
 }
 
-template <class T>
-std::vector<T> Stream::Read(const std::string &name,
-                            const Box<size_t> &stepSelection)
-{
-    // TODO
-}
+// template <class T>
+// std::vector<T> Stream::Read(const std::string &name,
+//                            const Box<size_t> &stepSelection)
+//{
+//    // TODO
+//}
 
 template <class T>
 std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,

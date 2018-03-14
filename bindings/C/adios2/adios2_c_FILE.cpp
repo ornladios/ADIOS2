@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * adios2_c_bpstream.cpp
+ * adios2_c_FILE.cpp
  *
  *  Created on: Jan 8, 2018
  *      Author: William F Godoy godoywf@ornl.gov
@@ -17,6 +17,10 @@
 #include "adios2/adios2_c_glue.h"
 #include "adios2/adios2_c_io.h"
 #include "adios2/core/Variable.h"
+
+#ifdef _WIN32
+#pragma warning(disable : 4297) // Windows noexcept default functions
+#endif
 
 adios2_FILE *adios2_fopen(const char *name, const adios2_mode mode,
                           MPI_Comm comm)

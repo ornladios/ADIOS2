@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * adios2_c_stream.h : header for high-level API
+ * adios2_c_FILE.h : high-level API functions
  *
  *  Created on: Jan 8, 2018
  *      Author: William F Godoy godoywf@ornl.gov

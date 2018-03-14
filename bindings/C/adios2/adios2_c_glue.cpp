@@ -12,7 +12,11 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/ADIOS.h"
-#include <adios2/highlevelapi/fstream/Stream.h>
+#include "adios2/highlevelapi/fstream/Stream.h"
+
+#ifdef _WIN32
+#pragma warning(disable : 4297) // Windows noexcept default functions
+#endif
 
 adios2_adios *adios2_init_config_glue(const char *config_file,
                                       MPI_Comm mpi_comm,
