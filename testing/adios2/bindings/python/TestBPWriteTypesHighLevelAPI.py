@@ -4,7 +4,8 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #
-# TestBPWriteTypes.py: test Python numpy types in ADIOS2 File Write.Read High-Level API
+# TestBPWriteTypes.py: test Python numpy types in ADIOS2 File
+#                      Write/Read High-Level API
 #  Created on: March 12, 2018
 #      Author: William F Godoy godoywf@ornl.gov
 
@@ -13,8 +14,6 @@ from adios2NPTypes import SmallTestData
 from mpi4py import MPI
 import numpy as np
 import adios2
-from future.backports.test.pystone import FALSE
-
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -62,7 +61,7 @@ fw.close()
 
 # Reader
 fr = adios2.open("types_np.bp", "r", comm)
-#
+
 inTag = fr.readstring("tag")
 inI8 = fr.read("gvarI8")
 inI16 = fr.read("gvarI16")
@@ -131,7 +130,7 @@ while(not fr.eof()):
 
     if(instepStr != stepStr):
         raise ValueError(
-            'steps variable read failed:...' + instepStr + "..." + stepStr + "...")
+            'steps variable read failed: ' + instepStr + " " + stepStr)
 
     if((indataI8 == data.I8).all() is False):
         print("InData: " + str(indataI8))

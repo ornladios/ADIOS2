@@ -12,6 +12,7 @@
 from mpi4py import MPI
 import numpy
 import adios2
+import sys
 
 # MPI
 comm = MPI.COMM_WORLD
@@ -34,33 +35,29 @@ for i in range(0, Nx):
     for j in range(0, Ny):
         value = iGlobal * shape[1] + j
         temperatures[i * Nx + j] = value
-        
+
 # ADIOS2 high-level API for Write
 fw = adios2.open("temperature.bp", "w", comm)
 fw.write("varString", 'This is ADIOS2')
 fw.write("temperature2D", temperatures, shape, start, count)
 fw.close()
 
-
 # ADIOS2 high-level API for Reading
 if rank == 0:
-  fr = adios2.open("temperature.bp", "r", MPI.COMM_SELF)
-  
-  inTemperatures = fr.read("temperature2D")
-  
-  if( inTemperatures is not None ):
-  
-      print( "Size " + str(inTemperatures.size) )
-  
-      for i in range(0,shape[0]):
-          for j in range(0,shape[1]):
-              print(str(inTemperatures[i][j]) + ' ' , end='')
-          print()
+    fr = adios2.open("temperature.bp", "r", MPI.COMM_SELF)
 
-  
-  
-  inString = fr.readstring("varString")
-  if( inString is not None ):
-      print( inString )  
-  fr.close()
-  
+    inTemperatures = fr.read("temperature2D")
+
+    if(inTemperatures is not None):
+
+        print("Size " + str(inTemperatures.size))
+
+        for i in range(0, shape[0]):
+            for j in range(0, shape[1]):
+                sys.stdout.write(str(inTemperatures[i][j]) + ' ')
+            print()
+
+    inString = fr.readstring("varString")
+    if(inString is not None):
+        print(inString)
+    fr.close()
