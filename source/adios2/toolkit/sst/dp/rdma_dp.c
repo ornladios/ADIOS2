@@ -428,10 +428,6 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
         LocalDesc = fi_mr_desc(LocalMR);
     }
 
-    rc = fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
-            SrcAddress, (uint64_t)ReadReplyMsg->Addr, ReadReplyMsg->Key,
-            Fabric->ctx);
-
     do {
     	rc = fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
     			SrcAddress, (uint64_t)ReadReplyMsg->Addr, ReadReplyMsg->Key,
