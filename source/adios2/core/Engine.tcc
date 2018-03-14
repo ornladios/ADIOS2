@@ -47,6 +47,9 @@ namespace adios2
                     variable.m_Name + ", in call to Put" + std::string(#L) +   \
                     "\n");                                                     \
             }                                                                  \
+                                                                               \
+            CheckWriteMode("variable " + variable.m_Name +                     \
+                           ", in call to Put" + std::string(#L) + "\n");       \
         }                                                                      \
                                                                                \
         DoPut##L(variable, data);                                              \
@@ -105,6 +108,9 @@ ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
                     variable.m_Name + ", in call to Get" + std::string(#L) +   \
                     "\n");                                                     \
             }                                                                  \
+                                                                               \
+            CheckReadMode("variable " + variable.m_Name + ", in call to Get" + \
+                          std::string(#L) + "\n");                             \
         }                                                                      \
                                                                                \
         DoGet##L(variable, data);                                              \

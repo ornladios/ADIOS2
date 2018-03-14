@@ -159,7 +159,6 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
                                       const bool isRowMajor,
                                       size_t &startOffset) noexcept
 {
-    bool itIs = true;
     const size_t dimensionsSize = blockBox.first.size();
     size_t nElements = 1; // number of elements in dim 1..n-1
     if (dimensionsSize == 0)
@@ -175,14 +174,14 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
         // first dimension is slowest
         dSlowest = 0;
         dStart = 1;
-        dEnd = dimensionsSize - 1;
+        dEnd = static_cast<int>(dimensionsSize - 1);
     }
     else
     {
         // last dimension is slowest
         dStart = 0;
-        dEnd = dimensionsSize - 2;
-        dSlowest = dimensionsSize - 1;
+        dEnd = static_cast<int>(dimensionsSize - 2);
+        dSlowest = static_cast<int>(dimensionsSize - 1);
     }
 
     for (size_t d = dStart; d <= dEnd; ++d)

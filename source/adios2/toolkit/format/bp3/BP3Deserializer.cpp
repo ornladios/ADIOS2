@@ -66,36 +66,6 @@ void BP3Deserializer::ClipContiguousMemory(
 #undef declare_type
 }
 
-void BP3Deserializer::GetStringFromMetadata(
-    Variable<std::string> &variable) const
-{
-    std::string *data = variable.GetData();
-    const auto &buffer = m_Metadata.m_Buffer;
-
-    for (size_t i = 0; i < variable.m_StepsCount; ++i)
-    {
-        *(data + i) = "";
-        const size_t step = variable.m_StepsStart + i + 1;
-        auto itStep = variable.m_IndexStepBlockStarts.find(step);
-
-        if (itStep == variable.m_IndexStepBlockStarts.end())
-        {
-            continue;
-        }
-
-        for (auto position : itStep->second)
-        {
-            const Characteristics<std::string> characteristics =
-                ReadElementIndexCharacteristics<std::string>(
-                    buffer, position, type_string, false);
-
-            *(data + i) = characteristics.Statistics.Value;
-        }
-
-        variable.m_Value = *(data + i);
-    }
-}
-
 // PRIVATE
 void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
@@ -502,7 +472,10 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
         Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
                                                                                \
     template void BP3Deserializer::GetDeferredVariable(Variable<T> &variable,  \
-                                                       T *data);
+                                                       T *data);               \
+                                                                               \
+    template void BP3Deserializer::GetValueFromMetadata(Variable<T> &variable) \
+        const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

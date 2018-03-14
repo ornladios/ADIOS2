@@ -7,6 +7,7 @@
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov
 !
+
 module adios2_parameters
     implicit none
 
@@ -61,5 +62,13 @@ module adios2_parameters
     integer, parameter :: adios2_string_array_element_max_size = 4096
 
     integer(kind=8), parameter, dimension(1) :: adios2_null_dims = (/-1/)
+
+    ! Debug mode
+    logical, parameter :: adios2_advance_yes = .true.
+    logical, parameter :: adios2_advance_no  = .false.
+
+    type adios2_file
+        integer(kind=8):: fh
+    end type
 
 end module

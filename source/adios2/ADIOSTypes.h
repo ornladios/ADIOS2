@@ -59,12 +59,6 @@ enum class Mode
     Append
 };
 
-enum Launch
-{
-    Sync = 0,
-    Deferred = 1,
-};
-
 enum class ReadMultiplexPattern
 {
     GlobalReaders,
@@ -207,9 +201,11 @@ constexpr size_t JoinedDim = MaxSizeT - 1;
 constexpr size_t LocalValueDim = MaxSizeT - 2;
 constexpr size_t IrregularDim = MaxSizeT - 3;
 constexpr bool ConstantDims = true;
+constexpr bool endl = true;
 
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;
+using vParams = std::map<std::string, std::string>;
 using Steps = size_t;
 
 template <class T>

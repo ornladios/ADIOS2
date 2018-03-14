@@ -25,29 +25,29 @@ extern "C" {
 
 #ifdef ADIOS2_HAVE_MPI_F
 void FC_GLOBAL(adios2_init_f2c,
-               ADIOS2_INIT_F2C)(adios2_ADIOS **adios, MPI_Fint *comm,
+               ADIOS2_INIT_F2C)(adios2_adios **adios, MPI_Fint *comm,
                                 const int *debug_mode, int *ierr);
 
 void FC_GLOBAL(adios2_init_config_f2c,
-               ADIOS2_INIT_CONFIG_F2C)(adios2_ADIOS **adios,
+               ADIOS2_INIT_CONFIG_F2C)(adios2_adios **adios,
                                        const char *config_file, MPI_Fint *comm,
                                        const int *debug_mode, int *ierr);
 #else
-void FC_GLOBAL(adios2_init_f2c, ADIOS2_INIT_F2C)(adios2_ADIOS **adios,
+void FC_GLOBAL(adios2_init_f2c, ADIOS2_INIT_F2C)(adios2_adios **adios,
                                                  const int *debug_mode,
                                                  int *ierr);
 
 void FC_GLOBAL(adios2_init_config_f2c,
-               ADIOS2_INIT_CONFIG_F2C)(adios2_ADIOS **adios,
+               ADIOS2_INIT_CONFIG_F2C)(adios2_adios **adios,
                                        const char *config_file,
                                        const int *debug_mode, int *ierr);
 #endif
 
 void FC_GLOBAL(adios2_declare_io_f2c,
-               ADIOS2_DECLARE_IO_F2C)(adios2_IO **io, adios2_ADIOS **adios,
+               ADIOS2_DECLARE_IO_F2C)(adios2_io **io, adios2_adios **adios,
                                       const char *io_name, int *ierr);
 
-void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_ADIOS **adios,
+void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_adios **adios,
                                                          int *ierr);
 
 #ifdef __cplusplus

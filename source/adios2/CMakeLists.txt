@@ -14,6 +14,10 @@ add_library(adios2
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
 
+#highlevelapi
+  highlevelapi/fstream/Stream.cpp highlevelapi/fstream/Stream.tcc
+  highlevelapi/fstream/ADIOS2fstream.cpp highlevelapi/fstream/ADIOS2fstream.tcc
+
 #operator callback
   operator/callback/Signature1.cpp
   operator/callback/Signature2.cpp
@@ -173,6 +177,10 @@ install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
   FILES_MATCHING REGEX "[^/]*\.(h|inl)$"
+)
+install(FILES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/highlevelapi/fstream/ADIOS2fstream.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 
 # Library installation

@@ -42,6 +42,13 @@ unsigned int IOPy::AddTransport(const std::string type,
     return m_IO.AddTransport(type, parameters);
 }
 
+VariableBase *IOPy::DefineVariable(const std::string &name,
+                                   std::string &stringValue)
+{
+    return &m_IO.DefineVariable<std::string>(name, Dims(), Dims(), Dims(),
+                                             false, &stringValue);
+}
+
 VariableBase *IOPy::DefineVariable(const std::string &name, const Dims &shape,
                                    const Dims &start, const Dims &count,
                                    const bool isConstantDims,

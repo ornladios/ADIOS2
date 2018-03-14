@@ -2,7 +2,7 @@
 ! Distributed under the OSI-approved Apache License, Version 2.0.  See
 !  accompanying file Copyright.txt for details.
 !
-!  adios2_variable_mod.f90 : ADIOS2 Fortran bindings for Variable class/handler
+!  adios2_variable_mod.f90 : ADIOS2 Fortran bindings for Variable class
 !
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov
@@ -14,8 +14,10 @@ module adios2_variable
 
 contains
 
+    !!<
+    !! @param variable
     subroutine adios2_variable_name(variable, name, ierr)
-        integer(kind=8), intent(in) :: variable
+        integer(kind=8), intent(out) :: variable
         character(len=:), allocatable, intent(out) :: name
         integer, intent(out) :: ierr
 
@@ -28,7 +30,7 @@ contains
     end subroutine
 
     subroutine adios2_variable_type(variable, type, ierr)
-        integer(kind=8), intent(in) :: variable
+        integer(kind=8), intent(out) :: variable
         integer, intent(out) :: type
         integer, intent(out) :: ierr
 
@@ -40,16 +42,15 @@ contains
     end subroutine
 
     subroutine adios2_variable_ndims(variable, ndims, ierr)
-        integer(kind=8), intent(in) :: variable
+        integer(kind=8), intent(out) :: variable
         integer, intent(out) :: ndims
         integer, intent(out) :: ierr
 
         call adios2_variable_ndims_f2c(variable, ndims, ierr)
-
     end subroutine
 
     subroutine adios2_variable_shape(variable, ndims, shape_dims, ierr)
-        integer(kind=8), intent(in) :: variable
+        integer(kind=8), intent(out) :: variable
         integer, intent(out) :: ndims
         integer(kind=8), dimension(:), allocatable, intent(out) :: shape_dims
         integer, intent(out) :: ierr
@@ -61,18 +62,17 @@ contains
     end subroutine
 
     subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)
-        integer(kind=8), intent(in) :: variable
+        integer(kind=8), intent(out) :: variable
         integer, intent(in) :: ndims
         integer(kind=8), dimension(:), intent(in) :: shape_dims
         integer, intent(out) :: ierr
 
         call adios2_set_shape_f2c(variable, ndims, shape_dims, ierr)
-
     end subroutine
 
     subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, &
         & ierr)
-        integer(kind=8), intent(in) :: variable
+        integer(kind=8), intent(out) :: variable
         integer, intent(in) :: ndims
         integer(kind=8), dimension(:), intent(in) :: start_dims
         integer(kind=8), dimension(:), intent(in) :: count_dims
@@ -83,13 +83,13 @@ contains
 
     end subroutine
 
-    subroutine adios2_set_step_selection(variable, start_step, count_step, ierr)
-        integer(kind=8), intent(in) :: variable
-        integer, dimension(:), intent(in) :: start_step
-        integer, dimension(:), intent(in) :: count_step
+    subroutine adios2_set_step_selection(variable, step_start, step_count, ierr)
+        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: step_start
+        integer(kind=8), intent(in) :: step_count
         integer, intent(out) :: ierr
 
-        call adios2_set_step_selection_f2c(variable, start_step, count_step, &
+        call adios2_set_step_selection_f2c(variable, step_start, step_count, &
                                            ierr)
 
     end subroutine

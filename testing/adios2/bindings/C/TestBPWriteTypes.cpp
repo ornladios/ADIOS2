@@ -29,15 +29,15 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
 #ifdef ADIOS2_HAVE_MPI
     int rank(0);
     int size(0);
-    adios2_ADIOS *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #else
-    adios2_ADIOS *adiosH = adios2_init_nompi(adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init_nompi(adios2_debug_mode_on);
 #endif
 
     // IO
-    adios2_IO *ioH = adios2_declare_io(adiosH, "CArrayTypes");
+    adios2_io *ioH = adios2_declare_io(adiosH, "CArrayTypes");
     // Set engine parameters
     adios2_set_engine(ioH, "BPFile");
     adios2_set_parameter(ioH, "ProfileUnits", "Microseconds");
@@ -78,18 +78,18 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
                                count, adios2_constant_dims_true, NULL);
     }
     // inquire variables
-    adios2_Variable *varI8 = adios2_inquire_variable(ioH, "varI8");
-    adios2_Variable *varI16 = adios2_inquire_variable(ioH, "varI16");
-    adios2_Variable *varI32 = adios2_inquire_variable(ioH, "varI32");
-    adios2_Variable *varI64 = adios2_inquire_variable(ioH, "varI64");
-    adios2_Variable *varU8 = adios2_inquire_variable(ioH, "varU8");
-    adios2_Variable *varU16 = adios2_inquire_variable(ioH, "varU16");
-    adios2_Variable *varU32 = adios2_inquire_variable(ioH, "varU32");
-    adios2_Variable *varU64 = adios2_inquire_variable(ioH, "varU64");
-    adios2_Variable *varR32 = adios2_inquire_variable(ioH, "varR32");
-    adios2_Variable *varR64 = adios2_inquire_variable(ioH, "varR64");
+    adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
+    adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
+    adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
+    adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
+    adios2_variable *varU8 = adios2_inquire_variable(ioH, "varU8");
+    adios2_variable *varU16 = adios2_inquire_variable(ioH, "varU16");
+    adios2_variable *varU32 = adios2_inquire_variable(ioH, "varU32");
+    adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
+    adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
+    adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
 
-    adios2_Engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
+    adios2_engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
     adios2_put_sync(engineH, varI8, data_I8);
     adios2_put_sync(engineH, varI16, data_I16);

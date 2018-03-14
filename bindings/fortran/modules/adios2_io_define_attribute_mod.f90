@@ -8,8 +8,8 @@
 !   Created on: Dec 15, 2017
 !       Author: William F Godoy godoywf@ornl.gov
 !
-module adios2_io_define_attribute
 
+module adios2_io_define_attribute
     use adios2_parameters
     implicit none
 

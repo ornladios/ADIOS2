@@ -6,6 +6,9 @@
 add_executable(TestBPWriteReadTypes_f SmallTestData_mod.f90)
 target_link_libraries(TestBPWriteReadTypes_f adios2_f)
 
+add_executable(TestBPWriteReadTypesHighLevelAPI_f SmallTestData_mod.f90)
+target_link_libraries(TestBPWriteReadTypesHighLevelAPI_f adios2_f)
+
 add_executable(TestRemove_f SmallTestData_mod.f90)
 target_link_libraries(TestRemove_f adios2_f)
 
@@ -13,6 +16,10 @@ if(ADIOS2_HAVE_MPI)
   target_sources(TestBPWriteReadTypes_f PRIVATE TestBPWriteTypes.f90)
   target_link_libraries(TestBPWriteReadTypes_f MPI::MPI_Fortran)
   
+  target_sources(TestBPWriteReadTypesHighLevelAPI_f 
+                 PRIVATE TestBPWriteTypesHighLevelAPI.f90)
+  target_link_libraries(TestBPWriteReadTypesHighLevelAPI_f MPI::MPI_Fortran)
+
   target_sources(TestRemove_f PRIVATE TestRemove.f90)
   target_link_libraries(TestRemove_f MPI::MPI_Fortran)
   
@@ -59,13 +66,20 @@ if(ADIOS2_HAVE_MPI)
 else()
   
   target_sources(TestBPWriteReadTypes_f PRIVATE TestBPWriteTypes_nompi.f90)
+
+  target_sources(TestBPWriteReadTypesHighLevelAPI_f 
+                 PRIVATE TestBPWriteTypesHighLevelAPI_nompi.f90)
   
   target_sources(TestRemove_f PRIVATE TestRemove_nompi.f90)
-  
+
 endif()
 
 add_test(NAME BPWriteReadTypes_f
   COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypes_f>
+)
+
+add_test(NAME BPWriteReadTypesHighLevelAPI_f
+  COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypesHighLevelAPI_f>
 )
 
 add_test(NAME Remove_f

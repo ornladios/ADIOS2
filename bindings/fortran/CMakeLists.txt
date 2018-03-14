@@ -13,11 +13,13 @@ set(F2C
      f2c/adios2_f2c_io.cpp 
      f2c/adios2_f2c_variable.cpp
      f2c/adios2_f2c_engine.cpp
+     f2c/adios2_f2c_FILE.cpp
 )
 
 set(MODULES 
      adios2_mod.f90
-     modules/adios2_functions_mod.f90 
+     modules/adios2_functions_mod.f90
+     modules/adios2_functions_allocate_mod.f90  
      modules/adios2_parameters_mod.f90 
      modules/adios2_adios_mod.f90 
      modules/adios2_io_mod.f90 
@@ -29,6 +31,9 @@ set(MODULES
      modules/adios2_engine_put_deferred_mod.f90
      modules/adios2_engine_get_sync_mod.f90 
      modules/adios2_engine_get_deferred_mod.f90
+     modules/adios2_file_mod.f90
+     modules/adios2_fwrite_mod.f90
+     modules/adios2_fread_mod.f90
 )
 
 add_library(adios2_f ${MODULES} ${F2C})
@@ -42,12 +47,14 @@ target_link_libraries(adios2_f PRIVATE adios2)
 if(ADIOS2_HAVE_MPI)
    target_sources(adios2_f PRIVATE modules/mpi/adios2_adios_init_mod.f90 
                                    modules/mpi/adios2_io_open_mod.f90
+                                   modules/mpi/adios2_fopen_mod.f90
    )
    target_compile_definitions(adios2_f PUBLIC ADIOS2_HAVE_MPI_F)
    target_link_libraries(adios2_f PRIVATE MPI::MPI_Fortran MPI::MPI_C)
 else()
    target_sources(adios2_f PRIVATE modules/nompi/adios2_adios_init_mod.f90 
                                    modules/nompi/adios2_io_open_mod.f90
+                                   modules/nompi/adios2_fopen_mod.f90
    )
 endif()
 

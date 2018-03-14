@@ -22,7 +22,7 @@ extern "C" {
  * @param mode
  * @param timeout_seconds
  */
-adios2_step_status adios2_begin_step(adios2_Engine *engine,
+adios2_step_status adios2_begin_step(adios2_engine *engine,
                                      const adios2_step_mode mode,
                                      const float timeout_seconds);
 
@@ -34,12 +34,12 @@ adios2_step_status adios2_begin_step(adios2_Engine *engine,
  * @param variable handler for variable from adios2_define_variable
  * @param values application data to be written for this variable
  */
-void adios2_put_sync(adios2_Engine *engine, adios2_Variable *variable,
+void adios2_put_sync(adios2_engine *engine, adios2_variable *variable,
                      const void *values);
 
-void adios2_put_sync_self(adios2_Engine *engine, adios2_Variable *variable);
+void adios2_put_sync_self(adios2_engine *engine, adios2_variable *variable);
 
-void adios2_put_sync_by_name(adios2_Engine *engine, const char *variable_name,
+void adios2_put_sync_by_name(adios2_engine *engine, const char *variable_name,
                              const void *values);
 
 /**
@@ -48,54 +48,54 @@ void adios2_put_sync_by_name(adios2_Engine *engine, const char *variable_name,
  * @param variable handler for variable from adios2_define_variable
  * @param values application data to be written for this variable
  */
-void adios2_put_deferred(adios2_Engine *engine, adios2_Variable *variable,
+void adios2_put_deferred(adios2_engine *engine, adios2_variable *variable,
                          const void *values);
 
-void adios2_put_deferred_self(adios2_Engine *engine, adios2_Variable *variable);
+void adios2_put_deferred_self(adios2_engine *engine, adios2_variable *variable);
 
-void adios2_put_deferred_by_name(adios2_Engine *engine,
+void adios2_put_deferred_by_name(adios2_engine *engine,
                                  const char *variable_name, const void *values);
 
-void adios2_perform_puts(adios2_Engine *engine);
+void adios2_perform_puts(adios2_engine *engine);
 
 //***************** GET *****************
-void adios2_get_sync(adios2_Engine *engine, adios2_Variable *variable,
+void adios2_get_sync(adios2_engine *engine, adios2_variable *variable,
                      void *values);
 
-void adios2_get_sync_self(adios2_Engine *engine, adios2_Variable *variable);
+void adios2_get_sync_self(adios2_engine *engine, adios2_variable *variable);
 
-void adios2_get_sync_by_name(adios2_Engine *engine, const char *variable_name,
+void adios2_get_sync_by_name(adios2_engine *engine, const char *variable_name,
                              void *values);
 
-void adios2_get_deferred(adios2_Engine *engine, adios2_Variable *variable,
+void adios2_get_deferred(adios2_engine *engine, adios2_variable *variable,
                          void *values);
 
-void adios2_get_deferred_self(adios2_Engine *engine, adios2_Variable *variable);
+void adios2_get_deferred_self(adios2_engine *engine, adios2_variable *variable);
 
-void adios2_get_deferred_by_name(adios2_Engine *engine,
+void adios2_get_deferred_by_name(adios2_engine *engine,
                                  const char *variable_name, void *values);
 
-void adios2_perform_gets(adios2_Engine *engine);
+void adios2_perform_gets(adios2_engine *engine);
 
 /**
  * terminates interaction with current step
  * @param engine handler executing IO tasks
  */
-void adios2_end_step(adios2_Engine *engine);
+void adios2_end_step(adios2_engine *engine);
 
 /**
  * Convenience function to write all current variables
  * defined in IO
  * @param engine handler executing IO tasks
  */
-void adios2_write_step(adios2_Engine *engine);
+void adios2_write_step(adios2_engine *engine);
 
 /**
  * Close all transports in adios2_Engine
  * @param engine handler containing all transports to
  * be closed. engine Becomes NULL after this function is called.
  */
-void adios2_close(adios2_Engine *engine);
+void adios2_close(adios2_engine *engine);
 
 /**
  * Close a particular transport from the index returned by adios2_add_transport
@@ -103,7 +103,7 @@ void adios2_close(adios2_Engine *engine);
  * be closed. NOTE: engine NEVER becomes NULL due to this function.
  * @param transport_index handler from adios2_add_transport
  */
-void adios2_close_by_index(adios2_Engine *engine,
+void adios2_close_by_index(adios2_engine *engine,
                            const unsigned int transport_index);
 
 #ifdef __cplusplus

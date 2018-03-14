@@ -16,31 +16,8 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
-void adios2_set_engine(adios2_IO *io, const char *engine_type)
-{
-    reinterpret_cast<adios2::IO *>(io)->SetEngine(engine_type);
-}
-
-void adios2_set_parameter(adios2_IO *io, const char *key, const char *value)
-{
-    reinterpret_cast<adios2::IO *>(io)->SetParameter(key, value);
-}
-
-unsigned int adios2_add_transport(adios2_IO *io, const char *transport_type)
-{
-    return reinterpret_cast<adios2::IO *>(io)->AddTransport(transport_type);
-}
-
-void adios2_set_transport_parameter(adios2_IO *io,
-                                    const unsigned int transport_index,
-                                    const char *key, const char *value)
-{
-    reinterpret_cast<adios2::IO *>(io)->SetTransportParameter(transport_index,
-                                                              key, value);
-}
-
-adios2_Variable *
-adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
+adios2_variable *
+adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                        const size_t ndims, const size_t *shape,
                        const size_t *start, const size_t *count,
                        const adios2_constant_dims constant_dims, void *data)
@@ -247,10 +224,10 @@ adios2_define_variable(adios2_IO *io, const char *name, const adios2_type type,
     }
     }
 
-    return reinterpret_cast<adios2_Variable *>(variable);
+    return reinterpret_cast<adios2_variable *>(variable);
 }
 
-adios2_Variable *adios2_inquire_variable(adios2_IO *io, const char *name)
+adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
 {
     adios2::IO &ioCpp = *reinterpret_cast<adios2::IO *>(io);
     const auto &dataMap = ioCpp.GetVariablesDataMap();
@@ -276,20 +253,20 @@ adios2_Variable *adios2_inquire_variable(adios2_IO *io, const char *name)
     ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-    return reinterpret_cast<adios2_Variable *>(variable);
+    return reinterpret_cast<adios2_variable *>(variable);
 }
 
-int adios2_remove_variable(adios2_IO *io, const char *name)
+int adios2_remove_variable(adios2_io *io, const char *name)
 {
     return (reinterpret_cast<adios2::IO *>(io)->RemoveVariable(name)) ? 1 : 0;
 }
 
-void adios2_remove_all_variables(adios2_IO *io)
+void adios2_remove_all_variables(adios2_io *io)
 {
     reinterpret_cast<adios2::IO *>(io)->RemoveAllVariables();
 }
 
-adios2_Attribute *adios2_define_attribute(adios2_IO *io, const char *name,
+adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
                                           const adios2_type type,
                                           const void *data,
                                           const size_t elements)
@@ -461,27 +438,50 @@ adios2_Attribute *adios2_define_attribute(adios2_IO *io, const char *name,
     }
     }
 
-    return reinterpret_cast<adios2_Attribute *>(attribute);
+    return reinterpret_cast<adios2_attribute *>(attribute);
 }
 
-int adios2_remove_attribute(adios2_IO *io, const char *name)
+int adios2_remove_attribute(adios2_io *io, const char *name)
 {
     return (reinterpret_cast<adios2::IO *>(io)->RemoveAttribute(name)) ? 1 : 0;
 }
 
-void adios2_remove_all_attributes(adios2_IO *io)
+void adios2_remove_all_attributes(adios2_io *io)
 {
     reinterpret_cast<adios2::IO *>(io)->RemoveAllAttributes();
 }
 
-adios2_Engine *adios2_open(adios2_IO *io, const char *name,
+void adios2_set_engine(adios2_io *io, const char *engine_type)
+{
+    reinterpret_cast<adios2::IO *>(io)->SetEngine(engine_type);
+}
+
+void adios2_set_parameter(adios2_io *io, const char *key, const char *value)
+{
+    reinterpret_cast<adios2::IO *>(io)->SetParameter(key, value);
+}
+
+unsigned int adios2_add_transport(adios2_io *io, const char *transport_type)
+{
+    return reinterpret_cast<adios2::IO *>(io)->AddTransport(transport_type);
+}
+
+void adios2_set_transport_parameter(adios2_io *io,
+                                    const unsigned int transport_index,
+                                    const char *key, const char *value)
+{
+    reinterpret_cast<adios2::IO *>(io)->SetTransportParameter(transport_index,
+                                                              key, value);
+}
+
+adios2_engine *adios2_open(adios2_io *io, const char *name,
                            const adios2_mode mode)
 {
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
     return adios2_open_new_comm(io, name, mode, ioCpp.m_MPIComm);
 }
 
-adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
+adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
                                     const adios2_mode mode, MPI_Comm mpi_comm)
 {
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
@@ -507,5 +507,5 @@ adios2_Engine *adios2_open_new_comm(adios2_IO *io, const char *name,
         break;
     }
 
-    return reinterpret_cast<adios2_Engine *>(engine);
+    return reinterpret_cast<adios2_engine *>(engine);
 }

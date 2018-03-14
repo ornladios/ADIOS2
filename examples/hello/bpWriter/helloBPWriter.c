@@ -30,8 +30,8 @@ int main(int argc, char *argv[])
         myFloats[i] = i;
     }
 
-    adios2_ADIOS *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
-    adios2_IO *ioH = adios2_declare_io(adiosH, "BPFile_N2N");
+    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_io *ioH = adios2_declare_io(adiosH, "BPFile_N2N");
 
     // dims are allocated in stack
     size_t shape[1];
@@ -43,11 +43,11 @@ int main(int argc, char *argv[])
     size_t count[1];
     count[0] = Nx;
 
-    adios2_Variable *variableH = adios2_define_variable(
+    adios2_variable *variableH = adios2_define_variable(
         ioH, "bpFloats", adios2_type_float, 1, shape, start, count,
         adios2_constant_dims_true, myFloats);
 
-    adios2_Engine *engineH =
+    adios2_engine *engineH =
         adios2_open(ioH, "myVector_c.bp", adios2_mode_write);
 
     adios2_put_sync(engineH, variableH, myFloats);

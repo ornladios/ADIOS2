@@ -278,6 +278,18 @@ private:
      */
     template <class T>
     Variable<T> &FindVariable(const std::string &variableName);
+
+    /**
+     * Checks if Engine was opened in Write mode so Put functions can be called
+     * @param hint
+     */
+    void CheckWriteMode(const std::string hint) const;
+
+    /**
+     * Checks if Engine was opened in Read mode so Get functions can be called
+     * @param hint
+     */
+    void CheckReadMode(const std::string hint) const;
 };
 
 #define declare_template_instantiation(T)                                      \
