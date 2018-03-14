@@ -136,3 +136,19 @@ adios2_FILE *adios2_fopen_config_glue(const char *name, const adios2_mode mode,
 
     return reinterpret_cast<adios2_FILE *>(streamCpp);
 }
+
+adios2_FILE *adios2_fopen_nompi_glue(const char *name, const adios2_mode mode,
+                                     const char *host_language)
+{
+    return adios2_fopen_glue(name, mode, MPI_COMM_SELF, host_language);
+}
+
+adios2_FILE *adios2_fopen_config_nompi_glue(const char *name,
+                                            const adios2_mode mode,
+                                            const char *config_file,
+                                            const char *io_in_config_file,
+                                            const char *host_language)
+{
+    return adios2_fopen_config_glue(name, mode, MPI_COMM_SELF, config_file,
+                                    io_in_config_file, host_language);
+}

@@ -72,6 +72,15 @@ adios2_FILE *adios2_fopen_config_glue(const char *name, const adios2_mode mode,
                                       const char *io_in_config_file,
                                       const char *host_language);
 
+adios2_FILE *adios2_fopen_nompi_glue(const char *name, const adios2_mode mode,
+                                     const char *host_language);
+
+adios2_FILE *adios2_fopen_config_nompi_glue(const char *name,
+                                            const adios2_mode mode,
+                                            const char *config_file,
+                                            const char *io_in_config_file,
+                                            const char *host_language);
+
 #ifdef __cplusplus
 } // end extern C
 #endif

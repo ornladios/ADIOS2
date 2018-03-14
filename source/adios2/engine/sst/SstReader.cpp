@@ -159,6 +159,51 @@ void SstReader::Init()
         return false;
     };
 
+    auto lf_SetStringParameter = [&](const std::string key, char *&parameter) {
+
+        auto itKey = m_IO.m_Parameters.find(key);
+        if (itKey != m_IO.m_Parameters.end())
+        {
+            parameter = strdup(itKey->second.c_str());
+            return true;
+        }
+        return false;
+    };
+
+    auto lf_SetRegMethodParameter = [&](const std::string key, int &parameter) {
+
+        auto itKey = m_IO.m_Parameters.find(key);
+        if (itKey != m_IO.m_Parameters.end())
+        {
+            std::string method = itKey->second;
+            std::transform(method.begin(), method.end(), method.begin(),
+                           ::tolower);
+            if (method == "file")
+            {
+                parameter = SstRegisterFile;
+            }
+            else if (method == "screen")
+            {
+                parameter = SstRegisterScreen;
+            }
+            else if (method == "cloud")
+            {
+                parameter = SstRegisterCloud;
+                throw std::invalid_argument("ERROR: Sst RegistrationMethod "
+                                            "\"cloud\" not yet implemented" +
+                                            m_EndMessage);
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown Sst RegistrationMethod parameter \"" +
+                    method + "\"" + m_EndMessage);
+            }
+            return true;
+        }
+        return false;
+    };
+
 #define get_params(Param, Type, Typedecl, Default)                             \
     lf_Set##Type##Parameter(#Param, m_##Param);
     SST_FOREACH_PARAMETER_TYPE_4ARGS(get_params);

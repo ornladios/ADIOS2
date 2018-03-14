@@ -400,15 +400,7 @@ protected:
                                                                                \
     extern template void fstream::read<T>(const std::string &, T *,            \
                                           const Dims &, const Dims &,          \
-                                          const size_t, const size_t);         \
-                                                                               \
-    extern template void fstream::read(const std::string &, T *, const size_t, \
-                                       const size_t);                          \
-                                                                               \
-    extern template T fstream::read(const std::string &, const size_t);        \
-                                                                               \
-    extern template std::vector<T> fstream::read(const std::string &,          \
-                                                 const size_t, const size_t);
+                                          const size_t, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

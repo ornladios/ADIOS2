@@ -55,25 +55,64 @@ void FC_GLOBAL(adios2_fopen_f2c,
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 fopen: " << e.what() << "\n";
+        std::cerr << "ADIOS2 fopen with name " << std::string(name) << " "
+                  << e.what() << "\n";
         *ierr = -1;
     }
 }
-#else
-void FC_GLOBAL(adios2_fopen_f2c,
-               adios2_FOPEN_F2C)(adios2_FILE **fh, const char *name,
-                                 const int *mode, const char *engine_type,
-                                 const char *config_file, int *ierr)
+
+void FC_GLOBAL(adios2_fopen_config_f2c, adios2_FOPEN_CONFIG_F2C)(
+    adios2_FILE **fh, const char *name, const int *mode, int *comm,
+    const char *config_file, const char *io_in_config_file, int *ierr)
 {
     *ierr = 0;
     try
     {
-        *fh = adios2_fopen_glue(name, static_cast<adios2_mode>(*mode), 0,
-                                engine_type, config_file, "Fortran");
+        *fh = adios2_fopen_config_glue(name, static_cast<adios2_mode>(*mode),
+                                       MPI_Comm_f2c(*comm), config_file,
+                                       io_in_config_file, "Fortran");
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 fopen: " << e.what() << "\n";
+        std::cerr << "ADIOS2 fopen with name " << std::string(name) << " "
+                  << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+#else
+void FC_GLOBAL(adios2_fopen_f2c, adios2_FOPEN_F2C)(adios2_FILE **fh,
+                                                   const char *name,
+                                                   const int *mode, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *fh = adios2_fopen_nompi_glue(name, static_cast<adios2_mode>(*mode),
+                                      "Fortran");
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 fopen with name " << std::string(name) << " "
+                  << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_fopen_config_f2c, adios2_FOPEN_CONFIG_F2C)(
+    adios2_FILE **fh, const char *name, const int *mode,
+    const char *config_file, const char *io_in_config_file, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *fh = adios2_fopen_config_nompi_glue(
+            name, static_cast<adios2_mode>(*mode), config_file,
+            io_in_config_file, "Fortran");
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 fopen with name " << std::string(name) << " "
+                  << e.what() << "\n";
         *ierr = -1;
     }
 }

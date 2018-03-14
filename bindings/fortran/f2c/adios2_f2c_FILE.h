@@ -26,10 +26,20 @@ extern "C" {
 void FC_GLOBAL(adios2_fopen_f2c,
                adios2_FOPEN_F2C)(adios2_FILE **fh, const char *name,
                                  const int *mode, MPI_Fint *comm, int *ierr);
+
+void FC_GLOBAL(adios2_fopen_config_f2c, adios2_FOPEN_CONFIG_F2C)(
+    adios2_FILE **fh, const char *name, const int *mode, int *comm,
+    const char *config_file, const char *io_in_config_file, int *ierr);
+
 #else
+
 void FC_GLOBAL(adios2_fopen_f2c, adios2_FOPEN_F2C)(adios2_FILE **fh,
                                                    const char *name,
                                                    const int *mode, int *ierr);
+
+void FC_GLOBAL(adios2_fopen_config_f2c, adios2_FOPEN_CONFIG_F2C)(
+    adios2_FILE **fh, const char *name, const int *mode,
+    const char *config_file, const char *io_in_config_file, int *ierr);
 #endif
 
 void FC_GLOBAL(adios2_fwrite_value_f2c,

@@ -101,10 +101,18 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Save);
 
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(FFSmarshal, Bool, int, true)                                         \
+    MACRO(RegistrationMethod, RegMethod, int, NULL)                            \
+    MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(BPmarshal, Bool, int, false)                                         \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
     MACRO(QueueLimit, Int, int, 0)                                             \
     MACRO(DiscardOnQueueFull, Bool, int, 1)
+
+typedef enum {
+    SstRegisterFile,
+    SstRegisterScreen,
+    SstRegisterCloud
+} SstRegistrationMethod;
 
 struct _SstParams
 {

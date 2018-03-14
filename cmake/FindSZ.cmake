@@ -53,6 +53,7 @@ if(NOT SZ_FOUND)
       add_library(SZ::SZ UNKNOWN IMPORTED)
       set_target_properties(SZ::SZ PROPERTIES
         IMPORTED_LOCATION             "${SZ_LIBRARY}"
+        INTERFACE_LINK_LIBRARIES      "${ZLIB_LIBRARY}"
         INTERFACE_INCLUDE_DIRECTORIES "${SZ_INCLUDE_DIR}"
       )
     endif()

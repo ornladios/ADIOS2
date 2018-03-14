@@ -144,7 +144,10 @@ void BP3Serializer::CloseData(IO &io)
 
         SerializeMetadataInData();
 
-        m_Profiler.Bytes.at("buffering") = m_Data.m_AbsolutePosition;
+        if (m_Profiler.IsActive)
+        {
+            m_Profiler.Bytes.at("buffering") = m_Data.m_AbsolutePosition;
+        }
 
         m_IsClosed = true;
     }
@@ -160,7 +163,10 @@ void BP3Serializer::CloseStream(IO &io)
         SerializeDataBuffer(io);
     }
     SerializeMetadataInData(false);
-    m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
+    }
     ProfilerStop("buffering");
 }
 
@@ -197,6 +203,7 @@ std::string BP3Serializer::GetRankProfilingJSON(
     lf_WriterTimer(rankLog, profiler.Timers.at("buffering"));
     lf_WriterTimer(rankLog, profiler.Timers.at("memcpy"));
     lf_WriterTimer(rankLog, profiler.Timers.at("minmax"));
+    lf_WriterTimer(rankLog, profiler.Timers.at("meta_sort_merge"));
 
     const size_t transportsSize = transportsTypes.size();
 
@@ -236,6 +243,8 @@ BP3Serializer::AggregateProfilingJSON(const std::string &rankProfilingLog)
 
 void BP3Serializer::AggregateCollectiveMetadata()
 {
+    ProfilerStart("buffering");
+    ProfilerStart("meta_sort_merge");
     const uint64_t pgIndexStart = m_Metadata.m_Position;
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount);
 
@@ -248,11 +257,13 @@ void BP3Serializer::AggregateCollectiveMetadata()
     if (m_RankMPI == 0)
     {
         m_Metadata.Resize(m_Metadata.m_Position + m_MetadataSet.MiniFooterSize,
-                          " when writing collective bp1 Minifooter");
+                          " when writing collective bp3 Minifooter");
         PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
                       m_Metadata.m_Buffer, m_Metadata.m_Position, true);
         m_Metadata.m_AbsolutePosition = m_Metadata.m_Position;
     }
+    ProfilerStop("meta_sort_merge");
+    ProfilerStop("buffering");
 }
 
 // PRIVATE FUNCTIONS

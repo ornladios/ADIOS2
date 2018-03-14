@@ -13,7 +13,7 @@ module adios2_fopen_mod
     implicit none
 
     interface adios2_fopen
-        module procedure adios2_fopen_config
+        module procedure adios2_fopen_full
         module procedure adios2_fopen_default
     end interface
 
@@ -28,9 +28,9 @@ contains
         character*(*), intent(in) :: io_in_config_file
         integer, intent(out) :: ierr
 
-        call adios2_fopen_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), adios2_mode, &
-                              TRIM(ADJUSTL(config_file))//char(0), &
-                              TRIM(ADJUSTL(io_in_config_file))//char(0), ierr)
+        call adios2_fopen_config_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), adios2_mode, &
+                                     TRIM(ADJUSTL(config_file))//char(0), &
+                                     TRIM(ADJUSTL(io_in_config_file))//char(0), ierr)
     end subroutine
 
     subroutine adios2_fopen_default(unit, name, adios2_mode, ierr)

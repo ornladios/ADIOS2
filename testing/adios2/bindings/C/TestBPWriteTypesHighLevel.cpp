@@ -36,7 +36,7 @@ TEST_F(BPWriteTypesHighLevel, ADIOS2BPWriteTypes)
     adios2_FILE *fhw =
         adios2_fopen("ctypes_hl.bp", adios2_mode_write, MPI_COMM_WORLD);
 #else
-    adios2_FILE *fhw = adios2_fopen("ctypes_hl.bp", adios2_mode_write);
+    adios2_FILE *fhw = adios2_fopen_nompi("ctypes_hl.bp", adios2_mode_write);
 #endif
 
     size_t shape[1];

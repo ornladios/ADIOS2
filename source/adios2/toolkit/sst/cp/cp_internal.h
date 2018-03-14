@@ -18,6 +18,7 @@ typedef struct _CP_GlobalInfo
     CMFormat ReaderActivateFormat;
     CMFormat ReleaseTimestepFormat;
     CMFormat WriterCloseFormat;
+    CMFormat ReaderCloseFormat;
 } * CP_GlobalInfo;
 
 struct _ReaderRegisterMsg;
@@ -94,6 +95,8 @@ struct _SstStream
 
     /* params */
     int RendezvousReaderCount;
+    char *DataTransport;
+    SstRegistrationMethod RegistrationMethod;
 
     /* state */
     int Verbose;
@@ -304,6 +307,15 @@ typedef struct _WriterCloseMsg
 } * WriterCloseMsg;
 
 /*
+ * The ReaderClose message informs the readers that the reader is beginning an
+ * orderly shutdown of the stream.  One is sent to each writer rank.
+ */
+typedef struct _ReaderCloseMsg
+{
+    void *WSR_Stream;
+} * ReaderCloseMsg;
+
+/*
  * This is the consolidated writer contact info structure that is used to
  * diseminate full writer contact information to all reader ranks
  */
@@ -351,6 +363,8 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
                                       void *msg_v, void *client_data,
                                       attr_list attrs);
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
+                                  void *client_data, attr_list attrs);
+extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,
                                   void *client_data, attr_list attrs);
 
 extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);

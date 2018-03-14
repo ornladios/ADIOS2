@@ -11,6 +11,8 @@
 #include "ADIOS2fstream.h"
 #include "ADIOS2fstream.tcc"
 
+#include "adios2/ADIOSMPI.h"
+
 namespace adios2
 {
 
@@ -123,15 +125,7 @@ void fstream::close() { m_Stream->Close(); }
                                    const Dims &, const bool);                  \
                                                                                \
     template void fstream::read<T>(const std::string &, T *, const Dims &,     \
-                                   const Dims &, const size_t, const size_t);  \
-                                                                               \
-    template void fstream::read(const std::string &, T *, const size_t,        \
-                                const size_t);                                 \
-                                                                               \
-    template T fstream::read(const std::string &, const size_t);               \
-                                                                               \
-    template std::vector<T> fstream::read(const std::string &, const size_t,   \
-                                          const size_t);
+                                   const Dims &, const size_t, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

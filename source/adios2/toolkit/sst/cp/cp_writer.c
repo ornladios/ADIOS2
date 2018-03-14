@@ -21,9 +21,18 @@ extern void CP_verbose(SstStream Stream, char *Format, ...);
 
 static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
                                     void **WS_StreamPtr);
-static void writeContactInfo(const char *Name, SstStream Stream)
+
+static char *buildContactInfo(SstStream Stream)
 {
     char *Contact = attr_list_to_string(CMget_contact_list(Stream->CPInfo->cm));
+    char *FullInfo = malloc(strlen(Contact) + 20);
+    sprintf(FullInfo, "%p:%s", (void *)Stream, Contact);
+    return FullInfo;
+}
+
+static void writeContactInfoFile(const char *Name, SstStream Stream)
+{
+    char *Contact = buildContactInfo(Stream);
     char *TmpName = malloc(strlen(Name) + strlen(".tmp") + 1);
     char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
     FILE *WriterInfo;
@@ -35,20 +44,67 @@ static void writeContactInfo(const char *Name, SstStream Stream)
     sprintf(TmpName, "%s.tmp", Name);
     sprintf(FileName, "%s" SST_POSTFIX, Name);
     WriterInfo = fopen(TmpName, "w");
-    fprintf(WriterInfo, "%p:%s", (void *)Stream, Contact);
+    fprintf(WriterInfo, "%s", Contact);
     fclose(WriterInfo);
     rename(TmpName, FileName);
     free(TmpName);
     free(FileName);
 }
 
-static void removeContactInfo(SstStream Stream)
+static void writeContactInfoScreen(const char *Name, SstStream Stream)
+{
+    char *Contact = buildContactInfo(Stream);
+
+    /*
+     * write the contact information file to the screen
+     */
+    fprintf(stdout, "The next line of output is the contact information "
+                    "associated with SST output stream \"%s\".  Please make it "
+                    "available to the reader.\n",
+            Name);
+    fprintf(stdout, "\t%s\n", Contact);
+    free(Contact);
+}
+
+static void registerContactInfo(const char *Name, SstStream Stream)
+{
+    switch (Stream->RegistrationMethod)
+    {
+    case SstRegisterFile:
+        writeContactInfoFile(Name, Stream);
+        break;
+    case SstRegisterScreen:
+        writeContactInfoScreen(Name, Stream);
+        break;
+    case SstRegisterCloud:
+        /* not yet */
+        break;
+    }
+}
+
+static void removeContactInfoFile(SstStream Stream)
 {
     const char *Name = Stream->Filename;
     char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
     FILE *WriterInfo;
     sprintf(FileName, "%s" SST_POSTFIX, Name);
     unlink(FileName);
+}
+
+static void removeContactInfo(SstStream Stream)
+{
+    switch (Stream->RegistrationMethod)
+    {
+    case SstRegisterFile:
+        removeContactInfoFile(Stream);
+        break;
+    case SstRegisterScreen:
+        /* nothing necessary here */
+        break;
+    case SstRegisterCloud:
+        /* not yet */
+        break;
+    }
 }
 
 static void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
@@ -450,7 +506,15 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->WriterParams = Params;
 
     char *Filename = strdup(Name);
-    Stream->DP_Interface = LoadDP("dummy");
+    CP_verbose(Stream, "Loading DataPlane \"%s\"\n", Stream->DataTransport);
+    Stream->DP_Interface = LoadDP(Stream->DataTransport);
+
+    if (!Stream->DP_Interface)
+    {
+        CP_verbose(Stream, "Failed to load DataPlane %s for Stream \"%s\"\n",
+                   Stream->DataTransport, Filename);
+        return NULL;
+    }
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
@@ -472,7 +536,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     if (Stream->Rank == 0)
     {
-        writeContactInfo(Filename, Stream);
+        registerContactInfo(Filename, Stream);
     }
 
     CP_verbose(Stream, "Opening Stream \"%s\"\n", Filename);
@@ -949,6 +1013,23 @@ void queueReaderRegisterMsgAndNotify(SstStream Stream,
     }
     pthread_cond_signal(&Stream->DataCondition);
     pthread_mutex_unlock(&Stream->DataLock);
+}
+
+void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
+                           void *client_data, attr_list attrs)
+{
+    struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
+
+    WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
+
+    CP_verbose(CP_WSR_Stream->ParentStream,
+               "Reader Close message received for stream %p.  Setting state to "
+               "PeerClosed and releasing timesteps.",
+               CP_WSR_Stream);
+    CP_WSR_Stream->ReaderStatus = PeerClosed;
+    SubRefRangeTimestep(CP_WSR_Stream->ParentStream,
+                        CP_WSR_Stream->StartingTimestep,
+                        CP_WSR_Stream->LastSentTimestep);
 }
 
 void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *Msg_v,

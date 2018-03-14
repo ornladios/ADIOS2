@@ -109,15 +109,9 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
 
-        if (dimensions == nullptr || size <= 0)
-        {
-            throw std::invalid_argument("ERROR: corrupted ndims or shape, "
-                                        "start, count dimensions in Fortran ");
-        }
-
         output.resize(size);
 
-        for (int d = 0; d < size; ++d)
+        for (unsigned int d = 0; d < size; ++d)
         {
             if (dimensions[d] < 0)
             {
@@ -132,6 +126,31 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
 
     try
     {
+        if (*ndims <= 0)
+        {
+            throw std::invalid_argument("ERROR: negative ndims in Fortran ");
+        }
+
+        // Check for local variables
+        if (shape[0] == -1)
+        {
+            if (start[0] != -1)
+            {
+                throw std::invalid_argument("ERROR: shape and start must be "
+                                            "adios2_null_dims when declaring "
+                                            "local variables in Fortran ");
+            }
+
+            std::vector<std::size_t> countV;
+            lf_IntToSizeT(count, *ndims, countV);
+
+            *variable = adios2_define_variable(
+                *io, name, static_cast<adios2_type>(*type), *ndims, NULL, NULL,
+                countV.data(),
+                static_cast<adios2_constant_dims>(*constant_dims), data);
+            return;
+        }
+
         std::vector<std::size_t> shapeV, startV, countV;
         lf_IntToSizeT(shape, *ndims, shapeV);
         lf_IntToSizeT(start, *ndims, startV);
@@ -173,19 +192,33 @@ void FC_GLOBAL(adios2_inquire_variable_f2c,
     }
 }
 
-void FC_GLOBAL(adios2_open_f2c,
-               ADIOS2_OPEN_F2C)(adios2_engine **engine, adios2_io **io,
-                                const char *name, const int *open_mode,
-                                int *ierr)
+void FC_GLOBAL(adios2_remove_variable_f2c,
+               ADIOS2_REMOVE_VARIABLE_F2C)(adios2_io **io, const char *name,
+                                           int *ierr)
 {
     *ierr = 0;
     try
     {
-        *engine = adios2_open(*io, name, static_cast<adios2_mode>(*open_mode));
+        *ierr = adios2_remove_variable(*io, name);
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 open: " << e.what() << "\n";
+        std::cerr << "ADIOS2 remove_variable: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_remove_all_variables_f2c,
+               ADIOS2_REMOVE_ALL_VARIABLES_F2C)(adios2_io **io, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_remove_all_variables(*io);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 remove_all_variables: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -210,6 +243,37 @@ void FC_GLOBAL(adios2_define_attribute_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_remove_attribute_f2c,
+               ADIOS2_REMOVE_ATTRIBUTE_F2C)(adios2_io **io, const char *name,
+                                            int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *ierr = adios2_remove_attribute(*io, name);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 remove_attribute: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_remove_all_attributes_f2c,
+               ADIOS2_REMOVE_ALL_ATTRIBUTES_F2C)(adios2_io **io, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_remove_all_attributes(*io);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 remove_all_attributes: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 #ifdef ADIOS2_HAVE_MPI_F
 void FC_GLOBAL(adios2_open_new_comm_f2c,
                ADIOS2_OPEN_NEW_COMM_F2C)(adios2_engine **engine, adios2_io **io,
@@ -230,3 +294,20 @@ void FC_GLOBAL(adios2_open_new_comm_f2c,
     }
 }
 #endif
+
+void FC_GLOBAL(adios2_open_f2c,
+               ADIOS2_OPEN_F2C)(adios2_engine **engine, adios2_io **io,
+                                const char *name, const int *open_mode,
+                                int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *engine = adios2_open(*io, name, static_cast<adios2_mode>(*open_mode));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 open: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}

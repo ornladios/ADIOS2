@@ -8,13 +8,13 @@
 
 #include "dp_interface.h"
 
-extern CP_DP_Interface LoadDummyDP();
+extern CP_DP_Interface LoadEVpathDP();
 
 CP_DP_Interface LoadDP(char *dp_name)
 {
-    if (strcmp(dp_name, "dummy") == 0)
+    if (strcmp(dp_name, "evpath") == 0)
     {
-        return LoadDummyDP();
+        return LoadEVpathDP();
     }
     else
     {

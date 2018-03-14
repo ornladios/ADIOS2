@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@
 
 #include "cp_internal.h"
 
-static char *readContactInfo(const char *Name, SstStream Stream)
+static char *readContactInfoFile(const char *Name, SstStream Stream)
 {
     char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
     FILE *WriterInfo;
@@ -43,6 +44,37 @@ redo:
     (void)fread(Buffer, Size, 1, WriterInfo);
     fclose(WriterInfo);
     return Buffer;
+}
+
+static char *readContactInfoScreen(const char *Name, SstStream Stream)
+{
+    char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
+    char Input[10240];
+    char *Skip = Input;
+    fprintf(stdout, "Please enter the contact information associated with SST "
+                    "input stream \"%s\":\n",
+            Name);
+    fgets(Input, sizeof(Input), stdin);
+    while (isspace(*Skip))
+        Skip++;
+    return strdup(Skip);
+}
+
+static char *readContactInfo(const char *Name, SstStream Stream)
+{
+    switch (Stream->RegistrationMethod)
+    {
+    case SstRegisterFile:
+        return readContactInfoFile(Name, Stream);
+        break;
+    case SstRegisterScreen:
+        return readContactInfoScreen(Name, Stream);
+        break;
+    case SstRegisterCloud:
+        /* not yet */
+        return NULL;
+        break;
+    }
 }
 
 static void ReaderConnCloseHandler(CManager cm, CMConnection closed_conn,
@@ -127,11 +159,12 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     CP_validateParams(Stream, Params, 0 /* reader */);
 
-    Stream->DP_Interface = LoadDP("dummy");
+    Stream->DP_Interface = LoadDP(Stream->DataTransport);
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
     Stream->mpiComm = comm;
+    Stream->FinalTimestep = INT_MAX; /* set this on close */
 
     MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
@@ -372,6 +405,7 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
                Msg->FinalTimestep);
 
     pthread_mutex_lock(&Stream->DataLock);
+    Stream->FinalTimestep = Msg->FinalTimestep;
     Stream->Status = PeerClosed;
     /* wake anyone that might be waiting */
     pthread_cond_signal(&Stream->DataCondition);
@@ -447,9 +481,14 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
             return FoundTS;
         }
         /* didn't find a good next timestep, check Stream status */
-        if (Stream->Status != Established)
+        if ((Stream->Status != Established) ||
+            ((Stream->FinalTimestep != INT_MAX) &&
+             (Stream->FinalTimestep >= LastTimestep)))
         {
             pthread_mutex_unlock(&Stream->DataLock);
+            CP_verbose(Stream,
+                       "Stream Final Timestep is %d, last timestep was %d\n",
+                       Stream->FinalTimestep, LastTimestep);
             CP_verbose(Stream, "Wait for next metadata returning NULL because "
                                "Stream is not Established\n");
             /* closed or failed, return NULL */
@@ -458,6 +497,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         CP_verbose(Stream,
                    "Waiting for metadata for a Timestep later than TS %d\n",
                    LastTimestep);
+        CP_verbose(Stream, "Stream status is %d\n", Stream->Status);
         /* wait until we get the timestep metadata or something else changes */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
     }
@@ -621,8 +661,13 @@ extern void SstReaderClose(SstStream Stream)
      * a little while to makes sure our release message for the last timestep
      * got received */
     struct timeval CloseTime, Diff;
+    struct _ReaderCloseMsg Msg;
+    /* wait until each reader rank has done SstReaderClose() */
+    MPI_Barrier(Stream->mpiComm);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
+    sendOneToEachWriterRank(Stream, Stream->CPInfo->ReaderCloseFormat, &Msg,
+                            &Msg.WSR_Stream);
     if (Stream->Stats)
         Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 

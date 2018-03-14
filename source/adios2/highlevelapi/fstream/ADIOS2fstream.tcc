@@ -90,32 +90,32 @@ fstream::read(const std::string &name, const Dims &selectionStart,
         Box<size_t>(stepSelectionStart, stepSelectionCount));
 }
 
-template <class T>
-void fstream::read(const std::string &name, T *values,
-                   const size_t stepSelectionStart,
-                   const size_t stepSelectionCount)
-{
-    // TODO
-    throw std::invalid_argument("ERROR: fstream read variable " + name +
-                                " signature not yet implemented\n");
-}
-
-template <class T>
-T fstream::read(const std::string &name, const size_t step)
-{
-    // TODO
-    throw std::invalid_argument("ERROR: fstream read variable " + name +
-                                " signature not yet implemented\n");
-}
-
-template <class T>
-std::vector<T> fstream::read(const std::string &name,
-                             const size_t stepSelectionStart,
-                             const size_t stepSelectionCount)
-{
-    // TODO
-    throw std::invalid_argument("ERROR: fstream read variable " + name +
-                                " signature not yet implemented\n");
-}
+// template <class T>
+// void fstream::read(const std::string &name, T *values,
+//                   const size_t stepSelectionStart,
+//                   const size_t stepSelectionCount)
+//{
+//    // TODO
+//    throw std::invalid_argument("ERROR: fstream read variable " + name +
+//                                " signature not yet implemented\n");
+//}
+//
+// template <class T>
+// T fstream::read(const std::string &name, const size_t step)
+//{
+//    // TODO
+//    throw std::invalid_argument("ERROR: fstream read variable " + name +
+//                                " signature not yet implemented\n");
+//}
+//
+// template <class T>
+// std::vector<T> fstream::read(const std::string &name,
+//                             const size_t stepSelectionStart,
+//                             const size_t stepSelectionCount)
+//{
+//    // TODO
+//    throw std::invalid_argument("ERROR: fstream read variable " + name +
+//                                " signature not yet implemented\n");
+//}
 
 } // end namespace adios2

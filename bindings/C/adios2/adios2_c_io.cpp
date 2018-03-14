@@ -256,6 +256,16 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
     return reinterpret_cast<adios2_variable *>(variable);
 }
 
+int adios2_remove_variable(adios2_io *io, const char *name)
+{
+    return (reinterpret_cast<adios2::IO *>(io)->RemoveVariable(name)) ? 1 : 0;
+}
+
+void adios2_remove_all_variables(adios2_io *io)
+{
+    reinterpret_cast<adios2::IO *>(io)->RemoveAllVariables();
+}
+
 adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
                                           const adios2_type type,
                                           const void *data,
@@ -429,6 +439,16 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
     }
 
     return reinterpret_cast<adios2_attribute *>(attribute);
+}
+
+int adios2_remove_attribute(adios2_io *io, const char *name)
+{
+    return (reinterpret_cast<adios2::IO *>(io)->RemoveAttribute(name)) ? 1 : 0;
+}
+
+void adios2_remove_all_attributes(adios2_io *io)
+{
+    reinterpret_cast<adios2::IO *>(io)->RemoveAllAttributes();
 }
 
 void adios2_set_engine(adios2_io *io, const char *engine_type)
