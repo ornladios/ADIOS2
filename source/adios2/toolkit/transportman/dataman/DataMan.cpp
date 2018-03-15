@@ -67,11 +67,11 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                            m_DefaultLibrary);
 
         std::string ip;
-        GetStringParameter(paramsVector[i], "IPAddress", ip,
-                           m_DefaultIPAddress);
+        GetStringParameter(paramsVector[i], "IPAddress", ip);
+                           
 
         std::string port;
-        GetStringParameter(paramsVector[i], "Port", port, m_DefaultPort);
+        GetStringParameter(paramsVector[i], "Port", port);
 
         std::string transportMode;
         GetStringParameter(paramsVector[i], "TransportMode", transportMode,
@@ -83,7 +83,6 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         MPI_Comm_size(m_MPIComm, &mpiSize);
         if (port.empty())
         {
-            port = m_DefaultPort;
             port = std::to_string(stoi(port) + i * mpiSize);
         }
         port = std::to_string(stoi(port) + mpiRank);

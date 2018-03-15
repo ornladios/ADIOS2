@@ -57,7 +57,7 @@ private:
     // Functions for parsing parameters
     bool GetBoolParameter(const Params &params, std::string key);
     bool GetStringParameter(const Params &params, std::string key,
-                            std::string &value, std::string default_value);
+                            std::string &value, std::string default_value = "");
 
     void ReadThread(std::shared_ptr<Transport> transport);
     std::vector<std::thread> m_ReadThreads;
@@ -72,8 +72,6 @@ private:
     size_t m_CurrentTransport = 0;
     int m_Timeout = 5;
     const std::string m_DefaultLibrary = "zmq";
-    const std::string m_DefaultIPAddress = "127.0.0.1";
-    const std::string m_DefaultPort = "12306";
     const std::string m_DefaultTransportMode = "broadcast";
 };
 

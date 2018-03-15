@@ -52,7 +52,6 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
 }
 
-
 template <class T>
 std::string DataManWriter::SerializeJson(Variable<T> &variable)
 {
@@ -85,7 +84,6 @@ void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
 
 	m_DataMan->WriteWAN(buffer);
 }
-
 
 template <class T>
 void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
