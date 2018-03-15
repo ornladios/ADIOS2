@@ -86,7 +86,7 @@ protected:
     ADIOS2_FOREACH_TYPE_1ARG(declare)
 #undef declare
 
-    void DoClose(const int transportIndex = -1);
+    void DoClose(const int transportIndex = -1) override;
 
 private:
     struct Impl;
