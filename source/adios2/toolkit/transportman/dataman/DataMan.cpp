@@ -68,7 +68,6 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
 
         std::string ip;
         GetStringParameter(paramsVector[i], "IPAddress", ip);
-                           
 
         std::string port;
         GetStringParameter(paramsVector[i], "Port", port);
