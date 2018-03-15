@@ -15,6 +15,7 @@
  */
 #include "adios2_c.h"
 #include <errno.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -357,8 +358,8 @@ int read_file()
     double tb, te, tsched;
     double tsb, ts; // time for just scheduling for one step/block
 
-    uint64_t start[2] = {offs1, offs2};
-    uint64_t count[2] = {ldim1, ldim2};
+    size_t start[2] = {offs1, offs2};
+    size_t count[2] = {ldim1, ldim2};
     uint64_t ndim;
 
     reset_readvars();
