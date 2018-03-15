@@ -48,6 +48,9 @@ IO::IO(const Settings &s, MPI_Comm comm)
         // local size, could be defined later using SetSelection()
         {s.ndx, s.ndy});
 
+    // we are not going to change the variable sizes nor add new variables
+    bpio.DefinitionIsFinal();
+
     bpWriter = &bpio.Open(m_outputfilename, adios2::Mode::Write, comm);
 }
 

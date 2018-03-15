@@ -53,7 +53,7 @@ void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     // function call
     m_BP3Serializer.PutVariableMetadata(variable);
 
-    if (m_FixedSchedule && m_CurrentStep > 0)
+    if (m_IO.IsDefinitionFinal() && m_CurrentStep > 0)
     {
         // Create the async send for the variable now
         AsyncSendVariable(variable);
