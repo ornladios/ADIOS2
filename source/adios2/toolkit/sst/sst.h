@@ -23,7 +23,6 @@ typedef struct _SstStream *SstStream;
 /*
  *  metadata and typedefs are tentative and may come from ADIOS2 constructors.
 */
-typedef struct _SstMetadata *SstMetadata;
 typedef struct _SstFullMetadata *SstFullMetadata;
 typedef struct _SstData *SstData;
 
@@ -47,8 +46,11 @@ typedef struct _SstParams *SstParams;
  */
 extern SstStream SstWriterOpen(const char *filename, SstParams Params,
                                MPI_Comm comm);
-extern void SstProvideTimestep(SstStream s, SstMetadata local_metadata,
-                               SstData data, long timestep);
+
+typedef void (*DataFreeFunc)(void *Data);
+extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,
+                               SstData LocalData, long Timestep,
+                               DataFreeFunc FreeData, void *FreeClientData);
 extern void SstWriterClose(SstStream stream);
 
 /*
@@ -56,7 +58,9 @@ extern void SstWriterClose(SstStream stream);
  */
 extern SstStream SstReaderOpen(const char *filename, SstParams Params,
                                MPI_Comm comm);
-extern SstFullMetadata SstGetMetadata(SstStream stream, long timestep);
+extern void SstReaderGetParams(SstStream stream, int *WriterFFSmarshal,
+                               int *WriterBPmarshal);
+extern SstFullMetadata SstGetCurMetadata(SstStream stream);
 extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  size_t offset, size_t length, void *buffer,
                                  void *DP_TimestepInfo);
@@ -67,29 +71,35 @@ extern SstStatusValue SstAdvanceStep(SstStream stream, int mode,
 extern void SstReaderClose(SstStream stream);
 extern long SstCurrentStep(SstStream s);
 
+/*
+ *  Calls that support FFS-based marshaling, source code in cp/ffs_marshal.c
+ */
 typedef void *(*VarSetupUpcallFunc)(void *Reader, const char *Name,
                                     const char *Type, void *Data);
 typedef void *(*ArraySetupUpcallFunc)(void *Reader, const char *Name,
                                       const char *Type, int DimsCount,
                                       size_t *Shape, size_t *Start,
                                       size_t *Count);
-extern void SstReaderInitCallback(SstStream stream, void *Reader,
-                                  VarSetupUpcallFunc VarCallback,
-                                  ArraySetupUpcallFunc ArrayCallback);
+extern void SstReaderInitFFSCallback(SstStream stream, void *Reader,
+                                     VarSetupUpcallFunc VarCallback,
+                                     ArraySetupUpcallFunc ArrayCallback);
 
-extern void SstMarshal(SstStream Stream, void *Variable, const char *Name,
-                       const char *Type, size_t ElemSize, size_t DimCount,
-                       const unsigned long *Shape, const unsigned long *Count,
-                       const unsigned long *Offsets, const void *data);
-extern void SstGetDeferred(SstStream Stream, void *Variable, const char *Name,
-                           size_t DimCount, const unsigned long *Start,
-                           const unsigned long *Count, void *Data);
+extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
+                          const char *Type, size_t ElemSize, size_t DimCount,
+                          const unsigned long *Shape,
+                          const unsigned long *Count,
+                          const unsigned long *Offsets, const void *data);
+extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
+                              const char *Name, size_t DimCount,
+                              const unsigned long *Start,
+                              const unsigned long *Count, void *Data);
 
-extern void SstPerformGets(SstStream Stream);
+extern void SstFFSPerformGets(SstStream Stream);
 
-extern int SstWriterBeginStep(SstStream Stream, int mode,
-                              const float timeout_sec);
-extern void SstWriterEndStep(SstStream Stream);
+extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
+                                 const float timeout_sec);
+extern void SstFFSWriterEndStep(SstStream Stream, size_t Step);
+
 /*
  *  General Operations
  */
@@ -101,7 +111,7 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Save);
 
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(FFSmarshal, Bool, int, true)                                         \
-    MACRO(RegistrationMethod, RegMethod, int, NULL)                            \
+    MACRO(RegistrationMethod, RegMethod, size_t, NULL)                         \
     MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(BPmarshal, Bool, int, false)                                         \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \

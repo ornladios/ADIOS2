@@ -190,38 +190,6 @@ static FMStructDescRec CP_WriterResponseStructs[] = {
     {"SstParams", NULL, sizeof(struct _SstParams), NULL},
     {NULL, NULL, 0, NULL}};
 
-/* static FMField SstMetadataList[] = {{"DataSize", "integer", sizeof(size_t),
- */
-/*                                      FMOffset(struct _SstMetadata *,
- * DataSize)}, */
-/*                                     {"VarCount", "integer", sizeof(int), */
-/*                                      FMOffset(struct _SstMetadata *,
- * VarCount)}, */
-/*                                     {"Vars", "VarMetadata[VarCount]", */
-/*                                      sizeof(struct _SstVarMeta), */
-/*                                      FMOffset(struct _SstMetadata *, Vars)},
- */
-/*                                     {NULL, NULL, 0, 0}}; */
-
-static FMField SstVarMetaList[] = {
-    {"VarName", "string", sizeof(char *),
-     FMOffset(struct _SstVarMeta *, VarName)},
-    {"DimensionCount", "integer", sizeof(int),
-     FMOffset(struct _SstVarMeta *, DimensionCount)},
-    {"Dimensions", "VarDimension[DimensionCount]", sizeof(struct _SstDimenMeta),
-     FMOffset(struct _SstVarMeta *, Dimensions)},
-    {"DataOffsetInBlock", "integer", sizeof(int),
-     FMOffset(struct _SstVarMeta *, DataOffsetInBlock)},
-    {NULL, NULL, 0, 0}};
-
-static FMField SstDimenMetaList[] = {
-    {"Offset", "integer", sizeof(int),
-     FMOffset(struct _SstDimenMeta *, Offset)},
-    {"Size", "integer", sizeof(int), FMOffset(struct _SstDimenMeta *, Size)},
-    {"GlobalSize", "integer", sizeof(int),
-     FMOffset(struct _SstDimenMeta *, GlobalSize)},
-    {NULL, NULL, 0, 0}};
-
 static FMField MetaDataPlusDPInfoList[] = {
     {"RequestGlobalOp", "integer", sizeof(int),
      FMOffset(struct _MetadataPlusDPInfo *, RequestGlobalOp)},
@@ -257,10 +225,6 @@ static FMStructDescRec MetaDataPlusDPInfoStructs[] = {
      sizeof(struct _MetadataPlusDPInfo), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
     {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
-    //    {"SstMetadata", SstMetadataList, sizeof(struct _SstMetadata), NULL},
-    //    {"VarMetadata", SstVarMetaList, sizeof(struct _SstVarMeta), NULL},
-    //    {"VarDimension", SstDimenMetaList, sizeof(struct _SstDimenMeta),
-    //    NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField TimestepMetadataList[] = {
@@ -721,7 +685,8 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
         CP_SstParamsList = copy_field_list(CP_SstParamsList_RAW);
         while (CP_SstParamsList[i].field_name)
         {
-            if (strcmp(CP_SstParamsList[i].field_type, "int") == 0)
+            if ((strcmp(CP_SstParamsList[i].field_type, "int") == 0) ||
+                (strcmp(CP_SstParamsList[i].field_type, "size_t") == 0))
             {
                 free((void *)CP_SstParamsList[i].field_type);
                 CP_SstParamsList[i].field_type = strdup("integer");
@@ -768,7 +733,7 @@ SstStream CP_newStream()
     memset(Stream, 0, sizeof(*Stream));
     pthread_mutex_init(&Stream->DataLock, NULL);
     pthread_cond_init(&Stream->DataCondition, NULL);
-    Stream->WriterTimestep = -1; // first beginstep will get us timestep 0
+    Stream->WriterTimestep = -1; // Filled in by ProvideTimestep
     Stream->ReaderTimestep = -1; // first beginstep will get us timestep 0
     if (getenv("SstVerbose"))
     {

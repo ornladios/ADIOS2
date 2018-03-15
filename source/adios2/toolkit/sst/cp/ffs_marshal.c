@@ -546,25 +546,25 @@ static FFSVarRec CreateVarRec(SstStream Stream, const char *ArrayName)
 
 extern void CP_verbose(SstStream Stream, char *Format, ...);
 
-extern int SstWriterBeginStep(SstStream Stream, int mode,
-                              const float timeout_sec)
+extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
+                                 const float timeout_sec)
 {
-    Stream->WriterTimestep++;
     return 0;
 }
 
-void SstReaderInitCallback(SstStream Stream, void *Reader,
-                           VarSetupUpcallFunc VarCallback,
-                           ArraySetupUpcallFunc ArrayCallback)
+void SstReaderInitFFSCallback(SstStream Stream, void *Reader,
+                              VarSetupUpcallFunc VarCallback,
+                              ArraySetupUpcallFunc ArrayCallback)
 {
     Stream->VarSetupUpcall = VarCallback;
     Stream->ArraySetupUpcall = ArrayCallback;
     Stream->SetupUpcallReader = Reader;
 }
 
-extern void SstGetDeferred(SstStream Stream, void *Variable, const char *Name,
-                           size_t DimCount, const unsigned long *Start,
-                           const unsigned long *Count, void *Data)
+extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
+                              const char *Name, size_t DimCount,
+                              const unsigned long *Start,
+                              const unsigned long *Count, void *Data)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     int GetFromWriter = 0;
@@ -904,7 +904,7 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
     }
 }
 
-extern void SstPerformGets(SstStream Stream)
+extern void SstFFSPerformGets(SstStream Stream)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
 
@@ -917,7 +917,7 @@ extern void SstPerformGets(SstStream Stream)
     ClearReadRequests(Stream);
 }
 
-extern void SstWriterEndStep(SstStream Stream)
+extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
 {
     struct FFSWriterMarshalBase *Info =
         (struct FFSWriterMarshalBase *)Stream->MarshalData;
@@ -989,9 +989,8 @@ extern void SstWriterEndStep(SstStream Stream)
     //    FMdump_encoded_data(Info->MetaFormat, MetaDataRec->block, 1024000);
     //    printf("\nDatablock is :\n");
     //    FMdump_encoded_data(Info->DataFormat, DataRec->block, 1024000);
-    SstInternalProvideTimestep(Stream, MetaDataRec, DataRec,
-                               Stream->WriterTimestep, Formats, FreeTSInfo,
-                               TSInfo);
+    SstInternalProvideTimestep(Stream, MetaDataRec, DataRec, Timestep, Formats,
+                               FreeTSInfo, TSInfo);
 }
 
 static void LoadFormats(SstStream Stream, FFSFormatList Formats)
@@ -1088,13 +1087,13 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     }
 
     FFSformat = FFSTypeHandle_from_encode(
-        Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->BlockData);
+        Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->block);
 
     if (!FFShas_conversion(FFSformat))
     {
         FMContext FMC = FMContext_from_FFS(Stream->ReaderFFSContext);
         FMFormat Format =
-            FMformat_from_ID(FMC, MetaData->Metadata[WriterRank]->BlockData);
+            FMformat_from_ID(FMC, MetaData->Metadata[WriterRank]->block);
         FMStructDescList List =
             FMcopy_struct_list(format_list_of_FMFormat(Format));
         FMlocalize_structs(List);
@@ -1104,19 +1103,17 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     if (FFSdecode_in_place_possible(FFSformat))
     {
         FFSdecode_in_place(Stream->ReaderFFSContext,
-                           MetaData->Metadata[WriterRank]->BlockData,
-                           &BaseData);
+                           MetaData->Metadata[WriterRank]->block, &BaseData);
     }
     else
     {
         int DecodedLength = FFS_est_decode_length(
-            Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->BlockData,
-            MetaData->Metadata[WriterRank]->BlockSize);
+            Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->block,
+            MetaData->Metadata[WriterRank]->DataSize);
         BaseData = malloc(DecodedLength);
         FFSBuffer decode_buf = create_fixed_FFSBuffer(BaseData, DecodedLength);
         FFSdecode_to_buffer(Stream->ReaderFFSContext,
-                            MetaData->Metadata[WriterRank]->BlockData,
-                            decode_buf);
+                            MetaData->Metadata[WriterRank]->block, decode_buf);
     }
     // printf("\nIncomingMetadatablock is %p :\n", BaseData);
     // FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
@@ -1215,10 +1212,11 @@ static void FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
     MBase->BitField[Element] |= (1 << ElementBit);
 }
 
-extern void SstMarshal(SstStream Stream, void *Variable, const char *Name,
-                       const char *Type, size_t ElemSize, size_t DimCount,
-                       const unsigned long *Shape, const unsigned long *Count,
-                       const unsigned long *Offsets, const void *data)
+extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
+                          const char *Type, size_t ElemSize, size_t DimCount,
+                          const unsigned long *Shape,
+                          const unsigned long *Count,
+                          const unsigned long *Offsets, const void *data)
 {
 
     struct FFSMetadataInfoStruct *MBase;

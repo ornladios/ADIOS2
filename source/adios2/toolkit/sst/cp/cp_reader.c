@@ -266,9 +266,14 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     //    printf("\n");
 
     Stream->WriterCohortSize = ReturnData->WriterCohortSize;
-    if (ReturnData->WriterConfigParams->FFSmarshal)
+    Stream->WriterConfigParams = ReturnData->WriterConfigParams;
+    if (Stream->WriterConfigParams->FFSmarshal)
     {
         CP_verbose(Stream, "Writer is doing FFS-based marshalling\n");
+    }
+    if (Stream->WriterConfigParams->BPmarshal)
+    {
+        CP_verbose(Stream, "Writer is doing BP-based marshalling\n");
     }
     Stream->ReaderTimestep = ReturnData->StartingStepNumber - 1;
     Stream->ConnectionsToWriter =
@@ -312,6 +317,13 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->OpenTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
     gettimeofday(&Stream->ValidStartTime, NULL);
     return Stream;
+}
+
+extern void SstReaderGetParams(SstStream Stream, int *WriterFFSmarshal,
+                               int *WriterBPmarshal)
+{
+    *WriterFFSmarshal = Stream->WriterConfigParams->FFSmarshal;
+    *WriterBPmarshal = Stream->WriterConfigParams->BPmarshal;
 }
 
 void queueTimestepMetadataMsgAndNotify(SstStream Stream,
@@ -633,7 +645,10 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
 
     if (Entry)
     {
-        FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
+        if (Stream->WriterConfigParams->FFSmarshal)
+        {
+            FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
+        }
         CP_verbose(Stream, "SstAdvanceStep returning Success on timestep %d\n",
                    Entry->MetadataMsg->Timestep);
         Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;

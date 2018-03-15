@@ -78,7 +78,7 @@ typedef struct _CPTimestepEntry
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
     void **DP_TimestepInfo;
-    SstBlock *MetadataArray;
+    SstData *MetadataArray;
     void (*DataFreeFunc)(void *);
     void *FreeClientData;
     struct _CPTimestepEntry *Next;
@@ -150,6 +150,7 @@ struct _SstStream
     enum StreamStatus Status;
     int FinalTimestep;
     int CurrentWorkingTimestep;
+    struct _SstParams *WriterConfigParams;
 
     /* reader side marshal info */
     FFSContext ReaderFFSContext;
@@ -204,7 +205,7 @@ struct FFSFormatBlock
 struct _MetadataPlusDPInfo
 {
     int RequestGlobalOp;
-    SstBlock Metadata;
+    SstData Metadata;
     FFSFormatList Formats;
     void *DP_TimestepInfo;
 };
@@ -278,7 +279,7 @@ typedef struct _TimestepMetadataMsg
     int Timestep;
     int CohortSize;
     FFSFormatList Formats;
-    SstBlock *Metadata;
+    SstData *Metadata;
     void **DP_TimestepInfo;
 } * TSMetadataMsg;
 
