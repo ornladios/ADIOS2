@@ -18,7 +18,7 @@
 
 int rank, size;
 std::string ip = "127.0.0.1";
-int port = 22306;
+int port = 12306;
 
 void Dump(std::vector<float> &data, size_t step)
 {

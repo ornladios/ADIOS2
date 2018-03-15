@@ -53,12 +53,9 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 }
 
 template <class T>
-void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
+std::string DataManWriter::SerializeJson(Variable<T> &variable)
 {
-	int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	nlohmann::json metaj;
-	
 	metaj["S"] = variable.m_Shape;
 	metaj["C"] = variable.m_Count;
 	metaj["O"] = variable.m_Start;
@@ -66,9 +63,15 @@ void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
 	metaj["N"] = variable.m_Name;
 	metaj["Y"] = variable.m_Type;
 	metaj["I"] = variable.PayloadSize();
-	metaj["R"] = rank;
-
+	metaj["R"] = m_MPIRank;
 	std::string metastr = metaj.dump();
+	return std::move(metastr);
+}
+
+template <class T>
+void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
+{
+	std::string metastr = SerializeJson(variable);
 	size_t flagsize = sizeof(size_t);
 	size_t metasize = metastr.size();
 	size_t datasize = variable.PayloadSize();
@@ -79,9 +82,8 @@ void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
 	std::memcpy(buffer->data() + flagsize, metastr.c_str(), metasize);
 	std::memcpy(buffer->data() + flagsize + metasize, values, datasize);
 
-	m_Man.WriteWAN(buffer, m_Blocking);
+	m_DataMan->WriteWAN(buffer);
 }
-
 
 template <class T>
 void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
@@ -109,7 +111,7 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
         auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
         auto &position = m_BP3Serializer.m_Data.m_Position;
 
-        m_Man.WriteWAN(buffer);
+        m_DataMan->WriteWAN(buffer);
 
         // set relative position to clear buffer
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);

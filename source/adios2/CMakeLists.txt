@@ -90,6 +90,8 @@ if(ADIOS2_HAVE_SST)
 endif()
 
 target_sources(adios2 PRIVATE
+    engine/dataman/DataManCommon.cpp
+    engine/dataman/DataManCommon.h
     engine/dataman/DataManReader.cpp
     engine/dataman/DataManReader.h
     engine/dataman/DataManReader.tcc
