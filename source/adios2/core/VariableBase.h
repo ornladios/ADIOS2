@@ -50,12 +50,11 @@ public:
      *  VariableCompound -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
 
-    ShapeID m_ShapeID;                 ///< see shape types in ADIOSTypes.h
-    bool m_SingleValue = false;        ///< true: single value, false: array
-    const bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
-    Dims m_Shape;                      ///< total dimensions across MPI
-    Dims m_Start; ///< starting point (offsets) in global shape
-    Dims m_Count; ///< dimensions from m_Start in global shape
+    ShapeID m_ShapeID;          ///< see shape types in ADIOSTypes.h
+    bool m_SingleValue = false; ///< true: single value, false: array
+    Dims m_Shape;               ///< total dimensions across MPI
+    Dims m_Start;               ///< starting point (offsets) in global shape
+    Dims m_Count;               ///< dimensions from m_Start in global shape
 
     /** Global array was written as Joined array, so read accordingly */
     bool m_ReadAsJoined = false;
@@ -159,8 +158,12 @@ public:
      */
     size_t SelectionSize() const;
 
+    bool IsConstantDims() const noexcept;
+    void SetConstantDims() noexcept;
+
 protected:
     const bool m_DebugMode = false;
+    bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
 
     Dims m_MemoryStart; ///< offset of memory selection
     Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)

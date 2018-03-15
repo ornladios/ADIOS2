@@ -46,8 +46,6 @@ public:
 private:
     MPI_Comm m_CommWorld = MPI_COMM_WORLD;
     int m_Verbosity = 0;
-    bool m_FixedSchedule = false; // true: metadata in steps does NOT change
-
     int m_GlobalRank; // my rank in the global comm
     int m_WriterRank; // my rank in the writers' comm
     int m_GlobalNproc, m_WriterNproc;

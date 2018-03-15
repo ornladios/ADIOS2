@@ -84,6 +84,27 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
                   << "  figured that the Reader root is Reader "
                   << m_ReaderRootRank << std::endl;
     }
+
+    // Receive fix schedule info
+    int fixed = 1;
+    /*if (m_ReaderRootRank == m_ReaderRank)
+    {
+        MPI_Status status;
+        MPI_Recv(&fixed, 1, MPI_INT, m_WriteRootGlobalRank,
+                 insitumpi::MpiTags::FixedSchedule, m_CommWorld, &status);
+        // if (m_Verbosity == 5)
+        //{
+        std::cout << "InSituMPI Reader " << m_ReaderRank
+                  << " received fixed schedule flag = " << fixed
+                  << " from writer world rank " << m_WriteRootGlobalRank
+                  << std::endl;
+        //}
+    }*/
+    // broadcast fixed schedule flag to every reader
+    // MPI_Bcast(&fixed, 1, MPI_INT, m_ReaderRootRank, m_MPIComm);
+    m_FixedSchedule = (fixed ? true : false);
+    std::cout << "InSituMPI Reader " << m_ReaderRank
+              << " fixed schedule = " << m_FixedSchedule << std::endl;
 }
 
 InSituMPIReader::~InSituMPIReader()

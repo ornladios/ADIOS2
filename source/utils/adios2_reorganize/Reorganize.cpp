@@ -123,9 +123,8 @@ void Reorganize::Run()
     print0("Waiting to open stream ", infilename, "...");
 
     io.SetEngine(rmethodname);
+    io.SetParameter("verbose", "5");
     adios2::Engine &rStream = io.Open(infilename, adios2::Mode::Read);
-    // io.SetParameters({{"num_threads", "1"}});
-    // io.AddTransport("File", {{"Library", "POSIX"}});
 
     io.SetEngine(wmethodname);
     adios2::Engine &wStream = io.Open(outfilename, adios2::Mode::Write);

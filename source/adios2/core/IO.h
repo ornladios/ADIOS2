@@ -181,6 +181,19 @@ public:
     Attribute<T> &DefineAttribute(const std::string &name, const T &value);
 
     /**
+     * @brief Promise that no more definitions or changes to defined variables
+     * will occur.
+     * Useful information if called before the first EndStep() of an output
+     * Engine, as
+     * it will know that the definitions are complete and constant for the
+     * entire lifetime of the output and may optimize metadata handling.
+     */
+    void DefinitionIsFinal() noexcept;
+
+    /** @brief Function for internal usage */
+    bool IsDefinitionFinal() noexcept;
+
+    /**
      * @brief Removes an existing Variable in current IO object.
      * Dangerous function since references and
      * pointers can be dangling after this call.
@@ -345,6 +358,10 @@ private:
     const bool m_InConfigFile = false;
 
     bool m_IsDeclared = false;
+
+    /** true: No more definitions or changes to existing variables are allowed
+     */
+    bool m_IsDefinitionFinal = false;
 
     /** BPFileWriter engine default if unknown */
     std::string m_EngineType;

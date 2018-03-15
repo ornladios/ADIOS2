@@ -41,6 +41,14 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
         }
     }
 
+    if (m_IsDefinitionFinal)
+    {
+        throw std::invalid_argument("ERROR: IO object " + m_Name +
+                                    "was finalized for definitions. No "
+                                    "modifications are allowed with "
+                                    "DefineVariable\n");
+    }
+
     auto &variableMap = GetVariableMap<T>();
     const unsigned int size = static_cast<unsigned int>(variableMap.size());
     auto itVariablePair =
