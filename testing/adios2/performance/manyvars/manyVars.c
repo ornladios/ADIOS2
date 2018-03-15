@@ -50,9 +50,9 @@ int gdim1, gdim2;
 int offs1, offs2;
 
 /* ADIOS2 variables to be accessed from multiple functions */
-adios2_IO *ioW, *ioR;
-adios2_Engine *engineW;
-adios2_Variable **varW; // array to hold all variable definitions
+adios2_io *ioW, *ioR;
+adios2_engine *engineW;
+adios2_variable **varW; // array to hold all variable definitions
 
 /* Variables to read */
 int *r2;
@@ -69,7 +69,7 @@ void alloc_vars()
     n = ldim1 * ldim2;
     a2 = (int *)malloc(n * sizeof(int));
     r2 = (int *)malloc(n * sizeof(int));
-    varW = (adios2_Variable **)malloc(NVARS * sizeof(adios2_Variable *));
+    varW = (adios2_variable **)malloc(NVARS * sizeof(adios2_variable *));
 
     varnames = (char **)malloc(NVARS * sizeof(char *));
     for (i = 0; i < NVARS; i++)
@@ -205,7 +205,7 @@ int main(int argc, char **argv)
     }
 
     alloc_vars();
-    adios2_ADIOS *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
     ioW = adios2_declare_io(adiosH, "multiblockwrite"); // group for writing
     ioR = adios2_declare_io(adiosH, "multiblockread");  // group for reading
     set_gdim();
@@ -350,7 +350,7 @@ void reset_readvars()
 
 int read_file()
 {
-    adios2_Variable *vi;
+    adios2_variable *vi;
     int err = 0, v, n;
     int block, step, i; // loop variables
     int iMacro;         // loop variable in macros
@@ -364,7 +364,7 @@ int read_file()
     reset_readvars();
 
     log("Read and check data in %s\n", FILENAME);
-    adios2_Engine *engineR = adios2_open(ioR, FILENAME, adios2_mode_read);
+    adios2_engine *engineR = adios2_open(ioR, FILENAME, adios2_mode_read);
     if (engineR == NULL)
     {
         printE("Error at opening file %s for reading\n", FILENAME);
@@ -412,7 +412,7 @@ int read_file()
                 for (i = 0; i < NVARS; i++)
                 {
                     tsb = MPI_Wtime();
-                    adios2_Variable *varH =
+                    adios2_variable *varH =
                         adios2_inquire_variable(ioR, varnames[i]);
                     adios2_set_selection(varH, 2, start, count);
                     adios2_get_sync(engineR, varH, r2);
