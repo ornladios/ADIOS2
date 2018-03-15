@@ -42,8 +42,7 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " Open(" << m_Name
-                  << "). Fixed schedule = " << (m_FixedSchedule ? "yes" : "no")
-                  << ". #readers=" << m_RankAllPeers.size()
+                  << "). #readers=" << m_RankAllPeers.size()
                   << " #writers=" << m_WriterNproc
                   << " #appsize=" << m_GlobalNproc
                   << " #direct peers=" << m_RankDirectPeers.size() << std::endl;
@@ -51,6 +50,14 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     insitumpi::ConnectDirectPeers(m_CommWorld, true,
                                   (m_BP3Serializer.m_RankMPI == 0),
                                   m_GlobalRank, m_RankDirectPeers);
+    // send fix schedule info
+    /*int fixed = (m_FixedSchedule ? 1 : 0);
+        if (m_BP3Serializer.m_RankMPI == 0)
+        {
+            auto peerRank = m_RankDirectPeers[0];
+            MPI_Send(&fixed, 1, MPI_INT, peerRank,
+                     insitumpi::MpiTags::FixedSchedule, m_CommWorld);
+        }*/
 }
 
 InSituMPIWriter::~InSituMPIWriter() {}
@@ -113,7 +120,7 @@ void InSituMPIWriter::PerformPuts()
     }
     m_NCallsPerformPuts++;
 
-    if (m_CurrentStep == 0 || !m_FixedSchedule)
+    if (m_CurrentStep == 0 || !m_IO.IsDefinitionFinal())
     {
         // Create local metadata and send to reader peers
         // std::vector<char> mdVar = m_BP3Serializer.SerializeIndices(
@@ -212,7 +219,7 @@ void InSituMPIWriter::PerformPuts()
     }
 
     m_BP3Serializer.m_DeferredVariables.clear();
-    if (m_CurrentStep == 0 || !m_FixedSchedule)
+    if (m_CurrentStep == 0 || !m_IO.IsDefinitionFinal())
     {
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data, true);
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
@@ -312,16 +319,6 @@ void InSituMPIWriter::Init()
 
 void InSituMPIWriter::InitParameters()
 {
-    auto itFixedSchedule = m_IO.m_Parameters.find("FixedSchedule");
-    if (itFixedSchedule == m_IO.m_Parameters.end())
-    {
-        m_FixedSchedule = false;
-    }
-    else if (itFixedSchedule->second == "true")
-    {
-        m_FixedSchedule = true;
-    }
-
     auto itVerbosity = m_IO.m_Parameters.find("verbose");
     if (itVerbosity != m_IO.m_Parameters.end())
     {

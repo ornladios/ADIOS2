@@ -126,7 +126,7 @@ void Engine::WriteStep()
         Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
         if (variable->GetData() != nullptr)                                    \
         {                                                                      \
-            if (m_DebugMode && !variable->m_ConstantDims)                      \
+            if (m_DebugMode && !variable->IsConstantDims())                    \
             {                                                                  \
                 throw std::invalid_argument(                                   \
                     "ERROR: variable " + name +                                \
