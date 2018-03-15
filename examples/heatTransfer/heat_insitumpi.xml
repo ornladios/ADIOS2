@@ -19,7 +19,6 @@ the MPI_COMM_WORLD and create two partitions of the processes.
     <io name="writer">
         <engine type="InSituMPI">
             <parameter key="verbose" value="5"/>
-            <parameter key="FixedSchedule" value="true"/>
 
             <!-- Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours -->
@@ -35,7 +34,6 @@ the MPI_COMM_WORLD and create two partitions of the processes.
     <io name="readerInput">
         <engine type="InSituMPI">
             <parameter key="verbose" value="5"/>
-            <parameter key="FixedSchedule" value="true"/>
 
             <!-- Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours -->

@@ -234,6 +234,9 @@ size_t VariableBase::SelectionSize() const
     return GetTotalSize(m_Count) * m_StepsCount;
 }
 
+bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; };
+void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; };
+
 // PRIVATE
 void VariableBase::InitShapeType()
 {
