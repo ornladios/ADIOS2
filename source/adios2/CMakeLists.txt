@@ -182,7 +182,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core
 )
 install(FILES 
   ${CMAKE_CURRENT_SOURCE_DIR}/highlevelapi/fstream/ADIOS2fstream.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/highlevelapi/fstream
 )
 
 # Library installation

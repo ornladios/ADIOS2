@@ -10,6 +10,8 @@
 
 #include "ADIOS2fstream.h"
 
+#include "adios2/highlevelapi/fstream/Stream.h"
+
 namespace adios2
 {
 
