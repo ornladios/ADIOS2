@@ -9,7 +9,7 @@ RUN yum -y install \
       gcc gcc-c++ gcc-gfortran \
       git make autoconf automake libtool\
       bzip2-devel zeromq-devel hdf5-devel \
-      python-devel numpy
+      python-devel numpy valgrind
 
 # Install gcc7 OpenHPC packages
 RUN yum -y install \
