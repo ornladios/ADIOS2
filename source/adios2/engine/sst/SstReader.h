@@ -51,6 +51,11 @@ public:
 private:
     void Init();
     SstStream m_Input;
+    int m_WriterFFSmarshal;
+    int m_WriterBPmarshal;
+    SstFullMetadata m_CurrentStepMetaData =
+        NULL; // Used only with BP marshaling
+
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \
     Typedecl m_##Param = Default;

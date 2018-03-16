@@ -37,14 +37,15 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
     if (m_FFSmarshal)
     {
-        SstMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
-                   variable.m_Type.c_str(), variable.m_ElementSize,
-                   variable.m_Shape.size(), variable.m_Shape.data(),
-                   variable.m_Count.data(), variable.m_Start.data(), values);
+        SstFFSMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
+                      variable.m_Type.c_str(), variable.m_ElementSize,
+                      variable.m_Shape.size(), variable.m_Shape.data(),
+                      variable.m_Count.data(), variable.m_Start.data(), values);
     }
     else
     {
         // Do BP marshaling
+        // The result of BP marshalling (in EndStep) should be a single buffer
     }
 }
 

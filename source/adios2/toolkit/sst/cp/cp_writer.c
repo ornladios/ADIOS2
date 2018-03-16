@@ -827,6 +827,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     int GlobalOpRequested = 0;
 
     pthread_mutex_lock(&Stream->DataLock);
+    Stream->WriterTimestep = Timestep;
     if ((Stream->QueueLimit > 0) &&
         (Stream->QueuedTimestepCount >= Stream->QueueLimit))
     {
@@ -871,7 +872,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     Md.RequestGlobalOp =
         Stream->GlobalOpRequired || (Stream->ReadRequestQueue != NULL);
     Md.Formats = Formats;
-    Md.Metadata = (SstBlock)LocalMetadata;
+    Md.Metadata = (SstData)LocalMetadata;
     Md.DP_TimestepInfo = DP_TimestepInfo;
 
     pointers = (MetadataPlusDPInfo *)CP_consolidateDataToAll(
@@ -887,7 +888,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     }
 
     Msg->CohortSize = Stream->CohortSize;
-    Msg->Timestep = Stream->WriterTimestep;
+    Msg->Timestep = Timestep;
 
     /* separate metadata and DP_info to separate arrays */
     Msg->Metadata = malloc(Stream->CohortSize * sizeof(void *));
@@ -987,6 +988,15 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     sendOneToEachReaderRank(Stream,
                             Stream->CPInfo->DeliverTimestepMetadataFormat, Msg,
                             &Msg->RS_Stream);
+}
+
+extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata,
+                               SstData Data, long Timestep,
+                               void DataFreeFunc(void *), void *FreeClientData)
+{
+
+    SstInternalProvideTimestep(Stream, LocalMetadata, Data, Timestep, NULL,
+                               DataFreeFunc, FreeClientData);
 }
 
 void queueReaderRegisterMsgAndNotify(SstStream Stream,

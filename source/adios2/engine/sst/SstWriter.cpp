@@ -13,8 +13,6 @@
 #include "SstWriter.h"
 #include "SstWriter.tcc"
 
-#include <iostream> //needs to go away, this is just for demo purposes
-
 namespace adios2
 {
 
@@ -33,14 +31,20 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
+    m_WriterStep++;
     if (m_FFSmarshal)
     {
-        return (StepStatus)SstWriterBeginStep(m_Output, (int)mode, timeout_sec);
+        return (StepStatus)SstFFSWriterBeginStep(m_Output, (int)mode,
+                                                 timeout_sec);
+    }
+    else if (m_BPmarshal)
+    {
+        // Do whatever might be necessary to initiate BP marshalling, maybe
+        // allocating buffers or creating BP objects
     }
     else
     {
-        // When BP marshalling/unmarshaling complete, this should call
-        // SstProvideTimestep and clean up at this level
+        // unknown marshaling method, shouldn't happen
     }
     return StepStatus::OK;
 }
@@ -49,12 +53,44 @@ void SstWriter::EndStep()
 {
     if (m_FFSmarshal)
     {
-        SstWriterEndStep(m_Output);
+        SstFFSWriterEndStep(m_Output, m_WriterStep);
+    }
+    else if (m_BPmarshal)
+    {
+        SstData Blocks = new _SstData[2];
+        SstData MetaDataBlock = &Blocks[0];
+        SstData DataBlock = &Blocks[1];
+
+        // This should finalize BP marshaling at the writer side.  All
+        // marshaling methods should result in two blocks, one a block of
+        // local metadata, and the second a block of data.  The metadata
+        // will be aggregated across all writer ranks (by SST, inside
+        // SstProvideTimestep) and made available to the readers (as a set
+        // of N metadata blocks).  The Data block will be held on the writer
+        // side (inside SstProvideTimestep), waiting on read requests from
+        // individual reader ranks.  Any metadata or data blocks created
+        // here should not be deallocated when SstProvideTimestep returns!
+        // They should not be deallocated until SST is done with them
+        // (explicit deallocation callback).
+
+        auto lf_FreeBlocks = [](void *vBlocks) {
+            SstData BlocksToFree = reinterpret_cast<SstData>(vBlocks);
+            //  Free data and metadata blocks here.  BlocksToFree is the Blocks
+            //  value in the enclosing function.
+            delete BlocksToFree;
+        };
+
+        MetaDataBlock->DataSize = /* set size of metadata block */ 0;
+        MetaDataBlock->block = /* set to address of metadata block */ NULL;
+        DataBlock->DataSize = /* set size of data block */ 0;
+        DataBlock->block = /* set to address of data block */ NULL;
+        SstProvideTimestep(m_Output, MetaDataBlock, DataBlock, m_WriterStep,
+                           lf_FreeBlocks, Blocks);
+        // DON'T FREE YOUR DATA OR METADATA BLOCKS HERE.  See lf_FreeBlocks.
     }
     else
     {
-        // When BP marshalling/unmarshaling complete, this should call
-        // SstProvideTimestep and clean up at this level
+        // unknown marshaling method, shouldn't happen
     }
 }
 
@@ -100,7 +136,8 @@ void SstWriter::Init()
         return false;
     };
 
-    auto lf_SetRegMethodParameter = [&](const std::string key, int &parameter) {
+    auto lf_SetRegMethodParameter = [&](const std::string key,
+                                        size_t &parameter) {
 
         auto itKey = m_IO.m_Parameters.find(key);
         if (itKey != m_IO.m_Parameters.end())

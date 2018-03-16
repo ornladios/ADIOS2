@@ -55,6 +55,7 @@ private:
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
     SstStream m_Output;
+    size_t m_WriterStep = -1;
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \
     Typedecl m_##Param = Default;
