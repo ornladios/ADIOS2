@@ -38,6 +38,9 @@ ZFP_ROOT:PATH=/opt/zfp/install
 ADIOS1_ROOT:PATH=/opt/adios1/1.12.0/gnu7_openmpi
 
 MPIEXEC_MAX_NUMPROCS:STRING=16
+
+MEMORYCHECK_COMMAND:FILEPATH=/usr/bin/valgrind
+MEMORYCHECK_COMMAND_OPTIONS:STRING=--leak-check=full --num-callers=50
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)

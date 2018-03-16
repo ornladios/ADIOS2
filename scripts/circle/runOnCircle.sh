@@ -78,7 +78,7 @@ then
 fi
 
 case "$1" in
-  update|configure|build|test)
+  update|configure|build|test|memcheck)
     STEP=$1
     if [ "$STEP" == "update" ]
     then
@@ -86,7 +86,7 @@ case "$1" in
     fi
     ;;
   *)
-    echo "Usage: $0 (update|configure|build|test)"
+    echo "Usage: $0 (update|configure|build|test|memcheck)"
     exit 3
     ;;
 esac

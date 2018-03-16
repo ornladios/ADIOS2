@@ -15,6 +15,9 @@ defaults: &defaults
     - run:
         name: Test
         command: bash source/scripts/circle/runOnCircle.sh test
+    - run:
+        name: Memcheck
+        command: bash source/scripts/circle/runOnCircle.sh memcheck
 
 version: 2
 
@@ -22,12 +25,12 @@ jobs:
   "el7-gcc48":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:el7-ohpc
+      - image: scottwittenburg/adios:adios2testing
 
   "el7-gcc7-openmpi":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:el7-ohpc
+      - image: scottwittenburg/adios:adios2testing
 
 workflows:
   version: 2
