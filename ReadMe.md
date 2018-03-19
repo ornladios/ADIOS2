@@ -6,6 +6,8 @@
 [![Travis CI](https://travis-ci.org/ornladios/ADIOS2.svg)](https://travis-ci.org/ornladios/ADIOS2)
 [![AppVeyor CI](https://ci.appveyor.com/api/projects/status/0s2a3qp57hgbvlhj?svg=true)](https://ci.appveyor.com/project/ornladios/adios2)
 
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/11116/badge.svg)](https://scan.coverity.com/projects/ornladios-adios2)
+
 # Adaptable Input / Output System (ADIOS) v2.1.0
 This is v2.1.0 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
