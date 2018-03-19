@@ -47,6 +47,11 @@ size_t BPFileWriter::CurrentStep() const
 
 void BPFileWriter::PerformPuts()
 {
+    if (m_BP3Serializer.m_DeferredVariables.empty())
+    {
+        return;
+    }
+
     m_BP3Serializer.ResizeBuffer(m_BP3Serializer.m_DeferredVariablesDataSize,
                                  "in call to PerformPuts");
 

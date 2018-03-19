@@ -287,7 +287,6 @@ int write_file(int step)
             adios2_put_sync(engineW, varW[i], a2);
         }
     }
-    adios2_perform_puts(engineW);
     adios2_end_step(engineW);
 
     te = MPI_Wtime();
