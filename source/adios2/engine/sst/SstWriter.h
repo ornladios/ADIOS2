@@ -16,6 +16,7 @@
 
 #include <mpi.h>
 
+#include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/sst/sst.h"
 
 #include "adios2/ADIOSConfig.h"
@@ -53,6 +54,14 @@ private:
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
+
+    struct BP3DataBlock
+    {
+        SstData data;
+        SstData metadata;
+        format::BP3Serializer *serializer;
+    };
+    format::BP3Serializer *m_BP3Serializer;
 
     SstStream m_Output;
     size_t m_WriterStep = -1;
