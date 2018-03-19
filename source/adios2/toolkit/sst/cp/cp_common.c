@@ -65,9 +65,8 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     if (Params->DataTransport == NULL)
     {
-        /* determine reasonable default, now "evpath" since "rdma" is not yet
-         * integrated */
-        Stream->DataTransport = strdup("evpath");
+        /* determine reasonable default, now "rdma" */
+        Stream->DataTransport = strdup("rdma");
     }
 }
 
