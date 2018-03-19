@@ -43,18 +43,8 @@ public:
     void PerformPuts() final;
     void EndStep() final;
 
-    /**
-     * Closes a single transport or all transports
-     * @param transportIndex, if -1 (default) closes all transports, otherwise
-     * it
-     * closes a transport in m_Transport[transportIndex]. In debug mode the
-     * latter
-     * is bounds-checked.
-     */
-    void Close(const int transportIndex = -1) final;
-
 private:
-    MPI_Comm m_CommWorld;
+    MPI_Comm m_CommWorld = MPI_COMM_WORLD;
     int m_Verbosity = 0;
     bool m_FixedSchedule = false; // true: metadata in steps does NOT change
 
@@ -92,6 +82,14 @@ private:
     void DoPutDeferred(Variable<T> &, const T &) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+    /**
+     * Closes a single transport or all transports
+     * @param transportIndex, if -1 (default) closes all transports,
+     * otherwise it closes a transport in m_Transport[transportIndex].
+     * In debug mode the latter is bounds-checked.
+     */
+    void DoClose(const int transportIndex = -1) final;
 
     /**
      * Common function for primitive PutSync, puts variables in buffer

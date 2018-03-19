@@ -10,6 +10,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_glue.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_io.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_engine.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_variable.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_FILE.cpp
 )
 
 target_include_directories(adios2
@@ -29,5 +30,6 @@ install(
         adios2/adios2_c_io.h
         adios2/adios2_c_variable.h
         adios2/adios2_c_engine.h
+        adios2/adios2_c_FILE.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )

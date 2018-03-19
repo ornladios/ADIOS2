@@ -14,6 +14,10 @@ add_library(adios2
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
 
+#highlevelapi
+  highlevelapi/fstream/Stream.cpp highlevelapi/fstream/Stream.tcc
+  highlevelapi/fstream/ADIOS2fstream.cpp highlevelapi/fstream/ADIOS2fstream.tcc
+
 #operator callback
   operator/callback/Signature1.cpp
   operator/callback/Signature2.cpp
@@ -86,8 +90,14 @@ if(ADIOS2_HAVE_SST)
 endif()
 
 target_sources(adios2 PRIVATE
+    engine/dataman/DataManCommon.cpp
+    engine/dataman/DataManCommon.h
     engine/dataman/DataManReader.cpp
+    engine/dataman/DataManReader.h
+    engine/dataman/DataManReader.tcc
     engine/dataman/DataManWriter.cpp
+    engine/dataman/DataManWriter.h
+    engine/dataman/DataManWriter.tcc
 )
 target_link_libraries(adios2 PRIVATE NLohmannJson)
 
@@ -100,6 +110,11 @@ endif()
 if(ADIOS2_HAVE_ZFP)
   target_sources(adios2 PRIVATE operator/compress/CompressZfp.cpp)
   target_link_libraries(adios2 PRIVATE zfp::zfp)
+endif()
+
+if(ADIOS2_HAVE_SZ)
+  target_sources(adios2 PRIVATE operator/compress/CompressSZ.cpp)
+  target_link_libraries(adios2 PRIVATE SZ::SZ)
 endif()
 
 if(ADIOS2_HAVE_MPI)
@@ -164,6 +179,10 @@ install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
   FILES_MATCHING REGEX "[^/]*\.(h|inl)$"
+)
+install(FILES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/highlevelapi/fstream/ADIOS2fstream.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/highlevelapi/fstream
 )
 
 # Library installation

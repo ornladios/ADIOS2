@@ -74,7 +74,8 @@ public:
                               const Box<Dims> &blockBox,
                               const Box<Dims> &intersectionBox) const;
 
-    void GetStringFromMetadata(Variable<std::string> &variable) const;
+    template <class T>
+    void GetValueFromMetadata(Variable<T> &variable) const;
 
 private:
     std::map<std::string, SubFileInfoMap> m_DeferredVariables;
@@ -82,7 +83,7 @@ private:
     static std::mutex m_Mutex;
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
-    void ParsePGIndex(const BufferSTL &bufferSTL);
+    void ParsePGIndex(const BufferSTL &bufferSTL, const IO &io);
     void ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io);
     void ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io);
 
@@ -136,6 +137,9 @@ private:
     void ClipContiguousMemoryCommonColumn(
         Variable<T> &variable, const std::vector<char> &contiguousMemory,
         const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
+
+    template <class T>
+    void GetValueFromMetadataCommon(Variable<T> &variable) const;
 };
 
 #define declare_template_instantiation(T)                                      \
@@ -147,7 +151,10 @@ private:
         Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
                                                                                \
     extern template void BP3Deserializer::GetDeferredVariable(                 \
-        Variable<T> &variable, T *data);
+        Variable<T> &variable, T *data);                                       \
+                                                                               \
+    extern template void BP3Deserializer::GetValueFromMetadata(                \
+        Variable<T> &variable) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

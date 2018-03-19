@@ -13,15 +13,15 @@ module adios2_io_open
 
 contains
 
-    subroutine adios2_open(engine, io, name, adios2_open_mode, ierr)
+    subroutine adios2_open(engine, io, name, adios2_mode, ierr)
         integer(kind=8), intent(out) :: engine
         integer(kind=8), intent(in) :: io
         character*(*), intent(in) :: name
-        integer, intent(in) :: adios2_open_mode
+        integer, intent(in) :: adios2_mode
         integer, intent(out) :: ierr
 
         call adios2_open_f2c(engine, io, TRIM(ADJUSTL(name))//char(0), &
-                             adios2_open_mode, ierr)
+                             adios2_mode, ierr)
 
     end subroutine
 

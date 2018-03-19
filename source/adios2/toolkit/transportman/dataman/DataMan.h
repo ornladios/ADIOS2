@@ -11,6 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORTMAN_DATAMAN_DATAMAN_H_
 #define ADIOS2_TOOLKIT_TRANSPORTMAN_DATAMAN_DATAMAN_H_
 
+#include <queue>
 #include <thread>
 
 #include "adios2/core/IO.h"
@@ -33,45 +34,45 @@ public:
 
     void OpenWANTransports(const std::vector<std::string> &streamNames,
                            const Mode openMode,
-                           const std::vector<Params> &params,
+                           const std::vector<Params> &parametersVector,
                            const bool profile);
 
-    /**
-     * For BP Format
-     * @param buffer
-     * @param size can't use const due to C libraries...
-     */
-    void WriteWAN(const void *buffer, size_t size);
+    void WriteWAN(const std::vector<char> &buffer);
+    void WriteWAN(std::shared_ptr<std::vector<char>> buffer);
 
-    void ReadWAN(void *buffer, size_t &size);
+    std::shared_ptr<std::vector<char>> ReadWAN();
 
-    /**
-     * Set BP3 deserializer private pointer m_BP3Deserializer, from Engine
-     * @param bp3Deserializer comes from engine
-     */
-    void SetBP3Deserializer(format::BP3Deserializer &bp3Deserializer);
-    void SetIO(IO &io);
-
-    void SetCallback(adios2::Operator &callback);
+    void SetMaxReceiveBuffer(size_t size);
 
 private:
-    format::BP3Deserializer *m_BP3Deserializer = nullptr;
-    IO *m_IO = nullptr;
-    Operator *m_Callback = nullptr;
-    void ReadThread(std::shared_ptr<Transport> trans,
-                    const std::string stream_name, const Params trans_params);
+    bool m_Blocking = true;
+    std::function<void(std::vector<char>)> m_Callback;
 
-    void RunCallback(void *buffer, std::string doid, std::string var,
-                     std::string dtype, std::vector<size_t> shape);
+    // Objects for buffer queue
+    std::queue<std::shared_ptr<std::vector<char>>> m_BufferQueue;
+    void PushBufferQueue(std::shared_ptr<std::vector<char>> v);
+    std::shared_ptr<std::vector<char>> PopBufferQueue();
+    std::mutex m_Mutex;
 
+    // Functions for parsing parameters
+    bool GetBoolParameter(const Params &params, std::string key);
+    bool GetStringParameter(const Params &params, std::string key,
+                            std::string &value, std::string default_value = "");
+
+    void ReadThread(std::shared_ptr<Transport> transport);
     std::vector<std::thread> m_ReadThreads;
-    std::vector<Params> m_TransportsParameters;
+    bool m_Reading = false;
 
+    void WriteThread(std::shared_ptr<Transport> transport);
+    std::vector<std::thread> m_WriteThreads;
+    bool m_Writing = false;
+
+    std::vector<Params> m_TransportsParameters;
+    size_t m_MaxReceiveBuffer = 128 * 1024 * 1024;
     size_t m_CurrentTransport = 0;
-    bool m_Listening = false;
-    size_t m_BufferSize = 1024 * 1024 * 1024;
-    const int m_DefaultPort = 12306;
     int m_Timeout = 5;
+    const std::string m_DefaultLibrary = "zmq";
+    const std::string m_DefaultTransportMode = "broadcast";
 };
 
 } // end namespace transportman

@@ -10,7 +10,7 @@
 
 #include "adiosMath.h"
 
-#include <algorithm> //std::transform
+#include <algorithm> //std::transform, std::reverse
 #include <cmath>
 #include <functional> //std::minus<T>
 #include <iterator>   //std::back_inserter
@@ -60,7 +60,8 @@ size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
     return nextExponentialSize;
 }
 
-Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept
+Box<Dims> StartEndBox(const Dims &start, const Dims &count,
+                      const bool reverse) noexcept
 {
     Box<Dims> box;
     box.first = start;
@@ -70,6 +71,12 @@ Box<Dims> StartEndBox(const Dims &start, const Dims &count) noexcept
     for (size_t d = 0; d < size; ++d)
     {
         box.second.push_back(start[d] + count[d] - 1); // end inclusive
+    }
+
+    if (reverse)
+    {
+        std::reverse(box.first.begin(), box.first.end());
+        std::reverse(box.second.begin(), box.second.end());
     }
 
     return box;
@@ -149,9 +156,9 @@ bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 
 bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
                                       const Box<Dims> &intersectionBox,
+                                      const bool isRowMajor,
                                       size_t &startOffset) noexcept
 {
-    bool itIs = true;
     const size_t dimensionsSize = blockBox.first.size();
     size_t nElements = 1; // number of elements in dim 1..n-1
     if (dimensionsSize == 0)
@@ -160,8 +167,24 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
         return true;
     }
     // It is a contiguous subarray iff the dimensions are equal everywhere
-    // except in the first dimension
-    for (size_t d = 1; d < dimensionsSize; ++d)
+    // except in the slowest dimension
+    int dStart, dEnd, dSlowest;
+    if (isRowMajor)
+    {
+        // first dimension is slowest
+        dSlowest = 0;
+        dStart = 1;
+        dEnd = static_cast<int>(dimensionsSize - 1);
+    }
+    else
+    {
+        // last dimension is slowest
+        dStart = 0;
+        dEnd = static_cast<int>(dimensionsSize - 2);
+        dSlowest = static_cast<int>(dimensionsSize - 1);
+    }
+
+    for (size_t d = dStart; d <= dEnd; ++d)
     {
         if (blockBox.first[d] != intersectionBox.first[d] ||
             blockBox.second[d] != intersectionBox.second[d])
@@ -170,7 +193,8 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
         }
         nElements *= (blockBox.second[d] - blockBox.first[d] + 1);
     }
-    startOffset = (intersectionBox.first[0] - blockBox.first[0]) * nElements;
+    startOffset = (intersectionBox.first[dSlowest] - blockBox.first[dSlowest]) *
+                  nElements;
     return true;
 }
 

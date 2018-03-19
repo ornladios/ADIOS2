@@ -11,15 +11,17 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
+#include "DataManCommon.h"
 #include "adios2/ADIOSConfig.h"
-#include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
+
+#include <json.hpp>
 
 namespace adios2
 {
 
-class DataManWriter : public Engine
+class DataManWriter : public DataManCommon
 {
 
 public:
@@ -30,26 +32,25 @@ public:
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
-
-    void Close(const int transportIndex = -1) final;
+    size_t CurrentStep() const;
 
 private:
-    format::BP3Serializer m_BP3Serializer;
-    transportman::DataMan m_Man;
-    std::string m_Name;
-
-    unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "bp";
+    unsigned int m_nDataThreads = 1;
+    unsigned int m_nControlThreads = 0;
+    unsigned int m_TransportChannels = 1;
+    size_t m_BufferSize = 1024 * 1024 * 1024;
+    std::string m_UseFormat = "json";
     bool m_DoMonitor = false;
+    bool m_Blocking = true;
+    size_t m_StepsPerBuffer = 10;
+
+    format::BP3Serializer m_BP3Serializer;
+    std::string m_Name;
+    size_t m_CurrentStep = 0;
+    bool m_CurrentStepStarted = false;
 
     void Init();
-    void InitParameters();
-    void InitTransports();
-
-    bool GetBoolParameter(Params &params, std::string key, bool &value);
-    bool GetStringParameter(Params &params, std::string key,
-                            std::string &value);
-    bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
+    void IOThread(std::shared_ptr<transportman::DataMan> man) final;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -66,6 +67,14 @@ private:
 
     template <class T>
     void PutSyncCommonBP(Variable<T> &variable, const T *values);
+
+    template <class T>
+    void PutSyncCommonJson(Variable<T> &variable, const T *values);
+
+    template <class T>
+    std::string SerializeJson(Variable<T> &variable);
+
+    void DoClose(const int transportIndex = -1) final;
 };
 
 } // end namespace adios2

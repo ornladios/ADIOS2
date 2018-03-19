@@ -43,6 +43,10 @@ void HDFMixer::Init()
     void HDFMixer::DoPutSync(Variable<T> &variable, const T *values)           \
     {                                                                          \
         DoPutSyncCommon(variable, values);                                     \
+    }                                                                          \
+    void HDFMixer::DoPutDeferred(Variable<T> &variable, const T *values)       \
+    {                                                                          \
+        DoPutSyncCommon(variable, values);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -58,41 +62,6 @@ void HDFMixer::EndStep()
 {
     m_HDFSerialWriter.Advance();
     m_HDFVDSWriter.Advance();
-}
-
-void HDFMixer::Close(const int transportIndex)
-{
-    /*if (m_DebugMode)
-      {
-          if (!m_TransportsManager.CheckTransportIndex(transportIndex))
-          {
-              auto transportsSize = m_TransportsManager.m_Transports.size();
-              throw std::invalid_argument(
-                  "ERROR: transport index " + std::to_string(transportIndex) +
-                  " outside range, -1 (default) to " +
-                  std::to_string(transportsSize - 1) + ", in call to Close\n");
-          }
-      }
-    */
-    // close bp buffer by flattening data and metadata
-    m_HDFSerialWriter.Close();
-    m_HDFVDSWriter.Close();
-    // send data to corresponding transports
-    /*
-    m_TransportsManager.WriteFiles(m_HDFSerialWriter.m_HeapBuffer.GetData(),
-                                   m_HDFSerialWriter.m_HeapBuffer.m_DataPosition,
-                                   transportIndex);
-
-    m_TransportsManager.CloseFiles(transportIndex);
-    */
-    /*
-      // do profiling later
-    if (m_HDFSerialWriter.m_Profiler.IsActive &&
-        m_TransportsManager.AllTransportsClosed())
-    {
-        WriteProfilingJSONFile();
-    }
-    */
 }
 
 // PRIVATE FUNCTIONS
@@ -185,4 +154,39 @@ void HDFMixer::WriteProfilingJSONFile() { /*
      }
   */}
 
-} // end namespace adios
+void HDFMixer::DoClose(const int transportIndex)
+{
+    /*if (m_DebugMode)
+      {
+          if (!m_TransportsManager.CheckTransportIndex(transportIndex))
+          {
+              auto transportsSize = m_TransportsManager.m_Transports.size();
+              throw std::invalid_argument(
+                  "ERROR: transport index " + std::to_string(transportIndex) +
+                  " outside range, -1 (default) to " +
+                  std::to_string(transportsSize - 1) + ", in call to Close\n");
+          }
+      }
+    */
+    // close bp buffer by flattening data and metadata
+    m_HDFSerialWriter.Close();
+    m_HDFVDSWriter.Close();
+    // send data to corresponding transports
+    /*
+    m_TransportsManager.WriteFiles(m_HDFSerialWriter.m_HeapBuffer.GetData(),
+                                   m_HDFSerialWriter.m_HeapBuffer.m_DataPosition,
+                                   transportIndex);
+
+    m_TransportsManager.CloseFiles(transportIndex);
+    */
+    /*
+      // do profiling later
+    if (m_HDFSerialWriter.m_Profiler.IsActive &&
+        m_TransportsManager.AllTransportsClosed())
+    {
+        WriteProfilingJSONFile();
+    }
+    */
+}
+
+} // end namespace adios2

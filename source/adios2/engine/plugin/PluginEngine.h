@@ -72,8 +72,6 @@ public:
     void PerformGets() override;
     void EndStep() override;
 
-    void Close(const int transportIndex = -1) override;
-
 protected:
     void Init() override;
 
@@ -87,6 +85,8 @@ protected:
 
     ADIOS2_FOREACH_TYPE_1ARG(declare)
 #undef declare
+
+    void DoClose(const int transportIndex = -1) override;
 
 private:
     struct Impl;

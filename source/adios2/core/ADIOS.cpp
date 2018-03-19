@@ -28,6 +28,10 @@
 #include "adios2/operator/compress/CompressZfp.h"
 #endif
 
+#ifdef ADIOS2_HAVE_SZ
+#include "adios2/operator/compress/CompressSZ.h"
+#endif
+
 // callback
 #include "adios2/operator/callback/Signature1.h"
 #include "adios2/operator/callback/Signature2.h"
@@ -164,6 +168,19 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
         throw std::invalid_argument(
             "ERROR: this version of ADIOS2 didn't compile with the "
             "zfp library (minimum v1.5), in call to DefineOperator\n");
+#endif
+    }
+    else if (type == "sz" || type == "SZ")
+    {
+#ifdef ADIOS2_HAVE_SZ
+        auto itPair = m_Operators.emplace(
+            name, std::make_shared<adios2::compress::CompressSZ>(parameters,
+                                                                 m_DebugMode));
+        operatorPtr = itPair.first->second;
+#else
+        throw std::invalid_argument(
+            "ERROR: this version of ADIOS2 didn't compile with the "
+            "SZ library (minimum v1.4.11), in call to DefineOperator\n");
 #endif
     }
     else

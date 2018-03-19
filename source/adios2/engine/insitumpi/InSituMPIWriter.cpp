@@ -29,7 +29,6 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
   m_BP3Serializer(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
-    MPI_Comm_dup(MPI_COMM_WORLD, &m_CommWorld);
     Init();
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 
@@ -54,7 +53,7 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
                                   m_GlobalRank, m_RankDirectPeers);
 }
 
-InSituMPIWriter::~InSituMPIWriter() { MPI_Comm_free(&m_CommWorld); }
+InSituMPIWriter::~InSituMPIWriter() {}
 
 StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
@@ -94,7 +93,8 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
     {
         std::vector<std::string> empty;
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, empty);
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                             empty);
     }
 
     return StepStatus::OK;
@@ -186,7 +186,8 @@ void InSituMPIWriter::PerformPuts()
         }
 
         // build (and remember for fixed schedule) the read request table
-        // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>> map
+        // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>>
+        // map
         m_WriteScheduleMap.clear();
         m_WriteScheduleMap =
             insitumpi::DeserializeReadSchedule(serializedSchedules);
@@ -286,23 +287,6 @@ void InSituMPIWriter::EndStep()
     m_MPIRequests.clear();
 }
 
-void InSituMPIWriter::Close(const int transportIndex)
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "InSituMPI Writer " << m_WriterRank << " Close(" << m_Name
-                  << ")\n";
-    }
-    m_CurrentStep = -1; // -1 will indicate end of stream
-    // Send -1 to all reader peers, asynchronously
-    MPI_Request request;
-    for (auto peerRank : m_RankDirectPeers)
-    {
-        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, m_CommWorld, &request);
-    }
-}
-
 // PRIVATE
 
 #define declare_type(T)                                                        \
@@ -356,6 +340,23 @@ void InSituMPIWriter::InitParameters()
 void InSituMPIWriter::InitTransports()
 {
     // Nothing to process from m_IO.m_TransportsParameters
+}
+
+void InSituMPIWriter::DoClose(const int transportIndex)
+{
+    if (m_Verbosity == 5)
+    {
+        std::cout << "InSituMPI Writer " << m_WriterRank << " Close(" << m_Name
+                  << ")\n";
+    }
+    m_CurrentStep = -1; // -1 will indicate end of stream
+    // Send -1 to all reader peers, asynchronously
+    MPI_Request request;
+    for (auto peerRank : m_RankDirectPeers)
+    {
+        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
+                  insitumpi::MpiTags::Step, m_CommWorld, &request);
+    }
 }
 
 } // end namespace adios2

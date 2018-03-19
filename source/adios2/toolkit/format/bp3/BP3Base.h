@@ -12,6 +12,7 @@
 #define ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <bitset>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -99,6 +100,10 @@ public:
 
         /** Used at Read, number of total steps */
         size_t StepsCount = 1;
+
+        /** Similar to TimeStep, but uses uint64_t and start from zero. Used for
+         * streaming a large number of steps */
+        size_t CurrentStep = 0;
     };
 
     struct Minifooter
@@ -148,6 +153,12 @@ public:
     /** Parameter to flush transports at every number of steps, to be used at
      * EndStep */
     size_t m_FlushStepsCount = 1;
+
+    /** from host language in data information at read */
+    bool m_IsRowMajor = true;
+
+    /** if reader and writer have different ordering (column vs row major) */
+    bool m_ReverseDimensions = false;
 
     /**
      * Unique constructor
@@ -230,9 +241,6 @@ protected:
     /** might be used in large payload copies to buffer */
     unsigned int m_Threads = 1;
     const bool m_DebugMode = false;
-
-    /** from host language in data information */
-    bool m_IsRowMajor = true;
 
     /** method type for file I/O */
     enum IO_METHOD
@@ -348,12 +356,14 @@ protected:
         uint16_t Length;
         std::string Name;
         std::string StepName;
-        char IsFortran;
+        char IsColumnMajor;
     };
 
     template <class T>
     struct Stats
     {
+        double BitSum;
+        double BitSumSquare;
         uint64_t Offset;
         uint64_t PayloadOffset;
         T Min;
@@ -363,6 +373,9 @@ protected:
         uint32_t Step;
         uint32_t FileIndex;
         uint32_t MemberID;
+        uint32_t BitCount;
+        std::bitset<32> Bitmap;
+        uint8_t BitFinite;
         bool IsValue = false;
     };
 
@@ -481,9 +494,9 @@ protected:
     std::string ReadBP3String(const std::vector<char> &buffer,
                               size_t &position) const noexcept;
 
-    void ProfilerStart(const std::string process);
+    void ProfilerStart(const std::string process) noexcept;
 
-    void ProfilerStop(const std::string process);
+    void ProfilerStop(const std::string process) noexcept;
 
 private:
     std::string GetBPRankName(const std::string &name, const size_t rank) const

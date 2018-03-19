@@ -16,7 +16,7 @@
 #include <vector>
 
 void FC_GLOBAL(adios2_variable_name_f2c,
-               ADIOS2_VARIABLE_NAME_F2C)(const adios2_Variable **variable,
+               adios2_variable_NAME_F2C)(const adios2_variable **variable,
                                          char name[4096], int *length,
                                          int *ierr)
 {
@@ -46,7 +46,7 @@ void FC_GLOBAL(adios2_variable_name_f2c,
 }
 
 void FC_GLOBAL(adios2_variable_type_f2c,
-               ADIOS2_VARIABLE_TYPE_F2C)(const adios2_Variable **variable,
+               adios2_variable_TYPE_F2C)(const adios2_variable **variable,
                                          int *type, int *ierr)
 {
     *ierr = 0;
@@ -61,8 +61,46 @@ void FC_GLOBAL(adios2_variable_type_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_variable_ndims_f2c,
+               adios2_variable_NDIMS_F2C)(const adios2_variable **variable,
+                                          int *ndims, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *ndims = static_cast<int>(adios2_variable_ndims(*variable));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 variable_ndims: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_variable_shape_f2c,
+               adios2_variable_SHAPE_F2C)(const adios2_variable **variable,
+                                          int64_t *shape, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        const size_t ndims = adios2_variable_ndims(*variable);
+        const size_t *shapeC = adios2_variable_shape(*variable);
+
+        for (auto d = 0; d < ndims; ++d)
+        {
+            shape[d] = static_cast<int64_t>(shapeC[d]);
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 variable_shape: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_set_shape_f2c,
-               ADIOS2_SET_SHAPE_F2C)(adios2_Variable **variable,
+               ADIOS2_SET_SHAPE_F2C)(adios2_variable **variable,
                                      const int *ndims, const int64_t *shape,
                                      int *ierr)
 {
@@ -86,7 +124,7 @@ void FC_GLOBAL(adios2_set_shape_f2c,
 }
 
 void FC_GLOBAL(adios2_set_selection_f2c,
-               ADIOS2_SET_SELECTION_F2C)(adios2_Variable **variable,
+               ADIOS2_SET_SELECTION_F2C)(adios2_variable **variable,
                                          const int *ndims, const int64_t *start,
                                          const int64_t *count, int *ierr)
 {
@@ -124,9 +162,10 @@ void FC_GLOBAL(adios2_set_selection_f2c,
 }
 
 void FC_GLOBAL(adios2_set_step_selection_f2c,
-               ADIOS2_SET_STEP_SELECTION_F2C)(adios2_Variable **variable,
-                                              const int *step_start,
-                                              const int *step_count, int *ierr)
+               ADIOS2_SET_STEP_SELECTION_F2C)(adios2_variable **variable,
+                                              const int64_t *step_start,
+                                              const int64_t *step_count,
+                                              int *ierr)
 {
     *ierr = 0;
 
@@ -152,8 +191,8 @@ void FC_GLOBAL(adios2_set_step_selection_f2c,
                                         "adios2_set_step_selection\n");
         }
 
-        const std::size_t stepStart = step_start[0];
-        const std::size_t stepCount = step_count[0];
+        const std::size_t stepStart = static_cast<std::size_t>(*step_start);
+        const std::size_t stepCount = static_cast<std::size_t>(*step_count);
         adios2_set_step_selection(*variable, stepStart, stepCount);
     }
     catch (std::exception &e)

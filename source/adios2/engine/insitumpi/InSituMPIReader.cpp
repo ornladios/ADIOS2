@@ -27,7 +27,6 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
   m_BP3Deserializer(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open InSituMPIReader " + m_Name + "\n";
-    MPI_Comm_dup(MPI_COMM_WORLD, &m_CommWorld);
     Init();
 
     m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, false, m_CommWorld);
@@ -94,7 +93,6 @@ InSituMPIReader::~InSituMPIReader()
         std::cout << "InSituMPI Reader " << m_ReaderRank << " Deconstructor on "
                   << m_Name << "\n";
     }
-    MPI_Comm_free(&m_CommWorld);
 }
 
 void InSituMPIReader::ClearMetadataBuffer()
@@ -182,7 +180,8 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
             std::cout << "InSituMPI Reader " << m_ReaderRank << " found "
                       << m_IO.GetVariablesDataMap().size() << " variables and "
                       << m_IO.GetAttributesDataMap().size()
-                      << " attributes in metadata" << std::endl;
+                      << " attributes in metadata. Is source row major = "
+                      << m_BP3Deserializer.m_IsRowMajor << std::endl;
         }
     }
 
@@ -209,8 +208,11 @@ void InSituMPIReader::PerformGets()
         m_ReadScheduleMap.clear();
         m_ReadScheduleMap =
             m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+        // bool reader_IsRowMajor = IsRowMajor(m_IO.m_HostLanguage);
+        // bool writer_IsRowMajor = m_BP3Deserializer.m_IsRowMajor;
         // recalculate seek offsets to payload offset 0 (beginning of blocks)
-        int nRequests = insitumpi::FixSeeksToZeroOffset(m_ReadScheduleMap);
+        int nRequests = insitumpi::FixSeeksToZeroOffset(
+            m_ReadScheduleMap, IsRowMajor(m_IO.m_HostLanguage));
 
         // Send schedule to writers
         SendReadSchedule(m_ReadScheduleMap);
@@ -227,6 +229,8 @@ void InSituMPIReader::PerformGets()
 
     m_BP3Deserializer.m_PerformedGets = true;
 }
+
+size_t InSituMPIReader::CurrentStep() const { return m_CurrentStep; }
 
 int InSituMPIReader::Statistics(uint64_t bytesInPlace, uint64_t bytesCopied)
 {
@@ -250,29 +254,6 @@ void InSituMPIReader::EndStep()
         PerformGets();
     }
     ClearMetadataBuffer();
-}
-
-void InSituMPIReader::Close(const int transportIndex)
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " Close(" << m_Name
-                  << ")\n";
-    }
-    if (m_Verbosity > 2)
-    {
-        uint64_t inPlaceBytes, inTempBytes;
-        MPI_Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1, MPI_LONG_LONG_INT,
-                   MPI_SUM, 0, m_MPIComm);
-        MPI_Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1,
-                   MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
-        if (m_ReaderRank == 0)
-        {
-            std::cout << "ADIOS InSituMPI Reader for " << m_Name << " received "
-                      << Statistics(inPlaceBytes, inTempBytes)
-                      << "% of data in place (zero-copy)" << std::endl;
-        }
-    }
 }
 
 // PRIVATE
@@ -444,6 +425,29 @@ void InSituMPIReader::InitParameters()
 void InSituMPIReader::InitTransports()
 {
     // Nothing to process from m_IO.m_TransportsParameters
+}
+
+void InSituMPIReader::DoClose(const int transportIndex)
+{
+    if (m_Verbosity == 5)
+    {
+        std::cout << "InSituMPI Reader " << m_ReaderRank << " Close(" << m_Name
+                  << ")\n";
+    }
+    if (m_Verbosity > 2)
+    {
+        uint64_t inPlaceBytes, inTempBytes;
+        MPI_Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1, MPI_LONG_LONG_INT,
+                   MPI_SUM, 0, m_MPIComm);
+        MPI_Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1,
+                   MPI_LONG_LONG_INT, MPI_SUM, 0, m_MPIComm);
+        if (m_ReaderRank == 0)
+        {
+            std::cout << "ADIOS InSituMPI Reader for " << m_Name << " received "
+                      << Statistics(inPlaceBytes, inTempBytes)
+                      << "% of data in place (zero-copy)" << std::endl;
+        }
+    }
 }
 
 } // end namespace adios2

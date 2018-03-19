@@ -4,9 +4,6 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_MPI)
-  add_executable(hello_datamanWriter helloDataManWriter.cpp)
-  target_link_libraries(hello_datamanWriter MPI::MPI_C)
-else()
-  add_executable(hello_datamanWriter helloDataManWriter_nompi.cpp)
+	add_executable(hello_datamanWriter helloDataManWriter.cpp)
+	target_link_libraries(hello_datamanWriter adios2 MPI::MPI_C)
 endif()
-target_link_libraries(hello_datamanWriter adios2)

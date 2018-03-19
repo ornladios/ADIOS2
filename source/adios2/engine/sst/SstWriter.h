@@ -37,8 +37,6 @@ public:
     void PerformPuts() final;
     void EndStep() final;
 
-    void Close(const int transportIndex = -1) final;
-
 private:
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
@@ -57,9 +55,16 @@ private:
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
     SstStream m_Output;
-    bool m_FFSmarshal = true;
+    size_t m_WriterStep = -1;
+    struct _SstParams Params;
+#define declare_locals(Param, Type, Typedecl, Default)                         \
+    Typedecl m_##Param = Default;
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals);
+#undef declare_locals
+
+    void DoClose(const int transportIndex = -1) final;
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SST_SST_WRITER_H_ */

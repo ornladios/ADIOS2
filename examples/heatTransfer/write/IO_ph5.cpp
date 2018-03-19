@@ -67,7 +67,7 @@ HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
 
     applyMetadataCacheEviction();
 
-    std::string ts0 = "/TimeStep0";
+    std::string ts0 = "/Step0";
 
     m_GroupId = H5Gcreate2(m_FileId, ts0.c_str(), H5P_DEFAULT, H5P_DEFAULT,
                            H5P_DEFAULT);
@@ -110,7 +110,7 @@ void HDF5NativeWriter::Close()
         return;
 
     hid_t s = H5Screate(H5S_SCALAR);
-    hid_t attr = H5Acreate(m_FileId, "NumTimeSteps", H5T_NATIVE_UINT, s,
+    hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s,
                            H5P_DEFAULT, H5P_DEFAULT);
     uint totalTimeSteps = m_CurrentTimeStep + 1;
 
@@ -153,7 +153,7 @@ void HDF5NativeWriter::CheckWriteGroup()
         return;
     }
 
-    std::string timeStepName = "/TimeStep" + std::to_string(m_CurrentTimeStep);
+    std::string timeStepName = "/Step" + std::to_string(m_CurrentTimeStep);
     m_GroupId = H5Gcreate2(m_FileId, timeStepName.c_str(), H5P_DEFAULT,
                            H5P_DEFAULT, H5P_DEFAULT);
     if (m_GroupId < 0)

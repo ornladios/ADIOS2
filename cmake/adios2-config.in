@@ -18,7 +18,41 @@ then
   exit 1
 fi
 
-prefix=$(readlink -f $(dirname ${BASH_SOURCE})/..)
+realpath() {
+  OURPWD=$PWD
+  cd "$(dirname "$1")"
+  LINK=$(readlink "$(basename "$1")")
+  while [ "$LINK" ]; do
+    cd "$(dirname "$LINK")"
+    LINK=$(readlink "$(basename "$1")")
+  done
+  REALPATH="$PWD/$(basename "$1")"
+  cd "$OURPWD"
+  echo "$REALPATH"
+}
+
+canonicalize_path() {
+    if [ -d "$1" ]; then
+        _canonicalize_dir_path "$1"
+    else
+        _canonicalize_file_path "$1"
+    fi
+}   
+
+_canonicalize_dir_path() {
+    (cd "$1" 2>/dev/null && pwd -P) 
+}           
+
+_canonicalize_file_path() {
+    local dir file
+    dir=$(dirname -- "$1")
+    file=$(basename -- "$1")
+    (cd "$dir" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
+}
+
+prefix=`realpath "$(dirname ${BASH_SOURCE})/.."`
+prefix=`canonicalize_path ${prefix}`
+
 ADIOS2_CXX_LIBS=$(echo "@ADIOS2_CXX_LIBS@")
 ADIOS2_CXX_OPTS=$(echo "@ADIOS2_CXX_OPTS@")
 ADIOS2_CXX_DEFS=$(echo "@ADIOS2_CXX_DEFS@")

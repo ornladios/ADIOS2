@@ -84,6 +84,8 @@ void SkeletonReader::PerformGets()
     m_NeedPerformGets = false;
 }
 
+size_t SkeletonReader::CurrentStep() const { return m_CurrentStep; }
+
 void SkeletonReader::EndStep()
 {
     // EndStep should call PerformGets() if there are unserved GetDeferred()
@@ -96,15 +98,6 @@ void SkeletonReader::EndStep()
     if (m_Verbosity == 5)
     {
         std::cout << "Skeleton Reader " << m_ReaderRank << "   EndStep()\n";
-    }
-}
-
-void SkeletonReader::Close(const int transportIndex)
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Skeleton Reader " << m_ReaderRank << " Close(" << m_Name
-                  << ")\n";
     }
 }
 
@@ -153,6 +146,15 @@ void SkeletonReader::InitParameters()
 void SkeletonReader::InitTransports()
 {
     // Nothing to process from m_IO.m_TransportsParameters
+}
+
+void SkeletonReader::DoClose(const int transportIndex)
+{
+    if (m_Verbosity == 5)
+    {
+        std::cout << "Skeleton Reader " << m_ReaderRank << " Close(" << m_Name
+                  << ")\n";
+    }
 }
 
 } // end namespace adios2

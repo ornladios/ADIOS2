@@ -9,7 +9,6 @@
 !
 
 module adios2_adios_init
-
     use adios2_functions
     implicit none
 
@@ -23,7 +22,6 @@ contains
         call adios2_init_config(adios, "", adios2_debug_mode, ierr)
 
     end subroutine
-
 
     subroutine adios2_init_config(adios, config_file, adios2_debug_mode, ierr)
         integer(kind=8), intent(out) :: adios

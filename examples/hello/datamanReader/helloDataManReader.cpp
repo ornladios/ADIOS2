@@ -8,120 +8,107 @@
  *      Author: Jason Wang
  */
 
+#include <adios2.h>
 #include <chrono>
 #include <iostream>
+#include <mpi.h>
 #include <numeric>
 #include <thread>
 #include <vector>
 
-#include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h"
-#include <adios2.h>
+int rank, size;
+std::string ip = "127.0.0.1";
+int port = 12306;
 
-// matches Signature2 in ADIOS2
-void UserCallBack(void *data, const std::string &doid, const std::string &var,
-                  const std::string &dtype,
-                  const std::vector<std::size_t> &varshape)
+void Dump(std::vector<float> &data, size_t step)
 {
-    std::cout << "Object : " << doid << std::endl;
-    std::cout << "Variable :" << var << std::endl;
-    std::cout << "Type : " << dtype << std::endl;
-    std::cout << "Shape : [";
-    for (size_t i = 0; i < varshape.size(); ++i)
+    std::cout << "Rank: " << rank << " Step: " << step << " [";
+    for (size_t i = 0; i < data.size(); ++i)
     {
-        std::cout << varshape[i];
-        if (i != varshape.size() - 1)
-        {
-            std::cout << ", ";
-        }
+        std::cout << data[i] << " ";
     }
     std::cout << "]" << std::endl;
-
-    size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
-                                     std::multiplies<std::size_t>());
-
-    size_t dumpsize = 128;
-    if (varsize < dumpsize)
-    {
-        dumpsize = varsize;
-    }
-
-    std::cout << "Data : " << std::endl;
-
-#define declare_type(T)                                                        \
-    if (dtype == adios2::GetType<T>())                                         \
-    {                                                                          \
-        for (size_t i = 0; i < dumpsize; ++i)                                  \
-        {                                                                      \
-            std::cout << (reinterpret_cast<T *>(data))[i] << " ";              \
-        }                                                                      \
-        std::cout << std::endl;                                                \
-    }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
 }
 
 int main(int argc, char *argv[])
 {
-    // Application variable
     MPI_Init(&argc, &argv);
-    int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int timeout = 5;
-
-    if (argc == 2)
-    {
-        timeout = atoi(argv[1]);
-    }
+    int nThreads = 1;
 
     try
     {
-        adios2::ADIOS adios(adios2::DebugON);
+        if (argc == 2)
+        {
+            nThreads = atoi(argv[1]);
+        }
 
-        adios2::Operator &callbackFloat = adios.DefineOperator(
-            "Print float Variable callback",
-            std::function<void(void *, const std::string &, const std::string &,
-                               const std::string &, const adios2::Dims &)>(
-                UserCallBack));
+        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataMan");
-        dataManIO.SetParameters({
-            {"Format", "bp"},
-        });
-        dataManIO.AddTransport("WAN", {
-                                          {"Library", "ZMQ"},
-                                          {"IPAddress", "127.0.0.1"},
-                                          {"DumpFile", "YES"},
-                                          {"Callback", "YES"},
-                                      });
-        dataManIO.AddOperator(callbackFloat); // propagate to all Engines
+        dataManIO.SetParameters({{"Blocking", "no"}});
+
+        for (int i = 0; i < nThreads; ++i)
+        {
+            int port_thread = port + i;
+            dataManIO.AddTransport("WAN",
+                                   {{"Library", "ZMQ"},
+                                    {"IPAddress", ip},
+                                    {"Port", std::to_string(port_thread)}});
+        }
 
         adios2::Engine &dataManReader =
-            dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
+            dataManIO.Open("stream", adios2::Mode::Read);
 
-        std::this_thread::sleep_for(std::chrono::seconds(timeout));
+        adios2::Variable<float> *bpFloats;
+
+        std::vector<float> myFloats(10);
+
+        bpFloats = dataManIO.InquireVariable<float>("bpFloats");
+        while (bpFloats == nullptr)
+        {
+            std::cout << "Variable bpFloats not read yet. Waiting...\n";
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            bpFloats = dataManIO.InquireVariable<float>("bpFloats");
+        }
+
+        for (int i = 0; i < 100000; ++i)
+        {
+            adios2::StepStatus status = dataManReader.BeginStep();
+            if (status == adios2::StepStatus::OK)
+            {
+                dataManReader.GetSync<float>(*bpFloats, myFloats.data());
+                Dump(myFloats, dataManReader.CurrentStep());
+                dataManReader.EndStep();
+            }
+            else if (status == adios2::StepStatus::NotReady)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            else if (status == adios2::StepStatus::EndOfStream)
+            {
+                break;
+            }
+        }
 
         dataManReader.Close();
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM "
-                     "from rank "
-                  << rank << "\n";
+        std::cout << "System exception, STOPPING PROGRAM\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
+        std::cout << "Exception, STOPPING PROGRAM\n";
         std::cout << e.what() << "\n";
     }
 

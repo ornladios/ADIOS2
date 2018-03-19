@@ -11,8 +11,6 @@
 #include "BPFileWriter.h"
 #include "BPFileWriter.tcc"
 
-#include <iostream>
-
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/IO.h"
@@ -42,8 +40,18 @@ StepStatus BPFileWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
+size_t BPFileWriter::CurrentStep() const
+{
+    return m_BP3Serializer.m_MetadataSet.CurrentStep;
+}
+
 void BPFileWriter::PerformPuts()
 {
+    if (m_BP3Serializer.m_DeferredVariables.empty())
+    {
+        return;
+    }
+
     m_BP3Serializer.ResizeBuffer(m_BP3Serializer.m_DeferredVariablesDataSize,
                                  "in call to PerformPuts");
 
@@ -62,47 +70,26 @@ void BPFileWriter::EndStep()
         PerformPuts();
     }
 
-    m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
-
-    const size_t currentStep = m_BP3Serializer.m_MetadataSet.TimeStep - 1;
+    const size_t currentStep = CurrentStep();
     const size_t flushStepsCount = m_BP3Serializer.m_FlushStepsCount;
 
-    if (currentStep % flushStepsCount)
+    m_BP3Serializer.SerializeData(m_IO, true); // true: advances step
+
+    // must be explicit
+    if (currentStep % flushStepsCount == 0)
     {
-        m_BP3Serializer.SerializeData(m_IO);
+        const size_t dataSize = m_BP3Serializer.m_Data.m_Position;
+        m_BP3Serializer.CloseStream(m_IO);
         m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
-                                     m_BP3Serializer.m_Data.m_Position);
+                                     dataSize);
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
         WriteCollectiveMetadataFile();
-    }
-}
 
-void BPFileWriter::Close(const int transportIndex)
-{
-    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
-    {
-        PerformPuts();
-    }
-
-    // close bp buffer by serializing data and metadata
-    m_BP3Serializer.CloseData(m_IO);
-    // send data to corresponding transports
-    m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
-                                 m_BP3Serializer.m_Data.m_Position,
-                                 transportIndex);
-
-    m_FileDataManager.CloseFiles(transportIndex);
-
-    if (m_BP3Serializer.m_Profiler.IsActive &&
-        m_FileDataManager.AllTransportsClosed())
-    {
-        WriteProfilingJSONFile();
-    }
-
-    if (m_BP3Serializer.m_CollectiveMetadata &&
-        m_FileDataManager.AllTransportsClosed())
-    {
-        WriteCollectiveMetadataFile();
+        //        if (currentStep == 5)
+        //        {
+        //            throw std::runtime_error("STOPPING AT 5 to test METADATA
+        //            FILE");
+        //        }
     }
 }
 
@@ -168,7 +155,37 @@ void BPFileWriter::InitBPBuffer()
     else
     {
         m_BP3Serializer.PutProcessGroupIndex(
-            m_IO.m_HostLanguage, m_FileDataManager.GetTransportsTypes());
+            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_FileDataManager.GetTransportsTypes());
+    }
+}
+
+void BPFileWriter::DoClose(const int transportIndex)
+{
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
+    {
+        PerformPuts();
+    }
+
+    // close bp buffer by serializing data and metadata
+    m_BP3Serializer.CloseData(m_IO);
+    // send data to corresponding transports
+    m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
+                                 m_BP3Serializer.m_Data.m_Position,
+                                 transportIndex);
+
+    m_FileDataManager.CloseFiles(transportIndex);
+
+    if (m_BP3Serializer.m_CollectiveMetadata &&
+        m_FileDataManager.AllTransportsClosed())
+    {
+        WriteCollectiveMetadataFile(true);
+    }
+
+    if (m_BP3Serializer.m_Profiler.IsActive &&
+        m_FileDataManager.AllTransportsClosed())
+    {
+        WriteProfilingJSONFile();
     }
 }
 
@@ -176,6 +193,16 @@ void BPFileWriter::WriteProfilingJSONFile()
 {
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
+
+    auto transportTypesMD = m_FileMetadataManager.GetTransportsTypes();
+    auto transportProfilersMD = m_FileMetadataManager.GetTransportsProfilers();
+
+    transportTypes.insert(transportTypes.end(), transportTypesMD.begin(),
+                          transportTypesMD.end());
+
+    transportProfilers.insert(transportProfilers.end(),
+                              transportProfilersMD.begin(),
+                              transportProfilersMD.end());
 
     const std::string lineJSON(m_BP3Serializer.GetRankProfilingJSON(
                                    transportTypes, transportProfilers) +
@@ -195,7 +222,7 @@ void BPFileWriter::WriteProfilingJSONFile()
     }
 }
 
-void BPFileWriter::WriteCollectiveMetadataFile()
+void BPFileWriter::WriteCollectiveMetadataFile(const bool isFinal)
 {
     m_BP3Serializer.AggregateCollectiveMetadata();
     if (m_BP3Serializer.m_RankMPI == 0)
@@ -217,7 +244,11 @@ void BPFileWriter::WriteCollectiveMetadataFile()
             m_BP3Serializer.m_Metadata.m_Position);
         m_FileMetadataManager.CloseFiles();
 
-        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
+        if (!isFinal)
+        {
+            m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
+            m_FileMetadataManager.m_Transports.clear();
+        }
     }
 }
 

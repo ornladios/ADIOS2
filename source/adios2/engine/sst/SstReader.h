@@ -44,14 +44,23 @@ public:
 
     StepStatus BeginStep();
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f);
-
+    size_t CurrentStep() const final;
     void EndStep();
-    void Close(const int transportIndex = -1);
     void PerformGets();
 
 private:
     void Init();
     SstStream m_Input;
+    int m_WriterFFSmarshal;
+    int m_WriterBPmarshal;
+    SstFullMetadata m_CurrentStepMetaData =
+        NULL; // Used only with BP marshaling
+
+    struct _SstParams Params;
+#define declare_locals(Param, Type, Typedecl, Default)                         \
+    Typedecl m_##Param = Default;
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals);
+#undef declare_locals
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -60,6 +69,8 @@ private:
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
+    void DoClose(const int transportIndex = -1) final;
+
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 
@@ -67,6 +78,6 @@ private:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 };
 
-} // end namespace adios
+} // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SST_SSTREADER_H_ */

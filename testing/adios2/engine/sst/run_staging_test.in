@@ -38,13 +38,6 @@ EO
 }
 
 PROGNAME=${0##*/} 
-SHORTOPTS="p:r:w:n:t:o:qhv" 
-LONGOPTS="p:,nw:,nr:,help,timeout:" 
-
-ARGS=$(getopt -a -s bash --options $SHORTOPTS  \
-  --longoptions $LONGOPTS --name $PROGNAME -- "$@" ) 
-
-eval set -- "$ARGS" 
 
 reader_prog="UNSET"
 writer_prog="UNSET"
@@ -62,11 +55,11 @@ do
     (-w) writer_prog="$2"; shift;;
     (-n) nw="$2"; nr="$2"; shift;;
     (-p) prefix="$2"; shift;;
-    (--nw) nw="$2"; shift;;
-    (--nr) nr="$2"; shift;;
-    (--timeout) timeout="$2"; shift;;
+    (-nw) nw="$2"; shift;;
+    (-nr) nr="$2"; shift;;
+    (-timeout) timeout="$2"; shift;;
     (--) shift; break;;
-    (-*) echo "$0: error - unrecognized option $1" 1>&2; exit 1;;
+    (-*) echo "$0: error - unrecognized option $1" ; usage; 1>&2; exit 1;;
     (*)  break;;
     esac
     shift

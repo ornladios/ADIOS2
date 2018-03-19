@@ -57,14 +57,11 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
     if (rank == rankDestination) // pre-allocate vector
     {
         gatheredSize = std::accumulate(counts.begin(), counts.end(), 0);
+
         const size_t newSize = out.size() + gatheredSize;
         try
         {
             out.resize(newSize);
-            if (newSize == 0)
-            {
-                return; // nothing to copy or do
-            }
         }
         catch (...)
         {

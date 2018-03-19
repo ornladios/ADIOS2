@@ -68,7 +68,6 @@ program TestBPWriteAttributes
 
     call adios2_close(bpWriter, ierr)
 
-
     call adios2_finalize(adios, ierr)
 
     call MPI_Finalize(ierr)

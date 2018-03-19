@@ -55,13 +55,15 @@ public:
     StepStatus BeginStep(const StepMode mode,
                          const float timeoutSeconds = 0.f) final;
     void PerformGets() final;
+    size_t CurrentStep() const final;
     void EndStep() final;
-
-    void Close(const int transportIndex = -1);
 
 private:
     interop::ADIOS1CommonRead m_ADIOS1;
     // ADIOS_FILE *m_fh = nullptr; ///< ADIOS1 file handler
+
+    // EndStep must call PerformGets if necessary
+    bool m_NeedPerformGets = false;
 
     void Init() final; ///< called from constructor, gets the selected ADIOS1
                        /// transport method from settings
@@ -74,6 +76,8 @@ private:
 
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+    void DoClose(const int transportIndex = -1) final;
 
     void ReadJoinedArray(const std::string &name, const Dims &offs,
                          const Dims &ldims, const int fromStep,

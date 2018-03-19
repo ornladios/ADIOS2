@@ -86,6 +86,8 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
+size_t BPFileReader::CurrentStep() const { return m_CurrentStep; }
+
 void BPFileReader::EndStep()
 {
     if (!m_BP3Deserializer.m_PerformedGets)
@@ -100,17 +102,6 @@ void BPFileReader::PerformGets()
         m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
     ReadVariables(m_IO, variablesSubfileInfo);
     m_BP3Deserializer.m_PerformedGets = true;
-}
-
-void BPFileReader::Close(const int transportIndex)
-{
-    if (!m_BP3Deserializer.m_PerformedGets)
-    {
-        PerformGets();
-    }
-
-    m_SubFileManager.CloseFiles();
-    m_FileManager.CloseFiles();
 }
 
 // PRIVATE
@@ -193,12 +184,12 @@ void BPFileReader::ReadVariables(
     const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
 
     // sequentially request bytes from transport manager
-    // threaded here?
+    // threaded per variable?
     for (const auto &variableNamePair : variablesSubFileInfo) // variable name
     {
         const std::string variableName(variableNamePair.first);
 
-        // or threaded here?
+        // or threaded per file?
         for (const auto &subFileIndexPair : variableNamePair.second)
         {
             const size_t subFileIndex = subFileIndexPair.first;
@@ -231,6 +222,17 @@ void BPFileReader::ReadVariables(
             }     // end step
         }         // end subfile
     }             // end variable
+}
+
+void BPFileReader::DoClose(const int transportIndex)
+{
+    if (!m_BP3Deserializer.m_PerformedGets)
+    {
+        PerformGets();
+    }
+
+    m_SubFileManager.CloseFiles();
+    m_FileManager.CloseFiles();
 }
 
 } // end namespace adios2

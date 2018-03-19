@@ -12,16 +12,18 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
+#include "DataManCommon.h"
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
-#include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
+
+#include <json.hpp>
 
 namespace adios2
 {
 
-class DataManReader : public Engine
+class DataManReader : public DataManCommon
 {
 
 public:
@@ -38,7 +40,7 @@ public:
     DataManReader(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
-    virtual ~DataManReader() = default;
+    virtual ~DataManReader();
 
     StepStatus BeginStep(StepMode stepMode,
                          const float timeoutSeconds = 0.f) final;
@@ -46,26 +48,45 @@ public:
     void PerformGets() final;
 
     void EndStep() final;
-
-    void Close(const int transportIndex = -1);
+    size_t CurrentStep() const;
 
 private:
-    format::BP3Deserializer m_BP3Deserializer;
-    transportman::DataMan m_Man;
+    std::vector<adios2::Operator *> m_Callbacks;
 
-    size_t m_BufferSize = 1024 * 1024 * 1024;
-    unsigned int m_NChannels = 1;
-    std::string m_UseFormat = "BP";
-    bool m_DoMonitor = false;
+    // The current time step that the reader app is reading
+    size_t m_CurrentStep = 0;
+
+    // The oldest time step contained in m_VariableMap
+    size_t m_OldestStep = 0xffffffff;
+
+    bool m_Listening = false;
+
+    struct DataManVar
+    {
+        std::vector<char> data;
+        std::string type;
+        Dims shape;
+        Dims start;
+        Dims count;
+        size_t rank;
+    };
+
+    std::unordered_map<
+        size_t, std::unordered_map<std::string, std::shared_ptr<DataManVar>>>
+        m_VariableMap;
+
+    std::mutex m_MutexIO;
+    std::mutex m_MutexMap;
+
+    void IOThread(std::shared_ptr<transportman::DataMan> man) final;
+    void IOThreadBP(std::shared_ptr<transportman::DataMan> man);
 
     void Init();
-    void InitParameters();
-    void InitTransports();
 
-    bool GetBoolParameter(Params &params, std::string key, bool &value);
-    bool GetStringParameter(Params &params, std::string key,
-                            std::string &value);
-    bool GetUIntParameter(Params &params, std::string key, unsigned int &value);
+    void RunCallback(void *buffer, std::string doid, std::string var,
+                     std::string dtype, std::vector<size_t> shape);
+
+    void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -75,14 +96,13 @@ private:
 #undef declare_type
 
     /**
-     * All DoGetSync virtual functions call this function
+     * All GetSync virtual functions call this function
      * @param variable
      * @param data
      */
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 
-    // TODO: let's implement this after GetSyncCommon
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 };

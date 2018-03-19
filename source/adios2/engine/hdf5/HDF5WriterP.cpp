@@ -24,7 +24,7 @@ HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
-HDF5WriterP::~HDF5WriterP() { Close(); }
+HDF5WriterP::~HDF5WriterP() { DoClose(); }
 
 StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
@@ -32,8 +32,6 @@ StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 }
 
 void HDF5WriterP::EndStep() { m_H5File.Advance(); }
-
-void HDF5WriterP::Close(const int transportIndex) { m_H5File.Close(); }
 
 // PRIVATE
 void HDF5WriterP::Init()
@@ -88,5 +86,7 @@ void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
     variable.SetData(values);
     m_H5File.Write(variable, values);
 }
+
+void HDF5WriterP::DoClose(const int transportIndex) { m_H5File.Close(); }
 
 } // end namespace adios2

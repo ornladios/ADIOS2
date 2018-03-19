@@ -12,6 +12,7 @@
 #include "BP3Deserializer.tcc"
 
 #include <future>
+#include <unordered_set>
 #include <vector>
 
 #include "adios2/helper/adiosFunctions.h" //ReadValue<T>
@@ -35,7 +36,7 @@ BP3Deserializer::BP3Deserializer(MPI_Comm mpiComm, const bool debugMode)
 void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, IO &io)
 {
     ParseMinifooter(bufferSTL);
-    ParsePGIndex(bufferSTL);
+    ParsePGIndex(bufferSTL, io);
     ParseVariablesIndex(bufferSTL, io);
     ParseAttributesIndex(bufferSTL, io);
 }
@@ -63,36 +64,6 @@ void BP3Deserializer::ClipContiguousMemory(
     }
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-}
-
-void BP3Deserializer::GetStringFromMetadata(
-    Variable<std::string> &variable) const
-{
-    std::string *data = variable.GetData();
-    const auto &buffer = m_Metadata.m_Buffer;
-
-    for (size_t i = 0; i < variable.m_StepsCount; ++i)
-    {
-        *(data + i) = "";
-        const size_t step = variable.m_StepsStart + i + 1;
-        auto itStep = variable.m_IndexStepBlockStarts.find(step);
-
-        if (itStep == variable.m_IndexStepBlockStarts.end())
-        {
-            continue;
-        }
-
-        for (auto position : itStep->second)
-        {
-            const Characteristics<std::string> characteristics =
-                ReadElementIndexCharacteristics<std::string>(
-                    buffer, position, type_string, false);
-
-            *(data + i) = characteristics.Statistics.Value;
-        }
-
-        variable.m_Value = *(data + i);
-    }
 }
 
 // PRIVATE
@@ -143,7 +114,7 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     m_Minifooter.AttributesIndexStart = ReadValue<uint64_t>(buffer, position);
 }
 
-void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
+void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL, const IO &io)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.PGIndexStart;
@@ -153,21 +124,31 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL)
 
     size_t localPosition = 0;
 
+    std::unordered_set<uint32_t> stepsFound;
+    m_MetadataSet.StepsCount = 0;
+
     while (localPosition < length)
     {
         ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
-        if (index.IsFortran == 'y')
+        if (index.IsColumnMajor == 'y')
         {
             m_IsRowMajor = false;
         }
 
-        const size_t currentStep = static_cast<size_t>(index.Step);
-        if (currentStep > m_MetadataSet.StepsCount)
+        m_MetadataSet.CurrentStep = static_cast<size_t>(index.Step - 1);
+
+        // Count the number of unseen steps
+        if (stepsFound.insert(index.Step).second)
         {
-            m_MetadataSet.StepsCount = currentStep;
+            ++m_MetadataSet.StepsCount;
         }
 
         localPosition += index.Length + 2;
+    }
+
+    if (m_IsRowMajor != IsRowMajor(io.m_HostLanguage))
+    {
+        m_ReverseDimensions = true;
     }
 }
 
@@ -491,7 +472,10 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
         Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
                                                                                \
     template void BP3Deserializer::GetDeferredVariable(Variable<T> &variable,  \
-                                                       T *data);
+                                                       T *data);               \
+                                                                               \
+    template void BP3Deserializer::GetValueFromMetadata(Variable<T> &variable) \
+        const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -13,7 +13,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
-adios2_step_status adios2_begin_step(adios2_Engine *engine,
+adios2_step_status adios2_begin_step(adios2_engine *engine,
                                      const adios2_step_mode mode,
                                      const float timeout_seconds)
 {
@@ -67,7 +67,7 @@ adios2_step_status adios2_begin_step(adios2_Engine *engine,
     return status;
 }
 
-void adios2_put_sync(adios2_Engine *engine, adios2_Variable *variable,
+void adios2_put_sync(adios2_engine *engine, adios2_variable *variable,
                      const void *values)
 {
     adios2::VariableBase *variableBase =
@@ -90,7 +90,7 @@ void adios2_put_sync(adios2_Engine *engine, adios2_Variable *variable,
 #undef declare_template_instantiation
 }
 
-void adios2_put_sync_self(adios2_Engine *engine, adios2_Variable *variable)
+void adios2_put_sync_self(adios2_engine *engine, adios2_variable *variable)
 {
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
@@ -111,7 +111,7 @@ void adios2_put_sync_self(adios2_Engine *engine, adios2_Variable *variable)
 #undef declare_template_instantiation
 }
 
-void adios2_put_sync_by_name(adios2_Engine *engine, const char *variable_name,
+void adios2_put_sync_by_name(adios2_engine *engine, const char *variable_name,
                              const void *values)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
@@ -131,7 +131,7 @@ void adios2_put_sync_by_name(adios2_Engine *engine, const char *variable_name,
 #undef declare_template_instantiation
 }
 
-void adios2_put_deferred(adios2_Engine *engine, adios2_Variable *variable,
+void adios2_put_deferred(adios2_engine *engine, adios2_variable *variable,
                          const void *values)
 {
     adios2::VariableBase *variableBase =
@@ -155,7 +155,7 @@ void adios2_put_deferred(adios2_Engine *engine, adios2_Variable *variable,
 #undef declare_template_instantiation
 }
 
-void adios2_put_deferred_self(adios2_Engine *engine, adios2_Variable *variable)
+void adios2_put_deferred_self(adios2_engine *engine, adios2_variable *variable)
 {
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
@@ -177,7 +177,7 @@ void adios2_put_deferred_self(adios2_Engine *engine, adios2_Variable *variable)
 #undef declare_template_instantiation
 }
 
-void adios2_put_deferred_by_name(adios2_Engine *engine,
+void adios2_put_deferred_by_name(adios2_engine *engine,
                                  const char *variable_name, const void *values)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
@@ -198,13 +198,13 @@ void adios2_put_deferred_by_name(adios2_Engine *engine,
 #undef declare_template_instantiation
 }
 
-void adios2_perform_puts(adios2_Engine *engine)
+void adios2_perform_puts(adios2_engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.PerformPuts();
 }
 
-void adios2_get_sync(adios2_Engine *engine, adios2_Variable *variable,
+void adios2_get_sync(adios2_engine *engine, adios2_variable *variable,
                      void *values)
 {
     adios2::VariableBase *variableBase =
@@ -227,7 +227,7 @@ void adios2_get_sync(adios2_Engine *engine, adios2_Variable *variable,
 #undef declare_template_instantiation
 }
 
-void adios2_get_sync_self(adios2_Engine *engine, adios2_Variable *variable)
+void adios2_get_sync_self(adios2_engine *engine, adios2_variable *variable)
 {
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
@@ -248,7 +248,7 @@ void adios2_get_sync_self(adios2_Engine *engine, adios2_Variable *variable)
 #undef declare_template_instantiation
 }
 
-void adios2_get_sync_by_name(adios2_Engine *engine, const char *variable_name,
+void adios2_get_sync_by_name(adios2_engine *engine, const char *variable_name,
                              void *values)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
@@ -268,7 +268,7 @@ void adios2_get_sync_by_name(adios2_Engine *engine, const char *variable_name,
 #undef declare_template_instantiation
 }
 
-void adios2_get_deferred(adios2_Engine *engine, adios2_Variable *variable,
+void adios2_get_deferred(adios2_engine *engine, adios2_variable *variable,
                          void *values)
 {
     adios2::VariableBase *variableBase =
@@ -292,7 +292,7 @@ void adios2_get_deferred(adios2_Engine *engine, adios2_Variable *variable,
 #undef declare_template_instantiation
 }
 
-void adios2_get_deferred_self(adios2_Engine *engine, adios2_Variable *variable)
+void adios2_get_deferred_self(adios2_engine *engine, adios2_variable *variable)
 {
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
@@ -314,7 +314,7 @@ void adios2_get_deferred_self(adios2_Engine *engine, adios2_Variable *variable)
 #undef declare_template_instantiation
 }
 
-void adios2_get_deferred_by_name(adios2_Engine *engine,
+void adios2_get_deferred_by_name(adios2_engine *engine,
                                  const char *variable_name, void *values)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
@@ -334,31 +334,31 @@ void adios2_get_deferred_by_name(adios2_Engine *engine,
 #undef declare_template_instantiation
 }
 
-void adios2_perform_gets(adios2_Engine *engine)
+void adios2_perform_gets(adios2_engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.PerformGets();
 }
 
-void adios2_end_step(adios2_Engine *engine)
+void adios2_end_step(adios2_engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.EndStep();
 }
 
-void adios2_write_step(adios2_Engine *engine)
+void adios2_write_step(adios2_engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.WriteStep();
 }
 
-void adios2_close(adios2_Engine *engine)
+void adios2_close(adios2_engine *engine)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.Close();
 }
 
-void adios2_close_by_index(adios2_Engine *engine,
+void adios2_close_by_index(adios2_engine *engine,
                            const unsigned int transport_index)
 {
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);

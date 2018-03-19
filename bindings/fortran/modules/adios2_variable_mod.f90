@@ -41,6 +41,26 @@ contains
 
     end subroutine
 
+    subroutine adios2_variable_ndims(variable, ndims, ierr)
+        integer(kind=8), intent(out) :: variable
+        integer, intent(out) :: ndims
+        integer, intent(out) :: ierr
+
+        call adios2_variable_ndims_f2c(variable, ndims, ierr)
+    end subroutine
+
+    subroutine adios2_variable_shape(variable, ndims, shape_dims, ierr)
+        integer(kind=8), intent(out) :: variable
+        integer, intent(out) :: ndims
+        integer(kind=8), dimension(:), allocatable, intent(out) :: shape_dims
+        integer, intent(out) :: ierr
+
+        call adios2_variable_ndims_f2c(variable, ndims, ierr)
+        allocate (shape_dims(ndims))
+        call adios2_variable_shape_f2c(variable, shape_dims, ierr)
+
+    end subroutine
+
     subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)
         integer(kind=8), intent(out) :: variable
         integer, intent(in) :: ndims
@@ -63,13 +83,13 @@ contains
 
     end subroutine
 
-    subroutine adios2_set_step_selection(variable, start_step, count_step, ierr)
+    subroutine adios2_set_step_selection(variable, step_start, step_count, ierr)
         integer(kind=8), intent(out) :: variable
-        integer, dimension(:), intent(in) :: start_step
-        integer, dimension(:), intent(in) :: count_step
+        integer(kind=8), intent(in) :: step_start
+        integer(kind=8), intent(in) :: step_count
         integer, intent(out) :: ierr
 
-        call adios2_set_step_selection_f2c(variable, start_step, count_step, &
+        call adios2_set_step_selection_f2c(variable, step_start, step_count, &
                                            ierr)
 
     end subroutine

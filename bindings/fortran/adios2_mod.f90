@@ -15,5 +15,6 @@ module adios2
     use adios2_io
     use adios2_variable
     use adios2_engine
+    use adios2_file_mod
 
 end module

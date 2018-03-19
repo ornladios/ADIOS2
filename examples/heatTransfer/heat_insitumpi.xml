@@ -28,11 +28,11 @@ the MPI_COMM_WORLD and create two partitions of the processes.
     </io>
 
 
-    <!--====================================
-           Configuration for the Reader 
-        ====================================-->
+    <!--=======================================
+           Configuration for the Reader input
+        =======================================-->
 
-    <io name="reader">
+    <io name="readerInput">
         <engine type="InSituMPI">
             <parameter key="verbose" value="5"/>
             <parameter key="FixedSchedule" value="true"/>
@@ -40,6 +40,16 @@ the MPI_COMM_WORLD and create two partitions of the processes.
             <!-- Microseconds (default), Milliseconds, Seconds, 
                  Minutes, Hours -->
             <parameter key="ProfileUnits" value="Microseconds"/>
+        </engine>
+    </io>
+    
+    
+    <!--=======================================
+           Configuration for the Reader output
+        =======================================-->
+    
+    <io name="readerOutput">
+        <engine type="BPFile">
         </engine>
     </io>
 </adios-config>

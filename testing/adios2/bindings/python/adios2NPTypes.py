@@ -12,6 +12,7 @@ import numpy as np
 class SmallTestData:
 
     def __init__(self):
+        self.Nx = 10
         self.I8 = np.array([0, 1, -2, 3, -4, 5, -6, 7, -8, 9], dtype=np.int8)
         self.I16 = np.array(
             [512, 513, -510, 515, -508, 517, -506, 519, -504, 521],

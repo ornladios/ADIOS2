@@ -30,7 +30,8 @@ public:
      * @param debugMode
      */
     WANZmq(const std::string ipAddress, const std::string port,
-           MPI_Comm mpiComm, const bool debugMode);
+           MPI_Comm mpiComm, const std::string transportMode,
+           const bool debugMode);
 
     ~WANZmq();
 
@@ -56,13 +57,27 @@ public:
 
 private:
     const std::string m_IPAddress;
-    std::string m_Port;
+    const std::string m_Port;
+    const std::string m_TransportMode;
 
     /** context handler created by zmq, thread safe */
     void *m_Context = nullptr;
 
     /** socket handler created by zmq */
     void *m_Socket = nullptr;
+
+    int OpenPubSub(const std::string &name, const Mode openMode,
+                   const std::string ip);
+    int OpenSenderDriven(const std::string &name, const Mode openMode,
+                         const std::string ip);
+    int OpenReceiverDriven(const std::string &name, const Mode openMode,
+                           const std::string ip);
+
+    void WritePubSub(const char *buffer, size_t size, const bool blocking);
+    void WriteSenderDriven(const char *buffer, size_t size,
+                           const bool blocking);
+    void WriteReceiverDriven(const char *buffer, size_t size,
+                             const bool blocking);
 };
 
 } // end namespace transport

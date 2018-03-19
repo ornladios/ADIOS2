@@ -84,13 +84,28 @@ void BP3Base::InitParameters(const Params &parameters)
             "buffering",
             profiling::Timer("buffering", DefaultTimeUnitEnum, m_DebugMode));
 
+        m_Profiler.Timers.emplace(
+            "memcpy",
+            profiling::Timer("memcpy", DefaultTimeUnitEnum, m_DebugMode));
+
+        m_Profiler.Timers.emplace(
+            "minmax",
+            profiling::Timer("minmax", DefaultTimeUnitEnum, m_DebugMode));
+
+        m_Profiler.Timers.emplace("meta_sort_merge",
+                                  profiling::Timer("meta_sort_merge",
+                                                   DefaultTimeUnitEnum,
+                                                   m_DebugMode));
+
         m_Profiler.Bytes.emplace("buffering", 0);
     }
 
+    ProfilerStart("buffering");
     if (useDefaultInitialBufferSize)
     {
         m_Data.Resize(DefaultInitialBufferSize, "in call to Open");
     }
+    ProfilerStop("buffering");
 }
 
 std::vector<std::string>
@@ -185,17 +200,20 @@ size_t BP3Base::GetVariableBPIndexSize(const std::string &variableName,
 void BP3Base::ResetBuffer(BufferSTL &bufferSTL,
                           const bool resetAbsolutePosition)
 {
+    ProfilerStart("buffering");
     bufferSTL.m_Position = 0;
     if (resetAbsolutePosition)
     {
         bufferSTL.m_AbsolutePosition = 0;
     }
     bufferSTL.m_Buffer.assign(bufferSTL.m_Buffer.size(), '\0');
+    ProfilerStop("buffering");
 }
 
 BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
                                             const std::string hint)
 {
+    ProfilerStart("buffering");
     const size_t currentCapacity = m_Data.m_Buffer.capacity();
     const size_t requiredCapacity = dataIn + m_Data.m_Position;
 
@@ -242,6 +260,7 @@ BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
         }
     }
 
+    ProfilerStop("buffering");
     return result;
 }
 
@@ -277,13 +296,18 @@ void BP3Base::InitParameterProfileUnits(const std::string value)
 {
     TimeUnit timeUnit = StringToTimeUnit(value, m_DebugMode);
 
-    if (m_Profiler.Timers.count("buffering") == 1)
-    {
-        m_Profiler.Timers.erase("buffering");
-    }
-
     m_Profiler.Timers.emplace(
         "buffering", profiling::Timer("buffering", timeUnit, m_DebugMode));
+
+    m_Profiler.Timers.emplace(
+        "memcpy", profiling::Timer("memcpy", timeUnit, m_DebugMode));
+
+    m_Profiler.Timers.emplace(
+        "minmax", profiling::Timer("minmax", timeUnit, m_DebugMode));
+
+    m_Profiler.Timers.emplace(
+        "meta_sort_merge",
+        profiling::Timer("meta_sort_merge", timeUnit, m_DebugMode));
 
     m_Profiler.Bytes.emplace("buffering", 0);
 }
@@ -368,7 +392,6 @@ void BP3Base::InitParameterInitBufferSize(const std::string value)
         bufferSize = static_cast<size_t>(std::stoul(number) * factor);
     }
 
-    // m_HeapBuffer.ResizeData(bufferSize);
     m_Data.Resize(bufferSize, "bufferSize " + std::to_string(bufferSize) +
                                   ", in call to Open");
 }
@@ -597,7 +620,7 @@ BP3Base::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
     ProcessGroupIndex index;
     index.Length = ReadValue<uint16_t>(buffer, position);
     index.Name = ReadBP3String(buffer, position);
-    index.IsFortran = ReadValue<char>(buffer, position);
+    index.IsColumnMajor = ReadValue<char>(buffer, position);
     index.ProcessID = ReadValue<int32_t>(buffer, position);
     index.StepName = ReadBP3String(buffer, position);
     index.Step = ReadValue<uint32_t>(buffer, position);
@@ -637,7 +660,7 @@ std::string BP3Base::ReadBP3String(const std::vector<char> &buffer,
     return values;
 }
 
-void BP3Base::ProfilerStart(const std::string process)
+void BP3Base::ProfilerStart(const std::string process) noexcept
 {
     if (m_Profiler.IsActive)
     {
@@ -645,7 +668,7 @@ void BP3Base::ProfilerStart(const std::string process)
     }
 }
 
-void BP3Base::ProfilerStop(const std::string process)
+void BP3Base::ProfilerStop(const std::string process) noexcept
 {
     if (m_Profiler.IsActive)
     {

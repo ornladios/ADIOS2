@@ -13,6 +13,9 @@
 
 #include "BP3Deserializer.h"
 
+#include <algorithm> //std::reverse
+#include <unordered_set>
+
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -66,6 +69,12 @@ BP3Deserializer::GetSubFileInfoMap(const std::string &variableName)
     return m_DeferredVariables[variableName];
 }
 
+template <class T>
+void BP3Deserializer::GetValueFromMetadata(Variable<T> &variable) const
+{
+    GetValueFromMetadataCommon(variable);
+}
+
 // PRIVATE
 template <>
 inline void BP3Deserializer::DefineVariableInIO<std::string>(
@@ -108,7 +117,8 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
     position = initialPosition;
 
     size_t currentStep = 0; // Starts at 1 in bp file
-
+    std::unordered_set<uint32_t> stepsFound;
+    variable->m_AvailableStepsCount = 0;
     while (position < endPosition)
     {
         const size_t subsetPosition = position;
@@ -122,8 +132,10 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
         if (subsetCharacteristics.Statistics.Step > currentStep)
         {
             currentStep = subsetCharacteristics.Statistics.Step;
-            variable->m_AvailableStepsCount =
-                subsetCharacteristics.Statistics.Step;
+        }
+        if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        {
+            ++variable->m_AvailableStepsCount;
         }
         variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
@@ -138,9 +150,8 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
 {
     const size_t initialPosition = position;
 
-    const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(header.DataType));
+    Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
+        buffer, position, static_cast<DataTypes>(header.DataType));
 
     std::string variableName(header.Name);
     if (!header.Path.empty())
@@ -160,9 +171,16 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
     else
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
-        variable =
-            &io.DefineVariable<T>(variableName, characteristics.Shape,
-                                  characteristics.Start, characteristics.Count);
+
+        if (m_ReverseDimensions)
+        {
+            std::reverse(characteristics.Shape.begin(),
+                         characteristics.Shape.end());
+        }
+
+        variable = &io.DefineVariable<T>(variableName, characteristics.Shape,
+                                         Dims(characteristics.Shape.size(), 0),
+                                         characteristics.Shape);
 
         variable->m_Min = characteristics.Statistics.Min;
         variable->m_Max = characteristics.Statistics.Max;
@@ -179,7 +197,8 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
     position = initialPosition;
 
     size_t currentStep = 0; // Starts at 1 in bp file
-
+    std::unordered_set<uint32_t> stepsFound;
+    variable->m_AvailableStepsCount = 0;
     while (position < endPosition)
     {
         const size_t subsetPosition = position;
@@ -204,8 +223,10 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
         if (subsetCharacteristics.Statistics.Step > currentStep)
         {
             currentStep = subsetCharacteristics.Statistics.Step;
-            variable->m_AvailableStepsCount =
-                subsetCharacteristics.Statistics.Step;
+        }
+        if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        {
+            ++variable->m_AvailableStepsCount;
         }
         variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
@@ -251,12 +272,10 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
     const auto &buffer = m_Metadata.m_Buffer;
 
     const size_t stepStart = variable.m_StepsStart + 1;
-    const size_t stepEnd =
-        stepStart + variable.m_StepsCount; // inclusive or exclusive?
+    const size_t stepEnd = stepStart + variable.m_StepsCount; // exclusive
 
-    // selection = [start, end[
     const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count);
+        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     for (size_t step = stepStart; step < stepEnd; ++step)
     {
@@ -355,7 +374,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonRow(
     Dims currentPoint(start); // current point for memory copy
 
     const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count);
+        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     const size_t dimensions = start.size();
     bool run = true;
@@ -419,7 +438,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
     Dims currentPoint(start); // current point for memory copy
 
     const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count);
+        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     const size_t dimensions = start.size();
     bool run = true;
@@ -468,6 +487,67 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
                 break; // break inner p loop
             }
         } // dimension index update
+    }
+}
+
+template <>
+inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
+    Variable<std::string> &variable) const
+{
+    std::string *data = variable.GetData();
+    const auto &buffer = m_Metadata.m_Buffer;
+
+    for (size_t i = 0; i < variable.m_StepsCount; ++i)
+    {
+        *(data + i) = "";
+        const size_t step = variable.m_StepsStart + i + 1;
+        auto itStep = variable.m_IndexStepBlockStarts.find(step);
+
+        if (itStep == variable.m_IndexStepBlockStarts.end())
+        {
+            continue;
+        }
+
+        for (const size_t position : itStep->second)
+        {
+            size_t localPosition = position;
+            const Characteristics<std::string> characteristics =
+                ReadElementIndexCharacteristics<std::string>(
+                    buffer, localPosition, type_string, false);
+
+            *(data + i) = characteristics.Statistics.Value;
+        }
+
+        variable.m_Value = *(data + i);
+    }
+}
+
+template <class T>
+inline void
+BP3Deserializer::GetValueFromMetadataCommon(Variable<T> &variable) const
+{
+    T *data = variable.GetData();
+    const auto &buffer = m_Metadata.m_Buffer;
+
+    const size_t step = variable.m_StepsStart + 1;
+    auto itStep = variable.m_IndexStepBlockStarts.find(step);
+
+    if (itStep == variable.m_IndexStepBlockStarts.end())
+    {
+        data = nullptr;
+        return;
+    }
+
+    for (const size_t position : itStep->second)
+    {
+        size_t localPosition = position;
+
+        const Characteristics<T> characteristics =
+            ReadElementIndexCharacteristics<T>(
+                buffer, localPosition, static_cast<DataTypes>(GetDataType<T>()),
+                false);
+
+        *data = characteristics.Statistics.Value;
     }
 }
 

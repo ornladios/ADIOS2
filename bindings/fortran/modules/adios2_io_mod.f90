@@ -7,8 +7,8 @@
 !   Created on: Mar 13, 2017
 !       Author: William F Godoy godoywf@ornl.gov
 !
-module adios2_io
 
+module adios2_io
     use adios2_io_open
     use adios2_io_define_variable
     use adios2_io_define_attribute
@@ -27,7 +27,6 @@ contains
 
     end subroutine
 
-
     subroutine adios2_add_transport(transport_index, io, type, ierr)
         integer, intent(out):: transport_index
         integer(kind=8), intent(in) :: io
@@ -37,9 +36,7 @@ contains
         call adios2_add_transport_f2c(transport_index, io, &
                                       TRIM(ADJUSTL(type))//char(0), ierr)
 
-
     end subroutine
-
 
     subroutine adios2_set_transport_parameter(io, transport_index, key, value, &
                                               ierr)
@@ -66,5 +63,43 @@ contains
                                          TRIM(ADJUSTL(name))//char(0), ierr)
 
     end subroutine
+
+    subroutine adios2_remove_variable(io, name, ierr)
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer, intent(out) :: ierr
+
+        call adios2_remove_variable_f2c(io, TRIM(ADJUSTL(name))//char(0), ierr)
+
+    end subroutine
+
+
+    subroutine adios2_remove_all_variables(io, ierr)
+        integer(kind=8), intent(in) :: io
+        integer, intent(out) :: ierr
+
+        call adios2_remove_all_variables_f2c(io, ierr)
+
+    end subroutine
+
+
+    subroutine adios2_remove_attribute(io, name, ierr)
+        integer(kind=8), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer, intent(out) :: ierr
+
+        call adios2_remove_attribute_f2c(io, TRIM(ADJUSTL(name))//char(0), ierr)
+
+    end subroutine
+
+
+    subroutine adios2_remove_all_attributes(io, ierr)
+        integer(kind=8), intent(in) :: io
+        integer, intent(out) :: ierr
+
+        call adios2_remove_all_attributes_f2c(io, ierr)
+
+    end subroutine
+
 
 end module

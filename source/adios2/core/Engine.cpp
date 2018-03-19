@@ -23,7 +23,7 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 {
 }
 
-Engine::~Engine() { MPI_Comm_free(&m_MPIComm); };
+Engine::~Engine(){};
 
 IO &Engine::GetIO() noexcept { return m_IO; }
 
@@ -44,6 +44,13 @@ StepStatus Engine::BeginStep(StepMode mode, const float timeoutSeconds)
     ThrowUp("BeginStep");
     return StepStatus::OtherError;
 }
+
+size_t Engine::CurrentStep() const
+{
+    ThrowUp("CurrentStep");
+    return 0;
+}
+
 void Engine::EndStep() { ThrowUp("EndStep"); }
 
 void Engine::PutSync(const std::string &variableName)
@@ -136,6 +143,16 @@ void Engine::WriteStep()
     EndStep();
 }
 
+void Engine::Close(const int transportIndex)
+{
+    DoClose(transportIndex);
+
+    if (transportIndex == -1)
+    {
+        MPI_Comm_free(&m_MPIComm);
+    }
+}
+
 // PROTECTED
 void Engine::Init() {}
 void Engine::InitParameters() {}
@@ -173,6 +190,23 @@ void Engine::ThrowUp(const std::string function) const
     throw std::invalid_argument("ERROR: Engine derived class " + m_EngineType +
                                 " doesn't implement function " + function +
                                 "\n");
+}
+
+void Engine::CheckWriteMode(const std::string hint) const
+{
+    if (m_OpenMode != adios2::Mode::Write && m_OpenMode != adios2::Mode::Append)
+    {
+        throw std::invalid_argument(
+            "ERROR: mode in open is not write or append, " + hint);
+    }
+}
+
+void Engine::CheckReadMode(const std::string hint) const
+{
+    if (m_OpenMode != adios2::Mode::Read)
+    {
+        throw std::invalid_argument("ERROR: mode in open is not read, " + hint);
+    }
 }
 
 // PUBLIC TEMPLATE FUNCTIONS EXPANSION WITH SCOPED TYPES

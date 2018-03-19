@@ -245,17 +245,13 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["Min"] = ValueToString(variable.m_Min);            \
         variablesInfo[name]["Max"] = ValueToString(variable.m_Max);            \
-        variablesInfo[name]["Value"] = ValueToString(variable.m_Value);        \
-        variablesInfo[name]["AvailableStepsStart"] =                           \
-            ValueToString(variable.m_AvailableStepsStart);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             ValueToString(variable.m_AvailableStepsCount);                     \
         variablesInfo[name]["Shape"] = VectorToCSV(variable.m_Shape);          \
-        variablesInfo[name]["Start"] = VectorToCSV(variable.m_Start);          \
-        variablesInfo[name]["Count"] = VectorToCSV(variable.m_Count);          \
         if (variable.m_SingleValue)                                            \
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "true";                       \
+            variablesInfo[name]["Value"] = ValueToString(variable.m_Value);    \
         }                                                                      \
         else                                                                   \
         {                                                                      \
@@ -351,7 +347,10 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_HDF5
 #if H5_VERSION_GE(1, 11, 0)
-        engine = std::make_shared<HDFMixer>(*this, name, mode, mpiComm);
+        if (mode == Mode::Read)
+            engine = std::make_shared<HDF5ReaderP>(*this, name, mode, mpiComm);
+        else
+            engine = std::make_shared<HDFMixer>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: update HDF5 >= 1.11 to support VDS.");

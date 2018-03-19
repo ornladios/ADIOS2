@@ -36,7 +36,7 @@ static unsigned int convertToUint(std::string varName, char *arg)
 ReadSettings::ReadSettings(int argc, char *argv[], int rank, int nproc)
 : rank{rank}
 {
-    if (argc < 5)
+    if (argc < 6)
     {
         throw std::invalid_argument("Not enough arguments");
     }
@@ -44,8 +44,9 @@ ReadSettings::ReadSettings(int argc, char *argv[], int rank, int nproc)
 
     configfile = argv[1];
     inputfile = argv[2];
-    npx = convertToUint("N", argv[3]);
-    npy = convertToUint("M", argv[4]);
+    outputfile = argv[3];
+    npx = convertToUint("N", argv[4]);
+    npy = convertToUint("M", argv[5]);
 
     if (npx * npy != this->nproc)
     {

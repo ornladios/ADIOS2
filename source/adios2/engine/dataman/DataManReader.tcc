@@ -13,6 +13,7 @@
 
 #include "DataManReader.h"
 #include <iostream>
+#include <limits>
 
 namespace adios2
 {
@@ -20,16 +21,33 @@ namespace adios2
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    if (m_UseFormat == "BP" || m_UseFormat == "bp" )
-    {
-        int mpiSize;
-        MPI_Comm_size(m_MPIComm, &mpiSize);
-        m_BP3Deserializer.GetSyncVariableDataFromStream(
-            variable, m_BP3Deserializer.m_Data);
-        size_t varsize = std::accumulate(variable.m_Shape.begin(), variable.m_Shape.end(), sizeof(T),
-                std::multiplies<std::size_t>());
-        std::memcpy(data, variable.GetData(), varsize/mpiSize);
-    }
+	if(m_TransportMode == "subscribe"){
+		m_MutexMap.lock();
+		auto j = m_VariableMap[m_OldestStep].find(variable.m_Name);
+		m_MutexMap.unlock();
+		if( j != m_VariableMap[m_OldestStep].end() ){
+			std::memcpy(data, j->second->data.data(), j->second->data.size());
+			m_CurrentStep = m_OldestStep;
+			return;
+		}
+	}
+	else{
+		// TODO: add timeout
+		while(true){
+			m_MutexMap.lock();
+			auto i = m_VariableMap.find(m_CurrentStep);
+			m_MutexMap.unlock();
+			if( i != m_VariableMap.end() ){
+				m_MutexMap.lock();
+				auto j = i->second.find(variable.m_Name);
+				m_MutexMap.unlock();
+				if( j != i->second.end() ){
+					std::memcpy(data, j->second->data.data(), j->second->data.size());
+					return;
+				}
+			}
+		}
+	}
 }
 
 template <class T>
@@ -37,6 +55,7 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     GetSyncCommon(variable, data);
 }
+
 
 } // end namespace adios2
 

@@ -36,7 +36,7 @@ BP3Serializer::BP3Serializer(MPI_Comm mpiComm, const bool debugMode)
 }
 
 void BP3Serializer::PutProcessGroupIndex(
-    const std::string hostLanguage,
+    const std::string &ioName, const std::string hostLanguage,
     const std::vector<std::string> &transportsTypes) noexcept
 {
     ProfilerStart("buffering");
@@ -52,15 +52,15 @@ void BP3Serializer::PutProcessGroupIndex(
     metadataBuffer.insert(metadataBuffer.end(), 2, '\0'); // skip pg length (2)
 
     // write name to metadata
-    const std::string name(std::to_string(m_RankMPI));
+    PutNameRecord(ioName, metadataBuffer);
 
-    PutNameRecord(name, metadataBuffer);
-    // write if host language Fortran in metadata and data
-    const char hostFortran = (hostLanguage == "Fortran") ? 'y' : 'n';
-    InsertToBuffer(metadataBuffer, &hostFortran);
-    CopyToBuffer(dataBuffer, dataPosition, &hostFortran);
+    // write if data is column major in metadata and data
+    const char columnMajor = (IsRowMajor(hostLanguage) == false) ? 'y' : 'n';
+    InsertToBuffer(metadataBuffer, &columnMajor);
+    CopyToBuffer(dataBuffer, dataPosition, &columnMajor);
+
     // write name in data
-    PutNameRecord(name, dataBuffer, dataPosition);
+    PutNameRecord(ioName, dataBuffer, dataPosition);
 
     // processID in metadata,
     const uint32_t processID = static_cast<uint32_t>(m_RankMPI);
@@ -126,6 +126,7 @@ void BP3Serializer::SerializeData(IO &io, const bool advanceStep)
     if (advanceStep)
     {
         ++m_MetadataSet.TimeStep;
+        ++m_MetadataSet.CurrentStep;
     }
     ProfilerStop("buffering");
 }
@@ -143,7 +144,10 @@ void BP3Serializer::CloseData(IO &io)
 
         SerializeMetadataInData();
 
-        m_Profiler.Bytes.at("buffering") += m_Data.m_AbsolutePosition;
+        if (m_Profiler.IsActive)
+        {
+            m_Profiler.Bytes.at("buffering") = m_Data.m_AbsolutePosition;
+        }
 
         m_IsClosed = true;
     }
@@ -158,9 +162,18 @@ void BP3Serializer::CloseStream(IO &io)
     {
         SerializeDataBuffer(io);
     }
-    SerializeMetadataInData();
-    m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
+    SerializeMetadataInData(false);
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
+    }
     ProfilerStop("buffering");
+}
+
+void BP3Serializer::ResetIndices()
+{
+    m_MetadataSet.AttributesIndices.clear();
+    m_MetadataSet.VarsIndices.clear();
 }
 
 std::string BP3Serializer::GetRankProfilingJSON(
@@ -188,6 +201,9 @@ std::string BP3Serializer::GetRankProfilingJSON(
     rankLog +=
         "\"bytes\": " + std::to_string(profiler.Bytes.at("buffering")) + ", ";
     lf_WriterTimer(rankLog, profiler.Timers.at("buffering"));
+    lf_WriterTimer(rankLog, profiler.Timers.at("memcpy"));
+    lf_WriterTimer(rankLog, profiler.Timers.at("minmax"));
+    lf_WriterTimer(rankLog, profiler.Timers.at("meta_sort_merge"));
 
     const size_t transportsSize = transportsTypes.size();
 
@@ -227,6 +243,8 @@ BP3Serializer::AggregateProfilingJSON(const std::string &rankProfilingLog)
 
 void BP3Serializer::AggregateCollectiveMetadata()
 {
+    ProfilerStart("buffering");
+    ProfilerStart("meta_sort_merge");
     const uint64_t pgIndexStart = m_Metadata.m_Position;
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount);
 
@@ -239,11 +257,13 @@ void BP3Serializer::AggregateCollectiveMetadata()
     if (m_RankMPI == 0)
     {
         m_Metadata.Resize(m_Metadata.m_Position + m_MetadataSet.MiniFooterSize,
-                          " when writing collective bp1 Minifooter");
+                          " when writing collective bp3 Minifooter");
         PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
                       m_Metadata.m_Buffer, m_Metadata.m_Position, true);
         m_Metadata.m_AbsolutePosition = m_Metadata.m_Position;
     }
+    ProfilerStop("meta_sort_merge");
+    ProfilerStop("buffering");
 }
 
 // PRIVATE FUNCTIONS
@@ -448,7 +468,8 @@ void BP3Serializer::SerializeDataBuffer(IO &io) noexcept
     m_MetadataSet.DataPGIsOpen = false;
 }
 
-void BP3Serializer::SerializeMetadataInData() noexcept
+void BP3Serializer::SerializeMetadataInData(
+    const bool updateAbsolutePosition) noexcept
 {
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
@@ -536,7 +557,11 @@ void BP3Serializer::SerializeMetadataInData() noexcept
     PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
                   buffer, position);
 
-    absolutePosition += footerSize;
+    if (updateAbsolutePosition)
+    {
+        absolutePosition += footerSize;
+    }
+
     if (m_Profiler.IsActive)
     {
         m_Profiler.Bytes.emplace("buffering", absolutePosition);
@@ -1099,14 +1124,15 @@ void BP3Serializer::MergeSerializeIndices(
         const size_t end)
 
     {
-        for (size_t i = start; i < end; ++i)
+        for (auto i = start; i < end; ++i)
         {
             auto itIndex = nameRankIndices.find(names[i]);
             lf_MergeRank(itIndex->second);
         }
     };
+
     // BODY OF FUNCTION STARTS HERE
-    // if (m_Threads == 1) // enforcing serial version for now
+    if (m_Threads == 1) // enforcing serial version for now
     {
         for (const auto &rankIndices : nameRankIndices)
         {
@@ -1114,48 +1140,43 @@ void BP3Serializer::MergeSerializeIndices(
         }
         return;
     }
+
     // TODO need to debug this part, if threaded per variable
-    //    const size_t elements = nameRankIndices.size();
-    //    const size_t stride = elements / m_Threads;        // elements per
-    //    thread
-    //    const size_t last = stride + elements % m_Threads; // remainder to
-    //    last
-    //
-    //    std::vector<std::thread> threads;
-    //    threads.reserve(m_Threads);
-    //
-    //    // copy names in order to use threads
-    //    std::vector<std::string> names;
-    //    names.reserve(nameRankIndices.size());
-    //
-    //    for (const auto &nameRankIndexPair : nameRankIndices)
-    //    {
-    //        names.push_back(nameRankIndexPair.first);
-    //    }
-    //
-    //    for (unsigned int t = 0; t < m_Threads; ++t)
-    //    {
-    //        const size_t start = stride * t;
-    //        size_t end;
-    //
-    //        if (t == m_Threads - 1)
-    //        {
-    //            end = start + stride;
-    //        }
-    //        else
-    //        {
-    //            end = start + last;
-    //        }
-    //
-    //        threads.push_back(std::thread(lf_MergeRankRange,
-    //                                      std::ref(nameRankIndices),
-    //                                      std::ref(names), start, end));
-    //    }
-    //
-    //    for (auto &thread : threads)
-    //    {
-    //        thread.join();
-    //    }
+    const size_t elements = nameRankIndices.size();
+    const size_t stride = elements / m_Threads;        // elements per thread
+    const size_t last = stride + elements % m_Threads; // remainder to last
+
+    std::vector<std::thread> threads;
+    threads.reserve(m_Threads);
+
+    // copy names in order to use threads
+    std::vector<std::string> names;
+    names.reserve(nameRankIndices.size());
+
+    for (const auto &nameRankIndexPair : nameRankIndices)
+    {
+        names.push_back(nameRankIndexPair.first);
+    }
+
+    for (unsigned int t = 0; t < m_Threads; ++t)
+    {
+        const size_t start = stride * t;
+        size_t end = start + stride;
+
+        if (t == m_Threads - 1)
+        {
+            end = start + last;
+        }
+
+        threads.push_back(std::thread(lf_MergeRankRange,
+                                      std::ref(nameRankIndices),
+                                      std::ref(names), start, end));
+    }
+
+    for (auto &thread : threads)
+    {
+        thread.join();
+    }
 }
 
 std::vector<char>

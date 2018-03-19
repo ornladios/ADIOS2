@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 
     /** Application variable */
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<int> myInts = {0, -1, -2, -3, -4, -5, -6, -7, -8, -9};
     const std::size_t Nx = myFloats.size();
 
     try
@@ -40,17 +41,21 @@ int main(int argc, char *argv[])
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = hdf5IO.DefineVariable<float>(
-            "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+        adios2::Variable<float> &h5Floats = hdf5IO.DefineVariable<float>(
+            "h5Floats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+
+        adios2::Variable<int> &h5Ints = hdf5IO.DefineVariable<int>(
+            "h5Ints", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &hdf5Writer =
             hdf5IO.Open("myVector.h5", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        hdf5Writer.PutSync<float>(bpFloats, myFloats.data());
+        hdf5Writer.PutSync<float>(h5Floats, myFloats.data());
+        hdf5Writer.PutSync(h5Ints, myInts.data());
 
-        /** Create bp file, engine becomes unreachable after this*/
+        /** Create h5 file, engine becomes unreachable after this*/
         hdf5Writer.Close();
     }
     catch (std::invalid_argument &e)

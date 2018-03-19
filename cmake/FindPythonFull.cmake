@@ -15,6 +15,7 @@
 #   PYTHONINTERP_FOUND
 #   PYTHON_EXECUTABLE
 #   PYTHONLIBS_FOUND
+#   PYTHON_INCLUDE_DIRS
 #   PYTHON_LIBRARIES
 #   PythonModule_${module_NAME}_FOUND
 #   
@@ -33,7 +34,18 @@ foreach(comp IN LISTS PythonFull_FIND_COMPONENTS)
     set(PythonFull_${comp}_FOUND ${PYTHONINTERP_FOUND})
     list(APPEND _req_vars PYTHON_EXECUTABLE)
   elseif(comp STREQUAL Libs)
-    find_package(PythonLibsNew)
+    if(PYTHONINTERP_FOUND AND Python_ADDITIONAL_VERSIONS)
+      set(_Python_ADDITIONAL_VERSIONS "${Python_ADDITIONAL_VERSIONS}")
+      unset(Python_ADDITIONAL_VERSIONS)
+      unset(Python_ADDITIONAL_VERSIONS CACHE)
+      find_package(PythonLibs)
+      set(Python_ADDITIONAL_VERSIONS "${_Python_ADDITIONAL_VERSIONS}"
+        CACHE STRING "Python versions to search for"
+      )
+      unset(_Python_ADDITIONAL_VERSIONS)
+    else()
+      find_package(PythonLibs)
+    endif()
     set(PythonFull_${comp}_FOUND ${PYTHONLIBS_FOUND})
     list(APPEND _req_vars PYTHON_LIBRARIES)
   else()

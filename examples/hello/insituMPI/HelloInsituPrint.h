@@ -53,7 +53,7 @@ void printDataStep(const float *data, const adios2::Dims &size,
         myfile << std::setw(5) << step << std::setw(5) << offset[0] + i;
         for (int j = 0; j < size[1]; j++)
         {
-            myfile << std::setw(9) << std::setprecision(4)
+            myfile << std::setw(9) << std::setprecision(5)
                    << data[i * size[1] + j];
         }
         myfile << std::endl;

@@ -40,33 +40,49 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    if (m_UseFormat == "bp" || m_UseFormat == "BP")
+    if (m_UseFormat == "bp")
     {
         PutSyncCommonBP(variable, values);
     }
 
-    if (m_DoMonitor)
+    else if (m_UseFormat == "json")
     {
-        MPI_Barrier(m_MPIComm);
-        std::cout << "I am hooked to the DataMan library\n";
-        std::cout << "Variable " << variable.m_Name << "\n";
-        std::cout << "putshape " << variable.m_Count.size() << "\n";
-        std::cout << "varshape " << variable.m_Shape.size() << "\n";
-        std::cout << "offset " << variable.m_Start.size() << "\n";
-
-        int rank = 0, size = 1;
-        MPI_Comm_size(m_MPIComm, &size);
-
-        for (int i = 0; i < size; ++i)
-        {
-            if (i == rank)
-            {
-                std::cout << "Rank: " << i << "\n";
-                std::cout << std::endl;
-            }
-        }
-        MPI_Barrier(m_MPIComm);
+        PutSyncCommonJson(variable, values);
     }
+
+}
+
+template <class T>
+std::string DataManWriter::SerializeJson(Variable<T> &variable)
+{
+	nlohmann::json metaj;
+	metaj["S"] = variable.m_Shape;
+	metaj["C"] = variable.m_Count;
+	metaj["O"] = variable.m_Start;
+	metaj["T"] = m_CurrentStep;
+	metaj["N"] = variable.m_Name;
+	metaj["Y"] = variable.m_Type;
+	metaj["I"] = variable.PayloadSize();
+	metaj["R"] = m_MPIRank;
+	std::string metastr = metaj.dump();
+	return std::move(metastr);
+}
+
+template <class T>
+void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
+{
+	std::string metastr = SerializeJson(variable);
+	size_t flagsize = sizeof(size_t);
+	size_t metasize = metastr.size();
+	size_t datasize = variable.PayloadSize();
+	size_t totalsize = flagsize + metasize + datasize;
+
+	std::shared_ptr<std::vector<char>> buffer = std::make_shared<std::vector<char>>(totalsize);
+	std::memcpy(buffer->data(), &metasize, flagsize);
+	std::memcpy(buffer->data() + flagsize, metastr.c_str(), metasize);
+	std::memcpy(buffer->data() + flagsize + metasize, values, datasize);
+
+	m_DataMan->WriteWAN(buffer);
 }
 
 template <class T>
@@ -78,7 +94,8 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
     // if first timestep Write create a new pg index
     if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
     {
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_Zmq"});
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                             {"WAN_Zmq"});
     }
 
     const size_t dataSize = variable.PayloadSize() +
@@ -94,12 +111,13 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
         auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
         auto &position = m_BP3Serializer.m_Data.m_Position;
 
-        m_Man.WriteWAN(buffer.data(), position);
+        m_DataMan->WriteWAN(buffer);
 
         // set relative position to clear buffer
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
         // new group index
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_HostLanguage, {"WAN_zmq"});
+        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                             {"WAN_zmq"});
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
@@ -111,7 +129,6 @@ template <class T>
 void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
     PutSyncCommon(variable, values);
-
 }
 
 } // end namespace adios2

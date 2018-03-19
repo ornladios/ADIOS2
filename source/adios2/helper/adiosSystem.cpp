@@ -50,10 +50,12 @@ bool IsRowMajor(const std::string hostLanguage) noexcept
 {
     bool isRowMajor = true;
 
-    if (hostLanguage == "Fortran" || hostLanguage == "R")
+    if (hostLanguage == "Fortran" || hostLanguage == "R" ||
+        hostLanguage == "Matlab")
     {
         isRowMajor = false;
     }
+
     return isRowMajor;
 }
 

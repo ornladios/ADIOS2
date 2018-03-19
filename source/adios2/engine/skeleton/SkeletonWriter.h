@@ -39,16 +39,6 @@ public:
     void PerformPuts() final;
     void EndStep() final;
 
-    /**
-     * Closes a single transport or all transports
-     * @param transportIndex, if -1 (default) closes all transports, otherwise
-     * it
-     * closes a transport in m_Transport[transportIndex]. In debug mode the
-     * latter
-     * is bounds-checked.
-     */
-    void Close(const int transportIndex = -1) final;
-
 private:
     int m_Verbosity = 0;
     int m_WriterRank;       // my rank in the writers' comm
@@ -67,6 +57,14 @@ private:
     void DoPutDeferred(Variable<T> &, const T &) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+    /**
+     * Closes a single transport or all transports
+     * @param transportIndex, if -1 (default) closes all transports,
+     * otherwise it closes a transport in m_Transport[transportIndex].
+     * In debug mode the latter is bounds-checked.
+     */
+    void DoClose(const int transportIndex = -1) final;
 
     /**
      * Common function for primitive PutSync, puts variables in buffer

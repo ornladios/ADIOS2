@@ -6,6 +6,7 @@ pybind11_add_module(adios2py MODULE
   gluePyBind11.cpp
   IOPy.h
   IOPy.cpp
+  FilePy.cpp
 )
 target_link_libraries(adios2py PRIVATE adios2)
 if(ADIOS2_HAVE_MPI)

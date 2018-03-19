@@ -59,16 +59,28 @@ StepStatus ADIOS1Reader::BeginStep(const StepMode mode,
                                     variable.m_StepsCount,                     \
                                     variable.m_ReadAsLocalValue,               \
                                     variable.m_ReadAsJoined, (void *)values);  \
+        m_NeedPerformGets = true;                                              \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void ADIOS1Reader::PerformGets() { m_ADIOS1.PerformReads(); }
+void ADIOS1Reader::PerformGets()
+{
+    m_ADIOS1.PerformReads();
+    m_NeedPerformGets = false;
+}
 
-void ADIOS1Reader::EndStep() { m_ADIOS1.ReleaseStep(); }
+size_t ADIOS1Reader::CurrentStep() const { return m_ADIOS1.CurrentStep(); }
 
-void ADIOS1Reader::Close(const int transportIndex) { m_ADIOS1.Close(); }
+void ADIOS1Reader::EndStep()
+{
+    if (m_NeedPerformGets)
+    {
+        PerformGets();
+    }
+    m_ADIOS1.ReleaseStep();
+}
 
 // PRIVATE
 void ADIOS1Reader::Init()
@@ -96,5 +108,7 @@ void ADIOS1Reader::InitTransports()
 {
     m_ADIOS1.InitTransports(m_IO.m_TransportsParameters);
 }
+
+void ADIOS1Reader::DoClose(const int transportIndex) { m_ADIOS1.Close(); }
 
 } // end namespace adios2

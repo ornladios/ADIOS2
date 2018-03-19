@@ -18,6 +18,7 @@ typedef struct _CP_GlobalInfo
     CMFormat ReaderActivateFormat;
     CMFormat ReleaseTimestepFormat;
     CMFormat WriterCloseFormat;
+    CMFormat ReaderCloseFormat;
 } * CP_GlobalInfo;
 
 struct _ReaderRegisterMsg;
@@ -49,6 +50,8 @@ typedef struct _WS_ReaderInfo
 {
     SstStream ParentStream;
     enum StreamStatus ReaderStatus;
+    long StartingTimestep;
+    long LastSentTimestep;
     void *DP_WSR_Stream;
     void *RS_StreamID;
     int ReaderCohortSize;
@@ -72,12 +75,16 @@ typedef struct _CPTimestepEntry
 {
     long Timestep;
     SstData Data;
+    struct _TimestepMetadataMsg *Msg;
+    int ReferenceCount;
     void **DP_TimestepInfo;
-    SstBlock *MetadataArray;
+    SstData *MetadataArray;
     void (*DataFreeFunc)(void *);
     void *FreeClientData;
     struct _CPTimestepEntry *Next;
 } * CPTimestepList;
+
+typedef struct FFSFormatBlock *FFSFormatList;
 
 struct _SstStream
 {
@@ -87,7 +94,9 @@ struct _SstStream
     enum StreamRole Role;
 
     /* params */
-    int WaitForFirstReader;
+    int RendezvousReaderCount;
+    char *DataTransport;
+    SstRegistrationMethod RegistrationMethod;
 
     /* state */
     int Verbose;
@@ -106,11 +115,15 @@ struct _SstStream
     pthread_cond_t DataCondition;
 
     /* WRITER-SIDE FIELDS */
+    SstParams WriterParams;
     int WriterTimestep;
     int ReaderTimestep;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
+    int QueueLimit;
+    int DiscardOnQueueFull;
     int LastProvidedTimestep;
+    int NewReaderPresent;
 
     /* rendezvous condition */
     int FirstReaderCondition;
@@ -118,6 +131,8 @@ struct _SstStream
 
     int ReaderCount;
     WS_ReaderInfo *Readers;
+    const char *Filename;
+    int GlobalOpRequired;
 
     /* writer side marshal info */
     void *MarshalData;
@@ -125,6 +140,7 @@ struct _SstStream
     void *M; // building metadata block
     size_t DataSize;
     void *D; // building data block
+    FFSFormatList PreviousFormats;
 
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
@@ -134,6 +150,7 @@ struct _SstStream
     enum StreamStatus Status;
     int FinalTimestep;
     int CurrentWorkingTimestep;
+    struct _SstParams *WriterConfigParams;
 
     /* reader side marshal info */
     FFSContext ReaderFFSContext;
@@ -171,14 +188,14 @@ struct _CP_DP_PairInfo
  * encode) to readers (who decode) so that we don't need a third party
  * format server.
  */
-typedef struct FFSFormatBlock
+struct FFSFormatBlock
 {
     char *FormatServerRep;
     int FormatServerRepLen;
     char *FormatIDRep;
     int FormatIDRepLen;
     struct FFSFormatBlock *Next;
-} * FFSFormatList;
+};
 
 /*
  * This is the structure that holds local metadata and the DP info related to
@@ -187,7 +204,8 @@ typedef struct FFSFormatBlock
  */
 struct _MetadataPlusDPInfo
 {
-    SstBlock Metadata;
+    int RequestGlobalOp;
+    SstData Metadata;
     FFSFormatList Formats;
     void *DP_TimestepInfo;
 };
@@ -235,6 +253,8 @@ struct _WriterResponseMsg
 {
     int WriterResponseCondition;
     int WriterCohortSize;
+    struct _SstParams *WriterConfigParams;
+    size_t NextStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
 };
@@ -259,7 +279,7 @@ typedef struct _TimestepMetadataMsg
     int Timestep;
     int CohortSize;
     FFSFormatList Formats;
-    SstBlock *Metadata;
+    SstData *Metadata;
     void **DP_TimestepInfo;
 } * TSMetadataMsg;
 
@@ -288,12 +308,23 @@ typedef struct _WriterCloseMsg
 } * WriterCloseMsg;
 
 /*
+ * The ReaderClose message informs the readers that the reader is beginning an
+ * orderly shutdown of the stream.  One is sent to each writer rank.
+ */
+typedef struct _ReaderCloseMsg
+{
+    void *WSR_Stream;
+} * ReaderCloseMsg;
+
+/*
  * This is the consolidated writer contact info structure that is used to
  * diseminate full writer contact information to all reader ranks
  */
 typedef struct _CombinedWriterInfo
 {
     int WriterCohortSize;
+    SstParams WriterConfigParams;
+    size_t StartingStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
 } * writer_data_t;
@@ -302,13 +333,13 @@ typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 
 extern atom_t CM_TRANSPORT_ATOM;
 
-void CP_parseParams(SstStream stream, const char *params);
+void CP_validateParams(SstStream stream, SstParams Params, int Writer);
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo);
 extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
                                        SstData Data, long Timestep,
                                        FFSFormatList Formats,
-                                       void *DataFreeFunc,
+                                       void DataFreeFunc(void *),
                                        void *FreeClientData);
 
 void **CP_consolidateDataToRankZero(SstStream stream, void *local_info,
@@ -334,6 +365,11 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
                                       attr_list attrs);
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
                                   void *client_data, attr_list attrs);
+extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,
+                                  void *client_data, attr_list attrs);
 
 extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
 extern void FFSClearTimestepData(SstStream Stream);
+extern int *setupPeerArray(int MySize, int MyRank, int PeerSize);
+extern void CP_verbose(SstStream Stream, char *Format, ...);
+extern struct _CP_Services Svcs;

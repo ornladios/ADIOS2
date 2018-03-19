@@ -144,8 +144,8 @@ void adios2::HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
         // std::string subfileVarName="TimeStep0/"+var.m_Name; // need full
         // path?  NEED TO GET the RIGHT SUBFILE VAR NAME RELATED to TIMESTEP!!
         std::string subfileVarName;
-        interop::HDF5Common::StaticGetTimeStepString(
-            subfileVarName, m_VDSFile.m_CurrentTimeStep);
+        interop::HDF5Common::StaticGetAdiosStepString(
+            subfileVarName, m_VDSFile.m_CurrentAdiosStep);
         subfileVarName += "/" + var.m_Name;
 
         for (int i = 0; i < m_NumSubFiles; i++)

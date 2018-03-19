@@ -13,5 +13,6 @@
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Operator.h"
+#include "adios2/highlevelapi/fstream/ADIOS2fstream.h"
 
 #endif /* ADIOS2_H_ */

@@ -44,11 +44,12 @@ public:
     /**
      * Writes a process group index PGIndex and list of methods (from
      * transports). Done at Open or Advance.
+     * @param ioName from IO class, identify Process Group with IO name
      * @param hostLanguage from ADIOS class passed to IO
      * @param transportsTypes passed to get list of transport "bp methods"
      */
     void PutProcessGroupIndex(
-        const std::string hostLanguage,
+        const std::string &ioName, const std::string hostLanguage,
         const std::vector<std::string> &transportsTypes) noexcept;
 
     /**
@@ -74,9 +75,13 @@ public:
 
     /**
      * Serializes the metadata indices appending it into the data buffer inside
-     * m_HeapBuffer
+     * m_Data
+     * @param updateAbsolutePosition true: adds footer size to absolute position
+     * used for Close,
+     * false: doesn't update absolute, used for partial buffer
      */
-    void SerializeMetadataInData() noexcept;
+    void
+    SerializeMetadataInData(const bool updateAbsolutePosition = true) noexcept;
 
     /**
      * Finishes bp buffer by serializing data and adding trailing metadata
@@ -85,11 +90,13 @@ public:
     void CloseData(IO &io);
 
     /**
-     * Closes bp buffer for streaming mdoe...must reset metadata for the next
+     * Closes bp buffer for streaming mode...must reset metadata for the next
      * step
      * @param io
      */
     void CloseStream(IO &io);
+
+    void ResetIndices();
 
     /**
      * Get a string with profiling information for this rank
@@ -189,7 +196,7 @@ private:
      */
     template <class T>
     Stats<typename TypeInfo<T>::ValueType>
-    GetStats(const Variable<T> &variable) const noexcept;
+    GetStats(const Variable<T> &variable) noexcept;
 
     template <class T>
     void PutVariableMetadataInData(
