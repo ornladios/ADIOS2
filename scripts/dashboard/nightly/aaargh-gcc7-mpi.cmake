@@ -1,6 +1,6 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "aaargh.kitware.com")
-set(CTEST_BUILD_CONFIGURATION Release)
+set(CTEST_BUILD_CONFIGURATION Debug)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j36")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
@@ -24,6 +24,10 @@ module(load ${MPI_MODULE})
 module(load phdf5)
 module(load mpi4py)
 module(load adios)
+
+module(load valgrind)
+find_program(CTEST_MEMORYCHECK_COMMAND valgrind)
+set(dashboard_do_memcheck ON)
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
