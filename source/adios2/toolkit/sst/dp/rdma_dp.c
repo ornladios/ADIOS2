@@ -428,16 +428,21 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
         LocalDesc = fi_mr_desc(LocalMR);
     }
 
-    do {
-    	rc = fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
-    			SrcAddress, (uint64_t)ReadReplyMsg->Addr, ReadReplyMsg->Key,
-    	        Fabric->ctx);
-    }while(rc == -EAGAIN);
+    do
+    {
+        rc = fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
+                     SrcAddress, (uint64_t)ReadReplyMsg->Addr,
+                     ReadReplyMsg->Key, Fabric->ctx);
+    } while (rc == -EAGAIN);
 
-    if(rc != 0) {
-    	Svcs->verbose(RS_Stream->CP_Stream, "fi_readmsg failed with code %d.\n", rc);
-    } else {
-    	fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
+    if (rc != 0)
+    {
+        Svcs->verbose(RS_Stream->CP_Stream, "fi_readmsg failed with code %d.\n",
+                      rc);
+    }
+    else
+    {
+        fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
     }
 
     if (Fabric->local_mr_req)
