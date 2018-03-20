@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Source any site-specific variables or scripts
+if [ -f ${HOME}/.dashboard ]
+then
+  source ${HOME}/.dashboard
+fi
+
 function log()
 {
   local TIMESTAMP=$(date +"%Y%m%dT%T.%N")
@@ -61,3 +67,7 @@ ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-clang5-nompi-asan.cmake 2>&1 1>Logs/aaargh-
 
 log "Running Clang5 NoMPI MemorySanitizer"
 ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-clang5-nompi-msan.cmake 2>&1 1>Logs/aaargh-clang5-nompi-msan.log
+
+# Do static analysis
+log "Running Coverity Static Analysis"
+${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi-coverity.cmake 2>&1 1>Logs/aaargh-gcc7-mpi-coverity.cmake.log
