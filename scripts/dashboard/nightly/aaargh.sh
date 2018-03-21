@@ -68,6 +68,9 @@ ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-clang5-nompi-asan.cmake 2>&1 1>Logs/aaargh-
 log "Running Clang5 NoMPI MemorySanitizer"
 ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-clang5-nompi-msan.cmake 2>&1 1>Logs/aaargh-clang5-nompi-msan.log
 
-# Do static analysis
 log "Running Coverity Static Analysis"
 ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi-coverity.cmake 2>&1 1>Logs/aaargh-gcc7-mpi-coverity.cmake.log
+
+log "Running Code Coverage Analysis"
+${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi-gcov.cmake \
+  -DMPI_NAME=MPICH -DMPI_MODULE=mpich 2>&1 | tee Logs/aaargh-gcc7-mpich-gcov.log
