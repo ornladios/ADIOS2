@@ -16,10 +16,7 @@ module(load llvm5)
 
 set(CTEST_MEMORYCHECK_TYPE "AddressSanitizer")
 set(dashboard_do_memcheck ON)
-set(dashboard_do_submit OFF)
-macro(dashboard_hook_end)
-  ctest_submit()
-endmacro()
+set(dashboard_track "Analysis")
 
 set(ENV{CC}  clang)
 set(ENV{CXX} clang++)

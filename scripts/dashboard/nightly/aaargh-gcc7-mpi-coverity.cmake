@@ -19,8 +19,8 @@ module(load mpi4py)
 module(load adios)
 
 set(ENV{PATH} "/opt/coverity/cov-analysis-linux64-2017.07/bin:$ENV{PATH}")
-set(dashboard_do_submit OFF)
 set(dashboard_do_test OFF)
+set(dashboard_track "Analysis")
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
