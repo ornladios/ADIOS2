@@ -60,6 +60,11 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         {
             Stream->DataTransport = strdup("rdma");
         }
+        else
+        {
+        	fprintf(stderr, "Error: Unknown value '%s' for DataTransport parameter.\n", SelectedTransport);
+        	Stream->DataTransport = NULL;
+        }
         free(SelectedTransport);
     }
     if (Params->DataTransport == NULL)
