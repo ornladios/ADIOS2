@@ -40,11 +40,11 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     char *SelectedTransport = NULL;
     if (Params->DataTransport != NULL)
     {
-        int i = 0;
+    	int i;
         SelectedTransport = malloc(strlen(Params->DataTransport) + 1);
-        while (Params->DataTransport[i] != 0)
+        for(i = 0; Params->DataTransport[i] != 0; i++)
         {
-            SelectedTransport[i] = tolower(Params->DataTransport[i]);
+        	SelectedTransport[i] = tolower(Params->DataTransport[i]);
         }
         SelectedTransport[i] = 0;
 
@@ -52,16 +52,15 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         if ((strcmp(SelectedTransport, "wan") == 0) ||
             (strcmp(SelectedTransport, "evpath") == 0))
         {
-            free(SelectedTransport);
-            SelectedTransport = strdup("evpath");
+            Stream->DataTransport = strdup("evpath");
         }
         else if ((strcmp(SelectedTransport, "rdma") == 0) ||
                  (strcmp(SelectedTransport, "ib") == 0) ||
                  (strcmp(SelectedTransport, "fabric") == 0))
         {
-            free(SelectedTransport);
-            SelectedTransport = strdup("rdma");
+            Stream->DataTransport = strdup("rdma");
         }
+        free(SelectedTransport);
     }
     if (Params->DataTransport == NULL)
     {
