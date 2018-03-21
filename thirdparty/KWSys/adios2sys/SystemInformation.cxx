@@ -121,7 +121,11 @@ typedef int siginfo_t;
 #if defined(KWSYS_SYS_HAS_IFADDRS_H)
 #include <ifaddrs.h>
 #include <net/if.h>
-#if !defined(__LSB_VERSION__) /* LSB has no getifaddrs */
+#if defined(__LSB_VERSION__)
+/* LSB has no getifaddrs */
+#elif defined(__ANDROID_API__) && __ANDROID_API__ < 24
+/* Android has no getifaddrs prior to API 24.  */
+#else
 #define KWSYS_SYSTEMINFORMATION_IMPLEMENT_FQDN
 #endif
 #endif
@@ -340,7 +344,7 @@ public:
 
   bool DoesCPUSupportCPUID();
 
-  // Retrieve memory information in megabyte.
+  // Retrieve memory information in MiB.
   size_t GetTotalVirtualMemory();
   size_t GetAvailableVirtualMemory();
   size_t GetTotalPhysicalMemory();
@@ -348,7 +352,7 @@ public:
 
   LongLong GetProcessId();
 
-  // Retrieve memory information in kib
+  // Retrieve memory information in KiB.
   LongLong GetHostMemoryTotal();
   LongLong GetHostMemoryAvailable(const char* envVarName);
   LongLong GetHostMemoryUsed();
@@ -736,7 +740,7 @@ bool SystemInformation::DoesCPUSupportCPUID()
   return this->Implementation->DoesCPUSupportCPUID();
 }
 
-// Retrieve memory information in megabyte.
+// Retrieve memory information in MiB.
 size_t SystemInformation::GetTotalVirtualMemory()
 {
   return this->Implementation->GetTotalVirtualMemory();
