@@ -8,11 +8,11 @@ readonly name="NLohmannJson"
 readonly ownership="JSON For Modern C++ Upstream <robot@adios2>"
 readonly subtree="thirdparty/NLohmannJson/json"
 readonly repo="https://github.com/nlohmann/json.git"
-readonly tag="v2.1.1"
+readonly tag="v3.1.2"
 readonly shortlog="true"
 readonly paths="
 LICENSE.MIT
-src/json.hpp
+single_include/nlohmann/json.hpp
 "
 
 extract_source () {

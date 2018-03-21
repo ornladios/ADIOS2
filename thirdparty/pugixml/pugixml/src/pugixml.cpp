@@ -1,7 +1,7 @@
 /**
  * pugixml parser - version 1.8
  * --------------------------------------------------------
- * Copyright (C) 2006-2017, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
+ * Copyright (C) 2006-2018, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
  * Report bugs and download new versions at http://pugixml.org/
  *
  * This library is distributed under the MIT License. See notice at the end
@@ -76,6 +76,10 @@
 #	pragma diag_suppress=237 // controlling expression is constant
 #endif
 
+#ifdef __TI_COMPILER_VERSION__
+#	pragma diag_suppress 179 // function was declared but never referenced
+#endif
+
 // Inlining controls
 #if defined(_MSC_VER) && _MSC_VER >= 1300
 #	define PUGI__NO_INLINE __declspec(noinline)
@@ -120,11 +124,11 @@ using std::memmove;
 using std::memset;
 #endif
 
-// Some MinGW versions have headers that erroneously omit LLONG_MIN/LLONG_MAX/ULLONG_MAX definitions in strict ANSI mode
-#if defined(PUGIXML_HAS_LONG_LONG) && defined(__MINGW32__) && defined(__STRICT_ANSI__) && !defined(LLONG_MAX) && !defined(LLONG_MIN) && !defined(ULLONG_MAX)
-#	define LLONG_MAX 9223372036854775807LL
-#	define LLONG_MIN (-LLONG_MAX-1)
-#	define ULLONG_MAX (2ULL*LLONG_MAX+1)
+// Some MinGW/GCC versions have headers that erroneously omit LLONG_MIN/LLONG_MAX/ULLONG_MAX definitions from limits.h in some configurations
+#if defined(PUGIXML_HAS_LONG_LONG) && defined(__GNUC__) && !defined(LLONG_MAX) && !defined(LLONG_MIN) && !defined(ULLONG_MAX)
+#	define LLONG_MIN (-LLONG_MAX - 1LL)
+#	define LLONG_MAX __LONG_LONG_MAX__
+#	define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
 #endif
 
 // In some environments MSVC is a compiler but the CRT lacks certain MSVC-specific features
@@ -848,7 +852,7 @@ PUGI__NS_BEGIN
 				{
 					uintptr_t base = reinterpret_cast<uintptr_t>(this) & ~(compact_alignment - 1);
 
-					return reinterpret_cast<T*>(base + ((_data - 1 + start) << compact_alignment_log2));
+					return reinterpret_cast<T*>(base + (_data - 1 + start) * compact_alignment);
 				}
 				else
 					return compact_get_value<header_offset, T>(this);
@@ -926,7 +930,7 @@ PUGI__NS_BEGIN
 				{
 					uintptr_t base = reinterpret_cast<uintptr_t>(this) & ~(compact_alignment - 1);
 
-					return reinterpret_cast<T*>(base + ((_data - 1 - 65533) << compact_alignment_log2));
+					return reinterpret_cast<T*>(base + (_data - 1 - 65533) * compact_alignment);
 				}
 				else if (_data == 65534)
 					return static_cast<T*>(compact_get_page(this, header_offset)->compact_shared_parent);
@@ -6072,10 +6076,16 @@ namespace pugi
 
 		// get extra buffer element (we'll store the document fragment buffer there so that we can deallocate it later)
 		impl::xml_memory_page* page = 0;
-		impl::xml_extra_buffer* extra = static_cast<impl::xml_extra_buffer*>(doc->allocate_memory(sizeof(impl::xml_extra_buffer), page));
+		impl::xml_extra_buffer* extra = static_cast<impl::xml_extra_buffer*>(doc->allocate_memory(sizeof(impl::xml_extra_buffer) + sizeof(void*), page));
 		(void)page;
 
 		if (!extra) return impl::make_parse_result(status_out_of_memory);
+
+	#ifdef PUGIXML_COMPACT
+		// align the memory block to a pointer boundary; this is required for compact mode where memory allocations are only 4b aligned
+		// note that this requires up to sizeof(void*)-1 additional memory, which the allocation above takes into account
+		extra = reinterpret_cast<impl::xml_extra_buffer*>((reinterpret_cast<uintptr_t>(extra) + (sizeof(void*) - 1)) & ~(sizeof(void*) - 1));
+	#endif
 
 		// add extra buffer to the list
 		extra->buffer = 0;
@@ -6834,13 +6844,13 @@ namespace pugi
 	}
 
 #ifdef PUGIXML_HAS_MOVE
-	PUGI__FN xml_document::xml_document(xml_document&& rhs): _buffer(0)
+	PUGI__FN xml_document::xml_document(xml_document&& rhs) PUGIXML_NOEXCEPT_IF_NOT_COMPACT: _buffer(0)
 	{
 		_create();
 		_move(rhs);
 	}
 
-	PUGI__FN xml_document& xml_document::operator=(xml_document&& rhs)
+	PUGI__FN xml_document& xml_document::operator=(xml_document&& rhs) PUGIXML_NOEXCEPT_IF_NOT_COMPACT
 	{
 		if (this == &rhs) return *this;
 
@@ -6871,7 +6881,8 @@ namespace pugi
 		assert(!_root);
 
 	#ifdef PUGIXML_COMPACT
-		const size_t page_offset = sizeof(uint32_t);
+		// space for page marker for the first page (uint32_t), rounded up to pointer size; assumes pointers are at least 32-bit
+		const size_t page_offset = sizeof(void*);
 	#else
 		const size_t page_offset = 0;
 	#endif
@@ -6948,7 +6959,7 @@ namespace pugi
 	}
 
 #ifdef PUGIXML_HAS_MOVE
-	PUGI__FN void xml_document::_move(xml_document& rhs)
+	PUGI__FN void xml_document::_move(xml_document& rhs) PUGIXML_NOEXCEPT_IF_NOT_COMPACT
 	{
 		impl::xml_document_struct* doc = static_cast<impl::xml_document_struct*>(_root);
 		impl::xml_document_struct* other = static_cast<impl::xml_document_struct*>(rhs._root);
@@ -12040,7 +12051,7 @@ namespace pugi
 	}
 
 #ifdef PUGIXML_HAS_MOVE
-	PUGI__FN void xpath_node_set::_move(xpath_node_set& rhs)
+	PUGI__FN void xpath_node_set::_move(xpath_node_set& rhs) PUGIXML_NOEXCEPT
 	{
 		_type = rhs._type;
 		_storage = rhs._storage;
@@ -12083,12 +12094,12 @@ namespace pugi
 	}
 
 #ifdef PUGIXML_HAS_MOVE
-	PUGI__FN xpath_node_set::xpath_node_set(xpath_node_set&& rhs): _type(type_unsorted), _begin(&_storage), _end(&_storage)
+	PUGI__FN xpath_node_set::xpath_node_set(xpath_node_set&& rhs) PUGIXML_NOEXCEPT: _type(type_unsorted), _begin(&_storage), _end(&_storage)
 	{
 		_move(rhs);
 	}
 
-	PUGI__FN xpath_node_set& xpath_node_set::operator=(xpath_node_set&& rhs)
+	PUGI__FN xpath_node_set& xpath_node_set::operator=(xpath_node_set&& rhs) PUGIXML_NOEXCEPT
 	{
 		if (this == &rhs) return *this;
 
@@ -12283,7 +12294,7 @@ namespace pugi
 	}
 
 #ifdef PUGIXML_HAS_MOVE
-	PUGI__FN xpath_variable_set::xpath_variable_set(xpath_variable_set&& rhs)
+	PUGI__FN xpath_variable_set::xpath_variable_set(xpath_variable_set&& rhs) PUGIXML_NOEXCEPT
 	{
 		for (size_t i = 0; i < sizeof(_data) / sizeof(_data[0]); ++i)
 		{
@@ -12292,7 +12303,7 @@ namespace pugi
 		}
 	}
 
-	PUGI__FN xpath_variable_set& xpath_variable_set::operator=(xpath_variable_set&& rhs)
+	PUGI__FN xpath_variable_set& xpath_variable_set::operator=(xpath_variable_set&& rhs) PUGIXML_NOEXCEPT
 	{
 		for (size_t i = 0; i < sizeof(_data) / sizeof(_data[0]); ++i)
 		{
@@ -12486,7 +12497,7 @@ namespace pugi
 	}
 
 #ifdef PUGIXML_HAS_MOVE
-	PUGI__FN xpath_query::xpath_query(xpath_query&& rhs)
+	PUGI__FN xpath_query::xpath_query(xpath_query&& rhs) PUGIXML_NOEXCEPT
 	{
 		_impl = rhs._impl;
 		_result = rhs._result;
@@ -12494,7 +12505,7 @@ namespace pugi
 		rhs._result = xpath_parse_result();
 	}
 
-	PUGI__FN xpath_query& xpath_query::operator=(xpath_query&& rhs)
+	PUGI__FN xpath_query& xpath_query::operator=(xpath_query&& rhs) PUGIXML_NOEXCEPT
 	{
 		if (this == &rhs) return *this;
 
@@ -12759,7 +12770,7 @@ namespace pugi
 #endif
 
 /**
- * Copyright (c) 2006-2017 Arseny Kapoulkine
+ * Copyright (c) 2006-2018 Arseny Kapoulkine
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
