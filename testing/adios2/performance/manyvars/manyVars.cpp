@@ -138,7 +138,7 @@ public:
     int REDEFINE =
         0; // 1: delete and redefine variable definitions at each step to
            // test adios_delete_vardefs()
-    char *FILENAME = nullptr;
+    std::string FILENAME;
 
     /* Variables to write */
     int *a2 = nullptr;
@@ -242,11 +242,9 @@ public:
         NBLOCKS = p.nblocks;
         NSTEPS = p.nsteps;
         REDEFINE = redefineVars;
-        std::string fn = "manyVars." + std::to_string(NVARS) + "_" +
-                         std::to_string(NBLOCKS) + "_" +
-                         std::to_string(NSTEPS) + "_" +
-                         (REDEFINE ? "redefine" : "") + ".bp";
-        FILENAME = const_cast<char *>(fn.c_str());
+        FILENAME = "manyVars." + std::to_string(NVARS) + "_" +
+                   std::to_string(NBLOCKS) + "_" + std::to_string(NSTEPS) +
+                   "_" + (REDEFINE ? "redefine" : "") + ".bp";
 
         alloc_vars();
         adios2_adios *adiosH =
@@ -261,7 +259,7 @@ public:
                 NSTEPS);
         }
 
-        engineW = adios2_open(ioW, FILENAME, adios2_mode_write);
+        engineW = adios2_open(ioW, FILENAME.c_str(), adios2_mode_write);
 
         err = 0;
         for (i = 0; i < NSTEPS; i++)
@@ -316,14 +314,15 @@ public:
         double tb, te;
         size_t count[2] = {ldim1, ldim2};
 
-        log("Write step %d to %s\n", step, FILENAME);
+        log("Write step %d to %s\n", step, FILENAME.c_str());
         tb = MPI_Wtime();
 
         adios2_begin_step(engineW, adios2_step_mode_append, 0.0);
         for (block = 0; block < NBLOCKS; block++)
         {
             v = VALUE(rank, step, block);
-            log("  Write block %d, value %d to %s\n", block, v, FILENAME);
+            log("  Write block %d, value %d to %s\n", block, v,
+                FILENAME.c_str());
             set_vars(step, block);
             size_t start[2] = {offs1, offs2};
             for (i = 0; i < NVARS; i++)
@@ -366,18 +365,19 @@ public:
 
         reset_readvars();
 
-        log("Read and check data in %s\n", FILENAME);
-        adios2_engine *engineR = adios2_open(ioR, FILENAME, adios2_mode_read);
+        log("Read and check data in %s\n", FILENAME.c_str());
+        adios2_engine *engineR =
+            adios2_open(ioR, FILENAME.c_str(), adios2_mode_read);
         if (engineR == NULL)
         {
-            printE("Error at opening file %s for reading\n", FILENAME);
+            printE("Error at opening file %s for reading\n", FILENAME.c_str());
             return 1;
         }
 
         adios2_step_status status =
             adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0);
 
-        log("  Check variable definitions... %s\n", FILENAME);
+        log("  Check variable definitions... %s\n", FILENAME.c_str());
         tb = MPI_Wtime();
         for (i = 0; i < NVARS; i++)
         {
