@@ -1,0 +1,13 @@
+option(ADIOS2_USE_SYSTEM_FFS "Use an externally supplied FFS library" OFF)
+if(NOT ADIOS2_USE_SYSTEM_FFS)
+  set(BUILD_TESTING OFF)
+  set(FFS_USE_ATL ON CACHE INTERNAL "")
+  set(FFS_USE_DILL ON CACHE INTERNAL "")
+  set(FFS_LIBRARIES_ONLY ON CACHE INTERNAL "")
+  set(FFS_QUIET ON CACHE INTERNAL "")
+  set(FFS_LIBRARY_PREFIX adios2_ CACHE INTERNAL "")
+
+  add_subdirectory(ffs)
+  set(ffs_DIR ${CMAKE_CURRENT_BINARY_DIR}/ffs CACHE INTERNAL "")
+endif()
+find_package(ffs REQUIRED)
