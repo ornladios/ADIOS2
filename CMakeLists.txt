@@ -22,18 +22,18 @@ set(CMAKE_INSTALL_LIBDIR lib)
 set(CMAKE_INSTALL_INCLUDEDIR include)
 set(CMAKE_INSTALL_CMAKEDIR lib/cmake/adios2)
 
-list(INSERT CMAKE_MODULE_PATH 0 "${ADIOS2_SOURCE_DIR}/cmake")
+list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
-    ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 endif()
 if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
-    ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 endif()
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-    ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 endif()
 
 # Let windows builds auto-export dll symbols
@@ -107,7 +107,7 @@ adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" OFF)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
-include(${ADIOS2_SOURCE_DIR}/cmake/DetectOptions.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
   # Workaround for MPI forcing the link of C++ bindings
@@ -119,12 +119,12 @@ set(ADIOS2_CONFIG_OPTS
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
-  ${ADIOS2_SOURCE_DIR}/CTestCustom.cmake.in
-  ${ADIOS2_BINARY_DIR}/CTestCustom.cmake
+  ${PROJECT_SOURCE_DIR}/CTestCustom.cmake.in
+  ${PROJECT_BINARY_DIR}/CTestCustom.cmake
   @ONLY
 )
 
-install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
+install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 
