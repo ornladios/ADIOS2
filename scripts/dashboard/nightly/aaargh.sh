@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Source any site-specific variables or scripts
+if [ -f ${HOME}/.dashboard ]
+then
+  source ${HOME}/.dashboard
+fi
+
 function log()
 {
   local TIMESTAMP=$(date +"%Y%m%dT%T.%N")
@@ -29,6 +35,10 @@ else
 fi
 SCRIPT_DIR=${PWD}/Source/scripts/dashboard/nightly
 
+# Make sure we have a newer binutils available
+
+source /opt/rh/devtoolset-7/enable
+
 log "Running Serial GCC7"
 ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-nompi.cmake 2>&1 1>Logs/aaargh-gcc7-nompi.log
 
@@ -51,3 +61,16 @@ ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel17-mpi.cmake \
 log "Running Intel18 IntelMPI"
 ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel18-mpi.cmake \
   -DMPI_NAME=IntelMPI -DMPI_MODULE=impi 2>&1 1>Logs/aaargh-intel18-impi.log
+
+log "Running Clang5 NoMPI AddressSanitizer"
+${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-clang5-nompi-asan.cmake 2>&1 1>Logs/aaargh-clang5-nompi-asan.log
+
+log "Running Clang5 NoMPI MemorySanitizer"
+${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-clang5-nompi-msan.cmake 2>&1 1>Logs/aaargh-clang5-nompi-msan.log
+
+log "Running Coverity Static Analysis"
+${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi-coverity.cmake 2>&1 1>Logs/aaargh-gcc7-mpi-coverity.cmake.log
+
+log "Running Code Coverage Analysis"
+${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi-gcov.cmake \
+  -DMPI_NAME=MPICH -DMPI_MODULE=mpich 2>&1 | tee Logs/aaargh-gcc7-mpich-gcov.log
