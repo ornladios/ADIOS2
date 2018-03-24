@@ -7,7 +7,11 @@ add_library(sst
   cp/ffs_marshal.c
 )
 
-target_compile_features(sst PRIVATE c_std_99)
+# Ideally we'd like to use the c_std_99 meta feature, but that wasn't available
+# until CMake 3.8.  However, requiring the c_restrict feature effectively
+# achieves the same result since it's a C99 feature
+target_compile_features(sst PRIVATE c_restrict)
+
 target_include_directories(sst PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(sst PRIVATE EVPath::EVPath)
 target_link_libraries(sst PUBLIC MPI::MPI_C)

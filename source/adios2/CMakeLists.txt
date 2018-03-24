@@ -81,6 +81,7 @@ if(ADIOS2_HAVE_ZeroMQ)
 endif()
 
 if(ADIOS2_HAVE_SST)
+  find_package(EVPath REQUIRED)
   add_subdirectory(toolkit/sst)
   target_sources(adios2 PRIVATE
     engine/sst/SstReader.cpp
