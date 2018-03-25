@@ -307,6 +307,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
         Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
         free(Stream);
         free(Contact);
+        free(RdmaContactString);
         *ReaderContactInfoPtr = NULL;
         return (NULL);
     }
