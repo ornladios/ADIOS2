@@ -4,9 +4,9 @@
 #include <evpath.h>
 #include <fm.h>
 
+#include "SSTConfig.h"
 #include "dp_interface.h"
 #include "sst_data.h"
-#include "SSTConfig.h"
 
 #ifdef SST_HAVE_LIBFABRIC
 extern CP_DP_Interface LoadRdmaDP();
