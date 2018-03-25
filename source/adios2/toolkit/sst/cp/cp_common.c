@@ -40,11 +40,11 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     char *SelectedTransport = NULL;
     if (Params->DataTransport != NULL)
     {
-    	int i;
+        int i;
         SelectedTransport = malloc(strlen(Params->DataTransport) + 1);
-        for(i = 0; Params->DataTransport[i] != 0; i++)
+        for (i = 0; Params->DataTransport[i] != 0; i++)
         {
-        	SelectedTransport[i] = tolower(Params->DataTransport[i]);
+            SelectedTransport[i] = tolower(Params->DataTransport[i]);
         }
         SelectedTransport[i] = 0;
 
@@ -62,8 +62,10 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         }
         else
         {
-        	fprintf(stderr, "Error: Unknown value '%s' for DataTransport parameter.\n", SelectedTransport);
-        	Stream->DataTransport = NULL;
+            fprintf(stderr,
+                    "Error: Unknown value '%s' for DataTransport parameter.\n",
+                    SelectedTransport);
+            Stream->DataTransport = NULL;
         }
         free(SelectedTransport);
     }
