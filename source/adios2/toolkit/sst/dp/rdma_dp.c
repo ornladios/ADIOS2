@@ -306,6 +306,8 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     {
         Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
         free(Stream);
+        free(Contact);
+        *ReaderContactInfoPtr = NULL;
         return (NULL);
     }
 
@@ -618,7 +620,6 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
         Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
     RdmaCompletionHandle ret = malloc(sizeof(struct _RdmaCompletionHandle));
-    RdmaPerTimestepInfo TimestepInfo = (RdmaPerTimestepInfo)DP_TimestepInfo;
     struct _RdmaReadRequestMsg ReadRequestMsg;
 
     ret->CMcondition = CMCondition_get(cm, NULL);
