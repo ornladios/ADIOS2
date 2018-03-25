@@ -141,6 +141,9 @@ endif()
 if(ADIOS2_USE_SST AND ADIOS2_HAVE_MPI)
   set(ADIOS2_HAVE_SST TRUE)
   find_package(LibFabric)
+  if(LIBFABRIC_FOUND)
+    set(SST_HAVE_LIBFABRIC TRUE)
+  endif()
 endif()
 
 #SysV IPC
