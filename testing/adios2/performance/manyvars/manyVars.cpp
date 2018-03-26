@@ -242,16 +242,8 @@ public:
         NBLOCKS = p.nblocks;
         NSTEPS = p.nsteps;
         REDEFINE = redefineVars;
-        if (REDEFINE)
-        {
-            snprintf(FILENAME, sizeof(FILENAME), "manyVars.%d_%d_%d.bp", NVARS,
-                     NBLOCKS, NSTEPS);
-        }
-        else
-        {
-            snprintf(FILENAME, sizeof(FILENAME),
-                     "manyVars.%d_%d_%d_redefine.bp", NVARS, NBLOCKS, NSTEPS);
-        }
+        snprintf(FILENAME, sizeof(FILENAME), "manyVars.%zu_%zu_%zu%s.bp", NVARS,
+                 NBLOCKS, NSTEPS, REDEFINE ? "_redefine" : "");
 
         alloc_vars();
         adios2_adios *adiosH =
