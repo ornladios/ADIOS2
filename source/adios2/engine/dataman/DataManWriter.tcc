@@ -109,7 +109,6 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
         // Close buffer here?
         m_BP3Serializer.CloseStream(m_IO);
         auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
-        auto &position = m_BP3Serializer.m_Data.m_Position;
 
         m_DataMan->WriteWAN(buffer);
 

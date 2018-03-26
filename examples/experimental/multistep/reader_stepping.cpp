@@ -17,18 +17,17 @@
 #endif
 int main(int argc, char *argv[])
 {
-    int rank = 0, nproc = 1;
+    int rank = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
     const bool adiosDebug = true;
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(MPI_COMM_WORLD, adiosDebug);
 #else
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios(adiosDebug);
 #endif
 
     // Info variables from the file

@@ -330,7 +330,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
 // ADIOS2 write, ADIOS2 read
 TEST_F(BPWriteReadTest, DISABLED_ADIOS2BPWriteADIOS2BPRead1D8)
 {
-    std::string fname = "ADIOS2BPWriteADIOS2BPRead1D8.bp";
+    // std::string fname = "ADIOS2BPWriteADIOS2BPRead1D8.bp";
 
     ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }

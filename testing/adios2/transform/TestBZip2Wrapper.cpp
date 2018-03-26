@@ -57,6 +57,7 @@ TEST_F(ADIOSBZip2Wrapper, UInt100)
     size_t decompressedSize = adiosBZip2.Decompress(
         compressedBuffer.data(), compressedSize, decompressedBuffer.data(),
         decompressedBuffer.size() * sizeof(unsigned int));
+    ASSERT_EQ(decompressedSize, Nx);
 
     // testing data recovery
     for (size_t i = 0; i < Nx; ++i)

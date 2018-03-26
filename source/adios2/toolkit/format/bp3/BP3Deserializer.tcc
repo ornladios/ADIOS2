@@ -239,8 +239,6 @@ void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
                                           const std::vector<char> &buffer,
                                           size_t position) const
 {
-    const size_t initialPosition = position;
-
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(
             buffer, position, static_cast<DataTypes>(header.DataType));
