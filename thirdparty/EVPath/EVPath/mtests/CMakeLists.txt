@@ -24,9 +24,9 @@ if(MPI_FOUND)
   target_compile_options(mpi_trans_test PRIVATE ${MPI_C_COMPILE_FLAGS})
   target_link_libraries(mpi_trans_test evpath atl::atl ${MPI_C_LIBRARIES})
   target_include_directories(mpi_trans_test PRIVATE ${MPI_C_INCLUDE_PATH})
-  target_compile_defintions(mpi_trans_test PRIVATE BUILD_WITH_MPI=1)
-
+  target_compile_defintion(mpi_trans_test PRIVATE BUILD_WITH_MPI=1)
 endif()
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/transport_test.pl
   ${CMAKE_CURRENT_BINARY_DIR}/transport_test.pl
