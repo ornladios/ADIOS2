@@ -30,6 +30,7 @@ target_compile_features(sst PRIVATE c_restrict)
 
 target_include_directories(sst PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${LIBFABRIC_INCLUDE_DIR}
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/sst>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2/toolkit/sst>
 )
