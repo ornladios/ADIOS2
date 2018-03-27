@@ -12,6 +12,18 @@ case ${BUILD_MATRIX_ENTRY} in
       exit 1;
     fi
     ;;
+  analyze)
+    echo "Running static analysis (clang-analyzer)"
+    if ! ${SOURCE_DIR}/scripts/travis/run-sa.sh; then
+      exit 1;
+    fi
+    ;;
+  check)
+    echo "Running static analysis (cppcheck)"
+    if ! ${SOURCE_DIR}/scripts/travis/run-cppcheck.sh; then
+      exit 1;
+    fi
+    ;;
   *)
     echo "Error: BUILD_MATRIX_ENTRY is undefined or set to an unknown value"
     exit 1;
