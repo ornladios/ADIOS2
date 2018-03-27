@@ -193,6 +193,11 @@ void EnginePy::EndStep() { m_Engine.EndStep(); }
 
 void EnginePy::WriteStep() { m_Engine.WriteStep(); }
 
+void EnginePy::Flush(const int transportIndex)
+{
+    m_Engine.Flush(transportIndex);
+}
+
 void EnginePy::Close(const int transportIndex)
 {
     m_Engine.Close(transportIndex);

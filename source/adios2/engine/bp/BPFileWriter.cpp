@@ -281,6 +281,8 @@ void BPFileWriter::WriteData(const bool isFinal, const int transportIndex)
 
     m_FileDataManager.WriteFiles(m_BP3Serializer.m_Data.m_Buffer.data(),
                                  dataSize, transportIndex);
+
+    m_FileDataManager.FlushFiles(transportIndex);
 }
 
 void BPFileWriter::AggregateWriteData(const bool isFinal,
@@ -304,6 +306,8 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
 
             m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
                                          bufferSTL.m_Position, transportIndex);
+
+            m_FileDataManager.FlushFiles(transportIndex);
         }
 
         m_BP3Serializer.AggregatorsIReceive(r);

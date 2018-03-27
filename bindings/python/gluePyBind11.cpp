@@ -181,7 +181,8 @@ PYBIND11_MODULE(adios2, m)
 
     pybind11::class_<adios2::ADIOSPy>(m, "ADIOSPy")
         .def("DeclareIO", &adios2::ADIOSPy::DeclareIO)
-        .def("AtIO", &adios2::ADIOSPy::AtIO);
+        .def("AtIO", &adios2::ADIOSPy::AtIO)
+        .def("FlushAll", &adios2::ADIOSPy::FlushAll);
 
     pybind11::class_<adios2::VariableBase>(m, "Variable")
         .def("SetShape", &adios2::VariableBase::SetShape)
@@ -236,7 +237,8 @@ PYBIND11_MODULE(adios2, m)
              pybind11::return_value_policy::reference_internal)
         .def("Open", (adios2::EnginePy (adios2::IOPy::*)(const std::string &,
                                                          const int)) &
-                         adios2::IOPy::Open);
+                         adios2::IOPy::Open)
+        .def("FlushAll", &adios2::IOPy::FlushAll);
 
     pybind11::class_<adios2::EnginePy>(m, "EnginePy")
         .def("BeginStep", &adios2::EnginePy::BeginStep,
@@ -271,6 +273,7 @@ PYBIND11_MODULE(adios2, m)
         .def("PerformGets", &adios2::EnginePy::PerformGets)
         .def("EndStep", &adios2::EnginePy::EndStep)
         .def("WriteStep", &adios2::EnginePy::WriteStep)
+        .def("Flush", &adios2::EnginePy::Flush)
         .def("Close", &adios2::EnginePy::Close,
              pybind11::arg("transportIndex") = -1);
 

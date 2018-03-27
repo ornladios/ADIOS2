@@ -57,6 +57,8 @@ public:
 
     EnginePy Open(const std::string &name, const int openMode);
 
+    void FlushAll();
+
 private:
     const bool m_DebugMode;
 };

@@ -47,6 +47,9 @@ void FC_GLOBAL(adios2_declare_io_f2c,
                ADIOS2_DECLARE_IO_F2C)(adios2_io **io, adios2_adios **adios,
                                       const char *io_name, int *ierr);
 
+void FC_GLOBAL(adios2_flush_all_f2c, ADIOS2_FLUSH_ALL_F2C)(adios2_adios **adios,
+                                                           int *ierr);
+
 void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_adios **adios,
                                                          int *ierr);
 

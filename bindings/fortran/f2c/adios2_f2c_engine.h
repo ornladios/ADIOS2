@@ -78,6 +78,9 @@ void FC_GLOBAL(adios2_end_step_f2c, ADIOS2_END_STEP_F2C)(adios2_engine **engine,
 void FC_GLOBAL(adios2_write_step_f2c,
                ADIOS2_WRITE_STEP_F2C)(adios2_engine **engine, int *ierr);
 
+void FC_GLOBAL(adios2_flush_f2c, ADIOS2_FLUSH_F2C)(adios2_engine **engine,
+                                                   int *ierr);
+
 void FC_GLOBAL(adios2_close_f2c, ADIOS2_CLOSE_F2C)(adios2_engine **engine,
                                                    int *ierr);
 

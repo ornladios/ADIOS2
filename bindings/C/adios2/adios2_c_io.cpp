@@ -509,3 +509,8 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
 
     return reinterpret_cast<adios2_engine *>(engine);
 }
+
+void adios2_flush_all_engines(adios2_io *io)
+{
+    reinterpret_cast<adios2::IO *>(io)->FlushAll();
+}

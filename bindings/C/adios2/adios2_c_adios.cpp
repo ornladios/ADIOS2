@@ -45,6 +45,11 @@ adios2_io *adios2_declare_io(adios2_adios *adios, const char *ioName)
     return io;
 }
 
+void adios2_flush_all(adios2_adios *adios)
+{
+    reinterpret_cast<adios2::ADIOS *>(adios)->FlushAll();
+}
+
 void adios2_finalize(adios2_adios *adios)
 {
     delete reinterpret_cast<adios2::ADIOS *>(adios);

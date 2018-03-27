@@ -121,6 +121,13 @@ public:
                   const size_t transportIndex = 0);
 
     /**
+     * Flush file or files depending on transport index. Throws an exception
+     * if transport is not a file when transportIndex > -1.
+     * @param transportIndex -1: all transports, otherwise index in m_Transports
+     */
+    void FlushFiles(const int transportIndex = -1);
+
+    /**
      * Close file or files depending on transport index. Throws an exception
      * if transport is not a file when transportIndex > -1.
      * @param transportIndex -1: all transports, otherwise index in m_Transports
