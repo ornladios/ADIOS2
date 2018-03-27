@@ -1,3 +1,4 @@
+set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/deps")
 set(ENET_LIBRARY_PREFIX adios2_ CACHE INTERNAL "")
 
 add_subdirectory(enet)
