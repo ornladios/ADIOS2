@@ -7,6 +7,13 @@ add_library(sst
   cp/ffs_marshal.c
 )
 
+# Set library version information
+set_target_properties(sst PROPERTIES
+  OUTPUT_NAME adios2_sst
+  VERSION ${ADIOS2_VERSION}
+  SOVERSION ${ADIOS2_VERSION_MAJOR}
+)
+
 if(SST_HAVE_LIBFABRIC)
     target_sources(sst PRIVATE dp/rdma_dp.c)
 endif()
