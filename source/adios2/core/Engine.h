@@ -63,6 +63,8 @@ public:
      */
     IO &GetIO() noexcept;
 
+    Mode OpenMode() const noexcept;
+
     StepStatus BeginStep();
 
     /**

@@ -27,6 +27,8 @@ Engine::~Engine(){};
 
 IO &Engine::GetIO() noexcept { return m_IO; }
 
+Mode Engine::OpenMode() const noexcept { return m_OpenMode; }
+
 StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
