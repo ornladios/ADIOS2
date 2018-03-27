@@ -2,10 +2,9 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloBPWriter.cpp: Simple self-descriptive example of how to write a variable
- * to a BP File that lives in several MPI processes.
+ * helloBPSubStreams.cpp
  *
- *  Created on: Feb 16, 2017
+ *  Created on: Feb 21, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
@@ -39,7 +38,8 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2M");
+        bpIO.SetParameter("SubStreams", "1");
 
         /** global array : name, { shape (total) }, { start (local) }, {
          * count
@@ -57,10 +57,20 @@ int main(int argc, char *argv[])
         adios2::Engine &bpFileWriter =
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
 
-        /** Put variables for buffering, template type is optional */
-        bpFileWriter.PutSync<float>(bpFloats, myFloats.data());
-        bpFileWriter.PutSync(bpInts, myInts.data());
-        bpFileWriter.PutSync(bpString, myString);
+        for (unsigned int t = 0; t < 3; ++t)
+        {
+            bpFileWriter.BeginStep();
+
+            bpFileWriter.PutDeferred(bpInts, myInts.data());
+
+            myFloats[0] = static_cast<float>(t);
+            myFloats[1] = static_cast<float>(rank);
+            bpFileWriter.PutDeferred<float>(bpFloats, myFloats.data());
+
+            bpFileWriter.PutDeferred(bpString, myString);
+
+            bpFileWriter.EndStep();
+        }
 
         /** Create bp file, engine becomes unreachable after this*/
         bpFileWriter.Close();

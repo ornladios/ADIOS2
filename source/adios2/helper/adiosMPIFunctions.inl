@@ -19,7 +19,7 @@
 
 namespace adios2
 {
-// GatherValues specializations
+
 template <class T>
 std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
                             const int rankDestination)
@@ -38,6 +38,18 @@ std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
     T sourceCopy = source; // so we can have an address for rvalues
     GatherArrays(&sourceCopy, 1, output.data(), mpiComm, rankDestination);
 
+    return output;
+}
+
+template <class T>
+std::vector<T> AllGatherValues(const T source, MPI_Comm mpiComm)
+{
+    int size;
+    MPI_Comm_size(mpiComm, &size);
+    std::vector<T> output(size);
+
+    T sourceCopy = source; // so we can have an address for rvalues
+    AllGatherArrays(&sourceCopy, 1, output.data(), mpiComm);
     return output;
 }
 

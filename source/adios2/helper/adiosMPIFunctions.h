@@ -46,6 +46,15 @@ std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
                             const int rankDestination = 0);
 
 /**
+ * Perform AllGather for source value
+ * @param source input
+ * @param mpiComm MPI communicator defining all ranks and size domain
+ * @return in all ranks: a vector with gathered source values ordered per rank
+ */
+template <class T>
+std::vector<T> AllGatherValues(const T source, MPI_Comm mpiComm);
+
+/**
  * Gather equal size arrays
  * @param source
  * @param sourceCount
@@ -56,6 +65,17 @@ std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
 template <class T>
 void GatherArrays(const T *source, const size_t sourceCount, T *destination,
                   MPI_Comm mpiComm, const int rankDestination = 0);
+
+/**
+ * Perform AllGather for equal size arrays
+ * @param source
+ * @param sourceCount
+ * @param destination
+ * @param mpiComm
+ */
+template <class T>
+void AllGatherArrays(const T *source, const size_t sourceCount, T *destination,
+                     MPI_Comm mpiComm);
 
 /**
  * Gather arrays of the same type into a destination (must be pre-allocated)

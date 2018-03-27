@@ -155,14 +155,16 @@ void BP3Serializer::CloseData(IO &io)
     ProfilerStop("buffering");
 }
 
-void BP3Serializer::CloseStream(IO &io)
+void BP3Serializer::CloseStream(IO &io, const bool addMetadata)
 {
     ProfilerStart("buffering");
     if (m_MetadataSet.DataPGIsOpen)
     {
         SerializeDataBuffer(io);
     }
-    SerializeMetadataInData(false);
+
+    SerializeMetadataInData(false, addMetadata);
+
     if (m_Profiler.IsActive)
     {
         m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
@@ -264,6 +266,66 @@ void BP3Serializer::AggregateCollectiveMetadata()
     }
     ProfilerStop("meta_sort_merge");
     ProfilerStop("buffering");
+}
+
+void BP3Serializer::AggregatorsUpdateDataAbsolutePosition()
+{
+    ProfilerStart("aggregation");
+
+    size_t producerPosition = m_Data.m_Position;
+    if (m_Aggregator.m_IsConsumer)
+    {
+        producerPosition = m_Data.m_AbsolutePosition;
+    }
+
+    const std::vector<size_t> positions =
+        AllGatherValues(producerPosition, m_Aggregator.m_Comm);
+
+    // update up to previous rank
+    int upperRank = m_Aggregator.m_Rank;
+    // update with all producers sizes for next aggregation
+    if (m_Aggregator.m_IsConsumer)
+    {
+        upperRank = m_Aggregator.m_Size;
+    }
+
+    m_Data.m_AbsolutePosition = 0;
+    for (int i = 0; i < upperRank; ++i)
+    {
+        m_Data.m_AbsolutePosition += positions[i];
+    }
+
+    ProfilerStop("aggregation");
+}
+
+void BP3Serializer::AggregatorsUpdateOffsetsInMetadata()
+{
+    if (m_Aggregator.m_IsConsumer)
+    {
+        return;
+    }
+
+    for (auto &varIndexPair : m_MetadataSet.VarsIndices)
+    {
+        SerialElementIndex &index = varIndexPair.second;
+        UpdateIndexOffsets(index);
+    }
+}
+
+void BP3Serializer::AggregatorsISend(const int step)
+{
+    m_Aggregator.Send(m_Data, step);
+}
+
+void BP3Serializer::AggregatorsIReceive(const int step)
+{
+    m_Aggregator.Receive(m_Data, step);
+    m_Aggregator.SwapBufferOrder();
+}
+
+BufferSTL &BP3Serializer::AggregatorConsumerBuffer()
+{
+    return m_Aggregator.GetConsumerBuffer(m_Data);
 }
 
 // PRIVATE FUNCTIONS
@@ -468,8 +530,8 @@ void BP3Serializer::SerializeDataBuffer(IO &io) noexcept
     m_MetadataSet.DataPGIsOpen = false;
 }
 
-void BP3Serializer::SerializeMetadataInData(
-    const bool updateAbsolutePosition) noexcept
+void BP3Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
+                                            const bool inData)
 {
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
@@ -511,15 +573,20 @@ void BP3Serializer::SerializeMetadataInData(
     const uint64_t pgLength = m_MetadataSet.PGIndex.Buffer.size();
 
     // var index count and length (total), and each index length
-    uint32_t varsCount;
-    uint64_t varsLength;
+    uint32_t varsCount = 0;
+    uint64_t varsLength = 0;
     lf_SetIndexCountLength(m_MetadataSet.VarsIndices, varsCount, varsLength);
 
     // attribute index count and length, and each index length
-    uint32_t attributesCount;
-    uint64_t attributesLength;
+    uint32_t attributesCount = 0;
+    uint64_t attributesLength = 0;
     lf_SetIndexCountLength(m_MetadataSet.AttributesIndices, attributesCount,
                            attributesLength);
+
+    if (!inData)
+    {
+        return;
+    }
 
     const size_t footerSize = static_cast<size_t>(
         (pgLength + 16) + (varsLength + 12) + (attributesLength + 12) +
@@ -679,14 +746,13 @@ void BP3Serializer::AggregateMergeIndex(
     // deallocate gathered serial indices (full in rank 0 only)
     std::vector<char>().swap(gatheredSerialIndices);
 
-    // to write count and length
-    auto &buffer = m_Metadata.m_Buffer;
-    auto &position = m_Metadata.m_Position;
-
-    size_t countPosition = position;
-
     if (m_RankMPI == 0)
     {
+        // to write count and length
+        auto &buffer = m_Metadata.m_Buffer;
+        auto &position = m_Metadata.m_Position;
+        size_t countPosition = position;
+
         // Write count
         position += 12;
         m_Metadata.Resize(position,
@@ -694,12 +760,9 @@ void BP3Serializer::AggregateMergeIndex(
         const uint32_t totalCountU32 =
             static_cast<uint32_t>(nameRankIndices.size());
         CopyToBuffer(buffer, countPosition, &totalCountU32);
-    }
 
-    MergeSerializeIndices(nameRankIndices);
+        MergeSerializeIndices(nameRankIndices);
 
-    if (m_RankMPI == 0)
-    {
         // Write length
         const uint64_t totalLengthU64 =
             static_cast<uint64_t>(position - countPosition - 8);
@@ -1212,6 +1275,125 @@ BP3Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
     }
 
     return profilingJSON;
+}
+
+void BP3Serializer::UpdateIndexOffsets(SerialElementIndex &index)
+{
+    auto &buffer = index.Buffer;
+
+    // First get the type:
+    size_t headerPosition = 0;
+    ElementIndexHeader header = ReadElementIndexHeader(buffer, headerPosition);
+    const DataTypes dataTypeEnum = static_cast<DataTypes>(header.DataType);
+
+    size_t &currentPosition = index.LastUpdatedPosition;
+
+    while (currentPosition < buffer.size())
+    {
+        switch (dataTypeEnum)
+        {
+
+        case (type_string):
+        {
+            // do nothing, strings are obtained from metadata
+            currentPosition = buffer.size();
+            break;
+        }
+
+        case (type_byte):
+        {
+            UpdateIndexOffsetsCharacteristics<char>(currentPosition, type_byte,
+                                                    buffer);
+            break;
+        }
+
+        case (type_short):
+        {
+            UpdateIndexOffsetsCharacteristics<short>(currentPosition,
+                                                     type_short, buffer);
+            break;
+        }
+
+        case (type_integer):
+        {
+            UpdateIndexOffsetsCharacteristics<int>(currentPosition,
+                                                   type_integer, buffer);
+            break;
+        }
+
+        case (type_long):
+        {
+            UpdateIndexOffsetsCharacteristics<int64_t>(currentPosition,
+                                                       type_long, buffer);
+
+            break;
+        }
+
+        case (type_unsigned_byte):
+        {
+            UpdateIndexOffsetsCharacteristics<unsigned char>(
+                currentPosition, type_unsigned_byte, buffer);
+
+            break;
+        }
+
+        case (type_unsigned_short):
+        {
+            UpdateIndexOffsetsCharacteristics<unsigned short>(
+                currentPosition, type_unsigned_short, buffer);
+
+            break;
+        }
+
+        case (type_unsigned_integer):
+        {
+            UpdateIndexOffsetsCharacteristics<unsigned int>(
+                currentPosition, type_unsigned_integer, buffer);
+
+            break;
+        }
+
+        case (type_unsigned_long):
+        {
+            UpdateIndexOffsetsCharacteristics<uint64_t>(
+                currentPosition, type_unsigned_long, buffer);
+
+            break;
+        }
+
+        case (type_real):
+        {
+            UpdateIndexOffsetsCharacteristics<float>(currentPosition, type_real,
+                                                     buffer);
+            break;
+        }
+
+        case (type_double):
+        {
+            UpdateIndexOffsetsCharacteristics<double>(currentPosition,
+                                                      type_double, buffer);
+
+            break;
+        }
+
+        default:
+            // TODO: complex, long double
+            throw std::invalid_argument(
+                "ERROR: type " + std::to_string(header.DataType) +
+                " not supported in updating aggregated offsets\n");
+
+        } // end switch
+    }
+}
+
+uint32_t BP3Serializer::GetFileIndex() const noexcept
+{
+    if (m_Aggregator.m_IsActive)
+    {
+        return static_cast<uint32_t>(m_Aggregator.m_ConsumerRank);
+    }
+
+    return static_cast<uint32_t>(m_RankMPI);
 }
 
 //------------------------------------------------------------------------------

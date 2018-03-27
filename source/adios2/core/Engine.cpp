@@ -153,6 +153,8 @@ void Engine::Close(const int transportIndex)
     }
 }
 
+void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
+
 // PROTECTED
 void Engine::Init() {}
 void Engine::InitParameters() {}

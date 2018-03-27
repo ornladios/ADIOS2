@@ -55,6 +55,9 @@ add_library(adios2
   toolkit/transportman/TransportMan.cpp
   toolkit/transportman/dataman/DataMan.cpp
   
+  toolkit/aggregator/mpi/MPIAggregator.cpp
+  toolkit/aggregator/mpi/MPIChain.cpp
+  
 )
 target_include_directories(adios2
   PUBLIC
