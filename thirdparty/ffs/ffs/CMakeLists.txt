@@ -5,12 +5,12 @@ cmake_minimum_required(VERSION 2.8.3)
 # raised to > 3.0
 if(POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
-  project(FFS VERSION 1.5.0)
+  project(FFS VERSION 1.5.1)
 else()
   project(FFS)
   set(FFS_VERSION_MAJOR 1)
   set(FFS_VERSION_MINOR 5)
-  set(FFS_VERSION_PATCH 0)
+  set(FFS_VERSION_PATCH 1)
   set(FFS_VERSION
     ${FFS_VERSION_MAJOR}.${FFS_VERSION_MINOR}.${FFS_VERSION_PATCH})
 endif()
@@ -24,7 +24,7 @@ if(WIN32 AND NOT CYGWIN)
   set(CMAKE_INSTALL_CMAKEDIR CMake
     CACHE STRING "Installation CMake subdirectory")
 else()
-  set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake
+	set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/ffs
     CACHE STRING "Installation CMake subdirectory")
 endif()
 mark_as_advanced(CMAKE_INSTALL_BINDIR)
@@ -193,17 +193,17 @@ set(FFS_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(FFS_LIBRARY_PREFIX)
 
 add_library(ffs ${FFS_MASTER_SRC_LIST})
-if(FFS_LIBRARY_PREFIX)
-  set_target_properties(ffs PROPERTIES
-    LIBRARY_OUTPUT_NAME ${FFS_LIBRARY_PREFIX}ffs)
-endif()
+set_target_properties(ffs PROPERTIES
+  OUTPUT_NAME ${FFS_LIBRARY_PREFIX}ffs
+  VERSION ${FFS_VERSION}
+  SOVERSION ${FFS_VERSION_MAJOR})
 add_library(ffs::ffs ALIAS ffs)
 
 if(UNIX)
-  target_link_libraries(ffs m)
+	target_link_libraries(ffs PRIVATE m)
 endif()
 if(SHARED_LIBS_SUPPORTED)
-  target_link_libraries(ffs ${CMAKE_DL_LIBS})
+	target_link_libraries(ffs PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
 target_include_directories(ffs PUBLIC
@@ -216,23 +216,20 @@ target_include_directories(ffs PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-set_target_properties(ffs PROPERTIES
-  VERSION ${FFS_VERSION} SOVERSION ${FFS_VERSION_MAJOR})
-
 option(FFS_USE_DILL "Enable Dill code generation" ON)
 if(FFS_USE_DILL)
-  find_package(dill REQUIRED)
+  find_package(dill 2.3.1 REQUIRED)
   set(HAVE_DILL_H ON)
   set(FFS_CONVERSION_GENERATION_DEFAULT ${DILL_HAS_NATIVE_DCG})
   set(DO_DCG TRUE)
-  target_link_libraries(ffs dill::dill)
+  target_link_libraries(ffs PRIVATE dill::dill)
 endif()
 
 option(FFS_USE_ATL "Enable the use of ATL" ON)
 if(FFS_USE_ATL)
-  find_package(atl REQUIRED)
+  find_package(atl 2.2.1 REQUIRED)
   set(HAVE_ATL_H ON)
-  target_link_libraries(ffs atl::atl)
+  target_link_libraries(ffs PUBLIC atl::atl)
 endif()
 
 CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
@@ -327,13 +324,13 @@ install(
   FILES
     "${PROJECT_BINARY_DIR}/ffs-config.cmake"
     "${PROJECT_BINARY_DIR}/ffs-config-version.cmake"
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/ffs"
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
   COMPONENT dev
 )
  
 # Install the export set for use with the install-tree
 install(EXPORT ffs-targets NAMESPACE ffs::
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/ffs" COMPONENT dev
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev
 )
 
 # display status message for important variables
