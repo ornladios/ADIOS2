@@ -20,29 +20,17 @@ if(LIBFABRIC_PREFIX)
   list(INSERT CMAKE_PREFIX_PATH 0 ${LIBFABRIC_PREFIX})
 endif()
 
-find_path(LIBFABRIC_INCLUDE_DIR rdma/fabric.h)
-find_library(LIBFABRIC_LIBRARY fabric)
-mark_as_advanced(LIBFABRIC_INCLUDE_DIR LIBFABRIC_LIBRARY)
-
-if(LIBFABRIC_PREFIX)
-  set(CMAKE_PREFIX_PATH ${_CMAKE_PREFIX_PATH})
-  unset(_CMAKE_PREFIX_PATH)
+include(CMakeFindDependencyMacro)
+find_dependency(PkgConfig)
+if(PKG_CONFIG_FOUND)
+  set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH TRUE)
+  pkg_check_modules(LIBFABRIC IMPORTED_TARGET libfabric)
 endif()
 
-######################################################
-include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set LIBFABRIC_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(libfabric  DEFAULT_MSG
-    LIBFABRIC_LIBRARY LIBFABRIC_INCLUDE_DIR)
-
 if(LIBFABRIC_FOUND)
-  set(LIBFABRIC_LIBRARIES ${LIBFABRIC_LIBRARY})
-  set(LIBFABRIC_INCLUDE_DIRS ${LIBFABRIC_INCLUDE_DIR})
   if(NOT TARGET libfabric::libfabric)
-    add_library(libfabric::libfabric UNKNOWN IMPORTED)
+    add_library(libfabric::libfabric INTERFACE IMPORTED)
     set_target_properties(libfabric::libfabric PROPERTIES
-      IMPORTED_LOCATION "${LIBFABRIC_LIBRARY}"
-      INTERFACE_INCLUDE_DIRECTORIES "${LIBFABRIC_INCLUDE_DIR}")
+      INTERFACE_LINK_LIBRARIES PkgConfig::LIBFABRIC)
   endif()
 endif()
