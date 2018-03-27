@@ -1,3 +1,7 @@
+#------------------------------------------------------------------------------#
+# Distributed under the OSI-approved Apache License, Version 2.0.  See
+# accompanying file Copyright.txt for details.
+#------------------------------------------------------------------------------#
 add_library(sst
   dp/dp.c
   dp/evpath_dp.c
@@ -6,6 +10,10 @@ add_library(sst
   cp/cp_common.c
   cp/ffs_marshal.c
 )
+if(ADISO2_SST_HAVE_LIBFABRIC)
+  target_sources(sst PRIVATE dp/rdma_dp.c)
+  target_link_libraries(sst PRIVATE libfabric::libfabric)
+endif()
 
 # Set library version information
 set_target_properties(sst PROPERTIES
@@ -13,10 +21,6 @@ set_target_properties(sst PROPERTIES
   VERSION ${ADIOS2_VERSION}
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
-
-if(SST_HAVE_LIBFABRIC)
-    target_sources(sst PRIVATE dp/rdma_dp.c)
-endif()
 
 #------------------------------------------------------------------------------#
 # Generate SST defines

@@ -11,7 +11,7 @@ function(GenerateSSTHeaderConfig)
 /* CMake Option: SST_USE_${OPT}=OFF */
 #cmakedefine SST_HAVE_${OPT_UPPER}
 ")
-    if(SST_HAVE_${OPT})
+    if(ADIOS2_SST_HAVE_${OPT})
       set(SST_HAVE_${OPT_UPPER} 1)
     else()
       set(SST_HAVE_${OPT_UPPER})
