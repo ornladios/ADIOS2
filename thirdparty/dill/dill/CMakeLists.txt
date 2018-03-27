@@ -189,7 +189,7 @@ ENDIF (LIBFFI_FOUND)
 option(DILL_ENABLE_DISASSEMBLY
   "enable binutils-based disassembly (default is OFF)" OFF)
 
-set (ARCHITECTURES sparc powerpc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm7 arm8)
+set (ARCHITECTURES sparc powerpc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
 foreach(_arch ${ARCHITECTURES})
   add_custom_command(
     OUTPUT "dill_${_arch}.c"
@@ -214,6 +214,11 @@ if(DILL_MULTI_TARGET)
 elseif(NOT "${NATIVE_ARCH}" STREQUAL "UNSUPPORTED") 
   list(APPEND SRC_LIST dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
 endif()
+
+# The MULTI_TARGET variable is only used to generate the preprocessor symbol
+# in config.h.  Use the DIL_MULTI_CONFIG option variable for all associated
+# logic in the build.
+set(MULTI_TARGET ${DILL_MULTI_TARGET})
 
 if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
     if (EMULATION_POSSIBLE)
