@@ -7,6 +7,13 @@
 
 ######################################################
 set(LIBFABRIC_PREFIX "" CACHE STRING "Help cmake to find libfabric library (https://github.com/ofiwg/libfabric) into your system.")
+mark_as_advanced(LIBFABRIC_PREFIX)
+if(NOT LIBFABRIC_PREFIX)
+  set(LIBFABRIC_PREFIX ${LIBFABRIC_ROOT})
+endif()
+if(NOT LIBFABRIC_PREFIX)
+  set(LIBFABRIC_PREFIX $ENV{LIBFABRIC_ROOT})
+endif()
 
 if(LIBFABRIC_PREFIX)
   set(_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
@@ -14,7 +21,7 @@ if(LIBFABRIC_PREFIX)
 endif()
 
 find_path(LIBFABRIC_INCLUDE_DIR rdma/fabric.h)
-find_library(LIBFABRIC_LIBRARY NAMES fabric)
+find_library(LIBFABRIC_LIBRARY fabric)
 mark_as_advanced(LIBFABRIC_INCLUDE_DIR LIBFABRIC_LIBRARY)
 
 if(LIBFABRIC_PREFIX)

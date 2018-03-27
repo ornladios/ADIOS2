@@ -15,6 +15,11 @@ foreach(T ${TESTS})
   file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/dfg_tests.tsts "dfg_${T}\n" )
 endforeach()
 
+if(UNIX)
+  target_link_libraries(dfg_tree_test m)
+  target_link_libraries(dfg_auto_tree_test m)
+endif()
+
 add_test(NAME dfg_chain_test_one_proc  COMMAND dfg_chain_test 1)
 add_test(NAME dfg_dchain_test_one_proc COMMAND dfg_dchain_test 1)
 
