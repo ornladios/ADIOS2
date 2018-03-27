@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(EVPath VERSION 4.3.0 LANGUAGES C)
+project(EVPath VERSION 4.3.1 LANGUAGES C)
 
 # Some boilerplate to setup nice output directories
 set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
 set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
 set(CMAKE_INSTALL_INCLUDEDIR include
   CACHE STRING "Installation include subdirectory")
-set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake
+set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/EVPath
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_BINDIR)
 mark_as_advanced(CMAKE_INSTALL_LIBDIR)
@@ -130,13 +130,8 @@ target_include_directories(EVPath PUBLIC
 set(EVPATH_LIBRARY_PREFIX "" CACHE STRING
   "Prefix to prepend to the output library name")
 mark_as_advanced(EVPATH_LIBRARY_PREFIX)
-if(EVPATH_LIBRARY_PREFIX)
-  set_target_properties(EVPath PROPERTIES
-    LIBRARY_OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}evpath)
-else()
-  set_target_properties(EVPath PROPERTIES LIBRARY_OUTPUT_NAME evpath)
-endif()
-
+set_target_properties(EVPath PROPERTIES
+  OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}evpath)
 
 set(EVPATH_TRANSPORT_DEP_LIBS)
 
@@ -150,21 +145,22 @@ cmake_dependent_option(EVPATH_TRANSPORT_MODULES
 )
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_INSTALL_PREFIX})
-find_package(atl REQUIRED)
-find_package(ffs REQUIRED)
-find_package(dill REQUIRED)
+find_package(atl 2.2.1 REQUIRED)
+find_package(ffs 1.5.1 REQUIRED)
+find_package(dill 2.3.1 REQUIRED)
 target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs PRIVATE dill::dill)
 
 find_package(Threads)
 if(Threads_FOUND)
-  set(EVPATH_PRIVATE_Threads ON)
   target_link_libraries(EVPath PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-find_package(NVML QUIET)
+find_package(NVML)
 if(NVML_FOUND)
-  target_include_directories(EVPath PRIVATE ${NVML_INCLUDE_DIR})
-  target_link_libraries(EVPath PRIVATE ${NVML_LIBRARY})
+  if(NOT BUILD_SHARED_LIBS)
+    list(APPEND EXTRA_INSTALL_PACKAGES NVML)
+  endif()
+  target_link_libraries(EVPath PRIVATE nvml::nvml)
 endif()
 
 include(CheckSymbolExists)
@@ -188,12 +184,10 @@ if(EVPATH_TRANSPORT_MODULES)
   add_library(cmudp MODULE cmudp.c)
   add_library(cmmulticast MODULE cmmulticast.c)
 
-  if(EVPATH_LIBRARY_PREFIX)
-    foreach(M cmselect cmsockets cmudp cmmulticast)
-      set_target_properties(${M} PROPERTIES
-        LIBRARY_OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M})
-    endforeach()
-  endif()
+  foreach(M cmselect cmsockets cmudp cmmulticast)
+    set_target_properties(${M} PROPERTIES
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M})
+  endforeach()
 
   target_link_libraries(cmselect evpath atl::atl)
   target_link_libraries(cmsockets evpath atl::atl)
@@ -215,15 +209,13 @@ set(RUN_NNTI_TESTS FALSE)
 
 # enet transport
 set(RUN_ENET_TESTS FALSE)
-find_package(enet)
+find_package(enet 1.3.13)
 if(ENET_FOUND)
   set(RUN_ENET_TESTS TRUE)
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmenet MODULE cmenet.c ip_config.c)
-    if(EVPATH_LIBRARY_PREFIX)
-      set_target_properties(cmenet PROPERTIES
-        LIBRARY_OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmenet)
-    endif()
+    set_target_properties(cmenet PROPERTIES
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmenet)
 
     target_link_libraries(cmenet evpath enet::enet)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmenet)
@@ -236,17 +228,18 @@ else()
 endif()
 
 # libfabric transport
-find_package(LibFabric)
+find_package(LIBFABRIC)
 if(LIBFABRIC_FOUND) 
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmfabric MODULE cmfabric.c ip_config.c)
-    if(EVPATH_LIBRARY_PREFIX)
-      set_target_properties(cmfabric PROPERTIES
-        LIBRARY_OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmfabric)
-    endif()
+    set_target_properties(cmfabric PROPERTIES
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmfabric)
     target_link_libraries(cmfabric evpath atl::atl libfabric::libfabric)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmfabric)
   else()
+    if(NOT BUILD_SHARED_LIBS)
+      list(APPEND EXTRA_INSTALL_PACKAGES LIBFABRIC)
+    endif()
     target_sources(EVPath PRIVATE cmfabric.c)
     target_link_libraries(EVPath PRIVATE libfabric::libfabric)
   endif()
@@ -260,19 +253,18 @@ CHECK_LIBRARY_EXISTS(ibverbs ibv_create_qp "" HAVE_IBVERBS)
 if(HAVE_IBVERBS)
   if(BUILD_TESTING)
     if(NOT CMAKE_CROSSCOMPILING)
-      message(STATUS "Check for enough rlimit to run IB tests")
+      message(STATUS "Check MEMLOCK rlimit for IB tests")
       file(READ "${CMAKE_CURRENT_SOURCE_DIR}/cmake/GOOD_MEMLOCK_LIMIT.c" _SOURCE)
       CHECK_C_SOURCE_RUNS("${_SOURCE}" GOOD_MEMLOCK_LIMIT)
       if(GOOD_MEMLOCK_LIMIT)
-        message(STATUS
-          "Check for large enough MEMLOCK rlimit to run IB tests - yes" )
+        message(STATUS "Check MEMLOCK rlimit for IB tests - yes" )
         set(RUN_IB_TESTS TRUE)
         set(RUN_NNTI_TESTS FALSE)
       else()
-        message(STATUS "Check for large enough MEMLOCK rlimit to run IB tests - no")
-        message(WARNING 
-          "Building InfiniBand transport, but current RLIMIT_MEMLOCK value " 
-          "will prevent successful runs.  Not running IB transport tests.")
+        message(STATUS "Check MEMLOCK rlimit for IB tests - no")
+	message(STATUS "  Building InfiniBand transport, but current")
+        message(STATUS "  RLIMIT_MEMLOCK value will prevent successful runs.")
+        message(STATUS "  Not running IB transport tests.")
       endif()
     else()
       set(RUN_IB_TESTS TRUE)
@@ -282,10 +274,8 @@ if(HAVE_IBVERBS)
 
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmib MODULE cmib.c)
-    if(EVPATH_LIBRARY_PREFIX)
-      set_target_properties(cmib PROPERTIES
-        LIBRARY_OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmib)
-    endif()
+    set_target_properties(cmib PROPERTIES
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmib)
     target_link_libraries(cmib evpath ibverbs)
     list(APPEND EVPATH_TRANSPORT_TARGETS cmib)
   else()
@@ -308,30 +298,36 @@ endif()
 CHECK_LIBRARY_EXISTS(ugni GNI_CqCreate "" HAVE_UGNI)
 
 if(HAVE_IBVERBS OR HAVE_UGNI)
-  find_package (nnti)
+  find_package(NNTI)
   if(NNTI_FOUND)
-    string(REGEX REPLACE trios_nnti trios_support
-      NNTI_SUP_LIB "${NNTI_LIBRARIES}")
-    list(APPEND NNTI_LIBRARIES ${NNTI_SUP_LIB})
     if(CercsArch STREQUAL "ppc64")
       set(RUN_NNTI_TESTS FALSE)
     endif()
     if(EVPATH_TRANSPORT_MODULES)
       add_library(cmnnti MODULE cmnnti.c)
-      if(EVPATH_LIBRARY_PREFIX)
-        set_target_properties(cmnnti PROPERTIES
-          LIBRARY_OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmnnti)
-      endif()
-      target_include_directories(cmnnti PRIVATE ${NNTI_INCLUDE_DIR})
-      target_link_libraries(cmnnti evpath ${NNTI_LIBRARIES} enet::enet atl::atl)
+      set_target_properties(cmnnti PROPERTIES
+        OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmnnti)
+      target_link_libraries(cmnnti evpath nnti::nnti enet::enet atl::atl)
       list(APPEND EVPATH_TRANSPORT_TARGETS cmnnti)
     else()
+      if(NOT BUILD_SHARED_LIBS)
+        list(APPEND EXTRA_INSTALL_PACKAGES NNTI)
+      endif()
       target_sources(EVPath PRIVATE cmnnti.c)
-      target_include_directories(EVPath PRIVATE ${NNTI_INCLUDE_DIR})
-      target_link_libraries(EVPath PRIVATE ${NNTI_LIBRARIES})
+      target_link_libraries(EVPath PRIVATE nnti::nnti enet::enet atl::atl)
     endif()
   endif()
 endif()
+
+# Extra find module dependencies
+foreach(P ${EXTRA_INSTALL_PACKAGES})
+  configure_file(
+    ${EVPath_SOURCE_DIR}/cmake/Find${P}.cmake
+    ${EVPath_BINARY_DIR}/Find${P}.cmake
+    COPYONLY)
+  install(FILES ${EVPath_BINARY_DIR}/Find${P}.cmake
+    DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
+endforeach()
 
 add_custom_command(
   OUTPUT "cm_interface.c" "revp.c" "revpath.h"
@@ -461,14 +457,7 @@ export(EXPORT EVPathTargets NAMESPACE EVPath::
 # targets from these, which can be used in many ways in the same way as a
 # normal library target created via a normal add_library().
 install(EXPORT EVPathTargets NAMESPACE EVPath::
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/EVPath)
-
-# figure out the relative path from the installed Config.cmake file to the
-# install prefix (which may be at runtime different from the chosen
-# CMAKE_INSTALL_PREFIX if under Windows the package was installed anywhere)
-# This relative path will be configured into the EVPathConfig.cmake
-file(RELATIVE_PATH relInstallDir
-  ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_CMAKEDIR} ${CMAKE_INSTALL_PREFIX})
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
 
 # Create a EVPathConfig.cmake file. <name>Config.cmake files are searched by
 # find_package() automatically. We configure that file so that we can put any
@@ -480,7 +469,7 @@ configure_file(
 )
 
 # So, this big ol thing...
-# This function will walk to dependency graph of a target and determine the full
+# This function will walk the dependency graph of a target to determine the full
 # list of transitive library and header information needed to use it.  The
 # purpose is to extract the necessary usage requirements for a non-CMake
 # project to consume evpath
@@ -557,7 +546,7 @@ file(GENERATE
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
   INPUT ${CMAKE_CURRENT_BINARY_DIR}/evpath_config.gen
 )
-install(PROGRAMS ${CMAKE_BINARY_DIR}/evpath_config
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
   DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # Additionally, when cmake has found a EVPathConfig.cmake, it can check for a
@@ -575,7 +564,7 @@ install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfigVersion.cmake
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/EVPath
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
 )
 
 configure_file(

@@ -1,22 +1,27 @@
-
-set( NVML_LIB_PATHS /usr/lib64 )
+set(_NVML_EXTRA_INC_ARGS PATHS /usr/include/nvidia/gdk)
 if(GPU_DEPLOYMENT_KIT_ROOT_DIR)
-    list(APPEND NVML_LIB_PATHS "${GPU_DEPLOYMENT_KIT_ROOT_DIR}/src/gdk/nvml/lib")
+  set(_NVML_EXTRA_LIB_ARGS HINT
+    "${GPU_DEPLOYMENT_KIT_ROOT_DIR}/src/gdk/nvml/lib")
+  list(APPEND _NVML_EXTRA_INC_ARGS
+    HINTS "${GPU_DEPLOYMENT_KIT_ROOT_DIR}/include/nvidia/gdk")
 endif()
-set(NVML_NAMES nvidia-ml)
   
-set( NVML_INC_PATHS /usr/include/nvidia/gdk/ /usr/include )
-if(GPU_DEPLOYMENT_KIT_ROOT_DIR)
-    list(APPEND NVML_INC_PATHS "${GPU_DEPLOYMENT_KIT_ROOT_DIR}/include/nvidia/gdk")
+find_library(NVML_LIBRARY nvidia-ml ${_NVML_EXTRA_LIB_ARGS})
+find_path(NVML_INCLUDE_DIR nvml.h ${_NVML_EXTRA_INC_ARGS})
+mark_as_advanced(NVML_LIBRARY NVML_INCLUDE_DIR)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(nvml DEFAULT_MSG
+  NVML_LIBRARY NVML_INCLUDE_DIR)
+
+if(NVML_FOUND)
+  set(NVML_LIBRARIES ${NVML_LIBRARY})
+  set(NVML_INCLUDE_DIRS ${NVML_INCLUDE_DIR})
+  if(NOT TARGET nvml::nvml)
+    add_library(nvml::nvml UNKNOWN IMPORTED)
+    set_target_properties(nvml::nvml PROPERTIES
+      IMPORTED_LOCATION "${NVML_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${NVML_INCLUDE_DIR}")
+  endif()
 endif()
 
-find_library(NVML_LIBRARY NAMES ${NVML_NAMES} PATHS ${NVML_LIB_PATHS} )
-
-find_path(NVML_INCLUDE_DIR nvml.h PATHS ${NVML_INC_PATHS})
-
-# handle the QUIETLY and REQUIRED arguments and set NVML_FOUND to TRUE if
-# all listed variables are TRUE
-include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(NVML DEFAULT_MSG NVML_LIBRARY NVML_INCLUDE_DIR)
-
-mark_as_advanced(NVML_LIBRARY NVML_INCLUDE_DIR)
