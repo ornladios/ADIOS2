@@ -724,7 +724,7 @@ void BP3Serializer::AggregateIndex(const SerialElementIndex &index,
 }
 
 void BP3Serializer::AggregateMergeIndex(
-    const std::unordered_map<std::string, SerialElementIndex> &indices) noexcept
+    const std::unordered_map<std::string, SerialElementIndex> &indices)
 {
     // first serialize index
     std::vector<char> serializedIndices = SerializeIndices(indices);
@@ -756,7 +756,7 @@ void BP3Serializer::AggregateMergeIndex(
         // Write count
         position += 12;
         m_Metadata.Resize(position,
-                          ", in call to AggregateMergeIndex bp1 metadata");
+                          ", in call to AggregateMergeIndex BP3 metadata");
         const uint32_t totalCountU32 =
             static_cast<uint32_t>(nameRankIndices.size());
         CopyToBuffer(buffer, countPosition, &totalCountU32);
@@ -838,11 +838,6 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
     {
         while (serializedPosition < serializedSize)
         {
-            if (serializedPosition >= serializedSize)
-            {
-                break;
-            }
-
             const int rankSource = static_cast<int>(
                 ReadValue<uint32_t>(serialized, serializedPosition));
 
@@ -915,7 +910,7 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
 
 void BP3Serializer::MergeSerializeIndices(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-        &nameRankIndices) noexcept
+        &nameRankIndices)
 {
     auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
                                      size_t &position, const uint8_t dataType,
@@ -1056,9 +1051,9 @@ void BP3Serializer::MergeSerializeIndices(
 
         default:
             // TODO: complex, long double
-            throw std::invalid_argument("ERROR: type " +
-                                        std::to_string(dataType) +
-                                        " not supported in Merge\n");
+            throw std::invalid_argument(
+                "ERROR: type " + std::to_string(dataType) +
+                " not supported in BP3 Metadata Merge\n");
 
         } // end switch
 

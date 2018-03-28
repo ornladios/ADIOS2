@@ -719,6 +719,5 @@ void adios2_fclose(adios2_FILE *stream)
 {
     adios2::Stream &streamCpp = *reinterpret_cast<adios2::Stream *>(stream);
     streamCpp.Close();
-    delete (reinterpret_cast<adios2::Stream *>(stream));
-    stream = nullptr;
+    delete reinterpret_cast<adios2::Stream *>(stream);
 }
