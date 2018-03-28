@@ -589,8 +589,10 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
                                         m_TestData.R64.data());
         }
 
-        adios2::Engine &bpWriter1D = io1D.Open("Flush1D", adios2::Mode::Write);
-        adios2::Engine &bpWriter2D = io2D.Open("Flush2D", adios2::Mode::Write);
+        adios2::Engine &bpWriter1D =
+            io1D.Open("Flush1Dstdio", adios2::Mode::Write);
+        adios2::Engine &bpWriter2D =
+            io2D.Open("Flush2Dstdio", adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
@@ -609,7 +611,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
         {
             adios2::IO &io = adios.DeclareIO("ReadIO1");
 
-            adios2::Engine &bpReader = io.Open("Flush1D", adios2::Mode::Read);
+            adios2::Engine &bpReader =
+                io.Open("Flush1Dstdio", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             ASSERT_NE(var_i8, nullptr);
@@ -757,7 +760,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
         {
             adios2::IO &io = adios.DeclareIO("ReadIO2");
 
-            adios2::Engine &bpReader = io.Open("Flush2D", adios2::Mode::Read);
+            adios2::Engine &bpReader =
+                io.Open("Flush2Dstdio", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             ASSERT_NE(var_i8, nullptr);
@@ -1033,8 +1037,10 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
                                         m_TestData.R64.data());
         }
 
-        adios2::Engine &bpWriter1D = io1D.Open("Flush1D", adios2::Mode::Write);
-        adios2::Engine &bpWriter2D = io2D.Open("Flush2D", adios2::Mode::Write);
+        adios2::Engine &bpWriter1D =
+            io1D.Open("Flush1Dfstream", adios2::Mode::Write);
+        adios2::Engine &bpWriter2D =
+            io2D.Open("Flush2Dfstream", adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
@@ -1053,7 +1059,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
         {
             adios2::IO &io = adios.DeclareIO("ReadIO1");
 
-            adios2::Engine &bpReader = io.Open("Flush1D", adios2::Mode::Read);
+            adios2::Engine &bpReader =
+                io.Open("Flush1Dfstream", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             ASSERT_NE(var_i8, nullptr);
@@ -1201,7 +1208,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
         {
             adios2::IO &io = adios.DeclareIO("ReadIO2");
 
-            adios2::Engine &bpReader = io.Open("Flush2D", adios2::Mode::Read);
+            adios2::Engine &bpReader =
+                io.Open("Flush2Dfstream", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             ASSERT_NE(var_i8, nullptr);
