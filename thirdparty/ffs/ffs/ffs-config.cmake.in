@@ -16,7 +16,7 @@ if(@FFS_USE_ATL@)
   list(APPEND _ffs_required_vars ATL_FOUND)
 endif()
 
-if(@FFS_USE_DILL@)
+if(@FFS_USE_DILL@ AND NOT @BUILD_SHARED_LIBS@)
   find_dependency(dill)
   list(APPEND _ffs_required_vars DILL_FOUND)
 endif()

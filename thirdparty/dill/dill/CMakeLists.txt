@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
 if(POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
-  project(DILL VERSION 2.3.0 LANGUAGES C CXX)
+  project(DILL VERSION 2.3.1 LANGUAGES C CXX)
 else()
   project(DILL C CXX)
   set(DILL_MAJOR_VERSION 2)
   set(DILL_MINOR_VERSION 3)
-  set(DILL_PATCH_VERSION 0)
+  set(DILL_PATCH_VERSION 1)
   set(DILL_VERSION
     ${DILL_MAJOR_VERSION}.${DILL_MINOR_VERSION}.${DILL_PATCH_VERSION})
 endif()
@@ -16,7 +16,7 @@ set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
 set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
 set(CMAKE_INSTALL_INCLUDEDIR include
   CACHE STRING "Installation include subdirectory")
-set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake
+set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/dill
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_BINDIR)
 mark_as_advanced(CMAKE_INSTALL_LIBDIR)
@@ -318,21 +318,18 @@ set(DILL_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(DILL_LIBRARY_PREFIX)
 
 add_library(dill ${SRC_LIST})
-if(DILL_LIBRARY_PREFIX)
-  set_target_properties(dill PROPERTIES
-    LIBRARY_OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill)
-endif()
 set_target_properties(dill PROPERTIES
+  OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill
   VERSION ${DILL_VERSION}
   SOVERSION ${DILL_VERSION_MAJOR})
+add_library(dill::dill ALIAS dill)
+
 target_include_directories(dill PUBLIC
                        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 		       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
                        $<INSTALL_INTERFACE:${include_dest}>
                        $<INSTALL_INTERFACE:${lib_dest}>)
 target_link_libraries(dill ${TARGET_DEP_LIBS})
-
-add_library(dill::dill ALIAS dill)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dill.h"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
@@ -367,11 +364,11 @@ configure_file(dill-config-version.cmake.in
 install(FILES
   "${PROJECT_BINARY_DIR}/dill-config.cmake"
   "${PROJECT_BINARY_DIR}/dill-config-version.cmake"
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/dill" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
  
 # Install the export set for use with the install-tree
 install(EXPORT dill-targets NAMESPACE dill::
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/dill" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
 
 # display status message for important variables
 include(CTest)

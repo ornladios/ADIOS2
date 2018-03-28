@@ -1,33 +1,43 @@
 include("${CMAKE_CURRENT_LIST_DIR}/EVPathConfigVersion.cmake")
   
 include(CMakeFindDependencyMacro)
-set(_evpath_required_vars REQUIRED_VARS)
 
-find_dependency(atl)
-list(APPEND _evpath_required_vars ATL_FOUND)
-
-find_dependency(ffs)
-list(APPEND _evpath_required_vars FFS_FOUND)
+find_dependency(atl @atl_VERSION@)
+find_dependency(ffs @ffs_VERSION@)
 
 if(NOT @BUILD_SHARED_LIBS@)
-  find_dependency(dill)
-  list(APPEND _evpath_required_vars DILL_FOUND)
+  list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_LIST_DIR}")
 
-  if(@ENET_FOUND@ AND NOT @EVPATH_TRANSPORT_MODULES@)
-    find_dependency(enet)
-    list(APPEND _evpath_required_vars ENET_FOUND)
+  find_dependency(dill @dill_VERSION@)
+
+  if(@NVML_FOUND@)
+    find_dependency(NVML)
+  endif()
+
+  if(NOT @EVPATH_TRANSPORT_MODULES@)
+    if(@ENET_FOUND@)
+      find_dependency(enet @enet_VERSION@)
+    endif()
+
+    if(@LIBFABRIC_FOUND@)
+      find_dependency(LIBFABRIC)
+    endif()
+
+    if(@NNTI_FOUND@)
+     find_dependency(NNTI)
+    endif()
   endif()
 endif()
 
 set(EVPath_LIBRARIES EVPath::EVPath)
 include(FindPackageHandleStandardArgs)
 set(EVPath_CONFIG "${CMAKE_CURRENT_LIST_FILE}")
-find_package_handle_standard_args(EVPath CONFIG_MODE ${_evpath_required_vars})
+find_package_handle_standard_args(EVPath CONFIG_MODE)
 
 if(NOT TARGET EVPath::EVPath)
   include("${CMAKE_CURRENT_LIST_DIR}/EVPathTargets.cmake")
 endif()
 
 set(EVPath_INCLUDE_DIRS
-        $<TARGET_PROPERTY:EVPath::EVPath,INTERFACE_INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:EVPath::EVPath,INTERFACE_INCLUDE_DIRECTORIES>
 )

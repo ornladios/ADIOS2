@@ -7,7 +7,7 @@ set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
 set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
 set(CMAKE_INSTALL_INCLUDEDIR include
   CACHE STRING "Installation include subdirectory")
-set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake
+set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/enet
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_BINDIR)
 mark_as_advanced(CMAKE_INSTALL_LIBDIR)
@@ -82,6 +82,10 @@ int main() { return sizeof(socklen_t); } ]=]
   HAS_SOCKLEN_T
 )
 
+set(ENET_LIBRARY_PREFIX "" CACHE STRING
+  "Prefix to prepend to the output library name")
+mark_as_advanced(ENET_LIBRARY_PREFIX)
+
 add_library(enet
   callbacks.c
   compress.c
@@ -91,7 +95,13 @@ add_library(enet
   peer.c
   protocol.c
 )
+set_target_properties(enet PROPERTIES
+  OUTPUT_NAME ${ENET_LIBRARY_PREFIX}enet
+  VERSION ${ENET_VERSION}
+  SOVERSION ${ENET_VERSION_MAJOR}
+)
 add_library(enet::enet ALIAS enet)
+
 target_compile_definitions(enet PRIVATE
   $<$<BOOL:${HAS_GETADDRINFO}>:HAS_GETADDRINFO>
   $<$<BOOL:${HAS_GETNAMEINFO}>:HAS_GETNAMEINFO>
@@ -104,14 +114,6 @@ target_compile_definitions(enet PRIVATE
   $<$<BOOL:${HAS_MSGHDR_FLAGS}>:HAS_MSGHDR_FLAGS>
   $<$<BOOL:${HAS_SOCKLEN_T}>:HAS_SOCKLEN_T>
 )
-set(ENET_LIBRARY_PREFIX "" CACHE STRING
-  "Prefix to prepend to the output library name")
-mark_as_advanced(ENET_LIBRARY_PREFIX)
-if(ENET_LIBRARY_PREFIX)
-  set_target_properties(enet PROPERTIES
-    LIBRARY_OUTPUT_NAME ${ENET_LIBRARY_PREFIX}enet
-  )
-endif()
 
 if(UNIX)
   target_sources(enet PRIVATE unix.c)
@@ -124,11 +126,6 @@ target_include_directories(enet PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-set_target_properties(enet PROPERTIES
-  VERSION ${ENET_VERSION}
-  SOVERSION ${ENET_VERSION_MAJOR}
-)
- 
 install(DIRECTORY include/enet
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   FILES_MATCHING PATTERN "*.h"
@@ -139,7 +136,6 @@ install(TARGETS enet
   LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"
   ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )
-
 
 # Setup packaging and configs
  
@@ -155,8 +151,8 @@ configure_file(enet-config-version.cmake.in
 install(FILES
   "${PROJECT_BINARY_DIR}/enet-config.cmake"
   "${PROJECT_BINARY_DIR}/enet-config-version.cmake"
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/enet")
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
  
 # Install the export set for use with the install-tree
 install(EXPORT enet-targets NAMESPACE enet::
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}/enet")
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
