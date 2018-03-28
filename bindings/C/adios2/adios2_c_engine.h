@@ -91,6 +91,12 @@ void adios2_end_step(adios2_engine *engine);
 void adios2_write_step(adios2_engine *engine);
 
 /**
+ * Explicit engine buffer flush to transports
+ * @param engine input
+ */
+void adios2_flush(adios2_engine *engine);
+
+/**
  * Close all transports in adios2_Engine
  * @param engine handler containing all transports to
  * be closed. engine Becomes NULL after this function is called.

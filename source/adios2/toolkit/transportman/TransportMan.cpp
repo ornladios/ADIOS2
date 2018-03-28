@@ -174,6 +174,29 @@ void TransportMan::ReadFile(char *buffer, const size_t size, const size_t start,
     itTransport->second->Read(buffer, size, start);
 }
 
+void TransportMan::FlushFiles(const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+
+            if (transport->m_Type == "File")
+            {
+                transport->Flush();
+            }
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport, ", in call to FlushFiles with index " +
+                                   std::to_string(transportIndex));
+        itTransport->second->Flush();
+    }
+}
+
 void TransportMan::CloseFiles(const int transportIndex)
 {
     if (transportIndex == -1)

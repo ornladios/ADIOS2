@@ -137,7 +137,7 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
         if (readSize != size)
         {
             throw std::ios_base::failure(
-                "ERROR: read size + " + std::to_string(readSize) +
+                "ERROR: read size of " + std::to_string(readSize) +
                 " is not equal to intended size " + std::to_string(size) +
                 " in file " + m_Name + ", in call to stdio fread\n");
         }
@@ -188,7 +188,9 @@ size_t FileStdio::GetSize()
 
 void FileStdio::Flush()
 {
+    ProfilerStart("write");
     const int status = std::fflush(m_File);
+    ProfilerStop("write");
 
     if (status == EOF)
     {

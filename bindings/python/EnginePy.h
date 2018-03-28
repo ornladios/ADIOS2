@@ -54,6 +54,8 @@ public:
 
     void WriteStep();
 
+    void Flush(const int transportIndex = -1);
+
     void Close(const int transportIndex = -1);
 
 private:

@@ -131,6 +131,14 @@ IO &ADIOS::AtIO(const std::string name)
     return itIO->second;
 }
 
+void ADIOS::FlushAll()
+{
+    for (auto &ioPair : m_IOs)
+    {
+        ioPair.second.FlushAll();
+    }
+}
+
 Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
                                 const Params &parameters)
 {

@@ -470,6 +470,18 @@ Engine &IO::Open(const std::string &name, const Mode mode)
     return Open(name, mode, m_MPIComm);
 }
 
+void IO::FlushAll()
+{
+    for (auto &enginePair : m_Engines)
+    {
+        auto &engine = enginePair.second;
+        if (engine->OpenMode() != Mode::Read)
+        {
+            enginePair.second->Flush();
+        }
+    }
+}
+
 // PRIVATE
 int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
     noexcept

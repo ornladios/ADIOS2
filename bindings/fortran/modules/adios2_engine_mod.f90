@@ -59,6 +59,14 @@ contains
 
     end subroutine
 
+    subroutine adios2_flush(engine, ierr)
+        integer(kind=8), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_flush_f2c(engine, ierr)
+
+    end subroutine
+
     subroutine adios2_close(engine, ierr)
         integer(kind=8), intent(in) :: engine
         integer, intent(out) :: ierr

@@ -311,3 +311,18 @@ void FC_GLOBAL(adios2_open_f2c,
         *ierr = -1;
     }
 }
+
+void FC_GLOBAL(adios2_flush_all_engines_f2c,
+               ADIOS2_FLUSH_ALL_ENGINES_F2C)(adios2_io **io, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_flush_all_engines(*io);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 flush_all_engines: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}

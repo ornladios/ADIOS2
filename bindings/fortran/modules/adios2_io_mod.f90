@@ -102,4 +102,12 @@ contains
     end subroutine
 
 
+    subroutine adios2_flush_all_engines(io, ierr)
+        integer(kind=8), intent(in) :: io
+        integer, intent(out) :: ierr
+
+        call adios2_flush_all_engines_f2c(io, ierr)
+
+    end subroutine
+
 end module

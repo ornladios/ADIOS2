@@ -158,7 +158,9 @@ size_t FileFStream::GetSize()
 
 void FileFStream::Flush()
 {
+    ProfilerStart("write");
     m_FileStream.flush();
+    ProfilerStart("write");
     CheckFile("couldn't flush to file " + m_Name +
               ", in call to fstream flush");
 }
