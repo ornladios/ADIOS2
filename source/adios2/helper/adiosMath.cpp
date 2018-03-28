@@ -24,8 +24,8 @@ namespace adios2
 
 size_t GetTotalSize(const Dims &dimensions) noexcept
 {
-    return std::accumulate(dimensions.begin(), dimensions.end(), 1,
-                           std::multiplies<size_t>());
+    return std::accumulate(dimensions.begin(), dimensions.end(),
+                           static_cast<size_t>(1), std::multiplies<size_t>());
 }
 
 bool CheckIndexRange(const int index, const int upperLimit,

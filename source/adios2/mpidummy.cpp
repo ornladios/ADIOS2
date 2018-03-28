@@ -452,7 +452,9 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                 reinterpret_cast<unsigned long long int *>(recvbuf);
             const unsigned long long int *sendBuffer =
                 reinterpret_cast<const unsigned long long int *>(sendbuf);
-            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
+            *recvBuffer =
+                std::accumulate(sendBuffer, sendBuffer + count,
+                                static_cast<unsigned long long int>(0));
         }
         break;
     default:
