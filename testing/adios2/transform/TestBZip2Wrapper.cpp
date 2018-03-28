@@ -20,18 +20,18 @@ protected:
 TEST_F(ADIOSBZip2Wrapper, UInt100)
 {
     /** Application variable uints from 0 to 1000 */
-    std::vector<unsigned int> myUInts(100);
+    std::vector<uint32_t> myUInts(100);
     std::iota(myUInts.begin(), myUInts.end(), 0.f);
     const std::size_t Nx = myUInts.size();
-    const std::size_t inputBytes = Nx * sizeof(unsigned int);
+    const std::size_t inputBytes = Nx * sizeof(uint32_t);
 
     // Define ADIOS variable
-    auto &var_UInt = io.DefineVariable<unsigned int>("myUInts", {}, {}, {Nx},
-                                                     adios2::ConstantDims);
+    auto &var_UInt = io.DefineVariable<uint32_t>("myUInts", {}, {}, {Nx},
+                                                 adios2::ConstantDims);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(var_UInt),
-                                  adios2::Variable<unsigned int> &>();
+                                  adios2::Variable<uint32_t> &>();
 
     // Define bzip2 transform
     adios2::Operator &adiosBZip2 =
@@ -53,10 +53,11 @@ TEST_F(ADIOSBZip2Wrapper, UInt100)
     compressedBuffer.resize(compressedSize);
 
     // Allocate original data size
-    std::vector<unsigned int> decompressedBuffer(Nx);
+    std::vector<uint32_t> decompressedBuffer(Nx);
     size_t decompressedSize = adiosBZip2.Decompress(
         compressedBuffer.data(), compressedSize, decompressedBuffer.data(),
-        decompressedBuffer.size() * sizeof(unsigned int));
+        decompressedBuffer.size() * sizeof(uint32_t));
+    ASSERT_EQ(decompressedSize, inputBytes);
 
     // testing data recovery
     for (size_t i = 0; i < Nx; ++i)

@@ -38,15 +38,13 @@ void UserCallBack(const void *data, std::string doid, std::string var,
 int main(int argc, char *argv[])
 {
     // Application variable
-    int rank, size;
+    int rank;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
 #else
     rank = 0;
-    size = 1;
 #endif
 
     int timeout = 5;

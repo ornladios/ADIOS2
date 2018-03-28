@@ -71,7 +71,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     int use_configfile = 0;
     int use_zchecker = 0;
     std::string sz_configfile = "sz.config";
-    std::string zc_configfile = "zc.config";
+    // std::string zc_configfile = "zc.config";
 
     std::cout << "debugMode:" << this->m_DebugMode << std::endl;
 
