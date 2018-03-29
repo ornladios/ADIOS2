@@ -325,11 +325,40 @@ set_target_properties(dill PROPERTIES
 add_library(dill::dill ALIAS dill)
 
 target_include_directories(dill PUBLIC
-                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-		       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                       $<INSTALL_INTERFACE:${include_dest}>
-                       $<INSTALL_INTERFACE:${lib_dest}>)
-target_link_libraries(dill ${TARGET_DEP_LIBS})
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+                           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_link_libraries(dill PRIVATE ${TARGET_DEP_LIBS})
+
+# Setup pkgconfig
+set(_pkg_config_private_libs)
+foreach(L ${TARGET_DEP_LIBS})
+  if(L MATCHES "(.*)/?lib(.*).")
+    if(CMAKE_MATCH_1)
+      list(APPEND _pkg_config_private_libs "-L${CMAKE_MATCH_1}")
+    endif()
+    list(APPEND _pkg_config_private_libs "-l${CMAKE_MATCH_2}")
+  elseif(L MATCHES "^-")
+    list(APPEND _pkg_config_private_libs "${L}")
+  else()
+    list(APPEND _pkg_config_private_libs "-l${L}")
+  endif()
+endforeach()
+string(REPLACE ";" " " _pkg_config_private_libs "${_pkg_config_private_libs}")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/dill.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/dill.pc
+  @ONLY
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dill.pc
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/dill-config.in
+  ${CMAKE_CURRENT_BINARY_DIR}/dill-config
+  @ONLY
+)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/dill-config
+  DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dill.h"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
