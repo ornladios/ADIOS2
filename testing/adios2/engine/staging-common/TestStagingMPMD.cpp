@@ -345,7 +345,15 @@ int main(int argc, char **argv)
                   << " processes " << std::endl;
     }
 
-    int result = RUN_ALL_TESTS();
+    int result = -1;
+    try
+    {
+        result = RUN_ALL_TESTS();
+    }
+    catch (std::exception &e)
+    {
+        result = 1;
+    }
 
     MPI_Finalize();
     return result;

@@ -30,6 +30,9 @@ StepStatus EnginePy::BeginStep(const StepMode mode, const float timeoutSeconds)
 
 void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
 {
+    adios2::CheckForNullptr(variable,
+                            "for variable, in call to PutSync a numpy array");
+
     if (variable->m_Type == "compound")
     {
         // not supported
@@ -56,12 +59,18 @@ void EnginePy::PutSync(VariableBase *variable, const pybind11::array &array)
 
 void EnginePy::PutSync(VariableBase *variable, const std::string &string)
 {
+    adios2::CheckForNullptr(variable,
+                            "for variable, in call to PutSync string");
+
     m_Engine.PutSync(*dynamic_cast<adios2::Variable<std::string> *>(variable),
                      string);
 }
 
 void EnginePy::PutDeferred(VariableBase *variable, const pybind11::array &array)
 {
+    adios2::CheckForNullptr(
+        variable, "for variable, in call to PutDeferred a numpy array");
+
     if (variable->m_Type == "compound")
     {
         // not supported
@@ -88,6 +97,8 @@ void EnginePy::PutDeferred(VariableBase *variable, const pybind11::array &array)
 
 void EnginePy::PutDeferred(VariableBase *variable, const std::string &string)
 {
+    adios2::CheckForNullptr(variable,
+                            "for variable, in call to PutDeferred a string");
     m_Engine.PutDeferred(
         *dynamic_cast<adios2::Variable<std::string> *>(variable), string);
 }
@@ -96,6 +107,9 @@ void EnginePy::PerformPuts() { m_Engine.PerformPuts(); }
 
 void EnginePy::GetSync(VariableBase *variable, pybind11::array &array)
 {
+    adios2::CheckForNullptr(variable,
+                            "for variable, in call to GetSync a numpy array");
+
     if (variable->m_Type == "compound")
     {
         // not supported
@@ -125,6 +139,9 @@ void EnginePy::GetSync(VariableBase *variable, pybind11::array &array)
 
 void EnginePy::GetSync(VariableBase *variable, std::string &string)
 {
+    adios2::CheckForNullptr(variable,
+                            "for variable, in call to GetSync a string");
+
     if (variable->m_Type == GetType<std::string>())
     {
         m_Engine.GetSync(
@@ -143,6 +160,9 @@ void EnginePy::GetSync(VariableBase *variable, std::string &string)
 
 void EnginePy::GetDeferred(VariableBase *variable, pybind11::array &array)
 {
+    adios2::CheckForNullptr(
+        variable, "for variable, in call to GetDeferred a numpy array");
+
     if (variable->m_Type == "compound")
     {
         // not supported
@@ -172,6 +192,9 @@ void EnginePy::GetDeferred(VariableBase *variable, pybind11::array &array)
 
 void EnginePy::GetDeferred(VariableBase *variable, std::string &string)
 {
+    adios2::CheckForNullptr(variable,
+                            "for variable, in call to GetDeferred a string");
+
     if (variable->m_Type == GetType<std::string>())
     {
         m_Engine.GetDeferred(

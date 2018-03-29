@@ -11,10 +11,13 @@
 #include "adios2_c_adios.h"
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/ADIOS.h"
+#include "adios2/helper/adiosFunctions.h"
 
 adios2_adios *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
                                  const adios2_debug_mode debug_mode)
 {
+    adios2::CheckForNullptr(config_file,
+                            "for config_file, in call to adios2_init_config");
     const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
     adios2_adios *adios = reinterpret_cast<adios2_adios *>(
         new adios2::ADIOS(config_file, mpi_comm, debugBool, "C"));
@@ -40,6 +43,8 @@ adios2_adios *adios2_init_nompi(const adios2_debug_mode debug_mode)
 
 adios2_io *adios2_declare_io(adios2_adios *adios, const char *ioName)
 {
+    adios2::CheckForNullptr(adios,
+                            "for adios2_adios, in call to adios2_declare_io");
     adios2_io *io = reinterpret_cast<adios2_io *>(
         &reinterpret_cast<adios2::ADIOS *>(adios)->DeclareIO(ioName));
     return io;
@@ -47,10 +52,14 @@ adios2_io *adios2_declare_io(adios2_adios *adios, const char *ioName)
 
 void adios2_flush_all(adios2_adios *adios)
 {
+    adios2::CheckForNullptr(adios,
+                            "for adios2_adios, in call to adios2_flush_all");
     reinterpret_cast<adios2::ADIOS *>(adios)->FlushAll();
 }
 
 void adios2_finalize(adios2_adios *adios)
 {
+    adios2::CheckForNullptr(adios,
+                            "for adios2_adios, in call to adios2_finalize");
     delete reinterpret_cast<adios2::ADIOS *>(adios);
 }

@@ -66,8 +66,6 @@ public:
 
     pybind11::array Read(const std::string &name, const bool endl = false);
 
-    pybind11::array Read(const std::string &name, const size_t step);
-
     pybind11::array Read(const std::string &name, const Dims &selectionStart,
                          const Dims &selectionCount, const bool endl = false);
 

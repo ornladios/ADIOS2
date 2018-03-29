@@ -127,3 +127,27 @@ TEST_F(ADIOSBZip2Wrapper, WrongBZip2Name)
                      adios.DefineOperator("BZip2Compressor4", "BZIP2"),
                  std::invalid_argument);
 }
+
+int main(int argc, char **argv)
+{
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(&argc, &argv);
+#endif
+
+    int result = -1;
+    try
+    {
+        ::testing::InitGoogleTest(&argc, argv);
+        result = RUN_ALL_TESTS();
+    }
+    catch (std::exception &e)
+    {
+        result = 1;
+    }
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Finalize();
+#endif
+
+    return result;
+}

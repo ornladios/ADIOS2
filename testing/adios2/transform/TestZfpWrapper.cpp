@@ -119,3 +119,27 @@ TEST_F(ADIOSZfpWrapper, MissingMandatoryParameter)
                      var_Floats.m_OperatorsInfo[zfpID].Parameters),
                  std::invalid_argument);
 }
+
+int main(int argc, char **argv)
+{
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Init(&argc, &argv);
+#endif
+
+    int result = -1;
+    try
+    {
+        ::testing::InitGoogleTest(&argc, argv);
+        result = RUN_ALL_TESTS();
+    }
+    catch (std::exception &e)
+    {
+        result = 1;
+    }
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Finalize();
+#endif
+
+    return result;
+}
