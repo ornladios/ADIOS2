@@ -1088,7 +1088,7 @@ void BP3Serializer::MergeSerializeIndices(
 
         if (m_DebugMode)
         {
-            if (header.DataType == std::numeric_limits<uint8_t> - 1)
+            if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
             {
                 throw std::runtime_error(
                     "ERROR: invalid data type for variable " + header.Name +
