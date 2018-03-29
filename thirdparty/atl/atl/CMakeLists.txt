@@ -120,11 +120,30 @@ set_target_properties(atl PROPERTIES
   PUBLIC_HEADER atl.h)
 add_library(atl::atl ALIAS atl)
 
+target_include_directories(atl PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
 if(NOT ANDROID)
   find_package(Threads)
-  target_link_libraries(atl ${CMAKE_THREADS_LIBS_INIT})
+  target_link_libraries(atl PRIVATE ${CMAKE_THREADS_LIBS_INIT})
 endif()
- 
+
+# Setup pkgconfig
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/atl.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/atl.pc
+  @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/atl.pc
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/atl-config.in
+  ${CMAKE_CURRENT_BINARY_DIR}/atl-config
+  @ONLY)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/atl-config
+  DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
 install(FILES atl.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 install(TARGETS atl
   # IMPORTANT: Add the foo library to the "export-set"
@@ -134,10 +153,6 @@ install(TARGETS atl
   ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
   PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" COMPONENT dev)
 
-target_include_directories(atl PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 option(ATL_LIBRARIES_ONLY "Don't built the ATL utility executables" OFF)
 if(NOT ATL_LIBRARIES_ONLY)
