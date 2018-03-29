@@ -1085,6 +1085,17 @@ void BP3Serializer::MergeSerializeIndices(
             headerSize = position;
             break;
         }
+
+        if (m_DebugMode)
+        {
+            if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
+            {
+                throw std::runtime_error(
+                    "ERROR: invalid data type for variable " + header.Name +
+                    "when writing collective metadata\n");
+            }
+        }
+
         // move all positions to headerSize
         for (size_t r = 0; r < indices.size(); ++r)
         {

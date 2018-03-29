@@ -82,7 +82,8 @@ void FileStdio::Write(const char *buffer, size_t size, size_t start)
     auto lf_Write = [&](const char *buffer, size_t size) {
 
         ProfilerStart("write");
-        auto writtenSize = std::fwrite(buffer, sizeof(char), size, m_File);
+        const auto writtenSize =
+            std::fwrite(buffer, sizeof(char), size, m_File);
         ProfilerStop("write");
 
         CheckFile("couldn't write to file " + m_Name +
@@ -99,7 +100,15 @@ void FileStdio::Write(const char *buffer, size_t size, size_t start)
 
     if (start != MaxSizeT)
     {
-        std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
+        const auto status =
+            std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
+        if (status != 0)
+        {
+            throw std::ios_base::failure(
+                "ERROR: couldn't move position of " + m_Name +
+                " file, in call to FileStdio Write fseek\n");
+        }
+
         CheckFile("couldn't move to start position " + std::to_string(start) +
                   " in file " + m_Name + ", in call to stdio fseek at write ");
     }
@@ -128,7 +137,7 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
     auto lf_Read = [&](char *buffer, size_t size) {
 
         ProfilerStart("read");
-        auto readSize = std::fread(buffer, sizeof(char), size, m_File);
+        const auto readSize = std::fread(buffer, sizeof(char), size, m_File);
         ProfilerStop("read");
 
         CheckFile("couldn't read to file " + m_Name +
@@ -145,12 +154,12 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
 
     if (start != MaxSizeT)
     {
-        const auto result =
+        const auto status =
             std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
         CheckFile("couldn't move to start position " + std::to_string(start) +
                   " in file " + m_Name +
                   ", in call to stdio fseek for read, result=" +
-                  std::to_string(result));
+                  std::to_string(status));
     }
 
     if (size > DefaultMaxFileBatchSize)
@@ -175,12 +184,20 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
 size_t FileStdio::GetSize()
 {
     const auto currentPosition = ftell(m_File);
+    if (currentPosition == -1L)
+    {
+        throw std::ios_base::failure(
+            "ERROR: couldn't get current position of " + m_Name +
+            " file, in call to FileStdio GetSize ftell\n");
+    }
+
     fseek(m_File, 0, SEEK_END);
     const auto size = ftell(m_File);
     if (size == -1)
     {
-        throw std::ios_base::failure("ERROR: couldn't get size of " + m_Name +
-                                     " file\n");
+        throw std::ios_base::failure(
+            "ERROR: couldn't get size of " + m_Name +
+            " file, in call to FileStdio GetSize ftell\n");
     }
     fseek(m_File, currentPosition, SEEK_SET);
     return static_cast<size_t>(size);

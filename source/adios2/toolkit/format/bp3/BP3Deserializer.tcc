@@ -103,7 +103,9 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
     }
     else
     {
-        // TODO: throw exception?
+        throw std::runtime_error("ERROR: variable " + variableName +
+                                 " of type string can't be an array, when "
+                                 "parsing metadata in call to Open");
     }
 
     // going back to get variable index position

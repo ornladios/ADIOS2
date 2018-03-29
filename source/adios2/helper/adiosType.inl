@@ -276,6 +276,15 @@ inline std::string VectorToCSV(const std::vector<T> &input) noexcept
     return csv;
 }
 
+template <class T>
+void CheckForNullptr(const T *pointer, const std::string hint)
+{
+    if (pointer == nullptr)
+    {
+        std::invalid_argument("ERROR: found null pointer " + hint + "\n");
+    }
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSTYPE_INL_ */

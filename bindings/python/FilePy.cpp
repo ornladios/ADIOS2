@@ -201,13 +201,6 @@ pybind11::array FilePy::Read(const std::string &name, const bool endl)
     return pybind11::array();
 }
 
-pybind11::array FilePy::Read(const std::string &name, const size_t step)
-{
-    throw std::invalid_argument("ERROR: adios2 file read variable " + name +
-                                " signature not yet implemented\n");
-    return pybind11::array();
-}
-
 pybind11::array FilePy::Read(const std::string &name,
                              const Dims &selectionStart,
                              const Dims &selectionCount, const bool endl)
@@ -228,13 +221,10 @@ pybind11::array FilePy::Read(const std::string &name,
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
-    else
-    {
-        throw std::invalid_argument(
-            "ERROR: adios2 file read variable " + name +
-            ", type can't be mapped to a numpy type, in call to read\n");
-    }
-    return pybind11::array();
+
+    throw std::invalid_argument(
+        "ERROR: adios2 file read variable " + name +
+        ", type can't be mapped to a numpy type, in call to read\n");
 }
 
 pybind11::array FilePy::Read(const std::string &name,

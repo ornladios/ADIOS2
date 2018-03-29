@@ -38,6 +38,9 @@ const std::map<std::string, std::vector<adios2_type>> adios2_types_map = {
 const char *adios2_variable_name(const adios2_variable *variable,
                                  size_t *length)
 {
+    adios2::CheckForNullptr(
+        variable, "for const adios2_variable, in call to adios2_variable_name");
+
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     if (length != nullptr)
@@ -49,6 +52,9 @@ const char *adios2_variable_name(const adios2_variable *variable,
 
 adios2_type adios2_variable_type(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(
+        variable, "for const adios2_variable, in call to adios2_variable_type");
+
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
 
@@ -64,6 +70,8 @@ adios2_type adios2_variable_type(const adios2_variable *variable)
 
 int adios2_variable_is_constant_dims(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                      "adios2_variable_is_constant_dims");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     const int isConstantDims = (variableBase->m_ConstantDims) ? 1 : 0;
@@ -72,6 +80,8 @@ int adios2_variable_is_constant_dims(const adios2_variable *variable)
 
 size_t adios2_variable_ndims(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                      "adios2_variable_ndims");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     return variableBase->m_Shape.size();
@@ -79,6 +89,8 @@ size_t adios2_variable_ndims(const adios2_variable *variable)
 
 const size_t *adios2_variable_shape(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                      "adios2_variable_shape");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     return variableBase->m_Shape.data();
@@ -86,6 +98,8 @@ const size_t *adios2_variable_shape(const adios2_variable *variable)
 
 const size_t *adios2_variable_start(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                      "adios2_variable_start");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     return variableBase->m_Start.data();
@@ -93,6 +107,8 @@ const size_t *adios2_variable_start(const adios2_variable *variable)
 
 const size_t *adios2_variable_count(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                      "adios2_variable_count");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     return variableBase->m_Count.data();
@@ -100,6 +116,8 @@ const size_t *adios2_variable_count(const adios2_variable *variable)
 
 size_t adios2_variable_available_steps_start(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                      "adios2_variable_available_steps_start");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     return variableBase->m_AvailableStepsStart;
@@ -107,6 +125,8 @@ size_t adios2_variable_available_steps_start(const adios2_variable *variable)
 
 size_t adios2_variable_available_steps_count(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                      "adios2_variable_available_steps_count");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     return variableBase->m_AvailableStepsCount;
@@ -126,6 +146,8 @@ void adios2_set_dimensions(adios2_variable *variable, const size_t ndims,
         }
     };
 
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                      "adios2_set_dimensions");
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
 
@@ -138,6 +160,8 @@ void adios2_set_dimensions(adios2_variable *variable, const size_t ndims,
 void adios2_set_shape(adios2_variable *variable, const size_t ndims,
                       const size_t *shape)
 {
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                      "adios2_set_shape");
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const adios2::Dims shapeV(shape, shape + ndims);
@@ -147,6 +171,8 @@ void adios2_set_shape(adios2_variable *variable, const size_t ndims,
 void adios2_set_selection(adios2_variable *variable, const size_t ndims,
                           const size_t *start, const size_t *count)
 {
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                      "adios2_set_selection");
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
 
@@ -159,6 +185,8 @@ void adios2_set_selection(adios2_variable *variable, const size_t ndims,
 void adios2_set_step_selection(adios2_variable *variable,
                                const size_t step_start, const size_t step_count)
 {
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                      "adios2_set_step_selection");
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     variableBase->SetStepSelection(adios2::Box<size_t>{step_start, step_count});
@@ -166,6 +194,8 @@ void adios2_set_step_selection(adios2_variable *variable,
 
 void *adios2_get_data(const adios2_variable *variable)
 {
+    adios2::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                      "adios2_get_data");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -190,6 +220,8 @@ void *adios2_get_data(const adios2_variable *variable)
 
 void adios2_set_data(adios2_variable *variable, const void *data)
 {
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                      "adios2_set_data");
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
 

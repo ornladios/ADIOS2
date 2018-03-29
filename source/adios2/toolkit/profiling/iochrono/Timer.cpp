@@ -30,7 +30,7 @@ void Timer::Resume() noexcept
     m_InitialTimeSet = true;
 }
 
-void Timer::Pause() noexcept
+void Timer::Pause()
 {
     m_ElapsedTime = std::chrono::high_resolution_clock::now();
     m_ProcessTime += GetElapsedTime();
