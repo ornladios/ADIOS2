@@ -200,10 +200,12 @@ set_target_properties(ffs PROPERTIES
 add_library(ffs::ffs ALIAS ffs)
 
 if(UNIX)
-	target_link_libraries(ffs PRIVATE m)
+    target_link_libraries(ffs PRIVATE m)
+    list(APPEND _pkg_config_private_libs m)
 endif()
 if(SHARED_LIBS_SUPPORTED)
-	target_link_libraries(ffs PRIVATE ${CMAKE_DL_LIBS})
+    target_link_libraries(ffs PRIVATE ${CMAKE_DL_LIBS})	
+    list(APPEND _pkg_config_private_libs ${CMAKE_DL_LIBS})	
 endif()
 
 target_include_directories(ffs PUBLIC
@@ -223,6 +225,7 @@ if(FFS_USE_DILL)
   set(FFS_CONVERSION_GENERATION_DEFAULT ${DILL_HAS_NATIVE_DCG})
   set(DO_DCG TRUE)
   target_link_libraries(ffs PRIVATE dill::dill)
+  list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")	
 endif()
 
 option(FFS_USE_ATL "Enable the use of ATL" ON)
@@ -230,6 +233,7 @@ if(FFS_USE_ATL)
   find_package(atl 2.2.1 REQUIRED)
   set(HAVE_ATL_H ON)
   target_link_libraries(ffs PUBLIC atl::atl)
+  list(APPEND _pkg_config_private_reqs "atl >= ${atl_VERSION}")
 endif()
 
 CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
@@ -288,6 +292,37 @@ ENDIF()
 IF (NOT DEFINED (FORMAT_SERVICE_DOMAIN) )
    set (FORMAT_SERVICE_DOMAIN "")
 ENDIF()
+# Setup pkgconfig
+set(__pkg_config_private_libs ${_pkg_config_private_libs})
+set(_pkg_config_private_libs)
+foreach(L ${__pkg_config_private_libs})
+  if(L MATCHES "(.*)/?lib(.*).")
+    if(CMAKE_MATCH_1)
+      list(APPEND _pkg_config_private_libs "-L${CMAKE_MATCH_1}")
+    endif()
+    list(APPEND _pkg_config_private_libs "-l${CMAKE_MATCH_2}")
+  elseif(L MATCHES "^-")
+    list(APPEND _pkg_config_private_libs "${L}")
+  else()
+    list(APPEND _pkg_config_private_libs "-l${L}")
+  endif()
+endforeach()
+string(REPLACE ";" " " _pkg_config_private_libs "${_pkg_config_private_libs}")
+string(REPLACE ";" " " _pkg_config_private_reqs "${_pkg_config_private_reqs}")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/ffs.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/ffs.pc
+  @ONLY
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ffs.pc
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/ffs-config.in
+  ${CMAKE_CURRENT_BINARY_DIR}/ffs-config
+  @ONLY
+)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ffs-config
+  DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
 install(FILES fm/fm.h cod/cod.h ${CMAKE_CURRENT_BINARY_DIR}/ffs/ffs.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
