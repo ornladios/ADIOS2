@@ -131,6 +131,30 @@ target_include_directories(EVPath PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+function(_pkg_get_target_prefix tgt out_prefix)
+  set(prefix)
+  get_property(inc TARGET ${tgt} PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+  get_filename_component(prefix "${inc}" PATH)
+  set(${out_prefix} "${prefix}" PARENT_SCOPE)
+endfunction()
+
+set(_pkg_config_pfxs
+  "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+set(_pkg_config_reqs)
+set(_pkg_config_private_reqs)
+set(_pkg_config_libs)
+set(_pkg_config_private_libs)
+
+check_function_exists(sqrt HAVE_SQRT)
+if(NOT HAVE_SQRT)
+  check_library_exists(m sqrt "" HAVE_LIBM_SQRT)
+  if(NOT HAVE_LIBM_SQRT)
+    message(FATAL_ERROR "Unable to use C math library functions (with or without -lm)")
+  endif()
+  target_link_libraries(EVPath PRIVATE m)
+  list(APPEND _pkg_config_private_libs m)
+endif()
+
 set(EVPATH_LIBRARY_PREFIX "" CACHE STRING
   "Prefix to prepend to the output library name")
 mark_as_advanced(EVPATH_LIBRARY_PREFIX)
@@ -154,9 +178,17 @@ find_package(ffs 1.5.1 REQUIRED)
 find_package(dill 2.3.1 REQUIRED)
 target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs PRIVATE dill::dill)
 
+_pkg_get_target_prefix(atl::atl atl_PREFIX)
+_pkg_get_target_prefix(ffs::ffs ffs_PREFIX)
+_pkg_get_target_prefix(dill::dill dill_PREFIX)
+list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}" "${dill_PREFIX}")
+list(APPEND _pkg_config_reqs "atl >= ${atl_VERSION}" "ffs >= ${ffs_VERSION}")
+list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
+
 find_package(Threads)
 if(Threads_FOUND)
   target_link_libraries(EVPath PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+  list(APPEND _pkg_config_private_libs ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 find_package(NVML)
@@ -165,6 +197,7 @@ if(NVML_FOUND)
     list(APPEND EXTRA_INSTALL_PACKAGES NVML)
   endif()
   target_link_libraries(EVPath PRIVATE nvml::nvml)
+  list(APPEND _pkg_config_private_libs ${NVML_LIBRARIES})
 endif()
 
 include(CheckSymbolExists)
@@ -175,6 +208,7 @@ if(NOT HAVE_CLOCK_GETTIME)
   CHECK_LIBRARY_EXISTS(rt clock_gettime "time.h" HAVE_CLOCK_GETTIME)
   if(HAVE_CLOCK_GETTIME)
     target_link_libraries(EVPath PRIVATE rt)
+    list(APPEND _pkg_config_private_libs rt)
   endif()
 endif()
 
@@ -226,6 +260,9 @@ if(ENET_FOUND)
   else()
     target_sources(EVPath PRIVATE cmenet.c)
     target_link_libraries(EVPath PRIVATE enet::enet)
+    _pkg_get_target_prefix(enet::enet enet_PREFIX)
+    list(APPEND _pkg_config_pfxs "${enet_PREFIX}")
+    list(APPEND _pkg_config_private_reqs "enet >= ${enet_VERSION}")
   endif()
 else()
   message(STATUS " - Enet library was not found.  This is not a fatal error, just that the Enet transport will not be built.")
@@ -246,6 +283,8 @@ if(LIBFABRIC_FOUND)
     endif()
     target_sources(EVPath PRIVATE cmfabric.c)
     target_link_libraries(EVPath PRIVATE libfabric::libfabric)
+    list(APPEND _pkg_config_pfxs ${LIBFABRIC_LIBDIR}/pkgconfig)
+    list(APPEND _pkg_config_private_reqs "libfabric >= ${LIBFABRIC_VERSION}")
   endif()
 else()
   message(STATUS " - LibFabric package was not found.  This is not a fatal error, just that the fabric transport will not be built.")
@@ -285,6 +324,7 @@ if(HAVE_IBVERBS)
   else()
     target_sources(EVPath PRIVATE cmib.c)
     target_link_libraries(EVPath PRIVATE ibverbs)
+    list(APPEND _pkg_config_private_libs ibverbs)
   endif()
   set(IB_FOUND 1)
 endif()
@@ -319,6 +359,7 @@ if(HAVE_IBVERBS OR HAVE_UGNI)
       endif()
       target_sources(EVPath PRIVATE cmnnti.c)
       target_link_libraries(EVPath PRIVATE nnti::nnti enet::enet atl::atl)
+      list(APPEND _pkg_config_private_libs ${NNTI_LIBRARIES})
     endif()
   endif()
 endif()
@@ -403,6 +444,43 @@ if(CMAKE_C_COMPILER_ID MATCHES "Intel")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
 endif()
 
+function(_pkg_expand_libs in_libs out_ldflags)
+  set(ldflags)
+  foreach(L ${in_libs})
+    if(L MATCHES "(.*)/?lib(.*).")
+      if(CMAKE_MATCH_1)
+        list(APPEND ldflags "-L${CMAKE_MATCH_1}")
+      endif()
+      list(APPEND ldflags "-l${CMAKE_MATCH_2}")
+    elseif(L MATCHES "^-")
+      list(APPEND ldflags "${L}")
+    else()
+      list(APPEND ldflags "-l${L}")
+    endif()
+  endforeach()
+  string(REPLACE ";" " " ldflags "${ldflags}")
+  set(${out_ldflags} "${ldflags}" PARENT_SCOPE)
+endfunction()
+string(REPLACE ";" ":" _pkg_config_pfxs "${_pkg_config_pfxs}")
+string(REPLACE ";" " " _pkg_config_reqs "${_pkg_config_reqs}")
+string(REPLACE ";" " " _pkg_config_private_reqs "${_pkg_config_private_reqs}")
+_pkg_expand_libs("${_pkg_config_libs}" _pkg_config_libs)
+_pkg_expand_libs("${_pkg_config_private_libs}" _pkg_config_private_libs)
+
+# Setup pkgconfig
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/evpath.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/evpath.pc
+  @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/evpath.pc
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/evpath_config.in
+  ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
+  @ONLY)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
+  DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
 install(
   FILES
     evpath.h
@@ -471,90 +549,6 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfig.cmake
   @ONLY
 )
-
-# So, this big ol thing...
-# This function will walk the dependency graph of a target to determine the full
-# list of transitive library and header information needed to use it.  The
-# purpose is to extract the necessary usage requirements for a non-CMake
-# project to consume evpath
-function(traverse_target_interface in_target out_libs out_inc_dirs)
-  get_target_property(libs ${in_target} INTERFACE_LINK_LIBRARIES)
-  if(NOT libs)
-    set(libs)
-  endif()
-  get_target_property(inc_dirs ${in_target} INTERFACE_INCLUDE_DIRECTORIES)
-  if(NOT inc_dirs)
-    set(inc_dirs)
-  endif()
-  list(INSERT libs 0 "$<TARGET_FILE:${in_target}>")
-
-  set(_has_targets TRUE)
-  while(_has_targets)
-    set(_libs)
-    set(_has_targets FALSE)
-    foreach(L IN LISTS libs)
-      if(L MATCHES "<LINK_ONLY:(.*)>")
-        set(L ${CMAKE_MATCH_1})
-      endif()
-      if(TARGET ${L})
-        set(_has_targets TRUE)
-        get_target_property(L_libs ${L} INTERFACE_LINK_LIBRARIES)
-        get_target_property(L_inc_dirs ${L} INTERFACE_INCLUDE_DIRECTORIES)
-        get_target_property(L_type ${L} TYPE)
-        if(L_type MATCHES "(STATIC|SHARED)_LIBRARY")
-          list(APPEND _libs "$<TARGET_FILE:${L}>")
-        endif()
-        if(L_libs)
-          list(APPEND _libs ${L_libs})
-        endif()
-        if(L_inc_dirs)
-          list(APPEND inc_dirs ${L_inc_dirs})
-        endif()
-      elseif(L MATCHES "^(/|-|\\$<)")
-        list(APPEND _libs "${L}")
-      else()
-        list(APPEND _libs "-l${L}")
-      endif()
-    endforeach()
-    set(libs ${_libs})
-  endwhile()
-
-  set(${out_libs} ${libs} PARENT_SCOPE)
-  set(${out_inc_dirs} ${inc_dirs} PARENT_SCOPE)
-endfunction()
-
-traverse_target_interface(EVPath
-  EVPATH_INTERFACE_LINK_INFO
-  EVPATH_INTERFACE_INCLUDE_DIRECTORIES)
-
-# Filter out any build interface items
-set(_EVPATH_INSTALL_INC_DIRS)
-foreach(D IN LISTS EVPATH_INTERFACE_INCLUDE_DIRECTORIES)
-  if(D MATCHES "<BUILD_INTERFACE:(.*)>")
-    continue()
-  elseif(D MATCHES "<INSTALL_INTERFACE:(.*)>")
-    list(APPEND _EVPATH_INSTALL_INC_DIRS
-      "${CMAKE_INSTALL_PREFIX}/${CMAKE_MATCH_1}")
-  else()
-    list(APPEND _EVPATH_INSTALL_INC_DIRS "${D}")
-  endif()
-endforeach()
-set(EVPATH_INTERFACE_INCLUDE_DIRECTORIES ${_EVPATH_INSTALL_INC_DIRS})
-
-# Create a evpath_config
-list(REMOVE_DUPLICATES EVPATH_INTERFACE_LINK_INFO)
-list(REMOVE_DUPLICATES EVPATH_INTERFACE_INCLUDE_DIRECTORIES)
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/evpath_config.in
-  ${CMAKE_CURRENT_BINARY_DIR}/evpath_config.gen
-  @ONLY
-)
-file(GENERATE
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
-  INPUT ${CMAKE_CURRENT_BINARY_DIR}/evpath_config.gen
-)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
-  DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # Additionally, when cmake has found a EVPathConfig.cmake, it can check for a
 # EVPathConfigVersion.cmake in the same directory when figuring out the version

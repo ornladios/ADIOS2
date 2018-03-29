@@ -24,6 +24,8 @@ Notes
 "
 }
 
+export PKG_CONFIG_LIBDIR="@_pkg_config_pfxs@"
+
 # default
 PRINT_DIR=no
 PRINT_CFLAGS=no
@@ -70,29 +72,26 @@ if [ "$PRINT_DIR" == "yes" ]; then
     if [ $NFLAGS_ASKED -gt 1 ]; then
         echo -n "DIR="
     fi
-    echo @CMAKE_INSTALL_PREFIX@
+    echo $(pkg-config evpath --variable=prefix)
 fi
 
 if [ "$PRINT_CFLAGS" == "yes" ]; then
-    CFLAGS="$<$<BOOL:@EVPATH_INTERFACE_INCLUDE_DIRECTORIES@>:-I$<JOIN:@EVPATH_INTERFACE_INCLUDE_DIRECTORIES@, -I>>"
     if [ $NFLAGS_ASKED -gt 1 ]; then
         echo -n "CFLAGS="
     fi
-    echo $CFLAGS
+    echo $(pkg-config evpath --cflags)
 fi
 
 if [ "$PRINT_LDFLAGS" == "yes" ]; then
-    LDFLAGS="$<JOIN:@EVPATH_INTERFACE_LINK_INFO@, >"
     if [ $NFLAGS_ASKED -gt 1 ]; then
         echo -n "LDFLAGS="
     fi
-    echo $LDFLAGS
+    echo $(pkg-config evpath --libs)
 fi
 
 if [ "$PRINT_STATIC_LDFLAGS" == "yes" ]; then
-    LDFLAGS="$<JOIN:@EVPATH_INTERFACE_LINK_INFO@, >"
     if [ $NFLAGS_ASKED -gt 1 ]; then
         echo -n "STATIC LDFLAGS="
     fi
-    echo $LDFLAGS
+    echo $(pkg-config evpath --libs --static)
 fi
