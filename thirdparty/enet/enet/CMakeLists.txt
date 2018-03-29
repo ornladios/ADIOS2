@@ -126,6 +126,20 @@ target_include_directories(enet PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+# Setup pkgconfig
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/enet.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/enet.pc
+  @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/enet.pc
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/enet-config.in
+  ${CMAKE_CURRENT_BINARY_DIR}/enet-config
+  @ONLY)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/enet-config
+  DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
 install(DIRECTORY include/enet
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   FILES_MATCHING PATTERN "*.h"
