@@ -25,3 +25,8 @@ build/
 
 # Mac OSX finder-related files
 .DS_Store
+
+# Doxygen generated files
+html/
+*.html
+

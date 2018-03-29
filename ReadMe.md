@@ -10,16 +10,22 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6eeb5a8ac3e34d2599cfdea5bdc3390f)](https://www.codacy.com/app/chuckatkins/ADIOS2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ornladios/ADIOS2&amp;utm_campaign=Badge_Grade)
 
 
-# Adaptable Input / Output System (ADIOS) v2.1.0
-This is v2.1.0 of the ADIOS I/O system, developed as part of the
+# Adaptable Input / Output System (ADIOS) v2.1.1
+This is v2.1.1 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
 
 ## License
 ADIOS >= 2.0 is licensed under the Apache License v2.0.  See the accompanying
 Copyright.txt for more details.
 
-## Directory layout
+## Documentation
+Please find ADIOS2 software documentation for:
 
+1. [ADIOS2 User Guide at readthedocs](http://adios2-adaptable-io-system-version-2.readthedocs.io/en/latest/index.html)
+
+2. Local user guide and api documentation generation [docs/ReadMe.md](docs/ReadMe.md)
+
+## Directory layout
 * cmake - Project specific CMake modules
 * examples - ADIOS2 Examples
 * scripts - Project maintenance and development scripts
@@ -28,13 +34,7 @@ Copyright.txt for more details.
     * utils  - source directory for the binary utilities, to be installed under install-dir/bin  
 * bindings - Additional language bindings (C, Fortran and Python)
 * testing - Tests
-
-## Documentation
-Please find ADIOS2 software documentation online under the project GitHub wiki:
-[https://github.com/ornladios/ADIOS2/wiki](https://github.com/ornladios/ADIOS2/wiki)
-
-To generate Doxygen application programming interface (API) documentation see 
-instructions under: [doc/ReadMe.md](doc/ReadMe.md)  
+  
 
 ## Getting Started
 
@@ -42,7 +42,9 @@ ADIOS2 uses CMake for its build environment.  CMake expects projects
 to use "out-of-source" builds, which means keeping a separate build and source
 directory (different from autotools, which usually uses an in-source build).
 
-To build ADIOS2:
+The following is a quick step-by-step build guide, find the full CMake-based install documentation [http://adios2-adaptable-io-system-version-2.readthedocs.io/en/latest/installation/installation.html](here)
+
+Step-by-step build guide:
 
 1. Clone the repository:
 
@@ -52,7 +54,7 @@ $ cd adios2
 $ git clone https://github.com/ornladios/adios2.git source
 ```
 
-2. Create a separate build directory:
+2. Create a separate build directory in your work area:
 
 ```bash
 $ mkdir build
@@ -62,17 +64,17 @@ $ mkdir build
 
 ```bash
 $ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.1.0/gnu/openmpi ../source
+$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.1.1/gnu/openmpi ../source
 -- The C compiler identification is GNU 6.3.1
 -- The CXX compiler identification is GNU 6.3.1
 ...
 
 ADIOS2 build configuration:
-  ADIOS Version: 2.1.0
+  ADIOS Version: 2.1.1
   C++ Compiler : GNU 6.3.1
     /usr/bin/c++
 
-  Installation prefix: /opt/adios2/2.0.0/gnu/openmpi
+  Installation prefix: /opt/adios2/2.1.1/gnu/openmpi
   Features:
     Library Type: shared
     Build Type:   Debug
@@ -107,6 +109,7 @@ The following options can be specified with CMake's `-DVAR=VALUE` syntax to cont
 | `ADIOS2_USE_HDF5`    | **`AUTO`**/``ON``/``OFF`` | Enable the [HDF5](https://www.hdfgroup.org) engine.                              |
 | `ADIOS2_USE_ADIOS1`  | **`AUTO`**/``ON``/``OFF`` | Enable the [ADIOS 1.x](https://www.olcf.ornl.gov/center-projects/adios/) engine. |
 | `ADIOS2_USE_Python`  | **`AUTO`**/``ON``/``OFF`` | Enable the Python >= 2.7 bindings. |
+| `ADIOS2_USE_SST`  | **`AUTO`**/``ON``/``OFF`` | Enable Staging Engine |
 
 Note: The `ADIOS2_USE_HDF5` and `ADIOS2_USE_ADIOS1` options require the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similary, enabling MPI and Python bindings requires the presence of `mpi4py`.
 
@@ -132,34 +135,16 @@ $ make -j8
 ```bash
 $ ctest
 Test project /home/chuck/Code/adios2/build
-      Start  1: ADIOSInterfaceWriteTest.DefineVarChar1x10
- 1/31 Test  #1: ADIOSInterfaceWriteTest.DefineVarChar1x10 ..............   Passed    0.00 sec
-      Start  2: ADIOSInterfaceWriteTest.DefineVarShort1x10
- 2/31 Test  #2: ADIOSInterfaceWriteTest.DefineVarShort1x10 .............   Passed    0.00 sec
-...
-      Start 21: HDF5WriteReadTest.ADIOS2HDF5WriteHDF5Read1D8
-21/31 Test #21: HDF5WriteReadTest.ADIOS2HDF5WriteHDF5Read1D8 ...........   Passed    0.01 sec
-      Start 22: HDF5WriteReadTest.ADIOS2HDF5WriteADIOS2HDF5Read1D8
-22/31 Test #22: HDF5WriteReadTest.ADIOS2HDF5WriteADIOS2HDF5Read1D8 .....***Not Run (Disabled)   0.00 sec
-      Start 23: HDF5WriteReadTest.HDF5WriteADIOS2HDF5Read1D8
-23/31 Test #23: HDF5WriteReadTest.HDF5WriteADIOS2HDF5Read1D8 ...........***Not Run (Disabled)   0.00 sec
-...
-      Start 30: PythonBPWrite
-30/31 Test #30: PythonBPWrite ..........................................   Passed    0.12 sec
-      Start 31: XMLConfigTest.TwoIOs
-31/31 Test #31: XMLConfigTest.TwoIOs ...................................   Passed    0.01 sec
-
-100% tests passed, 0 tests failed out of 25
-
-Total Test time (real) =   0.29 sec
-
-The following tests did not run:
-	 22 - HDF5WriteReadTest.ADIOS2HDF5WriteADIOS2HDF5Read1D8 (Disabled)
-	 23 - HDF5WriteReadTest.HDF5WriteADIOS2HDF5Read1D8 (Disabled)
-	 25 - HDF5WriteReadTest.ADIOS2HDF5WriteADIOS2HDF5Read2D2x4 (Disabled)
-	 26 - HDF5WriteReadTest.HDF5WriteADIOS2HDF5Read2D2x4 (Disabled)
-	 28 - HDF5WriteReadTest.ADIOS2HDF5WriteADIOS2HDF5Read2D4x2 (Disabled)
-	 29 - HDF5WriteReadTest.HDF5WriteADIOS2HDF5Read2D4x2 (Disabled)
+      Test project /home/wfg/workspace/build
+        Start   1: ADIOSInterfaceWriteTest.DefineVar_int8_t_1x10
+  1/113 Test   #1: ADIOSInterfaceWriteTest.DefineVar_int8_t_1x10 ............................   Passed    0.07 sec
+        Start   2: ADIOSInterfaceWriteTest.DefineVar_int16_t_1x10
+  2/113 Test   #2: ADIOSInterfaceWriteTest.DefineVar_int16_t_1x10 ...........................   Passed    0.07 sec
+        Start   3: ADIOSInterfaceWriteTest.DefineVar_int32_t_1x10
+  3/113 Test   #3: ADIOSInterfaceWriteTest.DefineVar_int32_t_1x10 ...........................   Passed    0.07 sec
+        Start   4: ADIOSInterfaceWriteTest.DefineVar_int64_t_1x10
+  ...
+  
 $
 ```
 
@@ -173,15 +158,15 @@ $ make install
 ...
 Install the project...
 -- Install configuration: "Debug"
--- Installing: /opt/adios2/2.1.0/gnu/openmpi/include/adios2/ADIOSConfig.h
+-- Installing: /opt/adios2/2.1.1/gnu/openmpi/include/adios2/ADIOSConfig.h
 ...
--- Installing: /opt/adios2/2.1.0/gnu/openmpi/bin/adios2-config
+-- Installing: /opt/adios2/2.1.1/gnu/openmpi/bin/adios2-config
 ...
--- Installing: /opt/adios2/2.1.0/gnu/openmpi/include/adios2.h
+-- Installing: /opt/adios2/2.1.1/gnu/openmpi/include/adios2.h
 ...
--- Installing: /opt/adios2/2.1.0/gnu/openmpi/lib/libadios2.so.2.0.0
--- Installing: /opt/adios2/2.1.0/gnu/openmpi/lib/libadios2.so.2
--- Installing: /opt/adios2/2.1.0/gnu/openmpi/lib/libadios2.so
+-- Installing: /opt/adios2/2.1.1/gnu/openmpi/lib/libadios2.so.2.0.0
+-- Installing: /opt/adios2/2.1.1/gnu/openmpi/lib/libadios2.so.2
+-- Installing: /opt/adios2/2.1.1/gnu/openmpi/lib/libadios2.so
 ...
 $
 ```
