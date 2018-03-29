@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Base.cpp
+ * BP3Base.cpp
  *
  *  Created on: Feb 7, 2017
  *      Author: William F Godoy godoywf@ornl.gov

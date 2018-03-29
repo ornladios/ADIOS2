@@ -72,7 +72,6 @@ TEST_F(ADIOSBZip2Wrapper, WrongParameterValue)
     std::vector<unsigned int> myUInts(100);
     std::iota(myUInts.begin(), myUInts.end(), 0.f);
     const std::size_t Nx = myUInts.size();
-    const std::size_t inputBytes = Nx * sizeof(unsigned int);
 
     // Define ADIOS variable
     auto &var_UInt = io.DefineVariable<unsigned int>("myUInts", {}, {}, {Nx},

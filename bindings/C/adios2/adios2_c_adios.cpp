@@ -53,5 +53,4 @@ void adios2_flush_all(adios2_adios *adios)
 void adios2_finalize(adios2_adios *adios)
 {
     delete reinterpret_cast<adios2::ADIOS *>(adios);
-    adios = nullptr;
 }

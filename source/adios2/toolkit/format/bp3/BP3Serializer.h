@@ -363,8 +363,7 @@ private:
      * @param indices
      */
     void AggregateMergeIndex(
-        const std::unordered_map<std::string, SerialElementIndex>
-            &indices) noexcept;
+        const std::unordered_map<std::string, SerialElementIndex> &indices);
 
     /**
      * Returns a serialized buffer with all indices with format:
@@ -391,7 +390,7 @@ private:
      */
     void MergeSerializeIndices(
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-            &nameRankIndices) noexcept;
+            &nameRankIndices);
 
     std::vector<char>
     SetCollectiveProfilingJSON(const std::string &rankLog) const;

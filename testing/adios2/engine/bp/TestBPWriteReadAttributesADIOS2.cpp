@@ -28,10 +28,9 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
     const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
                               "ADIOS2BPWriteAttributeReadSingleTypes.bp";
 
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     const std::string mpiRankString = std::to_string(mpiRank);

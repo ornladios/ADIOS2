@@ -54,8 +54,7 @@ int main(int argc, char *argv[])
 
         // 1st way: adding transform metadata to variable to Engine can decide:
         // &adiosBZip2 gets mapped to bpUInts.TransformInfo[bzip2ID].Operator
-        const unsigned int bzip2ID =
-            bpUInts.AddTransform(adiosBZip2, {{"BlockSize100K", "9"}});
+        bpUInts.AddTransform(adiosBZip2, {{"BlockSize100K", "9"}});
 
         // 2nd way: treat Transforms as wrappers to underlying library.
         // you can redefine parameters

@@ -124,18 +124,18 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
     {
         ProfilerStart("open");
 
-        int err;
+        int error = 0;
         if (m_TransportMode == "broadcast")
         {
             std::cout << "b" << fullIP << std::endl;
             m_Socket = zmq_socket(m_Context, ZMQ_REP);
-            err = zmq_bind(m_Socket, fullIP.c_str());
+            error = zmq_bind(m_Socket, fullIP.c_str());
         }
         else if (m_TransportMode == "push")
         {
             std::cout << "p" << fullIP << std::endl;
             m_Socket = zmq_socket(m_Context, ZMQ_SUB);
-            err = zmq_connect(m_Socket, fullIP.c_str());
+            error = zmq_connect(m_Socket, fullIP.c_str());
             zmq_setsockopt(m_Socket, ZMQ_SUBSCRIBE, "", 0);
         }
         else if (m_TransportMode == "query")
@@ -150,10 +150,10 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
 
         ProfilerStop("open");
 
-        if (err)
+        if (error)
         {
             throw std::runtime_error("ERROR: zmq_bind() failed with " +
-                                     std::to_string(err));
+                                     std::to_string(error));
         }
         if (m_DebugMode)
         {

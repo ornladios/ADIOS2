@@ -218,9 +218,7 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
     }
     default:
     {
-        throw std::invalid_argument(
-            "ERROR: type not yet supported for variable " + std::string(name) +
-            ", in call to adios2_define_variable\n");
+        return nullptr;
     }
     }
 
@@ -432,9 +430,7 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
     }
     default:
     {
-        throw std::invalid_argument("ERROR: type not supported for attribute " +
-                                    std::string(name) +
-                                    ", in call to adios2_define_attribute\n");
+        return nullptr;
     }
     }
 
