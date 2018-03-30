@@ -334,9 +334,8 @@ static FMStructDescList combineCpDpFormats(FMStructDescList top,
                                            FMStructDescList cp,
                                            FMStructDescList dp)
 {
-    FMStructDescList CombinedFormats = NULL;
     int i = 0, topCount = 0, cpCount = 0, dpCount = 0;
-    CombinedFormats = FMcopy_struct_list(top);
+    FMStructDescList CombinedFormats = FMcopy_struct_list(top);
 
     i = 0;
     while (top[i++].format_name)

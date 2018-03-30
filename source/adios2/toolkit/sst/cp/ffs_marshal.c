@@ -658,8 +658,9 @@ static void ClearReadRequests(SstStream Stream)
 
     while (Req)
     {
-        free(Req);
+        FFSArrayRequest PrevReq = Req;
         Req = Req->Next;
+        free(PrevReq);
     }
     Info->PendingVarRequests = NULL;
 }
@@ -876,8 +877,6 @@ void ExtractSelectionFromPartial(int ElementSize, size_t Dims,
 
 static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 {
-    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
-
     while (Reqs)
     {
         for (int i = 0; i < Stream->WriterCohortSize; i++)
