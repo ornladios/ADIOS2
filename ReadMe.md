@@ -70,25 +70,36 @@ $ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.1.1/gnu/openmpi ../source
 ...
 
 ADIOS2 build configuration:
-  ADIOS Version: 2.1.1
-  C++ Compiler : GNU 6.3.1
+  ADIOS Version: 2.1.0
+  C++ Compiler : GNU 5.4.0 
     /usr/bin/c++
 
-  Installation prefix: /opt/adios2/2.1.1/gnu/openmpi
+  Fortran Compiler : GNU 5.4.0 
+    /usr/bin/gfortran
+
+  Installation prefix: /opt/adios2
+        bin: bin
+        lib: lib
+    include: include
+      cmake: lib/cmake/adios2
+     python: lib/python3.5/site-packages
+
   Features:
     Library Type: shared
     Build Type:   Debug
     Testing: ON
     Build Options:
       BZip2    : ON
-      ZFP      : OFF
+      ZFP      : ON
+      SZ       : ON
       MPI      : ON
       DataMan  : ON
+      SST      : ON
       ZeroMQ   : ON
       HDF5     : ON
-      ADIOS1   : OFF
+      ADIOS1   : ON
       Python   : ON
-      C        : ON
+      Fortran  : ON
       SysVShMem: ON
 
 -- Configuring done
