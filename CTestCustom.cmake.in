@@ -6,6 +6,7 @@
 list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   "H5PL\\.c.*dlopen.*glibc"
   "gtest\\.cc.*getaddrinfo.*glibc"
+  ".*/thirdparty/.*/(.*\\.(c|cc|cxx|CC))"
 )
 list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/thirdparty/.*"
