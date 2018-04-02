@@ -351,9 +351,9 @@ static FMStructDescList combineCpDpFormats(FMStructDescList top,
     while (dp && dp[i++].format_name)
         dpCount++;
 
-    CombinedFormats = realloc(CombinedFormats,
-                              sizeof(CombinedFormats[0]) *
-                                  (topCount + cpCount + dpCount + 1));
+    CombinedFormats =
+        realloc(CombinedFormats, sizeof(CombinedFormats[0]) *
+                                     (topCount + cpCount + dpCount + 1));
     for (i = 0; i < cpCount; i++)
     {
         CombinedFormats[topCount + i].format_name = strdup(cp[i].format_name);
