@@ -73,6 +73,13 @@ typedef DP_RS_Stream (*CP_DP_InitReaderFunc)(CP_Services Svcs, void *CP_Stream,
                                              void **ReaderContactInfoPtr);
 
 /*!
+ * CP_DP_DestroyReaderFunc is the type of a dataplane reader-side
+ * stream destruction function.  Its should shutdown and deallocate
+ * dataplane resources associated with a reader-side stream.
+ */
+typedef void (*CP_DP_DestroyReaderFunc)(CP_Services Svcs, DP_RS_Stream Reader);
+
+/*!
  * CP_DP_InitWriterFunc is the type of a dataplane writer-side stream
  * initialization function.  Its return value is DP_WS_stream, an externally
  * opaque handle which is provided to the dataplane on all subsequent
@@ -83,6 +90,13 @@ typedef DP_RS_Stream (*CP_DP_InitReaderFunc)(CP_Services Svcs, void *CP_Stream,
  * associated with the DP_RS_stream.
  */
 typedef DP_WS_Stream (*CP_DP_InitWriterFunc)(CP_Services Svcs, void *CP_Stream);
+
+/*!
+ * CP_DP_DestroyWriterFunc is the type of a dataplane writer-side
+ * stream destruction function.  Its should shutdown and deallocate
+ * dataplane resources associated with a writer-side stream.
+ */
+typedef void (*CP_DP_DestroyWriterFunc)(CP_Services Svcs, DP_RS_Stream Writer);
 
 /*!
  * CP_DP_InitWriterPerReaderFunc is the type of a dataplane writer-side
@@ -110,6 +124,14 @@ typedef DP_WSR_Stream (*CP_DP_InitWriterPerReaderFunc)(
     CP_Services Svcs, DP_WS_Stream Stream, int ReaderCohortSize,
     CP_PeerCohort PeerCohort, void **ProvidedReaderInfo,
     void **WriterContactInfoPtr);
+
+/*!
+ * CP_DP_DestroyWriterPerReaderFunc is the type of a dataplane writer-side
+ * stream destruction function.  Its should shutdown and deallocate
+ * dataplane resources associated with a writer-side stream.
+ */
+typedef void (*CP_DP_DestroyWriterPerReaderFunc)(CP_Services Svcs,
+                                                 DP_RS_Stream Writer);
 
 /*
  * CP_DP_ProvideWriterDataToReaderFunc is the type of a dataplane reader-side
@@ -204,6 +226,10 @@ struct _CP_DP_Interface
 
     CP_DP_ProvideTimestepFunc provideTimestep;
     CP_DP_ReleaseTimestepFunc releaseTimestep;
+
+    CP_DP_DestroyReaderFunc destroyReader;
+    CP_DP_DestroyWriterFunc destroyWriter;
+    CP_DP_DestroyWriterPerReaderFunc destroyWriterPerReader;
 };
 
 typedef void (*CP_VerboseFunc)(void *CP_Stream, char *Format, ...);
