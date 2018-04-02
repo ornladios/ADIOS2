@@ -49,6 +49,8 @@ typedef struct _SstParams *SstParams;
 extern SstStream SstWriterOpen(const char *filename, SstParams Params,
                                MPI_Comm comm);
 
+extern void SstStreamDestroy(SstStream Stream);
+
 typedef void (*DataFreeFunc)(void *Data);
 extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,
                                SstData LocalData, long Timestep,
