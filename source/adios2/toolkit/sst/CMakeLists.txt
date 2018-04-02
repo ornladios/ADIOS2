@@ -34,10 +34,7 @@ install(FILES ${PROJECT_BINARY_DIR}/source/adios2/toolkit/sst/SSTConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit/sst
 )
 
-# Ideally we'd like to use the c_std_99 meta feature, but that wasn't available
-# until CMake 3.8.  However, requiring the c_restrict feature effectively
-# achieves the same result since it's a C99 feature
-target_compile_features(sst PRIVATE c_restrict)
+target_compile_features(sst PRIVATE ${ADIOS2_C99_FEATURES})
 
 target_include_directories(sst PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
