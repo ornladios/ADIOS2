@@ -358,9 +358,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     //                ReturnData, 1024000);
     //    printf("\n");
 
-    Stream->Readers =
-        realloc(Stream->Readers,
-                sizeof(Stream->Readers[0]) * (Stream->ReaderCount + 1));
+    Stream->Readers = realloc(Stream->Readers, sizeof(Stream->Readers[0]) *
+                                                   (Stream->ReaderCount + 1));
     DP_WSR_Stream per_reader_Stream;
     void *DP_WriterInfo;
     void *ret_data_block;
