@@ -30,6 +30,8 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
     delete[] cstr;
 }
 
+SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
+
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     m_WriterStep++;

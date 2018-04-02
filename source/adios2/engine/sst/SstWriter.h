@@ -32,7 +32,7 @@ public:
     SstWriter(IO &io, const std::string &name, const Mode mode,
               MPI_Comm mpiComm);
 
-    virtual ~SstWriter() = default;
+    ~SstWriter();
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void PerformPuts() final;

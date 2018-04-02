@@ -19,6 +19,8 @@ typedef struct _CP_GlobalInfo
     CMFormat ReleaseTimestepFormat;
     CMFormat WriterCloseFormat;
     CMFormat ReaderCloseFormat;
+    int CustomStructCount;
+    FMStructDescList *CustomStructList;
 } * CP_GlobalInfo;
 
 struct _ReaderRegisterMsg;
@@ -74,13 +76,14 @@ enum StreamRole
 typedef struct _CPTimestepEntry
 {
     long Timestep;
-    SstData Data;
+    struct _SstData Data;
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
     void **DP_TimestepInfo;
     SstData *MetadataArray;
     void (*DataFreeFunc)(void *);
     void *FreeClientData;
+    void *DataBlockToFree;
     struct _CPTimestepEntry *Next;
 } * CPTimestepList;
 
@@ -131,7 +134,7 @@ struct _SstStream
 
     int ReaderCount;
     WS_ReaderInfo *Readers;
-    const char *Filename;
+    char *Filename;
     int GlobalOpRequired;
 
     /* writer side marshal info */
@@ -371,6 +374,7 @@ extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,
 
 extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
 extern void FFSClearTimestepData(SstStream Stream);
+extern void FFSFreeMarshalData(SstStream Stream);
 extern int *setupPeerArray(int MySize, int MyRank, int PeerSize);
 extern void CP_verbose(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
