@@ -991,23 +991,21 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     FFSTimestepInfo TSInfo = malloc(sizeof(*TSInfo));
     FFSBuffer MetaEncodeBuffer = create_FFSBuffer();
     FFSBuffer DataEncodeBuffer = create_FFSBuffer();
-    struct _SstData _DataRec;
-    struct _SstData _MetaDataRec;
-    SstData DataRec = &_DataRec;
-    SstData MetaDataRec = &_MetaDataRec;
+    struct _SstData DataRec;
+    struct _SstData MetaDataRec;
     int MetaDataSize;
     int DataSize;
     struct FFSMetadataInfoStruct *MBase;
-    DataRec->block =
+    DataRec.block =
         FFSencode(DataEncodeBuffer, Info->DataFormat, Stream->D, &DataSize);
-    DataRec->DataSize = DataSize;
+    DataRec.DataSize = DataSize;
     TSInfo->DataEncodeBuffer = DataEncodeBuffer;
 
     MBase = Stream->M;
     MBase->DataBlockSize = DataSize;
-    MetaDataRec->block =
+    MetaDataRec.block =
         FFSencode(MetaEncodeBuffer, Info->MetaFormat, Stream->M, &MetaDataSize);
-    MetaDataRec->DataSize = MetaDataSize;
+    MetaDataRec.DataSize = MetaDataSize;
     TSInfo->MetaEncodeBuffer = MetaEncodeBuffer;
 
     /* free all those copied dimensions, etc */
@@ -1015,17 +1013,22 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     size_t *tmp = MBase->BitField;
     MBase->BitField = NULL;
     FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
+    /*
+     * Codacy reports a problem here, because codacy isn't very smart.  The
+     * BitField value is saved away from FMfree_var_rec_elements() so that it
+     * isn't unnecessarily free'd.
+     */
     MBase->BitField = tmp;
     FMfree_var_rec_elements(Info->DataFormat, Stream->D);
 
     // Call SstInternalProvideStep with Metadata block, Data block and (any new)
     // formatID and formatBody
     //    printf("MetaDatablock is (Length %d):\n", MetaDataSize);
-    //    FMdump_encoded_data(Info->MetaFormat, MetaDataRec->block, 1024000);
+    //    FMdump_encoded_data(Info->MetaFormat, MetaDataRec.block, 1024000);
     //    printf("\nDatablock is :\n");
-    //    FMdump_encoded_data(Info->DataFormat, DataRec->block, 1024000);
-    SstInternalProvideTimestep(Stream, MetaDataRec, DataRec, Timestep, Formats,
-                               FreeTSInfo, TSInfo);
+    //    FMdump_encoded_data(Info->DataFormat, DataRec.block, 1024000);
+    SstInternalProvideTimestep(Stream, &MetaDataRec, &DataRec, Timestep,
+                               Formats, FreeTSInfo, TSInfo);
     while (Formats)
     {
         struct FFSFormatBlock *Tmp = Formats->Next;
