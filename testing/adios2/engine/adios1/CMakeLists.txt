@@ -4,12 +4,12 @@
 #------------------------------------------------------------------------------#
 
 add_executable(TestADIOS1WriteRead TestADIOS1WriteRead.cpp)
-target_link_libraries(TestADIOS1WriteRead adios2 gtest adios1::adios)
+target_link_libraries(TestADIOS1WriteRead adios2 gtest_interface adios1::adios)
 
 if(ADIOS2_HAVE_MPI)
 
   add_executable(TestADIOS1WriteADIOS2Read TestADIOS1WriteADIOS2Read.cpp)
-  target_link_libraries(TestADIOS1WriteADIOS2Read adios2 gtest adios1::adios)
+  target_link_libraries(TestADIOS1WriteADIOS2Read adios2 gtest_interface adios1::adios)
   
   target_link_libraries(TestADIOS1WriteRead MPI::MPI_C)
   target_link_libraries(TestADIOS1WriteADIOS2Read MPI::MPI_C)

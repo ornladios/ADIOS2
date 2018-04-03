@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_executable(TestManyVars manyVars.cpp)
-target_link_libraries(TestManyVars adios2 gtest gtest_main)
+target_link_libraries(TestManyVars adios2 gtest)
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestManyVars MPI::MPI_C)
 endif()

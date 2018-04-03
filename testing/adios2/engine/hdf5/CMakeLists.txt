@@ -11,7 +11,7 @@ if(HDF5_C_INCLUDE_DIRS)
 else()
   target_include_directories(TestHDF5WriteRead PRIVATE ${HDF5_INCLUDE_DIRS})
 endif()
-target_link_libraries(TestHDF5WriteRead adios2 gtest ${HDF5_C_LIBRARIES})
+target_link_libraries(TestHDF5WriteRead adios2 gtest_interface ${HDF5_C_LIBRARIES})
 
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestHDF5WriteRead MPI::MPI_C)
