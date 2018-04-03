@@ -5,7 +5,11 @@
 
 add_subdirectory(basics)
 add_subdirectory(hello)
-add_subdirectory(heatTransfer)
+
+if(ADIOS2_HAVE_MPI)
+  add_subdirectory(heatTransfer)
+endif()
+
 add_subdirectory(plugins)
 add_subdirectory(highLevelAPI)
 
