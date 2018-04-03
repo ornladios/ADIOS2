@@ -71,9 +71,15 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+# Force C++11 and C99
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED True)
+
 # Use meta-compile features if available, otherwise use specific language
 # features
-if(NOT (CMAKE_VERSION VERSION_LESS  3.9))
+if(NOT (CMAKE_VERSION VERSION_LESS 3.9))
   set(ADIOS2_CXX11_FEATURES cxx_std_11)
   set(ADIOS2_C99_FEATURES c_std_99)
 else()
