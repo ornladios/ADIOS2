@@ -1264,8 +1264,8 @@ BP3Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
 
     if (m_RankMPI == 0) // pre-allocate in destination
     {
-        gatheredSize =
-            std::accumulate(rankLogsSizes.begin(), rankLogsSizes.end(), 0);
+        gatheredSize = std::accumulate(rankLogsSizes.begin(),
+                                       rankLogsSizes.end(), size_t(0));
 
         profilingJSON.resize(gatheredSize + header.size() + footer.size() - 2);
         CopyToBuffer(profilingJSON, position, header.c_str(), header.size());

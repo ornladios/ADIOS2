@@ -206,8 +206,8 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
 
         const size_t countSize = count.size();
         size_t linearIndex = 0;
-        size_t product = std::accumulate(count.begin() + 1, count.end(), 1,
-                                         std::multiplies<size_t>());
+        size_t product = std::accumulate(count.begin() + 1, count.end(),
+                                         size_t(1), std::multiplies<size_t>());
 
         for (size_t p = 0; p < countSize - 1; ++p)
         {
@@ -223,8 +223,8 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
 
         const size_t countSize = count.size();
         size_t linearIndex = 0;
-        size_t product = std::accumulate(count.begin(), count.end() - 1, 1,
-                                         std::multiplies<size_t>());
+        size_t product = std::accumulate(count.begin(), count.end() - 1,
+                                         size_t(1), std::multiplies<size_t>());
 
         for (size_t p = 1; p < countSize; ++p)
         {
