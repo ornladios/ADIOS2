@@ -68,7 +68,7 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 
     if (rank == rankDestination) // pre-allocate vector
     {
-        gatheredSize = std::accumulate(counts.begin(), counts.end(), 0);
+        gatheredSize = std::accumulate(counts.begin(), counts.end(), size_t(0));
 
         const size_t newSize = out.size() + gatheredSize;
         try

@@ -295,15 +295,13 @@ public:
 
     void define_vars()
     {
-        int i, block;
-
         size_t shape[2] = {gdim1, gdim2};
         size_t count[2] = {ldim1, ldim2};
         size_t start[2] = {0, 0};
 
         /* One variable definition for many blocks.
          * Offsets will change at writing for each block. */
-        for (i = 0; i < NVARS; i++)
+        for (size_t i = 0; i < NVARS; i++)
         {
             varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int,
                                              2, shape, start, count,
@@ -356,15 +354,14 @@ public:
     int read_file()
     {
         adios2_variable *vi;
-        int err = 0, v, n;
-        int block, step, i; // loop variables
+        int err = 0, v;
+        size_t step, i;
         int iMacro;         // loop variable in macros
-        double tb, te, tsched;
+        double tb, te;
         double tsb, ts; // time for just scheduling for one step/block
 
         size_t start[2] = {offs1, offs2};
         size_t count[2] = {ldim1, ldim2};
-        size_t ndim;
 
         reset_readvars();
 
@@ -402,7 +399,7 @@ public:
                 status = adios2_begin_step(
                     engineR, adios2_step_mode_next_available, 0.0);
             }
-            for (block = 0; block < NBLOCKS; block++)
+            for (size_t block = 0; block < NBLOCKS; block++)
             {
                 if (status == adios2_step_status_ok)
                 {
