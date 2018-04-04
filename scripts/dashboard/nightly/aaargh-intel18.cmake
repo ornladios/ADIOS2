@@ -5,16 +5,16 @@ set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j36")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 36)
 
-set(CTEST_BUILD_NAME "Linux-EL7_Intel17_NoMPI")
+set(CTEST_BUILD_NAME "Linux-EL7_Intel18")
 set(dashboard_model Nightly)
 set(CTEST_DASHBOARD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${CTEST_BUILD_NAME})
 
 
 include(${CMAKE_CURRENT_LIST_DIR}/../EnvironmentModules.cmake)
 module(purge)
-module(load intel/17.0.4.196)
+module(load intel/18.0.2.199)
 module(load hdf5)
-module(load numpy)
+module(load py3-numpy)
 
 set(ENV{CC}  icc)
 set(ENV{CXX} icpc)
@@ -30,6 +30,8 @@ ADIOS2_USE_MPI:STRING=OFF
 ADIOS2_USE_Python:STRING=ON
 ADIOS2_USE_ZFP:STRING=OFF
 ADIOS2_USE_ZeroMQ:STRING=ON
+
+PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python3.4
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../adios_common.cmake)
