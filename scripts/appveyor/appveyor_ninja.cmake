@@ -1,13 +1,11 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "AppVeyor")
 set(CTEST_BUILD_CONFIGURATION Release)
-set(CTEST_CMAKE_GENERATOR "Visual Studio 14 2015 Win64")
+set(CTEST_CMAKE_GENERATOR "Ninja")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 
-message("av_visual-studio-2015.cmake, CTEST_BUILD_NAME=${CTEST_BUILD_NAME}, push build notes is ADIOS_CTEST_SUBMIT_NOTES=${ADIOS_CTEST_SUBMIT_NOTES}")
-
 set(dashboard_model Experimental)
-set(dashboard_binary_name "build_visual-studio")
+set(dashboard_binary_name "build_ninja")
 set(dashboard_track "Continuous Integration")
 
 set(CTEST_GIT_COMMAND "git.exe")
