@@ -8,7 +8,7 @@ set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
 target_link_libraries(TestStagingMPMD adios2 gtest)
 if(ADIOS2_HAVE_MPI)
-    target_link_libraries(TestStagingMPMD adios2 gtest MPI::MPI_C)
+    target_link_libraries(TestStagingMPMD adios2 gtest_interface MPI::MPI_C)
 endif()
 
 if(ADIOS2_HAVE_SST)
