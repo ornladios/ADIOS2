@@ -1539,16 +1539,9 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
 
-    int result = -1;
-    try
-    {
-        ::testing::InitGoogleTest(&argc, argv);
-        result = RUN_ALL_TESTS();
-    }
-    catch (std::exception &e)
-    {
-        result = 1;
-    }
+    int result;
+    ::testing::InitGoogleTest(&argc, argv);
+    result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
