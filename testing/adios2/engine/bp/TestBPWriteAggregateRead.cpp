@@ -917,16 +917,9 @@ int main(int argc, char **argv)
 {
     MPI_Init(nullptr, nullptr);
 
-    int result = -1;
-    try
-    {
-        ::testing::InitGoogleTest(&argc, argv);
-        result = RUN_ALL_TESTS();
-    }
-    catch (std::exception &e)
-    {
-        result = 1;
-    }
+    int result;
+    ::testing::InitGoogleTest(&argc, argv);
+    result = RUN_ALL_TESTS();
 
     MPI_Finalize();
 
