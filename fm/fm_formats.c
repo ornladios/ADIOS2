@@ -3021,12 +3021,13 @@ int verbose;
  
     if ((iovar->string == 0) &&
 	(iovar->var_array == 0) &&
+	(index(iofield->field_type, '*') == NULL) &&
 	(iovar->data_type != unknown_type)) {
 	/* must be simple data type or array of simple data types */
 	return;
     }
     dimension = FMget_array_element_count(fmformat, iovar, data, encode);
-    if (iovar->var_array) {
+    if ((iovar->var_array) || (index(iofield->field_type, '*') != NULL)) {
 	FMgetFieldStruct descr;  /* OK */
 	long tmp_offset;
 	descr.offset = iofield->field_offset;
@@ -3064,7 +3065,7 @@ int verbose;
 	    data_offset += sub_field_size;
 	}
     }
-    if (iovar->var_array) {
+    if ((iovar->var_array) || (index(iofield->field_type, '*') != NULL)) {
 	free(data);
     }    
 }

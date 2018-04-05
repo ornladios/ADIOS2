@@ -143,5 +143,4 @@
 #define LIBRARY_EXT "@CMAKE_SHARED_LIBRARY_SUFFIX@"
 
 /* Set to 1 to build without dynamic linking  */
-#cmakedefine NO_DYNAMIC_LINKING @SHARED_LIBS_SUPPORTED@
-
+#cmakedefine01 NO_DYNAMIC_LINKING 

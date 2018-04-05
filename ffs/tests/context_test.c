@@ -17,6 +17,7 @@
 #include <sys/uio.h>
 #include <string.h>
 #include <assert.h>
+#include <arpa/inet.h>
 #include "ffs.h"
 
 #include "test_funcs.h"

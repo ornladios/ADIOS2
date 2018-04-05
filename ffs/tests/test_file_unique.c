@@ -36,6 +36,7 @@ file_checksum(char *filename)
 
 int
 main(argc,argv)
+int argc;
 char **argv;
 {
     unsigned int base_sum, sum;

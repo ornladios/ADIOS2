@@ -98,27 +98,28 @@ CHECK_TYPE_SIZE("long double" SIZEOF_LONG_DOUBLE)
 CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
 CHECK_TYPE_SIZE("size_t" SIZEOF_SIZE_T)
 
-# use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+if(BUILD_SHARED_LIBS)
+  # use, i.e. don't skip the full RPATH for the build tree
+  set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 
-# when building, don't use the install RPATH already
-# (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+  # when building, don't use the install RPATH already
+  # (but later on when installing)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
 
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
-# add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  # add the automatically determined parts of the RPATH
+  # which point to directories outside the build tree to the install RPATH
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+  # the RPATH to be used when installing, but only if it's not a system directory
+  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+  if(isSystemDir STREQUAL "-1")
+     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  endif()
 
-# the RPATH to be used when installing, but only if it's not a system directory
-LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-IF("${isSystemDir}" STREQUAL "-1")
-   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-ENDIF("${isSystemDir}" STREQUAL "-1")
-
-set (CMAKE_MACOSX_RPATH 1)
+  set(CMAKE_MACOSX_RPATH 1)
+endif()
 
 if (NOT (DEFINED NO_SOCKETS))
     check_function_exists(socket SOCKETS_FOUND)
@@ -204,8 +205,11 @@ if(UNIX)
     list(APPEND _pkg_config_private_libs m)
 endif()
 if(SHARED_LIBS_SUPPORTED)
+    unset(NO_DYNAMIC_LINKING)
     target_link_libraries(ffs PRIVATE ${CMAKE_DL_LIBS})	
-    list(APPEND _pkg_config_private_libs ${CMAKE_DL_LIBS})	
+    list(APPEND _pkg_config_private_libs ${CMAKE_DL_LIBS})
+else()
+    set(NO_DYNAMIC_LINKING TRUE)
 endif()
 
 target_include_directories(ffs PUBLIC
