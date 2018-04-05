@@ -12,6 +12,7 @@
 #include "unistd.h"
 #include "errno.h"
 #include "string.h"
+#include <arpa/inet.h>
 
 #include "io_interface.h"
 
