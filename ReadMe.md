@@ -51,7 +51,7 @@ Step-by-step build guide:
 ```bash
 $ mkdir adios2
 $ cd adios2
-$ git clone https://github.com/ornladios/ADIOS2.git source
+$ git clone https://github.com/ornladios/ADIOS2.git
 ```
 
 2. Create a separate build directory in your work area:
