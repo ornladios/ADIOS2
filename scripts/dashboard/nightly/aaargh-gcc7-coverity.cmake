@@ -12,7 +12,7 @@ set(CTEST_DASHBOARD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${CTEST_BUILD_NAME})
 include(${CMAKE_CURRENT_LIST_DIR}/../EnvironmentModules.cmake)
 module(purge)
 module(load gnu7)
-module(load numpy)
+module(load py2-numpy)
 module(load hdf5)
 
 set(ENV{PATH} "/opt/coverity/cov-analysis-linux64-2017.07/bin:$ENV{PATH}")
@@ -33,6 +33,8 @@ ADIOS2_USE_MPI:STRING=OFF
 ADIOS2_USE_Python:STRING=ON
 ADIOS2_USE_ZFP:STRING=OFF
 ADIOS2_USE_ZeroMQ:STRING=ON
+
+PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python2.7
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../adios_common.cmake)

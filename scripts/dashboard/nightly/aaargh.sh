@@ -39,38 +39,8 @@ SCRIPT_DIR=${PWD}/Source/scripts/dashboard/nightly
 
 source /opt/rh/devtoolset-7/enable
 
-log "Running Serial GCC7"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-nompi.cmake 2>&1 1>Logs/aaargh-gcc7-nompi.log
-
-log "Running Serial Intel17"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel17-nompi.cmake 2>&1 1>Logs/aaargh-intel17-nompi.log
-
-log "Running Serial Intel18"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel18-nompi.cmake 2>&1 1>Logs/aaargh-intel18-nompi.log
-
-# Now run the MPI tests
-
-log "Running GCC7 MPICH"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi.cmake \
-  -DMPI_NAME=MPICH -DMPI_MODULE=mpich 2>&1 1>Logs/aaargh-gcc7-mpich.log
-
-log "Running Intel17 OpenMPI"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel17-mpi.cmake \
-  -DMPI_NAME=OpenMPI -DMPI_MODULE=openmpi3 2>&1 1>Logs/aaargh-intel17-openmpi.log
-
-log "Running Intel18 IntelMPI"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel18-mpi.cmake \
-  -DMPI_NAME=IntelMPI -DMPI_MODULE=impi 2>&1 1>Logs/aaargh-intel18-impi.log
-
-log "Running Clang5 NoMPI AddressSanitizer"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-clang5-nompi-asan.cmake 2>&1 1>Logs/aaargh-clang5-nompi-asan.log
-
-log "Running Clang5 NoMPI MemorySanitizer"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-clang5-nompi-msan.cmake 2>&1 1>Logs/aaargh-clang5-nompi-msan.log
-
-log "Running Coverity Static Analysis"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi-coverity.cmake 2>&1 1>Logs/aaargh-gcc7-mpi-coverity.cmake.log
-
-log "Running Code Coverage Analysis"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi-gcov.cmake \
-  -DMPI_NAME=MPICH -DMPI_MODULE=mpich 2>&1 | tee Logs/aaargh-gcc7-mpich-gcov.log
+for F in gcc7 intel17 intel18 gcc7-mpich intel17-openmpi intel18-impi gcc7-gcov gcc7-mpich-gcov gcc7-valgrind clang5-asan clang5-msan gcc7-coverity
+do
+  log "Running ${F}"
+  ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-${F}.make 2>&1 1>Logs/aaargh-${F}.log
+done
