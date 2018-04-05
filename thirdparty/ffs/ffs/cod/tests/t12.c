@@ -3,7 +3,7 @@
 #include "assert.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif

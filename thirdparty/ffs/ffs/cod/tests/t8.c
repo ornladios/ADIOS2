@@ -4,7 +4,7 @@
 #include "config.h"
 #include "cod.h"
 #include "assert.h"
-#include <strings.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
