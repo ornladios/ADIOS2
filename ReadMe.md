@@ -42,7 +42,7 @@ ADIOS2 uses CMake for its build environment.  CMake expects projects
 to use "out-of-source" builds, which means keeping a separate build and source
 directory (different from autotools, which usually uses an in-source build).
 
-The following is a quick step-by-step build guide, find the full CMake-based install documentation [http://adios2-adaptable-io-system-version-2.readthedocs.io/en/latest/installation/installation.html](here)
+The following is a quick step-by-step build guide, find the full CMake-based install documentation [here](http://adios2-adaptable-io-system-version-2.readthedocs.io/en/latest/installation/installation.html)
 
 Step-by-step build guide:
 
@@ -51,7 +51,7 @@ Step-by-step build guide:
 ```bash
 $ mkdir adios2
 $ cd adios2
-$ git clone https://github.com/ornladios/adios2.git source
+$ git clone https://github.com/ornladios/ADIOS2.git
 ```
 
 2. Create a separate build directory in your work area:
@@ -64,7 +64,7 @@ $ mkdir build
 
 ```bash
 $ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.1.1/gnu/openmpi ../source
+$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.1.1/gnu/openmpi ../ADIOS2
 -- The C compiler identification is GNU 6.3.1
 -- The CXX compiler identification is GNU 6.3.1
 ...
@@ -119,8 +119,9 @@ The following options can be specified with CMake's `-DVAR=VALUE` syntax to cont
 | `ADIOS2_USE_ZeroMQ`  | **`AUTO`**/``ON``/``OFF`` | Enable ZeroMQ for the DataMan engine.                                            |
 | `ADIOS2_USE_HDF5`    | **`AUTO`**/``ON``/``OFF`` | Enable the [HDF5](https://www.hdfgroup.org) engine.                              |
 | `ADIOS2_USE_ADIOS1`  | **`AUTO`**/``ON``/``OFF`` | Enable the [ADIOS 1.x](https://www.olcf.ornl.gov/center-projects/adios/) engine. |
-| `ADIOS2_USE_Python`  | **`AUTO`**/``ON``/``OFF`` | Enable the Python >= 2.7 bindings. |
+| `ADIOS2_USE_Python`  | **`AUTO`**/``ON``/``OFF`` | Enable the Python >= 2.7 bindings. Need mpi4py and numpy |
 | `ADIOS2_USE_SST`  | **`AUTO`**/``ON``/``OFF`` | Enable Staging Engine |
+| `ADIOS2_USE_Fortran`  | **`AUTO`**/``ON``/``OFF`` | Enable Fortran bindings |
 
 Note: The `ADIOS2_USE_HDF5` and `ADIOS2_USE_ADIOS1` options require the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similary, enabling MPI and Python bindings requires the presence of `mpi4py`.
 
@@ -128,7 +129,7 @@ In addition to the `ADIOS2_USE_Feature` options, the following options are also 
 
 | CMake Options              | Values                                                    | Description                                                                           |
 | :------------------------- | :-------------------------------------------------------: | :------------------------------------------------------------------------------------ |
-| `ADIOS2_BUILD_SHARED_LIBS` | **`ON`**/`OFF`                                            | Build shared libraries.                                                               |
+| `BUILD_SHARED_LIBS` | **`ON`**/`OFF`                                            | Build shared libraries.                                                               |
 | `ADIOS2_ENABLE_PIC`        | **`ON`**/`OFF`                                            | Enable Position Independent Code for static libraries.                                |
 | `ADIOS2_BUILD_EXAMPLES`    | **`ON`**/`OFF`                                            | Build examples.                                                                       |
 | `ADIOS2_BUILD_TESTING`     | **`ON`**/`OFF`                                            | Build test code.                                                                      |
@@ -152,8 +153,6 @@ Test project /home/chuck/Code/adios2/build
         Start   2: ADIOSInterfaceWriteTest.DefineVar_int16_t_1x10
   2/113 Test   #2: ADIOSInterfaceWriteTest.DefineVar_int16_t_1x10 ...........................   Passed    0.07 sec
         Start   3: ADIOSInterfaceWriteTest.DefineVar_int32_t_1x10
-  3/113 Test   #3: ADIOSInterfaceWriteTest.DefineVar_int32_t_1x10 ...........................   Passed    0.07 sec
-        Start   4: ADIOSInterfaceWriteTest.DefineVar_int64_t_1x10
   ...
   
 $
