@@ -42,5 +42,5 @@ source /opt/rh/devtoolset-7/enable
 for F in gcc7 intel17 intel18 gcc7-mpich intel17-openmpi intel18-impi gcc7-gcov gcc7-mpich-gcov gcc7-valgrind clang5-asan clang5-msan gcc7-coverity
 do
   log "Running ${F}"
-  ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-${F}.make 2>&1 1>Logs/aaargh-${F}.log
+  ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-${F}.cmake 2>&1 1>Logs/aaargh-${F}.log
 done
