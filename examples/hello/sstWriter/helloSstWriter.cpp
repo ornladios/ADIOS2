@@ -47,7 +47,9 @@ int main(int argc, char *argv[])
         // Open returns a smart pointer to Engine containing the Derived class
         adios2::Engine &sstWriter = sstIO.Open("helloSst", adios2::Mode::Write);
 
+        sstWriter.BeginStep();
         sstWriter.PutSync<float>(bpFloats, myFloats.data());
+        sstWriter.EndStep();
         sstWriter.Close();
     }
     catch (std::invalid_argument &e)

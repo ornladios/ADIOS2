@@ -9,6 +9,7 @@
  */
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/format/bp3/BP3.h"
 #include <cstring>
 #include <string>
 
@@ -109,6 +110,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
 StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
 {
+
     SstStatusValue result;
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
@@ -161,13 +163,50 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         //   anything else that the Data Plane needs for efficient RDMA on
         //   whatever transport it is using.  But it is opaque to the Engine
         //   (and to the control plane).)
+
+        format::BP3Deserializer deserializer(m_MPIComm, m_DebugMode);
+        deserializer.InitParameters(m_IO.m_Parameters);
+
+        struct _SstData **d = m_CurrentStepMetaData->WriterMetadata;
+
+        deserializer.m_Metadata.Resize(
+            (*m_CurrentStepMetaData->WriterMetadata)->DataSize,
+            "in SST Streaming Listener");
+
+        std::memcpy(deserializer.m_Metadata.m_Buffer.data(),
+                    (*m_CurrentStepMetaData->WriterMetadata)->block,
+                    (*m_CurrentStepMetaData->WriterMetadata)->DataSize);
+
+        m_IO.RemoveAllVariables();
+        m_IO.RemoveAllAttributes();
+        deserializer.ParseMetadata(deserializer.m_Data, m_IO);
+        const auto variablesInfo = m_IO.GetAvailableVariables();
+        for (const auto &variableInfoPair : variablesInfo)
+        {
+            std::string var = variableInfoPair.first;
+            std::cout << "---- " << var << std::endl;
+            std::string type = "null";
+            for (const auto &parameter : variableInfoPair.second)
+            {
+                if (parameter.first == "Type")
+                {
+                    type = parameter.second;
+                }
+                std::cout << "---- key " << parameter.first << " value "
+                          << parameter.second << std::endl;
+            }
+        }
     }
-    if (m_WriterFFSmarshal)
+    else if (m_WriterFFSmarshal)
     {
         // For FFS-based marshaling, SstAdvanceStep takes care of installing
         // the metadata, creating variables using the varFFScallback and
         // arrayFFScallback, so there's nothing to be done now.  This
         // comment is just for clarification.
+    }
+    else
+    {
+        // unknown marshaling method, shouldn't happen
     }
 }
 
