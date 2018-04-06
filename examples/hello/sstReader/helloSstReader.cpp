@@ -20,25 +20,13 @@ v *      Author: Greg Eisenhauer
 #include <mpi.h>
 #endif
 
-void UserCallBack(const void *data, std::string doid, std::string var,
-                  std::string dtype, std::vector<std::size_t> varshape)
-{
-    std::cout << "data object ID = " << doid << "\n";
-    std::cout << "variable name = " << var << "\n";
-    std::cout << "data type = " << dtype << "\n";
-
-    std::size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
-                                          std::multiplies<std::size_t>());
-
-    for (unsigned int i = 0; i < varsize; ++i)
-        std::cout << ((float *)data)[i] << " ";
-    std::cout << std::endl;
-}
-
 int main(int argc, char *argv[])
 {
     // Application variable
     int rank, size;
+
+    std::vector<float> myFloats(10);
+    const std::size_t Nx = myFloats.size();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
@@ -48,13 +36,6 @@ int main(int argc, char *argv[])
     rank = 0;
     size = 1;
 #endif
-
-    int timeout = 5;
-
-    if (argc == 2)
-    {
-        timeout = atoi(argv[1]);
-    }
 
     try
     {
@@ -67,9 +48,12 @@ int main(int argc, char *argv[])
         adios2::IO &sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
 
+        auto bpFloats = sstIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
         adios2::Engine &sstReader = sstIO.Open("helloSst", adios2::Mode::Read);
 
-        std::this_thread::sleep_for(std::chrono::seconds(timeout));
+        sstReader.BeginStep();
+        sstReader.GetSync<float>(bpFloats, myFloats.data());
+        sstReader.EndStep();
 
         sstReader.Close();
     }
