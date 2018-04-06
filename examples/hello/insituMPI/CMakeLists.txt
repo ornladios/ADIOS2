@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_Fortran)
-  add_library(helloInsituArgs OBJECT helloInsituArgs.f90)
+  add_library(helloInsituArgs OBJECT helloInsituArgs.F90)
 
   add_executable(hello_insituMPIWriter_f
     helloInsituMPIWriter.f90 $<TARGET_OBJECTS:helloInsituArgs>
