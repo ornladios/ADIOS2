@@ -39,7 +39,7 @@ SCRIPT_DIR=${PWD}/Source/scripts/dashboard/nightly
 
 source /opt/rh/devtoolset-7/enable
 
-for F in gcc7 intel17 intel18 gcc7-mpich intel17-openmpi intel18-impi gcc7-gcov gcc7-mpich-gcov gcc7-valgrind clang5-asan clang5-msan gcc7-coverity
+for F in gcc7 intel17 intel18 gcc7-mpich intel17-impi intel18-openmpi gcc7-gcov gcc7-mpich-gcov gcc7-valgrind clang5-asan clang5-msan gcc7-coverity
 do
   log "Running ${F}"
   ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-${F}.make 2>&1 1>Logs/aaargh-${F}.log
