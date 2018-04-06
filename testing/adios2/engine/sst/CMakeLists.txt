@@ -20,7 +20,15 @@ if(ADIOS2_HAVE_MPI)
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 endif()
 
-configure_file(run_staging_test.in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test @ONLY)
+configure_file(
+  run_staging_test.in
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+  @ONLY
+)
 
-ADD_TEST(ADIOSSstTest.Simple_1x1 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -nr 1 -nw 1 -v -p TestSst)
+add_test(
+  NAME ADIOSSstTest.Simple_1x1
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+    -nr 1 -nw 1 -v -p TestSst
+)
 set_tests_properties(ADIOSSstTest.Simple_1x1 PROPERTIES TIMEOUT 60)

@@ -79,17 +79,17 @@ rm -f *.bpflx
 
 # Spawn the writer
 if [ $vflag == "yes" ]; then
-    echo "Doing        (@MPIEXEC@ -q @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog ) & writer_pid=$!"
+    echo "Doing        (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog ) & writer_pid=$!"
 fi
-(@MPIEXEC@ -q @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog ) & writer_pid=$!
+(@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog ) & writer_pid=$!
 
 sleep 2
 
 # Spawn the reader
 if [ $vflag == "yes" ]; then
-    echo "Doing (@MPIEXEC@ -q @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog 2>&1 1>/dev/null) & reader_pid=$!"
+    echo "Doing (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog 2>&1 1>/dev/null) & reader_pid=$!"
 fi
-(@MPIEXEC@ -q @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog 2>&1 1>/dev/null) & reader_pid=$!
+(@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog 2>&1 1>/dev/null) & reader_pid=$!
 
 
 # in the background, sleep for timeout secs then kill that processes
