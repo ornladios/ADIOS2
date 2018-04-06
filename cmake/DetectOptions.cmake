@@ -51,6 +51,7 @@ if(ADIOS2_USE_Fortran STREQUAL AUTO)
   if(CMAKE_Fortran_COMPILER)
     set(fcomp_args "-DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}")
   endif()
+  file(MAKE_DIRECTORY "${ADIOS2_BINARY_DIR}/cmake/check_f90")
   execute_process(
     COMMAND
       "${CMAKE_COMMAND}" "${fcomp_args}" "${ADIOS2_SOURCE_DIR}/cmake/check_f90"

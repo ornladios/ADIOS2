@@ -5,13 +5,14 @@ set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j36")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
 
-set(CTEST_BUILD_NAME "Linux-EL7_Intel17_OpenMPI")
+set(CTEST_BUILD_NAME "Linux-EL7_Intel18_OpenMPI")
 set(dashboard_model Nightly)
 set(CTEST_DASHBOARD_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${CTEST_BUILD_NAME})
 
+
 include(${CMAKE_CURRENT_LIST_DIR}/../EnvironmentModules.cmake)
 module(purge)
-module(load intel/17.0.6.256)
+module(load intel/18.0.1.163)
 module(load py3-numpy)
 module(load openmpi3)
 module(load phdf5)
