@@ -59,7 +59,7 @@ if (ADIOS2_HAVE_ADIOS1)
   target_link_libraries(TestBPWriteReadfstream adios2 gtest_interface adios1::adios)
 
   add_executable(TestBPWriteProfilingJSON TestBPWriteProfilingJSON.cpp)
-  target_link_libraries(TestBPWriteProfilingJSON adios2 gtest_interface NLohmannJson)
+  target_link_libraries(TestBPWriteProfilingJSON adios2 gtest_interface nlohmann_json)
 
   if(ADIOS2_HAVE_MPI)
     target_link_libraries(TestBPWriteRead MPI::MPI_C)
