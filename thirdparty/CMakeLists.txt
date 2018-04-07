@@ -1,7 +1,6 @@
 include(CMakeDependentOption)
 
 add_subdirectory(KWSys)
-add_subdirectory(NLohmannJson)
 add_subdirectory(pugixml)
 
 if(BUILD_TESTING)
@@ -11,6 +10,9 @@ endif()
 if(ADIOS2_HAVE_Python)
   add_subdirectory(pybind11)
 endif()
+
+option(ADIOS2_USE_SYSTEM_JSON
+  "Use an externally supplied nlohmann-json library" OFF)
 
 cmake_dependent_option(ADIOS2_USE_SYSTEM_EVPath
   "Use an externally supplied EVPath library" OFF
@@ -32,6 +34,12 @@ cmake_dependent_option(ADIOS2_USE_SYSTEM_ENET
   "Use an externally supplied ENET library" OFF
   "NOT ADIOS2_USE_SYSTEM_EVPath" OFF
 )
+
+if(ADIOS2_USE_SYSTEM_JSON)
+  find_package(nlohmann_json 3.1.2 REQUIRED)
+else()
+  add_subdirectory(NLohmannJson)
+endif()
 
 if(ADIOS2_HAVE_SST)
   if(NOT ADIOS2_USE_SYSTEM_EVPath)
