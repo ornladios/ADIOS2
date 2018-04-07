@@ -156,7 +156,7 @@ install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
 #------------------------------------------------------------------------------#
 include(CTest)
 mark_as_advanced(BUILD_TESTING)
-add_subdirectory(thirdparty)
+include(thirdparty/dependencies.cmake)
 
 #------------------------------------------------------------------------------#
 # Main library source
