@@ -1,0 +1,45 @@
+add_executable(testzfp testzfp.cpp fields.c)
+target_link_libraries(testzfp zfp)
+target_compile_definitions(testzfp PRIVATE ${zfp_defs})
+
+option(ZFP_BUILD_TESTING_SMALL "Enable small-sized array testing" ON)
+if(ZFP_BUILD_TESTING_SMALL)
+  foreach(D IN ITEMS 1 2 3)
+    foreach(P IN ITEMS 32 64)
+      add_test(NAME small-arrays-${D}d-fp${P}
+        COMMAND testzfp small ${D}d fp${P} serial)
+      if(ZFP_WITH_OPENMP)
+        add_test(NAME small-arrays-${D}d-fp${P}-omp
+          COMMAND testzfp small ${D}d fp${P} omp)
+      endif()
+    endforeach()
+  endforeach()
+endif()
+
+option(ZFP_BUILD_TESTING_MEDIUM "Enable medium-sized array testing" OFF)
+if(ZFP_BUILD_TESTING_MEDIUM)
+  foreach(D IN ITEMS 1 2 3)
+    foreach(P IN ITEMS 32 64)
+      add_test(NAME medium-arrays-${D}d-fp${P}
+        COMMAND testzfp medium ${D}d fp${P} serial)
+      if(ZFP_WITH_OPENMP)
+        add_test(NAME medium-arrays-${D}d-fp${P}-omp
+          COMMAND testzfp medium ${D}d fp${P} omp)
+      endif()
+    endforeach()
+  endforeach()
+endif()
+
+option(ZFP_BUILD_TESTING_LARGE "Enable large array testing" OFF)
+if(ZFP_BUILD_TESTING_LARGE)
+  foreach(D IN ITEMS 1 2 3)
+    foreach(P IN ITEMS 32 64)
+      add_test(NAME large-arrays-${D}d-fp${P}
+        COMMAND testzfp large ${D}d fp${P} serial)
+      if(ZFP_WITH_OPENMP)
+        add_test(NAME large-arrays-${D}d-fp${P}-omp
+          COMMAND testzfp large ${D}d fp${P} omp)
+      endif()
+    endforeach()
+  endforeach()
+endif()

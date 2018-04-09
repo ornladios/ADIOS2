@@ -24,14 +24,7 @@ if(BZIP2_FOUND)
 endif()
 
 # ZFP
-if(ADIOS2_USE_ZFP STREQUAL AUTO)
-  find_package(ZFP)
-elseif(ADIOS2_USE_ZFP)
-  find_package(ZFP REQUIRED)
-endif()
-if(ZFP_FOUND)
-  set(ADIOS2_HAVE_ZFP TRUE)
-endif()
+set(ADIOS2_HAVE_ZFP ${ADIOS2_USE_ZFP})
 
 # SZ
 if(ADIOS2_USE_SZ STREQUAL AUTO)

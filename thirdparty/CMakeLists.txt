@@ -12,6 +12,17 @@ if(ADIOS2_HAVE_Python)
   add_subdirectory(pybind11)
 endif()
 
+cmake_dependent_option(ADIOS2_USE_SYSTEM_ZFP
+  "Use an externally supplied ZFP library" OFF
+  "ADIOS2_HAVE_ZFP" OFF
+)
+if(ADIOS2_HAVE_ZFP)
+  if(NOT ADIOS2_USE_SYSTEM_ZFP)
+    add_subdirectory(zfp)
+  endif()
+  find_package(zfp REQUIRED)
+endif()
+
 cmake_dependent_option(ADIOS2_USE_SYSTEM_EVPath
   "Use an externally supplied EVPath library" OFF
   "ADIOS2_HAVE_SST" OFF

@@ -119,7 +119,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ${ADIOS2_ENABLE_PIC})
 mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
 
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
-adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
 adios_option(SZ        "Enable support for SZ transforms" AUTO)
 adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(DataMan   "Enable support for DataMan" AUTO)
@@ -130,6 +129,11 @@ adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
+
+# The following options don't have an "auto" mode because there's no particular
+# condition where they are not supported.
+option(ADIOS2_USE_ZFP "Enable support for ZFP transforms" ON)
+
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
