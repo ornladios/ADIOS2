@@ -1,0 +1,63 @@
+# compiler executables --------------------------------------------------------
+
+CC = gcc
+CXX = g++
+
+# language standard -----------------------------------------------------------
+
+# CSTD = -std=c89 -Wno-unused-function
+  CSTD = -std=c99
+  CXXSTD = -std=c++98
+# CXXSTD = -std=c++11
+
+# common compiler options -----------------------------------------------------
+
+FLAGS = -O3 -fPIC -Wall -pedantic -I../include
+
+# OpenMP compiler options -----------------------------------------------------
+
+# do not uncomment; use "make ZFP_WITH_OPENMP=0" to disable OpenMP
+OMPFLAGS = -fopenmp
+
+# optional compiler macros ----------------------------------------------------
+
+# use long long for 64-bit types
+# DEFS += -DZFP_INT64='long long' -DZFP_INT64_SUFFIX='ll'
+# DEFS += -DZFP_UINT64='unsigned long long' -DZFP_UINT64_SUFFIX='ull'
+
+# use smaller bit stream word type for finer rate granularity
+# DEFS += -DBIT_STREAM_WORD_TYPE=uint8
+# DEFS += -DBIT_STREAM_WORD_TYPE=uint16
+# DEFS += -DBIT_STREAM_WORD_TYPE=uint32
+# DEFS += -DBIT_STREAM_WORD_TYPE=uint64
+
+# enable strided access for progressive zfp streams
+# DEFS += -DBIT_STREAM_STRIDED
+
+# use aligned memory allocation
+# DEFS += -DZFP_WITH_ALIGNED_ALLOC
+
+# use two-way skew-associative cache
+# DEFS += -DZFP_WITH_CACHE_TWOWAY
+
+# use faster but more collision prone hash function
+# DEFS += -DZFP_WITH_CACHE_FAST_HASH
+
+# count cache misses
+# DEFS += -DZFP_WITH_CACHE_PROFILE
+
+# conditionals ----------------------------------------------------------------
+
+# enable OpenMP?
+ifdef ZFP_WITH_OPENMP
+  ifneq ($(ZFP_WITH_OPENMP),0)
+    ifneq ($(ZFP_WITH_OPENMP),OFF)
+      FLAGS += $(OMPFLAGS)
+    endif
+  endif
+endif
+
+# compiler options ------------------------------------------------------------
+
+CFLAGS = $(CSTD) $(FLAGS) $(DEFS)
+CXXFLAGS = $(CXXSTD) $(FLAGS) $(DEFS)
