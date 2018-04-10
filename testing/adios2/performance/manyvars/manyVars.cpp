@@ -114,8 +114,8 @@ std::vector<RunParams> CreateRunParams()
     for (i = 0; i < N; i++)                                                    \
         if (A[i] != VALUE)                                                     \
         {                                                                      \
-            printE("%s[%d] step %d block %d: wrote %d but read %d\n", VARNAME, \
-                   i, STEP, BLOCK, VALUE, A[i]);                               \
+            printE("%s[%d] step %zu block %zu: wrote %d but read %d\n",        \
+                   VARNAME, i, STEP, BLOCK, VALUE, A[i]);                      \
             err = 104;                                                         \
             /*goto endread;*/                                                  \
             break;                                                             \
@@ -356,7 +356,7 @@ public:
         adios2_variable *vi;
         int err = 0, v;
         size_t step, i;
-        int iMacro;         // loop variable in macros
+        int iMacro; // loop variable in macros
         double tb, te;
         double tsb, ts; // time for just scheduling for one step/block
 
@@ -408,7 +408,7 @@ public:
                     start[0] = offs1;
                     start[1] = offs2;
 
-                    log("    Step %d block %d: value=%d\n", step, block, v);
+                    log("    Step %zu block %zu: value=%d\n", step, block, v);
 
                     for (i = 0; i < NVARS; i++)
                     {
@@ -424,7 +424,7 @@ public:
                 }
                 else
                 {
-                    printf("-- ERROR: Could not get Step %d, status = %d\n", i,
+                    printf("-- ERROR: Could not get Step %zu, status = %d\n", i,
                            status);
                 }
             }
@@ -433,7 +433,7 @@ public:
             te = MPI_Wtime();
             if (rank == 0)
             {
-                log("  Read time for step %d was %6.3lfs\n", step, ts);
+                log("  Read time for step %zu was %6.3lfs\n", step, ts);
             }
         }
 
