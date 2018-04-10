@@ -720,9 +720,9 @@ extern void SstStreamDestroy(SstStream Stream)
             free(Stream->Readers[i]);
         }
         free(Stream->Readers);
-        free(Stream->DataTransport);
     }
 
+    free(Stream->DataTransport);
     FFSFormatList FFSList = Stream->PreviousFormats;
     while (FFSList)
     {
@@ -740,6 +740,24 @@ extern void SstStreamDestroy(SstStream Stream)
             free(Stream->M);
         if (Stream->D)
             free(Stream->D);
+    }
+
+    if (Stream->Role == ReaderRole)
+    {
+        /* reader side */
+        if (Stream->ReaderFFSContext)
+            free_FFSContext(Stream->ReaderFFSContext);
+        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        {
+            free_attr_list(Stream->ConnectionsToWriter[i].ContactList);
+            if (Stream->ConnectionsToWriter[i].CMconn)
+            {
+                CMConnection_close(Stream->ConnectionsToWriter[i].CMconn);
+            }
+        }
+        if (Stream->ConnectionsToWriter)
+            free(Stream->ConnectionsToWriter);
+        free(Stream->Peers);
     }
 
     CPInfoRefCount--;
@@ -760,6 +778,8 @@ extern void SstStreamDestroy(SstStream Stream)
     }
     if (Stream->Filename)
         free(Stream->Filename);
+    if (Stream->ParamsBlock)
+        free(Stream->ParamsBlock);
     free(Stream);
 }
 
