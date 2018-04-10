@@ -154,6 +154,7 @@ struct _SstStream
     int FinalTimestep;
     int CurrentWorkingTimestep;
     struct _SstParams *WriterConfigParams;
+    void *ParamsBlock;
 
     /* reader side marshal info */
     FFSContext ReaderFFSContext;

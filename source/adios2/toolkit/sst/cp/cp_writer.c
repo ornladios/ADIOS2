@@ -253,6 +253,8 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
             List = List->Next;
             ItemToFree->DataFreeFunc(ItemToFree->FreeClientData);
             free(ItemToFree->Msg);
+            free(ItemToFree->MetadataArray);
+            free(ItemToFree->DP_TimestepInfo);
             free(ItemToFree->DataBlockToFree);
             free(ItemToFree);
             AnythingRemoved++;
@@ -1005,6 +1007,8 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
         free(Msg->DP_TimestepInfo);
         Msg->DP_TimestepInfo = NULL;
     }
+    free(pointers);
+
     Stream->PreviousFormats =
         AddUniqueFormats(Stream->PreviousFormats, XmitFormats, /*copy*/ 1);
 
