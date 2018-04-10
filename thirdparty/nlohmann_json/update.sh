@@ -4,15 +4,15 @@ set -e
 set -x
 shopt -s dotglob
 
-readonly name="NLohmannJson"
+readonly name="nlohmann_json"
 readonly ownership="JSON For Modern C++ Upstream <robot@adios2>"
 readonly subtree="thirdparty/NLohmannJson/json"
-readonly repo="https://github.com/nlohmann/json.git"
-readonly tag="v3.1.2"
+#readonly repo="https://github.com/nlohmann/json.git"
+#readonly tag="v3.1.2"
+readonly repo="https://github.com/chuckatkins/json.git"
+readonly tag="misc-cmake-packaging-enhancements"
 readonly shortlog="true"
 readonly paths="
-LICENSE.MIT
-single_include/nlohmann/json.hpp
 "
 
 extract_source () {

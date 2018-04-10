@@ -19,7 +19,7 @@
 #include <adios2.h>
 
 #include <gtest/gtest.h>
-#include <json.hpp> //This fails to be included
+#include <nlohmann/json.hpp>
 
 #include "../SmallTestData.h"
 
