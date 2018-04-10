@@ -40,7 +40,7 @@ target_include_directories(sst PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
-target_link_libraries(sst PRIVATE EVPath::EVPath)
+target_link_libraries(sst PRIVATE adios2::thirdparty::EVPath)
 target_link_libraries(sst PUBLIC MPI::MPI_C)
 
 install(TARGETS sst EXPORT adios2Exports

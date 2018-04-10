@@ -10,6 +10,7 @@ function(adios_option name description default)
   )
 endfunction()
 
+
 function(message_pad msg out_len out_msg)
   string(LENGTH "${msg}" msg_len)
   if(NOT (msg_len LESS out_len))
@@ -21,6 +22,7 @@ function(message_pad msg out_len out_msg)
     set(${out_msg} "${msg}${pad}" PARENT_SCOPE)
   endif()
 endfunction()
+
 
 function(python_add_test)
   set(options)
@@ -38,6 +40,7 @@ function(python_add_test)
     ENVIRONMENT "PYTHONPATH=${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}:$ENV{PYTHONPATH}"
   )
 endfunction()
+
 
 function(GenerateADIOSHeaderConfig)
   set(ADIOS2_CONFIG_DEFINES)
@@ -94,6 +97,16 @@ function(__adios2_list_make_link_args var)
 
   set(${var} ${var_new} PARENT_SCOPE)
 endfunction()
+
+
+function(adios2_add_thirdparty_target PackageName TargetName)
+  find_package(${PackageName} REQUIRED)
+  add_library(adios2::thirdparty::${PackageName} INTERFACE IMPORTED GLOBAL)
+  target_link_libraries(adios2::thirdparty::${PackageName}
+    INTERFACE ${TargetName}
+  )
+endfunction()
+
 
 function(GenerateADIOSPackageConfig)
   include(CMakePackageConfigHelpers)
