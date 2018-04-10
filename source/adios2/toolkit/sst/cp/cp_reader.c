@@ -41,6 +41,7 @@ redo:
         goto redo;
     }
 
+    free(FileName);
     char *Buffer = calloc(1, Size + 1);
     (void)fread(Buffer, Size, 1, WriterInfo);
     fclose(WriterInfo);
@@ -153,6 +154,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     struct timeval Start, Stop, Diff;
     int i;
     char *Filename = strdup(Name);
+    CMConnection rank0_to_rank0_conn = NULL;
 
     Stream = CP_newStream();
     Stream->Role = ReaderRole;
@@ -193,6 +195,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
         attr_list WriterRank0Contact = attr_list_from_string(CMContactString);
         CMConnection conn = CMget_conn(Stream->CPInfo->cm, WriterRank0Contact);
+        free_attr_list(WriterRank0Contact);
 
         if (conn)
         {
@@ -221,6 +224,9 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
             CMwrite(conn, Stream->CPInfo->ReaderRegisterFormat,
                     &ReaderRegister);
+            free(ReaderRegister.CP_ReaderInfo);
+            free(ReaderRegister.DP_ReaderInfo);
+
             /* wait for "go" from writer */
             CP_verbose(
                 Stream,
@@ -237,6 +243,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
             WriterData.StartingStepNumber = response->NextStepNumber;
             WriterData.CP_WriterInfo = response->CP_WriterInfo;
             WriterData.DP_WriterInfo = response->DP_WriterInfo;
+            rank0_to_rank0_conn = conn;
         }
         else
         {
@@ -258,6 +265,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     if (ReturnData->WriterCohortSize == -1)
     {
         /* Rank 0 found no writer at that contact point, fail the stream */
+        free(free_block);
         return NULL;
     }
 
@@ -301,6 +309,13 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         i++;
     }
 
+    // Deref the original connection to writer rank 0 (might still be open as a
+    // peer)
+    if (rank0_to_rank0_conn)
+    {
+        CMConnection_close(rank0_to_rank0_conn);
+    }
+
     Stream->DP_Interface->provideWriterDataToReader(
         &Svcs, Stream->DP_Stream, ReturnData->WriterCohortSize,
         Stream->ConnectionsToWriter, ReturnData->DP_WriterInfo);
@@ -317,6 +332,9 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     timersub(&Stop, &Start, &Diff);
     Stream->OpenTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
     gettimeofday(&Stream->ValidStartTime, NULL);
+    Stream->Filename = Filename;
+    Stream->ParamsBlock = free_block;
+
     return Stream;
 }
 

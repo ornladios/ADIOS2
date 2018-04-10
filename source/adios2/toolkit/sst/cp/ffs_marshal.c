@@ -371,15 +371,65 @@ static void InitMarshalData(SstStream Stream)
 
 extern void FFSFreeMarshalData(SstStream Stream)
 {
-    struct FFSWriterMarshalBase *Info =
-        (struct FFSWriterMarshalBase *)Stream->MarshalData;
+    if (Stream->Role == WriterRole)
+    {
+        /* writer side */
+        struct FFSWriterMarshalBase *Info =
+            (struct FFSWriterMarshalBase *)Stream->MarshalData;
+        struct FFSMetadataInfoStruct *MBase;
+        MBase = Stream->M;
 
-    free(Info->RecList);
-    free_FMfield_list(Info->MetaFields);
-    free_FMfield_list(Info->DataFields);
-    free_FMcontext(Info->LocalFMContext);
-    free(Info);
-    Stream->MarshalData = NULL;
+        if (Info->RecList)
+            free(Info->RecList);
+        if (Info->MetaFields)
+            free_FMfield_list(Info->MetaFields);
+        if (Info->DataFields)
+            free_FMfield_list(Info->DataFields);
+        if (Info->LocalFMContext)
+            free_FMcontext(Info->LocalFMContext);
+        free(Info);
+        Stream->MarshalData = NULL;
+        free(Stream->D);
+        Stream->D = NULL;
+        free(MBase->BitField);
+        free(Stream->M);
+        Stream->M = NULL;
+    }
+    else
+    {
+
+        /* reader side */
+        struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        {
+            if (Info->WriterInfo[i].RawBuffer)
+                free(Info->WriterInfo[i].RawBuffer);
+        }
+        if (Info->WriterInfo)
+            free(Info->WriterInfo);
+        if (Info->MetadataBaseAddrs)
+            free(Info->MetadataBaseAddrs);
+        if (Info->MetadataFieldLists)
+            free(Info->MetadataFieldLists);
+        if (Info->DataBaseAddrs)
+            free(Info->DataBaseAddrs);
+        if (Info->DataFieldLists)
+            free(Info->DataFieldLists);
+        for (int i = 0; i < Info->VarCount; i++)
+        {
+            free(Info->VarList[i].VarName);
+            free(Info->VarList[i].PerWriterMetaFieldDesc);
+            free(Info->VarList[i].PerWriterDataFieldDesc);
+            free(Info->VarList[i].PerWriterStart);
+            free(Info->VarList[i].PerWriterCounts);
+            free(Info->VarList[i].PerWriterIncomingData);
+        }
+        if (Info->VarList)
+            free(Info->VarList);
+
+        free(Info);
+        Stream->ReaderMarshalData = NULL;
+    }
 }
 
 static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
@@ -712,6 +762,7 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
             FMcopy_struct_list(format_list_of_FMFormat(Format));
         FMlocalize_structs(List);
         establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
+        FMfree_struct_list(List);
     }
     if (FFSdecode_in_place_possible(FFSformat))
     {
@@ -830,8 +881,8 @@ void ExtractSelectionFromPartial(int ElementSize, size_t Dims,
                                  const char *InData, char *OutData)
 {
     int BlockSize;
-    int SourceBlockStride;
-    int DestBlockStride;
+    int SourceBlockStride = 0;
+    int DestBlockStride = 0;
     int SourceBlockStartOffset;
     int DestBlockStartOffset;
     int BlockCount;
@@ -860,8 +911,11 @@ void ExtractSelectionFromPartial(int ElementSize, size_t Dims,
             break;
         }
     }
-    SourceBlockStride = PartialCounts[OperantDims - 1] * OperantElementSize;
-    DestBlockStride = SelectionCounts[OperantDims - 1] * OperantElementSize;
+    if (OperantDims > 0)
+    {
+        SourceBlockStride = PartialCounts[OperantDims - 1] * OperantElementSize;
+        DestBlockStride = SelectionCounts[OperantDims - 1] * OperantElementSize;
+    }
 
     /* calculate first selected element and count */
     BlockCount = 1;
@@ -1142,6 +1196,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             FMcopy_struct_list(format_list_of_FMFormat(Format));
         FMlocalize_structs(List);
         establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
+        FMfree_struct_list(List);
     }
 
     if (FFSdecode_in_place_possible(FFSformat))
@@ -1230,8 +1285,11 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
 extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
 {
     if (!Stream->ReaderFFSContext)
-        Stream->ReaderFFSContext =
-            create_FFSContext_FM(create_local_FMcontext());
+    {
+        FMContext Tmp = create_local_FMcontext();
+        Stream->ReaderFFSContext = create_FFSContext_FM(Tmp);
+        free_FMcontext(Tmp);
+    }
 
     LoadFormats(Stream, MetaData->Formats);
 
