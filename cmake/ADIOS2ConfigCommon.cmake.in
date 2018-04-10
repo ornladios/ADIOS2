@@ -56,5 +56,6 @@ include(FindPackageHandleStandardArgs)
 set(ADIOS2_CONFIG "${CMAKE_CURRENT_LIST_FILE}")
 find_package_handle_standard_args(ADIOS2 DEFAULT_MESSAGE ADIOS2_VERSION)
 
-if(NOT adios2::adios2)
-include("${CMAKE_CURRENT_LIST_DIR}/ADIOS2Targets.cmake")
+if(NOT TARGET adios2::adios2)
+  include("${CMAKE_CURRENT_LIST_DIR}/ADIOS2Targets.cmake")
+endif()

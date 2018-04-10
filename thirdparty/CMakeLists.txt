@@ -12,36 +12,39 @@ if(ADIOS2_HAVE_Python)
   add_subdirectory(pybind11)
 endif()
 
-cmake_dependent_option(ADIOS2_USE_SYSTEM_EVPath
+#------------------------------------------------------------------------------#
+# SST / EVPath stuff
+#------------------------------------------------------------------------------#
+cmake_dependent_option(ADIOS2_USE_EXTERNAL_EVPATH
   "Use an externally supplied EVPath library" OFF
   "ADIOS2_HAVE_SST" OFF
 )
-cmake_dependent_option(ADIOS2_USE_SYSTEM_ATL
+cmake_dependent_option(ADIOS2_USE_EXTERNAL_ATL
   "Use an externally supplied ATL library" OFF
-  "NOT ADIOS2_USE_SYSTEM_EVPath" OFF
+  "NOT ADIOS2_USE_EXTERNAL_EVPATH" OFF
 )
-cmake_dependent_option(ADIOS2_USE_SYSTEM_FFS
+cmake_dependent_option(ADIOS2_USE_EXTERNAL_FFS
   "Use an externally supplied FFS library" OFF
-  "NOT ADIOS2_USE_SYSTEM_EVPath" OFF
+  "NOT ADIOS2_USE_EXTERNAL_EVPATH" OFF
 )
-cmake_dependent_option(ADIOS2_USE_SYSTEM_DILL
+cmake_dependent_option(ADIOS2_USE_EXTERNAL_DILL
   "Use an externally supplied DILL library" OFF
-  "NOT ADIOS2_USE_SYSTEM_FFS" OFF
+  "NOT ADIOS2_USE_EXTERNAL_FFS" OFF
 )
-cmake_dependent_option(ADIOS2_USE_SYSTEM_ENET
+cmake_dependent_option(ADIOS2_USE_EXTERNAL_ENET
   "Use an externally supplied ENET library" OFF
-  "NOT ADIOS2_USE_SYSTEM_EVPath" OFF
+  "NOT ADIOS2_USE_EXTERNAL_EVPATH" OFF
 )
 
 if(ADIOS2_HAVE_SST)
-  if(NOT ADIOS2_USE_SYSTEM_EVPath)
-    if(NOT ADIOS2_USE_SYSTEM_ATL)
+  if(NOT ADIOS2_USE_EXTERNAL_EVPATH)
+    if(NOT ADIOS2_USE_EXTERNAL_ATL)
       add_subdirectory(atl)
     endif()
     find_package(atl REQUIRED)
 
-    if(NOT ADIOS2_USE_SYSTEM_FFS)
-      if(NOT ADIOS2_USE_SYSTEM_DILL)
+    if(NOT ADIOS2_USE_EXTERNAL_FFS)
+      if(NOT ADIOS2_USE_EXTERNAL_DILL)
         add_subdirectory(dill)
       endif()
       find_package(dill REQUIRED)
@@ -50,12 +53,12 @@ if(ADIOS2_HAVE_SST)
     endif()
     find_package(ffs REQUIRED)
 
-    if(NOT ADIOS2_USE_SYSTEM_ENET)
+    if(NOT ADIOS2_USE_EXTERNAL_ENET)
       add_subdirectory(enet)
     endif()
     find_package(enet REQUIRED)
 
     add_subdirectory(EVPath)
   endif()
-  find_package(EVPath REQUIRED)
+  adios2_add_thirdparty_target(EVPath EVPath::EVPath)
 endif()
