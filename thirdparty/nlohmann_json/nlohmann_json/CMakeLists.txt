@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.6)
 
 ##
 ## PROJECT
@@ -46,7 +46,15 @@ endif()
 ##
 add_library(${NLOHMANN_JSON_TARGET_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${NLOHMANN_JSON_TARGET_NAME} ALIAS ${NLOHMANN_JSON_TARGET_NAME})
-target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
+
+# Use meta-compile features if available, otherwise use specific language
+# features
+if(cxx_std_11 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+  target_compile_features(${NLOHMANN_JSON_TARGET_NAME} INTERFACE cxx_std_11)
+else()
+  target_compile_features(${NLOHMANN_JSON_TARGET_NAME}
+      INTERFACE cxx_auto_type cxx_constexpr)
+endif()
 
 target_include_directories(
     ${NLOHMANN_JSON_TARGET_NAME}
