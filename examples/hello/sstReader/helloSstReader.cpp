@@ -20,6 +20,17 @@ v *      Author: Greg Eisenhauer
 #include <mpi.h>
 #endif
 
+template <class T>
+void Dump(std::vector<T> &v)
+{
+
+    for (auto i : v)
+    {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     // Application variable
@@ -48,11 +59,12 @@ int main(int argc, char *argv[])
         adios2::IO &sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
 
-        auto bpFloats = sstIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
         adios2::Engine &sstReader = sstIO.Open("helloSst", adios2::Mode::Read);
 
         sstReader.BeginStep();
-        sstReader.GetSync<float>(bpFloats, myFloats.data());
+        auto bpFloats = sstIO.InquireVariable<float>("bpFloats");
+        sstReader.GetSync<float>(*bpFloats, myFloats.data());
+        Dump(myFloats);
         sstReader.EndStep();
 
         sstReader.Close();

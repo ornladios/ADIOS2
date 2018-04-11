@@ -39,9 +39,11 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
         adios2::IO &sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
+        sstIO.SetParameters({{"BPmarshal", "yes"}, {"FFSmarshal", "no"}});
 
         // Define variable and local size
-        auto bpFloats = sstIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
+        auto bpFloats =
+            sstIO.DefineVariable<float>("bpFloats", {Nx}, {0}, {Nx});
 
         // Create engine smart pointer to Sst Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class

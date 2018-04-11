@@ -129,6 +129,7 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     }
     if (m_WriterBPmarshal)
     {
+        std::cout << "using BP marshal\n";
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         // At begin step, you get metadata from the writers.  You need to
         // use this for two things: First, you need to create the
