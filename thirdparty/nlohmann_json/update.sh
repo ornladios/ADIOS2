@@ -13,6 +13,7 @@ readonly shortlog="true"
 readonly paths="
   CMakeLists.txt
   LICENSE.MIT
+  nlohmann_json.natvis
   cmake
   include
   single_include
