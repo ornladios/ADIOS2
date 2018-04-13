@@ -10,6 +10,8 @@ if(ADIOS2_HAVE_Python)
   add_subdirectory(pybind11)
 endif()
 
+add_subdirectory(pugixml)
+
 option(ADIOS2_USE_EXTERNAL_JSON
   "Use an externally supplied nlohmann_json library" OFF
 )
