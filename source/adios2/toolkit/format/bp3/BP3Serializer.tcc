@@ -857,6 +857,7 @@ BP3Serializer::GetAttributeSizeInData(const Attribute<T> &attribute) const
 {
     size_t size = 14 + attribute.m_Name.size() + 10;
     size += 4 + sizeof(T) * attribute.m_Elements;
+    return size;
 }
 
 } // end namespace format
