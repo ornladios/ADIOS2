@@ -414,6 +414,11 @@ private:
                                            std::vector<char> &buffer);
 
     uint32_t GetFileIndex() const noexcept;
+
+    size_t GetAttributesSizeInData(IO &io) const noexcept;
+
+    template <class T>
+    size_t GetAttributeSizeInData(const Attribute<T> &attribute) const noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \

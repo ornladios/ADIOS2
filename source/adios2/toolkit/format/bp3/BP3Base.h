@@ -210,8 +210,8 @@ public:
      * @param variableName input
      * @param variableCount input
      */
-    size_t GetVariableBPIndexSize(const std::string &variableName,
-                                  const Dims &variableCount) const noexcept;
+    size_t GetBPIndexSizeInData(const std::string &variableName,
+                                const Dims &variableCount) const noexcept;
 
     /**
      * Sets buffer's positions to zero and fill buffer with zero char

@@ -172,8 +172,8 @@ std::string BP3Base::GetBPSubFileName(const std::string &name,
     return GetBPRankName(name, subFileIndex);
 }
 
-size_t BP3Base::GetVariableBPIndexSize(const std::string &variableName,
-                                       const Dims &variableCount) const noexcept
+size_t BP3Base::GetBPIndexSizeInData(const std::string &variableName,
+                                     const Dims &variableCount) const noexcept
 {
     size_t indexSize = 23; // header
     indexSize += variableName.size();
@@ -194,10 +194,13 @@ size_t BP3Base::GetVariableBPIndexSize(const std::string &variableName,
     }
 
     // characteristic statistics
-    if (m_Verbosity == 0) // default, only min and max
+    indexSize += 5;       // count + length
+    if (m_Verbosity == 0) // default, only min and max and dimensions
     {
         indexSize += 2 * (2 * sizeof(uint64_t) + 1);
         indexSize += 1 + 1; // id
+
+        indexSize += 28 * dimensions + 1;
     }
 
     return indexSize + 12; // extra 12 bytes in case of attributes
