@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_executable(TestXMLConfig TestXMLConfig.cpp)
-target_link_libraries(TestXMLConfig adios2 gtest gtest_main)
+target_link_libraries(TestXMLConfig adios2 gtest)
 target_compile_definitions(TestXMLConfig PRIVATE
   "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
 )

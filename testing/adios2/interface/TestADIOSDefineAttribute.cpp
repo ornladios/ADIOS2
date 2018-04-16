@@ -33,18 +33,17 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
     std::string name = std::string("attributeString") + std::to_string(mpiRank);
 
     // Attribute should be unique per process
-    auto &attributeString1 = io.DefineAttribute<std::string>(name, "-1");
+    io.DefineAttribute<std::string>(name, "-1");
 
-    EXPECT_THROW(auto &attributeString2 =
-                     io.DefineAttribute<std::string>(name, "0"),
+    EXPECT_THROW(io.DefineAttribute<std::string>(name, "0"),
                  std::invalid_argument);
 
-    auto *attributeString2 =
-        io.InquireAttribute<std::string>("NoExistingAttribute");
-    EXPECT_EQ(attributeString2, nullptr);
+    auto *attributeString1 =
+        io.InquireAttribute<std::string>("NonExistingAttribute");
+    EXPECT_EQ(attributeString1, nullptr);
 
-    auto *attributeString3 = io.InquireAttribute<std::string>(name);
-    EXPECT_NE(attributeString3, nullptr);
+    auto *attributeString2 = io.InquireAttribute<std::string>(name);
+    EXPECT_NE(attributeString2, nullptr);
 }
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
@@ -658,8 +657,9 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
 
+    int result;
     ::testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();

@@ -33,10 +33,9 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
     std::string fname = "foo/ADIOS2BPWriteAttributeADIOS1ReadSingleTypes.bp";
     std::string fRootName = "ADIOS2BPWriteAttributeADIOS1ReadSingleTypes.bp";
 
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // FIXME: Since collective meta generation has not landed yet, so there is
@@ -417,8 +416,9 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
 
+    int result;
     ::testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();

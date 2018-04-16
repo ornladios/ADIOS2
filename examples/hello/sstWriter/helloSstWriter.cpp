@@ -31,7 +31,11 @@ int main(int argc, char *argv[])
     size = 1;
 #endif
 
-    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<float> myFloats = {
+        (float)10.0 * size + 0, (float)10.0 * size + 1, (float)10.0 * size + 2,
+        (float)10.0 * size + 3, (float)10.0 * size + 4, (float)10.0 * size + 5,
+        (float)10.0 * size + 6, (float)10.0 * size + 7, (float)10.0 * size + 8,
+        (float)10.0 * size + 9};
     const std::size_t Nx = myFloats.size();
 
     try
@@ -42,8 +46,8 @@ int main(int argc, char *argv[])
         sstIO.SetParameters({{"BPmarshal", "yes"}, {"FFSmarshal", "no"}});
 
         // Define variable and local size
-        auto bpFloats =
-            sstIO.DefineVariable<float>("bpFloats", {Nx}, {0}, {Nx});
+        auto bpFloats = sstIO.DefineVariable<float>("bpFloats", {size * Nx},
+                                                    {rank * Nx}, {Nx});
 
         // Create engine smart pointer to Sst Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class

@@ -4,13 +4,13 @@
 #------------------------------------------------------------------------------#
 
 add_executable(TestADIOSInterfaceWrite TestADIOSInterfaceWrite.cpp)
-target_link_libraries(TestADIOSInterfaceWrite adios2 gtest gtest_main)
+target_link_libraries(TestADIOSInterfaceWrite adios2 gtest)
 
 add_executable(TestADIOSDefineVariable TestADIOSDefineVariable.cpp)
-target_link_libraries(TestADIOSDefineVariable adios2 gtest gtest_main)
+target_link_libraries(TestADIOSDefineVariable adios2 gtest)
 
 add_executable(TestADIOSDefineAttribute TestADIOSDefineAttribute.cpp)
-target_link_libraries(TestADIOSDefineAttribute adios2 gtest gtest_main)
+target_link_libraries(TestADIOSDefineAttribute adios2 gtest)
 
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestADIOSInterfaceWrite MPI::MPI_C)

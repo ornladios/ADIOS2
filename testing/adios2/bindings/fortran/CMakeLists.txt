@@ -3,13 +3,17 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_executable(TestBPWriteReadTypes_f SmallTestData_mod.f90)
+add_library(SmallTestData_f OBJECT SmallTestData_mod.f90)
+
+add_executable(TestBPWriteReadTypes_f $<TARGET_OBJECTS:SmallTestData_f>)
 target_link_libraries(TestBPWriteReadTypes_f adios2_f)
 
-add_executable(TestBPWriteReadTypesHighLevelAPI_f SmallTestData_mod.f90)
+add_executable(TestBPWriteReadTypesHighLevelAPI_f
+  $<TARGET_OBJECTS:SmallTestData_f>
+)
 target_link_libraries(TestBPWriteReadTypesHighLevelAPI_f adios2_f)
 
-add_executable(TestRemove_f SmallTestData_mod.f90)
+add_executable(TestRemove_f $<TARGET_OBJECTS:SmallTestData_f>)
 target_link_libraries(TestRemove_f adios2_f)
 
 if(ADIOS2_HAVE_MPI)
@@ -23,22 +27,22 @@ if(ADIOS2_HAVE_MPI)
   target_sources(TestRemove_f PRIVATE TestRemove.f90)
   target_link_libraries(TestRemove_f MPI::MPI_Fortran)
   
-  add_executable(TestBPWriteAttributes_f SmallTestData_mod.f90)
+  add_executable(TestBPWriteAttributes_f $<TARGET_OBJECTS:SmallTestData_f>)
   target_link_libraries(TestBPWriteAttributes_f adios2_f)
   target_sources(TestBPWriteAttributes_f PRIVATE TestBPWriteAttributes.f90)
   target_link_libraries(TestBPWriteAttributes_f MPI::MPI_Fortran)
   
-  add_executable(TestBPWriteTypesByName_f SmallTestData_mod.f90)
+  add_executable(TestBPWriteTypesByName_f $<TARGET_OBJECTS:SmallTestData_f>)
   target_link_libraries(TestBPWriteTypesByName_f adios2_f)
   target_sources(TestBPWriteTypesByName_f PRIVATE TestBPWriteTypesByName.f90)
   target_link_libraries(TestBPWriteTypesByName_f MPI::MPI_Fortran)
   
-  add_executable(TestBPWriteStep_f SmallTestData_mod.f90)
+  add_executable(TestBPWriteStep_f $<TARGET_OBJECTS:SmallTestData_f>)
   target_link_libraries(TestBPWriteStep_f adios2_f)
   target_sources(TestBPWriteStep_f PRIVATE TestBPWriteStep.f90)
   target_link_libraries(TestBPWriteStep_f MPI::MPI_Fortran)
   
-  add_executable(TestBPWriteLocal_f SmallTestData_mod.f90)
+  add_executable(TestBPWriteLocal_f $<TARGET_OBJECTS:SmallTestData_f>)
   target_link_libraries(TestBPWriteLocal_f adios2_f)
   target_sources(TestBPWriteLocal_f PRIVATE TestBPWriteTypesLocal.f90)
   target_link_libraries(TestBPWriteLocal_f MPI::MPI_Fortran)

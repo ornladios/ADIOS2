@@ -327,6 +327,13 @@ public:
      */
     Engine &Open(const std::string &name, const Mode mode);
 
+    /**
+     * Flushes all engines created with the current IO object using Open.
+     * If no engine is created it does nothing.
+     * @exception std::runtime_error if any engine Flush fails
+     */
+    void FlushAll();
+
     // READ FUNCTIONS, not yet implemented:
     /**
      * not yet implented

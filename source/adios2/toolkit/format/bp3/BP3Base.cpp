@@ -2,13 +2,15 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP1Base.cpp
+ * BP3Base.cpp
  *
  *  Created on: Feb 7, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "BP3Base.h"
 #include "BP3Base.tcc"
+
+#include <algorithm> // std::transform
 
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
@@ -26,6 +28,8 @@ BP3Base::BP3Base(MPI_Comm mpiComm, const bool debugMode)
     m_Profiler.IsActive = true; // default
 }
 
+BP3Base::~BP3Base() {}
+
 void BP3Base::InitParameters(const Params &parameters)
 {
     // flags for defaults that require constructors
@@ -34,68 +38,70 @@ void BP3Base::InitParameters(const Params &parameters)
 
     for (const auto &pair : parameters)
     {
-        const std::string key(pair.first);
+        std::string key(pair.first);
+        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+
         const std::string value(pair.second);
 
-        if (key == "Profile")
+        if (key == "profile")
         {
             InitParameterProfile(value);
         }
-        else if (key == "ProfileUnits")
+        else if (key == "profileunits")
         {
             InitParameterProfileUnits(value);
             useDefaultProfileUnits = false;
         }
-        else if (key == "BufferGrowthFactor")
+        else if (key == "buffergrowthfactor")
         {
             InitParameterBufferGrowth(value);
         }
-        else if (key == "InitialBufferSize")
+        else if (key == "initialbuffersize")
         {
             InitParameterInitBufferSize(value);
             useDefaultInitialBufferSize = false;
         }
-        else if (key == "MaxBufferSize")
+        else if (key == "maxbuffersize")
         {
             InitParameterMaxBufferSize(value);
         }
-        else if (key == "Threads")
+        else if (key == "threads")
         {
             InitParameterThreads(value);
         }
-        else if (key == "Verbose")
+        else if (key == "verbose")
         {
             InitParameterVerbose(value);
         }
-        else if (key == "CollectiveMetadata")
+        else if (key == "collectivemetadata")
         {
             InitParameterCollectiveMetadata(value);
         }
-        else if (key == "FlushStepsCount")
+        else if (key == "flushstepscount")
         {
             InitParameterFlushStepsCount(value);
+        }
+        else if (key == "substreams")
+        {
+            InitParameterSubStreams(value);
         }
     }
 
     // default timer for buffering
     if (m_Profiler.IsActive && useDefaultProfileUnits)
     {
-        m_Profiler.Timers.emplace(
-            "buffering",
-            profiling::Timer("buffering", DefaultTimeUnitEnum, m_DebugMode));
+        auto lf_EmplaceTimer = [&](const std::string process) {
 
-        m_Profiler.Timers.emplace(
-            "memcpy",
-            profiling::Timer("memcpy", DefaultTimeUnitEnum, m_DebugMode));
+            m_Profiler.Timers.emplace(
+                process,
+                profiling::Timer(process, DefaultTimeUnitEnum, m_DebugMode));
+        };
 
-        m_Profiler.Timers.emplace(
-            "minmax",
-            profiling::Timer("minmax", DefaultTimeUnitEnum, m_DebugMode));
-
-        m_Profiler.Timers.emplace("meta_sort_merge",
-                                  profiling::Timer("meta_sort_merge",
-                                                   DefaultTimeUnitEnum,
-                                                   m_DebugMode));
+        lf_EmplaceTimer("buffering");
+        lf_EmplaceTimer("memcpy");
+        lf_EmplaceTimer("minmax");
+        lf_EmplaceTimer("meta_sort_merge");
+        lf_EmplaceTimer("aggregation");
 
         m_Profiler.Bytes.emplace("buffering", 0);
     }
@@ -294,20 +300,24 @@ void BP3Base::InitParameterProfile(const std::string value)
 
 void BP3Base::InitParameterProfileUnits(const std::string value)
 {
+    auto lf_EmplaceTimer = [&](const std::string process,
+                               const TimeUnit timeUnit) {
+
+        if (m_Profiler.Timers.count(process) == 1)
+        {
+            m_Profiler.Timers.erase(process);
+        }
+        m_Profiler.Timers.emplace(
+            process, profiling::Timer(process, timeUnit, m_DebugMode));
+    };
+
     TimeUnit timeUnit = StringToTimeUnit(value, m_DebugMode);
 
-    m_Profiler.Timers.emplace(
-        "buffering", profiling::Timer("buffering", timeUnit, m_DebugMode));
-
-    m_Profiler.Timers.emplace(
-        "memcpy", profiling::Timer("memcpy", timeUnit, m_DebugMode));
-
-    m_Profiler.Timers.emplace(
-        "minmax", profiling::Timer("minmax", timeUnit, m_DebugMode));
-
-    m_Profiler.Timers.emplace(
-        "meta_sort_merge",
-        profiling::Timer("meta_sort_merge", timeUnit, m_DebugMode));
+    lf_EmplaceTimer("buffering", timeUnit);
+    lf_EmplaceTimer("memcpy", timeUnit);
+    lf_EmplaceTimer("minmax", timeUnit);
+    lf_EmplaceTimer("meta_sort_merge", timeUnit);
+    lf_EmplaceTimer("aggregation", timeUnit);
 
     m_Profiler.Bytes.emplace("buffering", 0);
 }
@@ -547,7 +557,8 @@ void BP3Base::InitParameterFlushStepsCount(const std::string value)
         {
             throw std::invalid_argument(
                 "ERROR: value in FlushStepscount=value in IO SetParameters "
-                "must be an integer >= 1 (default) \nadditional description: " +
+                "must be an integer >= 1 (default) \nadditional "
+                "description: " +
                 description + "\n, in call to Open\n");
         }
     }
@@ -692,6 +703,46 @@ std::string BP3Base::GetBPRankName(const std::string &name,
     const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
                                  "." + std::to_string(rank));
     return bpRankName;
+}
+
+void BP3Base::InitParameterSubStreams(const std::string value)
+{
+    int subStreams = -1;
+
+    if (m_DebugMode)
+    {
+        bool success = true;
+        std::string description;
+
+        try
+        {
+            subStreams = std::stoi(value);
+        }
+        catch (std::exception &e)
+        {
+            success = false;
+            description = std::string(e.what());
+        }
+
+        if (!success || subStreams < 1 || subStreams > m_SizeMPI)
+        {
+            throw std::invalid_argument(
+                "ERROR: value " + std::to_string(subStreams) +
+                " in SubStreams=value in IO SetParameters must be "
+                "an integer between 1 and MPI_Size \nadditional "
+                "description: " +
+                description + "\n, in call to Open\n");
+        }
+    }
+    else
+    {
+        subStreams = std::stoi(value);
+    }
+
+    if (subStreams < m_SizeMPI)
+    {
+        m_Aggregator.Init(subStreams, m_MPIComm);
+    }
 }
 
 #define declare_template_instantiation(T)                                      \

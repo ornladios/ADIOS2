@@ -301,26 +301,6 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read1D8)
     }
 }
 
-// ADIOS2 write, ADIOS2 read
-TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read1D8)
-{
-    std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read1D8.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
-// Native ADIOS1 write, ADIOS2 read
-TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read1D8)
-{
-    std::string fname = "ADIOS1WriteADIOS2ADIOS1Read1D8.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
-//******************************************************************************
-// 2D 2x4 test data
-//******************************************************************************
-
 // ADIOS2 write, native ADIOS1 read
 TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
 {
@@ -610,26 +590,6 @@ TEST_F(ADIOS1WriteReadTest, ADIOS2ADIOS1WriteADIOS1Read2D2x4)
     }
 }
 
-// ADIOS2 write, ADIOS2 read
-TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D2x4)
-{
-    std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D2x4Test.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
-// Native ADIOS1 write, ADIOS2 read
-TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read2D2x4)
-{
-    std::string fname = "ADIOS1WriteADIOS2ADIOS1Read2D2x4Test.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
-//******************************************************************************
-// 2D 4x2 test data
-//******************************************************************************
-
 // ADIOS2 write using ADIOS1 Writer, native ADIOS1 read
 TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
 {
@@ -918,26 +878,9 @@ TEST_F(ADIOS1WriteReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
     }
 }
 
-// ADIOS2 write, ADIOS2 read
-TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D4x2)
-{
-    std::string fname = "ADIOS2ADIOS1WriteADIOS2ADIOS1Read2D4x2Test.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
-// Native ADIOS1 write, ADIOS2 read
-TEST_F(ADIOS1WriteReadTest, DISABLED_ADIOS1WriteADIOS2ADIOS1Read2D4x2)
-{
-    std::string fname = "ADIOS1WriteADIOS2ADIOS1Read2D4x2Test.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
 //******************************************************************************
 // main
 //******************************************************************************
-
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
@@ -945,8 +888,9 @@ int main(int argc, char **argv)
     adios_init_noxml(MPI_COMM_WORLD);
 #endif
 
+    int result;
     ::testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();

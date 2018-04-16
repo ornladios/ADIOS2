@@ -448,8 +448,9 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
 
+    int result;
     ::testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();

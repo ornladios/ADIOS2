@@ -301,14 +301,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
     }
 }
 
-// ADIOS2 write, ADIOS2 read
-TEST_F(BPWriteReadTest, DISABLED_ADIOS2BPWriteADIOS2BPRead1D8fstream)
-{
-    std::string fname = "ADIOS2BPWriteADIOS2BPRead1D8fstream.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
 //******************************************************************************
 // 2D 2x4 test data
 //******************************************************************************
@@ -600,18 +592,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
     }
 }
 
-// ADIOS2 write, ADIOS2 read
-TEST_F(BPWriteReadTest, DISABLED_ADIOS2BPWriteADIOS2BPRead2D2x4fstream)
-{
-    std::string fname = "ADIOS2BPWriteADIOS2BPRead2D2x4Testfstream.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
-//******************************************************************************
-// 2D 4x2 test data
-//******************************************************************************
-
 // ADIOS2 write, native ADIOS1 read
 TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
 {
@@ -898,14 +878,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
     }
 }
 
-// ADIOS2 write, ADIOS2 read
-TEST_F(BPWriteReadTest, DISABLED_ADIOS2BPWriteADIOS2BPRead2D4x2fstream)
-{
-    std::string fname = "ADIOS2BPWriteADIOS2BPRead2D4x2Testfstream.bp";
-
-    ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
-}
-
 //******************************************************************************
 // main
 //******************************************************************************
@@ -916,8 +888,9 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
 
+    int result;
     ::testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();

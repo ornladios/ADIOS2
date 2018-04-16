@@ -12,28 +12,37 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.1.0)
+project(ADIOS2 VERSION 2.1.1)
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif()
 
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
 #------------------------------------------------------------------------------#
-set(CMAKE_INSTALL_BINDIR bin)
-set(CMAKE_INSTALL_LIBDIR lib)
-set(CMAKE_INSTALL_INCLUDEDIR include)
-set(CMAKE_INSTALL_CMAKEDIR lib/cmake/adios2)
+set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
+set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
+set(CMAKE_INSTALL_INCLUDEDIR include
+  CACHE STRING "Installation include subdirectory")
+set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/adios2
+  CACHE STRING "Installation CMake subdirectory")
+mark_as_advanced(CMAKE_INSTALL_BINDIR)
+mark_as_advanced(CMAKE_INSTALL_LIBDIR)
+mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
+mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
-list(INSERT CMAKE_MODULE_PATH 0 "${ADIOS2_SOURCE_DIR}/cmake")
+list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
-    ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 endif()
 if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
-    ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 endif()
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-    ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 endif()
 
 # Let windows builds auto-export dll symbols
@@ -62,9 +71,23 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-# Force C++11
+# Force C++11 and C99
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+if(NOT MSVC)
+  set(CMAKE_C_STANDARD 99)
+  set(CMAKE_C_STANDARD_REQUIRED True)
+endif()
+
+# Use meta-compile features if available, otherwise use specific language
+# features
+if(NOT (CMAKE_VERSION VERSION_LESS 3.9))
+  set(ADIOS2_CXX11_FEATURES cxx_std_11)
+  set(ADIOS2_C99_FEATURES c_std_99)
+else()
+  set(ADIOS2_CXX11_FEATURES cxx_auto_type cxx_nullptr)
+  set(ADIOS2_C99_FEATURES c_restrict)
+endif()
 
 include(CMakeDependentOption)
 
@@ -105,9 +128,9 @@ adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
 adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
-adios_option(Fortran   "Enable support for Fortran bindings" OFF)
+adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
-include(${ADIOS2_SOURCE_DIR}/cmake/DetectOptions.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
   # Workaround for MPI forcing the link of C++ bindings
@@ -119,12 +142,12 @@ set(ADIOS2_CONFIG_OPTS
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
-  ${ADIOS2_SOURCE_DIR}/CTestCustom.cmake.in
-  ${ADIOS2_BINARY_DIR}/CTestCustom.cmake
+  ${PROJECT_SOURCE_DIR}/CTestCustom.cmake.in
+  ${PROJECT_BINARY_DIR}/CTestCustom.cmake
   @ONLY
 )
 
-install(FILES ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
+install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 

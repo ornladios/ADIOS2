@@ -426,7 +426,6 @@ static void *DummyReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
         Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
     DummyCompletionHandle ret = malloc(sizeof(struct _DummyCompletionHandle));
-    DummyPerTimestepInfo TimestepInfo = (DummyPerTimestepInfo)DP_TimestepInfo;
     struct _DummyReadRequestMsg ReadRequestMsg;
 
     ret->CMcondition = CMCondition_get(cm, NULL);

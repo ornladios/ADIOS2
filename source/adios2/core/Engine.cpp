@@ -27,6 +27,8 @@ Engine::~Engine(){};
 
 IO &Engine::GetIO() noexcept { return m_IO; }
 
+Mode Engine::OpenMode() const noexcept { return m_OpenMode; }
+
 StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
@@ -152,6 +154,8 @@ void Engine::Close(const int transportIndex)
         MPI_Comm_free(&m_MPIComm);
     }
 }
+
+void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
 
 // PROTECTED
 void Engine::Init() {}

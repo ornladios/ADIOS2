@@ -19,17 +19,45 @@ namespace adios2
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string engineType, const Params &parameters,
                  const vParams &transportParameters)
-: m_Stream(std::make_shared<Stream>(name, static_cast<Mode>(mode), comm,
-                                    engineType, parameters, transportParameters,
-                                    "C++"))
 {
+    if (mode == openmode::out)
+    {
+        m_Stream =
+            std::make_shared<Stream>(name, Mode::Write, comm, engineType,
+                                     parameters, transportParameters, "C++");
+    }
+    else if (mode == openmode::app)
+    {
+        m_Stream =
+            std::make_shared<Stream>(name, Mode::Append, comm, engineType,
+                                     parameters, transportParameters, "C++");
+    }
+    else if (mode == openmode::in)
+    {
+        m_Stream =
+            std::make_shared<Stream>(name, Mode::Read, comm, engineType,
+                                     parameters, transportParameters, "C++");
+    }
 }
 
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string configFile, const std::string ioInConfigFile)
-: m_Stream(std::make_shared<Stream>(name, static_cast<Mode>(mode), comm,
-                                    configFile, ioInConfigFile, "C++"))
 {
+    if (mode == openmode::out)
+    {
+        m_Stream = std::make_shared<Stream>(name, Mode::Write, comm, configFile,
+                                            ioInConfigFile, "C++");
+    }
+    else if (mode == openmode::app)
+    {
+        m_Stream = std::make_shared<Stream>(name, Mode::Append, comm,
+                                            configFile, ioInConfigFile, "C++");
+    }
+    else if (mode == openmode::in)
+    {
+        m_Stream = std::make_shared<Stream>(name, Mode::Read, comm, configFile,
+                                            ioInConfigFile, "C++");
+    }
 }
 
 fstream::fstream(const std::string &name, const openmode mode,

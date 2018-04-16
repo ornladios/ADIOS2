@@ -25,6 +25,15 @@ contains
 
     end subroutine
 
+
+    subroutine adios2_flush_all(adios, ierr)
+        integer(kind=8), intent(in) :: adios
+        integer, intent(out) :: ierr
+
+        call adios2_flush_all_f2c(adios, ierr)
+
+    end subroutine
+
     subroutine adios2_finalize(adios, ierr)
         integer(kind=8), intent(in) :: adios
         integer, intent(out) :: ierr

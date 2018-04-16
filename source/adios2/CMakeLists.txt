@@ -55,6 +55,9 @@ add_library(adios2
   toolkit/transportman/TransportMan.cpp
   toolkit/transportman/dataman/DataMan.cpp
   
+  toolkit/aggregator/mpi/MPIAggregator.cpp
+  toolkit/aggregator/mpi/MPIChain.cpp
+  
 )
 target_include_directories(adios2
   PUBLIC
@@ -64,6 +67,7 @@ target_include_directories(adios2
 )
 target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
+target_compile_features(adios2 PUBLIC ${ADIOS2_CXX11_FEATURES})
 
 if(UNIX)
   target_sources(adios2 PRIVATE toolkit/transport/file/FilePOSIX.cpp)

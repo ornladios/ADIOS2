@@ -172,7 +172,7 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     EvpathReaderContactInfo Contact =
         malloc(sizeof(struct _EvpathReaderContactInfo));
     CManager cm = Svcs->getCManager(CP_Stream);
-    char *EvpathContactString = malloc(64);
+    char *EvpathContactString;
     MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     CMFormat F;
     CManager CM = Svcs->getCManager(CP_Stream);

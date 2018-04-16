@@ -54,8 +54,10 @@ public:
     /** sets timer active to start counting */
     void Resume() noexcept;
 
-    /** pauses timer (set to inactive) */
-    void Pause() noexcept;
+    /** pauses timer (set to inactive)
+     * @exception std::invalid_argument if Resume not previously called
+     */
+    void Pause();
 
     /** Returns TimeUnit as a short std::string  */
     std::string GetShortUnits() const noexcept;

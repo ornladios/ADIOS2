@@ -294,8 +294,9 @@ int main(int argc, char **argv)
 {
     MPI_Init(nullptr, nullptr);
 
+    int result;
     ::testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    result = RUN_ALL_TESTS();
 
     MPI_Finalize();
     return result;

@@ -24,6 +24,17 @@ template <class T>
 inline void
 BP3Serializer::PutVariableMetadata(const Variable<T> &variable) noexcept
 {
+    auto lf_SetOffset = [&](uint64_t &offset) {
+        if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
+        {
+            offset = static_cast<uint64_t>(m_Data.m_Position);
+        }
+        else
+        {
+            offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition);
+        }
+    };
+
     ProfilerStart("buffering");
 
     Stats<typename TypeInfo<T>::ValueType> stats = GetStats<T>(variable);
@@ -34,12 +45,9 @@ BP3Serializer::PutVariableMetadata(const Variable<T> &variable) noexcept
         variable.m_Name, m_MetadataSet.VarsIndices, isNew);
     stats.MemberID = variableIndex.MemberID;
 
-    size_t &absolutePosition = m_Data.m_AbsolutePosition;
-
-    // write metadata header in data and extract offsets
-    stats.Offset = static_cast<uint64_t>(absolutePosition);
+    lf_SetOffset(stats.Offset);
     PutVariableMetadataInData(variable, stats);
-    stats.PayloadOffset = static_cast<uint64_t>(absolutePosition);
+    lf_SetOffset(stats.PayloadOffset);
 
     // write to metadata  index
     PutVariableMetadataInIndex(variable, stats, isNew, variableIndex);
@@ -315,7 +323,7 @@ BP3Serializer::GetStats(const Variable<std::string> &variable) noexcept
 {
     Stats<typename TypeInfo<std::string>::ValueType> stats;
     stats.Step = m_MetadataSet.TimeStep;
-    stats.FileIndex = static_cast<uint32_t>(m_RankMPI);
+    stats.FileIndex = GetFileIndex();
     return stats;
 }
 
@@ -335,7 +343,7 @@ BP3Serializer::GetStats(const Variable<T> &variable) noexcept
     }
 
     stats.Step = m_MetadataSet.TimeStep;
-    stats.FileIndex = static_cast<uint32_t>(m_RankMPI);
+    stats.FileIndex = GetFileIndex();
     return stats;
 }
 
@@ -456,6 +464,9 @@ void BP3Serializer::PutVariableMetadataInIndex(
         // Characteristics Sets Count in Metadata
         index.Count = 1;
         InsertToBuffer(buffer, &index.Count);
+
+        // For updating absolute offsets in agreggation
+        index.LastUpdatedPosition = buffer.size();
     }
     else // update characteristics sets count
     {
@@ -707,6 +718,114 @@ void BP3Serializer::PutPayloadInBuffer(const Variable<T> &variable) noexcept
                         variable.TotalSize(), m_Threads);
     ProfilerStop("memcpy");
     m_Data.m_AbsolutePosition += variable.PayloadSize();
+}
+
+template <class T>
+void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
+                                                      const DataTypes dataType,
+                                                      std::vector<char> &buffer)
+{
+    const uint8_t characteristicsCount =
+        ReadValue<uint8_t>(buffer, currentPosition);
+
+    const uint32_t characteristicsLength =
+        ReadValue<uint32_t>(buffer, currentPosition);
+
+    const size_t endPosition =
+        currentPosition + static_cast<size_t>(characteristicsLength);
+
+    while (currentPosition < endPosition)
+    {
+        const uint8_t id = ReadValue<uint8_t>(buffer, currentPosition);
+
+        switch (id)
+        {
+        case (characteristic_time_index):
+        {
+            currentPosition += sizeof(uint32_t);
+            break;
+        }
+
+        case (characteristic_file_index):
+        {
+            currentPosition += sizeof(uint32_t);
+            break;
+        }
+
+        case (characteristic_value):
+        {
+            if (dataType == type_string)
+            {
+                // first get the length of the string
+                const size_t length = static_cast<size_t>(
+                    ReadValue<uint16_t>(buffer, currentPosition));
+
+                currentPosition += length;
+            }
+            // using this function only for variables
+            // TODO string array if string arrays are supported in the future
+            else
+            {
+                currentPosition += sizeof(T);
+            }
+
+            break;
+        }
+        case (characteristic_min):
+        {
+            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            break;
+        }
+        case (characteristic_max):
+        {
+            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            break;
+        }
+        case (characteristic_offset):
+        {
+            const uint64_t currentOffset =
+                ReadValue<uint64_t>(buffer, currentPosition);
+
+            const uint64_t updatedOffset =
+                currentOffset +
+                static_cast<uint64_t>(m_Data.m_AbsolutePosition);
+
+            currentPosition -= sizeof(uint64_t);
+            CopyToBuffer(buffer, currentPosition, &updatedOffset);
+            break;
+        }
+        case (characteristic_payload_offset):
+        {
+            const uint64_t currentPayloadOffset =
+                ReadValue<uint64_t>(buffer, currentPosition);
+
+            const uint64_t updatedPayloadOffset =
+                currentPayloadOffset +
+                static_cast<uint64_t>(m_Data.m_AbsolutePosition);
+
+            currentPosition -= sizeof(uint64_t);
+            CopyToBuffer(buffer, currentPosition, &updatedPayloadOffset);
+            break;
+        }
+        case (characteristic_dimensions):
+        {
+            const size_t dimensionsSize = static_cast<size_t>(
+                ReadValue<uint8_t>(buffer, currentPosition));
+
+            currentPosition +=
+                3 * sizeof(uint64_t) * dimensionsSize + 2; // 2 is for length
+            break;
+        }
+        // TODO: implement operators
+        default:
+        {
+            throw std::invalid_argument(
+                "ERROR: characteristic ID " + std::to_string(id) +
+                " not supported when updating offsets\n");
+        }
+
+        } // end id switch
+    }     // end while
 }
 
 } // end namespace format

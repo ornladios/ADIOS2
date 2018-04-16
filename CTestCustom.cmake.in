@@ -3,7 +3,17 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+set(CTEST_CUSTOM_MAXIMUM_NUMBER_OF_ERRORS 1000)
+set(CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 1000)
+
 list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   "H5PL\\.c.*dlopen.*glibc"
   "gtest\\.cc.*getaddrinfo.*glibc"
+  ".*/thirdparty/.*/(.*\\.(c|cc|cxx|CC))"
+  "warning: Using '.*' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking"
+)
+list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
+  ".*/thirdparty/.*"
+  ".*/testing/.*"
+  ".*/examples/.*"
 )

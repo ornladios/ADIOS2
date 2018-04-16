@@ -11,11 +11,11 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_FILEPY_H_
 #define ADIOS2_BINDINGS_PYTHON_FILEPY_H_
 
+#include <pybind11/numpy.h>
+
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/highlevelapi/fstream/Stream.h"
-
-#include <pybind11/numpy.h>
 
 namespace adios2
 {
@@ -65,8 +65,6 @@ public:
     std::string ReadString(const std::string &name, const size_t step);
 
     pybind11::array Read(const std::string &name, const bool endl = false);
-
-    pybind11::array Read(const std::string &name, const size_t step);
 
     pybind11::array Read(const std::string &name, const Dims &selectionStart,
                          const Dims &selectionCount, const bool endl = false);

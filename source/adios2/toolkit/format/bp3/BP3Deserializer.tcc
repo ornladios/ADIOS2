@@ -103,7 +103,9 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
     }
     else
     {
-        // TODO: throw exception?
+        throw std::runtime_error("ERROR: variable " + variableName +
+                                 " of type string can't be an array, when "
+                                 "parsing metadata in call to Open");
     }
 
     // going back to get variable index position
@@ -239,8 +241,6 @@ void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
                                           const std::vector<char> &buffer,
                                           size_t position) const
 {
-    const size_t initialPosition = position;
-
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(
             buffer, position, static_cast<DataTypes>(header.DataType));

@@ -24,8 +24,6 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
     variable.SetData(values);
 
-    // This part will go away, this is just to monitor variables per rank
-
     if (variable.m_Count.empty())
     {
         variable.m_Count = variable.m_Shape;
@@ -59,7 +57,8 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     }
     else
     {
-        // unknown marshaling method, shouldn't happen
+        throw std::invalid_argument(
+                "ERROR: unknown marshaling method \n");
     }
 }
 

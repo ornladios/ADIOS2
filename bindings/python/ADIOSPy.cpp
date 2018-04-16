@@ -46,4 +46,6 @@ IOPy ADIOSPy::AtIO(const std::string name)
     return IOPy(m_ADIOS->AtIO(name), m_DebugMode);
 }
 
+void ADIOSPy::FlushAll() { m_ADIOS->FlushAll(); }
+
 } // end namespace adios2

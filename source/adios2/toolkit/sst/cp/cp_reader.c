@@ -19,9 +19,10 @@
 
 static char *readContactInfoFile(const char *Name, SstStream Stream)
 {
-    char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
+    size_t len = strlen(Name) + strlen(SST_POSTFIX) + 1;
+    char *FileName = malloc(len);
     FILE *WriterInfo;
-    sprintf(FileName, "%s" SST_POSTFIX, Name);
+    snprintf(FileName, len, "%s" SST_POSTFIX, Name);
 //    printf("Looking for writer contact in file %s\n", FileName);
 redo:
     WriterInfo = fopen(FileName, "r");
@@ -48,7 +49,6 @@ redo:
 
 static char *readContactInfoScreen(const char *Name, SstStream Stream)
 {
-    char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
     char Input[10240];
     char *Skip = Input;
     fprintf(stdout, "Please enter the contact information associated with SST "
@@ -189,6 +189,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         sscanf(Writer0Contact, "%p:%s", &WriterFileID, CMContactString);
         //        printf("Writer contact info is fileID %p, contact info %s\n",
         //               WriterFileID, CMContactString);
+        free(Writer0Contact);
 
         attr_list WriterRank0Contact = attr_list_from_string(CMContactString);
         CMConnection conn = CMget_conn(Stream->CPInfo->cm, WriterRank0Contact);

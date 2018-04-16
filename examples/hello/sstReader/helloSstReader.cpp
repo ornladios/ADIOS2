@@ -34,10 +34,10 @@ void Dump(std::vector<T> &v)
 int main(int argc, char *argv[])
 {
     // Application variable
-    int rank, size;
+    int rank;
+    int size;
 
     std::vector<float> myFloats(10);
-    const std::size_t Nx = myFloats.size();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
@@ -60,10 +60,28 @@ int main(int argc, char *argv[])
         sstIO.SetEngine("Sst");
 
         adios2::Engine &sstReader = sstIO.Open("helloSst", adios2::Mode::Read);
-
         sstReader.BeginStep();
-        auto bpFloats = sstIO.InquireVariable<float>("bpFloats");
-        sstReader.GetSync<float>(*bpFloats, myFloats.data());
+        adios2::Variable<float> *bpFloats =
+            sstIO.InquireVariable<float>("bpFloats");
+        std::cout << "Incoming variable is of size " << bpFloats->m_Shape[0]
+                  << "\n";
+        const std::size_t total_size = bpFloats->m_Shape[0];
+        const std::size_t my_start = (total_size / size) * rank;
+        const std::size_t my_count = (total_size / size);
+        std::cout << "Reader rank " << rank << " reading " << my_count
+                  << " floats starting at element " << my_start << "\n";
+
+        const adios2::Dims start{my_start};
+        const adios2::Dims count{my_count};
+
+        const adios2::Box<adios2::Dims> sel(start, count);
+
+        std::vector<float> myFloats;
+        myFloats.resize(my_count);
+
+        bpFloats->SetSelection(sel);
+        sstReader.GetDeferred(*bpFloats, myFloats.data());
+
         Dump(myFloats);
         sstReader.EndStep();
 

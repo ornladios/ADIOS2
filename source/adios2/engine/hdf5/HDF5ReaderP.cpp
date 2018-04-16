@@ -52,16 +52,14 @@ void HDF5ReaderP::Init()
 
     m_H5File.Init(m_Name, m_MPIComm, false);
 
-    int ts = m_H5File.GetNumAdiosSteps();
     /*
-    //
+    int ts = m_H5File.GetNumAdiosSteps();
+
     if (ts == 0)
     {
         throw std::runtime_error("This h5 file is NOT written by ADIOS2");
     }
     */
-    /*
-     */
     if (!m_InStreamMode)
     {
         m_H5File.ReadAllVariables(m_IO);

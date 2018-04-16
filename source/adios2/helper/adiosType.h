@@ -163,6 +163,14 @@ std::string VectorToCSV(const std::vector<T> &input) noexcept;
 template <class T>
 std::string ValueToString(const T value) noexcept;
 
+/**
+ * Checks if input pointer is nullptr ad throws an exception
+ * @param pointer input to be checked against nullptr
+ * @param hint additional exception information
+ */
+template <class T>
+void CheckForNullptr(const T *pointer, const std::string hint);
+
 } // end namespace adios2
 
 #include "adiosType.inl"

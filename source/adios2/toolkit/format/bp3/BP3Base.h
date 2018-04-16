@@ -23,6 +23,7 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
+#include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/BufferSTL.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
@@ -51,6 +52,10 @@ public:
         uint64_t Count = 0;
         /** unique ID assigned to each variable for counter */
         const uint32_t MemberID;
+
+        /** starting point for offsets characteristics update (used in
+         * aggregation) */
+        size_t LastUpdatedPosition = 0;
 
         SerialElementIndex(const uint32_t memberID,
                            const size_t bufferSize = 200)
@@ -160,6 +165,9 @@ public:
     /** if reader and writer have different ordering (column vs row major) */
     bool m_ReverseDimensions = false;
 
+    /** manages all communication tasks in aggregation */
+    aggregator::MPIChain m_Aggregator;
+
     /**
      * Unique constructor
      * @param mpiComm for m_BP1Aggregator
@@ -167,7 +175,7 @@ public:
      */
     BP3Base(MPI_Comm mpiComm, const bool debugMode);
 
-    virtual ~BP3Base() = default;
+    virtual ~BP3Base();
 
     void InitParameters(const Params &parameters);
 
@@ -398,7 +406,7 @@ protected:
         std::string GroupName;
         std::string Name;
         std::string Path;
-        uint8_t DataType;
+        uint8_t DataType = std::numeric_limits<uint8_t>::max() - 1;
     };
 
     /**
@@ -439,6 +447,9 @@ protected:
 
     /** set steps count to flush */
     void InitParameterFlushStepsCount(const std::string value);
+
+    /** set number of substreams, turns on aggregation if less < MPI_Size */
+    void InitParameterSubStreams(const std::string value);
 
     /**
      * Returns data type index from enum Datatypes

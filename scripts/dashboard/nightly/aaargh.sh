@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Source any site-specific variables or scripts
+if [ -f ${HOME}/.dashboard ]
+then
+  source ${HOME}/.dashboard
+fi
+
 function log()
 {
   local TIMESTAMP=$(date +"%Y%m%dT%T.%N")
@@ -29,25 +35,12 @@ else
 fi
 SCRIPT_DIR=${PWD}/Source/scripts/dashboard/nightly
 
-log "Running Serial GCC7"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-nompi.cmake 2>&1 1>Logs/aaargh-gcc7-nompi.log
+# Make sure we have a newer binutils available
 
-log "Running Serial Intel17"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel17-nompi.cmake 2>&1 1>Logs/aaargh-intel17-nompi.log
+source /opt/rh/devtoolset-7/enable
 
-log "Running Serial Intel18"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel18-nompi.cmake 2>&1 1>Logs/aaargh-intel18-nompi.log
-
-# Now run the MPI tests
-
-log "Running GCC7 MPICH"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-gcc7-mpi.cmake \
-  -DMPI_NAME=MPICH -DMPI_MODULE=mpich 2>&1 1>Logs/aaargh-gcc7-mpich.log
-
-log "Running Intel17 OpenMPI"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel17-mpi.cmake \
-  -DMPI_NAME=OpenMPI -DMPI_MODULE=openmpi3 2>&1 1>Logs/aaargh-intel17-openmpi.log
-
-log "Running Intel18 IntelMPI"
-${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-intel18-mpi.cmake \
-  -DMPI_NAME=IntelMPI -DMPI_MODULE=impi 2>&1 1>Logs/aaargh-intel18-impi.log
+for F in gcc7 intel17 intel18 gcc7-mpich intel17-impi intel18-openmpi gcc7-gcov gcc7-mpich-gcov gcc7-valgrind clang5-asan clang5-msan gcc7-coverity
+do
+  log "Running ${F}"
+  ${CTEST} -VV -S ${SCRIPT_DIR}/aaargh-${F}.cmake 2>&1 1>Logs/aaargh-${F}.log
+done

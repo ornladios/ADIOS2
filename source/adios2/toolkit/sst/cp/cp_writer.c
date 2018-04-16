@@ -181,7 +181,6 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
     long Ret = CurrentTimestep;
     CPTimestepList List = Stream->QueuedTimesteps;
     pthread_mutex_lock(&Stream->DataLock);
-    List = Stream->QueuedTimesteps;
     while (List)
     {
         if (List->Timestep < Ret)
@@ -940,6 +939,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
         sendOneToEachReaderRank(Stream,
                                 Stream->CPInfo->DeliverTimestepMetadataFormat,
                                 Msg, &Msg->RS_Stream);
+        free(Entry);
         return;
     }
 

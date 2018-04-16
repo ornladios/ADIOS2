@@ -121,9 +121,9 @@ void ShmSystemV::Close()
     if (m_RemoveAtClose)
     {
         ProfilerStart("close");
-        int remove = shmctl(m_ShmID, IPC_RMID, NULL);
+        const int remove = shmctl(m_ShmID, IPC_RMID, NULL);
         ProfilerStop("close");
-        if (result < 1)
+        if (remove < 1)
         {
             throw std::ios_base::failure(
                 "ERROR: failed to remove shared memory segment of size " +

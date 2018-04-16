@@ -87,7 +87,7 @@ size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 void DataManReader::EndStep()
 {
     // delete any time steps older than the current step
-    for (int m = m_OldestStep; m <= m_CurrentStep; ++m)
+    for (size_t m = m_OldestStep; m <= m_CurrentStep; ++m)
     {
         m_MutexMap.lock();
         auto k = m_VariableMap.find(m);

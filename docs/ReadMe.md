@@ -1,15 +1,15 @@
-# Documentation for the Adaptable Input / Output System (ADIOS) v2.1.0
+# Documentation for the Adaptable Input / Output System (ADIOS) v2.1.1
 
-# Generate Doxygen API Documentation
+# Generate Doxygen API Documentation for each Language
 
 1. Requirements (on Linux install them from your package manager):
 	* doxygen http://www.stack.nl/~dimitri/doxygen/
 	* graphviz http://www.graphviz.org/
 	
-2. To generate the Doxygen API documentation under doc/api_doxygen/html format (default) from the existing Doxyfile (edit Doxyfile to change options):
+2. To generate the Doxygen API documentation under each docs/api_doxygen/language in html format (default) for each supported language from each existing Doxyfile (edit Doxyfile to change options). For example to build API documentation for the native C++11 library:
 	
 	```
-	$ cd ADIOS2/doc/api_doxygen 
+	$ cd ADIOS2/doc/api_doxygen/Cpp 
 	$ doxygen
 	``` 
 

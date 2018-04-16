@@ -108,6 +108,14 @@ public:
     IO &AtIO(const std::string name);
 
     /**
+     * Flushes all engines in all IOs created with the current ADIOS object
+     * using DeclareIO and IO.Open.
+     * If no IO or engine is created it does nothing.
+     * @exception std::runtime_error if any engine Flush fails
+     */
+    void FlushAll();
+
+    /**
      * Declares a derived class of the Operator abstract class. If object is
      * defined in the user
      * config file, by name, it will be already created during the processing of

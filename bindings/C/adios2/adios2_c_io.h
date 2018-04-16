@@ -154,6 +154,8 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
                                     const adios2_mode open_mode,
                                     MPI_Comm mpi_comm);
 
+void adios2_flush_all_engines(adios2_io *io);
+
 #ifdef __cplusplus
 } // end extern C
 #endif

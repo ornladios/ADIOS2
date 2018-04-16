@@ -17,6 +17,8 @@ adios2_step_status adios2_begin_step(adios2_engine *engine,
                                      const adios2_step_mode mode,
                                      const float timeout_seconds)
 {
+    adios2::CheckForNullptr(engine,
+                            "for adios2_engine, in call to adios2_begin_step");
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
 
     adios2::StepStatus statusCpp = adios2::StepStatus::OK;
@@ -70,6 +72,12 @@ adios2_step_status adios2_begin_step(adios2_engine *engine,
 void adios2_put_sync(adios2_engine *engine, adios2_variable *variable,
                      const void *values)
 {
+    adios2::CheckForNullptr(engine,
+                            "for adios2_engine, in call to adios2_put_sync");
+
+    adios2::CheckForNullptr(variable,
+                            "for adios2_variable, in call to adios2_put_sync");
+
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -92,6 +100,12 @@ void adios2_put_sync(adios2_engine *engine, adios2_variable *variable,
 
 void adios2_put_sync_self(adios2_engine *engine, adios2_variable *variable)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_put_sync_self");
+
+    adios2::CheckForNullptr(
+        variable, "for adios2_variable, in call to adios2_put_sync_self");
+
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -114,6 +128,13 @@ void adios2_put_sync_self(adios2_engine *engine, adios2_variable *variable)
 void adios2_put_sync_by_name(adios2_engine *engine, const char *variable_name,
                              const void *values)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_put_sync_by_name");
+
+    adios2::CheckForNullptr(
+        variable_name,
+        "for const char* variable_name, in call to adios2_put_sync_by_name");
+
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     const std::string type(
         engineCpp.GetIO().InquireVariableType(variable_name));
@@ -134,6 +155,12 @@ void adios2_put_sync_by_name(adios2_engine *engine, const char *variable_name,
 void adios2_put_deferred(adios2_engine *engine, adios2_variable *variable,
                          const void *values)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_put_deferred");
+
+    adios2::CheckForNullptr(
+        variable, "for adios2_variable, in call to adios2_put_deferred");
+
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -157,6 +184,12 @@ void adios2_put_deferred(adios2_engine *engine, adios2_variable *variable,
 
 void adios2_put_deferred_self(adios2_engine *engine, adios2_variable *variable)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_put_deferred_self");
+
+    adios2::CheckForNullptr(
+        variable, "for adios2_variable, in call to adios2_put_deferred_self");
+
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -180,6 +213,13 @@ void adios2_put_deferred_self(adios2_engine *engine, adios2_variable *variable)
 void adios2_put_deferred_by_name(adios2_engine *engine,
                                  const char *variable_name, const void *values)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_put_deferred_by_name");
+
+    adios2::CheckForNullptr(variable_name,
+                            "for const char* variable_name, in call "
+                            "to adios2_put_deferred_by_name");
+
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     const std::string type(
         engineCpp.GetIO().InquireVariableType(variable_name));
@@ -200,6 +240,8 @@ void adios2_put_deferred_by_name(adios2_engine *engine,
 
 void adios2_perform_puts(adios2_engine *engine)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_perform_puts");
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.PerformPuts();
 }
@@ -207,6 +249,11 @@ void adios2_perform_puts(adios2_engine *engine)
 void adios2_get_sync(adios2_engine *engine, adios2_variable *variable,
                      void *values)
 {
+    adios2::CheckForNullptr(engine,
+                            "for adios2_engine, in call to adios2_get_sync");
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call "
+                                      "to adios2_get_sync");
+
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -229,6 +276,11 @@ void adios2_get_sync(adios2_engine *engine, adios2_variable *variable,
 
 void adios2_get_sync_self(adios2_engine *engine, adios2_variable *variable)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_get_sync_self");
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call "
+                                      "to adios2_get_sync_self");
+
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -251,6 +303,12 @@ void adios2_get_sync_self(adios2_engine *engine, adios2_variable *variable)
 void adios2_get_sync_by_name(adios2_engine *engine, const char *variable_name,
                              void *values)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_get_sync_by_name");
+    adios2::CheckForNullptr(variable_name,
+                            "for const char* variable_name, in call to "
+                            "adios2_get_sync_by_name");
+
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     const std::string type(
         engineCpp.GetIO().InquireVariableType(variable_name));
@@ -271,6 +329,11 @@ void adios2_get_sync_by_name(adios2_engine *engine, const char *variable_name,
 void adios2_get_deferred(adios2_engine *engine, adios2_variable *variable,
                          void *values)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_get_deferred");
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call "
+                                      "to adios2_get_deferred");
+
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -294,6 +357,11 @@ void adios2_get_deferred(adios2_engine *engine, adios2_variable *variable,
 
 void adios2_get_deferred_self(adios2_engine *engine, adios2_variable *variable)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_get_deferred_self");
+    adios2::CheckForNullptr(variable, "for adios2_variable, in call "
+                                      "to adios2_get_deferred_self");
+
     adios2::VariableBase *variableBase =
         reinterpret_cast<adios2::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
@@ -317,6 +385,12 @@ void adios2_get_deferred_self(adios2_engine *engine, adios2_variable *variable)
 void adios2_get_deferred_by_name(adios2_engine *engine,
                                  const char *variable_name, void *values)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_get_deferred_by_name");
+    adios2::CheckForNullptr(variable_name,
+                            "for const char* variable_name, in call "
+                            "to adios2_get_deferred_by_name");
+
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     const std::string type(
         engineCpp.GetIO().InquireVariableType(variable_name));
@@ -336,24 +410,40 @@ void adios2_get_deferred_by_name(adios2_engine *engine,
 
 void adios2_perform_gets(adios2_engine *engine)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_perform_gets");
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.PerformGets();
 }
 
 void adios2_end_step(adios2_engine *engine)
 {
+    adios2::CheckForNullptr(engine,
+                            "for adios2_engine, in call to adios2_end_step");
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.EndStep();
 }
 
 void adios2_write_step(adios2_engine *engine)
 {
+    adios2::CheckForNullptr(engine,
+                            "for adios2_engine, in call to adios2_write_step");
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.WriteStep();
 }
 
+void adios2_flush(adios2_engine *engine)
+{
+    adios2::CheckForNullptr(engine,
+                            "for adios2_engine, in call to adios2_flush");
+    auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    engineCpp.Flush();
+}
+
 void adios2_close(adios2_engine *engine)
 {
+    adios2::CheckForNullptr(engine,
+                            "for adios2_engine, in call to adios2_close");
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.Close();
 }
@@ -361,6 +451,8 @@ void adios2_close(adios2_engine *engine)
 void adios2_close_by_index(adios2_engine *engine,
                            const unsigned int transport_index)
 {
+    adios2::CheckForNullptr(
+        engine, "for adios2_engine, in call to adios2_close_by_index");
     auto &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
     engineCpp.Close(transport_index);
 }

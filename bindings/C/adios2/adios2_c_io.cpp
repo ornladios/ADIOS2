@@ -22,6 +22,9 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                        const size_t *start, const size_t *count,
                        const adios2_constant_dims constant_dims, void *data)
 {
+    adios2::CheckForNullptr(io,
+                            "for adios2_io, in call to adios2_define_variable");
+
     const bool constantSizeBool =
         (constant_dims == adios2_constant_dims_true) ? true : false;
 
@@ -218,9 +221,7 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
     }
     default:
     {
-        throw std::invalid_argument(
-            "ERROR: type not yet supported for variable " + std::string(name) +
-            ", in call to adios2_define_variable\n");
+        return nullptr;
     }
     }
 
@@ -229,6 +230,9 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
 
 adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
 {
+    adios2::CheckForNullptr(
+        io, "for adios2_io, in call to adios2_inquire_variable");
+
     adios2::IO &ioCpp = *reinterpret_cast<adios2::IO *>(io);
     const auto &dataMap = ioCpp.GetVariablesDataMap();
 
@@ -258,11 +262,17 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
 
 int adios2_remove_variable(adios2_io *io, const char *name)
 {
+    adios2::CheckForNullptr(io,
+                            "for adios2_io, in call to adios2_remove_variable");
+
     return (reinterpret_cast<adios2::IO *>(io)->RemoveVariable(name)) ? 1 : 0;
 }
 
 void adios2_remove_all_variables(adios2_io *io)
 {
+    adios2::CheckForNullptr(
+        io, "for adios2_io, in call to adios2_remove_all_variables");
+
     reinterpret_cast<adios2::IO *>(io)->RemoveAllVariables();
 }
 
@@ -271,6 +281,12 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
                                           const void *data,
                                           const size_t elements)
 {
+    adios2::CheckForNullptr(
+        io, "for adios2_io, in call to adios2_define_attribute");
+
+    adios2::CheckForNullptr(
+        data, "for const void* data, in call to adios2_define_attribute");
+
     adios2::IO &ioCpp = *reinterpret_cast<adios2::IO *>(io);
     adios2::AttributeBase *attribute = nullptr;
 
@@ -432,9 +448,7 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
     }
     default:
     {
-        throw std::invalid_argument("ERROR: type not supported for attribute " +
-                                    std::string(name) +
-                                    ", in call to adios2_define_attribute\n");
+        return nullptr;
     }
     }
 
@@ -443,26 +457,35 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
 
 int adios2_remove_attribute(adios2_io *io, const char *name)
 {
+    adios2::CheckForNullptr(
+        io, "for adios2_io, in call to adios2_remove_attribute");
     return (reinterpret_cast<adios2::IO *>(io)->RemoveAttribute(name)) ? 1 : 0;
 }
 
 void adios2_remove_all_attributes(adios2_io *io)
 {
+    adios2::CheckForNullptr(
+        io, "for adios2_io, in call to adios2_remove_all_attributes");
     reinterpret_cast<adios2::IO *>(io)->RemoveAllAttributes();
 }
 
 void adios2_set_engine(adios2_io *io, const char *engine_type)
 {
+    adios2::CheckForNullptr(io, "for adios2_io, in call to adios2_set_engine");
     reinterpret_cast<adios2::IO *>(io)->SetEngine(engine_type);
 }
 
 void adios2_set_parameter(adios2_io *io, const char *key, const char *value)
 {
+    adios2::CheckForNullptr(io,
+                            "for adios2_io, in call to adios2_set_parameter");
     reinterpret_cast<adios2::IO *>(io)->SetParameter(key, value);
 }
 
 unsigned int adios2_add_transport(adios2_io *io, const char *transport_type)
 {
+    adios2::CheckForNullptr(io,
+                            "for adios2_io, in call to adios2_add_transport");
     return reinterpret_cast<adios2::IO *>(io)->AddTransport(transport_type);
 }
 
@@ -470,6 +493,8 @@ void adios2_set_transport_parameter(adios2_io *io,
                                     const unsigned int transport_index,
                                     const char *key, const char *value)
 {
+    adios2::CheckForNullptr(
+        io, "for adios2_io, in call to adios2_set_transport_parameter");
     reinterpret_cast<adios2::IO *>(io)->SetTransportParameter(transport_index,
                                                               key, value);
 }
@@ -477,6 +502,7 @@ void adios2_set_transport_parameter(adios2_io *io,
 adios2_engine *adios2_open(adios2_io *io, const char *name,
                            const adios2_mode mode)
 {
+    adios2::CheckForNullptr(io, "for adios2_io, in call to adios2_open");
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
     return adios2_open_new_comm(io, name, mode, ioCpp.m_MPIComm);
 }
@@ -484,6 +510,8 @@ adios2_engine *adios2_open(adios2_io *io, const char *name,
 adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
                                     const adios2_mode mode, MPI_Comm mpi_comm)
 {
+    adios2::CheckForNullptr(io,
+                            "for adios2_io, in call to adios2_open_new_comm");
     auto &ioCpp = *reinterpret_cast<adios2::IO *>(io);
     adios2::Engine *engine = nullptr;
 
@@ -508,4 +536,11 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
     }
 
     return reinterpret_cast<adios2_engine *>(engine);
+}
+
+void adios2_flush_all_engines(adios2_io *io)
+{
+    adios2::CheckForNullptr(
+        io, "for adios2_io, in call to adios2_flush_all_engines");
+    reinterpret_cast<adios2::IO *>(io)->FlushAll();
 }

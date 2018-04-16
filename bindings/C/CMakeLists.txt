@@ -12,11 +12,13 @@ ${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_engine.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_variable.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/adios2/adios2_c_FILE.cpp
 )
-
 target_include_directories(adios2
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
+if(NOT MSVC)
+  target_compile_features(adios2 PRIVATE ${ADIOS2_C99_FEATURES})
+endif()
 
 install(
   FILES adios2_c.h 

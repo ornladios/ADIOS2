@@ -165,8 +165,11 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         //   whatever transport it is using.  But it is opaque to the Engine
         //   (and to the control plane).)
 
+        std::cout << "1111\n";
         format::BP3Deserializer deserializer(m_MPIComm, m_DebugMode);
         deserializer.InitParameters(m_IO.m_Parameters);
+
+        std::cout << "2111\n";
 
         struct _SstData **d = m_CurrentStepMetaData->WriterMetadata;
 
@@ -180,7 +183,7 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
 
         m_IO.RemoveAllVariables();
         m_IO.RemoveAllAttributes();
-        deserializer.ParseMetadata(deserializer.m_Data, m_IO);
+        deserializer.ParseMetadata(deserializer.m_Metadata, m_IO);
         const auto variablesInfo = m_IO.GetAvailableVariables();
         for (const auto &variableInfoPair : variablesInfo)
         {
@@ -189,10 +192,6 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
             std::string type = "null";
             for (const auto &parameter : variableInfoPair.second)
             {
-                if (parameter.first == "Type")
-                {
-                    type = parameter.second;
-                }
                 std::cout << "---- key " << parameter.first << " value "
                           << parameter.second << std::endl;
             }
@@ -209,6 +208,7 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     {
         // unknown marshaling method, shouldn't happen
     }
+    std::cout << "8111\n";
 }
 
 size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }

@@ -107,7 +107,6 @@ void Reorganize::Run()
 {
     ParseArguments();
     ProcessParameters();
-    int err;
     int retval = 0;
 
     print0("Input stream            = ", infilename);
@@ -151,7 +150,7 @@ void Reorganize::Run()
                       << "were missed when advancing." << std::endl;
         }
 
-        curr_step = rStream.CurrentStep();
+        curr_step = static_cast<int>(rStream.CurrentStep());
         const DataMap &variables = io.GetVariablesDataMap();
         const DataMap &attributes = io.GetAttributesDataMap();
 
@@ -285,7 +284,7 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
         return writesize;
     }
 
-    int ndim = vi.v->m_Shape.size();
+    size_t ndim = vi.v->m_Shape.size();
     if (ndim == 0)
     {
         // scalars -> rank 0 writes them
@@ -322,7 +321,7 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
     vi.start.reserve(ndim);
     vi.count.reserve(ndim);
 
-    int i = 0;
+    size_t i = 0;
     for (i = 0; i < ndim - 1; i++)
     {
         pos[i] = (rank / nps) % np[i];
@@ -382,8 +381,6 @@ int Reorganize::ProcessMetadata(Engine &rStream, IO &io,
                                 const DataMap &attributes, int step)
 {
     int retval = 0;
-
-    char gdims[256], ldims[256], offs[256];
 
     varinfo.resize(variables.size());
     write_total = 0;
@@ -477,9 +474,8 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
                           const DataMap &variables, int step)
 {
     int retval = 0;
-    uint64_t total_size;
 
-    int nvars = variables.size();
+    size_t nvars = variables.size();
     if (nvars != varinfo.size())
     {
         std::cerr
@@ -493,7 +489,7 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
     /*
      * Read all variables into memory
      */
-    for (int varidx = 0; varidx < nvars; ++varidx)
+    for (size_t varidx = 0; varidx < nvars; ++varidx)
     {
         const std::string &name = varinfo[varidx].v->m_Name;
         if (varinfo[varidx].writesize != 0)
@@ -524,7 +520,7 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
     /*
      * Write all variables
      */
-    for (int varidx = 0; varidx < nvars; ++varidx)
+    for (size_t varidx = 0; varidx < nvars; ++varidx)
     {
         const std::string &name = varinfo[varidx].v->m_Name;
         if (varinfo[varidx].writesize != 0)

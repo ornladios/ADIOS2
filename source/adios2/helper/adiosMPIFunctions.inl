@@ -19,7 +19,7 @@
 
 namespace adios2
 {
-// GatherValues specializations
+
 template <class T>
 std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
                             const int rankDestination)
@@ -42,6 +42,18 @@ std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
 }
 
 template <class T>
+std::vector<T> AllGatherValues(const T source, MPI_Comm mpiComm)
+{
+    int size;
+    MPI_Comm_size(mpiComm, &size);
+    std::vector<T> output(size);
+
+    T sourceCopy = source; // so we can have an address for rvalues
+    AllGatherArrays(&sourceCopy, 1, output.data(), mpiComm);
+    return output;
+}
+
+template <class T>
 void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
                     size_t &position, MPI_Comm mpiComm,
                     const int rankDestination)
@@ -56,7 +68,7 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 
     if (rank == rankDestination) // pre-allocate vector
     {
-        gatheredSize = std::accumulate(counts.begin(), counts.end(), 0);
+        gatheredSize = std::accumulate(counts.begin(), counts.end(), size_t(0));
 
         const size_t newSize = out.size() + gatheredSize;
         try

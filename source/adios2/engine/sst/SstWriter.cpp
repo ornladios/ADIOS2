@@ -43,6 +43,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
         m_BP3Serializer = new format::BP3Serializer(m_MPIComm, m_DebugMode);
+        m_BP3Serializer->InitParameters(m_IO.m_Parameters);
     }
     else
     {
@@ -79,19 +80,24 @@ void SstWriter::EndStep()
             delete BlockToFree;
         };
 
+        m_BP3Serializer->CloseStream(m_IO, true);
+        m_BP3Serializer->AggregateCollectiveMetadata();
+
         BP3DataBlock *newblock = new BP3DataBlock;
+
+        size_t metadataStart, metadataCount;
+
+        std::cout << m_BP3Serializer->m_Metadata.m_Buffer.size() << std::endl;
+
+        newblock->metadata.DataSize =
+            m_BP3Serializer->m_Metadata.m_Buffer.size();
+        newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
+        newblock->data.DataSize = m_BP3Serializer->m_Data.m_Buffer.size();
+        newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
+
         newblock->serializer = m_BP3Serializer;
 
-        m_BP3Serializer->SerializeData(m_IO, true);
-        m_BP3Serializer->CloseStream(m_IO);
-
-        newblock->metadata->DataSize =
-            m_BP3Serializer->m_Metadata.m_Buffer.size();
-        newblock->metadata->block = m_BP3Serializer->m_Metadata.m_Buffer.data();
-        newblock->data->DataSize = m_BP3Serializer->m_Data.m_Buffer.size();
-        newblock->data->block = m_BP3Serializer->m_Data.m_Buffer.data();
-
-        SstProvideTimestep(m_Output, newblock->metadata, newblock->data,
+        SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
                            m_WriterStep, lf_FreeBlocks, newblock);
     }
     else

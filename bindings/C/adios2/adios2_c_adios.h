@@ -65,6 +65,14 @@ adios2_adios *adios2_init_nompi(const adios2_debug_mode debug_mode);
 adios2_io *adios2_declare_io(adios2_adios *adios, const char *io_name);
 
 /**
+ * Flushes all adios2_engine in all adios2_io handlers created with the current
+ * adios2_adios handler using adios2_declare_io and adios2_open
+ * If no adios2_io or adios2_engine is created it does nothing.
+ * @param adios input handler
+ */
+void adios2_flush_all(adios2_adios *adios);
+
+/**
  * Final point for adios2_ADIOS handler.
  * Deallocate adios pointer. Required to avoid memory leaks.
  * @param adios input to be deallocated

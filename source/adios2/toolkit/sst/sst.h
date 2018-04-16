@@ -14,6 +14,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
+
 /*!
  * SstStream is the basic type of a stream connecting an ADIOS2 reader
  * and an ADIOS2 writer.  Externally the same data type is used for both.
@@ -111,7 +113,7 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Save);
 
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(FFSmarshal, Bool, int, true)                                         \
-    MACRO(RegistrationMethod, RegMethod, size_t, NULL)                         \
+    MACRO(RegistrationMethod, RegMethod, size_t, 0)                            \
     MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(BPmarshal, Bool, int, false)                                         \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \

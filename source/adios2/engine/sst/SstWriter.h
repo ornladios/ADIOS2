@@ -57,8 +57,8 @@ private:
 
     struct BP3DataBlock
     {
-        SstData data;
-        SstData metadata;
+        _SstData data;
+        _SstData metadata;
         format::BP3Serializer *serializer;
     };
     format::BP3Serializer *m_BP3Serializer;

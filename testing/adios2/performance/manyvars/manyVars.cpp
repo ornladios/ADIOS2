@@ -96,7 +96,7 @@ std::vector<RunParams> CreateRunParams()
     }                                                                          \
     if (adios2_variable_available_steps_count(vi) != NSTEPS)                   \
     {                                                                          \
-        printE("Variable %s has %zu steps, but expected %u\n", VARNAME,        \
+        printE("Variable %s has %zu steps, but expected %zu\n", VARNAME,       \
                adios2_variable_available_steps_count(vi), NSTEPS);             \
         err = 103;                                                             \
         /*goto endread; */                                                     \
@@ -105,7 +105,8 @@ std::vector<RunParams> CreateRunParams()
 #define CHECK_SCALAR(VARNAME, VAR, VALUE, STEP)                                \
     if (VAR != VALUE)                                                          \
     {                                                                          \
-        printE(#VARNAME " step %d: wrote %d but read %d\n", STEP, VALUE, VAR); \
+        printE(#VARNAME " step %zu: wrote %zu but read %zu\n", STEP, VALUE,    \
+               VAR);                                                           \
         err = 104;                                                             \
         /*goto endread;*/                                                      \
     }
@@ -114,8 +115,8 @@ std::vector<RunParams> CreateRunParams()
     for (i = 0; i < N; i++)                                                    \
         if (A[i] != VALUE)                                                     \
         {                                                                      \
-            printE("%s[%d] step %d block %d: wrote %d but read %d\n", VARNAME, \
-                   i, STEP, BLOCK, VALUE, A[i]);                               \
+            printE("%s[%d] step %zu block %zu: wrote %zu but read %d\n",       \
+                   VARNAME, i, STEP, BLOCK, VALUE, A[i]);                      \
             err = 104;                                                         \
             /*goto endread;*/                                                  \
             break;                                                             \
@@ -131,9 +132,9 @@ public:
     TestManyVars() = default;
     ~TestManyVars() = default;
 
-    int NVARS = 1;
-    int NBLOCKS = 1;
-    int NSTEPS = 1;
+    size_t NVARS = 1;
+    size_t NBLOCKS = 1;
+    size_t NSTEPS = 1;
     int REDEFINE =
         0; // 1: delete and redefine variable definitions at each step to
            // test adios_delete_vardefs()
@@ -193,7 +194,7 @@ public:
         gdim2 = NBLOCKS * ldim2;
     }
 
-    void set_offsets(int block)
+    void set_offsets(size_t block)
     {
         offs1 = rank * ldim1;
         offs2 = block * ldim2;
@@ -256,7 +257,7 @@ public:
 
         if (rank == 0)
         {
-            log("Test %d Variables, %d Blocks, %d Steps\n", NVARS, NBLOCKS,
+            log("Test %zu Variables, %zu Blocks, %zu Steps\n", NVARS, NBLOCKS,
                 NSTEPS);
         }
 
@@ -295,15 +296,13 @@ public:
 
     void define_vars()
     {
-        int i, block;
-
         size_t shape[2] = {gdim1, gdim2};
         size_t count[2] = {ldim1, ldim2};
         size_t start[2] = {0, 0};
 
         /* One variable definition for many blocks.
          * Offsets will change at writing for each block. */
-        for (i = 0; i < NVARS; i++)
+        for (size_t i = 0; i < NVARS; i++)
         {
             varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int,
                                              2, shape, start, count,
@@ -356,15 +355,14 @@ public:
     int read_file()
     {
         adios2_variable *vi;
-        int err = 0, v, n;
-        int block, step, i; // loop variables
-        int iMacro;         // loop variable in macros
-        double tb, te, tsched;
+        int err = 0;
+        size_t step, i, v;
+        int iMacro; // loop variable in macros
+        double tb, te;
         double tsb, ts; // time for just scheduling for one step/block
 
         size_t start[2] = {offs1, offs2};
         size_t count[2] = {ldim1, ldim2};
-        size_t ndim;
 
         reset_readvars();
 
@@ -402,7 +400,7 @@ public:
                 status = adios2_begin_step(
                     engineR, adios2_step_mode_next_available, 0.0);
             }
-            for (block = 0; block < NBLOCKS; block++)
+            for (size_t block = 0; block < NBLOCKS; block++)
             {
                 if (status == adios2_step_status_ok)
                 {
@@ -411,7 +409,7 @@ public:
                     start[0] = offs1;
                     start[1] = offs2;
 
-                    log("    Step %d block %d: value=%d\n", step, block, v);
+                    log("    Step %zu block %zu: value=%zu\n", step, block, v);
 
                     for (i = 0; i < NVARS; i++)
                     {
@@ -427,7 +425,7 @@ public:
                 }
                 else
                 {
-                    printf("-- ERROR: Could not get Step %d, status = %d\n", i,
+                    printf("-- ERROR: Could not get Step %zu, status = %d\n", i,
                            status);
                 }
             }
@@ -436,7 +434,7 @@ public:
             te = MPI_Wtime();
             if (rank == 0)
             {
-                log("  Read time for step %d was %6.3lfs\n", step, ts);
+                log("  Read time for step %zu was %6.3lfs\n", step, ts);
             }
         }
 
@@ -470,7 +468,8 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
-    int result = RUN_ALL_TESTS();
+    int result;
+    result = RUN_ALL_TESTS();
 
     MPI_Finalize();
     return result;

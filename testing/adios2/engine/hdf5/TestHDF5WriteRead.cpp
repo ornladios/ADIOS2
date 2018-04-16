@@ -450,7 +450,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
 // ADIOS2 write, ADIOS2 read
 TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read1D8)
 {
-    std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read1D8.h5";
+    // std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read1D8.h5";
 
     ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
@@ -458,7 +458,7 @@ TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read1D8)
 // Native HDF5 write, ADIOS2 read
 TEST_F(HDF5WriteReadTest, DISABLED_HDF5WriteADIOS2HDF5Read1D8)
 {
-    std::string fname = "HDF5WriteADIOS2HDF5Read1D8.h5";
+    // std::string fname = "HDF5WriteADIOS2HDF5Read1D8.h5";
 
     ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
@@ -725,7 +725,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
 // ADIOS2 write, ADIOS2 read
 TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
 {
-    std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read2D2x4Test.h5";
+    // std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read2D2x4Test.h5";
 
     ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
@@ -733,7 +733,7 @@ TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
 // Native HDF5 write, ADIOS2 read
 TEST_F(HDF5WriteReadTest, DISABLED_HDF5WriteADIOS2HDF5Read2D2x4)
 {
-    std::string fname = "HDF5WriteADIOS2HDF5Read2D2x4Test.h5";
+    // std::string fname = "HDF5WriteADIOS2HDF5Read2D2x4Test.h5";
 
     ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
@@ -999,7 +999,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
 // ADIOS2 write, ADIOS2 read
 TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
 {
-    std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read2D4x2Test.h5";
+    // std::string fname = "ADIOS2HDF5WriteADIOS2HDF5Read2D4x2Test.h5";
 
     ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
@@ -1007,7 +1007,7 @@ TEST_F(HDF5WriteReadTest, DISABLED_ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
 // Native HDF5 write, ADIOS2 read
 TEST_F(HDF5WriteReadTest, DISABLED_HDF5WriteADIOS2HDF5Read2D4x2)
 {
-    std::string fname = "HDF5WriteADIOS2HDF5Read2D4x2Test.h5";
+    // std::string fname = "HDF5WriteADIOS2HDF5Read2D4x2Test.h5";
 
     ASSERT_TRUE(false) << "ADIOS2 read API is not yet implemented";
 }
@@ -1022,8 +1022,9 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
 
+    int result;
     ::testing::InitGoogleTest(&argc, argv);
-    int result = RUN_ALL_TESTS();
+    result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();

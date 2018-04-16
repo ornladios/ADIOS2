@@ -148,4 +148,6 @@ EnginePy IOPy::Open(const std::string &name, const int openMode)
                     m_IO.m_MPIComm);
 }
 
+void IOPy::FlushAll() { m_IO.FlushAll(); }
+
 } // end namespace adios2

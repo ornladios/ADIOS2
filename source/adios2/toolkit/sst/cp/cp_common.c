@@ -40,9 +40,9 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     char *SelectedTransport = NULL;
     if (Params->DataTransport != NULL)
     {
-        int i = 0;
+        int i;
         SelectedTransport = malloc(strlen(Params->DataTransport) + 1);
-        while (Params->DataTransport[i] != 0)
+        for (i = 0; Params->DataTransport[i] != 0; i++)
         {
             SelectedTransport[i] = tolower(Params->DataTransport[i]);
         }
@@ -52,21 +52,26 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         if ((strcmp(SelectedTransport, "wan") == 0) ||
             (strcmp(SelectedTransport, "evpath") == 0))
         {
-            free(SelectedTransport);
-            SelectedTransport = strdup("evpath");
+            Stream->DataTransport = strdup("evpath");
         }
         else if ((strcmp(SelectedTransport, "rdma") == 0) ||
                  (strcmp(SelectedTransport, "ib") == 0) ||
                  (strcmp(SelectedTransport, "fabric") == 0))
         {
-            free(SelectedTransport);
-            SelectedTransport = strdup("rdma");
+            Stream->DataTransport = strdup("rdma");
         }
+        else
+        {
+            fprintf(stderr,
+                    "Error: Unknown value '%s' for DataTransport parameter.\n",
+                    SelectedTransport);
+            Stream->DataTransport = NULL;
+        }
+        free(SelectedTransport);
     }
     if (Params->DataTransport == NULL)
     {
-        /* determine reasonable default, now "evpath" since "rdma" is not yet
-         * integrated */
+        /* determine reasonable default, now "evpath" */
         Stream->DataTransport = strdup("evpath");
     }
 }
@@ -329,9 +334,8 @@ static FMStructDescList combineCpDpFormats(FMStructDescList top,
                                            FMStructDescList cp,
                                            FMStructDescList dp)
 {
-    FMStructDescList CombinedFormats = NULL;
     int i = 0, topCount = 0, cpCount = 0, dpCount = 0;
-    CombinedFormats = FMcopy_struct_list(top);
+    FMStructDescList CombinedFormats = FMcopy_struct_list(top);
 
     i = 0;
     while (top[i++].format_name)

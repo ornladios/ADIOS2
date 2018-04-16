@@ -47,10 +47,23 @@ set(mpi_find_components C)
 
 # Fortran
 if(ADIOS2_USE_Fortran STREQUAL AUTO)
-  # Currently auto-detection for language support does not work in CMake.  See
-  # documentation for the "enable_language" command
-  message(WARN "Auto-detection of Fortran is not currently supported; Disabling")
-  #enable_language(Fortran OPTIONAL)
+  message(STATUS "Looking for a Fortran compiler")
+  if(CMAKE_Fortran_COMPILER)
+    set(fcomp_args "-DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}")
+  endif()
+  file(MAKE_DIRECTORY "${ADIOS2_BINARY_DIR}/cmake/check_f90")
+  execute_process(
+    COMMAND
+      "${CMAKE_COMMAND}" "${fcomp_args}" "${ADIOS2_SOURCE_DIR}/cmake/check_f90"
+    WORKING_DIRECTORY "${ADIOS2_BINARY_DIR}/cmake/check_f90"
+    RESULT_VARIABLE ADIOS2_FortranCompiles
+  )
+  if(ADIOS2_FortranCompiles EQUAL 0)
+    message(STATUS "Looking for a Fortran compiler -- found")
+    enable_language(Fortran)
+  else()
+    message(STATUS "Looking for a Fortran compiler -- not found")
+  endif()
 elseif(ADIOS2_USE_Fortran)
   enable_language(Fortran)
 endif()
@@ -135,18 +148,15 @@ if(PythonFull_FOUND)
 endif()
 
 # Sst
-if(ADIOS2_USE_SST STREQUAL AUTO)
-  if(ADIOS2_HAVE_MPI)
-    find_package(EVPath)
-  endif()
-elseif(ADIOS2_USE_SST)
-  if(NOT ADIOS2_HAVE_MPI)
-    message(FATAL_ERROR "SST currently requires MPI to be available")
-  endif()
-  find_package(EVPath REQUIRED)
+if(ADIOS2_USE_SST STREQUAL ON AND NOT ADIOS2_HAVE_MPI)
+  message(FATAL_ERROR "SST currently requires MPI to be available")
 endif()
-if(EVPath_FOUND)
+if(ADIOS2_USE_SST AND ADIOS2_HAVE_MPI)
   set(ADIOS2_HAVE_SST TRUE)
+  find_package(LIBFABRIC 1.6)
+  if(LIBFABRIC_FOUND)
+    set(ADIOS2_SST_HAVE_LIBFABRIC TRUE)
+  endif()
 endif()
 
 #SysV IPC
