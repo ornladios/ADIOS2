@@ -281,7 +281,7 @@ void CheckForNullptr(const T *pointer, const std::string hint)
 {
     if (pointer == nullptr)
     {
-        std::invalid_argument("ERROR: found null pointer " + hint + "\n");
+        throw std::invalid_argument("ERROR: found null pointer " + hint + "\n");
     }
 }
 

@@ -10,13 +10,14 @@
 
 #include "adios2_c_FILE.h"
 
-#include <adios2/highlevelapi/fstream/Stream.h>
 #include <cstring> //strcpy
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/adios2_c_glue.h"
 #include "adios2/adios2_c_io.h"
 #include "adios2/core/Variable.h"
+#include "adios2/helper/adiosFunctions.h" //CheckForNullptr
+#include "adios2/highlevelapi/fstream/Stream.h"
 
 #ifdef _WIN32
 #pragma warning(disable : 4297) // Windows noexcept default functions
@@ -54,6 +55,10 @@ void adios2_fwrite(adios2_FILE *stream, const char *name,
                    const size_t *shape, const size_t *start,
                    const size_t *count, const int end_step)
 {
+    adios2::CheckForNullptr(stream, "null adios2_FILE for variable " +
+                                        std::string(name) +
+                                        ", in call to adios2_fwrite\n");
+
     std::vector<size_t> shapeV, startV, countV;
 
     if (shape != nullptr)
@@ -273,12 +278,9 @@ void adios2_fread(adios2_FILE *stream, const char *name, const adios2_type type,
                   void *data, const size_t ndims, const size_t *selection_start,
                   const size_t *selection_count, const int end_step)
 {
-    if (stream == nullptr)
-    {
-        throw std::invalid_argument("ERROR: null adios2_FILE for variable " +
-                                    std::string(name) +
-                                    ", in call to adios2_fread\n");
-    }
+    adios2::CheckForNullptr(stream, "null adios2_FILE for variable " +
+                                        std::string(name) +
+                                        ", in call to adios2_fread\n");
 
     std::vector<size_t> startV, countV;
 
@@ -477,12 +479,9 @@ void adios2_fread_steps(adios2_FILE *stream, const char *name,
                         const size_t step_selection_start,
                         const size_t step_selection_count)
 {
-    if (stream == nullptr)
-    {
-        throw std::invalid_argument("ERROR: null adios2_FILE for variable " +
-                                    std::string(name) +
-                                    ", in call to adios2_fread_steps\n");
-    }
+    adios2::CheckForNullptr(stream, "null adios2_FILE for variable " +
+                                        std::string(name) +
+                                        ", in call to adios2_fread_steps\n");
 
     std::vector<size_t> startV, countV;
 
@@ -717,6 +716,9 @@ void adios2_fread_steps(adios2_FILE *stream, const char *name,
 
 void adios2_fclose(adios2_FILE *stream)
 {
+    adios2::CheckForNullptr(stream,
+                            "null adios2_FILE, in call to adios2_fclose\n");
+
     adios2::Stream &streamCpp = *reinterpret_cast<adios2::Stream *>(stream);
     streamCpp.Close();
     delete reinterpret_cast<adios2::Stream *>(stream);
