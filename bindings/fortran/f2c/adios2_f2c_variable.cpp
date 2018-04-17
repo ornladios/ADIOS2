@@ -99,6 +99,42 @@ void FC_GLOBAL(adios2_variable_shape_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_variable_available_steps_start_f2c,
+               adios2_variable_AVAILABLE_STEPS_START_F2C)(
+    const adios2_variable **variable, int64_t *steps_start, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *steps_start = static_cast<int64_t>(
+            adios2_variable_available_steps_start(*variable));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 variable_available_steps_start: " << e.what()
+                  << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_variable_available_steps_count_f2c,
+               adios2_variable_AVAILABLE_STEPS_COUNT_F2C)(
+    const adios2_variable **variable, int64_t *steps_count, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *steps_count = static_cast<int64_t>(
+            adios2_variable_available_steps_count(*variable));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 variable_available_steps_count: " << e.what()
+                  << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_set_shape_f2c,
                ADIOS2_SET_SHAPE_F2C)(adios2_variable **variable,
                                      const int *ndims, const int64_t *shape,

@@ -13,6 +13,7 @@
      character(len=:), allocatable :: variable_name
      integer :: variable_type, ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
+     integer(kind=8) :: steps_start, steps_count
 
      ! Launch MPI
      call MPI_Init(ierr)
@@ -112,6 +113,10 @@
      call adios2_variable_shape(variables(1), ndims, shape_in, ierr)
      if (ndims /= 1) stop 'var_I8 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_I8 shape_in read failed'
+     call adios2_variable_available_steps_start(variables(1), steps_start, ierr)
+     if (steps_start /= 0) stop 'var_I8 steps_start is not 0'
+     call adios2_variable_available_steps_count(variables(1), steps_count, ierr)
+     if (steps_count /= 3) stop 'var_I8 steps_count is not 3'
 
      call adios2_inquire_variable(variables(2), ioRead, "var_I16", ierr)
      call adios2_variable_name(variables(2), variable_name, ierr)
@@ -121,6 +126,10 @@
      call adios2_variable_shape(variables(2), ndims, shape_in, ierr)
      if (ndims /= 1) stop 'var_I16 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_I16 shape_in read failed'
+     call adios2_variable_available_steps_start(variables(2), steps_start, ierr)
+     if (steps_start /= 0) stop 'var_I16 steps_start is not 0'
+     call adios2_variable_available_steps_count(variables(2), steps_count, ierr)
+     if (steps_count /= 3) stop 'var_I16 steps_count is not 3'
 
      call adios2_inquire_variable(variables(3), ioRead, "var_I32", ierr)
      call adios2_variable_name(variables(3), variable_name, ierr)
@@ -130,6 +139,10 @@
      call adios2_variable_shape(variables(3), ndims, shape_in, ierr)
      if (ndims /= 1) stop 'var_I32 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_I32 shape_in read failed'
+     call adios2_variable_available_steps_start(variables(3), steps_start, ierr)
+     if (steps_start /= 0) stop 'var_I32 steps_start is not 0'
+     call adios2_variable_available_steps_count(variables(3), steps_count, ierr)
+     if (steps_count /= 3) stop 'var_I32 steps_count is not 3'
 
      call adios2_inquire_variable(variables(4), ioRead, "var_I64", ierr)
      call adios2_variable_name(variables(4), variable_name, ierr)
@@ -139,6 +152,10 @@
      call adios2_variable_shape(variables(4), ndims, shape_in, ierr)
      if (ndims /= 1) stop 'var_I64 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_I64 shape_in read failed'
+     call adios2_variable_available_steps_start(variables(4), steps_start, ierr)
+     if (steps_start /= 0) stop 'var_I64 steps_start is not 0'
+     call adios2_variable_available_steps_count(variables(4), steps_count, ierr)
+     if (steps_count /= 3) stop 'var_I64 steps_count is not 3'
 
      call adios2_inquire_variable(variables(5), ioRead, "var_R32", ierr)
      call adios2_variable_name(variables(5), variable_name, ierr)
@@ -148,6 +165,10 @@
      call adios2_variable_shape(variables(5), ndims, shape_in, ierr)
      if (ndims /= 1) stop 'var_R32 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_R32 shape_in read failed'
+     call adios2_variable_available_steps_start(variables(5), steps_start, ierr)
+     if (steps_start /= 0) stop 'var_R32 steps_start is not 0'
+     call adios2_variable_available_steps_count(variables(5), steps_count, ierr)
+     if (steps_count /= 3) stop 'var_R32 steps_count is not 3'
 
      call adios2_inquire_variable(variables(6), ioRead, "var_R64", ierr)
      call adios2_variable_name(variables(6), variable_name, ierr)
@@ -157,6 +178,10 @@
      call adios2_variable_shape(variables(6), ndims, shape_in, ierr)
      if (ndims /= 1) stop 'var_R64 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_R64 shape_in read failed'
+     call adios2_variable_available_steps_start(variables(6), steps_start, ierr)
+     if (steps_start /= 0) stop 'var_R64 steps_start is not 0'
+     call adios2_variable_available_steps_count(variables(6), steps_count, ierr)
+     if (steps_count /= 3) stop 'var_R64 steps_count is not 3'
 
      call adios2_close(bpReader, ierr)
 

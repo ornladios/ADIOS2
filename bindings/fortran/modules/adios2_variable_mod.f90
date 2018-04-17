@@ -17,7 +17,7 @@ contains
     !!<
     !! @param variable
     subroutine adios2_variable_name(variable, name, ierr)
-        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: variable
         character(len=:), allocatable, intent(out) :: name
         integer, intent(out) :: ierr
 
@@ -30,7 +30,7 @@ contains
     end subroutine
 
     subroutine adios2_variable_type(variable, type, ierr)
-        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: variable
         integer, intent(out) :: type
         integer, intent(out) :: ierr
 
@@ -42,7 +42,7 @@ contains
     end subroutine
 
     subroutine adios2_variable_ndims(variable, ndims, ierr)
-        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: variable
         integer, intent(out) :: ndims
         integer, intent(out) :: ierr
 
@@ -50,7 +50,7 @@ contains
     end subroutine
 
     subroutine adios2_variable_shape(variable, ndims, shape_dims, ierr)
-        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: variable
         integer, intent(out) :: ndims
         integer(kind=8), dimension(:), allocatable, intent(out) :: shape_dims
         integer, intent(out) :: ierr
@@ -61,8 +61,24 @@ contains
 
     end subroutine
 
+    subroutine adios2_variable_available_steps_start(variable, steps_start, ierr)
+        integer(kind=8), intent(in) :: variable
+        integer(kind=8), intent(out) :: steps_start
+        integer, intent(out) :: ierr
+
+        call adios2_variable_available_steps_start_f2c(variable, steps_start, ierr)
+    end subroutine
+
+    subroutine adios2_variable_available_steps_count(variable, steps_count, ierr)
+        integer(kind=8), intent(in) :: variable
+        integer(kind=8), intent(out) :: steps_count
+        integer, intent(out) :: ierr
+
+        call adios2_variable_available_steps_count_f2c(variable, steps_count, ierr)
+    end subroutine
+
     subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)
-        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: variable
         integer, intent(in) :: ndims
         integer(kind=8), dimension(:), intent(in) :: shape_dims
         integer, intent(out) :: ierr
@@ -72,7 +88,7 @@ contains
 
     subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, &
         & ierr)
-        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: variable
         integer, intent(in) :: ndims
         integer(kind=8), dimension(:), intent(in) :: start_dims
         integer(kind=8), dimension(:), intent(in) :: count_dims
@@ -80,11 +96,10 @@ contains
 
         call adios2_set_selection_f2c(variable, ndims, start_dims, count_dims, &
                                       ierr)
-
     end subroutine
 
     subroutine adios2_set_step_selection(variable, step_start, step_count, ierr)
-        integer(kind=8), intent(out) :: variable
+        integer(kind=8), intent(in) :: variable
         integer(kind=8), intent(in) :: step_start
         integer(kind=8), intent(in) :: step_count
         integer, intent(out) :: ierr
