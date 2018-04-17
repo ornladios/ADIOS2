@@ -65,7 +65,7 @@ public:
     /** Registered transforms */
     std::vector<OperatorInfo> m_OperatorsInfo;
 
-    size_t m_AvailableStepsStart = 1;
+    size_t m_AvailableStepsStart = 0;
     size_t m_AvailableStepsCount = 0;
 
     size_t m_StepsStart = 0;
