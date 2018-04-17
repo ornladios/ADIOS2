@@ -44,8 +44,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     auto varFFSCallback = [](void *reader, const char *variableName,
                              const char *type, void *data) {
         std::string Type(type);
-        typename SstReader::SstReader *Reader =
-            reinterpret_cast<typename SstReader::SstReader *>(reader);
+        class SstReader::SstReader *Reader =
+            reinterpret_cast<class SstReader::SstReader *>(reader);
         if (Type == "compound")
         {
             return (void *)NULL;
@@ -73,8 +73,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
         std::string Type(type);
-        typename SstReader::SstReader *Reader =
-            reinterpret_cast<typename SstReader::SstReader *>(reader);
+        class SstReader::SstReader *Reader =
+            reinterpret_cast<class SstReader::SstReader *>(reader);
         /*
          * setup shape of array variable as global (I.E. Count == Shape,
          * Start == 0)
@@ -113,18 +113,15 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
     result = SstAdvanceStep(m_Input, (int)mode, timeout_sec);
-    if (result == SstSuccess)
-    {
-        return StepStatus::OK;
-    }
-    else if (result == SstEndOfStream)
+    if (result == SstEndOfStream)
     {
         return StepStatus::EndOfStream;
     }
-    else
+    if (result != SstSuccess)
     {
         return StepStatus::OtherError;
     }
+
     if (m_WriterBPmarshal)
     {
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
@@ -169,6 +166,8 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         // arrayFFScallback, so there's nothing to be done now.  This
         // comment is just for clarification.
     }
+
+    return StepStatus::OK;
 }
 
 size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
