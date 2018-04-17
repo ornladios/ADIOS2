@@ -337,10 +337,9 @@ void BP3Serializer::PutAttributes(IO &io)
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
 
-    // used only to update m_HeapBuffer.m_DataAbsolutePosition;
     const size_t attributesCountPosition = position;
 
-    // count is known ahead of time, write
+    // count is known ahead of time
     const uint32_t attributesCount =
         static_cast<uint32_t>(attributesDataMap.size());
     CopyToBuffer(buffer, position, &attributesCount);
@@ -511,13 +510,19 @@ void BP3Serializer::SerializeDataBuffer(IO &io) noexcept
     CopyToBuffer(buffer, m_MetadataSet.DataPGVarsCountPosition, &varsLength);
 
     // attributes are only written once
-    if (!m_MetadataSet.AreAttributesWritten)
+
+    if (m_RankMPI == 0 && !m_MetadataSet.AreAttributesWritten)
     {
+        const size_t attributesSizeInData = GetAttributesSizeInData(io);
+        m_Data.Resize(position + attributesSizeInData,
+                      "when writing Attributes in rank=0\n");
+
         PutAttributes(io);
         m_MetadataSet.AreAttributesWritten = true;
     }
     else
     {
+        m_Data.Resize(position + 12, "for empty Attributes\n");
         position += 12;
         absolutePosition += 12;
     }
@@ -1400,6 +1405,33 @@ uint32_t BP3Serializer::GetFileIndex() const noexcept
     }
 
     return static_cast<uint32_t>(m_RankMPI);
+}
+
+size_t BP3Serializer::GetAttributesSizeInData(IO &io) const noexcept
+{
+    size_t attributesSizeInData = 12; // count + length
+
+    auto &attributes = io.GetAttributesDataMap();
+
+    for (const auto &attribute : attributes)
+    {
+        const std::string type = attribute.second.first;
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        const std::string name = attribute.first;                              \
+        const Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
+        attributesSizeInData += GetAttributeSizeInData<T>(attribute);          \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    return attributesSizeInData;
 }
 
 //------------------------------------------------------------------------------

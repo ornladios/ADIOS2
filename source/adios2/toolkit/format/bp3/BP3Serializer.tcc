@@ -828,6 +828,38 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
     }     // end while
 }
 
+template <>
+inline size_t BP3Serializer::GetAttributeSizeInData(
+    const Attribute<std::string> &attribute) const noexcept
+{
+    // index header
+    size_t size = 14 + attribute.m_Name.size() + 10;
+
+    if (attribute.m_IsSingleValue)
+    {
+        size += 4 + attribute.m_DataSingleValue.size();
+    }
+    else
+    {
+        size += 4;
+        for (const auto &dataString : attribute.m_DataArray)
+        {
+            size += 4 + dataString.size();
+        }
+    }
+    return size;
+}
+
+template <class T>
+size_t
+BP3Serializer::GetAttributeSizeInData(const Attribute<T> &attribute) const
+    noexcept
+{
+    size_t size = 14 + attribute.m_Name.size() + 10;
+    size += 4 + sizeof(T) * attribute.m_Elements;
+    return size;
+}
+
 } // end namespace format
 } // end namespace adios2
 

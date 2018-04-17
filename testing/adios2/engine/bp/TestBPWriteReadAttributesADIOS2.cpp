@@ -28,23 +28,18 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
     const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
                               "ADIOS2BPWriteAttributeReadSingleTypes.bp";
 
-    int mpiRank = 0;
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-#endif
-
-    const std::string mpiRankString = std::to_string(mpiRank);
-    const std::string s1_Single = std::string("s1_Single_") + mpiRankString;
-    const std::string i8_Single = std::string("i8_Single_") + mpiRankString;
-    const std::string i16_Single = std::string("i16_Single_") + mpiRankString;
-    const std::string i32_Single = std::string("i32_Single_") + mpiRankString;
-    const std::string i64_Single = std::string("i64_Single_") + mpiRankString;
-    const std::string u8_Single = std::string("u8_Single_") + mpiRankString;
-    const std::string u16_Single = std::string("u16_Single_") + mpiRankString;
-    const std::string u32_Single = std::string("u32_Single_") + mpiRankString;
-    const std::string u64_Single = std::string("u64_Single_") + mpiRankString;
-    const std::string r32_Single = std::string("r32_Single_") + mpiRankString;
-    const std::string r64_Single = std::string("r64_Single_") + mpiRankString;
+    const std::string zero = std::to_string(0);
+    const std::string s1_Single = std::string("s1_Single_") + zero;
+    const std::string i8_Single = std::string("i8_Single_") + zero;
+    const std::string i16_Single = std::string("i16_Single_") + zero;
+    const std::string i32_Single = std::string("i32_Single_") + zero;
+    const std::string i64_Single = std::string("i64_Single_") + zero;
+    const std::string u8_Single = std::string("u8_Single_") + zero;
+    const std::string u16_Single = std::string("u16_Single_") + zero;
+    const std::string u32_Single = std::string("u32_Single_") + zero;
+    const std::string u64_Single = std::string("u64_Single_") + zero;
+    const std::string r32_Single = std::string("r32_Single_") + zero;
+    const std::string r64_Single = std::string("r64_Single_") + zero;
 
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
@@ -196,18 +191,18 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    const std::string mpiRankString = std::to_string(mpiRank);
-    const std::string s1_Array = std::string("s1_Array_") + mpiRankString;
-    const std::string i8_Array = std::string("i8_Array_") + mpiRankString;
-    const std::string i16_Array = std::string("i16_Array_") + mpiRankString;
-    const std::string i32_Array = std::string("i32_Array_") + mpiRankString;
-    const std::string i64_Array = std::string("i64_Array_") + mpiRankString;
-    const std::string u8_Array = std::string("u8_Array_") + mpiRankString;
-    const std::string u16_Array = std::string("u16_Array_") + mpiRankString;
-    const std::string u32_Array = std::string("u32_Array_") + mpiRankString;
-    const std::string u64_Array = std::string("u64_Array_") + mpiRankString;
-    const std::string r32_Array = std::string("r32_Array_") + mpiRankString;
-    const std::string r64_Array = std::string("r64_Array_") + mpiRankString;
+    const std::string zero = std::to_string(0);
+    const std::string s1_Array = std::string("s1_Array_") + zero;
+    const std::string i8_Array = std::string("i8_Array_") + zero;
+    const std::string i16_Array = std::string("i16_Array_") + zero;
+    const std::string i32_Array = std::string("i32_Array_") + zero;
+    const std::string i64_Array = std::string("i64_Array_") + zero;
+    const std::string u8_Array = std::string("u8_Array_") + zero;
+    const std::string u16_Array = std::string("u16_Array_") + zero;
+    const std::string u32_Array = std::string("u32_Array_") + zero;
+    const std::string u64_Array = std::string("u64_Array_") + zero;
+    const std::string r32_Array = std::string("r32_Array_") + zero;
+    const std::string r64_Array = std::string("r64_Array_") + zero;
 
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);

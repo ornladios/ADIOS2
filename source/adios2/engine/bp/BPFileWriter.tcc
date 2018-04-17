@@ -29,9 +29,9 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             m_FileDataManager.GetTransportsTypes());
     }
 
-    const size_t dataSize = variable.PayloadSize() +
-                            m_BP3Serializer.GetVariableBPIndexSize(
-                                variable.m_Name, variable.m_Count);
+    const size_t dataSize =
+        variable.PayloadSize() +
+        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);
     format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
         dataSize, "in call to variable " + variable.m_Name + " PutSync");
 
@@ -58,8 +58,7 @@ void BPFileWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     m_BP3Serializer.m_DeferredVariables.push_back(variable.m_Name);
     m_BP3Serializer.m_DeferredVariablesDataSize +=
         variable.PayloadSize() +
-        m_BP3Serializer.GetVariableBPIndexSize(variable.m_Name,
-                                               variable.m_Count);
+        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);
 }
 
 } // end namespace adios2
