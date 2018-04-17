@@ -1415,14 +1415,15 @@ size_t BP3Serializer::GetAttributesSizeInData(IO &io) const noexcept
 
     for (const auto &attribute : attributes)
     {
-        const std::string name = attribute.first;
         const std::string type = attribute.second.first;
+
         if (type == "compound")
         {
         }
 #define declare_type(T)                                                        \
     else if (type == GetType<T>())                                             \
     {                                                                          \
+        const std::string name = attribute.first;                              \
         const Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
         attributesSizeInData += GetAttributeSizeInData<T>(attribute);          \
     }
