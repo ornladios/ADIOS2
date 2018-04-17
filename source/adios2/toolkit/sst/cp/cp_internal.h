@@ -150,6 +150,7 @@ struct _SstStream
     enum StreamStatus Status;
     int FinalTimestep;
     int CurrentWorkingTimestep;
+    SstFullMetadata CurrentMetadata;
     struct _SstParams *WriterConfigParams;
 
     /* reader side marshal info */
