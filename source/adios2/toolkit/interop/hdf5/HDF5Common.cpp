@@ -173,6 +173,7 @@ void HDF5Common::ReadAllVariables(IO &io)
         return;
     }
 
+    GetNumAdiosSteps();
     int i = 0;
 
     for (i = 0; i < m_NumAdiosSteps; i++)
