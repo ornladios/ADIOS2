@@ -12,9 +12,9 @@
 #ifndef BINDINGS_C_C_ADIOS2_C_GLUE_H_
 #define BINDINGS_C_C_ADIOS2_C_GLUE_H_
 
-#include "adios2_c_types.h"
-#include "adios2_c_adios.h"
 #include "adios2_c_FILE.h"
+#include "adios2_c_adios.h"
+#include "adios2_c_types.h"
 
 #ifdef __cplusplus
 extern "C" {
