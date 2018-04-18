@@ -156,8 +156,7 @@ public:
                    const bool constantDims = false, T *data = nullptr);
 
     /**
-     * @brief Define attribute from contiguous data array owned by an
-     * application
+     * @brief Define array attribute
      * @param name must be unique for the IO object
      * @param array pointer to user data
      * @param elements number of data elements
@@ -170,7 +169,7 @@ public:
                                   const size_t elements);
 
     /**
-     * @brief Define attribute from a single variable making a copy
+     * @brief Define single value attribute
      * @param name must be unique for the IO object
      * @param value single data value
      * @return reference to internal Attribute
