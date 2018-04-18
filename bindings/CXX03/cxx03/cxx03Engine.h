@@ -35,16 +35,16 @@ public:
     size_t CurrentStep() const;
 
     template <class T>
-    void PutSync(Variable<T> &variable, const T *data);
+    void PutSync(Variable<T> &variable, const T *values);
 
     template <class T>
-    void PutDeferred(Variable<T> &variable, const T *data);
+    void PutDeferred(Variable<T> &variable, const T *values);
 
     template <class T>
-    void GetSync(Variable<T> &variable, T *data);
+    void GetSync(Variable<T> &variable, T *values);
 
     template <class T>
-    void GetDeferred(Variable<T> &variable, T *data);
+    void GetDeferred(Variable<T> &variable, T *values);
 
     void EndStep();
 

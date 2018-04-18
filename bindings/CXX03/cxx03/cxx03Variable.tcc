@@ -39,6 +39,19 @@ namespace cxx03
             return false;                                                      \
         }                                                                      \
         return true;                                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    void Variable<T>::SetSelection(const Dims &start, const Dims &count)       \
+    {                                                                          \
+        adios2_set_selection(m_Variable, count.size(), &start[0], &count[0]);  \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    void Variable<T>::SetStepSelection(const size_t stepStart,                 \
+                                       const size_t stepCount)                 \
+    {                                                                          \
+        adios2_set_step_selection(m_Variable, stepStart, stepCount);           \
     }
 
 ADIOS2_FOREACH_CXX03_TYPE_1ARG(declare_type)

@@ -15,6 +15,8 @@
 
 #include <adios2_c.h>
 
+#include "cxx03types.h"
+
 namespace adios2
 {
 namespace cxx03
@@ -31,6 +33,10 @@ public:
     ~Variable<T>();
 
     operator bool() const;
+
+    void SetSelection(const Dims &start, const Dims &count);
+
+    void SetStepSelection(const size_t stepStart, const size_t stepCount);
 };
 
 } // end namespace cxx03

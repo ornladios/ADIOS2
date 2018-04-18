@@ -16,11 +16,7 @@
 #include "adios2/core/Operator.h"
 #include "adios2/highlevelapi/fstream/ADIOS2fstream.h"
 #else
-#include "cxx03/cxx03ADIOS.h"
-#include "cxx03/cxx03Attribute.h"
-#include "cxx03/cxx03Engine.h"
-#include "cxx03/cxx03IO.h"
-#include "cxx03/cxx03Variable.h"
+#include "adios2_cxx03.h"
 #endif
 
 #endif /* ADIOS2_H_ */

@@ -9,6 +9,7 @@
  */
 
 #include "cxx03Engine.h"
+#include "cxx03Engine.tcc"
 
 namespace adios2
 {
@@ -57,7 +58,7 @@ adios2_step_mode FromStepMode(const StepMode mode)
 
     return adios2_step_mode_update;
 }
-}
+} // end empty namespace
 
 Engine::Engine(adios2_engine &engine) : m_Engine(engine) {}
 

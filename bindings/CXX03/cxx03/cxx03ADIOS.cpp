@@ -49,7 +49,7 @@ ADIOS::~ADIOS() { adios2_finalize(m_ADIOS); }
 
 IO ADIOS::DeclareIO(const std::string &name)
 {
-    return IO(*adios2_declare_io(m_ADIOS, name.c_str()));
+    return IO(*adios2_declare_io(m_ADIOS, name.data()));
 }
 
 IO ADIOS::AtIO(const std::string &name)

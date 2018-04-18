@@ -162,11 +162,11 @@ PYBIND11_MODULE(adios2, m)
           pybind11::arg("parameters") = adios2::Params(),
           pybind11::arg("transportParameters") = adios2::vParams());
 #else
-    m.def("ADIOS", &py11::ADIOSInit,
+    m.def("ADIOS", &ADIOSInit,
           "Function that creates an ADIOS class object in non MPI mode",
           pybind11::arg("debugMode") = true);
 
-    m.def("ADIOS", &py11::ADIOSInitConfig,
+    m.def("ADIOS", &ADIOSInitConfig,
           "Function that creates an ADIOS class "
           "object using a config file in non MPI mode",
           pybind11::arg("configFile") = "", pybind11::arg("debugMode") = true);
