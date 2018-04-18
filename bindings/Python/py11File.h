@@ -29,20 +29,20 @@ public:
     const std::string m_Mode;
 
     File(const std::string &name, const std::string mode, MPI_Comm comm,
-           const std::string engineType = "BPFile",
-           const Params &parameters = Params(),
-           const vParams &transportParameters = vParams());
+         const std::string engineType = "BPFile",
+         const Params &parameters = Params(),
+         const vParams &transportParameters = vParams());
 
     File(const std::string &name, const std::string mode, MPI_Comm comm,
-           const std::string configFile, const std::string ioInConfigFile);
+         const std::string configFile, const std::string ioInConfigFile);
 
     File(const std::string &name, const std::string mode,
-           const std::string engineType = "BPFile",
-           const Params &parameters = Params(),
-           const vParams &transportParameters = vParams());
+         const std::string engineType = "BPFile",
+         const Params &parameters = Params(),
+         const vParams &transportParameters = vParams());
 
     File(const std::string &name, const std::string mode,
-           const std::string configFile, const std::string ioInConfigFile);
+         const std::string configFile, const std::string ioInConfigFile);
 
     File(const File &) = delete;
 
