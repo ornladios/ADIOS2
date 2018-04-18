@@ -27,9 +27,9 @@ class fstream
 public:
     enum openmode
     {
-        out = static_cast<int>(Mode::Write),
-        in = static_cast<int>(Mode::Read),
-        app = static_cast<int>(Mode::Append)
+        out,
+        in,
+        app
     };
     /**
      * High-level API MPI constructor, based on C++11 fstream. Allows for

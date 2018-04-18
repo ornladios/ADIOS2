@@ -12,11 +12,11 @@
 #define ADIOS2_BINDINGS_C_ADIOS2_C_H_
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/adios2_c_FILE.h"
-#include "adios2/adios2_c_adios.h"
-#include "adios2/adios2_c_engine.h"
-#include "adios2/adios2_c_glue.h"
-#include "adios2/adios2_c_io.h"
-#include "adios2/adios2_c_variable.h"
+#include "c/adios2_c_adios.h"
+#include "c/adios2_c_engine.h"
+#include "c/adios2_c_FILE.h"
+#include "c/adios2_c_glue.h"
+#include "c/adios2_c_io.h"
+#include "c/adios2_c_variable.h"
 
 #endif /* ADIOS2_BINDINGS_C_ADIOS2_C_H_ */

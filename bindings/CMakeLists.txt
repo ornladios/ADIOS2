@@ -4,11 +4,12 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_Python)
-  add_subdirectory(python)
+  add_subdirectory(Python)
 endif()
 
 if(ADIOS2_HAVE_Fortran)
-  add_subdirectory(fortran)
+  add_subdirectory(Fortran)
 endif()
 
 add_subdirectory(C)
+add_subdirectory(CXX03)
