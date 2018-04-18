@@ -74,7 +74,8 @@ size_t adios2_current_step(const adios2_engine *engine)
     adios2::CheckForNullptr(
         engine, "for adios2_engine, in call to adios2_current_step");
 
-    adios2::Engine &engineCpp = *reinterpret_cast<adios2::Engine *>(engine);
+    const adios2::Engine &engineCpp =
+        *reinterpret_cast<const adios2::Engine *>(engine);
     return engineCpp.CurrentStep();
 }
 

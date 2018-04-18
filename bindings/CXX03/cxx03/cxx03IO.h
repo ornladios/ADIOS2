@@ -18,6 +18,7 @@
 #include <adios2_c.h>
 
 #include "cxx03Attribute.h"
+#include "cxx03Engine.h"
 #include "cxx03Variable.h"
 #include "cxx03types.h"
 
@@ -66,14 +67,20 @@ public:
     template <class T>
     Attribute<T> DefineAttribute(const std::string &name, const T &value);
 
-    /**
-     * TODO Gets an existing attribute of primitive type by name
-     * @param name of attribute to be retrieved
-     * @return pointer to an existing attribute in current IO, NULL if not
-     * found
-     */
-    //    template <class T>
-    //    Attribute<T> InquireAttribute(const std::string &name);
+/**
+ * TODO Gets an existing attribute of primitive type by name
+ * @param name of attribute to be retrieved
+ * @return pointer to an existing attribute in current IO, NULL if not
+ * found
+ */
+//    template <class T>
+//    Attribute<T> InquireAttribute(const std::string &name);
+
+#ifdef ADIOS2_HAVE_MPI
+    Engine Open(const std::string &name, const Mode mode, MPI_Comm comm);
+#endif
+
+    Engine Open(const std::string &name, const Mode mode);
 
 private:
     adios2_io &m_IO;
@@ -81,21 +88,9 @@ private:
 
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
-    extern template Variable<T> IO::DefineVariable<T>(                         \
-        const std::string &, const Dims &, const Dims &, const Dims &,         \
-        const bool, T *);                                                      \
     extern template Variable<T> IO::InquireVariable<T>(const std::string &);
 
 ADIOS2_FOREACH_CXX03_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-#define declare_template_instantiation(T)                                      \
-    extern template Attribute<T> IO::DefineAttribute<T>(                       \
-        const std::string &, const T *, const size_t);                         \
-    extern template Attribute<T> IO::DefineAttribute<T>(const std::string &,   \
-                                                        const T &);
-
-ADIOS2_FOREACH_CXX03_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace cxx03
