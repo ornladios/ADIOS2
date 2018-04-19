@@ -89,6 +89,28 @@ adios2::py11::File Open(const std::string &name, const std::string mode,
                               transportParameters);
 }
 
+adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
+                              pybind11::object &object,
+                              const std::string configFile,
+                              const std::string ioInConfigFile)
+{
+    MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
+
+    if (import_mpi4py() < 0)
+    {
+        throw std::runtime_error("ERROR: could not import mpi4py "
+                                 "communicator, in call to open\n");
+    }
+
+    if (mpiCommPtr == nullptr)
+    {
+        throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
+                                 "to ADIOS constructor\n");
+    }
+    return adios2::py11::File(name, mode, *mpiCommPtr, configFile,
+                              ioInConfigFile);
+}
+
 #else
 adios2::py11::ADIOS ADIOSInitConfig(const std::string configFile,
                                     const bool debugMode)
@@ -108,6 +130,13 @@ adios2::py11::File Open(const std::string &name, const std::string mode,
 {
     return adios2::py11::File(name, mode, engineType, parameters,
                               transportParameters);
+}
+
+adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
+                              const std::string configFile,
+                              const std::string ioInConfigFile)
+{
+    return adios2::py11::File(name, mode, configFile, ioInConfigFile);
 }
 #endif
 
@@ -161,6 +190,11 @@ PYBIND11_MODULE(adios2, m)
           pybind11::arg("engineType") = "BPFile",
           pybind11::arg("parameters") = adios2::Params(),
           pybind11::arg("transportParameters") = adios2::vParams());
+
+    m.def("open", &OpenConfig, "High-level file object open with config file",
+          pybind11::arg("name"), pybind11::arg("mode"), pybind11::arg("object"),
+          pybind11::arg("configFile"), pybind11::arg("ioInConfigFile"));
+
 #else
     m.def("ADIOS", &ADIOSInit,
           "Function that creates an ADIOS class object in non MPI mode",
@@ -175,6 +209,10 @@ PYBIND11_MODULE(adios2, m)
           pybind11::arg("mode"), pybind11::arg("engineType") = "BPFile",
           pybind11::arg("parameters") = adios2::Params(),
           pybind11::arg("transportParameters") = adios2::vParams());
+
+    m.def("open", &OpenConfig, "High-level file object open with config file",
+          pybind11::arg("name"), pybind11::arg("mode"),
+          pybind11::arg("configFile"), pybind11::arg("ioInConfigFile"));
 #endif
 
     pybind11::class_<adios2::py11::ADIOS>(m, "py11::ADIOS")
@@ -283,6 +321,9 @@ PYBIND11_MODULE(adios2, m)
                         a.m_Mode + "'>";
              })
         .def_property_readonly("closed", &adios2::py11::File::IsClosed)
+
+        .def("available_variables", &adios2::py11::File::GetAvailableVariables)
+
         .def("write", (void (adios2::py11::File::*)(
                           const std::string &, const pybind11::array &,
                           const adios2::Dims &, const adios2::Dims &,

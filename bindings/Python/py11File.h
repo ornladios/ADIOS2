@@ -52,6 +52,8 @@ public:
 
     bool eof() const;
 
+    std::map<std::string, adios2::Params> GetAvailableVariables() noexcept;
+
     void Write(const std::string &name, const pybind11::array &array,
                const Dims &shape, const Dims &start, const Dims &count,
                const bool endl = false);
