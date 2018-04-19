@@ -63,13 +63,13 @@ fw.close()
 # Reader
 fr = adios2.open("types_np.bp", "r", comm)
 
-vars = fr.available_variables()
+vars_info = fr.available_variables()
 
-for name, info in vars.items():
+for name, info in vars_info.items():
     print(name)
-    for key,value in info.items():
-        print( "\t" + key + ": " + value)
-    print()
+    for key, value in info.items():
+        print("\t" + key + ": " + value)
+    print("\n")
 
 
 inTag = fr.readstring("tag")
