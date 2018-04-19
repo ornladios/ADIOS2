@@ -4,7 +4,7 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #
-# TestBPWriteTypes.py: test Python numpy types in ADIOS2 File
+# BPWriteTypes.py: test Python numpy types in ADIOS2 File
 #                      Write/Read High-Level API
 #  Created on: March 12, 2018
 #      Author: William F Godoy godoywf@ornl.gov
@@ -63,12 +63,12 @@ fw.close()
 # Reader
 fr = adios2.open("types_np.bp", "r", comm)
 
-vars = fr.available_variables()
+vars_info = fr.available_variables()
 
-for name, info in vars.items():
-    print(name)
-    for key,value in info.items():
-        print( "\t" + key + ": " + value)
+for var_name, info in vars_info.items():
+    print(var_name)
+    for key, value in info.items():
+        print("\t" + key + ": " + value)
     print()
 
 
