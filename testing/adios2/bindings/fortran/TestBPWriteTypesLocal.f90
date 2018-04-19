@@ -10,7 +10,7 @@
      integer(kind=8) :: adios, ioWrite, bpWriter, ioRead, bpReader
      integer(kind=8), dimension(12) :: variables
      ! read handlers
-     character(len=:), allocatable :: variable_name
+     character(len=:), allocatable :: variable_name, engine_type
      integer :: variable_type, ndims
      integer(kind=8), dimension(:), allocatable :: count_in
      integer(kind=8) steps_start, steps_count
@@ -76,6 +76,11 @@
 
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  data_R64(1), ierr)
+
+
+     call adios2_io_engine_type( ioWrite, engine_type, ierr)
+     write(*,*) "Engine type: ", engine_type
+
 
      ! Open myVector_f.bp in write mode, this launches an engine
      call adios2_open(bpWriter, ioWrite, "ftypes_local.bp", adios2_mode_write, ierr)

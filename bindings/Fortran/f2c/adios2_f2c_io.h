@@ -92,6 +92,11 @@ void FC_GLOBAL(adios2_open_f2c,
 void FC_GLOBAL(adios2_flush_all_engines_f2c,
                ADIOS2_FLUSH_ALL_ENGINES_F2C)(adios2_io **io, int *ierr);
 
+void FC_GLOBAL(adios2_io_engine_type_f2c,
+               ADIOS2_IO_ENGINE_TYPE_F2C)(const adios2_io **io,
+                                          char engine_type[32], int *length,
+                                          int *ierr);
+
 #ifdef __cplusplus
 }
 #endif

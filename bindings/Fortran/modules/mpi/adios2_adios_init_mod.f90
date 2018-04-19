@@ -14,9 +14,15 @@ module adios2_adios_init
     use adios2_functions
     implicit none
 
+    interface adios2_init
+        module procedure adios2_init_comm
+        module procedure adios2_init_config
+    end interface
+
+
 contains
 
-    subroutine adios2_init(adios, comm, adios2_debug_mode, ierr)
+    subroutine adios2_init_comm(adios, comm, adios2_debug_mode, ierr)
         integer(kind=8), intent(out) :: adios
         integer, intent(in) :: comm
         logical, value, intent(in) :: adios2_debug_mode

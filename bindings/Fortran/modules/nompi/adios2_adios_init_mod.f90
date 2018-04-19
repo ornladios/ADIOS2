@@ -12,14 +12,19 @@ module adios2_adios_init
     use adios2_functions
     implicit none
 
+    interface adios2_init
+        module procedure adios2_init_nompi
+        module procedure adios2_init_config
+    end interface
+
 contains
 
-    subroutine adios2_init(adios, adios2_debug_mode, ierr)
+    subroutine adios2_init_nompi(adios, adios2_debug_mode, ierr)
         integer(kind=8), intent(out) :: adios
         logical, value, intent(in) :: adios2_debug_mode
         integer, intent(out) :: ierr
 
-        call adios2_init_config(adios, "", adios2_debug_mode, ierr)
+        call adios2_init_config(adios, char(0), adios2_debug_mode, ierr)
 
     end subroutine
 

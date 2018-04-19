@@ -339,9 +339,15 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     if (isDefaultEngine || engineTypeLC == "bpfile")
     {
         if (mode == Mode::Read)
+        {
             engine = std::make_shared<BPFileReader>(*this, name, mode, mpiComm);
+        }
         else
+        {
             engine = std::make_shared<BPFileWriter>(*this, name, mode, mpiComm);
+        }
+
+        m_EngineType = "bpfile";
     }
     else if (engineTypeLC == "hdfmixer")
     {
