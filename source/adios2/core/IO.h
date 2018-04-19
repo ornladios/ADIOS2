@@ -72,6 +72,9 @@ public:
     /** From AddOperator, contains operators added to this IO */
     std::vector<OperatorInfo> m_Operators;
 
+    /** BPFileWriter engine default if unknown */
+    std::string m_EngineType = "BPFile";
+
     /**
      * @brief Constructor called from ADIOS factory class DeclareIO function.
      * Not to be used direclty in applications.
@@ -351,9 +354,6 @@ private:
     const bool m_InConfigFile = false;
 
     bool m_IsDeclared = false;
-
-    /** BPFileWriter engine default if unknown */
-    std::string m_EngineType;
 
     /** Independent (default) or Collective */
     adios2::IOMode m_IOMode = adios2::IOMode::Independent;

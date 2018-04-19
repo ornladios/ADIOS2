@@ -110,4 +110,18 @@ contains
 
     end subroutine
 
+
+    subroutine adios2_io_engine_type(io, engine_type, ierr)
+        integer(kind=8), intent(in) :: io
+        character(len=:), allocatable, intent(out) :: engine_type
+        integer, intent(out) :: ierr
+
+        character(len=32) :: c_engine_type
+        integer :: length
+
+        call adios2_io_engine_type_f2c(io, c_engine_type, length, ierr)
+        call adios2_StringC2F(c_engine_type, length, engine_type)
+
+    end subroutine
+
 end module

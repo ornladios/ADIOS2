@@ -326,3 +326,34 @@ void FC_GLOBAL(adios2_flush_all_engines_f2c,
         *ierr = -1;
     }
 }
+
+void FC_GLOBAL(adios2_io_engine_type_f2c,
+               ADIOS2_IO_ENGINE_TYPE_F2C)(const adios2_io **io,
+                                          char engine_type[32], int *length,
+                                          int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        std::size_t lengthC = 0;
+        const char *nameC = adios2_io_engine_type(*io, &lengthC);
+
+        if (nameC == nullptr)
+        {
+            throw std::runtime_error(
+                "ERROR: null pointer in adios2 io engine type\n");
+        }
+
+        for (std::size_t i = 0; i < lengthC; ++i)
+        {
+            engine_type[i] = nameC[i];
+        }
+
+        *length = static_cast<int>(lengthC);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 io_engine_type: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}

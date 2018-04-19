@@ -22,7 +22,7 @@ contains
         integer, intent(out) :: ierr
 
         character(len=1024) :: c_name
-        integer :: length, i
+        integer :: length
 
         call adios2_variable_name_f2c(variable, c_name, length, ierr)
         call adios2_StringC2F(c_name, length, name)
