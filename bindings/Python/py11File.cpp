@@ -109,6 +109,11 @@ bool File::eof() const
     return eof;
 }
 
+std::map<std::string, adios2::Params> File::GetAvailableVariables() noexcept
+{
+    return m_Stream->m_IO->GetAvailableVariables();
+}
+
 void File::Write(const std::string &name, const pybind11::array &array,
                  const Dims &shape, const Dims &start, const Dims &count,
                  const bool endl)
@@ -177,20 +182,21 @@ pybind11::array File::Read(const std::string &name, const bool endl)
     else if (type == GetType<T>())                                             \
     {                                                                          \
         Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);     \
-        Dims count;                                                            \
+        Dims pyCount;                                                          \
         if (variable.m_SingleValue)                                            \
         {                                                                      \
-            count = {1};                                                       \
+            pyCount = {1};                                                     \
+            pybind11::array pyArray(pybind11::dtype::of<T>(), pyCount);        \
+            m_Stream->Read<T>(name, reinterpret_cast<T *>(                     \
+                                        const_cast<void *>(pyArray.data())),   \
+                              endl);                                           \
+            return pyArray;                                                    \
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            count = variable.m_Count;                                          \
+            const Dims zerosStart(variable.m_Shape.size(), 0);                 \
+            return Read(name, zerosStart, variable.m_Shape, endl);             \
         }                                                                      \
-        pybind11::array pyArray(pybind11::dtype::of<T>(), count);              \
-        m_Stream->Read<T>(                                                     \
-            name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            endl);                                                             \
-        return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type

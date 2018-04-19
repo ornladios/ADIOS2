@@ -28,7 +28,7 @@ start = [rank * nx]
 count = [nx]
 
 # Writer
-fw = adios2.open("types_np.bp", "w", comm)
+fw = adios2.open("types_np.bp", "w", comm, "config1.xml", "Test IO 1")
 
 
 if(rank == 0):
