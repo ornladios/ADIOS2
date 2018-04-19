@@ -2,18 +2,18 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx03IO.cpp
+ * cxx98IO.cpp
  *
  *  Created on: Apr 5, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "cxx03IO.h"
-#include "cxx03IO.tcc"
+#include "cxx98IO.h"
+#include "cxx98IO.tcc"
 
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 namespace
@@ -61,8 +61,8 @@ Engine IO::Open(const std::string &name, const enum Mode mode)
 #define declare_template_instantiation(T)                                      \
     template Variable<T> IO::InquireVariable<T>(const std::string &);
 
-ADIOS2_FOREACH_CXX03_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_CXX98_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace cxx03
+} // end namespace cxx98
 } // end namespace adios2

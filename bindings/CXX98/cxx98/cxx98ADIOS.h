@@ -2,15 +2,15 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx03ADIOS.h : C++ 2003 bindings based on C API, eliminates all C++11
+ * cxx98ADIOS.h : C++98 bindings based on C API, eliminates all C++11
  * features in public headers
  *
  *  Created on: Apr 4, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX03_CXX03_CXX03ADIOS_H_
-#define BINDINGS_CXX03_CXX03_CXX03ADIOS_H_
+#ifndef BINDINGS_CXX98_CXX98_CXX98ADIOS_H_
+#define BINDINGS_CXX98_CXX98_CXX98ADIOS_H_
 
 #include <adios2_c.h>
 
@@ -20,11 +20,11 @@
 #include <mpi.h>
 #endif
 
-#include "cxx03IO.h"
+#include "cxx98IO.h"
 
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 class ADIOS
@@ -32,12 +32,12 @@ class ADIOS
 
 public:
 #ifdef ADIOS2_HAVE_MPI
-    ADIOS(const std::string configFile, MPI_Comm mpiComm,
+    ADIOS(const std::string &configFile, MPI_Comm mpiComm,
           const bool debugMode = true);
 
     ADIOS(MPI_Comm mpiComm, const bool debugMode = true);
 #else
-    ADIOS(const std::string configFile, const bool debugMode = true);
+    ADIOS(const std::string &configFile, const bool debugMode = true);
 
     ADIOS(const bool debugMode = true);
 #endif
@@ -81,4 +81,4 @@ private:
 } // end namespace cxx03
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX03_CXX03_CXX03ADIOS_H_ */
+#endif /* BINDINGS_CXX98_CXX98_CXX98ADIOS_H_ */

@@ -2,20 +2,20 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx03IO.tcc
+ * cxx98IO.tcc
  *
  *  Created on: Apr 5, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX03_CXX03_CXX03IO_TCC_
-#define BINDINGS_CXX03_CXX03_CXX03IO_TCC_
+#ifndef BINDINGS_CXX98_CXX98_CXX98IO_TCC_
+#define BINDINGS_CXX98_CXX98_CXX98IO_TCC_
 
-#include "cxx03IO.h"
+#include "cxx98IO.h"
 
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 namespace
@@ -432,7 +432,7 @@ Variable<T> IO::InquireVariable(const std::string &name)
     return Variable<T>(adios2_inquire_variable(&m_IO, name.c_str()));
 }
 
-} // end namespace cxx03
+} // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX03_CXX03_CXX03IO_TCC_ */
+#endif /* BINDINGS_CXX98_CXX98_CXX98IO_TCC_ */
