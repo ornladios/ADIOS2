@@ -3,8 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_executable(TestBPWriteReadADIOS2_cxx03 TestBPWriteReadADIOS2_cxx03.cpp)
-target_link_libraries(TestBPWriteReadADIOS2_cxx03 adios2_cxx03 gtest)
+add_executable(TestBPWriteReadADIOS2_cxx98 TestBPWriteReadADIOS2_cxx98.cpp)
+target_link_libraries(TestBPWriteReadADIOS2_cxx98 adios2_cxx98 gtest)
 
 #add_executable(TestBPWriteReadAsStreamADIOS2 TestBPWriteReadAsStreamADIOS2.cpp)
 #target_link_libraries(TestBPWriteReadAsStreamADIOS2 adios2 gtest)
@@ -23,7 +23,7 @@ target_link_libraries(TestBPWriteReadADIOS2_cxx03 adios2_cxx03 gtest)
 
 if(ADIOS2_HAVE_MPI)
 
-  target_link_libraries(TestBPWriteReadADIOS2_cxx03 MPI::MPI_C)
+  target_link_libraries(TestBPWriteReadADIOS2_cxx98 MPI::MPI_C)
 #  target_link_libraries(TestBPWriteReadAsStreamADIOS2 MPI::MPI_C)
 #  target_link_libraries(TestBPWriteReadAsStreamADIOS2_Threads MPI::MPI_C)
 #  target_link_libraries(TestBPWriteReadAttributesADIOS2 MPI::MPI_C)
@@ -38,7 +38,7 @@ if(ADIOS2_HAVE_MPI)
   
 endif()
 
-gtest_add_tests(TARGET TestBPWriteReadADIOS2_cxx03 ${extra_test_args})
+gtest_add_tests(TARGET TestBPWriteReadADIOS2_cxx98 ${extra_test_args})
 #gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2 ${extra_test_args})
 #gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2_Threads ${extra_test_args})
 #gtest_add_tests(TARGET TestBPWriteReadAttributesADIOS2 ${extra_test_args})

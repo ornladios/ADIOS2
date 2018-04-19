@@ -8,16 +8,16 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <adios2_cxx03.h>
-
 #include <gtest/gtest.h>
 
 #include "SmallTestData.h"
 
-class BPWriteReadTestADIOS2_cxx03 : public ::testing::Test
+#include <adios2_cxx98.h>
+
+class BPWriteReadTestADIOS2_cxx98 : public ::testing::Test
 {
 public:
-    BPWriteReadTestADIOS2_cxx03() = default;
+    BPWriteReadTestADIOS2_cxx98() = default;
 
     SmallTestData m_TestData;
 };
@@ -27,11 +27,11 @@ public:
 //******************************************************************************
 
 // ADIOS2 BP write, native ADIOS1 read
-TEST_F(BPWriteReadTestADIOS2_cxx03, ADIOS2BPWriteRead1D8)
+TEST_F(BPWriteReadTestADIOS2_cxx98, ADIOS2BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteRead1D8_cxx03.bp");
+    const std::string fname("ADIOS2BPWriteRead1D8_cxx98.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -48,20 +48,20 @@ TEST_F(BPWriteReadTestADIOS2_cxx03, ADIOS2BPWriteRead1D8)
 // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::cxx03::ADIOS adios(MPI_COMM_WORLD);
+    adios2::cxx98::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::cxx03::ADIOS adios(true);
+    adios2::cxx98::ADIOS adios(true);
 #endif
     {
-        adios2::cxx03::IO io = adios.DeclareIO("TestIO");
+        adios2::cxx98::IO io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            const adios2::cxx03::Dims shape{static_cast<size_t>(Nx * mpiSize)};
-            const adios2::cxx03::Dims start{static_cast<size_t>(Nx * mpiRank)};
-            const adios2::cxx03::Dims count{Nx};
+            const adios2::cxx98::Dims shape{static_cast<size_t>(Nx * mpiSize)};
+            const adios2::cxx98::Dims start{static_cast<size_t>(Nx * mpiRank)};
+            const adios2::cxx98::Dims count{Nx};
 
             auto var_iString = io.DefineVariable<std::string>("iString");
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
@@ -89,7 +89,7 @@ TEST_F(BPWriteReadTestADIOS2_cxx03, ADIOS2BPWriteRead1D8)
         // the cache in
         // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteADIOS1Read1D8.bp.dir,
         // then it works
-        adios2::cxx03::Engine bpWriter = io.Open(fname, adios2::cxx03::Write);
+        adios2::cxx98::Engine bpWriter = io.Open(fname, adios2::cxx98::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -98,36 +98,36 @@ TEST_F(BPWriteReadTestADIOS2_cxx03, ADIOS2BPWriteRead1D8)
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            adios2::cxx03::Variable<std::string> var_iString =
+            adios2::cxx98::Variable<std::string> var_iString =
                 io.InquireVariable<std::string>("iString");
-            adios2::cxx03::Variable<int8_t> var_i8 =
+            adios2::cxx98::Variable<int8_t> var_i8 =
                 io.InquireVariable<int8_t>("i8");
-            adios2::cxx03::Variable<int16_t> var_i16 =
+            adios2::cxx98::Variable<int16_t> var_i16 =
                 io.InquireVariable<int16_t>("i16");
-            adios2::cxx03::Variable<int32_t> var_i32 =
+            adios2::cxx98::Variable<int32_t> var_i32 =
                 io.InquireVariable<int32_t>("i32");
-            adios2::cxx03::Variable<int64_t> var_i64 =
+            adios2::cxx98::Variable<int64_t> var_i64 =
                 io.InquireVariable<int64_t>("i64");
 
-            adios2::cxx03::Variable<uint8_t> var_u8 =
+            adios2::cxx98::Variable<uint8_t> var_u8 =
                 io.InquireVariable<uint8_t>("u8");
-            adios2::cxx03::Variable<uint16_t> var_u16 =
+            adios2::cxx98::Variable<uint16_t> var_u16 =
                 io.InquireVariable<uint16_t>("u16");
-            adios2::cxx03::Variable<uint32_t> var_u32 =
+            adios2::cxx98::Variable<uint32_t> var_u32 =
                 io.InquireVariable<uint32_t>("u32");
-            adios2::cxx03::Variable<uint64_t> var_u64 =
+            adios2::cxx98::Variable<uint64_t> var_u64 =
                 io.InquireVariable<uint64_t>("u64");
-            adios2::cxx03::Variable<float> var_r32 =
+            adios2::cxx98::Variable<float> var_r32 =
                 io.InquireVariable<float>("r32");
-            adios2::cxx03::Variable<double> var_r64 =
+            adios2::cxx98::Variable<double> var_r64 =
                 io.InquireVariable<double>("r64");
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::cxx03::Dims start(1);
+            adios2::cxx98::Dims start(1);
             start[0] = mpiRank * Nx;
 
-            adios2::cxx03::Dims count(1);
+            adios2::cxx98::Dims count(1);
             count[0] = Nx;
 
             EXPECT_THROW(var_iString.SetSelection(start, count),
@@ -169,10 +169,10 @@ TEST_F(BPWriteReadTestADIOS2_cxx03, ADIOS2BPWriteRead1D8)
     }
 
     {
-        adios2::cxx03::IO io = adios.DeclareIO("ReadIO");
+        adios2::cxx98::IO io = adios.DeclareIO("ReadIO");
 
-        adios2::cxx03::Engine bpReader =
-            io.Open(fname, adios2::cxx03::Mode::Read);
+        adios2::cxx98::Engine bpReader =
+            io.Open(fname, adios2::cxx98::Mode::Read);
 
         //        auto var_iString = io.InquireVariable<std::string>("iString");
         //        ASSERT_NE(var_iString, nullptr);
@@ -255,9 +255,9 @@ TEST_F(BPWriteReadTestADIOS2_cxx03, ADIOS2BPWriteRead1D8)
         std::array<float, Nx> R32;
         std::array<double, Nx> R64;
 
-        adios2::cxx03::Dims start(1);
+        adios2::cxx98::Dims start(1);
         start[0] = mpiRank * Nx;
-        adios2::cxx03::Dims count(1);
+        adios2::cxx98::Dims count(1);
         count[0] = Nx;
 
         var_i8.SetSelection(start, count);

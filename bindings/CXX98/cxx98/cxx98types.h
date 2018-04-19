@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx03Types.h
+ * cxx98Types.h
  *
  *  Created on: Apr 6, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX03_CXX03_CXX03TYPES_H_
-#define BINDINGS_CXX03_CXX03_CXX03TYPES_H_
+#ifndef BINDINGS_CXX98_CXX98_CXX98TYPES_H_
+#define BINDINGS_CXX98_CXX98_CXX98TYPES_H_
 
 #include <complex>
 #include <cstddef>
@@ -18,7 +18,7 @@
 
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 enum Mode
@@ -47,7 +47,7 @@ enum StepMode
 
 typedef std::vector<std::size_t> Dims;
 
-#define ADIOS2_FOREACH_CXX03_TYPE_1ARG(MACRO)                                  \
+#define ADIOS2_FOREACH_CXX98_TYPE_1ARG(MACRO)                                  \
     MACRO(std::string)                                                         \
     MACRO(char)                                                                \
     MACRO(signed char)                                                         \
@@ -66,7 +66,7 @@ typedef std::vector<std::size_t> Dims;
     MACRO(std::complex<float>)                                                 \
     MACRO(std::complex<double>)
 
-#define ADIOS2_FOREACH_CXX03_ATTRIBUTE_TYPE_1ARG(MACRO)                        \
+#define ADIOS2_FOREACH_CXX98_ATTRIBUTE_TYPE_1ARG(MACRO)                        \
     MACRO(std::string)                                                         \
     MACRO(char)                                                                \
     MACRO(signed char)                                                         \
@@ -82,7 +82,7 @@ typedef std::vector<std::size_t> Dims;
     MACRO(float)                                                               \
     MACRO(double)
 
-} // end namespace cxx03
+} // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX03_CXX03_CXX03TYPES_H_ */
+#endif /* BINDINGS_CXX98_CXX98_CXX98TYPES_H_ */

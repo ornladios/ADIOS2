@@ -8,15 +8,15 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "cxx03ADIOS.h"
+#include "cxx98ADIOS.h"
 
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 #ifdef ADIOS2_HAVE_MPI
-ADIOS::ADIOS(const std::string configFile, MPI_Comm comm, const bool debugMode)
+ADIOS::ADIOS(const std::string &configFile, MPI_Comm comm, const bool debugMode)
 : m_ADIOS(
       debugMode
           ? adios2_init_config(configFile.c_str(), comm, adios2_debug_mode_on)
@@ -30,7 +30,7 @@ ADIOS::ADIOS(MPI_Comm comm, const bool debugMode)
 {
 }
 #else
-ADIOS::ADIOS(const std::string configFile, const bool debugMode)
+ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
 : m_ADIOS(
       debugMode
           ? adios2_init_config_nompi(configFile.c_str(), adios2_debug_mode_on)

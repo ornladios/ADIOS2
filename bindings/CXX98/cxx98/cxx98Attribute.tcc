@@ -2,21 +2,21 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx03Attribute.tcc
+ * cxx98Attribute.tcc
  *
  *  Created on: Apr 10, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX03_CXX03_CXX03ATTRIBUTE_TCC_
-#define BINDINGS_CXX03_CXX03_CXX03ATTRIBUTE_TCC_
+#ifndef BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_TCC_
+#define BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_TCC_
 
-#include "cxx03Attribute.h"
-#include "cxx03types.h"
+#include "cxx98Attribute.h"
+#include "cxx98types.h"
 
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 #define declare_type(T)                                                        \
@@ -42,9 +42,9 @@ namespace cxx03
         return true;                                                           \
     }
 
-ADIOS2_FOREACH_CXX03_ATTRIBUTE_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_CXX98_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
 }
 }
 
-#endif /* BINDINGS_CXX03_CXX03_CXX03ATTRIBUTE_TCC_ */
+#endif /* BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_TCC_ */

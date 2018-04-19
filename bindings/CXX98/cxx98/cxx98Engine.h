@@ -2,23 +2,23 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx03Engine.h
+ * cxx98Engine.h
  *
  *  Created on: Apr 10, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX03_CXX03_CXX03ENGINE_H_
-#define BINDINGS_CXX03_CXX03_CXX03ENGINE_H_
-
-#include "cxx03Variable.h"
-#include "cxx03types.h"
+#ifndef BINDINGS_CXX98_CXX98_CXX98ENGINE_H_
+#define BINDINGS_CXX98_CXX98_CXX98ENGINE_H_
 
 #include <adios2_c.h>
 
+#include "cxx98Variable.h"
+#include "cxx98types.h"
+
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 class Engine
@@ -71,10 +71,10 @@ private:
                                                                                \
     extern template void Engine::GetDeferred<T>(Variable<T> &, T *);
 
-ADIOS2_FOREACH_CXX03_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_CXX98_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace cxx03
+} // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX03_CXX03_CXX03ENGINE_H_ */
+#endif /* BINDINGS_CXX98_CXX98_CXX98ENGINE_H_ */

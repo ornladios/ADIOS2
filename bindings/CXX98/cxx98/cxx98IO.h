@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx03IO.h
+ * cxx98IO.h
  *
  *  Created on: Apr 5, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX03_CXX03_CXX03IO_H_
-#define BINDINGS_CXX03_CXX03_CXX03IO_H_
+#ifndef BINDINGS_CXX98_CXX98_CXX98IO_H_
+#define BINDINGS_CXX98_CXX98_CXX98IO_H_
 
 #include <cstddef>
 #include <string>
@@ -17,14 +17,14 @@
 
 #include <adios2_c.h>
 
-#include "cxx03Attribute.h"
-#include "cxx03Engine.h"
-#include "cxx03Variable.h"
-#include "cxx03types.h"
+#include "cxx98Attribute.h"
+#include "cxx98Engine.h"
+#include "cxx98Variable.h"
+#include "cxx98types.h"
 
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 class IO
@@ -90,10 +90,10 @@ private:
 #define declare_template_instantiation(T)                                      \
     extern template Variable<T> IO::InquireVariable<T>(const std::string &);
 
-ADIOS2_FOREACH_CXX03_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_CXX98_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace cxx03
+} // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX03_CXX03_CXX03IO_H_ */
+#endif /* BINDINGS_CXX98_CXX98_CXX98IO_H_ */

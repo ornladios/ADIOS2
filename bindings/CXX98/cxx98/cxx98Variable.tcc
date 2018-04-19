@@ -2,21 +2,21 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx03Variable.tcc
+ * cxx98Variable.tcc
  *
  *  Created on: Apr 6, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX03_CXX03_CXX03VARIABLE_TCC_
-#define BINDINGS_CXX03_CXX03_CXX03VARIABLE_TCC_
+#ifndef BINDINGS_CXX98_CXX98_CXX98VARIABLE_TCC_
+#define BINDINGS_CXX98_CXX98_CXX98VARIABLE_TCC_
 
-#include "cxx03Variable.h"
-#include "cxx03types.h"
+#include "cxx98Variable.h"
+#include "cxx98types.h"
 
 namespace adios2
 {
-namespace cxx03
+namespace cxx98
 {
 
 #define declare_type(T)                                                        \
@@ -54,10 +54,10 @@ namespace cxx03
         adios2_set_step_selection(m_Variable, stepStart, stepCount);           \
     }
 
-ADIOS2_FOREACH_CXX03_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_CXX98_TYPE_1ARG(declare_type)
 #undef declare_type
 
-} // end namespace cxx03
+} // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX03_CXX03_CXX03VARIABLE_TCC_ */
+#endif /* BINDINGS_CXX98_CXX98_CXX98VARIABLE_TCC_ */
