@@ -323,6 +323,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->Status = Established;
     pthread_mutex_unlock(&Stream->DataLock);
     CP_verbose(Stream, "Sending Reader Activate messages to writer\n");
+    memset(&Msg, 0, sizeof(Msg));
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReaderActivateFormat, &Msg,
                             &Msg.WSR_Stream);
     CP_verbose(Stream,
@@ -598,6 +599,7 @@ extern void SstReleaseStep(SstStream Stream)
             {
                 last->Next = List->Next;
                 free(List);
+                break;
             }
             last = List;
             List = List->Next;
@@ -618,6 +620,7 @@ extern void SstReleaseStep(SstStream Stream)
                                         "called SstReleaseTimestep with a "
                                         "different timestep value");
 
+    memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = Timestep;
 
     /*
@@ -705,6 +708,7 @@ extern void SstReaderClose(SstStream Stream)
     MPI_Barrier(Stream->mpiComm);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
+    memset(&Msg, 0, sizeof(Msg));
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReaderCloseFormat, &Msg,
                             &Msg.WSR_Stream);
     if (Stream->Stats)

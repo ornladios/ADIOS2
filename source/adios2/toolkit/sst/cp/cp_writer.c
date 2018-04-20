@@ -149,8 +149,8 @@ static void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
     }
 }
 
-static void initWSReader(WS_ReaderInfo reader, int ReaderSize,
-                         CP_ReaderInitInfo *reader_info)
+static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
+                        CP_ReaderInitInfo *reader_info)
 {
     int WriterSize = reader->ParentStream->CohortSize;
     int WriterRank = reader->ParentStream->Rank;
@@ -179,10 +179,15 @@ static void initWSReader(WS_ReaderInfo reader, int ReaderSize,
         reader->Connections[peer].CMconn =
             CMget_conn(reader->ParentStream->CPInfo->cm,
                        reader->Connections[peer].ContactList);
+
+        if (!reader->Connections[peer].CMconn)
+            return 0;
+
         CMconn_register_close_handler(reader->Connections[peer].CMconn,
                                       WriterConnCloseHandler, (void *)reader);
         i++;
     }
+    return 1;
 }
 
 static long earliestAvailableTimestepNumber(SstStream Stream,
@@ -387,9 +392,14 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     CP_WSR_Stream->DP_WSR_Stream = per_reader_Stream;
     CP_WSR_Stream->ParentStream = Stream;
     CP_WSR_Stream->Connections = connections_to_reader;
-    initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
-                 ReturnData->CP_ReaderInfo);
 
+    int success = initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
+                               ReturnData->CP_ReaderInfo);
+
+    if (!success)
+    {
+        return NULL;
+    }
     AddToLastCallFreeList(CP_WSR_Stream);
     free(free_block);
     ReturnData = NULL; /* now invalid */
@@ -1076,7 +1086,12 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     Stream->QueuedTimestepCount++;
     /* no one waits on timesteps being added, so no condition signal to note
      * change */
+
     pthread_mutex_unlock(&Stream->DataLock);
+
+    CP_verbose(Stream, "Sending TimestepMetadata for timestep %d (ref count "
+                       "%d), one to each reader\n",
+               Timestep, Entry->ReferenceCount);
 
     /*
      * This barrier deals with a possible race condition on the return
@@ -1087,10 +1102,6 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
      * barrier in another way in the future.
      */
     MPI_Barrier(Stream->mpiComm);
-
-    CP_verbose(Stream, "Sending TimestepMetadata for timestep %d (ref count "
-                       "%d), one to each reader\n",
-               Timestep, Entry->ReferenceCount);
 
     sendOneToEachReaderRank(Stream,
                             Stream->CPInfo->DeliverTimestepMetadataFormat, Msg,
