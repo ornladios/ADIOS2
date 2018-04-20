@@ -692,6 +692,15 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
 static CP_GlobalInfo CPInfo = NULL;
 static int CPInfoRefCount = 0;
 
+extern void AddToLastCallFreeList(void *Block)
+{
+    CPInfo->LastCallFreeList =
+        realloc(CPInfo->LastCallFreeList,
+                sizeof(void *) * (CPInfo->LastCallFreeCount + 1));
+    CPInfo->LastCallFreeList[CPInfo->LastCallFreeCount] = Block;
+    CPInfo->LastCallFreeCount++;
+}
+
 extern void SstStreamDestroy(SstStream Stream)
 {
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
@@ -717,7 +726,7 @@ extern void SstStreamDestroy(SstStream Stream)
             }
             free(Stream->Readers[i]->Connections);
             free(Stream->Readers[i]->Peers);
-            free(Stream->Readers[i]);
+            // Stream->Readers[i] is free'd in LastCall
         }
         free(Stream->Readers);
     }
@@ -760,6 +769,12 @@ extern void SstStreamDestroy(SstStream Stream)
         free(Stream->Peers);
     }
 
+    if (Stream->Filename)
+        free(Stream->Filename);
+    if (Stream->ParamsBlock)
+        free(Stream->ParamsBlock);
+    //   Stream is free'd in LastCall
+
     CPInfoRefCount--;
     if (CPInfoRefCount == 0)
     {
@@ -770,17 +785,16 @@ extern void SstStreamDestroy(SstStream Stream)
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
         FreeCustomStructs(CPInfo);
+        for (int i = 0; i < CPInfo->LastCallFreeCount; i++)
+        {
+            free(CPInfo->LastCallFreeList[i]);
+        }
         free(CPInfo);
         CPInfo = NULL;
         if (CP_SstParamsList)
             free_FMfield_list(CP_SstParamsList);
         CP_SstParamsList = NULL;
     }
-    if (Stream->Filename)
-        free(Stream->Filename);
-    if (Stream->ParamsBlock)
-        free(Stream->ParamsBlock);
-    free(Stream);
 }
 
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)

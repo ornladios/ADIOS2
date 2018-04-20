@@ -334,6 +334,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     gettimeofday(&Stream->ValidStartTime, NULL);
     Stream->Filename = Filename;
     Stream->ParamsBlock = free_block;
+    AddToLastCallFreeList(Stream);
 
     return Stream;
 }

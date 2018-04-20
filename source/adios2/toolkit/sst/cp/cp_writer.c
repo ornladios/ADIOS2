@@ -390,6 +390,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
                  ReturnData->CP_ReaderInfo);
 
+    AddToLastCallFreeList(CP_WSR_Stream);
     free(free_block);
     ReturnData = NULL; /* now invalid */
 
@@ -598,6 +599,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     }
     Stream->Filename = Filename;
     CP_verbose(Stream, "Finish opening Stream \"%s\"\n", Filename);
+    AddToLastCallFreeList(Stream);
     return Stream;
 }
 
