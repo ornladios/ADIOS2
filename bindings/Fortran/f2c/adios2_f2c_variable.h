@@ -14,7 +14,6 @@
 #include <FC.h>
 #include <adios2_c.h>
 
-#include <iostream> //std::cerr
 #include <stdint.h> // int64_t
 
 #ifdef __cplusplus

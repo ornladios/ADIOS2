@@ -75,4 +75,14 @@ contains
 
     end subroutine
 
+
+    subroutine adios2_current_step(engine, current_step, ierr)
+        integer(kind=8), intent(in) :: engine
+        integer(kind=8), intent(out) :: current_step
+        integer, intent(out) :: ierr
+
+        call adios2_current_step_f2c(engine, current_step, ierr)
+
+    end subroutine
+
 end module

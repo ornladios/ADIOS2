@@ -58,6 +58,8 @@ public:
 
     void Close(const int transportIndex = -1);
 
+    size_t CurrentStep() const;
+
 private:
     adios2::Engine &m_Engine;
     const bool m_DebugMode;
