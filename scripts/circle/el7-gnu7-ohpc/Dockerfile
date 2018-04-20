@@ -29,8 +29,8 @@ RUN curl -L https://github.com/ofiwg/libfabric/releases/download/v1.6.0/libfabri
   && rm -rf libfabric-1.6.0
 
 # Install the CMake binary
-WORKDIR /opt/cmake/3.6.0
-RUN curl -L https://cmake.org/files/v3.6/cmake-3.6.0-Linux-x86_64.tar.gz | \
+WORKDIR /opt/cmake/3.6.3
+RUN curl -L https://cmake.org/files/v3.6/cmake-3.6.3-Linux-x86_64.tar.gz | \
   tar --strip-components=1 -xz
 
 # Create a non-root user to run the builds/tests
