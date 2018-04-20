@@ -2,18 +2,18 @@ FROM centos:centos7
 
 # Install core dev packages
 RUN yum -y install gcc gcc-c++ git make curl file \
-      glibc-devel bzip2 bzip2-libs bzip2-devel python-devel pkg-config
+      glibc-devel bzip2 bzip2-libs bzip2-devel pkg-config
 RUN yum -y install epel-release
-RUN yum -y install zeromq-devel
+RUN yum -y install zeromq-devel python34-devel
 
 # Install extra repos
-RUN yum -y install epel-release https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+RUN yum -y install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
 
 # Install intel OpenHPC packages
 RUN yum -y install \
   lmod-ohpc gnu7-compilers-ohpc openmpi-gnu7-ohpc \
-  python-numpy-gnu7-ohpc hdf5-gnu7-ohpc \
-  python-mpi4py-gnu7-openmpi3-ohpc \
+  python34-numpy-gnu7-ohpc hdf5-gnu7-ohpc \
+  python34-mpi4py-gnu7-openmpi3-ohpc \
   phdf5-gnu7-openmpi3-ohpc netcdf-gnu7-openmpi3-ohpc adios-gnu7-openmpi3-ohpc
 
 # Cleanup headers and packages
