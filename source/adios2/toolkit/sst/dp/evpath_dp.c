@@ -65,15 +65,16 @@ typedef struct _Evpath_WSR_Stream
     CP_PeerCohort PeerCohort;
     int ReaderCohortSize;
     struct _EvpathReaderContactInfo *ReaderContactInfo;
+    struct _EvpathWriterContactInfo
+        *WriterContactInfo; /* included so we can free on destroy */
 } * Evpath_WSR_Stream;
 
 typedef struct _TimestepEntry
 {
     long Timestep;
-    struct _SstData *Data;
+    struct _SstData Data;
     struct _EvpathPerTimestepInfo *DP_TimestepInfo;
     struct _TimestepEntry *Next;
-
 } * TimestepList;
 
 typedef struct _Evpath_WS_Stream
@@ -211,6 +212,12 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     return Stream;
 }
 
+static void EvpathDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
+{
+    Evpath_RS_Stream RS_Stream = (Evpath_RS_Stream)RS_Stream_v;
+    free(RS_Stream);
+}
+
 static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                                      void *msg_v, void *client_Data,
                                      attr_list attrs)
@@ -236,7 +243,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
             memset(&ReadReplyMsg, 0, sizeof(ReadReplyMsg));
             ReadReplyMsg.Timestep = ReadRequestMsg->Timestep;
             ReadReplyMsg.DataLength = ReadRequestMsg->Length;
-            ReadReplyMsg.Data = tmp->Data->block + ReadRequestMsg->Offset;
+            ReadReplyMsg.Data = tmp->Data.block + ReadRequestMsg->Offset;
             ReadReplyMsg.RS_Stream = ReadRequestMsg->RS_Stream;
             ReadReplyMsg.NotifyCondition = ReadRequestMsg->NotifyCondition;
             Svcs->verbose(
@@ -251,6 +258,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                         ->ReaderContactInfo[ReadRequestMsg->RequestingRank]
                         .ContactString);
                 CMConnection Conn = CMget_conn(cm, List);
+                free_attr_list(List);
                 WSR_Stream->ReaderContactInfo[ReadRequestMsg->RequestingRank]
                     .Conn = Conn;
             }
@@ -342,6 +350,27 @@ static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream)
     return (void *)Stream;
 }
 
+static void EvpathDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
+{
+    Evpath_WS_Stream WS_Stream = (Evpath_WS_Stream)WS_Stream_v;
+    for (int i = 0; i < WS_Stream->ReaderCount; i++)
+    {
+        if (WS_Stream->Readers[i])
+        {
+            free(WS_Stream->Readers[i]->WriterContactInfo->ContactString);
+            free(WS_Stream->Readers[i]->WriterContactInfo);
+            free(WS_Stream->Readers[i]->ReaderContactInfo->ContactString);
+            if (WS_Stream->Readers[i]->ReaderContactInfo->Conn)
+                CMConnection_close(
+                    WS_Stream->Readers[i]->ReaderContactInfo->Conn);
+            free(WS_Stream->Readers[i]->ReaderContactInfo);
+            free(WS_Stream->Readers[i]);
+        }
+    }
+    free(WS_Stream->Readers);
+    free(WS_Stream);
+}
+
 static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
                                                DP_WS_Stream WS_Stream_v,
                                                int readerCohortSize,
@@ -398,8 +427,16 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
     ContactInfo->ContactString = EvpathContactString;
     ContactInfo->WS_Stream = WSR_Stream;
     *WriterContactInfoPtr = ContactInfo;
+    WSR_Stream->WriterContactInfo = ContactInfo;
 
     return WSR_Stream;
+}
+
+static void EvpathDestroyWriterPerReader(CP_Services Svcs,
+                                         DP_WSR_Stream WSR_Stream_v)
+{
+    Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSR_Stream_v;
+    free(WSR_Stream);
 }
 
 static void EvpathProvideWriterDataToReader(CP_Services Svcs,
@@ -519,7 +556,7 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     sprintf(Info->CheckString, "Evpath info for timestep %ld from rank %d",
             Timestep, Stream->Rank);
     Info->CheckInt = Stream->Rank * 1000 + Timestep;
-    Entry->Data = Data;
+    Entry->Data = *Data;
     Entry->Timestep = Timestep;
     Entry->DP_TimestepInfo = Info;
 
@@ -538,6 +575,8 @@ static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     if (Stream->Timesteps->Timestep == Timestep)
     {
         Stream->Timesteps = List->Next;
+        free(List->DP_TimestepInfo->CheckString);
+        free(List->DP_TimestepInfo);
         free(List);
     }
     else
@@ -549,6 +588,8 @@ static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
             if (List->Timestep == Timestep)
             {
                 last->Next = List->Next;
+                free(List->DP_TimestepInfo->CheckString);
+                free(List->DP_TimestepInfo);
                 free(List);
                 return;
             }
@@ -618,5 +659,8 @@ extern CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.waitForCompletion = EvpathWaitForCompletion;
     evpathDPInterface.provideTimestep = EvpathProvideTimestep;
     evpathDPInterface.releaseTimestep = EvpathReleaseTimestep;
+    evpathDPInterface.destroyReader = EvpathDestroyReader;
+    evpathDPInterface.destroyWriter = EvpathDestroyWriter;
+    evpathDPInterface.destroyWriterPerReader = EvpathDestroyWriterPerReader;
     return &evpathDPInterface;
 }

@@ -40,7 +40,7 @@ public:
     SstReader(IO &io, const std::string &name, const Mode mode,
               MPI_Comm mpiComm);
 
-    virtual ~SstReader() = default;
+    virtual ~SstReader();
 
     StepStatus BeginStep();
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f);
