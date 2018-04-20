@@ -94,4 +94,4 @@ esac
 # Manually source the bash env setup, freeing up $BASH_ENV used by circleci
 . /etc/profile >/dev/null
 
-/opt/cmake/3.6.0/bin/ctest -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE -DCTEST_BUILD_NAME=${CUSTOM_BUILD_NAME}
+/opt/cmake/3.6.3/bin/ctest -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE -DCTEST_BUILD_NAME=${CUSTOM_BUILD_NAME}

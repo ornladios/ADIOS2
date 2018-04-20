@@ -2,17 +2,17 @@ FROM centos:centos7
 
 # Install core dev packages
 RUN yum -y install gcc gcc-c++ gcc-gfortran git make curl file \
-      glibc-devel bzip2 bzip2-libs bzip2-devel python-devel hdf5-devel \
+      glibc-devel bzip2 bzip2-libs bzip2-devel python-devel numpy \
       pkgconfig
 RUN yum -y install epel-release
-RUN yum -y install zeromq-devel
+RUN yum -y install zeromq-devel hdf5 hdf5-devel
 
 # Cleanup headers and packages
 RUN yum clean all
 
 # Install the CMake binary
-WORKDIR /opt/cmake/3.6.0
-RUN curl -L https://cmake.org/files/v3.6/cmake-3.6.0-Linux-x86_64.tar.gz | \
+WORKDIR /opt/cmake/3.6.3
+RUN curl -L https://cmake.org/files/v3.6/cmake-3.6.3-Linux-x86_64.tar.gz | \
   tar --strip-components=1 -xz
 
 # Create a non-root user to run the builds/tests
