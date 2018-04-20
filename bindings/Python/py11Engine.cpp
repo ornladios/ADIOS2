@@ -222,5 +222,7 @@ void Engine::Flush(const int transportIndex) { m_Engine.Flush(transportIndex); }
 
 void Engine::Close(const int transportIndex) { m_Engine.Close(transportIndex); }
 
+size_t Engine::CurrentStep() const { return m_Engine.CurrentStep(); }
+
 } // end namespace py11
 } // end namespace adios2

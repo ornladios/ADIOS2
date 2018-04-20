@@ -259,3 +259,19 @@ void FC_GLOBAL(adios2_close_f2c, ADIOS2_CLOSE_F2C)(adios2_engine **engine,
         *ierr = -1;
     }
 }
+
+void FC_GLOBAL(adios2_current_step_f2c,
+               ADIOS2_CURRENT_STEP_F2C)(adios2_engine **engine,
+                                        int64_t *current_step, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *current_step = static_cast<int64_t>(adios2_current_step(*engine));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 current step: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
