@@ -17,8 +17,11 @@ set(CTEST_DASHBOARD_ROOT "$ENV{HOME}")
 include(${CMAKE_CURRENT_LIST_DIR}/EnvironmentModules.cmake)
 module(purge)
 module(load gnu7)
-module(load openmpi)
+module(load py2-numpy)
+module(load openmpi3)
+module(load py2-mpi4py)
 module(load phdf5)
+module(load adios)
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
@@ -32,10 +35,9 @@ ADIOS2_USE_Fortran:STRING=ON
 ADIOS2_USE_HDF5:STRING=ON
 ADIOS2_USE_MPI:STRING=ON
 ADIOS2_USE_Python:STRING=ON
-ADIOS2_USE_ZFP:STRING=ON
+#ADIOS2_USE_ZFP:STRING=ON
 ADIOS2_USE_ZeroMQ:STRING=ON
-ZFP_ROOT:PATH=/opt/zfp/install
-ADIOS1_ROOT:PATH=/opt/adios1/1.12.0/gnu7_openmpi
+#ZFP_ROOT:PATH=/opt/zfp/install
 
 MPIEXEC_MAX_NUMPROCS:STRING=16
 ")
