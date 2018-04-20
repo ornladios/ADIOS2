@@ -291,8 +291,8 @@ static void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
     *FieldP = realloc(*FieldP, (*CountP + 2) * sizeof((*FieldP)[0]));
     Field = &((*FieldP)[*CountP]);
     (*CountP)++;
-    Field->field_name = Name;
-    Field->field_type = Type;
+    Field->field_name = strdup(Name);
+    Field->field_type = strdup(Type);
     Field->field_size = ElementSize;
     Field->field_offset = Offset;
     Field++;
@@ -305,8 +305,9 @@ static void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
 static void AddField(FMFieldList *FieldP, int *CountP, const char *Name,
                      const char *Type, int ElementSize)
 {
-    AddSimpleField(FieldP, CountP, Name, TranslateADIOS2Type2FFS(Type),
-                   ElementSize);
+    char *TransType = TranslateADIOS2Type2FFS(Type);
+    AddSimpleField(FieldP, CountP, Name, TransType, ElementSize);
+    free(TransType);
 }
 
 static void AddFixedArrayField(FMFieldList *FieldP, int *CountP,
@@ -318,6 +319,7 @@ static void AddFixedArrayField(FMFieldList *FieldP, int *CountP,
     sprintf(TypeWithArray, "*(%s[%d])", TransType, DimCount);
     free((void *)TransType);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
+    free(TypeWithArray);
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 static void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
@@ -328,6 +330,7 @@ static void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
     sprintf(TypeWithArray, "%s[%s]", TransType, SizeField);
     free(TransType);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
+    free(TypeWithArray);
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 
@@ -353,17 +356,80 @@ static void InitMarshalData(SstStream Stream)
     Info->DataFieldCount = 0;
     Info->DataFields = malloc(sizeof(Info->DataFields[0]));
     Info->LocalFMContext = create_local_FMcontext();
-    AddSimpleField(&Info->MetaFields, &Info->MetaFieldCount,
-                   strdup("BitFieldCount"), strdup("integer"), sizeof(size_t));
-    AddSimpleField(&Info->MetaFields, &Info->MetaFieldCount, strdup("BitField"),
-                   strdup("integer[BitFieldCount]"), sizeof(size_t));
-    AddSimpleField(&Info->MetaFields, &Info->MetaFieldCount,
-                   strdup("DataBlockSize"), strdup("integer"), sizeof(size_t));
+    AddSimpleField(&Info->MetaFields, &Info->MetaFieldCount, "BitFieldCount",
+                   "integer", sizeof(size_t));
+    AddSimpleField(&Info->MetaFields, &Info->MetaFieldCount, "BitField",
+                   "integer[BitFieldCount]", sizeof(size_t));
+    AddSimpleField(&Info->MetaFields, &Info->MetaFieldCount, "DataBlockSize",
+                   "integer", sizeof(size_t));
     RecalcMarshalStorageSize(Stream);
     MBase = Stream->M;
     MBase->BitFieldCount = 0;
     MBase->BitField = malloc(sizeof(size_t));
     MBase->DataBlockSize = 0;
+}
+
+extern void FFSFreeMarshalData(SstStream Stream)
+{
+    if (Stream->Role == WriterRole)
+    {
+        /* writer side */
+        struct FFSWriterMarshalBase *Info =
+            (struct FFSWriterMarshalBase *)Stream->MarshalData;
+        struct FFSMetadataInfoStruct *MBase;
+        MBase = Stream->M;
+
+        if (Info->RecList)
+            free(Info->RecList);
+        if (Info->MetaFields)
+            free_FMfield_list(Info->MetaFields);
+        if (Info->DataFields)
+            free_FMfield_list(Info->DataFields);
+        if (Info->LocalFMContext)
+            free_FMcontext(Info->LocalFMContext);
+        free(Info);
+        Stream->MarshalData = NULL;
+        free(Stream->D);
+        Stream->D = NULL;
+        free(MBase->BitField);
+        free(Stream->M);
+        Stream->M = NULL;
+    }
+    else
+    {
+
+        /* reader side */
+        struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        {
+            if (Info->WriterInfo[i].RawBuffer)
+                free(Info->WriterInfo[i].RawBuffer);
+        }
+        if (Info->WriterInfo)
+            free(Info->WriterInfo);
+        if (Info->MetadataBaseAddrs)
+            free(Info->MetadataBaseAddrs);
+        if (Info->MetadataFieldLists)
+            free(Info->MetadataFieldLists);
+        if (Info->DataBaseAddrs)
+            free(Info->DataBaseAddrs);
+        if (Info->DataFieldLists)
+            free(Info->DataFieldLists);
+        for (int i = 0; i < Info->VarCount; i++)
+        {
+            free(Info->VarList[i].VarName);
+            free(Info->VarList[i].PerWriterMetaFieldDesc);
+            free(Info->VarList[i].PerWriterDataFieldDesc);
+            free(Info->VarList[i].PerWriterStart);
+            free(Info->VarList[i].PerWriterCounts);
+            free(Info->VarList[i].PerWriterIncomingData);
+        }
+        if (Info->VarList)
+            free(Info->VarList);
+
+        free(Info);
+        Stream->ReaderMarshalData = NULL;
+    }
 }
 
 static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
@@ -384,8 +450,10 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
     if (DimCount == 0)
     {
         // simple field, only add base value FMField to metadata
-        AddField(&Info->MetaFields, &Info->MetaFieldCount, ConcatName(Name, ""),
-                 Type, ElemSize);
+        char *SstName = ConcatName(Name, "");
+        AddField(&Info->MetaFields, &Info->MetaFieldCount, SstName, Type,
+                 ElemSize);
+        free(SstName);
         RecalcMarshalStorageSize(Stream);
         Rec->MetaOffset =
             Info->MetaFields[Info->MetaFieldCount - 1].field_offset;
@@ -398,30 +466,38 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
     {
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
-        AddField(&Info->MetaFields, &Info->MetaFieldCount,
-                 BuildArrayName(Name, Type), "integer", sizeof(size_t));
+        char *ArrayName = BuildArrayName(Name, Type);
+        AddField(&Info->MetaFields, &Info->MetaFieldCount, ArrayName, "integer",
+                 sizeof(size_t));
+        free(ArrayName);
         Rec->MetaOffset =
             Info->MetaFields[Info->MetaFieldCount - 1].field_offset;
         Rec->SingleValue = 0;
+        char *ShapeName = ConcatName(Name, "Shape");
+        char *CountName = ConcatName(Name, "Count");
+        char *OffsetsName = ConcatName(Name, "Offsets");
+        AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, ShapeName,
+                           "integer", sizeof(size_t), DimCount);
+        AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, CountName,
+                           "integer", sizeof(size_t), DimCount);
         AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
-                           ConcatName(Name, "Shape"), "integer", sizeof(size_t),
-                           DimCount);
-        AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
-                           ConcatName(Name, "Count"), "integer", sizeof(size_t),
-                           DimCount);
-        AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
-                           ConcatName(Name, "Offsets"), "integer",
-                           sizeof(size_t), DimCount);
+                           OffsetsName, "integer", sizeof(size_t), DimCount);
+        free(ShapeName);
+        free(CountName);
+        free(OffsetsName);
         RecalcMarshalStorageSize(Stream);
 
         // To Data, add FMFields for ElemCount and Array matching _ArrayRec
-        AddField(&Info->DataFields, &Info->DataFieldCount,
-                 ConcatName(Name, "ElemCount"), "integer", sizeof(size_t));
+        char *ElemCountName = ConcatName(Name, "ElemCount");
+        AddField(&Info->DataFields, &Info->DataFieldCount, ElemCountName,
+                 "integer", sizeof(size_t));
         Rec->DataOffset =
             Info->DataFields[Info->DataFieldCount - 1].field_offset;
-        AddVarArrayField(&Info->DataFields, &Info->DataFieldCount,
-                         ConcatName(Name, ""), Type, ElemSize,
-                         ConcatName(Name, "ElemCount"));
+        char *SstName = ConcatName(Name, "");
+        AddVarArrayField(&Info->DataFields, &Info->DataFieldCount, SstName,
+                         Type, ElemSize, ElemCountName);
+        free(SstName);
+        free(ElemCountName);
         RecalcMarshalStorageSize(Stream);
         // Changing the formats renders these invalid
         Info->MetaFormat = NULL;
@@ -686,6 +762,7 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
             FMcopy_struct_list(format_list_of_FMFormat(Format));
         FMlocalize_structs(List);
         establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
+        FMfree_struct_list(List);
     }
     if (FFSdecode_in_place_possible(FFSformat))
     {
@@ -804,8 +881,8 @@ void ExtractSelectionFromPartial(int ElementSize, size_t Dims,
                                  const char *InData, char *OutData)
 {
     int BlockSize;
-    int SourceBlockStride;
-    int DestBlockStride;
+    int SourceBlockStride = 0;
+    int DestBlockStride = 0;
     int SourceBlockStartOffset;
     int DestBlockStartOffset;
     int BlockCount;
@@ -834,8 +911,11 @@ void ExtractSelectionFromPartial(int ElementSize, size_t Dims,
             break;
         }
     }
-    SourceBlockStride = PartialCounts[OperantDims - 1] * OperantElementSize;
-    DestBlockStride = SelectionCounts[OperantDims - 1] * OperantElementSize;
+    if (OperantDims > 0)
+    {
+        SourceBlockStride = PartialCounts[OperantDims - 1] * OperantElementSize;
+        DestBlockStride = SelectionCounts[OperantDims - 1] * OperantElementSize;
+    }
 
     /* calculate first selected element and count */
     BlockCount = 1;
@@ -965,31 +1045,50 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     FFSTimestepInfo TSInfo = malloc(sizeof(*TSInfo));
     FFSBuffer MetaEncodeBuffer = create_FFSBuffer();
     FFSBuffer DataEncodeBuffer = create_FFSBuffer();
-    SstData DataRec = malloc(sizeof(*DataRec));
-    SstData MetaDataRec = malloc(sizeof(*MetaDataRec));
+    struct _SstData DataRec;
+    struct _SstData MetaDataRec;
     int MetaDataSize;
     int DataSize;
     struct FFSMetadataInfoStruct *MBase;
-    DataRec->block =
+    DataRec.block =
         FFSencode(DataEncodeBuffer, Info->DataFormat, Stream->D, &DataSize);
-    DataRec->DataSize = DataSize;
+    DataRec.DataSize = DataSize;
     TSInfo->DataEncodeBuffer = DataEncodeBuffer;
 
     MBase = Stream->M;
     MBase->DataBlockSize = DataSize;
-    MetaDataRec->block =
+    MetaDataRec.block =
         FFSencode(MetaEncodeBuffer, Info->MetaFormat, Stream->M, &MetaDataSize);
-    MetaDataRec->DataSize = MetaDataSize;
+    MetaDataRec.DataSize = MetaDataSize;
     TSInfo->MetaEncodeBuffer = MetaEncodeBuffer;
+
+    /* free all those copied dimensions, etc */
+    MBase = Stream->M;
+    size_t *tmp = MBase->BitField;
+    MBase->BitField = NULL;
+    FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
+    /*
+     * Codacy reports a problem here, because codacy isn't very smart.  The
+     * BitField value is saved away from FMfree_var_rec_elements() so that it
+     * isn't unnecessarily free'd.
+     */
+    MBase->BitField = tmp;
+    FMfree_var_rec_elements(Info->DataFormat, Stream->D);
 
     // Call SstInternalProvideStep with Metadata block, Data block and (any new)
     // formatID and formatBody
     //    printf("MetaDatablock is (Length %d):\n", MetaDataSize);
-    //    FMdump_encoded_data(Info->MetaFormat, MetaDataRec->block, 1024000);
+    //    FMdump_encoded_data(Info->MetaFormat, MetaDataRec.block, 1024000);
     //    printf("\nDatablock is :\n");
-    //    FMdump_encoded_data(Info->DataFormat, DataRec->block, 1024000);
-    SstInternalProvideTimestep(Stream, MetaDataRec, DataRec, Timestep, Formats,
-                               FreeTSInfo, TSInfo);
+    //    FMdump_encoded_data(Info->DataFormat, DataRec.block, 1024000);
+    SstInternalProvideTimestep(Stream, &MetaDataRec, &DataRec, Timestep,
+                               Formats, FreeTSInfo, TSInfo);
+    while (Formats)
+    {
+        struct FFSFormatBlock *Tmp = Formats->Next;
+        free(Formats);
+        Formats = Tmp;
+    }
 }
 
 static void LoadFormats(SstStream Stream, FFSFormatList Formats)
@@ -1097,6 +1196,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             FMcopy_struct_list(format_list_of_FMFormat(Format));
         FMlocalize_structs(List);
         establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
+        FMfree_struct_list(List);
     }
 
     if (FFSdecode_in_place_possible(FFSformat))
@@ -1185,8 +1285,11 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
 extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
 {
     if (!Stream->ReaderFFSContext)
-        Stream->ReaderFFSContext =
-            create_FFSContext_FM(create_local_FMcontext());
+    {
+        FMContext Tmp = create_local_FMcontext();
+        Stream->ReaderFFSContext = create_FFSContext_FM(Tmp);
+        free_FMcontext(Tmp);
+    }
 
     LoadFormats(Stream, MetaData->Formats);
 

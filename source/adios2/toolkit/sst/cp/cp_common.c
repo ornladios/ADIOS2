@@ -309,6 +309,8 @@ static void replaceFormatNameInFieldList(FMStructDescList l, char *orig,
                     /* remove list item with 'orig'  Move higher elements down 1
                      */
                     int index = j;
+                    free((char *)l[i].field_list[j].field_name);
+                    free((char *)l[i].field_list[j].field_type);
                     while (l[i].field_list[index].field_name != NULL)
                     {
                         l[i].field_list[index] = l[i].field_list[index + 1];
@@ -436,6 +438,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
 
     MPI_Gatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
                 MPI_CHAR, 0, Stream->mpiComm);
+    free_FFSBuffer(Buf);
 
     if (Stream->Rank == 0)
     {
@@ -543,6 +546,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 
     MPI_Allgatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
                    MPI_CHAR, Stream->mpiComm);
+    free_FFSBuffer(Buf);
 
     FFSContext context = Stream->CPInfo->ffs_c;
 
@@ -569,6 +573,24 @@ static void initAtomList()
     CM_TRANSPORT_ATOM = attr_atom_from_string("CM_TRANSPORT");
 }
 
+static void AddCustomStruct(CP_GlobalInfo CPInfo, FMStructDescList Struct)
+{
+    CPInfo->CustomStructCount++;
+    CPInfo->CustomStructList =
+        realloc(CPInfo->CustomStructList,
+                sizeof(FMStructDescList) * CPInfo->CustomStructCount);
+    CPInfo->CustomStructList[CPInfo->CustomStructCount - 1] = Struct;
+}
+
+static void FreeCustomStructs(CP_GlobalInfo CPInfo)
+{
+    for (int i = 0; i < CPInfo->CustomStructCount; i++)
+    {
+        FMfree_struct_list(CPInfo->CustomStructList[i]);
+    }
+    free(CPInfo->CustomStructList);
+}
+
 static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
 {
     FMStructDescList PerRankReaderStructs, FullReaderRegisterStructs,
@@ -584,6 +606,7 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     CPInfo->PerRankReaderInfoFormat =
         FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, PerRankReaderStructs);
+    AddCustomStruct(CPInfo, PerRankReaderStructs);
 
     FullReaderRegisterStructs =
         combineCpDpFormats(CP_ReaderRegisterStructs, CP_ReaderInitStructs,
@@ -592,52 +615,59 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
         CMregister_format(CPInfo->cm, FullReaderRegisterStructs);
     CMregister_handler(CPInfo->ReaderRegisterFormat, CP_ReaderRegisterHandler,
                        NULL);
+    AddCustomStruct(CPInfo, FullReaderRegisterStructs);
 
-    CombinedReaderStructs =
+    /*gse*/ CombinedReaderStructs =
         combineCpDpFormats(CP_DP_ReaderArrayStructs, CP_ReaderInitStructs,
                            DPInfo->ReaderContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedReaderStructs);
     CPInfo->CombinedReaderInfoFormat =
         FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedReaderStructs);
+    AddCustomStruct(CPInfo, CombinedReaderStructs);
 
-    PerRankWriterStructs =
+    /*gse*/ PerRankWriterStructs =
         combineCpDpFormats(CP_DP_WriterPairStructs, CP_WriterInitStructs,
                            DPInfo->WriterContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, PerRankWriterStructs);
     CPInfo->PerRankWriterInfoFormat =
         FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, PerRankWriterStructs);
+    AddCustomStruct(CPInfo, PerRankWriterStructs);
 
-    FullWriterResponseStructs =
+    /*gse*/ FullWriterResponseStructs =
         combineCpDpFormats(CP_WriterResponseStructs, CP_WriterInitStructs,
                            DPInfo->WriterContactFormats);
     CPInfo->WriterResponseFormat =
         CMregister_format(CPInfo->cm, FullWriterResponseStructs);
     CMregister_handler(CPInfo->WriterResponseFormat, CP_WriterResponseHandler,
                        NULL);
+    AddCustomStruct(CPInfo, FullWriterResponseStructs);
 
-    CombinedWriterStructs =
+    /*gse*/ CombinedWriterStructs =
         combineCpDpFormats(CP_DP_WriterArrayStructs, CP_WriterInitStructs,
                            DPInfo->WriterContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedWriterStructs);
     CPInfo->CombinedWriterInfoFormat =
         FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedWriterStructs);
+    AddCustomStruct(CPInfo, CombinedWriterStructs);
 
-    CombinedMetadataStructs = combineCpDpFormats(
+    /*gse*/ CombinedMetadataStructs = combineCpDpFormats(
         MetaDataPlusDPInfoStructs, NULL, DPInfo->TimestepInfoFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
     CPInfo->PerRankMetadataFormat =
         FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
+    AddCustomStruct(CPInfo, CombinedMetadataStructs);
 
-    CombinedTimestepMetadataStructs = combineCpDpFormats(
+    /*gse*/ CombinedTimestepMetadataStructs = combineCpDpFormats(
         TimestepMetadataStructs, NULL, DPInfo->TimestepInfoFormats);
     CPInfo->DeliverTimestepMetadataFormat =
         CMregister_format(CPInfo->cm, CombinedTimestepMetadataStructs);
     CMregister_handler(CPInfo->DeliverTimestepMetadataFormat,
                        CP_TimestepMetadataHandler, NULL);
+    AddCustomStruct(CPInfo, CombinedTimestepMetadataStructs);
 
     CPInfo->ReaderActivateFormat = CMregister_simple_format(
         CPInfo->cm, "ReaderActivate", ReaderActivateList,
@@ -659,12 +689,122 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     CMregister_handler(CPInfo->ReaderCloseFormat, CP_ReaderCloseHandler, NULL);
 }
 
+static CP_GlobalInfo CPInfo = NULL;
+static int CPInfoRefCount = 0;
+
+extern void AddToLastCallFreeList(void *Block)
+{
+    CPInfo->LastCallFreeList =
+        realloc(CPInfo->LastCallFreeList,
+                sizeof(void *) * (CPInfo->LastCallFreeCount + 1));
+    CPInfo->LastCallFreeList[CPInfo->LastCallFreeCount] = Block;
+    CPInfo->LastCallFreeCount++;
+}
+
+extern void SstStreamDestroy(SstStream Stream)
+{
+    CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
+               Stream->Filename);
+    if (Stream->Role == ReaderRole)
+    {
+        Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
+    }
+    else
+    {
+        Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
+    }
+    if (Stream->Readers)
+    {
+        for (int i = 0; i < Stream->ReaderCount; i++)
+        {
+            CP_PeerConnection *connections_to_reader =
+                Stream->Readers[i]->Connections;
+
+            for (int j = 0; j < Stream->Readers[i]->ReaderCohortSize; j++)
+            {
+                free_attr_list(connections_to_reader[j].ContactList);
+            }
+            free(Stream->Readers[i]->Connections);
+            free(Stream->Readers[i]->Peers);
+            // Stream->Readers[i] is free'd in LastCall
+        }
+        free(Stream->Readers);
+    }
+
+    free(Stream->DataTransport);
+    FFSFormatList FFSList = Stream->PreviousFormats;
+    while (FFSList)
+    {
+        FFSFormatList Tmp = FFSList->Next;
+        /* Server rep and ID here are copied */
+        free(FFSList->FormatServerRep);
+        free(FFSList->FormatIDRep);
+        free(FFSList);
+        FFSList = Tmp;
+    }
+    if ((Stream->Role == WriterRole) && Stream->WriterParams->FFSmarshal)
+    {
+        FFSFreeMarshalData(Stream);
+        if (Stream->M)
+            free(Stream->M);
+        if (Stream->D)
+            free(Stream->D);
+    }
+
+    if (Stream->Role == ReaderRole)
+    {
+        /* reader side */
+        if (Stream->ReaderFFSContext)
+            free_FFSContext(Stream->ReaderFFSContext);
+        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        {
+            free_attr_list(Stream->ConnectionsToWriter[i].ContactList);
+            if (Stream->ConnectionsToWriter[i].CMconn)
+            {
+                CMConnection_close(Stream->ConnectionsToWriter[i].CMconn);
+            }
+        }
+        if (Stream->ConnectionsToWriter)
+            free(Stream->ConnectionsToWriter);
+        free(Stream->Peers);
+    }
+
+    if (Stream->Filename)
+        free(Stream->Filename);
+    if (Stream->ParamsBlock)
+        free(Stream->ParamsBlock);
+    //   Stream is free'd in LastCall
+
+    CPInfoRefCount--;
+    if (CPInfoRefCount == 0)
+    {
+        CP_verbose(
+            Stream,
+            "Reference count now zero, Destroying process SST info cache");
+        CManager_close(CPInfo->cm);
+        if (CPInfo->ffs_c)
+            free_FFSContext(CPInfo->ffs_c);
+        FreeCustomStructs(CPInfo);
+        for (int i = 0; i < CPInfo->LastCallFreeCount; i++)
+        {
+            free(CPInfo->LastCallFreeList[i]);
+        }
+        free(CPInfo);
+        CPInfo = NULL;
+        if (CP_SstParamsList)
+            free_FMfield_list(CP_SstParamsList);
+        CP_SstParamsList = NULL;
+    }
+}
+
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
 {
-    static CP_GlobalInfo CPInfo = NULL;
 
     if (CPInfo)
+    {
+        CPInfoRefCount++;
         return CPInfo;
+    }
 
     initAtomList();
 
@@ -728,6 +868,7 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
 
     doFormatRegistration(CPInfo, DPInfo);
 
+    CPInfoRefCount++;
     return CPInfo;
 }
 

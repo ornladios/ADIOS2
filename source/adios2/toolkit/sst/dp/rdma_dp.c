@@ -742,6 +742,25 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     }
 }
 
+static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
+{
+    Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)RS_Stream_v;
+    /* Stuff here */
+}
+
+static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
+{
+    Rdma_WS_Stream WS_Stream = (Rdma_WS_Stream)WS_Stream_v;
+    /* Stuff here */
+}
+
+static void RdmaDestroyWriterPerReader(CP_Services Svcs,
+                                       DP_WSR_Stream WSR_Stream_v)
+{
+    Rdma_WSR_Stream WSR_Stream = (Rdma_WSR_Stream)WSR_Stream_v;
+    /* Stuff here */
+}
+
 static FMField RdmaReaderContactList[] = {
     {"ContactString", "string", sizeof(char *),
      FMOffset(RdmaReaderContactInfo, ContactString)},
@@ -797,5 +816,8 @@ extern CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.waitForCompletion = RdmaWaitForCompletion;
     RdmaDPInterface.provideTimestep = RdmaProvideTimestep;
     RdmaDPInterface.releaseTimestep = RdmaReleaseTimestep;
+    RdmaDPInterface.destroyReader = RdmaDestroyReader;
+    RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
+    RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;
     return &RdmaDPInterface;
 }
