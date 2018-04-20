@@ -4,7 +4,7 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #
-# TestBPWriteTypes.py: test Python numpy types in ADIOS2 File
+# BPWriteTypes.py: test Python numpy types in ADIOS2 File
 #                      Write/Read High-Level API
 #  Created on: March 12, 2018
 #      Author: William F Godoy godoywf@ornl.gov
@@ -28,7 +28,7 @@ start = [rank * nx]
 count = [nx]
 
 # Writer
-fw = adios2.open("types_np.bp", "w", comm)
+fw = adios2.open("types_np.bp", "w", comm, "config1.xml", "Test IO 1")
 
 
 if(rank == 0):
@@ -65,11 +65,11 @@ fr = adios2.open("types_np.bp", "r", comm)
 
 vars_info = fr.available_variables()
 
-for name, info in vars_info.items():
-    print("variable_name: " + name)
+for var_name, info in vars_info.items():
+    print(var_name)
     for key, value in info.items():
         print("\t" + key + ": " + value)
-    print("\n")
+    print()
 
 
 inTag = fr.readstring("tag")
@@ -124,15 +124,15 @@ i = 0
 
 while(not fr.eof()):
     instepStr = fr.readstring("steps")
-    indataI8 = fr.read("varI8", start, count)
+    indataI8 = fr.read("varI8")
     indataI16 = fr.read("varI16", start, count)
     indataI32 = fr.read("varI32", start, count)
     indataI64 = fr.read("varI64", start, count)
     indataU8 = fr.read("varU8", start, count)
     indataU16 = fr.read("varU16", start, count)
-    indataU32 = fr.read("varU32", start, count)
+    indataU32 = fr.read("varU32")
     indataU64 = fr.read("varU64", start, count)
-    indataR32 = fr.read("varR32", start, count)
+    indataR32 = fr.read("varR32")
     indataR64 = fr.read("varR64", start, count, True)
 
     stepStr = "Step:" + str(i).strip()

@@ -243,8 +243,6 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
     else if (type == GetType<T>())                                             \
     {                                                                          \
         Variable<T> &variable = *InquireVariable<T>(name);                     \
-        variablesInfo[name]["Min"] = ValueToString(variable.m_Min);            \
-        variablesInfo[name]["Max"] = ValueToString(variable.m_Max);            \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             ValueToString(variable.m_AvailableStepsCount);                     \
         variablesInfo[name]["Shape"] = VectorToCSV(variable.m_Shape);          \
@@ -256,6 +254,8 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         else                                                                   \
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "false";                      \
+            variablesInfo[name]["Min"] = ValueToString(variable.m_Min);        \
+            variablesInfo[name]["Max"] = ValueToString(variable.m_Max);        \
         }                                                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
