@@ -153,5 +153,10 @@ Engine IO::Open(const std::string &name, const int openMode)
 
 void IO::FlushAll() { m_IO.FlushAll(); }
 
+std::map<std::string, Params> IO::GetAvailableVariables() noexcept
+{
+    return m_IO.GetAvailableVariables();
+}
+
 } // end namespace py11
 } // end namespace adios2
