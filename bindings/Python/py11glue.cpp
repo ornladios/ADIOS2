@@ -274,6 +274,7 @@ PYBIND11_MODULE(adios2, m)
         .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
                          const std::string &, const int)) &
                          adios2::py11::IO::Open)
+        .def("GetAvailableVariables", &adios2::py11::IO::GetAvailableVariables)
         .def("FlushAll", &adios2::py11::IO::FlushAll);
 
     pybind11::class_<adios2::py11::Engine>(m, "py11::Engine")
@@ -310,6 +311,7 @@ PYBIND11_MODULE(adios2, m)
         .def("EndStep", &adios2::py11::Engine::EndStep)
         .def("WriteStep", &adios2::py11::Engine::WriteStep)
         .def("Flush", &adios2::py11::Engine::Flush)
+        .def("CurrentStep", &adios2::py11::Engine::CurrentStep)
         .def("Close", &adios2::py11::Engine::Close,
              pybind11::arg("transportIndex") = -1);
 

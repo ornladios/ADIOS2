@@ -55,6 +55,8 @@ public:
     AttributeBase *DefineAttribute(const std::string &name,
                                    const std::vector<std::string> &strings);
 
+    std::map<std::string, Params> GetAvailableVariables() noexcept;
+
     Engine Open(const std::string &name, const int openMode);
 
     void FlushAll();

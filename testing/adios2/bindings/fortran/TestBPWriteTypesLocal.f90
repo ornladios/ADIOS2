@@ -13,7 +13,7 @@
      character(len=:), allocatable :: variable_name, engine_type
      integer :: variable_type, ndims
      integer(kind=8), dimension(:), allocatable :: count_in
-     integer(kind=8) steps_start, steps_count
+     integer(kind=8) steps_start, steps_count, current_step
 
      ! Launch MPI
      call MPI_Init(ierr)
@@ -103,6 +103,10 @@
          call adios2_put_deferred(bpWriter, variables(4), data_I64, ierr)
          call adios2_put_deferred(bpWriter, variables(5), data_R32, ierr)
          call adios2_put_deferred(bpWriter, variables(6), data_R64, ierr)
+
+         call adios2_current_step(bpWriter, current_step, ierr)
+         if (current_step /= i-1) stop 'wrong current step'
+
          call adios2_end_step(bpWriter, ierr)
      end do
 
