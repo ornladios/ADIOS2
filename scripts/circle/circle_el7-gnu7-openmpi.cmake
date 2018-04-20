@@ -17,15 +17,16 @@ set(CTEST_DASHBOARD_ROOT "$ENV{HOME}")
 include(${CMAKE_CURRENT_LIST_DIR}/EnvironmentModules.cmake)
 module(purge)
 module(load gnu7)
-module(load py2-numpy)
+module(load py3-numpy)
 module(load openmpi3)
-module(load py2-mpi4py)
+module(load py3-mpi4py)
 module(load phdf5)
 module(load adios)
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
+find_program(PYTHON_EXECUTABLE python3.4)
 
 set(dashboard_cache "
 ADIOS2_USE_ADIOS1:STRING=ON
@@ -40,6 +41,8 @@ ADIOS2_USE_ZeroMQ:STRING=ON
 #ZFP_ROOT:PATH=/opt/zfp/install
 
 MPIEXEC_MAX_NUMPROCS:STRING=16
+
+PYTHON_EXECUTABLE:FILEPATH=${PYTHON_EXECUTABLE}
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)
