@@ -205,6 +205,8 @@ void BPFileReader::ReadVariables(
 
             for (const auto &stepPair : subFileIndexPair.second) // step
             {
+                // TODO move memory
+
                 for (const auto &blockInfo : stepPair.second)
                 {
                     const auto &seek = blockInfo.Seeks;

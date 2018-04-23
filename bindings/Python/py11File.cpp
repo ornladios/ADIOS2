@@ -239,12 +239,15 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
                            const size_t stepSelectionStart,
                            const size_t stepSelectionCount)
 {
-    const std::string type = m_Stream->m_IO->InquireVariableType(name);
-
     // shape of the returned numpy array
-    Dims shapePy(selectionCount);
-    std::transform(shapePy.begin(), shapePy.end(), shapePy.begin(),
-                   std::bind1st(std::multiplies<size_t>(), stepSelectionCount));
+    Dims shapePy(selectionCount.size() + 1);
+    shapePy[0] = stepSelectionCount;
+    for (auto i = 1; i < shapePy.size(); ++i)
+    {
+        shapePy[i] = selectionCount[i - 1];
+    }
+
+    const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
     if (type.empty())
     {
