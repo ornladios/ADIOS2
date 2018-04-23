@@ -57,6 +57,8 @@ public:
 
     virtual ~Engine();
 
+    explicit operator bool() const noexcept;
+
     /**
      * Gets the factory IO object
      * @return reference to IO object that created this engine
@@ -247,7 +249,11 @@ protected:
     /** added to exceptions to improve debugging */
     std::string m_EndMessage;
 
+    /** keeps track of current advance status */
     StepStatus m_AdvanceStatus = StepStatus::OK;
+
+    /** keep track if the current Engine is marked for destruction in IO */
+    bool m_IsClosed = false;
 
     /** Called from constructors */
     virtual void Init();

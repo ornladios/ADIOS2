@@ -25,6 +25,8 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 
 Engine::~Engine(){};
 
+Engine::operator bool() const noexcept { return !m_IsClosed; }
+
 IO &Engine::GetIO() noexcept { return m_IO; }
 
 Mode Engine::OpenMode() const noexcept { return m_OpenMode; }
@@ -152,6 +154,7 @@ void Engine::Close(const int transportIndex)
     if (transportIndex == -1)
     {
         MPI_Comm_free(&m_MPIComm);
+        m_IsClosed = true;
     }
 }
 
