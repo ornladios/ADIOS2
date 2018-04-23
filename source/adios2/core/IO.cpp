@@ -316,12 +316,32 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
 Engine &IO::Open(const std::string &name, const Mode mode,
                  MPI_Comm mpiComm_orig)
 {
-    if (m_DebugMode)
+    auto itEngineFound = m_Engines.find(name);
+    const bool isEngineFound = (itEngineFound != m_Engines.end());
+    bool isEngineActive = false;
+    if (isEngineFound)
     {
-        if (m_Engines.count(name) == 1)
+        if (*itEngineFound->second)
+        {
+            isEngineActive = true;
+        }
+    }
+
+    if (m_DebugMode && isEngineFound)
+    {
+        if (isEngineActive) // check if active
         {
             throw std::invalid_argument("ERROR: IO Engine with name " + name +
-                                        " already created, in call to Open.\n");
+                                        " already created and is active (Close "
+                                        "not called yet), in call to Open.\n");
+        }
+    }
+
+    if (isEngineFound)
+    {
+        if (!isEngineActive)
+        {
+            m_Engines.erase(name);
         }
     }
 

@@ -911,6 +911,45 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
     }
 }
 
+TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
+{
+    // Each process would write a 4x2 array and all processes would
+    // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
+    const std::string fname("OpenTwice.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const std::size_t Nx = 2;
+    // Number of cols
+    const std::size_t Ny = 4;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+// Write test data using ADIOS2
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+    {
+        adios2::IO &io = adios.DeclareIO("TwoOpens");
+
+        adios2::Engine &bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        EXPECT_THROW(io.Open(fname, adios2::Mode::Write),
+                     std::invalid_argument);
+
+        bpWriter.Close();
+
+        EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
+        EXPECT_THROW(io.Open(fname, adios2::Mode::Read), std::invalid_argument);
+    }
+}
+
 //******************************************************************************
 // main
 //******************************************************************************
