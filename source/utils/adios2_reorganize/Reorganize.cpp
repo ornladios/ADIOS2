@@ -506,10 +506,18 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
     else if (type == adios2::GetType<T>())                                     \
     {                                                                          \
         varinfo[varidx].readbuf = malloc(varinfo[varidx].writesize);           \
-        varinfo[varidx].v->SetSelection(                                       \
-            {varinfo[varidx].start, varinfo[varidx].count});                   \
-        rStream.GetDeferred<T>(                                                \
-            name, reinterpret_cast<T *>(varinfo[varidx].readbuf));             \
+        if (varinfo[varidx].count.size() == 0)                                 \
+        {                                                                      \
+            rStream.GetSync<T>(                                                \
+                name, reinterpret_cast<T *>(varinfo[varidx].readbuf));         \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            varinfo[varidx].v->SetSelection(                                   \
+                {varinfo[varidx].start, varinfo[varidx].count});               \
+            rStream.GetDeferred<T>(                                            \
+                name, reinterpret_cast<T *>(varinfo[varidx].readbuf));         \
+        }                                                                      \
     }
             ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -536,10 +544,18 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::GetType<T>())                                     \
     {                                                                          \
-        varinfo[varidx].v->SetSelection(                                       \
-            {varinfo[varidx].start, varinfo[varidx].count});                   \
-        wStream.PutDeferred<T>(                                                \
-            name, reinterpret_cast<T *>(varinfo[varidx].readbuf));             \
+        if (varinfo[varidx].count.size() == 0)                                 \
+        {                                                                      \
+            wStream.PutSync<T>(                                                \
+                name, reinterpret_cast<T *>(varinfo[varidx].readbuf));         \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            varinfo[varidx].v->SetSelection(                                   \
+                {varinfo[varidx].start, varinfo[varidx].count});               \
+            wStream.PutDeferred<T>(                                            \
+                name, reinterpret_cast<T *>(varinfo[varidx].readbuf));         \
+        }                                                                      \
     }
             ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
