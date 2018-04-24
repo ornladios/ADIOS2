@@ -66,6 +66,27 @@ void BP3Deserializer::ClipContiguousMemory(
 #undef declare_type
 }
 
+void BP3Deserializer::SetVariableNextStepData(const std::string &variableName,
+                                              IO &io) const
+{
+    const std::string type(io.InquireVariableType(variableName));
+
+    if (type == "compound")
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        Variable<T> *variable = io.InquireVariable<T>(variableName);           \
+        if (variable != nullptr)                                               \
+        {                                                                      \
+            SetVariableNextStepDataCommon(*variable);                          \
+        }                                                                      \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+}
+
 // PRIVATE
 void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
