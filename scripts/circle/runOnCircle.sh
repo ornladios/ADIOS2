@@ -95,4 +95,10 @@ esac
 . /etc/profile >/dev/null
 
 export PKG_CONFIG_PATH=$(dirname $(find /opt/libfabric/1.6.0 -name libfabric.pc))
-/opt/cmake/3.6.3/bin/ctest -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE -DCTEST_BUILD_NAME=${CUSTOM_BUILD_NAME}
+if [ -x /opt/cmake/3.6.3/bin/ctest ]
+then
+  CTEST=/opt/cmake/3.6.3/bin/ctest
+else
+  CTEST=/opt/cmake/3.6.0/bin/ctest
+fi
+${CTEST} -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE -DCTEST_BUILD_NAME=${CUSTOM_BUILD_NAME}
