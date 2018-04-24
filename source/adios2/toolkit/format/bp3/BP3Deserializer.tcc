@@ -490,6 +490,12 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
     }
 }
 
+template <class T>
+void BP3Deserializer::SetVariableNextStepDataCommon(Variable<T> &variable) const
+{
+    variable.SetData(variable.GetData() + GetTotalSize(variable.m_Count));
+}
+
 template <>
 inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
     Variable<std::string> &variable) const

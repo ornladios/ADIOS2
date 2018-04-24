@@ -924,7 +924,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ManySteps)
     const std::size_t Ny = 4;
 
     // Number of steps
-    const std::size_t NSteps = 2;
+    const std::size_t NSteps = 5;
+    const std::size_t tInitial = 2;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -945,12 +946,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ManySteps)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(mpiSize * Nx)};
-            adios2::Dims start{static_cast<unsigned int>(0),
-                               static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims shape{Ny, static_cast<size_t>(mpiSize * Nx)};
+            adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
+            adios2::Dims count{Ny, Nx};
             auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             auto &var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
@@ -1140,18 +1138,18 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ManySteps)
         var_r32->SetSelection(sel);
         var_r64->SetSelection(sel);
 
-        var_i8->SetStepSelection({0, NSteps});
-        var_i16->SetStepSelection({0, NSteps});
-        var_i32->SetStepSelection({0, NSteps});
-        var_i64->SetStepSelection({0, NSteps});
+        var_i8->SetStepSelection({tInitial, NSteps - tInitial});
+        var_i16->SetStepSelection({tInitial, NSteps - tInitial});
+        var_i32->SetStepSelection({tInitial, NSteps - tInitial});
+        var_i64->SetStepSelection({tInitial, NSteps - tInitial});
 
-        var_u8->SetStepSelection({0, NSteps});
-        var_u16->SetStepSelection({0, NSteps});
-        var_u32->SetStepSelection({0, NSteps});
-        var_u64->SetStepSelection({0, NSteps});
+        var_u8->SetStepSelection({tInitial, NSteps - tInitial});
+        var_u16->SetStepSelection({tInitial, NSteps - tInitial});
+        var_u32->SetStepSelection({tInitial, NSteps - tInitial});
+        var_u64->SetStepSelection({tInitial, NSteps - tInitial});
 
-        var_r32->SetStepSelection({0, NSteps});
-        var_r64->SetStepSelection({0, NSteps});
+        var_r32->SetStepSelection({tInitial, NSteps - tInitial});
+        var_r64->SetStepSelection({tInitial, NSteps - tInitial});
 
         bpReader.GetDeferred(*var_i8, I8.data());
         bpReader.GetDeferred(*var_i16, I16.data());
@@ -1168,7 +1166,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ManySteps)
 
         bpReader.PerformGets();
 
-        for (size_t t = 0; t < NSteps; ++t)
+        for (size_t t = tInitial; t < NSteps; ++t)
         {
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
@@ -1176,7 +1174,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ManySteps)
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
-                const size_t index = t * Nx * Ny + i;
+                const size_t index = (t - tInitial) * Nx * Ny + i;
                 std::stringstream ss;
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
