@@ -11,12 +11,13 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPY_H_
 #define ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPY_H_
 
+#include "py11IO.h"
+
 #include <memory> //std::shared_ptr
 #include <string>
 
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/ADIOS.h"
-#include "py11IO.h"
 
 namespace adios2
 {

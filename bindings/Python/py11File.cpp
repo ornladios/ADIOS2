@@ -8,6 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
+#include "py11File.h"
+
 #include <algorithm>
 #include <iostream>
 
@@ -15,7 +17,6 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 
-#include "py11File.h"
 #include "py11types.h"
 
 namespace adios2
