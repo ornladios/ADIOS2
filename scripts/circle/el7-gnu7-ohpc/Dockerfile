@@ -1,3 +1,4 @@
+MAINTAINER chuck.atkins@kitware.com
 FROM centos:centos7
 
 # Install core dev packages
