@@ -189,20 +189,6 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
                           << ", value = " << parameter.second << std::endl;
             }
         }
-        std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
-            m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
-        std::cout << variablesSubFileInfo.size() << std::endl;
-
-        for (const auto &variableNamePair : variablesSubFileInfo)
-        {
-            std::cout << ": " << variableNamePair.first << std::endl;
-            const std::string variableName(variableNamePair.first);
-            for (const auto &subFileIndexPair : variableNamePair.second)
-            {
-                const size_t subFileIndex = subFileIndexPair.first;
-                std::cout << "subFileIndex: " << subFileIndex << std::endl;
-            }
-        }
     }
     else if (m_WriterFFSmarshal)
     {
@@ -223,15 +209,32 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
-    std::cout << "0111\n";
+    m_BPmarshal = true;
+    m_FFSmarshal = false;
+    std::cout << m_BPmarshal << std::endl;
+    std::cout << m_FFSmarshal << std::endl;
     if (m_FFSmarshal)
     {
         // this does all the deferred gets and fills in the variable array data
         SstFFSPerformGets(m_Input);
-        std::cout << "1111\n";
     }
     else if (m_BPmarshal)
     {
+        std::cout << "1111\n";
+        std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
+            m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
+        std::cout << variablesSubFileInfo.size() << std::endl;
+
+        for (const auto &variableNamePair : variablesSubFileInfo)
+        {
+            std::cout << ": " << variableNamePair.first << std::endl;
+            const std::string variableName(variableNamePair.first);
+            for (const auto &subFileIndexPair : variableNamePair.second)
+            {
+                const size_t subFileIndex = subFileIndexPair.first;
+                std::cout << "subFileIndex: " << subFileIndex << std::endl;
+            }
+        }
         std::cout << "2111\n";
         //  I'm assuming that the DoGet calls below have been constructing
         //  some kind of data structure that indicates what data this reader
@@ -371,26 +374,12 @@ void SstReader::Init()
         }                                                                      \
         if (m_WriterBPmarshal)                                                 \
         {                                                                      \
-            std::cout << "c---\n";                                             \
             /*  Look at the data requested and examine the metadata to see  */ \
             /*  what writer has what you need.  Build up a set of read */      \
             /*  requests (maybe just get all the data from every writer */     \
             /*  that has *something* you need).  You'll use this in EndStep,*/ \
             /*  when you have to get all the array data and put it where  */   \
             /*  it's supposed to go. */                                        \
-            std::map<std::string, SubFileInfoMap> variablesSubFileInfo =       \
-                m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);      \
-            for (const auto &variableNamePair : variablesSubFileInfo)          \
-            {                                                                  \
-                std::cout << ": " << variableNamePair.first << std::endl;      \
-                const std::string variableName(variableNamePair.first);        \
-                for (const auto &subFileIndexPair : variableNamePair.second)   \
-                {                                                              \
-                    const size_t subFileIndex = subFileIndexPair.first;        \
-                    std::cout << "subFileIndex: " << subFileIndex              \
-                              << std::endl;                                    \
-                }                                                              \
-            }                                                                  \
         }                                                                      \
     }                                                                          \
     void SstReader::DoGetDeferred(Variable<T> &variable, T &data)              \
@@ -404,7 +393,6 @@ void SstReader::Init()
         }                                                                      \
         if (m_WriterBPmarshal)                                                 \
         {                                                                      \
-            std::cout << "d---\n";                                             \
             /* See the routine above.*/                                        \
         }                                                                      \
     }
