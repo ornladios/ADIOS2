@@ -48,7 +48,7 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-        io.SetParameter("Substreams", "2");
+        io.SetParameter("Substreams", "1");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -346,7 +346,7 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-        io.SetParameter("Substreams", "2");
+        io.SetParameter("Substreams", "1");
 
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -638,7 +638,7 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-        io.SetParameter("Substreams", "2");
+        io.SetParameter("Substreams", "1");
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later

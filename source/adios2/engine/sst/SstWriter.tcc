@@ -48,7 +48,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                     {"SST"});
         }
         const size_t dataSize = variable.PayloadSize() +
-            m_BP3Serializer->GetVariableBPIndexSize(
+            m_BP3Serializer->GetBPIndexSizeInData(
                     variable.m_Name, variable.m_Count);
         format::BP3Base::ResizeResult resizeResult = m_BP3Serializer->ResizeBuffer(
                 dataSize, "in call to variable " + variable.m_Name + " PutSync");

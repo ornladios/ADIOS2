@@ -49,40 +49,40 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     {
         PutSyncCommonJson(variable, values);
     }
-
 }
 
 template <class T>
 std::string DataManWriter::SerializeJson(Variable<T> &variable)
 {
-	nlohmann::json metaj;
-	metaj["S"] = variable.m_Shape;
-	metaj["C"] = variable.m_Count;
-	metaj["O"] = variable.m_Start;
-	metaj["T"] = m_CurrentStep;
-	metaj["N"] = variable.m_Name;
-	metaj["Y"] = variable.m_Type;
-	metaj["I"] = variable.PayloadSize();
-	metaj["R"] = m_MPIRank;
-	std::string metastr = metaj.dump();
-	return std::move(metastr);
+    nlohmann::json metaj;
+    metaj["S"] = variable.m_Shape;
+    metaj["C"] = variable.m_Count;
+    metaj["O"] = variable.m_Start;
+    metaj["T"] = m_CurrentStep;
+    metaj["N"] = variable.m_Name;
+    metaj["Y"] = variable.m_Type;
+    metaj["I"] = variable.PayloadSize();
+    metaj["R"] = m_MPIRank;
+    std::string metastr = metaj.dump();
+    return std::move(metastr);
 }
 
 template <class T>
 void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
 {
-	std::string metastr = SerializeJson(variable);
-	size_t flagsize = sizeof(size_t);
-	size_t metasize = metastr.size();
-	size_t datasize = variable.PayloadSize();
-	size_t totalsize = flagsize + metasize + datasize;
+    std::string metastr = SerializeJson(variable);
+    size_t flagsize = sizeof(size_t);
+    size_t metasize = metastr.size();
+    size_t datasize = variable.PayloadSize();
+    size_t totalsize = flagsize + metasize + datasize;
 
-	std::shared_ptr<std::vector<char>> buffer = std::make_shared<std::vector<char>>(totalsize);
-	std::memcpy(buffer->data(), &metasize, flagsize);
-	std::memcpy(buffer->data() + flagsize, metastr.c_str(), metasize);
-	std::memcpy(buffer->data() + flagsize + metasize, values, datasize);
+    std::shared_ptr<std::vector<char>> buffer =
+        std::make_shared<std::vector<char>>(totalsize);
+    std::memcpy(buffer->data(), &metasize, flagsize);
+    std::memcpy(buffer->data() + flagsize, metastr.c_str(), metasize);
+    std::memcpy(buffer->data() + flagsize + metasize, values, datasize);
 
-	m_DataMan->WriteWAN(buffer);
+    m_DataMan->WriteWAN(buffer);
 }
 
 template <class T>
@@ -98,9 +98,9 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
                                              {"WAN_Zmq"});
     }
 
-    const size_t dataSize = variable.PayloadSize() +
-                            m_BP3Serializer.GetVariableBPIndexSize(
-                                variable.m_Name, variable.m_Count);
+    const size_t dataSize =
+        variable.PayloadSize() +
+        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);
     format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
         dataSize, "in call to variable " + variable.m_Name + " PutSync");
 

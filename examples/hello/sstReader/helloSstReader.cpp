@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
 
         bpFloats->SetSelection(sel);
         sstReader.GetDeferred(*bpFloats, myFloats.data());
-
         Dump(myFloats);
         sstReader.EndStep();
 

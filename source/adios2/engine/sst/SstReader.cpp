@@ -45,8 +45,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     auto varFFSCallback = [](void *reader, const char *variableName,
                              const char *type, void *data) {
         std::string Type(type);
-        typename SstReader::SstReader *Reader =
-            reinterpret_cast<typename SstReader::SstReader *>(reader);
+        class SstReader::SstReader *Reader =
+            reinterpret_cast<class SstReader::SstReader *>(reader);
         if (Type == "compound")
         {
             return (void *)NULL;
@@ -74,8 +74,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
         std::string Type(type);
-        typename SstReader::SstReader *Reader =
-            reinterpret_cast<typename SstReader::SstReader *>(reader);
+        class SstReader::SstReader *Reader =
+            reinterpret_cast<class SstReader::SstReader *>(reader);
         /*
          * setup shape of array variable as global (I.E. Count == Shape,
          * Start == 0)
@@ -115,21 +115,17 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
     result = SstAdvanceStep(m_Input, (int)mode, timeout_sec);
-    if (result == SstSuccess)
-    {
-        return StepStatus::OK;
-    }
-    else if (result == SstEndOfStream)
+    if (result == SstEndOfStream)
     {
         return StepStatus::EndOfStream;
     }
-    else
+    if (result != SstSuccess)
     {
         return StepStatus::OtherError;
     }
+
     if (m_WriterBPmarshal)
     {
-        std::cout << "using BP marshal\n";
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         // At begin step, you get metadata from the writers.  You need to
         // use this for two things: First, you need to create the
@@ -165,35 +161,46 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         //   whatever transport it is using.  But it is opaque to the Engine
         //   (and to the control plane).)
 
-        std::cout << "1111\n";
-        format::BP3Deserializer deserializer(m_MPIComm, m_DebugMode);
-        deserializer.InitParameters(m_IO.m_Parameters);
-
-        std::cout << "2111\n";
+        m_BP3Deserializer = new format::BP3Deserializer(m_MPIComm, m_DebugMode);
+        m_BP3Deserializer->InitParameters(m_IO.m_Parameters);
 
         struct _SstData **d = m_CurrentStepMetaData->WriterMetadata;
 
-        deserializer.m_Metadata.Resize(
+        m_BP3Deserializer->m_Metadata.Resize(
             (*m_CurrentStepMetaData->WriterMetadata)->DataSize,
             "in SST Streaming Listener");
 
-        std::memcpy(deserializer.m_Metadata.m_Buffer.data(),
+        std::memcpy(m_BP3Deserializer->m_Metadata.m_Buffer.data(),
                     (*m_CurrentStepMetaData->WriterMetadata)->block,
                     (*m_CurrentStepMetaData->WriterMetadata)->DataSize);
 
         m_IO.RemoveAllVariables();
         m_IO.RemoveAllAttributes();
-        deserializer.ParseMetadata(deserializer.m_Metadata, m_IO);
+        m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, m_IO);
+
         const auto variablesInfo = m_IO.GetAvailableVariables();
         for (const auto &variableInfoPair : variablesInfo)
         {
             std::string var = variableInfoPair.first;
             std::cout << "---- " << var << std::endl;
-            std::string type = "null";
             for (const auto &parameter : variableInfoPair.second)
             {
-                std::cout << "---- key " << parameter.first << " value "
-                          << parameter.second << std::endl;
+                std::cout << "---- key = " << parameter.first
+                          << ", value = " << parameter.second << std::endl;
+            }
+        }
+        std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
+            m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
+        std::cout << variablesSubFileInfo.size() << std::endl;
+
+        for (const auto &variableNamePair : variablesSubFileInfo)
+        {
+            std::cout << ": " << variableNamePair.first << std::endl;
+            const std::string variableName(variableNamePair.first);
+            for (const auto &subFileIndexPair : variableNamePair.second)
+            {
+                const size_t subFileIndex = subFileIndexPair.first;
+                std::cout << "subFileIndex: " << subFileIndex << std::endl;
             }
         }
     }
@@ -208,20 +215,24 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     {
         // unknown marshaling method, shouldn't happen
     }
-    std::cout << "8111\n";
+
+    return StepStatus::OK;
 }
 
 size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
+    std::cout << "0111\n";
     if (m_FFSmarshal)
     {
         // this does all the deferred gets and fills in the variable array data
         SstFFSPerformGets(m_Input);
+        std::cout << "1111\n";
     }
-    if (m_BPmarshal)
+    else if (m_BPmarshal)
     {
+        std::cout << "2111\n";
         //  I'm assuming that the DoGet calls below have been constructing
         //  some kind of data structure that indicates what data this reader
         //  needs from different writers, what read requests it needs to
@@ -236,7 +247,13 @@ void SstReader::EndStep()
         //         place it appropriately into the waiting vars.
         //	   ClearReadRequests()  Clean up as necessary
         //
+        delete m_BP3Deserializer;
     }
+    else
+    {
+        // unknown marshaling method, shouldn't happen
+    }
+    std::cout << "3111\n";
     SstReleaseStep(m_Input);
 }
 
@@ -282,7 +299,6 @@ void SstReader::Init()
 
     auto lf_SetRegMethodParameter = [&](const std::string key,
                                         size_t &parameter) {
-
         auto itKey = m_IO.m_Parameters.find(key);
         if (itKey != m_IO.m_Parameters.end())
         {
@@ -338,8 +354,10 @@ void SstReader::Init()
         if (m_WriterBPmarshal)                                                 \
         {                                                                      \
             /*  DoGetSync() is going to have terrible performance 'cause */    \
-            /*  it's a	bad idea in an SST-like environment.  But do */         \
+            /*  it's a bad idea in an SST-like environment.  But do */         \
             /*  whatever you do forDoGetDeferred() and then PerformGets() */   \
+            DoGetDeferred(variable, data);                                     \
+            PerformGets();                                                     \
         }                                                                      \
     }                                                                          \
     void SstReader::DoGetDeferred(Variable<T> &variable, T *data)              \
@@ -353,12 +371,26 @@ void SstReader::Init()
         }                                                                      \
         if (m_WriterBPmarshal)                                                 \
         {                                                                      \
+            std::cout << "c---\n";                                             \
             /*  Look at the data requested and examine the metadata to see  */ \
-            /*  what writer has what you need.  Build up a set of read	*/      \
+            /*  what writer has what you need.  Build up a set of read */      \
             /*  requests (maybe just get all the data from every writer */     \
             /*  that has *something* you need).  You'll use this in EndStep,*/ \
             /*  when you have to get all the array data and put it where  */   \
-            /*  it's supposed to go.	*/                                        \
+            /*  it's supposed to go. */                                        \
+            std::map<std::string, SubFileInfoMap> variablesSubFileInfo =       \
+                m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);      \
+            for (const auto &variableNamePair : variablesSubFileInfo)          \
+            {                                                                  \
+                std::cout << ": " << variableNamePair.first << std::endl;      \
+                const std::string variableName(variableNamePair.first);        \
+                for (const auto &subFileIndexPair : variableNamePair.second)   \
+                {                                                              \
+                    const size_t subFileIndex = subFileIndexPair.first;        \
+                    std::cout << "subFileIndex: " << subFileIndex              \
+                              << std::endl;                                    \
+                }                                                              \
+            }                                                                  \
         }                                                                      \
     }                                                                          \
     void SstReader::DoGetDeferred(Variable<T> &variable, T &data)              \
@@ -372,6 +404,7 @@ void SstReader::Init()
         }                                                                      \
         if (m_WriterBPmarshal)                                                 \
         {                                                                      \
+            std::cout << "d---\n";                                             \
             /* See the routine above.*/                                        \
         }                                                                      \
     }

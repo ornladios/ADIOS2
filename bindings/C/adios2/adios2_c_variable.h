@@ -70,8 +70,19 @@ const size_t *adios2_variable_start(const adios2_variable *variable);
  */
 const size_t *adios2_variable_count(const adios2_variable *variable);
 
+/**
+ * Read API, get available steps start (e.g. in a file for a variable)
+ * @param variable
+ * @return available steps start
+ */
 size_t adios2_variable_available_steps_start(const adios2_variable *variable);
 
+/**
+ * Read API, get available steps count from available steps count
+ * (e.g. in a file for a variable). Not necessarily contiguous.
+ * @param variable
+ * @return available steps count
+ */
 size_t adios2_variable_available_steps_count(const adios2_variable *variable);
 
 /**

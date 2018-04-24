@@ -55,6 +55,7 @@ private:
     int m_WriterBPmarshal;
     SstFullMetadata m_CurrentStepMetaData =
         NULL; // Used only with BP marshaling
+    format::BP3Deserializer *m_BP3Deserializer;
 
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \

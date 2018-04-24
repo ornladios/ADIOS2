@@ -491,6 +491,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
             pthread_mutex_unlock(&Stream->DataLock);
             CP_verbose(Stream, "Returning metadata for Timestep %d\n",
                        FoundTS->MetadataMsg->Timestep);
+            Stream->CurrentWorkingTimestep = FoundTS->MetadataMsg->Timestep;
             return FoundTS;
         }
         /* didn't find a good next timestep, check Stream status */
@@ -505,6 +506,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
             CP_verbose(Stream, "Wait for next metadata returning NULL because "
                                "Stream is not Established\n");
             /* closed or failed, return NULL */
+            Stream->CurrentWorkingTimestep = -1;
             return NULL;
         }
         CP_verbose(Stream,
@@ -518,30 +520,9 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
     pthread_mutex_unlock(&Stream->DataLock);
 }
 
-extern SstFullMetadata SstGetMetadata(SstStream Stream, long timestep)
+extern SstFullMetadata SstGetCurMetadata(SstStream Stream)
 {
-    TSMetadataList Entry;
-    SstFullMetadata Ret;
-    Entry = waitForMetadata(Stream, timestep);
-    if (Entry)
-    {
-        Ret = malloc(sizeof(struct _SstFullMetadata));
-        Ret->WriterCohortSize = Entry->MetadataMsg->CohortSize;
-        Ret->WriterMetadata = Entry->MetadataMsg->Metadata;
-        if (Stream->DP_Interface->TimestepInfoFormats == NULL)
-        {
-            // DP didn't provide struct info, no valid data
-            Ret->DP_TimestepInfo = NULL;
-        }
-        else
-        {
-            Ret->DP_TimestepInfo = Entry->MetadataMsg->DP_TimestepInfo;
-        }
-        Stream->CurrentWorkingTimestep = timestep;
-        return Ret;
-    }
-    assert(Stream->Status != Established);
-    return NULL;
+    return Stream->CurrentMetadata;
 }
 
 extern void *SstReadRemoteMemory(SstStream Stream, int Rank, long Timestep,
@@ -642,7 +623,15 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
                                      const float timeout_sec)
 {
 
-    TSMetadataList Entry = waitForNextMetadata(Stream, Stream->ReaderTimestep);
+    TSMetadataList Entry;
+
+    if (Stream->CurrentMetadata != NULL)
+    {
+        free(Stream->CurrentMetadata);
+        Stream->CurrentMetadata = NULL;
+    }
+
+    Entry = waitForNextMetadata(Stream, Stream->ReaderTimestep);
 
     if (Entry)
     {
@@ -650,9 +639,24 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
         {
             FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
         }
+        Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
+        SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
+        Mdata->WriterCohortSize = Entry->MetadataMsg->CohortSize;
+        Mdata->WriterMetadata = Entry->MetadataMsg->Metadata;
+        if (Stream->DP_Interface->TimestepInfoFormats == NULL)
+        {
+            // DP didn't provide struct info, no valid data
+            Mdata->DP_TimestepInfo = NULL;
+        }
+        else
+        {
+            Mdata->DP_TimestepInfo = Entry->MetadataMsg->DP_TimestepInfo;
+        }
+        Stream->CurrentWorkingTimestep = Entry->MetadataMsg->Timestep;
+        Stream->CurrentMetadata = Mdata;
+
         CP_verbose(Stream, "SstAdvanceStep returning Success on timestep %d\n",
                    Entry->MetadataMsg->Timestep);
-        Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
         return SstSuccess;
     }
     if (Stream->Status == PeerClosed)
@@ -688,6 +692,11 @@ extern void SstReaderClose(SstStream Stream)
         Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
     CMsleep(Stream->CPInfo->cm, 1);
+    if (Stream->CurrentMetadata != NULL)
+    {
+        free(Stream->CurrentMetadata);
+        Stream->CurrentMetadata = NULL;
+    }
 }
 
 extern SstStatusValue SstWaitForCompletion(SstStream Stream, void *handle)

@@ -36,8 +36,8 @@ void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
                   << variable.m_Name << ")\n";
     }
 
-    const size_t dataSize = m_BP3Serializer.GetVariableBPIndexSize(
-        variable.m_Name, variable.m_Count);
+    const size_t dataSize =
+        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);
     format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
         dataSize, "in call to variable " + variable.m_Name + " PutSync");
 
