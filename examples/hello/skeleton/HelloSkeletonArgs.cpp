@@ -44,18 +44,13 @@ static void printUsage(bool isWriter)
 static unsigned int convertToUint(std::string varName, char *arg)
 {
     char *end;
-    int retval = std::strtoll(arg, &end, 10);
+    unsigned int retval = std::strtoul(arg, &end, 10);
     if (end[0] || errno == ERANGE)
     {
         throw std::invalid_argument("Invalid value given for " + varName +
                                     ": " + std::string(arg));
     }
-    if (retval < 0)
-    {
-        throw std::invalid_argument("Negative value given for " + varName +
-                                    ": " + std::string(arg));
-    }
-    return (unsigned int)retval;
+    return retval;
 }
 
 HelloSkeletonArgs::HelloSkeletonArgs(bool isWriter, int argc, char *argv[],
@@ -108,7 +103,7 @@ HelloSkeletonArgs::HelloSkeletonArgs(bool isWriter, int argc, char *argv[],
     }
 }
 
-void HelloSkeletonArgs::DecomposeArray(int NX, int NY)
+void HelloSkeletonArgs::DecomposeArray(unsigned NX, unsigned int NY)
 {
     gndx = NX;
     gndy = NY;

@@ -57,12 +57,12 @@ int main(int argc, char *argv[])
         adios2::Engine &writer =
             io.Open(settings.streamname, adios2::Mode::Write);
 
-        for (int step = 0; step < settings.steps; ++step)
+        for (size_t step = 0; step < settings.steps; ++step)
         {
             int idx = 0;
-            for (int j = 0; j < settings.ndy; ++j)
+            for (size_t j = 0; j < settings.ndy; ++j)
             {
-                for (int i = 0; i < settings.ndx; ++i)
+                for (size_t i = 0; i < settings.ndx; ++i)
                 {
                     myArray[idx] = rank + (step / 100.0f);
                     ++idx;
