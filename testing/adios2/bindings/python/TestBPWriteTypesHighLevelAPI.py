@@ -195,6 +195,4 @@ while(not fr.eof()):
         print("Data: " + str(data.R64))
         raise ValueError('R64 array read failed')
 
-
-
 fr.close()
