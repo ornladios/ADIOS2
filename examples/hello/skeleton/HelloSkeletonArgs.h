@@ -44,7 +44,7 @@ public:
     HelloSkeletonArgs(bool isWriter, int argc, char *argv[], int rank,
                       int nproc);
 
-    void DecomposeArray(int NX, int NY);
+    void DecomposeArray(unsigned int NX, unsigned int NY);
 };
 
 #endif /* HELLOSKELETONARGS_H_ */
