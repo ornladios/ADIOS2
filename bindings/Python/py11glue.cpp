@@ -11,19 +11,18 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "adios2/ADIOSTypes.h"
-
 #include <stdexcept>
 
-#include "py11ADIOS.h"
-#include "py11Engine.h"
-#include "py11File.h"
-#include "py11IO.h"
 #include <adios2.h>
 
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi4py/mpi4py.h>
 #endif
+
+#include "py11ADIOS.h"
+#include "py11Engine.h"
+#include "py11File.h"
+#include "py11IO.h"
 
 #ifdef ADIOS2_HAVE_MPI
 adios2::py11::ADIOS ADIOSInitConfig(const std::string configFile,

@@ -8,10 +8,11 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
+#include "py11IO.h"
+
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
-#include "py11IO.h"
 #include "py11types.h"
 
 namespace adios2
