@@ -21,9 +21,9 @@ int main(int argc, char *argv[])
 {
     int wrank = 0, wnproc = 1;
     int rank = 0, nproc = 1;
-    MPI_Comm mpiWriterComm;
 
 #ifdef ADIOS2_HAVE_MPI
+    MPI_Comm mpiWriterComm;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
     MPI_Comm_size(MPI_COMM_WORLD, &wnproc);
@@ -41,7 +41,11 @@ int main(int argc, char *argv[])
 
         std::vector<float> myArray(settings.ndx * settings.ndy);
 
+#ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(settings.configfile, mpiWriterComm);
+#else
+        adios2::ADIOS adios(settings.configfile);
+#endif
 
         adios2::IO &io = adios.DeclareIO("writer");
 
