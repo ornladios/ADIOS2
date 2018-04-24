@@ -103,10 +103,10 @@ HelloSkeletonArgs::HelloSkeletonArgs(bool isWriter, int argc, char *argv[],
     }
 }
 
-void HelloSkeletonArgs::DecomposeArray(unsigned NX, unsigned int NY)
+void HelloSkeletonArgs::DecomposeArray(size_t NX, size_t NY)
 {
-    gndx = NX;
-    gndy = NY;
+    gndx = static_cast<unsigned int>(NX);
+    gndy = static_cast<unsigned int>(NY);
     posx = rank % npx;
     posy = rank / npx;
 

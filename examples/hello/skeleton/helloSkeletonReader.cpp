@@ -45,7 +45,6 @@ int main(int argc, char *argv[])
         adios2::Variable<float> *vMyArray = nullptr;
         adios2::Dims count, start;
         std::vector<float> myArray;
-        size_t gndx, gndy;
 
         while (true)
         {
