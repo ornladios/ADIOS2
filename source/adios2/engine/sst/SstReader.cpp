@@ -209,33 +209,26 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
-    m_BPmarshal = true;
-    m_FFSmarshal = false;
-    std::cout << m_BPmarshal << std::endl;
-    std::cout << m_FFSmarshal << std::endl;
-    if (m_FFSmarshal)
+    if (m_WriterFFSmarshal)
     {
         // this does all the deferred gets and fills in the variable array data
         SstFFSPerformGets(m_Input);
     }
-    else if (m_BPmarshal)
+    else if (m_WriterBPmarshal)
     {
-        std::cout << "1111\n";
         std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
             m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
         std::cout << variablesSubFileInfo.size() << std::endl;
 
         for (const auto &variableNamePair : variablesSubFileInfo)
         {
-            std::cout << ": " << variableNamePair.first << std::endl;
             const std::string variableName(variableNamePair.first);
             for (const auto &subFileIndexPair : variableNamePair.second)
             {
                 const size_t subFileIndex = subFileIndexPair.first;
-                std::cout << "subFileIndex: " << subFileIndex << std::endl;
             }
         }
-        std::cout << "2111\n";
+
         //  I'm assuming that the DoGet calls below have been constructing
         //  some kind of data structure that indicates what data this reader
         //  needs from different writers, what read requests it needs to
@@ -256,7 +249,6 @@ void SstReader::EndStep()
     {
         // unknown marshaling method, shouldn't happen
     }
-    std::cout << "3111\n";
     SstReleaseStep(m_Input);
 }
 
