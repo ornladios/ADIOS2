@@ -100,7 +100,7 @@ void BPFileReader::PerformGets()
 {
     const std::map<std::string, SubFileInfoMap> variablesSubfileInfo =
         m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
-    ReadVariables(m_IO, variablesSubfileInfo);
+    ReadVariables(variablesSubfileInfo);
     m_BP3Deserializer.m_PerformedGets = true;
 }
 
@@ -179,7 +179,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
 void BPFileReader::ReadVariables(
-    IO &io, const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo)
+    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo)
 {
     const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
 
@@ -219,9 +219,13 @@ void BPFileReader::ReadVariables(
                         variableName, m_IO, contiguousMemory,
                         blockInfo.BlockBox, blockInfo.IntersectionBox);
                 } // end block
-            }     // end step
-        }         // end subfile
-    }             // end variable
+
+                // Advancing data pointer for the next step
+                m_BP3Deserializer.SetVariableNextStepData(variableName, m_IO);
+
+            } // end step
+        }     // end subfile
+    }         // end variable
 }
 
 void BPFileReader::DoClose(const int transportIndex)

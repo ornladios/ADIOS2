@@ -80,8 +80,7 @@ private:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
     void
-    ReadVariables(IO &io,
-                  const std::map<std::string, SubFileInfoMap> &variablesInfo);
+    ReadVariables(const std::map<std::string, SubFileInfoMap> &variablesInfo);
 };
 
 } // end namespace adios2

@@ -38,7 +38,7 @@ inline void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
     const std::map<std::string, SubFileInfoMap> variableSubfileInfo =
         m_BP3Deserializer.GetSyncVariableSubFileInfo(variable);
 
-    ReadVariables(m_IO, variableSubfileInfo);
+    ReadVariables(variableSubfileInfo);
 }
 
 template <class T>

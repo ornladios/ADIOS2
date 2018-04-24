@@ -73,6 +73,8 @@ public:
                               const Box<Dims> &blockBox,
                               const Box<Dims> &intersectionBox) const;
 
+    void SetVariableNextStepData(const std::string &variableName, IO &io) const;
+
     template <class T>
     void GetValueFromMetadata(Variable<T> &variable) const;
 
@@ -136,6 +138,9 @@ private:
     void ClipContiguousMemoryCommonColumn(
         Variable<T> &variable, const std::vector<char> &contiguousMemory,
         const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
+
+    template <class T>
+    void SetVariableNextStepDataCommon(Variable<T> &variable) const;
 
     template <class T>
     void GetValueFromMetadataCommon(Variable<T> &variable) const;
