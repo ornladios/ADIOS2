@@ -147,23 +147,13 @@ public:
             for (size_t y = 0; y < ndy; ++x)
             {
                 float expectedValue = GetValue(offsx + x, offsy + y, step);
-                if (array[idx] != expectedValue)
-                {
-                    throw std::ios_base::failure(
-                        "Error in read, did not receive the expected value:"
-                        " rank " + std::to_string(rank) +
-                        " step " + std::to_string(step) +
-                        " gdim {" + std::to_string(gndx) + "," +
-                                    std::to_string(gndy) + "}"
-                        " offs {" + std::to_string(offsx) + "," +
-                                    std::to_string(offsy) + "}"
-                        " ldim {" + std::to_string(ndx) + "," +
-                                    std::to_string(ndy) + "}"
-                        " lpos {" + std::to_string(x) + "," +
-                                    std::to_string(y) + "}"
-                        " received = " + std::to_string(array[idx]) +
-                        " expected = " + std::to_string(expectedValue));
-                }
+                EXPECT_EQ(array[idx], expectedValue) <<
+                    "Error in read, did not receive the expected value:"
+                    << " rank " << rank << ", step " << step
+                    << ", gdim {" << gndx << ',' << gndy << '}'
+                    << ", offs {" << offsx << ',' << offsy << '}'
+                    << ", ldim {" << ndx << ',' << ndy << '}'
+                    << ", lpos {" << x << ',' << y << '}';
                 ++idx;
             }
         }
