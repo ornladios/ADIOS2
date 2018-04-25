@@ -13,9 +13,9 @@ int main(int argc, char *argv[])
 {
     int wrank = 0, wnproc = 1;
     int rank = 0, nproc = 1;
-    MPI_Comm mpiReaderComm;
 
 #ifdef ADIOS2_HAVE_MPI
+    MPI_Comm mpiReaderComm;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
     MPI_Comm_size(MPI_COMM_WORLD, &wnproc);
@@ -32,17 +32,19 @@ int main(int argc, char *argv[])
         HelloSkeletonArgs settings(false, argc, argv, rank, nproc);
 
         /** ADIOS class factory of IO class objects, Debug is ON by default */
+#ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(settings.configfile, mpiReaderComm);
-
+#else
+        adios2::ADIOS adios(settings.configfile);
+#endif
         adios2::IO &io = adios.DeclareIO("reader");
         adios2::Engine &reader =
-            io.Open(settings.streamname, adios2::Mode::Read, mpiReaderComm);
+            io.Open(settings.streamname, adios2::Mode::Read);
 
         int step = 0;
         adios2::Variable<float> *vMyArray = nullptr;
         adios2::Dims count, start;
         std::vector<float> myArray;
-        size_t gndx, gndy;
 
         while (true)
         {
