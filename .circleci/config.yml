@@ -19,6 +19,33 @@ defaults: &defaults
 version: 2
 
 jobs:
+  "el7":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7
+
+  "el7-gnu7":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-gnu7-ohpc
+
+  "el7-gnu7-openmpi":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-gnu7-ohpc
+
+  "el7-intel18":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-intel18-ohpc
+
+  "el7-intel18-impi":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-intel18-ohpc
+
+  # These are the "legacy" jobs
+  # Just keeping them around to allow for an orderly transition to the new jobs
   "el7-gcc48":
     <<: *defaults
     docker:
@@ -33,5 +60,13 @@ workflows:
   version: 2
   build:
     jobs:
+      - "el7"
+      - "el7-gnu7"
+      - "el7-gnu7-openmpi"
+      - "el7-intel18"
+      - "el7-intel18-impi"
+
+      # Legacy
       - "el7-gcc48"
       - "el7-gcc7-openmpi"
+
