@@ -1,10 +1,8 @@
-MAINTAINER chuck.atkins@kitware.com
 FROM centos:centos7
 
 # Install core dev packages
 RUN yum -y install gcc gcc-c++ gcc-gfortran git make curl file \
       glibc-devel bzip2 bzip2-libs bzip2-devel python-devel numpy \
-      pkgconfig
 RUN yum -y install epel-release
 RUN yum -y install zeromq-devel hdf5 hdf5-devel
 
