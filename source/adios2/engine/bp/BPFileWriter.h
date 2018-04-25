@@ -50,6 +50,8 @@ private:
     /** Manages the optional collective metadata files */
     transportman::TransportMan m_FileMetadataManager;
 
+    bool m_IsDataReady = false;
+
     void Init() final;
 
     /** Parses parameters from IO SetParameters */

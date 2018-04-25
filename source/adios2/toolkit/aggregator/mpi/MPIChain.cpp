@@ -10,8 +10,6 @@
 
 #include "MPIChain.h"
 
-#include <iostream>
-
 #include "adios2/ADIOSMPI.h"
 
 namespace adios2
@@ -38,17 +36,17 @@ void MPIChain::Send(BufferSTL &bufferSTL, const int step)
 {
     BufferSTL &sendBuffer = GetSender(bufferSTL);
 
-    const int finalRank = m_Size - step;
+    const int endRank = m_Size - 1 - step;
 
     // send size
-    if (m_Rank >= 1 && m_Rank < finalRank) // sender
+    if (m_Rank >= 1 && m_Rank <= endRank) // sender
     {
         MPI_Request sendRequest;
         MPI_Isend(&sendBuffer.m_Position, 1, ADIOS2_MPI_SIZE_T, m_Rank - 1, 0,
                   m_Comm, &sendRequest);
     }
     // receive size and resize receiving buffer
-    if (m_Rank >= 0 && m_Rank < finalRank - 1) // receiver
+    if (m_Rank < endRank) // receiver
     {
         size_t bufferSize = 0;
         MPI_Request receiveRequest;
@@ -66,7 +64,7 @@ void MPIChain::Send(BufferSTL &bufferSTL, const int step)
     }
 
     // send data
-    if (m_Rank >= 1 && m_Rank < finalRank) // sender
+    if (m_Rank >= 1 && m_Rank <= endRank) // sender
     {
         MPI_Request sendRequest;
         MPI_Isend(sendBuffer.m_Buffer.data(),
@@ -77,8 +75,8 @@ void MPIChain::Send(BufferSTL &bufferSTL, const int step)
 
 void MPIChain::Receive(BufferSTL &bufferSTL, const int step)
 {
-    const int finalRank = m_Size - step;
-    if (m_Rank >= 0 && m_Rank < finalRank - 1) // receiver
+    const int endRank = m_Size - 1 - step;
+    if (m_Rank < endRank) // receiver
     {
         BufferSTL &receiveBuffer = GetReceiver(bufferSTL);
 

@@ -76,6 +76,7 @@ void MPIAggregator::InitComm(const size_t subStreams, MPI_Comm parentComm)
             MPI_Comm_split(parentComm, static_cast<int>(consumer), parentRank,
                            &m_Comm);
             m_ConsumerRank = static_cast<int>(consumer);
+            m_SubStreamIndex = static_cast<size_t>(s);
         }
     }
 

@@ -367,7 +367,7 @@ void BP3Serializer::PutAttributes(IO &io)
         stats.Offset = absolutePosition;                                       \
         stats.MemberID = memberID;                                             \
         stats.Step = m_MetadataSet.TimeStep;                                   \
-        stats.FileIndex = static_cast<uint32_t>(m_RankMPI);                    \
+        stats.FileIndex = GetFileIndex();                                      \
         Attribute<T> &attribute = *io.InquireAttribute<T>(name);               \
         PutAttributeInData(attribute, stats);                                  \
         PutAttributeInIndex(attribute, stats);                                 \
@@ -1401,7 +1401,7 @@ uint32_t BP3Serializer::GetFileIndex() const noexcept
 {
     if (m_Aggregator.m_IsActive)
     {
-        return static_cast<uint32_t>(m_Aggregator.m_ConsumerRank);
+        return static_cast<uint32_t>(m_Aggregator.m_SubStreamIndex);
     }
 
     return static_cast<uint32_t>(m_RankMPI);
