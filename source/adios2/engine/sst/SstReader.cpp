@@ -22,7 +22,6 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("SstReader", io, name, mode, mpiComm)
 {
-    SstStream output;
     char *cstr = new char[name.length() + 1];
     std::strcpy(cstr, name.c_str());
 
@@ -216,19 +215,8 @@ void SstReader::EndStep()
     }
     else if (m_WriterBPmarshal)
     {
-        std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
-            m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
-        std::cout << variablesSubFileInfo.size() << std::endl;
 
-        for (const auto &variableNamePair : variablesSubFileInfo)
-        {
-            const std::string variableName(variableNamePair.first);
-            for (const auto &subFileIndexPair : variableNamePair.second)
-            {
-                const size_t subFileIndex = subFileIndexPair.first;
-            }
-        }
-
+        PerformGets();
         //  I'm assuming that the DoGet calls below have been constructing
         //  some kind of data structure that indicates what data this reader
         //  needs from different writers, what read requests it needs to
@@ -372,6 +360,7 @@ void SstReader::Init()
             /*  that has *something* you need).  You'll use this in EndStep,*/ \
             /*  when you have to get all the array data and put it where  */   \
             /*  it's supposed to go. */                                        \
+            m_BP3Deserializer->GetDeferredVariable(variable, data);            \
         }                                                                      \
     }                                                                          \
     void SstReader::DoGetDeferred(Variable<T> &variable, T &data)              \
@@ -392,7 +381,71 @@ void SstReader::Init()
 ADIOS2_FOREACH_TYPE_1ARG(declare_gets)
 #undef declare_gets
 
-void SstReader::PerformGets() { SstFFSPerformGets(m_Input); }
+void SstReader::PerformGets()
+{
+    if (m_WriterFFSmarshal)
+    {
+        SstFFSPerformGets(m_Input);
+    }
+    else if (m_WriterBPmarshal)
+    {
+        const auto readScheduleMap =
+            m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
+        const auto variableMap = m_IO.GetAvailableVariables();
+
+        for (const auto &readSchedule : readScheduleMap)
+        {
+            const std::string variableName(readSchedule.first);
+            size_t rank;
+            for (const auto &subFileIndexPair : readSchedule.second)
+            {
+                rank = subFileIndexPair.first;
+            }
+            const auto it = variableMap.find(variableName);
+            if (it == variableMap.end())
+            {
+                throw std::runtime_error(
+                    "SstReader::PerformGets() failed to find variable.");
+            }
+            std::string type = "null";
+            for (const auto &parameter : it->second)
+            {
+                if (parameter.first == "Type")
+                {
+                    type = parameter.second;
+                }
+            }
+            if (type == "compound")
+            {
+                throw("Compound type is not supported yet.");
+            }
+#define declare_type(T)                                                        \
+    else if (type == GetType<T>())                                             \
+    {                                                                          \
+        auto *v = m_IO.InquireVariable<T>(variableName);                       \
+        if (v != nullptr)                                                      \
+        {                                                                      \
+            SstReadRemoteMemory(m_Input, rank, CurrentStep(), 0,               \
+                                v->PayloadSize(), v->GetData(),                \
+                                m_CurrentStepMetaData->DP_TimestepInfo[rank]); \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            throw std::runtime_error(                                          \
+                "In SstReader::PerformGets() data pointer obtained from BP "   \
+                "deserializer is a nullptr");                                  \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+        }
+    }
+
+    else
+    {
+        // unknown marshaling method, shouldn't happen
+    }
+}
 
 void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
 

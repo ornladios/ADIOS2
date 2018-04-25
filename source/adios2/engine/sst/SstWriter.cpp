@@ -85,10 +85,6 @@ void SstWriter::EndStep()
 
         BP3DataBlock *newblock = new BP3DataBlock;
 
-        size_t metadataStart, metadataCount;
-
-        std::cout << m_BP3Serializer->m_Metadata.m_Buffer.size() << std::endl;
-
         newblock->metadata.DataSize =
             m_BP3Serializer->m_Metadata.m_Buffer.size();
         newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
