@@ -144,7 +144,7 @@ public:
         size_t idx = 0;
         for (size_t x = 0; x < ndx; ++x)
         {
-            for (size_t y = 0; y < ndy; ++x)
+            for (size_t y = 0; y < ndy; ++y)
             {
                 float expectedValue = GetValue(offsx + x, offsy + y, step);
                 EXPECT_EQ(array[idx], expectedValue) <<
