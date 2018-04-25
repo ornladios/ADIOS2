@@ -147,12 +147,11 @@ public:
             for (size_t y = 0; y < ndy; ++y)
             {
                 float expectedValue = GetValue(offsx + x, offsy + y, step);
-                EXPECT_EQ(array[idx], expectedValue) <<
-                    "Error in read, did not receive the expected value:"
-                    << " rank " << rank << ", step " << step
-                    << ", gdim {" << gndx << ',' << gndy << '}'
-                    << ", offs {" << offsx << ',' << offsy << '}'
-                    << ", ldim {" << ndx << ',' << ndy << '}'
+                EXPECT_EQ(array[idx], expectedValue)
+                    << "Error in read, did not receive the expected value:"
+                    << " rank " << rank << ", step " << step << ", gdim {"
+                    << gndx << ',' << gndy << '}' << ", offs {" << offsx << ','
+                    << offsy << '}' << ", ldim {" << ndx << ',' << ndy << '}'
                     << ", lpos {" << x << ',' << y << '}';
                 ++idx;
             }
