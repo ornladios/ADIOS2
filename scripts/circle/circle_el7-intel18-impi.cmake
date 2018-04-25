@@ -30,6 +30,9 @@ find_program(MPI_C_COMPILER mpiicc)
 find_program(MPI_CXX_COMPILER mpiicpc)
 find_program(MPI_Fortran_COMPILER mpiifort)
 
+# Allow oversubscription for IntelMPI to prevent timeouts on circleci
+set(ENV{I_MPI_WAIT_MODE} "enable")
+
 set(dashboard_cache "
 ADIOS2_USE_ADIOS1:STRING=ON
 ADIOS2_USE_BZip2:STRING=ON
