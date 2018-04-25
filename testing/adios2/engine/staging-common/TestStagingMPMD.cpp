@@ -99,15 +99,14 @@ public:
 
         adios2::Engine &writer = io.Open(streamName, adios2::Mode::Write, comm);
 
-        for (int step = 0; step < steps; ++step)
+        for (size_t step = 0; step < steps; ++step)
         {
-            int idx = 0;
-            for (int j = 0; j < ndx; ++j)
+            size_t idx = 0;
+            for (size_t x = 0; x < ndx; ++x)
             {
-                for (int i = 0; i < ndy; ++i)
+                for (size_t y = 0; y < ndy; ++y)
                 {
-                    myArray[idx] =
-                        GetValue(gndx, gndy, offsx + j, offsy + i, step);
+                    myArray[idx] = GetValue(offsx + x, offsy + y, step);
                     ++idx;
                 }
             }
@@ -119,7 +118,7 @@ public:
         writer.Close();
     }
 
-    /* encode position x,y as x.y floating point value in each array cell
+    /* encode position x,y as y.x floating point value in each array cell
      * add 1000*step to each value
      *
      * A 2 by 2 example with 3x3 local arrays
@@ -133,33 +132,37 @@ public:
      *
      * Next step each value is bigger by 1000
      */
-    float GetValue(size_t gndx, size_t gndy, size_t offsx, size_t offsy,
-                   int step)
+    float GetValue(size_t offsx, size_t offsy, size_t step)
     {
-        return 1000.0f * step + offsx * gndx + offsy / 1000.0f;
+        return 1000.0f * step + offsy + offsx / 1000.0f;
     }
 
-    void CheckData(const float *array, size_t gndx, size_t gndy, size_t offsx,
-                   size_t offsy, size_t ndx, size_t ndy, int step, int rank)
+    void CheckData(const std::vector<float> &array, size_t gndx, size_t gndy,
+                   size_t offsx, size_t offsy, size_t ndx, size_t ndy,
+                   size_t step, int rank)
     {
-        float expectedValue;
-        int idx = 0;
-        for (int j = 0; j < ndx; ++j)
+        size_t idx = 0;
+        for (size_t x = 0; x < ndx; ++x)
         {
-            for (int i = 0; i < ndy; ++i)
+            for (size_t y = 0; y < ndy; ++x)
             {
-                expectedValue =
-                    GetValue(gndx, gndy, offsx + j, offsy + i, step);
+                float expectedValue = GetValue(offsx + x, offsy + y, step);
                 if (array[idx] != expectedValue)
                 {
                     throw std::ios_base::failure(
-                        "Error in read, did not receive the expected value: "
-                        "rank " +
-                        std::to_string(rank) + " step " + std::to_string(step) +
+                        "Error in read, did not receive the expected value:"
+                        " rank " + std::to_string(rank) +
+                        " step " + std::to_string(step) +
+                        " gdim {" + std::to_string(gndx) + "," +
+                                    std::to_string(gndy) + "}"
                         " offs {" + std::to_string(offsx) + "," +
-                        std::to_string(offsy) + "} received = " +
-                        std::to_string(array[idx]) + "  expected = " +
-                        std::to_string(expectedValue) + "\n");
+                                    std::to_string(offsy) + "}"
+                        " ldim {" + std::to_string(ndx) + "," +
+                                    std::to_string(ndy) + "}"
+                        " lpos {" + std::to_string(x) + "," +
+                                    std::to_string(y) + "}"
+                        " received = " + std::to_string(array[idx]) +
+                        " expected = " + std::to_string(expectedValue));
                 }
                 ++idx;
             }
@@ -184,7 +187,7 @@ public:
 
         size_t posx = rank % npx;
         size_t posy = rank / npx;
-        int step = 0;
+        size_t step = 0;
         adios2::Variable<float> *vMyArray = nullptr;
         std::vector<float> myArray;
 
@@ -231,8 +234,7 @@ public:
 
             reader.GetDeferred(*vMyArray, myArray.data());
             reader.EndStep();
-            CheckData(myArray.data(), gndx, gndy, offsx, offsy, ndx, ndy, step,
-                      rank);
+            CheckData(myArray, gndx, gndy, offsx, offsy, ndx, ndy, step, rank);
             std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
             ++step;
         }
