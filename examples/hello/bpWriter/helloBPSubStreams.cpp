@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     /** Application variable */
-    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    std::vector<float> myFloats = {0, 1}; //, 2, 3, 4, 5, 6, 7, 8, 9};
     std::vector<int> myInts = {0, -1, -2, -3, -4, -5, -6, -7, -8, -9};
     const std::size_t Nx = myFloats.size();
 
@@ -47,28 +47,28 @@ int main(int argc, char *argv[])
         adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
-        adios2::Variable<int> &bpInts = bpIO.DefineVariable<int>(
-            "bpInts", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
-
-        adios2::Variable<std::string> &bpString =
-            bpIO.DefineVariable<std::string>("bpString");
+        //        adios2::Variable<int> &bpInts = bpIO.DefineVariable<int>(
+        //            "bpInts", {size * Nx}, {rank * Nx}, {Nx},
+        //            adios2::ConstantDims);
+        //
+        //        adios2::Variable<std::string> &bpString =
+        //            bpIO.DefineVariable<std::string>("bpString");
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpFileWriter =
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
 
-        for (unsigned int t = 0; t < 3; ++t)
+        for (unsigned int t = 0; t < 2; ++t)
         {
             bpFileWriter.BeginStep();
 
-            bpFileWriter.PutDeferred(bpInts, myInts.data());
+            // bpFileWriter.PutDeferred(bpInts, myInts.data());
 
             myFloats[0] = static_cast<float>(t);
             myFloats[1] = static_cast<float>(rank);
             bpFileWriter.PutDeferred<float>(bpFloats, myFloats.data());
 
-            bpFileWriter.PutDeferred(bpString, myString);
-
+            // bpFileWriter.PutDeferred(bpString, myString);
             bpFileWriter.EndStep();
         }
 

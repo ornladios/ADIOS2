@@ -153,6 +153,17 @@ public:
      * used */
     void AggregatorsIReceive(const int step);
 
+    /**
+     * Swap the current sender/receiver buffers
+     * @param step current step in the aggregation process
+     */
+    void AggregatorsSwapBuffer(const int step) noexcept;
+
+    /**
+     * Resets buffering ordering to initial state for next aggregation
+     */
+    void AggregatorsResetBuffer() noexcept;
+
 private:
     /** BP format version */
     const uint8_t m_Version = 3;

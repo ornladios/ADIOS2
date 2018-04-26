@@ -70,7 +70,7 @@ void BPFileWriter::EndStep()
         PerformPuts();
     }
 
-    /** true: advances step */
+    // true: advances step
     m_BP3Serializer.SerializeData(m_IO, true);
 
     const size_t currentStep = CurrentStep();
@@ -138,10 +138,10 @@ void BPFileWriter::InitTransports()
                                                 m_IO.m_TransportsParameters);
 
         // /path/name.bp.dir/name.bp.rank
-        const std::vector<std::string> bpRankNames =
-            m_BP3Serializer.GetBPRankNames(transportsNames);
+        const std::vector<std::string> bpSubStreamNames =
+            m_BP3Serializer.GetBPSubStreamNames(transportsNames);
 
-        m_FileDataManager.OpenFiles(bpRankNames, m_OpenMode,
+        m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters,
                                     m_BP3Serializer.m_Profiler.IsActive);
     }
@@ -289,7 +289,6 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
                                       const int transportIndex)
 {
     m_BP3Serializer.CloseStream(m_IO, false);
-
     m_BP3Serializer.AggregatorsUpdateDataAbsolutePosition();
     // this can be launched with async and return a future
     m_BP3Serializer.AggregatorsUpdateOffsetsInMetadata();
@@ -311,7 +310,10 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
         }
 
         m_BP3Serializer.AggregatorsIReceive(r);
+        m_BP3Serializer.AggregatorsSwapBuffer(r);
     }
+
+    m_BP3Serializer.AggregatorsResetBuffer();
 }
 
 } // end namespace adios2

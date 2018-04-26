@@ -32,7 +32,9 @@ public:
 
     void Receive(BufferSTL &bufferSTL, const int step) final;
 
-    void SwapBufferOrder() final;
+    void SwapBuffers(const int step) noexcept final;
+
+    void ResetBuffers() noexcept final;
 
     BufferSTL &GetConsumerBuffer(BufferSTL &bufferSTL) final;
 
