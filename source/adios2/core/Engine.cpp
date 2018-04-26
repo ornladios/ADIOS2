@@ -128,7 +128,7 @@ void Engine::WriteStep()
         Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
         if (variable->GetData() != nullptr)                                    \
         {                                                                      \
-            if (m_DebugMode && !variable->m_ConstantDims)                      \
+            if (m_DebugMode && !variable->IsConstantDims())                    \
             {                                                                  \
                 throw std::invalid_argument(                                   \
                     "ERROR: variable " + name +                                \
@@ -159,6 +159,8 @@ void Engine::Close(const int transportIndex)
 }
 
 void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
+
+void Engine::FixedSchedule() noexcept { m_FixedLocalSchedule = true; };
 
 // PROTECTED
 void Engine::Init() {}

@@ -49,6 +49,10 @@ IO::IO(const Settings &s, MPI_Comm comm)
         {s.ndx, s.ndy});
 
     bpWriter = &bpio.Open(m_outputfilename, adios2::Mode::Write, comm);
+
+    // Promise that we are not going to change the variable sizes nor add new
+    // variables
+    bpWriter->FixedSchedule();
 }
 
 IO::~IO()
