@@ -2511,14 +2511,15 @@ INT_CMConnection_failed(CMConnection conn)
      CMtrace_out(cm, CMFreeVerbose, "CM - add reference connection %p - handler\n", conn);
      INT_CMConnection_add_reference(conn);
      {
+         CMHandlerFunc handler = cm_format->handler;
+	 void *client_data = cm_format->client_data;
 	 CMbuffer local = NULL;
 	 if ((cm_buffer == NULL) && (decode_buffer == NULL)) {
 	     local = fill_cmbuffer(cm, buffer, length);
 	     buffer = local->buffer;
 	 }
 	 CManager_unlock(cm);
-	 cm_format->handler(cm, conn, decode_buffer, cm_format->client_data,
-			    attrs);
+	 handler(cm, conn, decode_buffer, client_data, attrs);
 	 CManager_lock(cm);
 	 if (local) cm_return_data_buf(cm, local);
 	 CMtrace_out(cm, CMFreeVerbose, "CM - delete reference connection %p - handler\n", conn);
