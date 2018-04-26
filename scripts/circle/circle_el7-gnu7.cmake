@@ -23,6 +23,9 @@ module(load hdf5)
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
+set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
+set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
+set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 find_program(PYTHON_EXECUTABLE python3.4)
 
 set(dashboard_cache "
