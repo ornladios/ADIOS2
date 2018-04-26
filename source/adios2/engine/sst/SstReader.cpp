@@ -427,9 +427,13 @@ void SstReader::PerformGets()
         auto *v = m_IO.InquireVariable<T>(variableName);                       \
         if (v != nullptr)                                                      \
         {                                                                      \
+            void *dp_info = NULL;                                              \
+            if (m_CurrentStepMetaData->DP_TimestepInfo)                        \
+            {                                                                  \
+                dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];        \
+            }                                                                  \
             SstReadRemoteMemory(m_Input, rank, CurrentStep(), 0,               \
-                                v->PayloadSize(), v->GetData(),                \
-                                m_CurrentStepMetaData->DP_TimestepInfo[rank]); \
+                                v->PayloadSize(), v->GetData(), dp_info);      \
         }                                                                      \
         else                                                                   \
         {                                                                      \
