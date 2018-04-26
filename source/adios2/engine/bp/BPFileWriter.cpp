@@ -52,7 +52,6 @@ void BPFileWriter::PerformPuts()
         return;
     }
 
-    m_IsDataReady = false;
     m_BP3Serializer.ResizeBuffer(m_BP3Serializer.m_DeferredVariablesDataSize,
                                  "in call to PerformPuts");
 
@@ -80,7 +79,6 @@ void BPFileWriter::EndStep()
     if (currentStep % flushStepsCount == 0)
     {
         Flush();
-        m_IsDataReady = true;
     }
 }
 
@@ -106,7 +104,6 @@ void BPFileWriter::Init()
 #define declare_type(T)                                                        \
     void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
     {                                                                          \
-        m_IsDataReady = false;                                                 \
         PutSyncCommon(variable, values);                                       \
     }                                                                          \
     void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
@@ -180,28 +177,22 @@ void BPFileWriter::DoFlush(const bool isFinal, const int transportIndex)
 
 void BPFileWriter::DoClose(const int transportIndex)
 {
-    if (!m_IsDataReady)
+    if (m_BP3Serializer.m_DeferredVariables.size() > 0)
     {
-        if (m_BP3Serializer.m_DeferredVariables.size() > 0)
-        {
-            PerformPuts();
-        }
-
-        DoFlush(true, transportIndex);
+        PerformPuts();
     }
+
+    DoFlush(true, transportIndex);
 
     if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
     {
         m_FileDataManager.CloseFiles(transportIndex);
     }
 
-    if (!m_IsDataReady)
+    if (m_BP3Serializer.m_CollectiveMetadata &&
+        m_FileDataManager.AllTransportsClosed())
     {
-        if (m_BP3Serializer.m_CollectiveMetadata &&
-            m_FileDataManager.AllTransportsClosed())
-        {
-            WriteCollectiveMetadataFile(true);
-        }
+        WriteCollectiveMetadataFile(true);
     }
 
     if (m_BP3Serializer.m_Profiler.IsActive &&
