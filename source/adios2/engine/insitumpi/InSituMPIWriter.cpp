@@ -82,7 +82,8 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     for (auto peerRank : m_RankDirectPeers)
     {
         MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, m_CommWorld, m_MPIRequests.data());
+                  insitumpi::MpiTags::Step, m_CommWorld,
+                  m_MPIRequests.data() + index);
     }
 
     m_NCallsPerformPuts = 0;
@@ -242,7 +243,7 @@ void InSituMPIWriter::PerformPuts()
 
         const int nRequests = insitumpi::GetNumberOfRequestsInWriteScheduleMap(
             m_WriteScheduleMap);
-        m_MPIRequests.reserve(nRequests + 1);
+        m_MPIRequests.reserve(nRequests + 1); // +1 is a request from BeginStep
     }
 
     // Make the send requests for each variable for each matching peer

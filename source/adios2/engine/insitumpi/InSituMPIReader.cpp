@@ -146,7 +146,6 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     if (!m_FixedRemoteSchedule)
     {
         unsigned long mdLen = 0;
-        int fixed = (m_FixedRemoteSchedule ? 1 : 0);
 
         if (m_ReaderRootRank == m_ReaderRank)
         {
