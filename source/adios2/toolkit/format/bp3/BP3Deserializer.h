@@ -65,6 +65,10 @@ public:
     /* Return the read schedule of a variable stored at GetDeferred() calls */
     SubFileInfoMap &GetSubFileInfoMap(const std::string &variableName);
 
+    /* Calculate and return the read schedule of a single variable */
+    template <class T>
+    SubFileInfoMap GetSubFileInfo(const Variable<T> &variable) const;
+
     std::map<std::string, SubFileInfoMap>
     PerformGetsVariablesSubFileInfo(IO &io);
 
@@ -105,9 +109,6 @@ private:
     void DefineAttributeInIO(const ElementIndexHeader &header, IO &io,
                              const std::vector<char> &buffer,
                              size_t position) const;
-
-    template <class T>
-    SubFileInfoMap GetSubFileInfo(const Variable<T> &variable) const;
 
     template <class T>
     void ClipContiguousMemoryCommon(Variable<T> &variable,

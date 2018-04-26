@@ -255,10 +255,6 @@ void Reorganize::CleanUpStep(IO &io)
     {
         if (vi.readbuf != nullptr)
         {
-            std::cout << "************** clean: " << vi.v->m_Name
-                      << " size = " << vi.writesize
-                      << " ptr = " << static_cast<void *>(vi.readbuf)
-                      << std::endl;
             free(vi.readbuf);
         }
     }
@@ -444,8 +440,6 @@ int Reorganize::ProcessMetadata(Engine &rStream, IO &io,
         size_t sum_count =
             Decompose(numproc, rank, varinfo[varidx], decomp_values);
         varinfo[varidx].writesize = sum_count * variable->m_ElementSize;
-        std::cout << "$$$$$$$$$$$$$$$  process:" << variable->m_Name
-                  << " size = " << varinfo[varidx].writesize << std::endl;
 
         if (varinfo[varidx].writesize != 0)
         {
@@ -515,7 +509,7 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::GetType<T>())                                     \
     {                                                                          \
-        varinfo[varidx].readbuf = malloc(varinfo[varidx].writesize);           \
+        varinfo[varidx].readbuf = calloc(1, varinfo[varidx].writesize);        \
         if (varinfo[varidx].count.size() == 0)                                 \
         {                                                                      \
             rStream.GetSync<T>(                                                \

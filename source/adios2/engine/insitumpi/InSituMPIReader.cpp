@@ -257,12 +257,16 @@ void InSituMPIReader::PerformGets()
         SendReadSchedule(m_ReadScheduleMap);
     }
 
-    // Allocate the MPI_Request and OngoingReceives vectors
-    m_MPIRequests.reserve(nRequests);
-    m_OngoingReceives.reserve(nRequests);
+    if (m_CurrentStep == 0 || !m_FixedLocalSchedule || !m_FixedRemoteSchedule)
+    {
+        // Allocate the MPI_Request and OngoingReceives vectors
+        m_MPIRequests.reserve(nRequests);
+        m_OngoingReceives.reserve(nRequests);
 
-    // Make the receive requests for each variable
-    AsyncRecvAllVariables();
+        // Make the receive requests for each variable
+        AsyncRecvAllVariables();
+    }
+
     ProcessReceives();
 
     m_BP3Deserializer.m_PerformedGets = true;
@@ -396,26 +400,12 @@ void InSituMPIReader::ProcessReceives()
                 {
                     const std::vector<char> &rawData =
                         m_OngoingReceives[index].temporaryDataArray;
-                    const SubFileInfo *sfi =
-                        m_OngoingReceives[index].sfiPointer;
+                    const SubFileInfo &sfi = m_OngoingReceives[index].sfi;
                     const std::string *name =
                         m_OngoingReceives[index].varNamePointer;
-
-                    std::cout
-                        << "YYYYYYYYYYYYYYY Clip:"
-                        << "index = " << index << " ptr = "
-                        << static_cast<void *>(m_OngoingReceives[index]
-                                                   .temporaryDataArray.data())
-                        << " sfi.ptr = " << static_cast<const void *>(sfi)
-                        << std::endl;
-                    std::cout << " block = ";
-                    insitumpi::PrintBox(sfi->BlockBox);
-                    std::cout << " intersection = ";
-                    insitumpi::PrintBox(sfi->IntersectionBox);
-                    std::cout << std::endl;
-                    m_BP3Deserializer.ClipContiguousMemory(
-                        *name, m_IO, rawData, sfi->BlockBox,
-                        sfi->IntersectionBox);
+                    m_BP3Deserializer.ClipContiguousMemory(*name, m_IO, rawData,
+                                                           sfi.BlockBox,
+                                                           sfi.IntersectionBox);
                 }
                 // MPI_Request_free(&m_MPIRequests[index]); // not required???
                 // m_MPIRequests[index] = MPI_REQUEST_NULL; // not required???

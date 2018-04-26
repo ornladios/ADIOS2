@@ -51,8 +51,30 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::cout << "InSituMPI Reader " << m_ReaderRank << " GetDeferred("
                   << variable.m_Name << ")\n";
     }
-    m_BP3Deserializer.GetDeferredVariable(variable, data);
-    m_BP3Deserializer.m_PerformedGets = false;
+    if (m_FixedLocalSchedule && m_FixedRemoteSchedule && m_CurrentStep > 0)
+    {
+        variable.SetData(data);
+        // Create the async send for the variable now
+        const SubFileInfoMap sfim = m_BP3Deserializer.GetSubFileInfo(variable);
+        // m_BP3Deserializer.GetSubFileInfoMap(variable.m_Name);
+        /* FIXME: this only works if there is only one block read for each
+         * variable.
+         * SubFileInfoMap contains ALL read schedules for the variable.
+         * We should do this call per SubFileInfo that matches the request
+         */
+        AsyncRecvVariable(variable, sfim);
+        m_BP3Deserializer.m_PerformedGets = false;
+    }
+    else
+    {
+        /* FIXME: this call works if there is only one block read for each
+         * variable.
+         * SubFileInfoMap is created in this call which contains ALL read
+         * schedules for the variable.
+         */
+        m_BP3Deserializer.GetDeferredVariable(variable, data);
+        m_BP3Deserializer.m_PerformedGets = false;
+    }
 }
 
 template <class T>
@@ -108,21 +130,11 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
                     T *inPlacePointer = variable.GetData() + elementOffset;
                     T *ptrT = const_cast<T *>(inPlacePointer);
                     char *ptr = reinterpret_cast<char *>(ptrT);
-                    m_OngoingReceives.emplace_back(&sfi, &variable.m_Name, ptr);
-                    std::cout
-                        << "XXXXXXXXXXXXXXXX\n"
-                        << "index = " << index
-                        << " ptr = " << static_cast<void *>(variable.GetData())
-                        << " writer = " << writerRank
-                        << " writer rank = " << m_RankAllPeers[writerRank]
-                        << " req.ptr = "
-                        << static_cast<void *>(m_MPIRequests.data() + index)
-                        << std::endl;
+                    m_OngoingReceives.emplace_back(sfi, &variable.m_Name, ptr);
                     MPI_Irecv(m_OngoingReceives[index].inPlaceDataArray,
                               blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
                               insitumpi::MpiTags::Data, m_CommWorld,
                               m_MPIRequests.data() + index);
-                    std::cout << "YYYYYYYYYYYYYYYY" << std::endl;
                     if (m_Verbosity == 5)
                     {
                         std::cout
@@ -135,20 +147,9 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
                 else
                 {
                     // Receive in temporary array and copy in later
-                    m_OngoingReceives.emplace_back(&sfi, &variable.m_Name);
+                    m_OngoingReceives.emplace_back(sfi, &variable.m_Name);
                     m_OngoingReceives[index].temporaryDataArray.resize(
                         blockSize);
-                    std::cout
-                        << "XXXXXXXXX AsyncRecv:"
-                        << "index = " << index << " ptr = "
-                        << static_cast<void *>(m_OngoingReceives[index]
-                                                   .temporaryDataArray.data())
-                        << " writer = " << writerRank
-                        << " writer rank = " << m_RankAllPeers[writerRank]
-                        << " req.ptr = "
-                        << static_cast<void *>(m_MPIRequests.data() + index)
-                        << " sfi.ptr = " << static_cast<const void *>(&sfi)
-                        << std::endl;
                     MPI_Irecv(
                         m_OngoingReceives[index].temporaryDataArray.data(),
                         blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
