@@ -138,7 +138,7 @@ public:
     int REDEFINE =
         0; // 1: delete and redefine variable definitions at each step to
            // test adios_delete_vardefs()
-    char *FILENAME = nullptr;
+    char FILENAME[256];
 
     /* Variables to write */
     int *a2 = nullptr;
@@ -242,11 +242,8 @@ public:
         NBLOCKS = p.nblocks;
         NSTEPS = p.nsteps;
         REDEFINE = redefineVars;
-        std::string fn = "manyVars." + std::to_string(NVARS) + "_" +
-                         std::to_string(NBLOCKS) + "_" +
-                         std::to_string(NSTEPS) + "_" +
-                         (REDEFINE ? "redefine" : "") + ".bp";
-        FILENAME = const_cast<char *>(fn.c_str());
+        snprintf(FILENAME, sizeof(FILENAME), "manyVars.%zu_%zu_%zu%s.bp", NVARS,
+                 NBLOCKS, NSTEPS, REDEFINE ? "_redefine" : "");
 
         alloc_vars();
         adios2_adios *adiosH =
