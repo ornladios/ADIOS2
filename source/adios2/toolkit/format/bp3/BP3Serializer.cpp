@@ -320,7 +320,16 @@ void BP3Serializer::AggregatorsISend(const int step)
 void BP3Serializer::AggregatorsIReceive(const int step)
 {
     m_Aggregator.Receive(m_Data, step);
-    m_Aggregator.SwapBufferOrder();
+}
+
+void BP3Serializer::AggregatorsSwapBuffer(const int step) noexcept
+{
+    m_Aggregator.SwapBuffers(step);
+}
+
+void BP3Serializer::AggregatorsResetBuffer() noexcept
+{
+    m_Aggregator.ResetBuffers();
 }
 
 BufferSTL &BP3Serializer::AggregatorConsumerBuffer()

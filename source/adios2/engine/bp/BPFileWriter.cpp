@@ -319,7 +319,10 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
         }
 
         m_BP3Serializer.AggregatorsIReceive(r);
+        m_BP3Serializer.AggregatorsSwapBuffer(r);
     }
+
+    m_BP3Serializer.AggregatorsResetBuffer();
 }
 
 } // end namespace adios2

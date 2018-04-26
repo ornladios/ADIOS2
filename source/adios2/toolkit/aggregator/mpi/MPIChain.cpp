@@ -90,10 +90,12 @@ void MPIChain::Receive(BufferSTL &bufferSTL, const int step)
     }
 }
 
-void MPIChain::SwapBufferOrder()
+void MPIChain::SwapBuffers(const int /*step*/) noexcept
 {
     m_CurrentBufferOrder = (m_CurrentBufferOrder == 0) ? 1 : 0;
 }
+
+void MPIChain::ResetBuffers() noexcept { m_CurrentBufferOrder = 0; }
 
 BufferSTL &MPIChain::GetConsumerBuffer(BufferSTL &bufferSTL)
 {

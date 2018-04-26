@@ -33,7 +33,9 @@ void MPIAggregator::Send(BufferSTL &bufferSTL, const int step) {}
 
 void MPIAggregator::Receive(BufferSTL &bufferSTL, const int step) {}
 
-void MPIAggregator::SwapBufferOrder() {}
+void MPIAggregator::SwapBuffers(const int step) noexcept {}
+
+void MPIAggregator::ResetBuffers() noexcept {}
 
 BufferSTL &MPIAggregator::GetConsumerBuffer(BufferSTL &bufferSTL)
 {

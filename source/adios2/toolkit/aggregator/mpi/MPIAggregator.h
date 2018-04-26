@@ -60,7 +60,9 @@ public:
 
     virtual void Receive(BufferSTL &bufferSTL, const int step);
 
-    virtual void SwapBufferOrder();
+    virtual void SwapBuffers(const int step) noexcept;
+
+    virtual void ResetBuffers() noexcept;
 
     virtual BufferSTL &GetConsumerBuffer(BufferSTL &bufferSTL);
 
