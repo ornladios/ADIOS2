@@ -25,6 +25,9 @@ public:
     /** total number of substreams */
     size_t m_SubStreams = 0;
 
+    /** current substream index from 0 to m_SubStreams-1 */
+    size_t m_SubStreamIndex = 0;
+
     /** split Communicator for a substream: producers and consumer (rank=0) */
     MPI_Comm m_Comm;
 
@@ -57,7 +60,9 @@ public:
 
     virtual void Receive(BufferSTL &bufferSTL, const int step);
 
-    virtual void SwapBufferOrder();
+    virtual void SwapBuffers(const int step) noexcept;
+
+    virtual void ResetBuffers() noexcept;
 
     virtual BufferSTL &GetConsumerBuffer(BufferSTL &bufferSTL);
 

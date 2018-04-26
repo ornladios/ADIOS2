@@ -9,13 +9,19 @@ target_link_libraries(TestBPWriteReadADIOS2 adios2 gtest)
 add_executable(TestBPWriteReadAsStreamADIOS2 TestBPWriteReadAsStreamADIOS2.cpp)
 target_link_libraries(TestBPWriteReadAsStreamADIOS2 adios2 gtest)
 
-add_executable(TestBPWriteReadAsStreamADIOS2_Threads TestBPWriteReadAsStreamADIOS2_Threads.cpp)
+add_executable(TestBPWriteReadAsStreamADIOS2_Threads
+  TestBPWriteReadAsStreamADIOS2_Threads.cpp
+)
 target_link_libraries(TestBPWriteReadAsStreamADIOS2_Threads adios2 gtest)
 
-add_executable(TestBPWriteReadAttributesADIOS2 TestBPWriteReadAttributesADIOS2.cpp)
+add_executable(TestBPWriteReadAttributesADIOS2
+  TestBPWriteReadAttributesADIOS2.cpp
+)
 target_link_libraries(TestBPWriteReadAttributesADIOS2 adios2 gtest)
 
-add_executable(TestStreamWriteReadHighLevelAPI TestStreamWriteReadHighLevelAPI.cpp)
+add_executable(TestStreamWriteReadHighLevelAPI
+  TestStreamWriteReadHighLevelAPI.cpp
+)
 target_link_libraries(TestStreamWriteReadHighLevelAPI adios2 gtest)
 
 add_executable(TestBPWriteFlushRead TestBPWriteFlushRead.cpp)
@@ -31,7 +37,9 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPWriteFlushRead MPI::MPI_C)
   
   add_executable(TestBPWriteAggregateRead TestBPWriteAggregateRead.cpp)
-  target_link_libraries(TestBPWriteAggregateRead adios2 gtest_interface MPI::MPI_C)
+  target_link_libraries(TestBPWriteAggregateRead
+    adios2 gtest_interface MPI::MPI_C
+  )
   
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
   gtest_add_tests(TARGET TestBPWriteAggregateRead ${extra_test_args})
@@ -50,17 +58,24 @@ if (ADIOS2_HAVE_ADIOS1)
   target_link_libraries(TestBPWriteRead adios2 gtest_interface adios1::adios)
 
   add_executable(TestBPWriteReadAttributes TestBPWriteReadAttributes.cpp)
-  target_link_libraries(TestBPWriteReadAttributes adios2 gtest_interface adios1::adios)
+  target_link_libraries(TestBPWriteReadAttributes
+    adios2 gtest_interface adios1::adios
+  )
 
   add_executable(TestBPWriteReadstdio TestBPWriteReadstdio.cpp)
-  target_link_libraries(TestBPWriteReadstdio adios2 gtest_interface adios1::adios)
+  target_link_libraries(TestBPWriteReadstdio
+    adios2 gtest_interface adios1::adios
+  )
 
   add_executable(TestBPWriteReadfstream TestBPWriteReadfstream.cpp)
-  target_link_libraries(TestBPWriteReadfstream adios2 gtest_interface adios1::adios)
+  target_link_libraries(TestBPWriteReadfstream
+    adios2 gtest_interface adios1::adios
+  )
 
   add_executable(TestBPWriteProfilingJSON TestBPWriteProfilingJSON.cpp)
-  target_link_libraries(TestBPWriteProfilingJSON adios2 gtest_interface
-    adios2::thirdparty::nlohmann_json)
+  target_link_libraries(TestBPWriteProfilingJSON
+    adios2 gtest_interface adios2::thirdparty::nlohmann_json
+  )
 
   if(ADIOS2_HAVE_MPI)
     target_link_libraries(TestBPWriteRead MPI::MPI_C)

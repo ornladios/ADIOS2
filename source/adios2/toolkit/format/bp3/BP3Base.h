@@ -188,12 +188,15 @@ public:
     GetBPBaseNames(const std::vector<std::string> &names) const noexcept;
 
     /**
-     * Get BP rank names from base names:  /path/name.bp.dir/name.bp.rank
+     * Get BP substream names from base names:
+     * /path/name.bp.dir/name.bp.Index
+     * where Index = Rank, and in aggregation = SubStreamID
      * @param baseNames inputs
-     * @return
+     * @return vector of BP substream names for transports
      */
     std::vector<std::string>
-    GetBPRankNames(const std::vector<std::string> &baseNames) const noexcept;
+    GetBPSubStreamNames(const std::vector<std::string> &baseNames) const
+        noexcept;
 
     std::vector<std::string>
     GetBPMetadataFileNames(const std::vector<std::string> &names) const
@@ -510,8 +513,8 @@ protected:
     void ProfilerStop(const std::string process) noexcept;
 
 private:
-    std::string GetBPRankName(const std::string &name, const size_t rank) const
-        noexcept;
+    std::string GetBPSubStreamName(const std::string &name,
+                                   const size_t rank) const noexcept;
 
     /**
      * Specialized template for string and other types

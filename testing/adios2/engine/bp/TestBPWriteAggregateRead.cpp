@@ -38,7 +38,7 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
     const size_t Nx = 8;
 
     // Number of steps
-    const size_t NSteps = 3;
+    const size_t NSteps = 4;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -48,7 +48,12 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-        io.SetParameter("Substreams", "1");
+
+        if (mpiSize > 1)
+        {
+            const int subStreams = mpiSize / 2;
+            io.SetParameter("Substreams", std::to_string(subStreams));
+        }
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -276,7 +281,7 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
-            bpReader.GetSync(*var_iString, IString);
+            bpReader.GetDeferred(*var_iString, IString);
 
             bpReader.GetDeferred(*var_i8, I8.data());
             bpReader.GetDeferred(*var_i16, I16.data());
@@ -346,7 +351,12 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-        io.SetParameter("Substreams", "1");
+
+        if (mpiSize > 1)
+        {
+            const int subStreams = mpiSize / 2;
+            io.SetParameter("Substreams", std::to_string(subStreams));
+        }
 
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -638,7 +648,12 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     {
         adios2::IO &io = adios.DeclareIO("TestIO");
-        io.SetParameter("Substreams", "1");
+
+        if (mpiSize > 1)
+        {
+            const int subStreams = mpiSize / 2;
+            io.SetParameter("Substreams", std::to_string(subStreams));
+        }
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later

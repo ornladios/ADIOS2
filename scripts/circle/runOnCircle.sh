@@ -94,4 +94,10 @@ esac
 # Manually source the bash env setup, freeing up $BASH_ENV used by circleci
 . /etc/profile >/dev/null
 
-/opt/cmake/3.6.0/bin/ctest -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE -DCTEST_BUILD_NAME=${CUSTOM_BUILD_NAME}
+if [ -d /opt/libfabric/1.6.0 ]
+then
+  export PKG_CONFIG_PATH=$(dirname $(find /opt/libfabric/1.6.0 -name libfabric.pc))
+fi
+
+CTEST=/opt/cmake/3.6.3/bin/ctest
+${CTEST} -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE -DCTEST_BUILD_NAME=${CUSTOM_BUILD_NAME}
