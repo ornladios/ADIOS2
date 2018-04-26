@@ -19,6 +19,7 @@
 
 #include "Reorganize.h"
 
+#include <assert.h>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -124,6 +125,7 @@ void Reorganize::Run()
     io.SetEngine(rmethodname);
     io.SetParameter("verbose", "5");
     adios2::Engine &rStream = io.Open(infilename, adios2::Mode::Read);
+    // rStream.FixedSchedule();
 
     io.SetEngine(wmethodname);
     adios2::Engine &wStream = io.Open(outfilename, adios2::Mode::Write);
@@ -252,7 +254,13 @@ void Reorganize::CleanUpStep(IO &io)
     for (auto &vi : varinfo)
     {
         if (vi.readbuf != nullptr)
+        {
+            std::cout << "************** clean: " << vi.v->m_Name
+                      << " size = " << vi.writesize
+                      << " ptr = " << static_cast<void *>(vi.readbuf)
+                      << std::endl;
             free(vi.readbuf);
+        }
     }
     varinfo.clear();
     // io.RemoveAllVariables();
@@ -436,6 +444,8 @@ int Reorganize::ProcessMetadata(Engine &rStream, IO &io,
         size_t sum_count =
             Decompose(numproc, rank, varinfo[varidx], decomp_values);
         varinfo[varidx].writesize = sum_count * variable->m_ElementSize;
+        std::cout << "$$$$$$$$$$$$$$$  process:" << variable->m_Name
+                  << " size = " << varinfo[varidx].writesize << std::endl;
 
         if (varinfo[varidx].writesize != 0)
         {
@@ -491,6 +501,7 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
     for (size_t varidx = 0; varidx < nvars; ++varidx)
     {
         const std::string &name = varinfo[varidx].v->m_Name;
+        assert(varinfo[varidx].readbuf == nullptr);
         if (varinfo[varidx].writesize != 0)
         {
             // read variable subset
@@ -504,7 +515,11 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::GetType<T>())                                     \
     {                                                                          \
-        varinfo[varidx].readbuf = malloc(varinfo[varidx].writesize);           \
+        varinfo[varidx].readbuf = calloc(1, varinfo[varidx].writesize);        \
+        std::cout << "^^^^^^^^ calloc: " << varinfo[varidx].v->m_Name          \
+                  << " size = " << varinfo[varidx].writesize                   \
+                  << " ptr = " << static_cast<void *>(varinfo[varidx].readbuf) \
+                  << std::endl;                                                \
         varinfo[varidx].v->SetSelection(                                       \
             {varinfo[varidx].start, varinfo[varidx].count});                   \
         rStream.GetDeferred<T>(                                                \

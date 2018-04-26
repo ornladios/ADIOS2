@@ -50,14 +50,6 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     insitumpi::ConnectDirectPeers(m_CommWorld, true,
                                   (m_BP3Serializer.m_RankMPI == 0),
                                   m_GlobalRank, m_RankDirectPeers);
-    // send fix schedule info
-    /*int fixed = (m_FixedSchedule ? 1 : 0);
-        if (m_BP3Serializer.m_RankMPI == 0)
-        {
-            auto peerRank = m_RankDirectPeers[0];
-            MPI_Send(&fixed, 1, MPI_INT, peerRank,
-                     insitumpi::MpiTags::FixedSchedule, m_CommWorld);
-        }*/
 }
 
 InSituMPIWriter::~InSituMPIWriter() {}
@@ -83,12 +75,14 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
                   << std::endl;
     }
     // Send the step to all reader peers, asynchronously
-    // we don't care about keeping these requests
-    MPI_Request request;
+    // We need to do some time a Wait on any Isend/Irecv otherwise
+    // MPI_Comm_free() will never release the communicator
+    m_MPIRequests.emplace_back();
+    const int index = m_MPIRequests.size() - 1;
     for (auto peerRank : m_RankDirectPeers)
     {
         MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, m_CommWorld, &request);
+                  insitumpi::MpiTags::Step, m_CommWorld, m_MPIRequests.data());
     }
 
     m_NCallsPerformPuts = 0;
@@ -120,7 +114,7 @@ void InSituMPIWriter::PerformPuts()
     }
     m_NCallsPerformPuts++;
 
-    if (m_CurrentStep == 0 || !m_IO.IsDefinitionFinal())
+    if (m_CurrentStep == 0 || !m_FixedLocalSchedule)
     {
         // Create local metadata and send to reader peers
         // std::vector<char> mdVar = m_BP3Serializer.SerializeIndices(
@@ -158,7 +152,10 @@ void InSituMPIWriter::PerformPuts()
             }
             MPI_Request request;
             // for (auto peerRank : m_RankDirectPeers)
-            auto peerRank = m_RankDirectPeers[0];
+            int peerRank = m_RankDirectPeers[0];
+            // send fix schedule info, then length of metadata array,
+            // then metadata array
+
             MPI_Isend(&mdLen, 1, MPI_UNSIGNED_LONG, peerRank,
                       insitumpi::MpiTags::MetadataLength, m_CommWorld,
                       &request);
@@ -166,7 +163,45 @@ void InSituMPIWriter::PerformPuts()
                       MPI_CHAR, peerRank, insitumpi::MpiTags::Metadata,
                       m_CommWorld, &request);
         }
+    }
 
+    // exchange flags about fixed schedule
+    if (m_CurrentStep == 0)
+    {
+        MPI_Request request;
+        int peerRank = m_RankDirectPeers[0];
+        int fixed;
+
+        if (m_BP3Serializer.m_RankMPI == 0)
+        {
+            // send flag about this sender's fixed schedule
+            fixed = (int)m_FixedLocalSchedule;
+            MPI_Send(&fixed, 1, MPI_INT, peerRank,
+                     insitumpi::MpiTags::FixedRemoteSchedule, m_CommWorld);
+
+            // recv flag about the receiver's fixed schedule
+            MPI_Status status;
+            MPI_Recv(&fixed, 1, MPI_INT, peerRank,
+                     insitumpi::MpiTags::FixedRemoteSchedule, m_CommWorld,
+                     &status);
+        }
+        // broadcast fixed schedule flag to every reader
+        MPI_Bcast(&fixed, 1, MPI_INT, 0, m_MPIComm);
+        m_FixedRemoteSchedule = (fixed ? true : false);
+        if (m_BP3Serializer.m_RankMPI == 0)
+        {
+            if (m_Verbosity == 5)
+            {
+                std::cout << "InSituMPI Writer " << m_WriterRank
+                          << " fixed Writer schedule = " << m_FixedLocalSchedule
+                          << " fixed Reader schedule = "
+                          << m_FixedRemoteSchedule << std::endl;
+            }
+        }
+    }
+
+    if (m_CurrentStep == 0 || !m_FixedRemoteSchedule)
+    {
         // Collect the read requests from ALL readers
         // FIXME: How do we make this Irecv from all readers
         // std::vector<MPI_Request> requests(m_RankAllPeers.size());
@@ -207,19 +242,19 @@ void InSituMPIWriter::PerformPuts()
 
         const int nRequests = insitumpi::GetNumberOfRequestsInWriteScheduleMap(
             m_WriteScheduleMap);
-        m_MPIRequests.reserve(nRequests);
+        m_MPIRequests.reserve(nRequests + 1);
+    }
 
-        // Make the send requests for each variable for each matching peer
-        // request
-        for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
-        {
-            // Create the async send for the variable
-            AsyncSendVariable(variableName);
-        }
+    // Make the send requests for each variable for each matching peer
+    // request
+    for (const auto &variableName : m_BP3Serializer.m_DeferredVariables)
+    {
+        // Create the async send for the variable
+        AsyncSendVariable(variableName);
     }
 
     m_BP3Serializer.m_DeferredVariables.clear();
-    if (m_CurrentStep == 0 || !m_IO.IsDefinitionFinal())
+    if (!m_FixedRemoteSchedule)
     {
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data, true);
         m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
@@ -292,6 +327,22 @@ void InSituMPIWriter::EndStep()
     }
 
     m_MPIRequests.clear();
+
+    // Wait for final acknowledgment from the readers
+    int dummy;
+    if (m_BP3Serializer.m_RankMPI == 0)
+    {
+        MPI_Status status;
+        MPI_Recv(&dummy, 1, MPI_INT, m_RankDirectPeers[0],
+                 insitumpi::MpiTags::ReadCompleted, m_CommWorld, &status);
+    }
+    MPI_Bcast(&dummy, 1, MPI_INT, 0, m_MPIComm);
+
+    if (m_Verbosity == 5)
+    {
+        std::cout << "InSituMPI Writer " << m_WriterRank
+                  << " completed EndStep()\n";
+    }
 }
 
 // PRIVATE

@@ -39,7 +39,8 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " Open(" << m_Name
-                  << "). Fixed schedule = " << (m_FixedSchedule ? "yes" : "no")
+                  << "). Fixed Read schedule = "
+                  << (m_FixedLocalSchedule ? "yes" : "no")
                   << ". #readers=" << m_ReaderNproc
                   << " #writers=" << m_RankAllPeers.size()
                   << " #appsize=" << m_GlobalNproc
@@ -84,27 +85,6 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
                   << "  figured that the Reader root is Reader "
                   << m_ReaderRootRank << std::endl;
     }
-
-    // Receive fix schedule info
-    int fixed = 1;
-    /*if (m_ReaderRootRank == m_ReaderRank)
-    {
-        MPI_Status status;
-        MPI_Recv(&fixed, 1, MPI_INT, m_WriteRootGlobalRank,
-                 insitumpi::MpiTags::FixedSchedule, m_CommWorld, &status);
-        // if (m_Verbosity == 5)
-        //{
-        std::cout << "InSituMPI Reader " << m_ReaderRank
-                  << " received fixed schedule flag = " << fixed
-                  << " from writer world rank " << m_WriteRootGlobalRank
-                  << std::endl;
-        //}
-    }*/
-    // broadcast fixed schedule flag to every reader
-    // MPI_Bcast(&fixed, 1, MPI_INT, m_ReaderRootRank, m_MPIComm);
-    m_FixedSchedule = (fixed ? true : false);
-    std::cout << "InSituMPI Reader " << m_ReaderRank
-              << " fixed schedule = " << m_FixedSchedule << std::endl;
 }
 
 InSituMPIReader::~InSituMPIReader()
@@ -163,12 +143,13 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     m_NCallsPerformGets = 0;
 
     // Sync. recv. the global metadata
-    if (m_CurrentStep == 0 || !m_FixedSchedule)
+    if (!m_FixedRemoteSchedule)
     {
-        unsigned long mdLen;
+        unsigned long mdLen = 0;
+        int fixed = (m_FixedRemoteSchedule ? 1 : 0);
+
         if (m_ReaderRootRank == m_ReaderRank)
         {
-
             MPI_Status status;
             MPI_Recv(&mdLen, 1, MPI_UNSIGNED_LONG, m_WriteRootGlobalRank,
                      insitumpi::MpiTags::MetadataLength, m_CommWorld, &status);
@@ -206,6 +187,33 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         }
     }
 
+    // Recv the flag about fixed schedule on the sender side
+    if (m_CurrentStep == 0)
+    {
+        int fixed = (m_FixedRemoteSchedule ? 1 : 0);
+        if (m_ReaderRootRank == m_ReaderRank)
+        {
+            MPI_Status status;
+            MPI_Recv(&fixed, 1, MPI_INT, m_WriteRootGlobalRank,
+                     insitumpi::MpiTags::FixedRemoteSchedule, m_CommWorld,
+                     &status);
+        }
+
+        // broadcast fixed schedule flag to every reader
+        MPI_Bcast(&fixed, 1, MPI_INT, m_ReaderRootRank, m_MPIComm);
+        m_FixedRemoteSchedule = (fixed ? true : false);
+        if (m_ReaderRootRank == m_ReaderRank)
+        {
+            if (m_Verbosity == 5)
+            {
+                std::cout << "InSituMPI Reader " << m_ReaderRank
+                          << " fixed Writer schedule = "
+                          << m_FixedRemoteSchedule
+                          << " fixed Reader schedule = " << m_FixedLocalSchedule
+                          << std::endl;
+            }
+        }
+    }
     return StepStatus::OK;
 }
 
@@ -222,33 +230,47 @@ void InSituMPIReader::PerformGets()
     }
     m_NCallsPerformGets++;
 
-    if (m_CurrentStep == 0 || !m_FixedSchedule)
+    // send flag about this receiver's fixed schedule
+    if (m_CurrentStep == 0)
     {
-        // Create read schedule per writer
-        // const std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
-        m_ReadScheduleMap.clear();
-        m_ReadScheduleMap =
-            m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
-        // bool reader_IsRowMajor = IsRowMajor(m_IO.m_HostLanguage);
-        // bool writer_IsRowMajor = m_BP3Deserializer.m_IsRowMajor;
-        // recalculate seek offsets to payload offset 0 (beginning of blocks)
-        int nRequests = insitumpi::FixSeeksToZeroOffset(
-            m_ReadScheduleMap, IsRowMajor(m_IO.m_HostLanguage));
-
-        // Send schedule to writers
-        SendReadSchedule(m_ReadScheduleMap);
-
-        // Allocate the MPI_Request and OngoingReceives vectors
-        m_MPIRequests.reserve(nRequests);
-        m_OngoingReceives.reserve(nRequests);
-
-        // Make the receive requests for each variable
-        AsyncRecvAllVariables();
+        if (m_ReaderRootRank == m_ReaderRank)
+        {
+            int fixed = (int)m_FixedLocalSchedule;
+            MPI_Send(&fixed, 1, MPI_INT, m_WriteRootGlobalRank,
+                     insitumpi::MpiTags::FixedRemoteSchedule, m_CommWorld);
+        }
     }
 
+    // Create read schedule per writer
+    // const std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
+    m_ReadScheduleMap.clear();
+    m_ReadScheduleMap = m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+    // bool reader_IsRowMajor = IsRowMajor(m_IO.m_HostLanguage);
+    // bool writer_IsRowMajor = m_BP3Deserializer.m_IsRowMajor;
+    // recalculate seek offsets to payload offset 0 (beginning of blocks)
+    int nRequests = insitumpi::FixSeeksToZeroOffset(
+        m_ReadScheduleMap, IsRowMajor(m_IO.m_HostLanguage));
+
+    if (m_CurrentStep == 0 || !m_FixedLocalSchedule)
+    {
+        // Send schedule to writers
+        SendReadSchedule(m_ReadScheduleMap);
+    }
+
+    // Allocate the MPI_Request and OngoingReceives vectors
+    m_MPIRequests.reserve(nRequests);
+    m_OngoingReceives.reserve(nRequests);
+
+    // Make the receive requests for each variable
+    AsyncRecvAllVariables();
     ProcessReceives();
 
     m_BP3Deserializer.m_PerformedGets = true;
+    if (m_Verbosity == 5)
+    {
+        std::cout << "InSituMPI Reader " << m_ReaderRank
+                  << " completed PerformGets()\n";
+    }
 }
 
 size_t InSituMPIReader::CurrentStep() const { return m_CurrentStep; }
@@ -275,6 +297,21 @@ void InSituMPIReader::EndStep()
         PerformGets();
     }
     ClearMetadataBuffer();
+
+    // Send final acknowledgment to the Writer
+    int dummy = 1;
+    MPI_Bcast(&dummy, 1, MPI_INT, m_ReaderRootRank, m_MPIComm);
+    if (m_ReaderRootRank == m_ReaderRank)
+    {
+        MPI_Send(&dummy, 1, MPI_INT, m_WriteRootGlobalRank,
+                 insitumpi::MpiTags::ReadCompleted, m_CommWorld);
+    }
+
+    if (m_Verbosity == 5)
+    {
+        std::cout << "InSituMPI Reader " << m_ReaderRank
+                  << " completed EndStep()\n";
+    }
 }
 
 // PRIVATE
@@ -364,6 +401,18 @@ void InSituMPIReader::ProcessReceives()
                     const std::string *name =
                         m_OngoingReceives[index].varNamePointer;
 
+                    std::cout
+                        << "YYYYYYYYYYYYYYY Clip:"
+                        << "index = " << index << " ptr = "
+                        << static_cast<void *>(m_OngoingReceives[index]
+                                                   .temporaryDataArray.data())
+                        << " sfi.ptr = " << static_cast<const void *>(sfi)
+                        << std::endl;
+                    std::cout << " block = ";
+                    insitumpi::PrintBox(sfi->BlockBox);
+                    std::cout << " intersection = ";
+                    insitumpi::PrintBox(sfi->IntersectionBox);
+                    std::cout << std::endl;
                     m_BP3Deserializer.ClipContiguousMemory(
                         *name, m_IO, rawData, sfi->BlockBox,
                         sfi->IntersectionBox);
@@ -421,11 +470,11 @@ void InSituMPIReader::InitParameters()
     auto itFixedSchedule = m_IO.m_Parameters.find("FixedSchedule");
     if (itFixedSchedule == m_IO.m_Parameters.end())
     {
-        m_FixedSchedule = false;
+        m_FixedLocalSchedule = false;
     }
     else if (itFixedSchedule->second == "true")
     {
-        m_FixedSchedule = true;
+        m_FixedLocalSchedule = true;
     }
 
     auto itVerbosity = m_IO.m_Parameters.find("verbose");

@@ -128,34 +128,6 @@ void IO::SetTransportParameter(const unsigned int transportIndex,
     m_TransportsParameters[transportIndex][key] = value;
 }
 
-void IO::DefinitionIsFinal() noexcept
-{
-    m_IsDefinitionFinal = true;
-    for (auto itVariable : m_Variables)
-    {
-        // first remove the Variable object
-        const std::string type(itVariable.second.first);
-        const unsigned int index(itVariable.second.second);
-
-        if (type == "compound")
-        {
-            auto variableMap = m_Compound;
-            variableMap.erase(index);
-        }
-#define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
-    {                                                                          \
-        auto variableMap = GetVariableMap<T>();                                \
-        auto variable = variableMap.at(index);                                 \
-        variable.SetConstantDims();                                            \
-    }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-    }
-};
-
-bool IO::IsDefinitionFinal() noexcept { return m_IsDefinitionFinal; };
-
 const DataMap &IO::GetVariablesDataMap() const noexcept { return m_Variables; }
 
 const DataMap &IO::GetAttributesDataMap() const noexcept
