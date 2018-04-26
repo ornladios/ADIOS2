@@ -705,11 +705,8 @@ std::string BP3Base::GetBPSubStreamName(const std::string &name,
         bpRoot = bpName.substr(lastPathSeparator);
     }
 
-    int index = rank;
-    if (m_Aggregator.m_IsActive)
-    {
-        index = m_Aggregator.m_SubStreamIndex;
-    }
+    const size_t index =
+        m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : rank;
 
     const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
                                  "." + std::to_string(index));
