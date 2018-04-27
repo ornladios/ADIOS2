@@ -692,7 +692,8 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     sprintf(Info->CheckString, "Rdma info for timestep %ld from rank %d",
             Timestep, Stream->Rank);
     Info->CheckInt = Stream->Rank * 1000 + Timestep;
-    Entry->Data = Data;
+    Entry->Data = malloc(sizeof(*Data));
+    memcpy(Entry->Data, Data, sizeof(*Data));
     Entry->Timestep = Timestep;
     Entry->DP_TimestepInfo = Info;
 
