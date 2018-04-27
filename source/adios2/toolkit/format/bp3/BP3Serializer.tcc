@@ -334,14 +334,13 @@ BP3Serializer::GetStats(const Variable<T> &variable) noexcept
     Stats<typename TypeInfo<T>::ValueType> stats;
     const std::size_t valuesSize = variable.TotalSize();
 
-    if (m_Verbosity == 0)
+    if (m_StatsLevel == 0)
     {
         ProfilerStart("minmax");
         GetMinMaxThreads(variable.GetData(), valuesSize, stats.Min, stats.Max,
                          m_Threads);
         ProfilerStop("minmax");
     }
-
     stats.Step = m_MetadataSet.TimeStep;
     stats.FileIndex = GetFileIndex();
     return stats;
@@ -470,7 +469,7 @@ void BP3Serializer::PutVariableMetadataInIndex(
     }
     else // update characteristics sets count
     {
-        if (m_Verbosity == 0)
+        if (m_StatsLevel == 0)
         {
             ++index.Count;
             // fixed since group and path are not printed
@@ -494,7 +493,7 @@ void BP3Serializer::PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
     }
     else
     {
-        if (m_Verbosity == 0) // default verbose
+        if (m_StatsLevel == 0) // default verbose
         {
             PutCharacteristicRecord(characteristic_min, characteristicsCounter,
                                     stats.Min, buffer);
@@ -524,7 +523,7 @@ void BP3Serializer::PutBoundsRecord(const bool singleValue,
     }
     else
     {
-        if (m_Verbosity == 0) // default min and max only
+        if (m_StatsLevel == 0) // default min and max only
         {
             PutCharacteristicRecord(characteristic_min, characteristicsCounter,
                                     stats.Min, buffer, position);
