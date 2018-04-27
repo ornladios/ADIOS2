@@ -780,10 +780,12 @@ extern void SstStreamDestroy(SstStream Stream)
     {
         CP_verbose(
             Stream,
-            "Reference count now zero, Destroying process SST info cache");
+            "Reference count now zero, Destroying process SST info cache\n");
         CManager_close(CPInfo->cm);
+        CP_verbose(Stream, "After CManager_close\n");
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
+        CP_verbose(Stream, "After freeing FFSContext\n");
         FreeCustomStructs(CPInfo);
         for (int i = 0; i < CPInfo->LastCallFreeCount; i++)
         {
@@ -795,6 +797,7 @@ extern void SstStreamDestroy(SstStream Stream)
             free_FMfield_list(CP_SstParamsList);
         CP_SstParamsList = NULL;
     }
+    CP_verbose(Stream, "Done with SstStreamDestroy()\n");
 }
 
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)

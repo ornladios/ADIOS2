@@ -1152,7 +1152,7 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
 
     CP_verbose(CP_WSR_Stream->ParentStream,
                "Reader Close message received for stream %p.  Setting state to "
-               "PeerClosed and releasing timesteps.",
+               "PeerClosed and releasing timesteps.\n",
                CP_WSR_Stream);
     CP_WSR_Stream->ReaderStatus = PeerClosed;
     SubRefRangeTimestep(CP_WSR_Stream->ParentStream,
