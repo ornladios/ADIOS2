@@ -20,6 +20,9 @@ module(purge)
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
+set(ENV{CFLAGS} -Werror)
+set(ENV{CXXFLAGS} -Werror)
+set(ENV{FFLAGS} -Werror)
 
 set(dashboard_cache "
 ADIOS2_USE_ADIOS1:STRING=OFF
