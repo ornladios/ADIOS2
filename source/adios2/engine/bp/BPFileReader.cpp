@@ -221,7 +221,8 @@ void BPFileReader::ReadVariables(
                 } // end block
 
                 // Advancing data pointer for the next step
-                m_BP3Deserializer.SetVariableNextStepData(variableName, m_IO);
+                // m_BP3Deserializer.SetVariableNextStepData(variableName,
+                // m_IO);
 
             } // end step
         }     // end subfile
