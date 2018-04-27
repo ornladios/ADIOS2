@@ -69,9 +69,9 @@ void BP3Base::InitParameters(const Params &parameters)
         {
             InitParameterThreads(value);
         }
-        else if (key == "verbose")
+        else if (key == "statslevel")
         {
-            InitParameterVerbose(value);
+            InitParameterStatLevel(value);
         }
         else if (key == "collectivemetadata")
         {
@@ -195,8 +195,8 @@ size_t BP3Base::GetBPIndexSizeInData(const std::string &variableName,
     }
 
     // characteristic statistics
-    indexSize += 5;       // count + length
-    if (m_Verbosity == 0) // default, only min and max and dimensions
+    indexSize += 5;        // count + length
+    if (m_StatsLevel == 0) // default, only min and max and dimensions
     {
         indexSize += 2 * (2 * sizeof(uint64_t) + 1);
         indexSize += 1 + 1; // id
@@ -496,9 +496,9 @@ void BP3Base::InitParameterThreads(const std::string value)
     m_Threads = static_cast<unsigned int>(threads);
 }
 
-void BP3Base::InitParameterVerbose(const std::string value)
+void BP3Base::InitParameterStatLevel(const std::string value)
 {
-    int verbosity = -1;
+    int level = -1;
 
     if (m_DebugMode)
     {
@@ -507,7 +507,7 @@ void BP3Base::InitParameterVerbose(const std::string value)
 
         try
         {
-            verbosity = std::stoi(value);
+            level = std::stoi(value);
         }
         catch (std::exception &e)
         {
@@ -515,7 +515,7 @@ void BP3Base::InitParameterVerbose(const std::string value)
             description = std::string(e.what());
         }
 
-        if (!success || verbosity < 0 || verbosity > 5)
+        if (!success || level < 0 || level > 5)
         {
             throw std::invalid_argument(
                 "ERROR: value in Verbose=value in IO SetParameters must be "
@@ -526,10 +526,10 @@ void BP3Base::InitParameterVerbose(const std::string value)
     }
     else
     {
-        verbosity = std::stoi(value);
+        level = std::stoi(value);
     }
 
-    m_Verbosity = static_cast<unsigned int>(verbosity);
+    m_StatsLevel = static_cast<unsigned int>(level);
 }
 
 void BP3Base::InitParameterCollectiveMetadata(const std::string value)

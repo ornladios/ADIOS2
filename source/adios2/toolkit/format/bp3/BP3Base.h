@@ -128,7 +128,7 @@ public:
     int m_Processes = 1; ///< number of aggregated MPI processes
 
     /** statistics verbosity, only 0 is supported */
-    unsigned int m_Verbosity = 0;
+    unsigned int m_StatsLevel = 0;
 
     /** contains data buffer for this rank */
     BufferSTL m_Data;
@@ -443,7 +443,7 @@ protected:
     void InitParameterThreads(const std::string value);
 
     /** verbose file level=0 (default), not active yet */
-    void InitParameterVerbose(const std::string value);
+    void InitParameterStatLevel(const std::string value);
 
     /** verbose file level=0 (default) */
     void InitParameterCollectiveMetadata(const std::string value);
