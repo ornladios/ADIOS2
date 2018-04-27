@@ -44,6 +44,11 @@ jobs:
     docker:
       - image: ornladios/adios2:el7-intel18-impi-ohpc
 
+  "el7-intel18-mpich":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-intel18-mpich-ohpc
+
 workflows:
   version: 2
   build:
@@ -53,3 +58,4 @@ workflows:
       - "el7-gnu7-openmpi"
       - "el7-intel18"
       - "el7-intel18-impi"
+      - "el7-intel18-mpich"
