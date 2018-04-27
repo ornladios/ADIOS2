@@ -409,7 +409,7 @@ perform_actions_on_nodes(EVdfg_configuration config, EVmaster master)
 	    break;
 	}
 	default:
-	    printf("Bad action in perform_action_on_nodes %s (%d)\n", ACT_string[act.type], act.type);
+	    printf("Bad action in perform_action_on_nodes %d\n", act.type);
 	    break;
 	}
     }
@@ -705,9 +705,17 @@ EVdfg_perform_act_on_state(EVdfg_configuration config, EVdfg_config_action act, 
 	break;
     }
     default:
-	printf("Bad action in perform_act_on_state %s (%d)\n", ACT_string[act.type], act.type);
+	switch(act.type) {
+	case ACT_no_op:
+	case ACT_freeze:
+	case ACT_unfreeze:
+	    printf("Bad action in perform_act_on_state %s (%d)\n", ACT_string[act.type], act.type);
+	    break;
+	default:
+	    printf("Bad action in perform_act_on_state %d\n", act.type);
+	    break;
+	}
 	return 0;
-	break;
     }
     return 1;
 }
