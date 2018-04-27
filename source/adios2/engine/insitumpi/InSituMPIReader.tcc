@@ -22,23 +22,40 @@ template <>
 inline void InSituMPIReader::GetSyncCommon(Variable<std::string> &variable,
                                            std::string *data)
 {
-    variable.SetData(data);
-    if (m_Verbosity == 5)
+    if (variable.m_SingleValue)
     {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
-                  << variable.m_Name << ")\n";
+        *data = variable.m_Value;
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
+                      << variable.m_Name << ") = " << *data << std::endl;
+        }
     }
-    // FIXME: this call is only allowed for Global Values
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: ADIOS InSituMPI engine: GetSync(" + variable.m_Name +
+            ") is not supported for arrays, only for single values.\n");
+    }
 }
 
 template <class T>
 inline void InSituMPIReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    variable.SetData(data);
-    if (m_Verbosity == 5)
+    if (variable.m_SingleValue)
     {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
-                  << variable.m_Name << ")\n";
+        *data = variable.m_Value;
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
+                      << variable.m_Name << ") = " << *data << std::endl;
+        }
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: ADIOS InSituMPI engine: GetSync(" + variable.m_Name +
+            ") is not supported for arrays, only for single values.\n");
     }
 }
 
