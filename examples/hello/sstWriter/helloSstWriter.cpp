@@ -17,6 +17,17 @@
 #include <mpi.h>
 #endif
 
+template <class T>
+void Dump(std::vector<T> &v)
+{
+    std::cout << "Dumping data: " << std::endl;
+    for (auto i : v)
+    {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
     // Application variable
@@ -53,6 +64,7 @@ int main(int argc, char *argv[])
         // Open returns a smart pointer to Engine containing the Derived class
         adios2::Engine &sstWriter = sstIO.Open("helloSst", adios2::Mode::Write);
 
+        Dump(myFloats);
         sstWriter.BeginStep();
         sstWriter.PutSync<float>(bpFloats, myFloats.data());
         sstWriter.EndStep();

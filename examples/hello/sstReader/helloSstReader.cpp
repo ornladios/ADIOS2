@@ -23,7 +23,7 @@ v *      Author: Greg Eisenhauer
 template <class T>
 void Dump(std::vector<T> &v)
 {
-
+    std::cout << "Dumping data: " << std::endl;
     for (auto i : v)
     {
         std::cout << i << " ";
@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
 
         bpFloats->SetSelection(sel);
         sstReader.GetDeferred(*bpFloats, myFloats.data());
-        Dump(myFloats);
         sstReader.EndStep();
+        Dump(myFloats);
 
         sstReader.Close();
     }

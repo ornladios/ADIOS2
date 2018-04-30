@@ -391,36 +391,47 @@ void SstReader::PerformGets()
     }
     else if (m_WriterBPmarshal)
     {
-        const auto readScheduleMap =
+        const auto &readScheduleMap =
             m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
-        const auto variableMap = m_IO.GetAvailableVariables();
+        const auto &variableMap = m_IO.GetAvailableVariables();
 
         for (const auto &readSchedule : readScheduleMap)
         {
             const std::string variableName(readSchedule.first);
             size_t rank;
+
             for (const auto &subFileIndexPair : readSchedule.second)
             {
                 rank = subFileIndexPair.first;
-            }
-            const auto it = variableMap.find(variableName);
-            if (it == variableMap.end())
-            {
-                throw std::runtime_error(
-                    "SstReader::PerformGets() failed to find variable.");
-            }
-            std::string type = "null";
-            for (const auto &parameter : it->second)
-            {
-                if (parameter.first == "Type")
+
+                for (const auto &stepPair : subFileIndexPair.second)
                 {
-                    type = parameter.second;
-                }
-            }
-            if (type == "compound")
-            {
-                throw("Compound type is not supported yet.");
-            }
+                    const std::vector<SubFileInfo> &sfis = stepPair.second;
+                    for (const auto &sfi : sfis)
+                    {
+                        const auto &seek = sfi.Seeks;
+                        const size_t blockStart = seek.first;
+                        const size_t blockSize = seek.second - seek.first;
+
+                        const auto it = variableMap.find(variableName);
+                        if (it == variableMap.end())
+                        {
+                            throw std::runtime_error("SstReader::PerformGets() "
+                                                     "failed to find "
+                                                     "variable.");
+                        }
+                        std::string type = "null";
+                        for (const auto &parameter : it->second)
+                        {
+                            if (parameter.first == "Type")
+                            {
+                                type = parameter.second;
+                            }
+                        }
+                        if (type == "compound")
+                        {
+                            throw("Compound type is not supported yet.");
+                        }
 #define declare_type(T)                                                        \
     else if (type == GetType<T>())                                             \
     {                                                                          \
@@ -432,8 +443,8 @@ void SstReader::PerformGets()
             {                                                                  \
                 dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];        \
             }                                                                  \
-            SstReadRemoteMemory(m_Input, rank, CurrentStep(), 0,               \
-                                v->PayloadSize(), v->GetData(), dp_info);      \
+            SstReadRemoteMemory(m_Input, rank, CurrentStep(), blockStart,      \
+                                blockSize, v->GetData(), dp_info);             \
         }                                                                      \
         else                                                                   \
         {                                                                      \
@@ -442,8 +453,11 @@ void SstReader::PerformGets()
                 "deserializer is a nullptr");                                  \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+                        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+                    }
+                }
+            }
         }
     }
 

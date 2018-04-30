@@ -84,17 +84,13 @@ void SstWriter::EndStep()
 
         m_BP3Serializer->CloseStream(m_IO, true);
         m_BP3Serializer->AggregateCollectiveMetadata();
-
         BP3DataBlock *newblock = new BP3DataBlock;
-
         newblock->metadata.DataSize =
             m_BP3Serializer->m_Metadata.m_Buffer.size();
         newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
         newblock->data.DataSize = m_BP3Serializer->m_Data.m_Buffer.size();
         newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
-
         newblock->serializer = m_BP3Serializer;
-
         SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
                            m_WriterStep, lf_FreeBlocks, newblock);
     }
