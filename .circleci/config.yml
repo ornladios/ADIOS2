@@ -21,7 +21,7 @@ defaults: &defaults
     - run:
         command: |
           mkdir -p /tmp/core_dumps
-          find . -name '*.core*' -o '*core.*' -exec cp --parents {} /tmp/core_dumps \;
+          find . -name '*core*' | xargs bash -c 'for F in $@; do if file -b "$F" | grep -q "core file"; then cp -v --parents "$F" /tmp/core_dumps; fi; done'
         when: on_fail
     - store_artifacts:
         path: /tmp/core_dumps
