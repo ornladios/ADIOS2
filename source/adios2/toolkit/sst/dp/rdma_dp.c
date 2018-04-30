@@ -712,34 +712,29 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     TimestepList List = Stream->Timesteps;
 
     Svcs->verbose(Stream->CP_Stream, "Releasing timestep %ld\n", Timestep);
-    if (Stream->Timesteps->Timestep == Timestep)
+
+    while (List->Timestep != Timestep)
     {
-        Stream->Timesteps = List->Next;
-        free(List);
-    }
-    else
-    {
-        TimestepList last = List;
-        List = List->Next;
-        while (List != NULL)
+        if (List == NULL)
         {
-            if (List->Timestep == Timestep)
-            {
-                last->Next = List->Next;
-                fi_close((struct fid *)List->mr); // to be expanded
-                free(List);
-                return;
-            }
-            last = List;
-            List = List->Next;
+            /*
+             * Shouldn't ever get here because we should never release a
+             * timestep that we don't have.
+             */
+            fprintf(stderr, "Failed to release Timestep %ld, not found\n",
+                    Timestep);
+            assert(0);
         }
-        /*
-         * Shouldn't ever get here because we should never release a
-         * timestep that we don't have.
-         */
-        fprintf(stderr, "Failed to release Timestep %ld, not found\n",
-                Timestep);
-        assert(0);
+        List = List->Next;
+    }
+    fi_close((struct fid *)List->mr);
+    if (List)
+    {
+        if (List->Data)
+        {
+            free(List->Data);
+        }
+        free(List);
     }
 }
 
