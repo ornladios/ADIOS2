@@ -316,12 +316,21 @@ TEST_P(TestStagingMPMD, SlowReader)
 INSTANTIATE_TEST_CASE_P(NxM, TestStagingMPMD,
                         ::testing::ValuesIn(CreateRunParams()));
 
+void threadTimeoutRun(size_t t)
+{
+    std::this_thread::sleep_for(std::chrono::seconds(t));
+    throw std::runtime_error("Timeout reached");
+}
+
 //******************************************************************************
 // main
 //******************************************************************************
 
 int main(int argc, char **argv)
 {
+    std::thread threadTimeout(threadTimeoutRun, 300);
+    threadTimeout.detach();
+
     MPI_Init(&argc, &argv);
     ::testing::InitGoogleTest(&argc, argv);
 
