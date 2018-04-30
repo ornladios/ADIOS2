@@ -46,7 +46,8 @@ private:
     interop::HDF5Common m_H5File;
     void Init() final;
 
-    bool m_InStreamMode = false; // default is not streaming, i.e. set var timestep range
+    bool m_InStreamMode =
+        false; // default is not streaming, i.e. set var timestep range
     unsigned int m_StreamAt = 0; // stream step counter
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
