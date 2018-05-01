@@ -20,33 +20,37 @@ v *      Author: Greg Eisenhauer
 #include <mpi.h>
 #endif
 
+int rank = 0;
+int size = 1;
+
 template <class T>
 void Dump(std::vector<T> &v)
 {
-    std::cout << "Dumping data: " << std::endl;
-    for (auto i : v)
+    for (int i = 0; i < size; ++i)
     {
-        std::cout << i << " ";
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (rank == i)
+        {
+            std::cout << "Dumping data from Rank " << rank << ": " << std::endl;
+            for (const auto &i : v)
+            {
+                std::cout << i << " ";
+            }
+            std::cout << std::endl;
+        }
     }
-    std::cout << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
-    // Application variable
-    int rank;
-    int size;
-
-    std::vector<float> myFloats(10);
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-#else
-    rank = 0;
-    size = 1;
 #endif
+
+    std::vector<float> myFloats(10);
 
     try
     {

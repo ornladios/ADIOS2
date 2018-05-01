@@ -17,36 +17,41 @@
 #include <mpi.h>
 #endif
 
+int rank = 0;
+int size = 1;
+
 template <class T>
 void Dump(std::vector<T> &v)
 {
-    std::cout << "Dumping data: " << std::endl;
-    for (auto i : v)
+    for (int i = 0; i < size; ++i)
     {
-        std::cout << i << " ";
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (rank == i)
+        {
+            std::cout << "Dumping data from Rank " << rank << ": " << std::endl;
+            for (const auto &i : v)
+            {
+                std::cout << i << " ";
+            }
+            std::cout << std::endl;
+        }
     }
-    std::cout << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
-    // Application variable
-    int rank, size;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-#else
-    rank = 0;
-    size = 1;
 #endif
 
     std::vector<float> myFloats = {
-        (float)10.0 * size + 0, (float)10.0 * size + 1, (float)10.0 * size + 2,
-        (float)10.0 * size + 3, (float)10.0 * size + 4, (float)10.0 * size + 5,
-        (float)10.0 * size + 6, (float)10.0 * size + 7, (float)10.0 * size + 8,
-        (float)10.0 * size + 9};
+        (float)10.0 * rank + 0, (float)10.0 * rank + 1, (float)10.0 * rank + 2,
+        (float)10.0 * rank + 3, (float)10.0 * rank + 4, (float)10.0 * rank + 5,
+        (float)10.0 * rank + 6, (float)10.0 * rank + 7, (float)10.0 * rank + 8,
+        (float)10.0 * rank + 9};
     const std::size_t Nx = myFloats.size();
 
     try

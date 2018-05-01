@@ -394,16 +394,12 @@ void SstReader::PerformGets()
         const auto &readScheduleMap =
             m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
         const auto &variableMap = m_IO.GetAvailableVariables();
-
         for (const auto &readSchedule : readScheduleMap)
         {
             const std::string variableName(readSchedule.first);
-            size_t rank;
-
             for (const auto &subFileIndexPair : readSchedule.second)
             {
-                rank = subFileIndexPair.first;
-
+                const size_t rank = subFileIndexPair.first;
                 for (const auto &stepPair : subFileIndexPair.second)
                 {
                     const std::vector<SubFileInfo> &sfis = stepPair.second;
@@ -412,7 +408,6 @@ void SstReader::PerformGets()
                         const auto &seek = sfi.Seeks;
                         const size_t blockStart = seek.first;
                         const size_t blockSize = seek.second - seek.first;
-
                         const auto it = variableMap.find(variableName);
                         if (it == variableMap.end())
                         {
@@ -438,13 +433,26 @@ void SstReader::PerformGets()
         auto *v = m_IO.InquireVariable<T>(variableName);                       \
         if (v != nullptr)                                                      \
         {                                                                      \
-            void *dp_info = NULL;                                              \
-            if (m_CurrentStepMetaData->DP_TimestepInfo)                        \
+            size_t elementOffset, dummy;                                       \
+            if (IsIntersectionContiguousSubarray(                              \
+                    sfi.BlockBox, sfi.IntersectionBox,                         \
+                    m_BP3Deserializer->m_IsRowMajor, dummy) &&                 \
+                IsIntersectionContiguousSubarray(                              \
+                    StartEndBox(v->m_Start, v->m_Count,                        \
+                                m_BP3Deserializer->m_ReverseDimensions),       \
+                    sfi.IntersectionBox, m_BP3Deserializer->m_IsRowMajor,      \
+                    elementOffset))                                            \
             {                                                                  \
-                dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];        \
+                void *dp_info = NULL;                                          \
+                if (m_CurrentStepMetaData->DP_TimestepInfo)                    \
+                {                                                              \
+                    dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];    \
+                }                                                              \
+                auto ret = SstReadRemoteMemory(                                \
+                    m_Input, rank, CurrentStep(), blockStart, blockSize,       \
+                    v->GetData() + elementOffset, dp_info);                    \
+                SstWaitForCompletion(m_Input, ret);                            \
             }                                                                  \
-            SstReadRemoteMemory(m_Input, rank, CurrentStep(), blockStart,      \
-                                blockSize, v->GetData(), dp_info);             \
         }                                                                      \
         else                                                                   \
         {                                                                      \
