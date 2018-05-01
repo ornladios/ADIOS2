@@ -265,7 +265,6 @@ protected:
     /** keep track if the current Engine is marked for destruction in IO */
     bool m_IsClosed = false;
 
-
     /** true: No more definitions or changes to existing variables are allowed
      */
     bool m_FixedLocalSchedule = false;

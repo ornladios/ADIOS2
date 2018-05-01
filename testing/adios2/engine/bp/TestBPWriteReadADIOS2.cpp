@@ -911,7 +911,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
     }
 }
 
-
 TEST_F(BPWriteReadTestADIOS2, DISABLED_ADIOS2BPWriteRead2D4x2_ManySteps)
 {
     // Each process would write a 4x2 array and all processes would
