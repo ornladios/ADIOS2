@@ -21,28 +21,35 @@ namespace adios2
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    if(m_TransportMode == "subscribe"){
+    if (m_TransportMode == "subscribe")
+    {
         m_MutexMap.lock();
         auto j = m_VariableMap[m_OldestStep].find(variable.m_Name);
         m_MutexMap.unlock();
-        if( j != m_VariableMap[m_OldestStep].end() ){
+        if (j != m_VariableMap[m_OldestStep].end())
+        {
             std::memcpy(data, j->second->data.data(), j->second->data.size());
             m_CurrentStep = m_OldestStep;
             return;
         }
     }
-    else{
+    else
+    {
         // TODO: add timeout
-        while(true){
+        while (true)
+        {
             m_MutexMap.lock();
             auto i = m_VariableMap.find(m_CurrentStep);
             m_MutexMap.unlock();
-            if( i != m_VariableMap.end() ){
+            if (i != m_VariableMap.end())
+            {
                 m_MutexMap.lock();
                 auto j = i->second.find(variable.m_Name);
                 m_MutexMap.unlock();
-                if( j != i->second.end() ){
-                    std::memcpy(data, j->second->data.data(), j->second->data.size());
+                if (j != i->second.end())
+                {
+                    std::memcpy(data, j->second->data.data(),
+                                j->second->data.size());
                     return;
                 }
             }
@@ -55,7 +62,6 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     GetSyncCommon(variable, data);
 }
-
 
 } // end namespace adios2
 

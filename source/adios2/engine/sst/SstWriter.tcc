@@ -44,21 +44,22 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     {
         if (!m_BP3Serializer->m_MetadataSet.DataPGIsOpen)
         {
-            m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
-                    {"SST"});
+            m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name,
+                                                  m_IO.m_HostLanguage, {"SST"});
         }
         const size_t dataSize = variable.PayloadSize() +
-            m_BP3Serializer->GetBPIndexSizeInData(
-                    variable.m_Name, variable.m_Count);
-        format::BP3Base::ResizeResult resizeResult = m_BP3Serializer->ResizeBuffer(
-                dataSize, "in call to variable " + variable.m_Name + " PutSync");
+                                m_BP3Serializer->GetBPIndexSizeInData(
+                                    variable.m_Name, variable.m_Count);
+        format::BP3Base::ResizeResult resizeResult =
+            m_BP3Serializer->ResizeBuffer(dataSize, "in call to variable " +
+                                                        variable.m_Name +
+                                                        " PutSync");
         m_BP3Serializer->PutVariableMetadata(variable);
         m_BP3Serializer->PutVariablePayload(variable);
     }
     else
     {
-        throw std::invalid_argument(
-                "ERROR: unknown marshaling method \n");
+        throw std::invalid_argument("ERROR: unknown marshaling method \n");
     }
 }
 
