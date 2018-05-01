@@ -12,6 +12,7 @@
 #include "HDF5ReaderP.tcc"
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
 {
@@ -104,10 +105,20 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         {
             hsize_t start[ndims], count[ndims], stride[ndims];
 
+            bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
             for (int i = 0; i < ndims; i++)
             {
-                count[i] = variable.m_Count[i];
-                start[i] = variable.m_Start[i];
+                if (isOrderC)
+                {
+                    count[i] = variable.m_Count[i];
+                    start[i] = variable.m_Start[i];
+                }
+                else
+                {
+                    count[i] = variable.m_Count[ndims - 1 - i];
+                    start[i] = variable.m_Start[ndims - 1 - i];
+                }
+
                 slabsize *= count[i];
                 stride[i] = 1;
             }
@@ -175,11 +186,20 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         else
         {
             hsize_t start[ndims], count[ndims], stride[ndims];
+            bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
 
             for (int i = 0; i < ndims; i++)
             {
-                count[i] = variable.m_Count[i];
-                start[i] = variable.m_Start[i];
+                if (isOrderC)
+                {
+                    count[i] = variable.m_Count[i];
+                    start[i] = variable.m_Start[i];
+                }
+                else
+                {
+                    count[i] = variable.m_Count[ndims - 1 - i];
+                    start[i] = variable.m_Start[ndims - 1 - i];
+                }
                 slabsize *= count[i];
                 stride[i] = 1;
             }

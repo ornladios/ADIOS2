@@ -17,7 +17,8 @@
 #include <stdexcept>
 
 #include "adios2/ADIOSMPI.h"
-#include <cstring> // strlen
+#include "adios2/helper/adiosFunctions.h" // IsRowMajor
+#include <cstring>                        // strlen
 
 namespace adios2
 {
@@ -313,15 +314,24 @@ void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
         shape.resize(ndims);
         if (ndims > 0)
         {
+            bool isOrderC = IsRowMajor(io.m_HostLanguage);
             for (int i = 0; i < ndims; i++)
             {
-                shape[i] = dims[i];
+                if (isOrderC)
+                {
+                    shape[i] = dims[i];
+                }
+                else
+                {
+                    shape[i] = dims[ndims - 1 - i];
+                }
             }
         }
 
         Dims zeros(shape.size(), 0);
 
         auto &foo = io.DefineVariable<T>(name, shape, zeros, shape);
+
         // default was set to 0 while m_AvailabelStepsStart is 1.
         // correcting
         if (0 == foo.m_AvailableStepsCount)
