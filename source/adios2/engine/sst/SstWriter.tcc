@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Sst.h
+ * SstWriter.tcc
  *
  *  Created on: Aug 17, 2017
  *      Author: Greg Eisenhauer
@@ -65,4 +65,4 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_SST_SST_WRITER_H_ */
+#endif /* ADIOS2_ENGINE_SST_SST_WRITER_TCC_ */

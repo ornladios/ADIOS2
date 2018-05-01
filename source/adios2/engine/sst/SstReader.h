@@ -49,6 +49,8 @@ public:
     void PerformGets();
 
 private:
+    template <class T>
+    void SstBPPerformGets();
     void Init();
     SstStream m_Input;
     int m_WriterFFSmarshal;

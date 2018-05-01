@@ -14,6 +14,7 @@
 #include <string>
 
 #include "SstReader.h"
+#include "SstReader.tcc"
 
 namespace adios2
 {
@@ -178,18 +179,6 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         m_IO.RemoveAllVariables();
         m_IO.RemoveAllAttributes();
         m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, m_IO);
-
-        const auto variablesInfo = m_IO.GetAvailableVariables();
-        for (const auto &variableInfoPair : variablesInfo)
-        {
-            std::string var = variableInfoPair.first;
-            std::cout << "---- " << var << std::endl;
-            for (const auto &parameter : variableInfoPair.second)
-            {
-                std::cout << "---- key = " << parameter.first
-                          << ", value = " << parameter.second << std::endl;
-            }
-        }
     }
     else if (m_WriterFFSmarshal)
     {
@@ -391,84 +380,10 @@ void SstReader::PerformGets()
     }
     else if (m_WriterBPmarshal)
     {
-        const auto &readScheduleMap =
-            m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
-        const auto &variableMap = m_IO.GetAvailableVariables();
-        for (const auto &readSchedule : readScheduleMap)
-        {
-            const std::string variableName(readSchedule.first);
-            for (const auto &subFileIndexPair : readSchedule.second)
-            {
-                const size_t rank = subFileIndexPair.first;
-                for (const auto &stepPair : subFileIndexPair.second)
-                {
-                    const std::vector<SubFileInfo> &sfis = stepPair.second;
-                    for (const auto &sfi : sfis)
-                    {
-                        const auto &seek = sfi.Seeks;
-                        const size_t blockStart = seek.first;
-                        const size_t blockSize = seek.second - seek.first;
-                        const auto it = variableMap.find(variableName);
-                        if (it == variableMap.end())
-                        {
-                            throw std::runtime_error("SstReader::PerformGets() "
-                                                     "failed to find "
-                                                     "variable.");
-                        }
-                        std::string type = "null";
-                        for (const auto &parameter : it->second)
-                        {
-                            if (parameter.first == "Type")
-                            {
-                                type = parameter.second;
-                            }
-                        }
-                        if (type == "compound")
-                        {
-                            throw("Compound type is not supported yet.");
-                        }
-#define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
-    {                                                                          \
-        auto *v = m_IO.InquireVariable<T>(variableName);                       \
-        if (v != nullptr)                                                      \
-        {                                                                      \
-            size_t elementOffset, dummy;                                       \
-            if (IsIntersectionContiguousSubarray(                              \
-                    sfi.BlockBox, sfi.IntersectionBox,                         \
-                    m_BP3Deserializer->m_IsRowMajor, dummy) &&                 \
-                IsIntersectionContiguousSubarray(                              \
-                    StartEndBox(v->m_Start, v->m_Count,                        \
-                                m_BP3Deserializer->m_ReverseDimensions),       \
-                    sfi.IntersectionBox, m_BP3Deserializer->m_IsRowMajor,      \
-                    elementOffset))                                            \
-            {                                                                  \
-                void *dp_info = NULL;                                          \
-                if (m_CurrentStepMetaData->DP_TimestepInfo)                    \
-                {                                                              \
-                    dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];    \
-                }                                                              \
-                auto ret = SstReadRemoteMemory(                                \
-                    m_Input, rank, CurrentStep(), blockStart, blockSize,       \
-                    v->GetData() + elementOffset, dp_info);                    \
-                SstWaitForCompletion(m_Input, ret);                            \
-            }                                                                  \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            throw std::runtime_error(                                          \
-                "In SstReader::PerformGets() data pointer obtained from BP "   \
-                "deserializer is a nullptr");                                  \
-        }                                                                      \
-    }
-                        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#define declare_type(T) SstBPPerformGets<T>();
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-                    }
-                }
-            }
-        }
     }
-
     else
     {
         // unknown marshaling method, shouldn't happen
