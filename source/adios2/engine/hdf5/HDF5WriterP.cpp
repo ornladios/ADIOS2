@@ -102,7 +102,7 @@ void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
 
             Variable<T> dup =
                 Variable<T>(variable.m_Name, c_shape, c_offset, c_count,
-                            variable.m_ConstantDims, NULL, false);
+                            variable.IsConstantDims(), NULL, false);
 
             /*
              * duplicate var attributes and convert to c order before saving.
