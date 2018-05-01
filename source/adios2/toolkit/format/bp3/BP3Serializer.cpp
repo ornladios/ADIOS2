@@ -343,7 +343,16 @@ void BP3Serializer::AggregatorsISend(const int step)
 void BP3Serializer::AggregatorsIReceive(const int step)
 {
     m_Aggregator.Receive(m_Data, step);
-    m_Aggregator.SwapBufferOrder();
+}
+
+void BP3Serializer::AggregatorsSwapBuffer(const int step) noexcept
+{
+    m_Aggregator.SwapBuffers(step);
+}
+
+void BP3Serializer::AggregatorsResetBuffer() noexcept
+{
+    m_Aggregator.ResetBuffers();
 }
 
 BufferSTL &BP3Serializer::AggregatorConsumerBuffer()
@@ -390,7 +399,7 @@ void BP3Serializer::PutAttributes(IO &io)
         stats.Offset = absolutePosition;                                       \
         stats.MemberID = memberID;                                             \
         stats.Step = m_MetadataSet.TimeStep;                                   \
-        stats.FileIndex = static_cast<uint32_t>(m_RankMPI);                    \
+        stats.FileIndex = GetFileIndex();                                      \
         Attribute<T> &attribute = *io.InquireAttribute<T>(name);               \
         PutAttributeInData(attribute, stats);                                  \
         PutAttributeInIndex(attribute, stats);                                 \
@@ -824,35 +833,37 @@ std::unordered_map<std::string, std::vector<BP3Base::SerialElementIndex>>
 BP3Serializer::DeserializeIndicesPerRankThreads(
     const std::vector<char> &serialized) const noexcept
 {
-    auto lf_Deserialize =
-        [&](const int rankSource, const std::vector<char> &serialized,
-            const size_t serializedPosition,
-            std::unordered_map<std::string, std::vector<SerialElementIndex>>
-                &deserialized) {
-
-            size_t localPosition = serializedPosition;
-            ElementIndexHeader header =
-                ReadElementIndexHeader(serialized, localPosition);
-
-            // mutex portion
-            {
-                std::lock_guard<std::mutex> lock(m_Mutex);
-                if (deserialized.count(header.Name) == 0)
-                {
-                    deserialized[header.Name] = std::vector<SerialElementIndex>(
-                        m_SizeMPI, SerialElementIndex(header.MemberID, 0));
-                }
-            }
-
-            const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
-            SerialElementIndex &index = deserialized[header.Name][rankSource];
-            InsertToBuffer(index.Buffer, &serialized[serializedPosition],
-                           bufferSize);
-        };
-
-    // BODY OF FUNCTION starts here
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
         deserialized;
+
+    auto lf_Deserialize = [&](const int rankSource,
+                              const size_t serializedPosition) {
+
+        size_t localPosition = serializedPosition;
+        ElementIndexHeader header =
+            ReadElementIndexHeader(serialized, localPosition);
+
+        std::vector<BP3Base::SerialElementIndex> *deserializedIndexes;
+        // mutex portion
+        {
+            std::lock_guard<std::mutex> lock(m_Mutex);
+            deserializedIndexes =
+                &(deserialized
+                      .emplace(std::piecewise_construct,
+                               std::forward_as_tuple(header.Name),
+                               std::forward_as_tuple(
+                                   m_SizeMPI,
+                                   SerialElementIndex(header.MemberID, 0)))
+                      .first->second);
+        }
+
+        const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
+        SerialElementIndex &index = deserializedIndexes->at(rankSource);
+        InsertToBuffer(index.Buffer, &serialized[serializedPosition],
+                       bufferSize);
+    };
+
+    // BODY OF FUNCTION starts here
     const size_t serializedSize = serialized.size();
 
     if (m_RankMPI != 0 || serializedSize < 8)
@@ -871,8 +882,7 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
 
             if (serializedPosition <= serializedSize)
             {
-                lf_Deserialize(rankSource, serialized, serializedPosition,
-                               deserialized);
+                lf_Deserialize(rankSource, serializedPosition);
             }
 
             const size_t bufferSize = static_cast<size_t>(
@@ -915,10 +925,8 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
 
             if (serializedPosition <= serializedSize)
             {
-                asyncs[t] =
-                    std::async(std::launch::async, lf_Deserialize,
-                               asyncRankSources[t], std::ref(serialized),
-                               asyncPositions[t], std::ref(deserialized));
+                asyncs[t] = std::async(std::launch::async, lf_Deserialize,
+                                       asyncRankSources[t], asyncPositions[t]);
             }
         }
 
@@ -1424,7 +1432,7 @@ uint32_t BP3Serializer::GetFileIndex() const noexcept
 {
     if (m_Aggregator.m_IsActive)
     {
-        return static_cast<uint32_t>(m_Aggregator.m_ConsumerRank);
+        return static_cast<uint32_t>(m_Aggregator.m_SubStreamIndex);
     }
 
     return static_cast<uint32_t>(m_RankMPI);

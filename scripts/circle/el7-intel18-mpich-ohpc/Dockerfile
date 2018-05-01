@@ -1,7 +1,7 @@
 FROM centos:centos7
 
 # Install core dev packages
-RUN yum -y install make curl file git \
+RUN yum -y install make curl file git gcc pkg-config \
         gdb zlib zlib-devel bzip2 bzip2-libs bzip2-devel python-devel
 RUN yum -y install epel-release
 RUN yum -y install zeromq-devel
@@ -18,11 +18,21 @@ RUN yum -y install epel-release https://github.com/openhpc/ohpc/releases/downloa
 
 # Install intel OpenHPC packages
 RUN yum -y install \
-  lmod-ohpc intel-compilers-devel-ohpc \
-  python-numpy-intel-ohpc hdf5-intel-ohpc
+  lmod-ohpc intel-compilers-devel-ohpc python-numpy-intel-ohpc \
+  mpich-intel-ohpc python-mpi4py-intel-mpich-ohpc \
+  phdf5-intel-mpich-ohpc netcdf-intel-mpich-ohpc adios-intel-mpich-ohpc
 
 # Cleanup headers and packages
 RUN yum clean all
+
+# Install libfabric
+WORKDIR /opt/libfabric
+RUN curl -L https://github.com/ofiwg/libfabric/releases/download/v1.6.0/libfabric-1.6.0.tar.bz2 | tar -xj \
+  && pushd libfabric-1.6.0 \
+  && ./configure --prefix=/opt/libfabric/1.6.0 --libdir=/opt/libfabric/1.6.0/lib64 \
+  && make -j8 install \
+  && popd \
+  && rm -rf libfabric-1.6.0
 
 # Install the CMake binary
 WORKDIR /opt/cmake/3.6.3

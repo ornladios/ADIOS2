@@ -50,7 +50,6 @@ public:
 private:
     MPI_Comm m_CommWorld = MPI_COMM_WORLD;
     int m_Verbosity = 0;
-    bool m_FixedSchedule = false; // true: metadata in steps does NOT change
 
     int m_GlobalRank; // my rank in the global comm
     int m_ReaderRank; // my rank in the readers' comm
@@ -118,14 +117,14 @@ private:
 
     struct OngoingReceive
     {
-        const SubFileInfo *sfiPointer;
+        const SubFileInfo sfi; // a copy! of the selections to be pulled
         const std::string *varNamePointer;
         std::vector<char> temporaryDataArray; // allocated in engine
         char *inPlaceDataArray;               // pointer to user data
-        OngoingReceive(const SubFileInfo *p, const std::string *v)
-        : sfiPointer(p), varNamePointer(v), inPlaceDataArray(nullptr){};
-        OngoingReceive(const SubFileInfo *p, const std::string *v, char *ptr)
-        : sfiPointer(p), varNamePointer(v), inPlaceDataArray(ptr){};
+        OngoingReceive(const SubFileInfo p, const std::string *v)
+        : sfi(p), varNamePointer(v), inPlaceDataArray(nullptr){};
+        OngoingReceive(const SubFileInfo p, const std::string *v, char *ptr)
+        : sfi(p), varNamePointer(v), inPlaceDataArray(ptr){};
     };
 
     std::vector<OngoingReceive> m_OngoingReceives;

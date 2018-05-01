@@ -19,6 +19,7 @@
 
 #include "Reorganize.h"
 
+#include <assert.h>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -122,9 +123,9 @@ void Reorganize::Run()
     print0("Waiting to open stream ", infilename, "...");
 
     io.SetEngine(rmethodname);
+    io.SetParameter("verbose", "5");
     adios2::Engine &rStream = io.Open(infilename, adios2::Mode::Read);
-    // io.SetParameters({{"num_threads", "1"}});
-    // io.AddTransport("File", {{"Library", "POSIX"}});
+    // rStream.FixedSchedule();
 
     io.SetEngine(wmethodname);
     adios2::Engine &wStream = io.Open(outfilename, adios2::Mode::Write);
@@ -253,7 +254,9 @@ void Reorganize::CleanUpStep(IO &io)
     for (auto &vi : varinfo)
     {
         if (vi.readbuf != nullptr)
+        {
             free(vi.readbuf);
+        }
     }
     varinfo.clear();
     // io.RemoveAllVariables();
@@ -492,6 +495,7 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
     for (size_t varidx = 0; varidx < nvars; ++varidx)
     {
         const std::string &name = varinfo[varidx].v->m_Name;
+        assert(varinfo[varidx].readbuf == nullptr);
         if (varinfo[varidx].writesize != 0)
         {
             // read variable subset
@@ -505,7 +509,7 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::GetType<T>())                                     \
     {                                                                          \
-        varinfo[varidx].readbuf = malloc(varinfo[varidx].writesize);           \
+        varinfo[varidx].readbuf = calloc(1, varinfo[varidx].writesize);        \
         if (varinfo[varidx].count.size() == 0)                                 \
         {                                                                      \
             rStream.GetSync<T>(                                                \

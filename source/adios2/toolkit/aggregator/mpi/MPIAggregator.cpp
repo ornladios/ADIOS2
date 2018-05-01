@@ -33,7 +33,9 @@ void MPIAggregator::Send(BufferSTL &bufferSTL, const int step) {}
 
 void MPIAggregator::Receive(BufferSTL &bufferSTL, const int step) {}
 
-void MPIAggregator::SwapBufferOrder() {}
+void MPIAggregator::SwapBuffers(const int step) noexcept {}
+
+void MPIAggregator::ResetBuffers() noexcept {}
 
 BufferSTL &MPIAggregator::GetConsumerBuffer(BufferSTL &bufferSTL)
 {
@@ -76,6 +78,7 @@ void MPIAggregator::InitComm(const size_t subStreams, MPI_Comm parentComm)
             MPI_Comm_split(parentComm, static_cast<int>(consumer), parentRank,
                            &m_Comm);
             m_ConsumerRank = static_cast<int>(consumer);
+            m_SubStreamIndex = static_cast<size_t>(s);
         }
     }
 

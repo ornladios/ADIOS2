@@ -1,6 +1,6 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "CircleCI")
-set(CTEST_BUILD_CONFIGURATION Release)
+set(CTEST_BUILD_CONFIGURATION Debug)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
@@ -23,6 +23,9 @@ module(load hdf5)
 set(ENV{CC}  icc)
 set(ENV{CXX} icpc)
 set(ENV{FC}  ifort)
+set(ENV{CFLAGS} -Werror)
+set(ENV{CXXFLAGS} -Werror)
+set(ENV{FFLAGS} "-warn errors")
 
 set(dashboard_cache "
 ADIOS2_USE_ADIOS1:STRING=OFF

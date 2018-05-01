@@ -1,6 +1,6 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "CircleCI")
-set(CTEST_BUILD_CONFIGURATION Release)
+set(CTEST_BUILD_CONFIGURATION Debug)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
@@ -20,6 +20,9 @@ module(purge)
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
+set(ENV{CFLAGS} -Werror)
+set(ENV{CXXFLAGS} -Werror)
+set(ENV{FFLAGS} -Werror)
 
 set(dashboard_cache "
 ADIOS2_USE_ADIOS1:STRING=OFF

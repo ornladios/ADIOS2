@@ -22,8 +22,38 @@ void InSituMPIWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
     // set variable
     variable.SetData(values);
-    throw std::runtime_error(
-        "ERROR: InSituMPI engine does not allow for PutSync().");
+    if (variable.m_SingleValue)
+    {
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank << " PutSync("
+                      << variable.m_Name << ") = " << *values << std::endl;
+        }
+        const size_t dataSize = m_BP3Serializer.GetBPIndexSizeInData(
+            variable.m_Name, variable.m_Count);
+        format::BP3Base::ResizeResult resizeResult =
+            m_BP3Serializer.ResizeBuffer(dataSize, "in call to variable " +
+                                                       variable.m_Name +
+                                                       " PutSync");
+
+        if (resizeResult == format::BP3Base::ResizeResult::Flush)
+        {
+            throw std::runtime_error(
+                "ERROR: InSituMPI write engine PutDeferred(" + variable.m_Name +
+                ") caused Flush which is not handled).");
+        }
+
+        // WRITE INDEX to data buffer and metadata structure (in memory) we only
+        // need the metadata structure but this is the granularity of
+        // the function call
+        m_BP3Serializer.PutVariableMetadata(variable);
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: ADIOS InSituMPI engine: PytSync(" + variable.m_Name +
+            ") is not supported for arrays, only for single values.\n");
+    }
 }
 
 template <class T>
@@ -39,7 +69,7 @@ void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     const size_t dataSize =
         m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);
     format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
-        dataSize, "in call to variable " + variable.m_Name + " PutSync");
+        dataSize, "in call to variable " + variable.m_Name + " PutDeferred");
 
     if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
@@ -53,7 +83,7 @@ void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     // function call
     m_BP3Serializer.PutVariableMetadata(variable);
 
-    if (m_FixedSchedule && m_CurrentStep > 0)
+    if (m_FixedLocalSchedule && m_FixedRemoteSchedule)
     {
         // Create the async send for the variable now
         AsyncSendVariable(variable);

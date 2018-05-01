@@ -1,6 +1,7 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "CircleCI")
-set(CTEST_BUILD_CONFIGURATION Release)
+
+set(CTEST_BUILD_CONFIGURATION Debug)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
 set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
@@ -26,6 +27,9 @@ module(load adios)
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
 set(ENV{FC}  gfortran)
+set(ENV{CFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
+set(ENV{CXXFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
+set(ENV{FFLAGS} "-Werror -Wno-error=builtin-declaration-mismatch")
 find_program(PYTHON_EXECUTABLE python3.4)
 
 set(dashboard_cache "

@@ -22,23 +22,40 @@ template <>
 inline void InSituMPIReader::GetSyncCommon(Variable<std::string> &variable,
                                            std::string *data)
 {
-    variable.SetData(data);
-    if (m_Verbosity == 5)
+    if (variable.m_SingleValue)
     {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
-                  << variable.m_Name << ")\n";
+        *data = variable.m_Value;
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
+                      << variable.m_Name << ") = " << *data << std::endl;
+        }
     }
-    // FIXME: this call is only allowed for Global Values
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: ADIOS InSituMPI engine: GetSync(" + variable.m_Name +
+            ") is not supported for arrays, only for single values.\n");
+    }
 }
 
 template <class T>
 inline void InSituMPIReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    variable.SetData(data);
-    if (m_Verbosity == 5)
+    if (variable.m_SingleValue)
     {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
-                  << variable.m_Name << ")\n";
+        *data = variable.m_Value;
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Reader " << m_ReaderRank << " GetSync("
+                      << variable.m_Name << ") = " << *data << std::endl;
+        }
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: ADIOS InSituMPI engine: GetSync(" + variable.m_Name +
+            ") is not supported for arrays, only for single values.\n");
     }
 }
 
@@ -51,11 +68,12 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::cout << "InSituMPI Reader " << m_ReaderRank << " GetDeferred("
                   << variable.m_Name << ")\n";
     }
-    if (m_FixedSchedule && m_CurrentStep > 0)
+    if (m_FixedLocalSchedule && m_FixedRemoteSchedule && m_CurrentStep > 0)
     {
+        variable.SetData(data);
         // Create the async send for the variable now
-        const SubFileInfoMap &sfim =
-            m_BP3Deserializer.GetSubFileInfoMap(variable.m_Name);
+        const SubFileInfoMap sfim = m_BP3Deserializer.GetSubFileInfo(variable);
+        // m_BP3Deserializer.GetSubFileInfoMap(variable.m_Name);
         /* FIXME: this only works if there is only one block read for each
          * variable.
          * SubFileInfoMap contains ALL read schedules for the variable.
@@ -122,13 +140,14 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
                         sfi.IntersectionBox, m_BP3Deserializer.m_IsRowMajor,
                         elementOffset))
                 {
+
                     // Receive in place (of user data pointer)
                     // const size_t startOffset =
                     //    elementOffset * variable.m_ElementSize;
                     T *inPlacePointer = variable.GetData() + elementOffset;
                     T *ptrT = const_cast<T *>(inPlacePointer);
                     char *ptr = reinterpret_cast<char *>(ptrT);
-                    m_OngoingReceives.emplace_back(&sfi, &variable.m_Name, ptr);
+                    m_OngoingReceives.emplace_back(sfi, &variable.m_Name, ptr);
                     MPI_Irecv(m_OngoingReceives[index].inPlaceDataArray,
                               blockSize, MPI_CHAR, m_RankAllPeers[writerRank],
                               insitumpi::MpiTags::Data, m_CommWorld,
@@ -145,7 +164,7 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
                 else
                 {
                     // Receive in temporary array and copy in later
-                    m_OngoingReceives.emplace_back(&sfi, &variable.m_Name);
+                    m_OngoingReceives.emplace_back(sfi, &variable.m_Name);
                     m_OngoingReceives[index].temporaryDataArray.resize(
                         blockSize);
                     MPI_Irecv(

@@ -74,7 +74,7 @@ int adios2_variable_is_constant_dims(const adios2_variable *variable)
                                       "adios2_variable_is_constant_dims");
     const adios2::VariableBase *variableBase =
         reinterpret_cast<const adios2::VariableBase *>(variable);
-    const int isConstantDims = (variableBase->m_ConstantDims) ? 1 : 0;
+    const int isConstantDims = (variableBase->IsConstantDims()) ? 1 : 0;
     return isConstantDims;
 }
 

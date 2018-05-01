@@ -1,6 +1,5 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "CircleCI")
-
 set(CTEST_BUILD_CONFIGURATION Debug)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
@@ -19,7 +18,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/EnvironmentModules.cmake)
 module(purge)
 module(load intel)
 module(load py2-numpy)
-module(load impi)
+module(load mpich)
 module(load py2-mpi4py)
 module(load phdf5)
 module(load adios)
@@ -27,15 +26,9 @@ module(load adios)
 set(ENV{CC}  icc)
 set(ENV{CXX} icpc)
 set(ENV{FC}  ifort)
-set(ENV{CFLAGS} -Werror)
-set(ENV{CXXFLAGS} -Werror)
-set(ENV{FFLAGS} "-warn errors")
 find_program(MPI_C_COMPILER mpiicc)
 find_program(MPI_CXX_COMPILER mpiicpc)
 find_program(MPI_Fortran_COMPILER mpiifort)
-
-# Allow oversubscription for IntelMPI to prevent timeouts on circleci
-set(ENV{I_MPI_WAIT_MODE} "enable")
 
 set(dashboard_cache "
 ADIOS2_USE_ADIOS1:STRING=ON

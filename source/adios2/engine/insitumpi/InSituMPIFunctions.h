@@ -32,11 +32,13 @@ enum MpiTags
     BaseTag = 27950,
     Connect,
     Step,
+    FixedRemoteSchedule,
     MetadataLength,
     Metadata,
     ReadScheduleLength,
     ReadSchedule,
     Data,
+    ReadCompleted,
     LastTag
 };
 

@@ -14,12 +14,23 @@ defaults: &defaults
         command: bash source/scripts/circle/runOnCircle.sh build
     - run:
         name: Test
-        command: bash source/scripts/circle/runOnCircle.sh test
+        command: |
+          ulimit -c unlimited
+          export SstVerbose=1
+          bash source/scripts/circle/runOnCircle.sh test
+    - run:
+        command: |
+          mkdir -p /tmp/core_dumps
+          find . -name '*core*' | xargs bash -c 'for F in $@; do if file -b "$F" | grep -q "core file"; then cp -v --parents "$F" /tmp/core_dumps; fi; done'
+        when: on_fail
+    - store_artifacts:
+        path: /tmp/core_dumps
 
 version: 2
 
 jobs:
   "el7":
+
     <<: *defaults
     docker:
       - image: ornladios/adios2:el7
@@ -44,6 +55,12 @@ jobs:
     docker:
       - image: ornladios/adios2:el7-intel18-impi-ohpc
 
+  "el7-intel18-mpich":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:el7-intel18-mpich-ohpc
+
+
 workflows:
   version: 2
   build:
@@ -53,3 +70,5 @@ workflows:
       - "el7-gnu7-openmpi"
       - "el7-intel18"
       - "el7-intel18-impi"
+      - "el7-intel18-mpich"
+
