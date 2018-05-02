@@ -9,6 +9,7 @@
  */
 
 #include <iostream>
+#include <numeric>
 #include <vector>
 
 #include <adios2.h>
@@ -17,18 +18,19 @@
 #include <mpi.h>
 #endif
 
-int rank = 0;
-int size = 1;
+int mpiRank = 0;
+int mpiSize = 1;
 
 template <class T>
 void Dump(std::vector<T> &v)
 {
-    for (int i = 0; i < size; ++i)
+    for (int i = 0; i < mpiSize; ++i)
     {
         MPI_Barrier(MPI_COMM_WORLD);
-        if (rank == i)
+        if (mpiRank == i)
         {
-            std::cout << "Dumping data from Rank " << rank << ": " << std::endl;
+            std::cout << "Dumping data from Rank " << mpiRank << ": "
+                      << std::endl;
             for (const auto &i : v)
             {
                 std::cout << i << " ";
@@ -43,16 +45,29 @@ int main(int argc, char *argv[])
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    std::vector<float> myFloats = {
-        (float)10.0 * rank + 0, (float)10.0 * rank + 1, (float)10.0 * rank + 2,
-        (float)10.0 * rank + 3, (float)10.0 * rank + 4, (float)10.0 * rank + 5,
-        (float)10.0 * rank + 6, (float)10.0 * rank + 7, (float)10.0 * rank + 8,
-        (float)10.0 * rank + 9};
-    const std::size_t Nx = myFloats.size();
+    std::vector<size_t> dataShape;
+    for (int i = 1; i < argc; ++i)
+    {
+        dataShape.push_back(atoi(argv[i]));
+    }
+
+    if (dataShape.empty())
+    {
+        dataShape.push_back(10);
+    }
+
+    size_t dataSize = std::accumulate(dataShape.begin(), dataShape.end(), 1,
+                                      std::multiplies<size_t>());
+    std::vector<float> myFloats(dataSize);
+
+    for (size_t i = 0; i < dataSize; ++i)
+    {
+        myFloats[i] = 100000.0 * mpiRank + i;
+    }
 
     try
     {
@@ -61,9 +76,19 @@ int main(int argc, char *argv[])
         sstIO.SetEngine("Sst");
         sstIO.SetParameters({{"BPmarshal", "yes"}, {"FFSmarshal", "no"}});
 
+        std::vector<size_t> shape = dataShape;
+        shape[0] *= mpiSize;
+        std::vector<size_t> start = dataShape;
+        start[0] *= mpiRank;
+        for (size_t i = 1; i < start.size(); ++i)
+        {
+            start[i] = 0;
+        }
+        std::vector<size_t> count = dataShape;
+
         // Define variable and local size
-        auto bpFloats = sstIO.DefineVariable<float>("bpFloats", {size * Nx},
-                                                    {rank * Nx}, {Nx});
+        auto bpFloats =
+            sstIO.DefineVariable<float>("bpFloats", shape, start, count);
 
         // Create engine smart pointer to Sst Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
@@ -78,19 +103,20 @@ int main(int argc, char *argv[])
     catch (std::invalid_argument &e)
     {
         std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+                  << mpiRank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
         std::cout
             << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+            << mpiRank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
+        std::cout << "Exception, STOPPING PROGRAM from rank " << mpiRank
+                  << "\n";
         std::cout << e.what() << "\n";
     }
 
