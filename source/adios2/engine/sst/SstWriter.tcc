@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * Sst.h
+ * SstWriter.tcc
  *
  *  Created on: Aug 17, 2017
  *      Author: Greg Eisenhauer
@@ -24,8 +24,6 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
     variable.SetData(values);
 
-    // This part will go away, this is just to monitor variables per rank
-
     if (variable.m_Count.empty())
     {
         variable.m_Count = variable.m_Shape;
@@ -42,13 +40,29 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                       variable.m_Shape.size(), variable.m_Shape.data(),
                       variable.m_Count.data(), variable.m_Start.data(), values);
     }
+    else if (m_BPmarshal)
+    {
+        if (!m_BP3Serializer->m_MetadataSet.DataPGIsOpen)
+        {
+            m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name,
+                                                  m_IO.m_HostLanguage, {"SST"});
+        }
+        const size_t dataSize = variable.PayloadSize() +
+                                m_BP3Serializer->GetBPIndexSizeInData(
+                                    variable.m_Name, variable.m_Count);
+        format::BP3Base::ResizeResult resizeResult =
+            m_BP3Serializer->ResizeBuffer(dataSize, "in call to variable " +
+                                                        variable.m_Name +
+                                                        " PutSync");
+        m_BP3Serializer->PutVariableMetadata(variable);
+        m_BP3Serializer->PutVariablePayload(variable);
+    }
     else
     {
-        // Do BP marshaling
-        // The result of BP marshalling (in EndStep) should be a single buffer
+        throw std::invalid_argument("ERROR: unknown marshaling method \n");
     }
 }
 
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_SST_SST_WRITER_H_ */
+#endif /* ADIOS2_ENGINE_SST_SST_WRITER_TCC_ */

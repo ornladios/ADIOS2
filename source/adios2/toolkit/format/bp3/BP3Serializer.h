@@ -99,6 +99,8 @@ public:
      * (minifooter)
      */
     void CloseStream(IO &io, const bool addMetadata = true);
+    void CloseStream(IO &io, size_t &metadataStart, size_t &metadataCount,
+                     const bool addMetadata = true);
 
     void ResetIndices();
 

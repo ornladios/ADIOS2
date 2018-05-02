@@ -9,10 +9,12 @@
  */
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/format/bp3/BP3.h"
 #include <cstring>
 #include <string>
 
 #include "SstReader.h"
+#include "SstReader.tcc"
 
 namespace adios2
 {
@@ -21,7 +23,6 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("SstReader", io, name, mode, mpiComm)
 {
-    SstStream output;
     char *cstr = new char[name.length() + 1];
     std::strcpy(cstr, name.c_str());
 
@@ -111,6 +112,7 @@ SstReader::~SstReader() { SstStreamDestroy(m_Input); }
 
 StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
 {
+
     SstStatusValue result;
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
@@ -160,13 +162,34 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         //   anything else that the Data Plane needs for efficient RDMA on
         //   whatever transport it is using.  But it is opaque to the Engine
         //   (and to the control plane).)
+
+        m_BP3Deserializer = new format::BP3Deserializer(m_MPIComm, m_DebugMode);
+        m_BP3Deserializer->InitParameters(m_IO.m_Parameters);
+
+        struct _SstData **d = m_CurrentStepMetaData->WriterMetadata;
+
+        m_BP3Deserializer->m_Metadata.Resize(
+            (*m_CurrentStepMetaData->WriterMetadata)->DataSize,
+            "in SST Streaming Listener");
+
+        std::memcpy(m_BP3Deserializer->m_Metadata.m_Buffer.data(),
+                    (*m_CurrentStepMetaData->WriterMetadata)->block,
+                    (*m_CurrentStepMetaData->WriterMetadata)->DataSize);
+
+        m_IO.RemoveAllVariables();
+        m_IO.RemoveAllAttributes();
+        m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, m_IO);
     }
-    if (m_WriterFFSmarshal)
+    else if (m_WriterFFSmarshal)
     {
         // For FFS-based marshaling, SstAdvanceStep takes care of installing
         // the metadata, creating variables using the varFFScallback and
         // arrayFFScallback, so there's nothing to be done now.  This
         // comment is just for clarification.
+    }
+    else
+    {
+        // unknown marshaling method, shouldn't happen
     }
 
     return StepStatus::OK;
@@ -176,13 +199,15 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
-    if (m_FFSmarshal)
+    if (m_WriterFFSmarshal)
     {
         // this does all the deferred gets and fills in the variable array data
         SstFFSPerformGets(m_Input);
     }
-    if (m_BPmarshal)
+    else if (m_WriterBPmarshal)
     {
+
+        PerformGets();
         //  I'm assuming that the DoGet calls below have been constructing
         //  some kind of data structure that indicates what data this reader
         //  needs from different writers, what read requests it needs to
@@ -197,6 +222,11 @@ void SstReader::EndStep()
         //         place it appropriately into the waiting vars.
         //	   ClearReadRequests()  Clean up as necessary
         //
+        delete m_BP3Deserializer;
+    }
+    else
+    {
+        // unknown marshaling method, shouldn't happen
     }
     SstReleaseStep(m_Input);
 }
@@ -243,7 +273,6 @@ void SstReader::Init()
 
     auto lf_SetRegMethodParameter = [&](const std::string key,
                                         size_t &parameter) {
-
         auto itKey = m_IO.m_Parameters.find(key);
         if (itKey != m_IO.m_Parameters.end())
         {
@@ -299,8 +328,10 @@ void SstReader::Init()
         if (m_WriterBPmarshal)                                                 \
         {                                                                      \
             /*  DoGetSync() is going to have terrible performance 'cause */    \
-            /*  it's a	bad idea in an SST-like environment.  But do */         \
+            /*  it's a bad idea in an SST-like environment.  But do */         \
             /*  whatever you do forDoGetDeferred() and then PerformGets() */   \
+            DoGetDeferred(variable, data);                                     \
+            PerformGets();                                                     \
         }                                                                      \
     }                                                                          \
     void SstReader::DoGetDeferred(Variable<T> &variable, T *data)              \
@@ -315,11 +346,12 @@ void SstReader::Init()
         if (m_WriterBPmarshal)                                                 \
         {                                                                      \
             /*  Look at the data requested and examine the metadata to see  */ \
-            /*  what writer has what you need.  Build up a set of read	*/      \
+            /*  what writer has what you need.  Build up a set of read */      \
             /*  requests (maybe just get all the data from every writer */     \
             /*  that has *something* you need).  You'll use this in EndStep,*/ \
             /*  when you have to get all the array data and put it where  */   \
-            /*  it's supposed to go.	*/                                        \
+            /*  it's supposed to go. */                                        \
+            m_BP3Deserializer->GetDeferredVariable(variable, data);            \
         }                                                                      \
     }                                                                          \
     void SstReader::DoGetDeferred(Variable<T> &variable, T &data)              \
@@ -340,7 +372,23 @@ void SstReader::Init()
 ADIOS2_FOREACH_TYPE_1ARG(declare_gets)
 #undef declare_gets
 
-void SstReader::PerformGets() { SstFFSPerformGets(m_Input); }
+void SstReader::PerformGets()
+{
+    if (m_WriterFFSmarshal)
+    {
+        SstFFSPerformGets(m_Input);
+    }
+    else if (m_WriterBPmarshal)
+    {
+#define declare_type(T) SstBPPerformGets<T>();
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+    else
+    {
+        // unknown marshaling method, shouldn't happen
+    }
+}
 
 void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
 

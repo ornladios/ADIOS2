@@ -30,6 +30,7 @@ version: 2
 
 jobs:
   "el7":
+
     <<: *defaults
     docker:
       - image: ornladios/adios2:el7
@@ -59,6 +60,7 @@ jobs:
     docker:
       - image: ornladios/adios2:el7-intel18-mpich-ohpc
 
+
 workflows:
   version: 2
   build:
@@ -69,3 +71,4 @@ workflows:
       - "el7-intel18"
       - "el7-intel18-impi"
       - "el7-intel18-mpich"
+

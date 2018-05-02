@@ -16,9 +16,9 @@ namespace adios2
 template <class T>
 void HDFMixer::DoPutSyncCommon(Variable<T> &variable, const T *values)
 {
-    //set values
+    // set values
     variable.SetData(values);
-    //m_WrittenVariables.insert(variable.m_Name);
+    // m_WrittenVariables.insert(variable.m_Name);
     Variable<T> local(variable.m_Name, {}, {}, variable.m_Count,
                       variable.m_Count.size(), NULL, false);
 

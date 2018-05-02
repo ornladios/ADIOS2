@@ -20,27 +20,36 @@ v *      Author: Greg Eisenhauer
 #include <mpi.h>
 #endif
 
+int mpiRank = 0;
+int mpiSize = 1;
+
+template <class T>
+void Dump(std::vector<T> &v)
+{
+    for (int i = 0; i < mpiSize; ++i)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (mpiRank == i)
+        {
+            std::cout << "Dumping data from Rank " << mpiRank << ": "
+                      << std::endl;
+            for (const auto &i : v)
+            {
+                std::cout << i << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
-    // Application variable
-    int rank;
-    int size;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-#else
-    rank = 0;
-    size = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
-
-    int timeout = 5;
-
-    if (argc == 2)
-    {
-        timeout = atoi(argv[1]);
-    }
 
     try
     {
@@ -54,48 +63,59 @@ int main(int argc, char *argv[])
         sstIO.SetEngine("Sst");
 
         adios2::Engine &sstReader = sstIO.Open("helloSst", adios2::Mode::Read);
-
         sstReader.BeginStep();
         adios2::Variable<float> *bpFloats =
             sstIO.InquireVariable<float>("bpFloats");
-        std::cout << "Incoming variable is of size " << bpFloats->m_Shape[0]
-                  << "\n";
-        const std::size_t total_size = bpFloats->m_Shape[0];
-        const std::size_t my_start = (total_size / size) * rank;
-        const std::size_t my_count = (total_size / size);
-        std::cout << "Reader rank " << rank << " reading " << my_count
-                  << " floats starting at element " << my_start << "\n";
 
-        const adios2::Dims start{my_start};
-        const adios2::Dims count{my_count};
+        std::cout << "Incoming variable is of shape [";
+        for (auto &i : bpFloats->m_Shape)
+        {
+            std::cout << i << ", ";
+        }
+        std::cout << "]" << std::endl;
+
+        std::vector<size_t> start = bpFloats->m_Shape;
+        start[0] = start[0] / mpiSize * mpiRank;
+        for (size_t i = 1; i < start.size(); ++i)
+        {
+            start[i] = 0;
+        }
+
+        std::vector<size_t> count = bpFloats->m_Shape;
+        count[0] = count[0] / mpiSize;
+
+        size_t dataSize = std::accumulate(count.begin(), count.end(), 1,
+                                          std::multiplies<size_t>());
 
         const adios2::Box<adios2::Dims> sel(start, count);
 
         std::vector<float> myFloats;
-        myFloats.resize(my_count);
+        myFloats.resize(dataSize);
 
         bpFloats->SetSelection(sel);
         sstReader.GetDeferred(*bpFloats, myFloats.data());
         sstReader.EndStep();
+        Dump(myFloats);
 
         sstReader.Close();
     }
     catch (std::invalid_argument &e)
     {
         std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+                  << mpiRank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
         std::cout << "IO System base failure exception, STOPPING PROGRAM "
                      "from rank "
-                  << rank << "\n";
+                  << mpiRank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
+        std::cout << "Exception, STOPPING PROGRAM from rank " << mpiRank
+                  << "\n";
         std::cout << e.what() << "\n";
     }
 

@@ -634,7 +634,10 @@ extern void SstReleaseStep(SstStream Stream)
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReleaseTimestepFormat, &Msg,
                             &Msg.WSR_Stream);
 
-    FFSClearTimestepData(Stream);
+    if (Stream->WriterConfigParams->FFSmarshal)
+    {
+        FFSClearTimestepData(Stream);
+    }
 }
 
 /*

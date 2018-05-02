@@ -172,6 +172,29 @@ void BP3Serializer::CloseStream(IO &io, const bool addMetadata)
     ProfilerStop("buffering");
 }
 
+void BP3Serializer::CloseStream(IO &io, size_t &metadataStart,
+                                size_t &metadataCount, const bool addMetadata)
+{
+
+    ProfilerStart("buffering");
+    if (m_MetadataSet.DataPGIsOpen)
+    {
+        SerializeDataBuffer(io);
+    }
+
+    metadataStart = m_Data.m_Position;
+
+    SerializeMetadataInData(false, addMetadata);
+
+    metadataCount = m_Data.m_Position - metadataStart;
+
+    if (m_Profiler.IsActive)
+    {
+        m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
+    }
+    ProfilerStop("buffering");
+}
+
 void BP3Serializer::ResetIndices()
 {
     m_MetadataSet.AttributesIndices.clear();

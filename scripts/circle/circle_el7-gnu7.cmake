@@ -1,5 +1,6 @@
 # Client maintainer: chuck.atkins@kitware.com
 set(CTEST_SITE "CircleCI")
+
 set(CTEST_BUILD_CONFIGURATION Debug)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")

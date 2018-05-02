@@ -8,6 +8,7 @@
  *      Author: Greg Eisenhauer
  */
 
+#include <memory>
 #include <mpi.h>
 
 #include "SstWriter.h"
@@ -41,8 +42,10 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     }
     else if (m_BPmarshal)
     {
-        // Do whatever might be necessary to initiate BP marshalling, maybe
-        // allocating buffers or creating BP objects
+        // initialize BP serializer, deleted in
+        // SstWriter::EndStep()::lf_FreeBlocks()
+        m_BP3Serializer = new format::BP3Serializer(m_MPIComm, m_DebugMode);
+        m_BP3Serializer->InitParameters(m_IO.m_Parameters);
     }
     else
     {
@@ -59,10 +62,6 @@ void SstWriter::EndStep()
     }
     else if (m_BPmarshal)
     {
-        SstData Blocks = new _SstData[2];
-        SstData MetaDataBlock = &Blocks[0];
-        SstData DataBlock = &Blocks[1];
-
         // This should finalize BP marshaling at the writer side.  All
         // marshaling methods should result in two blocks, one a block of
         // local metadata, and the second a block of data.  The metadata
@@ -74,21 +73,26 @@ void SstWriter::EndStep()
         // here should not be deallocated when SstProvideTimestep returns!
         // They should not be deallocated until SST is done with them
         // (explicit deallocation callback).
-
-        auto lf_FreeBlocks = [](void *vBlocks) {
-            SstData BlocksToFree = reinterpret_cast<SstData>(vBlocks);
-            //  Free data and metadata blocks here.  BlocksToFree is the Blocks
+        auto lf_FreeBlocks = [](void *vBlock) {
+            BP3DataBlock *BlockToFree =
+                reinterpret_cast<BP3DataBlock *>(vBlock);
+            //  Free data and metadata blocks here.  BlockToFree is the newblock
             //  value in the enclosing function.
-            delete BlocksToFree;
+            delete BlockToFree->serializer;
+            delete BlockToFree;
         };
 
-        MetaDataBlock->DataSize = /* set size of metadata block */ 0;
-        MetaDataBlock->block = /* set to address of metadata block */ NULL;
-        DataBlock->DataSize = /* set size of data block */ 0;
-        DataBlock->block = /* set to address of data block */ NULL;
-        SstProvideTimestep(m_Output, MetaDataBlock, DataBlock, m_WriterStep,
-                           lf_FreeBlocks, Blocks);
-        // DON'T FREE YOUR DATA OR METADATA BLOCKS HERE.  See lf_FreeBlocks.
+        m_BP3Serializer->CloseStream(m_IO, true);
+        m_BP3Serializer->AggregateCollectiveMetadata();
+        BP3DataBlock *newblock = new BP3DataBlock;
+        newblock->metadata.DataSize =
+            m_BP3Serializer->m_Metadata.m_Buffer.size();
+        newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
+        newblock->data.DataSize = m_BP3Serializer->m_Data.m_Buffer.size();
+        newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
+        newblock->serializer = m_BP3Serializer;
+        SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
+                           m_WriterStep, lf_FreeBlocks, newblock);
     }
     else
     {

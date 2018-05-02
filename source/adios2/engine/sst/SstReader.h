@@ -49,12 +49,15 @@ public:
     void PerformGets();
 
 private:
+    template <class T>
+    void SstBPPerformGets();
     void Init();
     SstStream m_Input;
     int m_WriterFFSmarshal;
     int m_WriterBPmarshal;
     SstFullMetadata m_CurrentStepMetaData =
         NULL; // Used only with BP marshaling
+    format::BP3Deserializer *m_BP3Deserializer;
 
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \
