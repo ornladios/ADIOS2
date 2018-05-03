@@ -26,7 +26,7 @@ void SstReader::SstBPPerformGets()
         m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
     const auto &variableMap = m_IO.GetAvailableVariables();
     std::vector<void *> sstReadHandlers;
-    bool isContiguous;
+    std::vector<NonContiguousBpBuffer> nonContiguousBpBuffer;
     for (const auto &readSchedule : readScheduleMap)
     {
         const std::string variableName(readSchedule.first);
@@ -84,7 +84,6 @@ void SstReader::SstBPPerformGets()
                                     m_BP3Deserializer->m_IsRowMajor,
                                     elementOffset))
                             {
-                                isContiguous = true;
                                 auto ret = SstReadRemoteMemory(
                                     m_Input, rank, CurrentStep(),
                                     writerBlockStart, writerBlockSize,
@@ -93,13 +92,39 @@ void SstReader::SstBPPerformGets()
                             }
                             else
                             {
-                                isContiguous = false;
-                                std::vector<char> buffer(writerBlockSize);
-                                auto ret = SstReadRemoteMemory(
-                                    m_Input, rank, CurrentStep(),
-                                    writerBlockStart, writerBlockSize,
-                                    buffer.data(), dp_info);
-                                SstWaitForCompletion(m_Input, ret);
+                                if (m_BufferNonContiguousVariables)
+                                {
+                                    nonContiguousBpBuffer.emplace_back();
+                                    nonContiguousBpBuffer.back().VariableName =
+                                        variableName;
+                                    nonContiguousBpBuffer.back()
+                                        .ContiguousMemory.resize(
+                                            writerBlockSize);
+                                    nonContiguousBpBuffer.back().BlockBox =
+                                        sfi.BlockBox;
+                                    nonContiguousBpBuffer.back()
+                                        .IntersectionBox = sfi.IntersectionBox;
+                                    auto ret = SstReadRemoteMemory(
+                                        m_Input, rank, CurrentStep(),
+                                        writerBlockStart, writerBlockSize,
+                                        nonContiguousBpBuffer.back()
+                                            .ContiguousMemory.data(),
+                                        dp_info);
+                                    sstReadHandlers.push_back(ret);
+                                }
+                                else
+                                {
+                                    std::vector<char> contiguousMemory(
+                                        writerBlockSize);
+                                    auto ret = SstReadRemoteMemory(
+                                        m_Input, rank, CurrentStep(),
+                                        writerBlockStart, writerBlockSize,
+                                        contiguousMemory.data(), dp_info);
+                                    SstWaitForCompletion(m_Input, ret);
+                                    m_BP3Deserializer->ClipContiguousMemory(
+                                        variableName, m_IO, contiguousMemory,
+                                        sfi.BlockBox, sfi.IntersectionBox);
+                                }
                             }
                         }
                         else
@@ -114,12 +139,15 @@ void SstReader::SstBPPerformGets()
             }
         }
     }
-    if (isContiguous)
+    for (const auto &i : sstReadHandlers)
     {
-        for (const auto &i : sstReadHandlers)
-        {
-            SstWaitForCompletion(m_Input, i);
-        }
+        SstWaitForCompletion(m_Input, i);
+    }
+    for (const auto &i : nonContiguousBpBuffer)
+    {
+        m_BP3Deserializer->ClipContiguousMemory(i.VariableName, m_IO,
+                                                i.ContiguousMemory, i.BlockBox,
+                                                i.IntersectionBox);
     }
 }
 
