@@ -88,7 +88,6 @@ static void removeContactInfoFile(SstStream Stream)
 {
     const char *Name = Stream->Filename;
     char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
-    FILE *WriterInfo;
     sprintf(FileName, "%s" SST_POSTFIX, Name);
     unlink(FileName);
     free(FileName);
@@ -210,7 +209,7 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
 
 static void AddRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
 {
-    CPTimestepList List = Stream->QueuedTimesteps;
+    CPTimestepList List;
     pthread_mutex_lock(&Stream->DataLock);
     List = Stream->QueuedTimesteps;
     while (List)
@@ -1002,8 +1001,9 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     Msg->Timestep = Timestep;
 
     /* separate metadata and DP_info to separate arrays */
-    Msg->Metadata = malloc(Stream->CohortSize * sizeof(void *));
-    Msg->DP_TimestepInfo = malloc(Stream->CohortSize * sizeof(void *));
+    Msg->Metadata = malloc(Stream->CohortSize * sizeof(SstData));
+    Msg->DP_TimestepInfo =
+        malloc(Stream->CohortSize * sizeof(Msg->DP_TimestepInfo[0]));
     int NullCount = 0;
     for (int i = 0; i < Stream->CohortSize; i++)
     {
@@ -1211,7 +1211,7 @@ void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *Msg_v,
 extern CPTimestepList dequeueTimestep(SstStream Stream, long Timestep)
 {
     CPTimestepList Ret = NULL;
-    CPTimestepList List = NULL;
+    CPTimestepList List;
     pthread_mutex_lock(&Stream->DataLock);
     List = Stream->QueuedTimesteps;
     if (Stream->QueuedTimesteps->Timestep == Timestep)

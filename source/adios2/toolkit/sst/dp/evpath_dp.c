@@ -503,8 +503,9 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     Svcs->verbose(Stream->CP_Stream,
                   "Adios requesting to read remote memory for Timestep %d "
-                  "from Rank %d, WSR_Stream = %p\n",
-                  Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream);
+                  "from Rank %d, WSR_Stream = %p, DP_TimestepInfo %p\n",
+                  Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream,
+                  DP_TimestepInfo);
 
     /* send request to appropriate writer */
     /* memset avoids uninit byte warnings from valgrind */

@@ -277,7 +277,7 @@ static void RecalcMarshalStorageSize(SstStream Stream)
 static void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
                            const char *Type, int ElementSize)
 {
-    int FieldNum = *CountP, Offset = 0;
+    int Offset = 0;
     FMFieldList Field;
     if (*CountP)
     {
@@ -346,7 +346,6 @@ static void InitMarshalData(SstStream Stream)
     struct FFSWriterMarshalBase *Info =
         malloc(sizeof(struct FFSWriterMarshalBase));
     struct FFSMetadataInfoStruct *MBase;
-    FMFieldList Field;
 
     Stream->MarshalData = Info;
     Info->RecCount = 0;
@@ -791,7 +790,8 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
     int i = 0;
     while (FieldList[i].field_name)
     {
-        ArrayRec *data_base = BaseData + FieldList[i].field_offset;
+        ArrayRec *data_base =
+            (ArrayRec *)((char *)BaseData + FieldList[i].field_offset);
         const char *ArrayName = FieldList[i + 1].field_name + 4;
         FFSVarRec VarRec = LookupVarByName(Stream, ArrayName);
         VarRec->PerWriterIncomingData[Writer] = data_base->Array;
@@ -1065,13 +1065,12 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     /* free all those copied dimensions, etc */
     MBase = Stream->M;
     size_t *tmp = MBase->BitField;
-    MBase->BitField = NULL;
-    FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
     /*
-     * Codacy reports a problem here, because codacy isn't very smart.  The
      * BitField value is saved away from FMfree_var_rec_elements() so that it
      * isn't unnecessarily free'd.
      */
+    MBase->BitField = NULL;
+    FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
     MBase->BitField = tmp;
     FMfree_var_rec_elements(Info->DataFormat, Stream->D);
 
@@ -1227,7 +1226,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
 
     while (FieldList[i].field_name)
     {
-        void *field_data = BaseData + FieldList[i].field_offset;
+        void *field_data = (char *)BaseData + FieldList[i].field_offset;
         if (NameIndicatesArray(FieldList[i].field_name))
         {
             MetaArrayRec *meta_base = field_data;

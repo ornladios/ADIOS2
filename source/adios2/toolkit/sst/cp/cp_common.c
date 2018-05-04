@@ -503,7 +503,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 {
     FFSBuffer Buf = create_FFSBuffer();
     int DataSize;
-    int *RecvCounts = NULL;
+    int *RecvCounts;
     char *Buffer;
 
     struct _CP_DP_init_info **Pointers = NULL;
@@ -520,7 +520,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
      * and displacements for each rank
      */
 
-    int *Displs = NULL;
+    int *Displs;
     char *RecvBuffer = NULL;
     int i;
 
