@@ -784,6 +784,8 @@ extern void SstStreamDestroy(SstStream Stream)
         CManager_close(CPInfo->cm);
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
+        if (CPInfo->fm_c)
+            free_FMcontext(CPInfo->fm_c);
         FreeCustomStructs(CPInfo);
         for (int i = 0; i < CPInfo->LastCallFreeCount; i++)
         {
@@ -819,7 +821,7 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
     CMlisten_specific(CPInfo->cm, listen_list);
     free_attr_list(listen_list);
 
-    CPInfo->fm_c = CMget_FMcontext(CPInfo->cm);
+    CPInfo->fm_c = create_local_FMcontext();
     CPInfo->ffs_c = create_FFSContext_FM(CPInfo->fm_c);
 
     if (!CP_SstParamsList)
