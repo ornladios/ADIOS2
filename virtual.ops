@@ -53,10 +53,9 @@ print VMOUT "{\n    switch(code) {\n$vm_loadi_code    default: printf(\"loadi mi
 print VMOUT "int emulate_storei(int code, struct reg_type *dest, struct reg_type *src, long imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_storei_code    }return 0;\n}\n";
 
-print COUT "jmp_table ${mach}_jump_table;\n";
+print COUT "DECLARE_JUMP_TABLE(${mach});\n";
 print COUT "extern void dill_virtual_init(dill_stream s)\n{\n";
-print COUT "\tif(virtual_jump_table == 0) {\n";
-print COUT "\t  virtual_jump_table = alloc_dill_jump_table();\n";
+print COUT "\t  FILL_JUMP_STRUCTURE(virtual);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
@@ -120,7 +119,6 @@ print COUT "\t    ${mach}_jump_table->target_float_format = 2;  /* Format_IEEE_7
 print COUT "#endif\n";
 print COUT "\t  }\n";
 
-print COUT "\t}\n";
 print COUT "# line ". (__LINE__ + 2) . " \"virtual.ops\"\n";
 print COUT<<EOF;
 	if (s->p->virtual.mach_info == NULL) {

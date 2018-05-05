@@ -17,7 +17,10 @@
 
 #ifndef LINUX_KERNEL_MODULE
 #include <stdio.h>
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
+#include <stdlib.h>
 #include <string.h>
 #else
 #include "kdill.h"

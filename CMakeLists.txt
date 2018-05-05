@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
 if(POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
-  project(DILL VERSION 2.3.1 LANGUAGES C CXX)
+  project(DILL VERSION 2.3.2 LANGUAGES C CXX)
 else()
   project(DILL C CXX)
   set(DILL_MAJOR_VERSION 2)
   set(DILL_MINOR_VERSION 3)
-  set(DILL_PATCH_VERSION 1)
+  set(DILL_PATCH_VERSION 2)
   set(DILL_VERSION
     ${DILL_MAJOR_VERSION}.${DILL_MINOR_VERSION}.${DILL_PATCH_VERSION})
 endif()
@@ -189,7 +189,7 @@ ENDIF (LIBFFI_FOUND)
 option(DILL_ENABLE_DISASSEMBLY
   "enable binutils-based disassembly (default is OFF)" OFF)
 
-set (ARCHITECTURES sparc powerpc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
+set (ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
 foreach(_arch ${ARCHITECTURES})
   add_custom_command(
     OUTPUT "dill_${_arch}.c"

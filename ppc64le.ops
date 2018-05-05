@@ -163,9 +163,7 @@ print COUT "    ${mach}_jump_table->target_byte_order = 2;  /* Format_Integer_li
 print COUT "    ${mach}_jump_table->target_float_format = 3;  /* Format_IEEE_754_littleendian */ \n";
 print COUT "}\n\n";
 print COUT "extern void dill_ppc64le_init(dill_stream s)\n{\n";
-print COUT "    if(ppc64le_jump_table == 0) {\n";
 print COUT "        gen_ppc64le_jump_table();\n";
-print COUT "    }\n";
 print COUT "    s->j = ppc64le_jump_table;\n";
 print COUT "    s->dill_local_pointer = _sp;\n";
 print COUT "    s->dill_param_reg_pointer = _sp;\n";

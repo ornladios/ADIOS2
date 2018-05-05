@@ -130,7 +130,6 @@ extern void dill_arm5_init(dill_stream s);
 extern void dill_arm6_init(dill_stream s);
 extern void dill_arm7_init(dill_stream s);
 extern void dill_arm8_init(dill_stream s);
-extern void dill_powerpc_init(dill_stream s);
 extern void dill_ppc64le_init(dill_stream s);
 extern void dill_ia64_init(dill_stream s);
 #if defined(EMULATION_ONLY)
@@ -196,12 +195,6 @@ set_mach_reset(dill_stream s, char *arch)
 #if defined(MULTI_TARGET) || defined(HOST_ARM8)
     if (strcmp(arch, "arm8") == 0) {
 	s->p->mach_reset = dill_arm8_init;
-	return 1;
-    }
-#endif
-#if defined(MULTI_TARGET) || defined(HOST_POWERPC)
-    if (strcmp(arch, "powerpc") == 0) {
-	s->p->mach_reset = dill_powerpc_init;
 	return 1;
     }
 #endif
@@ -858,33 +851,8 @@ extend_dill_stream(dill_stream s)
 
 extern jmp_table alloc_dill_jump_table()
 {
-    jmp_table tmp = malloc(sizeof(struct jmp_table_s));
-    memset(tmp, 0, sizeof(struct jmp_table_s));
-    tmp->jmp_a3 = malloc(sizeof(arith_op3) * (dill_jmp_a3_size + 1));
-    memset(tmp->jmp_a3, 0, sizeof(arith_op3) * (dill_jmp_a3_size + 1));
-    tmp->a3_data = malloc(sizeof(jmp_data) * (dill_jmp_a3_size + 1));
-    memset(tmp->a3_data, 0, sizeof(jmp_data) * (dill_jmp_a3_size + 1));
-    tmp->jmp_a3i = malloc(sizeof(arith_op3i) * (dill_jmp_a3_size + 1));
-    memset(tmp->jmp_a3i, 0, sizeof(arith_op3i) * (dill_jmp_a3_size + 1));
-    tmp->a3i_data = malloc(sizeof(jmp_data) * (dill_jmp_a3_size + 1));
-    memset(tmp->a3i_data, 0, sizeof(jmp_data) * (dill_jmp_a3_size + 1));
-    tmp->jmp_a2 = malloc(sizeof(arith_op2) * (dill_jmp_a2_size + 1));
-    memset(tmp->jmp_a2, 0, sizeof(arith_op2) * (dill_jmp_a2_size + 1));
-    tmp->a2_data = malloc(sizeof(jmp_data) * (dill_jmp_a2_size + 1));
-    memset(tmp->a2_data, 0, sizeof(jmp_data) * (dill_jmp_a2_size + 1));
-    tmp->jmp_b = malloc(sizeof(branch_op) * (dill_jmp_branch_size + 1));
-    memset(tmp->jmp_b, 0, sizeof(branch_op) * (dill_jmp_branch_size + 1));
-    tmp->jmp_bi = malloc(sizeof(branch_opi) * (dill_jmp_branch_size + 1));
-    memset(tmp->jmp_bi, 0, sizeof(branch_opi) * (dill_jmp_branch_size + 1));
-    tmp->b_data = malloc(sizeof(jmp_data) * (dill_jmp_branch_size + 1));
-    memset(tmp->b_data, 0, sizeof(jmp_data) * (dill_jmp_branch_size + 1));
-    tmp->jmp_c = malloc(sizeof(compare_op) * (dill_jmp_branch_size + 1));
-    memset(tmp->jmp_c, 0, sizeof(compare_op) * (dill_jmp_compare_size + 1));
-    tmp->jmp_ci = malloc(sizeof(compare_opi) * (dill_jmp_compare_size + 1));
-    memset(tmp->jmp_ci, 0, sizeof(compare_opi) * (dill_jmp_compare_size + 1));
-    tmp->c_data = malloc(sizeof(jmp_data) * (dill_jmp_compare_size + 1));
-    memset(tmp->c_data, 0, sizeof(jmp_data) * (dill_jmp_compare_size + 1));
-    return tmp;
+    fprintf(stderr, "Don't use alloc_dill_jump_table().  Rewrite to use DECLARE_JUMP_TABLE() and FILL_JUMP_STRUCTURE()\n");
+    return NULL;
 }
 
 #define BIT_ON(i, bitvec) (((((long)1)<<reg) & bitvec[0]) == (((long)1)<<reg))
