@@ -292,7 +292,7 @@ long imm;
     } else {
 	/* lsh */
 	if (dill_type_size(s, type) == 4) {
-	    INSN_OUT(s, M_FORM(op, src1, dest, imm, 0, 31 - imm));
+	    INSN_OUT(s, M_FORM(op, src1, dest, imm, 0, (31 - imm)));
 	} else {
 	    INSN_OUT(s, MD_FORM(30, src1, dest, (imm&0x1f), ((((63-imm)&0x1f) << 1) | ((63-imm)>>5)), 1, (imm>>5)));
 	}

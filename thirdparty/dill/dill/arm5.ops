@@ -54,10 +54,10 @@ sub upperc {
 &branch_insn( "eq ge gt le lt ne", "i u ul l p d f", "arm5_branch");
 &branchi_insn( "eq ge gt le lt ne", "i u ul l p", "arm5_branchi");
 
-print COUT "jmp_table ${mach}_jump_table;\n";
+print COUT "DECLARE_JUMP_TABLE(${mach});\n";
 print COUT "static void gen_arm5_jump_table()\n";
 print COUT "{\n";
-print COUT "\t  ${mach}_jump_table = alloc_dill_jump_table();\n";
+print COUT "\t  FILL_JUMP_STRUCTURE($mach);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
@@ -103,9 +103,7 @@ print COUT "\t  ${mach}_jump_table->target_byte_order = 2;  /* Format_Integer_li
 print COUT "\t  ${mach}_jump_table->target_float_format = 3;  /* Format_IEEE_754_mixedendian */ \n";
 print COUT "}\n\n";
 print COUT "extern void dill_arm5_init(dill_stream s)\n{\n";
-print COUT "\tif(${mach}_jump_table == 0) {\n";
-print COUT "\t  gen_arm5_jump_table();\n";
-print COUT "\t}\n";
+print COUT "\tgen_arm5_jump_table();\n";
 print COUT "\ts->j = ${mach}_jump_table;\n";
 print COUT "\ts->dill_local_pointer = _fp;\n";
 print COUT "\ts->dill_param_reg_pointer = _fp;\n";
@@ -113,10 +111,8 @@ print COUT "\ts->p->mach_info = (void*)gen_arm5_mach_info(s,/*v9*/ 0);\n";
 print COUT "\ts->p->machine_strr_tmp_reg = _v1;\n";
 print COUT "\treturn;\n";
 print COUT "}\n";
-print COUT "extern void dill_armv9_init(dill_stream s)\n{\n";
-print COUT "\tif(${mach}_jump_table == 0) {\n";
-print COUT "\t  gen_arm5_jump_table();\n";
-print COUT "\t}\n";
+print COUT "extern void dill_armv5_init(dill_stream s)\n{\n";
+print COUT "\tgen_arm5_jump_table();\n";
 print COUT "\ts->j = ${mach}_jump_table;\n";
 print COUT "\ts->dill_local_pointer = _fp;\n";
 print COUT "\ts->dill_param_reg_pointer = _fp;\n";

@@ -275,3 +275,33 @@ struct dill_exec_s {
     void*closure;
 };
 
+#define DECLARE_JUMP_TABLE(NAME) \
+struct jmp_table_s NAME ## _table_s;\
+arith_op3 NAME ## _a3[dill_jmp_a3_size+1];\
+jmp_data NAME ## _a3_data[dill_jmp_a3_size+1];\
+arith_op3i NAME ## _a3i[dill_jmp_a3_size+1];\
+jmp_data NAME ## _a3i_data[dill_jmp_a3_size+1];\
+arith_op2 NAME ## _a2[dill_jmp_a2_size+1];\
+jmp_data NAME ## _a2_data[dill_jmp_a2_size+1];\
+branch_op NAME ## _b[dill_jmp_branch_size+1];\
+branch_opi NAME ## _bi[dill_jmp_branch_size+1];\
+jmp_data NAME ## _b_data[dill_jmp_branch_size+1];\
+compare_op NAME ## _c[dill_jmp_compare_size+1];\
+compare_opi NAME ## _ci[dill_jmp_compare_size+1];\
+jmp_data NAME ## _c_data[dill_jmp_compare_size+1];\
+\
+jmp_table NAME ## _jump_table = & NAME ## _table_s;
+
+#define FILL_JUMP_STRUCTURE(NAME)\
+    NAME ## _jump_table->jmp_a3 = &NAME ## _a3[0];\
+    NAME ## _jump_table->a3_data = &NAME ## _a3_data[0];\
+    NAME ## _jump_table->jmp_a3i = &NAME ## _a3i[0];\
+    NAME ## _jump_table->a3i_data = &NAME ## _a3i_data[0];\
+    NAME ## _jump_table->jmp_a2 = &NAME ## _a2[0];\
+    NAME ## _jump_table->a2_data = &NAME ## _a2_data[0];\
+    NAME ## _jump_table->jmp_b = &NAME ## _b[0];\
+    NAME ## _jump_table->jmp_bi = &NAME ## _bi[0];\
+    NAME ## _jump_table->b_data = &NAME ## _b_data[0];\
+    NAME ## _jump_table->jmp_c = &NAME ## _c[0];\
+    NAME ## _jump_table->jmp_ci = &NAME ## _ci[0];\
+    NAME ## _jump_table->c_data = &NAME ## _c_data[0];

@@ -50,10 +50,9 @@ sub upperc {
 &compare_insn( "eq ge gt le lt ne", "c uc s us i u ul l p d f", "x86_compare");
 &comparei_insn( "eq ge gt le lt ne", "c uc s us i u ul l p", "x86_comparei");
 
-print COUT "jmp_table ${mach}_jump_table;\n";
+print COUT "DECLARE_JUMP_TABLE(${mach});\n";
 print COUT "extern void dill_x86_init(dill_stream s)\n{\n";
-print COUT "\tif(x86_jump_table == 0) {\n";
-print COUT "\t  x86_jump_table = alloc_dill_jump_table();\n";
+print COUT "\t  FILL_JUMP_STRUCTURE($mach);\n";
 print COUT $jmp_a3_assigns;
 print COUT $jmp_a3i_assigns;
 print COUT $jmp_a2_assigns;
@@ -101,7 +100,6 @@ print COUT "\t  ${mach}_jump_table->count_insn = x86_count_insn;\n";
 print COUT "\t  ${mach}_jump_table->do_reverse_push = 0;\n";
 print COUT "\t  ${mach}_jump_table->target_byte_order = 2;  /* Format_Integer_littleendian */\n";
 print COUT "\t  ${mach}_jump_table->target_float_format = 2;  /* Format_IEEE_754_littleendian */ \n";
-print COUT "\t}\n";
 print COUT "\ts->j = x86_jump_table;\n";
 print COUT "\ts->dill_local_pointer = EBP;\n";
 print COUT "\ts->dill_param_reg_pointer = EBP;\n";
