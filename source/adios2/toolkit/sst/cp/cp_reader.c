@@ -127,7 +127,7 @@ static void **ParticipateInReaderInitDataExchange(SstStream Stream,
     struct _CP_DP_PairInfo combined_init;
     struct _CP_ReaderInitInfo cpInfo;
 
-    struct _CP_DP_PairInfo **pointers = NULL;
+    struct _CP_DP_PairInfo **pointers;
 
     cpInfo.ContactInfo =
         attr_list_to_string(CMget_contact_list(Stream->CPInfo->cm));
