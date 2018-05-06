@@ -21,6 +21,8 @@
 #define DP_AV_DEF_SIZE 512
 
 pthread_mutex_t fabric_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t wsr_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t ts_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 struct fabric_state
 {
@@ -163,6 +165,71 @@ static void init_fabric(struct fabric_state *fabric)
     fi_ep_bind(fabric->signal, &fabric->cq_signal->fid, FI_TRANSMIT | FI_RECV);
 
     fi_enable(fabric->signal);
+
+    fi_freeinfo(info);
+}
+
+static void fini_fabric(struct fabric_state *fabric)
+{
+
+    int status;
+
+    do
+    {
+        status = fi_close((struct fid *)fabric->signal);
+    } while (status == FI_EBUSY);
+
+    if (status)
+    {
+        // TODO: error handling
+    }
+
+    do
+    {
+        status = fi_close((struct fid *)fabric->cq_signal);
+    } while (status == FI_EBUSY);
+
+    if (status)
+    {
+        // TODO: error handling
+    }
+
+    do
+    {
+        status = fi_close((struct fid *)fabric->av);
+    } while (status == FI_EBUSY);
+
+    if (status)
+    {
+        // TODO: error handling
+    }
+
+    do
+    {
+        status = fi_close((struct fid *)fabric->domain);
+    } while (status == FI_EBUSY);
+
+    if (status)
+    {
+        // TODO: error handling
+    }
+
+    do
+    {
+        status = fi_close((struct fid *)fabric->fabric);
+    } while (status == FI_EBUSY);
+
+    if (status)
+    {
+        // TODO: error handling
+    }
+
+    fi_freeinfo(fabric->info);
+
+    if (fabric->ctx)
+    {
+        free(fabric->ctx);
+    }
 }
 
 typedef struct fabric_state *FabricState;
@@ -178,6 +245,7 @@ typedef struct _Rdma_RS_Stream
     /* writer info */
     int WriterCohortSize;
     CP_PeerCohort PeerCohort;
+    struct _RdmaReaderContactInfo *ReaderContactInfo;
     struct _RdmaWriterContactInfo *WriterContactInfo;
     fi_addr_t *WriterAddr;
 } * Rdma_RS_Stream;
@@ -188,7 +256,15 @@ typedef struct _Rdma_WSR_Stream
     CP_PeerCohort PeerCohort;
     int ReaderCohortSize;
     struct _RdmaReaderContactInfo *ReaderContactInfo;
+    struct _RdmaWriterContactInfo *WriterContactInfo;
 } * Rdma_WSR_Stream;
+
+typedef struct _RdmaPerTimestepInfo
+{
+    char *CheckString;
+    int CheckInt;
+    pthread_mutex_t CheckLock;
+} * RdmaPerTimestepInfo;
 
 typedef struct _TimestepEntry
 {
@@ -331,6 +407,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     Contact->ContactString = RdmaContactString;
     Contact->RS_Stream = Stream;
 
+    Stream->ReaderContactInfo = Contact;
     *ReaderContactInfoPtr = Contact;
 
     return Stream;
@@ -351,6 +428,7 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
                                         "offset %d, length %d\n",
                   ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep,
                   ReadRequestMsg->Offset, ReadRequestMsg->Length);
+    pthread_mutex_lock(&ts_mutex);
     while (tmp != NULL)
     {
         if (tmp->Timestep == ReadRequestMsg->Timestep)
@@ -366,6 +444,7 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
             ReadReplyMsg.NotifyCondition = ReadRequestMsg->NotifyCondition;
             ReadReplyMsg.Key = tmp->Key;
             ReadReplyMsg.Addr = tmp->Data->block + ReadRequestMsg->Offset;
+            pthread_mutex_unlock(&ts_mutex);
             Svcs->verbose(
                 WS_Stream->CP_Stream,
                 "Sending a reply to reader rank %d for remote memory read\n",
@@ -377,6 +456,7 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
         }
         tmp = tmp->Next;
     }
+    pthread_mutex_unlock(&ts_mutex);
     /*
      * Shouldn't ever get here because we should never get a request for a
      * timestep that we don't have.
@@ -440,7 +520,7 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
 
     if (rc != 0)
     {
-        Svcs->verbose(RS_Stream->CP_Stream, "fi_readmsg failed with code %d.\n",
+        Svcs->verbose(RS_Stream->CP_Stream, "fi_read failed with code %d.\n",
                       rc);
     }
     else
@@ -530,6 +610,7 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
      */
     WSR_Stream->ReaderContactInfo =
         malloc(sizeof(struct _RdmaReaderContactInfo) * readerCohortSize);
+
     for (int i = 0; i < readerCohortSize; i++)
     {
         WSR_Stream->ReaderContactInfo[i].ContactString =
@@ -543,14 +624,18 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
             WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
     }
 
+    WSR_Stream->ReaderCohortSize = readerCohortSize;
+
     /*
      * add this writer-side reader-specific stream to the parent writer stream
      * structure
      */
+    pthread_mutex_lock(&wsr_mutex);
     WS_Stream->Readers = realloc(
         WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount + 1));
     WS_Stream->Readers[WS_Stream->ReaderCount] = WSR_Stream;
     WS_Stream->ReaderCount++;
+    pthread_mutex_unlock(&wsr_mutex);
 
     ContactInfo = malloc(sizeof(struct _RdmaWriterContactInfo));
     memset(ContactInfo, 0, sizeof(struct _RdmaWriterContactInfo));
@@ -562,6 +647,7 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     fi_getname((fid_t)Fabric->signal, ContactInfo->Address,
                &ContactInfo->Length);
 
+    WSR_Stream->WriterContactInfo = ContactInfo;
     *WriterContactInfoPtr = ContactInfo;
 
     return WSR_Stream;
@@ -604,13 +690,6 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
             RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
 }
-
-typedef struct _RdmaPerTimestepInfo
-{
-    char *CheckString;
-    int CheckInt;
-    pthread_mutex_t CheckLock;
-} * RdmaPerTimestepInfo;
 
 static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
                                   int Rank, long Timestep, size_t Offset,
@@ -684,23 +763,25 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
 {
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
-    struct _RdmaPerTimestepInfo *Info =
-        malloc(sizeof(struct _RdmaPerTimestepInfo));
+    RdmaPerTimestepInfo Info = malloc(sizeof(struct _RdmaPerTimestepInfo));
     FabricState Fabric = Stream->Fabric;
 
     Info->CheckString = malloc(64);
     sprintf(Info->CheckString, "Rdma info for timestep %ld from rank %d",
             Timestep, Stream->Rank);
     Info->CheckInt = Stream->Rank * 1000 + Timestep;
-    Entry->Data = Data;
+    Entry->Data = malloc(sizeof(*Data));
+    memcpy(Entry->Data, Data, sizeof(*Data));
     Entry->Timestep = Timestep;
     Entry->DP_TimestepInfo = Info;
 
     fi_mr_reg(Fabric->domain, Data->block, Data->DataSize, FI_REMOTE_READ, 0, 0,
               0, &Entry->mr, Fabric->ctx);
     Entry->Key = fi_mr_key(Entry->mr);
+    pthread_mutex_lock(&ts_mutex);
     Entry->Next = Stream->Timesteps;
     Stream->Timesteps = Entry;
+    pthread_mutex_unlock(&ts_mutex);
     *TimestepInfoPtr = Info;
 }
 
@@ -708,30 +789,20 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                 long Timestep)
 {
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
-    TimestepList List = Stream->Timesteps;
+    TimestepList *List = &Stream->Timesteps;
+    TimestepList ReleaseTSL;
+    RdmaPerTimestepInfo Info;
 
     Svcs->verbose(Stream->CP_Stream, "Releasing timestep %ld\n", Timestep);
-    if (Stream->Timesteps->Timestep == Timestep)
+
+    pthread_mutex_lock(&ts_mutex);
+    while ((*List) && (*List)->Timestep != Timestep)
     {
-        Stream->Timesteps = List->Next;
-        free(List);
+        List = &((*List)->Next);
     }
-    else
+
+    if ((*List) == NULL)
     {
-        TimestepList last = List;
-        List = List->Next;
-        while (List != NULL)
-        {
-            if (List->Timestep == Timestep)
-            {
-                last->Next = List->Next;
-                fi_close((struct fid *)List->mr); // to be expanded
-                free(List);
-                return;
-            }
-            last = List;
-            List = List->Next;
-        }
         /*
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
@@ -740,25 +811,113 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                 Timestep);
         assert(0);
     }
+
+    ReleaseTSL = *List;
+    *List = ReleaseTSL->Next;
+    pthread_mutex_unlock(&ts_mutex);
+    fi_close((struct fid *)ReleaseTSL->mr);
+    if (ReleaseTSL->Data)
+    {
+        free(ReleaseTSL->Data);
+    }
+    Info = ReleaseTSL->DP_TimestepInfo;
+    if (Info)
+    {
+        if (Info->CheckString)
+        {
+            free(Info->CheckString);
+        }
+        free(Info);
+    }
+    free(ReleaseTSL);
 }
 
 static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
     Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)RS_Stream_v;
-    /* Stuff here */
-}
+    RdmaReaderContactInfo ReaderContactInfo;
 
-static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
-{
-    Rdma_WS_Stream WS_Stream = (Rdma_WS_Stream)WS_Stream_v;
-    /* Stuff here */
+    Svcs->verbose(RS_Stream->CP_Stream, "Tearing down RDMA state on reader.\n");
+    fini_fabric(RS_Stream->Fabric);
+
+    for (int i = 0; i < RS_Stream->WriterCohortSize; i++)
+    {
+        free(RS_Stream->WriterContactInfo[i].ContactString);
+    }
+
+    ReaderContactInfo = RS_Stream->ReaderContactInfo;
+    if (ReaderContactInfo)
+    {
+        free(ReaderContactInfo->ContactString);
+        free(ReaderContactInfo);
+    }
+    free(RS_Stream->WriterContactInfo);
+    free(RS_Stream->WriterAddr);
+    free(RS_Stream->Fabric);
+    free(RS_Stream);
 }
 
 static void RdmaDestroyWriterPerReader(CP_Services Svcs,
                                        DP_WSR_Stream WSR_Stream_v)
 {
     Rdma_WSR_Stream WSR_Stream = (Rdma_WSR_Stream)WSR_Stream_v;
-    /* Stuff here */
+    Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
+    RdmaWriterContactInfo WriterContactInfo;
+
+    pthread_mutex_lock(&wsr_mutex);
+    for (int i = 0; i < WS_Stream->ReaderCount; i++)
+    {
+        if (WS_Stream->Readers[i] == WSR_Stream)
+        {
+            WS_Stream->Readers[i] =
+                WS_Stream->Readers[WS_Stream->ReaderCount - 1];
+            break;
+        }
+    }
+    WS_Stream->Readers = realloc(
+        WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount - 1));
+    WS_Stream->ReaderCount--;
+    pthread_mutex_unlock(&wsr_mutex);
+
+    for (int i = 0; i < WSR_Stream->ReaderCohortSize; i++)
+    {
+        free(WSR_Stream->ReaderContactInfo[i].ContactString);
+    }
+
+    free(WSR_Stream->ReaderContactInfo);
+    if (WSR_Stream->WriterContactInfo)
+    {
+        WriterContactInfo = WSR_Stream->WriterContactInfo;
+        free(WriterContactInfo->ContactString);
+        free(WriterContactInfo->Address);
+    }
+    free(WSR_Stream->WriterContactInfo);
+    free(WSR_Stream);
+}
+
+static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
+{
+    Rdma_WS_Stream WS_Stream = (Rdma_WS_Stream)WS_Stream_v;
+    TimestepList List;
+
+    Svcs->verbose(WS_Stream->CP_Stream, "Tearing down RDMA state on writer.\n");
+    fini_fabric(WS_Stream->Fabric);
+
+    while (WS_Stream->ReaderCount > 0)
+    {
+        RdmaDestroyWriterPerReader(Svcs, WS_Stream->Readers[0]);
+    }
+
+    pthread_mutex_lock(&ts_mutex);
+    while (WS_Stream->Timesteps)
+    {
+        List = WS_Stream->Timesteps;
+        RdmaReleaseTimestep(Svcs, WS_Stream, List->Timestep);
+    }
+    pthread_mutex_unlock(&ts_mutex);
+
+    free(WS_Stream->Fabric);
+    free(WS_Stream);
 }
 
 static FMField RdmaReaderContactList[] = {
