@@ -30,6 +30,8 @@ adios2_constant_dims GetConstantDims(const bool constantDims)
 
 } // end empty namespace
 
+#define V0(v) (v.empty() ? NULL : &v[0])
+
 // DefineVariable
 template <>
 Variable<std::string>
@@ -38,8 +40,8 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
                    const bool constantDims, std::string *data)
 {
     return Variable<std::string>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_string, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_string, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -48,8 +50,8 @@ Variable<char> IO::DefineVariable(const std::string &name, const Dims &shape,
                                   const bool constantDims, char *data)
 {
     return Variable<char>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_char, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_char, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -59,8 +61,8 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
                    const bool constantDims, signed char *data)
 {
     return Variable<signed char>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_signed_char, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_signed_char, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -70,8 +72,8 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
                    const bool constantDims, unsigned char *data)
 {
     return Variable<unsigned char>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_unsigned_char, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_unsigned_char, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -80,8 +82,8 @@ Variable<short> IO::DefineVariable(const std::string &name, const Dims &shape,
                                    const bool constantDims, short *data)
 {
     return Variable<short>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_short, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_short, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -92,7 +94,7 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
 {
     return Variable<unsigned short>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_unsigned_short, count.size(),
-        &shape[0], &start[0], &count[0], GetConstantDims(constantDims), data));
+        V0(shape), V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -101,8 +103,8 @@ Variable<int> IO::DefineVariable(const std::string &name, const Dims &shape,
                                  const bool constantDims, int *data)
 {
     return Variable<int>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_int, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_int, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -112,8 +114,8 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
                    const bool constantDims, unsigned int *data)
 {
     return Variable<unsigned int>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_unsigned_int, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_unsigned_int, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -123,8 +125,8 @@ Variable<long int> IO::DefineVariable(const std::string &name,
                                       const bool constantDims, long int *data)
 {
     return Variable<long int>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_long_int, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_long_int, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -135,7 +137,7 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
 {
     return Variable<unsigned long int>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_unsigned_long_int, count.size(),
-        &shape[0], &start[0], &count[0], GetConstantDims(constantDims), data));
+        V0(shape), V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -145,8 +147,8 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
                    const bool constantDims, long long int *data)
 {
     return Variable<long long int>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_long_long_int, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_long_long_int, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -157,7 +159,7 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
 {
     return Variable<unsigned long long int>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_unsigned_long_long_int, count.size(),
-        &shape[0], &start[0], &count[0], GetConstantDims(constantDims), data));
+        V0(shape), V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -166,8 +168,8 @@ Variable<float> IO::DefineVariable(const std::string &name, const Dims &shape,
                                    const bool constantDims, float *data)
 {
     return Variable<float>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_float, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_float, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -176,8 +178,8 @@ Variable<double> IO::DefineVariable(const std::string &name, const Dims &shape,
                                     const bool constantDims, double *data)
 {
     return Variable<double>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_double, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_double, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -187,8 +189,8 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
                    const bool constantDims, std::complex<float> *data)
 {
     return Variable<std::complex<float>>(adios2_define_variable(
-        &m_IO, name.c_str(), adios2_type_float_complex, count.size(), &shape[0],
-        &start[0], &count[0], GetConstantDims(constantDims), data));
+        &m_IO, name.c_str(), adios2_type_float_complex, count.size(), V0(shape),
+        V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 template <>
@@ -199,7 +201,7 @@ IO::DefineVariable(const std::string &name, const Dims &shape,
 {
     return Variable<std::complex<double>>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_double_complex, count.size(),
-        &shape[0], &start[0], &count[0], GetConstantDims(constantDims), data));
+        V0(shape), V0(start), V0(count), GetConstantDims(constantDims), data));
 }
 
 // DefineAttribute
@@ -431,6 +433,8 @@ Variable<T> IO::InquireVariable(const std::string &name)
 {
     return Variable<T>(adios2_inquire_variable(&m_IO, name.c_str()));
 }
+
+#undef V0
 
 } // end namespace cxx98
 } // end namespace adios2

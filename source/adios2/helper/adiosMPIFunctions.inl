@@ -85,7 +85,7 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
     }
 
     GathervArrays(in.data(), in.size(), counts.data(), counts.size(),
-                  &out[position], mpiComm);
+                  out.data()+position, mpiComm);
     position += gatheredSize;
 }
 

@@ -44,7 +44,9 @@ namespace cxx98
     template <>                                                                \
     void Variable<T>::SetSelection(const Dims &start, const Dims &count)       \
     {                                                                          \
-        adios2_set_selection(m_Variable, count.size(), &start[0], &count[0]);  \
+        adios2_set_selection(m_Variable, count.size(),                         \
+                             start.empty() ? NULL : &start[0],                 \
+                             count.empty() ? NULL : &count[0]);                \
     }                                                                          \
                                                                                \
     template <>                                                                \
