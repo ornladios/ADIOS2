@@ -71,9 +71,10 @@ struct Entry
 // how to print one data item of an array
 // enum PrintDataType {STRING, INT, FLOAT, DOUBLE, COMPLEX};
 
+char *mystrndup(const char *s, size_t n);
 void init_globals();
 void processDimSpecs();
-void parseDimSpec(char *str, int64_t *dims);
+void parseDimSpec(const std::string &str, int64_t *dims);
 int compile_regexp_masks(void);
 void printSettings(void);
 int doList(const char *path);
@@ -94,7 +95,7 @@ int readVarBlock(Engine *fp, IO *io, Variable<T> *variable, int blockid);
 int cmpstringp(const void *p1, const void *p2);
 bool grpMatchesMask(char *name);
 bool matchesAMask(const char *name);
-int print_start(const char *fname);
+int print_start(const std::string &fnamestr);
 void print_slice_info(VariableBase *variable, uint64_t *s, uint64_t *c);
 int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartypes,
                bool allowformat);

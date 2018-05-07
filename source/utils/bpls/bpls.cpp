@@ -21,14 +21,37 @@
 //#include <iostream>
 #include <cinttypes>
 #include <cstdio>
+#include <string>
 #include <vector>
 
 #include "./bpls.h"
 
 #include <errno.h>
-#include <fnmatch.h> // shell pattern matching
-#include <getopt.h>
+
+#if defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
+#if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
+/* pre GCC 4.9 cannot handle the C++ regex implementation. Will use C-lib
+ * regex"*/
+#define USE_C_REGEX
+#endif
+#endif
+
+#ifdef USE_C_REGEX
 #include <regex.h> // regular expression matching
+#else
+#include <regex>
+#endif
+
+#ifdef _WIN32
+#include "shlwapi.h"
+#include "windows.h"
+#pragma comment(lib, "shlwapi.lib")
+#pragma warning(disable : 4101) // unreferenced local variable
+#else
+#include <fnmatch.h>
+#endif
+
+#include "adios2sys/CommandLineArguments.hxx"
 
 namespace adios2
 {
@@ -39,16 +62,17 @@ using EntryMap = std::map<std::string, Entry>;
 
 // global variables
 // Values from the arguments or defaults
-char *outpath; // output files' starting path (can be extended with subdirs,
-               // names, indexes)
+
+// output files' starting path (can be extended with subdirs,
+// names, indexes)
+std::string outpath;
 char *varmask[MAX_MASKS]; // can have many -var masks (either shell patterns or
                           // extended regular expressions)
 int nmasks;               // number of masks specified
 char *vfile;              // file name to bpls
-char *start;              // dimension spec starting points
-char *count;              // dimension spec counts
-char format[32];          // format string for one data element (e.g. %6.2f)
-bool formatgiven;         // true if format string is provided as argument
+std::string start;        // dimension spec starting points
+std::string count;        // dimension spec counts
+std::string format;       // format string for one data element (e.g. %6.2f)
 
 // Flags from arguments or defaults
 bool dump; // dump data not just list info
@@ -73,39 +97,15 @@ char *prgname; /* argv[0] */
 // long timefrom, timeto;
 int64_t istart[MAX_DIMS], icount[MAX_DIMS]; // negative values are allowed
 int ndimsspecified = 0;
+#ifdef USE_C_REGEX
 regex_t varregex[MAX_MASKS]; // compiled regular expressions of varmask
+#else
+std::vector<std::regex> varregex;
+#endif
 int ncols = 6; // how many values to print in one row (only for -p)
 int verbose = 0;
 FILE *outf; // file to print to or stdout
 char commentchar;
-
-struct option options[] = {
-    {"help", no_argument, NULL, 'h'},
-    {"verbose", no_argument, NULL, 'v'},
-    {"dump", no_argument, NULL, 'd'},
-    {"group", no_argument, NULL, 'g'},
-    {"regexp", no_argument, NULL, 'e'},
-    {"plot", no_argument, NULL, 'p'},
-    {"output", required_argument, NULL, 'o'},
-    {"xml", no_argument, NULL, 'x'},
-    {"start", required_argument, NULL, 's'},
-    {"count", required_argument, NULL, 'c'},
-    {"noindex", no_argument, NULL, 'y'},
-    {"timestep", no_argument, NULL, 't'},
-    {"attrs", no_argument, NULL, 'a'},
-    {"attrsonly", no_argument, NULL, 'A'},
-    {"meshes", no_argument, NULL, 'm'},
-    {"long", no_argument, NULL, 'l'},
-    {"string", no_argument, NULL, 'S'},
-    {"columns", required_argument, NULL, 'n'},
-    {"format", required_argument, NULL, 'f'},
-    {"hidden_attrs", no_argument, &hidden_attrs_flag, true},
-    {"decomp", no_argument, NULL, 'D'},
-    //    {"sort",                 no_argument,          NULL,    'r'},
-    //    {"time",                 required_argument,    NULL,    't'},
-    {NULL, 0, NULL, 0}};
-
-static const char *optstring = "hvepyrtaAmldSDg:o:x:s:c:n:f:";
 
 // help function
 void display_help()
@@ -113,7 +113,7 @@ void display_help()
     // printf( "Usage: %s  \n", prgname);
     printf(
         "usage: bpls [OPTIONS] file [mask1 mask2 ...]\n"
-        "\nList/dump content of a BP file. \n"
+        "\nList/dump content of a BP/HDF5 file. \n"
         "A mask can be a shell pattern like with 'ls' e.g. \"*/x?\".\n"
         "Variables with multiple timesteps are reported with an extra "
         "dimensions.\n"
@@ -130,7 +130,6 @@ void display_help()
         "  --sort      | -r           Sort names before listing\n"
         */
         "  --timestep  | -t           Print values of timestep elements\n"
-        "  --group     | -g <mask>    List/dump groups matching the mask only\n"
         "  --dump      | -d           Dump matched variables/attributes\n"
         "                               To match attributes too, add option "
         "-a\n"
@@ -185,143 +184,192 @@ void display_help()
         "Typical use: bpls -lav <file>\n");
 }
 
+bool option_help_was_called = false;
+int optioncb_help(const char *argument, const char *value, void *call_data)
+{
+    // adios2sys::CommandLineArguments *arg =
+    // static_cast<adios2sys::CommandLineArguments *>(call_data);
+    // printf("%s\n", arg->GetHelp());
+    display_help();
+    option_help_was_called = true;
+    return 1;
+}
+
+int optioncb_verbose(const char *argument, const char *value, void *call_data)
+{
+    verbose++;
+    return 1;
+}
+
+int process_unused_args(adios2sys::CommandLineArguments &arg)
+{
+    int nuargs;
+    char **uargs;
+    arg.GetUnusedArguments(&nuargs, &uargs);
+
+    std::vector<char *> retry_args;
+    retry_args.push_back(new char[4]);
+
+    // first arg is argv[0], so skip that
+    for (int i = 1; i < nuargs; i++)
+    {
+        if (uargs[i] != NULL && uargs[i][0] == '-')
+        {
+            if (uargs[i][1] == '-')
+            {
+                fprintf(stderr, "Unknown long option: %s\n", uargs[i]);
+                arg.DeleteRemainingArguments(nuargs, &uargs);
+                return 1;
+            }
+            else
+            {
+                // Maybe -abc is -a -b -c?
+                size_t len = strlen(uargs[i]);
+                for (size_t j = 1; j < len; ++j)
+                {
+                    char *opt = new char[3];
+                    opt[0] = '-';
+                    opt[1] = uargs[i][j];
+                    opt[2] = '\0';
+                    retry_args.push_back(opt);
+                }
+            }
+        }
+        else if (vfile == NULL)
+        {
+            vfile = mystrndup(uargs[i], 4096);
+            // fprintf(stderr, "Set file argument: %s\n", vfile);
+        }
+        else
+        {
+            varmask[nmasks] = mystrndup(uargs[i], 256);
+            // fprintf(stderr, "Set mask %d argument: %s\n", nmasks,
+            //        varmask[nmasks]);
+            nmasks++;
+        }
+    }
+    arg.DeleteRemainingArguments(nuargs, &uargs);
+
+    if (retry_args.size() > 1)
+    {
+        // Run a new parse on the -a single letter arguments
+        // fprintf(stderr, "Rerun parse on %zu options\n", retry_args.size());
+        arg.Initialize(static_cast<int>(retry_args.size()), retry_args.data());
+        arg.StoreUnusedArguments(false);
+        if (!arg.Parse())
+        {
+            fprintf(stderr, "Parsing arguments failed\n");
+            return 1;
+        }
+        for (size_t j = 0; j < retry_args.size(); ++j)
+        {
+            delete[] retry_args[j];
+        }
+    }
+    else
+    {
+        delete[] retry_args[0];
+    }
+
+    return 0;
+}
+
 /** Main */
 int bplsMain(int argc, char *argv[])
 {
     int retval = 0;
-    int i, timearg = false;
-    long int tmp;
 
     init_globals();
 
-    ////prgname = strdup(argv[0]);
+    adios2sys::CommandLineArguments arg;
+    arg.Initialize(argc, argv);
+    typedef adios2sys::CommandLineArguments argT;
+    arg.StoreUnusedArguments(true);
+    arg.AddCallback("--help", argT::NO_ARGUMENT, optioncb_help, &arg, "Help");
+    arg.AddCallback("-h", argT::NO_ARGUMENT, optioncb_help, &arg, "");
+    arg.AddCallback("--verbose", argT::NO_ARGUMENT, optioncb_verbose, nullptr,
+                    "Print information about what bpls is doing");
+    arg.AddCallback("-v", argT::NO_ARGUMENT, optioncb_verbose, nullptr, "");
+    arg.AddBooleanArgument("--dump", &dump,
+                           "Dump matched variables/attributes");
+    arg.AddBooleanArgument("-d", &dump, "");
+    arg.AddBooleanArgument(
+        "--long", &longopt,
+        "Print values of all scalars and attributes and min/max "
+        "values of arrays");
+    arg.AddBooleanArgument("-l", &longopt, "");
+    arg.AddBooleanArgument("--regexp", &use_regexp,
+                           "| -e Treat masks as extended regular expressions");
+    arg.AddBooleanArgument("-e", &use_regexp, "");
+    arg.AddArgument("--output", argT::SPACE_ARGUMENT, &outpath,
+                    "| -o opt    Print to a file instead of stdout");
+    arg.AddArgument("-o", argT::SPACE_ARGUMENT, &outpath, "");
+    arg.AddArgument("--start", argT::SPACE_ARGUMENT, &start,
+                    "| -s opt    Offset indices in each dimension (default is "
+                    "0 for all dimensions).  opt<0 is handled as in python (-1 "
+                    "is last)");
+    arg.AddArgument("-s", argT::SPACE_ARGUMENT, &start, "");
+    arg.AddArgument("--count", argT::SPACE_ARGUMENT, &count,
+                    "| -c opt    Number of elements in each dimension. -1 "
+                    "denotes 'until end' of dimension. default is -1 for all "
+                    "dimensions");
+    arg.AddArgument("-c", argT::SPACE_ARGUMENT, &count, "");
+    arg.AddBooleanArgument("--noindex", &noindex,
+                           " | -y Print data without array indices");
+    arg.AddBooleanArgument("-y", &noindex, "");
+    arg.AddBooleanArgument("--timestep", &timestep,
+                           " | -t Print values of timestep elements");
+    arg.AddBooleanArgument("-t", &timestep, "");
+    arg.AddBooleanArgument("--attrs", &listattrs,
+                           " | -a List/match attributes too");
+    arg.AddBooleanArgument("-a", &listattrs, "");
+    arg.AddBooleanArgument("--attrsonly", &attrsonly,
+                           " | -A List/match attributes only (no variables)");
+    arg.AddBooleanArgument("-A", &attrsonly, "");
+    arg.AddBooleanArgument("--meshes", &listmeshes, " | -m List meshes");
+    arg.AddBooleanArgument("-m", &listmeshes, "");
+    arg.AddBooleanArgument("--string", &printByteAsChar,
+                           " | -S Print 8bit integer arrays as strings");
+    arg.AddBooleanArgument("-S", &printByteAsChar, "");
+    arg.AddArgument("--columns", argT::SPACE_ARGUMENT, &ncols,
+                    "| -n opt    Number of data elements per row to print");
+    arg.AddArgument("-n", argT::SPACE_ARGUMENT, &ncols, "");
+    arg.AddArgument("--format", argT::SPACE_ARGUMENT, &format,
+                    "| -f opt    Format string to use for one data item ");
+    arg.AddArgument("-f", argT::SPACE_ARGUMENT, &format, "");
+    arg.AddBooleanArgument("--hidden_attrs", &hidden_attrs,
+                           "  Show hidden ADIOS attributes in the file");
+    arg.AddBooleanArgument(
+        "--decompose", &show_decomp,
+        "| -D Show decomposition of variables as layed out in file");
+    arg.AddBooleanArgument("-D", &show_decomp, "");
 
-    /* other variables */
-    int c;
-    // int last_c = '_';
-    /* Process the arguments */
-    while ((c = getopt_long(argc, argv, optstring, options, NULL)) != -1)
+    if (!arg.Parse())
     {
-        switch (c)
-        {
-        case 'a':
-            listattrs = true;
-            break;
-        case 'A':
-            listattrs = true;
-            attrsonly = true;
-            break;
-        case 'c':
-            count = strndup(optarg, 256);
-            break;
-        case 'd':
-            dump = true;
-            break;
-        case 'e':
-            use_regexp = true;
-            break;
-        case 'f':
-            snprintf(format, sizeof(format), "%s", optarg);
-            formatgiven = true;
-            break;
-        case 'h':
-            display_help();
-            return 0;
-        case 'r':
-            // sortnames = true;
-            break;
-        case 'l':
-            longopt = true;
-            readattrs = true;
-            break;
-        case 'm':
-            listmeshes = true;
-            break;
-        case 'n':
-            errno = 0;
-            tmp = strtol(optarg, (char **)NULL, 0);
-            if (errno)
-            {
-                fprintf(stderr,
-                        "Error: could not convert --columns value: %s\n",
-                        optarg);
-                return 1;
-            }
-            ncols = tmp;
-            break;
-        case 'o':
-            outpath = strndup(optarg, 256);
-            break;
-        case 'p':
-            plot = true;
-            break;
-        case 's':
-            start = strndup(optarg, 256);
-            break;
-        case 'S':
-            printByteAsChar = true;
-            break;
-        case 't':
-            timestep = true;
-            break;
-        case 'x':
-            output_xml = true;
-            break;
-        case 'y':
-            noindex = true;
-            break;
-        case 'v':
-            verbose++;
-            break;
-        case 'D':
-            show_decomp = true;
-            break;
-        case 1:
-            /* This means a field is unknown, or could be multiple arg or bad
-             * arg*/
-            /*
-               if (last_c=='t') {  // --time 2nd arg (or not if not a number)
-               errno = 0;
-               tmp = strtol(optarg, (char **)NULL, 0);
-               if (!errno) {
-               timeto = tmp;
-               printf("Time set to %d - %d\n", timefrom, timeto);
-               timearg=true;
-               }
-               }
-             */
-            if (!timearg)
-            {
-                fprintf(stderr, "Unrecognized argument: %s\n", optarg);
-                return 1;
-            }
-            break;
+        fprintf(stderr, "Parsing arguments failed\n");
+        return 1;
+    }
+    if (option_help_was_called)
+        return 0;
 
-        default:
-            printf("Processing default: %c\n", c);
-            break;
-        } /* end switch */
-        // last_c = c;
-    } /* end while */
+    retval = process_unused_args(arg);
+    if (retval)
+    {
+        return retval;
+    }
+    if (option_help_was_called)
+        return 0;
 
     /* Check if we have a file defined */
-    if (optind >= argc)
+    if (vfile == NULL)
     {
         fprintf(stderr, "Missing file name\n");
         return 1;
     }
-    vfile = strdup(argv[optind++]);
-    while (optind < argc)
-    {
-        varmask[nmasks] = strndup(argv[optind++], 256);
-        nmasks++;
-    }
 
     /* Process dimension specifications */
-    if (start != NULL)
-        parseDimSpec(start, istart);
-    if (count != NULL)
-        parseDimSpec(count, icount);
+    parseDimSpec(start, istart);
+    parseDimSpec(count, icount);
 
     // process the regular expressions
     if (use_regexp)
@@ -352,12 +400,14 @@ int bplsMain(int argc, char *argv[])
     print_stop();
 
     /* Free allocated memories */
-    // myfree(prgname);
-    myfree(outpath);
-    for (i = 0; i < nmasks; i++)
+    for (int i = 0; i < nmasks; i++)
     {
         myfree(varmask[i]);
+#ifdef USE_C_REGEX
         regfree(&(varregex[i]));
+#else
+        varregex.clear();
+#endif
     }
     myfree(vfile);
 
@@ -368,13 +418,10 @@ void init_globals()
 {
     int i;
     // variables for arguments
-    outpath = NULL;
     for (i = 0; i < MAX_MASKS; i++)
         varmask[i] = NULL;
     nmasks = 0;
     vfile = NULL;
-    start = NULL;
-    count = NULL;
     verbose = 0;
     ncols = 6; // by default when printing ascii, print "X Y", not X: Y1 Y2...
     dump = false;
@@ -393,7 +440,6 @@ void init_globals()
     plot = false;
     hidden_attrs = false;
     hidden_attrs_flag = 0;
-    formatgiven = false;
     printByteAsChar = false;
     show_decomp = false;
     for (i = 0; i < MAX_DIMS; i++)
@@ -437,14 +483,14 @@ void printSettings(void)
         printf("%s ", varmask[i]);
     printf("\n");
     printf("  file   : %s\n", vfile);
-    printf("  output : %s\n", (outpath ? outpath : "stdout"));
+    printf("  output : %s\n", (outpath.empty() ? "stdout" : outpath.c_str()));
 
-    if (start != NULL)
+    if (start.size())
     {
         PRINT_DIMS_INT64("  start", istart, ndimsspecified, i);
         printf("\n");
     }
-    if (count != NULL)
+    if (count.size())
     {
         PRINT_DIMS_INT64("  count", icount, ndimsspecified, i);
         printf("\n");
@@ -464,8 +510,8 @@ void printSettings(void)
         printf("      -d : dump matching variables and attributes\n");
     if (use_regexp)
         printf("      -e : handle masks as regular expressions\n");
-    if (formatgiven)
-        printf("      -f : dump using printf format \"%s\"\n", format);
+    if (format.size())
+        printf("      -f : dump using printf format \"%s\"\n", format.c_str());
     if (output_xml)
         printf("      -x : output data in XML format\n");
     if (show_decomp)
@@ -499,22 +545,16 @@ void print_file_size(uint64_t size)
     printf("  file size:     %" PRIu64 " %s\n", s, sm[idx]);
 }
 
-static inline int ndigits(int64_t n)
+static inline int ndigits(size_t n)
 {
     static char digitstr[32];
-    return snprintf(digitstr, 32, "%" PRId64, n);
+    return snprintf(digitstr, 32, "%zu", n);
 }
 
 int nEntriesMatched = 0;
 
 int doList_vars(Engine *fp, IO *io)
 {
-    enum ADIOS_DATATYPES vartype;
-    int i, j, n;  // loop vars
-    int attrsize; // info about one attribute
-    int len, maxlen, maxtypelen;
-    bool timed; // variable has multiple timesteps
-
     const DataMap &variables = io->GetVariablesDataMap();
     const DataMap &attributes = io->GetAttributesDataMap();
 
@@ -537,17 +577,17 @@ int doList_vars(Engine *fp, IO *io)
         }
     }
 
-    int nNames = entries.size();
+    // size_t nNames = entries.size();
 
     // calculate max length of variable names and type names in the first round
-    maxlen = 4;
-    maxtypelen = 7;
+    int maxlen = 4; // need int for printf formatting
+    int maxtypelen = 7;
     for (const auto &entrypair : entries)
     {
-        len = entrypair.first.size();
+        int len = static_cast<int>(entrypair.first.size());
         if (len > maxlen)
             maxlen = len;
-        len = entrypair.second.typeName.size();
+        len = static_cast<int>(entrypair.second.typeName.size());
         if (len > maxtypelen)
             maxtypelen = len;
     }
@@ -598,7 +638,6 @@ int doList_vars(Engine *fp, IO *io)
             }
             else
             {
-                VariableBase *v = nullptr;
                 if (entry.typeName == "compound")
                 {
                     // not supported
@@ -637,7 +676,7 @@ int printVariableInfo(Engine *fp, IO *io, Variable<T> *variable)
         if (variable->m_Shape.size() > 0)
         {
             fprintf(outf, "{%zu", variable->m_Shape[0]);
-            for (int j = 1; j < variable->m_Shape.size(); j++)
+            for (size_t j = 1; j < variable->m_Shape.size(); j++)
             {
                 fprintf(outf, ", %zu", variable->m_Shape[j]);
             }
@@ -1005,8 +1044,8 @@ void printMeshes(Engine *fp)
 std::vector<std::string> getEnginesList(const std::string path)
 {
     std::vector<std::string> list;
-    size_t slen = path.length();
 #ifdef ADIOS2_HAVE_HDF5
+    size_t slen = path.length();
     if (slen >= 3 && path.compare(slen - 3, 3, ".h5") == 0)
     {
         list.push_back("HDF5");
@@ -1025,12 +1064,6 @@ std::vector<std::string> getEnginesList(const std::string path)
 
 int doList(const char *path)
 {
-    int grpid;
-    int status;
-    int mpi_comm_dummy = 0;
-    int nGroupsMatched = 0;
-    int nGroups; // number of groups
-    char **group_namelist;
     char init_params[128];
     int adios_verbose = 2;
 
@@ -1062,7 +1095,8 @@ int doList(const char *path)
         catch (std::exception &e)
         {
             if (verbose > 2)
-                printf("Failed to open with %s engine.\n", engineName.c_str());
+                printf("Failed to open with %s engine: %s\n",
+                       engineName.c_str(), e.what());
         }
         if (fp != nullptr)
             break;
@@ -1326,20 +1360,19 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
     // size_t elemsize;                   // size in bytes of one element
     uint64_t st, ct;
     T *data;
-    uint64_t sum;    // working var to sum up things
-    int maxreadn;    // max number of elements to read once up to a limit (10MB
-                     // of
-                     // data)
-    int actualreadn; // our decision how much to read at once
-    int readn[MAX_DIMS]; // how big chunk to read in in each dimension?
-    int status;
-    bool incdim;          // used in incremental reading in
-    int ndigits_dims[32]; // # of digits (to print) of each dimension
+    uint64_t sum; // working var to sum up things
+    uint64_t
+        maxreadn; // max number of elements to read once up to a limit (10MB
+                  // of
+                  // data)
+    uint64_t actualreadn;     // our decision how much to read at once
+    uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
+    bool incdim;              // used in incremental reading in
+    int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
-    const int ndim = variable->m_Shape.size();
-    const int nsteps = variable->GetAvailableStepsCount();
-
+    const int nsteps = static_cast<int>(variable->GetAvailableStepsCount());
+    const int ndim = static_cast<int>(variable->m_Shape.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
 
@@ -1369,9 +1402,9 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
 
         tidx = 1;
     }
-    tdims = variable->m_Shape.size() + tidx;
+    tdims = ndim + tidx;
 
-    for (j = 0; j < variable->m_Shape.size(); j++)
+    for (j = 0; j < ndim; j++)
     {
         if (istart[j + tidx] < 0) // negative index means last-|index|
             st = variable->m_Shape[j] + istart[j + tidx];
@@ -1403,7 +1436,7 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
 
     print_slice_info(variable, start_t, count_t);
 
-    maxreadn = MAX_BUFFERSIZE / elemsize;
+    maxreadn = (uint64_t)MAX_BUFFERSIZE / elemsize;
     if (nelems < maxreadn)
         maxreadn = nelems;
 
@@ -1441,12 +1474,12 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
                 readn[i] = count_t[i];
         }
         if (verbose > 1)
-            printf("    dim %d: read %d elements\n", i, readn[i]);
+            printf("    dim %d: read %" PRIu64 " elements\n", i, readn[i]);
         sum = sum * (uint64_t)count_t[i];
         actualreadn = actualreadn * readn[i];
     }
     if (verbose > 1)
-        printf("    read %d elements at once, %" PRIu64
+        printf("    read %" PRIu64 " elements at once, %" PRIu64
                " in total (nelems=%" PRIu64 ")\n",
                actualreadn, sum, nelems);
 
@@ -1476,7 +1509,7 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
             printf("adios_read_var name=%s ", variable->m_Name.c_str());
             PRINT_DIMS_UINT64("  start", s, tdims, j);
             PRINT_DIMS_UINT64("  count", c, tdims, j);
-            printf("  read %d elems\n", actualreadn);
+            printf("  read %" PRIu64 " elems\n", actualreadn);
         }
 
         // read a slice finally
@@ -1808,19 +1841,21 @@ int readVarBlock(Engine *fp, IO *io, Variable<T> *variable, int blockid)
 
 bool matchesAMask(const char *name)
 {
-    int excode;
-    int i;
     int startpos = 0; // to match with starting / or without
+#ifdef USE_C_REGEX
     regmatch_t pmatch[1] = {{(regoff_t)-1, (regoff_t)-1}};
+#else
+#endif
 
     if (nmasks == 0)
         return true;
 
-    for (i = 0; i < nmasks; i++)
+    for (int i = 0; i < nmasks; i++)
     {
         if (use_regexp)
         {
-            excode = regexec(&(varregex[i]), name, 1, pmatch, 0);
+#ifdef USE_C_REGEX
+            int excode = regexec(&(varregex[i]), name, 1, pmatch, 0);
             if (name[0] == '/') // have to check if it matches from the second
                                 // character too
                 startpos = 1;
@@ -1829,13 +1864,16 @@ bool matchesAMask(const char *name)
                  pmatch[0].rm_so == startpos) && // from the beginning
                 pmatch[0].rm_eo == strlen(name)  // to the very end of the name
                 )
+#else
+            bool matches = std::regex_match(name, varregex[i]);
+            if (!matches && name[0] == '/')
+                matches = std::regex_match(name + 1, varregex[i]);
+            if (matches)
+#endif
             {
                 if (verbose > 1)
                     printf("Name %s matches regexp %i %s\n", name, i,
                            varmask[i]);
-                // printf("Match from %d to %d\n", (int) pmatch[0].rm_so,
-                // (int)
-                // pmatch[0].rm_eo);
                 return true;
             }
         }
@@ -1844,7 +1882,11 @@ bool matchesAMask(const char *name)
             // use shell pattern matching
             if (varmask[i][0] != '/' && name[0] == '/')
                 startpos = 1;
+#ifdef _WIN32
+            if (PathMatchSpec(name + startpos, varmask[i]))
+#else
             if (fnmatch(varmask[i], name + startpos, FNM_FILE_NAME) == 0)
+#endif
             {
                 if (verbose > 1)
                     printf("Name %s matches varmask %i %s\n", name, i,
@@ -1856,18 +1898,18 @@ bool matchesAMask(const char *name)
     return false;
 }
 
-int print_start(const char *fname)
+int print_start(const std::string &fname)
 {
-    if (fname == NULL)
+    if (fname.empty())
     {
         outf = stdout;
     }
     else
     {
-        if ((outf = fopen(fname, "w")) == NULL)
+        if ((outf = fopen(fname.c_str(), "w")) == NULL)
         {
-            fprintf(stderr, "Error at opening for writing file %s: %s\n", fname,
-                    strerror(errno));
+            fprintf(stderr, "Error at opening for writing file %s: %s\n",
+                    fname.c_str(), strerror(errno));
             return 30;
         }
     }
@@ -1885,7 +1927,6 @@ void print_slice_info(VariableBase *variable, uint64_t *s, uint64_t *c)
     // not the complete variable is read
     size_t ndim = variable->m_Shape.size();
     size_t nsteps = variable->m_AvailableStepsCount;
-    int i;
     bool isaslice = false;
     int tidx = (nsteps > 1 ? 1 : 0);
     size_t tdim = ndim + tidx;
@@ -1894,7 +1935,7 @@ void print_slice_info(VariableBase *variable, uint64_t *s, uint64_t *c)
         if (c[0] < nsteps)
             isaslice = true;
     }
-    for (i = 0; i < ndim; i++)
+    for (size_t i = 0; i < ndim; i++)
     {
         if (c[i + tidx] < variable->m_Shape[i])
             isaslice = true;
@@ -1903,7 +1944,7 @@ void print_slice_info(VariableBase *variable, uint64_t *s, uint64_t *c)
     {
         fprintf(outf, "%c   slice (%" PRIu64 ":%" PRIu64, commentchar, s[0],
                 s[0] + c[0] - 1);
-        for (i = 1; i < tdim; i++)
+        for (size_t i = 1; i < tdim; i++)
         {
             fprintf(outf, ", %" PRIu64 ":%" PRIu64, s[i], s[i] + c[i] - 1);
         }
@@ -1932,7 +1973,6 @@ const std::map<std::string, enum ADIOS_DATATYPES> adios_types_map = {
 
 enum ADIOS_DATATYPES type_to_enum(std::string type)
 {
-    enum ADIOS_DATATYPES t;
     auto itType = adios_types_map.find(type);
     if (itType == adios_types_map.end())
     {
@@ -1987,17 +2027,18 @@ int print_data_characteristics(void *min, void *max, double *avg,
                                enum ADIOS_DATATYPES adiosvartype,
                                bool allowformat)
 {
-    bool f = formatgiven && allowformat;
+    bool f = format.size() && allowformat;
+    const char *fmt = format.c_str();
 
     switch (adiosvartype)
     {
     case adios_unsigned_byte:
         if (min)
-            fprintf(outf, (f ? format : "%10hhu  "), *((unsigned char *)min));
+            fprintf(outf, (f ? fmt : "%10hhu  "), *((unsigned char *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10hhu  "), *((unsigned char *)max));
+            fprintf(outf, (f ? fmt : "%10hhu  "), *((unsigned char *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2011,11 +2052,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
         break;
     case adios_byte:
         if (min)
-            fprintf(outf, (f ? format : "%10hhd  "), *((char *)min));
+            fprintf(outf, (f ? fmt : "%10hhd  "), *((char *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10hhd  "), *((char *)max));
+            fprintf(outf, (f ? fmt : "%10hhd  "), *((char *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2032,11 +2073,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
 
     case adios_unsigned_short:
         if (min)
-            fprintf(outf, (f ? format : "%10hu  "), (*(unsigned short *)min));
+            fprintf(outf, (f ? fmt : "%10hu  "), (*(unsigned short *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10hu  "), (*(unsigned short *)max));
+            fprintf(outf, (f ? fmt : "%10hu  "), (*(unsigned short *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2050,11 +2091,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
         break;
     case adios_short:
         if (min)
-            fprintf(outf, (f ? format : "%10hd  "), (*(short *)min));
+            fprintf(outf, (f ? fmt : "%10hd  "), (*(short *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10hd  "), (*(short *)max));
+            fprintf(outf, (f ? fmt : "%10hd  "), (*(short *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2069,11 +2110,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
 
     case adios_unsigned_integer:
         if (min)
-            fprintf(outf, (f ? format : "%10u  "), (*(unsigned int *)min));
+            fprintf(outf, (f ? fmt : "%10u  "), (*(unsigned int *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10u  "), (*(unsigned int *)max));
+            fprintf(outf, (f ? fmt : "%10u  "), (*(unsigned int *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2087,11 +2128,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
         break;
     case adios_integer:
         if (min)
-            fprintf(outf, (f ? format : "%10d  "), (*(int *)min));
+            fprintf(outf, (f ? fmt : "%10d  "), (*(int *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10d  "), (*(int *)max));
+            fprintf(outf, (f ? fmt : "%10d  "), (*(int *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2106,13 +2147,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
 
     case adios_unsigned_long:
         if (min)
-            fprintf(outf, (f ? format : "%10llu  "),
-                    (*(unsigned long long *)min));
+            fprintf(outf, (f ? fmt : "%10llu  "), (*(unsigned long long *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10llu  "),
-                    (*(unsigned long long *)max));
+            fprintf(outf, (f ? fmt : "%10llu  "), (*(unsigned long long *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2126,11 +2165,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
         break;
     case adios_long:
         if (min)
-            fprintf(outf, (f ? format : "%10lld  "), (*(long long *)min));
+            fprintf(outf, (f ? fmt : "%10lld  "), (*(long long *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10lld  "), (*(long long *)max));
+            fprintf(outf, (f ? fmt : "%10lld  "), (*(long long *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2145,11 +2184,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
 
     case adios_real:
         if (min)
-            fprintf(outf, (f ? format : "%10.2g  "), (*(float *)min));
+            fprintf(outf, (f ? fmt : "%10.2g  "), (*(float *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10.2g  "), (*(float *)max));
+            fprintf(outf, (f ? fmt : "%10.2g  "), (*(float *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2163,11 +2202,11 @@ int print_data_characteristics(void *min, void *max, double *avg,
         break;
     case adios_double:
         if (min)
-            fprintf(outf, (f ? format : "%10.2g  "), (*(double *)min));
+            fprintf(outf, (f ? fmt : "%10.2g  "), (*(double *)min));
         else
             fprintf(outf, "      null  ");
         if (max)
-            fprintf(outf, (f ? format : "%10.2g  "), (*(double *)max));
+            fprintf(outf, (f ? fmt : "%10.2g  "), (*(double *)max));
         else
             fprintf(outf, "      null  ");
         if (avg)
@@ -2205,7 +2244,8 @@ int print_data_characteristics(void *min, void *max, double *avg,
 int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartype,
                bool allowformat)
 {
-    bool f = formatgiven && allowformat;
+    bool f = format.size() && allowformat;
+    const char *fmt = format.c_str();
     if (data == NULL)
     {
         fprintf(outf, "null ");
@@ -2215,62 +2255,61 @@ int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartype,
     switch (adiosvartype)
     {
     case adios_unsigned_byte:
-        fprintf(outf, (f ? format : "%hhu"), ((unsigned char *)data)[item]);
+        fprintf(outf, (f ? fmt : "%hhu"), ((unsigned char *)data)[item]);
         break;
     case adios_byte:
-        fprintf(outf, (f ? format : "%hhd"), ((signed char *)data)[item]);
+        fprintf(outf, (f ? fmt : "%hhd"), ((signed char *)data)[item]);
         break;
 
     case adios_string:
-        fprintf(outf, (f ? format : "\"%s\""), ((char *)data) + item);
+        fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
         break;
     case adios_string_array:
         // we expect one elemet of the array here
-        fprintf(outf, (f ? format : "\"%s\""), *((char **)data + item));
+        fprintf(outf, (f ? fmt : "\"%s\""), *((char **)data + item));
         break;
 
     case adios_unsigned_short:
-        fprintf(outf, (f ? format : "%hu"), ((unsigned short *)data)[item]);
+        fprintf(outf, (f ? fmt : "%hu"), ((unsigned short *)data)[item]);
         break;
     case adios_short:
-        fprintf(outf, (f ? format : "%hd"), ((signed short *)data)[item]);
+        fprintf(outf, (f ? fmt : "%hd"), ((signed short *)data)[item]);
         break;
 
     case adios_unsigned_integer:
-        fprintf(outf, (f ? format : "%u"), ((unsigned int *)data)[item]);
+        fprintf(outf, (f ? fmt : "%u"), ((unsigned int *)data)[item]);
         break;
     case adios_integer:
-        fprintf(outf, (f ? format : "%d"), ((signed int *)data)[item]);
+        fprintf(outf, (f ? fmt : "%d"), ((signed int *)data)[item]);
         break;
 
     case adios_unsigned_long:
-        fprintf(outf, (f ? format : "%llu"),
-                ((unsigned long long *)data)[item]);
+        fprintf(outf, (f ? fmt : "%llu"), ((unsigned long long *)data)[item]);
         break;
     case adios_long:
-        fprintf(outf, (f ? format : "%lld"), ((signed long long *)data)[item]);
+        fprintf(outf, (f ? fmt : "%lld"), ((signed long long *)data)[item]);
         break;
 
     case adios_real:
-        fprintf(outf, (f ? format : "%g"), ((float *)data)[item]);
+        fprintf(outf, (f ? fmt : "%g"), ((float *)data)[item]);
         break;
 
     case adios_double:
-        fprintf(outf, (f ? format : "%g"), ((double *)data)[item]);
+        fprintf(outf, (f ? fmt : "%g"), ((double *)data)[item]);
         break;
 
     case adios_long_double:
-        fprintf(outf, (f ? format : "%Lg"), ((long double *)data)[item]);
-        // fprintf(outf,(f ? format : "????????"));
+        fprintf(outf, (f ? fmt : "%Lg"), ((long double *)data)[item]);
+        // fprintf(outf,(f ? fmt : "????????"));
         break;
 
     case adios_complex:
-        fprintf(outf, (f ? format : "(%g,i%g)"), ((float *)data)[2 * item],
+        fprintf(outf, (f ? fmt : "(%g,i%g)"), ((float *)data)[2 * item],
                 ((float *)data)[2 * item + 1]);
         break;
 
     case adios_double_complex:
-        fprintf(outf, (f ? format : "(%g,i%g)"), ((double *)data)[2 * item],
+        fprintf(outf, (f ? fmt : "(%g,i%g)"), ((double *)data)[2 * item],
                 ((double *)data)[2 * item + 1]);
         break;
 
@@ -2392,18 +2431,18 @@ template <class T>
 void print_decomp(Engine *fp, IO *io, Variable<T> *variable)
 {
     /* Print block info */
-    int blockid = 0;
-    int nsteps = variable->GetAvailableStepsCount();
+    // int blockid = 0;
+    size_t nsteps = variable->GetAvailableStepsCount();
     size_t ndim = variable->m_Shape.size();
-    enum ADIOS_DATATYPES vartype = type_to_enum(variable->m_Type);
-    size_t nblocks = 1; /* FIXME: we need the number of blocks here */
+    // enum ADIOS_DATATYPES vartype = type_to_enum(variable->m_Type);
+    // size_t nblocks = 1; /* FIXME: we need the number of blocks here */
     int ndigits_nsteps = ndigits(nsteps - 1);
     if (ndim == 0)
     {
         // scalars
-        for (int i = 0; i < nsteps; i++)
+        for (size_t i = 0; i < nsteps; i++)
         {
-            fprintf(outf, "        step %*d: ", ndigits_nsteps, i);
+            fprintf(outf, "        step %*zu: ", ndigits_nsteps, i);
 #if 0
             fprintf(outf, "%d instances available\n", vi->nblocks[i]);
             if (dump && vi->statistics && vi->statistics->blocks)
@@ -2452,19 +2491,21 @@ void print_decomp(Engine *fp, IO *io, Variable<T> *variable)
     else
     {
         // arrays
+        /*
         int ndigits_nblocks;
         int ndigits_procid;
         int ndigits_time;
         int ndigits_dims[32];
-        for (int k = 0; k < ndim; k++)
+        for (size_t k = 0; k < ndim; k++)
         {
             // get digit lengths for each dimension
             ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
         }
+        */
 
-        for (int i = 0; i < nsteps; i++)
+        for (size_t i = 0; i < nsteps; i++)
         {
-            fprintf(outf, "        step %*d: ", ndigits_nsteps, i);
+            fprintf(outf, "        step %*zu: ", ndigits_nsteps, i);
             fprintf(outf, "\n");
 #if 0
             ndigits_nblocks = ndigits(vi->nblocks[i] - 1);
@@ -2604,14 +2645,18 @@ void print_decomp(Engine *fp, IO *io, Variable<T> *variable)
 // parse a string "0, 3; 027" into an integer array
 // of [0,3,27]
 // exits if parsing failes
-void parseDimSpec(char *str, int64_t *dims)
+void parseDimSpec(const std::string &str, int64_t *dims)
 {
-    char *token, *saveptr;
+    if (str.empty())
+        return;
+
+    char *token;
     char *s; // copy of s; strtok modifies the string
     int i = 0;
 
-    s = strndup(str, 256);
-    token = strtok_r(s, " ,;x\t\n", &saveptr);
+    s = mystrndup(str.c_str(), 1024);
+    // token = strtok_r(s, " ,;x\t\n", &saveptr);
+    token = strtok(s, " ,;x\t\n");
     while (token != NULL && i < MAX_DIMS)
     {
         // printf("\t|%s|", token);
@@ -2621,12 +2666,13 @@ void parseDimSpec(char *str, int64_t *dims)
         {
             fprintf(stderr, "Error: could not convert field into a value: "
                             "%s from \"%s\"\n",
-                    token, str);
+                    token, str.c_str());
             exit(200);
         }
 
         // get next item
-        token = strtok_r(NULL, " ,;x\t\n", &saveptr);
+        // token = strtok_r(NULL, " ,;x\t\n", &saveptr);
+        token = strtok(NULL, " ,;x\t\n");
         i++;
     }
     // if (i>0) printf("\n");
@@ -2639,28 +2685,65 @@ void parseDimSpec(char *str, int64_t *dims)
     {
         fprintf(stderr, "Error: More dimensions specified in \"%s\" than we "
                         "can handle (%d)\n",
-                str, MAX_DIMS);
+                str.c_str(), MAX_DIMS);
         exit(200);
     }
+    free(s);
 }
 
 int compile_regexp_masks(void)
 {
-    int i, errcode;
+#ifdef USE_C_REGEX
+    int errcode;
     char buf[256];
-    for (i = 0; i < nmasks; i++)
+    for (int i = 0; i < nmasks; i++)
     {
         errcode = regcomp(&(varregex[i]), varmask[i], REG_EXTENDED);
         if (errcode)
         {
             regerror(errcode, &(varregex[i]), buf, sizeof(buf));
-            fprintf(stderr, "Error: var %s is an invalid extended regular "
+            fprintf(stderr, "Error: \"%s\" is an invalid extended regular "
                             "expression: %s\n",
                     varmask[i], buf);
             return 2;
         }
     }
+#else
+    varregex.reserve(nmasks);
+    for (int i = 0; i < nmasks; i++)
+    {
+        try
+        {
+            varregex.push_back(std::regex(varmask[i]));
+        }
+        catch (std::regex_error &e)
+        {
+            fprintf(stderr, "Error: \"%s\" is an invalid extended regular "
+                            "expression. C++ regex error code: %d\n",
+                    varmask[i],
+                    e.code() == std::regex_constants::error_badrepeat);
+            return 2;
+        }
+    }
+#endif
     return 0;
+}
+
+char *mystrndup(const char *s, size_t n)
+{
+    char *t = nullptr;
+    if (n > 0)
+    {
+        size_t slen = strlen(s);
+        size_t len = (slen <= n ? slen : n);
+        t = (char *)malloc(len + 1);
+        if (t)
+        {
+            memcpy(t, s, len);
+            t[len] = '\0';
+        }
+    }
+    return t;
 }
 
 // end of namespace
@@ -2670,6 +2753,7 @@ int compile_regexp_masks(void)
 int main(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
-    return adios2::utils::bplsMain(argc, argv);
+    int retval = adios2::utils::bplsMain(argc, argv);
     MPI_Finalize();
+    return retval;
 }
