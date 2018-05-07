@@ -1517,6 +1517,8 @@ arm6_PLT_emit(dill_stream s, int package)
     }
 }
 
+extern void arm6_rt_call_link(char *code, call_t *t);
+
 static void
 arm6_call_link(dill_stream s)
 {
