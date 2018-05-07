@@ -90,13 +90,12 @@ extern void SstReaderInitFFSCallback(SstStream stream, void *Reader,
 
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                           const char *Type, size_t ElemSize, size_t DimCount,
-                          const unsigned long *Shape,
-                          const unsigned long *Count,
-                          const unsigned long *Offsets, const void *data);
+                          const size_t *Shape, const size_t *Count,
+                          const size_t *Offsets, const void *data);
 extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
                               const char *Name, size_t DimCount,
-                              const unsigned long *Start,
-                              const unsigned long *Count, void *Data);
+                              const size_t *Start, const size_t *Count,
+                              void *Data);
 
 extern void SstFFSPerformGets(SstStream Stream);
 
