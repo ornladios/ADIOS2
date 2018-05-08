@@ -838,6 +838,12 @@ CManager_free(CManager cm)
 
      CMtrace_out(cm, CMFreeVerbose, "CManager %p closing, ref count %d\n", cm,
 		 cm->reference_count);
+
+     CMtrace_out(cm, CMFreeVerbose, "CMControlList close CL=%lx current reference count will be %d, sdp = %p\n", 
+		 (long) cl, cl->cl_reference_count - 1, cl->select_data);
+     INT_CMControlList_close(cl, cm);
+     CMtrace_out(cm, CMFreeVerbose, "CMControlList CL=%lx is closed\n", (long) cl);
+
      while (cm->connection_count != 0) {
 	 /* connections are moved down as they are closed... */
 	 CMtrace_out(cm, CMFreeVerbose, "CManager in close, closing connection %p , ref count %d\n", cm->connections[0],
@@ -859,10 +865,6 @@ CManager_free(CManager cm)
 	     i++;
 	 }
      }
-     CMtrace_out(cm, CMFreeVerbose, "CMControlList close CL=%lx current reference count will be %d, sdp = %p\n", 
-		 (long) cl, cl->cl_reference_count - 1, cl->select_data);
-     INT_CMControlList_close(cl, cm);
-
      cm->reference_count--;
      CMtrace_out(cm, CMFreeVerbose, "CManager %p ref count now %d\n", 
 		 cm, cm->reference_count);
