@@ -6,6 +6,19 @@ TOKEN=${STATUS_ROBOT_KEY}
 COMMIT=${CIRCLE_SHA1}
 CDASH_STATUS_CONTEXT="cdash"
 
+if [ -x /usr/bin/python2 ]
+then
+  PYTHON_EXECUTABLE=/usr/bin/python2
+elif [ -x /usr/bin/python3 ]
+then
+  PYTHON_EXECUTABLE=/usr/bin/python3
+elif [ -x /usr/bin/python ]
+then
+  PYTHON_EXECUTABLE=/usr/bin/python
+else
+  PYTHON_EXECUTABLE=python
+fi
+
 build_status_body() {
   cat <<EOF
 {
@@ -19,7 +32,7 @@ EOF
 
 check_and_post_status() {
   PYTHON_SCRIPT="${SOURCE_DIR}/scripts/circle/findStatus.py"
-  curl -u "${STATUS_ROBOT_NAME}:${STATUS_ROBOT_KEY}" "${API_BASE}/commits/${COMMIT}/statuses" | python ${PYTHON_SCRIPT} --context ${CDASH_STATUS_CONTEXT}
+  curl -u "${STATUS_ROBOT_NAME}:${STATUS_ROBOT_KEY}" "${API_BASE}/commits/${COMMIT}/statuses" | ${PYTHON_EXECUTABLE} ${PYTHON_SCRIPT} --context ${CDASH_STATUS_CONTEXT}
   if [ $? -ne 0 ]
   then
     echo "Need to post a status for context ${CDASH_STATUS_CONTEXT}"
@@ -30,19 +43,20 @@ check_and_post_status() {
 }
 
 get_real_branch_name() {
-  APIURL="${API_BASE}/pulls/${CIRCLE_PR_NUMBER}"
-  RESULT=`curl -s ${APIURL} | python -c "import sys, json; print(json.load(sys.stdin)['head']['ref'])" 2> /dev/null`
-
-  if [ $? -eq 0 ]
+  REALBRANCH="${CIRCLE_BRANCH}"
+  if [ -n "${CIRCLE_PR_NUMBER}" ]
   then
-    REALBRANCH=$RESULT
-  else
-    REALBRANCH=$CIRCLE_BRANCH
+    APIURL="${API_BASE}/pulls/${CIRCLE_PR_NUMBER}"
+    RESULT="$(curl -s ${APIURL} | ${PYTHON_EXECUTABLE} -c "import sys, json; print(json.load(sys.stdin)['head']['ref'])" 2> /dev/null)"
+    if [ $? -eq 0 ]
+    then
+      REALBRANCH="${RESULT}"
+    fi
   fi
 }
 
 check_var() {
-  if [ -z "$1" ]
+  if [ -z "${!1}" ]
   then
     echo "Error: The $1 environment variable is undefined"
     exit 1
@@ -53,7 +67,6 @@ check_var CIRCLE_WORKING_DIRECTORY
 check_var CIRCLE_BRANCH
 check_var CIRCLE_JOB
 check_var CIRCLE_BUILD_NUM
-check_var CIRCLE_PR_NUMBER
 
 if [ ! "${CUSTOM_BUILD_NAME}" ]
 then
@@ -99,5 +112,10 @@ then
   export PKG_CONFIG_PATH=$(dirname $(find /opt/libfabric/1.6.0 -name libfabric.pc))
 fi
 
-CTEST=/opt/cmake/3.6.3/bin/ctest
+if [ -x /opt/cmake/3.6.3/bin/ctest ]
+then
+  CTEST=/opt/cmake/3.6.3/bin/ctest
+else
+  CTEST=ctest
+fi
 ${CTEST} -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF -Ddashboard_do_${STEP}=TRUE -DCTEST_BUILD_NAME=${CUSTOM_BUILD_NAME}
