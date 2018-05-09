@@ -599,7 +599,7 @@ free_sg_list(struct ibv_sge *sg_list, int len, int free_data_elements)
     int i;
     if (free_data_elements) {
 	for(i=0; i<len; i++) {
-	    free((void*)sg_list[i].addr);
+	    free(ptr_from_int64(sg_list[i].addr));
 	}
     }
     free(sg_list);     
