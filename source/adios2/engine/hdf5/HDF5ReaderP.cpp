@@ -12,6 +12,7 @@
 #include "HDF5ReaderP.tcc"
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
 {
@@ -104,10 +105,20 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         {
             hsize_t start[ndims], count[ndims], stride[ndims];
 
+            bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
             for (int i = 0; i < ndims; i++)
             {
-                count[i] = variable.m_Count[i];
-                start[i] = variable.m_Start[i];
+                if (isOrderC)
+                {
+                    count[i] = variable.m_Count[i];
+                    start[i] = variable.m_Start[i];
+                }
+                else
+                {
+                    count[i] = variable.m_Count[ndims - 1 - i];
+                    start[i] = variable.m_Start[ndims - 1 - i];
+                }
+
                 slabsize *= count[i];
                 stride[i] = 1;
             }
@@ -137,10 +148,13 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
     int ts = 0;
     // T *values = data;
     size_t variableStart = variable.m_StepsStart;
+    /*
+      // looks like m_StepsStart is defaulted to be 0 now.
     if (!m_InStreamMode && (variableStart == 1))
     { // variableBase::m_StepsStart min=1
         variableStart = 0;
     }
+    */
 
     while (ts < variable.m_StepsCount)
     {
@@ -172,11 +186,20 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         else
         {
             hsize_t start[ndims], count[ndims], stride[ndims];
+            bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
 
             for (int i = 0; i < ndims; i++)
             {
-                count[i] = variable.m_Count[i];
-                start[i] = variable.m_Start[i];
+                if (isOrderC)
+                {
+                    count[i] = variable.m_Count[i];
+                    start[i] = variable.m_Start[i];
+                }
+                else
+                {
+                    count[i] = variable.m_Count[ndims - 1 - i];
+                    start[i] = variable.m_Start[ndims - 1 - i];
+                }
                 slabsize *= count[i];
                 stride[i] = 1;
             }
@@ -361,6 +384,35 @@ void HDF5ReaderP::PerformGets()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void HDF5ReaderP::DoClose(const int transportIndex) { m_H5File.Close(); }
+void HDF5ReaderP::DoClose(const int transportIndex)
+{
+    // printf("ReaderP::DoClose() %lu\n", m_DeferredStack.size());
+    if (m_DeferredStack.size() > 0)
+    {
+        if (m_InStreamMode)
+        {
+            PerformGets();
+        }
+        else
+        {
+#define declare_type(T)                                                        \
+    for (std::string variableName : m_DeferredStack)                           \
+    {                                                                          \
+        Variable<T> *var = m_IO.InquireVariable<T>(variableName);              \
+        if (var != nullptr)                                                    \
+        {                                                                      \
+            hid_t h5Type = m_H5File.GetHDF5Type<T>();                          \
+            UseHDFRead(*var, var->GetData(), h5Type);                          \
+            break;                                                             \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+            m_DeferredStack.clear();
+        }
+    }
+
+    m_H5File.Close();
+}
 
 } // end namespace adios2
