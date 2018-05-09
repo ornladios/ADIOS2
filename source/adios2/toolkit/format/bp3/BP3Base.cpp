@@ -744,7 +744,7 @@ void BP3Base::InitParameterSubStreams(const std::string value)
         {
             if (m_RankMPI == 0)
             {
-                std::cout << "Warning substreams is less than zero, using "
+                std::cout << "Warning substreams is less than 1, using "
                              "substreams=1, in call to Open\n";
             }
             subStreams = 1;
