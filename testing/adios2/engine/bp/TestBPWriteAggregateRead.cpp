@@ -922,7 +922,7 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateSubStreamsException)
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     adios2::IO &io = adios.DeclareIO("TestIO");
     io.SetParameter("Substreams", std::to_string(mpiSize + 1));
-    EXPECT_THROW(io.Open(fname, adios2::Mode::Write), std::invalid_argument);
+    EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
 }
 //******************************************************************************
 // main
