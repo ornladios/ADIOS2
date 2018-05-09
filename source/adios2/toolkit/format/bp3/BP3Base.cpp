@@ -11,6 +11,7 @@
 #include "BP3Base.tcc"
 
 #include <algorithm> // std::transform
+#include <iostream>  //std::cout Warnings
 
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
@@ -732,14 +733,30 @@ void BP3Base::InitParameterSubStreams(const std::string value)
             description = std::string(e.what());
         }
 
-        if (!success || subStreams < 1 || subStreams > m_SizeMPI)
+        if (!success)
         {
             throw std::invalid_argument(
-                "ERROR: value " + std::to_string(subStreams) +
-                " in SubStreams=value in IO SetParameters must be "
-                "an integer between 1 and MPI_Size \nadditional "
-                "description: " +
-                description + "\n, in call to Open\n");
+                "ERROR: can't convert parameter value in substreams=value "
+                " to an integer number, in call to Open\n");
+        }
+
+        if (subStreams < 1)
+        {
+            if (m_RankMPI == 0)
+            {
+                std::cout << "Warning substreams is less than 1, using "
+                             "substreams=1, in call to Open\n";
+            }
+            subStreams = 1;
+        }
+        else if (subStreams > m_SizeMPI)
+        {
+            if (m_RankMPI == 0)
+            {
+                std::cout << "WARNING: substreams larger than MPI_Size, using "
+                             "substreams=MPI_Size, in call to Open\n";
+            }
+            subStreams = m_SizeMPI;
         }
     }
     else
