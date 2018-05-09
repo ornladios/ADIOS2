@@ -12,6 +12,10 @@ endif()
 
 add_subdirectory(pugixml)
 
+if(WIN32)
+  add_subdirectory(mingw-w64)
+endif()
+
 option(ADIOS2_USE_EXTERNAL_JSON
   "Use an externally supplied nlohmann_json library" OFF
 )
