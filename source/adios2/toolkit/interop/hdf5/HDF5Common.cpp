@@ -355,10 +355,10 @@ void HDF5Common::CreateVar(IO &io, hid_t datasetId, std::string const &name)
     hid_t h5Type = H5Dget_type(datasetId);
     HDF5TypeGuard t(h5Type, E_H5_DATATYPE);
 
-    // int8 is mapped to "signed char" by IO. 
-    // so signed needs to be checked before char, otherwise type is char instead of "signed char".
-    // Inqvar considers "signed char" and "char" different types
-    // and returns error
+    // int8 is mapped to "signed char" by IO.
+    // so signed needs to be checked before char, otherwise type is char instead
+    // of "signed char". Inqvar considers "signed char" and "char" different
+    // types and returns error
 
     if (H5Tequal(H5T_NATIVE_SCHAR, h5Type))
     {

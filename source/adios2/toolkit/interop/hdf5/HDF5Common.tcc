@@ -129,7 +129,6 @@ hid_t HDF5Common::GetHDF5Type<signed char>()
     return H5T_NATIVE_SCHAR;
 }
 
-
 template <>
 hid_t HDF5Common::GetHDF5Type<unsigned char>()
 {
