@@ -343,12 +343,27 @@ void HDF5ReaderP::EndStep()
 
 void HDF5ReaderP::PerformGets()
 {
+    // looks this this is not enforced to be specific to stream mode!!
     if (!m_InStreamMode)
     {
-        throw std::runtime_error(
-            "PerformGets() needs to follow stream read sequeuences.");
-    }
+#define declare_type(T)							\
+      for (std::string variableName : m_DeferredStack)			\
+	{								\
+	  Variable<T> *var = m_IO.InquireVariable<T>(variableName);	\
+	  if (var != nullptr)						\
+	    {								\
+	      hid_t h5Type = m_H5File.GetHDF5Type<T>();			\
+	      UseHDFRead(*var, var->GetData(), h5Type);			\
+	      break;							\
+	    }								\
+	}
+      ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
+        //throw std::runtime_error(
+	//  "PerformGets() needs to follow stream read sequeuences.");
+      return;
+    }
 #define declare_type(T)                                                        \
     for (std::string variableName : m_DeferredStack)                           \
     {                                                                          \
