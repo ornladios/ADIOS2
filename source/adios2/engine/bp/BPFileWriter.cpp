@@ -296,7 +296,8 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
     // async?
     for (int r = 0; r < m_BP3Serializer.m_Aggregator.m_Size; ++r)
     {
-        m_BP3Serializer.AggregatorsISend(r);
+        // Isend/Irecv requests
+        Box<MPI_Request> requests = m_BP3Serializer.AggregatorsIExchange(r);
 
         if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
         {
@@ -309,7 +310,7 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
             m_FileDataManager.FlushFiles(transportIndex);
         }
 
-        m_BP3Serializer.AggregatorsIReceive(r);
+        m_BP3Serializer.AggregatorsWait(requests, r);
         m_BP3Serializer.AggregatorsSwapBuffer(r);
     }
 

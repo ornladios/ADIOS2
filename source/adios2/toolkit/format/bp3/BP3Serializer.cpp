@@ -335,14 +335,19 @@ void BP3Serializer::AggregatorsUpdateOffsetsInMetadata()
     }
 }
 
-void BP3Serializer::AggregatorsISend(const int step)
+Box<MPI_Request> BP3Serializer::AggregatorsIExchange(const int step)
 {
-    m_Aggregator.Send(m_Data, step);
+    return m_Aggregator.IExchange(m_Data, step);
 }
 
-void BP3Serializer::AggregatorsIReceive(const int step)
+BufferSTL &BP3Serializer::AggregatorConsumerBuffer()
 {
-    m_Aggregator.Receive(m_Data, step);
+    return m_Aggregator.GetConsumerBuffer(m_Data);
+}
+
+void BP3Serializer::AggregatorsWait(Box<MPI_Request> &requests, const int step)
+{
+    m_Aggregator.Wait(requests, step);
 }
 
 void BP3Serializer::AggregatorsSwapBuffer(const int step) noexcept
@@ -353,11 +358,6 @@ void BP3Serializer::AggregatorsSwapBuffer(const int step) noexcept
 void BP3Serializer::AggregatorsResetBuffer() noexcept
 {
     m_Aggregator.ResetBuffers();
-}
-
-BufferSTL &BP3Serializer::AggregatorConsumerBuffer()
-{
-    return m_Aggregator.GetConsumerBuffer(m_Data);
 }
 
 // PRIVATE FUNCTIONS

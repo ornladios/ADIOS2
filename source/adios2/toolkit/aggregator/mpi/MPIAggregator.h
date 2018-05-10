@@ -11,7 +11,8 @@
 #ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPIAGGREGATOR_H_
 #define ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPIAGGREGATOR_H_
 
-#include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSMPI.h"
+#include "adios2/ADIOSTypes.h"
 #include "adios2/toolkit/format/BufferSTL.h"
 
 namespace adios2
@@ -56,9 +57,9 @@ public:
 
     virtual void Init(const size_t subStreams, MPI_Comm parentComm);
 
-    virtual void Send(BufferSTL &bufferSTL, const int step);
+    virtual Box<MPI_Request> IExchange(BufferSTL &bufferSTL, const int step);
 
-    virtual void Receive(BufferSTL &bufferSTL, const int step);
+    virtual void Wait(Box<MPI_Request> &requests, const int step);
 
     virtual void SwapBuffers(const int step) noexcept;
 

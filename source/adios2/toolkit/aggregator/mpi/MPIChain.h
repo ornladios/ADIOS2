@@ -28,9 +28,9 @@ public:
 
     void Init(const size_t subStreams, MPI_Comm parentComm) final;
 
-    void Send(BufferSTL &bufferSTL, const int step) final;
+    Box<MPI_Request> IExchange(BufferSTL &bufferSTL, const int step) final;
 
-    void Receive(BufferSTL &bufferSTL, const int step) final;
+    void Wait(Box<MPI_Request> &request, const int step) final;
 
     void SwapBuffers(const int step) noexcept final;
 

@@ -14,6 +14,7 @@
 #include <mutex>
 
 #include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Attribute.h"
@@ -141,7 +142,7 @@ public:
 
     /** Sends aggregation data in non-blocking mode according to the strategy
      * used */
-    void AggregatorsISend(const int step);
+    Box<MPI_Request> AggregatorsIExchange(const int step);
 
     /**
      * reference to buffer ready to be consumed (used by transports via a
@@ -151,9 +152,9 @@ public:
      */
     BufferSTL &AggregatorConsumerBuffer();
 
-    /** Receive aggregation data in non-blocking mode according to the strategy
+    /** Wait for aggregation data in non-blocking mode according to the strategy
      * used */
-    void AggregatorsIReceive(const int step);
+    void AggregatorsWait(Box<MPI_Request> &request, const int step);
 
     /**
      * Swap the current sender/receiver buffers

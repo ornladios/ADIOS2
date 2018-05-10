@@ -109,6 +109,8 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 std::vector<int> GetGathervDisplacements(const size_t *counts,
                                          const size_t countsSize);
 
+void CheckMPIReturn(const int value, const std::string hint);
+
 } // end namespace adios2
 
 #include "adiosMPIFunctions.inl"

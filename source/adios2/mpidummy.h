@@ -30,11 +30,12 @@ using MPI_Fint = int;
 using MPI_Op = int;
 
 #define MPI_SUCCESS 0
-#define MPI_ERR_BUFFER 1 /* Invalid buffer pointer */
-#define MPI_ERR_COUNT 2  /* Invalid count argument */
-#define MPI_ERR_TYPE 3   /* Invalid datatype argument */
-#define MPI_ERR_TAG 4    /* Invalid tag argument */
-#define MPI_ERR_COMM 5   /* Invalid communicator */
+#define MPI_ERR_BUFFER 1  /* Invalid buffer pointer */
+#define MPI_ERR_COUNT 2   /* Invalid count argument */
+#define MPI_ERR_TYPE 3    /* Invalid datatype argument */
+#define MPI_ERR_TAG 4     /* Invalid tag argument */
+#define MPI_ERR_COMM 5    /* Invalid communicator */
+#define MPI_ERR_INTERN 17 /* Invalid memory */
 #define MPI_MAX_ERROR_STRING 512
 #define MPI_MODE_RDONLY 1
 #define MPI_MODE_WRONLY 2

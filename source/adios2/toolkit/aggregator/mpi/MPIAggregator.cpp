@@ -10,8 +10,6 @@
 
 #include "MPIAggregator.h"
 
-#include "adios2/ADIOSMPI.h"
-
 namespace adios2
 {
 namespace aggregator
@@ -29,9 +27,16 @@ MPIAggregator::~MPIAggregator()
 
 void MPIAggregator::Init(const size_t subStreams, MPI_Comm parentComm) {}
 
-void MPIAggregator::Send(BufferSTL &bufferSTL, const int step) {}
+Box<MPI_Request> MPIAggregator::IExchange(BufferSTL & /**bufferSTL*/,
+                                          const int /** step*/)
+{
+    Box<MPI_Request> requests;
+    return requests;
+}
 
-void MPIAggregator::Receive(BufferSTL &bufferSTL, const int step) {}
+void MPIAggregator::Wait(Box<MPI_Request> & /**request*/, const int /**step*/)
+{
+}
 
 void MPIAggregator::SwapBuffers(const int step) noexcept {}
 
