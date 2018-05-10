@@ -934,6 +934,9 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
 
     {
 #ifdef ADIOS2_HAVE_MPI
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+
         HDF5NativeWriter h5writer(fname, MPI_COMM_WORLD);
 #else
         HDF5NativeWriter h5writer(fname, 0);
@@ -987,11 +990,6 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
     }
 
     { // ADIOS2 read back
-
-#ifdef ADIOS2_HAVE_MPI
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-        MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
 
 // Write test data using ADIOS2
 
@@ -1737,6 +1735,9 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D2x4)
 
     {
 #ifdef ADIOS2_HAVE_MPI
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+
         HDF5NativeWriter h5writer(fname, MPI_COMM_WORLD);
 #else
         HDF5NativeWriter h5writer(fname, 0);
@@ -2538,6 +2539,9 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
 
     {
 #ifdef ADIOS2_HAVE_MPI
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+
         HDF5NativeWriter h5writer(fname, MPI_COMM_WORLD);
 #else
         HDF5NativeWriter h5writer(fname, 0);
