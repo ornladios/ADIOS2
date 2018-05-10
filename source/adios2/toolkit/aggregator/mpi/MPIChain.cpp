@@ -11,6 +11,7 @@
 #include "MPIChain.h"
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/helper/adiosFunctions.h" //CheckMPIReturn
 
 namespace adios2
 {
@@ -32,61 +33,88 @@ void MPIChain::Init(const size_t subStreams, MPI_Comm parentComm)
     }
 }
 
-void MPIChain::Send(BufferSTL &bufferSTL, const int step)
+Box<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL, const int step)
 {
     BufferSTL &sendBuffer = GetSender(bufferSTL);
-
     const int endRank = m_Size - 1 - step;
+    const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
+    const bool receiver = (m_Rank < endRank) ? true : false;
 
-    // send size
-    if (m_Rank >= 1 && m_Rank <= endRank) // sender
+    MPI_Request sendSizeRequest;
+    Box<MPI_Request> requests;
+
+    if (sender) // sender
     {
-        MPI_Request sendRequest;
-        MPI_Isend(&sendBuffer.m_Position, 1, ADIOS2_MPI_SIZE_T, m_Rank - 1, 0,
-                  m_Comm, &sendRequest);
+        CheckMPIReturn(MPI_Isend(&sendBuffer.m_Position, 1, ADIOS2_MPI_SIZE_T,
+                                 m_Rank - 1, 0, m_Comm, &sendSizeRequest),
+                       ", aggregation Isend size at iteration " +
+                           std::to_string(step) + "\n");
+
+        CheckMPIReturn(MPI_Isend(sendBuffer.m_Buffer.data(),
+                                 static_cast<int>(sendBuffer.m_Position),
+                                 MPI_CHAR, m_Rank - 1, 1, m_Comm,
+                                 &requests.first),
+                       ", aggregation Isend data at iteration " +
+                           std::to_string(step) + "\n");
     }
-    // receive size and resize receiving buffer
-    if (m_Rank < endRank) // receiver
+    // receive size, resize receiving buffer and receive data
+    if (receiver)
     {
         size_t bufferSize = 0;
-        MPI_Request receiveRequest;
-        MPI_Irecv(&bufferSize, 1, ADIOS2_MPI_SIZE_T, m_Rank + 1, 0, m_Comm,
-                  &receiveRequest);
+        MPI_Request receiveSizeRequest;
+        CheckMPIReturn(MPI_Irecv(&bufferSize, 1, ADIOS2_MPI_SIZE_T, m_Rank + 1,
+                                 0, m_Comm, &receiveSizeRequest),
+                       ", aggregation Irecv size at iteration " +
+                           std::to_string(step) + "\n");
 
         MPI_Status receiveStatus;
-        MPI_Wait(&receiveRequest, &receiveStatus);
+        CheckMPIReturn(MPI_Wait(&receiveSizeRequest, &receiveStatus),
+                       ", aggregation waiting for size receiver at iteration " +
+                           std::to_string(step) + "\n");
 
         BufferSTL &receiveBuffer = GetReceiver(bufferSTL);
         ResizeUpdateBufferSTL(
             bufferSize, receiveBuffer,
             "in aggregation, when resizing receiving buffer to size " +
                 std::to_string(bufferSize));
+
+        CheckMPIReturn(MPI_Irecv(receiveBuffer.m_Buffer.data(),
+                                 static_cast<int>(receiveBuffer.m_Position),
+                                 MPI_CHAR, m_Rank + 1, 1, m_Comm,
+                                 &requests.second),
+                       ", aggregation Irecv data at iteration " +
+                           std::to_string(step) + "\n");
     }
 
-    // send data
-    if (m_Rank >= 1 && m_Rank <= endRank) // sender
+    if (sender) // make sure sizes arrived
     {
-        MPI_Request sendRequest;
-        MPI_Isend(sendBuffer.m_Buffer.data(),
-                  static_cast<int>(sendBuffer.m_Position), MPI_CHAR, m_Rank - 1,
-                  1, m_Comm, &sendRequest);
+        MPI_Status sendSizeStatus;
+        CheckMPIReturn(MPI_Wait(&sendSizeRequest, &sendSizeStatus),
+                       ", aggregation waiting for send Size at iteration " +
+                           std::to_string(step) + "\n");
     }
+
+    return requests;
 }
 
-void MPIChain::Receive(BufferSTL &bufferSTL, const int step)
+void MPIChain::Wait(Box<MPI_Request> &requests, const int step)
 {
     const int endRank = m_Size - 1 - step;
-    if (m_Rank < endRank) // receiver
+    const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
+    const bool receiver = (m_Rank < endRank) ? true : false;
+
+    MPI_Status status;
+    if (sender)
     {
-        BufferSTL &receiveBuffer = GetReceiver(bufferSTL);
-
-        MPI_Request receiveRequest;
-        MPI_Irecv(receiveBuffer.m_Buffer.data(),
-                  static_cast<int>(receiveBuffer.m_Position), MPI_CHAR,
-                  m_Rank + 1, 1, m_Comm, &receiveRequest);
-
-        MPI_Status receiveStatus;
-        MPI_Wait(&receiveRequest, &receiveStatus);
+        CheckMPIReturn(MPI_Wait(&requests.first, &status),
+                       ", aggregation waiting for sender at iteration " +
+                           std::to_string(step) + "\n");
+    }
+    if (receiver)
+    {
+        CheckMPIReturn(MPI_Wait(&requests.second, &status),
+                       ", aggregation waiting for receiver at iteration " +
+                           std::to_string(step) + "\n");
     }
 }
 
@@ -107,9 +135,9 @@ void MPIChain::HandshakeLinks()
 {
     int link = -1;
 
+    MPI_Request sendRequest;
     if (m_Rank > 0) // send
     {
-        MPI_Request sendRequest;
         MPI_Isend(&m_Rank, 1, MPI_INT, m_Rank - 1, 0, m_Comm, &sendRequest);
     }
 
@@ -120,6 +148,12 @@ void MPIChain::HandshakeLinks()
 
         MPI_Status receiveStatus;
         MPI_Wait(&receiveRequest, &receiveStatus);
+    }
+
+    if (m_Rank > 0)
+    {
+        MPI_Status sendStatus;
+        MPI_Wait(&sendRequest, &sendStatus);
     }
 }
 
