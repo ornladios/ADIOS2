@@ -160,12 +160,15 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
     {
         if (m_H5File.m_IsGeneratedByAdios)
         {
-	  try {
-            m_H5File.SetAdiosStep(variableStart + ts);
-	  } catch (std::exception &e) {
-	    printf("[Not fatal] %s\n", e.what());
-	    break;
-	  }
+            try
+            {
+                m_H5File.SetAdiosStep(variableStart + ts);
+            }
+            catch (std::exception &e)
+            {
+                printf("[Not fatal] %s\n", e.what());
+                break;
+            }
         }
         hid_t dataSetId =
             H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
