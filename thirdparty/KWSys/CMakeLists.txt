@@ -1,4 +1,5 @@
 set(KWSYS_NAMESPACE adios2sys)
+set(KWSYS_USE_CommandLineArguments ON)
 set(KWSYS_USE_DynamicLoader ON)
 set(KWSYS_USE_RegularExpression ON)
 set(KWSYS_USE_SystemTools ON)
