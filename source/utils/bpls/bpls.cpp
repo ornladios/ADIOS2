@@ -524,7 +524,7 @@ void printSettings(void)
 
 void bpexit(int code, Engine *fp)
 {
-    if (fp > 0)
+    if (fp != nullptr)
         fp->Close();
     exit(code);
 }
