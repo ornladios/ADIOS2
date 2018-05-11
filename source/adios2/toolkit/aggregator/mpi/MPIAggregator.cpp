@@ -66,26 +66,28 @@ void MPIAggregator::InitComm(const size_t subStreams, MPI_Comm parentComm)
     MPI_Comm_size(parentComm, &parentSize);
 
     const size_t processes = static_cast<size_t>(parentSize);
-    const size_t stride = processes / subStreams;
+    size_t stride = processes / subStreams + 1;
     const size_t remainder = processes % subStreams;
+
+    size_t consumer = 0;
 
     for (auto s = 0; s < subStreams; ++s)
     {
-        const size_t consumer = s * stride; // aggregator rank is start
-        size_t producers = stride;
-        if (s == subStreams - 1)
+        if (s >= remainder)
         {
-            producers += remainder;
+            stride = processes / subStreams;
         }
 
         if (static_cast<size_t>(parentRank) >= consumer &&
-            static_cast<size_t>(parentRank) < consumer + producers)
+            static_cast<size_t>(parentRank) < consumer + stride)
         {
             MPI_Comm_split(parentComm, static_cast<int>(consumer), parentRank,
                            &m_Comm);
             m_ConsumerRank = static_cast<int>(consumer);
             m_SubStreamIndex = static_cast<size_t>(s);
         }
+
+        consumer += stride;
     }
 
     MPI_Comm_rank(m_Comm, &m_Rank);
