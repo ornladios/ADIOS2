@@ -57,9 +57,10 @@ public:
 
     virtual void Init(const size_t subStreams, MPI_Comm parentComm);
 
-    virtual Box<MPI_Request> IExchange(BufferSTL &bufferSTL, const int step);
+    virtual std::vector<MPI_Request> IExchange(BufferSTL &bufferSTL,
+                                               const int step);
 
-    virtual void Wait(Box<MPI_Request> &requests, const int step);
+    virtual void Wait(std::vector<MPI_Request> &requests, const int step);
 
     virtual void SwapBuffers(const int step) noexcept;
 

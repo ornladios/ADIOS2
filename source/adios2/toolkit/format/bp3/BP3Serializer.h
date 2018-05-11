@@ -142,7 +142,7 @@ public:
 
     /** Sends aggregation data in non-blocking mode according to the strategy
      * used */
-    Box<MPI_Request> AggregatorsIExchange(const int step);
+    std::vector<MPI_Request> AggregatorsIExchange(const int step);
 
     /**
      * reference to buffer ready to be consumed (used by transports via a
@@ -152,15 +152,20 @@ public:
      */
     BufferSTL &AggregatorConsumerBuffer();
 
-    /** Wait for aggregation data in non-blocking mode according to the strategy
-     * used */
-    void AggregatorsWait(Box<MPI_Request> &request, const int step);
+    /**
+     * Wait for aggregation data in non-blocking mode according to the strategy
+     * used
+     * @param request input to wait upon
+     * @param iteration iteration process
+     */
+    void AggregatorsWait(std::vector<MPI_Request> &request,
+                         const int iteration);
 
     /**
      * Swap the current sender/receiver buffers
-     * @param step current step in the aggregation process
+     * @param iteration current iteration in the aggregation process
      */
-    void AggregatorsSwapBuffer(const int step) noexcept;
+    void AggregatorsSwapBuffer(const int iteration) noexcept;
 
     /**
      * Resets buffering ordering to initial state for next aggregation
