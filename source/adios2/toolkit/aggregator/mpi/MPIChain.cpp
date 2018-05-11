@@ -41,7 +41,6 @@ std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
     const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
     const bool receiver = (m_Rank < endRank) ? true : false;
 
-    MPI_Request sendSizeRequest;
     std::vector<MPI_Request> requests(3);
 
     if (sender) // sender
