@@ -27,14 +27,15 @@ MPIAggregator::~MPIAggregator()
 
 void MPIAggregator::Init(const size_t subStreams, MPI_Comm parentComm) {}
 
-Box<MPI_Request> MPIAggregator::IExchange(BufferSTL & /**bufferSTL*/,
-                                          const int /** step*/)
+std::vector<MPI_Request> MPIAggregator::IExchange(BufferSTL & /**bufferSTL*/,
+                                                  const int /** step*/)
 {
-    Box<MPI_Request> requests;
+    std::vector<MPI_Request> requests;
     return requests;
 }
 
-void MPIAggregator::Wait(Box<MPI_Request> & /**request*/, const int /**step*/)
+void MPIAggregator::Wait(std::vector<MPI_Request> & /**request*/,
+                         const int /**step*/)
 {
 }
 

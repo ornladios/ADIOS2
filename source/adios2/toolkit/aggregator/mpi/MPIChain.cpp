@@ -33,7 +33,8 @@ void MPIChain::Init(const size_t subStreams, MPI_Comm parentComm)
     }
 }
 
-Box<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL, const int step)
+std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
+                                             const int step)
 {
     BufferSTL &sendBuffer = GetSender(bufferSTL);
     const int endRank = m_Size - 1 - step;
@@ -41,19 +42,18 @@ Box<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL, const int step)
     const bool receiver = (m_Rank < endRank) ? true : false;
 
     MPI_Request sendSizeRequest;
-    Box<MPI_Request> requests;
+    std::vector<MPI_Request> requests(3);
 
     if (sender) // sender
     {
         CheckMPIReturn(MPI_Isend(&sendBuffer.m_Position, 1, ADIOS2_MPI_SIZE_T,
-                                 m_Rank - 1, 0, m_Comm, &sendSizeRequest),
+                                 m_Rank - 1, 0, m_Comm, &requests[0]),
                        ", aggregation Isend size at iteration " +
                            std::to_string(step) + "\n");
 
         CheckMPIReturn(MPI_Isend(sendBuffer.m_Buffer.data(),
                                  static_cast<int>(sendBuffer.m_Position),
-                                 MPI_CHAR, m_Rank - 1, 1, m_Comm,
-                                 &requests.first),
+                                 MPI_CHAR, m_Rank - 1, 1, m_Comm, &requests[1]),
                        ", aggregation Isend data at iteration " +
                            std::to_string(step) + "\n");
     }
@@ -69,7 +69,7 @@ Box<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL, const int step)
 
         MPI_Status receiveStatus;
         CheckMPIReturn(MPI_Wait(&receiveSizeRequest, &receiveStatus),
-                       ", aggregation waiting for size receiver at iteration " +
+                       ", aggregation waiting for receiver size at iteration " +
                            std::to_string(step) + "\n");
 
         BufferSTL &receiveBuffer = GetReceiver(bufferSTL);
@@ -80,40 +80,36 @@ Box<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL, const int step)
 
         CheckMPIReturn(MPI_Irecv(receiveBuffer.m_Buffer.data(),
                                  static_cast<int>(receiveBuffer.m_Position),
-                                 MPI_CHAR, m_Rank + 1, 1, m_Comm,
-                                 &requests.second),
+                                 MPI_CHAR, m_Rank + 1, 1, m_Comm, &requests[2]),
                        ", aggregation Irecv data at iteration " +
-                           std::to_string(step) + "\n");
-    }
-
-    if (sender) // make sure sizes arrived
-    {
-        MPI_Status sendSizeStatus;
-        CheckMPIReturn(MPI_Wait(&sendSizeRequest, &sendSizeStatus),
-                       ", aggregation waiting for send Size at iteration " +
                            std::to_string(step) + "\n");
     }
 
     return requests;
 }
 
-void MPIChain::Wait(Box<MPI_Request> &requests, const int step)
+void MPIChain::Wait(std::vector<MPI_Request> &requests, const int step)
 {
     const int endRank = m_Size - 1 - step;
     const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
     const bool receiver = (m_Rank < endRank) ? true : false;
 
     MPI_Status status;
-    if (sender)
-    {
-        CheckMPIReturn(MPI_Wait(&requests.first, &status),
-                       ", aggregation waiting for sender at iteration " +
-                           std::to_string(step) + "\n");
-    }
     if (receiver)
     {
-        CheckMPIReturn(MPI_Wait(&requests.second, &status),
-                       ", aggregation waiting for receiver at iteration " +
+        CheckMPIReturn(MPI_Wait(&requests[2], &status),
+                       ", aggregation waiting for receiver data at iteration " +
+                           std::to_string(step) + "\n");
+    }
+
+    if (sender)
+    {
+        CheckMPIReturn(MPI_Wait(&requests[0], &status),
+                       ", aggregation waiting for sender size at iteration " +
+                           std::to_string(step) + "\n");
+
+        CheckMPIReturn(MPI_Wait(&requests[1], &status),
+                       ", aggregation waiting for sender data at iteration " +
                            std::to_string(step) + "\n");
     }
 }

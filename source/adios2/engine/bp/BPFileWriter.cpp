@@ -297,7 +297,8 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
     for (int r = 0; r < m_BP3Serializer.m_Aggregator.m_Size; ++r)
     {
         // Isend/Irecv requests
-        Box<MPI_Request> requests = m_BP3Serializer.AggregatorsIExchange(r);
+        std::vector<MPI_Request> requests =
+            m_BP3Serializer.AggregatorsIExchange(r);
 
         if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
         {

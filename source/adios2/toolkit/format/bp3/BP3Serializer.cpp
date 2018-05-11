@@ -335,7 +335,7 @@ void BP3Serializer::AggregatorsUpdateOffsetsInMetadata()
     }
 }
 
-Box<MPI_Request> BP3Serializer::AggregatorsIExchange(const int step)
+std::vector<MPI_Request> BP3Serializer::AggregatorsIExchange(const int step)
 {
     return m_Aggregator.IExchange(m_Data, step);
 }
@@ -345,14 +345,15 @@ BufferSTL &BP3Serializer::AggregatorConsumerBuffer()
     return m_Aggregator.GetConsumerBuffer(m_Data);
 }
 
-void BP3Serializer::AggregatorsWait(Box<MPI_Request> &requests, const int step)
+void BP3Serializer::AggregatorsWait(std::vector<MPI_Request> &requests,
+                                    const int step)
 {
     m_Aggregator.Wait(requests, step);
 }
 
-void BP3Serializer::AggregatorsSwapBuffer(const int step) noexcept
+void BP3Serializer::AggregatorsSwapBuffer(const int iteration) noexcept
 {
-    m_Aggregator.SwapBuffers(step);
+    m_Aggregator.SwapBuffers(iteration);
 }
 
 void BP3Serializer::AggregatorsResetBuffer() noexcept
