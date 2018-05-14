@@ -202,6 +202,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
             /* success!   We have a connection to the writer! */
             struct _ReaderRegisterMsg ReaderRegister;
 
+            memset(&ReaderRegister, 0, sizeof(ReaderRegister));
             ReaderRegister.WriterFile = WriterFileID;
             ReaderRegister.WriterResponseCondition =
                 CMCondition_get(Stream->CPInfo->cm, conn);
