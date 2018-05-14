@@ -72,7 +72,7 @@ private:
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \
     Typedecl m_##Param = Default;
-    SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals);
+    SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals)
 #undef declare_locals
 
 #define declare_type(T)                                                        \
