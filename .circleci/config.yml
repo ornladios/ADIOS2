@@ -32,37 +32,37 @@ jobs:
   "el7":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:el7
+      - image: ornladios/adios2-auto:el7
 
   "el7-gnu7":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:el7-gnu7-ohpc
+      - image: ornladios/adios2-auto:el7-gnu7-ohpc
 
   "el7-gnu7-openmpi":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:el7-gnu7-openmpi-ohpc
+      - image: ornladios/adios2-auto:el7-gnu7-openmpi-ohpc
 
   "el7-intel18":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:el7-intel18-ohpc
+      - image: ornladios/adios2-auto:el7-intel18-ohpc
 
   "el7-intel18-impi":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:el7-intel18-impi-ohpc
+      - image: ornladios/adios2-auto:el7-intel18-impi-ohpc
 
   "fedora-ubsan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:fedora-ubsan
+      - image: ornladios/adios2-auto:fedora-ubsan
 
   "fedora-mpich-ubsan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:fedora-mpich-ubsan
+      - image: ornladios/adios2-auto:fedora-mpich-ubsan
 
 workflows:
   version: 2
