@@ -283,10 +283,16 @@ static void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
     {
         FMFieldList PriorField;
         PriorField = &((*FieldP)[(*CountP) - 1]);
-        Offset = ((PriorField->field_offset + PriorField->field_size +
-                   ElementSize - 1) /
-                  ElementSize) *
-                 ElementSize;
+        int PriorFieldSize = PriorField->field_size;
+        if (index(PriorField->field_type, '['))
+        {
+            // really a pointer
+            PriorFieldSize = sizeof(void *);
+        }
+        Offset =
+            ((PriorField->field_offset + PriorFieldSize + ElementSize - 1) /
+             ElementSize) *
+            ElementSize;
     }
     *FieldP = realloc(*FieldP, (*CountP + 2) * sizeof((*FieldP)[0]));
     Field = &((*FieldP)[*CountP]);
