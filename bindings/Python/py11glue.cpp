@@ -379,5 +379,6 @@ PYBIND11_MODULE(adios2, m)
                          adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership)
 
-        .def("close", &adios2::py11::File::Close);
+        .def("close", &adios2::py11::File::Close)
+        .def("currentstep", &adios2::py11::File::CurrentStep);
 }

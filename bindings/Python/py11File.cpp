@@ -282,5 +282,6 @@ void File::Close()
 
 bool File::IsClosed() const noexcept { return m_IsClosed; }
 
+size_t File::CurrentStep() const { return m_Stream->m_Engine->CurrentStep(); };
 } // end namespace py11
 } // end namespace adios2
