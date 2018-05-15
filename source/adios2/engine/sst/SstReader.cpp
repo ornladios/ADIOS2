@@ -166,8 +166,6 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         m_BP3Deserializer = new format::BP3Deserializer(m_MPIComm, m_DebugMode);
         m_BP3Deserializer->InitParameters(m_IO.m_Parameters);
 
-        struct _SstData **d = m_CurrentStepMetaData->WriterMetadata;
-
         m_BP3Deserializer->m_Metadata.Resize(
             (*m_CurrentStepMetaData->WriterMetadata)->DataSize,
             "in SST Streaming Listener");

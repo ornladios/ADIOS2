@@ -83,7 +83,7 @@ typedef struct _CPTimestepEntry
     int ReferenceCount;
     void **DP_TimestepInfo;
     SstData *MetadataArray;
-    void (*DataFreeFunc)(void *);
+    DataFreeFunc FreeTimestep;
     void *FreeClientData;
     void *DataBlockToFree;
     struct _CPTimestepEntry *Next;
@@ -346,7 +346,7 @@ extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
                                        SstData Data, long Timestep,
                                        FFSFormatList Formats,
-                                       void DataFreeFunc(void *),
+                                       DataFreeFunc FreeTimestep,
                                        void *FreeClientData);
 
 void **CP_consolidateDataToRankZero(SstStream stream, void *local_info,

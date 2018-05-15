@@ -255,7 +255,7 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
 
             Stream->QueuedTimestepCount--;
             List = List->Next;
-            ItemToFree->DataFreeFunc(ItemToFree->FreeClientData);
+            ItemToFree->FreeTimestep(ItemToFree->FreeClientData);
             free(ItemToFree->Msg);
             free(ItemToFree->MetadataArray);
             free(ItemToFree->DP_TimestepInfo);
@@ -871,7 +871,7 @@ static long DoStreamDiscard(SstStream Stream, long IncomingTimestep)
                        "Discarding timestep %d because of queue condition\n",
                        Entry->Timestep);
             Stream->QueuedTimesteps = NULL;
-            Entry->DataFreeFunc(Entry->FreeClientData);
+            Entry->FreeTimestep(Entry->FreeClientData);
             free(Entry->Msg);
             free(Entry->DataBlockToFree);
             free(Entry);
@@ -894,7 +894,7 @@ static long DoStreamDiscard(SstStream Stream, long IncomingTimestep)
                        "Discarding timestep %d because of queue condition\n",
                        Entry->Timestep);
             Last->Next = NULL;
-            Entry->DataFreeFunc(Entry->FreeClientData);
+            Entry->FreeTimestep(Entry->FreeClientData);
             free(Entry->MetadataArray);
             free(Entry->DP_TimestepInfo);
             free(Entry->DataBlockToFree);
@@ -923,7 +923,7 @@ static long DoStreamDiscard(SstStream Stream, long IncomingTimestep)
 extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
                                        SstData Data, long Timestep,
                                        FFSFormatList Formats,
-                                       void DataFreeFunc(void *),
+                                       DataFreeFunc FreeTimestep,
                                        void *FreeClientData)
 {
     void *data_block;
@@ -947,7 +947,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
             IncomingTimestepDiscarded = DoStreamDiscard(Stream, Timestep);
             if (IncomingTimestepDiscarded)
             {
-                DataFreeFunc(FreeClientData);
+                FreeTimestep(FreeClientData);
                 Formats = NULL;
                 LocalMetadata = NULL;
                 Data = NULL;
@@ -1078,7 +1078,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     Entry->Msg = Msg;
     Entry->MetadataArray = Msg->Metadata;
     Entry->DP_TimestepInfo = Msg->DP_TimestepInfo;
-    Entry->DataFreeFunc = DataFreeFunc;
+    Entry->FreeTimestep = FreeTimestep;
     Entry->FreeClientData = FreeClientData;
     Entry->Next = Stream->QueuedTimesteps;
     Entry->DataBlockToFree = data_block;
@@ -1110,11 +1110,11 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
 
 extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata,
                                SstData Data, long Timestep,
-                               void DataFreeFunc(void *), void *FreeClientData)
+                               DataFreeFunc FreeTimestep, void *FreeClientData)
 {
 
     SstInternalProvideTimestep(Stream, LocalMetadata, Data, Timestep, NULL,
-                               DataFreeFunc, FreeClientData);
+                               FreeTimestep, FreeClientData);
 }
 
 void queueReaderRegisterMsgAndNotify(SstStream Stream,
