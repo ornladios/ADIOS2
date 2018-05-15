@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-
 export SOURCE_DIR=${TRAVIS_BUILD_DIR}
-export BUILD_DIR=$(readlink -f ${SOURCE_DIR}/..)
+export BUILD_DIR="${SOURCE_DIR}/.."
 export COMMIT_RANGE="${TRAVIS_COMMIT_RANGE/.../ }"
 
 case ${BUILD_MATRIX_ENTRY} in
@@ -25,7 +24,27 @@ case ${BUILD_MATRIX_ENTRY} in
     fi
     ;;
   *)
-    echo "Error: BUILD_MATRIX_ENTRY is undefined or set to an unknown value"
-    exit 1;
+    case ${TRAVIS_OS_NAME} in
+      linux)
+        TRAVIS_GENERATOR="Unix Makefiles"
+        TRAVIS_BUILD_NAME="ubnt-trusty"
+        ;;
+      osx)
+        TRAVIS_GENERATOR="Xcode"
+        TRAVIS_BUILD_NAME="osx-${TRAVIS_OSX_IMAGE}"
+        ;;
+      *)
+        echo "Error: BUILD_MATRIX_ENTRY is undefined or set to an unknown value"
+        exit 1;
+        ;;
+    esac
+    TRAVIS_BUILD_NAME="${TRAVIS_BUILD_NAME}-${CC}"
+    if [ -n "${MPI}" ]
+    then
+      TRAVIS_BUILD_NAME="${TRAVIS_BUILD_NAME}-${MPI}"
+    fi
+    export TRAVIS_BUILD_NAME TRAVIS_GENERATOR
+    echo "Running build"
+    ${SOURCE_DIR}/scripts/travis/run-build.sh
     ;;
 esac
