@@ -63,8 +63,7 @@ std::string DataManWriter::SerializeJson(Variable<T> &variable)
     metaj["Y"] = variable.m_Type;
     metaj["I"] = variable.PayloadSize();
     metaj["R"] = m_MPIRank;
-    std::string metastr = metaj.dump();
-    return std::move(metastr);
+    return metaj.dump();
 }
 
 template <class T>
