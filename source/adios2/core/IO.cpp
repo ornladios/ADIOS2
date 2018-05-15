@@ -55,8 +55,8 @@ namespace adios2
 
 IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
        const std::string hostLanguage, const bool debugMode)
-: m_Name(name), m_MPIComm(mpiComm), m_InConfigFile(inConfigFile),
-  m_HostLanguage(hostLanguage), m_DebugMode(debugMode)
+: m_Name(name), m_MPIComm(mpiComm), m_DebugMode(debugMode),
+  m_HostLanguage(hostLanguage), m_InConfigFile(inConfigFile)
 {
 }
 

@@ -25,8 +25,8 @@ VariableBase::VariableBase(const std::string &name, const std::string type,
                            const Dims &start, const Dims &count,
                            const bool constantDims, const bool debugMode)
 : m_Name(name), m_Type(type), m_ElementSize(elementSize), m_Shape(shape),
-  m_Start(start), m_Count(count), m_ConstantDims(constantDims),
-  m_DebugMode(debugMode)
+  m_Start(start), m_Count(count), m_DebugMode(debugMode),
+  m_ConstantDims(constantDims)
 {
     InitShapeType();
 }
