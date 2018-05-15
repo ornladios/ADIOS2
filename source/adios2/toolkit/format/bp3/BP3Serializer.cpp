@@ -274,6 +274,7 @@ void BP3Serializer::AggregateCollectiveMetadata()
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount);
 
     const uint64_t variablesIndexStart = m_Metadata.m_Position;
+
     AggregateMergeIndex(m_MetadataSet.VarsIndices);
 
     const uint64_t attributesIndexStart = m_Metadata.m_Position;
@@ -281,8 +282,6 @@ void BP3Serializer::AggregateCollectiveMetadata()
 
     if (m_RankMPI == 0)
     {
-        m_Metadata.Resize(m_Metadata.m_Position + m_MetadataSet.MiniFooterSize,
-                          " when writing collective bp3 Minifooter");
         PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
                       m_Metadata.m_Buffer, m_Metadata.m_Position, true);
         m_Metadata.m_AbsolutePosition = m_Metadata.m_Position;
@@ -793,7 +792,8 @@ void BP3Serializer::AggregateMergeIndex(
 
         // Write count
         position += 12;
-        m_Metadata.Resize(position,
+        m_Metadata.Resize(position + gatheredSerialIndicesPosition +
+                              m_MetadataSet.MiniFooterSize,
                           ", in call to AggregateMergeIndex BP3 metadata");
         const uint32_t totalCountU32 =
             static_cast<uint32_t>(nameRankIndices.size());
@@ -1210,10 +1210,6 @@ void BP3Serializer::MergeSerializeIndices(
             std::lock_guard<std::mutex> lock(m_Mutex);
             auto &buffer = m_Metadata.m_Buffer;
             auto &position = m_Metadata.m_Position;
-
-            m_Metadata.Resize(buffer.size() +
-                                  static_cast<size_t>(entryLength + 4),
-                              "in call to MergeSerializeIndices bp3 index");
 
             CopyToBuffer(buffer, position, &entryLength);
             CopyToBuffer(buffer, position, &indices[firstRank].Buffer[4],
