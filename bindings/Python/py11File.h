@@ -81,6 +81,8 @@ public:
 
     bool IsClosed() const noexcept;
 
+    size_t CurrentStep() const;
+
 private:
     std::shared_ptr<adios2::Stream> m_Stream;
     bool m_IsClosed = true;
