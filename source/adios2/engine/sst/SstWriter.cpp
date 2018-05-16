@@ -35,12 +35,12 @@ SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     m_WriterStep++;
-    if (m_FFSmarshal)
+    if (m_MarshalMethod == SstMarshalFFS)
     {
         return (StepStatus)SstFFSWriterBeginStep(m_Output, (int)mode,
                                                  timeout_sec);
     }
-    else if (m_BPmarshal)
+    else if (m_MarshalMethod == SstMarshalBP)
     {
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
@@ -56,11 +56,11 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 void SstWriter::EndStep()
 {
-    if (m_FFSmarshal)
+    if (m_MarshalMethod == SstMarshalFFS)
     {
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }
-    else if (m_BPmarshal)
+    else if (m_MarshalMethod == SstMarshalBP)
     {
         // This should finalize BP marshaling at the writer side.  All
         // marshaling methods should result in two blocks, one a block of
@@ -171,6 +171,33 @@ void SstWriter::Init()
                 throw std::invalid_argument(
                     "ERROR: Unknown Sst RegistrationMethod parameter \"" +
                     method + "\"" + m_EndMessage);
+            }
+            return true;
+        }
+        return false;
+    };
+
+    auto lf_SetMarshalMethodParameter = [&](const std::string key,
+                                            size_t &parameter) {
+        auto itKey = m_IO.m_Parameters.find(key);
+        if (itKey != m_IO.m_Parameters.end())
+        {
+            std::string method = itKey->second;
+            std::transform(method.begin(), method.end(), method.begin(),
+                           ::tolower);
+            if (method == "ffs")
+            {
+                parameter = SstMarshalFFS;
+            }
+            else if (method == "bp")
+            {
+                parameter = SstMarshalBP;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown Sst MarshalMethod parameter \"" + method +
+                    "\"" + m_EndMessage);
             }
             return true;
         }
