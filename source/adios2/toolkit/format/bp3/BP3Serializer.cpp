@@ -266,25 +266,36 @@ BP3Serializer::AggregateProfilingJSON(const std::string &rankProfilingLog)
     return SetCollectiveProfilingJSON(rankProfilingLog);
 }
 
-void BP3Serializer::AggregateCollectiveMetadata()
+void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
+                                                BufferSTL &bufferSTL,
+                                                const bool inMetadataBuffer)
 {
     ProfilerStart("buffering");
     ProfilerStart("meta_sort_merge");
-    const uint64_t pgIndexStart = m_Metadata.m_Position;
-    AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount);
 
-    const uint64_t variablesIndexStart = m_Metadata.m_Position;
-    AggregateMergeIndex(m_MetadataSet.VarsIndices);
+    auto &buffer = bufferSTL.m_Buffer;
+    auto &position = bufferSTL.m_Position;
 
-    const uint64_t attributesIndexStart = m_Metadata.m_Position;
-    AggregateMergeIndex(m_MetadataSet.AttributesIndices);
+    const uint64_t pgIndexStart = position;
+    AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount, comm,
+                   bufferSTL);
 
-    if (m_RankMPI == 0)
+    const uint64_t variablesIndexStart = position;
+    AggregateMergeIndex(m_MetadataSet.VarsIndices, comm, bufferSTL);
+
+    const uint64_t attributesIndexStart = position;
+    AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL);
+
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+    if (rank == 0)
     {
         PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
-                      m_Metadata.m_Buffer, m_Metadata.m_Position, true);
-        m_Metadata.m_AbsolutePosition = m_Metadata.m_Position;
+                      bufferSTL.m_Buffer, bufferSTL.m_Position,
+                      inMetadataBuffer);
+        bufferSTL.m_AbsolutePosition = bufferSTL.m_Position;
     }
+
     ProfilerStop("meta_sort_merge");
     ProfilerStop("buffering");
 }
@@ -730,28 +741,31 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
 }
 
 void BP3Serializer::AggregateIndex(const SerialElementIndex &index,
-                                   const size_t count)
+                                   const size_t count, MPI_Comm comm,
+                                   BufferSTL &bufferSTL)
 {
-    auto &buffer = m_Metadata.m_Buffer;
-    auto &position = m_Metadata.m_Position;
+    auto &buffer = bufferSTL.m_Buffer;
+    auto &position = bufferSTL.m_Position;
+    int rank;
+    MPI_Comm_rank(comm, &rank);
 
     size_t countPosition = position;
-    const size_t totalCount = ReduceValues<size_t>(count, m_MPIComm);
+    const size_t totalCount = ReduceValues<size_t>(count, comm);
 
-    if (m_RankMPI == 0)
+    if (rank == 0)
     {
         // Write count
         position += 16;
-        m_Metadata.Resize(position, " in call to AggregateIndex bp1 metadata");
+        bufferSTL.Resize(position, " in call to AggregateIndex BP3 metadata");
         const uint64_t totalCountU64 = static_cast<uint64_t>(totalCount);
         CopyToBuffer(buffer, countPosition, &totalCountU64);
     }
 
     // write contents
-    GathervVectors(index.Buffer, buffer, position, m_MPIComm);
+    GathervVectors(index.Buffer, buffer, position, comm);
 
     // get total length and write it after count and before index
-    if (m_RankMPI == 0)
+    if (rank == 0)
     {
         const uint64_t totalLengthU64 =
             static_cast<uint64_t>(position - countPosition - 8);
@@ -760,16 +774,17 @@ void BP3Serializer::AggregateIndex(const SerialElementIndex &index,
 }
 
 void BP3Serializer::AggregateMergeIndex(
-    const std::unordered_map<std::string, SerialElementIndex> &indices)
+    const std::unordered_map<std::string, SerialElementIndex> &indices,
+    MPI_Comm comm, BufferSTL &bufferSTL)
 {
     // first serialize index
-    std::vector<char> serializedIndices = SerializeIndices(indices);
+    std::vector<char> serializedIndices = SerializeIndices(indices, comm);
     // gather in rank 0
     std::vector<char> gatheredSerialIndices;
     size_t gatheredSerialIndicesPosition = 0;
 
     GathervVectors(serializedIndices, gatheredSerialIndices,
-                   gatheredSerialIndicesPosition, m_MPIComm);
+                   gatheredSerialIndicesPosition, comm);
 
     // deallocate local serialized Indices
     std::vector<char>().swap(serializedIndices);
@@ -777,28 +792,31 @@ void BP3Serializer::AggregateMergeIndex(
     // deserialize in [name][rank] order
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
         nameRankIndices =
-            DeserializeIndicesPerRankThreads(gatheredSerialIndices);
+            DeserializeIndicesPerRankThreads(gatheredSerialIndices, comm);
 
     // deallocate gathered serial indices (full in rank 0 only)
     std::vector<char>().swap(gatheredSerialIndices);
 
-    if (m_RankMPI == 0)
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+
+    if (rank == 0)
     {
         // to write count and length
-        auto &buffer = m_Metadata.m_Buffer;
-        auto &position = m_Metadata.m_Position;
+        auto &buffer = bufferSTL.m_Buffer;
+        auto &position = bufferSTL.m_Position;
         size_t countPosition = position;
 
         // Write count
         position += 12;
-        m_Metadata.Resize(position + gatheredSerialIndicesPosition +
-                              m_MetadataSet.MiniFooterSize,
-                          ", in call to AggregateMergeIndex BP3 metadata");
+        bufferSTL.Resize(position + gatheredSerialIndicesPosition +
+                             m_MetadataSet.MiniFooterSize,
+                         ", in call to AggregateMergeIndex BP3 metadata");
         const uint32_t totalCountU32 =
             static_cast<uint32_t>(nameRankIndices.size());
         CopyToBuffer(buffer, countPosition, &totalCountU32);
 
-        MergeSerializeIndices(nameRankIndices);
+        MergeSerializeIndices(nameRankIndices, comm, bufferSTL);
 
         // Write length
         const uint64_t totalLengthU64 =
@@ -808,17 +826,19 @@ void BP3Serializer::AggregateMergeIndex(
 }
 
 std::vector<char> BP3Serializer::SerializeIndices(
-    const std::unordered_map<std::string, SerialElementIndex> &indices) const
-    noexcept
+    const std::unordered_map<std::string, SerialElementIndex> &indices,
+    MPI_Comm comm) const noexcept
 {
     std::vector<char> serializedIndices;
+    int rank;
+    MPI_Comm_rank(comm, &rank);
 
     for (const auto &indexPair : indices)
     {
         const SerialElementIndex &index = indexPair.second;
 
         // add rank at the beginning
-        const uint32_t rankSource = static_cast<uint32_t>(m_RankMPI);
+        const uint32_t rankSource = static_cast<uint32_t>(rank);
         InsertToBuffer(serializedIndices, &rankSource);
 
         // insert buffer
@@ -831,7 +851,7 @@ std::vector<char> BP3Serializer::SerializeIndices(
 
 std::unordered_map<std::string, std::vector<BP3Base::SerialElementIndex>>
 BP3Serializer::DeserializeIndicesPerRankThreads(
-    const std::vector<char> &serialized) const noexcept
+    const std::vector<char> &serialized, MPI_Comm comm) const noexcept
 {
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
         deserialized;
@@ -865,8 +885,10 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
 
     // BODY OF FUNCTION starts here
     const size_t serializedSize = serialized.size();
+    int rank;
+    MPI_Comm_rank(comm, &rank);
 
-    if (m_RankMPI != 0 || serializedSize < 8)
+    if (rank != 0 || serializedSize < 8)
     {
         return deserialized;
     }
@@ -946,7 +968,8 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
 
 void BP3Serializer::MergeSerializeIndices(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-        &nameRankIndices)
+        &nameRankIndices,
+    MPI_Comm comm, BufferSTL &bufferSTL)
 {
     auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
                                      size_t &position, const uint8_t dataType,
@@ -1095,145 +1118,134 @@ void BP3Serializer::MergeSerializeIndices(
 
     };
 
-    auto lf_MergeRankSerial =
-        [&](const std::vector<SerialElementIndex> &indices) {
+    auto lf_MergeRankSerial = [&](
+        const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
 
-            auto &bufferOut = m_Metadata.m_Buffer;
-            auto &positionOut = m_Metadata.m_Position;
-
-            // extract header
-            ElementIndexHeader header;
-            // index non-empty buffer
-            size_t firstRank = 0;
-            // index positions per rank
-            std::vector<size_t> positions(indices.size(), 0);
-            // merge index length
-            size_t headerSize = 0;
-
-            for (size_t r = 0; r < indices.size(); ++r)
-            {
-                const auto &buffer = indices[r].Buffer;
-                if (buffer.empty())
-                {
-                    continue;
-                }
-                size_t &position = positions[r];
-
-                header = ReadElementIndexHeader(buffer, position);
-                firstRank = r;
-
-                headerSize = position;
-                break;
-            }
-
-            if (m_DebugMode)
-            {
-                if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
-                {
-                    throw std::runtime_error(
-                        "ERROR: invalid data type for variable " + header.Name +
-                        "when writing collective metadata\n");
-                }
-            }
-
-            // move all positions to headerSize
-            for (size_t r = 0; r < indices.size(); ++r)
-            {
-                const auto &buffer = indices[r].Buffer;
-                if (buffer.empty())
-                {
-                    continue;
-                }
-                positions[r] = headerSize;
-            }
-
-            uint64_t setsCount = 0;
-            unsigned int currentTimeStep = 1;
-            bool marching = true;
-
-            const size_t entryLengthPosition = positionOut;
-            positionOut += headerSize;
-            // std::vector<char> sorted;
-
-            while (marching)
-            {
-                marching = false;
-
-                for (size_t r = firstRank; r < indices.size(); ++r)
-                {
-                    const auto &buffer = indices[r].Buffer;
-                    if (buffer.empty())
-                    {
-                        continue;
-                    }
-
-                    auto &position = positions[r];
-                    if (position < buffer.size())
-                    {
-                        marching = true;
-                    }
-                    else
-                    {
-                        continue;
-                    }
-
-                    uint8_t count = 0;
-                    uint32_t length = 0;
-                    uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
-
-                    while (timeStep == currentTimeStep)
-                    {
-                        size_t localPosition = position;
-                        lf_GetCharacteristics(buffer, localPosition,
-                                              header.DataType, count, length,
-                                              timeStep);
-
-                        if (timeStep != currentTimeStep)
-                        {
-                            break;
-                        }
-
-                        ++setsCount;
-
-                        // here copy to sorted buffer
-                        // InsertToBuffer(sorted, &buffer[position], length +
-                        // 5);
-                        CopyToBuffer(bufferOut, positionOut, &buffer[position],
-                                     length + 5);
-
-                        position += length + 5;
-
-                        if (position >= buffer.size())
-                        {
-                            break;
-                        }
-                    }
-                }
-                ++currentTimeStep;
-            }
-
-            const uint32_t entryLength =
-                static_cast<uint32_t>(positionOut - entryLengthPosition - 4);
-            // Copy header to metadata buffer, need mutex here
-            {
-                //                std::lock_guard<std::mutex> lock(m_Mutex);
-                //                auto &buffer = m_Metadata.m_Buffer;
-                //                auto &position = m_Metadata.m_Position;
-                size_t backPosition = entryLengthPosition;
-
-                CopyToBuffer(bufferOut, backPosition, &entryLength);
-                CopyToBuffer(bufferOut, backPosition,
-                             &indices[firstRank].Buffer[4], headerSize - 8 - 4);
-                CopyToBuffer(bufferOut, backPosition, &setsCount);
-                // CopyToBuffer(buffer, position, sorted.data(), sorted.size());
-            }
-        };
-
-    auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices) {
+        auto &bufferOut = bufferSTL.m_Buffer;
+        auto &positionOut = bufferSTL.m_Position;
 
         // extract header
         ElementIndexHeader header;
         // index non-empty buffer
+        size_t firstRank = 0;
+        // index positions per rank
+        std::vector<size_t> positions(indices.size(), 0);
+        // merge index length
+        size_t headerSize = 0;
+
+        for (size_t r = 0; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+            size_t &position = positions[r];
+
+            header = ReadElementIndexHeader(buffer, position);
+            firstRank = r;
+
+            headerSize = position;
+            break;
+        }
+
+        if (m_DebugMode)
+        {
+            if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
+            {
+                throw std::runtime_error(
+                    "ERROR: invalid data type for variable " + header.Name +
+                    "when writing metadata index\n");
+            }
+        }
+
+        // move all positions to headerSize
+        for (size_t r = 0; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+            positions[r] = headerSize;
+        }
+
+        uint64_t setsCount = 0;
+        unsigned int currentTimeStep = 1;
+        bool marching = true;
+
+        const size_t entryLengthPosition = positionOut;
+        positionOut += headerSize;
+
+        while (marching)
+        {
+            marching = false;
+
+            for (size_t r = firstRank; r < indices.size(); ++r)
+            {
+                const auto &buffer = indices[r].Buffer;
+                if (buffer.empty())
+                {
+                    continue;
+                }
+
+                auto &position = positions[r];
+                if (position < buffer.size())
+                {
+                    marching = true;
+                }
+                else
+                {
+                    continue;
+                }
+
+                uint8_t count = 0;
+                uint32_t length = 0;
+                uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+
+                while (timeStep == currentTimeStep)
+                {
+                    size_t localPosition = position;
+                    lf_GetCharacteristics(buffer, localPosition,
+                                          header.DataType, count, length,
+                                          timeStep);
+
+                    if (timeStep != currentTimeStep)
+                    {
+                        break;
+                    }
+
+                    ++setsCount;
+
+                    CopyToBuffer(bufferOut, positionOut, &buffer[position],
+                                 length + 5);
+
+                    position += length + 5;
+
+                    if (position >= buffer.size())
+                    {
+                        break;
+                    }
+                }
+            }
+            ++currentTimeStep;
+        }
+
+        const uint32_t entryLength =
+            static_cast<uint32_t>(positionOut - entryLengthPosition - 4);
+
+        size_t backPosition = entryLengthPosition;
+        CopyToBuffer(bufferOut, backPosition, &entryLength);
+        CopyToBuffer(bufferOut, backPosition, &indices[firstRank].Buffer[4],
+                     headerSize - 8 - 4);
+        CopyToBuffer(bufferOut, backPosition, &setsCount);
+
+    };
+
+    auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
+                            BufferSTL &bufferSTL) {
+
+        ElementIndexHeader header;
         size_t firstRank = 0;
         // index positions per rank
         std::vector<size_t> positions(indices.size(), 0);
@@ -1341,8 +1353,8 @@ void BP3Serializer::MergeSerializeIndices(
         // Copy header to metadata buffer, need mutex here
         {
             std::lock_guard<std::mutex> lock(m_Mutex);
-            auto &buffer = m_Metadata.m_Buffer;
-            auto &position = m_Metadata.m_Position;
+            auto &buffer = bufferSTL.m_Buffer;
+            auto &position = bufferSTL.m_Position;
 
             CopyToBuffer(buffer, position, &entryLength);
             CopyToBuffer(buffer, position, &indices[firstRank].Buffer[4],
@@ -1356,13 +1368,13 @@ void BP3Serializer::MergeSerializeIndices(
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
             &nameRankIndices,
         const std::vector<std::string> &names, const size_t start,
-        const size_t end)
+        const size_t end, BufferSTL &bufferSTL)
 
     {
         for (auto i = start; i < end; ++i)
         {
             auto itIndex = nameRankIndices.find(names[i]);
-            lf_MergeRank(itIndex->second);
+            lf_MergeRank(itIndex->second, bufferSTL);
         }
     };
 
@@ -1371,7 +1383,7 @@ void BP3Serializer::MergeSerializeIndices(
     {
         for (const auto &rankIndices : nameRankIndices)
         {
-            lf_MergeRankSerial(rankIndices.second);
+            lf_MergeRankSerial(rankIndices.second, bufferSTL);
         }
         return;
     }
@@ -1403,9 +1415,9 @@ void BP3Serializer::MergeSerializeIndices(
             end = start + last;
         }
 
-        threads.push_back(std::thread(lf_MergeRankRange,
-                                      std::ref(nameRankIndices),
-                                      std::ref(names), start, end));
+        threads.push_back(
+            std::thread(lf_MergeRankRange, std::ref(nameRankIndices),
+                        std::ref(names), start, end, std::ref(bufferSTL)));
     }
 
     for (auto &thread : threads)

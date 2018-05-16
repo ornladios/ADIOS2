@@ -237,7 +237,9 @@ void BPFileWriter::WriteProfilingJSONFile()
 
 void BPFileWriter::WriteCollectiveMetadataFile(const bool isFinal)
 {
-    m_BP3Serializer.AggregateCollectiveMetadata();
+    m_BP3Serializer.AggregateCollectiveMetadata(
+        m_MPIComm, m_BP3Serializer.m_Metadata, true);
+
     if (m_BP3Serializer.m_RankMPI == 0)
     {
         // first init metadata files
