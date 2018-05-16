@@ -277,11 +277,11 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     Stream->WriterCohortSize = ReturnData->WriterCohortSize;
     Stream->WriterConfigParams = ReturnData->WriterConfigParams;
-    if (Stream->WriterConfigParams->FFSmarshal)
+    if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
     {
         CP_verbose(Stream, "Writer is doing FFS-based marshalling\n");
     }
-    if (Stream->WriterConfigParams->BPmarshal)
+    if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP)
     {
         CP_verbose(Stream, "Writer is doing BP-based marshalling\n");
     }
@@ -344,8 +344,10 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 extern void SstReaderGetParams(SstStream Stream, int *WriterFFSmarshal,
                                int *WriterBPmarshal)
 {
-    *WriterFFSmarshal = Stream->WriterConfigParams->FFSmarshal;
-    *WriterBPmarshal = Stream->WriterConfigParams->BPmarshal;
+    *WriterFFSmarshal =
+        (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS);
+    *WriterBPmarshal =
+        (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP);
 }
 
 void queueTimestepMetadataMsgAndNotify(SstStream Stream,
@@ -635,7 +637,7 @@ extern void SstReleaseStep(SstStream Stream)
     sendOneToEachWriterRank(Stream, Stream->CPInfo->ReleaseTimestepFormat, &Msg,
                             &Msg.WSR_Stream);
 
-    if (Stream->WriterConfigParams->FFSmarshal)
+    if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
     {
         FFSClearTimestepData(Stream);
     }
@@ -661,7 +663,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
 
     if (Entry)
     {
-        if (Stream->WriterConfigParams->FFSmarshal)
+        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
             FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
         }

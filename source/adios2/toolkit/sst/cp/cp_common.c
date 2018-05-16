@@ -742,7 +742,8 @@ extern void SstStreamDestroy(SstStream Stream)
         free(FFSList);
         FFSList = Tmp;
     }
-    if ((Stream->Role == WriterRole) && Stream->WriterParams->FFSmarshal)
+    if ((Stream->Role == WriterRole) &&
+        (Stream->WriterParams->MarshalMethod == SstMarshalFFS))
     {
         FFSFreeMarshalData(Stream);
         if (Stream->M)
