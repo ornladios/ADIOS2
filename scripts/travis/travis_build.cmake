@@ -9,7 +9,7 @@ set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
 set(CTEST_BUILD_NAME "$ENV{TRAVIS_PULL_REQUEST_BRANCH}_$ENV{TRAVIS_BUILD_NUMBER}_$ENV{TRAVIS_BUILD_NAME}")
 
 set(dashboard_model Experimental)
-set(dashboard_binary_name "build_$ENV{CIRCLE_JOB}")
+set(dashboard_binary_name "build_$ENV{TRAVIS_JOB_ID}")
 set(dashboard_track "Continuous Integration")
 
 set(CTEST_GIT_COMMAND "/usr/bin/git")
