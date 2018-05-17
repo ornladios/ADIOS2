@@ -10,6 +10,8 @@
 
 #include "MPIAggregator.h"
 
+#include "adios2/helper/adiosFunctions.h"
+
 namespace adios2
 {
 namespace aggregator
@@ -34,7 +36,58 @@ std::vector<MPI_Request> MPIAggregator::IExchange(BufferSTL & /**bufferSTL*/,
     return requests;
 }
 
-void MPIAggregator::Wait(std::vector<MPI_Request> & /**request*/,
+std::vector<MPI_Request>
+MPIAggregator::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
+{
+    const int destination = (m_Rank != m_Size) ? m_Rank + 1 : 0;
+    std::vector<MPI_Request> requests(2);
+
+    if (m_Rank == step)
+    {
+        CheckMPIReturn(MPI_Isend(&bufferSTL.m_AbsolutePosition, 1,
+                                 ADIOS2_MPI_SIZE_T, destination, 0, m_Comm,
+                                 &requests[0]),
+                       ", aggregation Isend absolute position at iteration " +
+                           std::to_string(step) + "\n");
+    }
+
+    if (m_Rank == destination)
+    {
+        MPI_Request absolutePositionRequest;
+        CheckMPIReturn(MPI_Irecv(&m_AbsolutePositionSource, 1,
+                                 ADIOS2_MPI_SIZE_T, step, 0, m_Comm,
+                                 &requests[1]),
+                       ", aggregation Irecv absolute position at iteration " +
+                           std::to_string(step) + "\n");
+    }
+
+    return requests;
+}
+
+void MPIAggregator::WaitAbsolutePosition(std::vector<MPI_Request> &requests,
+                                         const int step)
+{
+    MPI_Status status;
+    const int destination = (m_Rank != m_Size) ? m_Rank + 1 : 0;
+
+    if (m_Rank == destination)
+    {
+        CheckMPIReturn(
+            MPI_Wait(&requests[1], &status),
+            ", aggregation Irecv Wait absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+
+    if (m_Rank == step)
+    {
+        CheckMPIReturn(
+            MPI_Wait(&requests[0], &status),
+            ", aggregation Isend Wait absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+}
+
+void MPIAggregator::Wait(std::vector<MPI_Request> & /**requests*/,
                          const int /**step*/)
 {
 }

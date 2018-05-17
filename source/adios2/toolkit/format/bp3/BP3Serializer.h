@@ -134,47 +134,11 @@ public:
                                      const bool inMetadataBuffer);
 
     /**
-     * Updates data absolute position based on data from other producers in
-     * aggregation
+     * Updates variable and payload offsets in metadata characteristics with
+     * the updated Buffer m_DataAbsolutePosition for a particular rank. This is
+     * a local (non-MPI) operation
      */
-    void AggregatorsUpdateDataAbsolutePosition();
-
-    /** Updates variable and payload offsets in metadata characteristics with
-     * the updated Buffer m_DataAbsolutePosition. This is a local (non-MPI)
-     * operation */
-    void AggregatorsUpdateOffsetsInMetadata();
-
-    /** Sends aggregation data in non-blocking mode according to the strategy
-     * used */
-    std::vector<MPI_Request> AggregatorsIExchange(const int step);
-
-    /**
-     * reference to buffer ready to be consumed (used by transports via a
-     * transport manager).
-     * This function should be only used by aggregator with rank 0.
-     * @return reference to buffer ready for consumption
-     */
-    BufferSTL &AggregatorConsumerBuffer();
-
-    /**
-     * Wait for aggregation data in non-blocking mode according to the strategy
-     * used
-     * @param request input to wait upon
-     * @param iteration iteration process
-     */
-    void AggregatorsWait(std::vector<MPI_Request> &request,
-                         const int iteration);
-
-    /**
-     * Swap the current sender/receiver buffers
-     * @param iteration current iteration in the aggregation process
-     */
-    void AggregatorsSwapBuffer(const int iteration) noexcept;
-
-    /**
-     * Resets buffering ordering to initial state for next aggregation
-     */
-    void AggregatorsResetBuffer() noexcept;
+    void UpdateOffsetsInMetadata();
 
 private:
     /** BP format version */

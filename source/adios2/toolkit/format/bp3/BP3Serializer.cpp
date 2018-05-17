@@ -300,37 +300,7 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     ProfilerStop("buffering");
 }
 
-void BP3Serializer::AggregatorsUpdateDataAbsolutePosition()
-{
-    ProfilerStart("aggregation");
-
-    size_t producerPosition = m_Data.m_Position;
-    if (m_Aggregator.m_IsConsumer)
-    {
-        producerPosition = m_Data.m_AbsolutePosition;
-    }
-
-    const std::vector<size_t> positions =
-        AllGatherValues(producerPosition, m_Aggregator.m_Comm);
-
-    // update up to previous rank
-    int upperRank = m_Aggregator.m_Rank;
-    // update with all producers sizes for next aggregation
-    if (m_Aggregator.m_IsConsumer)
-    {
-        upperRank = m_Aggregator.m_Size;
-    }
-
-    m_Data.m_AbsolutePosition = 0;
-    for (int i = 0; i < upperRank; ++i)
-    {
-        m_Data.m_AbsolutePosition += positions[i];
-    }
-
-    ProfilerStop("aggregation");
-}
-
-void BP3Serializer::AggregatorsUpdateOffsetsInMetadata()
+void BP3Serializer::UpdateOffsetsInMetadata()
 {
     if (m_Aggregator.m_IsConsumer)
     {
@@ -342,32 +312,6 @@ void BP3Serializer::AggregatorsUpdateOffsetsInMetadata()
         SerialElementIndex &index = varIndexPair.second;
         UpdateIndexOffsets(index);
     }
-}
-
-std::vector<MPI_Request> BP3Serializer::AggregatorsIExchange(const int step)
-{
-    return m_Aggregator.IExchange(m_Data, step);
-}
-
-BufferSTL &BP3Serializer::AggregatorConsumerBuffer()
-{
-    return m_Aggregator.GetConsumerBuffer(m_Data);
-}
-
-void BP3Serializer::AggregatorsWait(std::vector<MPI_Request> &requests,
-                                    const int step)
-{
-    m_Aggregator.Wait(requests, step);
-}
-
-void BP3Serializer::AggregatorsSwapBuffer(const int iteration) noexcept
-{
-    m_Aggregator.SwapBuffers(iteration);
-}
-
-void BP3Serializer::AggregatorsResetBuffer() noexcept
-{
-    m_Aggregator.ResetBuffers();
 }
 
 // PRIVATE FUNCTIONS
