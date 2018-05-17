@@ -87,7 +87,7 @@ std::vector<std::string> DataManCommon::ParseAddress(std::string input,
         }
         strings.push_back(s);
     }
-    return std::move(strings);
+    return strings;
 }
 
 } // end namespace adios2
