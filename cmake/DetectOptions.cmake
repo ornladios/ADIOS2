@@ -47,22 +47,10 @@ set(mpi_find_components C)
 
 # Fortran
 if(ADIOS2_USE_Fortran STREQUAL AUTO)
-  message(STATUS "Looking for a Fortran compiler")
+  include(CheckLanguage)
+  check_language(Fortran)
   if(CMAKE_Fortran_COMPILER)
-    set(fcomp_args "-DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}")
-  endif()
-  file(MAKE_DIRECTORY "${ADIOS2_BINARY_DIR}/cmake/check_f90")
-  execute_process(
-    COMMAND
-      "${CMAKE_COMMAND}" "${fcomp_args}" "${ADIOS2_SOURCE_DIR}/cmake/check_f90"
-    WORKING_DIRECTORY "${ADIOS2_BINARY_DIR}/cmake/check_f90"
-    RESULT_VARIABLE ADIOS2_FortranCompiles
-  )
-  if(ADIOS2_FortranCompiles EQUAL 0)
-    message(STATUS "Looking for a Fortran compiler -- found")
     enable_language(Fortran)
-  else()
-    message(STATUS "Looking for a Fortran compiler -- not found")
   endif()
 elseif(ADIOS2_USE_Fortran)
   enable_language(Fortran)
