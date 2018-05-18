@@ -53,7 +53,6 @@ add_library(adios2
   toolkit/transport/file/FileFStream.cpp
   
   toolkit/transportman/TransportMan.cpp
-  toolkit/transportman/dataman/DataMan.cpp
   
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
@@ -93,18 +92,20 @@ if(ADIOS2_HAVE_SST)
   target_link_libraries(adios2 PRIVATE sst)
 endif()
 
-target_sources(adios2 PRIVATE
-    engine/dataman/DataManCommon.cpp
-    engine/dataman/DataManCommon.h
-    engine/dataman/DataManReader.cpp
-    engine/dataman/DataManReader.h
-    engine/dataman/DataManReader.tcc
-    engine/dataman/DataManWriter.cpp
-    engine/dataman/DataManWriter.h
-    engine/dataman/DataManWriter.tcc
-)
-target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
-
+if(ADIOS2_HAVE_DataMan)
+  target_sources(adios2 PRIVATE
+      toolkit/transportman/dataman/DataMan.cpp
+      engine/dataman/DataManCommon.cpp
+      engine/dataman/DataManCommon.h
+      engine/dataman/DataManReader.cpp
+      engine/dataman/DataManReader.h
+      engine/dataman/DataManReader.tcc
+      engine/dataman/DataManWriter.cpp
+      engine/dataman/DataManWriter.h
+      engine/dataman/DataManWriter.tcc
+  )
+  target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
+endif()
 
 if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE operator/compress/CompressBZip2.cpp)
