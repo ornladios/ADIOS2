@@ -83,7 +83,9 @@ if(MPI_FOUND)
 endif()
 
 # DataMan
-if(SHARED_LIBS_SUPPORTED AND NOT MSVC)
+# DataMan currently breaks the PGI compiler
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND
+   SHARED_LIBS_SUPPORTED AND NOT MSVC)
   set(ADIOS2_HAVE_DataMan TRUE)
 endif()
 
