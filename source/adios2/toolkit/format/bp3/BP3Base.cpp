@@ -209,7 +209,8 @@ size_t BP3Base::GetBPIndexSizeInData(const std::string &variableName,
 }
 
 void BP3Base::ResetBuffer(BufferSTL &bufferSTL,
-                          const bool resetAbsolutePosition)
+                          const bool resetAbsolutePosition,
+                          const bool zeroInitialize)
 {
     ProfilerStart("buffering");
     bufferSTL.m_Position = 0;
@@ -217,7 +218,10 @@ void BP3Base::ResetBuffer(BufferSTL &bufferSTL,
     {
         bufferSTL.m_AbsolutePosition = 0;
     }
-    bufferSTL.m_Buffer.assign(bufferSTL.m_Buffer.size(), '\0');
+    if (zeroInitialize)
+    {
+        bufferSTL.m_Buffer.assign(bufferSTL.m_Buffer.size(), '\0');
+    }
     ProfilerStop("buffering");
 }
 

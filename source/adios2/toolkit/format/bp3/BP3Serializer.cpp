@@ -273,8 +273,8 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     ProfilerStart("buffering");
     ProfilerStart("meta_sort_merge");
 
-    auto &buffer = bufferSTL.m_Buffer;
-    auto &position = bufferSTL.m_Position;
+    auto &position =
+        inMetadataBuffer ? bufferSTL.m_Position : bufferSTL.m_AbsolutePosition;
 
     const uint64_t pgIndexStart = position;
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount, comm,
@@ -293,7 +293,11 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
         PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
                       bufferSTL.m_Buffer, bufferSTL.m_Position,
                       inMetadataBuffer);
-        bufferSTL.m_AbsolutePosition = bufferSTL.m_Position;
+
+        if (inMetadataBuffer)
+        {
+            bufferSTL.m_AbsolutePosition = bufferSTL.m_Position;
+        }
     }
 
     ProfilerStop("meta_sort_merge");
@@ -664,14 +668,9 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
     CopyToBuffer(buffer, position, &variablesIndexStart);
     CopyToBuffer(buffer, position, &attributesIndexStart);
 
-    // version
-    uint8_t endianness = 0; // little-endian
-    if (!IsLittleEndian())
-    {
-        endianness = 1; // big-endian
-    }
-
+    const uint8_t endianness = IsLittleEndian() ? 0 : 1;
     CopyToBuffer(buffer, position, &endianness);
+
     if (addSubfiles)
     {
         position += 1;
