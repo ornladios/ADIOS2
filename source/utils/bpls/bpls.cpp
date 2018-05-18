@@ -1518,8 +1518,8 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
         if (verbose > 2)
         {
             printf("set selection: ");
-            PRINT_DIMS_UINT64("  start", startv.data(), tdims - tidx, j);
-            PRINT_DIMS_UINT64("  count", countv.data(), tdims - tidx, j);
+            PRINT_DIMS_SIZET("  start", startv.data(), tdims - tidx, j);
+            PRINT_DIMS_SIZET("  count", countv.data(), tdims - tidx, j);
             printf("\n");
         }
         variable->SetSelection({startv, countv});
@@ -1528,7 +1528,7 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
         {
             if (verbose > 2)
             {
-                printf("set Step selection: from %zu read %zu steps\n", s[0],
+                printf("set Step selection: from %llu read %llu steps\n", s[0],
                        c[0]);
             }
             variable->SetStepSelection({s[0], c[0]});
