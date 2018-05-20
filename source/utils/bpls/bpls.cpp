@@ -1528,8 +1528,9 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
         {
             if (verbose > 2)
             {
-                printf("set Step selection: from %llu read %llu steps\n", s[0],
-                       c[0]);
+                printf("set Step selection: from %" PRIu64 " read %" PRIu64
+                       " steps\n",
+                       s[0], c[0]);
             }
             variable->SetStepSelection({s[0], c[0]});
         }
