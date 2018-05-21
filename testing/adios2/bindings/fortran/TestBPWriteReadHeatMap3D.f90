@@ -13,7 +13,7 @@ program TestBPWriteReadHeatMap3D
     integer(kind=8), dimension(3) :: sel_start, sel_count
     integer :: ierr, irank, isize, inx, iny, inz
     integer :: i, j, k, iglobal, value, ilinear, icounter
-    logical, parameter :: adios2_write = .true.
+    logical, parameter :: adios2_write = .false.
 
     call MPI_INIT(ierr)
     call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
@@ -59,28 +59,25 @@ program TestBPWriteReadHeatMap3D
         call adios2_declare_io( ioGet, adios, 'HeatMapRead', ierr )
 
         call adios2_open( bpReader, ioGet, 'HeatMap3D_f.bp', &
-                        & adios2_mode_read, MPI_COMM_SELF, ierr)
+                          adios2_mode_read, MPI_COMM_SELF, ierr)
 
         call adios2_inquire_variable( var_temperaturesIn, ioGet, &
-                                    & 'temperatures', ierr )
+                                     'temperatures', ierr )
 
         print *, 'adios2_found', adios2_found
 
         sel_start = (/ 0, 0, 0 /)
-        sel_count = (/ ishape(1), ishape(2), ishape(3) /)
+        sel_count = (/ ishape(1), ishape(2), ishape(3)*2 /)
         write(*,*) "Shapes: ", ishape(1), " ", ishape(2), " ", ishape(3)
 
-
-        allocate( sel_temperatures( sel_count(1), sel_count(2), &
-                                    & sel_count(3) ) )
+        allocate( sel_temperatures( sel_count(1), sel_count(2), sel_count(3) ) )
         sel_temperatures = 0.0_8
 
         call adios2_set_selection( var_temperaturesIn, 3, sel_start, &
-                                    & sel_count, ierr )
+                                   sel_count, ierr )
 
         call adios2_get_deferred( bpReader, var_temperaturesIn, &
-                            & sel_temperatures, &
-                            & ierr )
+                                  sel_temperatures, ierr )
 
         call adios2_close( bpReader, ierr )
 
@@ -100,6 +97,8 @@ program TestBPWriteReadHeatMap3D
         !! Expect 1000.0 * isize
         print *, 'sum(sel_temperatures): expecting', 1000.0 * isize, &
                  'got:', sum(sel_temperatures)
+
+        if( sum(sel_temperatures) /= 1000.0 * isize ) stop 'Test failed'
 
         if( allocated(sel_temperatures) ) deallocate(sel_temperatures)
 

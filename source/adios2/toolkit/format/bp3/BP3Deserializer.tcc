@@ -469,7 +469,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
         // here update each index recursively, always starting from the 2nd
         // fastest changing index, since fastest changing index is the
         // continuous part in the previous std::copy
-        size_t p = 1;
+        size_t p = 1; // TODO: this should go outside
         while (true)
         {
             ++currentPoint[p];
