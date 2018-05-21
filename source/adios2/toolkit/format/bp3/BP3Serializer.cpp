@@ -273,17 +273,19 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     ProfilerStart("buffering");
     ProfilerStart("meta_sort_merge");
 
-    auto &position =
-        inMetadataBuffer ? bufferSTL.m_Position : bufferSTL.m_AbsolutePosition;
+    auto &position = bufferSTL.m_Position;
 
-    const uint64_t pgIndexStart = position;
+    const uint64_t pgIndexStart =
+        inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount, comm,
                    bufferSTL);
 
-    const uint64_t variablesIndexStart = position;
+    const uint64_t variablesIndexStart =
+        inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     AggregateMergeIndex(m_MetadataSet.VarsIndices, comm, bufferSTL);
 
-    const uint64_t attributesIndexStart = position;
+    const uint64_t attributesIndexStart =
+        inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL);
 
     int rank;
@@ -298,6 +300,10 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
         {
             bufferSTL.m_AbsolutePosition = bufferSTL.m_Position;
         }
+        else
+        {
+            bufferSTL.m_AbsolutePosition += bufferSTL.m_Position;
+        }
     }
 
     ProfilerStop("meta_sort_merge");
@@ -306,15 +312,148 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 
 void BP3Serializer::UpdateOffsetsInMetadata()
 {
+    auto lf_UpdatePGIndexOffsets = [&]() {
+
+        auto &buffer = m_MetadataSet.PGIndex.Buffer;
+        size_t &currentPosition = m_MetadataSet.PGIndex.LastUpdatedPosition;
+
+        while (currentPosition < buffer.size())
+        {
+            ProcessGroupIndex pgIndex =
+                ReadProcessGroupIndexHeader(buffer, currentPosition);
+
+            const uint64_t updatedOffset =
+                pgIndex.Offset +
+                static_cast<uint64_t>(m_Data.m_AbsolutePosition);
+            currentPosition -= sizeof(uint64_t);
+            CopyToBuffer(buffer, currentPosition, &updatedOffset);
+        }
+    };
+
+    auto lf_UpdateIndexOffsets = [&](SerialElementIndex &index) {
+
+        auto &buffer = index.Buffer;
+
+        // First get the type:
+        size_t headerPosition = 0;
+        ElementIndexHeader header =
+            ReadElementIndexHeader(buffer, headerPosition);
+        const DataTypes dataTypeEnum = static_cast<DataTypes>(header.DataType);
+
+        size_t &currentPosition = index.LastUpdatedPosition;
+
+        while (currentPosition < buffer.size())
+        {
+            switch (dataTypeEnum)
+            {
+
+            case (type_string):
+            {
+                // do nothing, strings are obtained from metadata
+                currentPosition = buffer.size();
+                break;
+            }
+
+            case (type_byte):
+            {
+                UpdateIndexOffsetsCharacteristics<char>(currentPosition,
+                                                        type_byte, buffer);
+                break;
+            }
+
+            case (type_short):
+            {
+                UpdateIndexOffsetsCharacteristics<short>(currentPosition,
+                                                         type_short, buffer);
+                break;
+            }
+
+            case (type_integer):
+            {
+                UpdateIndexOffsetsCharacteristics<int>(currentPosition,
+                                                       type_integer, buffer);
+                break;
+            }
+
+            case (type_long):
+            {
+                UpdateIndexOffsetsCharacteristics<int64_t>(currentPosition,
+                                                           type_long, buffer);
+
+                break;
+            }
+
+            case (type_unsigned_byte):
+            {
+                UpdateIndexOffsetsCharacteristics<unsigned char>(
+                    currentPosition, type_unsigned_byte, buffer);
+
+                break;
+            }
+
+            case (type_unsigned_short):
+            {
+                UpdateIndexOffsetsCharacteristics<unsigned short>(
+                    currentPosition, type_unsigned_short, buffer);
+
+                break;
+            }
+
+            case (type_unsigned_integer):
+            {
+                UpdateIndexOffsetsCharacteristics<unsigned int>(
+                    currentPosition, type_unsigned_integer, buffer);
+
+                break;
+            }
+
+            case (type_unsigned_long):
+            {
+                UpdateIndexOffsetsCharacteristics<uint64_t>(
+                    currentPosition, type_unsigned_long, buffer);
+
+                break;
+            }
+
+            case (type_real):
+            {
+                UpdateIndexOffsetsCharacteristics<float>(currentPosition,
+                                                         type_real, buffer);
+                break;
+            }
+
+            case (type_double):
+            {
+                UpdateIndexOffsetsCharacteristics<double>(currentPosition,
+                                                          type_double, buffer);
+
+                break;
+            }
+
+            default:
+                // TODO: complex, long double
+                throw std::invalid_argument(
+                    "ERROR: type " + std::to_string(header.DataType) +
+                    " not supported in updating aggregated offsets\n");
+
+            } // end switch
+        }
+    };
+
+    // BODY OF FUNCTION STARTS HERE
     if (m_Aggregator.m_IsConsumer)
     {
         return;
     }
 
+    // PG Indices
+    lf_UpdatePGIndexOffsets();
+
+    // Variable Indices
     for (auto &varIndexPair : m_MetadataSet.VarsIndices)
     {
         SerialElementIndex &index = varIndexPair.second;
-        UpdateIndexOffsets(index);
+        lf_UpdateIndexOffsets(index);
     }
 }
 
@@ -772,7 +911,17 @@ std::vector<char> BP3Serializer::SerializeIndices(
     const std::unordered_map<std::string, SerialElementIndex> &indices,
     MPI_Comm comm) const noexcept
 {
+    // pre-allocate
+    size_t serializedIndicesSize = 0;
+    for (const auto &indexPair : indices)
+    {
+        const SerialElementIndex &index = indexPair.second;
+        serializedIndicesSize += 4 + index.Buffer.size();
+    }
+
     std::vector<char> serializedIndices;
+    serializedIndices.reserve(serializedIndicesSize);
+
     int rank;
     MPI_Comm_rank(comm, &rank);
 
@@ -1402,115 +1551,6 @@ BP3Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
     }
 
     return profilingJSON;
-}
-
-void BP3Serializer::UpdateIndexOffsets(SerialElementIndex &index)
-{
-    auto &buffer = index.Buffer;
-
-    // First get the type:
-    size_t headerPosition = 0;
-    ElementIndexHeader header = ReadElementIndexHeader(buffer, headerPosition);
-    const DataTypes dataTypeEnum = static_cast<DataTypes>(header.DataType);
-
-    size_t &currentPosition = index.LastUpdatedPosition;
-
-    while (currentPosition < buffer.size())
-    {
-        switch (dataTypeEnum)
-        {
-
-        case (type_string):
-        {
-            // do nothing, strings are obtained from metadata
-            currentPosition = buffer.size();
-            break;
-        }
-
-        case (type_byte):
-        {
-            UpdateIndexOffsetsCharacteristics<char>(currentPosition, type_byte,
-                                                    buffer);
-            break;
-        }
-
-        case (type_short):
-        {
-            UpdateIndexOffsetsCharacteristics<short>(currentPosition,
-                                                     type_short, buffer);
-            break;
-        }
-
-        case (type_integer):
-        {
-            UpdateIndexOffsetsCharacteristics<int>(currentPosition,
-                                                   type_integer, buffer);
-            break;
-        }
-
-        case (type_long):
-        {
-            UpdateIndexOffsetsCharacteristics<int64_t>(currentPosition,
-                                                       type_long, buffer);
-
-            break;
-        }
-
-        case (type_unsigned_byte):
-        {
-            UpdateIndexOffsetsCharacteristics<unsigned char>(
-                currentPosition, type_unsigned_byte, buffer);
-
-            break;
-        }
-
-        case (type_unsigned_short):
-        {
-            UpdateIndexOffsetsCharacteristics<unsigned short>(
-                currentPosition, type_unsigned_short, buffer);
-
-            break;
-        }
-
-        case (type_unsigned_integer):
-        {
-            UpdateIndexOffsetsCharacteristics<unsigned int>(
-                currentPosition, type_unsigned_integer, buffer);
-
-            break;
-        }
-
-        case (type_unsigned_long):
-        {
-            UpdateIndexOffsetsCharacteristics<uint64_t>(
-                currentPosition, type_unsigned_long, buffer);
-
-            break;
-        }
-
-        case (type_real):
-        {
-            UpdateIndexOffsetsCharacteristics<float>(currentPosition, type_real,
-                                                     buffer);
-            break;
-        }
-
-        case (type_double):
-        {
-            UpdateIndexOffsetsCharacteristics<double>(currentPosition,
-                                                      type_double, buffer);
-
-            break;
-        }
-
-        default:
-            // TODO: complex, long double
-            throw std::invalid_argument(
-                "ERROR: type " + std::to_string(header.DataType) +
-                " not supported in updating aggregated offsets\n");
-
-        } // end switch
-    }
 }
 
 uint32_t BP3Serializer::GetFileIndex() const noexcept

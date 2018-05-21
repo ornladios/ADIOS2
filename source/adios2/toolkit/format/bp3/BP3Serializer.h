@@ -331,6 +331,15 @@ private:
      */
     void SerializeDataBuffer(IO &io) noexcept;
 
+    /**
+     * Puts minifooter into a bp buffer
+     * @param pgIndexStart input offset
+     * @param variablesIndexStart input offset
+     * @param attributesIndexStart input offset
+     * @param buffer  buffer to add the minifooter
+     * @param position current buffer position
+     * @param addSubfiles true: metadata file, false: data file
+     */
     void PutMinifooter(const uint64_t pgIndexStart,
                        const uint64_t variablesIndexStart,
                        const uint64_t attributesIndexStart,
@@ -393,12 +402,6 @@ private:
      */
     template <class T>
     void PutPayloadInBuffer(const Variable<T> &variable) noexcept;
-
-    /**
-     * Updates variable and payload offsets with buffer m_DataAbsolutePosition
-     * @param index
-     */
-    void UpdateIndexOffsets(SerialElementIndex &index);
 
     template <class T>
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,

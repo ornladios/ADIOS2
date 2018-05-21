@@ -323,23 +323,22 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
 
     m_BP3Serializer.UpdateOffsetsInMetadata();
 
-    //    if (isFinal)
-    //    {
-    //        BufferSTL &bufferSTL = m_BP3Serializer.m_Data;
-    //        m_BP3Serializer.ResetBuffer(bufferSTL, false, false);
-    //
-    //        m_BP3Serializer.AggregateCollectiveMetadata(
-    //            m_BP3Serializer.m_Aggregator.m_Comm, bufferSTL, false);
-    //
-    //        if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
-    //        {
-    //            m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
-    //                                         bufferSTL.m_Position,
-    //                                         transportIndex);
-    //
-    //            m_FileDataManager.FlushFiles(transportIndex);
-    //        }
-    //    }
+    if (isFinal) // Write metadata footer
+    {
+        BufferSTL &bufferSTL = m_BP3Serializer.m_Data;
+        m_BP3Serializer.ResetBuffer(bufferSTL, false, false);
+
+        m_BP3Serializer.AggregateCollectiveMetadata(
+            m_BP3Serializer.m_Aggregator.m_Comm, bufferSTL, false);
+
+        if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+        {
+            m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
+                                         bufferSTL.m_Position, transportIndex);
+
+            m_FileDataManager.FlushFiles(transportIndex);
+        }
+    }
 
     m_BP3Serializer.m_Aggregator.ResetBuffers();
 }

@@ -54,6 +54,9 @@ int main(int argc, char *argv[])
         //        adios2::Variable<std::string> &bpString =
         //            bpIO.DefineVariable<std::string>("bpString");
 
+        adios2::Attribute<int> &attribute =
+            bpIO.DefineAttribute<int>("attrINT", -1);
+
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpFileWriter =
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
