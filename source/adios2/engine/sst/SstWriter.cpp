@@ -83,7 +83,8 @@ void SstWriter::EndStep()
         };
 
         m_BP3Serializer->CloseStream(m_IO, true);
-        m_BP3Serializer->AggregateCollectiveMetadata();
+        m_BP3Serializer->AggregateCollectiveMetadata(
+            m_MPIComm, m_BP3Serializer->m_Metadata, true);
         BP3DataBlock *newblock = new BP3DataBlock;
         newblock->metadata.DataSize =
             m_BP3Serializer->m_Metadata.m_Buffer.size();
