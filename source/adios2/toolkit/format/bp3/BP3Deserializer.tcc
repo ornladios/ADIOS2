@@ -14,6 +14,7 @@
 #include "BP3Deserializer.h"
 
 #include <algorithm> //std::reverse
+#include <iostream>
 #include <unordered_set>
 
 #include "adios2/helper/adiosFunctions.h"
@@ -320,6 +321,9 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
                              m_IsRowMajor) +
                  1) *
                     sizeof(T);
+
+            std::cout << "Info seeks: " << info.Seeks.first << " "
+                      << info.Seeks.second << std::endl;
 
             const size_t fileIndex =
                 static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
