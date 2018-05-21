@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
         adios2::IO &bpIO = adios.DeclareIO("BPFile_N2M");
-        bpIO.SetParameter("SubStreams", "12");
+        bpIO.SetParameter("SubStreams", "2");
 
         /** global array : name, { shape (total) }, { start (local) }, {
          * count
@@ -53,6 +53,9 @@ int main(int argc, char *argv[])
         //
         //        adios2::Variable<std::string> &bpString =
         //            bpIO.DefineVariable<std::string>("bpString");
+
+        adios2::Attribute<int> &attribute =
+            bpIO.DefineAttribute<int>("attrINT", -1);
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine &bpFileWriter =

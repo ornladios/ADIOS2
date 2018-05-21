@@ -237,7 +237,9 @@ void BPFileWriter::WriteProfilingJSONFile()
 
 void BPFileWriter::WriteCollectiveMetadataFile(const bool isFinal)
 {
-    m_BP3Serializer.AggregateCollectiveMetadata();
+    m_BP3Serializer.AggregateCollectiveMetadata(
+        m_MPIComm, m_BP3Serializer.m_Metadata, true);
+
     if (m_BP3Serializer.m_RankMPI == 0)
     {
         // first init metadata files
@@ -289,21 +291,22 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
                                       const int transportIndex)
 {
     m_BP3Serializer.CloseStream(m_IO, false);
-    m_BP3Serializer.AggregatorsUpdateDataAbsolutePosition();
-    // this can be launched with async and return a future
-    m_BP3Serializer.AggregatorsUpdateOffsetsInMetadata();
 
     // async?
     for (int r = 0; r < m_BP3Serializer.m_Aggregator.m_Size; ++r)
     {
-        // Isend/Irecv requests
-        std::vector<MPI_Request> requests =
-            m_BP3Serializer.AggregatorsIExchange(r);
+        std::vector<MPI_Request> dataRequests =
+            m_BP3Serializer.m_Aggregator.IExchange(m_BP3Serializer.m_Data, r);
+
+        std::vector<MPI_Request> absolutePositionRequests =
+            m_BP3Serializer.m_Aggregator.IExchangeAbsolutePosition(
+                m_BP3Serializer.m_Data, r);
 
         if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
         {
             const BufferSTL &bufferSTL =
-                m_BP3Serializer.AggregatorConsumerBuffer();
+                m_BP3Serializer.m_Aggregator.GetConsumerBuffer(
+                    m_BP3Serializer.m_Data);
 
             m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
                                          bufferSTL.m_Position, transportIndex);
@@ -311,11 +314,33 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
             m_FileDataManager.FlushFiles(transportIndex);
         }
 
-        m_BP3Serializer.AggregatorsWait(requests, r);
-        m_BP3Serializer.AggregatorsSwapBuffer(r);
+        m_BP3Serializer.m_Aggregator.WaitAbsolutePosition(
+            absolutePositionRequests, r);
+
+        m_BP3Serializer.m_Aggregator.Wait(dataRequests, r);
+        m_BP3Serializer.m_Aggregator.SwapBuffers(r);
     }
 
-    m_BP3Serializer.AggregatorsResetBuffer();
+    m_BP3Serializer.UpdateOffsetsInMetadata();
+
+    if (isFinal) // Write metadata footer
+    {
+        BufferSTL &bufferSTL = m_BP3Serializer.m_Data;
+        m_BP3Serializer.ResetBuffer(bufferSTL, false, false);
+
+        m_BP3Serializer.AggregateCollectiveMetadata(
+            m_BP3Serializer.m_Aggregator.m_Comm, bufferSTL, false);
+
+        if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+        {
+            m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
+                                         bufferSTL.m_Position, transportIndex);
+
+            m_FileDataManager.FlushFiles(transportIndex);
+        }
+    }
+
+    m_BP3Serializer.m_Aggregator.ResetBuffers();
 }
 
 } // end namespace adios2

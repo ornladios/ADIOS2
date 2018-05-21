@@ -124,53 +124,21 @@ public:
     AggregateProfilingJSON(const std::string &rankProfilingJSON);
 
     /**
-     * Creates the final collective Metadata buffer in m_HeapBuffer.m_Metadata
-     * from all ranks
+     * Aggregate collective metadata
+     * @param comm input establishing domain (all or per aggregator)
+     * @param bufferSTL buffer to put the metadata
+     * @param inMetadataBuffer collective metadata from absolute rank = 0, else
+     *                         from aggregators
      */
-    void AggregateCollectiveMetadata();
+    void AggregateCollectiveMetadata(MPI_Comm comm, BufferSTL &bufferSTL,
+                                     const bool inMetadataBuffer);
 
     /**
-     * Updates data absolute position based on data from other producers in
-     * aggregation
+     * Updates variable and payload offsets in metadata characteristics with
+     * the updated Buffer m_DataAbsolutePosition for a particular rank. This is
+     * a local (non-MPI) operation
      */
-    void AggregatorsUpdateDataAbsolutePosition();
-
-    /** Updates variable and payload offsets in metadata characteristics with
-     * the updated Buffer m_DataAbsolutePosition. This is a local (non-MPI)
-     * operation */
-    void AggregatorsUpdateOffsetsInMetadata();
-
-    /** Sends aggregation data in non-blocking mode according to the strategy
-     * used */
-    std::vector<MPI_Request> AggregatorsIExchange(const int step);
-
-    /**
-     * reference to buffer ready to be consumed (used by transports via a
-     * transport manager).
-     * This function should be only used by aggregator with rank 0.
-     * @return reference to buffer ready for consumption
-     */
-    BufferSTL &AggregatorConsumerBuffer();
-
-    /**
-     * Wait for aggregation data in non-blocking mode according to the strategy
-     * used
-     * @param request input to wait upon
-     * @param iteration iteration process
-     */
-    void AggregatorsWait(std::vector<MPI_Request> &request,
-                         const int iteration);
-
-    /**
-     * Swap the current sender/receiver buffers
-     * @param iteration current iteration in the aggregation process
-     */
-    void AggregatorsSwapBuffer(const int iteration) noexcept;
-
-    /**
-     * Resets buffering ordering to initial state for next aggregation
-     */
-    void AggregatorsResetBuffer() noexcept;
+    void UpdateOffsetsInMetadata();
 
 private:
     /** BP format version */
@@ -363,6 +331,15 @@ private:
      */
     void SerializeDataBuffer(IO &io) noexcept;
 
+    /**
+     * Puts minifooter into a bp buffer
+     * @param pgIndexStart input offset
+     * @param variablesIndexStart input offset
+     * @param attributesIndexStart input offset
+     * @param buffer  buffer to add the minifooter
+     * @param position current buffer position
+     * @param addSubfiles true: metadata file, false: data file
+     */
     void PutMinifooter(const uint64_t pgIndexStart,
                        const uint64_t variablesIndexStart,
                        const uint64_t attributesIndexStart,
@@ -371,10 +348,13 @@ private:
 
     /**
      * Used for PG index, aggregates without merging
-     * @param index input
-     * @param count total number of indices
+     * @param index
+     * @param count
+     * @param comm
+     * @param bufferSTL
      */
-    void AggregateIndex(const SerialElementIndex &index, const size_t count);
+    void AggregateIndex(const SerialElementIndex &index, const size_t count,
+                        MPI_Comm comm, BufferSTL &bufferSTL);
 
     /**
      * Collective operation to aggregate and merge (sort) indices (variables and
@@ -382,7 +362,8 @@ private:
      * @param indices
      */
     void AggregateMergeIndex(
-        const std::unordered_map<std::string, SerialElementIndex> &indices);
+        const std::unordered_map<std::string, SerialElementIndex> &indices,
+        MPI_Comm comm, BufferSTL &bufferSTL);
 
     /**
      * Returns a serialized buffer with all indices with format:
@@ -391,8 +372,8 @@ private:
      * @return buffer with serialized indices
      */
     std::vector<char> SerializeIndices(
-        const std::unordered_map<std::string, SerialElementIndex> &indices)
-        const noexcept;
+        const std::unordered_map<std::string, SerialElementIndex> &indices,
+        MPI_Comm comm) const noexcept;
 
     /**
      * In rank=0, deserialize gathered indices
@@ -400,8 +381,8 @@ private:
      * @return hash[name][rank] = bp index buffer
      */
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
-    DeserializeIndicesPerRankThreads(
-        const std::vector<char> &serializedIndices) const noexcept;
+    DeserializeIndicesPerRankThreads(const std::vector<char> &serializedIndices,
+                                     MPI_Comm comm) const noexcept;
 
     /**
      * Merge indices by time step (default) and write to m_HeapBuffer.m_Metadata
@@ -409,7 +390,8 @@ private:
      */
     void MergeSerializeIndices(
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-            &nameRankIndices);
+            &nameRankIndices,
+        MPI_Comm comm, BufferSTL &bufferSTL);
 
     std::vector<char>
     SetCollectiveProfilingJSON(const std::string &rankLog) const;
@@ -420,12 +402,6 @@ private:
      */
     template <class T>
     void PutPayloadInBuffer(const Variable<T> &variable) noexcept;
-
-    /**
-     * Updates variable and payload offsets with buffer m_DataAbsolutePosition
-     * @param index
-     */
-    void UpdateIndexOffsets(SerialElementIndex &index);
 
     template <class T>
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,

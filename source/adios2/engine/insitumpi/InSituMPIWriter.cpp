@@ -123,7 +123,8 @@ void InSituMPIWriter::PerformPuts()
         // Create Global metadata and send to readers
         m_BP3Serializer.SerializeData(m_IO, true); // advance timestep
         m_BP3Serializer.SerializeMetadataInData();
-        m_BP3Serializer.AggregateCollectiveMetadata();
+        m_BP3Serializer.AggregateCollectiveMetadata(
+            m_MPIComm, m_BP3Serializer.m_Metadata, true);
 
         // store length long enough to survive Isend() completion
         // so don't move this into the next if branch

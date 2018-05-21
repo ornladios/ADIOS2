@@ -60,6 +60,12 @@ public:
     virtual std::vector<MPI_Request> IExchange(BufferSTL &bufferSTL,
                                                const int step);
 
+    std::vector<MPI_Request> IExchangeAbsolutePosition(BufferSTL &bufferSTL,
+                                                       const int step);
+
+    void WaitAbsolutePosition(std::vector<MPI_Request> &requests,
+                              const int step);
+
     virtual void Wait(std::vector<MPI_Request> &requests, const int step);
 
     virtual void SwapBuffers(const int step) noexcept;

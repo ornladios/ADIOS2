@@ -225,7 +225,8 @@ public:
      * is set to zero,
      */
     void ResetBuffer(BufferSTL &bufferSTL,
-                     const bool resetAbsolutePosition = false);
+                     const bool resetAbsolutePosition = false,
+                     const bool zeroInitialize = true);
 
     /** Return type of the CheckAllocation function. */
     enum class ResizeResult
