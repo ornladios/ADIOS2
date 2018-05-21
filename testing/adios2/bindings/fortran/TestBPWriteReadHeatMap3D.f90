@@ -13,6 +13,7 @@ program TestBPWriteReadHeatMap3D
     integer(kind=8), dimension(3) :: sel_start, sel_count
     integer :: ierr, irank, isize, inx, iny, inz
     integer :: i, j, k, iglobal, value, ilinear, icounter
+    logical, parameter :: adios2_write = .true.
 
     call MPI_INIT(ierr)
     call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
@@ -31,21 +32,26 @@ program TestBPWriteReadHeatMap3D
 
     ! Start adios2 Writer
     call adios2_init( adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr )
-    call adios2_declare_io( ioPut, adios, 'HeatMapWrite', ierr )
 
-    call adios2_define_variable( var_temperatures, ioPut, 'temperatures', 3, &
-                                 ishape, istart, icount, adios2_constant_dims, &
-                                 temperatures, ierr )
+    if(adios2_write) then
 
-    call adios2_open( bpWriter, ioPut, 'HeatMap3D_f.bp', adios2_mode_write, &
-                      ierr )
+        call adios2_declare_io( ioPut, adios, 'HeatMapWrite', ierr )
 
-    call adios2_put_sync( bpWriter, var_temperatures, temperatures, ierr )
+        call adios2_define_variable( var_temperatures, ioPut, 'temperatures', 3, &
+            ishape, istart, icount, adios2_constant_dims, &
+            temperatures, ierr )
 
-    call adios2_close( bpWriter, ierr )
+        call adios2_open( bpWriter, ioPut, 'HeatMap3D_f.bp', adios2_mode_write, &
+            ierr )
+
+        call adios2_put_sync( bpWriter, var_temperatures, temperatures, ierr )
+
+        call adios2_close( bpWriter, ierr )
 
 
-    if( allocated(temperatures) ) deallocate(temperatures)
+        if( allocated(temperatures) ) deallocate(temperatures)
+
+    end if
 
     ! Start adios2 Reader in rank 0
     if( irank == 0 ) then
