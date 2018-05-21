@@ -8,11 +8,17 @@
 #include <evpath.h>
 #include <mpi.h>
 
+#include <SSTConfig.h>
+
 #include <rdma/fabric.h>
 #include <rdma/fi_cm.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
+
+#ifdef SST_HAVE_FI_GNI
+#include <rdma/fi_ext_gni.h>
+#endif
 
 #include "sst_data.h"
 
