@@ -55,7 +55,6 @@ MPIAggregator::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
     }
     else if (m_Rank == destination)
     {
-        MPI_Request absolutePositionRequest;
         CheckMPIReturn(MPI_Irecv(&bufferSTL.m_AbsolutePosition, 1,
                                  ADIOS2_MPI_SIZE_T, step, 0, m_Comm,
                                  &requests[1]),
