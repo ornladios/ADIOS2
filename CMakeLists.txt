@@ -1,19 +1,11 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 
-# Note that this whole if block is for backwards compatibility and can be
-# replaced with a single project(ATL VERSION A.B.C) if the minum required is
-# raised to > 3.0
-if(POLICY CMP0048)
-  cmake_policy(SET CMP0048 NEW)
-  project(FFS VERSION 1.5.1)
-else()
-  project(FFS)
-  set(FFS_VERSION_MAJOR 1)
-  set(FFS_VERSION_MINOR 5)
-  set(FFS_VERSION_PATCH 1)
-  set(FFS_VERSION
-    ${FFS_VERSION_MAJOR}.${FFS_VERSION_MINOR}.${FFS_VERSION_PATCH})
-endif()
+project(FFS)
+set(FFS_VERSION_MAJOR 1)
+set(FFS_VERSION_MINOR 5)
+set(FFS_VERSION_PATCH 2)
+set(FFS_VERSION
+  ${FFS_VERSION_MAJOR}.${FFS_VERSION_MINOR}.${FFS_VERSION_PATCH})
 
 # Some boilerplate to setup nice output directories
 set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")

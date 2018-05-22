@@ -1666,25 +1666,23 @@ void *data;
 	u.tmp = (unsigned long) (*((unsigned short *) data));
 	break;
     case 4:
-	u.tmp = (unsigned long) (*((unsigned int *) data));
+    {
+	unsigned int tmpi;
+	memcpy(&tmpi, data, 4);
+	u.tmp = (unsigned long) tmpi;
 	break;
+    }
     case 8:
 #if SIZEOF_LONG == 8
-	if ((((long) data) & 0x0f) == 0) {
-	    /* properly aligned */
-	    u.tmp = (unsigned long) (*((unsigned long *) data));
-	} else {
-	    u.tmpi[0] = ((int *) data)[0];
-	    u.tmpi[1] = ((int *) data)[1];
-	    return u.p;
-	}
+	memcpy(&u.p, data, 8);
 #else
+	int tmp;
 	/* must be fetching 4 bytes of the 8 available */
 	if (WORDS_BIGENDIAN)
-	    u.tmp = (*(((unsigned long *) data) +1));
+	    memcpy(&tmp, data + 4, 4);
 	else
-	    u.tmp = (*((unsigned long *) data));
-
+	    memcpy(&tmp, data, 4);
+	u.tmp = (unsigned long) tmp;
 #endif
 	break;
     }
@@ -1706,23 +1704,16 @@ void *data;
     case 2:
 	*((unsigned short *) data) = (unsigned short) value;
 	break;
-    case 4:
-	*((unsigned int *) data) = (unsigned int) value;
+    case 4:{
+	unsigned int tmp = (unsigned int) value;
+	memcpy(data, &value, 4);
 	break;
-    case 8:
-	if ((((long) data) & 0x0f) == 0) {
-	    /* properly aligned */
-	    *((unsigned long *) data) = (unsigned long) value;
-	} else {
-	    union {
-		unsigned long v;
-		unsigned int i[2];
-	    }u;
-	    u.v = value;
-	    ((int *) data)[0] = u.i[0];
-	    ((int *) data)[1] = u.i[1];
 	}
+    case 8:{
+	unsigned long tmp = value;
+	memcpy(data, &value, 8);
 	break;
+	}
     }
 }
 
