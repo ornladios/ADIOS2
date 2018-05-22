@@ -172,14 +172,16 @@ BYTE_OUT2IR(dill_stream s, int rex, int insn1, int insn2, int imm32)
     }
     tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
+	int tmp = imm32;
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
 	*(tmp_ip + 2) = (unsigned char)insn2;
-	*((int *)(tmp_ip + 3)) = imm32;
+	memcpy(tmp_ip + 3, &tmp, 4);
     } else {
+	int tmp = imm32;
 	*(tmp_ip) = (unsigned char)insn1;
 	*(tmp_ip + 1) = (unsigned char)insn2;
-	*((int *)(tmp_ip + 2)) = imm32;
+	memcpy(tmp_ip + 2, &tmp, 4);
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+6;
@@ -195,16 +197,18 @@ BYTE_OUT3IR(dill_stream s, int rex, int insn1, int insn2, int insn3, int imm32)
     }
     tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
+	int tmp = imm32;
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
 	*(tmp_ip + 2) = (unsigned char)insn2;
 	*(tmp_ip + 3) = (unsigned char)insn3;
-	*((int *)(tmp_ip + 4)) = imm32;
+	memcpy(tmp_ip + 4, &tmp, 4);
     } else {
+	int tmp = imm32;
 	*(tmp_ip) = (unsigned char)insn1;
 	*(tmp_ip + 1) = (unsigned char)insn2;
 	*(tmp_ip + 2) = (unsigned char)insn3;
-	*((int *)(tmp_ip + 3)) = imm32;
+	memcpy(tmp_ip + 3, &tmp, 4);
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+7;
@@ -220,12 +224,14 @@ BYTE_OUT1IR(dill_stream s, int rex, int insn1, int imm32)
     }
     tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
+	int tmp = imm32;
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
-	*((int *)(tmp_ip + 2)) = imm32;
+	memcpy(tmp_ip + 2, &tmp, 4);
     } else {
+	int tmp = imm32;
 	*(tmp_ip) = (unsigned char)insn1;
-	*((int *)(tmp_ip + 1)) = imm32;
+	memcpy(tmp_ip + 1, &tmp, 4);
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+5;
@@ -241,12 +247,14 @@ BYTE_OUT1LR(dill_stream s, int rex, int insn1, long imm64)
     }
     tmp_ip = (unsigned char *) s->p->cur_ip;
     if (rex != 0) {
+	long tmp = imm64;
 	*tmp_ip = (unsigned char)rex|0x40;
 	*(tmp_ip + 1) = (unsigned char)insn1;
-	*((long *)(tmp_ip + 2)) = imm64;
+	memcpy(tmp_ip + 2, &tmp, 8);
     } else {
+	long tmp = imm64;
 	*(tmp_ip) = (unsigned char)insn1;
-	*((long *)(tmp_ip + 1)) = imm64;
+	memcpy(tmp_ip + 1, &tmp, 8);
     }
     if (s->dill_debug) dump_cur_dill_insn(s);
     s->p->cur_ip = ((char*)s->p->cur_ip)+9;
@@ -2535,7 +2543,8 @@ x86_64_branch_link(dill_stream s)
 	    branch_addr++; /* unconditional */
 	    offset = 5;
 	}
-	*(int*)branch_addr = label_offset - offset;
+	int tmp = label_offset - offset;
+	memcpy(branch_addr, &tmp, 4);
     }
 }
 

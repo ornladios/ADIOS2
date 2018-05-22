@@ -23,8 +23,9 @@ x86_64_rt_call_link(char *code, call_t *t)
     int i;
 
     for(i=0; i< t->call_count; i++) {
+	unsigned long tmp = (unsigned long) t->call_locs[i].xfer_addr;
 	long *call_addr = (long *) (code + t->call_locs[i].loc + 2);
-	*call_addr = (unsigned long)t->call_locs[i].xfer_addr;
+	memcpy(call_addr, &tmp, 8);
     }
 }
 
