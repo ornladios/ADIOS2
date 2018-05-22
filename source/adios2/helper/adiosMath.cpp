@@ -205,16 +205,14 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
                           const Dims &normalizedPoint) -> size_t {
 
         const size_t countSize = count.size();
-        size_t linearIndex = 0;
-        size_t product = std::accumulate(count.begin() + 1, count.end(),
-                                         size_t(1), std::multiplies<size_t>());
+        size_t linearIndex = normalizedPoint[countSize - 1]; // fastest
+        size_t product = 1;
 
-        for (size_t p = 0; p < countSize - 1; ++p)
+        for (auto p = countSize - 1; p >= 1; --p)
         {
-            linearIndex += normalizedPoint[p] * product;
-            product /= count[p + 1];
+            product *= count[p];
+            linearIndex += normalizedPoint[p - 1] * product;
         }
-        linearIndex += normalizedPoint[countSize - 1]; // fastest
         return linearIndex;
     };
 
@@ -222,16 +220,14 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
                              const Dims &normalizedPoint) -> size_t {
 
         const size_t countSize = count.size();
-        size_t linearIndex = 0;
-        size_t product = std::accumulate(count.begin(), count.end() - 1,
-                                         size_t(1), std::multiplies<size_t>());
+        size_t linearIndex = normalizedPoint[0]; // fastest
+        size_t product = 1;
 
-        for (size_t p = 1; p < countSize; ++p)
+        for (auto p = 1; p < countSize; ++p)
         {
-            linearIndex += (normalizedPoint[countSize - p]) * product;
-            product /= count[countSize - p];
+            product *= count[p - 1];
+            linearIndex += normalizedPoint[p] * product;
         }
-        linearIndex += normalizedPoint[0]; // fastest
         return linearIndex;
     };
 

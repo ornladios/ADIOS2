@@ -14,7 +14,6 @@
 #include "BP3Deserializer.h"
 
 #include <algorithm> //std::reverse
-#include <iostream>
 #include <unordered_set>
 
 #include "adios2/helper/adiosFunctions.h"
@@ -322,9 +321,6 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
                  1) *
                     sizeof(T);
 
-            std::cout << "Info seeks: " << info.Seeks.first << " "
-                      << info.Seeks.second << std::endl;
-
             const size_t fileIndex =
                 static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
 
@@ -452,6 +448,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
 
     while (run)
     {
+
         // here copy current linear memory between currentPoint and end
         const size_t contiguousStart =
             LinearIndex(blockBox, currentPoint, false) * sizeof(T) -
@@ -462,14 +459,14 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
 
         char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
 
-        std::copy(&contiguousMemory[contiguousStart],
-                  &contiguousMemory[contiguousStart + stride],
-                  &rawVariableData[variableStart]);
+        std::copy(contiguousMemory.begin() + contiguousStart,
+                  contiguousMemory.begin() + contiguousStart + stride,
+                  rawVariableData + variableStart);
 
         // here update each index recursively, always starting from the 2nd
         // fastest changing index, since fastest changing index is the
         // continuous part in the previous std::copy
-        size_t p = 1; // TODO: this should go outside
+        size_t p = 1;
         while (true)
         {
             ++currentPoint[p];
@@ -480,11 +477,8 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
                     run = false; // we are done
                     break;
                 }
-                else
-                {
-                    currentPoint[p] = start[p];
-                    ++p;
-                }
+                currentPoint[p] = start[p];
+                ++p;
             }
             else
             {
