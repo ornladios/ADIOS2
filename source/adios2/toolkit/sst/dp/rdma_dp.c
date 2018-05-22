@@ -18,7 +18,10 @@
 
 #ifdef SST_HAVE_FI_GNI
 #include <rdma/fi_ext_gni.h>
-#endif
+#ifdef SST_HAVE_CRAY_DRC
+#include <rdmacred.h>
+#endif /* SST_HAVE_CRAY_DRC */
+#endif /* SST_HAVE_FI_GNI */
 
 #include "sst_data.h"
 
