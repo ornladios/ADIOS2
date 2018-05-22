@@ -115,25 +115,28 @@ if (c->dill_debug) dump_cur_dill_insn(c);\
 
 #define BYTE_OUT2I(c, insn1, insn2,imm32) \
 do { \
+unsigned int tmp = (unsigned int) imm32; \
 if (c->p->cur_ip >= c->p->code_limit) {\
    extend_dill_stream(c);\
 }\
 *(unsigned char*)c->p->cur_ip = (unsigned char)insn1;\
 *(((unsigned char*)c->p->cur_ip) + 1)= (unsigned char)insn2;\
-*(unsigned int *)(((unsigned char*)c->p->cur_ip) + 2)= (unsigned int)imm32;\
+memcpy((((unsigned char*)c->p->cur_ip) + 2), &tmp, 4);\
 if (c->dill_debug) dump_cur_dill_insn(c);\
  c->p->cur_ip = ((char*)c->p->cur_ip)+6; \
 } while (0)
 
 #define BYTE_OUT2II(c, insn1, insn2,imm32, imm32_2) \
 do { \
+unsigned int tmp = (unsigned int) imm32;\
+unsigned int tmp2 = (unsigned int) imm32_2;\
 if (c->p->cur_ip >= c->p->code_limit) {\
    extend_dill_stream(c);\
 }\
 *(unsigned char*)c->p->cur_ip = (unsigned char)insn1;\
 *(((unsigned char*)c->p->cur_ip) + 1)= (unsigned char)insn2;\
-*(unsigned int *)(((unsigned char*)c->p->cur_ip) + 2)= (unsigned int)imm32;\
-*(unsigned int *)(((unsigned char*)c->p->cur_ip) + 6)= (unsigned int)imm32_2;\
+memcpy((((unsigned char*)c->p->cur_ip) + 2), &tmp, 4);\
+memcpy((((unsigned char*)c->p->cur_ip) + 6), &tmp2, 4);\
 if (c->dill_debug) dump_cur_dill_insn(c);\
  c->p->cur_ip = ((char*)c->p->cur_ip)+10;	\
 } while (0)
