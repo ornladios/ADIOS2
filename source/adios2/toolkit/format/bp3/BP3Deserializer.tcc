@@ -448,6 +448,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
 
     while (run)
     {
+
         // here copy current linear memory between currentPoint and end
         const size_t contiguousStart =
             LinearIndex(blockBox, currentPoint, false) * sizeof(T) -
@@ -458,9 +459,9 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
 
         char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
 
-        std::copy(&contiguousMemory[contiguousStart],
-                  &contiguousMemory[contiguousStart + stride],
-                  &rawVariableData[variableStart]);
+        std::copy(contiguousMemory.begin() + contiguousStart,
+                  contiguousMemory.begin() + contiguousStart + stride,
+                  rawVariableData + variableStart);
 
         // here update each index recursively, always starting from the 2nd
         // fastest changing index, since fastest changing index is the
@@ -476,11 +477,8 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
                     run = false; // we are done
                     break;
                 }
-                else
-                {
-                    currentPoint[p] = start[p];
-                    ++p;
-                }
+                currentPoint[p] = start[p];
+                ++p;
             }
             else
             {
