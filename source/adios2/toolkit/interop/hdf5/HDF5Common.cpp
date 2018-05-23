@@ -25,6 +25,9 @@ namespace adios2
 namespace interop
 {
 
+const std::string HDF5Common::ATTRNAME_NUM_STEPS = "NumSteps";
+const std::string HDF5Common::ATTRNAME_GIVEN_ADIOSNAME = "ADIOSName";
+
 HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
 {
     m_DefH5TypeComplexFloat =
@@ -117,9 +120,9 @@ void HDF5Common::WriteAdiosSteps()
     }
 
     hid_t s = H5Screate(H5S_SCALAR);
-
-    hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s,
-                           H5P_DEFAULT, H5P_DEFAULT);
+    hid_t attr =
+        H5Acreate(m_FileId, ATTRNAME_NUM_STEPS.c_str(),
+                  /*"NumSteps",*/ H5T_NATIVE_UINT, s, H5P_DEFAULT, H5P_DEFAULT);
     uint totalAdiosSteps = m_CurrentAdiosStep + 1;
 
     if (m_GroupId < 0)
@@ -156,7 +159,7 @@ unsigned int HDF5Common::GetNumAdiosSteps()
 
     if (m_NumAdiosSteps <= 0)
     {
-        hid_t attr = H5Aopen(m_FileId, "NumSteps", H5P_DEFAULT);
+        hid_t attr = H5Aopen(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5P_DEFAULT);
 
         H5Aread(attr, H5T_NATIVE_UINT, &m_NumAdiosSteps);
         H5Aclose(attr);
@@ -170,7 +173,7 @@ void HDF5Common::ReadAllVariables(IO &io)
 {
     if (!m_IsGeneratedByAdios)
     {
-        ReadNativeDatasets(io, m_FileId, "/", "");
+        FindVarsFromH5(io, m_FileId, "/", "");
         return;
     }
 
@@ -183,8 +186,8 @@ void HDF5Common::ReadAllVariables(IO &io)
     }
 }
 
-void HDF5Common::ReadNativeDatasets(IO &io, hid_t top_id, const char *gname,
-                                    const char *heritage)
+void HDF5Common::FindVarsFromH5(IO &io, hid_t top_id, const char *gname,
+                                const char *heritage)
 {
     // int i = 0;
     // std::string stepStr;
@@ -214,7 +217,15 @@ void HDF5Common::ReadNativeDatasets(IO &io, hid_t top_id, const char *gname,
 
                     char longName[std::strlen(heritage) + std::strlen(gname) +
                                   std::strlen(name) + 10];
-                    sprintf(longName, "%s/%s/%s", heritage, gname, name);
+
+                    if (strcmp(gname, "/") == 0)
+                    {
+                        sprintf(longName, "/%s", name);
+                    }
+                    else
+                    {
+                        sprintf(longName, "%s/%s/%s", heritage, gname, name);
+                    }
                     // CreateVar(io, datasetId, name);
                     CreateVar(io, datasetId, longName);
                 }
@@ -226,7 +237,7 @@ void HDF5Common::ReadNativeDatasets(IO &io, hid_t top_id, const char *gname,
                         heritageNext += "/";
                         heritageNext += gname;
                     }
-                    ReadNativeDatasets(io, gid, name, heritageNext.c_str());
+                    FindVarsFromH5(io, gid, name, heritageNext.c_str());
                 }
             }
         }
@@ -287,10 +298,18 @@ void HDF5Common::ReadVariables(unsigned int ts, IO &io)
             ret = H5Gget_objname_by_idx(gid, (hsize_t)k, name, sizeof(name));
             if (ret >= 0)
             {
-                hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
+                int currType = H5Gget_objtype_by_idx(gid, k);
+                if (currType == H5G_GROUP)
+                {
+                    FindVarsFromH5(io, gid, name, "");
+                }
+                else if ((currType == H5G_DATASET) || (currType == H5G_TYPE))
+                {
+                    hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
 
-                HDF5TypeGuard d(datasetId, E_H5_DATASET);
-                CreateVar(io, datasetId, name);
+                    HDF5TypeGuard d(datasetId, E_H5_DATASET);
+                    CreateVar(io, datasetId, name);
+                }
             }
         }
     }
@@ -330,13 +349,23 @@ void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
 
         Dims zeros(shape.size(), 0);
 
-        auto &foo = io.DefineVariable<T>(name, shape, zeros, shape);
-
-        // default was set to 0 while m_AvailabelStepsStart is 1.
-        // correcting
-        if (0 == foo.m_AvailableStepsCount)
+        try
         {
-            foo.m_AvailableStepsCount++;
+            auto &foo = io.DefineVariable<T>(name, shape, zeros, shape);
+
+            // default was set to 0 while m_AvailabelStepsStart is 1.
+            // correcting
+            if (0 == foo.m_AvailableStepsCount)
+            {
+                foo.m_AvailableStepsCount++;
+            }
+        }
+        catch (std::exception &e)
+        {
+            // invalid variable, do not define
+            printf("WARNING: IO is not accepting definition of variable: %s. "
+                   "Skipping. \n",
+                   name.c_str());
         }
     }
     else
@@ -349,9 +378,16 @@ void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
     }
 }
 
-void HDF5Common::CreateVar(IO &io, hid_t datasetId, std::string const &name)
+void HDF5Common::CreateVar(IO &io, hid_t datasetId,
+                           std::string const &nameSuggested)
 {
-    // std::cout<<" creating var: "<<name<<std::endl;
+    std::string name;
+    ReadADIOSName(datasetId, name);
+    if (name.size() == 0)
+    {
+        name = nameSuggested;
+    }
+
     hid_t h5Type = H5Dget_type(datasetId);
     HDF5TypeGuard t(h5Type, E_H5_DATATYPE);
 
@@ -359,6 +395,13 @@ void HDF5Common::CreateVar(IO &io, hid_t datasetId, std::string const &name)
     // so signed needs to be checked before char, otherwise type is char instead
     // of "signed char". Inqvar considers "signed char" and "char" different
     // types and returns error
+
+    if (H5Tget_class(h5Type) == H5T_STRING)
+    // if (H5Tequal(H5T_STRING, h5Type))
+    {
+        AddVar<std::string>(io, name, datasetId);
+        return;
+    }
 
     if (H5Tequal(H5T_NATIVE_SCHAR, h5Type))
     {
@@ -560,6 +603,542 @@ void HDF5Common::CheckWriteGroup()
     }
 }
 
+void HDF5Common::ReadStringScalarDataset(hid_t dataSetId, std::string &result)
+{
+    hid_t h5Type = H5Dget_type(dataSetId); // get actual type;
+    size_t typesize = H5Tget_size(h5Type);
+
+    char *val = (char *)(calloc(typesize, sizeof(char)));
+    hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
+
+    /*if (std::is_same<T, std::string> :: value)  { // double check
+      ((std::string*)values) ->assign(val);
+    }
+    */
+    result.assign(val);
+    free(val);
+
+    H5Tclose(h5Type);
+}
+
+hid_t HDF5Common::GetTypeStringScalar(const std::string &input)
+{
+    /* Create a datatype to refer to. */
+    hid_t type = H5Tcopy(H5T_C_S1);
+    hid_t ret = H5Tset_size(type, input.size());
+
+    ret = H5Tset_strpad(type, H5T_STR_NULLTERM);
+
+    return type;
+}
+
+void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
+                               hid_t filespaceID,
+                               std::vector<hid_t> &datasetChain)
+{
+    std::vector<std::string> list;
+    char delimiter = '/';
+    int delimiterLength = 1;
+    std::string s = std::string(varName);
+    size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos)
+    {
+        if (pos > 1)
+        { // "///a/b/c" == "a/b/c"
+            token = s.substr(0, pos);
+            list.push_back(token);
+        }
+        s.erase(0, pos + delimiterLength);
+    }
+    list.push_back(s);
+
+    hid_t topId = m_GroupId;
+    if (list.size() > 1)
+    {
+        for (int i = 0; i < list.size() - 1; i++)
+        {
+            if (H5Lexists(topId, list[i].c_str(), H5P_DEFAULT) == 0)
+            { // does not exist, so create
+                topId = H5Gcreate2(topId, list[i].c_str(), H5P_DEFAULT,
+                                   H5P_DEFAULT, H5P_DEFAULT);
+            }
+            else
+            {
+                topId = H5Gopen(topId, list[i].c_str(), H5P_DEFAULT);
+            }
+            datasetChain.push_back(topId);
+        }
+    }
+
+    hid_t dsetID = H5Dcreate(topId, list.back().c_str(), h5Type, filespaceID,
+                             H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    StoreADIOSName(varName, dsetID);
+
+    datasetChain.push_back(dsetID);
+    // return dsetID;
+}
+
+void HDF5Common::StoreADIOSName(const std::string adiosName, hid_t dsetID)
+{
+    hid_t attrSpace = H5Screate(H5S_SCALAR);
+    hid_t atype = H5Tcopy(H5T_C_S1);
+    H5Tset_size(atype, adiosName.size());
+    H5Tset_strpad(atype, H5T_STR_NULLTERM);
+    hid_t attr = H5Acreate2(dsetID, ATTRNAME_GIVEN_ADIOSNAME.c_str(), atype,
+                            attrSpace, H5P_DEFAULT, H5P_DEFAULT);
+    H5Awrite(attr, atype, adiosName.c_str());
+
+    H5Sclose(attrSpace);
+    H5Tclose(atype);
+    H5Aclose(attr);
+}
+
+void HDF5Common::ReadADIOSName(hid_t dsetID, std::string &adiosName)
+{
+    // htri_t H5Lexists( hid_t loc_id, const char *name, hid_t lapl_id )
+    if (H5Aexists(dsetID, ATTRNAME_GIVEN_ADIOSNAME.c_str()) <= 0)
+    {
+        return;
+    }
+
+    hid_t attrID =
+        H5Aopen(dsetID, ATTRNAME_GIVEN_ADIOSNAME.c_str(), H5P_DEFAULT);
+    if (attrID < 0)
+    {
+        return;
+    }
+
+    hid_t attrType = H5Aget_type(attrID);
+    size_t typeSize = H5Tget_size(attrType);
+
+    char *val = (char *)(calloc(typeSize, sizeof(char)));
+    hid_t ret2 = H5Aread(attrID, attrType, val);
+
+    H5Tclose(attrType);
+    H5Aclose(attrID);
+
+    adiosName.assign(val);
+    free(val);
+}
+
+bool HDF5Common::OpenDataset(const std::string &varName,
+                             std::vector<hid_t> &datasetChain)
+{
+    std::vector<std::string> list;
+    char delimiter = '/';
+    int delimiterLength = 1;
+    std::string s = std::string(varName);
+    size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos)
+    {
+        if (pos > 1)
+        { // "///a/b/c" == "a/b/c"
+            token = s.substr(0, pos);
+            list.push_back(token);
+        }
+        s.erase(0, pos + delimiterLength);
+    }
+    list.push_back(s);
+
+    if (list.size() == 1)
+    {
+        hid_t dsetID = H5Dopen(m_GroupId, list[0].c_str(), H5P_DEFAULT);
+        datasetChain.push_back(dsetID);
+        return true;
+    }
+
+    hid_t topId = m_GroupId;
+
+    for (int i = 0; i < list.size() - 1; i++)
+    {
+        if (H5Lexists(topId, list[i].c_str(), H5P_DEFAULT) == 0)
+        { // does not exist, err
+            // topId = H5Gcreate2(topId, list[i].c_str(), H5P_DEFAULT,
+            // H5P_DEFAULT,H5P_DEFAULT);
+            printf("Unable to open HDF5 group: %s for %s. Quit. \n",
+                   list[i].c_str(), varName.c_str());
+            return false;
+        }
+        else
+        {
+            topId = H5Gopen(topId, list[i].c_str(), H5P_DEFAULT);
+        }
+        datasetChain.push_back(topId);
+    }
+
+    hid_t dsetID = H5Dopen(topId, list.back().c_str(), H5P_DEFAULT);
+
+    datasetChain.push_back(dsetID);
+    return true;
+}
+
+// trim from right
+inline std::string &rtrim(std::string &s, const char *t = " \t\n\r\f\v")
+{
+    s.erase(s.find_last_not_of(t) + 1);
+    return s;
+}
+
+// trim from left
+inline std::string &ltrim(std::string &s, const char *t = " \t\n\r\f\v")
+{
+    s.erase(0, s.find_first_not_of(t));
+    return s;
+}
+
+// trim from left & right
+inline std::string &trim(std::string &s, const char *t = " \t\n\r\f\v")
+{
+    return ltrim(rtrim(s, t), t);
+}
+
+void HDF5Common::ReadInStringAttr(IO &io, const std::string &attrName,
+                                  hid_t attrId, hid_t h5Type, hid_t sid)
+{
+    hsize_t typeSize = H5Tget_size(h5Type);
+    H5S_class_t stype = H5Sget_simple_extent_type(sid);
+
+    if (H5S_SCALAR == stype)
+    {
+        // char* val = (char*)(calloc(typeSize, sizeof(char)));
+        // char val[typeSize+1];
+        void *stringVal = calloc(typeSize, sizeof(char));
+        H5Aread(attrId, h5Type, (char *)stringVal);
+
+        std::string strValue((char *)stringVal);
+        free(stringVal);
+        io.DefineAttribute<std::string>(attrName, strValue);
+        // free(val);
+    }
+    else
+    { // array
+        hsize_t ndims = H5Sget_simple_extent_ndims(sid);
+        if (ndims != 1)
+        {
+            return; // so far io can only handle 1-D array
+        }
+        // ndims must be 1
+        hsize_t dims[1];
+        hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
+
+        char val[typeSize * dims[0]];
+        H5Aread(attrId, h5Type, val);
+        std::string strValue(val);
+
+        std::vector<std::string> stringArray;
+        for (int i = 0; i < dims[0]; i++)
+        {
+            std::string input = strValue.substr(i * typeSize, typeSize);
+            // remove the padded empty space;
+            rtrim(input);
+            stringArray.push_back(input);
+        }
+        io.DefineAttribute<std::string>(attrName, stringArray.data(), dims[0]);
+    }
+}
+
+template <class T>
+void HDF5Common::AddNonStringAttribute(IO &io, std::string const &attrName,
+                                       hid_t attrId, hid_t h5Type,
+                                       hsize_t arraySize)
+{
+    if (arraySize == 0)
+    { // SCALAR
+        T val;
+        H5Aread(attrId, h5Type, &val);
+        io.DefineAttribute<T>(attrName, val);
+    }
+    else
+    {
+        T val[arraySize];
+        H5Aread(attrId, h5Type, val);
+        io.DefineAttribute<T>(attrName, val, arraySize);
+    }
+}
+
+void HDF5Common::ReadInNonStringAttr(IO &io, const std::string &attrName,
+                                     hid_t attrId, hid_t h5Type, hid_t sid)
+{
+    H5S_class_t stype = H5Sget_simple_extent_type(sid);
+
+    hsize_t ndims = H5Sget_simple_extent_ndims(sid);
+    size_t typesize = H5Tget_size(h5Type);
+
+    if (ndims > 1)
+    {
+        return; // so far adios2 io can only handle 1-D array
+    }
+
+    hsize_t dims[1];
+    dims[0] = 0;
+    if (ndims == 1)
+        hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
+
+    if (H5Tequal(H5T_NATIVE_SCHAR, h5Type))
+    {
+        AddNonStringAttribute<signed char>(io, attrName, attrId, h5Type,
+                                           dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_CHAR, h5Type))
+    {
+        AddNonStringAttribute<char>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_UCHAR, h5Type))
+    {
+        AddNonStringAttribute<unsigned char>(io, attrName, attrId, h5Type,
+                                             dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_SHORT, h5Type))
+    {
+        AddNonStringAttribute<short>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_USHORT, h5Type))
+    {
+        AddNonStringAttribute<unsigned short>(io, attrName, attrId, h5Type,
+                                              dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_INT, h5Type))
+    {
+        AddNonStringAttribute<int>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_UINT, h5Type))
+    {
+        AddNonStringAttribute<unsigned int>(io, attrName, attrId, h5Type,
+                                            dims[0]);
+    }
+    else if (H5Tequal(H5T_STD_I64LE, h5Type))
+    {
+        AddNonStringAttribute<int64_t>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_STD_U64LE, h5Type))
+    {
+        AddNonStringAttribute<uint64_t>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_LONG, h5Type))
+    {
+        AddNonStringAttribute<long>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_ULONG, h5Type))
+    {
+        AddNonStringAttribute<unsigned long>(io, attrName, attrId, h5Type,
+                                             dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_LLONG, h5Type))
+    {
+        AddNonStringAttribute<long long>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_ULLONG, h5Type))
+    {
+        AddNonStringAttribute<unsigned long long>(io, attrName, attrId, h5Type,
+                                                  dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_FLOAT, h5Type))
+    {
+        AddNonStringAttribute<float>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_DOUBLE, h5Type))
+    {
+        AddNonStringAttribute<double>(io, attrName, attrId, h5Type, dims[0]);
+    }
+    else if (H5Tequal(H5T_NATIVE_LDOUBLE, h5Type))
+    {
+        AddNonStringAttribute<long double>(io, attrName, attrId, h5Type,
+                                           dims[0]);
+    }
+}
+
+void HDF5Common::WriteStringAttr(IO &io, const std::string &attrName)
+{
+    Attribute<std::string> *adiosAttr =
+        io.InquireAttribute<std::string>(attrName);
+    if (adiosAttr == NULL)
+    {
+        return;
+    }
+
+    if (adiosAttr->m_IsSingleValue)
+    {
+        hid_t h5Type = GetTypeStringScalar(adiosAttr->m_DataSingleValue.data());
+        hid_t s = H5Screate(H5S_SCALAR);
+        hid_t attr = H5Acreate2(m_FileId, attrName.c_str(), h5Type, s,
+                                H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attr, h5Type, (adiosAttr->m_DataSingleValue.data()));
+        H5Sclose(s);
+        H5Tclose(h5Type);
+        H5Aclose(attr);
+    }
+    else if (adiosAttr->m_Elements > 1)
+    {
+        // is array
+        int max = 0;
+        int idxWithMax = 0;
+        for (int i = 0; i < adiosAttr->m_Elements; i++)
+        {
+            int curr = adiosAttr->m_DataArray[i].size();
+            if (max < curr)
+            {
+                max = curr;
+                idxWithMax = i;
+            }
+        }
+
+        hid_t h5Type = GetTypeStringScalar(adiosAttr->m_DataArray[idxWithMax]);
+        // std::vector<char> temp;
+        std::string all;
+        for (int i = 0; i < adiosAttr->m_Elements; i++)
+        {
+            std::string curr = adiosAttr->m_DataArray[i];
+            curr.resize(max, ' ');
+            all.append(curr);
+        }
+
+        hsize_t onedim[1] = {adiosAttr->m_Elements};
+        hid_t s = H5Screate_simple(1, onedim, NULL);
+        hid_t attr = H5Acreate2(m_FileId, adiosAttr->m_Name.c_str(), h5Type, s,
+                                H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attr, h5Type, all.c_str());
+        H5Sclose(s);
+        H5Aclose(attr);
+        H5Tclose(h5Type);
+    }
+}
+
+template <class T>
+void HDF5Common::WriteNonStringAttr(IO &io, Attribute<T> *adiosAttr)
+{
+    if (adiosAttr == NULL)
+    {
+        return;
+    }
+    hid_t h5Type = GetHDF5Type<T>();
+    if (adiosAttr->m_IsSingleValue)
+    {
+        hid_t s = H5Screate(H5S_SCALAR);
+        hid_t attr = H5Acreate2(m_FileId, adiosAttr->m_Name.c_str(), h5Type, s,
+                                H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attr, h5Type, &(adiosAttr->m_DataSingleValue));
+        H5Sclose(s);
+        H5Aclose(attr);
+    }
+    else if (adiosAttr->m_Elements > 1)
+    {
+        hsize_t onedim[1] = {adiosAttr->m_Elements};
+        hid_t s = H5Screate_simple(1, onedim, NULL);
+        hid_t attr = H5Acreate2(m_FileId, adiosAttr->m_Name.c_str(), h5Type, s,
+                                H5P_DEFAULT, H5P_DEFAULT);
+        H5Awrite(attr, h5Type, adiosAttr->m_DataArray.data());
+        H5Sclose(s);
+        H5Aclose(attr);
+    }
+}
+
+//
+// write attr from io to hdf5
+// right now adios only support global attr
+// var does not have attr
+//
+void HDF5Common::WriteAttrFromIO(IO &io)
+{
+    if (m_FileId < 0)
+    {
+        return;
+    }
+    if (!m_WriteMode)
+    {
+        return;
+    }
+
+    const std::map<std::string, Params> &attributesInfo =
+        io.GetAvailableAttributes();
+
+    for (const auto &apair : attributesInfo)
+    {
+        std::string attrName = apair.first;
+        Params temp = apair.second;
+        std::string attrType = temp["Type"];
+
+        if (attrType == "compound")
+        {
+            // not supported
+        }
+        else if (attrType == "string")
+        {
+            WriteStringAttr(io, attrName);
+        }
+//
+// note no std::complext attr types
+//
+#define declare_template_instantiation(T)                                      \
+    else if (attrType == adios2::GetType<T>())                                 \
+    {                                                                          \
+        Attribute<T> *adiosAttr = io.InquireAttribute<T>(attrName);            \
+        WriteNonStringAttr(io, adiosAttr);                                     \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+
+    // std::string attrType = attributesInfo[attrName]["Type"];
+}
+
+//
+// read attr from hdf5 to IO
+// only the global ones are retrieved for now,
+// until adios2 starts to support var level attrs
+//
+void HDF5Common::ReadAttrToIO(IO &io)
+{
+    hsize_t numAttrs;
+    // herr_t ret = H5Gget_num_objs(m_FileId, &numObj);
+    H5O_info_t oinfo;
+    herr_t ret = H5Oget_info(m_FileId, &oinfo);
+    if (ret >= 0)
+    {
+        numAttrs = oinfo.num_attrs;
+        int k = 0;
+        char name[50];
+        int MAX_ATTR_NAME_SIZE = 100;
+        for (k = 0; k < numAttrs; k++)
+        {
+            char attrName[MAX_ATTR_NAME_SIZE];
+            ret = (herr_t)H5Aget_name_by_idx(
+                m_FileId, ".", H5_INDEX_CRT_ORDER, H5_ITER_DEC, (hsize_t)k,
+                attrName, (size_t)MAX_ATTR_NAME_SIZE, H5P_DEFAULT);
+            if (ret >= 0)
+            {
+                // if (strcmp(attrName, ATTRNAME_NUM_STEPS.c_str()) == 0) {
+                if (ATTRNAME_NUM_STEPS.compare(attrName) == 0)
+                {
+                    continue;
+                }
+
+                hid_t attrId = H5Aopen(m_FileId, attrName, H5P_DEFAULT);
+                if (attrId < 0)
+                {
+                    continue;
+                }
+                hid_t sid = H5Aget_space(attrId);
+                H5S_class_t stype = H5Sget_simple_extent_type(sid);
+
+                hid_t attrType = H5Aget_type(attrId);
+                bool isString = (H5Tget_class(attrType) == H5T_STRING);
+                if (isString)
+                {
+                    ReadInStringAttr(io, attrName, attrId, attrType, sid);
+                }
+                else
+                {
+                    ReadInNonStringAttr(io, attrName, attrId, attrType, sid);
+                }
+                H5Sclose(sid);
+                H5Aclose(attrId);
+            }
+        }
+    }
+}
 void HDF5Common::StaticGetAdiosStepString(std::string &stepName, int ts)
 {
     stepName = "/Step" + std::to_string(ts);
