@@ -61,6 +61,7 @@ void HDF5ReaderP::Init()
         throw std::runtime_error("This h5 file is NOT written by ADIOS2");
     }
     */
+    m_H5File.ReadAttrToIO(m_IO);
     if (!m_InStreamMode)
     {
         m_H5File.ReadAllVariables(m_IO);
@@ -71,15 +72,116 @@ void HDF5ReaderP::Init()
     }
 }
 
+// returns slab size (>0) (datasize read in)
+// returns -1 to advise do not continue
+template <class T>
+size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
+                                Variable<T> &variable, T *values)
+{
+    /*
+    size_t variableStart = variable.m_StepsStart;
+
+    if ((m_H5File.m_IsGeneratedByAdios) && (ts >= 0))
+      {
+              try
+              {
+                  m_H5File.SetAdiosStep(variableStart + ts);
+              }
+              catch (std::exception &e)
+              {
+                  printf("[Not fatal] %s\n", e.what());
+                  return 0;
+                  //break;
+              }
+          }
+
+          std::vector<hid_t> chain;
+          if (!m_H5File.OpenDataset(variable.m_Name, chain)) {
+            return -1;
+          }
+
+          hid_t dataSetId = chain.back();
+          interop::HDF5DatasetGuard g(chain);
+          //hid_t dataSetId =
+          //  H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
+          if (dataSetId < 0)
+          {
+              return 0;
+          }
+    */
+    hid_t fileSpace = H5Dget_space(dataSetId);
+    interop::HDF5TypeGuard g_fs(fileSpace, interop::E_H5_SPACE);
+
+    if (fileSpace < 0)
+    {
+        return 0;
+    }
+
+    size_t slabsize = 1;
+
+    int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
+    if (0 == ndims)
+    { // is scalar
+        hid_t myclass = H5Tget_class(h5Type);
+        if (H5Tget_class(h5Type) == H5T_STRING)
+        {
+            m_H5File.ReadStringScalarDataset(dataSetId, *(std::string *)values);
+        }
+        else
+        {
+            hid_t ret = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL,
+                                H5P_DEFAULT, values);
+        }
+    }
+    else
+    {
+        hsize_t start[ndims], count[ndims], stride[ndims];
+        bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
+
+        for (int i = 0; i < ndims; i++)
+        {
+            if (isOrderC)
+            {
+                count[i] = variable.m_Count[i];
+                start[i] = variable.m_Start[i];
+            }
+            else
+            {
+                count[i] = variable.m_Count[ndims - 1 - i];
+                start[i] = variable.m_Start[ndims - 1 - i];
+            }
+            slabsize *= count[i];
+            stride[i] = 1;
+        }
+        hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start,
+                                        stride, count, NULL);
+        if (ret < 0)
+            return 0;
+
+        hid_t memDataSpace = H5Screate_simple(ndims, count, NULL);
+        interop::HDF5TypeGuard g_mds(memDataSpace, interop::E_H5_SPACE);
+
+        int elementsRead = 1;
+        for (int i = 0; i < ndims; i++)
+        {
+            elementsRead *= count[i];
+        }
+
+        ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
+                      values);
+        // H5Sclose(memDataSpace);
+    }
+
+    return slabsize;
+}
+
 template <class T>
 void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 {
 
-    T *values = data;
-
     if (!m_H5File.m_IsGeneratedByAdios)
     {
-        // printf("Will read by Native reader ..%s\n", variable.m_Name.c_str());
+        // UseHDFReadNativeFile(variable, data, h5Type);
         hid_t dataSetId =
             H5Dopen(m_H5File.m_FileId, variable.m_Name.c_str(), H5P_DEFAULT);
         if (dataSetId < 0)
@@ -87,64 +189,12 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
             return;
         }
 
-        hid_t fileSpace = H5Dget_space(dataSetId);
-        if (fileSpace < 0)
-        {
-            return;
-        }
-
-        size_t slabsize = 1;
-
-        int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
-        if (0 == ndims)
-        { // is scalar
-            hid_t ret = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL,
-                                H5P_DEFAULT, values);
-        }
-        else
-        {
-            hsize_t start[ndims], count[ndims], stride[ndims];
-
-            bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
-            for (int i = 0; i < ndims; i++)
-            {
-                if (isOrderC)
-                {
-                    count[i] = variable.m_Count[i];
-                    start[i] = variable.m_Start[i];
-                }
-                else
-                {
-                    count[i] = variable.m_Count[ndims - 1 - i];
-                    start[i] = variable.m_Start[ndims - 1 - i];
-                }
-
-                slabsize *= count[i];
-                stride[i] = 1;
-            }
-            hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start,
-                                            stride, count, NULL);
-            if (ret < 0)
-                return;
-
-            hid_t memDataSpace = H5Screate_simple(ndims, count, NULL);
-            int elementsRead = 1;
-            for (int i = 0; i < ndims; i++)
-            {
-                elementsRead *= count[i];
-            }
-
-            ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace,
-                          H5P_DEFAULT, values);
-            H5Sclose(memDataSpace);
-        }
-
-        H5Sclose(fileSpace);
-        H5Dclose(dataSetId);
-
+        interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
+        ReadDataset(dataSetId, h5Type, variable, data);
         return;
     }
 
+    T *values = data;
     int ts = 0;
     // T *values = data;
     size_t variableStart = variable.m_StepsStart;
@@ -158,78 +208,38 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 
     while (ts < variable.m_StepsCount)
     {
-        if (m_H5File.m_IsGeneratedByAdios)
+        try
         {
-            try
-            {
-                m_H5File.SetAdiosStep(variableStart + ts);
-            }
-            catch (std::exception &e)
-            {
-                printf("[Not fatal] %s\n", e.what());
-                break;
-            }
+            m_H5File.SetAdiosStep(variableStart + ts);
         }
-        hid_t dataSetId =
-            H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
+        catch (std::exception &e)
+        {
+            printf("[Not fatal] %s\n", e.what());
+            break;
+        }
+
+        std::vector<hid_t> chain;
+        if (!m_H5File.OpenDataset(variable.m_Name, chain))
+        {
+            return;
+        }
+        hid_t dataSetId = chain.back();
+        interop::HDF5DatasetGuard g(chain);
+        // hid_t dataSetId =
+        //  H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
         if (dataSetId < 0)
         {
             return;
         }
 
-        hid_t fileSpace = H5Dget_space(dataSetId);
-        if (fileSpace < 0)
+        size_t slabsize = ReadDataset(dataSetId, h5Type, variable, values);
+
+        if (slabsize == 0)
         {
-            return;
+            break;
         }
-
-        size_t slabsize = 1;
-
-        int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
-        if (0 == ndims)
-        { // is scalar
-            hid_t ret = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL,
-                                H5P_DEFAULT, values);
-        }
-        else
-        {
-            hsize_t start[ndims], count[ndims], stride[ndims];
-            bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
-
-            for (int i = 0; i < ndims; i++)
-            {
-                if (isOrderC)
-                {
-                    count[i] = variable.m_Count[i];
-                    start[i] = variable.m_Start[i];
-                }
-                else
-                {
-                    count[i] = variable.m_Count[ndims - 1 - i];
-                    start[i] = variable.m_Start[ndims - 1 - i];
-                }
-                slabsize *= count[i];
-                stride[i] = 1;
-            }
-            hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start,
-                                            stride, count, NULL);
-            if (ret < 0)
-                return;
-
-            hid_t memDataSpace = H5Screate_simple(ndims, count, NULL);
-            int elementsRead = 1;
-            for (int i = 0; i < ndims; i++)
-            {
-                elementsRead *= count[i];
-            }
-
-            ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace,
-                          H5P_DEFAULT, values);
-            H5Sclose(memDataSpace);
-        }
-
-        H5Sclose(fileSpace);
-        H5Dclose(dataSetId);
+        // H5Sclose(fileSpace);
+        // H5Dclose(dataSetId);
 
         ts++;
         values += slabsize;
@@ -237,92 +247,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 }
 
 /*
-template <class T>
-void HDF5ReaderP::UseHDFRead(const std::string &variableName, T *values,
-                           hid_t h5Type)
-{
-  int rank, size;
-  MPI_Comm_rank(m_MPIComm, &rank);
-  MPI_Comm_size(m_MPIComm, &size);
-
-  hid_t dataSetId =
-      H5Dopen(m_H5File.m_GroupId, variableName.c_str(), H5P_DEFAULT);
-
-  if (dataSetId < 0)
-  {
-      return;
-  }
-
-  hid_t fileSpace = H5Dget_space(dataSetId);
-
-  if (fileSpace < 0)
-  {
-      return;
-  }
-  int ndims = H5Sget_simple_extent_ndims(fileSpace);
-
-  if (ndims == 0) { // SCALAR
-    hid_t ret = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-values); return;
-  }
-
-  hsize_t dims[ndims];
-  herr_t status_n = H5Sget_simple_extent_dims(fileSpace, dims, NULL);
-
-  // hsize_t start[ndims] = {0}, count[ndims] = {0}, stride[ndims] = {1};
-  hsize_t start[ndims], count[ndims], stride[ndims];
-
-  int totalElements = 1;
-  for (int i = 0; i < ndims; i++)
-  {
-      count[i] = dims[i];
-      totalElements *= dims[i];
-      start[i] = 0;
-      //count[i] = 0;
-      stride[i] = 1;
-  }
-
-  start[0] = rank * dims[0] / size;
-  count[0] = dims[0] / size;
-  if (rank == size - 1)
-  {
-      count[0] = dims[0] - count[0] * (size - 1);
-  }
-
-  hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start, stride,
-                                  count, NULL);
-  if (ret < 0)
-  {
-      return;
-  }
-
-  hid_t memDataSpace = H5Screate_simple(ndims, count, NULL);
-
-  int elementsRead = 1;
-  for (int i = 0; i < ndims; i++)
-  {
-      elementsRead *= count[i];
-  }
-
-#ifdef NEVER
-  //T data_array[elementsRead];
-
-  std::vector<T> data_vector;
-  data_vector.reserve(elementsRead);
-  T* data_array = data_vector.data();
-  ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
-                data_array);
-#else
-  ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
-values); #endif
-
-
-  H5Sclose(memDataSpace);
-
-  H5Sclose(fileSpace);
-  H5Dclose(dataSetId);
-}
-*/
+ */
 
 StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {

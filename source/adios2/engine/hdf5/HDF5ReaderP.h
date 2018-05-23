@@ -59,14 +59,16 @@ private:
     void DoClose(const int transportIndex = -1) final;
 
     template <class T>
+    size_t ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable,
+                       T *values);
+
+    template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
     template <class T>
-    // void UseHDFRead(const std::string &variableName, T *values, hid_t
-    // h5Type);
     void UseHDFRead(Variable<T> &variable, T *values, hid_t h5Type);
 
     std::vector<std::string> m_DeferredStack;

@@ -35,6 +35,24 @@ typedef enum {
     E_H5_SPACE = 3,
 } ADIOS_ENUM_H5;
 
+class HDF5DatasetGuard
+{
+public:
+    HDF5DatasetGuard(std::vector<hid_t> &chain) : m_Chain(chain) {}
+
+    ~HDF5DatasetGuard()
+    {
+        for (int i = 0; i < m_Chain.size() - 1; i++)
+        {
+            H5Gclose(m_Chain[i]);
+        }
+        H5Dclose(m_Chain.back());
+    }
+
+private:
+    std::vector<hid_t> m_Chain;
+};
+
 class HDF5TypeGuard
 {
 public:
@@ -87,13 +105,26 @@ public:
      */
     HDF5Common(const bool debugMode);
 
+    static const std::string ATTRNAME_NUM_STEPS;
+    static const std::string ATTRNAME_GIVEN_ADIOSNAME;
+
     void Init(const std::string &name, MPI_Comm comm, bool toWrite);
 
     template <class T>
     void Write(Variable<T> &variable, const T *values);
 
+    void CreateDataset(const std::string &varName, hid_t h5Type,
+                       hid_t filespaceID, std::vector<hid_t> &chain);
+    bool OpenDataset(const std::string &varName, std::vector<hid_t> &chain);
+
+    void StoreADIOSName(const std::string adiosName, hid_t dsetID);
+    void ReadADIOSName(hid_t dsetID, std::string &adiosName);
+
     void Close();
     void Advance();
+
+    void WriteAttrFromIO(IO &io);
+    void ReadAttrToIO(IO &io);
 
     void SetAdiosStep(int ts);
 
@@ -101,13 +132,20 @@ public:
     void WriteAdiosSteps();
 
     void ReadVariables(unsigned int ts, IO &io);
-    void ReadNativeDatasets(IO &io, hid_t gid, const char *name,
-                            const char *heritage);
+    void FindVarsFromH5(IO &io, hid_t gid, const char *name,
+                        const char *heritage);
     void ReadAllVariables(IO &io);
+
+    void ReadStringScalarDataset(hid_t dataSetId, std::string &result);
+    hid_t GetTypeStringScalar(const std::string &input);
     void CreateVar(IO &io, hid_t h5Type, std::string const &name);
 
     template <class T>
     void AddVar(IO &io, std::string const &name, hid_t datasetId);
+
+    template <class T>
+    void AddNonStringAttribute(IO &io, std::string const &attrName,
+                               hid_t attrId, hid_t h5Type, hsize_t arraySize);
 
     static void StaticGetAdiosStepString(std::string &adiosStepName, int ts);
 
@@ -132,6 +170,15 @@ public:
     bool m_IsGeneratedByAdios = false;
 
 private:
+    void ReadInStringAttr(IO &io, const std::string &attrName, hid_t attrId,
+                          hid_t h5Type, hid_t sid);
+    void ReadInNonStringAttr(IO &io, const std::string &attrName, hid_t attrId,
+                             hid_t h5Type, hid_t sid);
+    void WriteStringAttr(IO &io, const std::string &attrName);
+
+    template <class T>
+    void WriteNonStringAttr(IO &io, Attribute<T> *adiosAttr);
+
     const bool m_DebugMode;
     bool m_WriteMode = false;
     unsigned int m_NumAdiosSteps = 0;
