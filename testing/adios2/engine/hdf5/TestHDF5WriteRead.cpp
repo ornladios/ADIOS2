@@ -210,7 +210,7 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
         hid_t ret2 = H5Dread(dsetID, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
         std::cerr << "        ....  typesize=" << typesize << "  val=" << val
                   << std::endl;
-        delete val;
+        free val;
 #endif
     }
 
@@ -229,7 +229,6 @@ void HDF5NativeWriter::CreateAndStoreVar(std::string const &variableName,
     {
         throw std::runtime_error("Sync with ADIOS2. It does not store string "
                                  "var with dimensions yet!");
-        return;
     }
 
     CheckWriteGroup();
