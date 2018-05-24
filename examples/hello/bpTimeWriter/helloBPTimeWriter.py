@@ -35,12 +35,15 @@ bpTimeStep = bpIO.DefineVariable("bpTimeStep")
 bpFileWriter = bpIO.Open("myArray.bp", adios2.OpenModeWrite)
 # Doesn't work: bpFileWriter = bpIO.Open("myArray.bp", adiosOpenModeWrite,
 #                                                      MPI.COMM_WORLD)
-if(rank == 0):
-    bpFileWriter.Put(bpTimeStep, np.array([t]))
-        
+
 for t in range(0, 10):
     bpFileWriter.BeginStep()
+    
+    if(rank == 0):
+        bpFileWriter.Put(bpTimeStep, np.array([t]))
+        
     bpFileWriter.Put(bpArray, myArray)
+    
     bpFileWriter.EndStep()
 
 bpFileWriter.Close()
