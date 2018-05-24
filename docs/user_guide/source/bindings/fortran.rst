@@ -6,10 +6,10 @@ Fortran bindings
    :language: fortran
    :class: highlight
 
-The Fortran bindings API consist entirely on parameters and subroutines, whose 1st argument is always a type (Fortran struct) to one of the ADIOS2 components, while the last argument is an error integer flag, :fortran:`integer ierr`.
+The Fortran bindings API consist entirely on subroutines calls. Always, the 1st argument is a type (Fortran struct) to one of the ADIOS2 components (adios2_*), while the last argument is an error integer flag, :fortran:`integer ierr`.
 Typically: 
 
-.. code-block:: fortran
+   .. code-block:: fortran
 
       ! 0: no error
       ! 1: an error occured
@@ -89,13 +89,11 @@ The following bullets describe the overall component representation and the main
    .. code-block:: fortran
 
       ! Global array variables
-      subroutine adios2_define_variable(variable, io, variable_name, &
-                                        adios2_type, & 
-                                        ndims, & 
-                                        shape_dims, start_dims, count_dims &
+      subroutine adios2_define_variable(variable, io, variable_name, adios2_type, &
+                                        ndims, shape_dims, start_dims, count_dims, & 
                                         adios2_constant_dims, ierr) 
       ! Global single value variables
-      subroutine adios2_define_variable(variable, io, variable_name, type, ierr)
+      subroutine adios2_define_variable(variable, io, variable_name, adios2_type, ierr)
       
       ! WHERE:
       
@@ -134,7 +132,7 @@ The following bullets describe the overall component representation and the main
       logical, value, intent(in):: adios2_constant_dims
          
    
-   * available :fortran:`adios2_type integer parameters` to be used in :fortran:`subroutine adios2_define_variable` 
+   * available :fortran:`adios2_type` parameters in :fortran:`subroutine adios2_define_variable` 
    
    .. code-block:: fortran
       
@@ -158,9 +156,9 @@ The following bullets describe the overall component representation and the main
    .. code-block:: fortran
 
       ! Single value attributes
-      subroutine adios2_define_attribute(attribute, io, attribute_name, &
-                                         data, ierr)
+      subroutine adios2_define_attribute(attribute, io, attribute_name, data, ierr)
+                                         
       ! 1D array attributes
-      subroutine adios2_define_attribute(attribute, io, attribute_name, &
-                                         data, elements, ierr) 
+      subroutine adios2_define_attribute(attribute, io, attribute_name, data, elements, ierr)
+                                          
       
