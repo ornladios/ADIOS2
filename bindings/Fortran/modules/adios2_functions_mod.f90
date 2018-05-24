@@ -8,9 +8,9 @@
 !       Author: William F Godoy godoywf@ornl.gov
 !
 
-module adios2_functions
-    use adios2_parameters
-    use adios2_functions_allocate
+module adios2_functions_mod
+    use adios2_parameters_mod
+    use adios2_functions_allocate_mod
     implicit none
 
 contains

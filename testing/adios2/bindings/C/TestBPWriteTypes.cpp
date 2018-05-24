@@ -91,18 +91,18 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
 
     adios2_engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
-    adios2_put_sync(engineH, varI8, data_I8);
-    adios2_put_sync(engineH, varI16, data_I16);
-    adios2_put_sync(engineH, varI32, data_I32);
-    adios2_put_sync(engineH, varI64, data_I64);
+    adios2_put(engineH, varI8, data_I8, adios2_mode_sync);
+    adios2_put(engineH, varI16, data_I16, adios2_mode_sync);
+    adios2_put(engineH, varI32, data_I32, adios2_mode_sync);
+    adios2_put(engineH, varI64, data_I64, adios2_mode_sync);
 
-    adios2_put_sync(engineH, varU8, data_U8);
-    adios2_put_sync(engineH, varU16, data_U16);
-    adios2_put_sync(engineH, varU32, data_U32);
-    adios2_put_sync(engineH, varU64, data_U64);
+    adios2_put(engineH, varU8, data_U8, adios2_mode_sync);
+    adios2_put(engineH, varU16, data_U16, adios2_mode_sync);
+    adios2_put(engineH, varU32, data_U32, adios2_mode_sync);
+    adios2_put(engineH, varU64, data_U64, adios2_mode_sync);
 
-    adios2_put_sync(engineH, varR32, data_R32);
-    adios2_put_sync(engineH, varR64, data_R64);
+    adios2_put(engineH, varR32, data_R32, adios2_mode_sync);
+    adios2_put(engineH, varR64, data_R64, adios2_mode_sync);
 
     adios2_close(engineH);
 

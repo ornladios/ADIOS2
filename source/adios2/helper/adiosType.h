@@ -169,7 +169,7 @@ std::string ValueToString(const T value) noexcept;
  * @param hint additional exception information
  */
 template <class T>
-void CheckForNullptr(const T *pointer, const std::string hint);
+void CheckForNullptr(T *pointer, const std::string hint);
 
 } // end namespace adios2
 

@@ -83,14 +83,14 @@ int main(int argc, char *argv[])
                 // bpWriter.BeginStep();
                 if (rank == 0) // global single value, only saved by rank 0
                 {
-                    bpWriter.PutSync<unsigned int>(bpTimeStep, timeStep);
+                    bpWriter.Put<unsigned int>(bpTimeStep, timeStep);
                 }
 
                 // template type is optional, but recommended
                 for (unsigned int v = 0; v < variablesSize; ++v)
                 {
                     myFloats[0] = static_cast<float>(v + timeStep);
-                    bpWriter.PutSync(*bpFloats[v], myFloats.data());
+                    bpWriter.Put(*bpFloats[v], myFloats.data());
                 }
                 const std::string myString(
                     "Hello from rank: " + std::to_string(rank) +
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 
                 if (rank == 0)
                 {
-                    bpWriter.PutSync(bpString, myString);
+                    bpWriter.Put(bpString, myString);
                 }
 
                 bpWriter.EndStep();
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
                 bpFloats000->SetStepSelection({2, 1});
 
                 std::vector<float> data(bpFloats000->SelectionSize());
-                bpReader.GetSync(*bpFloats000, data.data());
+                bpReader.Get(*bpFloats000, data.data(), adios2::Mode::Sync);
 
                 std::cout << "Data timestep " << bpFloats000->m_StepsStart
                           << " from rank " << rank << ": ";
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
                 bpString->SetStepSelection({3, 1});
 
                 std::string myString;
-                bpReader.GetSync(*bpString, myString);
+                bpReader.Get(*bpString, myString, adios2::Mode::Sync);
                 std::cout << myString << "\n";
             }
 

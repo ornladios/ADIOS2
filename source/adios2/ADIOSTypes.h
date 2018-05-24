@@ -54,9 +54,13 @@ enum class IOMode
 enum class Mode
 {
     Undefined,
+    // open modes
     Write,
     Read,
-    Append
+    Append,
+    // launch execution modes
+    Sync,
+    Deferred
 };
 
 enum class ReadMultiplexPattern

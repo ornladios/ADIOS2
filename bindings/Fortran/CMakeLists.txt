@@ -27,10 +27,9 @@ set(MODULES
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_attribute_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_mod.f90 
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_put_sync_mod.f90 
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_put_deferred_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_get_sync_mod.f90 
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_get_deferred_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_begin_step_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_put_mod.f90 
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_get_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_file_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_fwrite_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_fread_mod.f90

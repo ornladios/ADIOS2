@@ -9,29 +9,15 @@
 !
 
 module adios2_fopen_mod
-    use adios2_parameters
+    use adios2_parameters_mod
     implicit none
 
     interface adios2_fopen
-        module procedure adios2_fopen_full
         module procedure adios2_fopen_default
+        module procedure adios2_fopen_config
     end interface
 
 contains
-
-    subroutine adios2_fopen_full(unit, name, adios2_mode, config_file, &
-                                 io_in_config_file, ierr)
-        type(adios2_file), intent(out):: unit
-        character*(*), intent(in) :: name
-        integer, intent(in) :: adios2_mode
-        character*(*), intent(in) :: config_file
-        character*(*), intent(in) :: io_in_config_file
-        integer, intent(out) :: ierr
-
-        call adios2_fopen_config_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), adios2_mode, &
-                                     TRIM(ADJUSTL(config_file))//char(0), &
-                                     TRIM(ADJUSTL(io_in_config_file))//char(0), ierr)
-    end subroutine
 
     subroutine adios2_fopen_default(unit, name, adios2_mode, ierr)
         type(adios2_file), intent(out):: unit
@@ -39,8 +25,25 @@ contains
         integer, intent(in) :: adios2_mode
         integer, intent(out) :: ierr
 
-        call adios2_fopen_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), adios2_mode, &
-                              ierr)
+        call adios2_fopen_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
+                              adios2_mode, ierr)
+    end subroutine
+
+
+    subroutine adios2_fopen_config(unit, name, adios2_mode, config_file, &
+                                   io_in_config_file, ierr)
+        type(adios2_file), intent(out):: unit
+        character*(*), intent(in) :: name
+        integer, intent(in) :: adios2_mode
+        character*(*), intent(in) :: config_file
+        character*(*), intent(in) :: io_in_config_file
+        integer, intent(out) :: ierr
+
+        call adios2_fopen_config_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
+                                     adios2_mode, &
+                                     TRIM(ADJUSTL(config_file))//char(0), &
+                                     TRIM(ADJUSTL(io_in_config_file))//char(0),&
+                                     ierr)
     end subroutine
 
 end module

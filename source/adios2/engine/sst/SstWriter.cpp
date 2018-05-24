@@ -222,8 +222,8 @@ void SstWriter::Init()
     void SstWriter::DoPutDeferred(Variable<T> &variable, const T *values)      \
     {                                                                          \
         PutSyncCommon(variable, values);                                       \
-    }                                                                          \
-    void SstWriter::DoPutDeferred(Variable<T> &, const T &value) {}
+    }
+
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

@@ -248,10 +248,6 @@ void DataManReader::RunCallback(void *buffer, std::string doid, std::string var,
     void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
-    }                                                                          \
-    void DataManReader::DoGetDeferred(Variable<T> &variable, T &data)          \
-    {                                                                          \
-        GetDeferredCommon(variable, &data);                                    \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

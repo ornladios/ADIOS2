@@ -32,7 +32,7 @@ void ReadData(adios2::IO &h5IO, adios2::Engine &h5Reader,
         }
         std::vector<T> myValues(totalSize);
         // myFloats.data is pre-allocated
-        h5Reader.GetSync<T>(*var, myValues.data());
+        h5Reader.Get<T>(*var, myValues.data(), adios2::Mode::Sync);
 
         // std::cout << "\tValues of "<<name<<": ";
         std::cout << "\tPeek Values: ";

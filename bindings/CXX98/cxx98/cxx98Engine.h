@@ -35,24 +35,17 @@ public:
     size_t CurrentStep() const;
 
     template <class T>
-    void PutSync(Variable<T> &variable, const T *values);
-
-    template <class T>
-    void PutDeferred(Variable<T> &variable, const T *values);
-
-    template <class T>
-    void GetSync(Variable<T> &variable, T *values);
-
-    template <class T>
-    void GetDeferred(Variable<T> &variable, T *values);
-
-    void EndStep();
+    void Put(Variable<T> &variable, const T *data,
+             const Mode launch = Deferred);
 
     void PerformPuts();
 
+    template <class T>
+    void Get(Variable<T> &variable, T *data, const Mode launch = Deferred);
+
     void PerformGets();
 
-    void WriteStep();
+    void EndStep();
 
     void Flush(const int transportIndex = -1);
 
@@ -63,13 +56,9 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template void Engine::PutSync<T>(Variable<T> &, const T *);         \
+    extern template void Engine::Put<T>(Variable<T> &, const T *, const Mode); \
                                                                                \
-    extern template void Engine::PutDeferred<T>(Variable<T> &, const T *);     \
-                                                                               \
-    extern template void Engine::GetSync<T>(Variable<T> &, T *);               \
-                                                                               \
-    extern template void Engine::GetDeferred<T>(Variable<T> &, T *);
+    extern template void Engine::Get<T>(Variable<T> &, T *, const Mode);
 
 ADIOS2_FOREACH_CXX98_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

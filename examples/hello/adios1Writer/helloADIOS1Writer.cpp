@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
             adios1IO.Open("myVector.bp", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        adios1Writer.PutSync<float>(bpFloats, myFloats.data());
+        adios1Writer.Put<float>(bpFloats, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
         adios1Writer.Close();

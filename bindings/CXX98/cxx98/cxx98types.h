@@ -23,10 +23,13 @@ namespace cxx98
 
 enum Mode
 {
-    Undefined,
-    Write,
-    Read,
-    Append
+    Undefined = 0,
+    Write = 1,
+    Read = 2,
+    Append = 3,
+
+    Deferred = 4,
+    Sync = 5
 };
 
 enum StepStatus

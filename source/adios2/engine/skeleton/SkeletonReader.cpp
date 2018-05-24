@@ -111,10 +111,6 @@ void SkeletonReader::EndStep()
     void SkeletonReader::DoGetDeferred(Variable<T> &variable, T *data)         \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
-    }                                                                          \
-    void SkeletonReader::DoGetDeferred(Variable<T> &variable, T &data)         \
-    {                                                                          \
-        GetDeferredCommon(variable, &data);                                    \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

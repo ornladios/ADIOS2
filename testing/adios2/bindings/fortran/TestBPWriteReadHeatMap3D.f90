@@ -5,10 +5,10 @@ program TestBPWriteReadHeatMap3D
   implicit none
 
   integer(kind=8) :: sum_i1, sum_i2
-  integer(kind=8) :: adios
-  integer(kind=8) :: ioPut, bpWriter
-  integer(kind=8) :: ioGet, bpReader
-  integer(kind=8), dimension(6) :: var_temperatures, var_temperaturesIn
+  type(adios2_adios) :: adios
+  type(adios2_io) :: ioPut, ioGet
+  type(adios2_engine) :: bpWriter, bpReader
+  type(adios2_variable), dimension(6) :: var_temperatures, var_temperaturesIn
 
   integer(kind=1), dimension(:, :, :), allocatable :: temperatures_i1, &
                                                       sel_temperatures_i1
@@ -65,50 +65,44 @@ program TestBPWriteReadHeatMap3D
   call adios2_declare_io(ioPut, adios, 'HeatMapWrite', ierr)
 
   call adios2_define_variable(var_temperatures(1), ioPut, &
-                              'temperatures_i1', &
+                              'temperatures_i1', adios2_type_integer1, &
                               3, ishape, istart, icount, &
-                              adios2_constant_dims, temperatures_i1, ierr)
+                              adios2_constant_dims, ierr)
 
   call adios2_define_variable(var_temperatures(2), ioPut, &
-                              'temperatures_i2', &
+                              'temperatures_i2', adios2_type_integer2, &
                               3, ishape, istart, icount, &
-                              adios2_constant_dims, temperatures_i2, ierr)
+                              adios2_constant_dims, ierr)
 
   call adios2_define_variable(var_temperatures(3), ioPut, &
-                              'temperatures_i4', &
+                              'temperatures_i4', adios2_type_integer4, &
                               3, ishape, istart, icount, &
-                              adios2_constant_dims, temperatures_i4, ierr)
+                              adios2_constant_dims, ierr)
 
   call adios2_define_variable(var_temperatures(4), ioPut, &
-                              'temperatures_i8', &
+                              'temperatures_i8', adios2_type_integer8, &
                               3, ishape, istart, icount, &
-                              adios2_constant_dims, temperatures_i8, ierr)
+                              adios2_constant_dims, ierr)
 
   call adios2_define_variable(var_temperatures(5), ioPut, &
-                              'temperatures_r4', &
+                              'temperatures_r4', adios2_type_real, &
                               3, ishape, istart, icount, &
-                              adios2_constant_dims, temperatures_r4, ierr)
+                              adios2_constant_dims, ierr)
 
   call adios2_define_variable(var_temperatures(6), ioPut, &
-                              'temperatures_r8', &
+                              'temperatures_r8', adios2_type_dp, &
                               3, ishape, istart, icount, &
-                              adios2_constant_dims, temperatures_r8, ierr)
+                              adios2_constant_dims, ierr)
 
   call adios2_open(bpWriter, ioPut, 'HeatMap3D_f.bp', adios2_mode_write, &
                    ierr)
 
-  call adios2_put_deferred(bpWriter, var_temperatures(1), temperatures_i1, &
-                           ierr)
-  call adios2_put_deferred(bpWriter, var_temperatures(2), temperatures_i2, &
-                           ierr)
-  call adios2_put_deferred(bpWriter, var_temperatures(3), temperatures_i4, &
-                           ierr)
-  call adios2_put_deferred(bpWriter, var_temperatures(4), temperatures_i8, &
-                           ierr)
-  call adios2_put_deferred(bpWriter, var_temperatures(5), temperatures_r4, &
-                           ierr)
-  call adios2_put_deferred(bpWriter, var_temperatures(6), temperatures_r8, &
-                           ierr)
+  call adios2_put(bpWriter, var_temperatures(1), temperatures_i1, ierr)
+  call adios2_put(bpWriter, var_temperatures(2), temperatures_i2, ierr)
+  call adios2_put(bpWriter, var_temperatures(3), temperatures_i4, ierr)
+  call adios2_put(bpWriter, var_temperatures(4), temperatures_i8, ierr)
+  call adios2_put(bpWriter, var_temperatures(5), temperatures_r4, ierr)
+  call adios2_put(bpWriter, var_temperatures(6), temperatures_r8, ierr)
 
   call adios2_close(bpWriter, ierr)
 
@@ -170,18 +164,12 @@ program TestBPWriteReadHeatMap3D
     call adios2_set_selection(var_temperaturesIn(6), 3, sel_start, sel_count, &
                               ierr)
 
-    call adios2_get_deferred(bpReader, var_temperaturesIn(1), &
-                             sel_temperatures_i1, ierr)
-    call adios2_get_deferred(bpReader, var_temperaturesIn(2), &
-                             sel_temperatures_i2, ierr)
-    call adios2_get_deferred(bpReader, var_temperaturesIn(3), &
-                             sel_temperatures_i4, ierr)
-    call adios2_get_deferred(bpReader, var_temperaturesIn(4), &
-                             sel_temperatures_i8, ierr)
-    call adios2_get_deferred(bpReader, var_temperaturesIn(5), &
-                             sel_temperatures_r4, ierr)
-    call adios2_get_deferred(bpReader, var_temperaturesIn(6), &
-                             sel_temperatures_r8, ierr)
+    call adios2_get(bpReader, var_temperaturesIn(1), sel_temperatures_i1, ierr)
+    call adios2_get(bpReader, var_temperaturesIn(2), sel_temperatures_i2, ierr)
+    call adios2_get(bpReader, var_temperaturesIn(3), sel_temperatures_i4, ierr)
+    call adios2_get(bpReader, var_temperaturesIn(4), sel_temperatures_i8, ierr)
+    call adios2_get(bpReader, var_temperaturesIn(5), sel_temperatures_r4, ierr)
+    call adios2_get(bpReader, var_temperaturesIn(6), sel_temperatures_r8, ierr)
 
     call adios2_close(bpReader, ierr)
 

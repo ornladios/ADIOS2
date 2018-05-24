@@ -20,7 +20,6 @@ public:
     BPWriteReadAsStreamTestADIOS2_Threads() = default;
 
     SmallTestData m_TestData;
-    SmallTestData m_OriginalData;
 };
 
 //******************************************************************************
@@ -108,10 +107,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead1D8)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter.CurrentStep(), step);
-            bpWriter.WriteStep();
+
+            bpWriter.BeginStep();
+            bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter.Put<float>("r32", currentTestData.R32.data());
+            bpWriter.Put<double>("r64", currentTestData.R64.data());
+            bpWriter.EndStep();
         }
 
         bpWriter.Close();
@@ -219,25 +231,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead1D8)
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
 
-            bpReader.PerformGets();
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.EndStep();
-
-            UpdateSmallTestData(m_OriginalData, static_cast<int>(t), mpiRank,
-                                mpiSize);
 
             for (size_t i = 0; i < Nx; ++i)
             {
@@ -245,16 +255,16 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead1D8)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                EXPECT_EQ(I8[i], m_OriginalData.I8[i]) << msg;
-                EXPECT_EQ(I16[i], m_OriginalData.I16[i]) << msg;
-                EXPECT_EQ(I32[i], m_OriginalData.I32[i]) << msg;
-                EXPECT_EQ(I64[i], m_OriginalData.I64[i]) << msg;
-                EXPECT_EQ(U8[i], m_OriginalData.U8[i]) << msg;
-                EXPECT_EQ(U16[i], m_OriginalData.U16[i]) << msg;
-                EXPECT_EQ(U32[i], m_OriginalData.U32[i]) << msg;
-                EXPECT_EQ(U64[i], m_OriginalData.U64[i]) << msg;
-                EXPECT_EQ(R32[i], m_OriginalData.R32[i]) << msg;
-                EXPECT_EQ(R64[i], m_OriginalData.R64[i]) << msg;
+                EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
+                EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
+                EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
+                EXPECT_EQ(U16[i], currentTestData.U16[i]) << msg;
+                EXPECT_EQ(U32[i], currentTestData.U32[i]) << msg;
+                EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
+                EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
             }
             ++t;
         }
@@ -353,10 +363,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D2x4)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter.CurrentStep(), step);
-            bpWriter.WriteStep();
+
+            bpWriter.BeginStep();
+            bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter.Put<float>("r32", currentTestData.R32.data());
+            bpWriter.Put<double>("r64", currentTestData.R64.data());
+            bpWriter.EndStep();
         }
 
         bpWriter.Close();
@@ -473,25 +496,24 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D2x4)
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
+
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.PerformGets();
             bpReader.EndStep();
-
-            // Generate test data for each rank uniquely
-            UpdateSmallTestData(m_OriginalData, static_cast<int>(t), mpiRank,
-                                mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -499,16 +521,16 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D2x4)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                EXPECT_EQ(I8[i], m_OriginalData.I8[i]) << msg;
-                EXPECT_EQ(I16[i], m_OriginalData.I16[i]) << msg;
-                EXPECT_EQ(I32[i], m_OriginalData.I32[i]) << msg;
-                EXPECT_EQ(I64[i], m_OriginalData.I64[i]) << msg;
-                EXPECT_EQ(U8[i], m_OriginalData.U8[i]) << msg;
-                EXPECT_EQ(U16[i], m_OriginalData.U16[i]) << msg;
-                EXPECT_EQ(U32[i], m_OriginalData.U32[i]) << msg;
-                EXPECT_EQ(U64[i], m_OriginalData.U64[i]) << msg;
-                EXPECT_EQ(R32[i], m_OriginalData.R32[i]) << msg;
-                EXPECT_EQ(R64[i], m_OriginalData.R64[i]) << msg;
+                EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
+                EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
+                EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
+                EXPECT_EQ(U16[i], currentTestData.U16[i]) << msg;
+                EXPECT_EQ(U32[i], currentTestData.U32[i]) << msg;
+                EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
+                EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
             }
             ++t;
         }
@@ -608,10 +630,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D4x2)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter.CurrentStep(), step);
-            bpWriter.WriteStep();
+
+            bpWriter.BeginStep();
+            bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter.Put<float>("r32", currentTestData.R32.data());
+            bpWriter.Put<double>("r64", currentTestData.R64.data());
+            bpWriter.EndStep();
         }
 
         bpWriter.Close();
@@ -731,26 +766,25 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D4x2)
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
+
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.PerformGets();
 
             bpReader.EndStep();
-
-            // Generate test data for each rank uniquely
-            UpdateSmallTestData(m_OriginalData, static_cast<int>(t), mpiRank,
-                                mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -758,16 +792,16 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D4x2)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                EXPECT_EQ(I8[i], m_OriginalData.I8[i]) << msg;
-                EXPECT_EQ(I16[i], m_OriginalData.I16[i]) << msg;
-                EXPECT_EQ(I32[i], m_OriginalData.I32[i]) << msg;
-                EXPECT_EQ(I64[i], m_OriginalData.I64[i]) << msg;
-                EXPECT_EQ(U8[i], m_OriginalData.U8[i]) << msg;
-                EXPECT_EQ(U16[i], m_OriginalData.U16[i]) << msg;
-                EXPECT_EQ(U32[i], m_OriginalData.U32[i]) << msg;
-                EXPECT_EQ(U64[i], m_OriginalData.U64[i]) << msg;
-                EXPECT_EQ(R32[i], m_OriginalData.R32[i]) << msg;
-                EXPECT_EQ(R64[i], m_OriginalData.R64[i]) << msg;
+                EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
+                EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
+                EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
+                EXPECT_EQ(U16[i], currentTestData.U16[i]) << msg;
+                EXPECT_EQ(U32[i], currentTestData.U32[i]) << msg;
+                EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
+                EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
             }
             ++t;
         }
@@ -863,10 +897,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter.CurrentStep(), step);
-            bpWriter.WriteStep();
+
+            bpWriter.BeginStep();
+            bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter.Put<float>("r32", currentTestData.R32.data());
+            bpWriter.Put<double>("r64", currentTestData.R64.data());
+            bpWriter.EndStep();
         }
 
         bpWriter.Close();
@@ -975,23 +1022,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
+
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.EndStep();
-
-            UpdateSmallTestData(m_OriginalData, static_cast<int>(t), mpiRank,
-                                mpiSize);
 
             for (size_t i = 0; i < Nx; ++i)
             {
@@ -999,16 +1046,16 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                EXPECT_EQ(I8[i], m_OriginalData.I8[i]) << msg;
-                EXPECT_EQ(I16[i], m_OriginalData.I16[i]) << msg;
-                EXPECT_EQ(I32[i], m_OriginalData.I32[i]) << msg;
-                EXPECT_EQ(I64[i], m_OriginalData.I64[i]) << msg;
-                EXPECT_EQ(U8[i], m_OriginalData.U8[i]) << msg;
-                EXPECT_EQ(U16[i], m_OriginalData.U16[i]) << msg;
-                EXPECT_EQ(U32[i], m_OriginalData.U32[i]) << msg;
-                EXPECT_EQ(U64[i], m_OriginalData.U64[i]) << msg;
-                EXPECT_EQ(R32[i], m_OriginalData.R32[i]) << msg;
-                EXPECT_EQ(R64[i], m_OriginalData.R64[i]) << msg;
+                EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
+                EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
+                EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
+                EXPECT_EQ(U16[i], currentTestData.U16[i]) << msg;
+                EXPECT_EQ(U32[i], currentTestData.U32[i]) << msg;
+                EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
+                EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
             }
             ++t;
         }
@@ -1108,10 +1155,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter.CurrentStep(), step);
-            bpWriter.WriteStep();
+
+            bpWriter.BeginStep();
+            bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter.Put<float>("r32", currentTestData.R32.data());
+            bpWriter.Put<double>("r64", currentTestData.R64.data());
+            bpWriter.EndStep();
         }
 
         bpWriter.Close();
@@ -1228,24 +1288,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
+
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.EndStep();
-
-            // Generate test data for each rank uniquely
-            UpdateSmallTestData(m_OriginalData, static_cast<int>(t), mpiRank,
-                                mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -1253,16 +1312,16 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                EXPECT_EQ(I8[i], m_OriginalData.I8[i]) << msg;
-                EXPECT_EQ(I16[i], m_OriginalData.I16[i]) << msg;
-                EXPECT_EQ(I32[i], m_OriginalData.I32[i]) << msg;
-                EXPECT_EQ(I64[i], m_OriginalData.I64[i]) << msg;
-                EXPECT_EQ(U8[i], m_OriginalData.U8[i]) << msg;
-                EXPECT_EQ(U16[i], m_OriginalData.U16[i]) << msg;
-                EXPECT_EQ(U32[i], m_OriginalData.U32[i]) << msg;
-                EXPECT_EQ(U64[i], m_OriginalData.U64[i]) << msg;
-                EXPECT_EQ(R32[i], m_OriginalData.R32[i]) << msg;
-                EXPECT_EQ(R64[i], m_OriginalData.R64[i]) << msg;
+                EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
+                EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
+                EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
+                EXPECT_EQ(U16[i], currentTestData.U16[i]) << msg;
+                EXPECT_EQ(U32[i], currentTestData.U32[i]) << msg;
+                EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
+                EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
             }
             ++t;
         }
@@ -1363,10 +1422,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter.CurrentStep(), step);
-            bpWriter.WriteStep();
+
+            bpWriter.BeginStep();
+            bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter.Put<float>("r32", currentTestData.R32.data());
+            bpWriter.Put<double>("r64", currentTestData.R64.data());
+            bpWriter.EndStep();
         }
 
         bpWriter.Close();
@@ -1486,24 +1558,23 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
+
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.EndStep();
-
-            // Generate test data for each rank uniquely
-            UpdateSmallTestData(m_OriginalData, static_cast<int>(t), mpiRank,
-                                mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -1511,16 +1582,16 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                EXPECT_EQ(I8[i], m_OriginalData.I8[i]) << msg;
-                EXPECT_EQ(I16[i], m_OriginalData.I16[i]) << msg;
-                EXPECT_EQ(I32[i], m_OriginalData.I32[i]) << msg;
-                EXPECT_EQ(I64[i], m_OriginalData.I64[i]) << msg;
-                EXPECT_EQ(U8[i], m_OriginalData.U8[i]) << msg;
-                EXPECT_EQ(U16[i], m_OriginalData.U16[i]) << msg;
-                EXPECT_EQ(U32[i], m_OriginalData.U32[i]) << msg;
-                EXPECT_EQ(U64[i], m_OriginalData.U64[i]) << msg;
-                EXPECT_EQ(R32[i], m_OriginalData.R32[i]) << msg;
-                EXPECT_EQ(R64[i], m_OriginalData.R64[i]) << msg;
+                EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
+                EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
+                EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
+                EXPECT_EQ(U16[i], currentTestData.U16[i]) << msg;
+                EXPECT_EQ(U32[i], currentTestData.U32[i]) << msg;
+                EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
+                EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
             }
             ++t;
         }

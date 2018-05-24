@@ -378,22 +378,7 @@ void SstReader::Init()
             /*  it's supposed to go. */                                        \
             m_BP3Deserializer->GetDeferredVariable(variable, data);            \
         }                                                                      \
-    }                                                                          \
-    void SstReader::DoGetDeferred(Variable<T> &variable, T &data)              \
-    {                                                                          \
-        if (m_MarshalMethod == SstMarshalFFS)                                  \
-        {                                                                      \
-            SstFFSGetDeferred(                                                 \
-                m_Input, (void *)&variable, variable.m_Name.c_str(),           \
-                variable.m_Start.size(), variable.m_Start.data(),              \
-                variable.m_Count.data(), &data);                               \
-        }                                                                      \
-        if (m_MarshalMethod == SstMarshalBP)                                   \
-        {                                                                      \
-            /* See the routine above.*/                                        \
-        }                                                                      \
     }
-
 ADIOS2_FOREACH_TYPE_1ARG(declare_gets)
 #undef declare_gets
 

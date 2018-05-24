@@ -36,9 +36,9 @@ fileID = bpIO.AddTransport('File', {'Library': 'fstream'})
 
 # ADIOS Variable name, shape, start, offset, constant dims
 ioArray = bpIO.DefineVariable(
-    "bpArray", [size * Nx], [rank * Nx], [Nx], adios2.ConstantDims)
+    "bpArray", [size * Nx], [rank * Nx], [Nx], adios2.ConstantDims, myArray)
 
 # ADIOS Engine
 bpFileWriter = bpIO.Open("npArray.bp", adios2.Mode.Write)
-bpFileWriter.PutSync(ioArray, myArray)
+bpFileWriter.Put(ioArray, myArray, adios2.Mode.Sync)
 bpFileWriter.Close()

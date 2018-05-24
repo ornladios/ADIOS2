@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
         adios2::Engine &sstWriter = sstIO.Open("helloSst", adios2::Mode::Write);
 
         sstWriter.BeginStep();
-        sstWriter.PutSync<float>(bpFloats, myFloats.data());
+        sstWriter.Put<float>(bpFloats, myFloats.data());
         sstWriter.EndStep();
         sstWriter.Close();
     }

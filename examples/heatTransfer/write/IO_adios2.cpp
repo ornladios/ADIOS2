@@ -70,6 +70,6 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     // We need to have the vector object here not to destruct here until the end
     // of function.
     std::vector<double> v = ht.data_noghost();
-    bpWriter->PutDeferred<double>(*varT, v.data());
+    bpWriter->Put<double>(*varT, v.data());
     bpWriter->EndStep();
 }

@@ -277,7 +277,7 @@ inline std::string VectorToCSV(const std::vector<T> &input) noexcept
 }
 
 template <class T>
-void CheckForNullptr(const T *pointer, const std::string hint)
+void CheckForNullptr(T *pointer, const std::string hint)
 {
     if (pointer == nullptr)
     {

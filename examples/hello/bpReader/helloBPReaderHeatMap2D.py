@@ -46,7 +46,7 @@ varTemperature = ioWrite.DefineVariable("temperature2D", shape,
                                         temperatures)
 
 obpStream = ioWrite.Open('HeatMap2D_py.bp', adios2.Mode.Write)
-obpStream.PutSync(varTemperature, temperatures)
+obpStream.Put(varTemperature, temperatures)
 obpStream.Close()
 
 
@@ -64,7 +64,7 @@ if rank == 0:
         print('Incoming size ' + str(inSize))
         inTemperatures = numpy.zeros(inSize, dtype=numpy.int)
 
-        ibpStream.GetSync(var_inTemperature, inTemperatures)
+        ibpStream.Get(var_inTemperature, inTemperatures, adios2.Mode.Sync)
 
         print('Incoming temperature map')
 

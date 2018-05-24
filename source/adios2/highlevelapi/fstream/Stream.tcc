@@ -44,7 +44,7 @@ void Stream::Write(const std::string &name, const T *values, const Dims &shape,
         }
     }
 
-    m_Engine->PutSync(*variable, values);
+    m_Engine->Put(*variable, values, adios2::Mode::Sync);
 
     if (endStep)
     {
@@ -188,7 +188,7 @@ std::vector<T> Stream::GetCommon(Variable<T> &variable, const bool endStep)
     try
     {
         std::vector<T> values(variable.SelectionSize());
-        m_Engine->GetSync(variable, values.data());
+        m_Engine->Get(variable, values.data(), adios2::Mode::Sync);
         if (endStep)
         {
             m_Engine->EndStep();
@@ -208,7 +208,7 @@ void Stream::GetPCommon(Variable<T> &variable, T *values, const bool endStep)
 {
     try
     {
-        m_Engine->GetSync(variable, values);
+        m_Engine->Get(variable, values, adios2::Mode::Sync);
         if (endStep)
         {
             m_Engine->EndStep();

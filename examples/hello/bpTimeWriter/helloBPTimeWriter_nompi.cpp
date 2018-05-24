@@ -47,11 +47,11 @@ int main(int argc, char *argv[])
             bpWriter.BeginStep();
 
             // template type is optional but recommended
-            bpWriter.PutSync<unsigned int>(bpTimeStep, timeStep);
+            bpWriter.Put<unsigned int>(bpTimeStep, timeStep);
 
             // modifying data
             myFloats[0] = static_cast<float>(timeStep);
-            bpWriter.PutSync<float>(bpFloats, myFloats.data());
+            bpWriter.Put<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
 
             bpWriter.EndStep();
         }

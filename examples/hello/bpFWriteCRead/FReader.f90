@@ -8,7 +8,10 @@ program FReader
     integer :: i, j, inx, iny, irank, isize, ierr
 
     ! adios2 handlers
-    integer(kind=8) :: adios, io, var, engine
+    type(adios2_adios):: adios
+    type(adios2_io):: io
+    type(adios2_variable):: var
+    type(adios2_engine):: engine
 
     ! Launch MPI
     call MPI_Init(ierr)
@@ -35,7 +38,7 @@ program FReader
 
             call adios2_set_selection( var, 2, sel_start, sel_count, ierr )
 
-            call adios2_get_sync(engine, var, data, ierr)
+            call adios2_get(engine, var, data, adios2_mode_sync, ierr)
 
             write(*,'(A,2(I2,A),A,2(I2,A),A)') 'Selection  &
                       & [ start = (', (sel_start(i),',',i=1,2) , ') &

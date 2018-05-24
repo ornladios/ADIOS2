@@ -166,18 +166,18 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         var_r32->SetSelection(sel);
         var_r64->SetSelection(sel);
 
-        engine.GetDeferred(*var_i8, I8.data());
-        engine.GetDeferred(*var_i16, I16.data());
-        engine.GetDeferred(*var_i32, I32.data());
-        engine.GetDeferred(*var_i64, I64.data());
+        engine.Get(*var_i8, I8.data());
+        engine.Get(*var_i16, I16.data());
+        engine.Get(*var_i32, I32.data());
+        engine.Get(*var_i64, I64.data());
 
-        engine.GetDeferred(*var_u8, U8.data());
-        engine.GetDeferred(*var_u16, U16.data());
-        engine.GetDeferred(*var_u32, U32.data());
-        engine.GetDeferred(*var_u64, U64.data());
+        engine.Get(*var_u8, U8.data());
+        engine.Get(*var_u16, U16.data());
+        engine.Get(*var_u32, U32.data());
+        engine.Get(*var_u64, U64.data());
 
-        engine.GetDeferred(*var_r32, R32.data());
-        engine.GetDeferred(*var_r64, R64.data());
+        engine.Get(*var_r32, R32.data());
+        engine.Get(*var_r64, R64.data());
 
         engine.EndStep();
 

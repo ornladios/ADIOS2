@@ -530,9 +530,8 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
         engine = &ioCpp.Open(name, adios2::Mode::Append, mpi_comm);
         break;
 
-    case adios2_mode_undefined:
-
-        break;
+    default:
+        return nullptr;
     }
 
     return reinterpret_cast<adios2_engine *>(engine);

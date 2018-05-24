@@ -77,7 +77,9 @@ int main(int argc, char *argv[])
                 myArray.resize(elementsSize);
             }
 
-            reader.GetDeferred(*vMyArray, myArray.data());
+            if (vMyArray != nullptr)
+                reader.Get(*vMyArray, myArray.data());
+
             reader.EndStep();
 
             printDataStep(myArray.data(), count, start, rank, step);

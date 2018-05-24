@@ -25,57 +25,28 @@ extern "C" {
 adios2_step_status adios2_begin_step(adios2_engine *engine,
                                      const adios2_step_mode mode,
                                      const float timeout_seconds);
-
+/**
+ * Retrieve current step for an engine
+ * @param engine handler
+ * @return current step
+ */
 size_t adios2_current_step(const adios2_engine *engine);
 
 //***************** PUT *****************
+void adios2_put(adios2_engine *engine, adios2_variable *variable,
+                const void *data, const adios2_mode mode);
 
-/**
- * Put a variable in IO using a adios2_Variable handler
- * @param engine handler for engine executing the write
- * @param variable handler for variable from adios2_define_variable
- * @param values application data to be written for this variable
- */
-void adios2_put_sync(adios2_engine *engine, adios2_variable *variable,
-                     const void *values);
-
-void adios2_put_sync_self(adios2_engine *engine, adios2_variable *variable);
-
-void adios2_put_sync_by_name(adios2_engine *engine, const char *variable_name,
-                             const void *values);
-
-/**
- * Write a variable using a adios2_Variable handler in deferred mode
- * @param engine handler for engine executing the write
- * @param variable handler for variable from adios2_define_variable
- * @param values application data to be written for this variable
- */
-void adios2_put_deferred(adios2_engine *engine, adios2_variable *variable,
-                         const void *values);
-
-void adios2_put_deferred_self(adios2_engine *engine, adios2_variable *variable);
-
-void adios2_put_deferred_by_name(adios2_engine *engine,
-                                 const char *variable_name, const void *values);
+void adios2_put_by_name(adios2_engine *engine, const char *variable_name,
+                        const void *data, const adios2_mode mode);
 
 void adios2_perform_puts(adios2_engine *engine);
 
 //***************** GET *****************
-void adios2_get_sync(adios2_engine *engine, adios2_variable *variable,
-                     void *values);
+void adios2_get(adios2_engine *engine, adios2_variable *variable, void *data,
+                const adios2_mode mode);
 
-void adios2_get_sync_self(adios2_engine *engine, adios2_variable *variable);
-
-void adios2_get_sync_by_name(adios2_engine *engine, const char *variable_name,
-                             void *values);
-
-void adios2_get_deferred(adios2_engine *engine, adios2_variable *variable,
-                         void *values);
-
-void adios2_get_deferred_self(adios2_engine *engine, adios2_variable *variable);
-
-void adios2_get_deferred_by_name(adios2_engine *engine,
-                                 const char *variable_name, void *values);
+void adios2_get_by_name(adios2_engine *engine, const char *variable_name,
+                        void *data, const adios2_mode mode);
 
 void adios2_perform_gets(adios2_engine *engine);
 
@@ -84,13 +55,6 @@ void adios2_perform_gets(adios2_engine *engine);
  * @param engine handler executing IO tasks
  */
 void adios2_end_step(adios2_engine *engine);
-
-/**
- * Convenience function to write all current variables
- * defined in IO
- * @param engine handler executing IO tasks
- */
-void adios2_write_step(adios2_engine *engine);
 
 /**
  * Explicit engine buffer flush to transports

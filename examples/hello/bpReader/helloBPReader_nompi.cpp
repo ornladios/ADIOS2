@@ -44,12 +44,12 @@ int main(int argc, char *argv[])
 
         if (bpFloats != nullptr)
         {
-            bpReader.GetSync<float>(*bpFloats, myFloats.data());
+            bpReader.Get<float>(*bpFloats, myFloats.data(), adios2::Mode::Sync);
         }
 
         if (bpFloats != nullptr)
         {
-            bpReader.GetSync<int>(*bpInts, myInts.data());
+            bpReader.Get<int>(*bpInts, myInts.data(), adios2::Mode::Sync);
         }
 
         /** Close bp file, engine becomes unreachable after this*/

@@ -220,7 +220,7 @@ void VariableBase::CheckDimensions(const std::string hint) const
             throw std::invalid_argument(
                 "ERROR: GlobalArray variable " + m_Name +
                 " start and count dimensions must be defined by either "
-                "IO.DefineVariable or Variable.SetSelection in call to " +
+                "IO.DefineVariable or Variable.SetSelection, " +
                 hint + "\n");
         }
     }
@@ -370,7 +370,7 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
             throw std::invalid_argument("ERROR: string variable " + m_Name +
                                         " can't have dimensions (shape, start, "
                                         "count must be empty), string is "
-                                        "always defined as a LocalValue " +
+                                        "always defined as a LocalValue, " +
                                         hint + "\n");
         }
     }
@@ -387,7 +387,7 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
             throw std::invalid_argument(
                 "ERROR: LocalValueDim parameter is only "
                 "allowed in a {LocalValueDim} "
-                "shape in call to " +
+                "shape, " +
                 hint + "\n");
         }
     }
@@ -400,8 +400,7 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
          std::count(m_Count.begin(), m_Count.end(), JoinedDim) > 0))
     {
         throw std::invalid_argument("ERROR: JoinedDim is only allowed once in "
-                                    "Shape and cannot appear in Start/Count in "
-                                    "call to " +
+                                    "Shape and cannot appear in start/count, " +
                                     hint + "\n");
     }
 }

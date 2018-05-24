@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
             bpIO.Open("myVector.bp", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        bpWriter.PutSync<float>(bpFloats, myFloats.data());
+        bpWriter.Put<float>(bpFloats, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
         bpWriter.Close();

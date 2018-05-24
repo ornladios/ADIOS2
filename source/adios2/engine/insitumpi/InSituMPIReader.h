@@ -80,8 +80,7 @@ private:
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
-    void DoGetDeferred(Variable<T> &, T *) final;                              \
-    void DoGetDeferred(Variable<T> &, T &) final;
+    void DoGetDeferred(Variable<T> &, T *) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

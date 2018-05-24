@@ -21,9 +21,9 @@ bpIO = adios.DeclareIO("BPFile_N2N")
 
 # ADIOS Variable name, shape, start, offset, constant dims
 ioArray = bpIO.DefineVariable(
-    "bpArray", [], [], [Nx], adios2.ConstantDims)
+    "bpArray", [], [], [Nx], adios2.ConstantDims, myArray)
 
 # ADIOS Engine
 bpFileWriter = bpIO.Open("npArray.bp", adios2.Mode.Write)
-bpFileWriter.PutSync(ioArray, myArray)
+bpFileWriter.Put(ioArray, myArray, adios2.Mode.Sync)
 bpFileWriter.Close()

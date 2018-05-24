@@ -358,9 +358,7 @@ void InSituMPIWriter::EndStep()
                                         const T *values)                       \
     {                                                                          \
         PutDeferredCommon(variable, values);                                   \
-    }                                                                          \
-    void InSituMPIWriter::DoPutDeferred(Variable<T> &, const T &value) {}
-
+    }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

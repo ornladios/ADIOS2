@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
             if (vMyArray != nullptr)
             {
-                reader.GetDeferred(*vMyArray, myArray.data());
+                reader.Get(*vMyArray, myArray.data());
             }
 
             reader.EndStep();

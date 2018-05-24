@@ -1,4 +1,4 @@
-module adios2_functions_allocate
+module adios2_functions_allocate_mod
     implicit none
 
     interface adios2_allocate

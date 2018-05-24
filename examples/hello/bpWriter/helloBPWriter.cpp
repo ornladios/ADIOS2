@@ -58,9 +58,9 @@ int main(int argc, char *argv[])
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
 
         /** Put variables for buffering, template type is optional */
-        bpFileWriter.PutSync<float>(bpFloats, myFloats.data());
-        bpFileWriter.PutSync(bpInts, myInts.data());
-        bpFileWriter.PutSync(bpString, myString);
+        bpFileWriter.Put<float>(bpFloats, myFloats.data());
+        bpFileWriter.Put(bpInts, myInts.data());
+        bpFileWriter.Put(bpString, myString);
 
         /** Create bp file, engine becomes unreachable after this*/
         bpFileWriter.Close();

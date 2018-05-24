@@ -1534,7 +1534,7 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
             }
             variable->SetStepSelection({s[0], c[0]});
         }
-        fp->GetSync(*variable, data);
+        fp->Get(*variable, data, adios2::Mode::Sync);
 
         // print slice
         print_dataset(data, variable->m_Type, s, c, tdims, ndigits_dims);

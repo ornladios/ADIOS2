@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
         myFloats.resize(my_count);
 
         bpFloats->SetSelection(sel);
-        sstReader.GetDeferred(*bpFloats, myFloats.data());
+        sstReader.Get(*bpFloats, myFloats.data());
         sstReader.EndStep();
 
         sstReader.Close();

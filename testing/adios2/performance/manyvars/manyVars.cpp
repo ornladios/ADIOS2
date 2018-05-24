@@ -326,7 +326,7 @@ public:
             for (i = 0; i < NVARS; i++)
             {
                 adios2_set_selection(varW[i], 2, start, count);
-                adios2_put_sync(engineW, varW[i], a2);
+                adios2_put(engineW, varW[i], a2, adios2_mode_sync);
             }
         }
         adios2_perform_puts(engineW);
@@ -414,7 +414,7 @@ public:
                         adios2_variable *varH =
                             adios2_inquire_variable(ioR, varnames[i]);
                         adios2_set_selection(varH, 2, start, count);
-                        adios2_get_sync(engineR, varH, r2);
+                        adios2_get(engineR, varH, r2, adios2_mode_sync);
                         ts += MPI_Wtime() - tsb;
                         CHECK_ARRAY(varnames[i], r2, ldim1 * ldim2, v, step,
                                     block, iMacro)

@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
             // adios2::SelectionBoundingBox sel();
             varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
                 {static_cast<size_t>(rank), 0}, {1, static_cast<size_t>(Nx)}));
-            writer.PutSync<double>(varGlobalArray, row.data());
+            writer.Put<double>(varGlobalArray, row.data());
 
             // Indicate we are done for this step.
             // Disk I/O will be performed during this call unless
