@@ -57,7 +57,7 @@ ADIOS objects can be created in MPI and non-MPI (serial) mode. Optionally, a run
    adios2::DebugON and adios::DebugOFF are aliases to true and false, respectively. Use them for code clarity. 
 
 
-**Factory of IO objects**: Multiple IOs can be created from within the scope of an ADIOS object by calling the **DeclareIO** function:
+**Factory of IO components**: Multiple IO components (IO tasks) can be created from within the scope of an ADIOS object by calling the **DeclareIO** function:
 
 .. code-block:: c++
 
