@@ -7,8 +7,11 @@
      integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
      integer :: inx, irank, isize, ierr, i
 
-     integer(kind=8) :: adios, ioWrite, bpWriter, ioRead, bpReader
-     integer(kind=8), dimension(12) :: variables
+     type(adios2_adios) :: adios
+     type(adios2_io) :: ioWrite, ioRead
+     type(adios2_variable), dimension(12) :: variables
+     type(adios2_engine) :: bpWriter, bpReader
+
      ! read handlers
      character(len=:), allocatable :: variable_name
      integer :: variable_type, ndims
@@ -35,70 +38,76 @@
      call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
 
      ! Defines a variable to be written in bp format
-     call adios2_define_variable(variables(1), ioWrite, "var_I8", 1, &
+     call adios2_define_variable(variables(1), ioWrite, "var_I8", &
+                                 adios2_type_integer1, 1, &
                                  shape_dims, start_dims, count_dims, &
-                                 adios2_constant_dims, data_I8, ierr)
+                                 adios2_constant_dims, ierr)
 
-     call adios2_define_variable(variables(2), ioWrite, "var_I16", 1, &
+     call adios2_define_variable(variables(2), ioWrite, "var_I16", &
+                                 adios2_type_integer2, 1, &
                                  shape_dims, start_dims, count_dims, &
-                                 adios2_constant_dims, data_I16, ierr)
+                                 adios2_constant_dims, ierr)
 
-     call adios2_define_variable(variables(3), ioWrite, "var_I32", 1, &
+     call adios2_define_variable(variables(3), ioWrite, "var_I32", &
+                                 adios2_type_integer4, 1, &
                                  shape_dims, start_dims, count_dims, &
-                                 adios2_constant_dims, data_I32, ierr)
+                                 adios2_constant_dims, ierr)
 
-     call adios2_define_variable(variables(4), ioWrite, "var_I64", 1, &
+     call adios2_define_variable(variables(4), ioWrite, "var_I64", &
+                                 adios2_type_integer8, 1, &
                                  shape_dims, start_dims, count_dims, &
-                                 adios2_constant_dims, data_I64, ierr)
+                                 adios2_constant_dims, ierr)
 
-     call adios2_define_variable(variables(5), ioWrite, "var_R32", 1, &
+     call adios2_define_variable(variables(5), ioWrite, "var_R32", &
+                                 adios2_type_real, 1, &
                                  shape_dims, start_dims, count_dims, &
-                                 adios2_constant_dims, data_R32, ierr)
+                                 adios2_constant_dims, ierr)
 
-     call adios2_define_variable(variables(6), ioWrite, "var_R64", 1, &
+     call adios2_define_variable(variables(6), ioWrite, "var_R64", &
+                                 adios2_type_dp, 1, &
                                  shape_dims, start_dims, count_dims, &
-                                 adios2_constant_dims, data_R64, ierr)
+                                 adios2_constant_dims, ierr)
 
      ! Global variables
-     call adios2_define_variable(variables(7), ioWrite, "gvar_I8", data_I8(1), &
-                                 ierr)
+     call adios2_define_variable(variables(7), ioWrite, "gvar_I8", &
+                                 adios2_type_integer1,  ierr)
 
      call adios2_define_variable(variables(8), ioWrite, "gvar_I16", &
-                                 data_I16(1), ierr)
+                                 adios2_type_integer2,  ierr)
 
      call adios2_define_variable(variables(9), ioWrite, "gvar_I32", &
-                                 data_I32(1), ierr)
+                                 adios2_type_integer4,  ierr)
 
      call adios2_define_variable(variables(10), ioWrite, "gvar_I64", &
-                                 data_I64(1), ierr)
+                                 adios2_type_integer8,  ierr)
 
      call adios2_define_variable(variables(11), ioWrite, "gvar_R32", &
-                                 data_R32(1), ierr)
+                                 adios2_type_real,  ierr)
 
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
-                                 data_R64(1), ierr)
+                                 adios2_type_dp,  ierr)
 
      ! Open myVector_f.bp in write mode, this launches an engine
      call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
 
      ! Put array contents to bp buffer, based on var1 metadata
      if (irank == 0) then
-         call adios2_put_deferred(bpWriter, variables(7), data_I8(1), ierr)
-         call adios2_put_deferred(bpWriter, variables(8), data_I16(1), ierr)
-         call adios2_put_deferred(bpWriter, variables(9), data_I32(1), ierr)
-         call adios2_put_deferred(bpWriter, variables(10), data_I64(1), ierr)
-         call adios2_put_deferred(bpWriter, variables(11), data_R32(1), ierr)
-         call adios2_put_deferred(bpWriter, variables(12), data_R64(1), ierr)
+         call adios2_put(bpWriter, variables(7), data_I8(1), ierr)
+         call adios2_put(bpWriter, variables(8), data_I16(1), ierr)
+         call adios2_put(bpWriter, variables(9), data_I32(1), ierr)
+         call adios2_put(bpWriter, variables(10), data_I64(1), ierr)
+         call adios2_put(bpWriter, variables(11), data_R32(1), ierr)
+         call adios2_put(bpWriter, variables(12), data_R64(1), ierr)
      end if
 
      do i = 1, 3
          call adios2_begin_step(bpWriter, adios2_step_mode_append, 0.0, ierr)
-         call adios2_put_deferred(bpWriter, variables(1), data_I8, ierr)
-         call adios2_put_deferred(bpWriter, variables(2), data_I16, ierr)
-         call adios2_put_deferred(bpWriter, variables(3), data_I32, ierr)
-         call adios2_put_deferred(bpWriter, variables(4), data_I64, ierr)
-         call adios2_put_deferred(bpWriter, variables(5), data_R32, ierr)
-         call adios2_put_deferred(bpWriter, variables(6), data_R64, ierr)
+         call adios2_put(bpWriter, variables(1), data_I8, ierr)
+         call adios2_put(bpWriter, variables(2), data_I16, ierr)
+         call adios2_put(bpWriter, variables(3), data_I32, ierr)
+         call adios2_put(bpWriter, variables(4), data_I64, ierr)
+         call adios2_put(bpWriter, variables(5), data_R32, ierr)
+         call adios2_put(bpWriter, variables(6), data_R64, ierr)
          call adios2_end_step(bpWriter, ierr)
      end do
 

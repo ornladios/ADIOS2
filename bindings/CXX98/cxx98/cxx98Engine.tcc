@@ -19,27 +19,17 @@ namespace cxx98
 {
 
 template <class T>
-void Engine::PutSync(Variable<T> &variable, const T *values)
+void Engine::Put(Variable<T> &variable, const T *values, const Mode launch)
 {
-    adios2_put_sync(&m_Engine, variable.m_Variable, values);
+    adios2_put(&m_Engine, variable.m_Variable, values,
+               static_cast<adios2_mode>(launch));
 }
 
 template <class T>
-void Engine::PutDeferred(Variable<T> &variable, const T *values)
+void Engine::Get(Variable<T> &variable, T *values, const Mode launch)
 {
-    adios2_put_deferred(&m_Engine, variable.m_Variable, values);
-}
-
-template <class T>
-void Engine::GetSync(Variable<T> &variable, T *values)
-{
-    adios2_get_sync(&m_Engine, variable.m_Variable, values);
-}
-
-template <class T>
-void Engine::GetDeferred(Variable<T> &variable, T *values)
-{
-    adios2_get_deferred(&m_Engine, variable.m_Variable, values);
+    adios2_get(&m_Engine, variable.m_Variable, values,
+               static_cast<adios2_mode>(launch));
 }
 
 } // end namespace cxx98

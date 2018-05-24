@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
                                  {nx, ny}, adios2::ConstantDims);
 
     adios2::Engine &engine = io.Open("CppWriter.bp", adios2::Mode::Write);
-    engine.PutSync(bpFloats, data.data());
+    engine.Put(bpFloats, data.data());
     engine.Close();
 
     MPI_Finalize();

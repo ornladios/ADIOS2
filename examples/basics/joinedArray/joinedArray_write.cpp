@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            writer.PutSync<double>(varTable, mytable.data());
+            writer.Put<double>(varTable, mytable.data());
 
             writer.EndStep();
         }

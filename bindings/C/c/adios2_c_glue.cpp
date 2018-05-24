@@ -85,8 +85,8 @@ adios2_FILE *adios2_fopen_glue(const char *name, const adios2_mode mode,
                                        "BPFile", host_language);
         break;
 
-    case adios2_mode_undefined:
-        throw std::invalid_argument("ERROR: undefined mode for adios2 fopen " +
+    default:
+        throw std::invalid_argument("ERROR: mode not valid for adios2_fopen " +
                                     std::string(name) + "\n");
         break;
     }
@@ -132,8 +132,8 @@ adios2_FILE *adios2_fopen_config_glue(const char *name, const adios2_mode mode,
                                io_in_config_file, host_language);
         break;
 
-    case adios2_mode_undefined:
-        throw std::invalid_argument("ERROR: undefined mode for adios2 fopen " +
+    default:
+        throw std::invalid_argument("ERROR: invalid mode for adios2_fopen " +
                                     std::string(name) + "\n");
         break;
     }

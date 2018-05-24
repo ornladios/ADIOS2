@@ -137,10 +137,6 @@ void PluginEngine::Init()
     {                                                                          \
         m_Impl->m_Plugin->DoPutDeferred(variable, values);                     \
     }                                                                          \
-    void PluginEngine::DoPutDeferred(Variable<T> &variable, const T &value)    \
-    {                                                                          \
-        m_Impl->m_Plugin->DoPutDeferred(variable, value);                      \
-    }                                                                          \
     void PluginEngine::DoGetSync(Variable<T> &variable, T *values)             \
     {                                                                          \
         m_Impl->m_Plugin->DoGetSync(variable, values);                         \
@@ -148,10 +144,6 @@ void PluginEngine::Init()
     void PluginEngine::DoGetDeferred(Variable<T> &variable, T *values)         \
     {                                                                          \
         m_Impl->m_Plugin->DoGetDeferred(variable, values);                     \
-    }                                                                          \
-    void PluginEngine::DoGetDeferred(Variable<T> &variable, T &value)          \
-    {                                                                          \
-        m_Impl->m_Plugin->DoGetDeferred(variable, value);                      \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare)

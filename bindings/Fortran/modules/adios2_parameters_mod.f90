@@ -8,7 +8,7 @@
 !       Author: William F Godoy godoywf@ornl.gov
 !
 
-module adios2_parameters
+module adios2_parameters_mod
     implicit none
 
     ! Debug mode
@@ -44,6 +44,8 @@ module adios2_parameters
     integer, parameter :: adios2_mode_write = 1
     integer, parameter :: adios2_mode_read = 2
     integer, parameter :: adios2_mode_append = 3
+    integer, parameter :: adios2_mode_deferred = 4
+    integer, parameter :: adios2_mode_sync = 5
 
     ! Step Mode
     integer, parameter :: adios2_step_mode_append = 0
@@ -67,8 +69,37 @@ module adios2_parameters
     logical, parameter :: adios2_advance_yes = .true.
     logical, parameter :: adios2_advance_no  = .false.
 
+    ! Low level API handlers
+    type adios2_adios
+        integer(kind=8):: f2c
+        logical :: valid
+    end type
+
+    type adios2_io
+        integer(kind=8):: f2c
+        logical :: valid
+    end type
+
+    type adios2_variable
+        integer(kind=8):: f2c
+        logical :: valid
+    end type
+
+    type adios2_attribute
+        integer(kind=8):: f2c
+        logical :: valid
+    end type
+
+    type adios2_engine
+        integer(kind=8):: f2c
+        integer :: mode
+        logical :: valid
+    end type
+
+    ! High-level API
     type adios2_file
-        integer(kind=8):: fh
+        integer(kind=8):: f2c
+        logical :: valid
     end type
 
 end module

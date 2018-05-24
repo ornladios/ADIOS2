@@ -150,13 +150,37 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter1D.CurrentStep(), step);
             EXPECT_EQ(bpWriter2D.CurrentStep(), step);
 
-            bpWriter1D.WriteStep();
-            bpWriter2D.WriteStep();
+            bpWriter1D.BeginStep();
+            bpWriter1D.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter1D.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter1D.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter1D.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter1D.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter1D.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter1D.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter1D.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter1D.Put<float>("r32", currentTestData.R32.data());
+            bpWriter1D.Put<double>("r64", currentTestData.R64.data());
+            bpWriter1D.EndStep();
+
+            bpWriter2D.BeginStep();
+            bpWriter2D.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter2D.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter2D.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter2D.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter2D.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter2D.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter2D.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter2D.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter2D.Put<float>("r32", currentTestData.R32.data());
+            bpWriter2D.Put<double>("r64", currentTestData.R64.data());
+            bpWriter2D.EndStep();
         }
 
         adios.FlushAll(); // checkpoint for 1D and 2D writers
@@ -264,18 +288,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.GetDeferred(*var_i8, I8.data());
-                bpReader.GetDeferred(*var_i16, I16.data());
-                bpReader.GetDeferred(*var_i32, I32.data());
-                bpReader.GetDeferred(*var_i64, I64.data());
+                bpReader.Get(*var_i8, I8.data());
+                bpReader.Get(*var_i16, I16.data());
+                bpReader.Get(*var_i32, I32.data());
+                bpReader.Get(*var_i64, I64.data());
 
-                bpReader.GetDeferred(*var_u8, U8.data());
-                bpReader.GetDeferred(*var_u16, U16.data());
-                bpReader.GetDeferred(*var_u32, U32.data());
-                bpReader.GetDeferred(*var_u64, U64.data());
+                bpReader.Get(*var_u8, U8.data());
+                bpReader.Get(*var_u16, U16.data());
+                bpReader.Get(*var_u32, U32.data());
+                bpReader.Get(*var_u64, U64.data());
 
-                bpReader.GetDeferred(*var_r32, R32.data());
-                bpReader.GetDeferred(*var_r64, R64.data());
+                bpReader.Get(*var_r32, R32.data());
+                bpReader.Get(*var_r64, R64.data());
 
                 bpReader.PerformGets();
 
@@ -421,18 +445,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.GetDeferred(*var_i8, I8.data());
-                bpReader.GetDeferred(*var_i16, I16.data());
-                bpReader.GetDeferred(*var_i32, I32.data());
-                bpReader.GetDeferred(*var_i64, I64.data());
+                bpReader.Get(*var_i8, I8.data());
+                bpReader.Get(*var_i16, I16.data());
+                bpReader.Get(*var_i32, I32.data());
+                bpReader.Get(*var_i64, I64.data());
 
-                bpReader.GetDeferred(*var_u8, U8.data());
-                bpReader.GetDeferred(*var_u16, U16.data());
-                bpReader.GetDeferred(*var_u32, U32.data());
-                bpReader.GetDeferred(*var_u64, U64.data());
+                bpReader.Get(*var_u8, U8.data());
+                bpReader.Get(*var_u16, U16.data());
+                bpReader.Get(*var_u32, U32.data());
+                bpReader.Get(*var_u64, U64.data());
 
-                bpReader.GetDeferred(*var_r32, R32.data());
-                bpReader.GetDeferred(*var_r64, R64.data());
+                bpReader.Get(*var_r32, R32.data());
+                bpReader.Get(*var_r64, R64.data());
 
                 bpReader.PerformGets();
                 bpReader.EndStep();
@@ -596,13 +620,37 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter1D.CurrentStep(), step);
             EXPECT_EQ(bpWriter2D.CurrentStep(), step);
 
-            bpWriter1D.WriteStep();
-            bpWriter2D.WriteStep();
+            bpWriter1D.BeginStep();
+            bpWriter1D.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter1D.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter1D.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter1D.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter1D.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter1D.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter1D.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter1D.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter1D.Put<float>("r32", currentTestData.R32.data());
+            bpWriter1D.Put<double>("r64", currentTestData.R64.data());
+            bpWriter1D.EndStep();
+
+            bpWriter2D.BeginStep();
+            bpWriter2D.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter2D.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter2D.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter2D.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter2D.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter2D.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter2D.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter2D.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter2D.Put<float>("r32", currentTestData.R32.data());
+            bpWriter2D.Put<double>("r64", currentTestData.R64.data());
+            bpWriter2D.EndStep();
         }
 
         adios.FlushAll(); // checkpoint for 1D and 2D writers
@@ -711,18 +759,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.GetDeferred(*var_i8, I8.data());
-                bpReader.GetDeferred(*var_i16, I16.data());
-                bpReader.GetDeferred(*var_i32, I32.data());
-                bpReader.GetDeferred(*var_i64, I64.data());
+                bpReader.Get(*var_i8, I8.data());
+                bpReader.Get(*var_i16, I16.data());
+                bpReader.Get(*var_i32, I32.data());
+                bpReader.Get(*var_i64, I64.data());
 
-                bpReader.GetDeferred(*var_u8, U8.data());
-                bpReader.GetDeferred(*var_u16, U16.data());
-                bpReader.GetDeferred(*var_u32, U32.data());
-                bpReader.GetDeferred(*var_u64, U64.data());
+                bpReader.Get(*var_u8, U8.data());
+                bpReader.Get(*var_u16, U16.data());
+                bpReader.Get(*var_u32, U32.data());
+                bpReader.Get(*var_u64, U64.data());
 
-                bpReader.GetDeferred(*var_r32, R32.data());
-                bpReader.GetDeferred(*var_r64, R64.data());
+                bpReader.Get(*var_r32, R32.data());
+                bpReader.Get(*var_r64, R64.data());
 
                 bpReader.PerformGets();
 
@@ -869,18 +917,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.GetDeferred(*var_i8, I8.data());
-                bpReader.GetDeferred(*var_i16, I16.data());
-                bpReader.GetDeferred(*var_i32, I32.data());
-                bpReader.GetDeferred(*var_i64, I64.data());
+                bpReader.Get(*var_i8, I8.data());
+                bpReader.Get(*var_i16, I16.data());
+                bpReader.Get(*var_i32, I32.data());
+                bpReader.Get(*var_i64, I64.data());
 
-                bpReader.GetDeferred(*var_u8, U8.data());
-                bpReader.GetDeferred(*var_u16, U16.data());
-                bpReader.GetDeferred(*var_u32, U32.data());
-                bpReader.GetDeferred(*var_u64, U64.data());
+                bpReader.Get(*var_u8, U8.data());
+                bpReader.Get(*var_u16, U16.data());
+                bpReader.Get(*var_u32, U32.data());
+                bpReader.Get(*var_u64, U64.data());
 
-                bpReader.GetDeferred(*var_r32, R32.data());
-                bpReader.GetDeferred(*var_r64, R64.data());
+                bpReader.Get(*var_r32, R32.data());
+                bpReader.Get(*var_r64, R64.data());
 
                 bpReader.PerformGets();
                 bpReader.EndStep();
@@ -1044,13 +1092,37 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
-            UpdateSmallTestData(m_TestData, static_cast<int>(step), mpiRank,
-                                mpiSize);
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+
             EXPECT_EQ(bpWriter1D.CurrentStep(), step);
             EXPECT_EQ(bpWriter2D.CurrentStep(), step);
 
-            bpWriter1D.WriteStep();
-            bpWriter2D.WriteStep();
+            bpWriter1D.BeginStep();
+            bpWriter1D.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter1D.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter1D.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter1D.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter1D.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter1D.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter1D.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter1D.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter1D.Put<float>("r32", currentTestData.R32.data());
+            bpWriter1D.Put<double>("r64", currentTestData.R64.data());
+            bpWriter1D.EndStep();
+
+            bpWriter2D.BeginStep();
+            bpWriter2D.Put<int8_t>("i8", currentTestData.I8.data());
+            bpWriter2D.Put<int16_t>("i16", currentTestData.I16.data());
+            bpWriter2D.Put<int32_t>("i32", currentTestData.I32.data());
+            bpWriter2D.Put<int64_t>("i64", currentTestData.I64.data());
+            bpWriter2D.Put<uint8_t>("u8", currentTestData.U8.data());
+            bpWriter2D.Put<uint16_t>("u16", currentTestData.U16.data());
+            bpWriter2D.Put<uint32_t>("u32", currentTestData.U32.data());
+            bpWriter2D.Put<uint64_t>("u64", currentTestData.U64.data());
+            bpWriter2D.Put<float>("r32", currentTestData.R32.data());
+            bpWriter2D.Put<double>("r64", currentTestData.R64.data());
+            bpWriter2D.EndStep();
         }
 
         adios.FlushAll(); // checkpoint for 1D and 2D writers
@@ -1159,18 +1231,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.GetDeferred(*var_i8, I8.data());
-                bpReader.GetDeferred(*var_i16, I16.data());
-                bpReader.GetDeferred(*var_i32, I32.data());
-                bpReader.GetDeferred(*var_i64, I64.data());
+                bpReader.Get(*var_i8, I8.data());
+                bpReader.Get(*var_i16, I16.data());
+                bpReader.Get(*var_i32, I32.data());
+                bpReader.Get(*var_i64, I64.data());
 
-                bpReader.GetDeferred(*var_u8, U8.data());
-                bpReader.GetDeferred(*var_u16, U16.data());
-                bpReader.GetDeferred(*var_u32, U32.data());
-                bpReader.GetDeferred(*var_u64, U64.data());
+                bpReader.Get(*var_u8, U8.data());
+                bpReader.Get(*var_u16, U16.data());
+                bpReader.Get(*var_u32, U32.data());
+                bpReader.Get(*var_u64, U64.data());
 
-                bpReader.GetDeferred(*var_r32, R32.data());
-                bpReader.GetDeferred(*var_r64, R64.data());
+                bpReader.Get(*var_r32, R32.data());
+                bpReader.Get(*var_r64, R64.data());
 
                 bpReader.PerformGets();
 
@@ -1317,18 +1389,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.GetDeferred(*var_i8, I8.data());
-                bpReader.GetDeferred(*var_i16, I16.data());
-                bpReader.GetDeferred(*var_i32, I32.data());
-                bpReader.GetDeferred(*var_i64, I64.data());
+                bpReader.Get(*var_i8, I8.data());
+                bpReader.Get(*var_i16, I16.data());
+                bpReader.Get(*var_i32, I32.data());
+                bpReader.Get(*var_i64, I64.data());
 
-                bpReader.GetDeferred(*var_u8, U8.data());
-                bpReader.GetDeferred(*var_u16, U16.data());
-                bpReader.GetDeferred(*var_u32, U32.data());
-                bpReader.GetDeferred(*var_u64, U64.data());
+                bpReader.Get(*var_u8, U8.data());
+                bpReader.Get(*var_u16, U16.data());
+                bpReader.Get(*var_u32, U32.data());
+                bpReader.Get(*var_u64, U64.data());
 
-                bpReader.GetDeferred(*var_r32, R32.data());
-                bpReader.GetDeferred(*var_r64, R64.data());
+                bpReader.Get(*var_r32, R32.data());
+                bpReader.Get(*var_r64, R64.data());
 
                 bpReader.PerformGets();
                 bpReader.EndStep();

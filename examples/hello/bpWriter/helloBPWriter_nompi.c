@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     adios2_engine *engineH =
         adios2_open(ioH, "myVector_c.bp", adios2_mode_write);
 
-    adios2_put_sync(engineH, variableH, myFloats);
+    adios2_put(engineH, variableH, myFloats, adios2_mode_deferred);
 
     adios2_close(engineH);
     adios2_finalize(adiosH);

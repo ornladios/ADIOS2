@@ -10,11 +10,11 @@
 
 module adios2
 
-    use adios2_parameters
-    use adios2_adios
-    use adios2_io
-    use adios2_variable
-    use adios2_engine
+    use adios2_parameters_mod
+    use adios2_adios_mod
+    use adios2_io_mod
+    use adios2_variable_mod
+    use adios2_engine_mod
     use adios2_file_mod
 
 end module

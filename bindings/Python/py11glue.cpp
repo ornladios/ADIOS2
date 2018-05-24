@@ -160,6 +160,8 @@ PYBIND11_MODULE(adios2, m)
         .value("Write", adios2::Mode::Write)
         .value("Read", adios2::Mode::Read)
         .value("Append", adios2::Mode::Append)
+        .value("Deferred", adios2::Mode::Deferred)
+        .value("Sync", adios2::Mode::Sync)
         .export_values();
 
     pybind11::enum_<adios2::StepMode>(m, "StepMode")
@@ -280,35 +282,35 @@ PYBIND11_MODULE(adios2, m)
         .def("BeginStep", &adios2::py11::Engine::BeginStep,
              pybind11::arg("mode") = adios2::StepMode::NextAvailable,
              pybind11::arg("timeoutSeconds") = 0.f)
-        .def("PutSync", (void (adios2::py11::Engine::*)(
-                            adios2::VariableBase *, const pybind11::array &)) &
-                            adios2::py11::Engine::PutSync)
-        .def("PutSync", (void (adios2::py11::Engine::*)(adios2::VariableBase *,
-                                                        const std::string &)) &
-                            adios2::py11::Engine::PutSync)
-        .def("PutDeferred",
-             (void (adios2::py11::Engine::*)(adios2::VariableBase *,
-                                             const pybind11::array &)) &
-                 adios2::py11::Engine::PutDeferred)
-        .def("PutDeferred", (void (adios2::py11::Engine::*)(
-                                adios2::VariableBase *, const std::string &)) &
-                                adios2::py11::Engine::PutDeferred)
+
+        .def("Put", (void (adios2::py11::Engine::*)(
+                        adios2::VariableBase *, const pybind11::array &,
+                        const adios2::Mode launch)) &
+                        adios2::py11::Engine::Put,
+             pybind11::arg("variable"), pybind11::arg("array"),
+             pybind11::arg("launch") = adios2::Mode::Deferred)
+        .def("Put", (void (adios2::py11::Engine::*)(adios2::VariableBase *,
+                                                    const std::string &)) &
+                        adios2::py11::Engine::Put)
+
         .def("PerformPuts", &adios2::py11::Engine::PerformPuts)
-        .def("GetSync", (void (adios2::py11::Engine::*)(adios2::VariableBase *,
-                                                        pybind11::array &)) &
-                            adios2::py11::Engine::GetSync)
-        .def("GetSync", (void (adios2::py11::Engine::*)(adios2::VariableBase *,
-                                                        std::string &)) &
-                            adios2::py11::Engine::GetSync)
-        .def("GetDeferred", (void (adios2::py11::Engine::*)(
-                                adios2::VariableBase *, pybind11::array &)) &
-                                adios2::py11::Engine::GetDeferred)
-        .def("GetDeferred", (void (adios2::py11::Engine::*)(
-                                adios2::VariableBase *, std::string &)) &
-                                adios2::py11::Engine::GetDeferred)
+
+        .def("Get", (void (adios2::py11::Engine::*)(
+                        adios2::VariableBase *, pybind11::array &,
+                        const adios2::Mode launch)) &
+                        adios2::py11::Engine::Get,
+             pybind11::arg("variable"), pybind11::arg("array"),
+             pybind11::arg("launch") = adios2::Mode::Deferred)
+        .def("Get", (void (adios2::py11::Engine::*)(
+                        adios2::VariableBase *, std::string &,
+                        const adios2::Mode launch)) &
+                        adios2::py11::Engine::Get,
+             pybind11::arg("variable"), pybind11::arg("string"),
+             pybind11::arg("launch") = adios2::Mode::Deferred)
+
         .def("PerformGets", &adios2::py11::Engine::PerformGets)
+
         .def("EndStep", &adios2::py11::Engine::EndStep)
-        .def("WriteStep", &adios2::py11::Engine::WriteStep)
         .def("Flush", &adios2::py11::Engine::Flush)
         .def("CurrentStep", &adios2::py11::Engine::CurrentStep)
         .def("Close", &adios2::py11::Engine::Close,

@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
             bpIO.Open("myVectorDeferred.bp", adios2::Mode::Write);
 
         /** Put variables for buffering, template type is optional */
-        bpFileWriter.PutDeferred<float>(bpFloats, myFloats.data());
-        bpFileWriter.PutDeferred(bpInts, myInts.data());
+        bpFileWriter.Put<float>(bpFloats, myFloats.data());
+        bpFileWriter.Put(bpInts, myInts.data());
         bpFileWriter.PerformPuts();
 
         /** Create bp file, engine becomes unreachable after this*/

@@ -86,8 +86,7 @@ void DataManWriter::IOThread(std::shared_ptr<transportman::DataMan> man) {}
     void DataManWriter::DoPutDeferred(Variable<T> &variable, const T *values)  \
     {                                                                          \
         PutDeferredCommon(variable, values);                                   \
-    }                                                                          \
-    void DataManWriter::DoPutDeferred(Variable<T> &, const T &value) {}
+    }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

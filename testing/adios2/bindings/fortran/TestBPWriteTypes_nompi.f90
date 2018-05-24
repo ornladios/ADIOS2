@@ -6,8 +6,10 @@ program TestBPWriteTypes
     integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
     integer :: inx, ierr, i
 
-    integer(kind=8) :: adios, io, engine
-    integer(kind=8), dimension(6) :: variables
+    type(adios2_adios) :: adios
+    type(adios2_io) :: io
+    type(adios2_engine) :: engine
+    type(adios2_variable), dimension(6) :: variables
 
     ! Application variables
     inx = 10
@@ -24,15 +26,16 @@ program TestBPWriteTypes
     call adios2_declare_io(io, adios, "bpIO", ierr)
 
     ! Defines a variable to be written in bp format
-    call adios2_define_variable(variables(1), io, "var_I8", 1, shape_dims, &
+    call adios2_define_variable(variables(1), io, "var_I8", &
+                                adios2_type_integer1, 1, shape_dims, &
                                 start_dims, count_dims, adios2_constant_dims, &
-                                data_I8, ierr)
+                                ierr)
 
     ! Open myVector_f.bp in write mode, this launches an engine
     call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)
 
     ! Write myArray contents to bp buffer, based on var1 metadata
-    call adios2_put_sync(engine, variables(1), data_I8, ierr)
+    call adios2_put(engine, variables(1), data_I8, ierr)
 
     ! Closes engine1 and deallocates it, becomes unreachable
     call adios2_close(engine, ierr)

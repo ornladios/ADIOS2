@@ -148,7 +148,7 @@ public:
                 }
             }
             writer.BeginStep(adios2::StepMode::Append);
-            writer.PutDeferred<float>(varArray, myArray.data());
+            writer.Put<float>(varArray, myArray.data());
             writer.EndStep();
             std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
         }
@@ -259,7 +259,7 @@ public:
             size_t elementsSize = count[0] * count[1];
             myArray.resize(elementsSize);
 
-            reader.GetDeferred(*vMyArray, myArray.data());
+            reader.Get(*vMyArray, myArray.data());
             reader.EndStep();
             CheckData(myArray, gndx, gndy, offsx, offsy, ndx, ndy, step, rank);
             std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));

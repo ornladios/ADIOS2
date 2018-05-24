@@ -137,17 +137,17 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
             // fill in the variable with values from starting index to
             // starting index + count
             engine.BeginStep();
-            engine.PutSync(var_iString, currentTestData.S1);
-            engine.PutSync(var_i8, currentTestData.I8.data());
-            engine.PutSync(var_i16, currentTestData.I16.data());
-            engine.PutSync(var_i32, currentTestData.I32.data());
-            engine.PutSync(var_i64, currentTestData.I64.data());
-            engine.PutSync(var_u8, currentTestData.U8.data());
-            engine.PutSync(var_u16, currentTestData.U16.data());
-            engine.PutSync(var_u32, currentTestData.U32.data());
-            engine.PutSync(var_u64, currentTestData.U64.data());
-            engine.PutSync(var_r32, currentTestData.R32.data());
-            engine.PutSync(var_r64, currentTestData.R64.data());
+            engine.Put(var_iString, currentTestData.S1);
+            engine.Put(var_i8, currentTestData.I8.data());
+            engine.Put(var_i16, currentTestData.I16.data());
+            engine.Put(var_i32, currentTestData.I32.data());
+            engine.Put(var_i64, currentTestData.I64.data());
+            engine.Put(var_u8, currentTestData.U8.data());
+            engine.Put(var_u16, currentTestData.U16.data());
+            engine.Put(var_u32, currentTestData.U32.data());
+            engine.Put(var_u64, currentTestData.U64.data());
+            engine.Put(var_r32, currentTestData.R32.data());
+            engine.Put(var_r64, currentTestData.R64.data());
             engine.EndStep();
         }
 
@@ -423,16 +423,16 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             engine.BeginStep();
-            engine.PutSync(var_i8, currentTestData.I8.data());
-            engine.PutSync(var_i16, currentTestData.I16.data());
-            engine.PutSync(var_i32, currentTestData.I32.data());
-            engine.PutSync(var_i64, currentTestData.I64.data());
-            engine.PutSync(var_u8, currentTestData.U8.data());
-            engine.PutSync(var_u16, currentTestData.U16.data());
-            engine.PutSync(var_u32, currentTestData.U32.data());
-            engine.PutSync(var_u64, currentTestData.U64.data());
-            engine.PutSync(var_r32, currentTestData.R32.data());
-            engine.PutSync(var_r64, currentTestData.R64.data());
+            engine.Put(var_i8, currentTestData.I8.data());
+            engine.Put(var_i16, currentTestData.I16.data());
+            engine.Put(var_i32, currentTestData.I32.data());
+            engine.Put(var_i64, currentTestData.I64.data());
+            engine.Put(var_u8, currentTestData.U8.data());
+            engine.Put(var_u16, currentTestData.U16.data());
+            engine.Put(var_u32, currentTestData.U32.data());
+            engine.Put(var_u64, currentTestData.U64.data());
+            engine.Put(var_r32, currentTestData.R32.data());
+            engine.Put(var_r64, currentTestData.R64.data());
             engine.EndStep();
         }
 
@@ -711,16 +711,16 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
             // fill in the variable with values from starting index to
             // starting index + count
             engine.BeginStep();
-            engine.PutSync(var_i8, currentTestData.I8.data());
-            engine.PutSync(var_i16, currentTestData.I16.data());
-            engine.PutSync(var_i32, currentTestData.I32.data());
-            engine.PutSync(var_i64, currentTestData.I64.data());
-            engine.PutSync(var_u8, currentTestData.U8.data());
-            engine.PutSync(var_u16, currentTestData.U16.data());
-            engine.PutSync(var_u32, currentTestData.U32.data());
-            engine.PutSync(var_u64, currentTestData.U64.data());
-            engine.PutSync(var_r32, currentTestData.R32.data());
-            engine.PutSync(var_r64, currentTestData.R64.data());
+            engine.Put(var_i8, currentTestData.I8.data());
+            engine.Put(var_i16, currentTestData.I16.data());
+            engine.Put(var_i32, currentTestData.I32.data());
+            engine.Put(var_i64, currentTestData.I64.data());
+            engine.Put(var_u8, currentTestData.U8.data());
+            engine.Put(var_u16, currentTestData.U16.data());
+            engine.Put(var_u32, currentTestData.U32.data());
+            engine.Put(var_u64, currentTestData.U64.data());
+            engine.Put(var_r32, currentTestData.R32.data());
+            engine.Put(var_r64, currentTestData.R64.data());
             engine.EndStep();
         }
 

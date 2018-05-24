@@ -86,8 +86,6 @@ void Engine::PerformPuts() { adios2_perform_puts(&m_Engine); }
 
 void Engine::PerformGets() { adios2_perform_gets(&m_Engine); }
 
-void Engine::WriteStep() { adios2_write_step(&m_Engine); }
-
 void Engine::Flush(const int transportIndex)
 {
     adios2_flush_by_index(&m_Engine, transportIndex);
@@ -99,13 +97,9 @@ void Engine::Close(const int transportIndex)
 }
 
 #define declare_template_instantiation(T)                                      \
-    template void Engine::PutSync<T>(Variable<T> &, const T *);                \
+    template void Engine::Put<T>(Variable<T> &, const T *, const Mode);        \
                                                                                \
-    template void Engine::PutDeferred<T>(Variable<T> &, const T *);            \
-                                                                               \
-    template void Engine::GetSync<T>(Variable<T> &, T *);                      \
-                                                                               \
-    template void Engine::GetDeferred<T>(Variable<T> &, T *);
+    template void Engine::Get<T>(Variable<T> &, T *, const Mode);
 
 ADIOS2_FOREACH_CXX98_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

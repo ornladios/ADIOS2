@@ -11,6 +11,7 @@
 #include <adios2.h>
 #include <iostream>
 #include <mpi.h>
+#include <thread>
 #include <vector>
 
 int rank, size;
@@ -63,7 +64,8 @@ int main(int argc, char *argv[])
                 j += rank * 10000;
             }
             dataManWriter.BeginStep();
-            dataManWriter.PutSync<float>(bpFloats, myFloats_rank.data());
+            dataManWriter.Put<float>(bpFloats, myFloats_rank.data(),
+                                     adios2::Mode::Sync);
             Dump(myFloats_rank, dataManWriter.CurrentStep());
             dataManWriter.EndStep();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));

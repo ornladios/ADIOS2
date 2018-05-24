@@ -78,10 +78,8 @@ protected:
 #define declare(T)                                                             \
     void DoPutSync(Variable<T> &, const T *) override;                         \
     void DoPutDeferred(Variable<T> &, const T *) override;                     \
-    void DoPutDeferred(Variable<T> &, const T &) override;                     \
     void DoGetSync(Variable<T> &, T *) override;                               \
-    void DoGetDeferred(Variable<T> &, T *) override;                           \
-    void DoGetDeferred(Variable<T> &, T &) override;
+    void DoGetDeferred(Variable<T> &, T *) override;
 
     ADIOS2_FOREACH_TYPE_1ARG(declare)
 #undef declare

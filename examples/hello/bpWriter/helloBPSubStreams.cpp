@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 
             myFloats[0] = static_cast<float>(t);
             myFloats[1] = static_cast<float>(rank);
-            bpFileWriter.PutDeferred<float>(bpFloats, myFloats.data());
+            bpFileWriter.Put<float>(bpFloats, myFloats.data());
 
             // bpFileWriter.PutDeferred(bpString, myString);
             bpFileWriter.EndStep();

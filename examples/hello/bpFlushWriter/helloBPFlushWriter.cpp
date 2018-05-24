@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
             /** values to time step */
             myFloats.assign(myFloats.size(), t);
             /** Write variable for buffering */
-            bpWriter.PutSync<float>(bpFloats, myFloats.data());
+            bpWriter.Put<float>(bpFloats, myFloats.data());
         }
 
         /** Create bp file, engine becomes unreachable after this*/

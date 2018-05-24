@@ -9,8 +9,10 @@ program helloInsituMPIWriter
     real, dimension(:,:), allocatable :: myArray
     integer :: wrank, wsize, rank, nproc
     integer :: ierr, i, j, step
-    integer(kind=8) :: adios, io, engine
-    integer(kind=8) :: varArray
+    type(adios2_adios):: adios
+    type(adios2_io):: io
+    type(adios2_variable):: varArray
+    type(adios2_engine):: engine
     integer :: comm, color
 
 
@@ -56,9 +58,9 @@ program helloInsituMPIWriter
     call adios2_declare_io(io, adios, "writer", ierr)
 
     ! Defines a 2D array variable
-    call adios2_define_variable(varArray, io, "myArray", 2, shape_dims, &
-                                start_dims, count_dims, adios2_constant_dims, &
-                                myArray, ierr)
+    call adios2_define_variable(varArray, io, "myArray", adios2_type_real, &
+                                2, shape_dims, start_dims, count_dims, &
+                                adios2_constant_dims, ierr)
 
     ! Open myVector_f.bp in write mode, this launches an engine
     call adios2_open(engine, io, streamname, adios2_mode_write, ierr)
@@ -71,8 +73,8 @@ program helloInsituMPIWriter
             end do
         end do
 
-        call adios2_begin_step(engine, adios2_step_mode_append, 0.0, ierr)
-        call adios2_put_deferred(engine, varArray, myArray, ierr)
+        call adios2_begin_step(engine, ierr)
+        call adios2_put(engine, varArray, myArray, ierr)
         call adios2_end_step(engine, ierr)
 
         ! sleep(sleeptime)

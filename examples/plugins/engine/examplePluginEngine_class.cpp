@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
         adios2::Engine &writer = io.Open("TestPlugin", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        writer.PutSync<float>(var, myFloats.data());
+        writer.Put<float>(var, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
         writer.Close();

@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
             hdf5IO.Open("myVector.h5", adios2::Mode::Write);
 
         /** Write variable for buffering */
-        hdf5Writer.PutSync<float>(h5Floats, myFloats.data());
-        hdf5Writer.PutSync(h5Ints, myInts.data());
+        hdf5Writer.Put<float>(h5Floats, myFloats.data());
+        hdf5Writer.Put(h5Ints, myInts.data());
 
         /** Create h5 file, engine becomes unreachable after this*/
         hdf5Writer.Close();

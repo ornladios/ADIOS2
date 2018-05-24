@@ -4,9 +4,12 @@ program TestBPWriteAttributes
     use adios2
     implicit none
 
-    integer(kind=8) :: adios, ioWrite, bpWriter, ioRead, bpReader
-    integer(kind=8), dimension(14) :: attributes
-    !character(len=:), allocatable :: attribute_name, attribute_type
+
+    type(adios2_adios) :: adios
+    type(adios2_io) :: ioWrite, ioRead
+    type(adios2_engine) :: bpWriter, bpReader
+    type(adios2_attribute), dimension(14) :: attributes
+
     integer :: ierr
 
     ! Launch MPI

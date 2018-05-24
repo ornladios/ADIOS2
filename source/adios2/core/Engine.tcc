@@ -15,145 +15,134 @@
 
 #include <stdexcept>
 
-#include "adios2/helper/adiosFunctions.h" // IsLvalue
+#include "adios2/helper/adiosFunctions.h" // CheckforNullptr
 
 namespace adios2
 {
 
 // Put
-#define declare_launch_mode(L)                                                 \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Put##L(Variable<T> &variable, const T *data)                  \
-    {                                                                          \
-        if (m_DebugMode)                                                       \
-        {                                                                      \
-            if (&variable == nullptr)                                          \
-            {                                                                  \
-                throw std::invalid_argument(                                   \
-                    "ERROR: variable reference is "                            \
-                    "undefined, is good practice to check if "                 \
-                    "IO::InquireVariable(name) is nullptr first "              \
-                    ", in call to Put" +                                       \
-                    std::string(#L) + "\n");                                   \
-            }                                                                  \
-                                                                               \
-            variable.CheckDimensions("Put" + std::string(#L));                 \
-                                                                               \
-            if (data == nullptr)                                               \
-            {                                                                  \
-                throw std::invalid_argument(                                   \
-                    "ERROR: found null pointer for Variable " +                \
-                    variable.m_Name + ", in call to Put" + std::string(#L) +   \
-                    "\n");                                                     \
-            }                                                                  \
-                                                                               \
-            CheckWriteMode("variable " + variable.m_Name +                     \
-                           ", in call to Put" + std::string(#L) + "\n");       \
-        }                                                                      \
-                                                                               \
-        DoPut##L(variable, data);                                              \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Put##L(const std::string &variableName, const T *data)        \
-    {                                                                          \
-        Put##L(FindVariable<T>(variableName), data);                           \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Put##L(Variable<T> &variable)                                 \
-    {                                                                          \
-        Put##L(variable, variable.GetData());                                  \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Put##L(Variable<T> &variable, const T &value)                 \
-    {                                                                          \
-        const T valueLocal = value;                                            \
-        PutSync(variable, &valueLocal);                                        \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Put##L(const std::string &variableName, const T &value)       \
-    {                                                                          \
-        PutSync(FindVariable<T>(variableName), value);                         \
+template <class T>
+void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
+{
+    if (m_DebugMode)
+    {
+        CommonChecks(variable, data, {{Mode::Write, Mode::Append}},
+                     "in call to Put");
     }
-ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
-#undef declare_launch_mode
+
+    switch (launch)
+    {
+    case Mode::Deferred:
+        DoPutDeferred(variable, data);
+        break;
+    case Mode::Sync:
+        DoPutSync(variable, data);
+        break;
+    default:
+        if (m_DebugMode)
+        {
+            throw std::invalid_argument(
+                "ERROR: invalid launch Mode for variable " + variable.m_Name +
+                ", only Mode::Deferred and Mode::Sync are valid, in call to "
+                "Put\n");
+        }
+    }
+}
+
+template <class T>
+void Engine::Put(const std::string &variableName, const T *data,
+                 const Mode launch)
+{
+    Put(FindVariable<T>(variableName, "in call to Put"), data, launch);
+}
+
+template <class T>
+void Engine::Put(Variable<T> &variable, const T &datum)
+{
+    const T datumLocal = datum;
+    Put(variable, &datumLocal, Mode::Sync);
+}
+
+template <class T>
+void Engine::Put(const std::string &variableName, const T &datum)
+{
+    Put(FindVariable<T>(variableName, "in call to Put"), datum);
+}
 
 // Get
-#define declare_launch_mode(L)                                                 \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Get##L(Variable<T> &variable, T *data)                        \
-    {                                                                          \
-        if (m_DebugMode)                                                       \
-        {                                                                      \
-            if (&variable == nullptr)                                          \
-            {                                                                  \
-                throw std::invalid_argument(                                   \
-                    "ERROR: variable reference is "                            \
-                    "undefined, is good practice to check if "                 \
-                    "IO::InquireVariable(name) is nullptr first, in call to "  \
-                    "Get" +                                                    \
-                    std::string(#L) + "\n");                                   \
-            }                                                                  \
-            variable.CheckDimensions("Get" + std::string(#L));                 \
-                                                                               \
-            if (data == nullptr)                                               \
-            {                                                                  \
-                throw std::invalid_argument(                                   \
-                    "ERROR: found null pointer for Variable " +                \
-                    variable.m_Name + ", in call to Get" + std::string(#L) +   \
-                    "\n");                                                     \
-            }                                                                  \
-                                                                               \
-            CheckReadMode("variable " + variable.m_Name + ", in call to Get" + \
-                          std::string(#L) + "\n");                             \
-        }                                                                      \
-                                                                               \
-        DoGet##L(variable, data);                                              \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Get##L(const std::string &variableName, T *data)              \
-    {                                                                          \
-        Get##L(FindVariable<T>(variableName), data);                           \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Get##L(Variable<T> &variable)                                 \
-    {                                                                          \
-        Get##L(variable, variable.GetData());                                  \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Get##L(Variable<T> &variable, T &value)                       \
-    {                                                                          \
-        GetSync(variable, &value);                                             \
-    }                                                                          \
-                                                                               \
-    template <class T>                                                         \
-    void Engine::Get##L(const std::string &variableName, T &value)             \
-    {                                                                          \
-        GetSync(FindVariable<T>(variableName), value);                         \
+template <class T>
+void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
+{
+    if (m_DebugMode)
+    {
+        CommonChecks(variable, data, {{Mode::Read}}, "in call to Get");
     }
-ADIOS2_FOREACH_LAUNCH_MODE(declare_launch_mode)
-#undef declare_launch_mode
+
+    switch (launch)
+    {
+    case Mode::Deferred:
+        DoGetDeferred(variable, data);
+        break;
+    case Mode::Sync:
+        DoGetSync(variable, data);
+        break;
+    default:
+        if (m_DebugMode)
+        {
+            throw std::invalid_argument(
+                "ERROR: invalid launch Mode for variable " + variable.m_Name +
+                ", only Mode::Deferred and Mode::Sync are valid, in call to "
+                "Get\n");
+        }
+    }
+}
+
+template <class T>
+void Engine::Get(const std::string &variableName, T *data, const Mode launch)
+{
+    Get(FindVariable<T>(variableName, "in call to Get"), data, launch);
+}
+
+template <class T>
+void Engine::Get(Variable<T> &variable, T &datum, const Mode /*launch*/)
+{
+    Get(variable, &datum, Mode::Sync);
+}
+
+template <class T>
+void Engine::Get(const std::string &variableName, T &datum, const Mode launch)
+{
+    Get(FindVariable<T>(variableName, "in call to Get"), datum, launch);
+}
+
+// PROTECTED
+template <class T>
+Variable<T> &Engine::FindVariable(const std::string &variableName,
+                                  const std::string hint)
+{
+    Variable<T> *variable = m_IO.InquireVariable<T>(variableName);
+    if (m_DebugMode)
+    {
+        if (variable == nullptr)
+        {
+            throw std::invalid_argument("ERROR: variable " + variableName +
+                                        " not found in IO " + m_IO.m_Name +
+                                        ", " + hint + "\n");
+        }
+    }
+    return *variable;
+}
 
 // PRIVATE
 template <class T>
-Variable<T> &Engine::FindVariable(const std::string &variableName)
+void Engine::CommonChecks(Variable<T> &variable, const T *data,
+                          const std::set<Mode> &modes,
+                          const std::string hint) const
 {
-    Variable<T> *variable = m_IO.InquireVariable<T>(variableName);
-    if (m_DebugMode && variable == nullptr)
-    {
-        throw std::invalid_argument("ERROR: Variable " + variableName +
-                                    " not found in IO " + m_IO.m_Name +
-                                    ", in call to Put Synch\n");
-    }
-    return *variable;
+    CheckForNullptr(&variable, "for variable argument, " + hint);
+    CheckForNullptr(data, "for data argument, " + hint);
+    variable.CheckDimensions(hint);
+    CheckOpenModes(modes, " for variable " + variable.m_Name + ", " + hint);
 }
 
 } // end namespace adios2

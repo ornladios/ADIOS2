@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
         adios2::Engine &bpWriter =
             putHeatMap.Open("HeatMap2D.bp", adios2::Mode::Write);
 
-        bpWriter.PutSync(outTemperature, temperatures.data());
+        bpWriter.Put(outTemperature, temperatures.data());
         bpWriter.Close();
 
         // ************************** READ
@@ -96,7 +96,8 @@ int main(int argc, char *argv[])
                 std::cout << "Pre-allocated " << elementsSize << " elements, "
                           << elementsSize * sizeof(unsigned int) << " bytes\n";
 
-                bpReader.GetSync(*inTemperature, inTemperatures.data());
+                bpReader.Get(*inTemperature, inTemperatures.data(),
+                             adios2::Mode::Sync);
 
                 std::cout << "Incoming temperature map:\n";
 

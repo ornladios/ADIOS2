@@ -7,7 +7,10 @@ program helloBPWriter
     integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
     real, dimension(:), allocatable :: myArray
     integer :: inx, irank, isize, ierr, i, var1_type
-    integer(kind=8) :: adios, io, var1, engine1
+    type(adios2_adios) :: adios
+    type(adios2_io) :: io
+    type(adios2_variable) :: var1
+    type(adios2_engine) :: engine1
     character(len=:), allocatable :: var1_name
 
     ! Launch MPI
@@ -35,15 +38,15 @@ program helloBPWriter
     call adios2_declare_io(io, adios, "ioWriter", ierr)
 
     ! Defines a variable to be written in bp format
-    call adios2_define_variable(var1, io, "myArray", 1, shape_dims, &
-                                start_dims, count_dims, adios2_constant_dims, &
-                                myArray, ierr)
+    call adios2_define_variable(var1, io, "myArray", adios2_type_real, 1, &
+                                shape_dims, start_dims, count_dims, &
+                                adios2_constant_dims, ierr)
 
     ! Open myVector_f.bp in write mode, this launches an engine
     call adios2_open(engine1, io, "myVector_f.bp", adios2_mode_write, ierr)
 
     ! Put myArray contents to bp buffer, based on var1 metadata
-    call adios2_put_sync(engine1, var1, myArray, ierr)
+    call adios2_put(engine1, var1, myArray, ierr)
 
     ! Closes engine1 and deallocates it, becomes unreachable
     call adios2_close(engine1, ierr)

@@ -80,7 +80,8 @@ int main(int argc, char *argv[])
             adios2::StepStatus status = dataManReader.BeginStep();
             if (status == adios2::StepStatus::OK)
             {
-                dataManReader.GetSync<float>(*bpFloats, myFloats.data());
+                dataManReader.Get<float>(*bpFloats, myFloats.data(),
+                                         adios2::Mode::Sync);
                 Dump(myFloats, dataManReader.CurrentStep());
                 dataManReader.EndStep();
             }

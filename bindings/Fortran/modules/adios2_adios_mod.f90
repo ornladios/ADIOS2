@@ -8,36 +8,35 @@
 !       Author: William F Godoy godoywf@ornl.gov
 !
 
-module adios2_adios
-    use adios2_adios_init
+module adios2_adios_mod
+    use adios2_adios_init_mod
     implicit none
 
 contains
 
     subroutine adios2_declare_io(io, adios, io_name, ierr)
-        integer(kind=8), intent(out) :: io
-        integer(kind=8), intent(in) :: adios
+        type(adios2_io), intent(out) :: io
+        type(adios2_adios), intent(in) :: adios
         character*(*), intent(in)  :: io_name
         integer, intent(out) :: ierr
 
-        call adios2_declare_io_f2c(io, adios, TRIM(ADJUSTL(io_name))//char(0), &
-                                   ierr)
-
+        call adios2_declare_io_f2c(io%f2c, adios%f2c, &
+                                   TRIM(ADJUSTL(io_name))//char(0), ierr)
     end subroutine
 
     subroutine adios2_flush_all(adios, ierr)
-        integer(kind=8), intent(in) :: adios
+        type(adios2_adios), intent(in) :: adios
         integer, intent(out) :: ierr
 
-        call adios2_flush_all_f2c(adios, ierr)
+        call adios2_flush_all_f2c(adios%f2c, ierr)
 
     end subroutine
 
     subroutine adios2_finalize(adios, ierr)
-        integer(kind=8), intent(in) :: adios
+        type(adios2_adios), intent(in) :: adios
         integer, intent(out) :: ierr
 
-        call adios2_finalize_f2c(adios, ierr)
+        call adios2_finalize_f2c(adios%f2c, ierr)
 
     end subroutine
 

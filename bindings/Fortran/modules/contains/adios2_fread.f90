@@ -21,7 +21,7 @@ subroutine adios2_fread_real(unit, name, data, adios2_advance_step, ierr)
 
     adios2_advance_step_int = adios2_LogicalToInt(adios2_advance_step)
 
-    call adios2_fread_value_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+    call adios2_fread_value_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 adios2_type_real, data, &
                                 adios2_advance_step_int, ierr)
 
@@ -38,7 +38,7 @@ subroutine adios2_fread_dp(unit, name, data, adios2_advance_step, ierr)
 
     adios2_advance_step_int = adios2_LogicalToInt(adios2_advance_step)
 
-    call adios2_fread_value_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+    call adios2_fread_value_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 adios2_type_dp, data, &
                                 adios2_advance_step_int, ierr)
 
@@ -55,7 +55,7 @@ subroutine adios2_fread_complex(unit, name, data, adios2_advance_step, ierr)
 
     adios2_advance_step_int = adios2_LogicalToInt(adios2_advance_step)
 
-    call adios2_fread_value_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+    call adios2_fread_value_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 adios2_type_complex, data, &
                                 adios2_advance_step_int, ierr)
 
@@ -72,7 +72,7 @@ subroutine adios2_fread_complex_dp(unit, name, data, adios2_advance_step, ierr)
 
     adios2_advance_step_int = adios2_LogicalToInt(adios2_advance_step)
 
-    call adios2_fread_value_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+    call adios2_fread_value_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 adios2_type_complex_dp, data, &
                                 adios2_advance_step_int, ierr)
 
@@ -89,7 +89,7 @@ subroutine adios2_fread_integer1(unit, name, data, adios2_advance_step, ierr)
 
     adios2_advance_step_int = adios2_LogicalToInt(adios2_advance_step)
 
-    call adios2_fread_value_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+    call adios2_fread_value_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 adios2_type_integer1, data, &
                                 adios2_advance_step_int, ierr)
 
@@ -106,7 +106,7 @@ subroutine adios2_fread_integer2(unit, name, data, adios2_advance_step, ierr)
 
     adios2_advance_step_int = adios2_LogicalToInt(adios2_advance_step)
 
-    call adios2_fread_value_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+    call adios2_fread_value_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 adios2_type_integer2, data, &
                                 adios2_advance_step_int, ierr)
 
@@ -123,7 +123,7 @@ subroutine adios2_fread_integer4(unit, name, data, adios2_advance_step, ierr)
 
     adios2_advance_step_int = adios2_LogicalToInt(adios2_advance_step)
 
-    call adios2_fread_value_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+    call adios2_fread_value_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 adios2_type_integer4, data, &
                                 adios2_advance_step_int, ierr)
 
@@ -140,7 +140,7 @@ subroutine adios2_fread_integer8(unit, name, data, adios2_advance_step, ierr)
 
     adios2_advance_step_int = adios2_LogicalToInt(adios2_advance_step)
 
-    call adios2_fread_value_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+    call adios2_fread_value_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 adios2_type_integer8, data, &
                                 adios2_advance_step_int, ierr)
 
@@ -163,7 +163,7 @@ subroutine adios2_fread_real_1d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_real, data, 1, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -188,7 +188,7 @@ subroutine adios2_fread_dp_1d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_dp, data, 1, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -213,7 +213,7 @@ subroutine adios2_fread_complex_1d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex, data, 1, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -238,7 +238,7 @@ subroutine adios2_fread_complex_dp_1d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex_dp, data, 1, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -263,7 +263,7 @@ subroutine adios2_fread_integer1_1d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer1, data, 1, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -288,7 +288,7 @@ subroutine adios2_fread_integer2_1d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer2, data, 1, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -313,7 +313,7 @@ subroutine adios2_fread_integer4_1d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer4, data, 1, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -338,7 +338,7 @@ subroutine adios2_fread_integer8_1d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer8, data, 1, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -364,7 +364,7 @@ subroutine adios2_fread_real_2d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_real, data, 2, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -389,7 +389,7 @@ subroutine adios2_fread_dp_2d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_dp, data, 2, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -414,7 +414,7 @@ subroutine adios2_fread_complex_2d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex, data, 2, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -439,7 +439,7 @@ subroutine adios2_fread_complex_dp_2d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex_dp, data, 2, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -464,7 +464,7 @@ subroutine adios2_fread_integer1_2d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer1, data, 2, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -489,7 +489,7 @@ subroutine adios2_fread_integer2_2d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer2, data, 2, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -514,7 +514,7 @@ subroutine adios2_fread_integer4_2d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer4, data, 2, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -539,7 +539,7 @@ subroutine adios2_fread_integer8_2d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer8, data, 2, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -565,7 +565,7 @@ subroutine adios2_fread_real_3d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_real, data, 3, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -590,7 +590,7 @@ subroutine adios2_fread_dp_3d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_dp, data, 3, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -615,7 +615,7 @@ subroutine adios2_fread_complex_3d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex, data, 3, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -640,7 +640,7 @@ subroutine adios2_fread_complex_dp_3d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex_dp, data, 3, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -665,7 +665,7 @@ subroutine adios2_fread_integer1_3d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer1, data, 3, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -690,7 +690,7 @@ subroutine adios2_fread_integer2_3d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer2, data, 3, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -715,7 +715,7 @@ subroutine adios2_fread_integer4_3d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer4, data, 3, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -740,7 +740,7 @@ subroutine adios2_fread_integer8_3d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer8, data, 3, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -766,7 +766,7 @@ subroutine adios2_fread_real_4d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_real, data, 4, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -791,7 +791,7 @@ subroutine adios2_fread_dp_4d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_dp, data, 4, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -816,7 +816,7 @@ subroutine adios2_fread_complex_4d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex, data, 4, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -841,7 +841,7 @@ subroutine adios2_fread_complex_dp_4d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex_dp, data, 4, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -866,7 +866,7 @@ subroutine adios2_fread_integer1_4d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer1, data, 4, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -891,7 +891,7 @@ subroutine adios2_fread_integer2_4d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer2, data, 4, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -916,7 +916,7 @@ subroutine adios2_fread_integer4_4d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer4, data, 4, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -941,7 +941,7 @@ subroutine adios2_fread_integer8_4d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer8, data, 4, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -967,7 +967,7 @@ subroutine adios2_fread_real_5d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_real, data, 5, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -992,7 +992,7 @@ subroutine adios2_fread_dp_5d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_dp, data, 5, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1017,7 +1017,7 @@ subroutine adios2_fread_complex_5d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex, data, 5, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1042,7 +1042,7 @@ subroutine adios2_fread_complex_dp_5d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex_dp, data, 5, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1067,7 +1067,7 @@ subroutine adios2_fread_integer1_5d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer1, data, 5, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1092,7 +1092,7 @@ subroutine adios2_fread_integer2_5d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer2, data, 5, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1117,7 +1117,7 @@ subroutine adios2_fread_integer4_5d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer4, data, 5, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1142,7 +1142,7 @@ subroutine adios2_fread_integer8_5d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer8, data, 5, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1168,7 +1168,7 @@ subroutine adios2_fread_real_6d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_real, data, 6, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1193,7 +1193,7 @@ subroutine adios2_fread_dp_6d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_dp, data, 6, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1218,7 +1218,7 @@ subroutine adios2_fread_complex_6d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex, data, 6, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1243,7 +1243,7 @@ subroutine adios2_fread_complex_dp_6d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_complex_dp, data, 6, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1268,7 +1268,7 @@ subroutine adios2_fread_integer1_6d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer1, data, 6, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1293,7 +1293,7 @@ subroutine adios2_fread_integer2_6d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer2, data, 6, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1318,7 +1318,7 @@ subroutine adios2_fread_integer4_6d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer4, data, 6, &
                               selection_start_dims, &
                               selection_count_dims, &
@@ -1343,7 +1343,7 @@ subroutine adios2_fread_integer8_6d(unit, name, data, selection_start_dims, &
     call adios2_allocate(data, selection_count_dims, ierr)
 
     if (ierr == 0) then
-        call adios2_fread_f2c(unit%fh, TRIM(ADJUSTL(name))//char(0), &
+        call adios2_fread_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_type_integer8, data, 6, &
                               selection_start_dims, &
                               selection_count_dims, &

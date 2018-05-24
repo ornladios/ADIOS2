@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
                 }
             }
             writer.BeginStep(adios2::StepMode::Append);
-            writer.PutDeferred<float>(varArray, myArray.data());
+            writer.Put<float>(varArray, myArray.data());
             writer.EndStep();
             std::this_thread::sleep_for(
                 std::chrono::milliseconds(settings.sleeptime));

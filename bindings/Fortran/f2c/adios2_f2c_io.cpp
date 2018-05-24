@@ -82,15 +82,14 @@ void FC_GLOBAL(adios2_define_global_variable_f2c,
                ADIOS2_DEFINE_GLOBAL_VARIABLE_F2C)(adios2_variable **variable,
                                                   adios2_io **io,
                                                   const char *name,
-                                                  const int *type, void *data,
-                                                  int *ierr)
+                                                  const int *type, int *ierr)
 {
     *ierr = 0;
     try
     {
         *variable = adios2_define_variable(
             *io, name, static_cast<adios2_type>(*type), 0, nullptr, nullptr,
-            nullptr, adios2_constant_dims_true, data);
+            nullptr, adios2_constant_dims_true, nullptr);
     }
     catch (std::exception &e)
     {
@@ -104,7 +103,7 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
     adios2_variable **variable, adios2_io **io, const char *name,
     const int *type, const int *ndims, const int64_t *shape,
     const int64_t *start, const int64_t *count, const int *constant_dims,
-    void *data, int *ierr)
+    int *ierr)
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
@@ -145,9 +144,9 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
             lf_IntToSizeT(count, *ndims, countV);
 
             *variable = adios2_define_variable(
-                *io, name, static_cast<adios2_type>(*type), *ndims, NULL, NULL,
-                countV.data(),
-                static_cast<adios2_constant_dims>(*constant_dims), data);
+                *io, name, static_cast<adios2_type>(*type), *ndims, nullptr,
+                nullptr, countV.data(),
+                static_cast<adios2_constant_dims>(*constant_dims), nullptr);
             return;
         }
 
@@ -160,7 +159,7 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
             *io, name, static_cast<adios2_type>(*type),
             static_cast<size_t>(*ndims), shapeV.data(), startV.data(),
             countV.data(), static_cast<adios2_constant_dims>(*constant_dims),
-            data);
+            nullptr);
     }
     catch (std::exception &e)
     {

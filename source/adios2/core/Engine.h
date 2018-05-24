@@ -16,9 +16,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <functional> //std::function
-#include <future>
-#include <map>
-#include <memory> //std::shared_ptr
+#include <memory>     //std::shared_ptr
 #include <set>
 #include <string>
 #include <vector>
@@ -65,6 +63,10 @@ public:
      */
     IO &GetIO() noexcept;
 
+    /**
+     * Returns the Mode used at Open for current Engine
+     * @return
+     */
     Mode OpenMode() const noexcept;
 
     StepStatus BeginStep();
@@ -86,107 +88,161 @@ public:
     virtual size_t CurrentStep() const;
 
     /**
-     * Puts variable with pre-defined pointer at DefineVariable into adios2
-     * buffer.
-     * Launch policy:
+     * @brief Put associates variable and data into adios2 in Engine Write mode.
+     * Check your Engine documentation for specific behavior.
+     * In general, it will register variable metadata and data for buffering.
+     * @param variable contains metadata
+     * @param data contains user defined data
+     * @param executeMode
      * <pre>
-     *     Synch: Variable data memory is reusable after this call
-     *     Deferred: function returns immediately so Variable data memory is
-     *               not reusable until PerformPuts
+     * Deferred (default): lazy evaluation, can't reuse data until EndStep
+     * 		               Close, or PerformPuts.
+     * Sync: data can be reused after this call
      * </pre>
-     * @param variable input object with metadata and pointer data contents
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user inputs
+     * std::runtime_error: always checks for system failures
+     * </pre>
      */
     template <class T>
-    void PutSync(Variable<T> &variable);
-
-    void PutSync(const std::string &variableName);
-
-    template <class T>
-    void PutDeferred(Variable<T> &variable);
-
-    void PutDeferred(const std::string &variableName);
+    void Put(Variable<T> &variable, const T *data,
+             const Mode launch = Mode::Deferred);
 
     /**
-     * Puts variable data passing new data pointer from application.
-     * Launch policy:
+     * @brief Put version that accepts a variable name as input parameter.
+     * Throws an exception if variable is not found in IO that created the
+     * current engine.
+     * @param variableName input variable name (Variable must exist in IO that
+     * created current Engine with Open)
+     * @param data contains user defined data
+     * @param executeMode
      * <pre>
-     *     Synch: Variable data memory is reusable after this call
-     *     Deferred: function returns immediately so Variable data memory is
-     *               not reusable until PerformPuts
+     * Deferred (default): lazy evaluation, can't reuse data until EndStep
+     * 		               Close, or PerformPuts.
+     * Sync: data can be reused after this call
      * </pre>
-     * @param variable input object with metadata
-     * @param values data pointer for this variable, can be reused
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user inputs
+     * 						  also thrown if variable is not
+     * found.
+     * std::runtime_error: always checks for system failures
+     * </pre>
      */
     template <class T>
-    void PutSync(Variable<T> &variable, const T *values);
-
-    template <class T>
-    void PutSync(const std::string &variableName, const T *values);
-
-    template <class T>
-    void PutDeferred(Variable<T> &variable, const T *values);
-
-    template <class T>
-    void PutDeferred(const std::string &variable, const T *values);
+    void Put(const std::string &variableName, const T *data,
+             const Mode launch = Mode::Deferred);
 
     /**
-     * Puts variable data passing a single value from application.
-     * Launch policy:
-     * <pre>
-     *     Synch: Variable data memory is reusable after this call
-     *     Deferred: function returns immediately so Variable data memory is
-     *               not reusable until PerformPuts
-     * </pre>
-     * @param variable input object with metadata
-     * @param value single value passed by value, allows rvalues
+     * Put version for single value datum, can accept on-the-fly values
+     * e.g. Put<float>(variable, 10.f);
+     * Mode is always Sync since there might be no pointer associated with the
+     * single value datum (r-values)
+     * @param variable contains metadata
+     * @param datum contains user defined single value
      */
     template <class T>
-    void PutSync(Variable<T> &variable, const T &value);
+    void Put(Variable<T> &variable, const T &datum);
 
+    /**
+     * @brief Put version for single value datum using variable name. Throws
+     * an exception if variable is not found in IO that created the
+     * current engine.
+     *
+     * Can accept on-the-fly values e.g. Put<float>("myVar", 10.f);
+     * Mode is always Sync since there might be no pointer associated with
+     * the single value datum (r-values)
+     *
+     * @param variableName input variable name (Variable must exist in IO that
+     * created current Engine with Open)
+     * @param datum contains user defined single value
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user inputs
+     * 						  also thrown if variable is not
+     * found.
+     * std::runtime_error: always checks for system failures
+     * </pre>
+     */
     template <class T>
-    void PutSync(const std::string &variableName, const T &value);
+    void Put(const std::string &variableName, const T &datum);
 
+    /**
+     * @brief Get associates an existing variable selections and populates data
+     * from adios2 Engine in Read Mode.
+     *
+     * Polymorphic function.
+     * Check your Engine documentation for specific behavior.
+     * In general, it will register variable metadata and data for populating
+     * data values at Read.
+     * @param variable contains metadata and selections for getting the variable
+     * @param data user pre-allocated memory space
+     * @param executeMode
+     * <pre>
+     * Deferred (default): lazy evaluation, data is not populated until EndStep
+     * 		Close, or PerformPuts
+     * Sync: data is ready after this call
+     * </pre>
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user
+     * inputs
+     * std::runtime_error: always if system failures are caught
+     * </pre>
+     */
     template <class T>
-    void PutDeferred(Variable<T> &variable, const T &value);
+    void Get(Variable<T> &variable, T *data,
+             const Mode launch = Mode::Deferred);
 
+    /**
+     * @brief Get version that accepts a variableName as input.
+     *
+     * Throws an exception if variable is not found in IO that created the
+     * current engine.
+     *
+     * @param variableName input variable name (Variable must exist in IO that
+     * created current Engine with Open)
+     * @param data user pre-allocated memory space
+     * @param executeMode
+     * <pre>
+     * Deferred (default): lazy evaluation, data is not populated until EndStep
+     * 		Close, or PerformPuts.
+     * Sync: data is ready after this call
+     * </pre>
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user
+     * inputs, also thrown if variable is not
+     * found.
+     * std::runtime_error: always if system failures are caught
+     * </pre>
+     */
     template <class T>
-    void PutDeferred(const std::string &variable, const T &value);
+    void Get(const std::string &variableName, T *data,
+             const Mode launch = Mode::Deferred);
 
+    /**
+     * @brief Get version for single value datum
+     * Mode is always Sync since there might be no pointer associated with
+     * the
+     * single value datum (r-values)
+     * @param variable contains metadata
+     * @param datum to be populated with corresponding value
+     */
     template <class T>
-    void GetSync(Variable<T> &variable);
+    void Get(Variable<T> &variable, T &datum,
+             const Mode launch = Mode::Deferred);
 
+    /**
+     * @brief Get version for single value datum using variable name
+     * @param variableName input variable name (Variable must exist in IO that
+     * created current Engine with Open)
+     * @param datum to be populated with corresponding value
+     */
     template <class T>
-    void GetSync(const std::string &variable);
-
-    template <class T>
-    void GetDeferred(Variable<T> &variable);
-
-    template <class T>
-    void GetDeferred(const std::string &variableName);
-
-    template <class T>
-    void GetSync(Variable<T> &variable, T *values);
-
-    template <class T>
-    void GetSync(const std::string &variableName, T *values);
-
-    template <class T>
-    void GetDeferred(Variable<T> &variable, T *values);
-
-    template <class T>
-    void GetDeferred(const std::string &variable, T *values);
-
-    template <class T>
-    void GetSync(Variable<T> &variable, T &values);
-
-    template <class T>
-    void GetSync(const std::string &variableName, T &values);
-
-    template <class T>
-    void GetDeferred(Variable<T> &variable, T &values);
-
-    template <class T>
-    void GetDeferred(const std::string &variableName, T &values);
+    void Get(const std::string &variableName, T &datum,
+             const Mode launch = Mode::Deferred);
 
     /**
      * Reader application indicates that no more data will be read from the
@@ -195,24 +251,16 @@ public:
      */
     virtual void EndStep();
 
-    /** Execute all Put<Deferred,T> starting from a previous PerformPuts */
+    /** Execute all Put (in deferred launch mode) starting from a previous
+     * PerformPuts, BeginStep or Open */
     virtual void PerformPuts();
 
-    /** Execute all Get<Deferred,T> starting from a previous PerformGets */
+    /** Execute all Get (in deferred launch mode) starting from a previous
+     * PerformGets, BeginStep or Open */
     virtual void PerformGets();
 
     /**
-     * Convenience function to write all variables defined with constant
-     * dimensions that are non-nullptr (with Variable.SetData(nullptr)) at once
-     * in IO. This functions is only used in very straight-forward cases when
-     * all variable dimensions are constant. Resizing (reallocation) generated
-     * dangling pointers.
-     * @exception if a variable in IO doesn't have constant dimensions it throws
-     * an invalid_argument */
-    void WriteStep();
-
-    /**
-     * Closes a particular transport, or all if -1 (default).
+     * Closes a particular transport, or all if transportIndex = -1 (default).
      * @param transportIndex index returned from IO AddTransport, default (-1) =
      * all
      */
@@ -228,11 +276,10 @@ public:
 
     /**
      * @brief Promise that no more definitions or changes to defined variables
-     * will occur.
-     * Useful information if called before the first EndStep() of an output
-     * Engine, as
-     * it will know that the definitions are complete and constant for the
-     * entire lifetime of the output and may optimize metadata handling.
+     * will occur. Useful information if called before the first EndStep() of an
+     * output Engine, as it will know that the definitions are complete and
+     * constant for the entire lifetime of the output and may optimize metadata
+     * handling.
      */
     void FixedSchedule() noexcept;
 
@@ -285,20 +332,29 @@ protected:
 
 #define declare_type(T)                                                        \
     virtual void DoPutSync(Variable<T> &, const T *);                          \
-    virtual void DoPutDeferred(Variable<T> &, const T *);                      \
-    virtual void DoPutDeferred(Variable<T> &, const T &);
+    virtual void DoPutDeferred(Variable<T> &, const T *);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
 // Get
 #define declare_type(T)                                                        \
     virtual void DoGetSync(Variable<T> &, T *);                                \
-    virtual void DoGetDeferred(Variable<T> &, T *);                            \
-    virtual void DoGetDeferred(Variable<T> &, T &);
+    virtual void DoGetDeferred(Variable<T> &, T *);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     virtual void DoClose(const int transportIndex) = 0;
+
+    /**
+     * Called by string Put/Get versions and deferred modes
+     * @param variableName variable to be searched
+     * @param hint extra exception information
+     * @return Variable<T>& reference if found, else throws an exception in
+     * debug mode
+     */
+    template <class T>
+    Variable<T> &FindVariable(const std::string &variableName,
+                              const std::string hint);
 
 private:
     /** Throw exception by Engine virtual functions not implemented/supported by
@@ -306,57 +362,44 @@ private:
     void ThrowUp(const std::string function) const;
 
     /**
-     * Called by string Put/Get versions
-     * @param variableName
-     * @return Variable<T> reference if found, else throws an exception in debug
-     * mode
+     * Execute common checks in Put and Get
+     * @param variable input variable
+     * @param data input data
+     * @param modes acceptable modes
+     * @param hint extra exception info
      */
     template <class T>
-    Variable<T> &FindVariable(const std::string &variableName);
+    void CommonChecks(Variable<T> &variable, const T *data,
+                      const std::set<Mode> &modes,
+                      const std::string hint) const;
 
     /**
-     * Checks if Engine was opened in Write mode so Put functions can be called
-     * @param hint
+     * Checks if Engine was opened using the right Open mode for a particular
+     * function
+     * @param modes acceptable modes
+     * @param hint extra exception info
      */
-    void CheckWriteMode(const std::string hint) const;
-
-    /**
-     * Checks if Engine was opened in Read mode so Get functions can be called
-     * @param hint
-     */
-    void CheckReadMode(const std::string hint) const;
+    void CheckOpenModes(const std::set<Mode> &modes,
+                        const std::string hint) const;
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template void Engine::PutSync<T>(Variable<T> &);                    \
-    extern template void Engine::PutDeferred<T>(Variable<T> &);                \
                                                                                \
-    extern template void Engine::PutSync<T>(Variable<T> &, const T *);         \
-    extern template void Engine::PutDeferred<T>(Variable<T> &, const T *);     \
-    extern template void Engine::PutSync<T>(const std::string &, const T *);   \
-    extern template void Engine::PutDeferred<T>(const std::string &,           \
-                                                const T *);                    \
+    extern template void Engine::Put<T>(Variable<T> &, const T *, const Mode); \
+    extern template void Engine::Put<T>(const std::string &, const T *,        \
+                                        const Mode);                           \
                                                                                \
-    extern template void Engine::PutSync<T>(Variable<T> &, const T &);         \
-    extern template void Engine::PutDeferred<T>(Variable<T> &, const T &);     \
-    extern template void Engine::PutSync<T>(const std::string &, const T &);   \
-    extern template void Engine::PutDeferred<T>(const std::string &,           \
-                                                const T &);                    \
+    extern template void Engine::Put<T>(Variable<T> &, const T &);             \
+    extern template void Engine::Put<T>(const std::string &, const T &);       \
                                                                                \
-    extern template void Engine::GetSync<T>(Variable<T> &);                    \
-    extern template void Engine::GetDeferred<T>(Variable<T> &);                \
-    extern template void Engine::GetSync<T>(const std::string &);              \
-    extern template void Engine::GetDeferred<T>(const std::string &);          \
+    extern template void Engine::Get<T>(Variable<T> &, T *, const Mode);       \
+    extern template void Engine::Get<T>(const std::string &, T *, const Mode); \
                                                                                \
-    extern template void Engine::GetSync<T>(Variable<T> &, T *);               \
-    extern template void Engine::GetDeferred<T>(Variable<T> &, T *);           \
-    extern template void Engine::GetSync<T>(const std::string &, T *);         \
-    extern template void Engine::GetDeferred<T>(const std::string &, T *);     \
+    extern template void Engine::Get<T>(Variable<T> &, T &, const Mode);       \
+    extern template void Engine::Get<T>(const std::string &, T &, const Mode); \
                                                                                \
-    extern template void Engine::GetSync<T>(Variable<T> &, T &);               \
-    extern template void Engine::GetDeferred<T>(Variable<T> &, T &);           \
-    extern template void Engine::GetSync<T>(const std::string &, T &);         \
-    extern template void Engine::GetDeferred<T>(const std::string &, T &);
+    extern template Variable<T> &Engine::FindVariable(                         \
+        const std::string &variableName, const std::string hint);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

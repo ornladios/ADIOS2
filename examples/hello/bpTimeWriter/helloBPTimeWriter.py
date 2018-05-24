@@ -28,19 +28,19 @@ bpIO = adios.DeclareIO("BPN2N")
 
 # Variables
 bpArray = bpIO.DefineVariable("bpArray", [size * nx], [rank * nx], [nx],
-                              adios2.ConstantDims)
+                              adios2.ConstantDims, myArray)
 bpTimeStep = bpIO.DefineVariable("bpTimeStep")
 
 # Engine
 bpFileWriter = bpIO.Open("myArray.bp", adios2.OpenModeWrite)
 # Doesn't work: bpFileWriter = bpIO.Open("myArray.bp", adiosOpenModeWrite,
 #                                                      MPI.COMM_WORLD)
-
+if(rank == 0):
+    bpFileWriter.Put(bpTimeStep, np.array([t]))
+        
 for t in range(0, 10):
-    if(rank == 0):
-        bpFileWriter.Write(bpTimeStep, np.array([t]))
-
-    bpFileWriter.Write(bpArray, myArray)
-    bpFileWriter.Advance()
+    bpFileWriter.BeginStep()
+    bpFileWriter.Put(bpArray, myArray)
+    bpFileWriter.EndStep()
 
 bpFileWriter.Close()

@@ -50,7 +50,8 @@ int main(int argc, char *argv[])
         bpData->SetSelection({{1, 1}, {3, 2}});
         std::vector<float> data(bpData->SelectionSize());
 
-        bpReader.GetSync(*bpData, data.data());
+        bpReader.Get(*bpData, data.data());
+        bpReader.Close();
 
         std::cout << "Selection size: " << bpData->SelectionSize() << "\n";
         for (auto i = 0; i < bpData->m_Count[0]; ++i)

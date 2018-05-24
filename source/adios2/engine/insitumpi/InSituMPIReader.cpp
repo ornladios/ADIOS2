@@ -439,12 +439,7 @@ void InSituMPIReader::ProcessReceives()
     void InSituMPIReader::DoGetDeferred(Variable<T> &variable, T *data)        \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
-    }                                                                          \
-    void InSituMPIReader::DoGetDeferred(Variable<T> &variable, T &data)        \
-    {                                                                          \
-        GetDeferredCommon(variable, &data);                                    \
     }
-
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

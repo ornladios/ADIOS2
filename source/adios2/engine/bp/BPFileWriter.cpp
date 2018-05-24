@@ -57,9 +57,21 @@ void BPFileWriter::PerformPuts()
 
     for (const std::string &variableName : m_BP3Serializer.m_DeferredVariables)
     {
-        PutSync(variableName);
+        const std::string type = m_IO.InquireVariableType(variableName);
+        if (type == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> &variable = FindVariable<T>(                               \
+            variableName, "in call to PerformPuts, EndStep or Close");         \
+        Put(variable, variable.GetData(), Mode::Sync);                         \
     }
-
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
     m_BP3Serializer.m_DeferredVariables.clear();
 }
 
@@ -109,8 +121,8 @@ void BPFileWriter::Init()
     void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
     {                                                                          \
         PutDeferredCommon(variable, values);                                   \
-    }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &, const T &value) {}
+    }
+
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

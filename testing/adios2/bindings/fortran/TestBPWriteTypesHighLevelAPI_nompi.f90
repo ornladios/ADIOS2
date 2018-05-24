@@ -4,12 +4,17 @@
    implicit none
 
 
-   integer(kind=8) :: adios, ioRead, bpReader
+   ! high-level writer
+   type(adios2_file) :: adios2_fhw, adios2_fhr
+   ! low-level reader
+   type(adios2_adios) :: adios
+   type(adios2_io) :: ioRead
+   type(adios2_variable), dimension(12) :: variables
+   type(adios2_engine) :: bpReader
+
    integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
    integer :: inx, irank, isize, ierr, i, n
 
-   type(adios2_file) :: adios2_fhw, adios2_fhr
-   integer(kind=8), dimension(12) :: variables
    ! read handlers
    character(len=:), allocatable :: variable_name
    integer :: variable_type, ndims

@@ -138,17 +138,17 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             // starting index + count
             bpWriter.BeginStep();
 
-            bpWriter.PutDeferred(var_iString, currentTestData.S1);
-            bpWriter.PutDeferred(var_i8, currentTestData.I8.data());
-            bpWriter.PutDeferred(var_i16, currentTestData.I16.data());
-            bpWriter.PutDeferred(var_i32, currentTestData.I32.data());
-            bpWriter.PutDeferred(var_i64, currentTestData.I64.data());
-            bpWriter.PutDeferred(var_u8, currentTestData.U8.data());
-            bpWriter.PutDeferred(var_u16, currentTestData.U16.data());
-            bpWriter.PutDeferred(var_u32, currentTestData.U32.data());
-            bpWriter.PutDeferred(var_u64, currentTestData.U64.data());
-            bpWriter.PutDeferred(var_r32, currentTestData.R32.data());
-            bpWriter.PutDeferred(var_r64, currentTestData.R64.data());
+            bpWriter.Put(var_iString, currentTestData.S1);
+            bpWriter.Put(var_i8, currentTestData.I8.data());
+            bpWriter.Put(var_i16, currentTestData.I16.data());
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.Put(var_i64, currentTestData.I64.data());
+            bpWriter.Put(var_u8, currentTestData.U8.data());
+            bpWriter.Put(var_u16, currentTestData.U16.data());
+            bpWriter.Put(var_u32, currentTestData.U32.data());
+            bpWriter.Put(var_u64, currentTestData.U64.data());
+            bpWriter.Put(var_r32, currentTestData.R32.data());
+            bpWriter.Put(var_r64, currentTestData.R64.data());
             bpWriter.PerformPuts();
 
             bpWriter.EndStep();
@@ -281,20 +281,20 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
-            bpReader.GetSync(*var_iString, IString);
+            bpReader.Get(*var_iString, IString);
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.PerformGets();
 
@@ -432,17 +432,17 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-            bpWriter.PutDeferred(var_iString, currentTestData.S1);
-            bpWriter.PutDeferred(var_i8, currentTestData.I8.data());
-            bpWriter.PutDeferred(var_i16, currentTestData.I16.data());
-            bpWriter.PutDeferred(var_i32, currentTestData.I32.data());
-            bpWriter.PutDeferred(var_i64, currentTestData.I64.data());
-            bpWriter.PutDeferred(var_u8, currentTestData.U8.data());
-            bpWriter.PutDeferred(var_u16, currentTestData.U16.data());
-            bpWriter.PutDeferred(var_u32, currentTestData.U32.data());
-            bpWriter.PutDeferred(var_u64, currentTestData.U64.data());
-            bpWriter.PutDeferred(var_r32, currentTestData.R32.data());
-            bpWriter.PutDeferred(var_r64, currentTestData.R64.data());
+            bpWriter.Put(var_iString, currentTestData.S1);
+            bpWriter.Put(var_i8, currentTestData.I8.data());
+            bpWriter.Put(var_i16, currentTestData.I16.data());
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.Put(var_i64, currentTestData.I64.data());
+            bpWriter.Put(var_u8, currentTestData.U8.data());
+            bpWriter.Put(var_u16, currentTestData.U16.data());
+            bpWriter.Put(var_u32, currentTestData.U32.data());
+            bpWriter.Put(var_u64, currentTestData.U64.data());
+            bpWriter.Put(var_r32, currentTestData.R32.data());
+            bpWriter.Put(var_r64, currentTestData.R64.data());
             bpWriter.PerformPuts();
 
             bpWriter.EndStep();
@@ -577,20 +577,20 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             var_r32->SetStepSelection({t, 1});
             var_r64->SetStepSelection({t, 1});
 
-            bpReader.GetDeferred(*var_iString, IString);
+            bpReader.Get(*var_iString, IString);
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.PerformGets();
 
@@ -731,16 +731,16 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-            bpWriter.PutSync(var_i8, currentTestData.I8.data());
-            bpWriter.PutSync(var_i16, currentTestData.I16.data());
-            bpWriter.PutSync(var_i32, currentTestData.I32.data());
-            bpWriter.PutSync(var_i64, currentTestData.I64.data());
-            bpWriter.PutSync(var_u8, currentTestData.U8.data());
-            bpWriter.PutSync(var_u16, currentTestData.U16.data());
-            bpWriter.PutSync(var_u32, currentTestData.U32.data());
-            bpWriter.PutSync(var_u64, currentTestData.U64.data());
-            bpWriter.PutSync(var_r32, currentTestData.R32.data());
-            bpWriter.PutSync(var_r64, currentTestData.R64.data());
+            bpWriter.Put(var_i8, currentTestData.I8.data());
+            bpWriter.Put(var_i16, currentTestData.I16.data());
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.Put(var_i64, currentTestData.I64.data());
+            bpWriter.Put(var_u8, currentTestData.U8.data());
+            bpWriter.Put(var_u16, currentTestData.U16.data());
+            bpWriter.Put(var_u32, currentTestData.U32.data());
+            bpWriter.Put(var_u64, currentTestData.U64.data());
+            bpWriter.Put(var_r32, currentTestData.R32.data());
+            bpWriter.Put(var_r64, currentTestData.R64.data());
             bpWriter.EndStep();
         }
 
@@ -870,18 +870,18 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             var_r32->SetStepSelection({t, 1});
             var_r64->SetStepSelection({t, 1});
 
-            bpReader.GetDeferred(*var_i8, I8.data());
-            bpReader.GetDeferred(*var_i16, I16.data());
-            bpReader.GetDeferred(*var_i32, I32.data());
-            bpReader.GetDeferred(*var_i64, I64.data());
+            bpReader.Get(*var_i8, I8.data());
+            bpReader.Get(*var_i16, I16.data());
+            bpReader.Get(*var_i32, I32.data());
+            bpReader.Get(*var_i64, I64.data());
 
-            bpReader.GetDeferred(*var_u8, U8.data());
-            bpReader.GetDeferred(*var_u16, U16.data());
-            bpReader.GetDeferred(*var_u32, U32.data());
-            bpReader.GetDeferred(*var_u64, U64.data());
+            bpReader.Get(*var_u8, U8.data());
+            bpReader.Get(*var_u16, U16.data());
+            bpReader.Get(*var_u32, U32.data());
+            bpReader.Get(*var_u64, U64.data());
 
-            bpReader.GetDeferred(*var_r32, R32.data());
-            bpReader.GetDeferred(*var_r64, R64.data());
+            bpReader.Get(*var_r32, R32.data());
+            bpReader.Get(*var_r64, R64.data());
 
             bpReader.PerformGets();
 
@@ -1014,16 +1014,16 @@ TEST_F(BPWriteReadTestADIOS2, DISABLED_ADIOS2BPWriteRead2D4x2_ManySteps)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-            bpWriter.PutDeferred(var_i8, currentTestData.I8.data());
-            bpWriter.PutDeferred(var_i16, currentTestData.I16.data());
-            bpWriter.PutDeferred(var_i32, currentTestData.I32.data());
-            bpWriter.PutDeferred(var_i64, currentTestData.I64.data());
-            bpWriter.PutDeferred(var_u8, currentTestData.U8.data());
-            bpWriter.PutDeferred(var_u16, currentTestData.U16.data());
-            bpWriter.PutDeferred(var_u32, currentTestData.U32.data());
-            bpWriter.PutDeferred(var_u64, currentTestData.U64.data());
-            bpWriter.PutDeferred(var_r32, currentTestData.R32.data());
-            bpWriter.PutDeferred(var_r64, currentTestData.R64.data());
+            bpWriter.Put(var_i8, currentTestData.I8.data());
+            bpWriter.Put(var_i16, currentTestData.I16.data());
+            bpWriter.Put(var_i32, currentTestData.I32.data());
+            bpWriter.Put(var_i64, currentTestData.I64.data());
+            bpWriter.Put(var_u8, currentTestData.U8.data());
+            bpWriter.Put(var_u16, currentTestData.U16.data());
+            bpWriter.Put(var_u32, currentTestData.U32.data());
+            bpWriter.Put(var_u64, currentTestData.U64.data());
+            bpWriter.Put(var_r32, currentTestData.R32.data());
+            bpWriter.Put(var_r64, currentTestData.R64.data());
             bpWriter.EndStep();
         }
 
@@ -1151,18 +1151,18 @@ TEST_F(BPWriteReadTestADIOS2, DISABLED_ADIOS2BPWriteRead2D4x2_ManySteps)
         var_r32->SetStepSelection({tInitial, NSteps - tInitial});
         var_r64->SetStepSelection({tInitial, NSteps - tInitial});
 
-        bpReader.GetDeferred(*var_i8, I8.data());
-        bpReader.GetDeferred(*var_i16, I16.data());
-        bpReader.GetDeferred(*var_i32, I32.data());
-        bpReader.GetDeferred(*var_i64, I64.data());
+        bpReader.Get(*var_i8, I8.data());
+        bpReader.Get(*var_i16, I16.data());
+        bpReader.Get(*var_i32, I32.data());
+        bpReader.Get(*var_i64, I64.data());
 
-        bpReader.GetDeferred(*var_u8, U8.data());
-        bpReader.GetDeferred(*var_u16, U16.data());
-        bpReader.GetDeferred(*var_u32, U32.data());
-        bpReader.GetDeferred(*var_u64, U64.data());
+        bpReader.Get(*var_u8, U8.data());
+        bpReader.Get(*var_u16, U16.data());
+        bpReader.Get(*var_u32, U32.data());
+        bpReader.Get(*var_u64, U64.data());
 
-        bpReader.GetDeferred(*var_r32, R32.data());
-        bpReader.GetDeferred(*var_r64, R64.data());
+        bpReader.Get(*var_r32, R32.data());
+        bpReader.Get(*var_r64, R64.data());
 
         bpReader.PerformGets();
 

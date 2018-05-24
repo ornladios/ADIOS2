@@ -5,8 +5,11 @@ program helloInsituMPIReader
 
     implicit none
 
-    integer(kind=8) :: adios
-    integer(kind=8) :: io, varArray, engine
+    type(adios2_adios):: adios
+    type(adios2_io):: io
+    type(adios2_variable):: varArray
+    type(adios2_engine):: engine
+
     integer :: wrank, wsize, rank, nproc
     real, dimension(:,:), allocatable :: myArray
     integer :: ndims
@@ -31,7 +34,7 @@ program helloInsituMPIReader
     call ProcessArgs(rank, nproc, .false.)
 
     ! Start adios2
-    call adios2_init_config( adios, xmlfile, comm, adios2_debug_mode_on, ierr )
+    call adios2_init( adios, xmlfile, comm, adios2_debug_mode_on, ierr )
 
     ! Declare an IO process configuration inside adios,
     ! Engine choice and parameters for 'writer' come from the config file
@@ -42,7 +45,7 @@ program helloInsituMPIReader
     if( ierr == adios2_found ) then
         step = 0
         do
-            call adios2_begin_step(engine, adios2_step_mode_next_available, 0.0, ierr)
+            call adios2_begin_step(engine, ierr)
             if (ierr /= adios2_step_status_ok) then
                 exit
             endif
@@ -60,7 +63,7 @@ program helloInsituMPIReader
             endif
 
             call adios2_set_selection( varArray, 2, sel_start, sel_count, ierr )
-            call adios2_get_deferred( engine, varArray, myArray, ierr )
+            call adios2_get( engine, varArray, myArray, ierr )
             call adios2_end_step(engine, ierr)
 
             call print_array(myArray, sel_start, rank, step)

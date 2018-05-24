@@ -33,70 +33,37 @@ void FC_GLOBAL(adios2_begin_step_f2c,
 }
 
 // ******** PUTS */
-void FC_GLOBAL(adios2_put_sync_f2c,
-               ADIOS2_PUT_SYNC_F2C)(adios2_engine **engine,
-                                    adios2_variable **variable,
-                                    const void *values, int *ierr)
+void FC_GLOBAL(adios2_put_f2c, ADIOS2_PUT_F2C)(adios2_engine **engine,
+                                               adios2_variable **variable,
+                                               const void *data,
+                                               const int *launch, int *ierr)
 {
     *ierr = 0;
     try
     {
-        adios2_put_sync(*engine, *variable, values);
+        adios2_put(*engine, *variable, data, static_cast<adios2_mode>(*launch));
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 put_sync: " << e.what() << "\n";
+        std::cerr << "ADIOS2 put: " << e.what() << "\n";
         *ierr = -1;
     }
 }
 
-void FC_GLOBAL(adios2_put_sync_by_name_f2c,
-               ADIOS2_PUT_SYNC_BY_NAME_F2C)(adios2_engine **engine,
-                                            const char *name,
-                                            const void *values, int *ierr)
+void FC_GLOBAL(adios2_put_by_name_f2c,
+               ADIOS2_PUT_BY_NAME_F2C)(adios2_engine **engine, const char *name,
+                                       const void *data, const int *launch,
+                                       int *ierr)
 {
     *ierr = 0;
     try
     {
-        adios2_put_sync_by_name(*engine, name, values);
+        adios2_put_by_name(*engine, name, data,
+                           static_cast<adios2_mode>(*launch));
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 put_sync: " << e.what() << "\n";
-        *ierr = -1;
-    }
-}
-
-void FC_GLOBAL(adios2_put_deferred_f2c,
-               ADIOS2_PUT_DEFERRED_F2C)(adios2_engine **engine,
-                                        adios2_variable **variable,
-                                        const void *values, int *ierr)
-{
-    *ierr = 0;
-    try
-    {
-        adios2_put_deferred(*engine, *variable, values);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 put_deferred: " << e.what() << "\n";
-        *ierr = -1;
-    }
-}
-
-void FC_GLOBAL(adios2_put_deferred_by_name_f2c,
-               ADIOS2_PUT_DEFERRED_BY_NAME_F2C)(adios2_engine **engine,
-                                                const char *name,
-                                                const void *values, int *ierr)
-{
-    *ierr = 0;
-    try
-    {
-        adios2_put_deferred_by_name(*engine, name, values);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 put_deferred: " << e.what() << "\n";
+        std::cerr << "ADIOS2 put by name: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -117,70 +84,36 @@ void FC_GLOBAL(adios2_perform_puts_f2c,
 }
 
 // ******** GETS */
-void FC_GLOBAL(adios2_get_sync_f2c,
-               ADIOS2_get_SYNC_F2C)(adios2_engine **engine,
-                                    adios2_variable **variable, void *values,
-                                    int *ierr)
+void FC_GLOBAL(adios2_get_f2c, ADIOS2_get_F2C)(adios2_engine **engine,
+                                               adios2_variable **variable,
+                                               void *data, const int *launch,
+                                               int *ierr)
 {
     *ierr = 0;
     try
     {
-        adios2_get_sync(*engine, *variable, values);
+        adios2_get(*engine, *variable, data, static_cast<adios2_mode>(*launch));
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 get_sync: " << e.what() << "\n";
+        std::cerr << "ADIOS2 get: " << e.what() << "\n";
         *ierr = -1;
     }
 }
 
-void FC_GLOBAL(adios2_get_sync_by_name_f2c,
-               ADIOS2_get_SYNC_BY_NAME_F2C)(adios2_engine **engine,
-                                            const char *name, void *values,
-                                            int *ierr)
+void FC_GLOBAL(adios2_get_by_name_f2c,
+               ADIOS2_get_BY_NAME_F2C)(adios2_engine **engine, const char *name,
+                                       void *data, const int *launch, int *ierr)
 {
     *ierr = 0;
     try
     {
-        adios2_get_sync_by_name(*engine, name, values);
+        adios2_get_by_name(*engine, name, data,
+                           static_cast<adios2_mode>(*launch));
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 get_sync: " << e.what() << "\n";
-        *ierr = -1;
-    }
-}
-
-void FC_GLOBAL(adios2_get_deferred_f2c,
-               ADIOS2_get_DEFERRED_F2C)(adios2_engine **engine,
-                                        adios2_variable **variable,
-                                        void *values, int *ierr)
-{
-    *ierr = 0;
-    try
-    {
-        adios2_get_deferred(*engine, *variable, values);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 get_deferred: " << e.what() << "\n";
-        *ierr = -1;
-    }
-}
-
-void FC_GLOBAL(adios2_get_deferred_by_name_f2c,
-               ADIOS2_get_DEFERRED_BY_NAME_F2C)(adios2_engine **engine,
-                                                const char *name, void *values,
-                                                int *ierr)
-{
-    *ierr = 0;
-    try
-    {
-        adios2_get_deferred_by_name(*engine, name, values);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 get_deferred: " << e.what() << "\n";
+        std::cerr << "ADIOS2 get by name: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -211,21 +144,6 @@ void FC_GLOBAL(adios2_end_step_f2c, ADIOS2_END_STEP_F2C)(adios2_engine **engine,
     catch (std::exception &e)
     {
         std::cerr << "ADIOS2 end_step: " << e.what() << "\n";
-        *ierr = -1;
-    }
-}
-
-void FC_GLOBAL(adios2_write_step_f2c,
-               ADIOS2_WRITE_STEP_F2C)(adios2_engine **engine, int *ierr)
-{
-    *ierr = 0;
-    try
-    {
-        adios2_write_step(*engine);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 write_step: " << e.what() << "\n";
         *ierr = -1;
     }
 }

@@ -34,25 +34,18 @@ public:
 
     StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = 0.f);
 
-    void PutSync(VariableBase *variable, const pybind11::array &array);
-    void PutSync(VariableBase *variable, const std::string &string);
-
-    void PutDeferred(VariableBase *variable, const pybind11::array &array);
-    void PutDeferred(VariableBase *variable, const std::string &string);
-
+    void Put(VariableBase *variable, const pybind11::array &array,
+             const Mode launch = Mode::Deferred);
+    void Put(VariableBase *variable, const std::string &string);
     void PerformPuts();
 
-    void GetSync(VariableBase *variable, pybind11::array &array);
-    void GetSync(VariableBase *variable, std::string &string);
-
-    void GetDeferred(VariableBase *variable, pybind11::array &array);
-    void GetDeferred(VariableBase *variable, std::string &string);
-
+    void Get(VariableBase *variable, pybind11::array &array,
+             const Mode launch = Mode::Deferred);
+    void Get(VariableBase *variable, std::string &string,
+             const Mode launch = Mode::Deferred);
     void PerformGets();
 
     void EndStep();
-
-    void WriteStep();
 
     void Flush(const int transportIndex = -1);
 

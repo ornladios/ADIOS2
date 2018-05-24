@@ -530,7 +530,10 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
         engine = &ioCpp.Open(name, adios2::Mode::Append, mpi_comm);
         break;
 
-    case adios2_mode_undefined:
+    default:
+        throw std::invalid_argument(
+            "ERROR: invalid mode, only adios2_mode_write, adios2_mode_append, "
+            "and adios2_mode_read are supported, in call to adios2_open\n");
 
         break;
     }

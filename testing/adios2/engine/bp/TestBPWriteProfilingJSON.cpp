@@ -135,20 +135,22 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
             // Write each one
             // fill in the variable with values from starting index to
             // starting index + count
+            adios2::Mode sync = adios2::Mode::Sync;
+
             engine.BeginStep();
-            engine.PutSync(var_i8, currentTestData.I8.data());
-            engine.PutSync(var_i16, currentTestData.I16.data());
-            engine.PutSync(var_i32, currentTestData.I32.data());
-            engine.PutSync(var_i64, currentTestData.I64.data());
-            engine.PutSync(var_u8, currentTestData.U8.data());
-            engine.PutSync(var_u16, currentTestData.U16.data());
-            engine.PutSync(var_u32, currentTestData.U32.data());
-            engine.PutSync(var_u64, currentTestData.U64.data());
-            engine.PutSync(var_r32, currentTestData.R32.data());
-            engine.PutSync(var_r64, currentTestData.R64.data());
+            engine.Put(var_i8, currentTestData.I8.data(), sync);
+            engine.Put(var_i16, currentTestData.I16.data(), sync);
+            engine.Put(var_i32, currentTestData.I32.data(), sync);
+            engine.Put(var_i64, currentTestData.I64.data(), sync);
+            engine.Put(var_u8, currentTestData.U8.data(), sync);
+            engine.Put(var_u16, currentTestData.U16.data(), sync);
+            engine.Put(var_u32, currentTestData.U32.data(), sync);
+            engine.Put(var_u64, currentTestData.U64.data(), sync);
+            engine.Put(var_r32, currentTestData.R32.data(), sync);
+            engine.Put(var_r64, currentTestData.R64.data(), sync);
             engine.EndStep();
         }
-        // Close the file
+
         engine.Close();
     }
 
@@ -274,16 +276,16 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
             // fill in the variable with values from starting index to
             // starting index + count
             engine.BeginStep();
-            engine.PutSync(var_i8, currentTestData.I8.data());
-            engine.PutSync(var_i16, currentTestData.I16.data());
-            engine.PutSync(var_i32, currentTestData.I32.data());
-            engine.PutSync(var_i64, currentTestData.I64.data());
-            engine.PutSync(var_u8, currentTestData.U8.data());
-            engine.PutSync(var_u16, currentTestData.U16.data());
-            engine.PutSync(var_u32, currentTestData.U32.data());
-            engine.PutSync(var_u64, currentTestData.U64.data());
-            engine.PutSync(var_r32, currentTestData.R32.data());
-            engine.PutSync(var_r64, currentTestData.R64.data());
+            engine.Put(var_i8, currentTestData.I8.data());
+            engine.Put(var_i16, currentTestData.I16.data());
+            engine.Put(var_i32, currentTestData.I32.data());
+            engine.Put(var_i64, currentTestData.I64.data());
+            engine.Put(var_u8, currentTestData.U8.data());
+            engine.Put(var_u16, currentTestData.U16.data());
+            engine.Put(var_u32, currentTestData.U32.data());
+            engine.Put(var_u64, currentTestData.U64.data());
+            engine.Put(var_r32, currentTestData.R32.data());
+            engine.Put(var_r64, currentTestData.R64.data());
             engine.EndStep();
         }
         // Close the file

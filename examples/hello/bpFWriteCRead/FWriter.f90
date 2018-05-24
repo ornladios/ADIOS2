@@ -8,7 +8,10 @@ program FWriter
     integer :: i, j, inx, iny, irank, isize, ierr
 
     ! adios2 handlers
-    integer(kind=8) :: adios, io, var, engine
+    type(adios2_adios):: adios
+    type(adios2_io):: io
+    type(adios2_variable):: var
+    type(adios2_engine):: engine
 
     ! Launch MPI
     call MPI_Init(ierr)
@@ -43,15 +46,15 @@ program FWriter
     call adios2_declare_io(io, adios, "FWriter", ierr)
 
     ! Defines a variable to be written in bp format
-    call adios2_define_variable(var, io, "data2D", 2, shape_dims, &
-                                start_dims, count_dims, adios2_constant_dims, &
-                                data, ierr)
+    call adios2_define_variable(var, io, "data2D", adios2_type_real, 2, &
+                                shape_dims, start_dims, count_dims, &
+                                adios2_constant_dims, ierr)
 
     ! Open in write mode, this launches an engine
     call adios2_open(engine, io, "FWriter.bp", adios2_mode_write, ierr)
 
     ! Put data contents to bp buffer
-    call adios2_put_sync(engine, var, data, ierr)
+    call adios2_put(engine, var, data, ierr)
 
     ! Closes engine1 and deallocates it, becomes unreachable
     call adios2_close(engine, ierr)

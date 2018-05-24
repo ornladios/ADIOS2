@@ -54,17 +54,17 @@ attI8 = bpIO.DefineAttribute("attI8", data.I8)
 # ADIOS Engine
 bpFileWriter = bpIO.Open("npTypes.bp", adios2.Mode.Write)
 
-bpFileWriter.PutSync(varI8, data.I8)
-bpFileWriter.PutSync(varI16, data.I16)
-bpFileWriter.PutSync(varI32, data.I32)
-bpFileWriter.PutSync(varI64, data.I64)
+bpFileWriter.Put(varI8, data.I8)
+bpFileWriter.Put(varI16, data.I16)
+bpFileWriter.Put(varI32, data.I32)
+bpFileWriter.Put(varI64, data.I64)
 
-bpFileWriter.PutSync(varU8, data.U8)
-bpFileWriter.PutSync(varU16, data.U16)
-bpFileWriter.PutSync(varU32, data.U32)
-bpFileWriter.PutSync(varU64, data.U64)
+bpFileWriter.Put(varU8, data.U8)
+bpFileWriter.Put(varU16, data.U16)
+bpFileWriter.Put(varU32, data.U32)
+bpFileWriter.Put(varU64, data.U64)
 
-bpFileWriter.PutSync(varR32, data.R32)
-bpFileWriter.PutSync(varR64, data.R64)
+bpFileWriter.Put(varR32, data.R32)
+bpFileWriter.Put(varR64, data.R64)
 
 bpFileWriter.Close()

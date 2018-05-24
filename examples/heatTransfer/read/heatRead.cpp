@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 
             // Arrays are read by scheduling one or more of them
             // and performing the reads at once
-            reader.GetDeferred<double>(*vTin, Tin.data());
+            reader.Get<double>(*vTin, Tin.data());
             /*printDataStep(Tin.data(), settings.readsize.data(),
                           settings.offset.data(), rank, step); */
             reader.EndStep();
@@ -189,8 +189,8 @@ int main(int argc, char *argv[])
 
             /* Output Tout and dT */
             writer->BeginStep();
-            writer->PutDeferred<double>(*vTout, Tout.data());
-            writer->PutDeferred<double>(*vdT, dT.data());
+            writer->Put<double>(*vTout, Tout.data());
+            writer->Put<double>(*vdT, dT.data());
             writer->EndStep();
 
             step++;

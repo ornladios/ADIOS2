@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
         if (bpFloats != nullptr) // means found
         {
             // myFloats.data is pre-allocated
-            bpReader.GetSync<float>(*bpFloats, myFloats.data());
+            bpReader.Get<float>(*bpFloats, myFloats.data(), adios2::Mode::Sync);
 
             std::cout << "MyFloats: \n";
             for (const auto number : myFloats)
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
         if (bpInts != nullptr) // means not found
         {
             // myInts.data is pre-allocated
-            bpReader.GetSync<int>(*bpInts, myInts.data());
+            bpReader.Get<int>(*bpInts, myInts.data(), adios2::Mode::Sync);
 
             std::cout << "MyInts: \n";
             for (const auto number : myInts)
