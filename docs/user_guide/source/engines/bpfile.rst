@@ -1,5 +1,5 @@
 ******
-BPFile 
+BPFile
 ******
 
 The BPFile Engine writes and reads files in ADIOS2 native binary-pack (bp) format. BP files are backwards compatible with ADIOS1.x and have the following structure given a "name" string passed as the first argument of ``IO::Open``:
@@ -28,7 +28,7 @@ will generate:
 
 This engine allows the user to fine tune the buffering operations through the following optional parameters: 
 
-1. **Threads**: number of threads provided from the application for buffering
+1. **Threads**: number of threads provided from the application for buffering, use this for very large variables
 
 2. **InitialBufferSize**: initial memory provided for buffering (minimum is 16Kb)
 
@@ -59,5 +59,4 @@ Only file transport types are supported. Optional parameters for `IO::AddTranspo
  Library           string        **POSIX** (UNIX), **FStream** (Windows), stdio  
 ============= ================= ================================================
 
-   
    

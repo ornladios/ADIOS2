@@ -26,6 +26,6 @@ Python v2.7 or above is required to build the Sphinx based user guide. Sphinx ca
 2. To generate the User Guide under doc/user_guide/build/html format (default) from the existing Sphinx source files:
 	
 	```
-	$ cd ADIOS2/doc/user_guide 
+	$ cd ADIOS2/docs/user_guide 
 	$ make html
 	```

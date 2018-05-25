@@ -21,20 +21,21 @@ Recall that Engines are created through the ``IO::Open`` function which must con
 
 For Publishing data (Write, Append mode)
 
-   * **PutSync**    Synchronized variable publishing. Data pointer memory becomes reusable immediately
-   * **PutDeferred** Deferred, lazy evaluation publishing. Data pointer memory data must not be reused until first encounter with PerformPuts, EndStep or Close
-   * **PerformsPuts**   Execute all pending PutDeferred functions until this call 
+   * **Put**  Default mode: deferred (lazy evaluation). Data pointer memory data must not be reused until first encounter with PerformPuts, EndStep or Close. 
+                            Use sync mode to allow the pointer memory to be reusable immediately, is enable by passing the flag adios2::Mode::Sync as the 3rd argument
+   * **PerformsPuts**   Execute all pending deferred Put calls until this line 
+
 
 For Consuming data (Read mode)
 
-   * **GetSync**        Synchronized variable publishing. Data pointer memory becomes reusable immediately
-   * **GetDeferred**    Deferred, lazy evaluation publishing. Data pointer memory data can't be reused until after first PerformGets, EndStep or Close
-   * **PerformsGets**   Execute all pending GetDeferred functions until this call
+   * **Get**  Default mode: deferred (lazy evaluation). Data pointer memory data must not be reused until first encounter with PerformPuts, EndStep or Close. 
+                            Use sync mode to populate the data pointer memory immediately, this is enable by passing the flag adios2::Mode::Sync as the 3rd argument 
+   * **PerformsGets**   Execute all pending deferred Get calls until this line
 
 Common Functionality (Write, Read, Append modes)
 
    * **BeginStep**      Begin logical step and return status of stream to be read/written
-   * **EndStep**        End logical step, flush to transports depending on IO parameters
+   * **EndStep**        End logical step, flush to transports depending on IO parameters and engine default behavior
    * **Close**          Close current engine and underlying transports. Engine object can't be used after this.
 
 The following example illustrates the basic API usage in write mode for data generated at each application step:
@@ -49,19 +50,21 @@ The following example illustrates the basic API usage in write mode for data gen
       
       engine.BeginStep(); //next "logical" step for this application
       
-      engine.PutSync(variableT, dataT);
+      engine.Put(variableT, dataT, adios2::Mode::Sync);
       // dataT memory already subscribed 
       // Application can modify its contents
    
-      //deferred functions return immediately (lazy evaluation)
+      //deferred functions return immediately (lazy evaluation), 
+      // dataU, dataV and dataW must not be resued 
       //1st batch
-      engine.PutDeferred(variableU, dataU);
-      engine.PutDeferred(variableV, dataV);
-      engine.PutDeferred(variableW, dataW);
-      // dataU, dataV, dataW memory subscription is "deferred" 
+      engine.Put(variableU, dataU);
+      engine.Put(variableV, dataV);
+      // in this case adios2::Mode::Deferred is redundant,
+      // as this is the default option
+      engine.Put(variableW, dataW, adios2::Mode::Deferred); 
+      // effectively dataU, dataV, dataW memory subscription is "deferred" 
       // until the first call toPerformPuts, EndStep or Close.      
       // Application MUST NOT modify their contents.
-      
       engine.PerformPuts();
       // dataU, dataV, data4W subscribed 
       // Application can modify their contents
@@ -69,9 +72,9 @@ The following example illustrates the basic API usage in write mode for data gen
       // ... Application modifies dataU, dataV, dataW
       
       //2nd batch
-      engine.PutDeferred(variableUi, dataU);
-      engine.PutDeferred(variableVi, dataV);
-      engine.PutDeferred(variableWi, dataW);
+      engine.Put(variableUi, dataU);
+      engine.Put(variableVi, dataV);
+      engine.Put(variableWi, dataW);
       // Application MUST NOT modify dataU, dataV and dataW
       
       engine.EndStep(); 
@@ -87,13 +90,19 @@ The following example illustrates the basic API usage in write mode for data gen
    // engine is unreachable and all data should be transported
    ...
 
+.. danger::
+   The default behavior of adios2 Put and Get calls IS NOT synchronized, but rather deferred. It's actually the opposite of MPI_Put and more like MPI_rPut.
+   Do not assume the data pointer is usable after a Put and Get, before EndStep, Close or the corresponding PerformPuts/PerformGets. 
+   Be SAFE and use the adios2::Mode::Sync in the 3rd argument. 
+
+
 .. tip::
 
-   Use Deferred (lazy evaluation) functions preferably as it has the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until EndStep, Perform(Puts/Gets) or Close. Only use Sync if you have to (*e.g.* reuse memory space from pointer).
+   Prefer Deferred (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until EndStep, Perform(Puts/Gets) or Close. Only use Sync if you really have to (*e.g.* reuse memory space from pointer).
 
 .. warning::
 
-   Currently ADIOS2 supports one variable per deferred "batch" (until PerformPuts/Gets, EndStep). Allowing multiple pieces in a "batch" is under progress. Use Sync functions (PutSync, GetSync) in current version as a workaround.
+   Currently ADIOS2 supports one variable per deferred "batch" (until PerformPuts/Gets, EndStep). Allowing multiple pieces in a "batch" is under progress. Use Sync functions (Put, Get with adios2::Mode::Sync in 3rd argument) in current version as a workaround.
 
 
 Available Engines
@@ -101,19 +110,19 @@ Available Engines
 
 A particular engine is set within the IO object that creates it with the ``IO::SetEngine`` function in a case insensitive manner. If the SetEngine function is not invoked the default engine is the **BPFile** for writing and reading self-describing bp (binary-pack) files.
    
-+-----------------------------+---------+---------------------------------------------+
-| Application                 | Engine  | Description                                 |
-+-----------------------------+---------+---------------------------------------------+
-| File                        | BPFile  | DEFAULT write/read ADIOS2 native bp files   |
-|                             +---------+---------------------------------------------+ 
-|                             | ADIOS1  | write/read ADIOS1.x native bp files         |
-|                             +---------+---------------------------------------------+
-|                             | HDF5    | write/read interoperability with HDF5 files |
-+-----------------------------+---------+---------------------------------------------+
-| Wide-Area-Network (WAN)     | DataMan | write/read TCP/IP streams                   |
-+-----------------------------+---------+---------------------------------------------+
-| Staging                     | SST     | write/read to a "staging" area: *e.g.* RDMA |
-+-----------------------------+---------+---------------------------------------------+
++-------------------------+---------+---------------------------------------------+
+| Application             | Engine  | Description                                 |
++-------------------------+---------+---------------------------------------------+
+| File                    | BPFile  | DEFAULT write/read ADIOS2 native bp files   |
+|                         |         |                                             |
+|                         | ADIOS1  | write/read ADIOS1.x native bp files         |
+|                         |         |                                             |
+|                         | HDF5    | write/read interoperability with HDF5 files |
++-------------------------+---------+---------------------------------------------+
+| Wide-Area-Network (WAN) | DataMan | write/read TCP/IP streams                   |
++-------------------------+---------+---------------------------------------------+
+| Staging                 | SST     | write/read to a "staging" area: *e.g.* RDMA |
++-------------------------+---------+---------------------------------------------+
 
 
 Engine Polymorphism has a two-fold goal:
