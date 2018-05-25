@@ -68,7 +68,7 @@ include(ADIOSFunctions)
 
 # Default to a debug build if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
 # Force C++11 and C99
@@ -126,7 +126,7 @@ adios_option(DataMan   "Enable support for DataMan" AUTO)
 adios_option(SST       "Enable support for SST" AUTO)
 adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
-adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" AUTO)
+adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" OFF)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)

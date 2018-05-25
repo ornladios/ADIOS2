@@ -3,7 +3,7 @@ set(CTEST_SITE "CircleCI")
 set(CTEST_BUILD_CONFIGURATION Debug)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
-set(CTEST_TEST_ARGS PARALLEL_LEVEL 4)
+set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
 
 set(dashboard_model Experimental)
 set(dashboard_binary_name "build_$ENV{CIRCLE_JOB}")
@@ -35,6 +35,8 @@ ADIOS2_USE_MPI:STRING=ON
 ADIOS2_USE_Python:STRING=ON
 ADIOS2_USE_ZFP:STRING=OFF
 ADIOS2_USE_ZeroMQ:STRING=ON
+
+MPIEXEC_MAX_NUMPROCS:STRING=4
 ")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../dashboard/adios_common.cmake)
