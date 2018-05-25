@@ -79,9 +79,9 @@ endif()
 
 # ZeroMQ
 if(ADIOS2_USE_ZeroMQ STREQUAL AUTO)
-  find_package(ZeroMQ)
+  find_package(ZeroMQ 4.1)
 elseif(ADIOS2_USE_ZeroMQ)
-  find_package(ZeroMQ REQUIRED)
+  find_package(ZeroMQ 4.1 REQUIRED)
 endif()
 if(ZeroMQ_FOUND)
   set(ADIOS2_HAVE_ZeroMQ TRUE)
