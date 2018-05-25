@@ -1,3 +1,5 @@
+message_start_thirdparty()
+
 set(BUILD_TESTING OFF)
 set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/deps")
 
@@ -9,3 +11,5 @@ set(FFS_LIBRARY_PREFIX adios2_ CACHE INTERNAL "")
 
 add_subdirectory(ffs)
 set(ffs_DIR ${CMAKE_CURRENT_BINARY_DIR}/ffs CACHE INTERNAL "")
+
+message_end_thirdparty()

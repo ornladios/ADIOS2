@@ -1,3 +1,5 @@
+message_start_thirdparty()
+
 set(KWSYS_NAMESPACE adios2sys)
 set(KWSYS_USE_CommandLineArguments ON)
 set(KWSYS_USE_DynamicLoader ON)
@@ -14,3 +16,5 @@ set(KWSYS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
 
 add_subdirectory(adios2sys)
 add_library(adios2sys_interface ALIAS adios2sys_private)
+
+message_end_thirdparty()

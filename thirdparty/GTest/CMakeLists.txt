@@ -1,3 +1,5 @@
+message_start_thirdparty()
+
 set(BUILD_GTEST ON CACHE INTERNAL "")
 set(BUILD_GMOCK OFF CACHE INTERNAL "")
 if(BUILD_SHARED_LIBS)
@@ -16,3 +18,5 @@ if(BUILD_SHARED_LIBS)
     GTEST_LINKED_AS_SHARED_LIBRARY=1
   )
 endif()
+
+message_end_thirdparty()
