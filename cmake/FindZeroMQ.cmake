@@ -13,6 +13,7 @@
 #   ZeroMQ_FOUND        - System has ZMQ
 #   ZeroMQ_INCLUDE_DIRS - The ZMQ include directory
 #   ZeroMQ_LIBRARIES    - Link these to use ZMQ
+#   ZeroMQ_VERSION      - Version of the zmq library to support
 #
 # and the following imported targets:
 #   ZeroMQ::ZMQ - The core ZMQ library
@@ -39,10 +40,23 @@ if(NOT ZeroMQ_FOUND)
 
   find_path(ZeroMQ_INCLUDE_DIR zmq.h ${ZeroMQ_INCLUDE_OPTS})
   find_library(ZeroMQ_LIBRARY zmq ${ZeroMQ_LIBRARY_OPTS})
+  if(ZeroMQ_INCLUDE_DIR)
+    file(STRINGS ${ZeroMQ_INCLUDE_DIR}/zmq.h _ver_strings
+      REGEX "ZMQ_VERSION_[^ ]* [0-9]+"
+    )
+    foreach(v IN LISTS _ver_strings)
+      string(REGEX MATCH "ZMQ_VERSION_([^ ]+) ([0-9]+)" v "${v}")
+      set(ZeroMQ_VERSION_${CMAKE_MATCH_1} ${CMAKE_MATCH_2})
+    endforeach()
+    set(ZeroMQ_VERSION
+      ${ZeroMQ_VERSION_MAJOR}.${ZeroMQ_VERSION_MINOR}.${ZeroMQ_VERSION_PATCH}
+    )
+  endif()
 
   include(FindPackageHandleStandardArgs)
   find_package_handle_standard_args(ZeroMQ
     FOUND_VAR ZeroMQ_FOUND
+    VERSION_VAR ZeroMQ_VERSION
     REQUIRED_VARS ZeroMQ_LIBRARY ZeroMQ_INCLUDE_DIR
   )
   if(ZeroMQ_FOUND)
