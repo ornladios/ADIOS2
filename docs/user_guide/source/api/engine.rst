@@ -30,7 +30,7 @@ For Consuming data (Read mode)
 
    * **Get**  Default mode: deferred (lazy evaluation). Data pointer memory data must not be reused until first encounter with PerformPuts, EndStep or Close. 
                             Use sync mode to populate the data pointer memory immediately, this is enable by passing the flag adios2::Mode::Sync as the 3rd argument 
-   * **PerformsPuts**   Execute all pending deferred Get calls until this line
+   * **PerformsGets**   Execute all pending deferred Get calls until this line
 
 Common Functionality (Write, Read, Append modes)
 
@@ -110,19 +110,19 @@ Available Engines
 
 A particular engine is set within the IO object that creates it with the ``IO::SetEngine`` function in a case insensitive manner. If the SetEngine function is not invoked the default engine is the **BPFile** for writing and reading self-describing bp (binary-pack) files.
    
-+-----------------------------------------------------------+---------+---------------------------------------------+
-| Application                                               | Engine  | Description                                 |
-+-----------------------------------------------------------+---------+---------------------------------------------+
-| File                                                      | BPFile  | DEFAULT write/read ADIOS2 native bp files   |
-| +---------+---------------------------------------------+ |         |                                             |
-|                                                           | ADIOS1  | write/read ADIOS1.x native bp files         |
-| +---------+---------------------------------------------+ |         |                                             |
-|                                                           | HDF5    | write/read interoperability with HDF5 files |
-+-----------------------------------------------------------+---------+---------------------------------------------+
-| Wide-Area-Network (WAN)                                   | DataMan | write/read TCP/IP streams                   |
-+-----------------------------------------------------------+---------+---------------------------------------------+
-| Staging                                                   | SST     | write/read to a "staging" area: *e.g.* RDMA |
-+-----------------------------------------------------------+---------+---------------------------------------------+
++-------------------------+---------+---------------------------------------------+
+| Application             | Engine  | Description                                 |
++-------------------------+---------+---------------------------------------------+
+| File                    | BPFile  | DEFAULT write/read ADIOS2 native bp files   |
+|                         |         |                                             |
+|                         | ADIOS1  | write/read ADIOS1.x native bp files         |
+|                         |         |                                             |
+|                         | HDF5    | write/read interoperability with HDF5 files |
++-------------------------+---------+---------------------------------------------+
+| Wide-Area-Network (WAN) | DataMan | write/read TCP/IP streams                   |
++-------------------------+---------+---------------------------------------------+
+| Staging                 | SST     | write/read to a "staging" area: *e.g.* RDMA |
++-------------------------+---------+---------------------------------------------+
 
 
 Engine Polymorphism has a two-fold goal:

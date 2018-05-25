@@ -15,4 +15,5 @@ To enable the Fortran bindings in ADIOS2 follow these guidelines:
 
     * Library: installation-dir/lib/libadios2_f.*
     * Modules: installation-dir/include/fortran/*.mod
-    
+
+4. **``use adios2:``*** adios2 can be included in any program by using the module adios2 only     
