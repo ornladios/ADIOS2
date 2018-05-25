@@ -90,12 +90,22 @@ endif()
 # HDF5
 if(ADIOS2_USE_HDF5 STREQUAL AUTO)
   find_package(HDF5 COMPONENTS C)
+  if(HDF5_FOUND AND
+     ((ADIOS2_HAVE_MPI AND HDF5_IS_PARALLEL) OR
+      (NOT ADIOS2_HAVE_MPI AND NOT HDF5_IS_PARALLEL)))
+    set(ADIOS2_HAVE_HDF5 TRUE)
+  endif()
 elseif(ADIOS2_USE_HDF5)
   find_package(HDF5 REQUIRED COMPONENTS C)
-endif()
-if(HDF5_FOUND AND
-   ((ADIOS2_HAVE_MPI AND HDF5_IS_PARALLEL) OR
-    NOT (ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL)))
+  if(ADIOS2_HAVE_MPI)
+    if(NOT HDF5_IS_PARALLEL)
+      message(FATAL_ERROR "MPI is enabled but serial HDF5 is detected.")
+    endif()
+  else()
+    if(HDF5_IS_PARALLEL)
+      message(FATAL_ERROR "MPI is disabled but parallel HDF5 is detected.")
+    endif()
+  endif()
   set(ADIOS2_HAVE_HDF5 TRUE)
 endif()
 

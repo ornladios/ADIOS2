@@ -1,3 +1,12 @@
+function(message_start_thirdparty)
+  get_filename_component(tp_base "${CMAKE_CURRENT_LIST_DIR}" NAME_WE)
+  message("")
+  message(STATUS "ADIOS2 ThirdParty: Configuring ${tp_base}")
+endfunction()
+
+function(message_end_thirdparty)
+endfunction()
+
 include(CMakeDependentOption)
 
 add_subdirectory(KWSys)
@@ -81,5 +90,10 @@ if(ADIOS2_HAVE_SST)
 
     add_subdirectory(EVPath)
   endif()
+  find_package(EVPath REQUIRED)
   adios2_add_thirdparty_target(EVPath EVPath::EVPath)
 endif()
+
+# Keep this at the end so we see the verbose messages at least once
+set(ADIOS2_THIRDPARTY_VERBOSE_DISABLE TRUE CACHE INTERNAL "" FORCE)
+message("")

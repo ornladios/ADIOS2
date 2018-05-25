@@ -1,3 +1,5 @@
+message_start_thirdparty()
+
 set(BUILD_TESTING OFF)
 set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/deps")
 
@@ -6,3 +8,5 @@ set(DILL_LIBRARY_PREFIX adios2_ CACHE INTERNAL "")
 
 add_subdirectory(dill)
 set(dill_DIR ${CMAKE_CURRENT_BINARY_DIR}/dill CACHE INTERNAL "")
+
+message_end_thirdparty()
