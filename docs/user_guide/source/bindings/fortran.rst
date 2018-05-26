@@ -12,22 +12,26 @@ Click here for a `Fortran write and read example`_ to illustrate the use of the 
 
 .. _`Fortran write and read example`: https://github.com/ornladios/ADIOS2/blob/master/testing/adios2/bindings/fortran/TestBPWriteReadHeatMap3D.f90
 
-The following bullets describe the overall component representation and the main subroutines and available overloaded versions in the API.
+The following subsections describe the overall component representation and the main subroutines versions in the Fortran bindings API.
 
-* **ADIOS2 typed handlers**: ADIOS2 Fortran handlers are mapped 1-to-1 to the ADIOS components described in the :ref:`Application Programmer Interface` section
+ADIOS2 typed handlers
+---------------------
+
+ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components described in the :ref:`Application Programmer Interface` section
  
-   .. code-block:: fortran
+.. code-block:: fortran
 
-      type(adios2_adios) :: adios
-      type(adios2_io) :: io
-      type(adios2_variable) :: variable
-      type(adios2_attribute) :: attribute
-      type(adios2_engine) :: engine
+   type(adios2_adios) :: adios
+   type(adios2_io) :: io
+   type(adios2_variable) :: variable
+   type(adios2_attribute) :: attribute
+   type(adios2_engine) :: engine
    
 
-* :ref:`ADIOS` component subroutines:
+:ref:`ADIOS` subroutines
+------------------------
 
-   * :f90:`subroutine adios2_init` : starting point for the adios component 
+* :f90:`subroutine adios2_init` starting point for the adios component 
 
    .. code-block:: fortran
 
@@ -63,7 +67,7 @@ The following bullets describe the overall component representation and the main
       logical, intent(in):: adios2_debug_mode
       
 
-   * :f90:`subroutine adios2_declare_io` : spawn IO tasks
+* :f90:`subroutine adios2_declare_io` spawn io components
 
    .. code-block:: fortran
 
@@ -79,9 +83,19 @@ The following bullets describe the overall component representation and the main
       
       ! unique name associated with this io component inside adios
       character*(*), intent(in):: io
+    
+* :f90:`subroutine adios2_flush_all` flush all current engines in all ios
+
+   .. code-block:: fortran
+
+      subroutine adios2_flush_all(adios, ierr)
       
+      ! WHERE:
+      
+      ! adios component from adios2_init owning ios and engines 
+      type(adios2_adios), intent(in):: adios  
    
-   * :f90:`subroutine adios2_finalize` : final point for the adios component
+* :f90:`subroutine adios2_finalize` final point for the adios component
 
    .. code-block:: fortran
 
@@ -98,9 +112,10 @@ The following bullets describe the overall component representation and the main
       Make sure that for every call to ``adios2_init`` there is a call to ``adios2_finalize`` for the same adios handler. Not doing so will result in memory leaks. 
 
       
-* :ref:`IO` component subroutines:    
+:ref:`IO` subroutines    
+---------------------
       
-   * :f90:`subroutine adios2_define_variable` 
+* :f90:`subroutine adios2_define_variable` 
 
    .. code-block:: fortran
 
@@ -148,7 +163,7 @@ The following bullets describe the overall component representation and the main
       logical, value, intent(in):: adios2_constant_dims
       
    
-   * available :f90:`adios2_type` parameters in :f90:`subroutine adios2_define_variable` 
+* available :f90:`adios2_type` parameters in :f90:`subroutine adios2_define_variable` 
    
    .. code-block:: fortran
       
@@ -165,8 +180,16 @@ The following bullets describe the overall component representation and the main
       
       integer, parameter :: adios2_type_string = 10
       integer, parameter :: adios2_type_string_array = 11
+  
+ 
+.. tip::
+
+   Always prefer using adios2_type_xxx parameters explicitly rather than raw numbers. 
+   `e.g.` use ``adios2_type_dp`` instead of ``3``
+  
+  
                
-   * :f90:`subroutine adios2_define_attribute`
+* :f90:`subroutine adios2_define_attribute`
    
    .. code-block:: fortran
 
@@ -196,7 +219,7 @@ The following bullets describe the overall component representation and the main
       integer, intent(in):: elements
 
 
-   * :f90:`subroutine adios2_set_engine`: set engine type in code, see :ref:`Supported Engines` for a list of available engines
+* :f90:`subroutine adios2_set_engine` set engine type in code, see :ref:`Supported Engines` for a list of available engines
    
    .. code-block:: fortran
       
@@ -210,7 +233,7 @@ The following bullets describe the overall component representation and the main
       ! engine_type: BPFile (default), HDF5, DataMan, SST, ADIOS1, InSituMPI
       character*(*), intent(in):: engine_type
 
-   * :f90:`subroutine adios2_set_parameter`: set IO key/value pair parameter in code, see :ref:`Supported Engines` for a list of available parameters for each engine type
+* :f90:`subroutine adios2_set_parameter` set IO key/value pair parameter in code, see :ref:`Supported Engines` for a list of available parameters for each engine type
    
    .. code-block:: fortran
       
@@ -228,7 +251,7 @@ The following bullets describe the overall component representation and the main
       character*(*), intent(in):: value
       
       
-   * :f90:`subroutine adios2_inquire_variable`: inquire for existing variable by its unique name
+* :f90:`subroutine adios2_inquire_variable` inquire for existing variable by its unique name
    
    .. code-block:: fortran
    
@@ -247,7 +270,7 @@ The following bullets describe the overall component representation and the main
       ! unique key name to search for variable 
       character*(*), intent(in) :: name
       
-   * :f90:`subroutine adios2_inquire_attribute`: inquire for existing attribute by its unique name
+* :f90:`subroutine adios2_inquire_attribute` inquire for existing attribute by its unique name
    
    .. code-block:: fortran
    
@@ -266,7 +289,7 @@ The following bullets describe the overall component representation and the main
       ! unique key name to search for attribute 
       character*(*), intent(in) :: name
       
-   * :f90:`subroutine adios2_remove_variable`: remove existing variable by its unique name
+* :f90:`subroutine adios2_remove_variable` remove existing variable by its unique name
    
    .. code-block:: fortran
    
@@ -281,7 +304,7 @@ The following bullets describe the overall component representation and the main
       character*(*), intent(in) :: name
       
       
-    * :f90:`subroutine adios2_remove_attribute`: remove existing attribute by its unique name
+* :f90:`subroutine adios2_remove_attribute` remove existing attribute by its unique name
    
    .. code-block:: fortran
    
@@ -295,7 +318,7 @@ The following bullets describe the overall component representation and the main
       ! unique key name to search for attribute 
       character*(*), intent(in) :: name
       
-   * :f90:`subroutine adios2_remove_all_variables`: remove all existing variables
+* :f90:`subroutine adios2_remove_all_variables` remove all existing variables
    
    .. code-block:: fortran
    
@@ -307,7 +330,7 @@ The following bullets describe the overall component representation and the main
       type(adios2_io), intent(in) :: io
       
       
-    * :f90:`subroutine adios2_remove_all_attributes`: remove all existing attributes
+* :f90:`subroutine adios2_remove_all_attributes` remove all existing attributes
    
    .. code-block:: fortran
    
@@ -318,7 +341,7 @@ The following bullets describe the overall component representation and the main
       ! io in which search and removal for all attributes is performed
       type(adios2_io), intent(in) :: io
 
-   * :f90:`subroutine adios2_flush_all_engines`: flushes all existing engines opened by this io
+* :f90:`subroutine adios2_flush_all_engines` flushes all existing engines opened by this io
    
    .. code-block:: fortran
    
@@ -329,7 +352,7 @@ The following bullets describe the overall component representation and the main
       ! io in which search and flush for all engines is performed
       type(adios2_io), intent(in) :: io 
       
-   * :f90:`subroutine adios2_open`: opens an engine to executes IO tasks 
+* :f90:`subroutine adios2_open` opens an engine to executes IO tasks 
    
    .. code-block:: fortran
    
@@ -360,10 +383,74 @@ The following bullets describe the overall component representation and the main
       !                      adios2_mode_read,  
       integer, intent(in):: adios2_mode
 
-      
-* :ref:`Engine` component subroutines:
 
-   * :f90:`subroutine adios2_begin_step` : moves to next step, starts from 0
+:ref:`Variables` subroutines
+----------------------------
+
+* :f90:`subroutine adios2_set_shape` set new shape_dims if dims are variable in adios2_define_variable
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_set_selection(variable, ndims, shape_dims, ierr)
+      
+      ! WHERE
+      
+      ! variable handler
+      type(adios2_variable), intent(in) :: variable
+      
+      ! number of dimensions in shape_dims
+      integer, intent(in) :: ndims
+      
+      ! new shape_dims
+      integer(kind=8), dimension(:), intent(in):: shape_dims
+
+
+
+* :f90:`subroutine adios2_set_selection` set new start_dims and count_dims
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, ierr)
+      
+      ! WHERE
+      
+      ! variable handler
+      type(adios2_variable), intent(in) :: variable
+      
+      ! number of dimensions in start_dims and count_dims
+      integer, intent(in) :: ndims
+      
+      ! new start_dims
+      integer(kind=8), dimension(:), intent(in):: start_dims
+      
+      ! new count_dims
+      integer(kind=8), dimension(:), intent(in):: count_dims
+      
+* :f90:`subroutine adios2_set_steps_selection` set new step_start and step_count
+   
+   .. code-block:: fortran
+   
+      subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, ierr)
+      
+      ! WHERE
+      
+      ! variable handler
+      type(adios2_variable), intent(in) :: variable
+      
+      ! number of dimensions in start_dims and count_dims
+      integer, intent(in):: ndims
+      
+      ! new step_start 
+      integer(kind=8), intent(in):: step_start
+      
+      ! new step_count (or number of steps to read from step_start)
+      integer(kind=8), intent(in):: step_count
+      
+      
+:ref:`Engine` subroutines
+-------------------------
+
+* :f90:`subroutine adios2_begin_step` moves to next step, starts at 0
    
    .. code-block:: fortran
    
@@ -389,7 +476,7 @@ The following bullets describe the overall component representation and the main
       real, intent(in):: timeout_seconds
    
    
-   * :f90:`subroutine adios2_current_step` : extracts current step
+* :f90:`subroutine adios2_current_step` extracts current step
    
    .. code-block:: fortran
    
@@ -404,7 +491,7 @@ The following bullets describe the overall component representation and the main
       integer(kind=8), intent(out) :: current_step 
       
       
-   * :f90:`subroutine adios2_end_step` : ends current step and default behavior is to execute transport IO (flush or read). 
+* :f90:`subroutine adios2_end_step` ends current step and default behavior is to execute transport IO (flush or read). 
    
    .. code-block:: fortran
    
@@ -415,7 +502,7 @@ The following bullets describe the overall component representation and the main
       ! engine handler  
       type(adios2_engine), intent(in) :: engine
    
-   * :f90:`subroutine adios2_put` : put variable metadata and data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Engine API Functions`. Variable and data types must match.
+* :f90:`subroutine adios2_put` put variable metadata and data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Engine API Functions`. Variable and data types must match.
    
    .. code-block:: fortran
    
@@ -450,7 +537,7 @@ The following bullets describe the overall component representation and the main
       integer, intent(in):: adios2_mode
       
       
-   * :f90:`subroutine adios2_perform_puts` : executes deferred calls to adios2_put
+* :f90:`subroutine adios2_perform_puts` executes deferred calls to adios2_put
       
    .. code-block:: fortran
    
@@ -463,7 +550,7 @@ The following bullets describe the overall component representation and the main
       type(adios2_engine), intent(in) :: engine
       
       
-   * :f90:`subroutine adios2_get` : get variable data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Engine API Functions`. Variable and data types must match, variable can be obtained from adios2_inquire_variable. Data must be pre-allocated.
+* :f90:`subroutine adios2_get` get variable data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Engine API Functions`. Variable and data types must match, variable can be obtained from adios2_inquire_variable. Data must be pre-allocated.
    
    .. code-block:: fortran
    
@@ -498,7 +585,7 @@ The following bullets describe the overall component representation and the main
       integer, intent(in):: adios2_mode
       
       
-   * :f90:`subroutine adios2_perform_gets` : executes deferred calls to adios2_get
+* :f90:`subroutine adios2_perform_gets` executes deferred calls to adios2_get
       
    .. code-block:: fortran
    
@@ -511,7 +598,7 @@ The following bullets describe the overall component representation and the main
       type(adios2_engine), intent(in) :: engine
       
       
-   * :f90:`subroutine adios2_close`: closes engine, can't reuse unless is opened again  
+* :f90:`subroutine adios2_close` closes engine, can't reuse unless is opened again  
       
    .. code-block:: fortran
    
@@ -522,14 +609,5 @@ The following bullets describe the overall component representation and the main
       
       ! engine handler  
       type(adios2_engine), intent(in) :: engine
-      
-      
-      
-      
-      
-      
-      
-      
-      
       
       
