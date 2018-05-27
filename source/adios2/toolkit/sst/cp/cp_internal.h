@@ -381,4 +381,5 @@ extern void FFSFreeMarshalData(SstStream Stream);
 extern int *setupPeerArray(int MySize, int MyRank, int PeerSize);
 extern void AddToLastCallFreeList(void *Block);
 extern void CP_verbose(SstStream Stream, char *Format, ...);
+extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;

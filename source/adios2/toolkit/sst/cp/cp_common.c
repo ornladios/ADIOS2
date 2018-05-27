@@ -781,7 +781,7 @@ extern void SstStreamDestroy(SstStream Stream)
     {
         CP_verbose(
             Stream,
-            "Reference count now zero, Destroying process SST info cache");
+            "Reference count now zero, Destroying process SST info cache\n");
         CManager_close(CPInfo->cm);
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
@@ -969,6 +969,22 @@ extern void CP_verbose(SstStream s, char *Format, ...)
     }
 }
 
+extern void CP_error(SstStream s, char *Format, ...)
+{
+    va_list Args;
+    va_start(Args, Format);
+    if (s->Role == ReaderRole)
+    {
+        fprintf(stderr, "Reader %d (%p): ", s->Rank, s);
+    }
+    else
+    {
+        fprintf(stderr, "Writer %d (%p): ", s->Rank, s);
+    }
+    vfprintf(stderr, Format, Args);
+    va_end(Args);
+}
+
 static CManager CP_getCManager(SstStream Stream) { return Stream->CPInfo->cm; }
 
 static MPI_Comm CP_getMPIComm(SstStream Stream) { return Stream->mpiComm; }
@@ -980,6 +996,13 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
     if (Peers[Rank].CMconn == NULL)
     {
         Peers[Rank].CMconn = CMget_conn(s->CPInfo->cm, Peers[Rank].ContactList);
+        if (!Peers[Rank].CMconn)
+        {
+            CP_error(s,
+                     "Connection failed in CP_sendToPeer! Contact list was:\n");
+            CP_error(s, attr_list_to_string(Peers[Rank].ContactList));
+            return;
+        }
     }
     CMwrite(Peers[Rank].CMconn, Format, Data);
 }

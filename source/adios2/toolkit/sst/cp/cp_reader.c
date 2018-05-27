@@ -303,10 +303,21 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     while (Stream->Peers[i] != -1)
     {
         int peer = Stream->Peers[i];
-        Stream->ConnectionsToWriter[peer].CMconn = CMget_conn(
+        CMConnection Conn = CMget_conn(
             Stream->CPInfo->cm, Stream->ConnectionsToWriter[peer].ContactList);
-        CMconn_register_close_handler(Stream->ConnectionsToWriter[peer].CMconn,
-                                      ReaderConnCloseHandler, (void *)Stream);
+        if (!Conn)
+        {
+            CP_error(
+                Stream,
+                "Connection failed in SstReaderOpen! Contact list was: \n");
+            fdump_attr_list(stderr,
+                            Stream->ConnectionsToWriter[peer].ContactList);
+            /* fail the stream */
+            return NULL;
+        }
+        Stream->ConnectionsToWriter[peer].CMconn = Conn;
+        CMconn_register_close_handler(Conn, ReaderConnCloseHandler,
+                                      (void *)Stream);
         i++;
     }
 
