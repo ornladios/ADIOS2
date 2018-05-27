@@ -180,7 +180,16 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
                        reader->Connections[peer].ContactList);
 
         if (!reader->Connections[peer].CMconn)
+        {
+            CP_error(
+                reader->ParentStream,
+                "Connection failed in SstInitWSReader! Contact list was:\n");
+            CP_error(
+                reader->ParentStream, "%s\n",
+                attr_list_to_string(reader->Connections[peer].ContactList));
+            /* fail the stream */
             return 0;
+        }
 
         CMconn_register_close_handler(reader->Connections[peer].CMconn,
                                       WriterConnCloseHandler, (void *)reader);
@@ -598,6 +607,11 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
         struct timeval Start, Stop, Diff;
         gettimeofday(&Start, NULL);
         reader = WriterParticipateInReaderOpen(Stream);
+        if (!reader)
+        {
+            CP_error(Stream, "Potential reader registration failed\n");
+            break;
+        }
         waitForReaderResponseAndSendQueued(reader);
         gettimeofday(&Stop, NULL);
         timersub(&Stop, &Start, &Diff);
@@ -832,6 +846,11 @@ static void DoWriterSideGlobalOp(SstStream Stream)
         CP_verbose(Stream,
                    "Writer side Global operation accepting incoming reader\n");
         reader = WriterParticipateInReaderOpen(Stream);
+        if (!reader)
+        {
+            CP_error(Stream, "Potential reader registration failed\n");
+            break;
+        }
         waitForReaderResponseAndSendQueued(reader);
     }
 
