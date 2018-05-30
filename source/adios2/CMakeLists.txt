@@ -46,8 +46,6 @@ add_library(adios2
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
   toolkit/format/bp3/BP3Deserializer.cpp toolkit/format/bp3/BP3Deserializer.tcc
 
-  toolkit/format/dataman/DataMan.cpp toolkit/format/dataman/DataMan.tcc toolkit/format/dataman/DataMan.h
-
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp
@@ -96,7 +94,11 @@ endif()
 
 if(ADIOS2_HAVE_DataMan)
   target_sources(adios2 PRIVATE
+      toolkit/format/dataman/DataMan.cpp
+      toolkit/format/dataman/DataMan.tcc
+      toolkit/format/dataman/DataMan.h
       toolkit/transportman/dataman/DataMan.cpp
+      toolkit/transportman/dataman/DataMan.h
       engine/dataman/DataManCommon.cpp
       engine/dataman/DataManCommon.h
       engine/dataman/DataManReader.cpp

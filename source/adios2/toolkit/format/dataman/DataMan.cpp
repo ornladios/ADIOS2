@@ -16,9 +16,9 @@ namespace adios2
 namespace format
 {
 
-DataManSerializer::DataManSerializer(size_t size) : m_Position(0)
+DataManSerializer::DataManSerializer(size_t size)
+: m_Position(0), m_Buffer(std::make_shared<std::vector<char>>())
 {
-    m_Buffer = std::make_shared<std::vector<char>>();
     m_Buffer->reserve(size);
 }
 
