@@ -44,8 +44,8 @@ class DataManDeserializer
 public:
     size_t MaxStep();
     size_t MinStep();
-    bool Check(size_t step, std::string variable);
-    bool Check(size_t step);
+    bool CheckStepVariable(size_t step, std::string variable);
+    bool CheckStep(size_t step);
     void Put(std::shared_ptr<std::vector<char>> data);
     template <class T>
     int Get(Variable<T> &variable, size_t step);
@@ -63,12 +63,11 @@ public:
         size_t index;
         int rank;
     };
-    const std::vector<DataManVar> &GetMetaData(size_t step);
+    const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
 
 private:
-    std::map<size_t, std::vector<DataManVar>> m_MetaDataMap;
+    std::map<size_t, std::shared_ptr<std::vector<DataManVar>>> m_MetaDataMap;
     std::vector<std::shared_ptr<std::vector<char>>> m_Buffer;
-    std::vector<DataManVar> m_EmptyVector;
     size_t m_MaxStep;
     size_t m_MinStep;
 };

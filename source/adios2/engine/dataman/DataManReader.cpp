@@ -49,9 +49,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         m_CurrentStep = m_DataManDeserializer.MinStep();
     }
     StepStatus status;
-    if (m_DataManDeserializer.Check(m_CurrentStep))
+    if (m_DataManDeserializer.CheckStep(m_CurrentStep))
     {
-        for (const auto &i : m_DataManDeserializer.GetMetaData(m_CurrentStep))
+        for (const auto &i : *m_DataManDeserializer.GetMetaData(m_CurrentStep))
         {
             if (i.type == "compound")
             {

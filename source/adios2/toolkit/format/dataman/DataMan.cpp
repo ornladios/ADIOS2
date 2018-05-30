@@ -64,7 +64,12 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
             {
                 break;
             }
-            m_MetaDataMap[var.step].push_back(std::move(var));
+            if (m_MetaDataMap[var.step] == nullptr)
+            {
+                m_MetaDataMap[var.step] =
+                    std::make_shared<std::vector<DataManVar>>();
+            }
+            m_MetaDataMap[var.step]->push_back(std::move(var));
             position += var.size;
         }
         catch (std::exception &e)
@@ -87,12 +92,12 @@ size_t DataManDeserializer::MaxStep() { return m_MaxStep; }
 
 size_t DataManDeserializer::MinStep() { return m_MinStep; }
 
-bool DataManDeserializer::Check(size_t step, std::string variable)
+bool DataManDeserializer::CheckStepVariable(size_t step, std::string variable)
 {
     const auto &i = m_MetaDataMap.find(step);
     if (i != m_MetaDataMap.end())
     {
-        for (const auto &j : i->second)
+        for (const auto &j : *i->second)
         {
             if (j.name == variable)
             {
@@ -103,7 +108,7 @@ bool DataManDeserializer::Check(size_t step, std::string variable)
     return false;
 }
 
-bool DataManDeserializer::Check(size_t step)
+bool DataManDeserializer::CheckStep(size_t step)
 {
     const auto &i = m_MetaDataMap.find(step);
     if (i != m_MetaDataMap.end())
@@ -116,16 +121,16 @@ bool DataManDeserializer::Check(size_t step)
     }
 }
 
-const std::vector<DataManDeserializer::DataManVar> &
+const std::shared_ptr<std::vector<DataManDeserializer::DataManVar>>
 DataManDeserializer::GetMetaData(size_t step)
 {
-    if (Check(step))
+    if (CheckStep(step))
     {
         return m_MetaDataMap[step];
     }
     else
     {
-        return m_EmptyVector;
+        return nullptr;
     }
 }
 }

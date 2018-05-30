@@ -65,7 +65,7 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
     }
     else
     {
-        for (const auto &j : i->second)
+        for (const auto &j : *i->second)
         {
             if (j.name == variable.m_Name && j.step == step)
             {
