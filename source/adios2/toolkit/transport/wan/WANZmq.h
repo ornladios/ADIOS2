@@ -66,12 +66,12 @@ private:
     /** socket handler created by zmq */
     void *m_Socket = nullptr;
 
-    int OpenPubSub(const std::string &name, const Mode openMode,
-                   const std::string ip);
-    int OpenSenderDriven(const std::string &name, const Mode openMode,
-                         const std::string ip);
-    int OpenReceiverDriven(const std::string &name, const Mode openMode,
-                           const std::string ip);
+    int OpenSubscribe(const std::string &name, const Mode openMode,
+                      const std::string ip);
+    int OpenPush(const std::string &name, const Mode openMode,
+                 const std::string ip);
+    int OpenQuery(const std::string &name, const Mode openMode,
+                  const std::string ip);
 
     void WritePubSub(const char *buffer, size_t size, const bool blocking);
     void WriteSenderDriven(const char *buffer, size_t size,

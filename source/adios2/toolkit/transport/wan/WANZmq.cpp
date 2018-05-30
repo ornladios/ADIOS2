@@ -48,25 +48,52 @@ WANZmq::~WANZmq()
     }
 }
 
-int WANZmq::OpenPubSub(const std::string &name, const Mode openMode,
-                       const std::string ip)
+int WANZmq::OpenSubscribe(const std::string &name, const Mode openMode,
+                          const std::string ip)
 {
     // PubSub mode uses the ZeroMQ Pub/Sub scheme and requires the IP address
     // and port of the publisher (sender). Multiple subscriptors are allowed to
     // subscribe to the same publisher.
-    m_Socket = zmq_socket(m_Context, ZMQ_REQ);
-    return zmq_connect(m_Socket, ip.c_str());
+
+    int error = -1;
+
+    if (m_OpenMode == Mode::Write)
+    {
+        m_Socket = zmq_socket(m_Context, ZMQ_PUB);
+        error = zmq_bind(m_Socket, ip.c_str());
+    }
+    else if (m_OpenMode == Mode::Read)
+    {
+        m_Socket = zmq_socket(m_Context, ZMQ_SUB);
+        error = zmq_connect(m_Socket, ip.c_str());
+        zmq_setsockopt(m_Socket, ZMQ_SUBSCRIBE, "", 0);
+    }
+
+    return error;
 }
 
-int WANZmq::OpenSenderDriven(const std::string &name, const Mode openMode,
-                             const std::string ip)
+int WANZmq::OpenPush(const std::string &name, const Mode openMode,
+                     const std::string ip)
 {
-    m_Socket = zmq_socket(m_Context, ZMQ_PUB);
-    return zmq_bind(m_Socket, ip.c_str());
+    int error = -1;
+
+    if (m_OpenMode == Mode::Write)
+    {
+        m_Socket = zmq_socket(m_Context, ZMQ_REQ);
+        error = zmq_connect(m_Socket, ip.c_str());
+    }
+
+    else if (m_OpenMode == Mode::Read)
+    {
+        m_Socket = zmq_socket(m_Context, ZMQ_REP);
+        error = zmq_bind(m_Socket, ip.c_str());
+    }
+
+    return error;
 }
 
-int WANZmq::OpenReceiverDriven(const std::string &name, const Mode openMode,
-                               const std::string ip)
+int WANZmq::OpenQuery(const std::string &name, const Mode openMode,
+                      const std::string ip)
 {
     return 0;
 }
@@ -77,101 +104,39 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
     m_OpenMode = openMode;
     const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
 
-    if (m_OpenMode == Mode::Write)
+    ProfilerStart("open");
+
+    int err;
+    if (m_TransportMode == "subscribe")
     {
-        if (m_Profiler.IsActive)
-        {
-            m_Profiler.Timers.at("open").Resume();
-        }
-
-        int err;
-        if (m_TransportMode == "broadcast")
-        {
-            err = OpenPubSub(name, openMode, fullIP);
-        }
-        else if (m_TransportMode == "push")
-        {
-            err = OpenSenderDriven(name, openMode, fullIP);
-        }
-        else if (m_TransportMode == "query")
-        {
-            err = OpenReceiverDriven(name, openMode, fullIP);
-        }
-        else
-        {
-            throw std::runtime_error(
-                "WANZmq::Open received wrong transport mode parameter" +
-                m_TransportMode + ". Should be broadcast, push or query");
-        }
-
-        if (err)
-        {
-            throw std::runtime_error("ERROR: zmq_connect() failed with " +
-                                     std::to_string(err));
-        }
-
-        if (m_Profiler.IsActive)
-        {
-            m_Profiler.Timers.at("open").Pause();
-        }
-        if (m_DebugMode)
-        {
-            std::cout << "[WANZmq] Open Mode Write" << std::endl;
-        }
+        err = OpenSubscribe(name, openMode, fullIP);
+    }
+    else if (m_TransportMode == "push")
+    {
+        err = OpenPush(name, openMode, fullIP);
+    }
+    else if (m_TransportMode == "query")
+    {
+        err = OpenQuery(name, openMode, fullIP);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "WANZmq::Open received wrong WorkflowMode parameter" +
+            m_TransportMode + ". Should be subscribe, push or query");
     }
 
-    else if (m_OpenMode == Mode::Read)
+    if (err)
     {
-        ProfilerStart("open");
-
-        int error = 0;
-        if (m_TransportMode == "broadcast")
-        {
-            std::cout << "b" << fullIP << std::endl;
-            m_Socket = zmq_socket(m_Context, ZMQ_REP);
-            error = zmq_bind(m_Socket, fullIP.c_str());
-        }
-        else if (m_TransportMode == "push")
-        {
-            std::cout << "p" << fullIP << std::endl;
-            m_Socket = zmq_socket(m_Context, ZMQ_SUB);
-            error = zmq_connect(m_Socket, fullIP.c_str());
-            zmq_setsockopt(m_Socket, ZMQ_SUBSCRIBE, "", 0);
-        }
-        else if (m_TransportMode == "query")
-        {
-        }
-        else
-        {
-            throw std::runtime_error(
-                "WANZmq::Open received wrong transport mode parameter" +
-                m_TransportMode + ". Should be broadcast, push or query");
-        }
-
-        ProfilerStop("open");
-
-        if (error)
-        {
-            throw std::runtime_error("ERROR: zmq_bind() failed with " +
-                                     std::to_string(error));
-        }
-        if (m_DebugMode)
-        {
-            std::cout << "[WANZmq] Open Mode Read" << std::endl;
-        }
+        throw std::runtime_error("ERROR: zmq_connect() failed with " +
+                                 std::to_string(err));
     }
 
-    else if (m_OpenMode == Mode::Append)
+    ProfilerStop("open");
+
+    if (m_DebugMode)
     {
-        if (m_DebugMode)
-        {
-            std::cout << "[WANZmq] Open Mode Append" << std::endl;
-            throw std::invalid_argument(
-                "ERROR: WAN transport " + m_Name +
-                " only supports "
-                "OpenMode:w (write/sender) and "
-                "OpenMode:r (read/receiver), in call to Open\n");
-        }
+        std::cout << "[WANZmq] Open " << std::endl;
     }
 
     if (m_DebugMode)
@@ -188,69 +153,76 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
 
 void WANZmq::SetBuffer(char *buffer, size_t size) {}
 
-void WANZmq::Write(const char *buffer, size_t size, size_t start)
-{
-    char ret[10];
-    ProfilerStart("write");
-    const int status = zmq_send(m_Socket, buffer, size, 0);
-    zmq_recv(m_Socket, ret, 10, 0);
-    ProfilerStop("write");
+void WANZmq::Write(const char *buffer, size_t size, size_t start) {}
 
-    const std::string retString(ret);
-
-    if (status == -1 || retString != "OK")
-    {
-        throw std::ios_base::failure("ERROR: couldn't send message " + m_Name +
-                                     ", in call to WANZmq write\n");
-    }
-}
-
-void WANZmq::Read(char *buffer, size_t size, size_t start)
-{
-    ProfilerStart("read");
-    zmq_recv(m_Socket, buffer, size, 0);
-    //    int status = zmq_send(m_Socket, "OK", 4, 0);
-    ProfilerStop("read");
-}
+void WANZmq::Read(char *buffer, size_t size, size_t start) {}
 
 void WANZmq::IWrite(const char *buffer, size_t size, Status &status,
                     size_t start)
 {
-    char ret[10];
-    ProfilerStart("write");
-    const int stat = zmq_send(m_Socket, buffer, size, ZMQ_DONTWAIT);
-    ProfilerStop("write");
-
-    const std::string retString(ret);
-    if (stat == -1 || retString != "OK")
+    int retInt = 0;
+    std::string retString = "OK";
+    if (m_TransportMode == "subscribe")
     {
-        // TODO: Add notification to users
+        ProfilerStart("write");
+        retInt = zmq_send(m_Socket, buffer, size, 0);
+        ProfilerStop("write");
+    }
+    else if (m_TransportMode == "push")
+    {
+    }
+    else if (m_TransportMode == "query")
+    {
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Unknown WorkflowMode caught in WANZmq::IWrite");
+    }
+
+    if (retInt < 0 || retString != "OK")
+    {
+        throw std::ios_base::failure("ERROR: couldn't send message " + m_Name +
+                                     ", in call to WANZmq::IWrite\n");
     }
 }
 
 void WANZmq::IRead(char *buffer, size_t size, Status &status, size_t start)
 {
-    ProfilerStart("read");
-    int bytes = zmq_recv(m_Socket, buffer, size, ZMQ_DONTWAIT);
-    zmq_send(m_Socket, "OK", 10, 0);
-    ProfilerStop("read");
-    if (bytes > 0)
+    if (m_TransportMode == "subscribe")
     {
-        status.Bytes = bytes;
-        status.Running = true;
+        ProfilerStart("read");
+        int bytes = zmq_recv(m_Socket, buffer, size, ZMQ_DONTWAIT);
+        ProfilerStop("read");
+        if (bytes > 0)
+        {
+            status.Bytes = bytes;
+            status.Running = true;
+        }
+        else
+        {
+            status.Bytes = 0;
+            status.Running = true;
+        }
+        if (bytes == size)
+        {
+            status.Successful = true;
+        }
+        else
+        {
+            status.Successful = false;
+        }
+    }
+    else if (m_TransportMode == "push")
+    {
+    }
+    else if (m_TransportMode == "query")
+    {
     }
     else
     {
-        status.Bytes = 0;
-        status.Running = true;
-    }
-    if (bytes == size)
-    {
-        status.Successful = true;
-    }
-    else
-    {
-        status.Successful = false;
+        throw std::runtime_error(
+            "Unknown WorkflowMode caught in WANZmq::IRead");
     }
 }
 

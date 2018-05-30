@@ -94,7 +94,11 @@ endif()
 
 if(ADIOS2_HAVE_DataMan)
   target_sources(adios2 PRIVATE
+      toolkit/format/dataman/DataMan.cpp
+      toolkit/format/dataman/DataMan.tcc
+      toolkit/format/dataman/DataMan.h
       toolkit/transportman/dataman/DataMan.cpp
+      toolkit/transportman/dataman/DataMan.h
       engine/dataman/DataManCommon.cpp
       engine/dataman/DataManCommon.h
       engine/dataman/DataManReader.cpp

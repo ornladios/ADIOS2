@@ -43,145 +43,53 @@ DataManReader::~DataManReader()
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    StepStatus status;
-
-    m_MutexMap.lock();
-    bool vmap_empty = m_VariableMap.empty();
-    m_MutexMap.unlock();
-
-    if (vmap_empty)
+    ++m_CurrentStep;
+    if (m_Synchronous == false)
     {
-        status = StepStatus::NotReady;
+        m_CurrentStep = m_DataManDeserializer.MinStep();
+    }
+    StepStatus status;
+    if (m_DataManDeserializer.Check(m_CurrentStep))
+    {
+        for (const auto &i : m_DataManDeserializer.GetMetaData(m_CurrentStep))
+        {
+            if (i.type == "compound")
+            {
+                throw("Compound type is not supported yet.");
+            }
+#define declare_type(T)                                                        \
+    else if (i.type == GetType<T>())                                           \
+    {                                                                          \
+        adios2::Variable<T> *v = m_IO.InquireVariable<T>(i.name);              \
+        if (v == nullptr)                                                      \
+        {                                                                      \
+            m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);         \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+        }
+        status = StepStatus::OK;
     }
     else
     {
-        status = StepStatus::OK;
+        status = StepStatus::NotReady;
     }
-
-    if (m_TransportMode == "subscribe")
-    {
-        m_OldestStep = 0xffffff;
-        size_t p_old = m_OldestStep;
-        for (auto &i : m_VariableMap)
-        {
-            if (i.first < m_OldestStep)
-            {
-                m_OldestStep = i.first;
-            }
-        }
-        if (p_old == m_OldestStep)
-        {
-            status = StepStatus::NotReady;
-        }
-        else if (p_old > m_OldestStep)
-        {
-            status = StepStatus::OK;
-        }
-    }
-
     return status;
 }
 
+void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
+
 size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
-
-void DataManReader::EndStep()
-{
-    // delete any time steps older than the current step
-    for (size_t m = m_OldestStep; m <= m_CurrentStep; ++m)
-    {
-        m_MutexMap.lock();
-        auto k = m_VariableMap.find(m);
-        m_MutexMap.unlock();
-        if (k != m_VariableMap.end())
-        {
-            m_MutexMap.lock();
-            m_VariableMap.erase(k);
-            m_MutexMap.unlock();
-        }
-    }
-
-    if (m_TransportMode != "subscribe")
-    {
-        m_OldestStep = m_CurrentStep;
-        ++m_CurrentStep;
-    }
-}
 
 void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
 {
-
     while (m_Listening)
     {
         std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
         if (buffer != nullptr)
         {
-            size_t flagsize = sizeof(size_t);
-            if (buffer->size() > flagsize)
-            {
-                size_t metasize;
-                std::memcpy(&metasize, buffer->data(), flagsize);
-
-                if (metasize > 0)
-                {
-                    std::vector<char> metastr(metasize + 1);
-                    std::memcpy(metastr.data(), buffer->data() + flagsize,
-                                metasize);
-                    metastr[metasize] = '\0';
-                    nlohmann::json metaj = nlohmann::json::parse(metastr);
-
-                    std::shared_ptr<DataManVar> dmv =
-                        std::make_shared<DataManVar>();
-
-                    dmv->shape = metaj["S"].get<std::vector<size_t>>();
-                    dmv->count = metaj["C"].get<std::vector<size_t>>();
-                    dmv->start = metaj["O"].get<std::vector<size_t>>();
-                    size_t step = metaj["T"].get<size_t>();
-                    std::string name = metaj["N"].get<std::string>();
-                    dmv->type = metaj["Y"].get<std::string>();
-                    dmv->rank = metaj["R"].get<size_t>();
-
-                    if (dmv->type == "compound")
-                    {
-                        throw("Compound type is not supported yet.");
-                    }
-#define declare_type(T)                                                        \
-    else if (dmv->type == GetType<T>())                                        \
-    {                                                                          \
-        adios2::Variable<T> *v = m_IO.InquireVariable<T>(name);                \
-        if (v == nullptr)                                                      \
-        {                                                                      \
-            m_IO.DefineVariable<T>(name, dmv->shape, dmv->start, dmv->count);  \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-        }                                                                      \
-    }
-                    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
-                    dmv->data.resize(metaj["I"].get<size_t>());
-                    std::memcpy(dmv->data.data(),
-                                buffer->data() + flagsize + metasize,
-                                dmv->data.size());
-
-                    m_MutexMap.lock();
-                    m_VariableMap[step][name] = dmv;
-                    if (m_TransportMode == "subscribe")
-                    {
-                        if (m_CurrentStep == step)
-                        {
-                            ++m_CurrentStep;
-                        }
-                        else
-                        {
-                            m_CurrentStep = step;
-                        }
-                    }
-                    m_MutexMap.unlock();
-                    RunCallback(dmv->data.data(), "stream", name, dmv->type,
-                                dmv->shape);
-                }
-            }
+            m_DataManDeserializer.Put(buffer);
         }
     }
 }
@@ -202,9 +110,19 @@ void DataManReader::Init()
         }
     }
 
-    // initialize transports
+    GetBoolParameter(m_IO.m_Parameters, "Synchronous", m_Synchronous);
+    GetStringParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
+    if (m_TransportMode == "subscribe")
+    {
+        m_Synchronous = false;
+    }
 
+    // initialize transports
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
+    for (auto &i : m_IO.m_TransportsParameters)
+    {
+        i["TransportMode"] = m_TransportMode;
+    }
     size_t channels = m_IO.m_TransportsParameters.size();
     std::vector<std::string> names;
     for (size_t i = 0; i < channels; ++i)
@@ -311,21 +229,10 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
         {                                                                      \
             for (auto &step : v->m_IndexStepBlockStarts)                       \
             {                                                                  \
-                std::shared_ptr<DataManVar> dmv =                              \
-                    std::make_shared<DataManVar>();                            \
-                dmv->type = type;                                              \
-                dmv->shape = v->m_Shape;                                       \
-                dmv->start = v->m_Start;                                       \
-                dmv->count = v->m_Count;                                       \
-                dmv->data.resize(v->PayloadSize());                            \
                 v->SetStepSelection({step.first - 1, 1});                      \
                 deserializer.GetSyncVariableDataFromStream(                    \
                     *v, deserializer.m_Data);                                  \
-                std::memcpy(dmv->data.data(), v->GetData(), v->PayloadSize()); \
                 RunCallback(v->GetData(), "stream", var, type, v->m_Shape);    \
-                m_MutexMap.lock();                                             \
-                m_VariableMap[step.first - 1][var] = dmv;                      \
-                m_MutexMap.unlock();                                           \
             }                                                                  \
         }                                                                      \
     }

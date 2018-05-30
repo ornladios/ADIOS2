@@ -40,49 +40,24 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    if (m_UseFormat == "bp")
+    if (m_Format == "bp")
     {
         PutSyncCommonBP(variable, values);
     }
-
-    else if (m_UseFormat == "json")
+    else if (m_Format == "dataman")
     {
-        PutSyncCommonJson(variable, values);
+        PutSyncCommonDataMan(variable, values);
     }
 }
 
 template <class T>
-std::string DataManWriter::SerializeJson(Variable<T> &variable)
+void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
 {
-    nlohmann::json metaj;
-    metaj["S"] = variable.m_Shape;
-    metaj["C"] = variable.m_Count;
-    metaj["O"] = variable.m_Start;
-    metaj["T"] = m_CurrentStep;
-    metaj["N"] = variable.m_Name;
-    metaj["Y"] = variable.m_Type;
-    metaj["I"] = variable.PayloadSize();
-    metaj["R"] = m_MPIRank;
-    std::string metastr = metaj.dump();
-    return std::move(metastr);
-}
-
-template <class T>
-void DataManWriter::PutSyncCommonJson(Variable<T> &variable, const T *values)
-{
-    std::string metastr = SerializeJson(variable);
-    size_t flagsize = sizeof(size_t);
-    size_t metasize = metastr.size();
-    size_t datasize = variable.PayloadSize();
-    size_t totalsize = flagsize + metasize + datasize;
-
-    std::shared_ptr<std::vector<char>> buffer =
-        std::make_shared<std::vector<char>>(totalsize);
-    std::memcpy(buffer->data(), &metasize, flagsize);
-    std::memcpy(buffer->data() + flagsize, metastr.c_str(), metasize);
-    std::memcpy(buffer->data() + flagsize + metasize, values, datasize);
-
-    m_DataMan->WriteWAN(buffer);
+    format::DataManSerializer serializer(m_BufferSize);
+    serializer.Put(variable, CurrentStep(), m_MPIRank);
+    auto buf = serializer.GetBuffer();
+    m_BufferSize = buf->size() + 1024;
+    m_DataMan->WriteWAN(buf);
 }
 
 template <class T>
@@ -92,36 +67,36 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
     variable.SetData(values);
 
     // if first timestep Write create a new pg index
-    if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
+    if (!m_BP3Serializer->m_MetadataSet.DataPGIsOpen)
     {
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
-                                             {"WAN_Zmq"});
+        m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                              {"WAN_Zmq"});
     }
 
-    const size_t dataSize =
-        variable.PayloadSize() +
-        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);
-    format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
+    const size_t dataSize = variable.PayloadSize() +
+                            m_BP3Serializer->GetBPIndexSizeInData(
+                                variable.m_Name, variable.m_Count);
+    format::BP3Base::ResizeResult resizeResult = m_BP3Serializer->ResizeBuffer(
         dataSize, "in call to variable " + variable.m_Name + " PutSync");
 
     if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
         // Close buffer here?
-        m_BP3Serializer.CloseStream(m_IO);
-        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
+        m_BP3Serializer->CloseStream(m_IO);
+        auto &buffer = m_BP3Serializer->m_Data.m_Buffer;
 
         m_DataMan->WriteWAN(buffer);
 
         // set relative position to clear buffer
-        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
+        m_BP3Serializer->ResetBuffer(m_BP3Serializer->m_Data);
         // new group index
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
-                                             {"WAN_zmq"});
+        m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                              {"WAN_zmq"});
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
-    m_BP3Serializer.PutVariableMetadata(variable);
-    m_BP3Serializer.PutVariablePayload(variable);
+    m_BP3Serializer->PutVariableMetadata(variable);
+    m_BP3Serializer->PutVariablePayload(variable);
 }
 
 template <class T>
