@@ -21,6 +21,10 @@
 extern "C" {
 #endif
 
+void FC_GLOBAL(adios2_set_engine_f2c,
+               ADIOS2_SET_ENGINE_F2C)(adios2_io **io, const char *engine_type,
+                                      int *ierr);
+
 void FC_GLOBAL(adios2_set_parameter_f2c,
                ADIOS2_SET_PARAMETER_F2C)(adios2_io **io, const char *key,
                                          const char *value, int *ierr);

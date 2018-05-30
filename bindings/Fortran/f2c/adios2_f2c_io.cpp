@@ -15,6 +15,23 @@
 #include <stdexcept>
 #include <vector>
 
+void FC_GLOBAL(adios2_set_engine_f2c,
+               ADIOS2_SET_ENGINE_F2C)(adios2_io **io, const char *engine_type,
+                                      int *ierr)
+{
+    *ierr = 0;
+
+    try
+    {
+        adios2_set_engine(*io, engine_type);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 set_engine: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_set_parameter_f2c,
                ADIOS2_SET_PARAMETER_F2C)(adios2_io **io, const char *key,
                                          const char *value, int *ierr)
