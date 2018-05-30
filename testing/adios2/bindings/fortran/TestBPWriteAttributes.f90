@@ -10,7 +10,7 @@ program TestBPWriteAttributes
     type(adios2_engine) :: bpWriter, bpReader
     type(adios2_attribute), dimension(14) :: attributes
 
-    integer :: ierr
+    integer :: ierr, i
 
     ! Launch MPI
     call MPI_Init(ierr)
@@ -21,6 +21,10 @@ program TestBPWriteAttributes
     !!!!!!!!!!!!!!!!!!!!!!!!! WRITER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! Declare an IO process configuration inside adios
     call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
+
+    do i=1,14
+        if( attributes(i)%valid .eqv. .true. ) stop 'Invalid attribute default'
+    end do
 
     ! single value
     call adios2_define_attribute(attributes(1), ioWrite, 'att_String', &
@@ -65,6 +69,12 @@ program TestBPWriteAttributes
 
     call adios2_define_attribute(attributes(14), ioWrite, 'att_r64_array', &
                                  data_R64, 3, ierr)
+
+    do i=1,14
+        if( attributes(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_attribute'
+    end do
+
+
 
     call adios2_open(bpWriter, ioWrite, "fattr_types.bp", adios2_mode_write, &
                      ierr)

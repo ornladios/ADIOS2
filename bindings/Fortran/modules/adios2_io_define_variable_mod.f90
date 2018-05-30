@@ -34,6 +34,8 @@ contains
         call adios2_define_global_variable_f2c(variable%f2c, io%f2c, &
                                                TRIM(ADJUSTL(name))//char(0), &
                                                adios2_type, ierr)
+        variable%valid = .true.
+
     end subroutine
 
     subroutine adios2_define_variable_array(variable, io, name, adios2_type, &
@@ -58,6 +60,8 @@ contains
                                         adios2_type, ndims, &
                                         shape_dims, start_dims, count_dims, &
                                         is_constant_dims_int, ierr)
+        variable%valid = .true.
+
     end subroutine
 
 end module

@@ -30,12 +30,24 @@
      start_dims(1) = irank*inx
      count_dims(1) = inx
 
+     if( adios%valid .eqv. .true. ) stop 'Invalid adios default'
+     if( ioWrite%valid .eqv. .true. ) stop 'Invalid io default'
+
+     do i=1,12
+        if( variables(i)%valid .eqv. .true. ) stop 'Invalid variables default'
+     end do
+
+     if( bpWriter%valid .eqv. .true. ) stop 'Invalid engine default'
+
+
      ! Create adios handler passing the communicator, debug mode and error flag
      call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+     if( adios%valid .eqv. .false. ) stop 'Invalid adios2_init'
 
      !!!!!!!!!!!!!!!!!!!!!!!!! WRITER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      ! Declare an IO process configuration inside adios
      call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
+     if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_declare_io'
 
      call adios2_set_engine(ioWrite, 'bpfile', ierr)
 
@@ -89,8 +101,13 @@
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  adios2_type_dp,  ierr)
 
+     do i=1,12
+        if( variables(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_variable'
+     end do
+
      ! Open myVector_f.bp in write mode, this launches an engine
      call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
+     if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_open'
 
      ! Put array contents to bp buffer, based on var1 metadata
      if (irank == 0) then
@@ -115,6 +132,8 @@
 
      ! Closes engine1 and deallocates it, becomes unreachable
      call adios2_close(bpWriter, ierr)
+
+     if( bpWriter%valid .eqv. .true. ) stop 'Invalid adios2_close'
 
      !!!!!!!!!!!!!!!!!!!!!!!!! READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      ! Declare io reader
@@ -180,6 +199,8 @@
 
      ! Deallocates adios and calls its destructor
      call adios2_finalize(adios, ierr)
+     if( adios%valid .eqv. .true. ) stop 'Invalid adios2_finalize'
+
 
      call MPI_Finalize(ierr)
 

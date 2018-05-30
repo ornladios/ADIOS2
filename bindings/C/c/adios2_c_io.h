@@ -81,6 +81,15 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
                                           const size_t elements);
 
 /**
+ * Returns a handler to a previously defined attribute identified by a unique
+ * name
+ * @param io handler to attribute io owner
+ * @param name unique name input
+ * @return attribute handler if found, else NULL
+ */
+adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name);
+
+/**
  * Remove an attribute, DANGEROUS function as it creates dangling pointers
  * @param io handler to attribute owner
  * @param name unique attribute name input to be removed

@@ -17,10 +17,11 @@ module adios2_file_mod
 contains
 
     subroutine adios2_fclose(unit, ierr)
-        type(adios2_file), intent(in) :: unit
+        type(adios2_file), intent(inout) :: unit
         integer, intent(out) :: ierr
 
         call adios2_fclose_f2c(unit%f2c, ierr)
+        unit%valid = .false.
 
     end subroutine
 
