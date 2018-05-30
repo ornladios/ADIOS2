@@ -46,6 +46,8 @@ add_library(adios2
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
   toolkit/format/bp3/BP3Deserializer.cpp toolkit/format/bp3/BP3Deserializer.tcc
 
+  toolkit/format/dataman/DataMan.cpp toolkit/format/dataman/DataMan.tcc toolkit/format/dataman/DataMan.h
+
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp

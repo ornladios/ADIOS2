@@ -15,9 +15,8 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
+#include "adios2/toolkit/format/dataman/DataMan.tcc"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
-
-#include <nlohmann/json.hpp>
 
 namespace adios2
 {
@@ -36,12 +35,12 @@ protected:
     int m_MPISize;
     int m_RemoteMPISize;
     int m_TransportChannels = 1;
-    std::string m_UseFormat = "json";
-    std::string m_TransportMode = "subscribe"; // subscribe | push | query
+    std::string m_Format = "dataman";
+    std::string m_TransportMode = "subscribe";
+    bool m_Synchronous = true;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
-
-    void InitCommon();
+    int64_t m_CurrentStep = -1;
 
     std::shared_ptr<transportman::DataMan> m_DataMan;
     std::shared_ptr<std::thread> m_DataThread;
@@ -50,12 +49,11 @@ protected:
     std::shared_ptr<std::thread> m_ControlThread;
 
     virtual void IOThread(std::shared_ptr<transportman::DataMan> man) = 0;
-
+    void InitCommon();
     bool GetBoolParameter(Params &params, std::string key, bool &value);
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);
     bool GetIntParameter(Params &params, std::string key, int &value);
-
     std::vector<std::string> ParseAddress(std::string input,
                                           std::string protocol = "");
 

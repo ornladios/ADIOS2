@@ -63,8 +63,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         // Get parameters
 
         std::string library;
-        GetStringParameter(paramsVector[i], "Library", library,
-                           m_DefaultLibrary);
+        GetStringParameter(paramsVector[i], "Library", library);
 
         std::string ip;
         GetStringParameter(paramsVector[i], "IPAddress", ip);
@@ -73,8 +72,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         GetStringParameter(paramsVector[i], "Port", port);
 
         std::string transportMode;
-        GetStringParameter(paramsVector[i], "TransportMode", transportMode,
-                           m_DefaultTransportMode);
+        GetStringParameter(paramsVector[i], "TransportMode", transportMode);
 
         // Calculate port number
         int mpiRank, mpiSize;
@@ -144,8 +142,7 @@ void DataMan::WriteWAN(const std::vector<char> &buffer)
             "ERROR: No valid transports found, from DataMan::WriteWAN()");
     }
 
-    m_Transports[m_CurrentTransport]->Write(
-        reinterpret_cast<const char *>(buffer.data()), buffer.size());
+    m_Transports[m_CurrentTransport]->Write(buffer.data(), buffer.size());
 }
 
 std::shared_ptr<std::vector<char>> DataMan::ReadWAN()
@@ -175,12 +172,13 @@ void DataMan::WriteThread(std::shared_ptr<Transport> transport)
 {
     while (m_Writing)
     {
+        Transport::Status status;
         std::shared_ptr<std::vector<char>> buffer = PopBufferQueue();
         if (buffer != nullptr)
         {
             if (buffer->size() > 0)
             {
-                transport->Write(buffer->data(), buffer->size());
+                transport->IWrite(buffer->data(), buffer->size(), status);
             }
         }
     }
@@ -223,7 +221,7 @@ bool DataMan::GetBoolParameter(const Params &params, std::string key)
 }
 
 bool DataMan::GetStringParameter(const Params &params, std::string key,
-                                 std::string &value, std::string default_value)
+                                 std::string &value)
 {
     auto it = params.find(key);
     if (it != params.end())
@@ -231,7 +229,6 @@ bool DataMan::GetStringParameter(const Params &params, std::string key,
         value = it->second;
         return true;
     }
-    value = default_value;
     return false;
 }
 

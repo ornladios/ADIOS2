@@ -21,8 +21,7 @@ namespace adios2
 
 DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: DataManCommon("DataManWriter", io, name, mode, mpiComm),
-  m_BP3Serializer(mpiComm, m_DebugMode), m_Name(name)
+: DataManCommon("DataManWriter", io, name, mode, mpiComm), m_Name(name)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";
     Init();
@@ -30,23 +29,19 @@ DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
-    if (m_CurrentStepStarted)
-    {
-        ++m_CurrentStep;
-    }
-    m_CurrentStepStarted = true;
+    ++m_CurrentStep;
     return StepStatus::OK;
 }
 
 void DataManWriter::EndStep()
 {
-    if (m_UseFormat == "bp")
+    if (m_Format == "bp")
     {
-        m_BP3Serializer.SerializeData(m_IO, true);
-        m_BP3Serializer.CloseStream(m_IO);
-        m_DataMan->WriteWAN(m_BP3Serializer.m_Data.m_Buffer);
-        m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data, true);
-        m_BP3Serializer.ResetIndices();
+        m_BP3Serializer->SerializeData(m_IO, true);
+        m_BP3Serializer->CloseStream(m_IO);
+        m_DataMan->WriteWAN(m_BP3Serializer->m_Data.m_Buffer);
+        m_BP3Serializer->ResetBuffer(m_BP3Serializer->m_Data, true);
+        m_BP3Serializer->ResetIndices();
     }
 }
 
@@ -56,16 +51,20 @@ size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 
 void DataManWriter::Init()
 {
-
-    // Check if using BP Format and initialize buffer
-    if (m_UseFormat == "bp")
+    if (m_Format == "bp")
     {
-        m_BP3Serializer.InitParameters(m_IO.m_Parameters);
-        m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
-                                             {"WAN_Zmq"});
+        m_BP3Serializer =
+            std::make_shared<format::BP3Serializer>(m_MPIComm, m_DebugMode);
+        m_BP3Serializer->InitParameters(m_IO.m_Parameters);
+        m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
+                                              {"WAN_Zmq"});
     }
 
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
+    for (auto &i : m_IO.m_TransportsParameters)
+    {
+        i["TransportMode"] = m_TransportMode;
+    }
     size_t channels = m_IO.m_TransportsParameters.size();
     std::vector<std::string> names;
     for (size_t i = 0; i < channels; ++i)
@@ -92,11 +91,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void DataManWriter::DoClose(const int transportIndex)
 {
-    if (m_UseFormat == "bp" || m_UseFormat == "BP")
+    if (m_Format == "bp")
     {
-        m_BP3Serializer.CloseData(m_IO);
-        auto &buffer = m_BP3Serializer.m_Data.m_Buffer;
-        auto &position = m_BP3Serializer.m_Data.m_Position;
+        m_BP3Serializer->CloseData(m_IO);
+        auto &buffer = m_BP3Serializer->m_Data.m_Buffer;
+        auto &position = m_BP3Serializer->m_Data.m_Position;
         if (position > 0)
         {
             m_DataMan->WriteWAN(buffer);

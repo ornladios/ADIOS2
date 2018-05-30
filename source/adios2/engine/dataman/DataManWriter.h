@@ -12,11 +12,6 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
 #include "DataManCommon.h"
-#include "adios2/ADIOSConfig.h"
-#include "adios2/toolkit/format/bp3/BP3.h"
-#include "adios2/toolkit/transportman/dataman/DataMan.h"
-
-#include <nlohmann/json.hpp>
 
 namespace adios2
 {
@@ -39,15 +34,13 @@ private:
     unsigned int m_nControlThreads = 0;
     unsigned int m_TransportChannels = 1;
     size_t m_BufferSize = 1024 * 1024 * 1024;
-    std::string m_UseFormat = "json";
     bool m_DoMonitor = false;
     bool m_Blocking = true;
     size_t m_StepsPerBuffer = 10;
 
-    format::BP3Serializer m_BP3Serializer;
+    std::shared_ptr<format::BP3Serializer> m_BP3Serializer;
+    std::shared_ptr<format::DataManSerializer> m_DataManSerializer;
     std::string m_Name;
-    size_t m_CurrentStep = 0;
-    bool m_CurrentStepStarted = false;
 
     void Init();
     void IOThread(std::shared_ptr<transportman::DataMan> man) final;
@@ -68,10 +61,7 @@ private:
     void PutSyncCommonBP(Variable<T> &variable, const T *values);
 
     template <class T>
-    void PutSyncCommonJson(Variable<T> &variable, const T *values);
-
-    template <class T>
-    std::string SerializeJson(Variable<T> &variable);
+    void PutSyncCommonDataMan(Variable<T> &variable, const T *values);
 
     void DoClose(const int transportIndex = -1) final;
 };

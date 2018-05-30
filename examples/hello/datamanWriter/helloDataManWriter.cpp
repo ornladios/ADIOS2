@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     {
 
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-        adios2::IO &dataManIO = adios.DeclareIO("WANIO");
+        adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters({{"Blocking", "no"}});
 
