@@ -37,6 +37,8 @@
      ! Declare an IO process configuration inside adios
      call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
 
+     call adios2_set_engine(ioWrite, 'bpfile', ierr)
+
      ! Defines a variable to be written in bp format
      call adios2_define_variable(variables(1), ioWrite, "var_I8", &
                                  adios2_type_integer1, 1, &

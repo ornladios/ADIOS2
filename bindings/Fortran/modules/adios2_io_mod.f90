@@ -16,6 +16,16 @@ module adios2_io_mod
 
 contains
 
+    subroutine adios2_set_engine(io, engine_type, ierr)
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: engine_type
+        integer, intent(out) :: ierr
+
+        call adios2_set_engine_f2c(io%f2c, &
+                                   TRIM(ADJUSTL(engine_type))//char(0), &
+                                   ierr)
+    end subroutine
+
     subroutine adios2_set_parameter(io, key, value, ierr)
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: key
