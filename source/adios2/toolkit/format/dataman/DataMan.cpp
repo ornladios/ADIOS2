@@ -31,10 +31,15 @@ const std::shared_ptr<std::vector<char>> DataManSerializer::GetBuffer()
 
 void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
 {
-    m_Buffer.push_back(data);
+    int key = rand();
+    m_MutexBuffer.lock();
+    while (m_BufferMap.count(key) > 0)
+    {
+        key = rand();
+    }
+    m_BufferMap[key] = data;
+    m_MutexBuffer.unlock();
     size_t position = 0;
-    m_MaxStep = std::numeric_limits<size_t>::min();
-    m_MinStep = std::numeric_limits<size_t>::max();
     while (position < data->capacity())
     {
         uint32_t metasize;
@@ -59,22 +64,25 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
             var.size = metaj["I"].get<size_t>();
             var.rank = metaj["R"].get<int>();
             var.position = position;
-            var.index = m_Buffer.size() - 1;
+            var.index = key;
             if (position + var.size < data->capacity())
             {
                 break;
             }
+            m_MutexMetaData.lock();
             if (m_MetaDataMap[var.step] == nullptr)
             {
                 m_MetaDataMap[var.step] =
                     std::make_shared<std::vector<DataManVar>>();
             }
             m_MetaDataMap[var.step]->push_back(std::move(var));
+            m_MutexMetaData.unlock();
             position += var.size;
         }
         catch (std::exception &e)
         {
         }
+        m_MutexMaxMin.lock();
         if (m_MaxStep < var.step)
         {
             m_MaxStep = var.step;
@@ -83,48 +91,52 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
         {
             m_MinStep = var.step;
         }
+        m_MutexMaxMin.unlock();
     }
 }
 
-void DataManDeserializer::Erase(size_t step) { m_MetaDataMap.erase(step); }
-
-size_t DataManDeserializer::MaxStep() { return m_MaxStep; }
-
-size_t DataManDeserializer::MinStep() { return m_MinStep; }
-
-bool DataManDeserializer::CheckStepVariable(size_t step, std::string variable)
+void DataManDeserializer::Erase(size_t step)
 {
+    m_MutexMetaData.lock();
     const auto &i = m_MetaDataMap.find(step);
     if (i != m_MetaDataMap.end())
     {
-        for (const auto &j : *i->second)
+        for (const auto &k : *i->second)
         {
-            if (j.name == variable)
+            if (BufferContainsSteps(k.index, step + 1, MaxStep()) == false)
             {
-                return true;
+                m_MutexBuffer.lock();
+                m_BufferMap.erase(k.index);
+                m_MutexBuffer.unlock();
             }
         }
     }
-    return false;
+    m_MetaDataMap.erase(step);
+    m_MutexMetaData.unlock();
+
+    m_MutexMaxMin.lock();
+    m_MinStep = step + 1;
+    m_MutexMaxMin.unlock();
 }
 
-bool DataManDeserializer::CheckStep(size_t step)
+size_t DataManDeserializer::MaxStep()
 {
-    const auto &i = m_MetaDataMap.find(step);
-    if (i != m_MetaDataMap.end())
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    std::lock_guard<std::mutex> l(m_MutexMaxMin);
+    return m_MaxStep;
+}
+
+size_t DataManDeserializer::MinStep()
+{
+    std::lock_guard<std::mutex> l(m_MutexMaxMin);
+    return m_MinStep;
 }
 
 const std::shared_ptr<std::vector<DataManDeserializer::DataManVar>>
 DataManDeserializer::GetMetaData(size_t step)
 {
-    if (CheckStep(step))
+    std::lock_guard<std::mutex> l(m_MutexMetaData);
+    const auto &i = m_MetaDataMap.find(step);
+    if (i != m_MetaDataMap.end())
     {
         return m_MetaDataMap[step];
     }
@@ -133,5 +145,28 @@ DataManDeserializer::GetMetaData(size_t step)
         return nullptr;
     }
 }
+
+bool DataManDeserializer::BufferContainsSteps(int index, size_t begin,
+                                              size_t end)
+{
+    // This is a private function and is always called after m_MutexMetaData is
+    // locked, so there is no need to lock again here.
+    for (size_t i = begin; i <= end; ++i)
+    {
+        const auto &j = m_MetaDataMap.find(i);
+        if (j != m_MetaDataMap.end())
+        {
+            for (const auto &k : *j->second)
+            {
+                if (k.index == index)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
-}
+
+} // namespace format
+} // namespace adios2

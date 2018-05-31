@@ -16,6 +16,8 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
 
+#include <unordered_map>
+
 namespace adios2
 {
 namespace format
@@ -44,8 +46,6 @@ class DataManDeserializer
 public:
     size_t MaxStep();
     size_t MinStep();
-    bool CheckStepVariable(size_t step, std::string variable);
-    bool CheckStep(size_t step);
     void Put(std::shared_ptr<std::vector<char>> data);
     template <class T>
     int Get(Variable<T> &variable, size_t step);
@@ -66,10 +66,16 @@ public:
     const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
 
 private:
-    std::map<size_t, std::shared_ptr<std::vector<DataManVar>>> m_MetaDataMap;
-    std::vector<std::shared_ptr<std::vector<char>>> m_Buffer;
-    size_t m_MaxStep;
-    size_t m_MinStep;
+    bool BufferContainsSteps(int index, size_t begin, size_t end);
+    std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
+        m_MetaDataMap;
+    std::unordered_map<int, std::shared_ptr<std::vector<char>>> m_BufferMap;
+    size_t m_MaxStep = std::numeric_limits<size_t>::min();
+    size_t m_MinStep = std::numeric_limits<size_t>::max();
+
+    std::mutex m_MutexMetaData;
+    std::mutex m_MutexBuffer;
+    std::mutex m_MutexMaxMin;
 };
 }
 }

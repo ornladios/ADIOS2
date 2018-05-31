@@ -57,21 +57,41 @@ bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank)
 template <class T>
 int DataManDeserializer::Get(Variable<T> &variable, size_t step)
 {
+
     int ret;
+
+    std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
+
+    m_MutexMetaData.lock();
     const auto &i = m_MetaDataMap.find(step);
     if (i == m_MetaDataMap.end())
     {
-        ret = -1;
+        ret = -1; // step not found
     }
     else
     {
-        for (const auto &j : *i->second)
+        vec = i->second;
+        ret = -2; // step found but variable not found
+    }
+    m_MutexMetaData.unlock();
+
+    if (vec != nullptr)
+    {
+        for (const auto &j : *vec)
         {
-            if (j.name == variable.m_Name && j.step == step)
+            if (j.name == variable.m_Name)
             {
-                std::memcpy(variable.GetData(),
-                            m_Buffer[j.index]->data() + j.position, j.size);
-                ret = 1;
+                // Get the shared pointer first and then copy memory. This is
+                // done in order to avoid expensive memory copy operations
+                // happening inside the lock. Once the shared pointer is
+                // assigned to k, its life cycle in m_BufferMap does not matter
+                // any more. So even if it is released somewhere else the memory
+                // is still valid until k dies.
+                m_MutexBuffer.lock();
+                std::shared_ptr<std::vector<char>> k = m_BufferMap[j.index];
+                m_MutexBuffer.unlock();
+                std::memcpy(variable.GetData(), k->data() + j.position, j.size);
+                ret = 0; // data obtained
             }
         }
     }

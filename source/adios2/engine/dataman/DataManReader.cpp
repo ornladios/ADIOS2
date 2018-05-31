@@ -49,9 +49,17 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         m_CurrentStep = m_DataManDeserializer.MinStep();
     }
     StepStatus status;
-    if (m_DataManDeserializer.CheckStep(m_CurrentStep))
+
+    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
+        m_DataManDeserializer.GetMetaData(m_CurrentStep);
+
+    if (vars == nullptr)
     {
-        for (const auto &i : *m_DataManDeserializer.GetMetaData(m_CurrentStep))
+        status = StepStatus::NotReady;
+    }
+    else
+    {
+        for (const auto &i : *vars)
         {
             if (i.type == "compound")
             {
@@ -70,10 +78,6 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 #undef declare_type
         }
         status = StepStatus::OK;
-    }
-    else
-    {
-        status = StepStatus::NotReady;
     }
     return status;
 }
