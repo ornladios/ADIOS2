@@ -16,6 +16,7 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
 
+#include <mutex>
 #include <unordered_map>
 
 namespace adios2
