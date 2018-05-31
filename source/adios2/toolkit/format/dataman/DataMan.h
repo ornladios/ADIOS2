@@ -26,19 +26,14 @@ namespace format
 class DataManSerializer
 {
 public:
-    DataManSerializer(size_t size);
+    void New(size_t size);
+    const std::shared_ptr<std::vector<char>> Get();
     template <class T>
     bool Put(Variable<T> &variable, size_t step, int rank);
-    size_t GetBufferSize();
-    const std::shared_ptr<std::vector<char>> GetBuffer();
-
-    template <class T>
-    static void Put(Variable<T> &variable, size_t step, int rank,
-                    std::vector<char> &output);
 
 private:
     std::shared_ptr<std::vector<char>> m_Buffer;
-    size_t m_Position;
+    size_t m_Position = 0;
 };
 
 class DataManDeserializer

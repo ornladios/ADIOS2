@@ -29,6 +29,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
+    m_DataManSerializer->New(m_BufferSize);
     ++m_CurrentStep;
     return StepStatus::OK;
 }
@@ -42,6 +43,13 @@ void DataManWriter::EndStep()
         m_DataMan->WriteWAN(m_BP3Serializer->m_Data.m_Buffer);
         m_BP3Serializer->ResetBuffer(m_BP3Serializer->m_Data, true);
         m_BP3Serializer->ResetIndices();
+    }
+    else if (m_Format == "dataman")
+    {
+        const std::shared_ptr<std::vector<char>> buf =
+            m_DataManSerializer->Get();
+        m_BufferSize = buf->size() + 1024;
+        m_DataMan->WriteWAN(buf);
     }
 }
 
@@ -58,6 +66,10 @@ void DataManWriter::Init()
         m_BP3Serializer->InitParameters(m_IO.m_Parameters);
         m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
                                               {"WAN_Zmq"});
+    }
+    else if (m_Format == "dataman")
+    {
+        m_DataManSerializer = std::make_shared<format::DataManSerializer>();
     }
 
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);

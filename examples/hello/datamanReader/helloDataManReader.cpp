@@ -67,23 +67,16 @@ int main(int argc, char *argv[])
 
         std::vector<float> myFloats(10);
 
-        for (int i = 0; i < 100000; ++i)
+        for (int i = 0; i < 1000; ++i)
         {
             adios2::StepStatus status = dataManReader.BeginStep();
-            /*
-            while (bpFloats == nullptr)
-            {
-                std::cout << "Variable bpFloats not read yet. Waiting...\n";
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            }
-            */
             if (status == adios2::StepStatus::OK)
             {
                 bpFloats = dataManIO.InquireVariable<float>("bpFloats");
                 dataManReader.Get<float>(*bpFloats, myFloats.data(),
                                          adios2::Mode::Sync);
                 Dump(myFloats, dataManReader.CurrentStep());
+                i = dataManReader.CurrentStep();
                 dataManReader.EndStep();
             }
             else if (status == adios2::StepStatus::NotReady)

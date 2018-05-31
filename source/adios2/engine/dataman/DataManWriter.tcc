@@ -53,11 +53,7 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
 {
-    format::DataManSerializer serializer(m_BufferSize);
-    serializer.Put(variable, CurrentStep(), m_MPIRank);
-    auto buf = serializer.GetBuffer();
-    m_BufferSize = buf->size() + 1024;
-    m_DataMan->WriteWAN(buf);
+    m_DataManSerializer->Put(variable, CurrentStep(), m_MPIRank);
 }
 
 template <class T>

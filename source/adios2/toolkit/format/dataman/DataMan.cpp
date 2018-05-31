@@ -16,15 +16,14 @@ namespace adios2
 namespace format
 {
 
-DataManSerializer::DataManSerializer(size_t size)
-: m_Position(0), m_Buffer(std::make_shared<std::vector<char>>())
+void DataManSerializer::New(size_t size)
 {
+    m_Buffer = std::make_shared<std::vector<char>>();
     m_Buffer->reserve(size);
+    m_Position = 0;
 }
 
-size_t DataManSerializer::GetBufferSize() { return m_Position; }
-
-const std::shared_ptr<std::vector<char>> DataManSerializer::GetBuffer()
+const std::shared_ptr<std::vector<char>> DataManSerializer::Get()
 {
     return m_Buffer;
 }
