@@ -16,6 +16,9 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
 
+#include <mutex>
+#include <unordered_map>
+
 namespace adios2
 {
 namespace format
@@ -24,19 +27,14 @@ namespace format
 class DataManSerializer
 {
 public:
-    DataManSerializer(size_t size);
+    void New(size_t size);
+    const std::shared_ptr<std::vector<char>> Get();
     template <class T>
     bool Put(Variable<T> &variable, size_t step, int rank);
-    size_t GetBufferSize();
-    const std::shared_ptr<std::vector<char>> GetBuffer();
-
-    template <class T>
-    static void Put(Variable<T> &variable, size_t step, int rank,
-                    std::vector<char> &output);
 
 private:
     std::shared_ptr<std::vector<char>> m_Buffer;
-    size_t m_Position;
+    size_t m_Position = 0;
 };
 
 class DataManDeserializer
@@ -44,8 +42,6 @@ class DataManDeserializer
 public:
     size_t MaxStep();
     size_t MinStep();
-    bool Check(size_t step, std::string variable);
-    bool Check(size_t step);
     void Put(std::shared_ptr<std::vector<char>> data);
     template <class T>
     int Get(Variable<T> &variable, size_t step);
@@ -63,14 +59,19 @@ public:
         size_t index;
         int rank;
     };
-    const std::vector<DataManVar> &GetMetaData(size_t step);
+    const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
 
 private:
-    std::map<size_t, std::vector<DataManVar>> m_MetaDataMap;
-    std::vector<std::shared_ptr<std::vector<char>>> m_Buffer;
-    std::vector<DataManVar> m_EmptyVector;
-    size_t m_MaxStep;
-    size_t m_MinStep;
+    bool BufferContainsSteps(int index, size_t begin, size_t end);
+    std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
+        m_MetaDataMap;
+    std::unordered_map<int, std::shared_ptr<std::vector<char>>> m_BufferMap;
+    size_t m_MaxStep = std::numeric_limits<size_t>::min();
+    size_t m_MinStep = std::numeric_limits<size_t>::max();
+
+    std::mutex m_MutexMetaData;
+    std::mutex m_MutexBuffer;
+    std::mutex m_MutexMaxMin;
 };
 }
 }
