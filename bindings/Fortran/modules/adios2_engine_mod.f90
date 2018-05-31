@@ -49,10 +49,11 @@ contains
     end subroutine
 
     subroutine adios2_close(engine, ierr)
-        type(adios2_engine), intent(in) :: engine
+        type(adios2_engine), intent(inout) :: engine
         integer, intent(out) :: ierr
 
         call adios2_close_f2c(engine%f2c, ierr)
+        engine%valid = .false.
 
     end subroutine
 

@@ -72,6 +72,12 @@ void FC_GLOBAL(adios2_define_attribute_f2c,
                                             const int *type, const void *data,
                                             const int *elements, int *ierr);
 
+void FC_GLOBAL(adios2_inquire_attribute_f2c,
+               ADIOS2_INQUIRE_ATTRIBUTE_F2C)(adios2_attribute **attribute,
+                                             adios2_io **io,
+                                             const char *attribute_name,
+                                             int *ierr);
+
 void FC_GLOBAL(adios2_remove_attribute_f2c,
                ADIOS2_REMOVE_ATTRIBUTE_F2C)(adios2_io **io,
                                             const char *variable_name,

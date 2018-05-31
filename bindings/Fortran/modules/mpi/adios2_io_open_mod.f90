@@ -30,6 +30,8 @@ contains
         call adios2_open_f2c(engine%f2c, io%f2c, TRIM(ADJUSTL(name))//char(0), &
                              adios2_mode, ierr)
 
+        if( ierr == 0 ) engine%valid = .true.
+
     end subroutine
 
     subroutine adios2_open_new_comm(engine, io, name, adios2_mode, comm, ierr)
@@ -44,6 +46,8 @@ contains
         call adios2_open_new_comm_f2c(engine%f2c, io%f2c, &
                                       TRIM(ADJUSTL(name))//char(0), &
                                       adios2_mode, comm, ierr)
+
+        if( ierr == 0 ) engine%valid = .true.
 
     end subroutine
 

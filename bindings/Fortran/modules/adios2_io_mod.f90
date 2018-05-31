@@ -75,6 +75,13 @@ contains
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(out) :: ierr
+        ! Local
+        type(adios2_variable):: variable
+
+        call adios2_inquire_variable(variable, io, name, ierr)
+        if(ierr == adios2_found) then
+            variable%valid = .false.
+        end if
 
         call adios2_remove_variable_f2c(io%f2c, TRIM(ADJUSTL(name))//char(0), ierr)
 
@@ -90,10 +97,29 @@ contains
     end subroutine
 
 
+    subroutine adios2_inquire_attribute(attribute, io, name, ierr)
+        type(adios2_attribute), intent(out) :: attribute
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: name
+        integer, intent(out) :: ierr
+
+        call adios2_inquire_attribute_f2c(attribute%f2c, io%f2c, &
+                                          TRIM(ADJUSTL(name))//char(0), ierr)
+    end subroutine
+
+
     subroutine adios2_remove_attribute(io, name, ierr)
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(out) :: ierr
+
+        ! Local
+        type(adios2_attribute):: attribute
+
+        call adios2_inquire_attribute(attribute, io, name, ierr)
+        if(ierr == adios2_found) then
+            attribute%valid = .false.
+        end if
 
         call adios2_remove_attribute_f2c(io%f2c, TRIM(ADJUSTL(name))//char(0), &
                                          ierr)

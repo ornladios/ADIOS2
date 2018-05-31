@@ -259,6 +259,24 @@ void FC_GLOBAL(adios2_define_attribute_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_inquire_attribute_f2c,
+               ADIOS2_INQUIRE_ATTRIBUTE_F2C)(adios2_attribute **attribute,
+                                             adios2_io **io,
+                                             const char *attribute_name,
+                                             int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *attribute = adios2_inquire_attribute(*io, attribute_name);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 inquire_attribute: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_remove_attribute_f2c,
                ADIOS2_REMOVE_ATTRIBUTE_F2C)(adios2_io **io, const char *name,
                                             int *ierr)

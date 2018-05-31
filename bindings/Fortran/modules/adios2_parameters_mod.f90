@@ -71,35 +71,35 @@ module adios2_parameters_mod
 
     ! Low level API handlers
     type adios2_adios
-        integer(kind=8):: f2c
-        logical :: valid
+        integer(kind=8):: f2c = 0_8
+        logical :: valid = .false.
     end type
 
     type adios2_io
-        integer(kind=8):: f2c
-        logical :: valid
+        integer(kind=8):: f2c = 0_8
+        logical :: valid = .false.
     end type
 
     type adios2_variable
-        integer(kind=8):: f2c
-        logical :: valid
+        integer(kind=8):: f2c = 0_8
+        logical :: valid = .false.
     end type
 
     type adios2_attribute
-        integer(kind=8):: f2c
-        logical :: valid
+        integer(kind=8):: f2c = 0_8
+        logical :: valid = .false.
     end type
 
     type adios2_engine
-        integer(kind=8):: f2c
-        integer :: mode
-        logical :: valid
+        integer(kind=8):: f2c = 0_8
+        integer :: mode = adios2_mode_undefined
+        logical :: valid = .false.
     end type
 
     ! High-level API
     type adios2_file
-        integer(kind=8):: f2c
-        logical :: valid
+        integer(kind=8):: f2c = 0_8
+        logical :: valid = .false.
     end type
 
 end module

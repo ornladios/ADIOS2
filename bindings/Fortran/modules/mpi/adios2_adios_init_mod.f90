@@ -57,6 +57,7 @@ contains
         call adios2_init_config_f2c(adios%f2c, &
                                     TRIM(ADJUSTL(config_file))//char(0), &
                                     comm, debug_mode, ierr)
+        if( ierr == 0 ) adios%valid = .true.
 
     end subroutine
 

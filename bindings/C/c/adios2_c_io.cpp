@@ -455,6 +455,38 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
     return reinterpret_cast<adios2_attribute *>(attribute);
 }
 
+adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
+{
+    adios2::CheckForNullptr(
+        io, "for adios2_io, in call to adios2_inquire_attribute");
+
+    adios2::IO &ioCpp = *reinterpret_cast<adios2::IO *>(io);
+    const auto &dataMap = ioCpp.GetAttributesDataMap();
+
+    auto itAttribute = dataMap.find(name);
+    if (itAttribute == dataMap.end()) // not found
+    {
+        return nullptr;
+    }
+
+    const std::string type(itAttribute->second.first);
+    adios2::AttributeBase *attribute = nullptr;
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        attribute = ioCpp.InquireAttribute<T>(name);                           \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+    return reinterpret_cast<adios2_attribute *>(attribute);
+}
+
 int adios2_remove_attribute(adios2_io *io, const char *name)
 {
     adios2::CheckForNullptr(

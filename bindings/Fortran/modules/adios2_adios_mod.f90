@@ -22,6 +22,8 @@ contains
 
         call adios2_declare_io_f2c(io%f2c, adios%f2c, &
                                    TRIM(ADJUSTL(io_name))//char(0), ierr)
+        if(ierr == 0 ) io%valid = .true.
+
     end subroutine
 
     subroutine adios2_flush_all(adios, ierr)
@@ -33,10 +35,11 @@ contains
     end subroutine
 
     subroutine adios2_finalize(adios, ierr)
-        type(adios2_adios), intent(in) :: adios
+        type(adios2_adios), intent(inout) :: adios
         integer, intent(out) :: ierr
 
         call adios2_finalize_f2c(adios%f2c, ierr)
+        adios%valid = .false.
 
     end subroutine
 
