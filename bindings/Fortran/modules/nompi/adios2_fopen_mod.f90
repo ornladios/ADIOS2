@@ -27,7 +27,7 @@ contains
 
         call adios2_fopen_f2c(unit%f2c, TRIM(ADJUSTL(name))//char(0), &
                               adios2_mode, ierr)
-        unit%valid = .true.
+        if( ierr == 0 ) unit%valid = .true.
 
     end subroutine
 
@@ -46,7 +46,7 @@ contains
                                      TRIM(ADJUSTL(config_file))//char(0), &
                                      TRIM(ADJUSTL(io_in_config_file))//char(0),&
                                      ierr)
-        unit%valid = .true.
+        if( ierr == 0 ) unit%valid = .true.
 
     end subroutine
 

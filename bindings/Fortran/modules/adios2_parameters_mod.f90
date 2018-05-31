@@ -92,7 +92,7 @@ module adios2_parameters_mod
 
     type adios2_engine
         integer(kind=8):: f2c = 0_8
-        integer :: mode
+        integer :: mode = adios2_mode_undefined
         logical :: valid = .false.
     end type
 

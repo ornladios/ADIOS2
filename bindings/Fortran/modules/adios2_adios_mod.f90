@@ -22,7 +22,7 @@ contains
 
         call adios2_declare_io_f2c(io%f2c, adios%f2c, &
                                    TRIM(ADJUSTL(io_name))//char(0), ierr)
-        io%valid = .true.
+        if(ierr == 0 ) io%valid = .true.
 
     end subroutine
 

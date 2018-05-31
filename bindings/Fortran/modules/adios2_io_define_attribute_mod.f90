@@ -48,7 +48,7 @@ contains
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_string, &
                                          TRIM(ADJUSTL(data))//char(0), 1, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_real(attribute, io, name, data, ierr)
@@ -61,7 +61,7 @@ contains
         call adios2_define_attribute_f2c(attribute%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_real, data, 1, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_dp(attribute, io, name, data, ierr)
@@ -74,7 +74,7 @@ contains
         call adios2_define_attribute_f2c(attribute%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_dp, data, 1, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_integer1(attribute, io, name, data, ierr)
@@ -87,7 +87,7 @@ contains
         call adios2_define_attribute_f2c(attribute%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_integer1, data, 1, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_integer2(attribute, io, name, data, ierr)
@@ -100,7 +100,7 @@ contains
         call adios2_define_attribute_f2c(attribute%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_integer2, data, 1, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_integer4(attribute, io, name, data, ierr)
@@ -113,7 +113,7 @@ contains
         call adios2_define_attribute_f2c(attribute%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_integer4, data, 1, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_integer8(attribute, io, name, data, ierr)
@@ -126,7 +126,7 @@ contains
         call adios2_define_attribute_f2c(attribute%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_integer8, data, 1, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     ! 1D
@@ -154,7 +154,7 @@ contains
                                          adios2_type_string_array, &
                                          data_null_terminated, elements, &
                                          ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
 
     end subroutine
 
@@ -170,7 +170,7 @@ contains
         call adios2_define_attribute_f2c(attribute%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_real, data, elements, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_dp_1d(attribute, io, name, data, &
@@ -185,7 +185,7 @@ contains
         call adios2_define_attribute_f2c(attribute%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_dp, data, elements, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_integer1_1d(attribute, io, name, &
@@ -201,7 +201,7 @@ contains
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_integer1, &
                                          data, elements, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_integer2_1d(attribute, io, name, &
@@ -217,7 +217,7 @@ contains
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_integer2, &
                                          data, elements, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_integer4_1d(attribute, io, name, &
@@ -233,7 +233,7 @@ contains
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_integer4, data, elements, &
                                          ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
     subroutine adios2_define_attribute_integer8_1d(attribute, io, name, &
@@ -249,7 +249,7 @@ contains
                                          TRIM(ADJUSTL(name))//char(0), &
                                          adios2_type_integer8, &
                                          data, elements, ierr)
-        attribute%valid = .true.
+        if( ierr == 0 ) attribute%valid = .true.
     end subroutine
 
 end module
