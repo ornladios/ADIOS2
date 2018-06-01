@@ -33,8 +33,11 @@ public:
     bool Put(Variable<T> &variable, size_t step, int rank,
              const Params &params);
     template <class T>
-    bool PutCompress(Variable<T> &variable, size_t step, int rank,
-                     const Params &params);
+
+#ifdef ADIOS2_HAVE_ZFP
+    bool PutZfp(Variable<T> &variable, size_t step, int rank,
+                const Params &params);
+#endif
 
 private:
     std::shared_ptr<std::vector<char>> m_Buffer;

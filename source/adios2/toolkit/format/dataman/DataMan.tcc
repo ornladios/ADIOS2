@@ -13,7 +13,9 @@
 
 #include "DataMan.h"
 
+#ifdef ADIOS2_HAVE_ZFP
 #include "adios2/operator/compress/CompressZfp.h"
+#endif
 
 #include <iostream>
 
@@ -22,9 +24,10 @@ namespace adios2
 namespace format
 {
 
+#ifdef ADIOS2_HAVE_ZFP
 template <class T>
-bool DataManSerializer::PutCompress(Variable<T> &variable, size_t step,
-                                    int rank, const Params &params)
+bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
+                               const Params &params)
 {
     nlohmann::json metaj;
 
@@ -84,16 +87,22 @@ bool DataManSerializer::PutCompress(Variable<T> &variable, size_t step,
     m_Position += datasize;
     return false;
 }
+#endif
 
 template <class T>
 bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
                             const Params &params)
 {
+#ifdef ADIOS2_HAVE_ZFP
     auto it = params.find("CompressionMethod");
     if (it != params.end())
     {
-        return PutCompress(variable, step, rank, params);
+        if (it->second == "zfp")
+        {
+            return PutZfp(variable, step, rank, params);
+        }
     }
+#endif
 
     nlohmann::json metaj;
 
@@ -167,6 +176,7 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
 
                 if (j.compression == "zfp")
                 {
+#ifdef ADIOS2_HAVE_ZFP
                     Params p = {{"Rate", std::to_string(j.compressionRate)}};
                     compress::CompressZfp zfp(p, true);
                     std::vector<char> decompressBuffer;
@@ -184,6 +194,12 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
                     else
                     {
                     }
+#else
+                    throw std::runtime_error(
+                        "Data received is compressed using ZFP. However, ZFP "
+                        "library is not found locally and as a result it "
+                        "cannot be decompressed.");
+#endif
                 }
                 else
                 {
