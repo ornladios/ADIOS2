@@ -30,10 +30,18 @@ public:
     void New(size_t size);
     const std::shared_ptr<std::vector<char>> Get();
     template <class T>
-    bool Put(Variable<T> &variable, size_t step, int rank);
+    bool Put(Variable<T> &variable, size_t step, int rank,
+             const Params &params);
+
+#ifdef ADIOS2_HAVE_ZFP
+    template <class T>
+    bool PutZfp(Variable<T> &variable, size_t step, int rank,
+                const Params &params);
+#endif
 
 private:
     std::shared_ptr<std::vector<char>> m_Buffer;
+    std::vector<char> m_CompressBuffer;
     size_t m_Position = 0;
 };
 
@@ -58,6 +66,8 @@ public:
         size_t position;
         size_t index;
         int rank;
+        std::string compression;
+        float compressionRate;
     };
     const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
 

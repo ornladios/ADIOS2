@@ -53,7 +53,8 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
 {
-    m_DataManSerializer->Put(variable, CurrentStep(), m_MPIRank);
+    m_DataManSerializer->Put(variable, CurrentStep(), m_MPIRank,
+                             m_CompressionParams);
 }
 
 template <class T>
