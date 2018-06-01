@@ -13,6 +13,8 @@
 
 #include "DataMan.h"
 
+#include "adios2/operator/compress/CompressZfp.h"
+
 #include <iostream>
 
 namespace adios2
@@ -21,18 +23,90 @@ namespace format
 {
 
 template <class T>
-bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank)
+bool DataManSerializer::PutCompress(Variable<T> &variable, size_t step,
+                                    int rank, const Params &params)
 {
     nlohmann::json metaj;
+
     metaj["N"] = variable.m_Name;
     metaj["Y"] = variable.m_Type;
     metaj["S"] = variable.m_Shape;
     metaj["C"] = variable.m_Count;
     metaj["O"] = variable.m_Start;
     metaj["T"] = step;
-    metaj["I"] = variable.PayloadSize();
     metaj["R"] = rank;
+
+    size_t datasize;
+
+    auto it = params.find("CompressionMethod");
+    if (it != params.end())
+    {
+        std::string method = it->second;
+        float rate = 2;
+        metaj["Z"] = method;
+        it = params.find("CompressionRate");
+        if (it != params.end())
+        {
+            rate = stof(it->second);
+            metaj["ZR"] = rate;
+        }
+
+        if (method == "zfp")
+        {
+            Params p = {{"Rate", std::to_string(rate)}};
+            compress::CompressZfp zfp(p, true);
+            m_CompressBuffer.reserve(variable.PayloadSize());
+            datasize =
+                zfp.Compress(variable.GetData(), variable.m_Count, 4,
+                             variable.m_Type, m_CompressBuffer.data(), p);
+        }
+    }
+    metaj["I"] = datasize;
     std::string metastr = metaj.dump() + '\0';
+
+    uint32_t metasize = metastr.size();
+    size_t totalsize = sizeof(metasize) + metasize + datasize;
+    if (m_Buffer->capacity() < m_Position + totalsize)
+    {
+        return true;
+    }
+
+    m_Buffer->resize(m_Position + totalsize);
+
+    std::memcpy(m_Buffer->data() + m_Position, &metasize, sizeof(metasize));
+    m_Position += sizeof(metasize);
+
+    std::memcpy(m_Buffer->data() + m_Position, metastr.c_str(), metasize);
+    m_Position += metasize;
+
+    std::memcpy(m_Buffer->data() + m_Position, m_CompressBuffer.data(),
+                datasize);
+    m_Position += datasize;
+    return false;
+}
+
+template <class T>
+bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
+                            const Params &params)
+{
+    auto it = params.find("CompressionMethod");
+    if (it != params.end())
+    {
+        return PutCompress(variable, step, rank, params);
+    }
+
+    nlohmann::json metaj;
+
+    metaj["N"] = variable.m_Name;
+    metaj["Y"] = variable.m_Type;
+    metaj["S"] = variable.m_Shape;
+    metaj["C"] = variable.m_Count;
+    metaj["O"] = variable.m_Start;
+    metaj["T"] = step;
+    metaj["R"] = rank;
+    metaj["I"] = variable.PayloadSize();
+    std::string metastr = metaj.dump() + '\0';
+
     uint32_t metasize = metastr.size();
     size_t datasize = variable.PayloadSize();
     size_t totalsize = sizeof(metasize) + metasize + datasize;
@@ -90,7 +164,34 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
                 m_MutexBuffer.lock();
                 std::shared_ptr<std::vector<char>> k = m_BufferMap[j.index];
                 m_MutexBuffer.unlock();
-                std::memcpy(variable.GetData(), k->data() + j.position, j.size);
+
+                if (j.compression == "zfp")
+                {
+                    Params p = {{"Rate", std::to_string(j.compressionRate)}};
+                    compress::CompressZfp zfp(p, true);
+                    std::vector<char> decompressBuffer;
+                    decompressBuffer.reserve(variable.PayloadSize());
+                    size_t datasize = zfp.Decompress(
+                        k->data() + j.position, j.size, decompressBuffer.data(),
+                        j.count, j.type, p);
+                    if (datasize == variable.PayloadSize())
+                    {
+                        // TODO: This is to be replaced with a more
+                        // sophisticated memory manipulation
+                        std::memcpy(variable.GetData(), decompressBuffer.data(),
+                                    datasize);
+                    }
+                    else
+                    {
+                    }
+                }
+                else
+                {
+                    // TODO: This is to be replaced with a more sophisticated
+                    // memory manipulation
+                    std::memcpy(variable.GetData(), k->data() + j.position,
+                                j.size);
+                }
                 ret = 0; // data obtained
             }
         }

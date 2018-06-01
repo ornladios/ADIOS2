@@ -64,6 +64,16 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
             var.rank = metaj["R"].get<int>();
             var.position = position;
             var.index = key;
+            auto it = metaj.find("Z");
+            if (it != metaj.end())
+            {
+                var.compression = it->get<std::string>();
+            }
+            it = metaj.find("ZR");
+            if (it != metaj.end())
+            {
+                var.compressionRate = it->get<float>();
+            }
             if (position + var.size < data->capacity())
             {
                 break;
