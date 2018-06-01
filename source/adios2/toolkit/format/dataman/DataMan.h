@@ -32,9 +32,9 @@ public:
     template <class T>
     bool Put(Variable<T> &variable, size_t step, int rank,
              const Params &params);
-    template <class T>
 
 #ifdef ADIOS2_HAVE_ZFP
+    template <class T>
     bool PutZfp(Variable<T> &variable, size_t step, int rank,
                 const Params &params);
 #endif
