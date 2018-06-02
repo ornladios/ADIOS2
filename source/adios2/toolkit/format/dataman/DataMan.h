@@ -29,9 +29,14 @@ class DataManSerializer
 public:
     void New(size_t size);
     const std::shared_ptr<std::vector<char>> Get();
+
     template <class T>
     bool Put(Variable<T> &variable, size_t step, int rank,
              const Params &params);
+
+    template <class T>
+    bool PutRaw(Variable<T> &variable, size_t step, int rank,
+                const Params &params);
 
 #ifdef ADIOS2_HAVE_ZFP
     template <class T>

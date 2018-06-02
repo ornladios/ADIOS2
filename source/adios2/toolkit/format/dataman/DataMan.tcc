@@ -59,9 +59,16 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
             Params p = {{"Rate", std::to_string(rate)}};
             compress::CompressZfp zfp(p, true);
             m_CompressBuffer.reserve(variable.PayloadSize());
-            datasize =
-                zfp.Compress(variable.GetData(), variable.m_Count, 4,
-                             variable.m_Type, m_CompressBuffer.data(), p);
+            try
+            {
+                datasize =
+                    zfp.Compress(variable.GetData(), variable.m_Count, 4,
+                                 variable.m_Type, m_CompressBuffer.data(), p);
+            }
+            catch (std::exception &e)
+            {
+                return PutRaw(variable, step, rank, params);
+            }
         }
     }
     metaj["I"] = datasize;
@@ -90,20 +97,9 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
 #endif
 
 template <class T>
-bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
-                            const Params &params)
+bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
+                               const Params &params)
 {
-#ifdef ADIOS2_HAVE_ZFP
-    auto it = params.find("CompressionMethod");
-    if (it != params.end())
-    {
-        if (it->second == "zfp")
-        {
-            return PutZfp(variable, step, rank, params);
-        }
-    }
-#endif
-
     nlohmann::json metaj;
 
     metaj["N"] = variable.m_Name;
@@ -135,6 +131,23 @@ bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
     std::memcpy(m_Buffer->data() + m_Position, variable.GetData(), datasize);
     m_Position += datasize;
     return false;
+}
+
+template <class T>
+bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
+                            const Params &params)
+{
+    auto it = params.find("CompressionMethod");
+    if (it != params.end())
+    {
+#ifdef ADIOS2_HAVE_ZFP
+        if (it->second == "zfp")
+        {
+            return PutZfp(variable, step, rank, params);
+        }
+#endif
+    }
+    return PutRaw(variable, step, rank, params);
 }
 
 template <class T>
