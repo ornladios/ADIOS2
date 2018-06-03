@@ -88,7 +88,7 @@ private:
     void CopyLocalToGlobal(char *dst, const Box<Dims> &dstbox, const char *src,
                            const Box<Dims> &srcbox, const size_t size,
                            const Box<Dims> &overlapBox);
-    void PrintBox(const Box<Dims> in);
+    void PrintBox(const Box<Dims> in, std::string name);
 
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
         m_MetaDataMap;

@@ -272,9 +272,7 @@ void DataManDeserializer::CopyLocalToGlobal(char *dst, const Box<Dims> &dstBox,
     else
     {
         size_t overlapChunkSize =
-            overlapBox.second.back() - overlapBox.first.back();
-        size_t srcChunkSize = srcBox.second.back() - srcBox.first.back();
-        size_t dstChunkSize = dstBox.second.back() - dstBox.first.back();
+            (overlapBox.second.back() - overlapBox.first.back()) * size;
 
         Dims overlapCount(dimensions);
         for (int i = 0; i < dimensions; ++i)
@@ -284,7 +282,7 @@ void DataManDeserializer::CopyLocalToGlobal(char *dst, const Box<Dims> &dstBox,
 
         for (size_t i = 0; i < overlapSize; i += overlapChunkSize)
         {
-            Dims currentPositionLocal = OneToMulti(overlapCount, i);
+            Dims currentPositionLocal = OneToMulti(overlapCount, i / size);
             Dims currentPositionGlobal =
                 GetAbsolutePosition(currentPositionLocal, overlapBox.first);
             Dims overlapInSrcRelativeCurrentPosition =
@@ -292,9 +290,11 @@ void DataManDeserializer::CopyLocalToGlobal(char *dst, const Box<Dims> &dstBox,
             Dims overlapInDstRelativeCurrentPosition =
                 GetRelativePosition(currentPositionGlobal, dstBox.first);
             size_t srcStartPtrOffset =
-                MultiToOne(srcCount, overlapInSrcRelativeCurrentPosition);
+                MultiToOne(srcCount, overlapInSrcRelativeCurrentPosition) *
+                size;
             size_t dstStartPtrOffset =
-                MultiToOne(dstCount, overlapInDstRelativeCurrentPosition);
+                MultiToOne(dstCount, overlapInDstRelativeCurrentPosition) *
+                size;
             std::memcpy(dst + dstStartPtrOffset, src + srcStartPtrOffset,
                         overlapChunkSize);
         }
@@ -355,17 +355,17 @@ bool DataManDeserializer::IsContinuous(const Box<Dims> &inner,
     return true;
 }
 
-void DataManDeserializer::PrintBox(const Box<Dims> in)
+void DataManDeserializer::PrintBox(const Box<Dims> in, std::string name)
 {
 
-    std::cout << "Left boundary: [";
+    std::cout << name << " Left boundary: [";
     for (auto &i : in.first)
     {
         std::cout << i << ", ";
     }
     std::cout << "]" << std::endl;
 
-    std::cout << "Right boundary: [";
+    std::cout << name << " Right boundary: [";
     for (auto &i : in.second)
     {
         std::cout << i << ", ";

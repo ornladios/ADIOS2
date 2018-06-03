@@ -112,8 +112,6 @@ bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
     metaj["I"] = variable.PayloadSize();
     std::string metastr = metaj.dump() + '\0';
 
-    std::cout << metaj.dump(4) << std::endl;
-
     uint32_t metasize = metastr.size();
     size_t datasize = variable.PayloadSize();
     size_t totalsize = sizeof(metasize) + metasize + datasize;
@@ -181,8 +179,11 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
             if (j.name == variable.m_Name)
             {
 
-                Box<Dims> srcBox(j.start, j.count);
-                Box<Dims> dstBox(variable.m_Start, variable.m_Count);
+                Box<Dims> srcBox(j.start,
+                                 GetAbsolutePosition(j.start, j.count));
+                Box<Dims> dstBox(
+                    variable.m_Start,
+                    GetAbsolutePosition(variable.m_Start, variable.m_Count));
                 Box<Dims> overlapBox;
 
                 if (GetOverlap(srcBox, dstBox, overlapBox) == false)
@@ -190,10 +191,6 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
                     return -3; // step and variable found but variable does not
                                // have desired part
                 }
-
-                PrintBox(srcBox);
-                PrintBox(dstBox);
-                PrintBox(overlapBox);
 
                 // Get the shared pointer first and then copy memory. This is
                 // done in order to avoid expensive memory copy operations
@@ -214,9 +211,9 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
                     decompressBuffer.reserve(variable.PayloadSize());
                     try
                     {
-                        size_t datasize = zfp.Decompress(
-                            k->data() + j.position, j.size,
-                            decompressBuffer.data(), j.count, j.type, p);
+                        zfp.Decompress(k->data() + j.position, j.size,
+                                       decompressBuffer.data(), j.count, j.type,
+                                       p);
                     }
                     catch (std::exception &e)
                     {
@@ -241,7 +238,7 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
                         "Data received is compressed using SZ. However, SZ "
                         "library is not found locally and as a result it "
                         "cannot be decompressed.");
-                    return -102; // zfp library not found
+                    return -102; // sz library not found
 #endif
                 }
                 else
