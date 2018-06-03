@@ -59,9 +59,16 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
             Params p = {{"Rate", std::to_string(rate)}};
             compress::CompressZfp zfp(p, true);
             m_CompressBuffer.reserve(variable.PayloadSize());
-            datasize =
-                zfp.Compress(variable.GetData(), variable.m_Count, 4,
-                             variable.m_Type, m_CompressBuffer.data(), p);
+            try
+            {
+                datasize =
+                    zfp.Compress(variable.GetData(), variable.m_Count, 4,
+                                 variable.m_Type, m_CompressBuffer.data(), p);
+            }
+            catch (std::exception &e)
+            {
+                return PutRaw(variable, step, rank, params);
+            }
         }
     }
     metaj["I"] = datasize;
@@ -90,20 +97,9 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
 #endif
 
 template <class T>
-bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
-                            const Params &params)
+bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
+                               const Params &params)
 {
-#ifdef ADIOS2_HAVE_ZFP
-    auto it = params.find("CompressionMethod");
-    if (it != params.end())
-    {
-        if (it->second == "zfp")
-        {
-            return PutZfp(variable, step, rank, params);
-        }
-    }
-#endif
-
     nlohmann::json metaj;
 
     metaj["N"] = variable.m_Name;
@@ -138,10 +134,25 @@ bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
 }
 
 template <class T>
+bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
+                            const Params &params)
+{
+    auto it = params.find("CompressionMethod");
+    if (it != params.end())
+    {
+#ifdef ADIOS2_HAVE_ZFP
+        if (it->second == "zfp")
+        {
+            return PutZfp(variable, step, rank, params);
+        }
+#endif
+    }
+    return PutRaw(variable, step, rank, params);
+}
+
+template <class T>
 int DataManDeserializer::Get(Variable<T> &variable, size_t step)
 {
-
-    int ret;
 
     std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
 
@@ -149,21 +160,38 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
     const auto &i = m_MetaDataMap.find(step);
     if (i == m_MetaDataMap.end())
     {
-        ret = -1; // step not found
+        return -1; // step not found
     }
     else
     {
         vec = i->second;
-        ret = -2; // step found but variable not found
     }
     m_MutexMetaData.unlock();
 
-    if (vec != nullptr)
+    if (vec == nullptr)
+    {
+        return -2; // step found but variable not found
+    }
+    else
     {
         for (const auto &j : *vec)
         {
             if (j.name == variable.m_Name)
             {
+
+                Box<Dims> srcBox(j.start,
+                                 GetAbsolutePosition(j.start, j.count));
+                Box<Dims> dstBox(
+                    variable.m_Start,
+                    GetAbsolutePosition(variable.m_Start, variable.m_Count));
+                Box<Dims> overlapBox;
+
+                if (GetOverlap(srcBox, dstBox, overlapBox) == false)
+                {
+                    return -3; // step and variable found but variable does not
+                               // have desired part
+                }
+
                 // Get the shared pointer first and then copy memory. This is
                 // done in order to avoid expensive memory copy operations
                 // happening inside the lock. Once the shared pointer is
@@ -181,39 +209,50 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
                     compress::CompressZfp zfp(p, true);
                     std::vector<char> decompressBuffer;
                     decompressBuffer.reserve(variable.PayloadSize());
-                    size_t datasize = zfp.Decompress(
-                        k->data() + j.position, j.size, decompressBuffer.data(),
-                        j.count, j.type, p);
-                    if (datasize == variable.PayloadSize())
+                    try
                     {
-                        // TODO: This is to be replaced with a more
-                        // sophisticated memory manipulation
-                        std::memcpy(variable.GetData(), decompressBuffer.data(),
-                                    datasize);
+                        zfp.Decompress(k->data() + j.position, j.size,
+                                       decompressBuffer.data(), j.count, j.type,
+                                       p);
                     }
-                    else
+                    catch (std::exception &e)
                     {
+                        return -4; // decompression failed
                     }
+                    CopyLocalToGlobal(
+                        reinterpret_cast<char *>(variable.GetData()), dstBox,
+                        decompressBuffer.data(), srcBox, sizeof(T), overlapBox);
 #else
                     throw std::runtime_error(
                         "Data received is compressed using ZFP. However, ZFP "
                         "library is not found locally and as a result it "
                         "cannot be decompressed.");
+                    return -101; // zfp library not found
+#endif
+                }
+                else if (j.compression == "sz")
+                {
+#ifdef ADIOS2_HAVE_SZ
+#else
+                    throw std::runtime_error(
+                        "Data received is compressed using SZ. However, SZ "
+                        "library is not found locally and as a result it "
+                        "cannot be decompressed.");
+                    return -102; // sz library not found
 #endif
                 }
                 else
                 {
-                    // TODO: This is to be replaced with a more sophisticated
-                    // memory manipulation
-                    std::memcpy(variable.GetData(), k->data() + j.position,
-                                j.size);
+                    Box<Dims> srcbox(j.start, j.count);
+                    Box<Dims> dstbox(variable.m_Start, variable.m_Count);
+                    CopyLocalToGlobal(
+                        reinterpret_cast<char *>(variable.GetData()), dstBox,
+                        k->data() + j.position, srcBox, sizeof(T), overlapBox);
                 }
-                ret = 0; // data obtained
             }
         }
     }
-
-    return ret;
+    return 0;
 }
 }
 }

@@ -37,7 +37,7 @@ private:
     bool m_DoMonitor = false;
     bool m_Blocking = true;
     size_t m_StepsPerBuffer = 10;
-    Params m_CompressionParams = {{"CompressionMethod", "zfp"},
+    Params m_CompressionParams = {//        {"CompressionMethod", "zfp"},
                                   {"CompressionRate", "6"}};
 
     std::shared_ptr<format::BP3Serializer> m_BP3Serializer;

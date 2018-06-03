@@ -16,11 +16,16 @@
 #include <thread>
 #include <vector>
 
-int rank, size;
 std::string ip = "127.0.0.1";
-int port = 12306;
+std::string port = "12306";
 
-void Dump(std::vector<float> &data, size_t step)
+adios2::Dims start({6, 0, 0});
+adios2::Dims count({2, 3, 8});
+
+int rank, size;
+
+template <class T>
+void Dump(std::vector<T> &data, size_t step)
 {
     std::cout << "Rank: " << rank << " Step: " << step << " [";
     for (size_t i = 0; i < data.size(); ++i)
@@ -36,77 +41,56 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int nThreads = 1;
+    // initialize data
 
-    try
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
+                                      std::multiplies<size_t>());
+
+    std::vector<float> myFloats(datasize);
+
+    // initialize ADIOS 2
+
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::IO &dataManIO = adios.DeclareIO("WAN");
+
+    dataManIO.SetEngine("DataMan");
+    dataManIO.SetParameters({{"WorkflowMode", "subscribe"}});
+
+    dataManIO.AddTransport(
+        "WAN", {{"Library", "ZMQ"}, {"IPAddress", ip}, {"Port", port}});
+
+    adios2::Engine &dataManReader =
+        dataManIO.Open("stream", adios2::Mode::Read);
+
+    adios2::Variable<float> *bpFloats;
+
+    // read data
+
+    for (int i = 0; i < 1000; ++i)
     {
-        if (argc == 2)
+        adios2::StepStatus status = dataManReader.BeginStep();
+        if (status == adios2::StepStatus::OK)
         {
-            nThreads = atoi(argv[1]);
+            bpFloats = dataManIO.InquireVariable<float>("bpFloats");
+            bpFloats->SetSelection({start, count});
+            dataManReader.Get<float>(*bpFloats, myFloats.data(),
+                                     adios2::Mode::Sync);
+            Dump(myFloats, dataManReader.CurrentStep());
+            i = dataManReader.CurrentStep();
+            dataManReader.EndStep();
         }
-
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-
-        adios2::IO &dataManIO = adios.DeclareIO("WAN");
-        dataManIO.SetEngine("DataMan");
-        dataManIO.SetParameters({{"Blocking", "no"}});
-
-        for (int i = 0; i < nThreads; ++i)
+        else if (status == adios2::StepStatus::NotReady)
         {
-            int port_thread = port + i;
-            dataManIO.AddTransport("WAN",
-                                   {{"Library", "ZMQ"},
-                                    {"IPAddress", ip},
-                                    {"Port", std::to_string(port_thread)}});
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
-
-        adios2::Engine &dataManReader =
-            dataManIO.Open("stream", adios2::Mode::Read);
-
-        adios2::Variable<float> *bpFloats;
-
-        std::vector<float> myFloats(10);
-
-        for (int i = 0; i < 1000; ++i)
+        else if (status == adios2::StepStatus::EndOfStream)
         {
-            adios2::StepStatus status = dataManReader.BeginStep();
-            if (status == adios2::StepStatus::OK)
-            {
-                bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-                dataManReader.Get<float>(*bpFloats, myFloats.data(),
-                                         adios2::Mode::Sync);
-                Dump(myFloats, dataManReader.CurrentStep());
-                i = dataManReader.CurrentStep();
-                dataManReader.EndStep();
-            }
-            else if (status == adios2::StepStatus::NotReady)
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
-            else if (status == adios2::StepStatus::EndOfStream)
-            {
-                break;
-            }
+            break;
         }
-
-        dataManReader.Close();
-    }
-    catch (std::invalid_argument &e)
-    {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
-    }
-    catch (std::ios_base::failure &e)
-    {
-        std::cout << "System exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
-    }
-    catch (std::exception &e)
-    {
-        std::cout << "Exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
     }
 
+    // finalize
+    dataManReader.Close();
     MPI_Finalize();
 
     return 0;

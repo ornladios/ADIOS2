@@ -11,15 +11,22 @@
 #include <adios2.h>
 #include <iostream>
 #include <mpi.h>
+#include <numeric>
 #include <thread>
 #include <vector>
 
-int rank, size;
-size_t steps = 10000;
+size_t steps = 100;
 std::string ip = "127.0.0.1";
-int port = 12306;
+std::string port = "12306";
 
-void Dump(std::vector<float> &data, size_t step)
+adios2::Dims shape({12, 6, 8});
+adios2::Dims start({4, 0, 0});
+adios2::Dims count({4, 6, 8});
+
+int rank, size;
+
+template <class T>
+void Dump(std::vector<T> &data, size_t step)
 {
     std::cout << "Rank: " << rank << " Step: " << step << " [";
     for (size_t i = 0; i < data.size(); ++i)
@@ -35,67 +42,51 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    const std::size_t Nx = myFloats.size();
+    // initialize data
 
-    try
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
+                                      std::multiplies<size_t>());
+
+    std::vector<float> myFloats(datasize);
+
+    for (size_t i = 0; i < datasize; ++i)
     {
+        myFloats[i] = i + rank * 10000;
+    }
 
-        adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-        adios2::IO &dataManIO = adios.DeclareIO("WAN");
-        dataManIO.SetEngine("DataMan");
-        dataManIO.SetParameters({{"Blocking", "no"}});
+    // initialize ADIOS 2
 
-        dataManIO.AddTransport("WAN", {{"Library", "ZMQ"},
-                                       {"IPAddress", ip},
-                                       {"Port", std::to_string(port)}});
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::IO &dataManIO = adios.DeclareIO("WAN");
 
-        auto bpFloats =
-            dataManIO.DefineVariable<float>("bpFloats", {}, {}, {Nx});
+    dataManIO.SetEngine("DataMan");
+    dataManIO.SetParameters({{"WorkflowMode", "subscribe"}});
+    dataManIO.AddTransport(
+        "WAN", {{"Library", "ZMQ"}, {"IPAddress", ip}, {"Port", port}});
 
-        adios2::Engine &dataManWriter =
-            dataManIO.Open("myFloats.bp", adios2::Mode::Write);
+    auto bpFloats =
+        dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
 
-        for (int i = 0; i < steps; ++i)
+    adios2::Engine &dataManWriter =
+        dataManIO.Open("myFloats.bp", adios2::Mode::Write);
+
+    // write data
+
+    for (int i = 0; i < steps; ++i)
+    {
+        dataManWriter.BeginStep();
+        dataManWriter.Put<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
+        Dump(myFloats, dataManWriter.CurrentStep());
+        dataManWriter.EndStep();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        for (auto &j : myFloats)
         {
-            std::vector<float> myFloats_rank = myFloats;
-            for (auto &j : myFloats_rank)
-            {
-                j += rank * 10000;
-            }
-            dataManWriter.BeginStep();
-            dataManWriter.Put<float>(bpFloats, myFloats_rank.data(),
-                                     adios2::Mode::Sync);
-            Dump(myFloats_rank, dataManWriter.CurrentStep());
-            dataManWriter.EndStep();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            for (auto &j : myFloats)
-            {
-                j += 1;
-            }
+            j += 1;
         }
-
-        dataManWriter.Close();
-    }
-    catch (std::invalid_argument &e)
-    {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
-        std::cout << e.what() << "\n";
-    }
-    catch (std::ios_base::failure &e)
-    {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
-        std::cout << e.what() << "\n";
-    }
-    catch (std::exception &e)
-    {
-        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
-        std::cout << e.what() << "\n";
     }
 
+    // finalize
+    dataManWriter.Close();
     MPI_Finalize();
 
     return 0;
