@@ -15,7 +15,7 @@
 #include <vector>
 
 int rank, size;
-size_t steps = 10000;
+size_t steps = 100;
 std::string ip = "127.0.0.1";
 int port = 12306;
 
