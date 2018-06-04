@@ -59,7 +59,7 @@ void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
         auto it = m_IO.m_TransportsParameters[i].find("CompressionMethod");
         if (it != m_IO.m_TransportsParameters[i].end())
         {
-            streamName += it->first + " = " + it->second + ", ";
+            streamName += " Compressed Using " + it->second + ", ";
         }
         else
         {
@@ -68,7 +68,7 @@ void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
         it = m_IO.m_TransportsParameters[i].find("CompressionRate");
         if (it != m_IO.m_TransportsParameters[i].end())
         {
-            streamName += it->first + " = " + it->second + ", ";
+            streamName += it->second + "\% Original Size";
         }
 
         m_DataManSerializer[i]->Put(variable, streamName, CurrentStep(),
