@@ -58,7 +58,8 @@ private:
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
     template <class T>
-    void PutSyncCommonBP(Variable<T> &variable, const T *values);
+    void PutSyncCommonBP(Variable<T> &variable,
+                         const typename Variable<T>::Info &blockInfo);
 
     template <class T>
     void PutSyncCommonDataMan(Variable<T> &variable, const T *values);

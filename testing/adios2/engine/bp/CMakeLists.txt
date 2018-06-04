@@ -27,6 +27,9 @@ target_link_libraries(TestStreamWriteReadHighLevelAPI adios2 gtest)
 add_executable(TestBPWriteFlushRead TestBPWriteFlushRead.cpp)
 target_link_libraries(TestBPWriteFlushRead adios2 gtest)
 
+add_executable(TestBPWriteMultiblockRead TestBPWriteMultiblockRead.cpp)
+target_link_libraries(TestBPWriteMultiblockRead adios2 gtest)
+
 if(ADIOS2_HAVE_MPI)
 
   target_link_libraries(TestBPWriteReadADIOS2 MPI::MPI_C)
@@ -35,6 +38,7 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPWriteReadAttributesADIOS2 MPI::MPI_C)
   target_link_libraries(TestStreamWriteReadHighLevelAPI MPI::MPI_C)
   target_link_libraries(TestBPWriteFlushRead MPI::MPI_C)
+  target_link_libraries(TestBPWriteMultiblockRead MPI::MPI_C)
   
   add_executable(TestBPWriteAggregateRead TestBPWriteAggregateRead.cpp)
   target_link_libraries(TestBPWriteAggregateRead
@@ -52,6 +56,7 @@ gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2_Threads ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteReadAttributesADIOS2 ${extra_test_args})
 gtest_add_tests(TARGET TestStreamWriteReadHighLevelAPI ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteFlushRead ${extra_test_args})
+gtest_add_tests(TARGET TestBPWriteMultiblockRead ${extra_test_args})
   
 if (ADIOS2_HAVE_ADIOS1)
   add_executable(TestBPWriteRead TestBPWriteRead.cpp)

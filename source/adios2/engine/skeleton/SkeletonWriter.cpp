@@ -70,13 +70,15 @@ void SkeletonWriter::EndStep()
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void SkeletonWriter::DoPutSync(Variable<T> &variable, const T *values)     \
+    void SkeletonWriter::DoPutSync(Variable<T> &variable, const T *data)       \
     {                                                                          \
-        PutSyncCommon(variable, values);                                       \
+        PutSyncCommon(variable,                                                \
+                      variable.SetStepBlockInfo(data, CurrentStep()));         \
+        variable.m_StepBlocksInfo.clear();                                     \
     }                                                                          \
-    void SkeletonWriter::DoPutDeferred(Variable<T> &variable, const T *values) \
+    void SkeletonWriter::DoPutDeferred(Variable<T> &variable, const T *data)   \
     {                                                                          \
-        PutDeferredCommon(variable, values);                                   \
+        PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

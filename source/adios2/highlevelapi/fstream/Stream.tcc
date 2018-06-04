@@ -19,7 +19,7 @@ namespace adios2
 {
 
 template <class T>
-void Stream::Write(const std::string &name, const T *values, const Dims &shape,
+void Stream::Write(const std::string &name, const T *data, const Dims &shape,
                    const Dims &start, const Dims &count, const bool endStep)
 {
     ThrowIfNotOpen("variable " + name + ", in call to write\n");
@@ -28,8 +28,7 @@ void Stream::Write(const std::string &name, const T *values, const Dims &shape,
 
     if (variable == nullptr)
     {
-        variable = &m_IO->DefineVariable(name, shape, start, count, false,
-                                         const_cast<T *>(values));
+        variable = &m_IO->DefineVariable<T>(name, shape, start, count, false);
     }
     else
     {
@@ -44,7 +43,7 @@ void Stream::Write(const std::string &name, const T *values, const Dims &shape,
         }
     }
 
-    m_Engine->Put(*variable, values, adios2::Mode::Sync);
+    m_Engine->Put(*variable, data, adios2::Mode::Sync);
 
     if (endStep)
     {
@@ -54,10 +53,10 @@ void Stream::Write(const std::string &name, const T *values, const Dims &shape,
 }
 
 template <class T>
-void Stream::Write(const std::string &name, const T &value, const bool endStep)
+void Stream::Write(const std::string &name, const T &datum, const bool endStep)
 {
-    const T valueLocal = value;
-    Write(name, &valueLocal, {}, {}, {}, endStep);
+    const T datumLocal = datum;
+    Write(name, &datumLocal, {}, {}, {}, endStep);
 }
 
 template <class T>

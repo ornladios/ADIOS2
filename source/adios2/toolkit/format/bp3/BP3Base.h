@@ -211,10 +211,10 @@ public:
      * Returns the estimated variable index size. Used by ResizeBuffer public
      * function
      * @param variableName input
-     * @param variableCount input
+     * @param count input variable local dimensions
      */
     size_t GetBPIndexSizeInData(const std::string &variableName,
-                                const Dims &variableCount) const noexcept;
+                                const Dims &count) const noexcept;
 
     /**
      * Sets buffer's positions to zero and fill buffer with zero char
@@ -394,7 +394,7 @@ protected:
     template <class T>
     struct Characteristics
     {
-        Stats<typename TypeInfo<T>::ValueType> Statistics;
+        Stats<T> Statistics;
         Dims Shape;
         Dims Start;
         Dims Count;

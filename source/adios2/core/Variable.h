@@ -15,6 +15,7 @@
 #include <map>
 #include <ostream> //std::ostream in MonitorGroups
 #include <string>
+#include <unordered_map>
 #include <vector>
 /// \endcond
 
@@ -32,28 +33,40 @@ class Variable : public VariableBase
 {
 
 public:
-    typename TypeInfo<T>::ValueType m_Min;
-    typename TypeInfo<T>::ValueType m_Max;
-    typename TypeInfo<T>::ValueType m_Value;
+    /** current reference to data */
+    T *m_Data = nullptr;
+    /** absolute minimum */
+    T m_Min = T();
+    /** absolute maximum */
+    T m_Max = T();
+    /** current value */
+    T m_Value = T();
+
+    struct Info
+    {
+        Dims Shape;
+        Dims Start;
+        Dims Count;
+        T *Data = nullptr;
+
+        T Min = T();
+        T Max = T();
+        T Value = T();
+    };
+
+    std::unordered_map<size_t, std::map<size_t, Info>> m_StepBlocksInfo;
 
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
-                const Dims &count, const bool constantShape, T *data,
+                const Dims &count, const bool constantShape,
                 const bool debugMode);
 
     ~Variable<T>() = default;
 
-    /** Gets current data pointer for this Variable object */
+    Info &SetStepBlockInfo(const T *data, const size_t step) noexcept;
+
+    void SetData(const T *data) noexcept;
+
     T *GetData() const noexcept;
-
-    /** Sets current data pointer for this Variable object */
-    void SetData(const T *) noexcept;
-
-private:
-    /** TODO: used for allocating memory from ADIOS2 */
-    std::vector<T> m_AllocatedData;
-
-    /** reference to data */
-    T *m_Data = nullptr;
 };
 
 } // end namespace adios2

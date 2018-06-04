@@ -42,6 +42,9 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     }
     else if (m_MarshalMethod == SstMarshalBP)
     {
+        auto &blockInfo = variable.SetStepBlockInfo(
+            values, m_BP3Serializer->m_MetadataSet.CurrentStep);
+
         if (!m_BP3Serializer->m_MetadataSet.DataPGIsOpen)
         {
             m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name,
@@ -49,13 +52,14 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         }
         const size_t dataSize = variable.PayloadSize() +
                                 m_BP3Serializer->GetBPIndexSizeInData(
-                                    variable.m_Name, variable.m_Count);
+                                    variable.m_Name, blockInfo.Count);
         format::BP3Base::ResizeResult resizeResult =
-            m_BP3Serializer->ResizeBuffer(dataSize, "in call to variable " +
-                                                        variable.m_Name +
-                                                        " PutSync");
-        m_BP3Serializer->PutVariableMetadata(variable);
-        m_BP3Serializer->PutVariablePayload(variable);
+            m_BP3Serializer->ResizeBuffer(
+                dataSize, "in call to variable " + variable.m_Name +
+                              " Put adios2::Mode::Sync");
+        m_BP3Serializer->PutVariableMetadata(variable, blockInfo);
+        m_BP3Serializer->PutVariablePayload(variable, blockInfo);
+        variable.m_StepBlocksInfo.clear();
     }
     else
     {

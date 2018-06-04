@@ -38,7 +38,7 @@ public:
     Variable<T>
     DefineVariable(const std::string &name, const Dims &shape = Dims(),
                    const Dims &start = Dims(), const Dims &count = Dims(),
-                   const bool constantDims = false, T *data = NULL);
+                   const bool constantDims = false);
 
     template <class T>
     Variable<T> InquireVariable(const std::string &name);

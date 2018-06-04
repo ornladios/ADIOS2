@@ -12,14 +12,10 @@
 #define ADIOS2_TOOLKIT_FORMAT_BP3_BP3SERIALIZER_H_
 
 #include <mutex>
+#include <set>
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
-#include "adios2/core/Variable.h"
 #include "adios2/toolkit/format/bp3/BP3Base.h"
 
 namespace adios2
@@ -31,7 +27,7 @@ class BP3Serializer : public BP3Base
 {
 
 public:
-    std::vector<std::string> m_DeferredVariables;
+    std::set<std::string> m_DeferredVariables;
     size_t m_DeferredVariablesDataSize = 0;
     /**
      * Unique constructor
@@ -58,14 +54,18 @@ public:
      * @param variable
      */
     template <class T>
-    void PutVariableMetadata(const Variable<T> &variable) noexcept;
+    void
+    PutVariableMetadata(const Variable<T> &variable,
+                        const typename Variable<T>::Info &blockInfo) noexcept;
 
     /**
      * Put in buffer variable payload. Expensive part.
      * @param variable payload input from m_PutValues
      */
     template <class T>
-    void PutVariablePayload(const Variable<T> &variable) noexcept;
+    void
+    PutVariablePayload(const Variable<T> &variable,
+                       const typename Variable<T>::Info &blockInfo) noexcept;
 
     /**
      *  Serializes data buffer and close current process group
@@ -157,7 +157,7 @@ private:
      * Put in BP buffer attribute header, called from PutAttributeInData
      * specialized functions
      * @param attribute input
-     * @param stats
+     * @param stats BP3 Stats
      * @return attribute length position
      */
     template <class T>
@@ -167,7 +167,7 @@ private:
     /**
      * Called from WriteAttributeInData specialized functions
      * @param attribute input
-     * @param stats
+     * @param stats BP3 stats
      * @param attributeLengthPosition
      */
     template <class T>
@@ -178,7 +178,7 @@ private:
     /**
      * Write a single attribute in data buffer, called from WriteAttributes
      * @param attribute input
-     * @param stats
+     * @param stats BP3 Stats
      */
     template <class T>
     void PutAttributeInData(const Attribute<T> &attribute,
@@ -201,7 +201,7 @@ private:
      * Write a single attribute in m_Metadata AttributesIndex, called from
      * WriteAttributes
      * @param attribute
-     * @param stats
+     * @param stats BP3 stats
      */
     template <class T>
     void PutAttributeInIndex(const Attribute<T> &attribute,
@@ -210,34 +210,34 @@ private:
     /**
      * Get variable statistics
      * @param variable
-     * @return stats
+     * @return stats BP3 Stats
      */
     template <class T>
-    Stats<typename TypeInfo<T>::ValueType>
-    GetStats(const Variable<T> &variable) noexcept;
+    Stats<T> GetBPStats(const typename Variable<T>::Info &blockInfo) noexcept;
 
     template <class T>
-    void PutVariableMetadataInData(
-        const Variable<T> &variable,
-        const Stats<typename TypeInfo<T>::ValueType> &stats) noexcept;
+    void PutVariableMetadataInData(const Variable<T> &variable,
+                                   const typename Variable<T>::Info &blockInfo,
+                                   const Stats<T> &stats) noexcept;
 
     template <class T>
-    void PutVariableMetadataInIndex(
-        const Variable<T> &variable,
-        const Stats<typename TypeInfo<T>::ValueType> &stats, const bool isNew,
-        SerialElementIndex &index) noexcept;
+    void PutVariableMetadataInIndex(const Variable<T> &variable,
+                                    const typename Variable<T>::Info &blockInfo,
+                                    const Stats<T> &stats, const bool isNew,
+                                    SerialElementIndex &index) noexcept;
 
     template <class T>
-    void PutVariableCharacteristics(
-        const Variable<T> &variable,
-        const Stats<typename TypeInfo<T>::ValueType> &stats,
-        std::vector<char> &buffer) noexcept;
+    void PutVariableCharacteristics(const Variable<T> &variable,
+                                    const typename Variable<T>::Info &blockInfo,
+                                    const Stats<T> &stats,
+                                    std::vector<char> &buffer) noexcept;
 
     template <class T>
-    void PutVariableCharacteristics(
-        const Variable<T> &variable,
-        const Stats<typename TypeInfo<T>::ValueType> &stats,
-        std::vector<char> &buffer, size_t &position) noexcept;
+    void PutVariableCharacteristics(const Variable<T> &variable,
+                                    const typename Variable<T>::Info &blockInfo,
+                                    const Stats<T> &stats,
+                                    std::vector<char> &buffer,
+                                    size_t &position) noexcept;
 
     /**
      * Writes from &buffer[position]:  [2
@@ -401,7 +401,8 @@ private:
      * @param variable input from which Payload is taken
      */
     template <class T>
-    void PutPayloadInBuffer(const Variable<T> &variable) noexcept;
+    void PutPayloadInBuffer(const Variable<T> &variable,
+                            const T *data) noexcept;
 
     template <class T>
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
@@ -418,10 +419,10 @@ private:
 
 #define declare_template_instantiation(T)                                      \
     extern template void BP3Serializer::PutVariablePayload(                    \
-        const Variable<T> &variable) noexcept;                                 \
+        const Variable<T> &, const typename Variable<T>::Info &) noexcept;     \
                                                                                \
     extern template void BP3Serializer::PutVariableMetadata(                   \
-        const Variable<T> &variable) noexcept;
+        const Variable<T> &, const typename Variable<T>::Info &) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

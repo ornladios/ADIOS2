@@ -20,14 +20,14 @@ template <>
 inline void BPFileReader::GetSyncCommon(Variable<std::string> &variable,
                                         std::string *data)
 {
-    variable.SetData(data);
+    variable.m_Data = data;
     m_BP3Deserializer.GetValueFromMetadata(variable);
 }
 
 template <class T>
 inline void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    variable.SetData(data);
+    variable.m_Data = data;
 
     if (variable.m_SingleValue)
     {
@@ -44,7 +44,7 @@ inline void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void BPFileReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    // returns immediately
+    // returns immediately without populating data
     m_BP3Deserializer.GetDeferredVariable(variable, data);
     m_BP3Deserializer.m_PerformedGets = false;
 }

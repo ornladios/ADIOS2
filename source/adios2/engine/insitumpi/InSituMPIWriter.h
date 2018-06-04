@@ -91,10 +91,11 @@ private:
     /**
      * Common function for primitive PutSync, puts variables in buffer
      * @param variable
-     * @param values
+     * @param blockInfo current block info
      */
     template <class T>
-    void PutSyncCommon(Variable<T> &variable, const T *values);
+    void PutSyncCommon(Variable<T> &variable,
+                       const typename Variable<T>::Info &blockInfo);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
@@ -104,7 +105,8 @@ private:
      * void AsyncSendVariable(const std::string &varName);
      */
     template <class T>
-    void AsyncSendVariable(Variable<T> &);
+    void AsyncSendVariable(Variable<T> &variable,
+                           const typename Variable<T>::Info &blockInfo);
 
     void AsyncSendVariable(std::string variableName);
 };

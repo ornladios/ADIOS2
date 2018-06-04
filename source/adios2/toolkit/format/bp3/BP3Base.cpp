@@ -175,13 +175,13 @@ std::string BP3Base::GetBPSubFileName(const std::string &name,
 }
 
 size_t BP3Base::GetBPIndexSizeInData(const std::string &variableName,
-                                     const Dims &variableCount) const noexcept
+                                     const Dims &count) const noexcept
 {
     size_t indexSize = 23; // header
     indexSize += variableName.size();
 
     // characteristics 3 and 4, check variable number of dimensions
-    const size_t dimensions = variableCount.size();
+    const size_t dimensions = count.size();
     indexSize += 28 * dimensions; // 28 bytes per dimension
     indexSize += 1;               // id
 

@@ -32,9 +32,9 @@ int main(int argc, char *argv[])
     size_t count[1];
     count[0] = Nx;
 
-    adios2_variable *variableH = adios2_define_variable(
-        ioH, "bpFloats", adios2_type_float, 1, NULL, NULL, count,
-        adios2_constant_dims_true, myFloats);
+    adios2_variable *variableH =
+        adios2_define_variable(ioH, "bpFloats", adios2_type_float, 1, NULL,
+                               NULL, count, adios2_constant_dims_true);
 
     adios2_engine *engineH =
         adios2_open(ioH, "myVector_c.bp", adios2_mode_write);

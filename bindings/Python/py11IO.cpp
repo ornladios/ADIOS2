@@ -47,10 +47,10 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 }
 
 VariableBase *IO::DefineVariable(const std::string &name,
-                                 std::string &stringValue)
+                                 std::string & /*stringValue*/)
 {
     return &m_IO.DefineVariable<std::string>(name, Dims(), Dims(), Dims(),
-                                             false, &stringValue);
+                                             false);
 }
 
 VariableBase *IO::DefineVariable(const std::string &name, const Dims &shape,
@@ -67,9 +67,8 @@ VariableBase *IO::DefineVariable(const std::string &name, const Dims &shape,
     else if (pybind11::isinstance<                                             \
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
-        variable = &m_IO.DefineVariable<T>(                                    \
-            name, shape, start, count, isConstantDims,                         \
-            reinterpret_cast<T *>(const_cast<void *>(array.data())));          \
+        variable = &m_IO.DefineVariable<T>(name, shape, start, count,          \
+                                           isConstantDims);                    \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type

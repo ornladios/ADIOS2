@@ -18,10 +18,9 @@ namespace adios2
 {
 
 template <class T>
-void SkeletonWriter::PutSyncCommon(Variable<T> &variable, const T *values)
+void SkeletonWriter::PutSyncCommon(Variable<T> &variable,
+                                   const typename Variable<T>::Info &blockInfo)
 {
-    // set variable
-    variable.SetData(values);
     if (m_Verbosity == 5)
     {
         std::cout << "Skeleton Writer " << m_WriterRank << "     PutSync("
@@ -30,9 +29,10 @@ void SkeletonWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 }
 
 template <class T>
-void SkeletonWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
+void SkeletonWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    variable.SetData(values);
+    variable.SetStepBlockInfo(data, CurrentStep());
+
     if (m_Verbosity == 5)
     {
         std::cout << "Skeleton Writer " << m_WriterRank << "     PutDeferred("

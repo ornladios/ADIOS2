@@ -24,24 +24,35 @@ namespace adios2
     template <>                                                                \
     Variable<T>::Variable(const std::string &name, const Dims &shape,          \
                           const Dims &start, const Dims &count,                \
-                          const bool constantDims, T *data,                    \
-                          const bool debugMode)                                \
+                          const bool constantDims, const bool debugMode)       \
     : VariableBase(name, GetType<T>(), sizeof(T), shape, start, count,         \
-                   constantDims, debugMode),                                   \
-      m_Data(data), m_Min(), m_Max(), m_Value()                                \
+                   constantDims, debugMode)                                    \
     {                                                                          \
     }                                                                          \
                                                                                \
     template <>                                                                \
-    T *Variable<T>::GetData() const noexcept                                   \
+    typename Variable<T>::Info &Variable<T>::SetStepBlockInfo(                 \
+        const T *data, const size_t step) noexcept                             \
     {                                                                          \
-        return m_Data;                                                         \
+        const size_t block = m_StepBlocksInfo[step].size();                    \
+        auto &stepBlockInfo = m_StepBlocksInfo[step][block];                   \
+        stepBlockInfo.Data = const_cast<T *>(data);                            \
+        stepBlockInfo.Shape = m_Shape;                                         \
+        stepBlockInfo.Start = m_Start;                                         \
+        stepBlockInfo.Count = m_Count;                                         \
+        return stepBlockInfo;                                                  \
     }                                                                          \
                                                                                \
     template <>                                                                \
     void Variable<T>::SetData(const T *data) noexcept                          \
     {                                                                          \
         m_Data = const_cast<T *>(data);                                        \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T *Variable<T>::GetData() const noexcept                                   \
+    {                                                                          \
+        return m_Data;                                                         \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

@@ -48,8 +48,8 @@ void GetMinMax(const T *values, const size_t size, T &min, T &max) noexcept;
  * @param max modulus from values
  */
 template <class T>
-void GetMinMaxComplex(const std::complex<T> *values, const size_t size, T &min,
-                      T &max) noexcept;
+void GetMinMaxComplex(const std::complex<T> *values, const size_t size,
+                      std::complex<T> &min, std::complex<T> &max) noexcept;
 
 /**
  * Threaded version of GetMinMax.
@@ -157,6 +157,28 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
  */
 size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
                    const bool isRowMajor) noexcept;
+
+/**
+ * Specialized for std::complex to do a comparison by std::norm.
+ * Similar to operator < for other types
+ * @param input1
+ * @param input2
+ * @return true if input1 < input2 or complex: std::norm(input1) <
+ * std::norm(input2), false otherwise
+ */
+template <class T>
+bool LessThan(const T input1, const T input2) noexcept;
+
+/**
+ * Specialized for std::complex types to do a comparison by std::norm.
+ * Similar to operator > for other types
+ * @param input1
+ * @param input2
+ * @return true if input1 > input2 or complex: std::norm(input1) >
+ * std::norm(input2), false otherwise
+ */
+template <class T>
+bool GreaterThan(const T input1, const T input2) noexcept;
 
 } // end namespace adios2
 

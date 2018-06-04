@@ -67,8 +67,15 @@ void BPFileWriter::PerformPuts()
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \
-        Put(variable, variable.GetData(), Mode::Sync);                         \
+        const auto &blocksInfo = variable.m_StepBlocksInfo.at(CurrentStep());  \
+        for (const auto &blockInfoPair : blocksInfo)                           \
+        {                                                                      \
+            const auto &blockInfo = blockInfoPair.second;                      \
+            PutSyncCommon(variable, blockInfo);                                \
+        }                                                                      \
+        variable.m_StepBlocksInfo.erase(CurrentStep());                        \
     }
+
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
@@ -114,13 +121,15 @@ void BPFileWriter::Init()
 }
 
 #define declare_type(T)                                                        \
-    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *values)       \
+    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *data)         \
     {                                                                          \
-        PutSyncCommon(variable, values);                                       \
+        PutSyncCommon(variable,                                                \
+                      variable.SetStepBlockInfo(data, CurrentStep()));         \
+        variable.m_StepBlocksInfo.clear();                                     \
     }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *values)   \
+    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
     {                                                                          \
-        PutDeferredCommon(variable, values);                                   \
+        PutDeferredCommon(variable, data);                                     \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
