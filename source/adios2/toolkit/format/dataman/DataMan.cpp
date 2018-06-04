@@ -62,6 +62,7 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
             var.step = metaj["T"].get<size_t>();
             var.size = metaj["I"].get<size_t>();
             var.rank = metaj["R"].get<int>();
+            var.doid = metaj["D"].get<std::string>();
             var.position = position;
             var.index = key;
             auto it = metaj.find("Z");
@@ -380,6 +381,7 @@ bool DataManDeserializer::GetVarList(size_t step,
             var.name = i.name;
             var.shape = i.shape;
             var.type = i.type;
+            var.doid = i.doid;
             varList.push_back(std::move(var));
         }
     }

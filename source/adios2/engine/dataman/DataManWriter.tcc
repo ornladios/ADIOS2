@@ -55,8 +55,24 @@ void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
 {
     for (size_t i = 0; i < m_TransportChannels; ++i)
     {
-        m_DataManSerializer[i]->Put(variable, CurrentStep(), m_MPIRank,
-                                    m_IO.m_TransportsParameters[i]);
+        std::string streamName = m_Name + ", ";
+        auto it = m_IO.m_TransportsParameters[i].find("CompressionMethod");
+        if (it != m_IO.m_TransportsParameters[i].end())
+        {
+            streamName += it->first + " = " + it->second + ", ";
+        }
+        else
+        {
+            streamName += "Original Data";
+        }
+        it = m_IO.m_TransportsParameters[i].find("CompressionRate");
+        if (it != m_IO.m_TransportsParameters[i].end())
+        {
+            streamName += it->first + " = " + it->second + ", ";
+        }
+
+        m_DataManSerializer[i]->Put(variable, streamName, CurrentStep(),
+                                    m_MPIRank, m_IO.m_TransportsParameters[i]);
     }
 }
 

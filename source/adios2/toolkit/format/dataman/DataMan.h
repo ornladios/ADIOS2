@@ -31,16 +31,16 @@ public:
     const std::shared_ptr<std::vector<char>> Get();
 
     template <class T>
-    bool Put(Variable<T> &variable, size_t step, int rank,
+    bool Put(Variable<T> &variable, std::string doid, size_t step, int rank,
              const Params &params);
 
     template <class T>
-    bool PutRaw(Variable<T> &variable, size_t step, int rank,
+    bool PutRaw(Variable<T> &variable, std::string doid, size_t step, int rank,
                 const Params &params);
 
 #ifdef ADIOS2_HAVE_ZFP
     template <class T>
-    bool PutZfp(Variable<T> &variable, size_t step, int rank,
+    bool PutZfp(Variable<T> &variable, std::string doid, size_t step, int rank,
                 const Params &params);
 #endif
 
@@ -65,6 +65,7 @@ public:
         Dims count;
         Dims start;
         std::string name;
+        std::string doid;
         std::string type;
         size_t step;
         size_t size;

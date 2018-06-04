@@ -181,8 +181,7 @@ void DataManReader::RunCallback()
         m_DataManDeserializer.Get(*v, step);                                   \
         for (auto &j : m_Callbacks)                                            \
         {                                                                      \
-            j->RunCallback2(varData.data(), "stream", i.name, i.type,          \
-                            i.shape);                                          \
+            j->RunCallback2(varData.data(), i.doid, i.name, i.type, i.shape);  \
         }                                                                      \
     }
             ADIOS2_FOREACH_TYPE_1ARG(declare_type)
