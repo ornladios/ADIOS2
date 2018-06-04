@@ -142,9 +142,6 @@ void DataManReader::Init()
     m_Listening = true;
     m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
                                                  m_DataMan);
-
-    //        m_ControlThread = std::make_shared<std::thread>(
-    //            std::thread(&DataManReader::IOThread, this, m_ControlMan));
 }
 
 void DataManReader::RunCallback(void *buffer, std::string doid, std::string var,

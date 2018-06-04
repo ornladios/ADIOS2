@@ -77,8 +77,6 @@ public:
     const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
 
 private:
-    bool BufferContainsSteps(int index, size_t begin, size_t end);
-
     bool GetOverlap(const Box<Dims> &b1, const Box<Dims> &b2, Box<Dims> &o);
     bool IsContinuous(const Box<Dims> &inner, const Box<Dims> &outer);
     Dims GetRelativePosition(const Dims &inner, const Dims &outer);
@@ -89,6 +87,8 @@ private:
                            const Box<Dims> &srcbox, const size_t size,
                            const Box<Dims> &overlapBox);
     void PrintBox(const Box<Dims> in, std::string name);
+
+    bool BufferContainsSteps(int index, size_t begin, size_t end);
 
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
         m_MetaDataMap;

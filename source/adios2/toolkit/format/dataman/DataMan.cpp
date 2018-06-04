@@ -74,7 +74,7 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
             {
                 var.compressionRate = it->get<float>();
             }
-            if (position + var.size < data->capacity())
+            if (position + var.size > data->capacity())
             {
                 break;
             }
@@ -90,6 +90,7 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
         }
         catch (std::exception &e)
         {
+            std::cout << e.what() << std::endl;
         }
         m_MutexMaxMin.lock();
         if (m_MaxStep < var.step)
@@ -237,7 +238,7 @@ void DataManDeserializer::CopyLocalToGlobal(char *dst, const Box<Dims> &dstBox,
 {
 
     size_t dimensions = overlapBox.first.size();
-    size_t overlapSize = size;
+    size_t overlapSize = 1;
     for (int i = 0; i < dimensions; ++i)
     {
         overlapSize =
@@ -266,13 +267,13 @@ void DataManDeserializer::CopyLocalToGlobal(char *dst, const Box<Dims> &dstBox,
             MultiToOne(srcCount, overlapInSrcRelativeLeftBoundary);
         size_t dstStartPtrOffset =
             MultiToOne(dstCount, overlapInDstRelativeLeftBoundary);
-        std::memcpy(dst + dstStartPtrOffset, src + srcStartPtrOffset,
-                    overlapSize);
+        std::memcpy(dst + dstStartPtrOffset * size,
+                    src + srcStartPtrOffset * size, overlapSize * size);
     }
     else
     {
         size_t overlapChunkSize =
-            (overlapBox.second.back() - overlapBox.first.back()) * size;
+            (overlapBox.second.back() - overlapBox.first.back());
 
         Dims overlapCount(dimensions);
         for (int i = 0; i < dimensions; ++i)
@@ -282,7 +283,7 @@ void DataManDeserializer::CopyLocalToGlobal(char *dst, const Box<Dims> &dstBox,
 
         for (size_t i = 0; i < overlapSize; i += overlapChunkSize)
         {
-            Dims currentPositionLocal = OneToMulti(overlapCount, i / size);
+            Dims currentPositionLocal = OneToMulti(overlapCount, i);
             Dims currentPositionGlobal =
                 GetAbsolutePosition(currentPositionLocal, overlapBox.first);
             Dims overlapInSrcRelativeCurrentPosition =
@@ -290,13 +291,12 @@ void DataManDeserializer::CopyLocalToGlobal(char *dst, const Box<Dims> &dstBox,
             Dims overlapInDstRelativeCurrentPosition =
                 GetRelativePosition(currentPositionGlobal, dstBox.first);
             size_t srcStartPtrOffset =
-                MultiToOne(srcCount, overlapInSrcRelativeCurrentPosition) *
-                size;
+                MultiToOne(srcCount, overlapInSrcRelativeCurrentPosition);
             size_t dstStartPtrOffset =
-                MultiToOne(dstCount, overlapInDstRelativeCurrentPosition) *
-                size;
-            std::memcpy(dst + dstStartPtrOffset, src + srcStartPtrOffset,
-                        overlapChunkSize);
+                MultiToOne(dstCount, overlapInDstRelativeCurrentPosition);
+            std::memcpy(dst + dstStartPtrOffset * size,
+                        src + srcStartPtrOffset * size,
+                        overlapChunkSize * size);
         }
     }
 }
