@@ -47,6 +47,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
     {
         dumpsize = varsize;
     }
+    dumpsize = varsize;
 
     std::cout << "Data : " << std::endl;
 

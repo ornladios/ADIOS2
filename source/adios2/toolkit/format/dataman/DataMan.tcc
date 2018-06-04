@@ -56,7 +56,6 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
     {
         datasize = zfp.Compress(variable.GetData(), variable.m_Count, 4,
                                 variable.m_Type, m_CompressBuffer.data(), p);
-        std::cout << "compress\n";
     }
     catch (std::exception &e)
     {

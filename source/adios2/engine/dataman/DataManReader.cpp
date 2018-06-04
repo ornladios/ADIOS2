@@ -155,12 +155,39 @@ void DataManReader::RunCallback()
     {
         std::vector<format::DataManDeserializer::DataManVar> varList;
         m_DataManDeserializer.GetVarList(step, varList);
-        std::cout << varList[0].name << "  " << varList[0].type << std::endl;
-    }
+        for (auto &i : varList)
+        {
 
-    for (auto &i : m_Callbacks)
-    {
-        // i->RunCallback2(buffer, doid, var, dtype, shape);
+            if (i.type == "compound")
+            {
+                throw("Compound type is not supported yet.");
+            }
+#define declare_type(T)                                                        \
+    else if (i.type == GetType<T>())                                           \
+    {                                                                          \
+        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
+        if (v == nullptr)                                                      \
+        {                                                                      \
+            Dims start(i.shape.size(), 0);                                     \
+            Dims count = i.shape;                                              \
+            m_IO.DefineVariable<T>(i.name, i.shape, start, count);             \
+            v = m_IO.InquireVariable<T>(i.name);                               \
+        }                                                                      \
+        size_t datasize =                                                      \
+            std::accumulate(v->m_Count.begin(), v->m_Count.end(), sizeof(T),   \
+                            std::multiplies<size_t>());                        \
+        std::vector<T> varData(datasize, std::numeric_limits<T>::quiet_NaN()); \
+        v->SetData(varData.data());                                            \
+        m_DataManDeserializer.Get(*v, step);                                   \
+        for (auto &j : m_Callbacks)                                            \
+        {                                                                      \
+            j->RunCallback2(varData.data(), "stream", i.name, i.type,          \
+                            i.shape);                                          \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+        }
     }
 }
 
