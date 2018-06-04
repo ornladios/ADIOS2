@@ -136,7 +136,7 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
 {
     while (m_Listening)
     {
-        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
+        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN(0);
         if (buffer != nullptr)
         {
             m_DataManDeserializer.Put(buffer);
@@ -188,6 +188,7 @@ void DataManReader::RunCallback()
             ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
         }
+        m_DataManDeserializer.Erase(step);
     }
 }
 
@@ -212,7 +213,7 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
 
     while (m_Listening)
     {
-        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
+        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN(0);
         if (buffer != nullptr)
         {
             if (buffer->size() > 0)

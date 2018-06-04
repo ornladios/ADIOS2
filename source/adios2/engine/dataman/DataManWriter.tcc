@@ -53,8 +53,11 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
 {
-    m_DataManSerializer->Put(variable, CurrentStep(), m_MPIRank,
-                             m_CompressionParams);
+    for (size_t i = 0; i < m_TransportChannels; ++i)
+    {
+        m_DataManSerializer[i]->Put(variable, CurrentStep(), m_MPIRank,
+                                    m_CompressionParams);
+    }
 }
 
 template <class T>
@@ -82,7 +85,7 @@ void DataManWriter::PutSyncCommonBP(Variable<T> &variable, const T *values)
         m_BP3Serializer->CloseStream(m_IO);
         auto &buffer = m_BP3Serializer->m_Data.m_Buffer;
 
-        m_DataMan->WriteWAN(buffer);
+        m_DataMan->WriteWAN(buffer, 0);
 
         // set relative position to clear buffer
         m_BP3Serializer->ResetBuffer(m_BP3Serializer->m_Data);

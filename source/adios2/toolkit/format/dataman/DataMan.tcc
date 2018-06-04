@@ -69,7 +69,7 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
     {
-        return false;
+        m_Buffer->reserve(m_Buffer->capacity() * 2);
     }
 
     m_Buffer->resize(m_Position + totalsize);
@@ -108,7 +108,7 @@ bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
     {
-        return false;
+        m_Buffer->reserve(m_Buffer->capacity() * 2);
     }
 
     m_Buffer->resize(m_Position + totalsize);

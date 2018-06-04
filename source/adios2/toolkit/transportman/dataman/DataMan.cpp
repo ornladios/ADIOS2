@@ -51,13 +51,17 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                                 const std::vector<Params> &paramsVector,
                                 const bool profile)
 {
+    m_TransportsParameters = paramsVector;
+    m_TransportChannels = streamNames.size();
 
     if (streamNames.size() == 0)
     {
         throw("No streams to open from DataMan::OpenWANTransports");
     }
 
-    for (size_t i = 0; i < streamNames.size(); ++i)
+    m_BufferQueue.resize(m_TransportChannels);
+
+    for (size_t i = 0; i < m_TransportChannels; ++i)
     {
 
         // Get parameters
@@ -107,7 +111,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             {
                 m_Writing = true;
                 m_WriteThreads.emplace_back(
-                    std::thread(&DataMan::WriteThread, this, wanTransport));
+                    std::thread(&DataMan::WriteThread, this, wanTransport, i));
             }
 
 #else
@@ -129,51 +133,51 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void DataMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer)
+void DataMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer, size_t id)
 {
-    PushBufferQueue(buffer);
+    PushBufferQueue(buffer, id);
 }
 
-void DataMan::WriteWAN(const std::vector<char> &buffer)
+void DataMan::WriteWAN(const std::vector<char> &buffer, size_t transportId)
 {
-    if (m_CurrentTransport >= m_Transports.size())
+    if (transportId >= m_Transports.size())
     {
         throw std::runtime_error(
             "ERROR: No valid transports found, from DataMan::WriteWAN()");
     }
 
-    m_Transports[m_CurrentTransport]->Write(buffer.data(), buffer.size());
+    m_Transports[transportId]->Write(buffer.data(), buffer.size());
 }
 
-std::shared_ptr<std::vector<char>> DataMan::ReadWAN()
+std::shared_ptr<std::vector<char>> DataMan::ReadWAN(size_t id)
 {
-    return PopBufferQueue();
+    return PopBufferQueue(id);
 }
 
-void DataMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v)
-{
-    std::lock_guard<std::mutex> l(m_Mutex);
-    m_BufferQueue.push(v);
-}
-
-std::shared_ptr<std::vector<char>> DataMan::PopBufferQueue()
+void DataMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
-    if (m_BufferQueue.size() > 0)
+    m_BufferQueue[id].push(v);
+}
+
+std::shared_ptr<std::vector<char>> DataMan::PopBufferQueue(size_t id)
+{
+    std::lock_guard<std::mutex> l(m_Mutex);
+    if (m_BufferQueue[id].size() > 0)
     {
-        std::shared_ptr<std::vector<char>> vec = m_BufferQueue.front();
-        m_BufferQueue.pop();
+        std::shared_ptr<std::vector<char>> vec = m_BufferQueue[id].front();
+        m_BufferQueue[id].pop();
         return vec;
     }
     return nullptr;
 }
 
-void DataMan::WriteThread(std::shared_ptr<Transport> transport)
+void DataMan::WriteThread(std::shared_ptr<Transport> transport, size_t id)
 {
     while (m_Writing)
     {
         Transport::Status status;
-        std::shared_ptr<std::vector<char>> buffer = PopBufferQueue();
+        std::shared_ptr<std::vector<char>> buffer = PopBufferQueue(id);
         if (buffer != nullptr)
         {
             if (buffer->size() > 0)
@@ -196,7 +200,7 @@ void DataMan::ReadThread(std::shared_ptr<Transport> transport)
             std::shared_ptr<std::vector<char>> bufferQ =
                 std::make_shared<std::vector<char>>(status.Bytes);
             std::memcpy(bufferQ->data(), buffer.data(), status.Bytes);
-            PushBufferQueue(bufferQ);
+            PushBufferQueue(bufferQ, 0);
         }
     }
 }

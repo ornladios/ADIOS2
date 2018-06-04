@@ -29,7 +29,10 @@ DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
-    m_DataManSerializer->New(m_BufferSize);
+    for (size_t i = 0; i < m_TransportChannels; ++i)
+    {
+        m_DataManSerializer[i]->New(m_BufferSize);
+    }
     ++m_CurrentStep;
     return StepStatus::OK;
 }
@@ -40,16 +43,19 @@ void DataManWriter::EndStep()
     {
         m_BP3Serializer->SerializeData(m_IO, true);
         m_BP3Serializer->CloseStream(m_IO);
-        m_DataMan->WriteWAN(m_BP3Serializer->m_Data.m_Buffer);
+        m_DataMan->WriteWAN(m_BP3Serializer->m_Data.m_Buffer, 0);
         m_BP3Serializer->ResetBuffer(m_BP3Serializer->m_Data, true);
         m_BP3Serializer->ResetIndices();
     }
     else if (m_Format == "dataman")
     {
-        const std::shared_ptr<std::vector<char>> buf =
-            m_DataManSerializer->Get();
-        m_BufferSize = buf->size() + 1024;
-        m_DataMan->WriteWAN(buf);
+        for (size_t i = 0; i < m_TransportChannels; ++i)
+        {
+            const std::shared_ptr<std::vector<char>> buf =
+                m_DataManSerializer[i]->Get();
+            m_BufferSize = buf->size() * 2;
+            m_DataMan->WriteWAN(buf, i);
+        }
     }
 }
 
@@ -59,6 +65,8 @@ size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 
 void DataManWriter::Init()
 {
+    m_TransportChannels = m_IO.m_TransportsParameters.size();
+
     if (m_Format == "bp")
     {
         m_BP3Serializer =
@@ -69,7 +77,11 @@ void DataManWriter::Init()
     }
     else if (m_Format == "dataman")
     {
-        m_DataManSerializer = std::make_shared<format::DataManSerializer>();
+        for (size_t i = 0; i < m_TransportChannels; ++i)
+        {
+            m_DataManSerializer.push_back(
+                std::make_shared<format::DataManSerializer>());
+        }
     }
 
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
@@ -77,9 +89,8 @@ void DataManWriter::Init()
     {
         i["TransportMode"] = m_TransportMode;
     }
-    size_t channels = m_IO.m_TransportsParameters.size();
     std::vector<std::string> names;
-    for (size_t i = 0; i < channels; ++i)
+    for (size_t i = 0; i < m_TransportChannels; ++i)
     {
         names.push_back(m_Name + std::to_string(i));
     }
@@ -110,7 +121,7 @@ void DataManWriter::DoClose(const int transportIndex)
         auto &position = m_BP3Serializer->m_Data.m_Position;
         if (position > 0)
         {
-            m_DataMan->WriteWAN(buffer);
+            m_DataMan->WriteWAN(buffer, transportIndex);
         }
     }
 }
