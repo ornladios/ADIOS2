@@ -87,7 +87,7 @@ void DataManWriter::Init()
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
     for (auto &i : m_IO.m_TransportsParameters)
     {
-        i["TransportMode"] = m_TransportMode;
+        i["WorkflowMode"] = m_WorkflowMode;
     }
     std::vector<std::string> names;
     for (size_t i = 0; i < m_TransportChannels; ++i)

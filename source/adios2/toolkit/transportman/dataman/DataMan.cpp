@@ -75,8 +75,8 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         std::string port;
         GetStringParameter(paramsVector[i], "Port", port);
 
-        std::string transportMode;
-        GetStringParameter(paramsVector[i], "TransportMode", transportMode);
+        std::string workflowMode;
+        GetStringParameter(paramsVector[i], "WorkflowMode", workflowMode);
 
         // Calculate port number
         int mpiRank, mpiSize;
@@ -96,7 +96,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
 #ifdef ADIOS2_HAVE_ZEROMQ
 
             wanTransport = std::make_shared<transport::WANZmq>(
-                ip, port, m_MPIComm, transportMode, m_DebugMode);
+                ip, port, m_MPIComm, workflowMode, m_DebugMode);
             wanTransport->Open(streamNames[i], mode);
             m_Transports.emplace(i, wanTransport);
 

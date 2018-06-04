@@ -103,8 +103,8 @@ void DataManReader::Init()
     }
 
     GetBoolParameter(m_IO.m_Parameters, "Synchronous", m_Synchronous);
-    GetStringParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
-    if (m_TransportMode == "subscribe")
+    GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
+    if (m_WorkflowMode == "subscribe")
     {
         m_Synchronous = false;
     }
@@ -113,7 +113,7 @@ void DataManReader::Init()
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
     for (auto &i : m_IO.m_TransportsParameters)
     {
-        i["TransportMode"] = m_TransportMode;
+        i["WorkflowMode"] = m_WorkflowMode;
     }
     size_t channels = m_IO.m_TransportsParameters.size();
     std::vector<std::string> names;

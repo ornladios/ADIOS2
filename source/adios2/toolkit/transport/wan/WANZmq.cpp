@@ -22,7 +22,7 @@ WANZmq::WANZmq(const std::string ipAddress, const std::string port,
                MPI_Comm mpiComm, const std::string transportMode,
                const bool debugMode)
 : Transport("wan", "zmq", mpiComm, debugMode), m_IPAddress(ipAddress),
-  m_Port(port), m_TransportMode(transportMode)
+  m_Port(port), m_WorkflowMode(transportMode)
 {
     m_Context = zmq_ctx_new();
     if (m_Context == nullptr || m_Context == NULL)
@@ -107,15 +107,15 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
     ProfilerStart("open");
 
     int err;
-    if (m_TransportMode == "subscribe")
+    if (m_WorkflowMode == "subscribe")
     {
         err = OpenSubscribe(name, openMode, fullIP);
     }
-    else if (m_TransportMode == "push")
+    else if (m_WorkflowMode == "push")
     {
         err = OpenPush(name, openMode, fullIP);
     }
-    else if (m_TransportMode == "query")
+    else if (m_WorkflowMode == "query")
     {
         err = OpenQuery(name, openMode, fullIP);
     }
@@ -123,7 +123,7 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
     {
         throw std::runtime_error(
             "WANZmq::Open received wrong WorkflowMode parameter" +
-            m_TransportMode + ". Should be subscribe, push or query");
+            m_WorkflowMode + ". Should be subscribe, push or query");
     }
 
     if (err)
@@ -162,16 +162,16 @@ void WANZmq::IWrite(const char *buffer, size_t size, Status &status,
 {
     int retInt = 0;
     std::string retString = "OK";
-    if (m_TransportMode == "subscribe")
+    if (m_WorkflowMode == "subscribe")
     {
         ProfilerStart("write");
         retInt = zmq_send(m_Socket, buffer, size, 0);
         ProfilerStop("write");
     }
-    else if (m_TransportMode == "push")
+    else if (m_WorkflowMode == "push")
     {
     }
-    else if (m_TransportMode == "query")
+    else if (m_WorkflowMode == "query")
     {
     }
     else
@@ -189,7 +189,7 @@ void WANZmq::IWrite(const char *buffer, size_t size, Status &status,
 
 void WANZmq::IRead(char *buffer, size_t size, Status &status, size_t start)
 {
-    if (m_TransportMode == "subscribe")
+    if (m_WorkflowMode == "subscribe")
     {
         ProfilerStart("read");
         int bytes = zmq_recv(m_Socket, buffer, size, ZMQ_DONTWAIT);
@@ -213,10 +213,10 @@ void WANZmq::IRead(char *buffer, size_t size, Status &status, size_t start)
             status.Successful = false;
         }
     }
-    else if (m_TransportMode == "push")
+    else if (m_WorkflowMode == "push")
     {
     }
-    else if (m_TransportMode == "query")
+    else if (m_WorkflowMode == "query")
     {
     }
     else

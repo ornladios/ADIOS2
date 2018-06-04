@@ -36,7 +36,7 @@ protected:
     int m_RemoteMPISize;
     int m_TransportChannels = 1;
     std::string m_Format = "dataman";
-    std::string m_TransportMode = "subscribe";
+    std::string m_WorkflowMode = "subscribe";
     bool m_Synchronous = true;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
