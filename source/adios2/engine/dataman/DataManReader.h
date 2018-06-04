@@ -54,8 +54,7 @@ private:
 
     void Init();
 
-    void RunCallback(void *buffer, std::string doid, std::string var,
-                     std::string dtype, std::vector<size_t> shape);
+    void RunCallback();
 
     void DoClose(const int transportIndex = -1) final;
 

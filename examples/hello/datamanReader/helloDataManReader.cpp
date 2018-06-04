@@ -19,8 +19,8 @@
 std::string ip = "127.0.0.1";
 std::string port = "12306";
 
-adios2::Dims start({0, 0, 0});
-adios2::Dims count({16, 6, 8});
+adios2::Dims start({0, 0});
+adios2::Dims count({60, 80});
 
 int rank, size;
 

@@ -86,18 +86,6 @@ void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
 
 size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
-void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
-{
-    while (m_Listening)
-    {
-        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
-        if (buffer != nullptr)
-        {
-            m_DataManDeserializer.Put(buffer);
-        }
-    }
-}
-
 void DataManReader::PerformGets() {}
 
 // PRIVATE
@@ -144,18 +132,35 @@ void DataManReader::Init()
                                                  m_DataMan);
 }
 
-void DataManReader::RunCallback(void *buffer, std::string doid, std::string var,
-                                std::string dtype, std::vector<size_t> shape)
+void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
 {
+    while (m_Listening)
+    {
+        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
+        if (buffer != nullptr)
+        {
+            m_DataManDeserializer.Put(buffer);
+        }
+        if (m_Callbacks.empty() == false)
+        {
+            RunCallback();
+        }
+    }
+}
+
+void DataManReader::RunCallback()
+{
+    for (size_t step = m_DataManDeserializer.MinStep();
+         step <= m_DataManDeserializer.MaxStep(); ++step)
+    {
+        std::vector<format::DataManDeserializer::DataManVar> varList;
+        m_DataManDeserializer.GetVarList(step, varList);
+        std::cout << varList[0].name << "  " << varList[0].type << std::endl;
+    }
+
     for (auto &i : m_Callbacks)
     {
-        if (i != nullptr)
-        {
-            if (i->m_Type == "Signature2")
-            {
-                i->RunCallback2(buffer, doid, var, dtype, shape);
-            }
-        }
+        // i->RunCallback2(buffer, doid, var, dtype, shape);
     }
 }
 
@@ -233,7 +238,6 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
                 v->SetStepSelection({step.first - 1, 1});                      \
                 deserializer.GetSyncVariableDataFromStream(                    \
                     *v, deserializer.m_Data);                                  \
-                RunCallback(v->GetData(), "stream", var, type, v->m_Shape);    \
             }                                                                  \
         }                                                                      \
     }

@@ -38,38 +38,30 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
     metaj["O"] = variable.m_Start;
     metaj["T"] = step;
     metaj["R"] = rank;
+    metaj["Z"] = "zfp";
 
-    size_t datasize;
-
-    auto it = params.find("CompressionMethod");
+    float rate = 2;
+    const auto it = params.find("CompressionRate");
     if (it != params.end())
     {
-        std::string method = it->second;
-        float rate = 2;
-        metaj["Z"] = method;
-        it = params.find("CompressionRate");
-        if (it != params.end())
-        {
-            rate = stof(it->second);
-            metaj["ZR"] = rate;
-        }
+        rate = stof(it->second);
+    }
+    metaj["ZR"] = rate;
 
-        if (method == "zfp")
-        {
-            Params p = {{"Rate", std::to_string(rate)}};
-            compress::CompressZfp zfp(p, true);
-            m_CompressBuffer.reserve(variable.PayloadSize());
-            try
-            {
-                datasize =
-                    zfp.Compress(variable.GetData(), variable.m_Count, 4,
-                                 variable.m_Type, m_CompressBuffer.data(), p);
-            }
-            catch (std::exception &e)
-            {
-                return PutRaw(variable, step, rank, params);
-            }
-        }
+    Params p = {{"Rate", std::to_string(rate)}};
+    compress::CompressZfp zfp(p, true);
+    m_CompressBuffer.reserve(variable.PayloadSize());
+    size_t datasize;
+    try
+    {
+        datasize = zfp.Compress(variable.GetData(), variable.m_Count, 4,
+                                variable.m_Type, m_CompressBuffer.data(), p);
+        std::cout << "compress\n";
+    }
+    catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        return PutRaw(variable, step, rank, params);
     }
     metaj["I"] = datasize;
     std::string metastr = metaj.dump() + '\0';
@@ -78,7 +70,7 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
     {
-        return true;
+        return false;
     }
 
     m_Buffer->resize(m_Position + totalsize);
@@ -92,7 +84,7 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
     std::memcpy(m_Buffer->data() + m_Position, m_CompressBuffer.data(),
                 datasize);
     m_Position += datasize;
-    return false;
+    return true;
 }
 #endif
 
@@ -117,7 +109,7 @@ bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
     {
-        return true;
+        return false;
     }
 
     m_Buffer->resize(m_Position + totalsize);
@@ -130,7 +122,7 @@ bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
 
     std::memcpy(m_Buffer->data() + m_Position, variable.GetData(), datasize);
     m_Position += datasize;
-    return false;
+    return true;
 }
 
 template <class T>

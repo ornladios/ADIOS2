@@ -355,6 +355,38 @@ bool DataManDeserializer::IsContinuous(const Box<Dims> &inner,
     return true;
 }
 
+bool DataManDeserializer::GetVarList(size_t step,
+                                     std::vector<DataManVar> &varList)
+{
+    m_MutexMetaData.lock();
+    auto metaDataStep = m_MetaDataMap.find(step);
+    if (metaDataStep == m_MetaDataMap.end())
+    {
+        return false;
+    }
+    for (auto &i : *metaDataStep->second)
+    {
+        bool hasVar = false;
+        for (DataManVar &j : varList)
+        {
+            if (j.name == i.name)
+            {
+                hasVar = true;
+            }
+        }
+        if (hasVar == false)
+        {
+            DataManVar var;
+            var.name = i.name;
+            var.shape = i.shape;
+            var.type = i.type;
+            varList.push_back(std::move(var));
+        }
+    }
+    m_MutexMetaData.unlock();
+    return true;
+}
+
 void DataManDeserializer::PrintBox(const Box<Dims> in, std::string name)
 {
 
