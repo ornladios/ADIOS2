@@ -17,6 +17,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 class DynamicBinder
 {
@@ -33,6 +35,8 @@ private:
     struct Impl;
     std::unique_ptr<Impl> m_Impl;
 };
-}
+
+} // end namespace helper
+} // end namespace adios2
 
 #endif // ADIOS2_HELPER_DYNAMICBINDER_H_

@@ -22,6 +22,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class InSituMPIReader : public Engine
 {
@@ -95,10 +99,10 @@ private:
     void ClearMetadataBuffer();
 
     // BP3 format style read schedule, keeping it around in fixed schedule
-    std::map<std::string, SubFileInfoMap> m_ReadScheduleMap;
+    std::map<std::string, helper::SubFileInfoMap> m_ReadScheduleMap;
 
-    void SendReadSchedule(
-        const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo);
+    void SendReadSchedule(const std::map<std::string, helper::SubFileInfoMap>
+                              &variablesSubFileInfo);
 
     uint64_t m_BytesReceivedInPlace = 0; // bytes that were arriving in place
     uint64_t m_BytesReceivedInTemporary = 0; // bytes that needed copy
@@ -109,20 +113,21 @@ private:
 
     template <class T>
     void AsyncRecvVariable(const Variable<T> &variable,
-                           const SubFileInfoMap &subFileInfoMap);
+                           const helper::SubFileInfoMap &subFileInfoMap);
 
     // Wait for all async receives to arrive and process them
     void ProcessReceives();
 
     struct OngoingReceive
     {
-        const SubFileInfo sfi; // a copy! of the selections to be pulled
+        const helper::SubFileInfo sfi; // a copy! of the selections to be pulled
         const std::string *varNamePointer;
         std::vector<char> temporaryDataArray; // allocated in engine
         char *inPlaceDataArray;               // pointer to user data
-        OngoingReceive(const SubFileInfo p, const std::string *v)
+        OngoingReceive(const helper::SubFileInfo p, const std::string *v)
         : sfi(p), varNamePointer(v), inPlaceDataArray(nullptr){};
-        OngoingReceive(const SubFileInfo p, const std::string *v, char *ptr)
+        OngoingReceive(const helper::SubFileInfo p, const std::string *v,
+                       char *ptr)
         : sfi(p), varNamePointer(v), inPlaceDataArray(ptr){};
     };
 
@@ -132,6 +137,8 @@ private:
     std::vector<MPI_Request> m_MPIRequests;
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_INSITUMPIMPIREADER_H_ */

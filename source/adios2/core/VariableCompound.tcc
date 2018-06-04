@@ -17,13 +17,17 @@
 
 namespace adios2
 {
+namespace core
+{
 
 template <class T>
-void VariableCompound::InsertMember(const std::string name, const size_t offset)
+void VariableCompound::InsertMember(const std::string &name,
+                                    const size_t offset)
 {
-    m_Elements.push_back(Element{name, GetType<T>(), offset});
+    m_Elements.push_back(Element{name, helper::GetType<T>(), offset});
 }
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_VARIABLECOMPOUND_TCC_ */

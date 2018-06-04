@@ -17,15 +17,21 @@
 //
 // class HDFSerialWriter
 //
+namespace adios
+{
+namespace core
+{
+namespace engine
+{
 
-adios2::HDFVDSWriter::HDFVDSWriter(MPI_Comm mpiComm, bool debugMode = false)
+HDFVDSWriter::HDFVDSWriter(MPI_Comm mpiComm, bool debugMode)
 : m_MPISubfileComm(mpiComm), m_VDSFile(debugMode), m_Rank(-1)
 {
     MPI_Comm_size(m_MPISubfileComm, &m_NumSubFiles);
     MPI_Comm_rank(m_MPISubfileComm, &m_Rank);
 }
 
-void adios2::HDFVDSWriter::Init(const std::string &name)
+void HDFVDSWriter::Init(const std::string &name)
 {
     if (m_Rank > 0)
     {
@@ -41,11 +47,11 @@ void adios2::HDFVDSWriter::Init(const std::string &name)
     m_FileName = name;
 }
 
-void adios2::HDFVDSWriter::GetVarInfo(const VariableBase &var,
-                                      std::vector<hsize_t> &dimsf, int nDims,
-                                      std::vector<hsize_t> &start,
-                                      std::vector<hsize_t> &count,
-                                      std::vector<hsize_t> &one)
+void HDFVDSWriter::GetVarInfo(const VariableBase &var,
+                              std::vector<hsize_t> &dimsf, int nDims,
+                              std::vector<hsize_t> &start,
+                              std::vector<hsize_t> &count,
+                              std::vector<hsize_t> &one)
 { // interop::HDF5Common summaryFile(true);
     // std::vector<hsize_t> dimsf, start, one, count;
     // int nDims = std::max(var.m_Shape.size(), var.m_Count.size());
@@ -84,7 +90,7 @@ void adios2::HDFVDSWriter::GetVarInfo(const VariableBase &var,
     }
 }
 
-void adios2::HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
+void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
 {
     hid_t space;
     /* Create VDS dataspace.  */
@@ -193,7 +199,7 @@ void adios2::HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
     MPI_Barrier(m_MPISubfileComm);
 }
 
-void adios2::HDFVDSWriter::Advance(const float timeoutSeconds)
+void HDFVDSWriter::Advance(const float timeoutSeconds)
 {
     if (m_Rank > 0)
     {
@@ -203,7 +209,7 @@ void adios2::HDFVDSWriter::Advance(const float timeoutSeconds)
     m_VDSFile.Advance();
 }
 
-void adios2::HDFVDSWriter::Close(const int transportIndex)
+void HDFVDSWriter::Close(const int transportIndex)
 {
     if (m_Rank > 0)
     {
@@ -216,26 +222,21 @@ void adios2::HDFVDSWriter::Close(const int transportIndex)
 //
 // class HDFSerialWriter
 //
-adios2::HDFSerialWriter::HDFSerialWriter(MPI_Comm mpiComm,
-                                         const bool debugMode = false)
+HDFSerialWriter::HDFSerialWriter(MPI_Comm mpiComm, const bool debugMode = false)
 : m_MPILocalComm(mpiComm), m_DebugMode(debugMode), m_H5File(debugMode)
 {
 }
 
-void adios2::HDFSerialWriter::Advance(const float timeoutSeconds)
+void HDFSerialWriter::Advance(const float timeoutSeconds)
 {
     m_H5File.Advance();
 }
-void adios2::HDFSerialWriter::Close(const int transportIndex)
-{
-    m_H5File.Close();
-};
+void HDFSerialWriter::Close(const int transportIndex) { m_H5File.Close(); };
 
-void adios2::HDFSerialWriter::StaticCreateName(std::string &pathName,
-                                               std::string &rootName,
-                                               std::string &fullH5Name,
-                                               const std::string &input,
-                                               int rank)
+void HDFSerialWriter::StaticCreateName(std::string &pathName,
+                                       std::string &rootName,
+                                       std::string &fullH5Name,
+                                       const std::string &input, int rank)
 {
 
     auto lf_GetBaseName = [](const std::string &name) -> std::string {
@@ -260,7 +261,7 @@ void adios2::HDFSerialWriter::StaticCreateName(std::string &pathName,
         (pathName + "/" + rootName + "_" + std::to_string(rank) + ".h5");
 }
 
-void adios2::HDFSerialWriter::Init(const std::string &name, int rank)
+void HDFSerialWriter::Init(const std::string &name, int rank)
 {
     /*
     auto lf_GetBaseName = [](const std::string &name) -> std::string {
@@ -435,3 +436,7 @@ noexcept
 
 };
 */
+
+} // end namespace engine
+} // end namespace core
+} // end namespace adios2

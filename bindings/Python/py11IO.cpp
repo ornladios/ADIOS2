@@ -20,9 +20,7 @@ namespace adios2
 namespace py11
 {
 
-IO::IO(adios2::IO &io, const bool debugMode) : m_IO(io), m_DebugMode(debugMode)
-{
-}
+IO::IO(core::IO &io, const bool debugMode) : m_IO(io), m_DebugMode(debugMode) {}
 
 void IO::SetEngine(const std::string type) noexcept { m_IO.SetEngine(type); }
 
@@ -46,19 +44,20 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     return m_IO.AddTransport(type, parameters);
 }
 
-VariableBase *IO::DefineVariable(const std::string &name,
-                                 std::string & /*stringValue*/)
+core::VariableBase *IO::DefineVariable(const std::string &name,
+                                       std::string & /*stringValue*/)
 {
     return &m_IO.DefineVariable<std::string>(name, Dims(), Dims(), Dims(),
                                              false);
 }
 
-VariableBase *IO::DefineVariable(const std::string &name, const Dims &shape,
-                                 const Dims &start, const Dims &count,
-                                 const bool isConstantDims,
-                                 pybind11::array &array)
+core::VariableBase *IO::DefineVariable(const std::string &name,
+                                       const Dims &shape, const Dims &start,
+                                       const Dims &count,
+                                       const bool isConstantDims,
+                                       pybind11::array &array)
 {
-    VariableBase *variable = nullptr;
+    core::VariableBase *variable = nullptr;
 
     if (false)
     {
@@ -87,16 +86,16 @@ VariableBase *IO::DefineVariable(const std::string &name, const Dims &shape,
     return variable;
 }
 
-VariableBase *IO::InquireVariable(const std::string &name) noexcept
+core::VariableBase *IO::InquireVariable(const std::string &name) noexcept
 {
     const std::string type(m_IO.InquireVariableType(name));
-    adios2::VariableBase *variable = nullptr;
+    core::VariableBase *variable = nullptr;
 
     if (type == "unknown")
     {
     }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         variable = m_IO.InquireVariable<T>(name);                              \
     }
@@ -106,10 +105,10 @@ VariableBase *IO::InquireVariable(const std::string &name) noexcept
     return variable;
 }
 
-AttributeBase *IO::DefineAttribute(const std::string &name,
-                                   pybind11::array &array)
+core::AttributeBase *IO::DefineAttribute(const std::string &name,
+                                         pybind11::array &array)
 {
-    AttributeBase *attribute = nullptr;
+    core::AttributeBase *attribute = nullptr;
 
     if (false)
     {
@@ -119,8 +118,7 @@ AttributeBase *IO::DefineAttribute(const std::string &name,
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
         attribute = &m_IO.DefineAttribute<T>(                                  \
-            name, reinterpret_cast<T *>(const_cast<void *>(array.data())),     \
-            array.size());                                                     \
+            name, reinterpret_cast<const T *>(array.data()), array.size());    \
     }
     ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -139,8 +137,9 @@ AttributeBase *IO::DefineAttribute(const std::string &name,
     return attribute;
 }
 
-AttributeBase *IO::DefineAttribute(const std::string &name,
-                                   const std::vector<std::string> &strings)
+core::AttributeBase *
+IO::DefineAttribute(const std::string &name,
+                    const std::vector<std::string> &strings)
 {
     return &m_IO.DefineAttribute(name, strings.data(), strings.size());
 }

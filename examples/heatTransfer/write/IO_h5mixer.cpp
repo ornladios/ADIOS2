@@ -25,9 +25,9 @@
 static int rank_saved;
 adios2::ADIOS *ad = nullptr;
 // std::shared_ptr<adios2::Engine> h5mixerWriter;
-adios2::Engine *h5mixerWriter = nullptr;
-adios2::Variable<double> *varT = nullptr;
-adios2::Variable<unsigned int> *varGndx = nullptr;
+adios2::Engine h5mixerWriter;
+adios2::Variable<double> varT;
+adios2::Variable<unsigned int> varGndx;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
@@ -42,7 +42,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     // Define method for engine creation
 
-    adios2::IO &h5io = ad->DeclareIO("writer");
+    adios2::IO h5io = ad->DeclareIO("writer");
     if (!h5io.InConfigFile())
     {
         // if not defined by user, we can change the default settings
@@ -54,11 +54,11 @@ IO::IO(const Settings &s, MPI_Comm comm)
         h5io.SetEngine("HDFMixer");
     }
 
-    varGndx = &h5io.DefineVariable<unsigned int>("gndx");
+    varGndx = h5io.DefineVariable<unsigned int>("gndx");
     h5io.DefineVariable<unsigned int>("gndy");
 
     // define T as 2D global array
-    varT = &h5io.DefineVariable<double>(
+    varT = h5io.DefineVariable<double>(
         "T",
         // Global dimensions
         {s.gndx, s.gndy},
@@ -72,7 +72,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     // varT.AddTransform( tr, "" );
     // varT.AddTransform( tr,"accuracy=0.001" );  // for ZFP
 
-    h5mixerWriter = &h5io.Open(m_outputfilename, adios2::Mode::Write, comm);
+    h5mixerWriter = h5io.Open(m_outputfilename, adios2::Mode::Write, comm);
 
     if (!h5mixerWriter)
     {
@@ -83,7 +83,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
 IO::~IO()
 {
-    h5mixerWriter->Close();
+    h5mixerWriter.Close();
     delete ad;
 }
 
@@ -91,14 +91,14 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
 
-    h5mixerWriter->BeginStep();
+    h5mixerWriter.BeginStep();
     /* This selection is redundant and not required, since we defined
      * the selection already in DefineVariable(). It is here just as an example.
      */
     // Make a selection to describe the local dimensions of the variable we
     // write and its offsets in the global spaces. This could have been done in
     // adios.DefineVariable()
-    varT->SetSelection(
+    varT.SetSelection(
         adios2::Box<adios2::Dims>({s.offsx, s.offsy}, {s.ndx, s.ndy}));
 
     /* Select the area that we want to write from the data pointer we pass to
@@ -110,13 +110,14 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
        selection which was given above. Default memspace is always the full
        selection.
     */
-    varT->SetMemorySelection(adios2::Box<adios2::Dims>({1, 1}, {s.ndx, s.ndy}));
+    // varT.SetMemorySelection(adios2::Box<adios2::Dims>({1, 1}, {s.ndx,
+    // s.ndy}));
 
-    h5mixerWriter->PutSync<unsigned int>(*varGndx, s.gndx);
-    h5mixerWriter->PutSync<unsigned int>("gndy", s.gndy);
-    h5mixerWriter->PutSync<double>(*varT, ht.data_noghost().data());
+    h5mixerWriter.Put<unsigned int>(varGndx, s.gndx);
+    h5mixerWriter.Put<unsigned int>("gndy", s.gndy);
+    h5mixerWriter.Put<double>(varT, ht.data_noghost().data());
 
-    h5mixerWriter->EndStep();
+    h5mixerWriter.EndStep();
 
 #ifdef NEVER
 #if 1

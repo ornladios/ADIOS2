@@ -120,7 +120,8 @@ BP3Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
 {
     auto lf_GetBPBaseName = [](const std::string &name) -> std::string {
 
-        const std::string bpBaseName(AddExtension(name, ".bp") + ".dir");
+        const std::string bpBaseName(helper::AddExtension(name, ".bp") +
+                                     ".dir");
         return bpBaseName;
     };
 
@@ -150,7 +151,7 @@ BP3Base::GetBPMetadataFileNames(const std::vector<std::string> &names) const
 std::string BP3Base::GetBPMetadataFileName(const std::string &name) const
     noexcept
 {
-    return AddExtension(name, ".bp");
+    return helper::AddExtension(name, ".bp");
 }
 
 std::vector<std::string>
@@ -264,10 +265,10 @@ BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
     {
         if (currentCapacity < m_MaxBufferSize)
         {
-            const size_t nextSize =
-                std::min(m_MaxBufferSize,
-                         NextExponentialSize(requiredCapacity, currentCapacity,
-                                             m_GrowthFactor));
+            const size_t nextSize = std::min(
+                m_MaxBufferSize,
+                helper::NextExponentialSize(requiredCapacity, currentCapacity,
+                                            m_GrowthFactor));
             m_Data.Resize(nextSize, " when resizing buffer to " +
                                         std::to_string(nextSize) + "bytes, " +
                                         hint);
@@ -320,7 +321,7 @@ void BP3Base::InitParameterProfileUnits(const std::string value)
             process, profiling::Timer(process, timeUnit, m_DebugMode));
     };
 
-    TimeUnit timeUnit = StringToTimeUnit(value, m_DebugMode);
+    TimeUnit timeUnit = helper::StringToTimeUnit(value, m_DebugMode);
 
     lf_EmplaceTimer("buffering", timeUnit);
     lf_EmplaceTimer("memcpy", timeUnit);
@@ -378,7 +379,7 @@ void BP3Base::InitParameterInitBufferSize(const std::string value)
 
     const std::string number(value.substr(0, value.size() - 2));
     const std::string units(value.substr(value.size() - 2));
-    const size_t factor = BytesFactor(units, m_DebugMode);
+    const size_t factor = helper::BytesFactor(units, m_DebugMode);
     size_t bufferSize = DefaultInitialBufferSize; // from ADIOSTypes.h
 
     if (m_DebugMode)
@@ -432,7 +433,7 @@ void BP3Base::InitParameterMaxBufferSize(const std::string value)
 
     const std::string number(value.substr(0, value.size() - 2));
     const std::string units(value.substr(value.size() - 2));
-    const size_t factor = BytesFactor(units, m_DebugMode);
+    const size_t factor = helper::BytesFactor(units, m_DebugMode);
 
     if (m_DebugMode)
     {
@@ -638,13 +639,13 @@ BP3Base::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
                                      size_t &position) const noexcept
 {
     ProcessGroupIndex index;
-    index.Length = ReadValue<uint16_t>(buffer, position);
+    index.Length = helper::ReadValue<uint16_t>(buffer, position);
     index.Name = ReadBP3String(buffer, position);
-    index.IsColumnMajor = ReadValue<char>(buffer, position);
-    index.ProcessID = ReadValue<int32_t>(buffer, position);
+    index.IsColumnMajor = helper::ReadValue<char>(buffer, position);
+    index.ProcessID = helper::ReadValue<int32_t>(buffer, position);
     index.StepName = ReadBP3String(buffer, position);
-    index.Step = ReadValue<uint32_t>(buffer, position);
-    index.Offset = ReadValue<uint64_t>(buffer, position);
+    index.Step = helper::ReadValue<uint32_t>(buffer, position);
+    index.Offset = helper::ReadValue<uint64_t>(buffer, position);
     return index;
 }
 
@@ -653,13 +654,14 @@ BP3Base::ReadElementIndexHeader(const std::vector<char> &buffer,
                                 size_t &position) const noexcept
 {
     ElementIndexHeader header;
-    header.Length = ReadValue<uint32_t>(buffer, position);
-    header.MemberID = ReadValue<uint32_t>(buffer, position);
+    header.Length = helper::ReadValue<uint32_t>(buffer, position);
+    header.MemberID = helper::ReadValue<uint32_t>(buffer, position);
     header.GroupName = ReadBP3String(buffer, position);
     header.Name = ReadBP3String(buffer, position);
     header.Path = ReadBP3String(buffer, position);
-    header.DataType = ReadValue<int8_t>(buffer, position);
-    header.CharacteristicsSetsCount = ReadValue<uint64_t>(buffer, position);
+    header.DataType = helper::ReadValue<int8_t>(buffer, position);
+    header.CharacteristicsSetsCount =
+        helper::ReadValue<uint64_t>(buffer, position);
 
     return header;
 }
@@ -668,7 +670,7 @@ std::string BP3Base::ReadBP3String(const std::vector<char> &buffer,
                                    size_t &position) const noexcept
 {
     const size_t size =
-        static_cast<size_t>(ReadValue<uint16_t>(buffer, position));
+        static_cast<size_t>(helper::ReadValue<uint16_t>(buffer, position));
 
     if (size == 0)
     {
@@ -699,7 +701,7 @@ void BP3Base::ProfilerStop(const std::string process) noexcept
 std::string BP3Base::GetBPSubStreamName(const std::string &name,
                                         const size_t rank) const noexcept
 {
-    const std::string bpName = AddExtension(name, ".bp");
+    const std::string bpName = helper::AddExtension(name, ".bp");
 
     // path/root.bp.dir/root.bp.Index
     std::string bpRoot = bpName;

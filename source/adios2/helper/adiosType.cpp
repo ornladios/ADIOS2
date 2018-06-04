@@ -17,6 +17,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 std::string DimsToCSV(const Dims &dimensions) noexcept
 {
@@ -207,4 +209,5 @@ std::string OpenModeToString(const Mode openMode, const bool oneLetter) noexcept
     return openModeString;
 }
 
+} // end namespace helper
 } // end namespace adios2

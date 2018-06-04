@@ -84,33 +84,35 @@ void mergeLists(int nV, char **listV, int nA, char **listA, char **mlist,
 enum ADIOS_DATATYPES type_to_enum(std::string type);
 
 template <class T>
-int printVariableInfo(Engine *fp, IO *io, Variable<T> *variable);
+int printVariableInfo(core::Engine *fp, core::IO *io,
+                      core::Variable<T> *variable);
 
 template <class T>
-int readVar(Engine *fp, IO *io, Variable<T> *variable);
+int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable);
 
 template <class T>
-int readVarBlock(Engine *fp, IO *io, Variable<T> *variable, int blockid);
+int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
+                 int blockid);
 
 int cmpstringp(const void *p1, const void *p2);
 bool grpMatchesMask(char *name);
 bool matchesAMask(const char *name);
 int print_start(const std::string &fnamestr);
-void print_slice_info(VariableBase *variable, uint64_t *s, uint64_t *c);
+void print_slice_info(core::VariableBase *variable, uint64_t *s, uint64_t *c);
 int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartypes,
                bool allowformat);
 int print_dataset(const void *data, const std::string vartype, uint64_t *s,
                   uint64_t *c, int tdims, int *ndigits);
 void print_endline(void);
 void print_stop(void);
-int print_data_hist(VariableBase *vi, char *varname);
+int print_data_hist(core::VariableBase *vi, char *varname);
 int print_data_characteristics(void *min, void *max, double *avg,
                                double *std_dev,
                                enum ADIOS_DATATYPES adiosvartypes,
                                bool allowformat);
 
 template <class T>
-void print_decomp(Engine *fp, IO *io, Variable<T> *variable);
+void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable);
 
 // close namespace
 }

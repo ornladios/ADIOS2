@@ -11,8 +11,11 @@
 
 namespace adios2
 {
+namespace core
+{
 namespace callback
 {
+
 #define declare_type(T, L)                                                     \
     Signature1::Signature1(                                                    \
         const std::function<void(const T *, const std::string &,               \
@@ -45,4 +48,5 @@ ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
 #undef declare_type
 
 } // end namespace callback
+} // end namespace core
 } // end namespace adios2

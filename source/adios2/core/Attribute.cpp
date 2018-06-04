@@ -9,9 +9,40 @@
  */
 
 #include "Attribute.h"
-#include "Attribute.tcc"
+
+#include "adios2/ADIOSMacros.h"
+#include "adios2/helper/adiosFunctions.h" //GetType<T>
 
 namespace adios2
 {
+namespace core
+{
 
+#define declare_type(T)                                                        \
+                                                                               \
+    template <>                                                                \
+    Attribute<T>::Attribute(const std::string &name, const T *array,           \
+                            const size_t elements)                             \
+    : AttributeBase(name, helper::GetType<T>(), elements), m_DataSingleValue() \
+    {                                                                          \
+        if (elements == 1)                                                     \
+        {                                                                      \
+            m_DataSingleValue = array[0];                                      \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            m_DataArray = std::vector<T>(array, array + elements);             \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    Attribute<T>::Attribute(const std::string &name, const T &value)           \
+    : AttributeBase(name, helper::GetType<T>(), 1), m_DataSingleValue(value)   \
+    {                                                                          \
+    }
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+
+} // end namespace core
 } // end namespace adios2

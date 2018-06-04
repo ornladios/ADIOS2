@@ -8,12 +8,12 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_C_C_ADIOS2_C_ADIOS_H_
-#define BINDINGS_C_C_ADIOS2_C_ADIOS_H_
-
-#include "adios2/ADIOSMPICommOnly.h"
+#ifndef ADIOS2_BINDINGS_C_C_ADIOS2_C_ADIOS_H_
+#define ADIOS2_BINDINGS_C_C_ADIOS2_C_ADIOS_H_
 
 #include "adios2_c_types.h"
+
+#include "adios2/ADIOSMPICommOnly.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +38,6 @@ adios2_adios *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
  */
 adios2_adios *adios2_init(MPI_Comm mpi_comm,
                           const adios2_debug_mode debug_mode);
-
 /**
  * Create an ADIOS struct pointer handler using a runtime config file in serial
  * nonMPI
@@ -92,4 +91,4 @@ void adios2_finalize(adios2_adios *adios);
 } // end extern C
 #endif
 
-#endif /* BINDINGS_C_C_ADIOS2_C_ADIOS_H_ */
+#endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_ADIOS_H_ */

@@ -24,6 +24,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 Params InitParametersXML(const pugi::xml_node &node, const bool debugMode)
 {
@@ -61,10 +63,11 @@ Params InitParametersXML(const pugi::xml_node &node, const bool debugMode)
     return params;
 }
 
-void InitIOXML(const pugi::xml_node &ioNode, MPI_Comm mpiComm,
-               const std::string hostLanguage, const bool debugMode,
-               std::map<std::string, std::shared_ptr<Operator>> &transforms,
-               std::map<std::string, IO> &ios)
+void InitIOXML(
+    const pugi::xml_node &ioNode, MPI_Comm mpiComm,
+    const std::string hostLanguage, const bool debugMode,
+    std::map<std::string, std::shared_ptr<core::Operator>> &transforms,
+    std::map<std::string, core::IO> &ios)
 {
     // Extract <io name=""> attribute
     const pugi::xml_attribute nameAttr = ioNode.attribute("name");
@@ -81,9 +84,9 @@ void InitIOXML(const pugi::xml_node &ioNode, MPI_Comm mpiComm,
     const std::string ioName = nameAttr.value();
 
     // Build the IO object
-    auto ioIt =
-        ios.emplace(ioName, IO(ioName, mpiComm, true, hostLanguage, debugMode));
-    IO &io = ioIt.first->second;
+    auto ioIt = ios.emplace(
+        ioName, core::IO(ioName, mpiComm, true, hostLanguage, debugMode));
+    core::IO &io = ioIt.first->second;
 
     // Extract <engine> element
     if (debugMode)
@@ -149,8 +152,8 @@ void InitIOXML(const pugi::xml_node &ioNode, MPI_Comm mpiComm,
 
 void InitXML(const std::string configXML, MPI_Comm mpiComm,
              const std::string hostLanguage, const bool debugMode,
-             std::map<std::string, std::shared_ptr<Operator>> &transforms,
-             std::map<std::string, IO> &ios)
+             std::map<std::string, std::shared_ptr<core::Operator>> &transforms,
+             std::map<std::string, core::IO> &ios)
 {
     int mpiRank;
     MPI_Comm_rank(mpiComm, &mpiRank);
@@ -204,4 +207,5 @@ void InitXML(const std::string configXML, MPI_Comm mpiComm,
     }
 }
 
+} // end namespace helper
 } // end namespace adios2

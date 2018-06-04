@@ -17,6 +17,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
@@ -66,9 +70,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                 throw("Compound type is not supported yet.");
             }
 #define declare_type(T)                                                        \
-    else if (i.type == GetType<T>())                                           \
+    else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
-        adios2::Variable<T> *v = m_IO.InquireVariable<T>(i.name);              \
+        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
         if (v == nullptr)                                                      \
         {                                                                      \
             m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);         \
@@ -163,7 +167,7 @@ void DataManReader::RunCallback()
                 throw("Compound type is not supported yet.");
             }
 #define declare_type(T)                                                        \
-    else if (i.type == GetType<T>())                                           \
+    else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
         Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
         if (v == nullptr)                                                      \
@@ -250,9 +254,9 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
                     }
 
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        adios2::Variable<T> *v = m_IO.InquireVariable<T>(var);                 \
+        Variable<T> *v = m_IO.InquireVariable<T>(var);                         \
         if (v == nullptr)                                                      \
         {                                                                      \
             throw std::runtime_error("Data pointer obtained from BP "          \
@@ -276,4 +280,6 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

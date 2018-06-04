@@ -16,6 +16,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 Variable<T> *
@@ -27,15 +31,15 @@ ADIOS1Reader::InquireVariableCommon(const std::string &variableName)
     // name, )
     // return &variable; //return address if success
     ADIOS_VARINFO *vi = m_ADIOS1.InqVar(variableName);
-    adios2::Variable<T> *var = nullptr;
+    Variable<T> *var = nullptr;
     if (vi != nullptr)
     {
-        CheckADIOS1TypeCompatibility(variableName, GetType<T>(),
+        CheckADIOS1TypeCompatibility(variableName, helper::GetType<T>(),
                                      vi->type); // throws
 
         if (vi->ndim > 0)
         {
-            Dims gdims = Uint64ArrayToSizetVector(vi->ndim, vi->dims);
+            Dims gdims = helper::Uint64ArrayToSizetVector(vi->ndim, vi->dims);
 
             bool joinedread = false;
             if (gdims[0] == JoinedDim)
@@ -120,6 +124,8 @@ ADIOS1Reader::InquireVariableCommon(const std::string &variableName)
     return var;
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_ADIOS1_ADIOS1READER_INL_ */

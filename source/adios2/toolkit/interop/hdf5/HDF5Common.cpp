@@ -169,7 +169,7 @@ unsigned int HDF5Common::GetNumAdiosSteps()
 }
 
 // read from all time steps
-void HDF5Common::ReadAllVariables(IO &io)
+void HDF5Common::ReadAllVariables(core::IO &io)
 {
     if (!m_IsGeneratedByAdios)
     {
@@ -186,7 +186,7 @@ void HDF5Common::ReadAllVariables(IO &io)
     }
 }
 
-void HDF5Common::FindVarsFromH5(IO &io, hid_t top_id, const char *gname,
+void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname,
                                 const char *heritage)
 {
     // int i = 0;
@@ -278,7 +278,7 @@ type:[0=G/1=D/2=T/3=L/4=UDL]"<<currType<<std::endl;
 */
 
 // read variables from the input timestep
-void HDF5Common::ReadVariables(unsigned int ts, IO &io)
+void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
 {
     int i = 0;
     std::string stepStr;
@@ -318,9 +318,9 @@ void HDF5Common::ReadVariables(unsigned int ts, IO &io)
 }
 
 template <class T>
-void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
+void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId)
 {
-    Variable<T> *v = io.InquireVariable<T>(name);
+    core::Variable<T> *v = io.InquireVariable<T>(name);
     if (NULL == v)
     {
         hid_t dspace = H5Dget_space(datasetId);
@@ -333,7 +333,7 @@ void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
         shape.resize(ndims);
         if (ndims > 0)
         {
-            bool isOrderC = IsRowMajor(io.m_HostLanguage);
+            bool isOrderC = helper::IsRowMajor(io.m_HostLanguage);
             for (int i = 0; i < ndims; i++)
             {
                 if (isOrderC)
@@ -378,7 +378,7 @@ void HDF5Common::AddVar(IO &io, std::string const &name, hid_t datasetId)
     }
 }
 
-void HDF5Common::CreateVar(IO &io, hid_t datasetId,
+void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
                            std::string const &nameSuggested)
 {
     std::string name;
@@ -795,7 +795,7 @@ inline std::string &trim(std::string &s, const char *t = " \t\n\r\f\v")
     return ltrim(rtrim(s, t), t);
 }
 
-void HDF5Common::ReadInStringAttr(IO &io, const std::string &attrName,
+void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName,
                                   hid_t attrId, hid_t h5Type, hid_t sid)
 {
     hsize_t typeSize = H5Tget_size(h5Type);
@@ -841,7 +841,8 @@ void HDF5Common::ReadInStringAttr(IO &io, const std::string &attrName,
 }
 
 template <class T>
-void HDF5Common::AddNonStringAttribute(IO &io, std::string const &attrName,
+void HDF5Common::AddNonStringAttribute(core::IO &io,
+                                       std::string const &attrName,
                                        hid_t attrId, hid_t h5Type,
                                        hsize_t arraySize)
 {
@@ -859,7 +860,7 @@ void HDF5Common::AddNonStringAttribute(IO &io, std::string const &attrName,
     }
 }
 
-void HDF5Common::ReadInNonStringAttr(IO &io, const std::string &attrName,
+void HDF5Common::ReadInNonStringAttr(core::IO &io, const std::string &attrName,
                                      hid_t attrId, hid_t h5Type, hid_t sid)
 {
     H5S_class_t stype = H5Sget_simple_extent_type(sid);
@@ -950,9 +951,9 @@ void HDF5Common::ReadInNonStringAttr(IO &io, const std::string &attrName,
     }
 }
 
-void HDF5Common::WriteStringAttr(IO &io, const std::string &attrName)
+void HDF5Common::WriteStringAttr(core::IO &io, const std::string &attrName)
 {
-    Attribute<std::string> *adiosAttr =
+    core::Attribute<std::string> *adiosAttr =
         io.InquireAttribute<std::string>(attrName);
     if (adiosAttr == NULL)
     {
@@ -1007,7 +1008,7 @@ void HDF5Common::WriteStringAttr(IO &io, const std::string &attrName)
 }
 
 template <class T>
-void HDF5Common::WriteNonStringAttr(IO &io, Attribute<T> *adiosAttr)
+void HDF5Common::WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr)
 {
     if (adiosAttr == NULL)
     {
@@ -1040,7 +1041,7 @@ void HDF5Common::WriteNonStringAttr(IO &io, Attribute<T> *adiosAttr)
 // right now adios only support global attr
 // var does not have attr
 //
-void HDF5Common::WriteAttrFromIO(IO &io)
+void HDF5Common::WriteAttrFromIO(core::IO &io)
 {
     if (m_FileId < 0)
     {
@@ -1072,9 +1073,9 @@ void HDF5Common::WriteAttrFromIO(IO &io)
 // note no std::complext attr types
 //
 #define declare_template_instantiation(T)                                      \
-    else if (attrType == adios2::GetType<T>())                                 \
+    else if (attrType == helper::GetType<T>())                                 \
     {                                                                          \
-        Attribute<T> *adiosAttr = io.InquireAttribute<T>(attrName);            \
+        core::Attribute<T> *adiosAttr = io.InquireAttribute<T>(attrName);      \
         WriteNonStringAttr(io, adiosAttr);                                     \
     }
         ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
@@ -1089,7 +1090,7 @@ void HDF5Common::WriteAttrFromIO(IO &io)
 // only the global ones are retrieved for now,
 // until adios2 starts to support var level attrs
 //
-void HDF5Common::ReadAttrToIO(IO &io)
+void HDF5Common::ReadAttrToIO(core::IO &io)
 {
     hsize_t numAttrs;
     // herr_t ret = H5Gget_num_objs(m_FileId, &numObj);
@@ -1145,7 +1146,7 @@ void HDF5Common::StaticGetAdiosStepString(std::string &stepName, int ts)
 }
 
 #define declare_template_instantiation(T)                                      \
-    template void HDF5Common::Write(Variable<T> &variable, const T *value);
+    template void HDF5Common::Write(core::Variable<T> &, const T *);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

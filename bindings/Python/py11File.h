@@ -15,7 +15,7 @@
 
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/highlevelapi/fstream/Stream.h"
+#include "adios2/core/Stream.h"
 
 namespace adios2
 {
@@ -84,7 +84,7 @@ public:
     size_t CurrentStep() const;
 
 private:
-    std::shared_ptr<adios2::Stream> m_Stream;
+    std::shared_ptr<core::Stream> m_Stream;
     bool m_IsClosed = true;
 };
 

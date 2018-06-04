@@ -14,6 +14,8 @@
 
 namespace adios2
 {
+namespace core
+{
 namespace compress
 {
 
@@ -107,7 +109,8 @@ size_t CompressZfp::Decompress(const void *bufferIn, const size_t sizeIn,
     stream_close(bitstream);
 
     const size_t typeSizeBytes = lf_GetTypeSize(GetZfpType(type));
-    const size_t dataSizeBytes = GetTotalSize(dimensions) * typeSizeBytes;
+    const size_t dataSizeBytes =
+        helper::GetTotalSize(dimensions) * typeSizeBytes;
 
     return dataSizeBytes;
 }
@@ -117,19 +120,19 @@ zfp_type CompressZfp::GetZfpType(const std::string type) const
 {
     zfp_type zfpType = zfp_type_none;
 
-    if (type == GetType<double>())
+    if (type == helper::GetType<double>())
     {
         zfpType = zfp_type_double;
     }
-    else if (type == GetType<float>())
+    else if (type == helper::GetType<float>())
     {
         zfpType = zfp_type_float;
     }
-    else if (type == GetType<int64_t>())
+    else if (type == helper::GetType<int64_t>())
     {
         zfpType = zfp_type_int64;
     }
-    else if (type == GetType<int32_t>())
+    else if (type == helper::GetType<int32_t>())
     {
         zfpType = zfp_type_int32;
     }
@@ -251,7 +254,7 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
 
     if (hasTolerance)
     {
-        const double tolerance = StringToDouble(
+        const double tolerance = helper::StringToDouble(
             itTolerance->second, m_DebugMode,
             "setting Tolerance in call to CompressZfp class Transform\n");
 
@@ -259,7 +262,7 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
     }
     else if (hasRate)
     {
-        const double rate = StringToDouble(
+        const double rate = helper::StringToDouble(
             itRate->second, m_DebugMode,
             "setting Rate in call to CompressZfp class Transform\n");
         // TODO support last argument write random access?
@@ -268,7 +271,7 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
     }
     else if (hasPrecision)
     {
-        const unsigned int precision = StringToUInt(
+        const unsigned int precision = helper::StringToUInt(
             itPrecision->second, m_DebugMode,
             "setting Precision in call to CompressZfp class Transform\n");
         zfp_stream_set_precision(stream, precision);
@@ -277,5 +280,6 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
     return stream;
 }
 
-} // end namespace transform
+} // end namespace compress
+} // end namespace core
 } // end namespace adios2

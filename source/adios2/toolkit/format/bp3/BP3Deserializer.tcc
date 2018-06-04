@@ -24,16 +24,17 @@ namespace format
 {
 
 template <class T>
-std::map<std::string, SubFileInfoMap>
-BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable) const
+std::map<std::string, helper::SubFileInfoMap>
+BP3Deserializer::GetSyncVariableSubFileInfo(
+    const core::Variable<T> &variable) const
 {
-    std::map<std::string, SubFileInfoMap> variableSubFileInfo;
+    std::map<std::string, helper::SubFileInfoMap> variableSubFileInfo;
     variableSubFileInfo[variable.m_Name] = GetSubFileInfo(variable);
     return variableSubFileInfo;
 }
 
 template <class T>
-void BP3Deserializer::GetSyncVariableDataFromStream(Variable<T> &variable,
+void BP3Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
                                                     BufferSTL &bufferSTL) const
 {
     auto itStep =
@@ -57,20 +58,20 @@ void BP3Deserializer::GetSyncVariableDataFromStream(Variable<T> &variable,
 }
 
 template <class T>
-void BP3Deserializer::GetDeferredVariable(Variable<T> &variable, T *data)
+void BP3Deserializer::GetDeferredVariable(core::Variable<T> &variable, T *data)
 {
     variable.m_Data = data;
-    m_DeferredVariables[variable.m_Name] = SubFileInfoMap();
+    m_DeferredVariables[variable.m_Name] = helper::SubFileInfoMap();
 }
 
-SubFileInfoMap &
+helper::SubFileInfoMap &
 BP3Deserializer::GetSubFileInfoMap(const std::string &variableName)
 {
     return m_DeferredVariables[variableName];
 }
 
 template <class T>
-void BP3Deserializer::GetValueFromMetadata(Variable<T> &variable) const
+void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable) const
 {
     GetValueFromMetadataCommon(variable);
 }
@@ -78,8 +79,8 @@ void BP3Deserializer::GetValueFromMetadata(Variable<T> &variable) const
 // PRIVATE
 template <>
 inline void BP3Deserializer::DefineVariableInIO<std::string>(
-    const ElementIndexHeader &header, IO &io, const std::vector<char> &buffer,
-    size_t position) const
+    const ElementIndexHeader &header, core::IO &io,
+    const std::vector<char> &buffer, size_t position) const
 {
     const size_t initialPosition = position;
 
@@ -93,7 +94,7 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
         variableName = header.Path + PathSeparator + header.Name;
     }
 
-    Variable<std::string> *variable = nullptr;
+    core::Variable<std::string> *variable = nullptr;
     if (characteristics.Statistics.IsValue)
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
@@ -146,7 +147,7 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
 
 template <class T>
 void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
-                                         IO &io,
+                                         core::IO &io,
                                          const std::vector<char> &buffer,
                                          size_t position) const
 {
@@ -161,7 +162,7 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
         variableName = header.Path + PathSeparator + header.Name;
     }
 
-    Variable<T> *variable = nullptr;
+    core::Variable<T> *variable = nullptr;
     if (characteristics.Statistics.IsValue)
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
@@ -211,12 +212,14 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                 buffer, position, static_cast<DataTypes>(header.DataType),
                 false);
 
-        if (LessThan(subsetCharacteristics.Statistics.Min, variable->m_Min))
+        if (helper::LessThan(subsetCharacteristics.Statistics.Min,
+                             variable->m_Min))
         {
             variable->m_Min = subsetCharacteristics.Statistics.Min;
         }
 
-        if (GreaterThan(subsetCharacteristics.Statistics.Max, variable->m_Max))
+        if (helper::GreaterThan(subsetCharacteristics.Statistics.Max,
+                                variable->m_Max))
         {
             variable->m_Max = subsetCharacteristics.Statistics.Max;
         }
@@ -236,7 +239,7 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
 
 template <class T>
 void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
-                                          IO &io,
+                                          core::IO &io,
                                           const std::vector<char> &buffer,
                                           size_t position) const
 {
@@ -263,18 +266,18 @@ void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
 }
 
 template <class T>
-SubFileInfoMap
-BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
+helper::SubFileInfoMap
+BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
 {
-    SubFileInfoMap infoMap;
+    helper::SubFileInfoMap infoMap;
 
     const auto &buffer = m_Metadata.m_Buffer;
 
     const size_t stepStart = variable.m_StepsStart + 1;
     const size_t stepEnd = stepStart + variable.m_StepsCount; // exclusive
 
-    const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
+    const Box<Dims> selectionBox = helper::StartEndBox(
+        variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     for (size_t step = stepStart; step < stepEnd; ++step)
     {
@@ -295,10 +298,11 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
                     static_cast<DataTypes>(GetDataType<T>()));
 
             // check if they intersect
-            SubFileInfo info;
-            info.BlockBox = StartEndBox(blockCharacteristics.Start,
-                                        blockCharacteristics.Count);
-            info.IntersectionBox = IntersectionBox(selectionBox, info.BlockBox);
+            helper::SubFileInfo info;
+            info.BlockBox = helper::StartEndBox(blockCharacteristics.Start,
+                                                blockCharacteristics.Count);
+            info.IntersectionBox =
+                helper::IntersectionBox(selectionBox, info.BlockBox);
 
             if (info.IntersectionBox.first.empty() ||
                 info.IntersectionBox.second.empty())
@@ -309,14 +313,14 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
             // count)
             info.Seeks.first =
                 blockCharacteristics.Statistics.PayloadOffset +
-                LinearIndex(info.BlockBox, info.IntersectionBox.first,
-                            m_IsRowMajor) *
+                helper::LinearIndex(info.BlockBox, info.IntersectionBox.first,
+                                    m_IsRowMajor) *
                     sizeof(T);
 
             info.Seeks.second =
                 blockCharacteristics.Statistics.PayloadOffset +
-                (LinearIndex(info.BlockBox, info.IntersectionBox.second,
-                             m_IsRowMajor) +
+                (helper::LinearIndex(info.BlockBox, info.IntersectionBox.second,
+                                     m_IsRowMajor) +
                  1) *
                     sizeof(T);
 
@@ -332,7 +336,7 @@ BP3Deserializer::GetSubFileInfo(const Variable<T> &variable) const
 
 template <class T>
 void BP3Deserializer::ClipContiguousMemoryCommon(
-    Variable<T> &variable, const std::vector<char> &contiguousMemory,
+    core::Variable<T> &variable, const std::vector<char> &contiguousMemory,
     const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
 {
     const Dims &start = intersectionBox.first;
@@ -363,7 +367,7 @@ void BP3Deserializer::ClipContiguousMemoryCommon(
 
 template <class T>
 void BP3Deserializer::ClipContiguousMemoryCommonRow(
-    Variable<T> &variable, const std::vector<char> &contiguousMemory,
+    core::Variable<T> &variable, const std::vector<char> &contiguousMemory,
     const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
 {
     const Dims &start = intersectionBox.first;
@@ -372,24 +376,24 @@ void BP3Deserializer::ClipContiguousMemoryCommonRow(
 
     Dims currentPoint(start); // current point for memory copy
 
-    const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
+    const Box<Dims> selectionBox = helper::StartEndBox(
+        variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     const size_t dimensions = start.size();
     bool run = true;
 
     const size_t intersectionStart =
-        LinearIndex(blockBox, intersectionBox.first, true) * sizeof(T);
+        helper::LinearIndex(blockBox, intersectionBox.first, true) * sizeof(T);
 
     while (run)
     {
         // here copy current linear memory between currentPoint and end
         const size_t contiguousStart =
-            LinearIndex(blockBox, currentPoint, true) * sizeof(T) -
+            helper::LinearIndex(blockBox, currentPoint, true) * sizeof(T) -
             intersectionStart;
 
         const size_t variableStart =
-            LinearIndex(selectionBox, currentPoint, true) * sizeof(T);
+            helper::LinearIndex(selectionBox, currentPoint, true) * sizeof(T);
 
         char *rawVariableData = reinterpret_cast<char *>(variable.m_Data);
 
@@ -427,7 +431,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonRow(
 
 template <class T>
 void BP3Deserializer::ClipContiguousMemoryCommonColumn(
-    Variable<T> &variable, const std::vector<char> &contiguousMemory,
+    core::Variable<T> &variable, const std::vector<char> &contiguousMemory,
     const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
 {
     const Dims &start = intersectionBox.first;
@@ -436,25 +440,25 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
 
     Dims currentPoint(start); // current point for memory copy
 
-    const Box<Dims> selectionBox =
-        StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
+    const Box<Dims> selectionBox = helper::StartEndBox(
+        variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     const size_t dimensions = start.size();
     bool run = true;
 
     const size_t intersectionStart =
-        LinearIndex(blockBox, intersectionBox.first, false) * sizeof(T);
+        helper::LinearIndex(blockBox, intersectionBox.first, false) * sizeof(T);
 
     while (run)
     {
 
         // here copy current linear memory between currentPoint and end
         const size_t contiguousStart =
-            LinearIndex(blockBox, currentPoint, false) * sizeof(T) -
+            helper::LinearIndex(blockBox, currentPoint, false) * sizeof(T) -
             intersectionStart;
 
         const size_t variableStart =
-            LinearIndex(selectionBox, currentPoint, false) * sizeof(T);
+            helper::LinearIndex(selectionBox, currentPoint, false) * sizeof(T);
 
         char *rawVariableData = reinterpret_cast<char *>(variable.m_Data);
 
@@ -488,14 +492,15 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
 }
 
 template <class T>
-void BP3Deserializer::SetVariableNextStepDataCommon(Variable<T> &variable) const
+void BP3Deserializer::SetVariableNextStepDataCommon(
+    core::Variable<T> &variable) const
 {
-    variable.m_Data += GetTotalSize(variable.m_Count);
+    variable.m_Data += helper::GetTotalSize(variable.m_Count);
 }
 
 template <>
 inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
-    Variable<std::string> &variable) const
+    core::Variable<std::string> &variable) const
 {
     std::string *data = variable.m_Data;
     const auto &buffer = m_Metadata.m_Buffer;
@@ -527,7 +532,7 @@ inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
 
 template <class T>
 inline void
-BP3Deserializer::GetValueFromMetadataCommon(Variable<T> &variable) const
+BP3Deserializer::GetValueFromMetadataCommon(core::Variable<T> &variable) const
 {
     T *data = variable.m_Data;
     const auto &buffer = m_Metadata.m_Buffer;

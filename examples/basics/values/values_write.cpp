@@ -64,28 +64,28 @@ int main(int argc, char *argv[])
     {
         // Get io settings from the config file or
         // create one with default settings here
-        adios2::IO &io = adios.DeclareIO("Output");
+        adios2::IO io = adios.DeclareIO("Output");
 
         /*
          * Define variables
          */
         // 1. Global constant, same value across processes, constant over time
-        adios2::Variable<int> &varNproc = io.DefineVariable<int>("Nproc");
+        adios2::Variable<int> varNproc = io.DefineVariable<int>("Nproc");
 
         // 2. Global value, same value across processes, varying value over time
-        adios2::Variable<int> &varStep = io.DefineVariable<int>("Step");
+        adios2::Variable<int> varStep = io.DefineVariable<int>("Step");
 
         // 3. Local value, varying across processes, constant over time
-        adios2::Variable<int> &varProcessID =
+        adios2::Variable<int> varProcessID =
             io.DefineVariable<int>("ProcessID", {adios2::LocalValueDim});
 
         // 4. Local value, varying across processes, varying over time
-        adios2::Variable<unsigned int> &varNparts =
+        adios2::Variable<unsigned int> varNparts =
             io.DefineVariable<unsigned int>("Nparts", {adios2::LocalValueDim});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        adios2::Engine &writer = io.Open("values.bp", adios2::Mode::Write);
+        adios2::Engine writer = io.Open("values.bp", adios2::Mode::Write);
 
         for (int step = 0; step < NSTEPS; step++)
         {
@@ -100,7 +100,9 @@ int main(int argc, char *argv[])
                 // 1. Writing a global constant value only once
                 if (step == 0)
                 {
-                    writer.Put<int>(*io.InquireVariable<int>("Nproc"), nproc);
+                    adios2::Variable<int> varNproc =
+                        io.InquireVariable<int>("Nproc");
+                    writer.Put<int>(varNproc, nproc);
                 }
                 writer.Put<int>(varStep, step);
             }

@@ -24,8 +24,8 @@ int main(int argc, char *argv[])
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     const std::size_t Nx = myFloats.size();
 
-    adios2::PluginEngine::RegisterPlugin<adios2::ExampleEnginePlugin>(
-        "MyPlugin");
+    adios2::core::engine::PluginEngine::RegisterPlugin<
+        adios2::core::engine::ExampleEnginePlugin>("MyPlugin");
 
     try
     {
@@ -34,17 +34,17 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &io = adios.DeclareIO("PluginIO");
+        adios2::IO io = adios.DeclareIO("PluginIO");
 
         /** global array: name, { shape (total dimensions) }, { start (local) },
          * { count (local) }, all are constant dimensions */
-        adios2::Variable<float> &var = io.DefineVariable<float>(
+        adios2::Variable<float> var = io.DefineVariable<float>(
             "data", {}, {}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
         io.SetEngine("PluginEngine");
         io.SetParameters({{"PluginName", "MyPlugin"}});
-        adios2::Engine &writer = io.Open("TestPlugin", adios2::Mode::Write);
+        adios2::Engine writer = io.Open("TestPlugin", adios2::Mode::Write);
 
         /** Write variable for buffering */
         writer.Put<float>(var, myFloats.data());

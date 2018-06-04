@@ -52,7 +52,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
 #else
     adios2::ADIOS adios(true);
 #endif
-    adios2::IO &io = adios.DeclareIO("TestIO");
+    adios2::IO io = adios.DeclareIO("TestIO");
 
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
@@ -76,7 +76,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
     // Create the Engine
     io.SetEngine("Sst");
 
-    adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+    adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
     for (size_t step = 0; step < NSteps; ++step)
     {
@@ -86,16 +86,16 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
-        auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-        auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-        auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-        auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-        auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-        auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-        auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-        auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-        auto &var_r32 = *io.InquireVariable<float>("r32");
-        auto &var_r64 = *io.InquireVariable<double>("r64");
+        auto var_i8 = io.InquireVariable<int8_t>("i8");
+        auto var_i16 = io.InquireVariable<int16_t>("i16");
+        auto var_i32 = io.InquireVariable<int32_t>("i32");
+        auto var_i64 = io.InquireVariable<int64_t>("i64");
+        auto var_u8 = io.InquireVariable<uint8_t>("u8");
+        auto var_u16 = io.InquireVariable<uint16_t>("u16");
+        auto var_u32 = io.InquireVariable<uint32_t>("u32");
+        auto var_u64 = io.InquireVariable<uint64_t>("u64");
+        auto var_r32 = io.InquireVariable<float>("r32");
+        auto var_r64 = io.InquireVariable<double>("r64");
 
         // Make a 1D selection to describe the local dimensions of the
         // variable we write and its offsets in the global spaces

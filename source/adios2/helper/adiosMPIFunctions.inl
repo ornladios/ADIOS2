@@ -19,6 +19,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 template <class T>
 std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
@@ -85,10 +87,11 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
     }
 
     GathervArrays(in.data(), in.size(), counts.data(), counts.size(),
-                  out.data()+position, mpiComm);
+                  out.data() + position, mpiComm);
     position += gatheredSize;
 }
 
+} // end namespace helper
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSMPIFUNCTIONS_INL_ */

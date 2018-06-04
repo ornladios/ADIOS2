@@ -36,16 +36,16 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("ReadBP");
+        adios2::IO bpIO = adios.DeclareIO("ReadBP");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpReader =
+        adios2::Engine bpReader =
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Read);
 
         const std::map<std::string, adios2::Params> variables =
-            bpIO.GetAvailableVariables();
+            bpIO.AvailableVariables();
 
-        for (const auto &variablePair : variables)
+        for (const auto variablePair : variables)
         {
             std::cout << "Name: " << variablePair.first;
 
@@ -57,14 +57,14 @@ int main(int argc, char *argv[])
         }
 
         /** Write variable for buffering */
-        adios2::Variable<float> *bpFloats =
+        adios2::Variable<float> bpFloats =
             bpIO.InquireVariable<float>("bpFloats");
-        adios2::Variable<int> *bpInts = bpIO.InquireVariable<int>("bpInts");
+        adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("bpInts");
 
-        if (bpFloats != nullptr) // means found
+        if (bpFloats) // means found
         {
             // myFloats.data is pre-allocated
-            bpReader.Get<float>(*bpFloats, myFloats.data(), adios2::Mode::Sync);
+            bpReader.Get<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
 
             std::cout << "MyFloats: \n";
             for (const auto number : myFloats)
@@ -74,10 +74,10 @@ int main(int argc, char *argv[])
             std::cout << "\n";
         }
 
-        if (bpInts != nullptr) // means not found
+        if (bpInts) // means not found
         {
             // myInts.data is pre-allocated
-            bpReader.Get<int>(*bpInts, myInts.data(), adios2::Mode::Sync);
+            bpReader.Get<int>(bpInts, myInts.data(), adios2::Mode::Sync);
 
             std::cout << "MyInts: \n";
             for (const auto number : myInts)

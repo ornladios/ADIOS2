@@ -31,6 +31,9 @@
 namespace adios2
 {
 
+namespace core
+{
+
 /** used for Variables and Attributes, name, type, type-index */
 using DataMap =
     std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
@@ -129,8 +132,7 @@ public:
     /**
      * @brief Sets a single parameter to an existing transport identified with a
      * transportIndex handler from AddTransport.
-     * This function overwrites
-     * existing parameter with the same key.
+     * This function overwrites existing parameter with the same key.
      * @param transportIndex index handler from AddTransport
      * @param key parameter key
      * @param value parameter value
@@ -473,6 +475,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_IO_H_ */

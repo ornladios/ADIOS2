@@ -23,6 +23,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 /**
  * Called inside the ADIOS XML constructors to get contents from file,
@@ -35,8 +37,10 @@ namespace adios2
  */
 void InitXML(const std::string configXML, MPI_Comm mpiComm,
              const std::string hostLanguage, const bool debugMode,
-             std::map<std::string, std::shared_ptr<Operator>> &transforms,
-             std::map<std::string, IO> &ios);
+             std::map<std::string, std::shared_ptr<core::Operator>> &transforms,
+             std::map<std::string, core::IO> &ios);
+
+} // end namespace helper
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSXML_H_ */

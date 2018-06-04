@@ -21,6 +21,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 /**
  * Opens and checks for file and dumps content to a single string.
@@ -112,6 +114,7 @@ unsigned int StringToUInt(const std::string value, const bool debugMode,
  */
 std::string DimsToString(const Dims &dimensions);
 
+} // end namespace helper
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSSTRING_H_ */

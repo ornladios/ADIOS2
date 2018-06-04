@@ -20,9 +20,11 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
 
 namespace adios2
+{
+namespace core
 {
 
 template <class T>
@@ -46,7 +48,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
     auto itVariablePair =
         variableMap.emplace(size, Variable<T>(name, shape, start, count,
                                               constantDims, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
+    m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), size));
     return itVariablePair.first->second;
 }
 
@@ -60,7 +62,7 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    if (itVariable->second.first != GetType<T>())
+    if (itVariable->second.first != helper::GetType<T>())
     {
         return nullptr;
     }
@@ -81,7 +83,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value)
 
     auto itAttributePair =
         attributeMap.emplace(size, Attribute<T>(name, value));
-    m_Attributes.emplace(name, std::make_pair(GetType<T>(), size));
+    m_Attributes.emplace(name, std::make_pair(helper::GetType<T>(), size));
 
     return itAttributePair.first->second;
 }
@@ -100,7 +102,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 
     auto itAttributePair =
         attributeMap.emplace(size, Attribute<T>(name, array, elements));
-    m_Attributes.emplace(name, std::make_pair(GetType<T>(), size));
+    m_Attributes.emplace(name, std::make_pair(helper::GetType<T>(), size));
 
     return itAttributePair.first->second;
 }
@@ -115,7 +117,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name) noexcept
         return nullptr;
     }
 
-    if (itAttribute->second.first != GetType<T>())
+    if (itAttribute->second.first != helper::GetType<T>())
     {
         return nullptr;
     }
@@ -323,6 +325,7 @@ std::map<unsigned int, Attribute<long double>> &IO::GetAttributeMap()
     return m_LDoubleA;
 }
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_IO_TCC_ */

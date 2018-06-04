@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     {
         // Get io settings from the config file or
         // create one with default settings here
-        adios2::IO &io = adios.DeclareIO("Output");
+        adios2::IO io = adios.DeclareIO("Output");
         // io.SetEngine("ADIOS1");
         // io.AddTransport("File", {{"library", "MPI"}});
 
@@ -78,12 +78,12 @@ int main(int argc, char *argv[])
          * Starting offset can be an empty vector
          * Only one global dimension can be joined
          */
-        adios2::Variable<double> &varTable = io.DefineVariable<double>(
+        adios2::Variable<double> varTable = io.DefineVariable<double>(
             "table", {adios2::JoinedDim, Ncols}, {}, {Nrows, Ncols});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        adios2::Engine &writer = io.Open("joinedArray.bp", adios2::Mode::Write);
+        adios2::Engine writer = io.Open("joinedArray.bp", adios2::Mode::Write);
 
         for (int step = 0; step < NSTEPS; step++)
         {

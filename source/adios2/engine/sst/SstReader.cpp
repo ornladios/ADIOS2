@@ -18,6 +18,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
@@ -52,7 +56,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == GetType<T>())                                             \
+    else if (Type == helper::GetType<T>())                                     \
     {                                                                          \
         Variable<T> *variable =                                                \
             &(Reader->m_IO.DefineVariable<T>(variableName));                   \
@@ -91,7 +95,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == GetType<T>())                                             \
+    else if (Type == helper::GetType<T>())                                     \
     {                                                                          \
         Variable<T> *variable = &(Reader->m_IO.DefineVariable<T>(              \
             variableName, VecShape, VecStart, VecCount));                      \
@@ -402,4 +406,6 @@ void SstReader::PerformGets()
 
 void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

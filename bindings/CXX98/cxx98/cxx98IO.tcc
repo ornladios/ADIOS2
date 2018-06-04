@@ -8,10 +8,12 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX98_CXX98_CXX98IO_TCC_
-#define BINDINGS_CXX98_CXX98_CXX98IO_TCC_
+#ifndef ADIOS2_BINDINGS_CXX98_CXX98_CXX98IO_TCC_
+#define ADIOS2_BINDINGS_CXX98_CXX98_CXX98IO_TCC_
 
 #include "cxx98IO.h"
+
+#include <adios2_c.h>
 
 namespace adios2
 {
@@ -439,4 +441,4 @@ Variable<T> IO::InquireVariable(const std::string &name)
 } // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX98_CXX98_CXX98IO_TCC_ */
+#endif /* ADIOS2_BINDINGS_CXX98_CXX98_CXX98IO_TCC_ */

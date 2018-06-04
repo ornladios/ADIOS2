@@ -32,12 +32,12 @@ The key aspects of the ADIOS2 infrastructure include:
 
    
 #. **Sustainability:** automatic nightly build, testing and continuous
-   integration to ensure the quality of the contributions in our software.  
+   integration to ensure the quality of the contributions in our software. Please report any issue on github: https://github.com/ornladios/ADIOS2/issues   
 
 
 #. **Language Support:** ADIOS2 is written in full taking advantage of the
    C++11 major standard update. In addition, it started providing bindings for
-   seamless support in Python, C and Fortran.  
+   seamless support in Python, C, Fortran and the C++98 standard.  
 
 
 #. **Commitment:** ADIOS2 is committed to the community of researchers, users

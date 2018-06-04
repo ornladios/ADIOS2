@@ -21,6 +21,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 template <class T>
 void GetMinMax(const T *values, const size_t size, T &min, T &max) noexcept
@@ -84,13 +86,13 @@ void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
         if (t == threads - 1)
         {
             getMinMaxThreads.push_back(
-                std::thread(adios2::GetMinMax<T>, &values[position], last,
+                std::thread(GetMinMax<T>, &values[position], last,
                             std::ref(mins[t]), std::ref(maxs[t])));
         }
         else
         {
             getMinMaxThreads.push_back(
-                std::thread(adios2::GetMinMax<T>, &values[position], stride,
+                std::thread(GetMinMax<T>, &values[position], stride,
                             std::ref(mins[t]), std::ref(maxs[t])));
         }
     }
@@ -208,6 +210,7 @@ inline bool GreaterThan(const T input1, const T input2) noexcept
     return false;
 }
 
+} // end namespace helper
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSMATH_INL_ */

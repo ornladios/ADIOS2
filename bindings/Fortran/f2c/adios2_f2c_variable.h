@@ -7,8 +7,8 @@
  *  Created on: Nov 12, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
-#ifndef BINDINGS_FORTRAN_F2C_ADIOS2_F2C_VARIABLE_H_
-#define BINDINGS_FORTRAN_F2C_ADIOS2_F2C_VARIABLE_H_
+#ifndef ADIOS2_BINDINGS_FORTRAN_F2C_ADIOS2_F2C_VARIABLE_H_
+#define ADIOS2_BINDINGS_FORTRAN_F2C_ADIOS2_F2C_VARIABLE_H_
 
 #include "adios2/ADIOSConfig.h"
 #include <FC.h>
@@ -37,13 +37,14 @@ void FC_GLOBAL(adios2_variable_shape_f2c,
                adios2_variable_SHAPE_F2C)(const adios2_variable **variable,
                                           int64_t *shape, int *ierr);
 
-void FC_GLOBAL(adios2_variable_available_steps_start_f2c,
-               adios2_variable_AVAILABLE_STEPS_START_F2C)(
-    const adios2_variable **variable, int64_t *steps_start, int *ierr);
+void
+    FC_GLOBAL(adios2_variable_steps_start_f2c,
+              adios2_variable_STEPS_START_F2C)(const adios2_variable **variable,
+                                               int64_t *steps_start, int *ierr);
 
-void FC_GLOBAL(adios2_variable_available_steps_count_f2c,
-               adios2_variable_AVAILABLE_STEPS_COUNT_F2C)(
-    const adios2_variable **variable, int64_t *steps_count, int *ierr);
+void FC_GLOBAL(adios2_variable_steps_f2c,
+               adios2_variable_STEPS_F2C)(const adios2_variable **variable,
+                                          int64_t *steps_count, int *ierr);
 
 void FC_GLOBAL(adios2_set_shape_f2c,
                ADIOS2_SET_SHAPE_F2C)(adios2_variable **variable,
@@ -65,4 +66,4 @@ void FC_GLOBAL(adios2_set_step_selection_f2c,
 }
 #endif
 
-#endif /* BINDINGS_FORTRAN_F2C_ADIOS2_F2C_VARIABLE_H_ */
+#endif /* ADIOS2_BINDINGS_FORTRAN_F2C_ADIOS2_F2C_VARIABLE_H_ */

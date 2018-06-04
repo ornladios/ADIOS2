@@ -20,6 +20,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
                                  const Mode mode, MPI_Comm mpiComm)
@@ -248,7 +252,7 @@ void InSituMPIReader::PerformGets()
     // bool writer_IsRowMajor = m_BP3Deserializer.m_IsRowMajor;
     // recalculate seek offsets to payload offset 0 (beginning of blocks)
     int nRequests = insitumpi::FixSeeksToZeroOffset(
-        m_ReadScheduleMap, IsRowMajor(m_IO.m_HostLanguage));
+        m_ReadScheduleMap, helper::IsRowMajor(m_IO.m_HostLanguage));
 
     if (m_CurrentStep == 0 || !m_FixedLocalSchedule)
     {
@@ -320,7 +324,7 @@ void InSituMPIReader::EndStep()
 // PRIVATE
 
 void InSituMPIReader::SendReadSchedule(
-    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo)
+    const std::map<std::string, helper::SubFileInfoMap> &variablesSubFileInfo)
 {
     const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
 
@@ -365,9 +369,10 @@ void InSituMPIReader::AsyncRecvAllVariables()
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Variable<T> *variable = m_IO.InquireVariable<T>(variablePair.first);   \
+        core::Variable<T> *variable =                                          \
+            m_IO.InquireVariable<T>(variablePair.first);                       \
         if (m_DebugMode && variable == nullptr)                                \
         {                                                                      \
             throw std::invalid_argument(                                       \
@@ -399,7 +404,8 @@ void InSituMPIReader::ProcessReceives()
                 {
                     const std::vector<char> &rawData =
                         m_OngoingReceives[index].temporaryDataArray;
-                    const SubFileInfo &sfi = m_OngoingReceives[index].sfi;
+                    const helper::SubFileInfo &sfi =
+                        m_OngoingReceives[index].sfi;
                     const std::string *name =
                         m_OngoingReceives[index].varNamePointer;
                     m_BP3Deserializer.ClipContiguousMemory(*name, m_IO, rawData,
@@ -504,4 +510,6 @@ void InSituMPIReader::DoClose(const int transportIndex)
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

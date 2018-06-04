@@ -8,14 +8,14 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_C_C_ADIOS2_C_IO_H_
-#define BINDINGS_C_C_ADIOS2_C_IO_H_
+#ifndef ADIOS2_BINDINGS_C_C_ADIOS2_C_IO_H_
+#define ADIOS2_BINDINGS_C_C_ADIOS2_C_IO_H_
 
 #include <stddef.h> //size_t
 
-#include "adios2/ADIOSMPICommOnly.h"
-
 #include "adios2_c_types.h"
+
+#include "adios2/ADIOSMPICommOnly.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -178,4 +178,4 @@ const char *adios2_io_engine_type(const adios2_io *io, size_t *length);
 } // end extern C
 #endif
 
-#endif /* BINDINGS_C_C_ADIOS2_C_IO_H_ */
+#endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_IO_H_ */

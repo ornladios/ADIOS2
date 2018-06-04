@@ -20,6 +20,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
@@ -123,6 +127,8 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     PutSyncCommon(variable, values);
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */

@@ -54,24 +54,24 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N_SZ");
+        adios2::IO bpIO = adios.DeclareIO("BPFile_N2N_SZ");
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<double> &var = bpIO.DefineVariable<double>(
+        adios2::Variable<double> var = bpIO.DefineVariable<double>(
             "var", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         // 1st way: adding transform metadata to variable to Engine can decide:
         // &adiosSZ gets mapped to bpUInts.TransformInfo[SZID].Operator
-        const unsigned int SZID = var.AddTransform(adiosSZ, {{"foo", "0.01"}});
+        const unsigned int SZID = var.AddOperator(adiosSZ, {{"foo", "0.01"}});
 
         // 2nd way: treat Transforms as wrappers to underlying library.
         // you can redefine parameters
         const std::size_t estimatedSize =
-            adiosSZ.BufferMaxSize(Nx * var.m_ElementSize);
+            adiosSZ.BufferMaxSize(Nx * var.Sizeof());
         std::vector<char> compressedBuffer(estimatedSize);
         size_t compressedSize = adiosSZ.Compress(
-            myvars.data(), var.m_Count, var.m_ElementSize, var.m_Type,
+            myvars.data(), var.Count(), var.Sizeof(), var.Type(),
             compressedBuffer.data(), {{"accuracy", "0.01"}});
 
         compressedBuffer.resize(compressedSize);
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
         std::vector<double> decompressedBuffer(Nx);
         size_t decompressedSize = adiosSZ.Decompress(
             compressedBuffer.data(), compressedSize, decompressedBuffer.data(),
-            var.m_Count, var.m_Type, var.m_OperatorsInfo[SZID].Parameters);
+            var.Count(), var.Type(), var.OperatorsInfo()[SZID].Parameters);
 
         std::cout << "Decompression summary:\n";
         std::cout << "Decompressed size: " << decompressedSize << " bytes\n";

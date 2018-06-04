@@ -5,8 +5,3 @@
 
 add_subdirectory(adios2)
 add_subdirectory(utils)
-
-install(
-  FILES adios2.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)

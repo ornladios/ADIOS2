@@ -29,6 +29,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 /** A front-end wrapper for an engine implemented outside of libadios2 */
 class PluginEngine : public Engine
@@ -91,6 +95,8 @@ private:
     std::unique_ptr<Impl> m_Impl;
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #include "PluginEngine.inl"

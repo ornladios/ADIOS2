@@ -15,9 +15,11 @@
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
-#include "adios2/helper/adiosFunctions.h" //GetTotalSize
+#include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 
 namespace adios2
+{
+namespace core
 {
 
 VariableBase::VariableBase(const std::string &name, const std::string type,
@@ -33,19 +35,19 @@ VariableBase::VariableBase(const std::string &name, const std::string type,
 
 size_t VariableBase::PayloadSize() const noexcept
 {
-    return GetTotalSize(m_Count) * m_ElementSize;
+    return helper::GetTotalSize(m_Count) * m_ElementSize;
 }
 
 size_t VariableBase::TotalSize() const noexcept
 {
-    return GetTotalSize(m_Count);
+    return helper::GetTotalSize(m_Count);
 }
 
 void VariableBase::SetShape(const adios2::Dims &shape)
 {
     if (m_DebugMode)
     {
-        if (m_Type == GetType<std::string>())
+        if (m_Type == helper::GetType<std::string>())
         {
             throw std::invalid_argument("ERROR: string variable " + m_Name +
                                         " is always LocalValue, can't change "
@@ -84,7 +86,7 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     if (m_DebugMode)
     {
-        if (m_Type == GetType<std::string>())
+        if (m_Type == helper::GetType<std::string>())
         {
             throw std::invalid_argument(
                 "ERROR: string variable " + m_Name +
@@ -186,8 +188,8 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 }
 
 // transforms related functions
-unsigned int VariableBase::AddTransform(Operator &transform,
-                                        const Params &parameters) noexcept
+unsigned int VariableBase::AddOperator(core::Operator &transform,
+                                       const Params &parameters) noexcept
 {
     m_OperatorsInfo.push_back(OperatorInfo{transform, parameters});
     return static_cast<unsigned int>(m_OperatorsInfo.size() - 1);
@@ -229,9 +231,9 @@ void VariableBase::CheckDimensions(const std::string hint) const
     // TODO need to think more exceptions here
 }
 
-size_t VariableBase::SelectionSize() const
+size_t VariableBase::SelectionSize() const noexcept
 {
-    return GetTotalSize(m_Count) * m_StepsCount;
+    return helper::GetTotalSize(m_Count) * m_StepsCount;
 }
 
 bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; };
@@ -405,4 +407,5 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
     }
 }
 
+} // end namespace core
 } // end namespace adios2

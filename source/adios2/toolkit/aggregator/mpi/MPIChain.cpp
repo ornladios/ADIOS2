@@ -11,7 +11,7 @@
 #include "MPIChain.h"
 
 #include "adios2/ADIOSMPI.h"
-#include "adios2/helper/adiosFunctions.h" //CheckMPIReturn
+#include "adios2/helper/adiosFunctions.h" //helper::CheckMPIReturn
 
 namespace adios2
 {
@@ -45,31 +45,35 @@ std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
 
     if (sender) // sender
     {
-        CheckMPIReturn(MPI_Isend(&sendBuffer.m_Position, 1, ADIOS2_MPI_SIZE_T,
-                                 m_Rank - 1, 0, m_Comm, &requests[0]),
-                       ", aggregation Isend size at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(MPI_Isend(&sendBuffer.m_Position, 1,
+                                         ADIOS2_MPI_SIZE_T, m_Rank - 1, 0,
+                                         m_Comm, &requests[0]),
+                               ", aggregation Isend size at iteration " +
+                                   std::to_string(step) + "\n");
 
-        CheckMPIReturn(MPI_Isend(sendBuffer.m_Buffer.data(),
-                                 static_cast<int>(sendBuffer.m_Position),
-                                 MPI_CHAR, m_Rank - 1, 1, m_Comm, &requests[1]),
-                       ", aggregation Isend data at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(
+            MPI_Isend(sendBuffer.m_Buffer.data(),
+                      static_cast<int>(sendBuffer.m_Position), MPI_CHAR,
+                      m_Rank - 1, 1, m_Comm, &requests[1]),
+            ", aggregation Isend data at iteration " + std::to_string(step) +
+                "\n");
     }
     // receive size, resize receiving buffer and receive data
     if (receiver)
     {
         size_t bufferSize = 0;
         MPI_Request receiveSizeRequest;
-        CheckMPIReturn(MPI_Irecv(&bufferSize, 1, ADIOS2_MPI_SIZE_T, m_Rank + 1,
-                                 0, m_Comm, &receiveSizeRequest),
-                       ", aggregation Irecv size at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(MPI_Irecv(&bufferSize, 1, ADIOS2_MPI_SIZE_T,
+                                         m_Rank + 1, 0, m_Comm,
+                                         &receiveSizeRequest),
+                               ", aggregation Irecv size at iteration " +
+                                   std::to_string(step) + "\n");
 
         MPI_Status receiveStatus;
-        CheckMPIReturn(MPI_Wait(&receiveSizeRequest, &receiveStatus),
-                       ", aggregation waiting for receiver size at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(
+            MPI_Wait(&receiveSizeRequest, &receiveStatus),
+            ", aggregation waiting for receiver size at iteration " +
+                std::to_string(step) + "\n");
 
         BufferSTL &receiveBuffer = GetReceiver(bufferSTL);
         ResizeUpdateBufferSTL(
@@ -77,11 +81,12 @@ std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
             "in aggregation, when resizing receiving buffer to size " +
                 std::to_string(bufferSize));
 
-        CheckMPIReturn(MPI_Irecv(receiveBuffer.m_Buffer.data(),
-                                 static_cast<int>(receiveBuffer.m_Position),
-                                 MPI_CHAR, m_Rank + 1, 1, m_Comm, &requests[2]),
-                       ", aggregation Irecv data at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(
+            MPI_Irecv(receiveBuffer.m_Buffer.data(),
+                      static_cast<int>(receiveBuffer.m_Position), MPI_CHAR,
+                      m_Rank + 1, 1, m_Comm, &requests[2]),
+            ", aggregation Irecv data at iteration " + std::to_string(step) +
+                "\n");
     }
 
     return requests;
@@ -96,20 +101,23 @@ void MPIChain::Wait(std::vector<MPI_Request> &requests, const int step)
     MPI_Status status;
     if (receiver)
     {
-        CheckMPIReturn(MPI_Wait(&requests[2], &status),
-                       ", aggregation waiting for receiver data at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(
+            MPI_Wait(&requests[2], &status),
+            ", aggregation waiting for receiver data at iteration " +
+                std::to_string(step) + "\n");
     }
 
     if (sender)
     {
-        CheckMPIReturn(MPI_Wait(&requests[0], &status),
-                       ", aggregation waiting for sender size at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(
+            MPI_Wait(&requests[0], &status),
+            ", aggregation waiting for sender size at iteration " +
+                std::to_string(step) + "\n");
 
-        CheckMPIReturn(MPI_Wait(&requests[1], &status),
-                       ", aggregation waiting for sender data at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(
+            MPI_Wait(&requests[1], &status),
+            ", aggregation waiting for sender data at iteration " +
+                std::to_string(step) + "\n");
     }
 }
 

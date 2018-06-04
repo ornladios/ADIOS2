@@ -21,6 +21,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 /******************************************************************************/
 
@@ -31,7 +35,7 @@ struct PluginEngine::Impl
     static Registry m_Registry;
 
     std::string m_PluginName;
-    std::unique_ptr<adios2::DynamicBinder> m_Binder;
+    std::unique_ptr<helper::DynamicBinder> m_Binder;
     EngineCreateFun m_HandleCreate;
     EngineDestroyFun m_HandleDestroy;
     PluginEngineInterface *m_Plugin = nullptr;
@@ -106,7 +110,7 @@ void PluginEngine::Init()
         }
         std::string &pluginLibrary = paramPluginLibraryIt->second;
 
-        m_Impl->m_Binder.reset(new adios2::DynamicBinder(pluginLibrary));
+        m_Impl->m_Binder.reset(new helper::DynamicBinder(pluginLibrary));
 
         m_Impl->m_HandleCreate = reinterpret_cast<EngineCreatePtr>(
             m_Impl->m_Binder->GetSymbol("EngineCreate"));
@@ -154,4 +158,6 @@ void PluginEngine::DoClose(const int transportIndex)
     m_Impl->m_Plugin->Close(transportIndex);
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

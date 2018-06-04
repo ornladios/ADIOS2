@@ -18,6 +18,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <typename T>
 void PluginEngine::RegisterPlugin(const std::string name)
@@ -31,6 +35,9 @@ void PluginEngine::RegisterPlugin(const std::string name)
 
     RegisterPlugin(name, createFun, destroyFun);
 }
+
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif // ADIOS2_ENGINE_PLUGIN_ENGINE_INL_

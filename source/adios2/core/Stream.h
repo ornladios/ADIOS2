@@ -22,6 +22,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 /**
  * Private implementation of high-level APIs
@@ -171,6 +173,7 @@ private:
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_STREAM_H_ */

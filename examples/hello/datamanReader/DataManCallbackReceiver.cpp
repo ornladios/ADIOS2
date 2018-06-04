@@ -20,9 +20,9 @@
 #include <adios2.h>
 
 // matches Signature2 in ADIOS2
-void UserCallBack(void *data, const std::string &doid, const std::string &var,
+void UserCallBack(void *data, const std::string &doid, const std::string var,
                   const std::string &dtype,
-                  const std::vector<std::size_t> &varshape)
+                  const std::vector<std::size_t> varshape)
 {
 
     std::cout << "Object : " << doid << std::endl;
@@ -52,7 +52,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
     std::cout << "Data : " << std::endl;
 
 #define declare_type(T)                                                        \
-    if (dtype == adios2::GetType<T>())                                         \
+    if (dtype == adios2::helper::GetType<T>())                                 \
     {                                                                          \
         for (size_t i = 0; i < dumpsize; ++i)                                  \
         {                                                                      \
@@ -79,13 +79,13 @@ int main(int argc, char *argv[])
     {
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
-        adios2::Operator &callbackFloat = adios.DefineOperator(
+        adios2::Operator callbackFloat = adios.DefineOperator(
             "Print float Variable callback",
             std::function<void(void *, const std::string &, const std::string &,
                                const std::string &, const adios2::Dims &)>(
                 UserCallBack));
 
-        adios2::IO &dataManIO = adios.DeclareIO("WAN");
+        adios2::IO dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters({
             {"WorkflowMode", "subscribe"},
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
                                       });
         dataManIO.AddOperator(callbackFloat); // propagate to all Engines
 
-        adios2::Engine &dataManReader =
+        adios2::Engine dataManReader =
             dataManIO.Open("stream", adios2::Mode::Read);
 
         std::this_thread::sleep_for(std::chrono::seconds(timeout));

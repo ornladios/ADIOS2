@@ -26,7 +26,7 @@ namespace format
 
 #ifdef ADIOS2_HAVE_ZFP
 template <class T>
-bool DataManSerializer::PutZfp(Variable<T> &variable, std::string doid,
+bool DataManSerializer::PutZfp(core::Variable<T> &variable, std::string doid,
                                size_t step, int rank, const Params &params)
 {
     nlohmann::json metaj;
@@ -50,7 +50,7 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, std::string doid,
     metaj["ZR"] = rate;
 
     Params p = {{"Rate", std::to_string(rate)}};
-    compress::CompressZfp zfp(p, true);
+    core::compress::CompressZfp zfp(p, true);
     m_CompressBuffer.reserve(variable.PayloadSize());
     size_t datasize;
     try
@@ -89,7 +89,7 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, std::string doid,
 #endif
 
 template <class T>
-bool DataManSerializer::PutRaw(Variable<T> &variable, std::string doid,
+bool DataManSerializer::PutRaw(core::Variable<T> &variable, std::string doid,
                                size_t step, int rank, const Params &params)
 {
     nlohmann::json metaj;
@@ -127,7 +127,7 @@ bool DataManSerializer::PutRaw(Variable<T> &variable, std::string doid,
 }
 
 template <class T>
-bool DataManSerializer::Put(Variable<T> &variable, std::string doid,
+bool DataManSerializer::Put(core::Variable<T> &variable, std::string doid,
                             size_t step, int rank, const Params &params)
 {
     auto it = params.find("CompressionMethod");
@@ -144,7 +144,7 @@ bool DataManSerializer::Put(Variable<T> &variable, std::string doid,
 }
 
 template <class T>
-int DataManDeserializer::Get(Variable<T> &variable, size_t step)
+int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
 {
 
     std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
@@ -199,7 +199,7 @@ int DataManDeserializer::Get(Variable<T> &variable, size_t step)
                 {
 #ifdef ADIOS2_HAVE_ZFP
                     Params p = {{"Rate", std::to_string(j.compressionRate)}};
-                    compress::CompressZfp zfp(p, true);
+                    core::compress::CompressZfp zfp(p, true);
                     std::vector<char> decompressBuffer;
                     decompressBuffer.reserve(variable.PayloadSize());
                     try

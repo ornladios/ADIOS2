@@ -19,6 +19,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class SkeletonReader : public Engine
 {
@@ -74,6 +78,8 @@ private:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SKELETONREADER_H_ */

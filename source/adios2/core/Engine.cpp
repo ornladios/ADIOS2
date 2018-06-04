@@ -15,6 +15,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 Engine::Engine(const std::string engineType, IO &io, const std::string &name,
                const Mode openMode, MPI_Comm mpiComm)
@@ -136,4 +138,5 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+} // end namespace core
 } // end namespace adios2

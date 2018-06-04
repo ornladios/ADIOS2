@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_FORTRAN_F2C_ADIOS2_F2C_ADIOS_H_
-#define BINDINGS_FORTRAN_F2C_ADIOS2_F2C_ADIOS_H_
+#ifndef ADIOS2_BINDINGS_FORTRAN_F2C_ADIOS2_F2C_ADIOS_H_
+#define ADIOS2_BINDINGS_FORTRAN_F2C_ADIOS2_F2C_ADIOS_H_
 
 #include "adios2/ADIOSConfig.h"
 #include <FC.h>
@@ -57,4 +57,4 @@ void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_adios **adios,
 }
 #endif
 
-#endif /* BINDINGS_FORTRAN_F2C_ADIOS2_F2C_ADIOS_H_ */
+#endif /* ADIOS2_BINDINGS_FORTRAN_F2C_ADIOS2_F2C_ADIOS_H_ */

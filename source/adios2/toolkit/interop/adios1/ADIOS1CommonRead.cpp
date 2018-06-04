@@ -36,7 +36,7 @@ ADIOS1CommonRead::~ADIOS1CommonRead()
     adios_read_finalize_method(m_ReadMethod);
 }
 
-bool ADIOS1CommonRead::Open(IO &io)
+bool ADIOS1CommonRead::Open(core::IO &io)
 {
     if (m_OpenAsFile)
     {
@@ -53,7 +53,7 @@ bool ADIOS1CommonRead::Open(IO &io)
     return (m_fh != NULL);
 }
 
-void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
+void ADIOS1CommonRead::DefineADIOS2Variable(core::IO &io, const char *name,
                                             const ADIOS_VARINFO *vi, Dims gdims,
                                             bool isJoined, bool isGlobal)
 {
@@ -118,7 +118,7 @@ void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
     }
 }
 
-void ADIOS1CommonRead::GenerateVariables(IO &io)
+void ADIOS1CommonRead::GenerateVariables(core::IO &io)
 {
     if (!m_fh)
         return;
@@ -135,7 +135,8 @@ void ADIOS1CommonRead::GenerateVariables(IO &io)
         {
             if (vi->ndim > 0)
             {
-                Dims gdims = Uint64ArrayToSizetVector(vi->ndim, vi->dims);
+                Dims gdims =
+                    helper::Uint64ArrayToSizetVector(vi->ndim, vi->dims);
 
                 bool joinedread = false;
                 if (gdims[0] == JoinedDim)
@@ -212,7 +213,7 @@ void ADIOS1CommonRead::GenerateVariables(IO &io)
     }
 }
 
-void ADIOS1CommonRead::DefineADIOS2Attribute(IO &io, const char *name,
+void ADIOS1CommonRead::DefineADIOS2Attribute(core::IO &io, const char *name,
                                              enum ADIOS_DATATYPES type,
                                              void *value)
 {
@@ -271,7 +272,7 @@ void ADIOS1CommonRead::DefineADIOS2Attribute(IO &io, const char *name,
     }
 }
 
-void ADIOS1CommonRead::GenerateAttributes(IO &io)
+void ADIOS1CommonRead::GenerateAttributes(core::IO &io)
 {
     if (!m_fh)
         return;
@@ -354,7 +355,7 @@ void ADIOS1CommonRead::PerformReads()
     adios_perform_reads(m_fh, static_cast<int>(ReadMode::Blocking));
 }
 
-StepStatus ADIOS1CommonRead::AdvanceStep(IO &io, const StepMode mode,
+StepStatus ADIOS1CommonRead::AdvanceStep(core::IO &io, const StepMode mode,
                                          const float timeout_sec)
 {
     if (m_OpenAsFile)

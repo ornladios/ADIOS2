@@ -32,12 +32,12 @@ int main(int argc, char *argv[])
         /** ADIOS class factory of IO class objects, Debug is ON by default */
         adios2::ADIOS adios(settings.configfile, mpiReaderComm);
 
-        adios2::IO &io = adios.DeclareIO("reader");
-        adios2::Engine &reader =
+        adios2::IO io = adios.DeclareIO("reader");
+        adios2::Engine reader =
             io.Open(settings.streamname, adios2::Mode::Read, mpiReaderComm);
 
         int step = 0;
-        adios2::Variable<float> *vMyArray = nullptr;
+        adios2::Variable<float> vMyArray;
         adios2::Dims count, start;
         std::vector<float> myArray;
 
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
                 // exists
                 vMyArray = io.InquireVariable<float>("myArray");
                 // now read the variable
-                if (vMyArray == nullptr)
+                if (vMyArray)
                 {
                     throw std::runtime_error(
                         "Missing 'myArray' variable. This reader "
@@ -65,20 +65,20 @@ int main(int argc, char *argv[])
                 }
 
                 // Get the read decomposition
-                settings.DecomposeArray(vMyArray->m_Shape[0],
-                                        vMyArray->m_Shape[1]);
+                settings.DecomposeArray(vMyArray.Shape()[0],
+                                        vMyArray.Shape()[1]);
                 count.push_back(settings.ndx);
                 count.push_back(settings.ndy);
                 start.push_back(settings.offsx);
                 start.push_back(settings.offsy);
 
-                vMyArray->SetSelection({start, count});
+                vMyArray.SetSelection({start, count});
                 size_t elementsSize = count[0] * count[1];
                 myArray.resize(elementsSize);
             }
 
-            if (vMyArray != nullptr)
-                reader.Get(*vMyArray, myArray.data());
+            if (vMyArray)
+                reader.Get(vMyArray, myArray.data());
 
             reader.EndStep();
 

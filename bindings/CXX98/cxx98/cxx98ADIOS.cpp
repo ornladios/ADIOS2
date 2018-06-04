@@ -10,6 +10,8 @@
 
 #include "cxx98ADIOS.h"
 
+#include <adios2_c.h>
+
 namespace adios2
 {
 namespace cxx98
@@ -24,11 +26,17 @@ ADIOS::ADIOS(const std::string &configFile, MPI_Comm comm, const bool debugMode)
 {
 }
 
-ADIOS::ADIOS(MPI_Comm comm, const bool debugMode)
-: m_ADIOS(debugMode ? adios2_init(comm, adios2_debug_mode_on)
-                    : adios2_init(comm, adios2_debug_mode_off))
+ADIOS::ADIOS(MPI_Comm comm, const bool debugMode) : ADIOS("", comm, debugMode)
 {
 }
+
+ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
+: ADIOS(configFile, MPI_COMM_SELF, debugMode)
+{
+}
+
+ADIOS::ADIOS(const bool debugMode) : ADIOS("", MPI_COMM_SELF, debugMode) {}
+
 #else
 ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
 : m_ADIOS(
@@ -45,7 +53,25 @@ ADIOS::ADIOS(const bool debugMode)
 }
 #endif
 
-ADIOS::~ADIOS() { adios2_finalize(m_ADIOS); }
+ADIOS::ADIOS(const ADIOS &adios)
+{
+    if (m_ADIOS != NULL)
+    {
+        adios2_finalize(m_ADIOS);
+    }
+    m_ADIOS = adios.m_ADIOS;
+}
+
+ADIOS::~ADIOS()
+{
+    if (m_ADIOS != NULL)
+    {
+        adios2_finalize(m_ADIOS);
+        m_ADIOS = NULL;
+    }
+}
+
+ADIOS::operator bool() const { return m_ADIOS == NULL ? false : true; }
 
 IO ADIOS::DeclareIO(const std::string &name)
 {

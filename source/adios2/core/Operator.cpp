@@ -9,9 +9,13 @@
  */
 
 #include "Operator.h"
-#include "Operator.tcc"
+
+#include "adios2/ADIOSMacros.h"
+#include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
+{
+namespace core
 {
 
 Operator::Operator(const std::string type, const Params &parameters,
@@ -57,6 +61,17 @@ size_t Operator::BufferMaxSize(const size_t sizeIn) const
     }
     return 0;
 }
+
+#define declare_type(T)                                                        \
+    template <>                                                                \
+    size_t Operator::BufferMaxSize<T>(const T *dataIn, const Dims &dimensions, \
+                                      const Params &parameters) const          \
+    {                                                                          \
+        return DoBufferMaxSize(dataIn, dimensions, helper::GetType<T>(),       \
+                               parameters);                                    \
+    }
+ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
+#undef declare_type
 
 size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
                           const size_t /*elementSize*/,
@@ -133,4 +148,5 @@ void Operator::CheckCallbackType(const std::string type) const
     }
 }
 
+} // end namespace core
 } // end namespace adios2

@@ -17,6 +17,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
@@ -31,6 +35,8 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
     GetSyncCommon(variable, data);
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMANREADER_TCC_ */

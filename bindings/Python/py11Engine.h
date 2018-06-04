@@ -16,7 +16,8 @@
 #include <memory> //std::shared_ptr
 #include <string>
 
-#include <adios2.h>
+#include "adios2/core/IO.h"
+#include "adios2/core/Variable.h"
 
 namespace adios2
 {
@@ -27,21 +28,21 @@ class Engine
 {
 
 public:
-    Engine(adios2::IO &io, const std::string &name, const Mode openMode,
+    Engine(core::IO &io, const std::string &name, const Mode openMode,
            MPI_Comm mpiComm);
 
     ~Engine() = default;
 
     StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = 0.f);
 
-    void Put(VariableBase *variable, const pybind11::array &array,
+    void Put(core::VariableBase *variable, const pybind11::array &array,
              const Mode launch = Mode::Deferred);
-    void Put(VariableBase *variable, const std::string &string);
+    void Put(core::VariableBase *variable, const std::string &string);
     void PerformPuts();
 
-    void Get(VariableBase *variable, pybind11::array &array,
+    void Get(core::VariableBase *variable, pybind11::array &array,
              const Mode launch = Mode::Deferred);
-    void Get(VariableBase *variable, std::string &string,
+    void Get(core::VariableBase *variable, std::string &string,
              const Mode launch = Mode::Deferred);
     void PerformGets();
 
@@ -54,7 +55,7 @@ public:
     size_t CurrentStep() const;
 
 private:
-    adios2::Engine &m_Engine;
+    core::Engine &m_Engine;
     const bool m_DebugMode;
 };
 

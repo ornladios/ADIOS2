@@ -54,7 +54,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
     adios2::ADIOS adios(true);
 #endif
     {
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare Single Value Attributes
         io.DefineAttribute<std::string>(s1_Single, currentTestData.S1);
@@ -74,18 +74,18 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         io.SetEngine("BPFile");
         io.AddTransport("File");
 
-        adios2::Engine &engine = io.Open(fName, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
         // only attributes are written
         engine.Close();
     }
 
     {
-        adios2::IO &ioRead = adios.DeclareIO("ioRead");
+        adios2::IO ioRead = adios.DeclareIO("ioRead");
         // ioRead.SetEngine("ADIOS1");
         // ioRead.AddTransport("File");
         // ioRead.SetParameter("OpenAsFile", "true");
 
-        adios2::Engine &bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Single);
         auto attr_i8 = ioRead.InquireAttribute<int8_t>(i8_Single);
@@ -101,79 +101,79 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         auto attr_r32 = ioRead.InquireAttribute<float>(r32_Single);
         auto attr_r64 = ioRead.InquireAttribute<double>(r64_Single);
 
-        ASSERT_NE(attr_s1, nullptr);
-        ASSERT_EQ(attr_s1->m_Name, s1_Single);
-        ASSERT_EQ(attr_s1->m_IsSingleValue, true);
-        ASSERT_EQ(attr_s1->m_Type, "string");
-        ASSERT_EQ(attr_s1->m_DataSingleValue, currentTestData.S1);
+        EXPECT_TRUE(attr_s1);
+        ASSERT_EQ(attr_s1.Name(), s1_Single);
+        ASSERT_EQ(attr_s1.Data().size() == 1, true);
+        ASSERT_EQ(attr_s1.Type(), "string");
+        ASSERT_EQ(attr_s1.Data().front(), currentTestData.S1);
 
-        ASSERT_NE(attr_i8, nullptr);
-        ASSERT_EQ(attr_i8->m_Name, i8_Single);
-        ASSERT_EQ(attr_i8->m_IsSingleValue, true);
-        ASSERT_EQ(attr_i8->m_Type, "signed char");
-        ASSERT_EQ(attr_i8->m_DataSingleValue, currentTestData.I8.front());
+        EXPECT_TRUE(attr_i8);
+        ASSERT_EQ(attr_i8.Name(), i8_Single);
+        ASSERT_EQ(attr_i8.Data().size() == 1, true);
+        ASSERT_EQ(attr_i8.Type(), "signed char");
+        ASSERT_EQ(attr_i8.Data().front(), currentTestData.I8.front());
 
-        ASSERT_NE(attr_i16, nullptr);
-        ASSERT_EQ(attr_i16->m_Name, i16_Single);
-        ASSERT_EQ(attr_i16->m_IsSingleValue, true);
-        ASSERT_EQ(attr_i16->m_Type, "short");
-        ASSERT_EQ(attr_i16->m_DataSingleValue, currentTestData.I16.front());
+        EXPECT_TRUE(attr_i16);
+        ASSERT_EQ(attr_i16.Name(), i16_Single);
+        ASSERT_EQ(attr_i16.Data().size() == 1, true);
+        ASSERT_EQ(attr_i16.Type(), "short");
+        ASSERT_EQ(attr_i16.Data().front(), currentTestData.I16.front());
 
-        ASSERT_NE(attr_i32, nullptr);
-        ASSERT_EQ(attr_i32->m_Name, i32_Single);
-        ASSERT_EQ(attr_i32->m_IsSingleValue, true);
-        ASSERT_EQ(attr_i32->m_Type, "int");
-        ASSERT_EQ(attr_i32->m_DataSingleValue, currentTestData.I32.front());
+        EXPECT_TRUE(attr_i32);
+        ASSERT_EQ(attr_i32.Name(), i32_Single);
+        ASSERT_EQ(attr_i32.Data().size() == 1, true);
+        ASSERT_EQ(attr_i32.Type(), "int");
+        ASSERT_EQ(attr_i32.Data().front(), currentTestData.I32.front());
 
-        ASSERT_NE(attr_i64, nullptr);
-        ASSERT_EQ(attr_i64->m_Name, i64_Single);
-        ASSERT_EQ(attr_i64->m_IsSingleValue, true);
+        EXPECT_TRUE(attr_i64);
+        ASSERT_EQ(attr_i64.Name(), i64_Single);
+        ASSERT_EQ(attr_i64.Data().size() == 1, true);
 #if defined(_WIN32) || defined(__APPLE__)
-        ASSERT_EQ(attr_i64->m_Type, "long long int");
+        ASSERT_EQ(attr_i64.Type(), "long long int");
 #else
-        ASSERT_EQ(attr_i64->m_Type, "long int");
+        ASSERT_EQ(attr_i64.Type(), "long int");
 #endif
-        ASSERT_EQ(attr_i64->m_DataSingleValue, currentTestData.I64.front());
+        ASSERT_EQ(attr_i64.Data().front(), currentTestData.I64.front());
 
-        ASSERT_NE(attr_u8, nullptr);
-        ASSERT_EQ(attr_u8->m_Name, u8_Single);
-        ASSERT_EQ(attr_u8->m_IsSingleValue, true);
-        ASSERT_EQ(attr_u8->m_Type, "unsigned char");
-        ASSERT_EQ(attr_u8->m_DataSingleValue, currentTestData.U8.front());
+        EXPECT_TRUE(attr_u8);
+        ASSERT_EQ(attr_u8.Name(), u8_Single);
+        ASSERT_EQ(attr_u8.Data().size() == 1, true);
+        ASSERT_EQ(attr_u8.Type(), "unsigned char");
+        ASSERT_EQ(attr_u8.Data().front(), currentTestData.U8.front());
 
-        ASSERT_NE(attr_u16, nullptr);
-        ASSERT_EQ(attr_u16->m_Name, u16_Single);
-        ASSERT_EQ(attr_u16->m_IsSingleValue, true);
-        ASSERT_EQ(attr_u16->m_Type, "unsigned short");
-        ASSERT_EQ(attr_u16->m_DataSingleValue, currentTestData.U16.front());
+        EXPECT_TRUE(attr_u16);
+        ASSERT_EQ(attr_u16.Name(), u16_Single);
+        ASSERT_EQ(attr_u16.Data().size() == 1, true);
+        ASSERT_EQ(attr_u16.Type(), "unsigned short");
+        ASSERT_EQ(attr_u16.Data().front(), currentTestData.U16.front());
 
-        ASSERT_NE(attr_u32, nullptr);
-        ASSERT_EQ(attr_u32->m_Name, u32_Single);
-        ASSERT_EQ(attr_u32->m_IsSingleValue, true);
-        ASSERT_EQ(attr_u32->m_Type, "unsigned int");
-        ASSERT_EQ(attr_u32->m_DataSingleValue, currentTestData.U32.front());
+        EXPECT_TRUE(attr_u32);
+        ASSERT_EQ(attr_u32.Name(), u32_Single);
+        ASSERT_EQ(attr_u32.Data().size() == 1, true);
+        ASSERT_EQ(attr_u32.Type(), "unsigned int");
+        ASSERT_EQ(attr_u32.Data().front(), currentTestData.U32.front());
 
-        ASSERT_NE(attr_u64, nullptr);
-        ASSERT_EQ(attr_u64->m_Name, u64_Single);
-        ASSERT_EQ(attr_u64->m_IsSingleValue, true);
+        EXPECT_TRUE(attr_u64);
+        ASSERT_EQ(attr_u64.Name(), u64_Single);
+        ASSERT_EQ(attr_u64.Data().size() == 1, true);
 #if defined(_WIN32) || defined(__APPLE__)
-        ASSERT_EQ(attr_u64->m_Type, "unsigned long long int");
+        ASSERT_EQ(attr_u64.Type(), "unsigned long long int");
 #else
-        ASSERT_EQ(attr_u64->m_Type, "unsigned long int");
+        ASSERT_EQ(attr_u64.Type(), "unsigned long int");
 #endif
-        ASSERT_EQ(attr_u64->m_DataSingleValue, currentTestData.U64.front());
+        ASSERT_EQ(attr_u64.Data().front(), currentTestData.U64.front());
 
-        ASSERT_NE(attr_r32, nullptr);
-        ASSERT_EQ(attr_r32->m_Name, r32_Single);
-        ASSERT_EQ(attr_r32->m_IsSingleValue, true);
-        ASSERT_EQ(attr_r32->m_Type, "float");
-        ASSERT_EQ(attr_r32->m_DataSingleValue, currentTestData.R32.front());
+        EXPECT_TRUE(attr_r32);
+        ASSERT_EQ(attr_r32.Name(), r32_Single);
+        ASSERT_EQ(attr_r32.Data().size() == 1, true);
+        ASSERT_EQ(attr_r32.Type(), "float");
+        ASSERT_EQ(attr_r32.Data().front(), currentTestData.R32.front());
 
-        ASSERT_NE(attr_r64, nullptr);
-        ASSERT_EQ(attr_r64->m_Name, r64_Single);
-        ASSERT_EQ(attr_r64->m_IsSingleValue, true);
-        ASSERT_EQ(attr_r64->m_Type, "double");
-        ASSERT_EQ(attr_r64->m_DataSingleValue, currentTestData.R64.front());
+        EXPECT_TRUE(attr_r64);
+        ASSERT_EQ(attr_r64.Name(), r64_Single);
+        ASSERT_EQ(attr_r64.Data().size() == 1, true);
+        ASSERT_EQ(attr_r64.Type(), "double");
+        ASSERT_EQ(attr_r64.Data().front(), currentTestData.R64.front());
 
         bpRead.Close();
     }
@@ -217,7 +217,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
     adios2::ADIOS adios(true);
 #endif
     {
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare Single Value Attributes
         io.DefineAttribute<std::string>(s1_Array, currentTestData.S3.data(),
@@ -249,15 +249,15 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         io.SetEngine("BPFile");
         io.AddTransport("file");
 
-        adios2::Engine &engine = io.Open(fName, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
         // only attributes are written
         engine.Close();
     }
 
     {
-        adios2::IO &ioRead = adios.DeclareIO("ioRead");
+        adios2::IO ioRead = adios.DeclareIO("ioRead");
 
-        adios2::Engine &bpRead = ioRead.Open(fName, adios2::Mode::Read);
+        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Array);
 
@@ -274,78 +274,78 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         auto attr_r32 = ioRead.InquireAttribute<float>(r32_Array);
         auto attr_r64 = ioRead.InquireAttribute<double>(r64_Array);
 
-        ASSERT_NE(attr_s1, nullptr);
-        ASSERT_EQ(attr_s1->m_Name, s1_Array);
-        ASSERT_EQ(attr_s1->m_IsSingleValue, false);
-        ASSERT_EQ(attr_s1->m_Type, "string");
+        EXPECT_TRUE(attr_s1);
+        ASSERT_EQ(attr_s1.Name(), s1_Array);
+        ASSERT_EQ(attr_s1.Data().size() == 1, false);
+        ASSERT_EQ(attr_s1.Type(), "string");
 
-        ASSERT_NE(attr_i8, nullptr);
-        ASSERT_EQ(attr_i8->m_Name, i8_Array);
-        ASSERT_EQ(attr_i8->m_IsSingleValue, false);
-        ASSERT_EQ(attr_i8->m_Type, "signed char");
+        EXPECT_TRUE(attr_i8);
+        ASSERT_EQ(attr_i8.Name(), i8_Array);
+        ASSERT_EQ(attr_i8.Data().size() == 1, false);
+        ASSERT_EQ(attr_i8.Type(), "signed char");
 
-        ASSERT_NE(attr_i16, nullptr);
-        ASSERT_EQ(attr_i16->m_Name, i16_Array);
-        ASSERT_EQ(attr_i16->m_IsSingleValue, false);
-        ASSERT_EQ(attr_i16->m_Type, "short");
+        EXPECT_TRUE(attr_i16);
+        ASSERT_EQ(attr_i16.Name(), i16_Array);
+        ASSERT_EQ(attr_i16.Data().size() == 1, false);
+        ASSERT_EQ(attr_i16.Type(), "short");
 
-        ASSERT_NE(attr_i32, nullptr);
-        ASSERT_EQ(attr_i32->m_Name, i32_Array);
-        ASSERT_EQ(attr_i32->m_IsSingleValue, false);
-        ASSERT_EQ(attr_i32->m_Type, "int");
+        EXPECT_TRUE(attr_i32);
+        ASSERT_EQ(attr_i32.Name(), i32_Array);
+        ASSERT_EQ(attr_i32.Data().size() == 1, false);
+        ASSERT_EQ(attr_i32.Type(), "int");
 
-        ASSERT_NE(attr_i64, nullptr);
-        ASSERT_EQ(attr_i64->m_Name, i64_Array);
-        ASSERT_EQ(attr_i64->m_IsSingleValue, false);
+        EXPECT_TRUE(attr_i64);
+        ASSERT_EQ(attr_i64.Name(), i64_Array);
+        ASSERT_EQ(attr_i64.Data().size() == 1, false);
 #if defined(_WIN32) || defined(__APPLE__)
-        ASSERT_EQ(attr_i64->m_Type, "long long int");
+        ASSERT_EQ(attr_i64.Type(), "long long int");
 #else
-        ASSERT_EQ(attr_i64->m_Type, "long int");
+        ASSERT_EQ(attr_i64.Type(), "long int");
 #endif
 
-        ASSERT_NE(attr_u8, nullptr);
-        ASSERT_EQ(attr_u8->m_Name, u8_Array);
-        ASSERT_EQ(attr_u8->m_IsSingleValue, false);
-        ASSERT_EQ(attr_u8->m_Type, "unsigned char");
+        EXPECT_TRUE(attr_u8);
+        ASSERT_EQ(attr_u8.Name(), u8_Array);
+        ASSERT_EQ(attr_u8.Data().size() == 1, false);
+        ASSERT_EQ(attr_u8.Type(), "unsigned char");
 
-        ASSERT_NE(attr_u16, nullptr);
-        ASSERT_EQ(attr_u16->m_Name, u16_Array);
-        ASSERT_EQ(attr_u16->m_IsSingleValue, false);
-        ASSERT_EQ(attr_u16->m_Type, "unsigned short");
+        EXPECT_TRUE(attr_u16);
+        ASSERT_EQ(attr_u16.Name(), u16_Array);
+        ASSERT_EQ(attr_u16.Data().size() == 1, false);
+        ASSERT_EQ(attr_u16.Type(), "unsigned short");
 
-        ASSERT_NE(attr_u32, nullptr);
-        ASSERT_EQ(attr_u32->m_Name, u32_Array);
-        ASSERT_EQ(attr_u32->m_IsSingleValue, false);
-        ASSERT_EQ(attr_u32->m_Type, "unsigned int");
+        EXPECT_TRUE(attr_u32);
+        ASSERT_EQ(attr_u32.Name(), u32_Array);
+        ASSERT_EQ(attr_u32.Data().size() == 1, false);
+        ASSERT_EQ(attr_u32.Type(), "unsigned int");
 
-        ASSERT_NE(attr_u64, nullptr);
-        ASSERT_EQ(attr_u64->m_Name, u64_Array);
-        ASSERT_EQ(attr_u64->m_IsSingleValue, false);
+        EXPECT_TRUE(attr_u64);
+        ASSERT_EQ(attr_u64.Name(), u64_Array);
+        ASSERT_EQ(attr_u64.Data().size() == 1, false);
 #if defined(_WIN32) || defined(__APPLE__)
-        ASSERT_EQ(attr_u64->m_Type, "unsigned long long int");
+        ASSERT_EQ(attr_u64.Type(), "unsigned long long int");
 #else
-        ASSERT_EQ(attr_u64->m_Type, "unsigned long int");
+        ASSERT_EQ(attr_u64.Type(), "unsigned long int");
 #endif
 
-        ASSERT_NE(attr_r32, nullptr);
-        ASSERT_EQ(attr_r32->m_Name, r32_Array);
-        ASSERT_EQ(attr_r32->m_IsSingleValue, false);
-        ASSERT_EQ(attr_r32->m_Type, "float");
+        EXPECT_TRUE(attr_r32);
+        ASSERT_EQ(attr_r32.Name(), r32_Array);
+        ASSERT_EQ(attr_r32.Data().size() == 1, false);
+        ASSERT_EQ(attr_r32.Type(), "float");
 
-        ASSERT_NE(attr_r64, nullptr);
-        ASSERT_EQ(attr_r64->m_Name, r64_Array);
-        ASSERT_EQ(attr_r64->m_IsSingleValue, false);
-        ASSERT_EQ(attr_r64->m_Type, "double");
+        EXPECT_TRUE(attr_r64);
+        ASSERT_EQ(attr_r64.Name(), r64_Array);
+        ASSERT_EQ(attr_r64.Data().size() == 1, false);
+        ASSERT_EQ(attr_r64.Type(), "double");
 
-        auto &I8 = attr_i8->m_DataArray;
-        auto &I16 = attr_i16->m_DataArray;
-        auto &I32 = attr_i32->m_DataArray;
-        auto &I64 = attr_i64->m_DataArray;
+        auto I8 = attr_i8.Data();
+        auto I16 = attr_i16.Data();
+        auto I32 = attr_i32.Data();
+        auto I64 = attr_i64.Data();
 
-        auto &U8 = attr_u8->m_DataArray;
-        auto &U16 = attr_u16->m_DataArray;
-        auto &U32 = attr_u32->m_DataArray;
-        auto &U64 = attr_u64->m_DataArray;
+        auto U8 = attr_u8.Data();
+        auto U16 = attr_u16.Data();
+        auto U32 = attr_u32.Data();
+        auto U64 = attr_u64.Data();
 
         const size_t Nx = 10;
         for (size_t i = 0; i < Nx; ++i)

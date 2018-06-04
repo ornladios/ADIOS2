@@ -8,32 +8,43 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_H_
-#define BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_H_
+#ifndef ADIOS2_BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_H_
+#define ADIOS2_BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_H_
 
 #include <string>
+#include <vector>
 
-#include <adios2_c.h>
+struct adios2_attribute;
 
 namespace adios2
 {
 namespace cxx98
 {
 
+// forward declare
+class IO;
+
 template <class T>
 class Attribute
 {
+    friend class IO;
+
 public:
-    adios2_attribute *m_Attribute;
-
-    Attribute<T>(adios2_attribute *attribute);
-
+    Attribute<T>();
     ~Attribute<T>();
 
     operator bool() const;
+
+    std::string Name() const;
+    std::string Type() const;
+    std::vector<T> Data() const;
+
+private:
+    Attribute<T>(adios2_attribute *attribute);
+    adios2_attribute *m_Attribute;
 };
 
 } // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_H_ */
+#endif /* ADIOS2_BINDINGS_CXX98_CXX98_CXX98ATTRIBUTE_H_ */

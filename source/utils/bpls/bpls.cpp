@@ -522,7 +522,7 @@ void printSettings(void)
     }
 }
 
-void bpexit(int code, Engine *fp)
+void bpexit(int code, core::Engine *fp)
 {
     if (fp != nullptr)
         fp->Close();
@@ -553,10 +553,10 @@ static inline int ndigits(size_t n)
 
 int nEntriesMatched = 0;
 
-int doList_vars(Engine *fp, IO *io)
+int doList_vars(core::Engine *fp, core::IO *io)
 {
-    const DataMap &variables = io->GetVariablesDataMap();
-    const DataMap &attributes = io->GetAttributesDataMap();
+    const core::DataMap &variables = io->GetVariablesDataMap();
+    const core::DataMap &attributes = io->GetAttributesDataMap();
 
     // make a sorted list of all variables and attributes
     EntryMap entries;
@@ -643,9 +643,9 @@ int doList_vars(Engine *fp, IO *io)
                     // not supported
                 }
 #define declare_template_instantiation(T)                                      \
-    else if (entry.typeName == adios2::GetType<T>())                           \
+    else if (entry.typeName == helper::GetType<T>())                           \
     {                                                                          \
-        Variable<T> *v = io->InquireVariable<T>(name);                         \
+        core::Variable<T> *v = io->InquireVariable<T>(name);                   \
         retval = printVariableInfo(fp, io, v);                                 \
     }
                 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
@@ -662,7 +662,8 @@ int doList_vars(Engine *fp, IO *io)
 }
 
 template <class T>
-int printVariableInfo(Engine *fp, IO *io, Variable<T> *variable)
+int printVariableInfo(core::Engine *fp, core::IO *io,
+                      core::Variable<T> *variable)
 {
     size_t nsteps = variable->GetAvailableStepsCount();
     enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
@@ -884,7 +885,7 @@ int printVariableInfo(Engine *fp, IO *io, Variable<T> *variable)
         fprintf(outf, "empty\n");                                              \
     }
 
-void printMeshes(Engine *fp)
+void printMeshes(core::Engine *fp)
 {
     fprintf(outf, "Mesh info: is not implemented in adios 2.x at the moment\n");
     return;
@@ -1079,9 +1080,9 @@ int doList(const char *path)
     if (hidden_attrs)
         strcat(init_params, ";show_hidden_attrs");
 
-    ADIOS adios(true);
-    IO &io = adios.DeclareIO("bpls");
-    Engine *fp = nullptr;
+    core::ADIOS adios(true);
+    core::IO &io = adios.DeclareIO("bpls");
+    core::Engine *fp = nullptr;
     std::vector<std::string> engineList = getEnginesList(path);
     for (auto &engineName : engineList)
     {
@@ -1348,7 +1349,7 @@ int getTypeInfo(enum ADIOS_DATATYPES adiosvartype, int *elemsize)
  * Return: 0: ok, != 0 on error
  */
 template <class T>
-int readVar(Engine *fp, IO *io, Variable<T> *variable)
+int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     int i, j;
     uint64_t start_t[MAX_DIMS],
@@ -1513,8 +1514,8 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
         }
 
         // read a slice finally
-        Dims startv = Uint64ArrayToSizetVector(tdims - tidx, s + tidx);
-        Dims countv = Uint64ArrayToSizetVector(tdims - tidx, c + tidx);
+        Dims startv = helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx);
+        Dims countv = helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx);
         if (verbose > 2)
         {
             printf("set selection: ");
@@ -1577,7 +1578,8 @@ int readVar(Engine *fp, IO *io, Variable<T> *variable)
  * Return: 0: ok, != 0 on error
  */
 template <class T>
-int readVarBlock(Engine *fp, IO *io, Variable<T> *variable, int blockid)
+int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
+                 int blockid)
 {
     int i, j;
     uint64_t start_t[MAX_DIMS],
@@ -1922,7 +1924,7 @@ void print_stop() { fclose(outf); }
 static int nextcol =
     0; // column index to start with (can have lines split in two calls)
 
-void print_slice_info(VariableBase *variable, uint64_t *s, uint64_t *c)
+void print_slice_info(core::VariableBase *variable, uint64_t *s, uint64_t *c)
 {
     // print the slice info in indexing is on and
     // not the complete variable is read
@@ -2429,7 +2431,7 @@ void print_endline(void)
 }
 
 template <class T>
-void print_decomp(Engine *fp, IO *io, Variable<T> *variable)
+void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
     // int blockid = 0;

@@ -20,6 +20,8 @@
 
 namespace adios2
 {
+namespace core
+{
 namespace compress
 {
 
@@ -374,5 +376,6 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     return static_cast<size_t>(dataSizeBytes);
 }
 
-} // end namespace transform
+} // end namespace compress
+} // end namespace core
 } // end namespace adios2

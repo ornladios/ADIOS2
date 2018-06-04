@@ -23,14 +23,15 @@ The following screen will appear providing information on the status of each fin
     3/46 Test  #3: ADIOSInterfaceWriteTest.DefineVarInt1x10 ........................   Passed    0.04 sec
     Start  4: ADIOSInterfaceWriteTest.DefineVarLong1x10
     ... 
-    44/46 Test #44: ADIOSZfpWrapper.Float100 ........................................   Passed    0.00 sec
-    Start 45: ADIOSZfpWrapper.UnsupportedCall
-    45/46 Test #45: ADIOSZfpWrapper.UnsupportedCall .................................   Passed    0.00 sec
-    Start 46: ADIOSZfpWrapper.MissingMandatoryParameter
-    46/46 Test #46: ADIOSZfpWrapper.MissingMandatoryParameter .......................   Passed    0.00 sec
+    128/130 Test #128: ADIOSZfpWrapper.UnsupportedCall ..........................................   Passed    0.05 sec
+        Start 129: ADIOSZfpWrapper.MissingMandatoryParameter
+    129/130 Test #129: ADIOSZfpWrapper.MissingMandatoryParameter ................................   Passed    0.05 sec
+        Start 130: */TestManyVars.DontRedefineVars/*
+    130/130 Test #130: */TestManyVars.DontRedefineVars/* ........................................   Passed    0.08 sec
 
-    100% tests passed, 0 tests failed out of 46
+    100% tests passed, 0 tests failed out of 130
 
-    Total Test time (real) =   2.04 sec
+    Total Test time (real) = 204.82 sec
+
 
 

@@ -15,7 +15,7 @@
 
 #include <algorithm> //std::all_of
 
-#include "adios2/helper/adiosFunctions.h" //NextExponentialSize, CopyFromBuffer
+#include "adios2/helper/adiosFunctions.h" //NextExponentialSize, helper::CopyFromBuffer
 
 namespace adios2
 {
@@ -165,8 +165,8 @@ BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
     const bool untilTimeStep) const
 {
     Characteristics<T> characteristics;
-    characteristics.EntryCount = ReadValue<uint8_t>(buffer, position);
-    characteristics.EntryLength = ReadValue<uint32_t>(buffer, position);
+    characteristics.EntryCount = helper::ReadValue<uint8_t>(buffer, position);
+    characteristics.EntryLength = helper::ReadValue<uint32_t>(buffer, position);
 
     ParseCharacteristics(buffer, position, dataType, untilTimeStep,
                          characteristics);
@@ -187,14 +187,14 @@ inline void BP3Base::ParseCharacteristics(
 
     while (localPosition < characteristics.EntryLength)
     {
-        const uint8_t id = ReadValue<uint8_t>(buffer, position);
+        const uint8_t id = helper::ReadValue<uint8_t>(buffer, position);
 
         switch (id)
         {
         case (characteristic_time_index):
         {
             characteristics.Statistics.Step =
-                ReadValue<uint32_t>(buffer, position);
+                helper::ReadValue<uint32_t>(buffer, position);
             foundTimeStep = true;
             break;
         }
@@ -202,7 +202,7 @@ inline void BP3Base::ParseCharacteristics(
         case (characteristic_file_index):
         {
             characteristics.Statistics.FileIndex =
-                ReadValue<uint32_t>(buffer, position);
+                helper::ReadValue<uint32_t>(buffer, position);
             break;
         }
 
@@ -211,8 +211,8 @@ inline void BP3Base::ParseCharacteristics(
             if (dataType == type_string)
             {
                 // first get the length of the string
-                const size_t length =
-                    static_cast<size_t>(ReadValue<uint16_t>(buffer, position));
+                const size_t length = static_cast<size_t>(
+                    helper::ReadValue<uint16_t>(buffer, position));
 
                 characteristics.Statistics.Value =
                     std::string(&buffer[position], length);
@@ -234,7 +234,7 @@ inline void BP3Base::ParseCharacteristics(
                 for (size_t e = 0; e < elements; ++e)
                 {
                     const size_t length = static_cast<size_t>(
-                        ReadValue<uint16_t>(buffer, position));
+                        helper::ReadValue<uint16_t>(buffer, position));
 
                     characteristics.Statistics.Values.push_back(
                         std::string(&buffer[position], length));
@@ -249,21 +249,21 @@ inline void BP3Base::ParseCharacteristics(
         case (characteristic_offset):
         {
             characteristics.Statistics.Offset =
-                ReadValue<uint64_t>(buffer, position);
+                helper::ReadValue<uint64_t>(buffer, position);
             break;
         }
 
         case (characteristic_payload_offset):
         {
             characteristics.Statistics.PayloadOffset =
-                ReadValue<uint64_t>(buffer, position);
+                helper::ReadValue<uint64_t>(buffer, position);
             break;
         }
 
         case (characteristic_dimensions):
         {
-            const unsigned int dimensionsSize =
-                static_cast<unsigned int>(ReadValue<uint8_t>(buffer, position));
+            const unsigned int dimensionsSize = static_cast<unsigned int>(
+                helper::ReadValue<uint8_t>(buffer, position));
 
             characteristics.Shape.reserve(dimensionsSize);
             characteristics.Start.reserve(dimensionsSize);
@@ -272,14 +272,14 @@ inline void BP3Base::ParseCharacteristics(
 
             for (unsigned int d = 0; d < dimensionsSize; ++d)
             {
-                characteristics.Count.push_back(
-                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+                characteristics.Count.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
 
-                characteristics.Shape.push_back(
-                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+                characteristics.Shape.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
 
-                characteristics.Start.push_back(
-                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+                characteristics.Start.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
             }
             break;
         }
@@ -316,15 +316,15 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
 
     while (localPosition < characteristics.EntryLength)
     {
-        const CharacteristicID id =
-            static_cast<CharacteristicID>(ReadValue<uint8_t>(buffer, position));
+        const CharacteristicID id = static_cast<CharacteristicID>(
+            helper::ReadValue<uint8_t>(buffer, position));
 
         switch (id)
         {
         case (characteristic_time_index):
         {
             characteristics.Statistics.Step =
-                ReadValue<uint32_t>(buffer, position);
+                helper::ReadValue<uint32_t>(buffer, position);
             foundTimeStep = true;
             break;
         }
@@ -332,7 +332,7 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         case (characteristic_file_index):
         {
             characteristics.Statistics.FileIndex =
-                ReadValue<uint32_t>(buffer, position);
+                helper::ReadValue<uint32_t>(buffer, position);
             break;
         }
 
@@ -342,16 +342,17 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
             if (characteristics.Count.empty() || characteristics.Count[0] == 1)
             {
                 characteristics.Statistics.Value =
-                    ReadValue<typename TypeInfo<T>::ValueType>(buffer,
-                                                               position);
+                    helper::ReadValue<typename TypeInfo<T>::ValueType>(
+                        buffer, position);
                 characteristics.Statistics.IsValue = true;
             }
             else // used for attributes
             {
                 const size_t size = characteristics.Count[0];
                 characteristics.Statistics.Values.resize(size);
-                CopyFromBuffer(buffer, position,
-                               characteristics.Statistics.Values.data(), size);
+                helper::CopyFromBuffer(buffer, position,
+                                       characteristics.Statistics.Values.data(),
+                                       size);
             }
             break;
         }
@@ -359,35 +360,37 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         case (characteristic_min):
         {
             characteristics.Statistics.Min =
-                ReadValue<typename TypeInfo<T>::ValueType>(buffer, position);
+                helper::ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                                   position);
             break;
         }
 
         case (characteristic_max):
         {
             characteristics.Statistics.Max =
-                ReadValue<typename TypeInfo<T>::ValueType>(buffer, position);
+                helper::ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                                   position);
             break;
         }
 
         case (characteristic_offset):
         {
             characteristics.Statistics.Offset =
-                ReadValue<uint64_t>(buffer, position);
+                helper::ReadValue<uint64_t>(buffer, position);
             break;
         }
 
         case (characteristic_payload_offset):
         {
             characteristics.Statistics.PayloadOffset =
-                ReadValue<uint64_t>(buffer, position);
+                helper::ReadValue<uint64_t>(buffer, position);
             break;
         }
 
         case (characteristic_dimensions):
         {
-            const unsigned int dimensionsSize =
-                static_cast<unsigned int>(ReadValue<uint8_t>(buffer, position));
+            const unsigned int dimensionsSize = static_cast<unsigned int>(
+                helper::ReadValue<uint8_t>(buffer, position));
 
             characteristics.Shape.reserve(dimensionsSize);
             characteristics.Start.reserve(dimensionsSize);
@@ -396,14 +399,14 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
 
             for (unsigned int d = 0; d < dimensionsSize; ++d)
             {
-                characteristics.Count.push_back(
-                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+                characteristics.Count.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
 
-                characteristics.Shape.push_back(
-                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+                characteristics.Shape.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
 
-                characteristics.Start.push_back(
-                    static_cast<size_t>(ReadValue<uint64_t>(buffer, position)));
+                characteristics.Start.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
             }
             // check for local variables (Start and Shape must be all zero)
             const bool emptyShape = std::all_of(
@@ -429,7 +432,7 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         case (characteristic_bitmap):
         {
             characteristics.Statistics.Bitmap =
-                std::bitset<32>(ReadValue<uint32_t>(buffer, position));
+                std::bitset<32>(helper::ReadValue<uint32_t>(buffer, position));
             break;
         }
         case (characteristic_stat):
@@ -454,33 +457,33 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
                 case (statistic_min):
                 {
                     characteristics.Statistics.Min =
-                        ReadValue<typename TypeInfo<T>::ValueType>(buffer,
-                                                                   position);
+                        helper::ReadValue<typename TypeInfo<T>::ValueType>(
+                            buffer, position);
                     break;
                 }
                 case (statistic_max):
                 {
                     characteristics.Statistics.Max =
-                        ReadValue<typename TypeInfo<T>::ValueType>(buffer,
-                                                                   position);
+                        helper::ReadValue<typename TypeInfo<T>::ValueType>(
+                            buffer, position);
                     break;
                 }
                 case (statistic_sum):
                 {
                     characteristics.Statistics.BitSum =
-                        ReadValue<double>(buffer, position);
+                        helper::ReadValue<double>(buffer, position);
                     break;
                 }
                 case (statistic_sum_square):
                 {
                     characteristics.Statistics.BitSumSquare =
-                        ReadValue<double>(buffer, position);
+                        helper::ReadValue<double>(buffer, position);
                     break;
                 }
                 case (statistic_finite):
                 {
                     characteristics.Statistics.BitFinite =
-                        ReadValue<uint8_t>(buffer, position);
+                        helper::ReadValue<uint8_t>(buffer, position);
                     break;
                 }
                 case (statistic_hist):

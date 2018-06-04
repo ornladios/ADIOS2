@@ -12,4 +12,5 @@ if(ADIOS2_HAVE_Fortran)
 endif()
 
 add_subdirectory(C)
+add_subdirectory(CXX11)
 add_subdirectory(CXX98)

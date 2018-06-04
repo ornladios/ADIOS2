@@ -22,6 +22,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
                                  const Mode mode, MPI_Comm mpiComm)
@@ -273,7 +277,7 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
         // not supported
     }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
         if (m_DebugMode && variable == nullptr)                                \
@@ -415,4 +419,6 @@ void InSituMPIWriter::DoClose(const int transportIndex)
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

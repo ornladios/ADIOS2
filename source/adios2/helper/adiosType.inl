@@ -21,6 +21,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 template <class T>
 inline std::string GetType() noexcept
@@ -285,6 +287,7 @@ void CheckForNullptr(T *pointer, const std::string hint)
     }
 }
 
+} // end namespace helper
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSTYPE_INL_ */

@@ -64,13 +64,13 @@ int main(int argc, char *argv[])
     {
         // Get io settings from the config file or
         // create one with default settings here
-        adios2::IO &io = adios.DeclareIO("Output");
+        adios2::IO io = adios.DeclareIO("Output");
 
         /*
          * Define local array: type, name, local size
          * Global dimension and starting offset must be an empty vector
          */
-        adios2::Variable<double> &varV1 =
+        adios2::Variable<double> varV1 =
             io.DefineVariable<double>("v1", {}, {}, {Nx});
 
         /*
@@ -80,12 +80,12 @@ int main(int argc, char *argv[])
          * We can use {adios2::UnknownDim} for this purpose or any number
          * but we will modify it before writing
          */
-        adios2::Variable<double> &varV2 =
+        adios2::Variable<double> varV2 =
             io.DefineVariable<double>("v2", {}, {}, {adios2::UnknownDim});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        adios2::Engine &writer = io.Open("localArray.bp", adios2::Mode::Write);
+        adios2::Engine writer = io.Open("localArray.bp", adios2::Mode::Write);
 
         for (int step = 0; step < NSTEPS; step++)
         {

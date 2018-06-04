@@ -28,25 +28,31 @@ will generate:
 
 This engine allows the user to fine tune the buffering operations through the following optional parameters: 
 
-1. **Threads**: number of threads provided from the application for buffering, use this for very large variables
+1. **Profile**: turns ON/OFF profiling information right after a run
 
-2. **InitialBufferSize**: initial memory provided for buffering (minimum is 16Kb)
+2. **CollectiveMetadata**: turns ON/OFF forming collective metadata during run (used by large scale HPC applications)
 
-3. **BufferGrowthFactor**: exponential growth factor for initial buffer > 1, default = 1.05.
+3. **Threads**: number of threads provided from the application for buffering, use this for very large variables
 
-4. **MaxBufferSize**: maximum allowable buffer size (must be larger than 16Kb). If to large adios2 will throw an exception.
+4. **InitialBufferSize**: initial memory provided for buffering (minimum is 16Kb)
 
-5. **FlushStepsCount**: user can select how often to produce the more expensive collective metadata file in terms of steps: default is 1. Increase to reduce adios2 collective operations footprint, with the trade-off of reducing checkpoint frequency. Buffer size will increase until first steps count if MaxBufferSize is not set.
+5. **BufferGrowthFactor**: exponential growth factor for initial buffer > 1, default = 1.05.
 
-=================== ===================== ==============================
- **Key**             **Value Format**      **Default** and Examples 
-=================== ===================== ==============================
- Threads             integer > 1           **1**, 2, 3, 4, 16, 32, 64 
- InitialBufferSize   float+units >= 16Kb   **16Kb**, 10Mb, 0.5Gb 
- MaxBufferSize       float+units >= 16Kb   **at EndStep**, 10Mb, 0.5Gb   
- BufferGrowthFactor  float > 1             **1.05**, 1.01, 1.5, 2 
- FlushStepsCount     integer > 1           **1** 5, 1000, 50000 
-=================== ===================== ==============================
+6. **MaxBufferSize**: maximum allowable buffer size (must be larger than 16Kb). If to large adios2 will throw an exception.
+
+7. **FlushStepsCount**: user can select how often to produce the more expensive collective metadata file in terms of steps: default is 1. Increase to reduce adios2 collective operations footprint, with the trade-off of reducing checkpoint frequency. Buffer size will increase until first steps count if MaxBufferSize is not set.
+
+==================== ===================== ==============================
+ **Key**              **Value Format**      **Default** and Examples 
+==================== ===================== ==============================
+ Profile              string ON/OFF         **ON**, OFF
+ CollectiveMetadata   string ON/OFF         **ON**, OFF 
+ Threads              integer > 1           **1**, 2, 3, 4, 16, 32, 64 
+ InitialBufferSize    float+units >= 16Kb   **16Kb**, 10Mb, 0.5Gb 
+ MaxBufferSize        float+units >= 16Kb   **at EndStep**, 10Mb, 0.5Gb   
+ BufferGrowthFactor   float > 1             **1.05**, 1.01, 1.5, 2 
+ FlushStepsCount      integer > 1           **1** 5, 1000, 50000 
+==================== ===================== ==============================
 
 
 Only file transport types are supported. Optional parameters for `IO::AddTransport` or in runtime config file transport field: 

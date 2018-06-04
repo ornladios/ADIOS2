@@ -20,6 +20,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class DataManCommon : public Engine
 {
@@ -58,6 +62,9 @@ protected:
                                           std::string protocol = "");
 
 }; // end class DataManCommon
+
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMANCOMMON_H_ */

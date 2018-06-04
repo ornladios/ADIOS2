@@ -53,7 +53,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
 #else
         adios2::ADIOS adios(true);
 #endif
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -62,24 +62,22 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
             adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
             adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
             adios2::Dims count{static_cast<unsigned int>(Nx)};
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto &var_i16 =
+            auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto &var_i32 =
+            auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto &var_i64 =
+            auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto &var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto &var_u16 =
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto &var_u32 =
+            auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto &var_u64 =
+            auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto &var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
-            auto &var_r64 =
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
@@ -93,7 +91,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
         // the cache in
         // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteADIOS1Read1D8.bp.dir,
         // then it works
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -102,16 +100,16 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-            auto &var_r32 = *io.InquireVariable<float>("r32");
-            auto &var_r64 = *io.InquireVariable<double>("r64");
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            auto var_r32 = io.InquireVariable<float>("r32");
+            auto var_r64 = io.InquireVariable<double>("r64");
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -166,61 +164,61 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8fstream)
 
         // Check the variables exist
         ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
-        ASSERT_NE(var_i8, nullptr);
+        EXPECT_TRUE(var_i8);
         ASSERT_EQ(var_i8->ndim, 1);
         ASSERT_EQ(var_i8->global, 1);
         ASSERT_EQ(var_i8->nsteps, NSteps);
         ASSERT_EQ(var_i8->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
-        ASSERT_NE(var_i16, nullptr);
+        EXPECT_TRUE(var_i16);
         ASSERT_EQ(var_i16->ndim, 1);
         ASSERT_EQ(var_i16->global, 1);
         ASSERT_EQ(var_i16->nsteps, NSteps);
         ASSERT_EQ(var_i16->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
-        ASSERT_NE(var_i32, nullptr);
+        EXPECT_TRUE(var_i32);
         ASSERT_EQ(var_i32->ndim, 1);
         ASSERT_EQ(var_i32->global, 1);
         ASSERT_EQ(var_i32->nsteps, NSteps);
         ASSERT_EQ(var_i32->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
-        ASSERT_NE(var_i64, nullptr);
+        EXPECT_TRUE(var_i64);
         ASSERT_EQ(var_i64->ndim, 1);
         ASSERT_EQ(var_i64->global, 1);
         ASSERT_EQ(var_i64->nsteps, NSteps);
         ASSERT_EQ(var_i64->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
-        ASSERT_NE(var_u8, nullptr);
+        EXPECT_TRUE(var_u8);
         ASSERT_EQ(var_u8->ndim, 1);
         ASSERT_EQ(var_u8->global, 1);
         ASSERT_EQ(var_u8->nsteps, NSteps);
         ASSERT_EQ(var_u8->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
-        ASSERT_NE(var_u16, nullptr);
+        EXPECT_TRUE(var_u16);
         ASSERT_EQ(var_u16->ndim, 1);
         ASSERT_EQ(var_u16->global, 1);
         ASSERT_EQ(var_u16->nsteps, NSteps);
         ASSERT_EQ(var_u16->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
-        ASSERT_NE(var_u32, nullptr);
+        EXPECT_TRUE(var_u32);
         ASSERT_EQ(var_u32->ndim, 1);
         ASSERT_EQ(var_u32->global, 1);
         ASSERT_EQ(var_u32->nsteps, NSteps);
         ASSERT_EQ(var_u32->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
-        ASSERT_NE(var_u64, nullptr);
+        EXPECT_TRUE(var_u64);
         ASSERT_EQ(var_u64->ndim, 1);
         ASSERT_EQ(var_u64->global, 1);
         ASSERT_EQ(var_u64->nsteps, NSteps);
         ASSERT_EQ(var_u64->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
-        ASSERT_NE(var_r32, nullptr);
+        EXPECT_TRUE(var_r32);
         ASSERT_EQ(var_r32->ndim, 1);
         ASSERT_EQ(var_r32->global, 1);
         ASSERT_EQ(var_r32->nsteps, NSteps);
         ASSERT_EQ(var_r32->dims[0], mpiSize * Nx);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
-        ASSERT_NE(var_r64, nullptr);
+        EXPECT_TRUE(var_r64);
         ASSERT_EQ(var_r64->ndim, 1);
         ASSERT_EQ(var_r64->global, 1);
         ASSERT_EQ(var_r64->nsteps, NSteps);
@@ -334,7 +332,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
 #else
         adios2::ADIOS adios(true);
 #endif
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -346,24 +344,22 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
                                static_cast<unsigned int>(mpiRank * Nx)};
             adios2::Dims count{static_cast<unsigned int>(Ny),
                                static_cast<unsigned int>(Nx)};
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto &var_i16 =
+            auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto &var_i32 =
+            auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto &var_i64 =
+            auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto &var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto &var_u16 =
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto &var_u32 =
+            auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto &var_u64 =
+            auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto &var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
-            auto &var_r64 =
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
@@ -371,7 +367,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
         io.SetEngine("BPFile");
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -380,16 +376,16 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-            auto &var_r32 = *io.InquireVariable<float>("r32");
-            auto &var_r64 = *io.InquireVariable<double>("r64");
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            auto var_r32 = io.InquireVariable<float>("r32");
+            auto var_r64 = io.InquireVariable<double>("r64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -444,70 +440,70 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4fstream)
 
         // Check the variables exist
         ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
-        ASSERT_NE(var_i8, nullptr);
+        EXPECT_TRUE(var_i8);
         ASSERT_EQ(var_i8->ndim, 2);
         ASSERT_EQ(var_i8->global, 1);
         ASSERT_EQ(var_i8->nsteps, NSteps);
         ASSERT_EQ(var_i8->dims[0], Ny);
         ASSERT_EQ(var_i8->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
-        ASSERT_NE(var_i16, nullptr);
+        EXPECT_TRUE(var_i16);
         ASSERT_EQ(var_i16->ndim, 2);
         ASSERT_EQ(var_i16->global, 1);
         ASSERT_EQ(var_i16->nsteps, NSteps);
         ASSERT_EQ(var_i16->dims[0], Ny);
         ASSERT_EQ(var_i16->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
-        ASSERT_NE(var_i32, nullptr);
+        EXPECT_TRUE(var_i32);
         ASSERT_EQ(var_i32->ndim, 2);
         ASSERT_EQ(var_i32->global, 1);
         ASSERT_EQ(var_i32->nsteps, NSteps);
         ASSERT_EQ(var_i32->dims[0], Ny);
         ASSERT_EQ(var_i32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
-        ASSERT_NE(var_i64, nullptr);
+        EXPECT_TRUE(var_i64);
         ASSERT_EQ(var_i64->ndim, 2);
         ASSERT_EQ(var_i64->global, 1);
         ASSERT_EQ(var_i64->nsteps, NSteps);
         ASSERT_EQ(var_i64->dims[0], Ny);
         ASSERT_EQ(var_i64->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
-        ASSERT_NE(var_u8, nullptr);
+        EXPECT_TRUE(var_u8);
         ASSERT_EQ(var_u8->ndim, 2);
         ASSERT_EQ(var_u8->global, 1);
         ASSERT_EQ(var_u8->nsteps, NSteps);
         ASSERT_EQ(var_u8->dims[0], Ny);
         ASSERT_EQ(var_u8->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
-        ASSERT_NE(var_u16, nullptr);
+        EXPECT_TRUE(var_u16);
         ASSERT_EQ(var_u16->ndim, 2);
         ASSERT_EQ(var_u16->global, 1);
         ASSERT_EQ(var_u16->nsteps, NSteps);
         ASSERT_EQ(var_u16->dims[0], Ny);
         ASSERT_EQ(var_u16->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
-        ASSERT_NE(var_u32, nullptr);
+        EXPECT_TRUE(var_u32);
         ASSERT_EQ(var_u32->ndim, 2);
         ASSERT_EQ(var_u32->global, 1);
         ASSERT_EQ(var_u32->nsteps, NSteps);
         ASSERT_EQ(var_u32->dims[0], Ny);
         ASSERT_EQ(var_u32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
-        ASSERT_NE(var_u64, nullptr);
+        EXPECT_TRUE(var_u64);
         ASSERT_EQ(var_u64->ndim, 2);
         ASSERT_EQ(var_u64->global, 1);
         ASSERT_EQ(var_u64->nsteps, NSteps);
         ASSERT_EQ(var_u64->dims[0], Ny);
         ASSERT_EQ(var_u64->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
-        ASSERT_NE(var_r32, nullptr);
+        EXPECT_TRUE(var_r32);
         ASSERT_EQ(var_r32->ndim, 2);
         ASSERT_EQ(var_r32->global, 1);
         ASSERT_EQ(var_r32->nsteps, NSteps);
         ASSERT_EQ(var_r32->dims[0], Ny);
         ASSERT_EQ(var_r32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
-        ASSERT_NE(var_r64, nullptr);
+        EXPECT_TRUE(var_r64);
         ASSERT_EQ(var_r64->ndim, 2);
         ASSERT_EQ(var_r64->global, 1);
         ASSERT_EQ(var_r64->nsteps, NSteps);
@@ -620,7 +616,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
 #else
         adios2::ADIOS adios(true);
 #endif
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -632,24 +628,22 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
                                static_cast<unsigned int>(mpiRank * Nx)};
             adios2::Dims count{static_cast<unsigned int>(Ny),
                                static_cast<unsigned int>(Nx)};
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto &var_i16 =
+            auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto &var_i32 =
+            auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto &var_i64 =
+            auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto &var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto &var_u16 =
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto &var_u32 =
+            auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto &var_u64 =
+            auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto &var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
-            auto &var_r64 =
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
@@ -657,7 +651,7 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
         io.SetEngine("BPFile");
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -666,16 +660,16 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-            auto &var_r32 = *io.InquireVariable<float>("r32");
-            auto &var_r64 = *io.InquireVariable<double>("r64");
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            auto var_r32 = io.InquireVariable<float>("r32");
+            auto var_r64 = io.InquireVariable<double>("r64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -730,70 +724,70 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2fstream)
 
         // Check the variables exist
         ADIOS_VARINFO *var_i8 = adios_inq_var(f, "i8");
-        ASSERT_NE(var_i8, nullptr);
+        EXPECT_TRUE(var_i8);
         ASSERT_EQ(var_i8->ndim, 2);
         ASSERT_EQ(var_i8->global, 1);
         ASSERT_EQ(var_i8->nsteps, NSteps);
         ASSERT_EQ(var_i8->dims[0], Ny);
         ASSERT_EQ(var_i8->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i16 = adios_inq_var(f, "i16");
-        ASSERT_NE(var_i16, nullptr);
+        EXPECT_TRUE(var_i16);
         ASSERT_EQ(var_i16->ndim, 2);
         ASSERT_EQ(var_i16->global, 1);
         ASSERT_EQ(var_i16->nsteps, NSteps);
         ASSERT_EQ(var_i16->dims[0], Ny);
         ASSERT_EQ(var_i16->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i32 = adios_inq_var(f, "i32");
-        ASSERT_NE(var_i32, nullptr);
+        EXPECT_TRUE(var_i32);
         ASSERT_EQ(var_i32->ndim, 2);
         ASSERT_EQ(var_i32->global, 1);
         ASSERT_EQ(var_i32->nsteps, NSteps);
         ASSERT_EQ(var_i32->dims[0], Ny);
         ASSERT_EQ(var_i32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_i64 = adios_inq_var(f, "i64");
-        ASSERT_NE(var_i64, nullptr);
+        EXPECT_TRUE(var_i64);
         ASSERT_EQ(var_i64->ndim, 2);
         ASSERT_EQ(var_i64->global, 1);
         ASSERT_EQ(var_i64->nsteps, NSteps);
         ASSERT_EQ(var_i64->dims[0], Ny);
         ASSERT_EQ(var_i64->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u8 = adios_inq_var(f, "u8");
-        ASSERT_NE(var_u8, nullptr);
+        EXPECT_TRUE(var_u8);
         ASSERT_EQ(var_u8->ndim, 2);
         ASSERT_EQ(var_u8->global, 1);
         ASSERT_EQ(var_u8->nsteps, NSteps);
         ASSERT_EQ(var_u8->dims[0], Ny);
         ASSERT_EQ(var_u8->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u16 = adios_inq_var(f, "u16");
-        ASSERT_NE(var_u16, nullptr);
+        EXPECT_TRUE(var_u16);
         ASSERT_EQ(var_u16->ndim, 2);
         ASSERT_EQ(var_u16->global, 1);
         ASSERT_EQ(var_u16->nsteps, NSteps);
         ASSERT_EQ(var_u16->dims[0], Ny);
         ASSERT_EQ(var_u16->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u32 = adios_inq_var(f, "u32");
-        ASSERT_NE(var_u32, nullptr);
+        EXPECT_TRUE(var_u32);
         ASSERT_EQ(var_u32->ndim, 2);
         ASSERT_EQ(var_u32->global, 1);
         ASSERT_EQ(var_u32->nsteps, NSteps);
         ASSERT_EQ(var_u32->dims[0], Ny);
         ASSERT_EQ(var_u32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_u64 = adios_inq_var(f, "u64");
-        ASSERT_NE(var_u64, nullptr);
+        EXPECT_TRUE(var_u64);
         ASSERT_EQ(var_u64->ndim, 2);
         ASSERT_EQ(var_u64->global, 1);
         ASSERT_EQ(var_u64->nsteps, NSteps);
         ASSERT_EQ(var_u64->dims[0], Ny);
         ASSERT_EQ(var_u64->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_r32 = adios_inq_var(f, "r32");
-        ASSERT_NE(var_r32, nullptr);
+        EXPECT_TRUE(var_r32);
         ASSERT_EQ(var_r32->ndim, 2);
         ASSERT_EQ(var_r32->global, 1);
         ASSERT_EQ(var_r32->nsteps, NSteps);
         ASSERT_EQ(var_r32->dims[0], Ny);
         ASSERT_EQ(var_r32->dims[1], mpiSize * Nx);
         ADIOS_VARINFO *var_r64 = adios_inq_var(f, "r64");
-        ASSERT_NE(var_r64, nullptr);
+        EXPECT_TRUE(var_r64);
         ASSERT_EQ(var_r64->ndim, 2);
         ASSERT_EQ(var_r64->global, 1);
         ASSERT_EQ(var_r64->nsteps, NSteps);

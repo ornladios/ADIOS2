@@ -62,19 +62,19 @@ int main(int argc, char *argv[])
     {
         // Get io settings from the config file or
         // create one with default settings here
-        adios2::IO &io = adios.DeclareIO("Output");
+        adios2::IO io = adios.DeclareIO("Output");
 
         /*
          * Define global array: type, name, global dimensions
          * The local process' part (start, count) can be defined now or later
          * before Write().
          */
-        adios2::Variable<double> &varGlobalArray =
+        adios2::Variable<double> varGlobalArray =
             io.DefineVariable<double>("GlobalArray", {(unsigned int)nproc, Nx});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
-        adios2::Engine &writer = io.Open("globalArray.bp", adios2::Mode::Write);
+        adios2::Engine writer = io.Open("globalArray.bp", adios2::Mode::Write);
 
         for (int step = 0; step < NSTEPS; step++)
         {

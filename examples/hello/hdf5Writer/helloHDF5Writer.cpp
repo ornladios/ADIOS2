@@ -36,19 +36,19 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &hdf5IO = adios.DeclareIO("HDFFileIO");
+        adios2::IO hdf5IO = adios.DeclareIO("HDFFileIO");
         hdf5IO.SetEngine("HDF5");
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> &h5Floats = hdf5IO.DefineVariable<float>(
+        adios2::Variable<float> h5Floats = hdf5IO.DefineVariable<float>(
             "h5Floats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
-        adios2::Variable<int> &h5Ints = hdf5IO.DefineVariable<int>(
+        adios2::Variable<int> h5Ints = hdf5IO.DefineVariable<int>(
             "h5Ints", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &hdf5Writer =
+        adios2::Engine hdf5Writer =
             hdf5IO.Open("myVector.h5", adios2::Mode::Write);
 
         /** Write variable for buffering */

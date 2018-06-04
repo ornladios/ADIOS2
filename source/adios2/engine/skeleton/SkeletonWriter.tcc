@@ -16,6 +16,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 void SkeletonWriter::PutSyncCommon(Variable<T> &variable,
@@ -41,6 +45,8 @@ void SkeletonWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     m_NeedPerformPuts = true;
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SKELETONWRITER_TCC_ */

@@ -21,6 +21,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 ADIOS1Writer::ADIOS1Writer(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
@@ -77,4 +81,6 @@ void ADIOS1Writer::InitTransports()
     m_ADIOS1.InitTransports(m_IO.m_TransportsParameters);
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

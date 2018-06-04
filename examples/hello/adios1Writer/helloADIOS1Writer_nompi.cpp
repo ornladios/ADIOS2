@@ -26,17 +26,17 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &adios1IO = adios.DeclareIO("ADIOS1IO");
+        adios2::IO adios1IO = adios.DeclareIO("ADIOS1IO");
         adios1IO.SetEngine("ADIOS1");
         adios1IO.AddTransport("file");
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = adios1IO.DefineVariable<float>(
+        adios2::Variable<float> bpFloats = adios1IO.DefineVariable<float>(
             "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &adios1Writer =
+        adios2::Engine adios1Writer =
             adios1IO.Open("myVector.bp", adios2::Mode::Write);
 
         /** Write variable for buffering */

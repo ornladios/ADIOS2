@@ -22,14 +22,14 @@ namespace interop
 {
 
 template <class T>
-void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
+void ADIOS1CommonRead::DefineADIOS2Variable(core::IO &io, const char *name,
                                             const ADIOS_VARINFO *vi, Dims gdims,
                                             bool isJoined, bool isGlobal)
 {
     if (vi != nullptr)
     {
         Dims zeros(gdims.size(), 0);
-        adios2::Variable<T> &var =
+        core::Variable<T> &var =
             io.DefineVariable<T>(name, gdims, zeros, gdims);
         if (vi->ndim == 0 && isGlobal)
         {
@@ -47,10 +47,10 @@ void ADIOS1CommonRead::DefineADIOS2Variable(IO &io, const char *name,
 }
 
 template <class T>
-void ADIOS1CommonRead::DefineADIOS2Attribute(IO &io, const char *name,
+void ADIOS1CommonRead::DefineADIOS2Attribute(core::IO &io, const char *name,
                                              void *value)
 {
-    adios2::Attribute<T> &attr = io.DefineAttribute<T>(
+    core::Attribute<T> &attr = io.DefineAttribute<T>(
         name, *(reinterpret_cast<typename TypeInfo<T>::ValueType *>(value)));
 }
 

@@ -18,6 +18,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
@@ -67,6 +71,8 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SST_SST_WRITER_TCC_ */

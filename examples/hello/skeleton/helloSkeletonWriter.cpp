@@ -47,14 +47,14 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(settings.configfile);
 #endif
 
-        adios2::IO &io = adios.DeclareIO("writer");
+        adios2::IO io = adios.DeclareIO("writer");
 
-        adios2::Variable<float> &varArray = io.DefineVariable<float>(
+        adios2::Variable<float> varArray = io.DefineVariable<float>(
             "myArray", {settings.gndx, settings.gndy},
             {settings.offsx, settings.offsy}, {settings.ndx, settings.ndy},
             adios2::ConstantDims);
 
-        adios2::Engine &writer =
+        adios2::Engine writer =
             io.Open(settings.streamname, adios2::Mode::Write);
 
         for (size_t step = 0; step < settings.steps; ++step)

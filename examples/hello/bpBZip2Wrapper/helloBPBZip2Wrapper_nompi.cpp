@@ -31,29 +31,29 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(adios2::DebugON);
 
         // Get a Transform of type BZip2
-        adios2::Operator &adiosBZip2 =
+        adios2::Operator adiosBZip2 =
             adios.DefineOperator("BZip2VariableCompressor", "bzip2");
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N_BZip2");
+        adios2::IO bpIO = adios.DeclareIO("BPFile_N2N_BZip2");
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<unsigned int> &bpUInts =
+        adios2::Variable<unsigned int> bpUInts =
             bpIO.DefineVariable<unsigned int>("bpUInts", {}, {}, {Nx},
                                               adios2::ConstantDims);
 
         // 1st way: adding transform metadata to variable to Engine can decide:
-        bpUInts.AddTransform(adiosBZip2, {{"BlockSize100K", "10"}});
+        bpUInts.AddOperator(adiosBZip2, {{"BlockSize100K", "10"}});
 
         // 2nd way: treat Transforms as wrappers to underlying library:
         const std::size_t estimatedSize =
-            adiosBZip2.BufferMaxSize(Nx * bpUInts.m_ElementSize);
+            adiosBZip2.BufferMaxSize(Nx * bpUInts.Sizeof());
         std::vector<char> compressedBuffer(estimatedSize);
         size_t compressedSize = adiosBZip2.Compress(
-            myUInts.data(), bpUInts.m_Count, bpUInts.m_ElementSize,
-            bpUInts.m_Type, compressedBuffer.data(), {{"BlockSize100K", "9"}});
+            myUInts.data(), bpUInts.Count(), bpUInts.Sizeof(), bpUInts.Type(),
+            compressedBuffer.data(), {{"BlockSize100K", "9"}});
 
         compressedBuffer.resize(compressedSize);
 

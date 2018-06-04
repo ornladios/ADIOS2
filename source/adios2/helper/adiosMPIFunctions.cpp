@@ -15,6 +15,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 std::vector<int> GetGathervDisplacements(const size_t *counts,
                                          const size_t countsSize)
@@ -53,4 +55,5 @@ void CheckMPIReturn(const int value, const std::string hint)
     throw std::runtime_error("ERROR: ADIOS2 detected " + error + ", " + hint);
 }
 
+} // end namespace helper
 } // end namespace adios2

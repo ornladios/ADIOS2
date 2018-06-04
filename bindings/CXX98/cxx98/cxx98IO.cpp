@@ -11,6 +11,8 @@
 #include "cxx98IO.h"
 #include "cxx98IO.tcc"
 
+#include <adios2_c.h>
+
 namespace adios2
 {
 namespace cxx98
@@ -49,13 +51,13 @@ IO::~IO() {}
 Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
 {
     return Engine(
-        *adios2_open_new_comm(&m_IO, name.c_str(), ToMode(mode), comm));
+        adios2_open_new_comm(&m_IO, name.c_str(), ToMode(mode), comm));
 }
 #endif
 
 Engine IO::Open(const std::string &name, const enum Mode mode)
 {
-    return Engine(*adios2_open(&m_IO, name.c_str(), ToMode(mode)));
+    return Engine(adios2_open(&m_IO, name.c_str(), ToMode(mode)));
 }
 
 #define declare_template_instantiation(T)                                      \

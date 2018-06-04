@@ -18,8 +18,12 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
-class BPFileWriter : public Engine
+class BPFileWriter : public core::Engine
 {
 
 public:
@@ -101,6 +105,8 @@ private:
     void AggregateWriteData(const bool isFinal, const int transportIndex = -1);
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_BP_BPFILEWRITER_H_ */

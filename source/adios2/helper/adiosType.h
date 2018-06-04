@@ -23,6 +23,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 struct SubFileInfo
 {
@@ -171,6 +173,7 @@ std::string ValueToString(const T value) noexcept;
 template <class T>
 void CheckForNullptr(T *pointer, const std::string hint);
 
+} // end namespace helper
 } // end namespace adios2
 
 #include "adiosType.inl"

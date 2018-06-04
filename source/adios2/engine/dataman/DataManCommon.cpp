@@ -12,6 +12,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 DataManCommon::DataManCommon(const std::string engineType, IO &io,
                              const std::string &name, const Mode mode,
@@ -90,4 +94,6 @@ std::vector<std::string> DataManCommon::ParseAddress(std::string input,
     return std::move(strings);
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

@@ -15,6 +15,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode,
                          MPI_Comm mpiComm)
@@ -84,7 +88,7 @@ template <class T>
 void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
 {
 
-    bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
+    bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
 
     if (!isOrderC)
     {
@@ -122,4 +126,6 @@ void HDF5WriterP::DoClose(const int transportIndex)
     m_H5File.Close();
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

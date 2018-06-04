@@ -127,7 +127,7 @@ void ADIOS1CommonWrite::InitTransports(
 bool ADIOS1CommonWrite::Open(const Mode openMode)
 {
     adios_open(&m_ADIOSFile, m_GroupName.c_str(), m_FileName.c_str(),
-               OpenModeToString(openMode, true).c_str(), m_MPIComm);
+               helper::OpenModeToString(openMode, true).c_str(), m_MPIComm);
     if (adios_errno == err_no_error)
     {
         m_IsFileOpen = true;

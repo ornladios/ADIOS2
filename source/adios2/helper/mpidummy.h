@@ -1,20 +1,21 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
+ *
+ * A dummy MPI 'implementation' for the BP READ API, to have an MPI-free version
+ * of the API
+ *
  */
 
-#ifndef ADIOS2_MPIDUMMY_H_
-#define ADIOS2_MPIDUMMY_H_
-
-/*
-   A dummy MPI 'implementation' for the BP READ API, to have an MPI-free version
-   of the API
-*/
+#ifndef ADIOS2_HELPER_MPIDUMMY_H_
+#define ADIOS2_HELPER_MPIDUMMY_H_
 
 #include <cstdint>
 #include <cstdio>
 
 namespace adios2
+{
+namespace helper
 {
 namespace mpi
 {
@@ -143,6 +144,7 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
 
 } // end namespace mpi
+} // end namespace helper
 } // end namespace adios
 
 #endif /* ADIOS2_MPIDUMMY_H_ */

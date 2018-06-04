@@ -16,6 +16,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
@@ -229,4 +233,6 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void SstWriter::DoClose(const int transportIndex) { SstWriterClose(m_Output); }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

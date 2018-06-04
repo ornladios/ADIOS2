@@ -9,6 +9,8 @@
  */
 
 #include "DataMan.tcc"
+
+#include <cstring> //std::memcpy
 #include <iostream>
 
 namespace adios2

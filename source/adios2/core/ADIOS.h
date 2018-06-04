@@ -26,6 +26,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 /** @brief Point of entry class for an application.
  *         Serves as factory of IO class objects and Transforms */
@@ -129,21 +131,6 @@ public:
      */
     Operator &DefineOperator(const std::string name, const std::string type,
                              const Params &parameters = Params());
-
-    /**
-     * Signature for passing Callback functions as operators
-     * @param name unique operator name
-     * @param function callable function
-     * @param parameters optional key-value pairs parameters
-     * @return reference to Operator object
-     * @exception std::invalid_argument if Operator with unique name is already
-     * defined, in debug mode only
-     */
-    template <class R, class... Args>
-    Operator &DefineOperator(const std::string name,
-                             const std::function<R(Args...)> &function,
-                             const Params &parameters = Params());
-
     /**
      * Retrieve a reference pointer to an existing Operator object
      * created with DefineOperator.
@@ -151,6 +138,26 @@ public:
      * ADIOS, otherwise a nullptr
      */
     Operator *InquireOperator(const std::string name) noexcept;
+
+/** define CallBack1 */
+#define declare_type(T)                                                        \
+    Operator &DefineCallBack(                                                  \
+        const std::string name,                                                \
+        const std::function<void(const T *, const std::string,                 \
+                                 const std::string, const std::string,         \
+                                 const Dims &)> &function,                     \
+        const Params &parameters);
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+    /** define CallBack2 */
+    Operator &DefineCallBack(
+        const std::string name,
+        const std::function<void(void *, const std::string &,
+                                 const std::string &, const std::string &,
+                                 const Dims &)> &function,
+        const Params &parameters);
 
 private:
     /** XML File to be read containing configuration information */
@@ -179,29 +186,10 @@ private:
     /** throws exception if m_MPIComm = MPI_COMM_NULL */
     void CheckMPI() const;
 
-/** define CallBack1 */
-#define declare_type(T)                                                        \
-    Operator &DefineCallBack(                                                  \
-        const std::string name,                                                \
-        const std::function<void(const T *, const std::string,                 \
-                                 const std::string, const std::string,         \
-                                 const Dims &)> &function,                     \
-        const Params &parameters);
-
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-
-    /** define CallBack2 */
-    Operator &DefineCallBack(
-        const std::string name,
-        const std::function<void(void *, const std::string &,
-                                 const std::string &, const std::string &,
-                                 const Dims &)> &function,
-        const Params &parameters);
+    void CheckOperator(const std::string name) const;
 };
 
+} // end namespace core
 } // end namespace adios2
-
-#include "ADIOS.inl"
 
 #endif /* ADIOS2_ADIOS_H_ */

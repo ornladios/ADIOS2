@@ -14,7 +14,7 @@ public:
 
 protected:
     adios2::ADIOS adios;
-    adios2::IO &io;
+    adios2::IO io;
 };
 
 TEST_F(ADIOSZfpWrapper, Float100)
@@ -25,29 +25,29 @@ TEST_F(ADIOSZfpWrapper, Float100)
     const std::size_t Nx = myFloats.size();
 
     // Define ADIOS variable
-    auto &var_Floats = io.DefineVariable<float>("myFloats", {}, {}, {Nx},
-                                                adios2::ConstantDims);
+    auto var_Floats = io.DefineVariable<float>("myFloats", {}, {}, {Nx},
+                                               adios2::ConstantDims);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(var_Floats),
-                                  adios2::Variable<float> &>();
+                                  adios2::Variable<float>>();
 
     // Define bzip2 transform
-    adios2::Operator &adiosZfp = adios.DefineOperator("ZfpCompressor", "Zfp");
+    adios2::Operator adiosZfp = adios.DefineOperator("ZfpCompressor", "Zfp");
 
     const unsigned int zfpID =
-        var_Floats.AddTransform(adiosZfp, {{"Rate", "8"}});
+        var_Floats.AddOperator(adiosZfp, {{"Rate", "8"}});
 
     const std::size_t estimatedSize =
-        adiosZfp.BufferMaxSize(myFloats.data(), var_Floats.m_Count,
-                               var_Floats.m_OperatorsInfo[zfpID].Parameters);
+        adiosZfp.BufferMaxSize(myFloats.data(), var_Floats.Count(),
+                               var_Floats.OperatorsInfo()[zfpID].Parameters);
 
     std::vector<char> compressedBuffer(estimatedSize);
 
     size_t compressedSize = adiosZfp.Compress(
-        myFloats.data(), var_Floats.m_Count, var_Floats.m_ElementSize,
-        var_Floats.m_Type, compressedBuffer.data(),
-        var_Floats.m_OperatorsInfo[zfpID].Parameters);
+        myFloats.data(), var_Floats.Count(), var_Floats.Sizeof(),
+        var_Floats.Type(), compressedBuffer.data(),
+        var_Floats.OperatorsInfo()[zfpID].Parameters);
 
     compressedBuffer.resize(compressedSize);
 
@@ -55,9 +55,9 @@ TEST_F(ADIOSZfpWrapper, Float100)
     std::vector<float> decompressedBuffer(Nx);
 
     adiosZfp.Decompress(compressedBuffer.data(), compressedBuffer.size(),
-                        decompressedBuffer.data(), var_Floats.m_Count,
-                        var_Floats.m_Type,
-                        var_Floats.m_OperatorsInfo[zfpID].Parameters);
+                        decompressedBuffer.data(), var_Floats.Count(),
+                        var_Floats.Type(),
+                        var_Floats.OperatorsInfo()[zfpID].Parameters);
 
     // testing data recovery for rate = 8
     for (size_t i = 0; i < Nx; ++i)
@@ -75,21 +75,21 @@ TEST_F(ADIOSZfpWrapper, UnsupportedCall)
     const std::size_t inputBytes = Nx * sizeof(float);
 
     // Define ADIOS variable
-    auto &var_Floats = io.DefineVariable<float>("myFloats", {}, {}, {Nx},
-                                                adios2::ConstantDims);
+    auto var_Floats = io.DefineVariable<float>("myFloats", {}, {}, {Nx},
+                                               adios2::ConstantDims);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(var_Floats),
-                                  adios2::Variable<float> &>();
+                                  adios2::Variable<float>>();
 
     // Define bzip2 transform
-    adios2::Operator &adiosZfp = adios.DefineOperator("ZfpCompressor", "zfp");
+    adios2::Operator adiosZfp = adios.DefineOperator("ZfpCompressor", "zfp");
 
-    var_Floats.AddTransform(adiosZfp, {{"Rate", "8"}});
+    var_Floats.AddOperator(adiosZfp, {{"Rate", "8"}});
 
     // Wrong signature for Zfp
     EXPECT_THROW(const std::size_t estimatedSize =
-                     adiosZfp.BufferMaxSize(Nx * var_Floats.m_ElementSize),
+                     adiosZfp.BufferMaxSize(Nx * var_Floats.Sizeof()),
                  std::invalid_argument);
 }
 
@@ -102,21 +102,21 @@ TEST_F(ADIOSZfpWrapper, MissingMandatoryParameter)
     const std::size_t inputBytes = Nx * sizeof(float);
 
     // Define ADIOS variable
-    auto &var_Floats = io.DefineVariable<float>("myFloats", {}, {}, {Nx},
-                                                adios2::ConstantDims);
+    auto var_Floats = io.DefineVariable<float>("myFloats", {}, {}, {Nx},
+                                               adios2::ConstantDims);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(var_Floats),
-                                  adios2::Variable<float> &>();
+                                  adios2::Variable<float>>();
 
     // Define bzip2 transform
-    adios2::Operator &adiosZfp = adios.DefineOperator("ZFPCompressor", "zfp");
+    adios2::Operator adiosZfp = adios.DefineOperator("ZFPCompressor", "zfp");
 
-    const unsigned int zfpID = var_Floats.AddTransform(adiosZfp);
+    const unsigned int zfpID = var_Floats.AddOperator(adiosZfp);
 
     EXPECT_THROW(const std::size_t estimatedSize = adiosZfp.BufferMaxSize(
-                     myFloats.data(), var_Floats.m_Count,
-                     var_Floats.m_OperatorsInfo[zfpID].Parameters),
+                     myFloats.data(), var_Floats.Count(),
+                     var_Floats.OperatorsInfo()[zfpID].Parameters),
                  std::invalid_argument);
 }
 

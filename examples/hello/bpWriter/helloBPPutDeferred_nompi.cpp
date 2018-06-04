@@ -30,20 +30,20 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+        adios2::IO bpIO = adios.DeclareIO("BPFile_N2N");
         bpIO.SetParameters({{"Threads", "2"}});
 
         /** global array : name, { shape (total) }, { start (local) }, {
          * count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
+        adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
-        adios2::Variable<int> &bpInts = bpIO.DefineVariable<int>(
+        adios2::Variable<int> bpInts = bpIO.DefineVariable<int>(
             "bpInts", {}, {}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpFileWriter =
+        adios2::Engine bpFileWriter =
             bpIO.Open("myVectorDeferred.bp", adios2::Mode::Write);
 
         /** Put variables for buffering, template type is optional */

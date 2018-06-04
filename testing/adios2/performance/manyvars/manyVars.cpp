@@ -94,10 +94,10 @@ std::vector<RunParams> CreateRunParams()
         err = 102;                                                             \
         goto endread;                                                          \
     }                                                                          \
-    if (adios2_variable_available_steps_count(vi) != NSTEPS)                   \
+    if (adios2_variable_steps(vi) != NSTEPS)                                   \
     {                                                                          \
         printE("Variable %s has %zu steps, but expected %zu\n", VARNAME,       \
-               adios2_variable_available_steps_count(vi), NSTEPS);             \
+               adios2_variable_steps(vi), NSTEPS);                             \
         err = 103;                                                             \
         /*goto endread; */                                                     \
     }
@@ -145,8 +145,8 @@ public:
 
     static const size_t ldim1 = 5;
     static const size_t ldim2 = 5;
-    size_t gdim1, gdim2;
-    size_t offs1, offs2;
+    size_t gdim1 = 0, gdim2 = 0;
+    size_t offs1 = 0, offs2 = 0;
 
     /* ADIOS2 variables to be accessed from multiple functions */
     adios2_io *ioW, *ioR;

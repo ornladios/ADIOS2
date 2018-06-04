@@ -80,7 +80,7 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
     {
         // Get transport name from user
         std::string name(baseName);
-        SetParameterValue("Name", parameters, name); // if found in map
+        helper::SetParameterValue("Name", parameters, name); // if found in map
 
         const std::string type(parameters.at("transport"));
 
@@ -276,7 +276,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                             const Params &parameters) -> std::string {
 
         std::string library(defaultLibrary);
-        SetParameterValue("Library", parameters, library);
+        helper::SetParameterValue("Library", parameters, library);
         return library;
     };
 
@@ -284,8 +284,8 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                                const Params &parameters) -> TimeUnit {
 
         std::string profileUnits(defaultTimeUnit);
-        SetParameterValue("ProfileUnits", parameters, profileUnits);
-        return StringToTimeUnit(profileUnits, m_DebugMode);
+        helper::SetParameterValue("ProfileUnits", parameters, profileUnits);
+        return helper::StringToTimeUnit(profileUnits, m_DebugMode);
     };
 
     // BODY OF FUNCTION starts here

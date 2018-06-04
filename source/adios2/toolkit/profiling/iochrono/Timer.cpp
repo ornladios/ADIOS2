@@ -19,8 +19,8 @@ namespace profiling
 
 Timer::Timer(const std::string process, const TimeUnit timeUnit,
              const bool debug)
-: m_Process(process), m_TimeUnit(timeUnit), m_LocalTimeDate(LocalTimeDate()),
-  m_DebugMode(debug)
+: m_Process(process), m_TimeUnit(timeUnit),
+  m_LocalTimeDate(helper::LocalTimeDate()), m_DebugMode(debug)
 {
 }
 

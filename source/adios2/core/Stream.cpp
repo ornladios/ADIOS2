@@ -8,12 +8,13 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "Stream.h"
-#include "Stream.tcc"
-
+#include <adios2/core/Stream.h>
+#include <adios2/core/Stream.tcc>
 #include "adios2/ADIOSMPI.h"
 
 namespace adios2
+{
+namespace core
 {
 
 Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
@@ -151,4 +152,5 @@ void Stream::ThrowIfOpen(const std::string hint) const
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+} // end namespace core
 } // end namespace adios2

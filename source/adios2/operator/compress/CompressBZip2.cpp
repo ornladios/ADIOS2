@@ -21,6 +21,8 @@
 
 namespace adios2
 {
+namespace core
+{
 namespace compress
 {
 
@@ -47,12 +49,12 @@ size_t CompressBZip2::Compress(const void *dataIn, const Dims &dimensions,
     {
         const std::string hint(" in call to CompressBZip2 Compress " + type +
                                "\n");
-        SetParameterValueInt("BlockSize100K", parameters, blockSize100k,
-                             m_DebugMode, hint);
-        SetParameterValueInt("Verbosity", parameters, verbosity, m_DebugMode,
-                             hint);
-        SetParameterValueInt("WorkFactor", parameters, workFactor, m_DebugMode,
-                             hint);
+        helper::SetParameterValueInt("BlockSize100K", parameters, blockSize100k,
+                                     m_DebugMode, hint);
+        helper::SetParameterValueInt("Verbosity", parameters, verbosity,
+                                     m_DebugMode, hint);
+        helper::SetParameterValueInt("WorkFactor", parameters, workFactor,
+                                     m_DebugMode, hint);
         if (m_DebugMode == true)
         {
 
@@ -69,7 +71,7 @@ size_t CompressBZip2::Compress(const void *dataIn, const Dims &dimensions,
     }
 
     const size_t sizeIn =
-        static_cast<size_t>(GetTotalSize(dimensions) * elementSize);
+        static_cast<size_t>(helper::GetTotalSize(dimensions) * elementSize);
     // Build inputs to BZip2 compression function
     char *dest = const_cast<char *>(reinterpret_cast<const char *>(bufferOut));
     unsigned int destLen = static_cast<unsigned int>(BufferMaxSize(sizeIn));
@@ -165,5 +167,6 @@ void CompressBZip2::CheckStatus(const int status, const std::string hint) const
     }
 }
 
-} // end namespace transform
+} // end namespace compress
+} // end namespace core
 } // end namespace adios2

@@ -24,6 +24,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 class Operator
 {
@@ -128,6 +130,7 @@ private:
     void CheckCallbackType(const std::string type) const;
 };
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_OPERATOR_H_ */

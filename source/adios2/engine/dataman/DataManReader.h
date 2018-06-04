@@ -16,6 +16,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class DataManReader : public DataManCommon
 {
@@ -41,9 +45,9 @@ public:
     size_t CurrentStep() const;
 
 private:
-    std::vector<adios2::Operator *> m_Callbacks;
+    std::vector<core::Operator *> m_Callbacks;
 
-    adios2::format::DataManDeserializer m_DataManDeserializer;
+    format::DataManDeserializer m_DataManDeserializer;
 
     bool m_Listening = false;
 
@@ -76,6 +80,8 @@ private:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_ */

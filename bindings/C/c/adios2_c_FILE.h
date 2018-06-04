@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_C_C_ADIOS2_C_FILE_H_
-#define BINDINGS_C_C_ADIOS2_C_FILE_H_
+#ifndef ADIOS2_BINDINGS_C_C_ADIOS2_C_FILE_H_
+#define ADIOS2_BINDINGS_C_C_ADIOS2_C_FILE_H_
 
 #include "adios2/ADIOSMPICommOnly.h"
 
@@ -54,4 +54,4 @@ void adios2_fclose(adios2_FILE *stream);
 } // end extern C
 #endif
 
-#endif /* BINDINGS_C_C_ADIOS2_C_FILE_H_ */
+#endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_FILE_H_ */

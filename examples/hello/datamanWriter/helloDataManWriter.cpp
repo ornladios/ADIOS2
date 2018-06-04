@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     // initialize ADIOS 2
 
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-    adios2::IO &dataManIO = adios.DeclareIO("WAN");
+    adios2::IO dataManIO = adios.DeclareIO("WAN");
 
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({{"WorkflowMode", "subscribe"}});
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     auto bpFloats =
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
 
-    adios2::Engine &dataManWriter =
+    adios2::Engine dataManWriter =
         dataManIO.Open("myFloats.bp", adios2::Mode::Write);
 
     // write data

@@ -9,13 +9,16 @@
  */
 
 #include "ADIOS1Reader.h"
-#include "ADIOS1Reader.tcc"
 
 #include <adios_error.h>
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 
 namespace adios2
+{
+namespace core
+{
+namespace engine
 {
 
 ADIOS1Reader::ADIOS1Reader(IO &io, const std::string &name, const Mode mode,
@@ -111,4 +114,6 @@ void ADIOS1Reader::InitTransports()
 
 void ADIOS1Reader::DoClose(const int transportIndex) { m_ADIOS1.Close(); }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

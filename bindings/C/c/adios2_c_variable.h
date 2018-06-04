@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_C_C_ADIOS2_C_VARIABLE_H_
-#define BINDINGS_C_C_ADIOS2_C_VARIABLE_H_
+#ifndef ADIOS2_BINDINGS_C_C_ADIOS2_C_VARIABLE_H_
+#define ADIOS2_BINDINGS_C_C_ADIOS2_C_VARIABLE_H_
 
 #include <stddef.h> //size_t
 
@@ -75,7 +75,7 @@ const size_t *adios2_variable_count(const adios2_variable *variable);
  * @param variable
  * @return available steps start
  */
-size_t adios2_variable_available_steps_start(const adios2_variable *variable);
+size_t adios2_variable_steps_start(const adios2_variable *variable);
 
 /**
  * Read API, get available steps count from available steps count
@@ -83,7 +83,7 @@ size_t adios2_variable_available_steps_start(const adios2_variable *variable);
  * @param variable
  * @return available steps count
  */
-size_t adios2_variable_available_steps_count(const adios2_variable *variable);
+size_t adios2_variable_steps(const adios2_variable *variable);
 
 /**
  * Set new dimensions: shape, start and count
@@ -151,4 +151,4 @@ void adios2_set_data(adios2_variable *variable, const void *data);
 } // end extern C
 #endif
 
-#endif /* BINDINGS_C_C_ADIOS2_C_VARIABLE_H_ */
+#endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_VARIABLE_H_ */

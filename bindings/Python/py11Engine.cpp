@@ -11,6 +11,7 @@
 #include "py11Engine.h"
 
 #include "adios2/ADIOSMacros.h"
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
 
 #include "py11types.h"
@@ -20,7 +21,7 @@ namespace adios2
 namespace py11
 {
 
-Engine::Engine(adios2::IO &io, const std::string &name, const Mode openMode,
+Engine::Engine(core::IO &io, const std::string &name, const Mode openMode,
                MPI_Comm mpiComm)
 : m_Engine(io.Open(name, openMode, mpiComm)), m_DebugMode(io.m_DebugMode)
 {
@@ -31,10 +32,10 @@ StepStatus Engine::BeginStep(const StepMode mode, const float timeoutSeconds)
     return m_Engine.BeginStep(mode, timeoutSeconds);
 }
 
-void Engine::Put(VariableBase *variable, const pybind11::array &array,
+void Engine::Put(core::VariableBase *variable, const pybind11::array &array,
                  const Mode launch)
 {
-    adios2::CheckForNullptr(variable,
+    helper::CheckForNullptr(variable,
                             "for variable, in call to Put numpy array");
 
     if (variable->m_Type == "compound")
@@ -42,9 +43,9 @@ void Engine::Put(VariableBase *variable, const pybind11::array &array,
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (variable->m_Type == GetType<T>())                                 \
+    else if (variable->m_Type == helper::GetType<T>())                         \
     {                                                                          \
-        m_Engine.Put(*dynamic_cast<adios2::Variable<T> *>(variable),           \
+        m_Engine.Put(*dynamic_cast<core::Variable<T> *>(variable),             \
                      reinterpret_cast<const T *>(array.data()), launch);       \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
@@ -61,21 +62,21 @@ void Engine::Put(VariableBase *variable, const pybind11::array &array,
     }
 }
 
-void Engine::Put(VariableBase *variable, const std::string &string)
+void Engine::Put(core::VariableBase *variable, const std::string &string)
 {
-    adios2::CheckForNullptr(variable,
+    helper::CheckForNullptr(variable,
                             "for variable, in call to PutSync string");
 
-    m_Engine.Put(*dynamic_cast<adios2::Variable<std::string> *>(variable),
+    m_Engine.Put(*dynamic_cast<core::Variable<std::string> *>(variable),
                  string);
 }
 
 void Engine::PerformPuts() { m_Engine.PerformPuts(); }
 
-void Engine::Get(VariableBase *variable, pybind11::array &array,
+void Engine::Get(core::VariableBase *variable, pybind11::array &array,
                  const Mode launch)
 {
-    adios2::CheckForNullptr(variable,
+    helper::CheckForNullptr(variable,
                             "for variable, in call to GetSync a numpy array");
 
     if (variable->m_Type == "compound")
@@ -83,9 +84,9 @@ void Engine::Get(VariableBase *variable, pybind11::array &array,
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (variable->m_Type == GetType<T>())                                 \
+    else if (variable->m_Type == helper::GetType<T>())                         \
     {                                                                          \
-        m_Engine.Get(*dynamic_cast<adios2::Variable<T> *>(variable),           \
+        m_Engine.Get(*dynamic_cast<core::Variable<T> *>(variable),             \
                      reinterpret_cast<T *>(const_cast<void *>(array.data())),  \
                      launch);                                                  \
     }
@@ -105,14 +106,15 @@ void Engine::Get(VariableBase *variable, pybind11::array &array,
     }
 }
 
-void Engine::Get(VariableBase *variable, std::string &string, const Mode launch)
+void Engine::Get(core::VariableBase *variable, std::string &string,
+                 const Mode launch)
 {
-    adios2::CheckForNullptr(variable,
+    helper::CheckForNullptr(variable,
                             "for variable, in call to GetSync a string");
 
-    if (variable->m_Type == GetType<std::string>())
+    if (variable->m_Type == helper::GetType<std::string>())
     {
-        m_Engine.Get(*dynamic_cast<adios2::Variable<std::string> *>(variable),
+        m_Engine.Get(*dynamic_cast<core::Variable<std::string> *>(variable),
                      string, launch);
     }
     else

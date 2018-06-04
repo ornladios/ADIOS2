@@ -46,16 +46,16 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(adios2::DebugON);
 #endif
 
-        adios2::IO &sstIO = adios.DeclareIO("myIO");
+        adios2::IO sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
 
-        adios2::Engine &sstReader = sstIO.Open("helloSst", adios2::Mode::Read);
+        adios2::Engine sstReader = sstIO.Open("helloSst", adios2::Mode::Read);
         sstReader.BeginStep();
-        adios2::Variable<float> *bpFloats =
+        adios2::Variable<float> bpFloats =
             sstIO.InquireVariable<float>("bpFloats");
-        std::cout << "Incoming variable is of size " << bpFloats->m_Shape[0]
+        std::cout << "Incoming variable is of size " << bpFloats.Shape()[0]
                   << "\n";
-        const std::size_t total_size = bpFloats->m_Shape[0];
+        const std::size_t total_size = bpFloats.Shape()[0];
         const std::size_t my_start = (total_size / size) * rank;
         const std::size_t my_count = (total_size / size);
         std::cout << "Reader rank " << rank << " reading " << my_count
@@ -69,8 +69,8 @@ int main(int argc, char *argv[])
         std::vector<float> myFloats;
         myFloats.resize(my_count);
 
-        bpFloats->SetSelection(sel);
-        sstReader.Get(*bpFloats, myFloats.data());
+        bpFloats.SetSelection(sel);
+        sstReader.Get(bpFloats, myFloats.data());
         sstReader.EndStep();
 
         sstReader.Close();

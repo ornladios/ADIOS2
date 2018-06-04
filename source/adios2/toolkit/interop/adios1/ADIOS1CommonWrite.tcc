@@ -39,7 +39,8 @@ void ADIOS1CommonWrite::WriteVariable(const std::string &name,
         else
         {
             throw std::invalid_argument("ERROR: ADIOS1 doesn't support type " +
-                                        GetType<T>() + ", in call to Write\n");
+                                        helper::GetType<T>() +
+                                        ", in call to Write\n");
         }
     }
 }

@@ -8,30 +8,38 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX98_CXX98_CXX98IO_H_
-#define BINDINGS_CXX98_CXX98_CXX98IO_H_
+#ifndef ADIOS2_BINDINGS_CXX98_CXX98_CXX98IO_H_
+#define ADIOS2_BINDINGS_CXX98_CXX98_CXX98IO_H_
 
 #include <cstddef>
 #include <string>
 #include <vector>
-
-#include <adios2_c.h>
 
 #include "cxx98Attribute.h"
 #include "cxx98Engine.h"
 #include "cxx98Variable.h"
 #include "cxx98types.h"
 
+#include "adios2/ADIOSConfig.h"
+
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
+
+struct adios2_io;
+
 namespace adios2
 {
 namespace cxx98
 {
 
+class ADIOS;
+
 class IO
 {
-public:
-    IO(adios2_io &io);
+    friend class ADIOS;
 
+public:
     ~IO();
 
     template <class T>
@@ -54,7 +62,7 @@ public:
      */
     template <class T>
     Attribute<T> DefineAttribute(const std::string &name, const T *array,
-                                 const size_t elements);
+                                 const size_t size);
 
     /**
      * @brief Define single value attribute
@@ -83,6 +91,7 @@ public:
     Engine Open(const std::string &name, const Mode mode);
 
 private:
+    IO(adios2_io &io);
     adios2_io &m_IO;
 };
 
@@ -96,4 +105,4 @@ ADIOS2_FOREACH_CXX98_TYPE_1ARG(declare_template_instantiation)
 } // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX98_CXX98_CXX98IO_H_ */
+#endif /* ADIOS2_BINDINGS_CXX98_CXX98_CXX98IO_H_ */
