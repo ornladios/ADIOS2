@@ -68,7 +68,7 @@ void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
         it = m_IO.m_TransportsParameters[i].find("CompressionRate");
         if (it != m_IO.m_TransportsParameters[i].end())
         {
-            streamName += it->second + "\% Original Size";
+            streamName += it->second + "%% Original Size";
         }
 
         m_DataManSerializer[i]->Put(variable, streamName, CurrentStep(),
