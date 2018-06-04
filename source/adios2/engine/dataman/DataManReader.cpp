@@ -86,18 +86,6 @@ void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
 
 size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
-void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
-{
-    while (m_Listening)
-    {
-        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
-        if (buffer != nullptr)
-        {
-            m_DataManDeserializer.Put(buffer);
-        }
-    }
-}
-
 void DataManReader::PerformGets() {}
 
 // PRIVATE
@@ -115,8 +103,8 @@ void DataManReader::Init()
     }
 
     GetBoolParameter(m_IO.m_Parameters, "Synchronous", m_Synchronous);
-    GetStringParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
-    if (m_TransportMode == "subscribe")
+    GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
+    if (m_WorkflowMode == "subscribe")
     {
         m_Synchronous = false;
     }
@@ -125,7 +113,7 @@ void DataManReader::Init()
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
     for (auto &i : m_IO.m_TransportsParameters)
     {
-        i["TransportMode"] = m_TransportMode;
+        i["WorkflowMode"] = m_WorkflowMode;
     }
     size_t channels = m_IO.m_TransportsParameters.size();
     std::vector<std::string> names;
@@ -142,23 +130,64 @@ void DataManReader::Init()
     m_Listening = true;
     m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
                                                  m_DataMan);
-
-    //        m_ControlThread = std::make_shared<std::thread>(
-    //            std::thread(&DataManReader::IOThread, this, m_ControlMan));
 }
 
-void DataManReader::RunCallback(void *buffer, std::string doid, std::string var,
-                                std::string dtype, std::vector<size_t> shape)
+void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
 {
-    for (auto &i : m_Callbacks)
+    while (m_Listening)
     {
-        if (i != nullptr)
+        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN(0);
+        if (buffer != nullptr)
         {
-            if (i->m_Type == "Signature2")
-            {
-                i->RunCallback2(buffer, doid, var, dtype, shape);
-            }
+            m_DataManDeserializer.Put(buffer);
         }
+        if (m_Callbacks.empty() == false)
+        {
+            RunCallback();
+        }
+    }
+}
+
+void DataManReader::RunCallback()
+{
+    for (size_t step = m_DataManDeserializer.MinStep();
+         step <= m_DataManDeserializer.MaxStep(); ++step)
+    {
+        std::vector<format::DataManDeserializer::DataManVar> varList;
+        m_DataManDeserializer.GetVarList(step, varList);
+        for (auto &i : varList)
+        {
+
+            if (i.type == "compound")
+            {
+                throw("Compound type is not supported yet.");
+            }
+#define declare_type(T)                                                        \
+    else if (i.type == GetType<T>())                                           \
+    {                                                                          \
+        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
+        if (v == nullptr)                                                      \
+        {                                                                      \
+            Dims start(i.shape.size(), 0);                                     \
+            Dims count = i.shape;                                              \
+            m_IO.DefineVariable<T>(i.name, i.shape, start, count);             \
+            v = m_IO.InquireVariable<T>(i.name);                               \
+        }                                                                      \
+        size_t datasize =                                                      \
+            std::accumulate(v->m_Count.begin(), v->m_Count.end(), sizeof(T),   \
+                            std::multiplies<size_t>());                        \
+        std::vector<T> varData(datasize, std::numeric_limits<T>::quiet_NaN()); \
+        v->SetData(varData.data());                                            \
+        m_DataManDeserializer.Get(*v, step);                                   \
+        for (auto &j : m_Callbacks)                                            \
+        {                                                                      \
+            j->RunCallback2(varData.data(), i.doid, i.name, i.type, i.shape);  \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+        }
+        m_DataManDeserializer.Erase(step);
     }
 }
 
@@ -183,7 +212,7 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
 
     while (m_Listening)
     {
-        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN();
+        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN(0);
         if (buffer != nullptr)
         {
             if (buffer->size() > 0)
@@ -236,7 +265,6 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
                 v->SetStepSelection({step.first - 1, 1});                      \
                 deserializer.GetSyncVariableDataFromStream(                    \
                     *v, deserializer.m_Data);                                  \
-                RunCallback(v->GetData(), "stream", var, type, v->m_Shape);    \
             }                                                                  \
         }                                                                      \
     }

@@ -31,16 +31,16 @@ public:
     const std::shared_ptr<std::vector<char>> Get();
 
     template <class T>
-    bool Put(Variable<T> &variable, size_t step, int rank,
+    bool Put(Variable<T> &variable, std::string doid, size_t step, int rank,
              const Params &params);
 
     template <class T>
-    bool PutRaw(Variable<T> &variable, size_t step, int rank,
+    bool PutRaw(Variable<T> &variable, std::string doid, size_t step, int rank,
                 const Params &params);
 
 #ifdef ADIOS2_HAVE_ZFP
     template <class T>
-    bool PutZfp(Variable<T> &variable, size_t step, int rank,
+    bool PutZfp(Variable<T> &variable, std::string doid, size_t step, int rank,
                 const Params &params);
 #endif
 
@@ -65,6 +65,7 @@ public:
         Dims count;
         Dims start;
         std::string name;
+        std::string doid;
         std::string type;
         size_t step;
         size_t size;
@@ -74,11 +75,10 @@ public:
         std::string compression;
         float compressionRate;
     };
+    bool GetVarList(size_t step, std::vector<DataManVar> &varList);
     const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
 
 private:
-    bool BufferContainsSteps(int index, size_t begin, size_t end);
-
     bool GetOverlap(const Box<Dims> &b1, const Box<Dims> &b2, Box<Dims> &o);
     bool IsContinuous(const Box<Dims> &inner, const Box<Dims> &outer);
     Dims GetRelativePosition(const Dims &inner, const Dims &outer);
@@ -89,6 +89,8 @@ private:
                            const Box<Dims> &srcbox, const size_t size,
                            const Box<Dims> &overlapBox);
     void PrintBox(const Box<Dims> in, std::string name);
+
+    bool BufferContainsSteps(int index, size_t begin, size_t end);
 
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
         m_MetaDataMap;

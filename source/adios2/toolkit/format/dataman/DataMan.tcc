@@ -26,8 +26,8 @@ namespace format
 
 #ifdef ADIOS2_HAVE_ZFP
 template <class T>
-bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
-                               const Params &params)
+bool DataManSerializer::PutZfp(Variable<T> &variable, std::string doid,
+                               size_t step, int rank, const Params &params)
 {
     nlohmann::json metaj;
 
@@ -38,38 +38,30 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
     metaj["O"] = variable.m_Start;
     metaj["T"] = step;
     metaj["R"] = rank;
+    metaj["D"] = doid;
+    metaj["Z"] = "zfp";
 
-    size_t datasize;
-
-    auto it = params.find("CompressionMethod");
+    float rate = 2;
+    const auto it = params.find("CompressionRate");
     if (it != params.end())
     {
-        std::string method = it->second;
-        float rate = 2;
-        metaj["Z"] = method;
-        it = params.find("CompressionRate");
-        if (it != params.end())
-        {
-            rate = stof(it->second);
-            metaj["ZR"] = rate;
-        }
+        rate = stof(it->second);
+    }
+    metaj["ZR"] = rate;
 
-        if (method == "zfp")
-        {
-            Params p = {{"Rate", std::to_string(rate)}};
-            compress::CompressZfp zfp(p, true);
-            m_CompressBuffer.reserve(variable.PayloadSize());
-            try
-            {
-                datasize =
-                    zfp.Compress(variable.GetData(), variable.m_Count, 4,
-                                 variable.m_Type, m_CompressBuffer.data(), p);
-            }
-            catch (std::exception &e)
-            {
-                return PutRaw(variable, step, rank, params);
-            }
-        }
+    Params p = {{"Rate", std::to_string(rate)}};
+    compress::CompressZfp zfp(p, true);
+    m_CompressBuffer.reserve(variable.PayloadSize());
+    size_t datasize;
+    try
+    {
+        datasize = zfp.Compress(variable.GetData(), variable.m_Count, 4,
+                                variable.m_Type, m_CompressBuffer.data(), p);
+    }
+    catch (std::exception &e)
+    {
+        std::cout << e.what() << std::endl;
+        return PutRaw(variable, doid, step, rank, params);
     }
     metaj["I"] = datasize;
     std::string metastr = metaj.dump() + '\0';
@@ -78,7 +70,7 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
     {
-        return true;
+        m_Buffer->reserve(m_Buffer->capacity() * 2);
     }
 
     m_Buffer->resize(m_Position + totalsize);
@@ -92,13 +84,13 @@ bool DataManSerializer::PutZfp(Variable<T> &variable, size_t step, int rank,
     std::memcpy(m_Buffer->data() + m_Position, m_CompressBuffer.data(),
                 datasize);
     m_Position += datasize;
-    return false;
+    return true;
 }
 #endif
 
 template <class T>
-bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
-                               const Params &params)
+bool DataManSerializer::PutRaw(Variable<T> &variable, std::string doid,
+                               size_t step, int rank, const Params &params)
 {
     nlohmann::json metaj;
 
@@ -109,6 +101,7 @@ bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
     metaj["O"] = variable.m_Start;
     metaj["T"] = step;
     metaj["R"] = rank;
+    metaj["D"] = doid;
     metaj["I"] = variable.PayloadSize();
     std::string metastr = metaj.dump() + '\0';
 
@@ -117,7 +110,7 @@ bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
     {
-        return true;
+        m_Buffer->reserve(m_Buffer->capacity() * 2);
     }
 
     m_Buffer->resize(m_Position + totalsize);
@@ -130,12 +123,12 @@ bool DataManSerializer::PutRaw(Variable<T> &variable, size_t step, int rank,
 
     std::memcpy(m_Buffer->data() + m_Position, variable.GetData(), datasize);
     m_Position += datasize;
-    return false;
+    return true;
 }
 
 template <class T>
-bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
-                            const Params &params)
+bool DataManSerializer::Put(Variable<T> &variable, std::string doid,
+                            size_t step, int rank, const Params &params)
 {
     auto it = params.find("CompressionMethod");
     if (it != params.end())
@@ -143,11 +136,11 @@ bool DataManSerializer::Put(Variable<T> &variable, size_t step, int rank,
 #ifdef ADIOS2_HAVE_ZFP
         if (it->second == "zfp")
         {
-            return PutZfp(variable, step, rank, params);
+            return PutZfp(variable, doid, step, rank, params);
         }
 #endif
     }
-    return PutRaw(variable, step, rank, params);
+    return PutRaw(variable, doid, step, rank, params);
 }
 
 template <class T>

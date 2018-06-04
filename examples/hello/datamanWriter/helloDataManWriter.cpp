@@ -19,9 +19,9 @@ size_t steps = 100;
 std::string ip = "127.0.0.1";
 std::string port = "12306";
 
-adios2::Dims shape({12, 6, 8});
-adios2::Dims start({4, 0, 0});
-adios2::Dims count({4, 6, 8});
+adios2::Dims shape({200, 640, 512});
+adios2::Dims start({0, 0, 0});
+adios2::Dims count({200, 60, 80});
 
 int rank, size;
 
@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
     for (int i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
+        // start[0] = 0;
+        // bpFloats.SetSelection({start, count});
         dataManWriter.Put<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
         Dump(myFloats, dataManWriter.CurrentStep());
         dataManWriter.EndStep();

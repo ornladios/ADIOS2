@@ -58,7 +58,7 @@ public:
 private:
     const std::string m_IPAddress;
     const std::string m_Port;
-    const std::string m_TransportMode;
+    const std::string m_WorkflowMode;
 
     /** context handler created by zmq, thread safe */
     void *m_Context = nullptr;

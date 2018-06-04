@@ -37,10 +37,11 @@ public:
                            const std::vector<Params> &parametersVector,
                            const bool profile);
 
-    void WriteWAN(const std::vector<char> &buffer);
-    void WriteWAN(std::shared_ptr<std::vector<char>> buffer);
+    void WriteWAN(const std::vector<char> &buffer, size_t transportId);
+    void WriteWAN(std::shared_ptr<std::vector<char>> buffer,
+                  size_t transportId);
 
-    std::shared_ptr<std::vector<char>> ReadWAN();
+    std::shared_ptr<std::vector<char>> ReadWAN(size_t id);
 
     void SetMaxReceiveBuffer(size_t size);
 
@@ -49,9 +50,9 @@ private:
     std::function<void(std::vector<char>)> m_Callback;
 
     // Objects for buffer queue
-    std::queue<std::shared_ptr<std::vector<char>>> m_BufferQueue;
-    void PushBufferQueue(std::shared_ptr<std::vector<char>> v);
-    std::shared_ptr<std::vector<char>> PopBufferQueue();
+    std::vector<std::queue<std::shared_ptr<std::vector<char>>>> m_BufferQueue;
+    void PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id);
+    std::shared_ptr<std::vector<char>> PopBufferQueue(size_t id);
     std::mutex m_Mutex;
 
     // Functions for parsing parameters
@@ -63,13 +64,13 @@ private:
     std::vector<std::thread> m_ReadThreads;
     bool m_Reading = false;
 
-    void WriteThread(std::shared_ptr<Transport> transport);
+    void WriteThread(std::shared_ptr<Transport> transport, size_t id);
     std::vector<std::thread> m_WriteThreads;
     bool m_Writing = false;
 
     std::vector<Params> m_TransportsParameters;
-    size_t m_MaxReceiveBuffer = 128 * 1024 * 1024;
-    size_t m_CurrentTransport = 0;
+    size_t m_TransportChannels;
+    size_t m_MaxReceiveBuffer = 256 * 1024 * 1024;
     int m_Timeout = 5;
 };
 

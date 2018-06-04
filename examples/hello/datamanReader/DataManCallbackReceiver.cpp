@@ -47,6 +47,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
     {
         dumpsize = varsize;
     }
+    dumpsize = varsize;
 
     std::cout << "Data : " << std::endl;
 
@@ -67,7 +68,7 @@ int main(int argc, char *argv[])
 {
 
     MPI_Init(&argc, &argv);
-    int timeout = 5;
+    int timeout = 20;
 
     if (argc == 2)
     {
@@ -87,18 +88,17 @@ int main(int argc, char *argv[])
         adios2::IO &dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataMan");
         dataManIO.SetParameters({
-            {"Format", "bp"},
+            {"WorkflowMode", "subscribe"},
         });
         dataManIO.AddTransport("WAN", {
                                           {"Library", "ZMQ"},
                                           {"IPAddress", "127.0.0.1"},
-                                          {"DumpFile", "YES"},
-                                          {"Callback", "YES"},
+                                          {"Port", "12306"},
                                       });
         dataManIO.AddOperator(callbackFloat); // propagate to all Engines
 
         adios2::Engine &dataManReader =
-            dataManIO.Open("myDoubles.bp", adios2::Mode::Read);
+            dataManIO.Open("stream", adios2::Mode::Read);
 
         std::this_thread::sleep_for(std::chrono::seconds(timeout));
 

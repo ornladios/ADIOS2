@@ -32,16 +32,14 @@ public:
 private:
     unsigned int m_nDataThreads = 1;
     unsigned int m_nControlThreads = 0;
-    unsigned int m_TransportChannels = 1;
+    size_t m_TransportChannels = 1;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
     bool m_Blocking = true;
     size_t m_StepsPerBuffer = 10;
-    Params m_CompressionParams = {//        {"CompressionMethod", "zfp"},
-                                  {"CompressionRate", "6"}};
 
     std::shared_ptr<format::BP3Serializer> m_BP3Serializer;
-    std::shared_ptr<format::DataManSerializer> m_DataManSerializer;
+    std::vector<std::shared_ptr<format::DataManSerializer>> m_DataManSerializer;
     std::string m_Name;
 
     void Init();
