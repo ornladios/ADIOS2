@@ -1594,11 +1594,11 @@ size_t BP3Serializer::GetAttributesSizeInData(IO &io) const noexcept
 // Explicit instantiation of only public templates
 
 #define declare_template_instantiation(T)                                      \
-    template void BP3Serializer::PutVariableMetadata(                          \
-        const Variable<T> &variable) noexcept;                                 \
-                                                                               \
     template void BP3Serializer::PutVariablePayload(                           \
-        const Variable<T> &variable) noexcept;
+        const Variable<T> &, const typename Variable<T>::Info &) noexcept;     \
+                                                                               \
+    template void BP3Serializer::PutVariableMetadata(                          \
+        const Variable<T> &, const typename Variable<T>::Info &) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

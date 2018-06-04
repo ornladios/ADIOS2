@@ -303,7 +303,7 @@ public:
         {
             varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int,
                                              2, shape, start, count,
-                                             adios2_constant_dims_false, a2);
+                                             adios2_constant_dims_false);
         }
     }
 

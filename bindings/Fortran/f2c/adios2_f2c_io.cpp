@@ -106,7 +106,7 @@ void FC_GLOBAL(adios2_define_global_variable_f2c,
     {
         *variable = adios2_define_variable(
             *io, name, static_cast<adios2_type>(*type), 0, nullptr, nullptr,
-            nullptr, adios2_constant_dims_true, nullptr);
+            nullptr, adios2_constant_dims_true);
     }
     catch (std::exception &e)
     {
@@ -163,7 +163,7 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
             *variable = adios2_define_variable(
                 *io, name, static_cast<adios2_type>(*type), *ndims, nullptr,
                 nullptr, countV.data(),
-                static_cast<adios2_constant_dims>(*constant_dims), nullptr);
+                static_cast<adios2_constant_dims>(*constant_dims));
             return;
         }
 
@@ -175,8 +175,7 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
         *variable = adios2_define_variable(
             *io, name, static_cast<adios2_type>(*type),
             static_cast<size_t>(*ndims), shapeV.data(), startV.data(),
-            countV.data(), static_cast<adios2_constant_dims>(*constant_dims),
-            nullptr);
+            countV.data(), static_cast<adios2_constant_dims>(*constant_dims));
     }
     catch (std::exception &e)
     {

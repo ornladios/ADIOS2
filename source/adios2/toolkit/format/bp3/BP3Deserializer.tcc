@@ -41,7 +41,7 @@ void BP3Deserializer::GetSyncVariableDataFromStream(Variable<T> &variable,
 
     if (itStep == variable.m_IndexStepBlockStarts.end())
     {
-        variable.SetData(nullptr);
+        variable.m_Data = nullptr;
         return;
     }
 
@@ -53,13 +53,13 @@ void BP3Deserializer::GetSyncVariableDataFromStream(Variable<T> &variable,
             buffer, position, static_cast<DataTypes>(GetDataType<T>()), false);
 
     const size_t payloadOffset = characteristics.Statistics.PayloadOffset;
-    variable.SetData(reinterpret_cast<T *>(&buffer[payloadOffset]));
+    variable.m_Data = reinterpret_cast<T *>(&buffer[payloadOffset]);
 }
 
 template <class T>
 void BP3Deserializer::GetDeferredVariable(Variable<T> &variable, T *data)
 {
-    variable.SetData(data);
+    variable.m_Data = data;
     m_DeferredVariables[variable.m_Name] = SubFileInfoMap();
 }
 
@@ -145,10 +145,10 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
 }
 
 template <class T>
-inline void
-BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
-                                    const std::vector<char> &buffer,
-                                    size_t position) const
+void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
+                                         IO &io,
+                                         const std::vector<char> &buffer,
+                                         size_t position) const
 {
     const size_t initialPosition = position;
 
@@ -206,18 +206,17 @@ BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header, IO &io,
         const size_t subsetPosition = position;
 
         // read until step is found
-        const Characteristics<typename TypeInfo<T>::ValueType>
-            subsetCharacteristics = ReadElementIndexCharacteristics<
-                typename TypeInfo<T>::ValueType>(
+        const Characteristics<T> subsetCharacteristics =
+            ReadElementIndexCharacteristics<T>(
                 buffer, position, static_cast<DataTypes>(header.DataType),
                 false);
 
-        if (subsetCharacteristics.Statistics.Min < variable->m_Min)
+        if (LessThan(subsetCharacteristics.Statistics.Min, variable->m_Min))
         {
             variable->m_Min = subsetCharacteristics.Statistics.Min;
         }
 
-        if (subsetCharacteristics.Statistics.Max > variable->m_Max)
+        if (GreaterThan(subsetCharacteristics.Statistics.Max, variable->m_Max))
         {
             variable->m_Max = subsetCharacteristics.Statistics.Max;
         }
@@ -342,7 +341,7 @@ void BP3Deserializer::ClipContiguousMemoryCommon(
         // normalize intersection start with variable.m_Start
         const size_t normalizedStart =
             (start[0] - variable.m_Start[0]) * sizeof(T);
-        char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
+        char *rawVariableData = reinterpret_cast<char *>(variable.m_Data);
 
         std::copy(contiguousMemory.begin(), contiguousMemory.end(),
                   &rawVariableData[normalizedStart]);
@@ -392,7 +391,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonRow(
         const size_t variableStart =
             LinearIndex(selectionBox, currentPoint, true) * sizeof(T);
 
-        char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
+        char *rawVariableData = reinterpret_cast<char *>(variable.m_Data);
 
         std::copy(contiguousMemory.begin() + contiguousStart,
                   contiguousMemory.begin() + contiguousStart + stride,
@@ -457,7 +456,7 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
         const size_t variableStart =
             LinearIndex(selectionBox, currentPoint, false) * sizeof(T);
 
-        char *rawVariableData = reinterpret_cast<char *>(variable.GetData());
+        char *rawVariableData = reinterpret_cast<char *>(variable.m_Data);
 
         std::copy(contiguousMemory.begin() + contiguousStart,
                   contiguousMemory.begin() + contiguousStart + stride,
@@ -491,14 +490,14 @@ void BP3Deserializer::ClipContiguousMemoryCommonColumn(
 template <class T>
 void BP3Deserializer::SetVariableNextStepDataCommon(Variable<T> &variable) const
 {
-    variable.SetData(variable.GetData() + GetTotalSize(variable.m_Count));
+    variable.m_Data += GetTotalSize(variable.m_Count);
 }
 
 template <>
 inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
     Variable<std::string> &variable) const
 {
-    std::string *data = variable.GetData();
+    std::string *data = variable.m_Data;
     const auto &buffer = m_Metadata.m_Buffer;
 
     for (size_t i = 0; i < variable.m_StepsCount; ++i)
@@ -530,7 +529,7 @@ template <class T>
 inline void
 BP3Deserializer::GetValueFromMetadataCommon(Variable<T> &variable) const
 {
-    T *data = variable.GetData();
+    T *data = variable.m_Data;
     const auto &buffer = m_Metadata.m_Buffer;
 
     const size_t step = variable.m_StepsStart + 1;

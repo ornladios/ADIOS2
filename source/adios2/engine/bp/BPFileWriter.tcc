@@ -16,11 +16,9 @@ namespace adios2
 {
 
 template <class T>
-void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
+void BPFileWriter::PutSyncCommon(Variable<T> &variable,
+                                 const typename Variable<T>::Info &blockInfo)
 {
-    // set variable
-    variable.SetData(values);
-
     // if first timestep Write create a new pg index
     if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
     {
@@ -31,9 +29,11 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
     const size_t dataSize =
         variable.PayloadSize() +
-        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);
-    format::BP3Base::ResizeResult resizeResult = m_BP3Serializer.ResizeBuffer(
-        dataSize, "in call to variable " + variable.m_Name + " PutSync");
+        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
+
+    const format::BP3Base::ResizeResult resizeResult =
+        m_BP3Serializer.ResizeBuffer(dataSize, "in call to variable " +
+                                                   variable.m_Name + " Put");
 
     if (resizeResult == format::BP3Base::ResizeResult::Flush)
     {
@@ -47,15 +47,15 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
-    m_BP3Serializer.PutVariableMetadata(variable);
-    m_BP3Serializer.PutVariablePayload(variable);
+    m_BP3Serializer.PutVariableMetadata(variable, blockInfo);
+    m_BP3Serializer.PutVariablePayload(variable, blockInfo);
 }
 
 template <class T>
-void BPFileWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
+void BPFileWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    variable.SetData(values);
-    m_BP3Serializer.m_DeferredVariables.push_back(variable.m_Name);
+    variable.SetStepBlockInfo(data, CurrentStep());
+    m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
     m_BP3Serializer.m_DeferredVariablesDataSize +=
         variable.PayloadSize() +
         m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);

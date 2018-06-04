@@ -64,38 +64,28 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead1D8)
             const adios2::Dims count{Nx};
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.I8.data());
+                                      adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I16.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I32.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I64.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.U8.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U16.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U32.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U64.data());
+                                        adios2::ConstantDims);
 
             io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims,
-                                     m_TestData.R32.data());
+                                     adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.R64.data());
+                                      adios2::ConstantDims);
         }
 
         // Create the BP Engine
@@ -320,38 +310,28 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D2x4)
             const adios2::Dims count{Ny, Nx};
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.I8.data());
+                                      adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I16.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I32.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I64.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.U8.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U16.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U32.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U64.data());
+                                        adios2::ConstantDims);
 
             io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims,
-                                     m_TestData.R32.data());
+                                     adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.R64.data());
+                                      adios2::ConstantDims);
         }
 
         // Create the BP Engine
@@ -586,38 +566,28 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D4x2)
                                static_cast<unsigned int>(Nx)};
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.I8.data());
+                                      adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I16.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I32.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I64.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.U8.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U16.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U32.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U64.data());
+                                        adios2::ConstantDims);
 
             io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims,
-                                     m_TestData.R32.data());
+                                     adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.R64.data());
+                                      adios2::ConstantDims);
         }
 
         // Create the BP Engine
@@ -848,38 +818,28 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
             const adios2::Dims count{Nx};
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.I8.data());
+                                      adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I16.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I32.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I64.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.U8.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U16.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U32.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U64.data());
+                                        adios2::ConstantDims);
 
             io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims,
-                                     m_TestData.R32.data());
+                                     adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.R64.data());
+                                      adios2::ConstantDims);
         }
 
         // Create the BP Engine
@@ -1112,38 +1072,28 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
             const adios2::Dims count{Ny, Nx};
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.I8.data());
+                                      adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I16.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I32.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I64.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.U8.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U16.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U32.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U64.data());
+                                        adios2::ConstantDims);
 
             io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims,
-                                     m_TestData.R32.data());
+                                     adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.R64.data());
+                                      adios2::ConstantDims);
         }
 
         // Create the BP Engine
@@ -1378,38 +1328,28 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
                                static_cast<unsigned int>(Nx)};
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.I8.data());
+                                      adios2::ConstantDims);
             io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I16.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I32.data());
+                                       adios2::ConstantDims);
             io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.I64.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.U8.data());
+                                       adios2::ConstantDims);
 
             io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U16.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U32.data());
+                                        adios2::ConstantDims);
             io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.U64.data());
+                                        adios2::ConstantDims);
 
             io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims,
-                                     m_TestData.R32.data());
+                                     adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims,
-                                      m_TestData.R64.data());
+                                      adios2::ConstantDims);
         }
 
         // Create the BP Engine

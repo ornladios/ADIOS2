@@ -28,7 +28,7 @@ namespace adios2
 template <class T>
 Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
                                 const Dims &start, const Dims &count,
-                                const bool constantDims, T *data)
+                                const bool constantDims)
 {
     if (m_DebugMode)
     {
@@ -45,7 +45,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
     const unsigned int size = static_cast<unsigned int>(variableMap.size());
     auto itVariablePair =
         variableMap.emplace(size, Variable<T>(name, shape, start, count,
-                                              constantDims, data, m_DebugMode));
+                                              constantDims, m_DebugMode));
     m_Variables.emplace(name, std::make_pair(GetType<T>(), size));
     return itVariablePair.first->second;
 }

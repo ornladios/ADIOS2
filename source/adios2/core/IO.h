@@ -154,9 +154,9 @@ public:
      */
     template <class T>
     Variable<T> &
-    DefineVariable(const std::string &name, const Dims &shape = Dims{},
-                   const Dims &start = Dims{}, const Dims &count = Dims{},
-                   const bool constantDims = false, T *data = nullptr);
+    DefineVariable(const std::string &name, const Dims &shape = Dims(),
+                   const Dims &start = Dims(), const Dims &count = Dims(),
+                   const bool constantDims = false);
 
     /**
      * @brief Define array attribute
@@ -455,7 +455,7 @@ private:
 #define declare_template_instantiation(T)                                      \
     extern template Variable<T> &IO::DefineVariable<T>(                        \
         const std::string &, const Dims &, const Dims &, const Dims &,         \
-        const bool, T *);                                                      \
+        const bool);                                                           \
     extern template Variable<T> *IO::InquireVariable<T>(                       \
         const std::string &name) noexcept;
 

@@ -282,7 +282,13 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
                 "ERROR: variable " + variableName +                            \
                 " not found, in call to AsyncSendVariable\n");                 \
         }                                                                      \
-        AsyncSendVariable<T>(*variable);                                       \
+        const auto &blocksInfo = variable->m_StepBlocksInfo.at(m_CurrentStep); \
+        for (const auto &blockInfoPair : blocksInfo)                           \
+        {                                                                      \
+            const auto &blockInfo = blockInfoPair.second;                      \
+            AsyncSendVariable<T>(*variable, blockInfo);                        \
+        }                                                                      \
+        variable->m_StepBlocksInfo.erase(m_CurrentStep);                       \
     }
 
     ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
@@ -352,7 +358,9 @@ void InSituMPIWriter::EndStep()
 #define declare_type(T)                                                        \
     void InSituMPIWriter::DoPutSync(Variable<T> &variable, const T *values)    \
     {                                                                          \
-        PutSyncCommon(variable, values);                                       \
+        PutSyncCommon(variable,                                                \
+                      variable.SetStepBlockInfo(values, m_CurrentStep));       \
+        variable.m_StepBlocksInfo.clear();                                     \
     }                                                                          \
     void InSituMPIWriter::DoPutDeferred(Variable<T> &variable,                 \
                                         const T *values)                       \

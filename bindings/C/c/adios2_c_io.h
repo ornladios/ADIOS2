@@ -25,7 +25,7 @@ extern "C" {
  * Defines a variable inside a corresponding io handler
  * @param io handler that owns the variable
  * @param name unique variable name inside IO handler
- * @param type primitive type
+ * @param type primitive type from enum adios2_type_*
  * @param ndims number of dimensions
  * @param shape total MPI dimensions
  * @param start local MPI start (offset)
@@ -39,7 +39,7 @@ adios2_variable *
 adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                        const size_t ndims, const size_t *shape,
                        const size_t *start, const size_t *count,
-                       const adios2_constant_dims constant_dims, void *data);
+                       const adios2_constant_dims constant_dims);
 
 /**
  * Returns a handler to a previously defined variable identified by a unique

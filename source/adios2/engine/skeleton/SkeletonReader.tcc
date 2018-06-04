@@ -22,7 +22,7 @@ template <>
 inline void SkeletonReader::GetSyncCommon(Variable<std::string> &variable,
                                           std::string *data)
 {
-    variable.SetData(data);
+    variable.m_Data = data;
     if (m_Verbosity == 5)
     {
         std::cout << "Skeleton Reader " << m_ReaderRank << "     GetSync("
@@ -33,7 +33,7 @@ inline void SkeletonReader::GetSyncCommon(Variable<std::string> &variable,
 template <class T>
 inline void SkeletonReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    variable.SetData(data);
+    variable.m_Data = data;
     if (m_Verbosity == 5)
     {
         std::cout << "Skeleton Reader " << m_ReaderRank << "     GetSync("

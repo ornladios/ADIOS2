@@ -70,6 +70,11 @@
     MACRO(std::complex<double>)                                                \
     MACRO(std::complex<long double>)
 
+#define ADIOS2_FOREACH_COMPLEX_PRIMITIVE_TYPE_1ARG(MACRO)                      \
+    MACRO(float)                                                               \
+    MACRO(double)                                                              \
+    MACRO(long double)
+
 #define ADIOS2_FOREACH_CHAR_TYPE_1ARG(MACRO)                                   \
     MACRO(char)                                                                \
     MACRO(signed char)                                                         \

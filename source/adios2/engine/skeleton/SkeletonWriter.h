@@ -71,7 +71,8 @@ private:
      * @param values
      */
     template <class T>
-    void PutSyncCommon(Variable<T> &variable, const T *values);
+    void PutSyncCommon(Variable<T> &variable,
+                       const typename Variable<T>::Info &blockInfo);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);

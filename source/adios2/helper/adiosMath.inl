@@ -17,6 +17,8 @@
 #include <algorithm> //std::minmax_element, std::min_element, std::max_element
 #include <thread>
 
+#include "adios2/ADIOSMacros.h"
+
 namespace adios2
 {
 
@@ -29,31 +31,30 @@ void GetMinMax(const T *values, const size_t size, T &min, T &max) noexcept
 }
 
 template <class T>
-void GetMinMaxComplex(const std::complex<T> *values, const size_t size, T &min,
-                      T &max) noexcept
+void GetMinMaxComplex(const std::complex<T> *values, const size_t size,
+                      std::complex<T> &min, std::complex<T> &max) noexcept
 {
 
-    min = std::norm(values[0]);
-    max = min;
+    T minNorm = std::norm(values[0]);
+    T maxNorm = minNorm;
 
-    for (size_t i = 1; i < size; ++i)
+    for (auto i = 1; i < size; ++i)
     {
         T norm = std::norm(values[i]);
 
-        if (norm < min)
+        if (norm < minNorm)
         {
-            min = norm;
+            minNorm = norm;
+            min = values[i];
             continue;
         }
 
-        if (norm > max)
+        if (norm > maxNorm)
         {
-            max = norm;
+            maxNorm = norm;
+            max = values[i];
         }
     }
-
-    min = std::sqrt(min);
-    max = std::sqrt(max);
 }
 
 template <class T>
@@ -107,8 +108,9 @@ void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
 }
 
 template <class T>
-void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
-                      T &max, const unsigned int threads) noexcept
+void GetMinMaxThreads(const std::complex<T> *values, const size_t size,
+                      std::complex<T> &min, std::complex<T> &max,
+                      const unsigned int threads) noexcept
 {
     if (threads == 1)
     {
@@ -120,8 +122,8 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
     const size_t remainder = size % threads; // remainder if not aligned
     const size_t last = stride + remainder;
 
-    std::vector<T> mins(threads); // zero init
-    std::vector<T> maxs(threads); // zero init
+    std::vector<std::complex<T>> mins(threads); // zero init
+    std::vector<std::complex<T>> maxs(threads); // zero init
 
     std::vector<std::thread> getMinMaxThreads;
     getMinMaxThreads.reserve(threads);
@@ -149,11 +151,61 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
         getMinMaxThread.join();
     }
 
-    auto itMin = std::min_element(mins.begin(), mins.end());
-    min = *itMin;
+    std::complex<T> minTemp;
+    std::complex<T> maxTemp;
 
-    auto itMax = std::max_element(maxs.begin(), maxs.end());
-    max = *itMax;
+    GetMinMaxComplex(mins.data(), mins.size(), min, maxTemp);
+    GetMinMaxComplex(maxs.data(), maxs.size(), minTemp, max);
+}
+
+#define declare_template_instantiation(T)                                      \
+    template <>                                                                \
+    inline bool LessThan<std::complex<T>>(                                     \
+        const std::complex<T> input1, const std::complex<T> input2) noexcept   \
+    {                                                                          \
+        if (std::norm(input1) < std::norm(input2))                             \
+        {                                                                      \
+            return true;                                                       \
+        }                                                                      \
+        return false;                                                          \
+    }
+
+ADIOS2_FOREACH_COMPLEX_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+template <class T>
+inline bool LessThan(const T input1, const T input2) noexcept
+{
+    if (input1 < input2)
+    {
+        return true;
+    }
+    return false;
+}
+
+#define declare_template_instantiation(T)                                      \
+    template <>                                                                \
+    inline bool GreaterThan<std::complex<T>>(                                  \
+        const std::complex<T> input1, const std::complex<T> input2) noexcept   \
+    {                                                                          \
+        if (std::norm(input1) > std::norm(input2))                             \
+        {                                                                      \
+            return true;                                                       \
+        }                                                                      \
+        return false;                                                          \
+    }
+
+ADIOS2_FOREACH_COMPLEX_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+template <class T>
+inline bool GreaterThan(const T input1, const T input2) noexcept
+{
+    if (input1 > input2)
+    {
+        return true;
+    }
+    return false;
 }
 
 } // end namespace adios2

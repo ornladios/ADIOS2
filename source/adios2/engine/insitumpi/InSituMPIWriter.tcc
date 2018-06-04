@@ -18,19 +18,19 @@ namespace adios2
 {
 
 template <class T>
-void InSituMPIWriter::PutSyncCommon(Variable<T> &variable, const T *values)
+void InSituMPIWriter::PutSyncCommon(Variable<T> &variable,
+                                    const typename Variable<T>::Info &blockInfo)
 {
-    // set variable
-    variable.SetData(values);
     if (variable.m_SingleValue)
     {
         if (m_Verbosity == 5)
         {
             std::cout << "InSituMPI Writer " << m_WriterRank << " PutSync("
-                      << variable.m_Name << ") = " << *values << std::endl;
+                      << variable.m_Name << ") = " << *blockInfo.Data
+                      << std::endl;
         }
         const size_t dataSize = m_BP3Serializer.GetBPIndexSizeInData(
-            variable.m_Name, variable.m_Count);
+            variable.m_Name, blockInfo.Count);
         format::BP3Base::ResizeResult resizeResult =
             m_BP3Serializer.ResizeBuffer(dataSize, "in call to variable " +
                                                        variable.m_Name +
@@ -46,7 +46,7 @@ void InSituMPIWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         // WRITE INDEX to data buffer and metadata structure (in memory) we only
         // need the metadata structure but this is the granularity of
         // the function call
-        m_BP3Serializer.PutVariableMetadata(variable);
+        m_BP3Serializer.PutVariableMetadata(variable, blockInfo);
     }
     else
     {
@@ -59,7 +59,8 @@ void InSituMPIWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
-    variable.SetData(values);
+    auto &blockInfo = variable.SetStepBlockInfo(values, m_CurrentStep);
+
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " PutDeferred("
@@ -81,22 +82,23 @@ void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     // WRITE INDEX to data buffer and metadata structure (in memory)
     // we only need the metadata structure but this is the granularity of the
     // function call
-    m_BP3Serializer.PutVariableMetadata(variable);
+    m_BP3Serializer.PutVariableMetadata(variable, blockInfo);
 
     if (m_FixedLocalSchedule && m_FixedRemoteSchedule)
     {
         // Create the async send for the variable now
-        AsyncSendVariable(variable);
+        AsyncSendVariable(variable, blockInfo);
     }
     else
     {
         // Remember this variable to make the send request in PerformPuts()
-        m_BP3Serializer.m_DeferredVariables.push_back(variable.m_Name);
+        m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
     }
 }
 
 template <class T>
-void InSituMPIWriter::AsyncSendVariable(Variable<T> &variable)
+void InSituMPIWriter::AsyncSendVariable(
+    Variable<T> &variable, const typename Variable<T>::Info &blockInfo)
 {
     const auto it = m_WriteScheduleMap.find(variable.m_Name);
     if (it != m_WriteScheduleMap.end())
@@ -128,8 +130,8 @@ void InSituMPIWriter::AsyncSendVariable(Variable<T> &variable)
                     const size_t blockStart = seek.first;
                     const size_t blockSize = seek.second - seek.first;
 
-                    MPI_Isend(variable.GetData() + blockStart, blockSize,
-                              MPI_CHAR, m_RankAllPeers[readerPair.first],
+                    MPI_Isend(blockInfo.Data + blockStart, blockSize, MPI_CHAR,
+                              m_RankAllPeers[readerPair.first],
                               insitumpi::MpiTags::Data, m_CommWorld,
                               m_MPIRequests.data() + index);
                 }

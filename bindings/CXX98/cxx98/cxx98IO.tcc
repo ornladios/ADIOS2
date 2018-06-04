@@ -34,174 +34,174 @@ adios2_constant_dims GetConstantDims(const bool constantDims)
 
 // DefineVariable
 template <>
-Variable<std::string>
-IO::DefineVariable(const std::string &name, const Dims &shape,
-                   const Dims &start, const Dims &count,
-                   const bool constantDims, std::string *data)
+Variable<std::string> IO::DefineVariable(const std::string &name,
+                                         const Dims &shape, const Dims &start,
+                                         const Dims &count,
+                                         const bool constantDims)
 {
     return Variable<std::string>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_string, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<char> IO::DefineVariable(const std::string &name, const Dims &shape,
                                   const Dims &start, const Dims &count,
-                                  const bool constantDims, char *data)
+                                  const bool constantDims)
 {
     return Variable<char>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_char, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
-Variable<signed char>
-IO::DefineVariable(const std::string &name, const Dims &shape,
-                   const Dims &start, const Dims &count,
-                   const bool constantDims, signed char *data)
+Variable<signed char> IO::DefineVariable(const std::string &name,
+                                         const Dims &shape, const Dims &start,
+                                         const Dims &count,
+                                         const bool constantDims)
 {
     return Variable<signed char>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_signed_char, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
-Variable<unsigned char>
-IO::DefineVariable(const std::string &name, const Dims &shape,
-                   const Dims &start, const Dims &count,
-                   const bool constantDims, unsigned char *data)
+Variable<unsigned char> IO::DefineVariable(const std::string &name,
+                                           const Dims &shape, const Dims &start,
+                                           const Dims &count,
+                                           const bool constantDims)
 {
     return Variable<unsigned char>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_unsigned_char, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<short> IO::DefineVariable(const std::string &name, const Dims &shape,
                                    const Dims &start, const Dims &count,
-                                   const bool constantDims, short *data)
+                                   const bool constantDims)
 {
     return Variable<short>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_short, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<unsigned short>
 IO::DefineVariable(const std::string &name, const Dims &shape,
                    const Dims &start, const Dims &count,
-                   const bool constantDims, unsigned short *data)
+                   const bool constantDims)
 {
     return Variable<unsigned short>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_unsigned_short, count.size(),
-        V0(shape), V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(shape), V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<int> IO::DefineVariable(const std::string &name, const Dims &shape,
                                  const Dims &start, const Dims &count,
-                                 const bool constantDims, int *data)
+                                 const bool constantDims)
 {
     return Variable<int>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_int, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
-Variable<unsigned int>
-IO::DefineVariable(const std::string &name, const Dims &shape,
-                   const Dims &start, const Dims &count,
-                   const bool constantDims, unsigned int *data)
+Variable<unsigned int> IO::DefineVariable(const std::string &name,
+                                          const Dims &shape, const Dims &start,
+                                          const Dims &count,
+                                          const bool constantDims)
 {
     return Variable<unsigned int>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_unsigned_int, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<long int> IO::DefineVariable(const std::string &name,
                                       const Dims &shape, const Dims &start,
                                       const Dims &count,
-                                      const bool constantDims, long int *data)
+                                      const bool constantDims)
 {
     return Variable<long int>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_long_int, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<unsigned long int>
 IO::DefineVariable(const std::string &name, const Dims &shape,
                    const Dims &start, const Dims &count,
-                   const bool constantDims, unsigned long int *data)
+                   const bool constantDims)
 {
     return Variable<unsigned long int>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_unsigned_long_int, count.size(),
-        V0(shape), V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(shape), V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
-Variable<long long int>
-IO::DefineVariable(const std::string &name, const Dims &shape,
-                   const Dims &start, const Dims &count,
-                   const bool constantDims, long long int *data)
+Variable<long long int> IO::DefineVariable(const std::string &name,
+                                           const Dims &shape, const Dims &start,
+                                           const Dims &count,
+                                           const bool constantDims)
 {
     return Variable<long long int>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_long_long_int, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<unsigned long long int>
 IO::DefineVariable(const std::string &name, const Dims &shape,
                    const Dims &start, const Dims &count,
-                   const bool constantDims, unsigned long long int *data)
+                   const bool constantDims)
 {
     return Variable<unsigned long long int>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_unsigned_long_long_int, count.size(),
-        V0(shape), V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(shape), V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<float> IO::DefineVariable(const std::string &name, const Dims &shape,
                                    const Dims &start, const Dims &count,
-                                   const bool constantDims, float *data)
+                                   const bool constantDims)
 {
     return Variable<float>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_float, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<double> IO::DefineVariable(const std::string &name, const Dims &shape,
                                     const Dims &start, const Dims &count,
-                                    const bool constantDims, double *data)
+                                    const bool constantDims)
 {
     return Variable<double>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_double, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<std::complex<float>>
 IO::DefineVariable(const std::string &name, const Dims &shape,
                    const Dims &start, const Dims &count,
-                   const bool constantDims, std::complex<float> *data)
+                   const bool constantDims)
 {
     return Variable<std::complex<float>>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_float_complex, count.size(), V0(shape),
-        V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 template <>
 Variable<std::complex<double>>
 IO::DefineVariable(const std::string &name, const Dims &shape,
                    const Dims &start, const Dims &count,
-                   const bool constantDims, std::complex<double> *data)
+                   const bool constantDims)
 {
     return Variable<std::complex<double>>(adios2_define_variable(
         &m_IO, name.c_str(), adios2_type_double_complex, count.size(),
-        V0(shape), V0(start), V0(count), GetConstantDims(constantDims), data));
+        V0(shape), V0(start), V0(count), GetConstantDims(constantDims)));
 }
 
 // DefineAttribute

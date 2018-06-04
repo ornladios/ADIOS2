@@ -70,38 +70,28 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
             const adios2::Dims count{Nx1D};
 
             io1D.DefineVariable<int8_t>("i8", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.I8.data());
+                                        adios2::ConstantDims);
             io1D.DefineVariable<int16_t>("i16", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I16.data());
+                                         adios2::ConstantDims);
             io1D.DefineVariable<int32_t>("i32", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I32.data());
+                                         adios2::ConstantDims);
             io1D.DefineVariable<int64_t>("i64", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I64.data());
+                                         adios2::ConstantDims);
 
             io1D.DefineVariable<uint8_t>("u8", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.U8.data());
+                                         adios2::ConstantDims);
 
             io1D.DefineVariable<uint16_t>("u16", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U16.data());
+                                          adios2::ConstantDims);
             io1D.DefineVariable<uint32_t>("u32", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U32.data());
+                                          adios2::ConstantDims);
             io1D.DefineVariable<uint64_t>("u64", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U64.data());
+                                          adios2::ConstantDims);
 
             io1D.DefineVariable<float>("r32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.R32.data());
+                                       adios2::ConstantDims);
             io1D.DefineVariable<double>("r64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.R64.data());
+                                        adios2::ConstantDims);
         }
 
         // io2D variables
@@ -111,38 +101,28 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
             const adios2::Dims count{Ny2D, Nx2D};
 
             io2D.DefineVariable<int8_t>("i8", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.I8.data());
+                                        adios2::ConstantDims);
             io2D.DefineVariable<int16_t>("i16", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I16.data());
+                                         adios2::ConstantDims);
             io2D.DefineVariable<int32_t>("i32", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I32.data());
+                                         adios2::ConstantDims);
             io2D.DefineVariable<int64_t>("i64", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I64.data());
+                                         adios2::ConstantDims);
 
             io2D.DefineVariable<uint8_t>("u8", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.U8.data());
+                                         adios2::ConstantDims);
 
             io2D.DefineVariable<uint16_t>("u16", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U16.data());
+                                          adios2::ConstantDims);
             io2D.DefineVariable<uint32_t>("u32", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U32.data());
+                                          adios2::ConstantDims);
             io2D.DefineVariable<uint64_t>("u64", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U64.data());
+                                          adios2::ConstantDims);
 
             io2D.DefineVariable<float>("r32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.R32.data());
+                                       adios2::ConstantDims);
             io2D.DefineVariable<double>("r64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.R64.data());
+                                        adios2::ConstantDims);
         }
 
         adios2::Engine &bpWriter1D = io1D.Open("Flush1D", adios2::Mode::Write);
@@ -538,38 +518,28 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
             const adios2::Dims count{Nx1D};
 
             io1D.DefineVariable<int8_t>("i8", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.I8.data());
+                                        adios2::ConstantDims);
             io1D.DefineVariable<int16_t>("i16", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I16.data());
+                                         adios2::ConstantDims);
             io1D.DefineVariable<int32_t>("i32", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I32.data());
+                                         adios2::ConstantDims);
             io1D.DefineVariable<int64_t>("i64", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I64.data());
+                                         adios2::ConstantDims);
 
             io1D.DefineVariable<uint8_t>("u8", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.U8.data());
+                                         adios2::ConstantDims);
 
             io1D.DefineVariable<uint16_t>("u16", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U16.data());
+                                          adios2::ConstantDims);
             io1D.DefineVariable<uint32_t>("u32", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U32.data());
+                                          adios2::ConstantDims);
             io1D.DefineVariable<uint64_t>("u64", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U64.data());
+                                          adios2::ConstantDims);
 
             io1D.DefineVariable<float>("r32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.R32.data());
+                                       adios2::ConstantDims);
             io1D.DefineVariable<double>("r64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.R64.data());
+                                        adios2::ConstantDims);
         }
 
         // io2D variables
@@ -579,38 +549,28 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
             const adios2::Dims count{Ny2D, Nx2D};
 
             io2D.DefineVariable<int8_t>("i8", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.I8.data());
+                                        adios2::ConstantDims);
             io2D.DefineVariable<int16_t>("i16", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I16.data());
+                                         adios2::ConstantDims);
             io2D.DefineVariable<int32_t>("i32", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I32.data());
+                                         adios2::ConstantDims);
             io2D.DefineVariable<int64_t>("i64", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I64.data());
+                                         adios2::ConstantDims);
 
             io2D.DefineVariable<uint8_t>("u8", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.U8.data());
+                                         adios2::ConstantDims);
 
             io2D.DefineVariable<uint16_t>("u16", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U16.data());
+                                          adios2::ConstantDims);
             io2D.DefineVariable<uint32_t>("u32", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U32.data());
+                                          adios2::ConstantDims);
             io2D.DefineVariable<uint64_t>("u64", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U64.data());
+                                          adios2::ConstantDims);
 
             io2D.DefineVariable<float>("r32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.R32.data());
+                                       adios2::ConstantDims);
             io2D.DefineVariable<double>("r64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.R64.data());
+                                        adios2::ConstantDims);
         }
 
         adios2::Engine &bpWriter1D =
@@ -1010,38 +970,28 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
             const adios2::Dims count{Nx1D};
 
             io1D.DefineVariable<int8_t>("i8", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.I8.data());
+                                        adios2::ConstantDims);
             io1D.DefineVariable<int16_t>("i16", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I16.data());
+                                         adios2::ConstantDims);
             io1D.DefineVariable<int32_t>("i32", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I32.data());
+                                         adios2::ConstantDims);
             io1D.DefineVariable<int64_t>("i64", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I64.data());
+                                         adios2::ConstantDims);
 
             io1D.DefineVariable<uint8_t>("u8", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.U8.data());
+                                         adios2::ConstantDims);
 
             io1D.DefineVariable<uint16_t>("u16", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U16.data());
+                                          adios2::ConstantDims);
             io1D.DefineVariable<uint32_t>("u32", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U32.data());
+                                          adios2::ConstantDims);
             io1D.DefineVariable<uint64_t>("u64", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U64.data());
+                                          adios2::ConstantDims);
 
             io1D.DefineVariable<float>("r32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.R32.data());
+                                       adios2::ConstantDims);
             io1D.DefineVariable<double>("r64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.R64.data());
+                                        adios2::ConstantDims);
         }
 
         // io2D variables
@@ -1051,38 +1001,28 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
             const adios2::Dims count{Ny2D, Nx2D};
 
             io2D.DefineVariable<int8_t>("i8", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.I8.data());
+                                        adios2::ConstantDims);
             io2D.DefineVariable<int16_t>("i16", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I16.data());
+                                         adios2::ConstantDims);
             io2D.DefineVariable<int32_t>("i32", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I32.data());
+                                         adios2::ConstantDims);
             io2D.DefineVariable<int64_t>("i64", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.I64.data());
+                                         adios2::ConstantDims);
 
             io2D.DefineVariable<uint8_t>("u8", shape, start, count,
-                                         adios2::ConstantDims,
-                                         m_TestData.U8.data());
+                                         adios2::ConstantDims);
 
             io2D.DefineVariable<uint16_t>("u16", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U16.data());
+                                          adios2::ConstantDims);
             io2D.DefineVariable<uint32_t>("u32", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U32.data());
+                                          adios2::ConstantDims);
             io2D.DefineVariable<uint64_t>("u64", shape, start, count,
-                                          adios2::ConstantDims,
-                                          m_TestData.U64.data());
+                                          adios2::ConstantDims);
 
             io2D.DefineVariable<float>("r32", shape, start, count,
-                                       adios2::ConstantDims,
-                                       m_TestData.R32.data());
+                                       adios2::ConstantDims);
             io2D.DefineVariable<double>("r64", shape, start, count,
-                                        adios2::ConstantDims,
-                                        m_TestData.R64.data());
+                                        adios2::ConstantDims);
         }
 
         adios2::Engine &bpWriter1D =
