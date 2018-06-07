@@ -653,7 +653,6 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
 
     // if Variable is in Metadata (I.E. DimCount == 0), move incoming data to
     // Data area
-    printf("in get deferred, dim count is %ld\n", DimCount);
     if (DimCount == 0)
     {
         void *IncomingDataBase =
@@ -680,15 +679,12 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
 
 static int NeedWriter(FFSArrayRequest Req, int i)
 {
-    printf("Checking Req, %p,\n", Req);
     for (int j = 0; j < Req->VarRec->DimCount; j++)
     {
         size_t SelOffset = Req->Start[j];
         size_t SelSize = Req->Count[j];
         size_t RankOffset = Req->VarRec->PerWriterStart[i][j];
         size_t RankSize = Req->VarRec->PerWriterCounts[i][j];
-        printf("SelSize = %ld, RankSize %ld\n", SelSize, RankSize);
-        printf("SelOffset = %ld, RankOffset %ld\n", SelOffset, RankOffset);
         if ((SelSize == 0) || (RankSize == 0))
         {
             return 0;
