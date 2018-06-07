@@ -31,7 +31,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname = "ADIOS2Sst1D8.sst";
+    const std::string fname = "ADIOS2Sst";
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -61,16 +61,16 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
         adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
         adios2::Dims count{static_cast<unsigned int>(Nx)};
+        adios2::Dims shape2{static_cast<unsigned int>(Nx * mpiSize), 2};
+        adios2::Dims start2{static_cast<unsigned int>(Nx * mpiRank), 0};
+        adios2::Dims count2{static_cast<unsigned int>(Nx), 2};
         io.DefineVariable<int8_t>("i8", shape, start, count);
         io.DefineVariable<int16_t>("i16", shape, start, count);
         io.DefineVariable<int32_t>("i32", shape, start, count);
         io.DefineVariable<int64_t>("i64", shape, start, count);
-        io.DefineVariable<uint8_t>("u8", shape, start, count);
-        io.DefineVariable<uint16_t>("u16", shape, start, count);
-        io.DefineVariable<uint32_t>("u32", shape, start, count);
-        io.DefineVariable<uint64_t>("u64", shape, start, count);
         io.DefineVariable<float>("r32", shape, start, count);
         io.DefineVariable<double>("r64", shape, start, count);
+        io.DefineVariable<double>("r64_2d", shape2, start2, count2);
     }
 
     // Create the Engine
@@ -83,6 +83,10 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         // Generate test data for each process uniquely
         SmallTestData currentTestData =
             generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
+        std::array<double, 20> R64_2d = {{0, 1, 2, 3, 4, 5, 6, 7, 1000, 1001,
+                                          1002, 1003, 1004, 1005, 1006, 1007}};
+        int j = mpiRank + 1 + step * mpiSize;
+        std::for_each(R64_2d.begin(), R64_2d.end(), [&](double &v) { v += j; });
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -91,25 +95,21 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         auto var_i64 = io.InquireVariable<int64_t>("i64");
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
-        auto var_u16 = io.InquireVariable<uint16_t>("u16");
-        auto var_u32 = io.InquireVariable<uint32_t>("u32");
-        auto var_u64 = io.InquireVariable<uint64_t>("u64");
         auto var_r32 = io.InquireVariable<float>("r32");
         auto var_r64 = io.InquireVariable<double>("r64");
+        auto var_r64_2d = io.InquireVariable<double>("r64_2d");
 
         // Make a 1D selection to describe the local dimensions of the
         // variable we write and its offsets in the global spaces
         adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
+        adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
         var_i32.SetSelection(sel);
         var_i64.SetSelection(sel);
-        var_u8.SetSelection(sel);
-        var_u16.SetSelection(sel);
-        var_u32.SetSelection(sel);
-        var_u64.SetSelection(sel);
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
+        var_r64_2d.SetSelection(sel2);
 
         // Write each one
         // fill in the variable with values from starting index to
@@ -120,12 +120,9 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         engine.Put(var_i16, currentTestData.I16.data(), sync);
         engine.Put(var_i32, currentTestData.I32.data(), sync);
         engine.Put(var_i64, currentTestData.I64.data(), sync);
-        engine.Put(var_u8, currentTestData.U8.data(), sync);
-        engine.Put(var_u16, currentTestData.U16.data(), sync);
-        engine.Put(var_u32, currentTestData.U32.data(), sync);
-        engine.Put(var_u64, currentTestData.U64.data(), sync);
         engine.Put(var_r32, currentTestData.R32.data(), sync);
         engine.Put(var_r64, currentTestData.R64.data(), sync);
+        engine.Put(var_r64_2d, R64_2d.data(), sync);
         // Advance to the next time step
         engine.EndStep();
     }

@@ -653,6 +653,7 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
 
     // if Variable is in Metadata (I.E. DimCount == 0), move incoming data to
     // Data area
+    printf("in get deferred, dim count is %ld\n", DimCount);
     if (DimCount == 0)
     {
         void *IncomingDataBase =
@@ -679,12 +680,15 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
 
 static int NeedWriter(FFSArrayRequest Req, int i)
 {
+    printf("Checking Req, %p,\n", Req);
     for (int j = 0; j < Req->VarRec->DimCount; j++)
     {
         size_t SelOffset = Req->Start[j];
         size_t SelSize = Req->Count[j];
         size_t RankOffset = Req->VarRec->PerWriterStart[i][j];
         size_t RankSize = Req->VarRec->PerWriterCounts[i][j];
+        printf("SelSize = %ld, RankSize %ld\n", SelSize, RankSize);
+        printf("SelOffset = %ld, RankOffset %ld\n", SelOffset, RankOffset);
         if ((SelSize == 0) || (RankSize == 0))
         {
             return 0;
@@ -1145,6 +1149,16 @@ extern void FFSClearTimestepData(SstStream Stream)
     Info->VarCount = 0;
 }
 
+static void ReverseDimensions(size_t *Dimensions, int count)
+{
+    for (int i = 0; i < count / 2; i++)
+    {
+        size_t tmp = Dimensions[i];
+        Dimensions[i] = Dimensions[count - i - 1];
+        Dimensions[count - i - 1] = tmp;
+    }
+}
+
 static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                          int WriterRank)
 {
@@ -1248,6 +1262,14 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             {
                 VarRec = CreateVarRec(Stream, ArrayName);
                 VarRec->DimCount = meta_base->Dims;
+                if ((VarRec->DimCount > 1) &&
+                    (Stream->WriterConfigParams->IsRowMajor !=
+                     Stream->ConfigParams->IsRowMajor))
+                {
+                    ReverseDimensions(meta_base->Shape, meta_base->Dims);
+                    ReverseDimensions(meta_base->Count, meta_base->Dims);
+                    ReverseDimensions(meta_base->Offsets, meta_base->Dims);
+                }
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, ArrayName, Type, meta_base->Dims,
                     meta_base->Shape, meta_base->Count, meta_base->Offsets);

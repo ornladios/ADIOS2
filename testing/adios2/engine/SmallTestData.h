@@ -42,8 +42,10 @@ struct SmallTestData
          9223372036854775811UL, 9223372036854775812UL, 9223372036854775813UL,
          9223372036854775814UL, 9223372036854775815UL, 9223372036854775816UL,
          9223372036854775817UL}};
-    std::array<float, 10> R32 = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}};
-    std::array<double, 10> R64 = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}};
+    std::array<float, 10> R32 = {
+        {0.1, 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1}};
+    std::array<double, 10> R64 = {
+        {10.2, 11.2, 12.2, 13.2, 14.2, 15.2, 16.2, 17.2, 18.2, 19.2}};
 };
 
 SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
