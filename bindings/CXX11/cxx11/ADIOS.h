@@ -11,6 +11,7 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_ADIOS_H_
 #define ADIOS2_BINDINGS_CXX11_CXX11_ADIOS_H_
 
+#include <functional>
 #include <memory>
 #include <string>
 
