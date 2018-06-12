@@ -24,18 +24,16 @@ program TestSstWrite
   call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
 
   !Application variables 
-  inx = 8
-
   insteps = 1;
 
   !Variable dimensions 
-  shape_dims(1) = isize * inx
-  start_dims(1) = irank * inx
-  count_dims(1) = inx
+  shape_dims(1) = isize * nx
+  start_dims(1) = irank * nx
+  count_dims(1) = nx
 
-  shape_dims2 = (/ 2, isize *inx /)
-  start_dims2 = (/ 0, irank *inx /)
-  count_dims2 = (/ 2, inx /)
+  shape_dims2 = (/ 2, isize *nx /)
+  start_dims2 = (/ 0, irank *nx /)
+  count_dims2 = (/ 2, nx /)
 
   !Create adios handler passing the communicator, debug mode and error flag
   call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
@@ -94,7 +92,6 @@ program TestSstWrite
      call adios2_put(sstWriter, variables(4), data_I64, ierr)
      call adios2_put(sstWriter, variables(5), data_R32, ierr)
      call adios2_put(sstWriter, variables(6), data_R64, ierr)
-     print *, "Data_r64_2d ", data_R64_2d(1, 1)
      call adios2_put(sstWriter, variables(7), data_R64_2d, ierr)
      call adios2_end_step(sstWriter, ierr)
   end do

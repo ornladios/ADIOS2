@@ -12,18 +12,13 @@
 
 #include <gtest/gtest.h>
 
-#include "../SmallTestData.h"
+#include "TestData.h"
 
 class SstReadTest : public ::testing::Test
 {
 public:
     SstReadTest() = default;
 
-    SmallTestData m_TestData;
-    SmallTestData m_OriginalData;
-    std::array<double, 20> Original_R64_2d = {{0, 1, 2, 3, 4, 5, 6, 7, 1000,
-                                               1001, 1002, 1003, 1004, 1005,
-                                               1006, 1007}};
 };
 
 //******************************************************************************
@@ -38,8 +33,6 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
     const std::string fname = "ADIOS2Sst";
 
     int mpiRank = 0, mpiSize = 1;
-    // Number of rows
-    const std::size_t Nx = 8;
 
     // Number of steps
     const std::size_t NSteps = 1;
@@ -70,55 +63,62 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         const size_t currentStep = engine.CurrentStep();
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
+        int writerSize;
+
         auto var_i8 = io.InquireVariable<int8_t>("i8");
-        EXPECT_TRUE(var_i8);
-        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i8.Shape()[0], mpiSize * Nx);
+	EXPECT_TRUE(var_i8)
+        ASSERT_EQ(var_i8->m_ShapeID, adios2::ShapeID::GlobalArray);
+        /* must be a multiple of Nx */
+        ASSERT_EQ(var_i8->m_Shape[0] % Nx, 0);
+
+        /* take the first size as something that gives us writer size */
+        writerSize = var_i8->m_Shape[0] / 10;
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_i16->m_ShapeID, adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_i16->m_Shape[0], writerSize * Nx);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_i32->m_ShapeID, adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_i32->m_Shape[0], writerSize * Nx);
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
         EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_i64->m_ShapeID, adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_i64->m_Shape[0], writerSize * Nx);
 
         auto var_r32 = io.InquireVariable<float>("r32");
         EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_r32->m_ShapeID, adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_r32->m_Shape[0], writerSize * Nx);
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_r64->m_ShapeID, adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_r64->m_Shape[0], writerSize * Nx);
 
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
-        ASSERT_NE(var_r64_2d, nullptr);
+        EXPECT_TRUE(var_r64_2d);
         ASSERT_EQ(var_r64_2d->m_ShapeID, adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64_2d->m_Shape[0], mpiSize * Nx);
+        ASSERT_EQ(var_r64_2d->m_Shape[0], writerSize * Nx);
         ASSERT_EQ(var_r64_2d->m_Shape[1], 2);
 
-        std::string IString;
-        std::array<int8_t, Nx> I8;
-        std::array<int16_t, Nx> I16;
-        std::array<int32_t, Nx> I32;
-        std::array<int64_t, Nx> I64;
-        std::array<float, Nx> R32;
-        std::array<double, Nx> R64;
-        std::array<double, Nx * 2> R64_2d;
+        long unsigned int myStart = (writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myLength =
+            ((writerSize * Nx + mpiSize - 1) / mpiSize);
 
-        const adios2::Dims start{mpiRank * Nx};
-        const adios2::Dims count{Nx};
-        const adios2::Dims start2{mpiRank * Nx, 0};
-        const adios2::Dims count2{Nx, 2};
+        if (myStart + myLength > writerSize * Nx)
+        {
+            myLength = writerSize * Nx - myStart;
+        }
+	std::cout << "Reader rank " << mpiRank << " is starting at element "
+		  << myStart << " for length " << myLength << std::endl;
+        const adios2::Dims start{myStart};
+        const adios2::Dims count{myLength};
+        const adios2::Dims start2{myStart, 0};
+        const adios2::Dims count2{myLength, 2};
 
         const adios2::Box<adios2::Dims> sel(start, count);
         const adios2::Box<adios2::Dims> sel2(start2, count2);
@@ -132,38 +132,25 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         var_r64.SetSelection(sel);
         var_r64_2d.SetSelection(sel2);
 
-        engine.Get(var_i8, I8.data());
-        engine.Get(var_i16, I16.data());
-        engine.Get(var_i32, I32.data());
-        engine.Get(var_i64, I64.data());
+        in_I8.reserve(myLength);
+        in_I16.reserve(myLength);
+        in_I32.reserve(myLength);
+        in_I64.reserve(myLength);
+        in_R32.reserve(myLength);
+        in_R64.reserve(myLength);
+        in_R64_2d.reserve(myLength*2);
+        engine.Get(var_i8, in_I8.data());
+        engine.Get(var_i16, in_I16.data());
+        engine.Get(var_i32, in_I32.data());
+        engine.Get(var_i64, in_I64.data());
 
-        engine.Get(var_r32, R32.data());
-        engine.Get(var_r64, R64.data());
-        engine.Get(var_r64_2d, R64_2d.data());
+        engine.Get(var_r32, in_R32.data());
+        engine.Get(var_r64, in_R64.data());
+        engine.Get(var_r64_2d, in_R64_2d.data());
 
         engine.EndStep();
 
-        UpdateSmallTestData(m_OriginalData, static_cast<int>(t), mpiRank,
-                            mpiSize);
-        int j = mpiRank + 1 + t * mpiSize;
-        std::for_each(Original_R64_2d.begin(), Original_R64_2d.end(),
-                      [&](double &v) { v += j; });
-
-        for (size_t i = 0; i < Nx; ++i)
-        {
-            std::stringstream ss;
-            ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
-            std::string msg = ss.str();
-
-            EXPECT_EQ(I8[i], m_OriginalData.I8[i]) << msg;
-            EXPECT_EQ(I16[i], m_OriginalData.I16[i]) << msg;
-            EXPECT_EQ(I32[i], m_OriginalData.I32[i]) << msg;
-            EXPECT_EQ(I64[i], m_OriginalData.I64[i]) << msg;
-            EXPECT_EQ(R32[i], m_OriginalData.R32[i]) << msg;
-            EXPECT_EQ(R64[i], m_OriginalData.R64[i]) << msg;
-            EXPECT_EQ(R64_2d[i], Original_R64_2d[i]) << msg;
-            EXPECT_EQ(R64_2d[i + 8], Original_R64_2d[i + 8]) << msg;
-        }
+        EXPECT_EQ(validateSstTestData(myStart, myLength, t), 0);
         ++t;
     }
 

@@ -10,47 +10,75 @@
 module sst_test_data
     implicit none
 
-    integer(kind=1), dimension(10) :: data_I8 = &
-                                                 (/0, 1, -2, 3, -4, 5, -6, 7, -8, 9/)
+    integer, parameter :: Nx = 10
 
-    integer(kind=2), dimension(10) :: data_I16 = &
-                                                 (/512, 513, -510, 515, -508, 517, -506, 519, -504, 521/)
+    integer(kind=1), dimension(10) :: data_I8
+    integer(kind=2), dimension(10) :: data_I16
+    integer(kind=4), dimension(10) :: data_I32
+    integer(kind=8), dimension(10) :: data_I64
+    real(kind=4), dimension(10) :: data_R32
+    real(kind=8), dimension(10) :: data_R64
+    real (kind=8), dimension(2, 10) :: data_R64_2d
 
-    integer(kind=4), dimension(10) :: data_I32 = &
-                                                 (/131072, 131073, -131070, 131075, -131068, 131077, -131066, 131079, &
-                                                   -131064, 131081/)
-
-    integer(kind=8), dimension(10) :: data_I64 = &
-                                                 (/8589934592_8, 8589934593_8, -8589934590_8, 8589934595_8, &
-                                                   -8589934588_8, 8589934597_8, -8589934586_8, 8589934599_8, &
-                                                   -8589934584_8, 8589934601_8/)
-
-    real(kind=4), dimension(10) :: data_R32 = &
-                                              (/0.1, 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1/)
-
-    real(kind=8), dimension(10) :: data_R64 = &
-                                              (/10.2D0, 11.2D0, 12.2D0, 13.2D0, 14.2D0, 15.2D0, 16.2D0, 17.2D0, 18.2D0, 19.2D0/)
-
-    real (kind=8), dimension(8, 2) :: data_R64_2d = &
-         reshape((/0D0, 1D0, 2D0, 3D0, 4D0, 5D0, 6D0, 7D0, &
-         1000D0, 1001D0, 1002D0, 1003D0, 1004D0, 1005D0, 1006D0, 1007D0/),&
-         (/8,2/))
+    integer(kind=1), dimension(:), allocatable :: in_I8
+    integer(kind=2), dimension(:), allocatable :: in_I16
+    integer(kind=4), dimension(:), allocatable :: in_I32
+    integer(kind=8), dimension(:), allocatable :: in_I64
+    real(kind=4), dimension(:), allocatable :: in_R32
+    real(kind=8), dimension(:), allocatable :: in_R64 
+    real (kind=8), dimension(:,:), allocatable :: in_R64_2d 
 
     contains
     subroutine GenerateTestData(step, rank, size)
       INTEGER, INTENT(IN) :: step, rank, size
 
       
-      integer :: j
-      j = rank + 1 + step * size;
-      data_I8 = data_I8 + j
-      data_I16 = data_I16 + j
-      data_I32 = data_I32 + j
-      data_I64 = data_I64 + j
-      data_R32 = data_R32 + j
-      data_R64 = data_R64 + j
-      data_R64_2d = data_R64_2d + j
+      integer (kind=8) :: i, j
+      j =  rank * Nx * 10 + step;
+      do i = 1, Nx
+         data_I8(i) = (j + 10 * (i-1));
+         data_I16(i) = (j + 10 * (i-1));
+         data_I32(i) = (j + 10 * (i-1));
+         data_I64(i) = (j + 10 * (i-1));
+         data_R32(i) = (j + 10 * (i-1));
+         data_R64(i) = (j + 10 * (i-1));
+         data_R64_2d(1,i) = (j + 10 * (i-1));
+         data_R64_2d(2,i) = 10000 + (j + 10 * (i-1));
+      end do
 
     end subroutine GenerateTestData
+
+    subroutine ValidateTestData(start, length, step)
+      INTEGER, INTENT(IN) :: start, length, step
+      
+      integer (kind=8) :: i
+      do i = 1, length
+         if (in_I8(i) /= INT(((i - 1 + start)* 10 + step), kind=1)) then
+            stop 'data_I8 value failed'
+         end if
+         if (in_I16(i) /= (i - 1 + start)* 10 + step) then
+            stop 'data_I16 value failed'
+         end if
+         if (in_I32(i) /= (i - 1 + start)* 10 + step) then
+            stop 'data_I32 value failed'
+         end if
+         if (in_I64(i) /= (i - 1 + start)* 10 + step) then
+            stop 'data_I64 value failed'
+         end if
+         if (in_R32(i) /= (i - 1 + start)* 10 + step) then
+            stop 'data_R32 value failed'
+         end if
+         if (in_R64(i) /= (i - 1 + start)* 10 + step) then
+            stop 'data_R64 value failed'
+         end if
+         if (in_R64_2d(1, i) /= (i - 1 + start)* 10 + step) then
+            stop 'data_R64 value failed'
+         end if
+         if (in_R64_2d(2, i) /= 10000 + (i - 1 + start)* 10 + step) then
+            stop 'data_R64 value failed'
+         end if
+      end do
+
+    end subroutine ValidateTestData
 
   end module sst_test_data

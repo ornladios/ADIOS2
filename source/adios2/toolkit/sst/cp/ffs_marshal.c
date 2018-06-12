@@ -859,6 +859,16 @@ static int FindOffset(size_t Dims, const size_t *Size, const size_t *Index)
     return Offset;
 }
 
+static int FindOffsetCM(size_t Dims, const size_t *Size, const size_t *Index)
+{
+    int Offset = 0;
+    for (int i = Dims - 1; i >= 0; i--)
+    {
+        Offset = Index[i] + (Size[i] * Offset);
+    }
+    return Offset;
+}
+
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
@@ -878,13 +888,14 @@ static int FindOffset(size_t Dims, const size_t *Size, const size_t *Index)
  *  - InData is the input, a slab of the global array
  *  - OutData is the output, to be filled with the selection array.
  */
-void ExtractSelectionFromPartial(int ElementSize, size_t Dims,
-                                 const size_t *GlobalDims,
-                                 const size_t *PartialOffsets,
-                                 const size_t *PartialCounts,
-                                 const size_t *SelectionOffsets,
-                                 const size_t *SelectionCounts,
-                                 const char *InData, char *OutData)
+// Row major version
+void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
+                                   const size_t *GlobalDims,
+                                   const size_t *PartialOffsets,
+                                   const size_t *PartialCounts,
+                                   const size_t *SelectionOffsets,
+                                   const size_t *SelectionCounts,
+                                   const char *InData, char *OutData)
 {
     int BlockSize;
     int SourceBlockStride = 0;
@@ -961,6 +972,107 @@ void ExtractSelectionFromPartial(int ElementSize, size_t Dims,
     free(FirstIndex);
 }
 
+static void ReverseDimensions(size_t *Dimensions, int count)
+{
+    for (int i = 0; i < count / 2; i++)
+    {
+        size_t tmp = Dimensions[i];
+        Dimensions[i] = Dimensions[count - i - 1];
+        Dimensions[count - i - 1] = tmp;
+    }
+}
+
+// Column-major version
+void ExtractSelectionFromPartialCM(int ElementSize, size_t Dims,
+                                   const size_t *GlobalDims,
+                                   const size_t *PartialOffsets,
+                                   const size_t *PartialCounts,
+                                   const size_t *SelectionOffsets,
+                                   const size_t *SelectionCounts,
+                                   const char *InData, char *OutData)
+{
+    int BlockSize;
+    int SourceBlockStride = 0;
+    int DestBlockStride = 0;
+    int SourceBlockStartOffset;
+    int DestBlockStartOffset;
+    int BlockCount;
+    int OperantElementSize;
+
+    BlockSize = 1;
+    OperantElementSize = ElementSize;
+    for (int Dim = 0; Dim < Dims; Dim++)
+    {
+        if ((GlobalDims[Dim] == PartialCounts[Dim]) &&
+            (SelectionCounts[Dim] == PartialCounts[Dim]))
+        {
+            BlockSize *= GlobalDims[Dim];
+            OperantElementSize *= GlobalDims[Dim];
+            /* skip the first bit of everything */
+            GlobalDims++;
+            PartialOffsets++;
+            PartialCounts++;
+            SelectionOffsets++;
+            SelectionCounts++;
+            Dims--;
+            /* and make sure we do the next dimensions appropriately by
+             * repeating this iterator value */
+            Dim--;
+        }
+        else
+        {
+            int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+            int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                            SelectionOffsets[Dim] + SelectionCounts[Dim]);
+            BlockSize *= (Right - Left);
+            break;
+        }
+    }
+    if (Dims > 0)
+    {
+        SourceBlockStride = PartialCounts[Dims - 1] * OperantElementSize;
+        DestBlockStride = SelectionCounts[Dims - 1] * OperantElementSize;
+    }
+
+    /* calculate first selected element and count */
+    BlockCount = 1;
+    size_t *FirstIndex = malloc(Dims * sizeof(FirstIndex[0]));
+    for (int Dim = 0; Dim < Dims; Dim++)
+    {
+        int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+        int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                        SelectionOffsets[Dim] + SelectionCounts[Dim]);
+        if (Dim < Dims - 1)
+        {
+            BlockCount *= (Right - Left);
+        }
+        FirstIndex[Dim] = Left;
+    }
+    size_t *SelectionIndex = malloc(Dims * sizeof(SelectionIndex[0]));
+    MapGlobalToLocalIndex(Dims, FirstIndex, SelectionOffsets, SelectionIndex);
+    DestBlockStartOffset = FindOffsetCM(Dims, SelectionCounts, SelectionIndex);
+    free(SelectionIndex);
+    DestBlockStartOffset *= OperantElementSize;
+
+    size_t *PartialIndex = malloc(Dims * sizeof(PartialIndex[0]));
+    MapGlobalToLocalIndex(Dims, FirstIndex, PartialOffsets, PartialIndex);
+    SourceBlockStartOffset = FindOffsetCM(Dims, PartialCounts, PartialIndex);
+
+    free(PartialIndex);
+    SourceBlockStartOffset *= OperantElementSize;
+
+    InData += SourceBlockStartOffset;
+    OutData += DestBlockStartOffset;
+    int i;
+    for (i = 0; i < BlockCount; i++)
+    {
+        memcpy(OutData, InData, BlockSize * ElementSize);
+        InData += SourceBlockStride;
+        OutData += DestBlockStride;
+    }
+    free(FirstIndex);
+}
+
 static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 {
     while (Reqs)
@@ -980,9 +1092,18 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t *SelSize = Reqs->Count;
                 void *IncomingData = Reqs->VarRec->PerWriterIncomingData[i];
 
-                ExtractSelectionFromPartial(
-                    ElementSize, DimCount, GlobalDimensions, RankOffset,
-                    RankSize, SelOffset, SelSize, IncomingData, Reqs->Data);
+                if (Stream->ConfigParams->IsRowMajor)
+                {
+                    ExtractSelectionFromPartialRM(
+                        ElementSize, DimCount, GlobalDimensions, RankOffset,
+                        RankSize, SelOffset, SelSize, IncomingData, Reqs->Data);
+                }
+                else
+                {
+                    ExtractSelectionFromPartialCM(
+                        ElementSize, DimCount, GlobalDimensions, RankOffset,
+                        RankSize, SelOffset, SelSize, IncomingData, Reqs->Data);
+                }
             }
         }
         Reqs = Reqs->Next;
@@ -1145,16 +1266,6 @@ extern void FFSClearTimestepData(SstStream Stream)
     Info->VarCount = 0;
 }
 
-static void ReverseDimensions(size_t *Dimensions, int count)
-{
-    for (int i = 0; i < count / 2; i++)
-    {
-        size_t tmp = Dimensions[i];
-        Dimensions[i] = Dimensions[count - i - 1];
-        Dimensions[count - i - 1] = tmp;
-    }
-}
-
 static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                          int WriterRank)
 {
@@ -1254,18 +1365,20 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             {
                 VarRec = LookupVarByName(Stream, ArrayName);
             }
+            if ((meta_base->Dims > 1) &&
+                (Stream->WriterConfigParams->IsRowMajor !=
+                 Stream->ConfigParams->IsRowMajor))
+            {
+                /* if we're getting data from someone of the other array gender,
+                 * switcheroo */
+                ReverseDimensions(meta_base->Shape, meta_base->Dims);
+                ReverseDimensions(meta_base->Count, meta_base->Dims);
+                ReverseDimensions(meta_base->Offsets, meta_base->Dims);
+            }
             if (!VarRec)
             {
                 VarRec = CreateVarRec(Stream, ArrayName);
                 VarRec->DimCount = meta_base->Dims;
-                if ((VarRec->DimCount > 1) &&
-                    (Stream->WriterConfigParams->IsRowMajor !=
-                     Stream->ConfigParams->IsRowMajor))
-                {
-                    ReverseDimensions(meta_base->Shape, meta_base->Dims);
-                    ReverseDimensions(meta_base->Count, meta_base->Dims);
-                    ReverseDimensions(meta_base->Offsets, meta_base->Dims);
-                }
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, ArrayName, Type, meta_base->Dims,
                     meta_base->Shape, meta_base->Count, meta_base->Offsets);

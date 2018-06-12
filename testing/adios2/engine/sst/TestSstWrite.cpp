@@ -12,14 +12,12 @@
 
 #include <gtest/gtest.h>
 
-#include "../SmallTestData.h"
+#include "TestData.h"
 
 class SstWriteTest : public ::testing::Test
 {
 public:
     SstWriteTest() = default;
-
-    SmallTestData m_TestData;
 };
 
 //******************************************************************************
@@ -34,8 +32,6 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
     const std::string fname = "ADIOS2Sst";
 
     int mpiRank = 0, mpiSize = 1;
-    // Number of rows
-    const std::size_t Nx = 8;
 
     // Number of steps
     const std::size_t NSteps = 1;
@@ -81,12 +77,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
     for (size_t step = 0; step < NSteps; ++step)
     {
         // Generate test data for each process uniquely
-        SmallTestData currentTestData =
-            generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
-        std::array<double, 20> R64_2d = {{0, 1, 2, 3, 4, 5, 6, 7, 1000, 1001,
-                                          1002, 1003, 1004, 1005, 1006, 1007}};
-        int j = mpiRank + 1 + step * mpiSize;
-        std::for_each(R64_2d.begin(), R64_2d.end(), [&](double &v) { v += j; });
+        generateSstTestData(step, mpiRank, mpiSize);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -116,13 +107,13 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         // starting index + count
         const adios2::Mode sync = adios2::Mode::Sync;
 
-        engine.Put(var_i8, currentTestData.I8.data(), sync);
-        engine.Put(var_i16, currentTestData.I16.data(), sync);
-        engine.Put(var_i32, currentTestData.I32.data(), sync);
-        engine.Put(var_i64, currentTestData.I64.data(), sync);
-        engine.Put(var_r32, currentTestData.R32.data(), sync);
-        engine.Put(var_r64, currentTestData.R64.data(), sync);
-        engine.Put(var_r64_2d, R64_2d.data(), sync);
+        engine.Put(var_i8, data_I8.data(), sync);
+        engine.Put(var_i16, data_I16.data(), sync);
+        engine.Put(var_i32, data_I32.data(), sync);
+        engine.Put(var_i64, data_I64.data(), sync);
+        engine.Put(var_r32, data_R32.data(), sync);
+        engine.Put(var_r64, data_R64.data(), sync);
+        engine.Put(var_r64_2d, &data_R64_2d[0][0], sync);
         // Advance to the next time step
         engine.EndStep();
     }
