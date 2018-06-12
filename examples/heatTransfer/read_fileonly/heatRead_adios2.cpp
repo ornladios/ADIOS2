@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
     adios2::Engine bpReader =
         bpReaderIO.Open(inputfile, adios2::Mode::Read, mpiReaderComm);
 
-    unsigned int gndx;
-    unsigned int gndy;
+    unsigned int gndx = 0;
+    unsigned int gndy = 0;
     // bpReader->Read<unsigned int>("gndx", &gndx);
     // bpReader->Read<unsigned int>("gndy", &gndy);
 

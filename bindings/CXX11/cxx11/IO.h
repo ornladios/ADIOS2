@@ -254,7 +254,8 @@ private:
                                                    const Dims &, const Dims &, \
                                                    const Dims &, const bool);  \
                                                                                \
-    extern template Variable<T> IO::InquireVariable<T>(const std::string &);
+    extern template Variable<T> IO::InquireVariable<T>(                        \
+        const std::string &) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -266,7 +267,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     extern template Attribute<T> IO::DefineAttribute(const std::string &,      \
                                                      const T &);               \
                                                                                \
-    extern template Attribute<T> IO::InquireAttribute<T>(const std::string &);
+    extern template Attribute<T> IO::InquireAttribute<T>(                      \
+        const std::string &) noexcept;
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 

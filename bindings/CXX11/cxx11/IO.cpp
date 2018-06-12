@@ -98,7 +98,7 @@ IO::IO(core::IO &io) : m_IO(io) {}
                                             const Dims &, const Dims &,        \
                                             const bool);                       \
                                                                                \
-    template Variable<T> IO::InquireVariable<T>(const std::string &);
+    template Variable<T> IO::InquireVariable<T>(const std::string &) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -109,7 +109,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
                                                                                \
     template Attribute<T> IO::DefineAttribute(const std::string &, const T &); \
                                                                                \
-    template Attribute<T> IO::InquireAttribute<T>(const std::string &);
+    template Attribute<T> IO::InquireAttribute<T>(const std::string &) noexcept;
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 

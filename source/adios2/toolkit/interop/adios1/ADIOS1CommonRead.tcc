@@ -50,7 +50,7 @@ template <class T>
 void ADIOS1CommonRead::DefineADIOS2Attribute(core::IO &io, const char *name,
                                              void *value)
 {
-    core::Attribute<T> &attr = io.DefineAttribute<T>(
+    io.DefineAttribute<T>(
         name, *(reinterpret_cast<typename TypeInfo<T>::ValueType *>(value)));
 }
 
