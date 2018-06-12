@@ -19,7 +19,8 @@
 
 namespace adios2
 {
-
+namespace helper
+{
 /**
  * Creates a chain of directories using POSIX systems calls (stat, mkdir),
  * Verifies if directory exists before creating a new one. Permissions are 777
@@ -56,6 +57,7 @@ bool IsRowMajor(const std::string hostLanguage) noexcept;
  */
 bool IsZeroIndexed(const std::string hostLanguage) noexcept;
 
+} // end namespace helper
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSSYSTEM_H_ */

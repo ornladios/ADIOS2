@@ -15,6 +15,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
@@ -71,7 +75,7 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         auto variable = m_IO.InquireVariable<T>(name);                         \
         if (mode == StepMode::NextAvailable)                                   \
@@ -98,7 +102,7 @@ void BPFileReader::EndStep()
 
 void BPFileReader::PerformGets()
 {
-    const std::map<std::string, SubFileInfoMap> variablesSubfileInfo =
+    const std::map<std::string, helper::SubFileInfoMap> variablesSubfileInfo =
         m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
     ReadVariables(variablesSubfileInfo);
     m_BP3Deserializer.m_PerformedGets = true;
@@ -156,7 +160,7 @@ void BPFileReader::InitBuffer()
                                fileSize);
     }
     // broadcast buffer to all ranks from zero
-    BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
+    helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // fills IO with Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
@@ -175,7 +179,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
 void BPFileReader::ReadVariables(
-    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo)
+    const std::map<std::string, helper::SubFileInfoMap> &variablesSubFileInfo)
 {
     const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
 
@@ -235,4 +239,6 @@ void BPFileReader::DoClose(const int transportIndex)
     m_FileManager.CloseFiles();
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

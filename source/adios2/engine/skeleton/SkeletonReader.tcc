@@ -17,6 +17,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <>
 inline void SkeletonReader::GetSyncCommon(Variable<std::string> &variable,
@@ -53,6 +57,8 @@ void SkeletonReader::GetDeferredCommon(Variable<T> &variable, T *data)
     m_NeedPerformGets = true;
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif // ADIOS2_ENGINE_SKELETONREADER_TCC_

@@ -6,26 +6,13 @@
  * in the COPYING file in the top level directory of this source distribution.
  *
  * Copyright (c) 2008 - 2009.  UT-BATTELLE, LLC. All rights reserved.
- */
 
-/*
    A dummy MPI implementation for the BP READ API, to have an MPI-free version
    of the API
 */
 
 #include "mpidummy.h"
 
-/*
-#define __STDC_FORMAT_MACROS
-#include <cinttypes>
-#include <cstdint>
-#include <cstring>
-
-#if defined(__APPLE__) || defined(__WIN32__) || defined(__CYGWIN__)
-#define lseek64 lseek
-#define open64 open
-#endif
-*/
 #include <cinttypes>
 #include <cstdio>
 #include <cstring>
@@ -41,6 +28,8 @@
 #endif
 
 namespace adios2
+{
+namespace helper
 {
 namespace mpi
 {
@@ -465,4 +454,5 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
 }
 
 } // end namespace mpi
+} // end namespace helper
 } // end namespace adios2

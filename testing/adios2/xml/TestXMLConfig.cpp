@@ -37,7 +37,7 @@ TEST_F(XMLConfigTest, TwoIOs)
     EXPECT_THROW(adios.AtIO("Test IO 1"), std::invalid_argument);
 
     EXPECT_NO_THROW({
-        adios2::IO &io = adios.DeclareIO("Test IO 1");
+        adios2::IO io = adios.DeclareIO("Test IO 1");
         const adios2::Params &params = io.GetParameters();
         ASSERT_EQ(params.size(), 5);
         EXPECT_THROW(params.at("DoesNotExist"), std::out_of_range);
@@ -46,7 +46,7 @@ TEST_F(XMLConfigTest, TwoIOs)
         EXPECT_EQ(params.at("MaxBufferSize"), "20Mb");
         EXPECT_EQ(params.at("InitialBufferSize"), "1Mb");
         EXPECT_EQ(params.at("BufferGrowthFactor"), "2");
-        adios2::Engine &engine =
+        adios2::Engine engine =
             io.Open("Test BP Writer 1", adios2::Mode::Write);
         engine.Close();
     });
@@ -54,7 +54,7 @@ TEST_F(XMLConfigTest, TwoIOs)
 
     EXPECT_THROW(adios.AtIO("Test IO 2"), std::invalid_argument);
     EXPECT_NO_THROW({
-        adios2::IO &io = adios.DeclareIO("Test IO 2");
+        adios2::IO io = adios.DeclareIO("Test IO 2");
         const adios2::Params &params = io.GetParameters();
         ASSERT_EQ(params.size(), 0);
     });

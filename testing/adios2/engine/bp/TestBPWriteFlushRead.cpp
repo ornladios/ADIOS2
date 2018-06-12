@@ -57,8 +57,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
     adios2::ADIOS adios(true);
 #endif
     {
-        adios2::IO &io1D = adios.DeclareIO("Flush1D");
-        adios2::IO &io2D = adios.DeclareIO("Flush2D");
+        adios2::IO io1D = adios.DeclareIO("Flush1D");
+        adios2::IO io2D = adios.DeclareIO("Flush2D");
 
         io1D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
         io2D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
@@ -125,8 +125,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
                                         adios2::ConstantDims);
         }
 
-        adios2::Engine &bpWriter1D = io1D.Open("Flush1D", adios2::Mode::Write);
-        adios2::Engine &bpWriter2D = io2D.Open("Flush2D", adios2::Mode::Write);
+        adios2::Engine bpWriter1D = io1D.Open("Flush1D", adios2::Mode::Write);
+        adios2::Engine bpWriter2D = io2D.Open("Flush2D", adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
@@ -167,69 +167,69 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
 
         // Partial 1D read
         {
-            adios2::IO &io = adios.DeclareIO("ReadIO1");
+            adios2::IO io = adios.DeclareIO("ReadIO1");
 
-            adios2::Engine &bpReader = io.Open("Flush1D", adios2::Mode::Read);
+            adios2::Engine bpReader = io.Open("Flush1D", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
-            ASSERT_NE(var_i8, nullptr);
-            ASSERT_EQ(var_i8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i8->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i8.Shape()[0], mpiSize * Nx1D);
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
-            ASSERT_NE(var_i16, nullptr);
-            ASSERT_EQ(var_i16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i16->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i16.Shape()[0], mpiSize * Nx1D);
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
-            ASSERT_NE(var_i32, nullptr);
-            ASSERT_EQ(var_i32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx1D);
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
-            ASSERT_NE(var_i64, nullptr);
-            ASSERT_EQ(var_i64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i64.Shape()[0], mpiSize * Nx1D);
 
             auto var_u8 = io.InquireVariable<uint8_t>("u8");
-            ASSERT_NE(var_u8, nullptr);
-            ASSERT_EQ(var_u8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u8->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u8);
+            ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u8.Shape()[0], mpiSize * Nx1D);
 
             auto var_u16 = io.InquireVariable<uint16_t>("u16");
-            ASSERT_NE(var_u16, nullptr);
-            ASSERT_EQ(var_u16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u16->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u16);
+            ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u16.Shape()[0], mpiSize * Nx1D);
 
             auto var_u32 = io.InquireVariable<uint32_t>("u32");
-            ASSERT_NE(var_u32, nullptr);
-            ASSERT_EQ(var_u32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u32);
+            ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u32.Shape()[0], mpiSize * Nx1D);
 
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
-            ASSERT_NE(var_u64, nullptr);
-            ASSERT_EQ(var_u64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u64);
+            ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u64.Shape()[0], mpiSize * Nx1D);
 
             auto var_r32 = io.InquireVariable<float>("r32");
-            ASSERT_NE(var_r32, nullptr);
-            ASSERT_EQ(var_r32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx1D);
 
             auto var_r64 = io.InquireVariable<double>("r64");
-            ASSERT_NE(var_r64, nullptr);
-            ASSERT_EQ(var_r64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx1D);
 
             std::string IString;
             std::array<int8_t, Nx1D> I8;
@@ -248,18 +248,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
 
             const adios2::Box<adios2::Dims> sel(start, count);
 
-            var_i8->SetSelection(sel);
-            var_i16->SetSelection(sel);
-            var_i32->SetSelection(sel);
-            var_i64->SetSelection(sel);
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
 
-            var_u8->SetSelection(sel);
-            var_u16->SetSelection(sel);
-            var_u32->SetSelection(sel);
-            var_u64->SetSelection(sel);
+            var_u8.SetSelection(sel);
+            var_u16.SetSelection(sel);
+            var_u32.SetSelection(sel);
+            var_u64.SetSelection(sel);
 
-            var_r32->SetSelection(sel);
-            var_r64->SetSelection(sel);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
 
             unsigned int t = 0;
 
@@ -268,18 +268,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.Get(*var_i8, I8.data());
-                bpReader.Get(*var_i16, I16.data());
-                bpReader.Get(*var_i32, I32.data());
-                bpReader.Get(*var_i64, I64.data());
+                bpReader.Get(var_i8, I8.data());
+                bpReader.Get(var_i16, I16.data());
+                bpReader.Get(var_i32, I32.data());
+                bpReader.Get(var_i64, I64.data());
 
-                bpReader.Get(*var_u8, U8.data());
-                bpReader.Get(*var_u16, U16.data());
-                bpReader.Get(*var_u32, U32.data());
-                bpReader.Get(*var_u64, U64.data());
+                bpReader.Get(var_u8, U8.data());
+                bpReader.Get(var_u16, U16.data());
+                bpReader.Get(var_u32, U32.data());
+                bpReader.Get(var_u64, U64.data());
 
-                bpReader.Get(*var_r32, R32.data());
-                bpReader.Get(*var_r64, R64.data());
+                bpReader.Get(var_r32, R32.data());
+                bpReader.Get(var_r64, R64.data());
 
                 bpReader.PerformGets();
 
@@ -315,79 +315,79 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
 
         // Partial 2D Read
         {
-            adios2::IO &io = adios.DeclareIO("ReadIO2");
+            adios2::IO io = adios.DeclareIO("ReadIO2");
 
-            adios2::Engine &bpReader = io.Open("Flush2D", adios2::Mode::Read);
+            adios2::Engine bpReader = io.Open("Flush2D", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
-            ASSERT_NE(var_i8, nullptr);
-            ASSERT_EQ(var_i8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i8->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i8->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i8.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
-            ASSERT_NE(var_i16, nullptr);
-            ASSERT_EQ(var_i16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i16->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i16->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i16.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
-            ASSERT_NE(var_i32, nullptr);
-            ASSERT_EQ(var_i32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
-            ASSERT_NE(var_i64, nullptr);
-            ASSERT_EQ(var_i64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u8 = io.InquireVariable<uint8_t>("u8");
-            ASSERT_NE(var_u8, nullptr);
-            ASSERT_EQ(var_u8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u8->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u8->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u8);
+            ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u8.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u16 = io.InquireVariable<uint16_t>("u16");
-            ASSERT_NE(var_u16, nullptr);
-            ASSERT_EQ(var_u16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u16->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u16->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u16);
+            ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u16.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u32 = io.InquireVariable<uint32_t>("u32");
-            ASSERT_NE(var_u32, nullptr);
-            ASSERT_EQ(var_u32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u32);
+            ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
-            ASSERT_NE(var_u64, nullptr);
-            ASSERT_EQ(var_u64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u64);
+            ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_r32 = io.InquireVariable<float>("r32");
-            ASSERT_NE(var_r32, nullptr);
-            ASSERT_EQ(var_r32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_r32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_r64 = io.InquireVariable<double>("r64");
-            ASSERT_NE(var_r64, nullptr);
-            ASSERT_EQ(var_r64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_r64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             std::array<int8_t, Nx2D * Ny2D> I8;
             std::array<int16_t, Nx2D * Ny2D> I16;
@@ -405,18 +405,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
 
             const adios2::Box<adios2::Dims> sel(start, count);
 
-            var_i8->SetSelection(sel);
-            var_i16->SetSelection(sel);
-            var_i32->SetSelection(sel);
-            var_i64->SetSelection(sel);
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
 
-            var_u8->SetSelection(sel);
-            var_u16->SetSelection(sel);
-            var_u32->SetSelection(sel);
-            var_u64->SetSelection(sel);
+            var_u8.SetSelection(sel);
+            var_u16.SetSelection(sel);
+            var_u32.SetSelection(sel);
+            var_u64.SetSelection(sel);
 
-            var_r32->SetSelection(sel);
-            var_r64->SetSelection(sel);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
 
             unsigned int t = 0;
 
@@ -425,18 +425,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.Get(*var_i8, I8.data());
-                bpReader.Get(*var_i16, I16.data());
-                bpReader.Get(*var_i32, I32.data());
-                bpReader.Get(*var_i64, I64.data());
+                bpReader.Get(var_i8, I8.data());
+                bpReader.Get(var_i16, I16.data());
+                bpReader.Get(var_i32, I32.data());
+                bpReader.Get(var_i64, I64.data());
 
-                bpReader.Get(*var_u8, U8.data());
-                bpReader.Get(*var_u16, U16.data());
-                bpReader.Get(*var_u32, U32.data());
-                bpReader.Get(*var_u64, U64.data());
+                bpReader.Get(var_u8, U8.data());
+                bpReader.Get(var_u16, U16.data());
+                bpReader.Get(var_u32, U32.data());
+                bpReader.Get(var_u64, U64.data());
 
-                bpReader.Get(*var_r32, R32.data());
-                bpReader.Get(*var_r64, R64.data());
+                bpReader.Get(var_r32, R32.data());
+                bpReader.Get(var_r64, R64.data());
 
                 bpReader.PerformGets();
                 bpReader.EndStep();
@@ -502,8 +502,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
     adios2::ADIOS adios(true);
 #endif
     {
-        adios2::IO &io1D = adios.DeclareIO("Flush1D");
-        adios2::IO &io2D = adios.DeclareIO("Flush2D");
+        adios2::IO io1D = adios.DeclareIO("Flush1D");
+        adios2::IO io2D = adios.DeclareIO("Flush2D");
 
         io1D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
         io2D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
@@ -573,9 +573,9 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
                                         adios2::ConstantDims);
         }
 
-        adios2::Engine &bpWriter1D =
+        adios2::Engine bpWriter1D =
             io1D.Open("Flush1Dstdio", adios2::Mode::Write);
-        adios2::Engine &bpWriter2D =
+        adios2::Engine bpWriter2D =
             io2D.Open("Flush2Dstdio", adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps / 2; ++step)
@@ -617,70 +617,70 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
 
         // Partial 1D read
         {
-            adios2::IO &io = adios.DeclareIO("ReadIO1");
+            adios2::IO io = adios.DeclareIO("ReadIO1");
 
-            adios2::Engine &bpReader =
+            adios2::Engine bpReader =
                 io.Open("Flush1Dstdio", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
-            ASSERT_NE(var_i8, nullptr);
-            ASSERT_EQ(var_i8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i8->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i8.Shape()[0], mpiSize * Nx1D);
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
-            ASSERT_NE(var_i16, nullptr);
-            ASSERT_EQ(var_i16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i16->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i16.Shape()[0], mpiSize * Nx1D);
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
-            ASSERT_NE(var_i32, nullptr);
-            ASSERT_EQ(var_i32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx1D);
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
-            ASSERT_NE(var_i64, nullptr);
-            ASSERT_EQ(var_i64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i64.Shape()[0], mpiSize * Nx1D);
 
             auto var_u8 = io.InquireVariable<uint8_t>("u8");
-            ASSERT_NE(var_u8, nullptr);
-            ASSERT_EQ(var_u8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u8->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u8);
+            ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u8.Shape()[0], mpiSize * Nx1D);
 
             auto var_u16 = io.InquireVariable<uint16_t>("u16");
-            ASSERT_NE(var_u16, nullptr);
-            ASSERT_EQ(var_u16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u16->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u16);
+            ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u16.Shape()[0], mpiSize * Nx1D);
 
             auto var_u32 = io.InquireVariable<uint32_t>("u32");
-            ASSERT_NE(var_u32, nullptr);
-            ASSERT_EQ(var_u32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u32);
+            ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u32.Shape()[0], mpiSize * Nx1D);
 
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
-            ASSERT_NE(var_u64, nullptr);
-            ASSERT_EQ(var_u64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u64);
+            ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u64.Shape()[0], mpiSize * Nx1D);
 
             auto var_r32 = io.InquireVariable<float>("r32");
-            ASSERT_NE(var_r32, nullptr);
-            ASSERT_EQ(var_r32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx1D);
 
             auto var_r64 = io.InquireVariable<double>("r64");
-            ASSERT_NE(var_r64, nullptr);
-            ASSERT_EQ(var_r64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx1D);
 
             std::string IString;
             std::array<int8_t, Nx1D> I8;
@@ -699,18 +699,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
 
             const adios2::Box<adios2::Dims> sel(start, count);
 
-            var_i8->SetSelection(sel);
-            var_i16->SetSelection(sel);
-            var_i32->SetSelection(sel);
-            var_i64->SetSelection(sel);
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
 
-            var_u8->SetSelection(sel);
-            var_u16->SetSelection(sel);
-            var_u32->SetSelection(sel);
-            var_u64->SetSelection(sel);
+            var_u8.SetSelection(sel);
+            var_u16.SetSelection(sel);
+            var_u32.SetSelection(sel);
+            var_u64.SetSelection(sel);
 
-            var_r32->SetSelection(sel);
-            var_r64->SetSelection(sel);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
 
             unsigned int t = 0;
 
@@ -719,18 +719,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.Get(*var_i8, I8.data());
-                bpReader.Get(*var_i16, I16.data());
-                bpReader.Get(*var_i32, I32.data());
-                bpReader.Get(*var_i64, I64.data());
+                bpReader.Get(var_i8, I8.data());
+                bpReader.Get(var_i16, I16.data());
+                bpReader.Get(var_i32, I32.data());
+                bpReader.Get(var_i64, I64.data());
 
-                bpReader.Get(*var_u8, U8.data());
-                bpReader.Get(*var_u16, U16.data());
-                bpReader.Get(*var_u32, U32.data());
-                bpReader.Get(*var_u64, U64.data());
+                bpReader.Get(var_u8, U8.data());
+                bpReader.Get(var_u16, U16.data());
+                bpReader.Get(var_u32, U32.data());
+                bpReader.Get(var_u64, U64.data());
 
-                bpReader.Get(*var_r32, R32.data());
-                bpReader.Get(*var_r64, R64.data());
+                bpReader.Get(var_r32, R32.data());
+                bpReader.Get(var_r64, R64.data());
 
                 bpReader.PerformGets();
 
@@ -766,80 +766,80 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
 
         // Partial 2D Read
         {
-            adios2::IO &io = adios.DeclareIO("ReadIO2");
+            adios2::IO io = adios.DeclareIO("ReadIO2");
 
-            adios2::Engine &bpReader =
+            adios2::Engine bpReader =
                 io.Open("Flush2Dstdio", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
-            ASSERT_NE(var_i8, nullptr);
-            ASSERT_EQ(var_i8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i8->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i8->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i8.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
-            ASSERT_NE(var_i16, nullptr);
-            ASSERT_EQ(var_i16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i16->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i16->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i16.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
-            ASSERT_NE(var_i32, nullptr);
-            ASSERT_EQ(var_i32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
-            ASSERT_NE(var_i64, nullptr);
-            ASSERT_EQ(var_i64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u8 = io.InquireVariable<uint8_t>("u8");
-            ASSERT_NE(var_u8, nullptr);
-            ASSERT_EQ(var_u8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u8->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u8->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u8);
+            ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u8.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u16 = io.InquireVariable<uint16_t>("u16");
-            ASSERT_NE(var_u16, nullptr);
-            ASSERT_EQ(var_u16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u16->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u16->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u16);
+            ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u16.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u32 = io.InquireVariable<uint32_t>("u32");
-            ASSERT_NE(var_u32, nullptr);
-            ASSERT_EQ(var_u32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u32);
+            ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
-            ASSERT_NE(var_u64, nullptr);
-            ASSERT_EQ(var_u64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u64);
+            ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_r32 = io.InquireVariable<float>("r32");
-            ASSERT_NE(var_r32, nullptr);
-            ASSERT_EQ(var_r32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_r32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_r64 = io.InquireVariable<double>("r64");
-            ASSERT_NE(var_r64, nullptr);
-            ASSERT_EQ(var_r64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_r64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             std::array<int8_t, Nx2D * Ny2D> I8;
             std::array<int16_t, Nx2D * Ny2D> I16;
@@ -857,18 +857,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
 
             const adios2::Box<adios2::Dims> sel(start, count);
 
-            var_i8->SetSelection(sel);
-            var_i16->SetSelection(sel);
-            var_i32->SetSelection(sel);
-            var_i64->SetSelection(sel);
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
 
-            var_u8->SetSelection(sel);
-            var_u16->SetSelection(sel);
-            var_u32->SetSelection(sel);
-            var_u64->SetSelection(sel);
+            var_u8.SetSelection(sel);
+            var_u16.SetSelection(sel);
+            var_u32.SetSelection(sel);
+            var_u64.SetSelection(sel);
 
-            var_r32->SetSelection(sel);
-            var_r64->SetSelection(sel);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
 
             unsigned int t = 0;
 
@@ -877,18 +877,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.Get(*var_i8, I8.data());
-                bpReader.Get(*var_i16, I16.data());
-                bpReader.Get(*var_i32, I32.data());
-                bpReader.Get(*var_i64, I64.data());
+                bpReader.Get(var_i8, I8.data());
+                bpReader.Get(var_i16, I16.data());
+                bpReader.Get(var_i32, I32.data());
+                bpReader.Get(var_i64, I64.data());
 
-                bpReader.Get(*var_u8, U8.data());
-                bpReader.Get(*var_u16, U16.data());
-                bpReader.Get(*var_u32, U32.data());
-                bpReader.Get(*var_u64, U64.data());
+                bpReader.Get(var_u8, U8.data());
+                bpReader.Get(var_u16, U16.data());
+                bpReader.Get(var_u32, U32.data());
+                bpReader.Get(var_u64, U64.data());
 
-                bpReader.Get(*var_r32, R32.data());
-                bpReader.Get(*var_r64, R64.data());
+                bpReader.Get(var_r32, R32.data());
+                bpReader.Get(var_r64, R64.data());
 
                 bpReader.PerformGets();
                 bpReader.EndStep();
@@ -954,8 +954,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
     adios2::ADIOS adios(true);
 #endif
     {
-        adios2::IO &io1D = adios.DeclareIO("Flush1D");
-        adios2::IO &io2D = adios.DeclareIO("Flush2D");
+        adios2::IO io1D = adios.DeclareIO("Flush1D");
+        adios2::IO io2D = adios.DeclareIO("Flush2D");
 
         io1D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
         io2D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
@@ -1025,9 +1025,9 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
                                         adios2::ConstantDims);
         }
 
-        adios2::Engine &bpWriter1D =
+        adios2::Engine bpWriter1D =
             io1D.Open("Flush1Dfstream", adios2::Mode::Write);
-        adios2::Engine &bpWriter2D =
+        adios2::Engine bpWriter2D =
             io2D.Open("Flush2Dfstream", adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps / 2; ++step)
@@ -1069,70 +1069,70 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
 
         // Partial 1D read
         {
-            adios2::IO &io = adios.DeclareIO("ReadIO1");
+            adios2::IO io = adios.DeclareIO("ReadIO1");
 
-            adios2::Engine &bpReader =
+            adios2::Engine bpReader =
                 io.Open("Flush1Dfstream", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
-            ASSERT_NE(var_i8, nullptr);
-            ASSERT_EQ(var_i8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i8->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i8.Shape()[0], mpiSize * Nx1D);
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
-            ASSERT_NE(var_i16, nullptr);
-            ASSERT_EQ(var_i16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i16->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i16.Shape()[0], mpiSize * Nx1D);
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
-            ASSERT_NE(var_i32, nullptr);
-            ASSERT_EQ(var_i32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx1D);
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
-            ASSERT_NE(var_i64, nullptr);
-            ASSERT_EQ(var_i64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i64.Shape()[0], mpiSize * Nx1D);
 
             auto var_u8 = io.InquireVariable<uint8_t>("u8");
-            ASSERT_NE(var_u8, nullptr);
-            ASSERT_EQ(var_u8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u8->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u8);
+            ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u8.Shape()[0], mpiSize * Nx1D);
 
             auto var_u16 = io.InquireVariable<uint16_t>("u16");
-            ASSERT_NE(var_u16, nullptr);
-            ASSERT_EQ(var_u16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u16->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u16);
+            ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u16.Shape()[0], mpiSize * Nx1D);
 
             auto var_u32 = io.InquireVariable<uint32_t>("u32");
-            ASSERT_NE(var_u32, nullptr);
-            ASSERT_EQ(var_u32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u32);
+            ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u32.Shape()[0], mpiSize * Nx1D);
 
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
-            ASSERT_NE(var_u64, nullptr);
-            ASSERT_EQ(var_u64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_u64);
+            ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u64.Shape()[0], mpiSize * Nx1D);
 
             auto var_r32 = io.InquireVariable<float>("r32");
-            ASSERT_NE(var_r32, nullptr);
-            ASSERT_EQ(var_r32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r32->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx1D);
 
             auto var_r64 = io.InquireVariable<double>("r64");
-            ASSERT_NE(var_r64, nullptr);
-            ASSERT_EQ(var_r64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r64->m_Shape[0], mpiSize * Nx1D);
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx1D);
 
             std::string IString;
             std::array<int8_t, Nx1D> I8;
@@ -1151,18 +1151,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
 
             const adios2::Box<adios2::Dims> sel(start, count);
 
-            var_i8->SetSelection(sel);
-            var_i16->SetSelection(sel);
-            var_i32->SetSelection(sel);
-            var_i64->SetSelection(sel);
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
 
-            var_u8->SetSelection(sel);
-            var_u16->SetSelection(sel);
-            var_u32->SetSelection(sel);
-            var_u64->SetSelection(sel);
+            var_u8.SetSelection(sel);
+            var_u16.SetSelection(sel);
+            var_u32.SetSelection(sel);
+            var_u64.SetSelection(sel);
 
-            var_r32->SetSelection(sel);
-            var_r64->SetSelection(sel);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
 
             unsigned int t = 0;
 
@@ -1171,18 +1171,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.Get(*var_i8, I8.data());
-                bpReader.Get(*var_i16, I16.data());
-                bpReader.Get(*var_i32, I32.data());
-                bpReader.Get(*var_i64, I64.data());
+                bpReader.Get(var_i8, I8.data());
+                bpReader.Get(var_i16, I16.data());
+                bpReader.Get(var_i32, I32.data());
+                bpReader.Get(var_i64, I64.data());
 
-                bpReader.Get(*var_u8, U8.data());
-                bpReader.Get(*var_u16, U16.data());
-                bpReader.Get(*var_u32, U32.data());
-                bpReader.Get(*var_u64, U64.data());
+                bpReader.Get(var_u8, U8.data());
+                bpReader.Get(var_u16, U16.data());
+                bpReader.Get(var_u32, U32.data());
+                bpReader.Get(var_u64, U64.data());
 
-                bpReader.Get(*var_r32, R32.data());
-                bpReader.Get(*var_r64, R64.data());
+                bpReader.Get(var_r32, R32.data());
+                bpReader.Get(var_r64, R64.data());
 
                 bpReader.PerformGets();
 
@@ -1218,80 +1218,80 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
 
         // Partial 2D Read
         {
-            adios2::IO &io = adios.DeclareIO("ReadIO2");
+            adios2::IO io = adios.DeclareIO("ReadIO2");
 
-            adios2::Engine &bpReader =
+            adios2::Engine bpReader =
                 io.Open("Flush2Dfstream", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
-            ASSERT_NE(var_i8, nullptr);
-            ASSERT_EQ(var_i8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i8->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i8->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i8.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
-            ASSERT_NE(var_i16, nullptr);
-            ASSERT_EQ(var_i16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i16->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i16->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i16.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
-            ASSERT_NE(var_i32, nullptr);
-            ASSERT_EQ(var_i32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
-            ASSERT_NE(var_i64, nullptr);
-            ASSERT_EQ(var_i64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_i64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_i64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_i64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u8 = io.InquireVariable<uint8_t>("u8");
-            ASSERT_NE(var_u8, nullptr);
-            ASSERT_EQ(var_u8->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u8->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u8->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u8->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u8);
+            ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u8.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u8.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u16 = io.InquireVariable<uint16_t>("u16");
-            ASSERT_NE(var_u16, nullptr);
-            ASSERT_EQ(var_u16->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u16->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u16->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u16->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u16);
+            ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u16.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u16.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u32 = io.InquireVariable<uint32_t>("u32");
-            ASSERT_NE(var_u32, nullptr);
-            ASSERT_EQ(var_u32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u32);
+            ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
-            ASSERT_NE(var_u64, nullptr);
-            ASSERT_EQ(var_u64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_u64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_u64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_u64);
+            ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_u64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_r32 = io.InquireVariable<float>("r32");
-            ASSERT_NE(var_r32, nullptr);
-            ASSERT_EQ(var_r32->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r32->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_r32->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r32.Shape()[0], Ny2D);
+            ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             auto var_r64 = io.InquireVariable<double>("r64");
-            ASSERT_NE(var_r64, nullptr);
-            ASSERT_EQ(var_r64->m_ShapeID, adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r64->m_AvailableStepsCount, NSteps / 2);
-            ASSERT_EQ(var_r64->m_Shape[0], Ny2D);
-            ASSERT_EQ(var_r64->m_Shape[1], static_cast<size_t>(mpiSize * Nx2D));
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps / 2);
+            ASSERT_EQ(var_r64.Shape()[0], Ny2D);
+            ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx2D));
 
             std::array<int8_t, Nx2D * Ny2D> I8;
             std::array<int16_t, Nx2D * Ny2D> I16;
@@ -1309,18 +1309,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
 
             const adios2::Box<adios2::Dims> sel(start, count);
 
-            var_i8->SetSelection(sel);
-            var_i16->SetSelection(sel);
-            var_i32->SetSelection(sel);
-            var_i64->SetSelection(sel);
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
 
-            var_u8->SetSelection(sel);
-            var_u16->SetSelection(sel);
-            var_u32->SetSelection(sel);
-            var_u64->SetSelection(sel);
+            var_u8.SetSelection(sel);
+            var_u16.SetSelection(sel);
+            var_u32.SetSelection(sel);
+            var_u64.SetSelection(sel);
 
-            var_r32->SetSelection(sel);
-            var_r64->SetSelection(sel);
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
 
             unsigned int t = 0;
 
@@ -1329,18 +1329,18 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-                bpReader.Get(*var_i8, I8.data());
-                bpReader.Get(*var_i16, I16.data());
-                bpReader.Get(*var_i32, I32.data());
-                bpReader.Get(*var_i64, I64.data());
+                bpReader.Get(var_i8, I8.data());
+                bpReader.Get(var_i16, I16.data());
+                bpReader.Get(var_i32, I32.data());
+                bpReader.Get(var_i64, I64.data());
 
-                bpReader.Get(*var_u8, U8.data());
-                bpReader.Get(*var_u16, U16.data());
-                bpReader.Get(*var_u32, U32.data());
-                bpReader.Get(*var_u64, U64.data());
+                bpReader.Get(var_u8, U8.data());
+                bpReader.Get(var_u16, U16.data());
+                bpReader.Get(var_u32, U32.data());
+                bpReader.Get(var_u64, U64.data());
 
-                bpReader.Get(*var_r32, R32.data());
-                bpReader.Get(*var_r64, R64.data());
+                bpReader.Get(var_r32, R32.data());
+                bpReader.Get(var_r64, R64.data());
 
                 bpReader.PerformGets();
                 bpReader.EndStep();

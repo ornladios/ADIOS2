@@ -15,6 +15,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
                const std::string engineType, const Params &parameters,
@@ -151,4 +153,5 @@ void Stream::ThrowIfOpen(const std::string hint) const
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+} // end namespace core
 } // end namespace adios2

@@ -19,8 +19,9 @@
 
 namespace adios2
 {
+namespace core
+{
 
-// Put
 template <class T>
 void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
 {
@@ -139,12 +140,13 @@ void Engine::CommonChecks(Variable<T> &variable, const T *data,
                           const std::set<Mode> &modes,
                           const std::string hint) const
 {
-    CheckForNullptr(&variable, "for variable argument, " + hint);
-    CheckForNullptr(data, "for data argument, " + hint);
+    helper::CheckForNullptr(&variable, "for variable argument, " + hint);
+    helper::CheckForNullptr(data, "for data argument, " + hint);
     variable.CheckDimensions(hint);
     CheckOpenModes(modes, " for variable " + variable.m_Name + ", " + hint);
 }
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /** ADIOS2_CORE_ENGINE_TCC_ */

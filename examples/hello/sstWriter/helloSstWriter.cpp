@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     try
     {
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-        adios2::IO &sstIO = adios.DeclareIO("myIO");
+        adios2::IO sstIO = adios.DeclareIO("myIO");
         sstIO.SetEngine("Sst");
 
         // Define variable and local size
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
         // Create engine smart pointer to Sst Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
-        adios2::Engine &sstWriter = sstIO.Open("helloSst", adios2::Mode::Write);
+        adios2::Engine sstWriter = sstIO.Open("helloSst", adios2::Mode::Write);
 
         sstWriter.BeginStep();
         sstWriter.Put<float>(bpFloats, myFloats.data());

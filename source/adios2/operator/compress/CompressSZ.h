@@ -19,6 +19,8 @@ extern "C" {
 
 namespace adios2
 {
+namespace core
+{
 namespace compress
 {
 
@@ -73,7 +75,8 @@ private:
     void CheckStatus(const int status, const std::string hint) const;
 };
 
-} // end namespace transform
+} // end namespace compress
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_TRANSFORM_COMPRESSION_COMPRESSSZ_H_ */

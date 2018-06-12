@@ -12,6 +12,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 AttributeBase::AttributeBase(const std::string &name, const std::string type,
                              const size_t elements)
@@ -23,4 +25,5 @@ AttributeBase::AttributeBase(const std::string &name, const std::string type,
     }
 }
 
+} // end namespace core
 } // end namespace adios2

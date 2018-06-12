@@ -15,6 +15,9 @@
 
 namespace adios2
 {
+namespace core
+{
+
 /** @brief Attributes provide complementary information to IO Variables*/
 template <class T>
 class Attribute : public AttributeBase
@@ -43,6 +46,7 @@ public:
     ~Attribute<T>() = default;
 };
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_ATTRIBUTE_H_ */

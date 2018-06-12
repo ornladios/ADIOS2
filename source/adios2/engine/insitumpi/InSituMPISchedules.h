@@ -25,16 +25,17 @@ namespace insitumpi
 {
 
 // Count the requests in the map
-int GetNumberOfRequests(
-    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
+int GetNumberOfRequests(const std::map<std::string, helper::SubFileInfoMap>
+                            &variablesSubFileInfo) noexcept;
 
 // Recalculate in each SubFileInfo the Seek parameters as
 // if the payload offset was always 0
 // This function also returns the number of requests in the map
 int FixSeeksToZeroOffset(
-    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo,
+    std::map<std::string, helper::SubFileInfoMap> &variablesSubFileInfo,
     bool isRowMajor) noexcept;
-void FixSeeksToZeroOffset(SubFileInfo &record, bool isRowMajor) noexcept;
+void FixSeeksToZeroOffset(helper::SubFileInfo &record,
+                          bool isRowMajor) noexcept;
 
 // Serialize the read requests on a reader.
 // Creates a separate buffer for each writer.
@@ -44,12 +45,13 @@ void FixSeeksToZeroOffset(SubFileInfo &record, bool isRowMajor) noexcept;
 //     for each rank separately have one buffer[rank]
 //         there is one step, lrs is the vector of SubFileInfos
 //         SerializeLocalReadSchedule (variable, lrs)
-std::vector<std::vector<char>> SerializeLocalReadSchedule(
-    const int nWriters,
-    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept;
+std::vector<std::vector<char>>
+SerializeLocalReadSchedule(const int nWriters,
+                           const std::map<std::string, helper::SubFileInfoMap>
+                               &variablesSubFileInfo) noexcept;
 
 // per-variable per rank schedule
-using LocalReadSchedule = std::vector<SubFileInfo>;
+using LocalReadSchedule = std::vector<helper::SubFileInfo>;
 
 // Serialize one variable's read schedule into one writer's buffer
 //     int L   : length of variable name (without 0)
@@ -65,7 +67,7 @@ void SerializeLocalReadSchedule(std::vector<char> &buffer,
 // Box<Dims> IntersectionBox; ///< first = Start point, second = End point
 // Box<size_t> Seeks;
 void SerializeSubFileInfo(std::vector<char> &buffer,
-                          const SubFileInfo record) noexcept;
+                          const helper::SubFileInfo record) noexcept;
 
 void SerializeBox(std::vector<char> &buffer, const Box<Dims> box) noexcept;
 void SerializeBox(std::vector<char> &buffer, const Box<size_t> box) noexcept;
@@ -75,10 +77,11 @@ void SerializeBox(std::vector<char> &buffer, const Box<size_t> box) noexcept;
 //    for all readers that requested it
 //       the blocks
 using WriteScheduleMap =
-    std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>>;
+    std::map<std::string, std::map<size_t, std::vector<helper::SubFileInfo>>>;
 
 // One readers' schedule for all variables on a writer
-using LocalReadScheduleMap = std::map<std::string, std::vector<SubFileInfo>>;
+using LocalReadScheduleMap =
+    std::map<std::string, std::vector<helper::SubFileInfo>>;
 
 // Get the number of read requests to be served on a particular writer
 int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept;
@@ -94,15 +97,15 @@ DeserializeReadSchedule(const std::vector<char> &buffer) noexcept;
 // Deserialize one variable from one reader
 // LocalReadSchedule DeserializeReadSchedule(const std::vector<char> &buffer);
 
-SubFileInfo DeserializeSubFileInfo(const std::vector<char> &buffer,
-                                   size_t &position) noexcept;
+helper::SubFileInfo DeserializeSubFileInfo(const std::vector<char> &buffer,
+                                           size_t &position) noexcept;
 Box<Dims> DeserializeBoxDims(const std::vector<char> &buffer,
                              size_t &position) noexcept;
 Box<size_t> DeserializeBoxSizet(const std::vector<char> &buffer,
                                 size_t &position) noexcept;
 
 void PrintReadScheduleMap(const WriteScheduleMap &map) noexcept;
-void PrintSubFileInfo(const SubFileInfo &sfi) noexcept;
+void PrintSubFileInfo(const helper::SubFileInfo &sfi) noexcept;
 void PrintBox(const Box<Dims> &box) noexcept;
 void PrintBox(const Box<size_t> &box) noexcept;
 void PrintDims(const Dims &dims) noexcept;

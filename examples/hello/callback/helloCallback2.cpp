@@ -18,9 +18,9 @@
 
 #include <adios2.h>
 
-void UserCallBack(void *data, const std::string &doid, const std::string &var,
+void UserCallBack(void *data, const std::string &doid, const std::string var,
                   const std::string &dtype,
-                  const std::vector<std::size_t> &varshape)
+                  const std::vector<std::size_t> varshape)
 {
     std::cout << "data object ID = " << doid << "\n";
     std::cout << "variable name = " << var << "\n";
@@ -53,14 +53,14 @@ int main(int argc, char *argv[])
         /** ADIOS class factory of IO class objects, DebugON is recommended */
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
-        adios2::Operator &callback = adios.DefineOperator(
+        adios2::Operator callback = adios.DefineOperator(
             "Print Variable<float>",
             std::function<void(void *, const std::string &, const std::string &,
                                const std::string &,
                                const std::vector<std::size_t> &)>(
                 &UserCallBack));
 
-        if (callback.m_Type == "Signature2")
+        if (callback.Type() == "Signature2")
         {
             callback.RunCallback2(myFloats.data(), "0", "bpFloats", "float",
                                   std::vector<std::size_t>{Nx});

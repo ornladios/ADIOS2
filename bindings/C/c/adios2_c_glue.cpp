@@ -12,7 +12,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/ADIOS.h"
-#include "adios2/highlevelapi/fstream/Stream.h"
+#include "adios2/core/Stream.h"
 
 #ifdef _WIN32
 #pragma warning(disable : 4297) // Windows noexcept default functions
@@ -24,8 +24,9 @@ adios2_adios *adios2_init_config_glue(const char *config_file,
                                       const char *host_language)
 {
     const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
-    adios2_adios *adios = reinterpret_cast<adios2_adios *>(
-        new adios2::ADIOS(config_file, mpi_comm, debugBool, host_language));
+    adios2_adios *adios =
+        reinterpret_cast<adios2_adios *>(new adios2::core::ADIOS(
+            config_file, mpi_comm, debugBool, host_language));
 
     return adios;
 }
@@ -65,24 +66,24 @@ adios2_FILE *adios2_fopen_glue(const char *name, const adios2_mode mode,
         commCpp = comm;
     }
 
-    adios2::Stream *streamCpp = nullptr;
+    adios2::core::Stream *streamCpp = nullptr;
 
     switch (mode)
     {
 
     case adios2_mode_write:
-        streamCpp = new adios2::Stream(name, adios2::Mode::Write, commCpp,
-                                       "BPFile", host_language);
+        streamCpp = new adios2::core::Stream(name, adios2::Mode::Write, commCpp,
+                                             "BPFile", host_language);
         break;
 
     case adios2_mode_read:
-        streamCpp = new adios2::Stream(name, adios2::Mode::Read, commCpp,
-                                       "BPFile", host_language);
+        streamCpp = new adios2::core::Stream(name, adios2::Mode::Read, commCpp,
+                                             "BPFile", host_language);
         break;
 
     case adios2_mode_append:
-        streamCpp = new adios2::Stream(name, adios2::Mode::Append, commCpp,
-                                       "BPFile", host_language);
+        streamCpp = new adios2::core::Stream(name, adios2::Mode::Append,
+                                             commCpp, "BPFile", host_language);
         break;
 
     default:
@@ -109,27 +110,27 @@ adios2_FILE *adios2_fopen_config_glue(const char *name, const adios2_mode mode,
         commCpp = comm;
     }
 
-    adios2::Stream *streamCpp = nullptr;
+    adios2::core::Stream *streamCpp = nullptr;
 
     switch (mode)
     {
 
     case adios2_mode_write:
-        streamCpp =
-            new adios2::Stream(name, adios2::Mode::Write, commCpp, config_file,
-                               io_in_config_file, host_language);
+        streamCpp = new adios2::core::Stream(name, adios2::Mode::Write, commCpp,
+                                             config_file, io_in_config_file,
+                                             host_language);
         break;
 
     case adios2_mode_read:
-        streamCpp =
-            new adios2::Stream(name, adios2::Mode::Read, commCpp, config_file,
-                               io_in_config_file, host_language);
+        streamCpp = new adios2::core::Stream(name, adios2::Mode::Read, commCpp,
+                                             config_file, io_in_config_file,
+                                             host_language);
         break;
 
     case adios2_mode_append:
-        streamCpp =
-            new adios2::Stream(name, adios2::Mode::Append, commCpp, config_file,
-                               io_in_config_file, host_language);
+        streamCpp = new adios2::core::Stream(name, adios2::Mode::Append,
+                                             commCpp, config_file,
+                                             io_in_config_file, host_language);
         break;
 
     default:

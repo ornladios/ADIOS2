@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios2::IO &bpWriterSettings = adios.DeclareIO("output");
+        adios2::IO bpWriterSettings = adios.DeclareIO("output");
         if (!bpWriterSettings.InConfigFile())
         {
             // if not defined by user, we can change the default settings
@@ -90,53 +90,53 @@ int main(int argc, char *argv[])
          * Define variables
          */
         // 1. Global value, constant across processes, constant over time
-        adios2::Variable<unsigned int> &varNX =
+        adios2::Variable<unsigned int> varNX =
             bpWriterSettings.DefineVariable<unsigned int>("NX");
-        adios2::Variable<int> &varNproc =
+        adios2::Variable<int> varNproc =
             bpWriterSettings.DefineVariable<int>("Nproc");
 
         // 2. Local value, varying across processes, constant over time
-        adios2::Variable<int> &varProcessID =
+        adios2::Variable<int> varProcessID =
             bpWriterSettings.DefineVariable<int>("ProcessID",
                                                  {adios2::LocalValueDim});
 
         // 3. Global array, global dimensions (shape), offsets (start) and
         // local
         // dimensions (count)  are  constant over time
-        adios2::Variable<double> &varGlobalArrayFixedDims =
+        adios2::Variable<double> varGlobalArrayFixedDims =
             bpWriterSettings.DefineVariable<double>("GlobalArrayFixedDims",
                                                     {nproc * Nx});
 
         // 4. Local array, local dimensions and offsets are
         // constant over time.
         // 4.a. Want to see this at reading as a bunch of local arrays
-        adios2::Variable<float> &varLocalArrayFixedDims =
+        adios2::Variable<float> varLocalArrayFixedDims =
             bpWriterSettings.DefineVariable<float>(
                 "LocalArrayFixedDims", {}, {}, {LocalArrayFixedDims.size()});
         // 4.b. Joined array, a 1D array, with global dimension and offsets
         // calculated at read time
-        adios2::Variable<float> &varLocalArrayFixedDimsJoined =
+        adios2::Variable<float> varLocalArrayFixedDimsJoined =
             bpWriterSettings.DefineVariable<float>(
                 "LocalArrayFixedDimsJoined", {adios2::JoinedDim}, {},
                 {LocalArrayFixedDims.size()});
 
         // 5. Global value, constant across processes, VARYING value over
         // time
-        adios2::Variable<unsigned int> &varNY =
+        adios2::Variable<unsigned int> varNY =
             bpWriterSettings.DefineVariable<unsigned int>("NY");
 
         // 6. Local value, varying across processes, VARYING over time
-        adios2::Variable<unsigned int> &varNparts =
+        adios2::Variable<unsigned int> varNparts =
             bpWriterSettings.DefineVariable<unsigned int>(
                 "Nparts", {adios2::LocalValueDim});
 
         // 7. Global array, dimensions and offsets are VARYING over time
-        adios2::Variable<double> &varGlobalArray =
+        adios2::Variable<double> varGlobalArray =
             bpWriterSettings.DefineVariable<double>("GlobalArray",
                                                     {adios2::UnknownDim});
 
         // 8. Local array, dimensions and offsets are VARYING over time
-        adios2::Variable<float> &varIrregularArray =
+        adios2::Variable<float> varIrregularArray =
             bpWriterSettings.DefineVariable<float>("Irregular", {}, {},
                                                    {adios2::UnknownDim});
 

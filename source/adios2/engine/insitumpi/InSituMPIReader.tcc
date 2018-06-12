@@ -17,6 +17,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <>
 inline void InSituMPIReader::GetSyncCommon(Variable<std::string> &variable,
@@ -72,7 +76,8 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
     {
         variable.SetData(data);
         // Create the async send for the variable now
-        const SubFileInfoMap sfim = m_BP3Deserializer.GetSubFileInfo(variable);
+        const helper::SubFileInfoMap sfim =
+            m_BP3Deserializer.GetSubFileInfo(variable);
         // m_BP3Deserializer.GetSubFileInfoMap(variable.m_Name);
         /* FIXME: this only works if there is only one block read for each
          * variable.
@@ -95,8 +100,8 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
-                                        const SubFileInfoMap &subFileInfoMap)
+void InSituMPIReader::AsyncRecvVariable(
+    const Variable<T> &variable, const helper::SubFileInfoMap &subFileInfoMap)
 {
     // <writer, <steps, <SubFileInfo>>>
     for (const auto &subFileIndexPair : subFileInfoMap)
@@ -105,7 +110,7 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
         // <steps, <SubFileInfo>>  but there is only one step
         for (const auto &stepPair : subFileIndexPair.second)
         {
-            const std::vector<SubFileInfo> &sfis = stepPair.second;
+            const std::vector<helper::SubFileInfo> &sfis = stepPair.second;
             for (const auto &sfi : sfis)
             {
                 if (m_Verbosity == 5)
@@ -116,9 +121,9 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
                     std::cout << " info = ";
                     insitumpi::PrintSubFileInfo(sfi);
                     std::cout << " my allocation = ";
-                    insitumpi::PrintBox(
-                        StartEndBox(variable.m_Start, variable.m_Count,
-                                    m_BP3Deserializer.m_ReverseDimensions));
+                    insitumpi::PrintBox(helper::StartEndBox(
+                        variable.m_Start, variable.m_Count,
+                        m_BP3Deserializer.m_ReverseDimensions));
                     std::cout << std::endl;
                 }
 
@@ -131,12 +136,13 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
 
                 // Do we read a contiguous piece from the source?
                 // and do we write a contiguous piece into the user data?
-                if (IsIntersectionContiguousSubarray(
+                if (helper::IsIntersectionContiguousSubarray(
                         sfi.BlockBox, sfi.IntersectionBox,
                         m_BP3Deserializer.m_IsRowMajor, dummy) &&
-                    IsIntersectionContiguousSubarray(
-                        StartEndBox(variable.m_Start, variable.m_Count,
-                                    m_BP3Deserializer.m_ReverseDimensions),
+                    helper::IsIntersectionContiguousSubarray(
+                        helper::StartEndBox(
+                            variable.m_Start, variable.m_Count,
+                            m_BP3Deserializer.m_ReverseDimensions),
                         sfi.IntersectionBox, m_BP3Deserializer.m_IsRowMajor,
                         elementOffset))
                 {
@@ -186,6 +192,8 @@ void InSituMPIReader::AsyncRecvVariable(const Variable<T> &variable,
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif // ADIOS2_ENGINE_INSITUMPIREADER_TCC_

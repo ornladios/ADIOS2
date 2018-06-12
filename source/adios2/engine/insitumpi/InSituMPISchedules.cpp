@@ -23,8 +23,8 @@ namespace adios2
 namespace insitumpi
 {
 
-int GetNumberOfRequests(
-    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
+int GetNumberOfRequests(const std::map<std::string, helper::SubFileInfoMap>
+                            &variablesSubFileInfo) noexcept
 {
     int n = 0;
     for (const auto &variableNamePair : variablesSubFileInfo)
@@ -47,7 +47,7 @@ int GetNumberOfRequests(
 }
 
 int FixSeeksToZeroOffset(
-    std::map<std::string, SubFileInfoMap> &variablesSubFileInfo,
+    std::map<std::string, helper::SubFileInfoMap> &variablesSubFileInfo,
     bool isRowMajor) noexcept
 {
     int n = 0;
@@ -71,18 +71,19 @@ int FixSeeksToZeroOffset(
     return n;
 }
 
-void FixSeeksToZeroOffset(SubFileInfo &record, bool isRowMajor) noexcept
+void FixSeeksToZeroOffset(helper::SubFileInfo &record, bool isRowMajor) noexcept
 {
     size_t nElements = record.Seeks.second - record.Seeks.first + 1;
-    size_t pos =
-        LinearIndex(record.BlockBox, record.IntersectionBox.first, isRowMajor);
+    size_t pos = helper::LinearIndex(record.BlockBox,
+                                     record.IntersectionBox.first, isRowMajor);
     record.Seeks.first = pos;
     record.Seeks.second = pos + nElements - 1;
 }
 
-std::vector<std::vector<char>> SerializeLocalReadSchedule(
-    const int nWriters,
-    const std::map<std::string, SubFileInfoMap> &variablesSubFileInfo) noexcept
+std::vector<std::vector<char>>
+SerializeLocalReadSchedule(const int nWriters,
+                           const std::map<std::string, helper::SubFileInfoMap>
+                               &variablesSubFileInfo) noexcept
 {
     std::vector<std::vector<char>> buffers(nWriters);
 
@@ -91,8 +92,8 @@ std::vector<std::vector<char>> SerializeLocalReadSchedule(
     for (size_t i = 0; i < nWriters; i++)
     {
         nVarPerWriter[i] = 0;
-        InsertToBuffer(buffers[i], &nVarPerWriter[i],
-                       1); // allocate first 4 bytes
+        // allocate first 4 bytes
+        helper::InsertToBuffer(buffers[i], &nVarPerWriter[i], 1);
     }
 
     for (const auto &variableNamePair : variablesSubFileInfo)
@@ -107,7 +108,7 @@ std::vector<std::vector<char>> SerializeLocalReadSchedule(
             for (const auto &stepPair : subFileIndexPair.second)
             {
                 // LocalReadSchedule sfi = subFileIndexPair.second[0];
-                const std::vector<SubFileInfo> &sfi = stepPair.second;
+                const std::vector<helper::SubFileInfo> &sfi = stepPair.second;
                 SerializeLocalReadSchedule(buffers[subFileIndex], variableName,
                                            sfi);
                 ++nVarPerWriter[subFileIndex];
@@ -120,7 +121,7 @@ std::vector<std::vector<char>> SerializeLocalReadSchedule(
     for (int i = 0; i < nWriters; i++)
     {
         size_t pos = 0;
-        CopyToBuffer(buffers[i], pos, &nVarPerWriter[i]);
+        helper::CopyToBuffer(buffers[i], pos, &nVarPerWriter[i]);
     }
     return buffers;
 }
@@ -130,10 +131,10 @@ void SerializeLocalReadSchedule(std::vector<char> &buffer,
                                 const LocalReadSchedule lrs) noexcept
 {
     const int nameLen = varName.size();
-    InsertToBuffer(buffer, &nameLen, 1);
-    InsertToBuffer(buffer, varName.data(), nameLen);
+    helper::InsertToBuffer(buffer, &nameLen, 1);
+    helper::InsertToBuffer(buffer, varName.data(), nameLen);
     const int nSubFileInfos = lrs.size();
-    InsertToBuffer(buffer, &nSubFileInfos, 1);
+    helper::InsertToBuffer(buffer, &nSubFileInfos, 1);
     for (const auto &blockInfo : lrs)
     {
         SerializeSubFileInfo(buffer, blockInfo);
@@ -141,7 +142,7 @@ void SerializeLocalReadSchedule(std::vector<char> &buffer,
 }
 
 void SerializeSubFileInfo(std::vector<char> &buffer,
-                          const SubFileInfo record) noexcept
+                          const helper::SubFileInfo record) noexcept
 {
     SerializeBox(buffer, record.BlockBox);
     SerializeBox(buffer, record.IntersectionBox);
@@ -151,15 +152,15 @@ void SerializeSubFileInfo(std::vector<char> &buffer,
 void SerializeBox(std::vector<char> &buffer, const Box<Dims> box) noexcept
 {
     const int nDims = box.first.size();
-    InsertToBuffer(buffer, &nDims, 1);
-    InsertToBuffer(buffer, box.first.data(), nDims);
-    InsertToBuffer(buffer, box.second.data(), nDims);
+    helper::InsertToBuffer(buffer, &nDims, 1);
+    helper::InsertToBuffer(buffer, box.first.data(), nDims);
+    helper::InsertToBuffer(buffer, box.second.data(), nDims);
 }
 
 void SerializeBox(std::vector<char> &buffer, const Box<size_t> box) noexcept
 {
-    InsertToBuffer(buffer, &box.first, 1);
-    InsertToBuffer(buffer, &box.second, 1);
+    helper::InsertToBuffer(buffer, &box.first, 1);
+    helper::InsertToBuffer(buffer, &box.second, 1);
 }
 
 int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept
@@ -203,15 +204,15 @@ DeserializeReadSchedule(const std::vector<char> &buffer) noexcept
 {
     LocalReadScheduleMap map;
     size_t pos = 0;
-    int nVars = ReadValue<int>(buffer, pos);
+    int nVars = helper::ReadValue<int>(buffer, pos);
     for (int i = 0; i < nVars; i++)
     {
-        int nameLen = ReadValue<int>(buffer, pos);
+        int nameLen = helper::ReadValue<int>(buffer, pos);
         char name[nameLen + 1];
-        CopyFromBuffer(buffer, pos, name, nameLen);
+        helper::CopyFromBuffer(buffer, pos, name, nameLen);
         name[nameLen] = '\0';
-        int nSubFileInfos = ReadValue<int>(buffer, pos);
-        std::vector<SubFileInfo> sfis;
+        int nSubFileInfos = helper::ReadValue<int>(buffer, pos);
+        std::vector<helper::SubFileInfo> sfis;
         sfis.reserve(nSubFileInfos);
         for (int j = 0; j < nSubFileInfos; j++)
         {
@@ -222,10 +223,10 @@ DeserializeReadSchedule(const std::vector<char> &buffer) noexcept
     return map;
 }
 
-SubFileInfo DeserializeSubFileInfo(const std::vector<char> &buffer,
-                                   size_t &position) noexcept
+helper::SubFileInfo DeserializeSubFileInfo(const std::vector<char> &buffer,
+                                           size_t &position) noexcept
 {
-    SubFileInfo record;
+    helper::SubFileInfo record;
     record.BlockBox = DeserializeBoxDims(buffer, position);
     record.IntersectionBox = DeserializeBoxDims(buffer, position);
     record.Seeks = DeserializeBoxSizet(buffer, position);
@@ -236,11 +237,11 @@ Box<Dims> DeserializeBoxDims(const std::vector<char> &buffer,
                              size_t &position) noexcept
 {
     Box<Dims> box;
-    int nDims = ReadValue<int>(buffer, position);
+    int nDims = helper::ReadValue<int>(buffer, position);
     std::vector<size_t> start(nDims);
     std::vector<size_t> count(nDims);
-    CopyFromBuffer(buffer, position, start.data(), nDims);
-    CopyFromBuffer(buffer, position, count.data(), nDims);
+    helper::CopyFromBuffer(buffer, position, start.data(), nDims);
+    helper::CopyFromBuffer(buffer, position, count.data(), nDims);
     return Box<Dims>(start, count);
 }
 
@@ -248,8 +249,8 @@ Box<size_t> DeserializeBoxSizet(const std::vector<char> &buffer,
                                 size_t &position) noexcept
 {
     size_t first, second;
-    CopyFromBuffer(buffer, position, &first, 1);
-    CopyFromBuffer(buffer, position, &second, 1);
+    helper::CopyFromBuffer(buffer, position, &first, 1);
+    helper::CopyFromBuffer(buffer, position, &second, 1);
     return Box<size_t>(first, second);
 }
 
@@ -264,7 +265,7 @@ void PrintReadScheduleMap(const WriteScheduleMap &map) noexcept
         {
             const size_t readerRank = readerPair.first;
             std::cout << "{ reader = " << readerPair.first << " ";
-            const std::vector<SubFileInfo> &sfis = readerPair.second;
+            const std::vector<helper::SubFileInfo> &sfis = readerPair.second;
             for (const auto &sfi : sfis)
             {
                 std::cout << "<";
@@ -277,7 +278,7 @@ void PrintReadScheduleMap(const WriteScheduleMap &map) noexcept
     }
 }
 
-void PrintSubFileInfo(const SubFileInfo &sfi) noexcept
+void PrintSubFileInfo(const helper::SubFileInfo &sfi) noexcept
 {
     std::cout << "(block=";
     PrintBox(sfi.BlockBox);

@@ -16,6 +16,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 void InSituMPIWriter::PutSyncCommon(Variable<T> &variable,
@@ -103,13 +107,15 @@ void InSituMPIWriter::AsyncSendVariable(
     const auto it = m_WriteScheduleMap.find(variable.m_Name);
     if (it != m_WriteScheduleMap.end())
     {
-        std::map<size_t, std::vector<SubFileInfo>> requests = it->second;
-        Box<Dims> mybox = StartEndBox(variable.m_Start, variable.m_Count);
+        std::map<size_t, std::vector<helper::SubFileInfo>> requests =
+            it->second;
+        Box<Dims> mybox =
+            helper::StartEndBox(variable.m_Start, variable.m_Count);
         for (const auto &readerPair : requests)
         {
             for (const auto &sfi : readerPair.second)
             {
-                if (IdenticalBoxes(mybox, sfi.BlockBox))
+                if (helper::IdenticalBoxes(mybox, sfi.BlockBox))
                 {
                     if (m_Verbosity == 5)
                     {
@@ -140,6 +146,8 @@ void InSituMPIWriter::AsyncSendVariable(
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_INSITUMPIWRITER_TCC_ */

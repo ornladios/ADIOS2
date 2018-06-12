@@ -40,16 +40,16 @@ int main(int argc, char *argv[])
         {
             /*** IO class object: settings and factory of Settings: Variables,
              * Parameters, Transports, and Execution: Engines */
-            adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N");
+            adios2::IO bpIO = adios.DeclareIO("BPFile_N2N");
             bpIO.SetParameters({{"Threads", "2"}});
 
             /** global array: name, { shape (total dimensions) }, { start
              * (local) },
              * { count (local) }, all are constant dimensions */
             const unsigned int variablesSize = 1;
-            std::vector<adios2::Variable<float> *> bpFloats(variablesSize);
+            std::vector<adios2::Variable<float>> bpFloats(variablesSize);
 
-            adios2::Variable<std::string> &bpString =
+            adios2::Variable<std::string> bpString =
                 bpIO.DefineVariable<std::string>("bpString");
 
             for (unsigned int v = 0; v < variablesSize; ++v)
@@ -66,16 +66,16 @@ int main(int argc, char *argv[])
                 namev += std::to_string(v);
 
                 bpFloats[v] =
-                    &bpIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
-                                                {Nx}, adios2::ConstantDims);
+                    bpIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
+                                               {Nx}, adios2::ConstantDims);
             }
 
             /** global single value variable: name */
-            adios2::Variable<unsigned int> &bpTimeStep =
+            adios2::Variable<unsigned int> bpTimeStep =
                 bpIO.DefineVariable<unsigned int>("timeStep");
 
             /** Engine derived class, spawned to start IO operations */
-            adios2::Engine &bpWriter =
+            adios2::Engine bpWriter =
                 bpIO.Open("myVector.bp", adios2::Mode::Write);
 
             for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
                 for (unsigned int v = 0; v < variablesSize; ++v)
                 {
                     myFloats[0] = static_cast<float>(v + timeStep);
-                    bpWriter.Put(*bpFloats[v], myFloats.data());
+                    bpWriter.Put(bpFloats[v], myFloats.data());
                 }
                 const std::string myString(
                     "Hello from rank: " + std::to_string(rank) +
@@ -111,26 +111,26 @@ int main(int argc, char *argv[])
         { /////////////////////READ
             //            if (rank == 0)
             //            {
-            adios2::IO &ioReader = adios.DeclareIO("bpReader");
+            adios2::IO ioReader = adios.DeclareIO("bpReader");
 
-            adios2::Engine &bpReader =
+            adios2::Engine bpReader =
                 ioReader.Open("myVector.bp", adios2::Mode::Read);
 
-            adios2::Variable<float> *bpFloats000 =
+            adios2::Variable<float> bpFloats000 =
                 ioReader.InquireVariable<float>("bpFloats000");
 
-            adios2::Variable<std::string> *bpString =
+            adios2::Variable<std::string> bpString =
                 ioReader.InquireVariable<std::string>("bpString");
 
-            if (bpFloats000 != nullptr)
+            if (bpFloats000)
             {
-                bpFloats000->SetSelection({{rank * Nx}, {Nx}});
-                bpFloats000->SetStepSelection({2, 1});
+                bpFloats000.SetSelection({{rank * Nx}, {Nx}});
+                bpFloats000.SetStepSelection({2, 1});
 
-                std::vector<float> data(bpFloats000->SelectionSize());
-                bpReader.Get(*bpFloats000, data.data(), adios2::Mode::Sync);
+                std::vector<float> data(bpFloats000.SelectionSize());
+                bpReader.Get(bpFloats000, data.data(), adios2::Mode::Sync);
 
-                std::cout << "Data timestep " << bpFloats000->m_StepsStart
+                std::cout << "Data timestep " << bpFloats000.StepsStart()
                           << " from rank " << rank << ": ";
                 for (const auto datum : data)
                 {
@@ -143,12 +143,12 @@ int main(int argc, char *argv[])
                 std::cout << "Variable bpFloats000 not found\n";
             }
 
-            if (bpString != nullptr)
+            if (bpString)
             {
-                bpString->SetStepSelection({3, 1});
+                bpString.SetStepSelection({3, 1});
 
                 std::string myString;
-                bpReader.Get(*bpString, myString, adios2::Mode::Sync);
+                bpReader.Get(bpString, myString, adios2::Mode::Sync);
                 std::cout << myString << "\n";
             }
 

@@ -19,6 +19,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 std::string FileToString(const std::string &fileName) noexcept
 {
@@ -244,4 +246,5 @@ std::string DimsToString(const Dims &dimensions)
     return dimensionsString;
 }
 
+} // end namespace helper
 } // end namespace adios2

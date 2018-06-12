@@ -68,7 +68,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
 #else
         adios2::ADIOS adios(true);
 #endif
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare Single Value Attributes
         {
@@ -100,7 +100,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadSingleTypes)
 
         io.AddTransport("file");
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         // Close the file
         engine.Close();
@@ -212,7 +212,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
     // Write test data using ADIOS2
     {
         adios2::ADIOS adios(true);
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare Array Attributes
         {
@@ -247,7 +247,7 @@ TEST_F(BPWriteReadAttributeTest, ADIOS2BPWriteADIOS1ReadArrayTypes)
 
         io.AddTransport("file");
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         // Close the file
         engine.Close();

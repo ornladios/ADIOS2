@@ -15,28 +15,27 @@
 
 namespace adios2
 {
-
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string engineType, const Params &parameters,
                  const vParams &transportParameters)
 {
     if (mode == openmode::out)
     {
-        m_Stream =
-            std::make_shared<Stream>(name, Mode::Write, comm, engineType,
-                                     parameters, transportParameters, "C++");
+        m_Stream = std::make_shared<core::Stream>(name, Mode::Write, comm,
+                                                  engineType, parameters,
+                                                  transportParameters, "C++");
     }
     else if (mode == openmode::app)
     {
-        m_Stream =
-            std::make_shared<Stream>(name, Mode::Append, comm, engineType,
-                                     parameters, transportParameters, "C++");
+        m_Stream = std::make_shared<core::Stream>(name, Mode::Append, comm,
+                                                  engineType, parameters,
+                                                  transportParameters, "C++");
     }
     else if (mode == openmode::in)
     {
-        m_Stream =
-            std::make_shared<Stream>(name, Mode::Read, comm, engineType,
-                                     parameters, transportParameters, "C++");
+        m_Stream = std::make_shared<core::Stream>(name, Mode::Read, comm,
+                                                  engineType, parameters,
+                                                  transportParameters, "C++");
     }
 }
 
@@ -45,36 +44,66 @@ fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
 {
     if (mode == openmode::out)
     {
-        m_Stream = std::make_shared<Stream>(name, Mode::Write, comm, configFile,
-                                            ioInConfigFile, "C++");
+        m_Stream = std::make_shared<core::Stream>(
+            name, Mode::Write, comm, configFile, ioInConfigFile, "C++");
     }
     else if (mode == openmode::app)
     {
-        m_Stream = std::make_shared<Stream>(name, Mode::Append, comm,
-                                            configFile, ioInConfigFile, "C++");
+        m_Stream = std::make_shared<core::Stream>(
+            name, Mode::Append, comm, configFile, ioInConfigFile, "C++");
     }
     else if (mode == openmode::in)
     {
-        m_Stream = std::make_shared<Stream>(name, Mode::Read, comm, configFile,
-                                            ioInConfigFile, "C++");
+        m_Stream = std::make_shared<core::Stream>(
+            name, Mode::Read, comm, configFile, ioInConfigFile, "C++");
     }
 }
 
 fstream::fstream(const std::string &name, const openmode mode,
                  const std::string engineType, const Params &parameters,
                  const vParams &transportParameters)
-: fstream(name, mode, MPI_COMM_SELF, engineType, parameters,
-          transportParameters)
 {
+    if (mode == openmode::out)
+    {
+        m_Stream = std::make_shared<core::Stream>(name, Mode::Write, engineType,
+                                                  parameters,
+                                                  transportParameters, "C++");
+    }
+    else if (mode == openmode::app)
+    {
+        m_Stream = std::make_shared<core::Stream>(name, Mode::Append,
+                                                  engineType, parameters,
+                                                  transportParameters, "C++");
+    }
+    else if (mode == openmode::in)
+    {
+        m_Stream = std::make_shared<core::Stream>(name, Mode::Read, engineType,
+                                                  parameters,
+                                                  transportParameters, "C++");
+    }
 }
 
 fstream::fstream(const std::string &name, const openmode mode,
                  const std::string configFile, const std::string ioInConfigFile)
-: fstream(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile)
 {
+    if (mode == openmode::out)
+    {
+        m_Stream = std::make_shared<core::Stream>(name, Mode::Write, configFile,
+                                                  ioInConfigFile, "C++");
+    }
+    else if (mode == openmode::app)
+    {
+        m_Stream = std::make_shared<core::Stream>(
+            name, Mode::Append, configFile, ioInConfigFile, "C++");
+    }
+    else if (mode == openmode::in)
+    {
+        m_Stream = std::make_shared<core::Stream>(name, Mode::Read, configFile,
+                                                  ioInConfigFile, "C++");
+    }
 }
 
-fstream::fstream() : m_Stream(std::make_shared<Stream>("C++")) {}
+fstream::fstream() : m_Stream(std::make_shared<core::Stream>("C++")) {}
 
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
                    const std::string engineType, const Params &parameters,

@@ -21,6 +21,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 size_t GetTotalSize(const Dims &dimensions) noexcept
 {
@@ -262,4 +264,5 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
     return linearIndex;
 }
 
+} // end namespace helper
 } // end namespace adios2

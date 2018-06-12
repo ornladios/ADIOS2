@@ -18,16 +18,13 @@
 
 namespace adios2
 {
-
-namespace utils
+namespace core
 {
-class BPLS2;
-}
+namespace engine
+{
 
 class BPFileReader : public Engine
 {
-
-    friend class utils::BPLS2;
 
 public:
     /**
@@ -78,10 +75,12 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    void
-    ReadVariables(const std::map<std::string, SubFileInfoMap> &variablesInfo);
+    void ReadVariables(
+        const std::map<std::string, helper::SubFileInfoMap> &variablesInfo);
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_BP_BPFILEREADER_H_ */

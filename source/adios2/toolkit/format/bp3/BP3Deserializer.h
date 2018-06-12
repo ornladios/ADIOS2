@@ -41,12 +41,12 @@ public:
 
     ~BP3Deserializer() = default;
 
-    void ParseMetadata(const BufferSTL &bufferSTL, IO &io);
+    void ParseMetadata(const BufferSTL &bufferSTL, core::IO &io);
 
     // Sync functions
     template <class T>
-    std::map<std::string, SubFileInfoMap>
-    GetSyncVariableSubFileInfo(const Variable<T> &variable) const;
+    std::map<std::string, helper::SubFileInfoMap>
+    GetSyncVariableSubFileInfo(const core::Variable<T> &variable) const;
 
     /**
      * Used to get the variable payload data for the current selection (dims and
@@ -55,42 +55,44 @@ public:
      * @param bufferSTL bp buffer input that contains metadata and data
      */
     template <class T>
-    void GetSyncVariableDataFromStream(Variable<T> &variable,
+    void GetSyncVariableDataFromStream(core::Variable<T> &variable,
                                        BufferSTL &bufferSTL) const;
 
     // Deferred functions
     template <class T>
-    void GetDeferredVariable(Variable<T> &variable, T *data);
+    void GetDeferredVariable(core::Variable<T> &variable, T *data);
 
     /* Return the read schedule of a variable stored at GetDeferred() calls */
-    SubFileInfoMap &GetSubFileInfoMap(const std::string &variableName);
+    helper::SubFileInfoMap &GetSubFileInfoMap(const std::string &variableName);
 
     /* Calculate and return the read schedule of a single variable */
     template <class T>
-    SubFileInfoMap GetSubFileInfo(const Variable<T> &variable) const;
+    helper::SubFileInfoMap
+    GetSubFileInfo(const core::Variable<T> &variable) const;
 
-    std::map<std::string, SubFileInfoMap>
-    PerformGetsVariablesSubFileInfo(IO &io);
+    std::map<std::string, helper::SubFileInfoMap>
+    PerformGetsVariablesSubFileInfo(core::IO &io);
 
-    void ClipContiguousMemory(const std::string &variableName, IO &io,
+    void ClipContiguousMemory(const std::string &variableName, core::IO &io,
                               const std::vector<char> &contiguousMemory,
                               const Box<Dims> &blockBox,
                               const Box<Dims> &intersectionBox) const;
 
-    void SetVariableNextStepData(const std::string &variableName, IO &io) const;
+    void SetVariableNextStepData(const std::string &variableName,
+                                 core::IO &io) const;
 
     template <class T>
-    void GetValueFromMetadata(Variable<T> &variable) const;
+    void GetValueFromMetadata(core::Variable<T> &variable) const;
 
 private:
-    std::map<std::string, SubFileInfoMap> m_DeferredVariables;
+    std::map<std::string, helper::SubFileInfoMap> m_DeferredVariables;
 
     static std::mutex m_Mutex;
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
-    void ParsePGIndex(const BufferSTL &bufferSTL, const IO &io);
-    void ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io);
-    void ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io);
+    void ParsePGIndex(const BufferSTL &bufferSTL, const core::IO &io);
+    void ParseVariablesIndex(const BufferSTL &bufferSTL, core::IO &io);
+    void ParseAttributesIndex(const BufferSTL &bufferSTL, core::IO &io);
 
     /**
      * Reads a variable index element (serialized) and calls IO.DefineVariable
@@ -101,17 +103,17 @@ private:
      * @param position
      */
     template <class T>
-    void DefineVariableInIO(const ElementIndexHeader &header, IO &io,
+    void DefineVariableInIO(const ElementIndexHeader &header, core::IO &io,
                             const std::vector<char> &buffer,
                             size_t position) const;
 
     template <class T>
-    void DefineAttributeInIO(const ElementIndexHeader &header, IO &io,
+    void DefineAttributeInIO(const ElementIndexHeader &header, core::IO &io,
                              const std::vector<char> &buffer,
                              size_t position) const;
 
     template <class T>
-    void ClipContiguousMemoryCommon(Variable<T> &variable,
+    void ClipContiguousMemoryCommon(core::Variable<T> &variable,
                                     const std::vector<char> &contiguousMemory,
                                     const Box<Dims> &blockBox,
                                     const Box<Dims> &intersectionBox) const;
@@ -125,7 +127,7 @@ private:
      */
     template <class T>
     void ClipContiguousMemoryCommonRow(
-        Variable<T> &variable, const std::vector<char> &contiguousMemory,
+        core::Variable<T> &variable, const std::vector<char> &contiguousMemory,
         const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
 
     /**
@@ -137,29 +139,29 @@ private:
      */
     template <class T>
     void ClipContiguousMemoryCommonColumn(
-        Variable<T> &variable, const std::vector<char> &contiguousMemory,
+        core::Variable<T> &variable, const std::vector<char> &contiguousMemory,
         const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const;
 
     template <class T>
-    void SetVariableNextStepDataCommon(Variable<T> &variable) const;
+    void SetVariableNextStepDataCommon(core::Variable<T> &variable) const;
 
     template <class T>
-    void GetValueFromMetadataCommon(Variable<T> &variable) const;
+    void GetValueFromMetadataCommon(core::Variable<T> &variable) const;
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template std::map<std::string, SubFileInfoMap>                      \
-    BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable)   \
+    extern template std::map<std::string, helper::SubFileInfoMap>              \
+    BP3Deserializer::GetSyncVariableSubFileInfo(const core::Variable<T> &)     \
         const;                                                                 \
                                                                                \
     extern template void BP3Deserializer::GetSyncVariableDataFromStream(       \
-        Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
+        core::Variable<T> &, BufferSTL &) const;                               \
                                                                                \
     extern template void BP3Deserializer::GetDeferredVariable(                 \
-        Variable<T> &variable, T *data);                                       \
+        core::Variable<T> &variable, T *);                                     \
                                                                                \
     extern template void BP3Deserializer::GetValueFromMetadata(                \
-        Variable<T> &variable) const;
+        core::Variable<T> &variable) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -12,6 +12,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 void HDFMixer::DoPutSyncCommon(Variable<T> &variable, const T *values)
@@ -44,4 +48,6 @@ void HDFMixer::DoPutSyncCommon(Variable<T> &variable, const T *values)
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios

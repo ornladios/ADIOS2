@@ -111,7 +111,7 @@ public:
     void Init(const std::string &name, MPI_Comm comm, bool toWrite);
 
     template <class T>
-    void Write(Variable<T> &variable, const T *values);
+    void Write(core::Variable<T> &variable, const T *values);
 
     void CreateDataset(const std::string &varName, hid_t h5Type,
                        hid_t filespaceID, std::vector<hid_t> &chain);
@@ -123,28 +123,28 @@ public:
     void Close();
     void Advance();
 
-    void WriteAttrFromIO(IO &io);
-    void ReadAttrToIO(IO &io);
+    void WriteAttrFromIO(core::IO &io);
+    void ReadAttrToIO(core::IO &io);
 
     void SetAdiosStep(int ts);
 
     unsigned int GetNumAdiosSteps();
     void WriteAdiosSteps();
 
-    void ReadVariables(unsigned int ts, IO &io);
-    void FindVarsFromH5(IO &io, hid_t gid, const char *name,
+    void ReadVariables(unsigned int ts, core::IO &io);
+    void FindVarsFromH5(core::IO &io, hid_t gid, const char *name,
                         const char *heritage);
-    void ReadAllVariables(IO &io);
+    void ReadAllVariables(core::IO &io);
 
     void ReadStringScalarDataset(hid_t dataSetId, std::string &result);
     hid_t GetTypeStringScalar(const std::string &input);
-    void CreateVar(IO &io, hid_t h5Type, std::string const &name);
+    void CreateVar(core::IO &io, hid_t h5Type, std::string const &name);
 
     template <class T>
-    void AddVar(IO &io, std::string const &name, hid_t datasetId);
+    void AddVar(core::IO &io, std::string const &name, hid_t datasetId);
 
     template <class T>
-    void AddNonStringAttribute(IO &io, std::string const &attrName,
+    void AddNonStringAttribute(core::IO &io, std::string const &attrName,
                                hid_t attrId, hid_t h5Type, hsize_t arraySize);
 
     static void StaticGetAdiosStepString(std::string &adiosStepName, int ts);
@@ -170,14 +170,14 @@ public:
     bool m_IsGeneratedByAdios = false;
 
 private:
-    void ReadInStringAttr(IO &io, const std::string &attrName, hid_t attrId,
-                          hid_t h5Type, hid_t sid);
-    void ReadInNonStringAttr(IO &io, const std::string &attrName, hid_t attrId,
-                             hid_t h5Type, hid_t sid);
-    void WriteStringAttr(IO &io, const std::string &attrName);
+    void ReadInStringAttr(core::IO &io, const std::string &attrName,
+                          hid_t attrId, hid_t h5Type, hid_t sid);
+    void ReadInNonStringAttr(core::IO &io, const std::string &attrName,
+                             hid_t attrId, hid_t h5Type, hid_t sid);
+    void WriteStringAttr(core::IO &io, const std::string &attrName);
 
     template <class T>
-    void WriteNonStringAttr(IO &io, Attribute<T> *adiosAttr);
+    void WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr);
 
     const bool m_DebugMode;
     bool m_WriteMode = false;
@@ -186,7 +186,7 @@ private:
 
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
-    extern template void HDF5Common::Write(Variable<T> &variable,              \
+    extern template void HDF5Common::Write(core::Variable<T> &variable,        \
                                            const T *value);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)

@@ -31,21 +31,21 @@ File::File(const std::string &name, const std::string mode, MPI_Comm comm,
 {
     if (mode == "r")
     {
-        m_Stream =
-            std::make_shared<Stream>(name, adios2::Mode::Read, comm, engineType,
-                                     parameters, transportParameters);
+        m_Stream = std::make_shared<core::Stream>(name, adios2::Mode::Read,
+                                                  comm, engineType, parameters,
+                                                  transportParameters);
     }
     else if (mode == "w")
     {
-        m_Stream = std::make_shared<Stream>(name, adios2::Mode::Write, comm,
-                                            engineType, parameters,
-                                            transportParameters);
+        m_Stream = std::make_shared<core::Stream>(name, adios2::Mode::Write,
+                                                  comm, engineType, parameters,
+                                                  transportParameters);
     }
     else if (mode == "a")
     {
-        m_Stream = std::make_shared<Stream>(name, adios2::Mode::Append, comm,
-                                            engineType, parameters,
-                                            transportParameters);
+        m_Stream = std::make_shared<core::Stream>(name, adios2::Mode::Append,
+                                                  comm, engineType, parameters,
+                                                  transportParameters);
     }
     else
     {
@@ -63,18 +63,18 @@ File::File(const std::string &name, const std::string mode, MPI_Comm comm,
 {
     if (mode == "r")
     {
-        m_Stream = std::make_shared<Stream>(name, adios2::Mode::Read, comm,
-                                            configFile, ioInConfigFile);
+        m_Stream = std::make_shared<core::Stream>(
+            name, adios2::Mode::Read, comm, configFile, ioInConfigFile);
     }
     else if (mode == "w")
     {
-        m_Stream = std::make_shared<Stream>(name, adios2::Mode::Write, comm,
-                                            configFile, ioInConfigFile);
+        m_Stream = std::make_shared<core::Stream>(
+            name, adios2::Mode::Write, comm, configFile, ioInConfigFile);
     }
     else if (mode == "a")
     {
-        m_Stream = std::make_shared<Stream>(name, adios2::Mode::Append, comm,
-                                            configFile, ioInConfigFile);
+        m_Stream = std::make_shared<core::Stream>(
+            name, adios2::Mode::Append, comm, configFile, ioInConfigFile);
     }
     else
     {
@@ -180,9 +180,10 @@ pybind11::array File::Read(const std::string &name, const bool endl)
         return pyArray;
     }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);     \
+        core::Variable<T> &variable =                                          \
+            *m_Stream->m_IO->InquireVariable<T>(name);                         \
         Dims pyCount;                                                          \
         if (variable.m_SingleValue)                                            \
         {                                                                      \
@@ -219,7 +220,7 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         pybind11::array pyArray(pybind11::dtype::of<T>(), selectionCount);     \
         m_Stream->Read<T>(                                                     \
@@ -254,7 +255,7 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         pybind11::array pyArray(pybind11::dtype::of<T>(), shapePy);            \
         m_Stream->Read<T>(                                                     \

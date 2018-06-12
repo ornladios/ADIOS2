@@ -9,9 +9,8 @@
  */
 #include "adiosSystem.h"
 
-#include <ctime>
-
 #include <chrono> //system_clock, now
+#include <ctime>
 
 #include <adios2sys/SystemTools.hxx>
 
@@ -25,6 +24,8 @@
 #endif
 
 namespace adios2
+{
+namespace helper
 {
 
 bool CreateDirectory(const std::string &fullPath) noexcept
@@ -70,4 +71,5 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept
     return isZeroIndexed;
 }
 
+} // end namespace helper
 } // end namespace adios2

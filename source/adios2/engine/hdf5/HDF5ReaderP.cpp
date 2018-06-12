@@ -16,6 +16,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
                          MPI_Comm mpiComm)
@@ -136,7 +140,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
     else
     {
         hsize_t start[ndims], count[ndims], stride[ndims];
-        bool isOrderC = IsRowMajor(m_IO.m_HostLanguage);
+        bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
 
         for (int i = 0; i < ndims; i++)
         {
@@ -360,4 +364,6 @@ void HDF5ReaderP::DoClose(const int transportIndex)
     m_H5File.Close();
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

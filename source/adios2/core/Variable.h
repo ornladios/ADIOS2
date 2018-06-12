@@ -24,6 +24,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 /**
  * @param Base (parent) class for template derived (child) class Variable.
@@ -69,6 +71,7 @@ public:
     T *GetData() const noexcept;
 };
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_VARIABLE_H_ */

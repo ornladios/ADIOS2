@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     {
         // Define method for engine creation
         // 1. Get method def from config file or define new one
-        adios2::IO &bpReaderSettings = adios.DeclareIO("input");
+        adios2::IO bpReaderSettings = adios.DeclareIO("input");
         if (!bpReaderSettings.InConfigFile())
         {
             // if not defined by user, we can change the default settings

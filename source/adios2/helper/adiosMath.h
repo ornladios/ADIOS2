@@ -19,6 +19,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 /**
  * Loops through a vector containing dimensions and returns the product of all
  * elements
@@ -180,6 +182,7 @@ bool LessThan(const T input1, const T input2) noexcept;
 template <class T>
 bool GreaterThan(const T input1, const T input2) noexcept;
 
+} // end namespace helper
 } // end namespace adios2
 
 #include "adiosMath.inl"

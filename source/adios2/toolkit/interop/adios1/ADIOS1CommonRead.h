@@ -48,7 +48,7 @@ public:
 
     void InitParameters(const Params &parameters);
     void InitTransports(const std::vector<Params> &transportsParameters);
-    bool Open(IO &io); // return true if file is opened successfully
+    bool Open(core::IO &io); // return true if file is opened successfully
 
     void ScheduleReadCommon(const std::string &name, const Dims &offs,
                             const Dims &ldims, const int fromStep,
@@ -56,7 +56,7 @@ public:
                             const bool readAsJoinedArray, void *data);
 
     void PerformReads();
-    StepStatus AdvanceStep(IO &io, const StepMode mode,
+    StepStatus AdvanceStep(core::IO &io, const StepMode mode,
                            const float timeout_sec = 0.0);
     size_t CurrentStep() const;
     void ReleaseStep();
@@ -81,22 +81,24 @@ private:
 
     void Init();
 
-    void DefineADIOS2Variable(IO &io, const char *name, const ADIOS_VARINFO *vi,
-                              Dims gdims, bool isJoined, bool isGlobal);
+    void DefineADIOS2Variable(core::IO &io, const char *name,
+                              const ADIOS_VARINFO *vi, Dims gdims,
+                              bool isJoined, bool isGlobal);
 
     template <class T>
-    void DefineADIOS2Variable(IO &io, const char *name, const ADIOS_VARINFO *vi,
-                              Dims gdims, bool isJoined, bool isGlobal);
+    void DefineADIOS2Variable(core::IO &io, const char *name,
+                              const ADIOS_VARINFO *vi, Dims gdims,
+                              bool isJoined, bool isGlobal);
 
-    void GenerateVariables(IO &io);
+    void GenerateVariables(core::IO &io);
 
-    void DefineADIOS2Attribute(IO &io, const char *name,
+    void DefineADIOS2Attribute(core::IO &io, const char *name,
                                enum ADIOS_DATATYPES type, void *value);
 
     template <class T>
-    void DefineADIOS2Attribute(IO &io, const char *name, void *value);
+    void DefineADIOS2Attribute(core::IO &io, const char *name, void *value);
 
-    void GenerateAttributes(IO &io);
+    void GenerateAttributes(core::IO &io);
 };
 
 } // end namespace interop

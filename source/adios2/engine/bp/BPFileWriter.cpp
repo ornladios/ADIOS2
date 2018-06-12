@@ -19,6 +19,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
@@ -63,7 +67,7 @@ void BPFileWriter::PerformPuts()
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \
@@ -364,4 +368,6 @@ void BPFileWriter::AggregateWriteData(const bool isFinal,
     m_BP3Serializer.m_Aggregator.ResetBuffers();
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

@@ -99,38 +99,36 @@ void FC_GLOBAL(adios2_variable_shape_f2c,
     }
 }
 
-void FC_GLOBAL(adios2_variable_available_steps_start_f2c,
-               adios2_variable_AVAILABLE_STEPS_START_F2C)(
-    const adios2_variable **variable, int64_t *steps_start, int *ierr)
+void
+    FC_GLOBAL(adios2_variable_steps_start_f2c,
+              adios2_variable_STEPS_START_F2C)(const adios2_variable **variable,
+                                               int64_t *steps_start, int *ierr)
 {
     *ierr = 0;
     try
     {
-        *steps_start = static_cast<int64_t>(
-            adios2_variable_available_steps_start(*variable));
+        *steps_start =
+            static_cast<int64_t>(adios2_variable_steps_start(*variable));
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 variable_available_steps_start: " << e.what()
-                  << "\n";
+        std::cerr << "ADIOS2 variable_steps_start: " << e.what() << "\n";
         *ierr = -1;
     }
 }
 
-void FC_GLOBAL(adios2_variable_available_steps_count_f2c,
-               adios2_variable_AVAILABLE_STEPS_COUNT_F2C)(
-    const adios2_variable **variable, int64_t *steps_count, int *ierr)
+void FC_GLOBAL(adios2_variable_steps_f2c,
+               adios2_variable_STEPS_F2C)(const adios2_variable **variable,
+                                          int64_t *steps_count, int *ierr)
 {
     *ierr = 0;
     try
     {
-        *steps_count = static_cast<int64_t>(
-            adios2_variable_available_steps_count(*variable));
+        *steps_count = static_cast<int64_t>(adios2_variable_steps(*variable));
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 variable_available_steps_count: " << e.what()
-                  << "\n";
+        std::cerr << "ADIOS2 variable_steps: " << e.what() << "\n";
         *ierr = -1;
     }
 }

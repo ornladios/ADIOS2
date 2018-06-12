@@ -8,13 +8,14 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX98_ADIOS2_CXX98_H_
-#define BINDINGS_CXX98_ADIOS2_CXX98_H_
+#ifndef ADIOS2_BINDINGS_CXX98_H_
+#define ADIOS2_BINDINGS_CXX98_H_
 
 #include "cxx98/cxx98ADIOS.h"
 #include "cxx98/cxx98Attribute.h"
 #include "cxx98/cxx98Engine.h"
 #include "cxx98/cxx98IO.h"
 #include "cxx98/cxx98Variable.h"
+#include "cxx98/cxx98types.h"
 
-#endif /* BINDINGS_CXX98_ADIOS2_CXX98_H_ */
+#endif /* ADIOS2_BINDINGS_CXX98_H_ */

@@ -32,16 +32,16 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(adios2::DebugON);
 
         // Get a Transform of type BZip2
-        adios2::Operator &adiosZfp =
+        adios2::Operator adiosZfp =
             adios.DefineOperator("ZfpVariableCompressor", "zfp");
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPVariable_Zfp");
+        adios2::IO bpIO = adios.DeclareIO("BPVariable_Zfp");
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
+        adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
             "bpUInts", {}, {}, {Nx}, adios2::ConstantDims);
 
         // Adding transform metadata to variable:
@@ -50,20 +50,20 @@ int main(int argc, char *argv[])
         // Tolerance
         // Precision
         const unsigned int zfpID =
-            bpFloats.AddTransform(adiosZfp, {{"Rate", "8"}});
+            bpFloats.AddOperator(adiosZfp, {{"Rate", "8"}});
 
         // Treat Transforms as wrappers to underlying library (zfp):
         const std::size_t estimatedSize =
-            adiosZfp.BufferMaxSize(myFloats.data(), bpFloats.m_Count,
-                                   bpFloats.m_OperatorsInfo[zfpID].Parameters);
+            adiosZfp.BufferMaxSize(myFloats.data(), bpFloats.Count(),
+                                   bpFloats.OperatorsInfo()[zfpID].Parameters);
 
         // Compress
         std::vector<char> compressedBuffer(estimatedSize);
 
         size_t compressedSize = adiosZfp.Compress(
-            myFloats.data(), bpFloats.m_Count, bpFloats.m_ElementSize,
-            bpFloats.m_Type, compressedBuffer.data(),
-            bpFloats.m_OperatorsInfo[zfpID].Parameters);
+            myFloats.data(), bpFloats.Count(), bpFloats.Sizeof(),
+            bpFloats.Type(), compressedBuffer.data(),
+            bpFloats.OperatorsInfo()[zfpID].Parameters);
 
         compressedBuffer.resize(compressedSize);
 
@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
         std::vector<float> decompressedBuffer(Nx);
         size_t decompressedSize = adiosZfp.Decompress(
             compressedBuffer.data(), compressedBuffer.size(),
-            decompressedBuffer.data(), bpFloats.m_Count, bpFloats.m_Type,
-            bpFloats.m_OperatorsInfo[zfpID].Parameters);
+            decompressedBuffer.data(), bpFloats.Count(), bpFloats.Type(),
+            bpFloats.OperatorsInfo()[zfpID].Parameters);
 
         std::cout << "Decompression summary:\n";
         std::cout << "Decompressed size: " << decompressedSize << " bytes\n ";

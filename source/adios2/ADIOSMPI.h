@@ -11,8 +11,8 @@
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #else
-#include "adios2/mpidummy.h"
-using namespace adios2::mpi;
+#include "adios2/helper/mpidummy.h"
+using namespace adios2::helper::mpi;
 #endif
 
 #include <climits> //UXXX_MAX

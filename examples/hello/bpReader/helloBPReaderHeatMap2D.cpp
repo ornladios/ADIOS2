@@ -64,14 +64,14 @@ int main(int argc, char *argv[])
         // ************************** WRITE
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &putHeatMap = adios.DeclareIO("HeatMapWriter");
+        adios2::IO putHeatMap = adios.DeclareIO("HeatMapWriter");
 
-        adios2::Variable<unsigned int> &outTemperature =
+        adios2::Variable<unsigned int> outTemperature =
             putHeatMap.DefineVariable<unsigned int>(
                 "temperature", shape, start, count, adios2::ConstantDims);
 
         /** Will create HeatMap.bp */
-        adios2::Engine &bpWriter =
+        adios2::Engine bpWriter =
             putHeatMap.Open("HeatMap2D.bp", adios2::Mode::Write);
 
         bpWriter.Put(outTemperature, temperatures.data());
@@ -80,23 +80,23 @@ int main(int argc, char *argv[])
         // ************************** READ
         if (rank == 0)
         {
-            adios2::IO &getHeatMap = adios.DeclareIO("HeatMapReader");
-            adios2::Engine &bpReader = getHeatMap.Open(
+            adios2::IO getHeatMap = adios.DeclareIO("HeatMapReader");
+            adios2::Engine bpReader = getHeatMap.Open(
                 "HeatMap2D.bp", adios2::Mode::Read, MPI_COMM_SELF);
 
             // this just discovers in the metadata file that the variable exists
-            adios2::Variable<unsigned int> *inTemperature =
+            adios2::Variable<unsigned int> inTemperature =
                 getHeatMap.InquireVariable<unsigned int>("temperature");
             // now read the variable
-            if (inTemperature != nullptr)
+            if (inTemperature)
             {
-                inTemperature->SetSelection({{2, 2}, {6, 1}});
-                size_t elementsSize = inTemperature->SelectionSize();
+                inTemperature.SetSelection({{2, 2}, {6, 1}});
+                size_t elementsSize = inTemperature.SelectionSize();
                 std::vector<unsigned int> inTemperatures(elementsSize);
                 std::cout << "Pre-allocated " << elementsSize << " elements, "
                           << elementsSize * sizeof(unsigned int) << " bytes\n";
 
-                bpReader.Get(*inTemperature, inTemperatures.data(),
+                bpReader.Get(inTemperature, inTemperatures.data(),
                              adios2::Mode::Sync);
 
                 std::cout << "Incoming temperature map:\n";
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
                 for (auto i = 0; i < inTemperatures.size(); ++i)
                 {
                     std::cout << inTemperatures[i] << " ";
-                    if ((i + 1) % inTemperature->m_Count.back() == 0)
+                    if ((i + 1) % inTemperature.Count().back() == 0)
                     {
                         std::cout << "\n";
                     }

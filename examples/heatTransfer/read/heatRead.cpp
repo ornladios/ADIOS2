@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
         // Define method for engine creation
         // 1. Get method def from config file or define new one
 
-        adios2::IO &inIO = ad.DeclareIO("readerInput");
+        adios2::IO inIO = ad.DeclareIO("readerInput");
         if (!inIO.InConfigFile())
         {
             // if not defined by user, we can change the default settings
@@ -103,18 +103,18 @@ int main(int argc, char *argv[])
             inIO.AddTransport("File", {{"verbose", "4"}});
         }
 
-        adios2::IO &outIO = ad.DeclareIO("readerOutput");
+        adios2::IO outIO = ad.DeclareIO("readerOutput");
 
-        adios2::Engine &reader =
+        adios2::Engine reader =
             inIO.Open(settings.inputfile, adios2::Mode::Read, mpiReaderComm);
 
         std::vector<double> Tin;
         std::vector<double> Tout;
         std::vector<double> dT;
-        adios2::Variable<double> *vTin = nullptr;
-        adios2::Variable<double> *vTout = nullptr;
-        adios2::Variable<double> *vdT = nullptr;
-        adios2::Engine *writer = nullptr;
+        adios2::Variable<double> vTin;
+        adios2::Variable<double> vTout;
+        adios2::Variable<double> vdT;
+        adios2::Engine writer;
         bool firstStep = true;
         int step = 0;
 
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
             // step
             vTin = inIO.InquireVariable<double>("T");
 
-            if (vTin == nullptr)
+            if (!vTin)
             {
                 std::cout << "Error: NO variable T found. Unable to proceed. "
                              "Exiting. "
@@ -141,8 +141,8 @@ int main(int argc, char *argv[])
 
             if (firstStep)
             {
-                unsigned int gndx = vTin->m_Shape[0];
-                unsigned int gndy = vTin->m_Shape[1];
+                unsigned int gndx = vTin.Shape()[0];
+                unsigned int gndy = vTin.Shape()[1];
 
                 if (rank == 0)
                 {
@@ -156,12 +156,12 @@ int main(int argc, char *argv[])
                 dT.resize(settings.readsize[0] * settings.readsize[1]);
 
                 /* Create output variables and open output stream */
-                vTout = &outIO.DefineVariable<double>(
+                vTout = outIO.DefineVariable<double>(
                     "T", {gndx, gndy}, settings.offset, settings.readsize);
-                vdT = &outIO.DefineVariable<double>(
+                vdT = outIO.DefineVariable<double>(
                     "dT", {gndx, gndy}, settings.offset, settings.readsize);
-                writer = &outIO.Open(settings.outputfile, adios2::Mode::Write,
-                                     mpiReaderComm);
+                writer = outIO.Open(settings.outputfile, adios2::Mode::Write,
+                                    mpiReaderComm);
 
                 MPI_Barrier(mpiReaderComm); // sync processes just for stdout
             }
@@ -172,12 +172,12 @@ int main(int argc, char *argv[])
             }
 
             // Create a 2D selection for the subset
-            vTin->SetSelection(
+            vTin.SetSelection(
                 adios2::Box<adios2::Dims>(settings.offset, settings.readsize));
 
             // Arrays are read by scheduling one or more of them
             // and performing the reads at once
-            reader.Get<double>(*vTin, Tin.data());
+            reader.Get<double>(vTin, Tin.data());
             /*printDataStep(Tin.data(), settings.readsize.data(),
                           settings.offset.data(), rank, step); */
             reader.EndStep();
@@ -188,20 +188,20 @@ int main(int argc, char *argv[])
             Compute(Tin, Tout, dT, firstStep);
 
             /* Output Tout and dT */
-            writer->BeginStep();
+            writer.BeginStep();
 
-            if (vTout != nullptr)
-                writer->Put<double>(*vTout, Tout.data());
-            if (vdT != nullptr)
-                writer->Put<double>(*vdT, dT.data());
-            writer->EndStep();
+            if (vTout)
+                writer.Put<double>(vTout, Tout.data());
+            if (vdT)
+                writer.Put<double>(vdT, dT.data());
+            writer.EndStep();
 
             step++;
             firstStep = false;
         }
         reader.Close();
-        if (writer != nullptr)
-            writer->Close();
+        if (writer)
+            writer.Close();
     }
     catch (std::invalid_argument &e) // command-line argument errors
     {

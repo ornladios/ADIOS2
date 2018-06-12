@@ -8,9 +8,12 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
+#ifndef ADIOS2_BINDINGS_CXX11_CXX11_FSTREAM_ADIOS2FSTREAM_TCC_
+#define ADIOS2_BINDINGS_CXX11_CXX11_FSTREAM_ADIOS2FSTREAM_TCC_
+
 #include "ADIOS2fstream.h"
 
-#include "adios2/highlevelapi/fstream/Stream.h"
+#include "adios2/core/Stream.h"
 
 namespace adios2
 {
@@ -121,3 +124,5 @@ fstream::read(const std::string &name, const Dims &selectionStart,
 //}
 
 } // end namespace adios2
+
+#endif /* ADIOS2_BINDINGS_CXX11_CXX11_FSTREAM_ADIOS2FSTREAM_TCC_ */

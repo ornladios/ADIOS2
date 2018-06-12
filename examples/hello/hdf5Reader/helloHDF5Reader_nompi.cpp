@@ -16,22 +16,21 @@
 #include <adios2.h>
 
 template <class T>
-void ReadData(adios2::IO &h5IO, adios2::Engine &h5Reader,
-              const std::string &name)
+void ReadData(adios2::IO h5IO, adios2::Engine h5Reader, const std::string &name)
 {
-    adios2::Variable<T> *var = h5IO.InquireVariable<T>(name);
+    adios2::Variable<T> var = h5IO.InquireVariable<T>(name);
 
-    if (var != nullptr)
+    if (var)
     {
-        int nDims = var->m_Shape.size();
+        int nDims = var.Shape().size();
         size_t totalSize = 1;
         for (int i = 0; i < nDims; i++)
         {
-            totalSize *= var->m_Shape[i];
+            totalSize *= var.Shape()[i];
         }
         std::vector<T> myValues(totalSize);
         // myFloats.data is pre-allocated
-        h5Reader.Get<T>(*var, myValues.data(), adios2::Mode::Sync);
+        h5Reader.Get<T>(var, myValues.data(), adios2::Mode::Sync);
 
         // std::cout << "\tValues of "<<name<<": ";
         std::cout << "\tPeek Values: ";
@@ -84,17 +83,17 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &h5IO = adios.DeclareIO("ReadHDF5");
+        adios2::IO h5IO = adios.DeclareIO("ReadHDF5");
 
         h5IO.SetEngine("HDF5");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &h5Reader = h5IO.Open(filename, adios2::Mode::Read);
+        adios2::Engine h5Reader = h5IO.Open(filename, adios2::Mode::Read);
 
         const std::map<std::string, adios2::Params> variables =
-            h5IO.GetAvailableVariables();
+            h5IO.AvailableVariables();
 
-        for (const auto &variablePair : variables)
+        for (const auto variablePair : variables)
         {
             std::cout << "Name: " << variablePair.first;
             std::cout << std::endl;

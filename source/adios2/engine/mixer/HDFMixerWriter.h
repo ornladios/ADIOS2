@@ -41,6 +41,10 @@ inline MPI_Datatype mpi_typeof(std::pair<short, int>) { return MPI_SHORT_INT; }
 */
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class HDFVDSWriter
 {
@@ -87,6 +91,9 @@ private:
     const bool m_DebugMode = false;
     int m_Rank;
 };
+
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif // ADIOS2_ENGINE_BP_HDFSerialWriter

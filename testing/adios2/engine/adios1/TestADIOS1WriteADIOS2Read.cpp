@@ -60,7 +60,7 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read1D8)
 #endif
 
     {
-        adios2::IO &io = adios.DeclareIO("ADIOS1Write");
+        adios2::IO io = adios.DeclareIO("ADIOS1Write");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -69,24 +69,22 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read1D8)
             adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
             adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
             adios2::Dims count{Nx};
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto &var_i16 =
+            auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto &var_i32 =
+            auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto &var_i64 =
+            auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto &var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto &var_u16 =
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto &var_u32 =
+            auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto &var_u64 =
+            auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto &var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
-            auto &var_r64 =
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
@@ -94,7 +92,7 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read1D8)
         io.SetEngine("ADIOS1");
         io.AddTransport("file");
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -103,16 +101,16 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read1D8)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-            auto &var_r32 = *io.InquireVariable<float>("r32");
-            auto &var_r64 = *io.InquireVariable<double>("r64");
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            auto var_r32 = io.InquireVariable<float>("r32");
+            auto var_r64 = io.InquireVariable<double>("r64");
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -153,81 +151,81 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read1D8)
     }
 
     {
-        adios2::IO &io = adios.DeclareIO("ADIOS2Read");
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Read);
+        adios2::IO io = adios.DeclareIO("ADIOS2Read");
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
-        ASSERT_NE(var_i8, nullptr);
-        ASSERT_EQ(var_i8->m_Shape.size(), 1);
-        ASSERT_EQ(var_i8->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_i8->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i8);
+        ASSERT_EQ(var_i8.Shape().size(), 1);
+        ASSERT_EQ(var_i8.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_i8.Steps(), NSteps);
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
-        ASSERT_NE(var_i16, nullptr);
-        ASSERT_EQ(var_i16->m_Shape.size(), 1);
-        ASSERT_EQ(var_i16->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_i16->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i16);
+        ASSERT_EQ(var_i16.Shape().size(), 1);
+        ASSERT_EQ(var_i16.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_i16.Steps(), NSteps);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
-        ASSERT_NE(var_i32, nullptr);
-        ASSERT_EQ(var_i32->m_Shape.size(), 1);
-        ASSERT_EQ(var_i32->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_i32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i32);
+        ASSERT_EQ(var_i32.Shape().size(), 1);
+        ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_i32.Steps(), NSteps);
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
-        ASSERT_NE(var_i64, nullptr);
-        ASSERT_EQ(var_i64->m_Shape.size(), 1);
-        ASSERT_EQ(var_i64->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_i64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i64);
+        ASSERT_EQ(var_i64.Shape().size(), 1);
+        ASSERT_EQ(var_i64.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_i64.Steps(), NSteps);
 
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
-        ASSERT_NE(var_u8, nullptr);
-        ASSERT_EQ(var_u8->m_Shape.size(), 1);
-        ASSERT_EQ(var_u8->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_u8->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u8);
+        ASSERT_EQ(var_u8.Shape().size(), 1);
+        ASSERT_EQ(var_u8.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_u8.Steps(), NSteps);
 
         auto var_u16 = io.InquireVariable<uint16_t>("u16");
-        ASSERT_NE(var_u16, nullptr);
-        ASSERT_EQ(var_u16->m_Shape.size(), 1);
-        ASSERT_EQ(var_u16->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_u16->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u16);
+        ASSERT_EQ(var_u16.Shape().size(), 1);
+        ASSERT_EQ(var_u16.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_u16.Steps(), NSteps);
 
         auto var_u32 = io.InquireVariable<uint32_t>("u32");
-        ASSERT_NE(var_u32, nullptr);
-        ASSERT_EQ(var_u32->m_Shape.size(), 1);
-        ASSERT_EQ(var_u32->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_u32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u32);
+        ASSERT_EQ(var_u32.Shape().size(), 1);
+        ASSERT_EQ(var_u32.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_u32.Steps(), NSteps);
 
         auto var_u64 = io.InquireVariable<uint64_t>("u64");
-        ASSERT_NE(var_u64, nullptr);
-        ASSERT_EQ(var_u64->m_Shape.size(), 1);
-        ASSERT_EQ(var_u64->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_u64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u64);
+        ASSERT_EQ(var_u64.Shape().size(), 1);
+        ASSERT_EQ(var_u64.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_u64.Steps(), NSteps);
 
         auto var_r32 = io.InquireVariable<float>("r32");
-        ASSERT_NE(var_r32, nullptr);
-        ASSERT_EQ(var_r32->m_Shape.size(), 1);
-        ASSERT_EQ(var_r32->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_r32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_r32);
+        ASSERT_EQ(var_r32.Shape().size(), 1);
+        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_r32.Steps(), NSteps);
 
         auto var_r64 = io.InquireVariable<double>("r64");
-        ASSERT_NE(var_r64, nullptr);
-        ASSERT_EQ(var_r64->m_Shape.size(), 1);
-        ASSERT_EQ(var_r64->m_Shape[0], mpiSize * Nx);
-        ASSERT_EQ(var_r64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_r64);
+        ASSERT_EQ(var_r64.Shape().size(), 1);
+        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_r64.Steps(), NSteps);
 
         adios2::Box<adios2::Dims> selection({{mpiRank * Nx}, {Nx}});
 
-        var_i8->SetSelection(selection);
-        var_i16->SetSelection(selection);
-        var_i32->SetSelection(selection);
-        var_i64->SetSelection(selection);
-        var_u8->SetSelection(selection);
-        var_u16->SetSelection(selection);
-        var_u32->SetSelection(selection);
-        var_u64->SetSelection(selection);
-        var_r32->SetSelection(selection);
-        var_r64->SetSelection(selection);
+        var_i8.SetSelection(selection);
+        var_i16.SetSelection(selection);
+        var_i32.SetSelection(selection);
+        var_i64.SetSelection(selection);
+        var_u8.SetSelection(selection);
+        var_u16.SetSelection(selection);
+        var_u32.SetSelection(selection);
+        var_u64.SetSelection(selection);
+        var_r32.SetSelection(selection);
+        var_r64.SetSelection(selection);
 
         std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
@@ -248,18 +246,18 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read1D8)
                 generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
             // Read the current step
             engine.BeginStep();
-            engine.Get(*var_i8, I8.data());
-            engine.Get(*var_i16, I16.data());
-            engine.Get(*var_i32, I32.data());
-            engine.Get(*var_i64, I64.data());
+            engine.Get(var_i8, I8.data());
+            engine.Get(var_i16, I16.data());
+            engine.Get(var_i32, I32.data());
+            engine.Get(var_i64, I64.data());
 
-            engine.Get(*var_u8, U8.data());
-            engine.Get(*var_u16, U16.data());
-            engine.Get(*var_u32, U32.data());
-            engine.Get(*var_u64, U64.data());
+            engine.Get(var_u8, U8.data());
+            engine.Get(var_u16, U16.data());
+            engine.Get(var_u32, U32.data());
+            engine.Get(var_u64, U64.data());
 
-            engine.Get(*var_r32, R32.data());
-            engine.Get(*var_r64, R64.data());
+            engine.Get(var_r32, R32.data());
+            engine.Get(var_r64, R64.data());
 
             engine.PerformGets();
 
@@ -321,7 +319,7 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read2D2x4)
     adios2::ADIOS adios(true);
 #endif
     {
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -330,24 +328,22 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read2D2x4)
             adios2::Dims shape{Ny, static_cast<unsigned int>(mpiSize * Nx)};
             adios2::Dims start{0, static_cast<unsigned int>(mpiRank * Nx)};
             adios2::Dims count{Ny, Nx};
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto &var_i16 =
+            auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto &var_i32 =
+            auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto &var_i64 =
+            auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto &var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto &var_u16 =
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto &var_u32 =
+            auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto &var_u64 =
+            auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto &var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
-            auto &var_r64 =
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
@@ -355,7 +351,7 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read2D2x4)
         io.SetEngine("ADIOS1");
         io.AddTransport("file");
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -364,16 +360,16 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read2D2x4)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-            auto &var_r32 = *io.InquireVariable<float>("r32");
-            auto &var_r64 = *io.InquireVariable<double>("r64");
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            auto var_r32 = io.InquireVariable<float>("r32");
+            auto var_r64 = io.InquireVariable<double>("r64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -414,91 +410,91 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read2D2x4)
     }
 
     {
-        adios2::IO &io = adios.DeclareIO("ADIOS2Read");
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Read);
+        adios2::IO io = adios.DeclareIO("ADIOS2Read");
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
-        ASSERT_NE(var_i8, nullptr);
-        ASSERT_EQ(var_i8->m_Shape.size(), 2);
-        ASSERT_EQ(var_i8->m_Shape[0], Ny);
-        ASSERT_EQ(var_i8->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_i8->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i8);
+        ASSERT_EQ(var_i8.Shape().size(), 2);
+        ASSERT_EQ(var_i8.Shape()[0], Ny);
+        ASSERT_EQ(var_i8.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i8.Steps(), NSteps);
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
-        ASSERT_NE(var_i16, nullptr);
-        ASSERT_EQ(var_i16->m_Shape.size(), 2);
-        ASSERT_EQ(var_i16->m_Shape[0], Ny);
-        ASSERT_EQ(var_i16->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_i16->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i16);
+        ASSERT_EQ(var_i16.Shape().size(), 2);
+        ASSERT_EQ(var_i16.Shape()[0], Ny);
+        ASSERT_EQ(var_i16.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i16.Steps(), NSteps);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
-        ASSERT_NE(var_i32, nullptr);
-        ASSERT_EQ(var_i32->m_Shape.size(), 2);
-        ASSERT_EQ(var_i32->m_Shape[0], Ny);
-        ASSERT_EQ(var_i32->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_i32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i32);
+        ASSERT_EQ(var_i32.Shape().size(), 2);
+        ASSERT_EQ(var_i32.Shape()[0], Ny);
+        ASSERT_EQ(var_i32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i32.Steps(), NSteps);
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
-        ASSERT_NE(var_i64, nullptr);
-        ASSERT_EQ(var_i64->m_Shape.size(), 2);
-        ASSERT_EQ(var_i64->m_Shape[0], Ny);
-        ASSERT_EQ(var_i64->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_i64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i64);
+        ASSERT_EQ(var_i64.Shape().size(), 2);
+        ASSERT_EQ(var_i64.Shape()[0], Ny);
+        ASSERT_EQ(var_i64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i64.Steps(), NSteps);
 
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
-        ASSERT_NE(var_u8, nullptr);
-        ASSERT_EQ(var_u8->m_Shape.size(), 2);
-        ASSERT_EQ(var_u8->m_Shape[0], Ny);
-        ASSERT_EQ(var_u8->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_u8->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u8);
+        ASSERT_EQ(var_u8.Shape().size(), 2);
+        ASSERT_EQ(var_u8.Shape()[0], Ny);
+        ASSERT_EQ(var_u8.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_u8.Steps(), NSteps);
 
         auto var_u16 = io.InquireVariable<uint16_t>("u16");
-        ASSERT_NE(var_u16, nullptr);
-        ASSERT_EQ(var_u16->m_Shape.size(), 2);
-        ASSERT_EQ(var_u16->m_Shape[0], Ny);
-        ASSERT_EQ(var_u16->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_u16->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u16);
+        ASSERT_EQ(var_u16.Shape().size(), 2);
+        ASSERT_EQ(var_u16.Shape()[0], Ny);
+        ASSERT_EQ(var_u16.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_u16.Steps(), NSteps);
 
         auto var_u32 = io.InquireVariable<uint32_t>("u32");
-        ASSERT_NE(var_u32, nullptr);
-        ASSERT_EQ(var_u32->m_Shape.size(), 2);
-        ASSERT_EQ(var_u32->m_Shape[0], Ny);
-        ASSERT_EQ(var_u32->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_u32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u32);
+        ASSERT_EQ(var_u32.Shape().size(), 2);
+        ASSERT_EQ(var_u32.Shape()[0], Ny);
+        ASSERT_EQ(var_u32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_u32.Steps(), NSteps);
 
         auto var_u64 = io.InquireVariable<uint64_t>("u64");
-        ASSERT_NE(var_u64, nullptr);
-        ASSERT_EQ(var_u64->m_Shape.size(), 2);
-        ASSERT_EQ(var_u64->m_Shape[0], Ny);
-        ASSERT_EQ(var_u64->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_u64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u64);
+        ASSERT_EQ(var_u64.Shape().size(), 2);
+        ASSERT_EQ(var_u64.Shape()[0], Ny);
+        ASSERT_EQ(var_u64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_u64.Steps(), NSteps);
 
         auto var_r32 = io.InquireVariable<float>("r32");
-        ASSERT_NE(var_r32, nullptr);
-        ASSERT_EQ(var_r32->m_Shape.size(), 2);
-        ASSERT_EQ(var_r32->m_Shape[0], Ny);
-        ASSERT_EQ(var_r32->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_r32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_r32);
+        ASSERT_EQ(var_r32.Shape().size(), 2);
+        ASSERT_EQ(var_r32.Shape()[0], Ny);
+        ASSERT_EQ(var_r32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_r32.Steps(), NSteps);
 
         auto var_r64 = io.InquireVariable<double>("r64");
-        ASSERT_NE(var_r64, nullptr);
-        ASSERT_EQ(var_r64->m_Shape.size(), 2);
-        ASSERT_EQ(var_r64->m_Shape[0], Ny);
-        ASSERT_EQ(var_r64->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_r64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_r64);
+        ASSERT_EQ(var_r64.Shape().size(), 2);
+        ASSERT_EQ(var_r64.Shape()[0], Ny);
+        ASSERT_EQ(var_r64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_r64.Steps(), NSteps);
 
         adios2::Box<adios2::Dims> selection({{0, mpiRank * Nx}, {Ny, Nx}});
 
-        var_i8->SetSelection(selection);
-        var_i16->SetSelection(selection);
-        var_i32->SetSelection(selection);
-        var_i64->SetSelection(selection);
-        var_u8->SetSelection(selection);
-        var_u16->SetSelection(selection);
-        var_u32->SetSelection(selection);
-        var_u64->SetSelection(selection);
-        var_r32->SetSelection(selection);
-        var_r64->SetSelection(selection);
+        var_i8.SetSelection(selection);
+        var_i16.SetSelection(selection);
+        var_i32.SetSelection(selection);
+        var_i64.SetSelection(selection);
+        var_u8.SetSelection(selection);
+        var_u16.SetSelection(selection);
+        var_u32.SetSelection(selection);
+        var_u64.SetSelection(selection);
+        var_r32.SetSelection(selection);
+        var_r64.SetSelection(selection);
 
         std::array<int8_t, Nx * Ny> I8;
         std::array<int16_t, Nx * Ny> I16;
@@ -519,18 +515,18 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, ADIOS1WriteADIOS2Read2D2x4)
                 generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
             // Read the current step
             engine.BeginStep();
-            engine.Get(*var_i8, I8.data());
-            engine.Get(*var_i16, I16.data());
-            engine.Get(*var_i32, I32.data());
-            engine.Get(*var_i64, I64.data());
+            engine.Get(var_i8, I8.data());
+            engine.Get(var_i16, I16.data());
+            engine.Get(var_i32, I32.data());
+            engine.Get(var_i64, I64.data());
 
-            engine.Get(*var_u8, U8.data());
-            engine.Get(*var_u16, U16.data());
-            engine.Get(*var_u32, U32.data());
-            engine.Get(*var_u64, U64.data());
+            engine.Get(var_u8, U8.data());
+            engine.Get(var_u16, U16.data());
+            engine.Get(var_u32, U32.data());
+            engine.Get(var_u64, U64.data());
 
-            engine.Get(*var_r32, R32.data());
-            engine.Get(*var_r64, R64.data());
+            engine.Get(var_r32, R32.data());
+            engine.Get(var_r64, R64.data());
 
             engine.PerformGets();
 
@@ -590,7 +586,7 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
     adios2::ADIOS adios(true);
 #endif
     {
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
         // The local process' part (start, count) can be defined now or later
@@ -602,24 +598,22 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
                                static_cast<unsigned int>(mpiRank * Nx)};
             adios2::Dims count{static_cast<unsigned int>(Ny),
                                static_cast<unsigned int>(Nx)};
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto &var_i16 =
+            auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto &var_i32 =
+            auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto &var_i64 =
+            auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto &var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto &var_u16 =
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto &var_u32 =
+            auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto &var_u64 =
+            auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto &var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
-            auto &var_r64 =
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
@@ -627,7 +621,7 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         io.SetEngine("ADIOS1");
         io.AddTransport("file");
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -636,16 +630,16 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-            auto &var_r32 = *io.InquireVariable<float>("r32");
-            auto &var_r64 = *io.InquireVariable<double>("r64");
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            auto var_r32 = io.InquireVariable<float>("r32");
+            auto var_r64 = io.InquireVariable<double>("r64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -686,91 +680,91 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
         adios_finalize(0);
     }
     {
-        adios2::IO &io = adios.DeclareIO("ADIOS2Read");
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Read);
+        adios2::IO io = adios.DeclareIO("ADIOS2Read");
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
-        ASSERT_NE(var_i8, nullptr);
-        ASSERT_EQ(var_i8->m_Shape.size(), 2);
-        ASSERT_EQ(var_i8->m_Shape[0], Ny);
-        ASSERT_EQ(var_i8->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_i8->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i8);
+        ASSERT_EQ(var_i8.Shape().size(), 2);
+        ASSERT_EQ(var_i8.Shape()[0], Ny);
+        ASSERT_EQ(var_i8.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i8.Steps(), NSteps);
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
-        ASSERT_NE(var_i16, nullptr);
-        ASSERT_EQ(var_i16->m_Shape.size(), 2);
-        ASSERT_EQ(var_i16->m_Shape[0], Ny);
-        ASSERT_EQ(var_i16->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_i16->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i16);
+        ASSERT_EQ(var_i16.Shape().size(), 2);
+        ASSERT_EQ(var_i16.Shape()[0], Ny);
+        ASSERT_EQ(var_i16.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i16.Steps(), NSteps);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
-        ASSERT_NE(var_i32, nullptr);
-        ASSERT_EQ(var_i32->m_Shape.size(), 2);
-        ASSERT_EQ(var_i32->m_Shape[0], Ny);
-        ASSERT_EQ(var_i32->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_i32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i32);
+        ASSERT_EQ(var_i32.Shape().size(), 2);
+        ASSERT_EQ(var_i32.Shape()[0], Ny);
+        ASSERT_EQ(var_i32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i32.Steps(), NSteps);
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
-        ASSERT_NE(var_i64, nullptr);
-        ASSERT_EQ(var_i64->m_Shape.size(), 2);
-        ASSERT_EQ(var_i64->m_Shape[0], Ny);
-        ASSERT_EQ(var_i64->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_i64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_i64);
+        ASSERT_EQ(var_i64.Shape().size(), 2);
+        ASSERT_EQ(var_i64.Shape()[0], Ny);
+        ASSERT_EQ(var_i64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i64.Steps(), NSteps);
 
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
-        ASSERT_NE(var_u8, nullptr);
-        ASSERT_EQ(var_u8->m_Shape.size(), 2);
-        ASSERT_EQ(var_u8->m_Shape[0], Ny);
-        ASSERT_EQ(var_u8->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_u8->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u8);
+        ASSERT_EQ(var_u8.Shape().size(), 2);
+        ASSERT_EQ(var_u8.Shape()[0], Ny);
+        ASSERT_EQ(var_u8.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_u8.Steps(), NSteps);
 
         auto var_u16 = io.InquireVariable<uint16_t>("u16");
-        ASSERT_NE(var_u16, nullptr);
-        ASSERT_EQ(var_u16->m_Shape.size(), 2);
-        ASSERT_EQ(var_u16->m_Shape[0], Ny);
-        ASSERT_EQ(var_u16->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_u16->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u16);
+        ASSERT_EQ(var_u16.Shape().size(), 2);
+        ASSERT_EQ(var_u16.Shape()[0], Ny);
+        ASSERT_EQ(var_u16.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_u16.Steps(), NSteps);
 
         auto var_u32 = io.InquireVariable<uint32_t>("u32");
-        ASSERT_NE(var_u32, nullptr);
-        ASSERT_EQ(var_u32->m_Shape.size(), 2);
-        ASSERT_EQ(var_u32->m_Shape[0], Ny);
-        ASSERT_EQ(var_u32->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_u32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u32);
+        ASSERT_EQ(var_u32.Shape().size(), 2);
+        ASSERT_EQ(var_u32.Shape()[0], Ny);
+        ASSERT_EQ(var_u32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_u32.Steps(), NSteps);
 
         auto var_u64 = io.InquireVariable<uint64_t>("u64");
-        ASSERT_NE(var_u64, nullptr);
-        ASSERT_EQ(var_u64->m_Shape.size(), 2);
-        ASSERT_EQ(var_u64->m_Shape[0], Ny);
-        ASSERT_EQ(var_u64->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_u64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_u64);
+        ASSERT_EQ(var_u64.Shape().size(), 2);
+        ASSERT_EQ(var_u64.Shape()[0], Ny);
+        ASSERT_EQ(var_u64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_u64.Steps(), NSteps);
 
         auto var_r32 = io.InquireVariable<float>("r32");
-        ASSERT_NE(var_r32, nullptr);
-        ASSERT_EQ(var_r32->m_Shape.size(), 2);
-        ASSERT_EQ(var_r32->m_Shape[0], Ny);
-        ASSERT_EQ(var_r32->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_r32->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_r32);
+        ASSERT_EQ(var_r32.Shape().size(), 2);
+        ASSERT_EQ(var_r32.Shape()[0], Ny);
+        ASSERT_EQ(var_r32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_r32.Steps(), NSteps);
 
         auto var_r64 = io.InquireVariable<double>("r64");
-        ASSERT_NE(var_r64, nullptr);
-        ASSERT_EQ(var_r64->m_Shape.size(), 2);
-        ASSERT_EQ(var_r64->m_Shape[0], Ny);
-        ASSERT_EQ(var_r64->m_Shape[1], mpiSize * Nx);
-        ASSERT_EQ(var_r64->GetAvailableStepsCount(), NSteps);
+        EXPECT_TRUE(var_r64);
+        ASSERT_EQ(var_r64.Shape().size(), 2);
+        ASSERT_EQ(var_r64.Shape()[0], Ny);
+        ASSERT_EQ(var_r64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_r64.Steps(), NSteps);
 
         adios2::Box<adios2::Dims> selection({{0, mpiRank * Nx}, {Ny, Nx}});
 
-        var_i8->SetSelection(selection);
-        var_i16->SetSelection(selection);
-        var_i32->SetSelection(selection);
-        var_i64->SetSelection(selection);
-        var_u8->SetSelection(selection);
-        var_u16->SetSelection(selection);
-        var_u32->SetSelection(selection);
-        var_u64->SetSelection(selection);
-        var_r32->SetSelection(selection);
-        var_r64->SetSelection(selection);
+        var_i8.SetSelection(selection);
+        var_i16.SetSelection(selection);
+        var_i32.SetSelection(selection);
+        var_i64.SetSelection(selection);
+        var_u8.SetSelection(selection);
+        var_u16.SetSelection(selection);
+        var_u32.SetSelection(selection);
+        var_u64.SetSelection(selection);
+        var_r32.SetSelection(selection);
+        var_r64.SetSelection(selection);
 
         std::array<int8_t, Nx * Ny> I8;
         std::array<int16_t, Nx * Ny> I16;
@@ -791,18 +785,18 @@ TEST_F(ADIOS1WriteADIOS2ReadTest, _ADIOS2ADIOS1WriteADIOS1Read2D4x2)
                 generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
             // Read the current step
             engine.BeginStep();
-            engine.Get(*var_i8, I8.data());
-            engine.Get(*var_i16, I16.data());
-            engine.Get(*var_i32, I32.data());
-            engine.Get(*var_i64, I64.data());
+            engine.Get(var_i8, I8.data());
+            engine.Get(var_i16, I16.data());
+            engine.Get(var_i32, I32.data());
+            engine.Get(var_i64, I64.data());
 
-            engine.Get(*var_u8, U8.data());
-            engine.Get(*var_u16, U16.data());
-            engine.Get(*var_u32, U32.data());
-            engine.Get(*var_u64, U64.data());
+            engine.Get(var_u8, U8.data());
+            engine.Get(var_u16, U16.data());
+            engine.Get(var_u32, U32.data());
+            engine.Get(var_u64, U64.data());
 
-            engine.Get(*var_r32, R32.data());
-            engine.Get(*var_r64, R64.data());
+            engine.Get(var_r32, R32.data());
+            engine.Get(var_r64, R64.data());
 
             engine.PerformGets();
 

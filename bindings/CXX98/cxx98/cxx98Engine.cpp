@@ -60,46 +60,57 @@ adios2_step_mode FromStepMode(const StepMode mode)
 }
 } // end empty namespace
 
-Engine::Engine(adios2_engine &engine) : m_Engine(engine) {}
+Engine::Engine() : m_Engine(NULL) {}
 
 Engine::~Engine() {}
+
+Engine::operator bool() const { return m_Engine == NULL ? false : true; }
 
 StepStatus Engine::BeginStep()
 {
     const adios2_step_status status =
-        adios2_begin_step(&m_Engine, adios2_step_mode_next_available, 0.f);
+        adios2_begin_step(m_Engine, adios2_step_mode_next_available, 0.f);
     return ToStepStatus(status);
 }
 
 StepStatus Engine::BeginStep(const StepMode mode, const float timeoutSeconds)
 {
     const adios2_step_status status =
-        adios2_begin_step(&m_Engine, FromStepMode(mode), timeoutSeconds);
+        adios2_begin_step(m_Engine, FromStepMode(mode), timeoutSeconds);
     return ToStepStatus(status);
 }
 
-size_t Engine::CurrentStep() const { return adios2_current_step(&m_Engine); }
+size_t Engine::CurrentStep() const { return adios2_current_step(m_Engine); }
 
-void Engine::EndStep() { adios2_end_step(&m_Engine); }
+void Engine::EndStep() { adios2_end_step(m_Engine); }
 
-void Engine::PerformPuts() { adios2_perform_puts(&m_Engine); }
+void Engine::PerformPuts() { adios2_perform_puts(m_Engine); }
 
-void Engine::PerformGets() { adios2_perform_gets(&m_Engine); }
+void Engine::PerformGets() { adios2_perform_gets(m_Engine); }
 
 void Engine::Flush(const int transportIndex)
 {
-    adios2_flush_by_index(&m_Engine, transportIndex);
+    adios2_flush_by_index(m_Engine, transportIndex);
 }
 
 void Engine::Close(const int transportIndex)
 {
-    adios2_close_by_index(&m_Engine, transportIndex);
+    adios2_close_by_index(m_Engine, transportIndex);
 }
 
+// PRIVATE
+Engine::Engine(adios2_engine *engine) : m_Engine(engine) {}
+
 #define declare_template_instantiation(T)                                      \
-    template void Engine::Put<T>(Variable<T> &, const T *, const Mode);        \
+    template void Engine::Put<T>(Variable<T>, const T *, const Mode);          \
+    template void Engine::Put<T>(const std::string &, const T *, const Mode);  \
+    template void Engine::Put<T>(Variable<T>, const T &, const Mode);          \
+    template void Engine::Put<T>(const std::string &, const T &, const Mode);  \
                                                                                \
-    template void Engine::Get<T>(Variable<T> &, T *, const Mode);
+    template void Engine::Get<T>(Variable<T>, T *, const Mode);                \
+    template void Engine::Get<T>(const std::string &, T *, const Mode);        \
+    template void Engine::Get<T>(Variable<T>, T &, const Mode);                \
+    template void Engine::Get<T>(const std::string &, T &, const Mode);
 
 ADIOS2_FOREACH_CXX98_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -38,13 +38,13 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2M");
+        adios2::IO bpIO = adios.DeclareIO("BPFile_N2M");
         bpIO.SetParameter("SubStreams", "2");
 
         /** global array : name, { shape (total) }, { start (local) }, {
          * count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
+        adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         //        adios2::Variable<int> &bpInts = bpIO.DefineVariable<int>(
@@ -54,11 +54,11 @@ int main(int argc, char *argv[])
         //        adios2::Variable<std::string> &bpString =
         //            bpIO.DefineVariable<std::string>("bpString");
 
-        adios2::Attribute<int> &attribute =
+        adios2::Attribute<int> attribute =
             bpIO.DefineAttribute<int>("attrINT", -1);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpFileWriter =
+        adios2::Engine bpFileWriter =
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
 
         for (unsigned int t = 0; t < 2; ++t)

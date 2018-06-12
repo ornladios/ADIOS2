@@ -15,21 +15,24 @@
 
 namespace adios2
 {
+namespace core
+{
 
-VariableCompound::VariableCompound(const std::string name,
-                                   const size_t sizeOfStruct, const Dims shape,
-                                   const Dims start, const Dims count,
+VariableCompound::VariableCompound(const std::string &name,
+                                   const size_t structSize, const Dims &shape,
+                                   const Dims &start, const Dims &count,
                                    const bool constantDims,
                                    const bool debugMode)
-: VariableBase(name, "compound", sizeOfStruct, shape, start, count,
-               constantDims, debugMode)
+: VariableBase(name, "compound", structSize, shape, start, count, constantDims,
+               debugMode)
 {
 }
 
 #define declare_template_instantiation(T)                                      \
-    template void VariableCompound::InsertMember<T>(const std::string,         \
+    template void VariableCompound::InsertMember<T>(const std::string &,       \
                                                     const size_t);
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace
+} // end namespace core
+} // end namespace adios2

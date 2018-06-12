@@ -23,6 +23,9 @@
 
 namespace adios2
 {
+namespace helper
+{
+
 // BroadcastValue specializations
 template <>
 size_t BroadcastValue(const size_t &input, MPI_Comm mpiComm,
@@ -242,6 +245,7 @@ void GathervArrays(const size_t *source, const size_t sourceCount,
     }
 }
 
+} // end namespace helper
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSMPIFUNCTIONS_TCC_ */

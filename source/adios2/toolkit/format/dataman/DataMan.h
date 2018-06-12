@@ -31,17 +31,17 @@ public:
     const std::shared_ptr<std::vector<char>> Get();
 
     template <class T>
-    bool Put(Variable<T> &variable, std::string doid, size_t step, int rank,
-             const Params &params);
+    bool Put(core::Variable<T> &variable, std::string doid, size_t step,
+             int rank, const Params &params);
 
     template <class T>
-    bool PutRaw(Variable<T> &variable, std::string doid, size_t step, int rank,
-                const Params &params);
+    bool PutRaw(core::Variable<T> &variable, std::string doid, size_t step,
+                int rank, const Params &params);
 
 #ifdef ADIOS2_HAVE_ZFP
     template <class T>
-    bool PutZfp(Variable<T> &variable, std::string doid, size_t step, int rank,
-                const Params &params);
+    bool PutZfp(core::Variable<T> &variable, std::string doid, size_t step,
+                int rank, const Params &params);
 #endif
 
 private:
@@ -57,7 +57,7 @@ public:
     size_t MinStep();
     void Put(std::shared_ptr<std::vector<char>> data);
     template <class T>
-    int Get(Variable<T> &variable, size_t step);
+    int Get(core::Variable<T> &variable, size_t step);
     void Erase(size_t step);
     struct DataManVar
     {
@@ -102,7 +102,8 @@ private:
     std::mutex m_MutexBuffer;
     std::mutex m_MutexMaxMin;
 };
-}
-}
+
+} // end namespace format
+} // end namespace adios2
 
 #endif

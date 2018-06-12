@@ -52,19 +52,19 @@ MPIAggregator::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
         // argument, some MPICH implementations provide a broken signature
         // which takes a non-const first argument.  The explicit const_cast
         // here works around this.
-        CheckMPIReturn(MPI_Isend(const_cast<size_t *>(&position), 1,
-                                 ADIOS2_MPI_SIZE_T, destination, 0, m_Comm,
-                                 &requests[0]),
-                       ", aggregation Isend absolute position at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(
+            MPI_Isend(const_cast<size_t *>(&position), 1, ADIOS2_MPI_SIZE_T,
+                      destination, 0, m_Comm, &requests[0]),
+            ", aggregation Isend absolute position at iteration " +
+                std::to_string(step) + "\n");
     }
     else if (m_Rank == destination)
     {
-        CheckMPIReturn(MPI_Irecv(&bufferSTL.m_AbsolutePosition, 1,
-                                 ADIOS2_MPI_SIZE_T, step, 0, m_Comm,
-                                 &requests[1]),
-                       ", aggregation Irecv absolute position at iteration " +
-                           std::to_string(step) + "\n");
+        helper::CheckMPIReturn(
+            MPI_Irecv(&bufferSTL.m_AbsolutePosition, 1, ADIOS2_MPI_SIZE_T, step,
+                      0, m_Comm, &requests[1]),
+            ", aggregation Irecv absolute position at iteration " +
+                std::to_string(step) + "\n");
     }
 
     return requests;
@@ -78,7 +78,7 @@ void MPIAggregator::WaitAbsolutePosition(std::vector<MPI_Request> &requests,
 
     if (m_Rank == destination)
     {
-        CheckMPIReturn(
+        helper::CheckMPIReturn(
             MPI_Wait(&requests[1], &status),
             ", aggregation Irecv Wait absolute position at iteration " +
                 std::to_string(step) + "\n");
@@ -86,7 +86,7 @@ void MPIAggregator::WaitAbsolutePosition(std::vector<MPI_Request> &requests,
 
     if (m_Rank == step)
     {
-        CheckMPIReturn(
+        helper::CheckMPIReturn(
             MPI_Wait(&requests[0], &status),
             ", aggregation Isend Wait absolute position at iteration " +
                 std::to_string(step) + "\n");

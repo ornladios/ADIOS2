@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("BPFile_N2N_Flush");
+        adios2::IO bpIO = adios.DeclareIO("BPFile_N2N_Flush");
         bpIO.SetEngine("BPFile");
 
         //        bpIO.SetParameters({{"MaxBufferSize", "9Mb"},
@@ -46,11 +46,11 @@ int main(int argc, char *argv[])
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
+        adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpWriter =
+        adios2::Engine bpWriter =
             bpIO.Open("myVectorFlush.bp", adios2::Mode::Write);
 
         for (unsigned int t = 0; t < 100; ++t)

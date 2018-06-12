@@ -52,6 +52,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
        const std::string hostLanguage, const bool debugMode)
@@ -158,7 +160,7 @@ bool IO::RemoveVariable(const std::string &name) noexcept
             variableMap.erase(index);
         }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         auto variableMap = GetVariableMap<T>();                                \
         variableMap.erase(index);                                              \
@@ -201,7 +203,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
             // nothing to do
         }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         auto variableMap = GetVariableMap<T>();                                \
         variableMap.erase(index);                                              \
@@ -240,22 +242,25 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         {
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
-            ValueToString(variable.m_AvailableStepsCount);                     \
-        variablesInfo[name]["Shape"] = VectorToCSV(variable.m_Shape);          \
+            helper::ValueToString(variable.m_AvailableStepsCount);             \
+        variablesInfo[name]["Shape"] = helper::VectorToCSV(variable.m_Shape);  \
         if (variable.m_SingleValue)                                            \
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "true";                       \
-            variablesInfo[name]["Value"] = ValueToString(variable.m_Value);    \
+            variablesInfo[name]["Value"] =                                     \
+                helper::ValueToString(variable.m_Value);                       \
         }                                                                      \
         else                                                                   \
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "false";                      \
-            variablesInfo[name]["Min"] = ValueToString(variable.m_Min);        \
-            variablesInfo[name]["Max"] = ValueToString(variable.m_Max);        \
+            variablesInfo[name]["Min"] =                                       \
+                helper::ValueToString(variable.m_Min);                         \
+            variablesInfo[name]["Max"] =                                       \
+                helper::ValueToString(variable.m_Max);                         \
         }                                                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
@@ -278,7 +283,7 @@ std::map<std::string, Params> IO::GetAvailableAttributes() noexcept
         {
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         Attribute<T> &attribute = *InquireAttribute<T>(name);                  \
         attributesInfo[name]["Elements"] =                                     \
@@ -287,12 +292,12 @@ std::map<std::string, Params> IO::GetAvailableAttributes() noexcept
         if (attribute.m_IsSingleValue)                                         \
         {                                                                      \
             attributesInfo[name]["Value"] =                                    \
-                ValueToString(attribute.m_DataSingleValue);                    \
+                helper::ValueToString(attribute.m_DataSingleValue);            \
         }                                                                      \
         else                                                                   \
         {                                                                      \
             attributesInfo[name]["Value"] =                                    \
-                "{ " + VectorToCSV(attribute.m_DataArray) + " }";              \
+                "{ " + helper::VectorToCSV(attribute.m_DataArray) + " }";      \
         }                                                                      \
     }
         ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
@@ -360,11 +365,13 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
         if (mode == Mode::Read)
         {
-            engine = std::make_shared<BPFileReader>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::BPFileReader>(*this, name, mode,
+                                                            mpiComm);
         }
         else
         {
-            engine = std::make_shared<BPFileWriter>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::BPFileWriter>(*this, name, mode,
+                                                            mpiComm);
         }
 
         m_EngineType = "bpfile";
@@ -374,9 +381,11 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 #ifdef ADIOS2_HAVE_HDF5
 #if H5_VERSION_GE(1, 11, 0)
         if (mode == Mode::Read)
-            engine = std::make_shared<HDF5ReaderP>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::HDF5ReaderP>(*this, name, mode,
+                                                           mpiComm);
         else
-            engine = std::make_shared<HDFMixer>(*this, name, mode, mpiComm);
+            engine =
+                std::make_shared<engine::HDFMixer>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: update HDF5 >= 1.11 to support VDS.");
@@ -390,11 +399,11 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_DATAMAN
         if (mode == Mode::Read)
-            engine =
-                std::make_shared<DataManReader>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::DataManReader>(*this, name, mode,
+                                                             mpiComm);
         else
-            engine =
-                std::make_shared<DataManWriter>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::DataManWriter>(*this, name, mode,
+                                                             mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "
@@ -405,9 +414,11 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_SST
         if (mode == Mode::Read)
-            engine = std::make_shared<SstReader>(*this, name, mode, mpiComm);
+            engine =
+                std::make_shared<engine::SstReader>(*this, name, mode, mpiComm);
         else
-            engine = std::make_shared<SstWriter>(*this, name, mode, mpiComm);
+            engine =
+                std::make_shared<engine::SstWriter>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "Sst library, can't use Sst engine\n");
@@ -417,9 +428,11 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_ADIOS1
         if (mode == Mode::Read)
-            engine = std::make_shared<ADIOS1Reader>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::ADIOS1Reader>(*this, name, mode,
+                                                            mpiComm);
         else
-            engine = std::make_shared<ADIOS1Writer>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::ADIOS1Writer>(*this, name, mode,
+                                                            mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with ADIOS "
@@ -430,9 +443,11 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_HDF5
         if (mode == Mode::Read)
-            engine = std::make_shared<HDF5ReaderP>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::HDF5ReaderP>(*this, name, mode,
+                                                           mpiComm);
         else
-            engine = std::make_shared<HDF5WriterP>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::HDF5WriterP>(*this, name, mode,
+                                                           mpiComm);
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "HDF5 library, can't use HDF5 engine\n");
@@ -442,11 +457,11 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_MPI
         if (mode == Mode::Read)
-            engine =
-                std::make_shared<InSituMPIReader>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::InSituMPIReader>(*this, name,
+                                                               mode, mpiComm);
         else
-            engine =
-                std::make_shared<InSituMPIWriter>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::InSituMPIWriter>(*this, name,
+                                                               mode, mpiComm);
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "MPI, can't use InSituMPI engine\n");
@@ -454,16 +469,17 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     }
     else if (engineTypeLC == "pluginengine")
     {
-        engine = std::make_shared<PluginEngine>(*this, name, mode, mpiComm);
+        engine =
+            std::make_shared<engine::PluginEngine>(*this, name, mode, mpiComm);
     }
     else if (engineTypeLC == "skeleton")
     {
         if (mode == Mode::Read)
-            engine =
-                std::make_shared<SkeletonReader>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::SkeletonReader>(*this, name, mode,
+                                                              mpiComm);
         else
-            engine =
-                std::make_shared<SkeletonWriter>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::SkeletonWriter>(*this, name, mode,
+                                                              mpiComm);
     }
     else
     {
@@ -573,4 +589,5 @@ ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+} // end namespace core
 } // end namespace adios2

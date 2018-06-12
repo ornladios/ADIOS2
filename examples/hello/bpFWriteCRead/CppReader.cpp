@@ -27,15 +27,15 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("CppReader");
+        adios2::IO bpIO = adios.DeclareIO("CppReader");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpReader = bpIO.Open("FWriter.bp", adios2::Mode::Read);
+        adios2::Engine bpReader = bpIO.Open("FWriter.bp", adios2::Mode::Read);
 
         const std::map<std::string, adios2::Params> variables =
-            bpIO.GetAvailableVariables();
+            bpIO.AvailableVariables();
 
-        for (const auto &variablePair : variables)
+        for (const auto variablePair : variables)
         {
             std::cout << "Name: " << variablePair.first;
 
@@ -47,18 +47,18 @@ int main(int argc, char *argv[])
         }
 
         auto bpData = bpIO.InquireVariable<float>("data2D");
-        bpData->SetSelection({{1, 1}, {3, 2}});
-        std::vector<float> data(bpData->SelectionSize());
+        bpData.SetSelection({{1, 1}, {3, 2}});
+        std::vector<float> data(bpData.SelectionSize());
 
-        bpReader.Get(*bpData, data.data());
+        bpReader.Get(bpData, data.data());
         bpReader.Close();
 
-        std::cout << "Selection size: " << bpData->SelectionSize() << "\n";
-        for (auto i = 0; i < bpData->m_Count[0]; ++i)
+        std::cout << "Selection size: " << bpData.SelectionSize() << "\n";
+        for (auto i = 0; i < bpData.Count()[0]; ++i)
         {
-            for (auto j = 0; j < bpData->m_Count[1]; ++j)
+            for (auto j = 0; j < bpData.Count()[1]; ++j)
             {
-                std::cout << data[i * bpData->m_Count[1] + j] << " ";
+                std::cout << data[i * bpData.Count()[1] + j] << " ";
             }
 
             std::cout << "\n";

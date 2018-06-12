@@ -20,6 +20,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 class AttributeBase
 {
@@ -42,6 +44,7 @@ public:
     virtual ~AttributeBase() = default;
 };
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_ATTRIBUTEBASE_H_ */

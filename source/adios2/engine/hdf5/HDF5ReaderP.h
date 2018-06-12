@@ -17,6 +17,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class HDF5ReaderP : public Engine
 {
@@ -72,5 +76,8 @@ private:
 
     std::vector<std::string> m_DeferredStack;
 };
-};
+
+} // end namespace engine
+} // end namespace core
+} // end namespace adios2
 #endif /* ADIOS2_ENGINE_HDF5_HDF5READERP_H_ */

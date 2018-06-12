@@ -22,6 +22,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 template <class T>
 void InsertToBuffer(std::vector<char> &buffer, const T *source,
@@ -123,6 +125,7 @@ T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept
     return value;
 }
 
+} // end namespace helper
 } // end namespace adios2
 
 #endif /* ADIOS2_HELPER_ADIOSMEMORY_INL_ */

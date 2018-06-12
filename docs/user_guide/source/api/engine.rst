@@ -1,6 +1,6 @@
-*******
+******
 Engine
-*******
+******
 
 The Engine abstraction component serves as the base interface to the actual IO Systems executing the heavy-load tasks performed when Producing and Consuming data.
 
@@ -42,7 +42,7 @@ The following example illustrates the basic API usage in write mode for data gen
 
 .. code-block:: c++
 
-   adios2::Engine &engine = io.Open("file.bp", adios2::Mode::Write);
+   adios2::Engine engine = io.Open("file.bp", adios2::Mode::Write);
 
    for( size_t i = 0; i < steps; ++i )
    {
@@ -90,15 +90,16 @@ The following example illustrates the basic API usage in write mode for data gen
    // engine is unreachable and all data should be transported
    ...
 
+.. tip::
+
+   Prefer default Deferred (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until EndStep, Perform(Puts/Gets) or Close. Only use Sync if you really have to (*e.g.* reuse memory space from pointer). ADIOS2 prefers a step-based IO in which everything is known ahead of time when writing an entire step.
+
+
 .. danger::
    The default behavior of adios2 Put and Get calls IS NOT synchronized, but rather deferred. It's actually the opposite of MPI_Put and more like MPI_rPut.
    Do not assume the data pointer is usable after a Put and Get, before EndStep, Close or the corresponding PerformPuts/PerformGets. 
    Be SAFE and use the adios2::Mode::Sync in the 3rd argument. 
 
-
-.. tip::
-
-   Prefer Deferred (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until EndStep, Perform(Puts/Gets) or Close. Only use Sync if you really have to (*e.g.* reuse memory space from pointer).
 
 .. warning::
 

@@ -59,24 +59,22 @@ contains
 
     end subroutine
 
-    subroutine adios2_variable_available_steps_start(variable, steps_start, &
-                                                     ierr)
+    subroutine adios2_variable_steps_start(variable, steps_start, ierr)
         type(adios2_variable), intent(in) :: variable
         integer(kind=8), intent(out) :: steps_start
         integer, intent(out) :: ierr
 
-        call adios2_variable_available_steps_start_f2c(variable%f2c, &
-                                                       steps_start, ierr)
+        call adios2_variable_steps_start_f2c(variable%f2c, steps_start, ierr)
+
     end subroutine
 
-    subroutine adios2_variable_available_steps_count(variable, steps_count, &
-                                                     ierr)
+    subroutine adios2_variable_steps(variable, steps_count, ierr)
         type(adios2_variable), intent(in) :: variable
         integer(kind=8), intent(out) :: steps_count
         integer, intent(out) :: ierr
 
-        call adios2_variable_available_steps_count_f2c(variable%f2c, &
-                                                       steps_count, ierr)
+        call adios2_variable_steps_f2c(variable%f2c, steps_count, ierr)
+
     end subroutine
 
     subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)

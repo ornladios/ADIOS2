@@ -9,12 +9,14 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_C_C_ADIOS2_C_GLUE_H_
-#define BINDINGS_C_C_ADIOS2_C_GLUE_H_
+#ifndef ADIOS2_BINDINGS_C_C_ADIOS2_C_GLUE_H_
+#define ADIOS2_BINDINGS_C_C_ADIOS2_C_GLUE_H_
 
 #include "adios2_c_FILE.h"
 #include "adios2_c_adios.h"
 #include "adios2_c_types.h"
+
+#include "adios2/ADIOSMPICommOnly.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +36,6 @@ adios2_adios *adios2_init_config_glue(const char *config_file,
 adios2_adios *adios2_init_glue(MPI_Comm mpi_comm,
                                const adios2_debug_mode debug_mode,
                                const char *host_language);
-
 /**
  * Create an ADIOS struct pointer handler using a runtime config file in serial
  * nonMPI
@@ -72,7 +73,6 @@ adios2_FILE *adios2_fopen_config_glue(const char *name, const adios2_mode mode,
                                       const char *config_file,
                                       const char *io_in_config_file,
                                       const char *host_language);
-
 adios2_FILE *adios2_fopen_nompi_glue(const char *name, const adios2_mode mode,
                                      const char *host_language);
 
@@ -86,4 +86,4 @@ adios2_FILE *adios2_fopen_config_nompi_glue(const char *name,
 } // end extern C
 #endif
 
-#endif /* BINDINGS_C_C_ADIOS2_C_GLUE_H_ */
+#endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_GLUE_H_ */

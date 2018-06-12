@@ -23,6 +23,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 /** An engine interface to be used aby the plugin infrastructure */
 class ExampleEnginePlugin : public PluginEngineInterface
@@ -46,5 +50,7 @@ private:
     std::ofstream m_Log;
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 #endif /* EXAMPLEENGINEPLUGIN_H_ */

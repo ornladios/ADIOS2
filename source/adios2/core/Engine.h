@@ -32,6 +32,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 /** Base Abstract class for IO operations:  Read/Write, Schedule, Advance and
  * Close */
@@ -39,7 +41,7 @@ class Engine
 {
 public:
     using AdvanceAsyncCallback =
-        std::function<void(std::shared_ptr<adios2::Engine>)>;
+        std::function<void(std::shared_ptr<core::Engine>)>;
 
 public:
     /**
@@ -404,6 +406,7 @@ private:
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_ENGINE_H_ */

@@ -54,25 +54,25 @@ public:
      * @param variable
      */
     template <class T>
-    void
-    PutVariableMetadata(const Variable<T> &variable,
-                        const typename Variable<T>::Info &blockInfo) noexcept;
+    void PutVariableMetadata(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo) noexcept;
 
     /**
      * Put in buffer variable payload. Expensive part.
      * @param variable payload input from m_PutValues
      */
     template <class T>
-    void
-    PutVariablePayload(const Variable<T> &variable,
-                       const typename Variable<T>::Info &blockInfo) noexcept;
+    void PutVariablePayload(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo) noexcept;
 
     /**
      *  Serializes data buffer and close current process group
      * @param io : attributes written in first step
      * @param advanceStep true: advances step, false: doesn't advance
      */
-    void SerializeData(IO &io, const bool advanceStep = false);
+    void SerializeData(core::IO &io, const bool advanceStep = false);
 
     /**
      * Serializes the metadata indices appending it into the data buffer inside
@@ -90,7 +90,7 @@ public:
      * Finishes bp buffer by serializing data and adding trailing metadata
      * @param io
      */
-    void CloseData(IO &io);
+    void CloseData(core::IO &io);
 
     /**
      * Closes bp buffer for streaming mode...must reset metadata for the next
@@ -99,8 +99,8 @@ public:
      * @param addMetadata true: process metadata and add to data buffer
      * (minifooter)
      */
-    void CloseStream(IO &io, const bool addMetadata = true);
-    void CloseStream(IO &io, size_t &metadataStart, size_t &metadataCount,
+    void CloseStream(core::IO &io, const bool addMetadata = true);
+    void CloseStream(core::IO &io, size_t &metadataStart, size_t &metadataCount,
                      const bool addMetadata = true);
 
     void ResetIndices();
@@ -151,7 +151,7 @@ private:
      * Called by SerializeData function
      * @param io input containing attributes
      */
-    void PutAttributes(IO &io);
+    void PutAttributes(core::IO &io);
 
     /**
      * Put in BP buffer attribute header, called from PutAttributeInData
@@ -161,7 +161,7 @@ private:
      * @return attribute length position
      */
     template <class T>
-    size_t PutAttributeHeaderInData(const Attribute<T> &attribute,
+    size_t PutAttributeHeaderInData(const core::Attribute<T> &attribute,
                                     Stats<T> &stats) noexcept;
 
     /**
@@ -172,7 +172,8 @@ private:
      */
     template <class T>
     void
-    PutAttributeLengthInData(const Attribute<T> &attribute, Stats<T> &stats,
+    PutAttributeLengthInData(const core::Attribute<T> &attribute,
+                             Stats<T> &stats,
                              const size_t attributeLengthPosition) noexcept;
 
     /**
@@ -181,7 +182,7 @@ private:
      * @param stats BP3 Stats
      */
     template <class T>
-    void PutAttributeInData(const Attribute<T> &attribute,
+    void PutAttributeInData(const core::Attribute<T> &attribute,
                             Stats<T> &stats) noexcept;
 
     /**
@@ -194,7 +195,7 @@ private:
     template <class T>
     void
     PutAttributeCharacteristicValueInIndex(std::uint8_t &characteristicsCounter,
-                                           const Attribute<T> &attribute,
+                                           const core::Attribute<T> &attribute,
                                            std::vector<char> &buffer) noexcept;
 
     /**
@@ -204,7 +205,7 @@ private:
      * @param stats BP3 stats
      */
     template <class T>
-    void PutAttributeInIndex(const Attribute<T> &attribute,
+    void PutAttributeInIndex(const core::Attribute<T> &attribute,
                              const Stats<T> &stats) noexcept;
 
     /**
@@ -213,31 +214,34 @@ private:
      * @return stats BP3 Stats
      */
     template <class T>
-    Stats<T> GetBPStats(const typename Variable<T>::Info &blockInfo) noexcept;
+    Stats<T>
+    GetBPStats(const typename core::Variable<T>::Info &blockInfo) noexcept;
 
     template <class T>
-    void PutVariableMetadataInData(const Variable<T> &variable,
-                                   const typename Variable<T>::Info &blockInfo,
-                                   const Stats<T> &stats) noexcept;
+    void
+    PutVariableMetadataInData(const core::Variable<T> &variable,
+                              const typename core::Variable<T>::Info &blockInfo,
+                              const Stats<T> &stats) noexcept;
 
     template <class T>
-    void PutVariableMetadataInIndex(const Variable<T> &variable,
-                                    const typename Variable<T>::Info &blockInfo,
-                                    const Stats<T> &stats, const bool isNew,
-                                    SerialElementIndex &index) noexcept;
+    void PutVariableMetadataInIndex(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo,
+        const Stats<T> &stats, const bool isNew,
+        SerialElementIndex &index) noexcept;
 
     template <class T>
-    void PutVariableCharacteristics(const Variable<T> &variable,
-                                    const typename Variable<T>::Info &blockInfo,
-                                    const Stats<T> &stats,
-                                    std::vector<char> &buffer) noexcept;
+    void PutVariableCharacteristics(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo,
+        const Stats<T> &stats, std::vector<char> &buffer) noexcept;
 
     template <class T>
-    void PutVariableCharacteristics(const Variable<T> &variable,
-                                    const typename Variable<T>::Info &blockInfo,
-                                    const Stats<T> &stats,
-                                    std::vector<char> &buffer,
-                                    size_t &position) noexcept;
+    void PutVariableCharacteristics(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo,
+        const Stats<T> &stats, std::vector<char> &buffer,
+        size_t &position) noexcept;
 
     /**
      * Writes from &buffer[position]:  [2
@@ -329,7 +333,7 @@ private:
      * length and attributes count and attributes length
      * @param io object containing all attributes
      */
-    void SerializeDataBuffer(IO &io) noexcept;
+    void SerializeDataBuffer(core::IO &io) noexcept;
 
     /**
      * Puts minifooter into a bp buffer
@@ -401,7 +405,7 @@ private:
      * @param variable input from which Payload is taken
      */
     template <class T>
-    void PutPayloadInBuffer(const Variable<T> &variable,
+    void PutPayloadInBuffer(const core::Variable<T> &variable,
                             const T *data) noexcept;
 
     template <class T>
@@ -411,18 +415,21 @@ private:
 
     uint32_t GetFileIndex() const noexcept;
 
-    size_t GetAttributesSizeInData(IO &io) const noexcept;
+    size_t GetAttributesSizeInData(core::IO &io) const noexcept;
 
     template <class T>
-    size_t GetAttributeSizeInData(const Attribute<T> &attribute) const noexcept;
+    size_t GetAttributeSizeInData(const core::Attribute<T> &attribute) const
+        noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \
     extern template void BP3Serializer::PutVariablePayload(                    \
-        const Variable<T> &, const typename Variable<T>::Info &) noexcept;     \
+        const core::Variable<T> &,                                             \
+        const typename core::Variable<T>::Info &) noexcept;                    \
                                                                                \
     extern template void BP3Serializer::PutVariableMetadata(                   \
-        const Variable<T> &, const typename Variable<T>::Info &) noexcept;
+        const core::Variable<T> &,                                             \
+        const typename core::Variable<T>::Info &) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

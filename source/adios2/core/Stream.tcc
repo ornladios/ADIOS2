@@ -11,11 +11,12 @@
 #ifndef ADIOS2_CORE_STREAM_TCC_
 #define ADIOS2_CORE_STREAM_TCC_
 
-#include "Stream.h"
-
+#include <adios2/core/Stream.h>
 #include "adios2/core/Variable.h"
 
 namespace adios2
+{
+namespace core
 {
 
 template <class T>
@@ -234,6 +235,7 @@ void Stream::CheckPCommon(const std::string &name, const T *values) const
     }
 }
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_STREAM_TCC_ */

@@ -17,6 +17,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class SkeletonWriter : public Engine
 {
@@ -78,6 +82,8 @@ private:
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SKELETONMPIWRITER_H_ */

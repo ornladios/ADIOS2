@@ -38,6 +38,8 @@
 
 namespace adios2
 {
+namespace core
+{
 
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
              const bool debugMode, const std::string hostLanguage)
@@ -52,8 +54,8 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
     {
         if (configFile.substr(configFile.size() - 3) == "xml")
         {
-            InitXML(configFile, m_MPIComm, m_HostLanguage, m_DebugMode,
-                    m_Operators, m_IOs);
+            helper::InitXML(configFile, m_MPIComm, m_HostLanguage, m_DebugMode,
+                            m_Operators, m_IOs);
         }
         // TODO expand for other formats
     }
@@ -144,20 +146,14 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
 {
     std::shared_ptr<Operator> operatorPtr;
 
-    if (m_DebugMode && m_Operators.count(name) == 1)
-    {
-        throw std::invalid_argument("ERROR: Operator with name " + name +
-                                    ", is already defined in config file "
-                                    "or with call to DefineOperator, name must "
-                                    "be unique, in call to DefineOperator\n");
-    }
+    CheckOperator(name);
 
     if (type == "bzip2" || type == "BZip2")
     {
 #ifdef ADIOS2_HAVE_BZIP2
         auto itPair = m_Operators.emplace(
-            name, std::make_shared<adios2::compress::CompressBZip2>(
-                      parameters, m_DebugMode));
+            name,
+            std::make_shared<compress::CompressBZip2>(parameters, m_DebugMode));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(
@@ -169,8 +165,8 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_ZFP
         auto itPair = m_Operators.emplace(
-            name, std::make_shared<adios2::compress::CompressZfp>(parameters,
-                                                                  m_DebugMode));
+            name,
+            std::make_shared<compress::CompressZfp>(parameters, m_DebugMode));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(
@@ -182,8 +178,8 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
     {
 #ifdef ADIOS2_HAVE_SZ
         auto itPair = m_Operators.emplace(
-            name, std::make_shared<adios2::compress::CompressSZ>(parameters,
-                                                                 m_DebugMode));
+            name,
+            std::make_shared<compress::CompressSZ>(parameters, m_DebugMode));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(
@@ -213,17 +209,7 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
 
 Operator *ADIOS::InquireOperator(const std::string name) noexcept
 {
-    return InquireKey(name, m_Operators)->get();
-}
-
-// PRIVATE FUNCTIONS
-void ADIOS::CheckMPI() const
-{
-    if (m_MPIComm == MPI_COMM_NULL)
-    {
-        throw std::ios_base::failure("ERROR: MPI communicator is MPI_COMM_NULL,"
-                                     " in call to ADIOS constructor\n");
-    }
+    return helper::InquireKey(name, m_Operators)->get();
 }
 
 #define declare_type(T)                                                        \
@@ -234,6 +220,7 @@ void ADIOS::CheckMPI() const
                                  const Dims &)> &function,                     \
         const Params &parameters)                                              \
     {                                                                          \
+        CheckOperator(name);                                                   \
         std::shared_ptr<Operator> callbackOperator =                           \
             std::make_shared<callback::Signature1>(function, parameters,       \
                                                    m_DebugMode);               \
@@ -251,6 +238,7 @@ Operator &ADIOS::DefineCallBack(
                              const std::string &, const Dims &)> &function,
     const Params &parameters)
 {
+    CheckOperator(name);
     std::shared_ptr<Operator> callbackOperator =
         std::make_shared<callback::Signature2>(function, parameters,
                                                m_DebugMode);
@@ -259,4 +247,30 @@ Operator &ADIOS::DefineCallBack(
     return *itPair.first->second;
 }
 
+// PRIVATE FUNCTIONS
+void ADIOS::CheckMPI() const
+{
+    if (m_MPIComm == MPI_COMM_NULL)
+    {
+        throw std::ios_base::failure("ERROR: MPI communicator is MPI_COMM_NULL,"
+                                     " in call to ADIOS constructor\n");
+    }
+}
+
+void ADIOS::CheckOperator(const std::string name) const
+{
+    if (m_DebugMode)
+    {
+        if (m_Operators.count(name) == 1)
+        {
+            throw std::invalid_argument(
+                "ERROR: Operator with name " + name +
+                ", is already defined in either config file "
+                "or with call to DefineOperator, name must "
+                "be unique, in call to DefineOperator\n");
+        }
+    }
+}
+
+} // end namespace core
 } // end namespace adios2

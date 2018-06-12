@@ -42,7 +42,7 @@ public:
 
 private:
     const bool m_DebugMode = true;
-    std::shared_ptr<adios2::ADIOS> m_ADIOS;
+    std::shared_ptr<adios2::core::ADIOS> m_ADIOS;
 };
 
 } // end namespace py11

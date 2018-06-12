@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * cxx98Types.h
+ * cxx98Types.h : define public types under the adios2::cxx98 namespace
  *
  *  Created on: Apr 6, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX98_CXX98_CXX98TYPES_H_
-#define BINDINGS_CXX98_CXX98_CXX98TYPES_H_
+#ifndef ADIOS2_BINDINGS_CXX98_CXX98_CXX98TYPES_H_
+#define ADIOS2_BINDINGS_CXX98_CXX98_CXX98TYPES_H_
 
 #include <complex>
 #include <cstddef>
@@ -46,6 +46,17 @@ enum StepMode
     Update, // writer advance mode
     NextAvailable,
     LatestAvailable // reader advance mode
+};
+
+/** Variable shape type identifier, assigned automatically from the signature of
+ *  DefineVariable */
+enum ShapeID
+{
+    GlobalValue, ///< single global value, common case
+    GlobalArray, ///< global (across MPI_Comm) array, common case
+    JoinedArray, ///< global array with a common (joinable) dimension
+    LocalValue,  ///< special case, local independent value
+    LocalArray   ///< special case, local independent array
 };
 
 typedef std::vector<std::size_t> Dims;
@@ -88,4 +99,4 @@ typedef std::vector<std::size_t> Dims;
 } // end namespace cxx98
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX98_CXX98_CXX98TYPES_H_ */
+#endif /* ADIOS2_BINDINGS_CXX98_CXX98_CXX98TYPES_H_ */

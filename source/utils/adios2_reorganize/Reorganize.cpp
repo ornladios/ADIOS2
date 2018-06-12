@@ -117,18 +117,18 @@ void Reorganize::Run()
     print0("Write method            = ", wmethodname);
     print0("Write method parameters = ", wmethodparams);
 
-    ADIOS adios(comm, true);
-    IO &io = adios.DeclareIO("group");
+    core::ADIOS adios(comm, true);
+    core::IO &io = adios.DeclareIO("group");
 
     print0("Waiting to open stream ", infilename, "...");
 
     io.SetEngine(rmethodname);
     io.SetParameter("verbose", "5");
-    adios2::Engine &rStream = io.Open(infilename, adios2::Mode::Read);
+    core::Engine &rStream = io.Open(infilename, adios2::Mode::Read);
     // rStream.FixedSchedule();
 
     io.SetEngine(wmethodname);
-    adios2::Engine &wStream = io.Open(outfilename, adios2::Mode::Write);
+    core::Engine &wStream = io.Open(outfilename, adios2::Mode::Write);
 
     int steps = 0;
     int curr_step = -1;
@@ -152,8 +152,8 @@ void Reorganize::Run()
         }
 
         curr_step = static_cast<int>(rStream.CurrentStep());
-        const DataMap &variables = io.GetVariablesDataMap();
-        const DataMap &attributes = io.GetAttributesDataMap();
+        const core::DataMap &variables = io.GetVariablesDataMap();
+        const core::DataMap &attributes = io.GetAttributesDataMap();
 
         print0("File info:");
         print0("  current step:   ", curr_step);
@@ -249,7 +249,7 @@ std::vector<VarInfo> varinfo;
 // do NOT
 //   destroy group
 //
-void Reorganize::CleanUpStep(IO &io)
+void Reorganize::CleanUpStep(core::IO &io)
 {
     for (auto &vi : varinfo)
     {
@@ -379,9 +379,9 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
     return writesize;
 }
 
-int Reorganize::ProcessMetadata(Engine &rStream, IO &io,
-                                const DataMap &variables,
-                                const DataMap &attributes, int step)
+int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
+                                const core::DataMap &variables,
+                                const core::DataMap &attributes, int step)
 {
     int retval = 0;
 
@@ -395,7 +395,7 @@ int Reorganize::ProcessMetadata(Engine &rStream, IO &io,
     {
         const std::string &name(variablePair.first);
         const std::string &type(variablePair.second.first);
-        adios2::VariableBase *variable = nullptr;
+        core::VariableBase *variable = nullptr;
         print0("Get info on variable ", varidx, ": ", name);
 
         if (type == "compound")
@@ -403,7 +403,7 @@ int Reorganize::ProcessMetadata(Engine &rStream, IO &io,
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         variable = io.InquireVariable<T>(variablePair.first);                  \
     }
@@ -473,8 +473,9 @@ int Reorganize::ProcessMetadata(Engine &rStream, IO &io,
     return retval;
 }
 
-int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
-                          const DataMap &variables, int step)
+int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
+                          core::IO &io, const core::DataMap &variables,
+                          int step)
 {
     int retval = 0;
 
@@ -507,7 +508,7 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
                 // not supported
             }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         varinfo[varidx].readbuf = calloc(1, varinfo[varidx].writesize);        \
         if (varinfo[varidx].count.size() == 0)                                 \
@@ -547,7 +548,7 @@ int Reorganize::ReadWrite(Engine &rStream, Engine &wStream, IO &io,
                 // not supported
             }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         if (varinfo[varidx].count.size() == 0)                                 \
         {                                                                      \

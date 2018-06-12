@@ -13,6 +13,8 @@
 
 #include <stddef.h> //std::size_t
 
+#include "adios2/ADIOSConfig.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

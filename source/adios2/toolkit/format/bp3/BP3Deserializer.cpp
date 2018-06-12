@@ -15,7 +15,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "adios2/helper/adiosFunctions.h" //ReadValue<T>
+#include "adios2/helper/adiosFunctions.h" //helper::ReadValue<T>
 
 #ifdef _WIN32
 #pragma warning(disable : 4503) // Windows complains about SubFileInfoMap levels
@@ -33,7 +33,7 @@ BP3Deserializer::BP3Deserializer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, IO &io)
+void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
 {
     ParseMinifooter(bufferSTL);
     ParsePGIndex(bufferSTL, io);
@@ -42,7 +42,7 @@ void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, IO &io)
 }
 
 void BP3Deserializer::ClipContiguousMemory(
-    const std::string &variableName, IO &io,
+    const std::string &variableName, core::IO &io,
     const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
     const Box<Dims> &intersectionBox) const
 {
@@ -53,9 +53,9 @@ void BP3Deserializer::ClipContiguousMemory(
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Variable<T> *variable = io.InquireVariable<T>(variableName);           \
+        core::Variable<T> *variable = io.InquireVariable<T>(variableName);     \
         if (variable != nullptr)                                               \
         {                                                                      \
             ClipContiguousMemoryCommon(*variable, contiguousMemory, blockBox,  \
@@ -67,7 +67,7 @@ void BP3Deserializer::ClipContiguousMemory(
 }
 
 void BP3Deserializer::SetVariableNextStepData(const std::string &variableName,
-                                              IO &io) const
+                                              core::IO &io) const
 {
     const std::string type(io.InquireVariableType(variableName));
 
@@ -75,9 +75,9 @@ void BP3Deserializer::SetVariableNextStepData(const std::string &variableName,
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Variable<T> *variable = io.InquireVariable<T>(variableName);           \
+        core::Variable<T> *variable = io.InquireVariable<T>(variableName);     \
         if (variable != nullptr)                                               \
         {                                                                      \
             SetVariableNextStepDataCommon(*variable);                          \
@@ -106,17 +106,17 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
     size_t position = bufferSize - 4;
-    const uint8_t endianess = ReadValue<uint8_t>(buffer, position);
+    const uint8_t endianess = helper::ReadValue<uint8_t>(buffer, position);
     lf_GetEndianness(endianess, m_Minifooter.IsLittleEndian);
     position += 1;
 
-    const uint8_t subFilesIndex = ReadValue<uint8_t>(buffer, position);
+    const uint8_t subFilesIndex = helper::ReadValue<uint8_t>(buffer, position);
     if (subFilesIndex > 0)
     {
         m_Minifooter.HasSubFiles = true;
     }
 
-    m_Minifooter.Version = ReadValue<uint8_t>(buffer, position);
+    m_Minifooter.Version = helper::ReadValue<uint8_t>(buffer, position);
     if (m_Minifooter.Version < 3)
     {
         throw std::runtime_error("ERROR: ADIOS2 only supports bp format "
@@ -130,18 +130,20 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     m_Minifooter.VersionTag.assign(&buffer[position], 28);
     position += 28;
 
-    m_Minifooter.PGIndexStart = ReadValue<uint64_t>(buffer, position);
-    m_Minifooter.VarsIndexStart = ReadValue<uint64_t>(buffer, position);
-    m_Minifooter.AttributesIndexStart = ReadValue<uint64_t>(buffer, position);
+    m_Minifooter.PGIndexStart = helper::ReadValue<uint64_t>(buffer, position);
+    m_Minifooter.VarsIndexStart = helper::ReadValue<uint64_t>(buffer, position);
+    m_Minifooter.AttributesIndexStart =
+        helper::ReadValue<uint64_t>(buffer, position);
 }
 
-void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL, const IO &io)
+void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
+                                   const core::IO &io)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.PGIndexStart;
 
-    m_MetadataSet.DataPGCount = ReadValue<uint64_t>(buffer, position);
-    const size_t length = ReadValue<uint64_t>(buffer, position);
+    m_MetadataSet.DataPGCount = helper::ReadValue<uint64_t>(buffer, position);
+    const size_t length = helper::ReadValue<uint64_t>(buffer, position);
 
     size_t localPosition = 0;
 
@@ -167,16 +169,17 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL, const IO &io)
         localPosition += index.Length + 2;
     }
 
-    if (m_IsRowMajor != IsRowMajor(io.m_HostLanguage))
+    if (m_IsRowMajor != helper::IsRowMajor(io.m_HostLanguage))
     {
         m_ReverseDimensions = true;
     }
 }
 
-void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
+void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
+                                          core::IO &io)
 {
-    auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
-                                   size_t position) {
+    auto lf_ReadElementIndex = [&](
+        core::IO &io, const std::vector<char> &buffer, size_t position) {
 
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
@@ -283,8 +286,8 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.VarsIndexStart;
 
-    const uint32_t count = ReadValue<uint32_t>(buffer, position);
-    const uint64_t length = ReadValue<uint64_t>(buffer, position);
+    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
+    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -295,8 +298,8 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
         {
             lf_ReadElementIndex(io, buffer, position);
 
-            const size_t elementIndexSize =
-                static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+            const size_t elementIndexSize = static_cast<size_t>(
+                helper::ReadValue<uint32_t>(buffer, position));
             position += elementIndexSize;
             localPosition = position - startPosition;
         }
@@ -315,8 +318,8 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
         for (unsigned int t = 0; t < m_Threads; ++t)
         {
             asyncPositions[t] = position;
-            const size_t elementIndexSize =
-                static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+            const size_t elementIndexSize = static_cast<size_t>(
+                helper::ReadValue<uint32_t>(buffer, position));
             position += elementIndexSize;
             localPosition = position - startPosition;
 
@@ -344,10 +347,11 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL, IO &io)
     }
 }
 
-void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io)
+void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
+                                           core::IO &io)
 {
-    auto lf_ReadElementIndex = [&](IO &io, const std::vector<char> &buffer,
-                                   size_t position) {
+    auto lf_ReadElementIndex = [&](
+        core::IO &io, const std::vector<char> &buffer, size_t position) {
 
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
@@ -439,8 +443,8 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io)
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.AttributesIndexStart;
 
-    const uint32_t count = ReadValue<uint32_t>(buffer, position);
-    const uint64_t length = ReadValue<uint64_t>(buffer, position);
+    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
+    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -450,14 +454,14 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL, IO &io)
     {
         lf_ReadElementIndex(io, buffer, position);
         const size_t elementIndexSize =
-            static_cast<size_t>(ReadValue<uint32_t>(buffer, position));
+            static_cast<size_t>(helper::ReadValue<uint32_t>(buffer, position));
         position += elementIndexSize;
         localPosition = position - startPosition;
     }
 }
 
-std::map<std::string, SubFileInfoMap>
-BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
+std::map<std::string, helper::SubFileInfoMap>
+BP3Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
 {
     if (m_DeferredVariables.empty())
     {
@@ -473,7 +477,7 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == GetType<T>())                                             \
+    else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         subFileInfoPair.second =                                               \
             GetSubFileInfo(*io.InquireVariable<T>(variableName));              \
@@ -485,17 +489,17 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(IO &io)
 }
 
 #define declare_template_instantiation(T)                                      \
-    template std::map<std::string, SubFileInfoMap>                             \
-    BP3Deserializer::GetSyncVariableSubFileInfo(const Variable<T> &variable)   \
+    template std::map<std::string, helper::SubFileInfoMap>                     \
+    BP3Deserializer::GetSyncVariableSubFileInfo(const core::Variable<T> &)     \
         const;                                                                 \
                                                                                \
     template void BP3Deserializer::GetSyncVariableDataFromStream(              \
-        Variable<T> &variable, BufferSTL &bufferSTL) const;                    \
+        core::Variable<T> &, BufferSTL &) const;                               \
                                                                                \
-    template void BP3Deserializer::GetDeferredVariable(Variable<T> &variable,  \
-                                                       T *data);               \
+    template void BP3Deserializer::GetDeferredVariable(core::Variable<T> &,    \
+                                                       T *);                   \
                                                                                \
-    template void BP3Deserializer::GetValueFromMetadata(Variable<T> &variable) \
+    template void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &)   \
         const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)

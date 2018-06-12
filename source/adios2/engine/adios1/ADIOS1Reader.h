@@ -33,6 +33,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class ADIOS1Reader : public Engine
 {
@@ -89,6 +93,8 @@ private:
     Variable<T> *InquireVariableCommon(const std::string &variableName);
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #include "ADIOS1Reader.inl"

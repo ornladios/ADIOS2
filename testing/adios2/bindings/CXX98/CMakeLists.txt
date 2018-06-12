@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_executable(TestBPWriteReadADIOS2_cxx98 TestBPWriteReadADIOS2_cxx98.cpp)
-target_link_libraries(TestBPWriteReadADIOS2_cxx98 adios2_cxx98 gtest)
+target_link_libraries(TestBPWriteReadADIOS2_cxx98 adios2_cxx98 adios2 gtest)
 
 #add_executable(TestBPWriteReadAsStreamADIOS2 TestBPWriteReadAsStreamADIOS2.cpp)
 #target_link_libraries(TestBPWriteReadAsStreamADIOS2 adios2 gtest)

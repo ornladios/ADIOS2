@@ -18,6 +18,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 SkeletonWriter::SkeletonWriter(IO &io, const std::string &name, const Mode mode,
                                MPI_Comm mpiComm)
@@ -120,4 +124,6 @@ void SkeletonWriter::DoClose(const int transportIndex)
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

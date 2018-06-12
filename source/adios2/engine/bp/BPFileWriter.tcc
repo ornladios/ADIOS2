@@ -14,6 +14,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 void BPFileWriter::PutSyncCommon(Variable<T> &variable,
@@ -61,6 +65,8 @@ void BPFileWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, variable.m_Count);
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_BP_BPFILEWRITER_TCC_ */

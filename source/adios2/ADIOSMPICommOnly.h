@@ -14,12 +14,15 @@
 #ifdef __cplusplus
 namespace adios2
 {
+namespace helper
+{
 namespace mpi
 {
-using MPI_Comm = int;
+typedef int MPI_Comm;
 } // end namespace mpi
+} // end namespace helper
 } // end namespace adios2
-using adios2::mpi::MPI_Comm;
+using adios2::helper::mpi::MPI_Comm;
 #else
 typedef int MPI_Comm;
 #endif

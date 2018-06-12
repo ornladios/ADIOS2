@@ -14,18 +14,18 @@
 
 #include <adios2.h>
 
-adios2::ADIOS *ad = nullptr;
-adios2::Engine *bpWriter = nullptr;
-adios2::Variable<double> *varT = nullptr;
-adios2::Variable<unsigned int> *varGndx = nullptr;
+adios2::ADIOS ad;
+adios2::Engine bpWriter;
+adios2::Variable<double> varT;
+adios2::Variable<unsigned int> varGndx;
 
 IO::IO(const Settings &s, MPI_Comm comm)
 {
     m_outputfilename = MakeFilename(s.outputfile, ".bp");
 
-    ad = new adios2::ADIOS(s.configfile, comm, adios2::DebugON);
+    ad = adios2::ADIOS(s.configfile, comm, adios2::DebugON);
 
-    adios2::IO &bpio = ad->DeclareIO("writer");
+    adios2::IO bpio = ad.DeclareIO("writer");
     if (!bpio.InConfigFile())
     {
         // if not defined by user, we can change the default settings
@@ -39,7 +39,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
     }
 
     // define T as 2D global array
-    varT = &bpio.DefineVariable<double>(
+    varT = bpio.DefineVariable<double>(
         "T",
         // Global dimensions
         {s.gndx, s.gndy},
@@ -48,28 +48,24 @@ IO::IO(const Settings &s, MPI_Comm comm)
         // local size, could be defined later using SetSelection()
         {s.ndx, s.ndy});
 
-    bpWriter = &bpio.Open(m_outputfilename, adios2::Mode::Write, comm);
+    bpWriter = bpio.Open(m_outputfilename, adios2::Mode::Write, comm);
 
     // Promise that we are not going to change the variable sizes nor add new
     // variables
-    bpWriter->FixedSchedule();
+    bpWriter.FixedSchedule();
 }
 
-IO::~IO()
-{
-    bpWriter->Close();
-    delete ad;
-}
+IO::~IO() { bpWriter.Close(); }
 
 void IO::write(int step, const HeatTransfer &ht, const Settings &s,
                MPI_Comm comm)
 {
-    bpWriter->BeginStep();
+    bpWriter.BeginStep();
     // using PutDeferred() you promise the pointer to the data will be intact
     // until the end of the output step.
     // We need to have the vector object here not to destruct here until the end
     // of function.
     std::vector<double> v = ht.data_noghost();
-    bpWriter->Put<double>(*varT, v.data());
-    bpWriter->EndStep();
+    bpWriter.Put<double>(varT, v.data());
+    bpWriter.EndStep();
 }

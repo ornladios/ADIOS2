@@ -26,8 +26,8 @@ Currently, ADIOS2 supports single values and arrays of primitive types (excludin
    double  
    long double 
    
-The returned object reference (DefineAttribute) or pointer (InquireAttribute) only serves the purpose to inspect the current ``Attribute<T>`` information within code.
+The returned object (DefineAttribute or InquireAttribute) only serves the purpose to inspect the current ``Attribute<T>`` information within code.
 
 .. note:
 
-   Attributes are not forcibly associated to a particular variable in ADIOS2
+   Attributes are not forcibly associated to a particular variable in ADIOS2. Developers are free to create associations through their own naming conventions.

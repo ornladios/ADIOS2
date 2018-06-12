@@ -11,17 +11,19 @@ The simple way to understand the big picture for the ADIOS2 core components is t
 ============== =========== ============== ============
 
 
-ADIOS2's native C++11 application programming interface (API) is fully object-oriented, thus each component is mapped to a class while data is expressed as pointers. Current language bindings will find a more natural API, such as:
+ADIOS2's public APIs are based on the natural choice for each supported language to represent each ADIOS2 components and its interaction with application datatypes. Thus, 
 
-============== ======================== ======================
- **Language**      **Component API**     **Application Data**   
-============== ======================== ======================
- C++            object/public members    pointers 
- C              handler/functions        pointers 
- Fortran        handler/subroutines      native arrays 
- Python         object/public members    numpy arrays 
-============== ======================== ======================
 
+============== ========================== ======================
+ **Language**      **Component API**       **Application Data**   
+============== ========================== ======================
+ C++(11/98)     objects/member functions    pointers/references
+ C              handler/functions           pointers 
+ Fortran        handler/subroutines         arrays up to 6D 
+ Python         objects/member functions    numpy arrays. 
+============== ========================== ======================
+
+The following section provides a common overview to all languages based on the C++11 APIs. For each specific language go to the `ref:Language Bindings APIs` section, but it's highly recommended to read this section as components map 1-to-1 in other languages. 
 
 The following figure depicts the components hierarchy from the application's point of view. 
 
@@ -39,11 +41,11 @@ The following figure depicts the components hierarchy from the application's poi
     2. Attributes
     3. Engines
 
-* **Variables**: Variables are the link between self-describing representation in the ADIOS2 library and data from applications. Variables are identified by unique names in the scope of the particular IO that created them. When the Engine API functions are called, a Variable must be provided along with the application data.
+* **Variable**: Variables are the link between self-describing representation in the ADIOS2 library and data from applications. Variables are identified by unique names in the scope of the particular IO that created them. When the Engine API functions are called, a Variable must be provided along with the application data.
 
-* **Attributes**: an Attributes adds extra information to the overall variables dataset defined in the IO class. They can be single or array values.
+* **Attribute**: an Attributes adds extra information to the overall variables dataset defined in the IO class. They can be single or array values.
 
-* **Engines**: Engines define the actual system executing the heavy IO tasks at Open, BeginStep, Put, Get, EndStep and Close. Due to polymorphism, new IO system solutions can be developed quickly reusing internal components and reusing the same API. The default engine, if IO.SetEngine is not called, is the binary-pack bp file reader and writer: BPFile.
+* **Engine**: Engines define the actual system executing the heavy IO tasks at Open, BeginStep, Put, Get, EndStep and Close. Due to polymorphism, new IO system solutions can be developed quickly reusing internal components and reusing the same API. The default engine, if IO.SetEngine is not called, is the binary-pack bp file reader and writer: BPFile.
 
-* **Operator**: (under development) this component defines possible operations to be applied on adios2 self-describing data. This higher level abstraction is needed to provide support to: Callback functions, Transforms, Analytics, Data Models functionality, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.
+* **Operator**: (under development) this component defines possible operations to be applied on adios2 self-describing data. This higher level abstraction is needed to provide support to: Callback functions, Transforms, Analytics funcions, Data Models functionality, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.
    

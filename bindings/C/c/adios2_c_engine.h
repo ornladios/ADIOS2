@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_C_C_ADIOS2_C_ENGINE_H_
-#define BINDINGS_C_C_ADIOS2_C_ENGINE_H_
+#ifndef ADIOS2_BINDINGS_C_C_ADIOS2_C_ENGINE_H_
+#define ADIOS2_BINDINGS_C_C_ADIOS2_C_ENGINE_H_
 
 #include "adios2_c_types.h"
 
@@ -88,4 +88,4 @@ void adios2_close_by_index(adios2_engine *engine, const int transport_index);
 } // end extern C
 #endif
 
-#endif /* BINDINGS_C_C_ADIOS2_C_ENGINE_H_ */
+#endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_ENGINE_H_ */

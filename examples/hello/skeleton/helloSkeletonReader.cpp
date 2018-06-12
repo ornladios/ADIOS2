@@ -37,12 +37,12 @@ int main(int argc, char *argv[])
 #else
         adios2::ADIOS adios(settings.configfile);
 #endif
-        adios2::IO &io = adios.DeclareIO("reader");
-        adios2::Engine &reader =
+        adios2::IO io = adios.DeclareIO("reader");
+        adios2::Engine reader =
             io.Open(settings.streamname, adios2::Mode::Read);
 
         int step = 0;
-        adios2::Variable<float> *vMyArray = nullptr;
+        adios2::Variable<float> vMyArray;
         adios2::Dims count, start;
         std::vector<float> myArray;
 
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
                 // this just discovers in the metadata file that the variable
                 // exists
                 vMyArray = io.InquireVariable<float>("myArray");
-                if (vMyArray == nullptr)
+                if (!vMyArray)
                 {
                     std::cout
                         << "Missing 'myArray' variable. The Skeleton reader "
@@ -76,22 +76,22 @@ int main(int argc, char *argv[])
                 {
                     // now read the variable
                     // Get the read decomposition
-                    settings.DecomposeArray(vMyArray->m_Shape[0],
-                                            vMyArray->m_Shape[1]);
+                    settings.DecomposeArray(vMyArray.Shape()[0],
+                                            vMyArray.Shape()[1]);
                     count.push_back(settings.ndx);
                     count.push_back(settings.ndy);
                     start.push_back(settings.offsx);
                     start.push_back(settings.offsy);
 
-                    vMyArray->SetSelection({start, count});
+                    vMyArray.SetSelection({start, count});
                     size_t elementsSize = count[0] * count[1];
                     myArray.resize(elementsSize);
                 }
             }
 
-            if (vMyArray != nullptr)
+            if (vMyArray)
             {
-                reader.Get(*vMyArray, myArray.data());
+                reader.Get(vMyArray, myArray.data());
             }
 
             reader.EndStep();

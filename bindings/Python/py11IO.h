@@ -26,9 +26,9 @@ class IO
 {
 
 public:
-    adios2::IO &m_IO;
+    core::IO &m_IO;
 
-    IO(adios2::IO &io, const bool debugMode);
+    IO(core::IO &io, const bool debugMode);
 
     ~IO() = default;
 
@@ -39,21 +39,23 @@ public:
 
     const Params &GetParameters() const noexcept;
 
-    VariableBase *DefineVariable(const std::string &name,
-                                 std::string &stringValue);
+    core::VariableBase *DefineVariable(const std::string &name,
+                                       std::string &stringValue);
 
-    VariableBase *DefineVariable(const std::string &name, const Dims &shape,
-                                 const Dims &start, const Dims &count,
-                                 const bool isConstantDims,
-                                 pybind11::array &array);
+    core::VariableBase *DefineVariable(const std::string &name,
+                                       const Dims &shape, const Dims &start,
+                                       const Dims &count,
+                                       const bool isConstantDims,
+                                       pybind11::array &array);
 
-    VariableBase *InquireVariable(const std::string &name) noexcept;
+    core::VariableBase *InquireVariable(const std::string &name) noexcept;
 
-    AttributeBase *DefineAttribute(const std::string &name,
-                                   pybind11::array &array);
+    core::AttributeBase *DefineAttribute(const std::string &name,
+                                         pybind11::array &array);
 
-    AttributeBase *DefineAttribute(const std::string &name,
-                                   const std::vector<std::string> &strings);
+    core::AttributeBase *
+    DefineAttribute(const std::string &name,
+                    const std::vector<std::string> &strings);
 
     std::map<std::string, Params> GetAvailableVariables() noexcept;
 

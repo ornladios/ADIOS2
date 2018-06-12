@@ -3,7 +3,7 @@
  * accompanying file Copyright.txt for details.
  *
  * helloBPReader.cpp: Simple self-descriptive example of how to read a variable
- * to a BP File.
+ * from a BP File.
  *
  *  Created on: Feb 16, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -30,26 +30,26 @@ int main(int argc, char *argv[])
 
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines */
-        adios2::IO &bpIO = adios.DeclareIO("ReadBP");
+        adios2::IO bpIO = adios.DeclareIO("ReadBP");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine &bpReader =
+        adios2::Engine bpReader =
             bpIO.Open("myVector_cpp.bp", adios2::Mode::Read);
 
         /** Write variable for buffering */
-        adios2::Variable<float> *bpFloats =
+        adios2::Variable<float> bpFloats =
             bpIO.InquireVariable<float>("bpFloats");
 
-        adios2::Variable<int> *bpInts = bpIO.InquireVariable<int>("bpInts");
+        adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("bpInts");
 
-        if (bpFloats != nullptr)
+        if (bpFloats)
         {
-            bpReader.Get<float>(*bpFloats, myFloats.data(), adios2::Mode::Sync);
+            bpReader.Get<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
         }
 
-        if (bpFloats != nullptr)
+        if (bpInts)
         {
-            bpReader.Get<int>(*bpInts, myInts.data(), adios2::Mode::Sync);
+            bpReader.Get<int>(bpInts, myInts.data(), adios2::Mode::Sync);
         }
 
         /** Close bp file, engine becomes unreachable after this*/

@@ -123,7 +123,7 @@ void Transport::MkDir(const std::string &fileName)
     }
 
     const std::string path(fileName.substr(0, lastPathSeparator));
-    CreateDirectory(path);
+    helper::CreateDirectory(path);
 }
 
 } // end namespace adios2

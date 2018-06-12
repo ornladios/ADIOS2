@@ -115,7 +115,7 @@ The template functions DefineVariable<T> allows subscribing self-describing data
 .. code-block:: c++
     
     /** Signature */
-    adios2::Variable<T>& 
+    adios2::Variable<T> 
         DefineVariable<T>(const std::string &name, 
                           const adios2::Dims& shape = {}, 
                           const adios2::Dims& start = {}, 
@@ -125,7 +125,7 @@ The template functions DefineVariable<T> allows subscribing self-describing data
                                 
     /** Example */
     /** global array of floats with constant dimensions */
-    adios2::Variable<float> &varFloats = 
+    adios2::Variable<float> varFloats = 
         io.DefineVariable<float>("bpFloats", 
                                  {size * Nx}, 
                                  {rank * Nx}, 
@@ -139,11 +139,11 @@ Attributes are extra-information associated with the current IO object. The func
     /** Signatures */
     
     /** Single value */
-    Attribute<T>& DefineAttribute(const std::string &name, 
+    adios2::Attribute<T> DefineAttribute(const std::string &name, 
                                   const T &value);
     
     /** Arrays */
-    Attribute<T>& DefineAttribute(const std::string &name, 
+    adios2::Attribute<T> DefineAttribute(const std::string &name, 
                                   const T *array,
                                   const size_t elements);
 
@@ -153,12 +153,12 @@ In situations in which a variable and attribute has been previously defined:
 .. code-block:: c++
 
     /** Signature */
-    Variable<T>* InquireVariable<T>(const std::string &name) noexcept;
-    Attribute<T>* InquireAttribute<T>(const std::string &name) noexcept;
+    adios2::Variable<T> InquireVariable<T>(const std::string &name) noexcept;
+    adios2::Attribute<T> InquireAttribute<T>(const std::string &name) noexcept;
     
     /** Example */
-    Variable<float>* varPressure = io.InquireVariable<T>("pressure");
-    if( varPressure != nullptr )
+    adios2::Variable<float> varPressure = io.InquireVariable<T>("pressure");
+    if( varPressure ) // it exists
     {
       ...
     }
@@ -181,11 +181,11 @@ Removing Variables and Attributes can be done in a on-by-one basis or by removin
 .. code-block:: c++
     
     /** Signature */
-    bool RemoveVariable(const std::string &name) noexcept;
-    void RemoveAllVariables( ) noexcept;
+    bool IO::RemoveVariable(const std::string &name) noexcept;
+    void IO::RemoveAllVariables( ) noexcept;
     
-    bool RemoveAttribute(const std::string &name) noexcept;
-    void RemoveAllAttributes( ) noexcept;
+    bool IO::RemoveAttribute(const std::string &name) noexcept;
+    void IO::RemoveAllAttributes( ) noexcept;
  
 .. caution::
 
@@ -210,29 +210,41 @@ The ``IO::Open`` function creates a new derived object of the abstract Engine cl
         
     /** Signatures */
     /** Provide a new MPI communicator other than from ADIOS->IO->Engine */
-    adios2::Engine& adios2::IO::Open( const std::string& name, 
+    adios2::Engine adios2::IO::Open( const std::string& name, 
                                       const adios2::Mode mode, 
                                       MPI_Comm mpiComm );
 
     /** Reuse the MPI communicator from ADIOS->IO->Engine \n or non-MPI serial mode */
-    adios2::Engine& adios2::IO::Open(const std::string& name, 
+    adios2::Engine adios2::IO::Open(const std::string& name, 
                                      const adios2::Mode mode);
     
     
     /** Examples */
     
     /** Engine derived class, spawned to start Write operations */
-    adios2::Engine& bpWriter = io.Open("myVector.bp", 
-                                       adios2::Mode::Write);
+    adios2::Engine bpWriter = io.Open("myVector.bp", adios2::Mode::Write);
+    
+    if(bpWriter) // good practice
+    {
+      ...
+    } 
+                                       
     
     /** Engine derived class, spawned to start Read operations on rank 0 */
     if( rank == 0 )
     {
-        adios2::Engine& bpReader = io.Open("myVector.bp", 
+        adios2::Engine bpReader = io.Open("myVector.bp", 
                                            adios2::Mode::Read, 
                                            MPI_COMM_SELF);
+        if(bpReader) // good practice
+        {
+         ...
+        }
     }
 
+.. tip::
+   
+   It is good practice to always check the validity of each ADIOS object before operating on it using the explicit bool operator.  ```if( engine ){ }```
 
 .. caution:: 
  

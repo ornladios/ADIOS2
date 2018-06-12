@@ -313,10 +313,10 @@ int write_file(int step)
         err = 102;                                                             \
         goto endread;                                                          \
     }                                                                          \
-    if (adios2_variable_available_steps_count(vi) != NSTEPS)                   \
+    if (adios2_variable_steps(vi) != NSTEPS)                                   \
     {                                                                          \
         printE("Variable %s has %zu steps, but expected %u\n", VARNAME,        \
-               adios2_variable_available_steps_count(vi), NSTEPS);             \
+               adios2_variable_steps(vi), NSTEPS);                             \
         err = 103;                                                             \
         /*goto endread; */                                                     \
     }

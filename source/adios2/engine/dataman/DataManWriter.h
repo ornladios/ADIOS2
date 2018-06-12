@@ -15,6 +15,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 class DataManWriter : public DataManCommon
 {
@@ -67,6 +71,8 @@ private:
     void DoClose(const int transportIndex = -1) final;
 };
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_ */

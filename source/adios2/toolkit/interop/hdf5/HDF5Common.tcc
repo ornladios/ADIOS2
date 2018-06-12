@@ -21,7 +21,7 @@ namespace interop
 {
 
 template <class T>
-void HDF5Common::Write(Variable<T> &variable, const T *values)
+void HDF5Common::Write(core::Variable<T> &variable, const T *values)
 {
     CheckWriteGroup();
     int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());

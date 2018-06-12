@@ -4,19 +4,16 @@
 #------------------------------------------------------------------------------#
   
 add_library(adios2
-  core/Attribute.cpp core/Attribute.tcc
+  core/Attribute.cpp 
   core/AttributeBase.cpp
   core/ADIOS.cpp
   core/Engine.cpp
   core/IO.cpp core/IO.tcc
-  core/Operator.cpp core/Operator.tcc
-  core/Variable.cpp core/Variable.tcc
+  core/Operator.cpp
+  core/Stream.cpp core/Stream.tcc
+  core/Variable.cpp 
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
-
-#highlevelapi
-  highlevelapi/fstream/Stream.cpp highlevelapi/fstream/Stream.tcc
-  highlevelapi/fstream/ADIOS2fstream.cpp highlevelapi/fstream/ADIOS2fstream.tcc
 
 #operator callback
   operator/callback/Signature1.cpp
@@ -30,7 +27,8 @@ add_library(adios2
   helper/adiosSystem.cpp
   helper/adiosType.cpp
   helper/adiosXML.cpp
-  
+
+#engine derived classes  
   engine/bp/BPFileReader.cpp engine/bp/BPFileReader.tcc
   engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
 
@@ -40,6 +38,7 @@ add_library(adios2
   engine/plugin/PluginEngine.cpp
   engine/plugin/PluginEngineInterface.cpp
 
+#toolkit
   toolkit/format/BufferSTL.cpp
   
   toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
@@ -134,7 +133,7 @@ if(ADIOS2_HAVE_MPI)
   )
   target_link_libraries(adios2 PUBLIC MPI::MPI_C)
 else()
-  target_sources(adios2 PRIVATE mpidummy.cpp)
+  target_sources(adios2 PRIVATE helper/mpidummy.cpp)
 endif()
 
 if(ADIOS2_HAVE_ADIOS1)
@@ -184,14 +183,6 @@ set_target_properties(adios2 PROPERTIES
 
 install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
-)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
-  FILES_MATCHING REGEX "[^/]*\.(h|inl)$"
-)
-install(FILES 
-  ${CMAKE_CURRENT_SOURCE_DIR}/highlevelapi/fstream/ADIOS2fstream.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/highlevelapi/fstream
 )
 
 # Library installation

@@ -52,10 +52,15 @@ std::string now()
 
 namespace adios2
 {
+namespace core
+{
+
+namespace engine
+{
 
 ExampleEnginePlugin::ExampleEnginePlugin(IO &io, const std::string &name,
                                          const Mode mode, MPI_Comm mpiComm)
-: adios2::PluginEngineInterface(io, name, mode, mpiComm)
+: PluginEngineInterface(io, name, mode, mpiComm)
 {
     Init();
 }
@@ -97,4 +102,6 @@ void ExampleEnginePlugin::DoClose(const int transportIndex)
           << std::endl;
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

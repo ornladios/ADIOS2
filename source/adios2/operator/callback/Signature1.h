@@ -15,6 +15,8 @@
 
 namespace adios2
 {
+namespace core
+{
 namespace callback
 {
 
@@ -49,6 +51,7 @@ private:
 };
 
 } // end namespace callback
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_OPERATOR_CALLBACK_CALLBACK1_H_ */

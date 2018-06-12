@@ -126,15 +126,15 @@ public:
         std::vector<float> myArray(ndx * ndy);
 
         adios2::ADIOS adios(comm);
-        adios2::IO &io = adios.DeclareIO("writer");
+        adios2::IO io = adios.DeclareIO("writer");
         io.SetEngine(engineName);
         io.SetParameters(engineParams);
 
-        adios2::Variable<float> &varArray =
+        adios2::Variable<float> varArray =
             io.DefineVariable<float>("myArray", {gndx, gndy}, {offsx, offsy},
                                      {ndx, ndy}, adios2::ConstantDims);
 
-        adios2::Engine &writer = io.Open(streamName, adios2::Mode::Write, comm);
+        adios2::Engine writer = io.Open(streamName, adios2::Mode::Write, comm);
 
         for (size_t step = 0; step < steps; ++step)
         {
@@ -207,15 +207,15 @@ public:
         }
 
         adios2::ADIOS adios(comm);
-        adios2::IO &io = adios.DeclareIO("reader");
+        adios2::IO io = adios.DeclareIO("reader");
         io.SetEngine(engineName);
         io.SetParameters(engineParams);
-        adios2::Engine &reader = io.Open(streamName, adios2::Mode::Read, comm);
+        adios2::Engine reader = io.Open(streamName, adios2::Mode::Read, comm);
 
         size_t posx = rank % npx;
         size_t posy = rank / npx;
         size_t step = 0;
-        adios2::Variable<float> *vMyArray = nullptr;
+        adios2::Variable<float> vMyArray;
         std::vector<float> myArray;
 
         while (true)
@@ -228,14 +228,14 @@ public:
             }
 
             vMyArray = io.InquireVariable<float>("myArray");
-            if (vMyArray == nullptr)
+            if (!vMyArray)
             {
                 throw std::ios_base::failure("Missing 'myArray' variable.");
             }
 
             // 2D decomposition of global array reading
-            size_t gndx = vMyArray->m_Shape[0];
-            size_t gndy = vMyArray->m_Shape[1];
+            size_t gndx = vMyArray.Shape()[0];
+            size_t gndy = vMyArray.Shape()[1];
             size_t ndx = gndx / npx;
             size_t ndy = gndy / npy;
             size_t offsx = ndx * posx;
@@ -255,11 +255,11 @@ public:
             adios2::Dims count({ndx, ndy});
             adios2::Dims start({offsx, offsy});
 
-            vMyArray->SetSelection({start, count});
+            vMyArray.SetSelection({start, count});
             size_t elementsSize = count[0] * count[1];
             myArray.resize(elementsSize);
 
-            reader.Get(*vMyArray, myArray.data());
+            reader.Get(vMyArray, myArray.data());
             reader.EndStep();
             CheckData(myArray, gndx, gndy, offsx, offsy, ndx, ndy, step, rank);
             std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));

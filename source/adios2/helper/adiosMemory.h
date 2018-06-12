@@ -21,6 +21,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 /**
  * Inserts source at the end of a buffer updating buffer.size()
@@ -82,6 +84,7 @@ void InsertU64(std::vector<char> &buffer, const T element) noexcept;
 template <class T>
 T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
 
+} // end namespace helper
 } // end namespace adios2
 
 #include "adiosMemory.inl"

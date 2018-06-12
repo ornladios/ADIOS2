@@ -23,7 +23,7 @@ namespace utils
 
 typedef struct
 {
-    VariableBase *v = nullptr;
+    core::VariableBase *v = nullptr;
     std::string type;
     Dims start;
     Dims count;
@@ -53,7 +53,7 @@ private:
     void PrintExamples() const noexcept final;
     void SetParameters(const std::string argument, const bool isLong) final;
 
-    void CleanUpStep(IO &io);
+    void CleanUpStep(core::IO &io);
 
     template <typename T>
     std::string VectorToString(const T &v);
@@ -61,10 +61,11 @@ private:
     size_t Decompose(int numproc, int rank, VarInfo &vi,
                      const int *np // number of processes in each dimension
                      );
-    int ProcessMetadata(Engine &rStream, IO &io, const DataMap &variables,
-                        const DataMap &attributes, int step);
-    int ReadWrite(Engine &rStream, Engine &wStream, IO &io,
-                  const DataMap &variables, int step);
+    int ProcessMetadata(core::Engine &rStream, core::IO &io,
+                        const core::DataMap &variables,
+                        const core::DataMap &attributes, int step);
+    int ReadWrite(core::Engine &rStream, core::Engine &wStream, core::IO &io,
+                  const core::DataMap &variables, int step);
 
     // Input arguments
     std::string infilename;    // File/stream to read

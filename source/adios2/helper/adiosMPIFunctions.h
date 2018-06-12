@@ -20,6 +20,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 template <class T>
 T BroadcastValue(const T &input, MPI_Comm mpiComm, const int rankSource = 0);
@@ -111,6 +113,7 @@ std::vector<int> GetGathervDisplacements(const size_t *counts,
 
 void CheckMPIReturn(const int value, const std::string hint);
 
+} // end namespace helper
 } // end namespace adios2
 
 #include "adiosMPIFunctions.inl"

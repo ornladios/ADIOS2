@@ -18,6 +18,11 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
+
 template <class T>
 void SstReader::SstBPPerformGets()
 {
@@ -34,7 +39,7 @@ void SstReader::SstBPPerformGets()
         {
             for (const auto &stepPair : subFileIndexPair.second)
             {
-                const std::vector<SubFileInfo> &sfis = stepPair.second;
+                const std::vector<helper::SubFileInfo> &sfis = stepPair.second;
                 for (const auto &sfi : sfis)
                 {
                     const auto it = variableMap.find(variableName);
@@ -56,7 +61,7 @@ void SstReader::SstBPPerformGets()
                     {
                         throw("Compound type is not supported yet.");
                     }
-                    else if (type == GetType<T>())
+                    else if (type == helper::GetType<T>())
                     {
                         auto *v = m_IO.InquireVariable<T>(variableName);
                         if (v != nullptr)
@@ -73,11 +78,11 @@ void SstReader::SstBPPerformGets()
                                 dp_info = m_CurrentStepMetaData
                                               ->DP_TimestepInfo[rank];
                             }
-                            if (IsIntersectionContiguousSubarray(
+                            if (helper::IsIntersectionContiguousSubarray(
                                     sfi.BlockBox, sfi.IntersectionBox,
                                     m_BP3Deserializer->m_IsRowMajor, dummy) &&
-                                IsIntersectionContiguousSubarray(
-                                    StartEndBox(
+                                helper::IsIntersectionContiguousSubarray(
+                                    helper::StartEndBox(
                                         v->m_Start, v->m_Count,
                                         m_BP3Deserializer->m_ReverseDimensions),
                                     sfi.IntersectionBox,
@@ -151,6 +156,8 @@ void SstReader::SstBPPerformGets()
     }
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_SST_SST_READER_TCC_ */

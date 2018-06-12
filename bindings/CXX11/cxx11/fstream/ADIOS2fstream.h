@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_HIGHLEVELAPI_FSTREAM_ADIOS2FSTREAM_H_
-#define ADIOS2_HIGHLEVELAPI_FSTREAM_ADIOS2FSTREAM_H_
+#ifndef ADIOS2_BINDINGS_CXX11_CXX11_FSTREAM_ADIOS2FSTREAM_H_
+#define ADIOS2_BINDINGS_CXX11_CXX11_FSTREAM_ADIOS2FSTREAM_H_
 
 #include <memory> //std::shared_ptr
 
@@ -20,7 +20,10 @@
 namespace adios2
 {
 
+namespace core
+{
 class Stream;
+}
 
 class fstream
 {
@@ -31,6 +34,7 @@ public:
         in,
         app
     };
+
     /**
      * High-level API MPI constructor, based on C++11 fstream. Allows for
      * passing parameters in source code.
@@ -63,7 +67,6 @@ public:
      */
     fstream(const std::string &name, const openmode mode, MPI_Comm comm,
             const std::string configFile, const std::string ioInConfigFile);
-
     /**
      * High-level API non-MPI constructor, based on C++11 fstream. Allows for
      * passing parameters in source code.
@@ -363,7 +366,7 @@ public:
     void close();
 
 protected:
-    std::shared_ptr<Stream> m_Stream;
+    std::shared_ptr<core::Stream> m_Stream;
 };
 
 #define declare_template_instantiation(T)                                      \
@@ -408,4 +411,4 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 
 } // end namespace adios2
 
-#endif /* ADIOS2_HIGHLEVELAPI_FSTREAM_ADIOS2FSTREAM_H_ */
+#endif /* ADIOS2_BINDINGS_CXX11_CXX11_FSTREAM_ADIOS2FSTREAM_H_ */

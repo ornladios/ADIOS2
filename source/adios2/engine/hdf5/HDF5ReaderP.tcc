@@ -15,6 +15,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 template <class T>
 void HDF5ReaderP::GetSyncCommon(Variable<T> &variable, T *data)
@@ -50,6 +54,8 @@ void HDF5ReaderP::GetDeferredCommon(Variable<T> &variable, T *data)
 #endif
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_ENGINE_HDF5_HDF5FILEREADER_TCC_ */

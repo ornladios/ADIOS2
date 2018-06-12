@@ -12,6 +12,8 @@
 
 namespace adios2
 {
+namespace core
+{
 namespace callback
 {
 
@@ -39,4 +41,5 @@ void Signature2::RunCallback2(void *arg1, const std::string &arg2,
 }
 
 } // end namespace callback
+} // end namespace core
 } // end namespace adios2

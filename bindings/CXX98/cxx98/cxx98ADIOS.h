@@ -9,10 +9,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef BINDINGS_CXX98_CXX98_CXX98ADIOS_H_
-#define BINDINGS_CXX98_CXX98_CXX98ADIOS_H_
-
-#include <adios2_c.h>
+#ifndef ADIOS2_BINDINGS_CXX98_CXX98_CXX98ADIOS_H_
+#define ADIOS2_BINDINGS_CXX98_CXX98_CXX98ADIOS_H_
 
 #include <string>
 
@@ -21,6 +19,10 @@
 #endif
 
 #include "cxx98IO.h"
+
+#include "adios2/ADIOSConfig.h"
+
+struct adios2_adios;
 
 namespace adios2
 {
@@ -36,13 +38,21 @@ public:
           const bool debugMode = true);
 
     ADIOS(MPI_Comm mpiComm, const bool debugMode = true);
+
+    ADIOS(const std::string &configFile, const bool debugMode = true);
+
+    ADIOS(const bool debugMode = true);
 #else
     ADIOS(const std::string &configFile, const bool debugMode = true);
 
     ADIOS(const bool debugMode = true);
 #endif
 
+    ADIOS(const ADIOS &adios);
+
     ~ADIOS();
+
+    operator bool() const;
 
     /**
      * Declares a new IO class object and returns a reference to that
@@ -81,4 +91,4 @@ private:
 } // end namespace cxx03
 } // end namespace adios2
 
-#endif /* BINDINGS_CXX98_CXX98_CXX98ADIOS_H_ */
+#endif /* ADIOS2_BINDINGS_CXX98_CXX98_CXX98ADIOS_H_ */

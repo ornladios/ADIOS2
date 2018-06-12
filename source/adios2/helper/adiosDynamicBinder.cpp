@@ -21,6 +21,8 @@
 
 namespace adios2
 {
+namespace helper
+{
 
 struct DynamicBinder::Impl
 {
@@ -96,4 +98,6 @@ DynamicBinder::GetSymbol(std::string symbolName)
     return adios2sys::DynamicLoader::GetSymbolAddress(m_Impl->m_LibraryHandle,
                                                       symbolName);
 }
-};
+
+} // end namespace helper
+} // end namespace adios2

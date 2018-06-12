@@ -6,20 +6,20 @@
 add_library(adios2_cxx98
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98ADIOS.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98Attribute.cpp 
-	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98Attribute.tcc
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98Engine.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98Engine.tcc
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98IO.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98IO.tcc
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98Variable.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/cxx98/cxx98Variable.tcc
 )
 
 set_property(TARGET adios2_cxx98 PROPERTY CXX_STANDARD 98)
 
-
-target_include_directories(adios2_cxx98 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
-                                               ${CMAKE_CURRENT_BINARY_DIR}
+target_include_directories(adios2
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
+
 
 target_link_libraries(adios2_cxx98 PUBLIC adios2)
 
@@ -40,8 +40,11 @@ install(
 )
 
 install(
-  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cxx98/
+  FILES cxx98/cxx98types.h
+  		cxx98/cxx98ADIOS.h 
+        cxx98/cxx98IO.h
+        cxx98/cxx98Variable.h 
+        cxx98/cxx98Attribute.h
+        cxx98/cxx98Engine.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cxx98
-  FILES_MATCHING 
-  PATTERN "*.h" 
 )

@@ -12,6 +12,10 @@
 
 namespace adios2
 {
+namespace core
+{
+namespace engine
+{
 
 PluginEngineInterface::PluginEngineInterface(IO &io, const std::string &name,
                                              const Mode mode, MPI_Comm mpiComm)
@@ -19,4 +23,6 @@ PluginEngineInterface::PluginEngineInterface(IO &io, const std::string &name,
 {
 }
 
+} // end namespace engine
+} // end namespace core
 } // end namespace adios2

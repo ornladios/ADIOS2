@@ -63,7 +63,7 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
 #else
         adios2::ADIOS adios(true);
 #endif
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -72,24 +72,22 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
             adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
             adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
             adios2::Dims count{static_cast<unsigned int>(Nx)};
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto &var_i16 =
+            auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto &var_i32 =
+            auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto &var_i64 =
+            auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto &var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto &var_u16 =
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto &var_u32 =
+            auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto &var_u64 =
+            auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto &var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
-            auto &var_r64 =
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
@@ -98,7 +96,7 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
         io.SetParameters({{"Threads", "2"}});
         io.AddTransport("file", {{"Library", "POSIX"}});
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -107,16 +105,16 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-            auto &var_r32 = *io.InquireVariable<float>("r32");
-            auto &var_r64 = *io.InquireVariable<double>("r64");
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            auto var_r32 = io.InquireVariable<float>("r32");
+            auto var_r64 = io.InquireVariable<double>("r64");
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -203,7 +201,7 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
 #else
         adios2::ADIOS adios(true);
 #endif
-        adios2::IO &io = adios.DeclareIO("TestIO");
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -212,24 +210,22 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
             adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
             adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
             adios2::Dims count{static_cast<unsigned int>(Nx)};
-            auto &var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto &var_i16 =
+            auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+            auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto &var_i32 =
+            auto var_i32 =
                 io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto &var_i64 =
+            auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto &var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto &var_u16 =
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto &var_u32 =
+            auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto &var_u64 =
+            auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto &var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
-            auto &var_r64 =
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
@@ -238,7 +234,7 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
         io.SetParameters({{"Profile", "Off"}});
         io.AddTransport("file", {{"Library", "POSIX"}});
 
-        adios2::Engine &engine = io.Open(fname, adios2::Mode::Write);
+        adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -247,16 +243,16 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
-            auto &var_i8 = *io.InquireVariable<int8_t>("i8");
-            auto &var_i16 = *io.InquireVariable<int16_t>("i16");
-            auto &var_i32 = *io.InquireVariable<int32_t>("i32");
-            auto &var_i64 = *io.InquireVariable<int64_t>("i64");
-            auto &var_u8 = *io.InquireVariable<uint8_t>("u8");
-            auto &var_u16 = *io.InquireVariable<uint16_t>("u16");
-            auto &var_u32 = *io.InquireVariable<uint32_t>("u32");
-            auto &var_u64 = *io.InquireVariable<uint64_t>("u64");
-            auto &var_r32 = *io.InquireVariable<float>("r32");
-            auto &var_r64 = *io.InquireVariable<double>("r64");
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            auto var_r32 = io.InquireVariable<float>("r32");
+            auto var_r64 = io.InquireVariable<double>("r64");
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces

@@ -14,7 +14,7 @@ public:
 
 protected:
     adios2::ADIOS adios;
-    adios2::IO &io;
+    adios2::IO io;
 };
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalValue)
@@ -22,37 +22,37 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalValue)
     std::string name = std::string("globalValue");
 
     // Define ADIOS global value
-    auto &globalvalue = io.DefineVariable<int>(name);
+    auto globalvalue = io.DefineVariable<int>(name);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(globalvalue),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(globalvalue.m_Shape.size(), 0);
-    EXPECT_EQ(globalvalue.m_Start.size(), 0);
-    EXPECT_EQ(globalvalue.m_Count.size(), 0);
-    EXPECT_EQ(globalvalue.m_Name, name);
-    EXPECT_EQ(globalvalue.m_Type, "int");
+    ASSERT_EQ(globalvalue.Shape().size(), 0);
+    EXPECT_EQ(globalvalue.Start().size(), 0);
+    EXPECT_EQ(globalvalue.Count().size(), 0);
+    EXPECT_EQ(globalvalue.Name(), name);
+    EXPECT_EQ(globalvalue.Type(), "int");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
 {
     // Define ADIOS local value (a value changing across processes)
-    auto &localvalue =
+    auto localvalue =
         io.DefineVariable<int>("localvalue", {adios2::LocalValueDim});
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(localvalue),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(localvalue.m_Shape.size(), 1);
-    EXPECT_EQ(localvalue.m_Shape[0], adios2::LocalValueDim);
-    EXPECT_EQ(localvalue.m_Start.size(), 0);
-    EXPECT_EQ(localvalue.m_Count.size(), 0);
-    EXPECT_EQ(localvalue.m_Name, "localvalue");
-    EXPECT_EQ(localvalue.m_Type, "int");
+    ASSERT_EQ(localvalue.Shape().size(), 1);
+    EXPECT_EQ(localvalue.Shape()[0], adios2::LocalValueDim);
+    EXPECT_EQ(localvalue.Start().size(), 0);
+    EXPECT_EQ(localvalue.Count().size(), 0);
+    EXPECT_EQ(localvalue.Name(), "localvalue");
+    EXPECT_EQ(localvalue.Type(), "int");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
@@ -74,28 +74,28 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
                        static_cast<unsigned int>(Ny),
                        static_cast<unsigned int>(Nz)};
     // Define ADIOS global array
-    auto &globalarray =
+    auto globalarray =
         io.DefineVariable<int>("globalarray", shape, start, count);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(globalarray),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(globalarray.m_Shape.size(), 3);
-    EXPECT_EQ(globalarray.m_Shape[0], Nx * mpiSize);
-    EXPECT_EQ(globalarray.m_Shape[1], Ny * mpiSize);
-    EXPECT_EQ(globalarray.m_Shape[2], Nz * mpiSize);
-    EXPECT_EQ(globalarray.m_Start.size(), 3);
-    EXPECT_EQ(globalarray.m_Start[0], Nx * mpiRank);
-    EXPECT_EQ(globalarray.m_Start[1], Ny * mpiRank);
-    EXPECT_EQ(globalarray.m_Start[2], Nz * mpiRank);
-    EXPECT_EQ(globalarray.m_Count.size(), 3);
-    EXPECT_EQ(globalarray.m_Count[0], Nx);
-    EXPECT_EQ(globalarray.m_Count[1], Ny);
-    EXPECT_EQ(globalarray.m_Count[2], Nz);
-    EXPECT_EQ(globalarray.m_Name, "globalarray");
-    EXPECT_EQ(globalarray.m_Type, "int");
+    ASSERT_EQ(globalarray.Shape().size(), 3);
+    EXPECT_EQ(globalarray.Shape()[0], Nx * mpiSize);
+    EXPECT_EQ(globalarray.Shape()[1], Ny * mpiSize);
+    EXPECT_EQ(globalarray.Shape()[2], Nz * mpiSize);
+    EXPECT_EQ(globalarray.Start().size(), 3);
+    EXPECT_EQ(globalarray.Start()[0], Nx * mpiRank);
+    EXPECT_EQ(globalarray.Start()[1], Ny * mpiRank);
+    EXPECT_EQ(globalarray.Start()[2], Nz * mpiRank);
+    EXPECT_EQ(globalarray.Count().size(), 3);
+    EXPECT_EQ(globalarray.Count()[0], Nx);
+    EXPECT_EQ(globalarray.Count()[1], Ny);
+    EXPECT_EQ(globalarray.Count()[2], Nz);
+    EXPECT_EQ(globalarray.Name(), "globalarray");
+    EXPECT_EQ(globalarray.Type(), "int");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
@@ -119,11 +119,11 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
                        static_cast<unsigned int>(Ny),
                        static_cast<unsigned int>(Nz)};
     // Define ADIOS global array
-    auto &globalarray = io.DefineVariable<int>("globalarray", shape);
+    auto globalarray = io.DefineVariable<int>("globalarray", shape);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(globalarray),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
@@ -131,20 +131,20 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
     globalarray.SetSelection(sel);
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(globalarray.m_Shape.size(), 3);
-    EXPECT_EQ(globalarray.m_Shape[0], Nx * mpiSize);
-    EXPECT_EQ(globalarray.m_Shape[1], Ny * mpiSize);
-    EXPECT_EQ(globalarray.m_Shape[2], Nz * mpiSize);
-    EXPECT_EQ(globalarray.m_Start.size(), 3);
-    EXPECT_EQ(globalarray.m_Start[0], Nx * mpiRank);
-    EXPECT_EQ(globalarray.m_Start[1], Ny * mpiRank);
-    EXPECT_EQ(globalarray.m_Start[2], Nz * mpiRank);
-    EXPECT_EQ(globalarray.m_Count.size(), 3);
-    EXPECT_EQ(globalarray.m_Count[0], Nx);
-    EXPECT_EQ(globalarray.m_Count[1], Ny);
-    EXPECT_EQ(globalarray.m_Count[2], Nz);
-    EXPECT_EQ(globalarray.m_Name, "globalarray");
-    EXPECT_EQ(globalarray.m_Type, "int");
+    ASSERT_EQ(globalarray.Shape().size(), 3);
+    EXPECT_EQ(globalarray.Shape()[0], Nx * mpiSize);
+    EXPECT_EQ(globalarray.Shape()[1], Ny * mpiSize);
+    EXPECT_EQ(globalarray.Shape()[2], Nz * mpiSize);
+    EXPECT_EQ(globalarray.Start().size(), 3);
+    EXPECT_EQ(globalarray.Start()[0], Nx * mpiRank);
+    EXPECT_EQ(globalarray.Start()[1], Ny * mpiRank);
+    EXPECT_EQ(globalarray.Start()[2], Nz * mpiRank);
+    EXPECT_EQ(globalarray.Count().size(), 3);
+    EXPECT_EQ(globalarray.Count()[0], Nx);
+    EXPECT_EQ(globalarray.Count()[1], Ny);
+    EXPECT_EQ(globalarray.Count()[2], Nz);
+    EXPECT_EQ(globalarray.Name(), "globalarray");
+    EXPECT_EQ(globalarray.Type(), "int");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
@@ -167,12 +167,12 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
                        static_cast<unsigned int>(Ny),
                        static_cast<unsigned int>(Nz)};
     // Define ADIOS global array
-    auto &globalarray =
+    auto globalarray =
         io.DefineVariable<int>("globalarray", shape, start, count, true);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(globalarray),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
@@ -180,20 +180,20 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
     EXPECT_THROW(globalarray.SetSelection(sel), std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(globalarray.m_Shape.size(), 3);
-    EXPECT_EQ(globalarray.m_Shape[0], Nx * mpiSize);
-    EXPECT_EQ(globalarray.m_Shape[1], Ny * mpiSize);
-    EXPECT_EQ(globalarray.m_Shape[2], Nz * mpiSize);
-    EXPECT_EQ(globalarray.m_Start.size(), 3);
-    EXPECT_EQ(globalarray.m_Start[0], Nx * mpiRank);
-    EXPECT_EQ(globalarray.m_Start[1], Ny * mpiRank);
-    EXPECT_EQ(globalarray.m_Start[2], Nz * mpiRank);
-    EXPECT_EQ(globalarray.m_Count.size(), 3);
-    EXPECT_EQ(globalarray.m_Count[0], Nx);
-    EXPECT_EQ(globalarray.m_Count[1], Ny);
-    EXPECT_EQ(globalarray.m_Count[2], Nz);
-    EXPECT_EQ(globalarray.m_Name, "globalarray");
-    EXPECT_EQ(globalarray.m_Type, "int");
+    ASSERT_EQ(globalarray.Shape().size(), 3);
+    EXPECT_EQ(globalarray.Shape()[0], Nx * mpiSize);
+    EXPECT_EQ(globalarray.Shape()[1], Ny * mpiSize);
+    EXPECT_EQ(globalarray.Shape()[2], Nz * mpiSize);
+    EXPECT_EQ(globalarray.Start().size(), 3);
+    EXPECT_EQ(globalarray.Start()[0], Nx * mpiRank);
+    EXPECT_EQ(globalarray.Start()[1], Ny * mpiRank);
+    EXPECT_EQ(globalarray.Start()[2], Nz * mpiRank);
+    EXPECT_EQ(globalarray.Count().size(), 3);
+    EXPECT_EQ(globalarray.Count()[0], Nx);
+    EXPECT_EQ(globalarray.Count()[1], Ny);
+    EXPECT_EQ(globalarray.Count()[2], Nz);
+    EXPECT_EQ(globalarray.Name(), "globalarray");
+    EXPECT_EQ(globalarray.Type(), "int");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayInvalidLocalValueDim)
@@ -210,23 +210,23 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArray)
 {
     // Define ADIOS local array (no global dimensions, no offsets)
     std::size_t n = 50;
-    auto &localarray =
+    auto localarray =
         io.DefineVariable<int>("localarray", {}, {}, {10, n / 2, 30});
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(localarray),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(localarray.m_Shape.size(), 0);
-    EXPECT_EQ(localarray.m_Start.size(), 0);
-    EXPECT_EQ(localarray.m_Count.size(), 3);
-    EXPECT_EQ(localarray.m_Count[0], 10);
-    EXPECT_EQ(localarray.m_Count[1], n / 2);
-    EXPECT_EQ(localarray.m_Count[2], 30);
-    EXPECT_EQ(localarray.m_Name, "localarray");
-    EXPECT_EQ(localarray.m_Type, "int");
-    EXPECT_EQ(localarray.m_ShapeID, adios2::ShapeID::LocalArray);
+    ASSERT_EQ(localarray.Shape().size(), 0);
+    EXPECT_EQ(localarray.Start().size(), 0);
+    EXPECT_EQ(localarray.Count().size(), 3);
+    EXPECT_EQ(localarray.Count()[0], 10);
+    EXPECT_EQ(localarray.Count()[1], n / 2);
+    EXPECT_EQ(localarray.Count()[2], 30);
+    EXPECT_EQ(localarray.Name(), "localarray");
+    EXPECT_EQ(localarray.Type(), "int");
+    EXPECT_EQ(localarray.ShapeID(), adios2::ShapeID::LocalArray);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
@@ -248,22 +248,22 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
                        static_cast<unsigned int>(Ny),
                        static_cast<unsigned int>(Nz)};
     // Define ADIOS global array
-    auto &localArray = io.DefineVariable<int>(
+    auto localArray = io.DefineVariable<int>(
         "localArray", {}, {},
         {adios2::UnknownDim, adios2::UnknownDim, adios2::UnknownDim});
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(localArray),
-                                  adios2::Variable<int> &>();
-    ASSERT_EQ(localArray.m_Shape.size(), 0);
-    EXPECT_EQ(localArray.m_Start.size(), 0);
-    EXPECT_EQ(localArray.m_Count.size(), 3);
-    EXPECT_EQ(localArray.m_Count[0], 0);
-    EXPECT_EQ(localArray.m_Count[1], 0);
-    EXPECT_EQ(localArray.m_Count[2], 0);
-    EXPECT_EQ(localArray.m_Name, "localArray");
-    EXPECT_EQ(localArray.m_Type, "int");
-    EXPECT_EQ(localArray.m_ShapeID, adios2::ShapeID::LocalArray);
+                                  adios2::Variable<int>>();
+    ASSERT_EQ(localArray.Shape().size(), 0);
+    EXPECT_EQ(localArray.Start().size(), 0);
+    EXPECT_EQ(localArray.Count().size(), 3);
+    EXPECT_EQ(localArray.Count()[0], 0);
+    EXPECT_EQ(localArray.Count()[1], 0);
+    EXPECT_EQ(localArray.Count()[2], 0);
+    EXPECT_EQ(localArray.Name(), "localArray");
+    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write
@@ -274,15 +274,15 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
     EXPECT_THROW(localArray.SetSelection(selbad), std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(localArray.m_Shape.size(), 0);
-    EXPECT_EQ(localArray.m_Start.size(), 0);
-    EXPECT_EQ(localArray.m_Count.size(), 3);
-    EXPECT_EQ(localArray.m_Count[0], Nx);
-    EXPECT_EQ(localArray.m_Count[1], Ny);
-    EXPECT_EQ(localArray.m_Count[2], Nz);
-    EXPECT_EQ(localArray.m_Name, "localArray");
-    EXPECT_EQ(localArray.m_Type, "int");
-    EXPECT_EQ(localArray.m_ShapeID, adios2::ShapeID::LocalArray);
+    ASSERT_EQ(localArray.Shape().size(), 0);
+    EXPECT_EQ(localArray.Start().size(), 0);
+    EXPECT_EQ(localArray.Count().size(), 3);
+    EXPECT_EQ(localArray.Count()[0], Nx);
+    EXPECT_EQ(localArray.Count()[1], Ny);
+    EXPECT_EQ(localArray.Count()[2], Nz);
+    EXPECT_EQ(localArray.Name(), "localArray");
+    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
@@ -298,25 +298,24 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
                        static_cast<unsigned int>(Ny),
                        static_cast<unsigned int>(Nz)};
     // Define ADIOS global array
-    auto &localArray =
-        io.DefineVariable<int>("localArray", {}, {}, count, true);
+    auto localArray = io.DefineVariable<int>("localArray", {}, {}, count, true);
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(localArray),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     adios2::Box<adios2::Dims> sel({}, count);
     EXPECT_THROW(localArray.SetSelection(sel), std::invalid_argument);
 
-    ASSERT_EQ(localArray.m_Shape.size(), 0);
-    EXPECT_EQ(localArray.m_Start.size(), 0);
-    EXPECT_EQ(localArray.m_Count.size(), 3);
-    EXPECT_EQ(localArray.m_Count[0], Nx);
-    EXPECT_EQ(localArray.m_Count[1], Ny);
-    EXPECT_EQ(localArray.m_Count[2], Nz);
-    EXPECT_EQ(localArray.m_Name, "localArray");
-    EXPECT_EQ(localArray.m_Type, "int");
-    EXPECT_EQ(localArray.m_ShapeID, adios2::ShapeID::LocalArray);
+    ASSERT_EQ(localArray.Shape().size(), 0);
+    EXPECT_EQ(localArray.Start().size(), 0);
+    EXPECT_EQ(localArray.Count().size(), 3);
+    EXPECT_EQ(localArray.Count()[0], Nx);
+    EXPECT_EQ(localArray.Count()[1], Ny);
+    EXPECT_EQ(localArray.Count()[2], Nz);
+    EXPECT_EQ(localArray.Name(), "localArray");
+    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalArrayInvalidOffsets)
@@ -333,53 +332,53 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayFirstDim)
 {
     // Define ADIOS joined array
     std::size_t n = 50;
-    auto &joinedarray = io.DefineVariable<int>(
+    auto joinedarray = io.DefineVariable<int>(
         "joinedarray", {adios2::JoinedDim, n, 30}, {}, {10, n, 30});
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(joinedarray),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(joinedarray.m_Shape.size(), 3);
-    EXPECT_EQ(joinedarray.m_Shape[0], adios2::JoinedDim);
-    EXPECT_EQ(joinedarray.m_Shape[1], n);
-    EXPECT_EQ(joinedarray.m_Shape[2], 30);
-    EXPECT_EQ(joinedarray.m_Start.size(), 0);
-    EXPECT_EQ(joinedarray.m_Count.size(), 3);
-    EXPECT_EQ(joinedarray.m_Count[0], 10);
-    EXPECT_EQ(joinedarray.m_Count[1], n);
-    EXPECT_EQ(joinedarray.m_Count[2], 30);
-    EXPECT_EQ(joinedarray.m_Name, "joinedarray");
-    EXPECT_EQ(joinedarray.m_Type, "int");
+    ASSERT_EQ(joinedarray.Shape().size(), 3);
+    EXPECT_EQ(joinedarray.Shape()[0], adios2::JoinedDim);
+    EXPECT_EQ(joinedarray.Shape()[1], n);
+    EXPECT_EQ(joinedarray.Shape()[2], 30);
+    EXPECT_EQ(joinedarray.Start().size(), 0);
+    EXPECT_EQ(joinedarray.Count().size(), 3);
+    EXPECT_EQ(joinedarray.Count()[0], 10);
+    EXPECT_EQ(joinedarray.Count()[1], n);
+    EXPECT_EQ(joinedarray.Count()[2], 30);
+    EXPECT_EQ(joinedarray.Name(), "joinedarray");
+    EXPECT_EQ(joinedarray.Type(), "int");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineJoinedArraySecondDim)
 {
     // Define ADIOS joined array
     std::size_t n = 50;
-    auto &joinedarray = io.DefineVariable<int>(
+    auto joinedarray = io.DefineVariable<int>(
         "joinedarray", {n, adios2::JoinedDim, 30}, {0, 0, 0}, {n, 10, 30});
 
     // Verify the return type is as expected
     ::testing::StaticAssertTypeEq<decltype(joinedarray),
-                                  adios2::Variable<int> &>();
+                                  adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
-    ASSERT_EQ(joinedarray.m_Shape.size(), 3);
-    EXPECT_EQ(joinedarray.m_Shape[0], n);
-    EXPECT_EQ(joinedarray.m_Shape[1], adios2::JoinedDim);
-    EXPECT_EQ(joinedarray.m_Shape[2], 30);
-    EXPECT_EQ(joinedarray.m_Start.size(), 3);
-    EXPECT_EQ(joinedarray.m_Start[0], 0);
-    EXPECT_EQ(joinedarray.m_Start[1], 0);
-    EXPECT_EQ(joinedarray.m_Start[2], 0);
-    EXPECT_EQ(joinedarray.m_Count.size(), 3);
-    EXPECT_EQ(joinedarray.m_Count[0], n);
-    EXPECT_EQ(joinedarray.m_Count[1], 10);
-    EXPECT_EQ(joinedarray.m_Count[2], 30);
-    EXPECT_EQ(joinedarray.m_Name, "joinedarray");
-    EXPECT_EQ(joinedarray.m_Type, "int");
+    ASSERT_EQ(joinedarray.Shape().size(), 3);
+    EXPECT_EQ(joinedarray.Shape()[0], n);
+    EXPECT_EQ(joinedarray.Shape()[1], adios2::JoinedDim);
+    EXPECT_EQ(joinedarray.Shape()[2], 30);
+    EXPECT_EQ(joinedarray.Start().size(), 3);
+    EXPECT_EQ(joinedarray.Start()[0], 0);
+    EXPECT_EQ(joinedarray.Start()[1], 0);
+    EXPECT_EQ(joinedarray.Start()[2], 0);
+    EXPECT_EQ(joinedarray.Count().size(), 3);
+    EXPECT_EQ(joinedarray.Count()[0], n);
+    EXPECT_EQ(joinedarray.Count()[1], 10);
+    EXPECT_EQ(joinedarray.Count()[2], 30);
+    EXPECT_EQ(joinedarray.Name(), "joinedarray");
+    EXPECT_EQ(joinedarray.Type(), "int");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayTooManyJoinedDims)
@@ -475,22 +474,22 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
     auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
     auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
 
-    EXPECT_EQ(var_iString, nullptr);
-    EXPECT_EQ(var_i8, nullptr);
-    EXPECT_EQ(var_i16, nullptr);
-    EXPECT_EQ(var_i32, nullptr);
-    EXPECT_EQ(var_i64, nullptr);
+    EXPECT_FALSE(var_iString);
+    EXPECT_FALSE(var_i8);
+    EXPECT_FALSE(var_i16);
+    EXPECT_FALSE(var_i32);
+    EXPECT_FALSE(var_i64);
 
-    EXPECT_EQ(var_u8, nullptr);
-    EXPECT_EQ(var_u16, nullptr);
-    EXPECT_EQ(var_u32, nullptr);
-    EXPECT_EQ(var_u64, nullptr);
+    EXPECT_FALSE(var_u8);
+    EXPECT_FALSE(var_u16);
+    EXPECT_FALSE(var_u32);
+    EXPECT_FALSE(var_u64);
 
-    EXPECT_EQ(var_r32, nullptr);
-    EXPECT_EQ(var_r64, nullptr);
+    EXPECT_FALSE(var_r32);
+    EXPECT_FALSE(var_r64);
 
-    EXPECT_EQ(var_c32, nullptr);
-    EXPECT_EQ(var_c64, nullptr);
+    EXPECT_FALSE(var_c32);
+    EXPECT_FALSE(var_c64);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
@@ -529,22 +528,22 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
     auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
     auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
 
-    EXPECT_EQ(var_iString, nullptr);
-    EXPECT_EQ(var_i8, nullptr);
-    EXPECT_EQ(var_i16, nullptr);
-    EXPECT_EQ(var_i32, nullptr);
-    EXPECT_EQ(var_i64, nullptr);
+    EXPECT_FALSE(var_iString);
+    EXPECT_FALSE(var_i8);
+    EXPECT_FALSE(var_i16);
+    EXPECT_FALSE(var_i32);
+    EXPECT_FALSE(var_i64);
 
-    EXPECT_EQ(var_u8, nullptr);
-    EXPECT_EQ(var_u16, nullptr);
-    EXPECT_EQ(var_u32, nullptr);
-    EXPECT_EQ(var_u64, nullptr);
+    EXPECT_FALSE(var_u8);
+    EXPECT_FALSE(var_u16);
+    EXPECT_FALSE(var_u32);
+    EXPECT_FALSE(var_u64);
 
-    EXPECT_EQ(var_r32, nullptr);
-    EXPECT_EQ(var_r64, nullptr);
+    EXPECT_FALSE(var_r32);
+    EXPECT_FALSE(var_r64);
 
-    EXPECT_EQ(var_c32, nullptr);
-    EXPECT_EQ(var_c64, nullptr);
+    EXPECT_FALSE(var_c32);
+    EXPECT_FALSE(var_c64);
 }
 
 int main(int argc, char **argv)

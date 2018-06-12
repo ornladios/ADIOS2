@@ -13,7 +13,6 @@
 #define ADIOS2_CORE_VARIABLEBASE_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <adios2/core/Operator.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -21,9 +20,13 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/Operator.h"
 
 namespace adios2
 {
+namespace core
+{
+
 /** Base class for Variable<T> (primitives) and VariableCompound classes */
 class VariableBase
 {
@@ -33,7 +36,7 @@ public:
     struct OperatorInfo
     {
         /** reference to object derived from Operator class */
-        Operator &ADIOSOperator;
+        core::Operator &Op;
         /** Variable specific parameters */
         Params Parameters;
         /** resulting sizes from Operator */
@@ -138,8 +141,8 @@ public:
      * @param parameters transform specific parameters
      * @return transformID handler
      */
-    unsigned int AddTransform(Operator &transform,
-                              const Params &parameters = Params()) noexcept;
+    unsigned int AddOperator(core::Operator &transform,
+                             const Params &parameters = Params()) noexcept;
 
     void ResetTransformParameters(const unsigned int transformIndex,
                                   const Params &parameters = Params());
@@ -156,7 +159,7 @@ public:
      * @return memory size to be allocated by a pointer/vector to read this
      * variable
      */
-    size_t SelectionSize() const;
+    size_t SelectionSize() const noexcept;
 
     bool IsConstantDims() const noexcept;
     void SetConstantDims() noexcept;
@@ -178,6 +181,7 @@ protected:
     void CheckDimensionsCommon(const std::string hint) const;
 };
 
+} // end namespace core
 } // end namespace adios2
 
 #endif /* ADIOS2_CORE_VARIABLEBASE_H_ */

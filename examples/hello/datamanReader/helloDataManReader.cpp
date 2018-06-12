@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     // initialize ADIOS 2
 
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-    adios2::IO &dataManIO = adios.DeclareIO("WAN");
+    adios2::IO dataManIO = adios.DeclareIO("WAN");
 
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({{"WorkflowMode", "subscribe"}});
@@ -59,10 +59,9 @@ int main(int argc, char *argv[])
     dataManIO.AddTransport(
         "WAN", {{"Library", "ZMQ"}, {"IPAddress", ip}, {"Port", port}});
 
-    adios2::Engine &dataManReader =
-        dataManIO.Open("stream", adios2::Mode::Read);
+    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
-    adios2::Variable<float> *bpFloats;
+    adios2::Variable<float> bpFloats;
 
     // read data
 
@@ -72,8 +71,8 @@ int main(int argc, char *argv[])
         if (status == adios2::StepStatus::OK)
         {
             bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            bpFloats->SetSelection({start, count});
-            dataManReader.Get<float>(*bpFloats, myFloats.data(),
+            bpFloats.SetSelection({start, count});
+            dataManReader.Get<float>(bpFloats, myFloats.data(),
                                      adios2::Mode::Sync);
             Dump(myFloats, dataManReader.CurrentStep());
             i = dataManReader.CurrentStep();
