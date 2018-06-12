@@ -16,8 +16,6 @@
 
 #include <stdexcept>
 
-#include "ADIOS.h"
-
 namespace adios2
 {
 
