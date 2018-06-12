@@ -118,9 +118,9 @@ struct _SstStream
 
     pthread_mutex_t DataLock;
     pthread_cond_t DataCondition;
+    SstParams ConfigParams;
 
     /* WRITER-SIDE FIELDS */
-    SstParams WriterParams;
     int WriterTimestep;
     int ReaderTimestep;
     CPTimestepList QueuedTimesteps;

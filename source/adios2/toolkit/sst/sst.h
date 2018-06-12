@@ -118,7 +118,8 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Save);
     MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
     MACRO(QueueLimit, Int, int, 0)                                             \
-    MACRO(DiscardOnQueueFull, Bool, int, 1)
+    MACRO(DiscardOnQueueFull, Bool, int, 1)                                    \
+    MACRO(IsRowMajor, IsRowMajor, int, 0)
 
 typedef enum {
     SstRegisterFile,

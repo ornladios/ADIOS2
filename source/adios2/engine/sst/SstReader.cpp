@@ -307,6 +307,14 @@ void SstReader::Init()
         return false;
     };
 
+    // not really a parameter, but a convenient way to pass this around
+    auto lf_SetIsRowMajorParameter = [&](const std::string key,
+                                         int &parameter) {
+
+        parameter = adios2::helper::IsRowMajor(m_IO.m_HostLanguage);
+        return true;
+    };
+
     auto lf_SetMarshalMethodParameter = [&](const std::string key,
                                             size_t &parameter) {
         auto itKey = m_IO.m_Parameters.find(key);
@@ -341,6 +349,7 @@ void SstReader::Init()
 #define set_params(Param, Type, Typedecl, Default) Params.Param = m_##Param;
     SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
 #undef set_params
+    m_IsRowMajor = adios2::helper::IsRowMajor(m_IO.m_HostLanguage);
 }
 
 #define declare_gets(T)                                                        \

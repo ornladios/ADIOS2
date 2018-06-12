@@ -448,7 +448,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
         memset(&response, 0, sizeof(response));
         response.WriterResponseCondition = WriterResponseCondition;
         response.WriterCohortSize = Stream->CohortSize;
-        response.WriterConfigParams = Stream->WriterParams;
+        response.WriterConfigParams = Stream->ConfigParams;
         response.NextStepNumber = GlobalStartingTimestep;
         response.CP_WriterInfo =
             malloc(response.WriterCohortSize * sizeof(void *));
@@ -549,7 +549,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream = CP_newStream();
     Stream->Role = WriterRole;
     CP_validateParams(Stream, Params, 1 /* Writer */);
-    Stream->WriterParams = Params;
+    Stream->ConfigParams = Params;
 
     char *Filename = strdup(Name);
     CP_verbose(Stream, "Loading DataPlane \"%s\"\n", Stream->DataTransport);
