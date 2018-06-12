@@ -54,6 +54,16 @@ jobs:
     docker:
       - image: ornladios/adios2-auto:el7-intel18-openmpi-ohpc
 
+  "suse-pgi":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:suse-pgi
+
+  "suse-pgi-openmpi":
+    <<: *defaults
+    docker:
+      - image: ornladios/adios2:suse-pgi-openmpi
+
   "fedora-ubsan":
     <<: *defaults
     docker:
@@ -73,5 +83,7 @@ workflows:
       - "el7-gnu7-openmpi"
       - "el7-intel18"
       - "el7-intel18-openmpi"
+      - "suse-pgi"
+      - "suse-pgi-openmpi"
       - "fedora-ubsan"
       - "fedora-openmpi-ubsan"
