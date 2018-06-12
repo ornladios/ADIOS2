@@ -49,23 +49,11 @@ void generateSstTestData(int step, int rank, int size)
         data_R64_2d[i][0] = j + 10 * i;
         data_R64_2d[i][1] = 10000 + j + 10 * i;
     }
-    printf("2D array is :");
-    for (int i = 0; i < sizeof(data_I8)*2; i++)
-    {
-      printf(" %g", *(((double*)&(data_R64_2d[0]) ) + i));
-    }
-    printf("\n");
 }
 
 int validateSstTestData(int start, int length, int step)
 {
     int failures = 0;
-    printf("2D array is %p :", in_R64_2d.data());
-    for (int i = 0; i < sizeof(data_I8)*2; i++)
-    {
-      printf(" %g", *(((double*)in_R64_2d.data() ) + i));
-    }
-    printf("\n");
     for (int i = 0; i < length; i++)
     {
         if (in_I8[i] != (int8_t)((i + start) * 10 + step))
@@ -115,17 +103,18 @@ int validateSstTestData(int start, int length, int step)
                       << "](global[" << i + start << "])" << std::endl;
             failures++;
         }
-        if (in_R64_2d[2*i] != (double)((i + start) * 10 + step))
+        if (in_R64_2d[2 * i] != (double)((i + start) * 10 + step))
         {
             std::cout << "Expected " << (double)((i + start) * 10 + step)
                       << ", got " << in_R64_2d[i] << " for in_R64_2d[" << i
                       << "][0](global[" << i + start << "][0])" << std::endl;
             failures++;
         }
-        if (in_R64_2d[2*i+ 1] != (double)(10000 + (i + start) * 10 + step))
+        if (in_R64_2d[2 * i + 1] != (double)(10000 + (i + start) * 10 + step))
         {
-            std::cout << "Expected " << (double)(10000 + (i + start) * 10 + step)
-                      << ", got " << in_R64_2d[i] << " for in_R64_2d[" << i
+            std::cout << "Expected "
+                      << (double)(10000 + (i + start) * 10 + step) << ", got "
+                      << in_R64_2d[i] << " for in_R64_2d[" << i
                       << "][1](global[" << i + start << "][1])" << std::endl;
             failures++;
         }

@@ -186,7 +186,7 @@ void SstWriter::Init()
     auto lf_SetIsRowMajorParameter = [&](const std::string key,
                                          int &parameter) {
 
-        parameter = IsRowMajor(m_IO.m_HostLanguage);
+        parameter = adios2::helper::IsRowMajor(m_IO.m_HostLanguage);
         return true;
     };
 
@@ -224,7 +224,7 @@ void SstWriter::Init()
 #define set_params(Param, Type, Typedecl, Default) Params.Param = m_##Param;
     SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
 #undef set_params
-    m_IsRowMajor = IsRowMajor(m_IO.m_HostLanguage);
+    m_IsRowMajor = adios2::helper::IsRowMajor(m_IO.m_HostLanguage);
 }
 
 #define declare_type(T)                                                        \

@@ -18,7 +18,6 @@ class SstReadTest : public ::testing::Test
 {
 public:
     SstReadTest() = default;
-
 };
 
 //******************************************************************************
@@ -66,44 +65,44 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         int writerSize;
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
-	EXPECT_TRUE(var_i8)
-        ASSERT_EQ(var_i8->m_ShapeID, adios2::ShapeID::GlobalArray);
+        EXPECT_TRUE(var_i8);
+        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
         /* must be a multiple of Nx */
-        ASSERT_EQ(var_i8->m_Shape[0] % Nx, 0);
+        ASSERT_EQ(var_i8.Shape()[0] % Nx, 0);
 
         /* take the first size as something that gives us writer size */
-        writerSize = var_i8->m_Shape[0] / 10;
+        writerSize = var_i8.Shape()[0] / 10;
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16->m_ShapeID, adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16->m_Shape[0], writerSize * Nx);
+        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_i16.Shape()[0], writerSize * Nx);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32->m_ShapeID, adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32->m_Shape[0], writerSize * Nx);
+        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_i32.Shape()[0], writerSize * Nx);
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
         EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64->m_ShapeID, adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64->m_Shape[0], writerSize * Nx);
+        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_i64.Shape()[0], writerSize * Nx);
 
         auto var_r32 = io.InquireVariable<float>("r32");
         EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32->m_ShapeID, adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32->m_Shape[0], writerSize * Nx);
+        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_r32.Shape()[0], writerSize * Nx);
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64->m_ShapeID, adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64->m_Shape[0], writerSize * Nx);
+        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_r64.Shape()[0], writerSize * Nx);
 
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
         EXPECT_TRUE(var_r64_2d);
-        ASSERT_EQ(var_r64_2d->m_ShapeID, adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64_2d->m_Shape[0], writerSize * Nx);
-        ASSERT_EQ(var_r64_2d->m_Shape[1], 2);
+        ASSERT_EQ(var_r64_2d.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_r64_2d.Shape()[0], writerSize * Nx);
+        ASSERT_EQ(var_r64_2d.Shape()[1], 2);
 
         long unsigned int myStart = (writerSize * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =
@@ -113,8 +112,6 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         {
             myLength = writerSize * Nx - myStart;
         }
-	std::cout << "Reader rank " << mpiRank << " is starting at element "
-		  << myStart << " for length " << myLength << std::endl;
         const adios2::Dims start{myStart};
         const adios2::Dims count{myLength};
         const adios2::Dims start2{myStart, 0};
@@ -138,7 +135,7 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         in_I64.reserve(myLength);
         in_R32.reserve(myLength);
         in_R64.reserve(myLength);
-        in_R64_2d.reserve(myLength*2);
+        in_R64_2d.reserve(myLength * 2);
         engine.Get(var_i8, in_I8.data());
         engine.Get(var_i16, in_I16.data());
         engine.Get(var_i32, in_I32.data());

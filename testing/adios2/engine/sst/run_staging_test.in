@@ -109,10 +109,6 @@ if [ "$reader_exitcode" -ne "0" ]; then
   echo "$reader_prog exited with error code $reader_exitcode"
   exit_value=1
 fi
-if [ "$finished_gracefully" -ne "0" ]; then
-  echo "One or more processes had to be killed because of timeout"
-  exit_value=1
-fi
 
 if [ $qflag != "yes" ]; then
   if [ $exit_value -eq "0" ]; then
