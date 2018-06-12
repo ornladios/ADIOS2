@@ -79,16 +79,14 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
                 io.DefineVariable<int32_t>("i32", shape, start, count);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
@@ -219,16 +217,14 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
                 io.DefineVariable<int32_t>("i32", shape, start, count);
             auto var_i64 =
                 io.DefineVariable<int64_t>("i64", shape, start, count);
-            auto var_u8 =
-                io.DefineVariable<uint8_t>("u8", shape, start, count);
+            auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             auto var_u16 =
                 io.DefineVariable<uint16_t>("u16", shape, start, count);
             auto var_u32 =
                 io.DefineVariable<uint32_t>("u32", shape, start, count);
             auto var_u64 =
                 io.DefineVariable<uint64_t>("u64", shape, start, count);
-            auto var_r32 =
-                io.DefineVariable<float>("r32", shape, start, count);
+            auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }

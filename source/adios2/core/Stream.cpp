@@ -8,8 +8,9 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include <adios2/core/Stream.h>
-#include <adios2/core/Stream.tcc>
+#include "Stream.h"
+#include "Stream.tcc"
+
 #include "adios2/ADIOSMPI.h"
 
 namespace adios2
