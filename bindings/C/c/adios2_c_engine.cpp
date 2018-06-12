@@ -114,13 +114,6 @@ void adios2_put(adios2_engine *engine, adios2_variable *variable,
         reinterpret_cast<adios2::core::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
 
-    adios2::core::Engine &engineCpp =
-        *reinterpret_cast<adios2::core::Engine *>(engine);
-
-    const adios2::Mode modeCpp =
-        ToMode(mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
-                     "in call to adios2_put");
-
     if (type == "compound")
     {
         // not supported
@@ -128,6 +121,13 @@ void adios2_put(adios2_engine *engine, adios2_variable *variable,
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
+        adios2::core::Engine &engineCpp =                                      \
+            *reinterpret_cast<adios2::core::Engine *>(engine);                 \
+                                                                               \
+        const adios2::Mode modeCpp = ToMode(                                   \
+            mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "  \
+                  "in call to adios2_put");                                    \
+                                                                               \
         engineCpp.Put(                                                         \
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<const T *>(data), modeCpp);                       \
@@ -188,12 +188,6 @@ void adios2_get(adios2_engine *engine, adios2_variable *variable, void *values,
         reinterpret_cast<adios2::core::VariableBase *>(variable);
     const std::string type(variableBase->m_Type);
 
-    adios2::core::Engine &engineCpp =
-        *reinterpret_cast<adios2::core::Engine *>(engine);
-    const adios2::Mode modeCpp =
-        ToMode(mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
-                     "in call to adios2_get");
-
     if (type == "compound")
     {
         // not supported
@@ -201,6 +195,11 @@ void adios2_get(adios2_engine *engine, adios2_variable *variable, void *values,
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
+        adios2::core::Engine &engineCpp =                                      \
+            *reinterpret_cast<adios2::core::Engine *>(engine);                 \
+        const adios2::Mode modeCpp = ToMode(                                   \
+            mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "  \
+                  "in call to adios2_get");                                    \
         engineCpp.Get(                                                         \
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<T *>(values), modeCpp);                           \
