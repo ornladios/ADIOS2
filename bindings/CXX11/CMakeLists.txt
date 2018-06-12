@@ -28,6 +28,7 @@ install(
 
 install(
   FILES cxx11/ADIOS.h 
+        cxx11/ADIOS.inl
         cxx11/IO.h
         cxx11/Variable.h 
         cxx11/Attribute.h
