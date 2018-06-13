@@ -58,7 +58,7 @@ void BPFileWriter::PutSyncCommon(Variable<T> &variable,
 template <class T>
 void BPFileWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    variable.SetStepBlockInfo(data, CurrentStep());
+    variable.SetBlockInfo(data, CurrentStep());
     m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
     m_BP3Serializer.m_DeferredVariablesDataSize +=
         variable.PayloadSize() +

@@ -408,9 +408,9 @@ void InSituMPIReader::ProcessReceives()
                         m_OngoingReceives[index].sfi;
                     const std::string *name =
                         m_OngoingReceives[index].varNamePointer;
-                    m_BP3Deserializer.ClipContiguousMemory(*name, m_IO, rawData,
-                                                           sfi.BlockBox,
-                                                           sfi.IntersectionBox);
+                    m_BP3Deserializer.ClipMemory(*name, m_IO, rawData,
+                                                 sfi.BlockBox,
+                                                 sfi.IntersectionBox);
                 }
                 // MPI_Request_free(&m_MPIRequests[index]); // not required???
                 // m_MPIRequests[index] = MPI_REQUEST_NULL; // not required???

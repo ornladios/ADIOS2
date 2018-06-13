@@ -286,13 +286,12 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
                 "ERROR: variable " + variableName +                            \
                 " not found, in call to AsyncSendVariable\n");                 \
         }                                                                      \
-        const auto &blocksInfo = variable->m_StepBlocksInfo.at(m_CurrentStep); \
-        for (const auto &blockInfoPair : blocksInfo)                           \
+                                                                               \
+        for (const auto &blockInfo : variable->m_BlocksInfo)                   \
         {                                                                      \
-            const auto &blockInfo = blockInfoPair.second;                      \
             AsyncSendVariable<T>(*variable, blockInfo);                        \
         }                                                                      \
-        variable->m_StepBlocksInfo.erase(m_CurrentStep);                       \
+        variable->m_BlocksInfo.clear();                                        \
     }
 
     ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
@@ -362,9 +361,8 @@ void InSituMPIWriter::EndStep()
 #define declare_type(T)                                                        \
     void InSituMPIWriter::DoPutSync(Variable<T> &variable, const T *values)    \
     {                                                                          \
-        PutSyncCommon(variable,                                                \
-                      variable.SetStepBlockInfo(values, m_CurrentStep));       \
-        variable.m_StepBlocksInfo.clear();                                     \
+        PutSyncCommon(variable, variable.SetBlockInfo(values, m_CurrentStep)); \
+        variable.m_BlocksInfo.clear();                                         \
     }                                                                          \
     void InSituMPIWriter::DoPutDeferred(Variable<T> &variable,                 \
                                         const T *values)                       \

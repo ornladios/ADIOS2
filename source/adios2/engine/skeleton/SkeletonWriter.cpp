@@ -76,9 +76,8 @@ void SkeletonWriter::EndStep()
 #define declare_type(T)                                                        \
     void SkeletonWriter::DoPutSync(Variable<T> &variable, const T *data)       \
     {                                                                          \
-        PutSyncCommon(variable,                                                \
-                      variable.SetStepBlockInfo(data, CurrentStep()));         \
-        variable.m_StepBlocksInfo.clear();                                     \
+        PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
+        variable.m_BlocksInfo.clear();                                         \
     }                                                                          \
     void SkeletonWriter::DoPutDeferred(Variable<T> &variable, const T *data)   \
     {                                                                          \

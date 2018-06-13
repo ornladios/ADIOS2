@@ -41,7 +41,7 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
                                         "BeginStep\n");
         }
 
-        if (!m_BP3Deserializer.m_PerformedGets)
+        if (!m_BP3Deserializer.m_DeferredVariables.empty())
         {
             throw std::invalid_argument(
                 "ERROR: existing variables subscribed with "
@@ -77,7 +77,7 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        auto variable = m_IO.InquireVariable<T>(name);                         \
+        Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
         if (mode == StepMode::NextAvailable)                                   \
         {                                                                      \
             variable->SetStepSelection({m_CurrentStep, 1});                    \
@@ -92,20 +92,39 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
 
 size_t BPFileReader::CurrentStep() const { return m_CurrentStep; }
 
-void BPFileReader::EndStep()
-{
-    if (!m_BP3Deserializer.m_PerformedGets)
-    {
-        PerformGets();
-    }
-}
+void BPFileReader::EndStep() { PerformGets(); }
 
 void BPFileReader::PerformGets()
 {
-    const std::map<std::string, helper::SubFileInfoMap> variablesSubfileInfo =
-        m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
-    ReadVariables(variablesSubfileInfo);
-    m_BP3Deserializer.m_PerformedGets = true;
+    if (m_BP3Deserializer.m_DeferredVariables.empty())
+    {
+        return;
+    }
+
+    for (const std::string &name : m_BP3Deserializer.m_DeferredVariables)
+    {
+        const std::string type = m_IO.InquireVariableType(name);
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> &variable =                                                \
+            FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
+        for (auto &blockInfo : variable.m_BlocksInfo)                          \
+        {                                                                      \
+            m_BP3Deserializer.SetVariableBlockInfo(variable, blockInfo);       \
+        }                                                                      \
+        ReadVariableBlocks(variable);                                          \
+        variable.m_BlocksInfo.clear();                                         \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    m_BP3Deserializer.m_DeferredVariables.clear();
 }
 
 // PRIVATE
@@ -178,63 +197,9 @@ void BPFileReader::InitBuffer()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void BPFileReader::ReadVariables(
-    const std::map<std::string, helper::SubFileInfoMap> &variablesSubFileInfo)
-{
-    const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
-
-    // sequentially request bytes from transport manager
-    // threaded per variable?
-    for (const auto &variableNamePair : variablesSubFileInfo) // variable name
-    {
-        const std::string variableName(variableNamePair.first);
-
-        // or threaded per file?
-        for (const auto &subFileIndexPair : variableNamePair.second)
-        {
-            const size_t subFileIndex = subFileIndexPair.first;
-
-            if (m_SubFileManager.m_Transports.count(subFileIndex) == 0)
-            {
-                const std::string subFile(
-                    m_BP3Deserializer.GetBPSubFileName(m_Name, subFileIndex));
-
-                m_SubFileManager.OpenFileID(subFile, subFileIndex, Mode::Read,
-                                            {{"transport", "File"}}, profile);
-            }
-
-            for (const auto &stepPair : subFileIndexPair.second) // step
-            {
-                for (const auto &blockInfo : stepPair.second)
-                {
-                    const auto &seek = blockInfo.Seeks;
-                    const size_t blockStart = seek.first;
-                    const size_t blockSize = seek.second - seek.first;
-                    std::vector<char> contiguousMemory(blockSize);
-                    m_SubFileManager.ReadFile(contiguousMemory.data(),
-                                              blockSize, blockStart,
-                                              subFileIndex);
-
-                    m_BP3Deserializer.ClipContiguousMemory(
-                        variableName, m_IO, contiguousMemory,
-                        blockInfo.BlockBox, blockInfo.IntersectionBox);
-                } // end block
-
-                // Advancing data pointer for the next step
-                // m_BP3Deserializer.SetVariableNextStepData(variableName,
-                // m_IO);
-            } // end step
-        }     // end subfile
-    }         // end variable
-}
-
 void BPFileReader::DoClose(const int transportIndex)
 {
-    if (!m_BP3Deserializer.m_PerformedGets)
-    {
-        PerformGets();
-    }
-
+    PerformGets();
     m_SubFileManager.CloseFiles();
     m_FileManager.CloseFiles();
 }

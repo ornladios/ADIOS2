@@ -24,23 +24,13 @@ namespace format
 {
 
 template <class T>
-std::map<std::string, helper::SubFileInfoMap>
-BP3Deserializer::GetSyncVariableSubFileInfo(
-    const core::Variable<T> &variable) const
-{
-    std::map<std::string, helper::SubFileInfoMap> variableSubFileInfo;
-    variableSubFileInfo[variable.m_Name] = GetSubFileInfo(variable);
-    return variableSubFileInfo;
-}
-
-template <class T>
 void BP3Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
                                                     BufferSTL &bufferSTL) const
 {
-    auto itStep =
-        variable.m_IndexStepBlockStarts.find(variable.m_StepsStart + 1);
+    auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(
+        variable.m_StepsStart + 1);
 
-    if (itStep == variable.m_IndexStepBlockStarts.end())
+    if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
     {
         variable.m_Data = nullptr;
         return;
@@ -58,22 +48,130 @@ void BP3Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
 }
 
 template <class T>
-void BP3Deserializer::GetDeferredVariable(core::Variable<T> &variable, T *data)
+typename core::Variable<T>::Info &
+BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable, T *data)
 {
-    variable.m_Data = data;
-    m_DeferredVariables[variable.m_Name] = helper::SubFileInfoMap();
-}
-
-helper::SubFileInfoMap &
-BP3Deserializer::GetSubFileInfoMap(const std::string &variableName)
-{
-    return m_DeferredVariables[variableName];
+    const size_t stepsStart = variable.m_StepsStart;
+    const auto &indices = variable.m_AvailableStepBlockIndexOffsets;
+    // bp3 starts at step "1"
+    auto itStep = indices.find(stepsStart + 1);
+    if (m_DebugMode)
+    {
+        if (itStep == indices.end())
+        {
+            throw std::invalid_argument("ERROR: step start in Variable " +
+                                        variable.m_Name +
+                                        " is invalid, in call to Get\n");
+        }
+    }
+    const size_t stepsCount = variable.m_StepsCount;
+    // create block info
+    return variable.SetBlockInfo(data, stepsStart, stepsCount);
 }
 
 template <class T>
-void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable) const
+void BP3Deserializer::SetVariableBlockInfo(
+    core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo)
 {
-    GetValueFromMetadataCommon(variable);
+    auto lf_SetSubStreamInfo = [&](const Box<Dims> &selectionBox,
+                                   typename core::Variable<T>::Info &blockInfo,
+                                   const size_t step,
+                                   const std::vector<size_t> &blockIndexOffsets,
+                                   const BufferSTL &bufferSTL)
+
+    {
+        const std::vector<char> &buffer = bufferSTL.m_Buffer;
+
+        for (const size_t blockIndexOffset : blockIndexOffsets)
+        {
+            size_t position = blockIndexOffset;
+
+            const Characteristics<T> blockCharacteristics =
+                ReadElementIndexCharacteristics<T>(
+                    buffer, position, static_cast<DataTypes>(GetDataType<T>()));
+
+            // check if they intersect
+            helper::SubStreamBoxInfo subStreamInfo;
+            subStreamInfo.BlockBox = helper::StartEndBox(
+                blockCharacteristics.Start, blockCharacteristics.Count);
+            subStreamInfo.IntersectionBox =
+                helper::IntersectionBox(selectionBox, subStreamInfo.BlockBox);
+
+            if (subStreamInfo.IntersectionBox.first.empty() ||
+                subStreamInfo.IntersectionBox.second.empty())
+            {
+                continue;
+            }
+            // if they intersect get info Seeks (first: start, second:
+            // count)
+            subStreamInfo.Seeks.first =
+                blockCharacteristics.Statistics.PayloadOffset +
+                helper::LinearIndex(subStreamInfo.BlockBox,
+                                    subStreamInfo.IntersectionBox.first,
+                                    m_IsRowMajor) *
+                    sizeof(T);
+
+            subStreamInfo.Seeks.second =
+                blockCharacteristics.Statistics.PayloadOffset +
+                (helper::LinearIndex(subStreamInfo.BlockBox,
+                                     subStreamInfo.IntersectionBox.second,
+                                     m_IsRowMajor) +
+                 1) *
+                    sizeof(T);
+
+            subStreamInfo.SubStreamID =
+                static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
+
+            blockInfo.StepBlockSubStreamsInfo[step].push_back(
+                std::move(subStreamInfo));
+        }
+    };
+
+    const auto &indices = variable.m_AvailableStepBlockIndexOffsets;
+
+    const Box<Dims> selectionBox = helper::StartEndBox(
+        blockInfo.Start, blockInfo.Count, m_ReverseDimensions);
+
+    auto itStep = indices.find(blockInfo.StepsStart + 1);
+
+    for (auto i = 0; i < blockInfo.StepsCount; ++i)
+    {
+        if (m_DebugMode)
+        {
+            if (itStep == indices.end())
+            {
+                throw std::invalid_argument(
+                    "ERROR: offset " + std::to_string(i) +
+                    " from stepsStart in variable " + variable.m_Name +
+                    " is beyond the largest available step =" +
+                    std::to_string(indices.rbegin()->first) +
+                    ", check Variable SetStepSelection argument stepsCount,"
+                    "in call to Get");
+            }
+        }
+
+        lf_SetSubStreamInfo(selectionBox, blockInfo, itStep->first,
+                            itStep->second, m_Metadata);
+        ++itStep;
+    }
+}
+
+template <class T>
+void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
+                                           T *data) const
+{
+    GetValueFromMetadataCommon(variable, data);
+}
+
+template <class T>
+void BP3Deserializer::ClipContiguousMemory(
+    typename core::Variable<T>::Info &blockInfo,
+    const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
+    const Box<Dims> &intersectionBox) const
+{
+    helper::ClipContiguousMemory(
+        blockInfo.Data, blockInfo.Start, blockInfo.Count, contiguousMemory,
+        blockBox, intersectionBox, m_IsRowMajor, m_ReverseDimensions);
 }
 
 // PRIVATE
@@ -140,7 +238,8 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
         {
             ++variable->m_AvailableStepsCount;
         }
-        variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
+        variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
+            subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
 }
@@ -232,7 +331,8 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
         {
             ++variable->m_AvailableStepsCount;
         }
-        variable->m_IndexStepBlockStarts[currentStep].push_back(subsetPosition);
+        variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
+            subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
 }
@@ -265,6 +365,82 @@ void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
     }
 }
 
+template <>
+inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
+    core::Variable<std::string> &variable, std::string *data) const
+{
+    const auto &buffer = m_Metadata.m_Buffer;
+
+    for (size_t i = 0; i < variable.m_StepsCount; ++i)
+    {
+        *(data + i) = "";
+        const size_t step = variable.m_StepsStart + i + 1;
+        auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step);
+
+        if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
+        {
+            continue;
+        }
+
+        for (const size_t position : itStep->second)
+        {
+            size_t localPosition = position;
+            const Characteristics<std::string> characteristics =
+                ReadElementIndexCharacteristics<std::string>(
+                    buffer, localPosition, type_string, false);
+
+            *(data + i) = characteristics.Statistics.Value;
+        }
+
+        variable.m_Value = *(data + i);
+    }
+}
+
+template <class T>
+inline void
+BP3Deserializer::GetValueFromMetadataCommon(core::Variable<T> &variable,
+                                            T *data) const
+{
+    const auto &buffer = m_Metadata.m_Buffer;
+    const size_t step = variable.m_StepsStart + 1;
+    auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step);
+
+    if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
+    {
+        data = nullptr;
+        return;
+    }
+
+    for (const size_t position : itStep->second)
+    {
+        size_t localPosition = position;
+
+        const Characteristics<T> characteristics =
+            ReadElementIndexCharacteristics<T>(
+                buffer, localPosition, static_cast<DataTypes>(GetDataType<T>()),
+                false);
+
+        *data = characteristics.Statistics.Value;
+    }
+}
+
+template <class T>
+std::map<std::string, helper::SubFileInfoMap>
+BP3Deserializer::GetSyncVariableSubFileInfo(
+    const core::Variable<T> &variable) const
+{
+    std::map<std::string, helper::SubFileInfoMap> variableSubFileInfo;
+    variableSubFileInfo[variable.m_Name] = GetSubFileInfo(variable);
+    return variableSubFileInfo;
+}
+
+template <class T>
+void BP3Deserializer::GetDeferredVariable(core::Variable<T> &variable, T *data)
+{
+    variable.m_Data = data;
+    m_DeferredVariablesMap[variable.m_Name] = helper::SubFileInfoMap();
+}
+
 template <class T>
 helper::SubFileInfoMap
 BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
@@ -281,8 +457,9 @@ BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
 
     for (size_t step = stepStart; step < stepEnd; ++step)
     {
-        auto itBlockStarts = variable.m_IndexStepBlockStarts.find(step);
-        if (itBlockStarts == variable.m_IndexStepBlockStarts.end())
+        auto itBlockStarts =
+            variable.m_AvailableStepBlockIndexOffsets.find(step);
+        if (itBlockStarts == variable.m_AvailableStepBlockIndexOffsets.end())
         {
             continue;
         }
@@ -332,231 +509,6 @@ BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
     }
 
     return infoMap;
-}
-
-template <class T>
-void BP3Deserializer::ClipContiguousMemoryCommon(
-    core::Variable<T> &variable, const std::vector<char> &contiguousMemory,
-    const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
-{
-    const Dims &start = intersectionBox.first;
-    if (start.size() == 1) // 1D copy memory
-    {
-        // normalize intersection start with variable.m_Start
-        const size_t normalizedStart =
-            (start[0] - variable.m_Start[0]) * sizeof(T);
-        char *rawVariableData = reinterpret_cast<char *>(variable.m_Data);
-
-        std::copy(contiguousMemory.begin(), contiguousMemory.end(),
-                  &rawVariableData[normalizedStart]);
-
-        return;
-    }
-
-    if (m_IsRowMajor) // stored with C, C++, Python
-    {
-        ClipContiguousMemoryCommonRow(variable, contiguousMemory, blockBox,
-                                      intersectionBox);
-    }
-    else // stored with Fortran, R
-    {
-        ClipContiguousMemoryCommonColumn(variable, contiguousMemory, blockBox,
-                                         intersectionBox);
-    }
-}
-
-template <class T>
-void BP3Deserializer::ClipContiguousMemoryCommonRow(
-    core::Variable<T> &variable, const std::vector<char> &contiguousMemory,
-    const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
-{
-    const Dims &start = intersectionBox.first;
-    const Dims &end = intersectionBox.second;
-    const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
-
-    Dims currentPoint(start); // current point for memory copy
-
-    const Box<Dims> selectionBox = helper::StartEndBox(
-        variable.m_Start, variable.m_Count, m_ReverseDimensions);
-
-    const size_t dimensions = start.size();
-    bool run = true;
-
-    const size_t intersectionStart =
-        helper::LinearIndex(blockBox, intersectionBox.first, true) * sizeof(T);
-
-    while (run)
-    {
-        // here copy current linear memory between currentPoint and end
-        const size_t contiguousStart =
-            helper::LinearIndex(blockBox, currentPoint, true) * sizeof(T) -
-            intersectionStart;
-
-        const size_t variableStart =
-            helper::LinearIndex(selectionBox, currentPoint, true) * sizeof(T);
-
-        char *rawVariableData = reinterpret_cast<char *>(variable.m_Data);
-
-        std::copy(contiguousMemory.begin() + contiguousStart,
-                  contiguousMemory.begin() + contiguousStart + stride,
-                  rawVariableData + variableStart);
-
-        // here update each index recursively, always starting from the 2nd
-        // fastest changing index, since fastest changing index is the
-        // continuous part in the previous std::copy
-        size_t p = dimensions - 2;
-        while (true)
-        {
-            ++currentPoint[p];
-            if (currentPoint[p] > end[p])
-            {
-                if (p == 0)
-                {
-                    run = false; // we are done
-                    break;
-                }
-                else
-                {
-                    currentPoint[p] = start[p];
-                    --p;
-                }
-            }
-            else
-            {
-                break; // break inner p loop
-            }
-        } // dimension index update
-    }     // run
-}
-
-template <class T>
-void BP3Deserializer::ClipContiguousMemoryCommonColumn(
-    core::Variable<T> &variable, const std::vector<char> &contiguousMemory,
-    const Box<Dims> &blockBox, const Box<Dims> &intersectionBox) const
-{
-    const Dims &start = intersectionBox.first;
-    const Dims &end = intersectionBox.second;
-    const size_t stride = (end.front() - start.front() + 1) * sizeof(T);
-
-    Dims currentPoint(start); // current point for memory copy
-
-    const Box<Dims> selectionBox = helper::StartEndBox(
-        variable.m_Start, variable.m_Count, m_ReverseDimensions);
-
-    const size_t dimensions = start.size();
-    bool run = true;
-
-    const size_t intersectionStart =
-        helper::LinearIndex(blockBox, intersectionBox.first, false) * sizeof(T);
-
-    while (run)
-    {
-
-        // here copy current linear memory between currentPoint and end
-        const size_t contiguousStart =
-            helper::LinearIndex(blockBox, currentPoint, false) * sizeof(T) -
-            intersectionStart;
-
-        const size_t variableStart =
-            helper::LinearIndex(selectionBox, currentPoint, false) * sizeof(T);
-
-        char *rawVariableData = reinterpret_cast<char *>(variable.m_Data);
-
-        std::copy(contiguousMemory.begin() + contiguousStart,
-                  contiguousMemory.begin() + contiguousStart + stride,
-                  rawVariableData + variableStart);
-
-        // here update each index recursively, always starting from the 2nd
-        // fastest changing index, since fastest changing index is the
-        // continuous part in the previous std::copy
-        size_t p = 1;
-        while (true)
-        {
-            ++currentPoint[p];
-            if (currentPoint[p] > end[p])
-            {
-                if (p == dimensions - 1)
-                {
-                    run = false; // we are done
-                    break;
-                }
-                currentPoint[p] = start[p];
-                ++p;
-            }
-            else
-            {
-                break; // break inner p loop
-            }
-        } // dimension index update
-    }
-}
-
-template <class T>
-void BP3Deserializer::SetVariableNextStepDataCommon(
-    core::Variable<T> &variable) const
-{
-    variable.m_Data += helper::GetTotalSize(variable.m_Count);
-}
-
-template <>
-inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
-    core::Variable<std::string> &variable) const
-{
-    std::string *data = variable.m_Data;
-    const auto &buffer = m_Metadata.m_Buffer;
-
-    for (size_t i = 0; i < variable.m_StepsCount; ++i)
-    {
-        *(data + i) = "";
-        const size_t step = variable.m_StepsStart + i + 1;
-        auto itStep = variable.m_IndexStepBlockStarts.find(step);
-
-        if (itStep == variable.m_IndexStepBlockStarts.end())
-        {
-            continue;
-        }
-
-        for (const size_t position : itStep->second)
-        {
-            size_t localPosition = position;
-            const Characteristics<std::string> characteristics =
-                ReadElementIndexCharacteristics<std::string>(
-                    buffer, localPosition, type_string, false);
-
-            *(data + i) = characteristics.Statistics.Value;
-        }
-
-        variable.m_Value = *(data + i);
-    }
-}
-
-template <class T>
-inline void
-BP3Deserializer::GetValueFromMetadataCommon(core::Variable<T> &variable) const
-{
-    T *data = variable.m_Data;
-    const auto &buffer = m_Metadata.m_Buffer;
-
-    const size_t step = variable.m_StepsStart + 1;
-    auto itStep = variable.m_IndexStepBlockStarts.find(step);
-
-    if (itStep == variable.m_IndexStepBlockStarts.end())
-    {
-        data = nullptr;
-        return;
-    }
-
-    for (const size_t position : itStep->second)
-    {
-        size_t localPosition = position;
-
-        const Characteristics<T> characteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, localPosition, static_cast<DataTypes>(GetDataType<T>()),
-                false);
-
-        *data = characteristics.Statistics.Value;
-    }
 }
 
 } // end namespace format

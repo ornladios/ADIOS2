@@ -46,7 +46,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     }
     else if (m_MarshalMethod == SstMarshalBP)
     {
-        auto &blockInfo = variable.SetStepBlockInfo(
+        auto &blockInfo = variable.SetBlockInfo(
             values, m_BP3Serializer->m_MetadataSet.CurrentStep);
 
         if (!m_BP3Serializer->m_MetadataSet.DataPGIsOpen)
@@ -63,7 +63,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                               " Put adios2::Mode::Sync");
         m_BP3Serializer->PutVariableMetadata(variable, blockInfo);
         m_BP3Serializer->PutVariablePayload(variable, blockInfo);
-        variable.m_StepBlocksInfo.clear();
+        variable.m_BlocksInfo.clear();
     }
     else
     {

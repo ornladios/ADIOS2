@@ -35,7 +35,7 @@ void SkeletonWriter::PutSyncCommon(Variable<T> &variable,
 template <class T>
 void SkeletonWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    variable.SetStepBlockInfo(data, CurrentStep());
+    variable.SetBlockInfo(data, CurrentStep());
 
     if (m_Verbosity == 5)
     {

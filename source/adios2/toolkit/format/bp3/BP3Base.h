@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <bitset>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,7 +23,6 @@
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/core/Variable.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/BufferSTL.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
@@ -167,6 +167,11 @@ public:
 
     /** manages all communication tasks in aggregation */
     aggregator::MPIChain m_Aggregator;
+
+    /** tracks Put and Get variables in deferred mode */
+    std::set<std::string> m_DeferredVariables;
+    /** tracks the overall size of deferred variables */
+    size_t m_DeferredVariablesDataSize = 0;
 
     /**
      * Unique constructor
@@ -378,9 +383,9 @@ protected:
         double BitSumSquare;
         uint64_t Offset;
         uint64_t PayloadOffset;
-        T Min;
-        T Max;
-        T Value;
+        T Min = T();
+        T Max = T();
+        T Value = T();
         std::vector<T> Values;
         uint32_t Step;
         uint32_t FileIndex;

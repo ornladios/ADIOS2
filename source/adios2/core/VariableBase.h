@@ -83,7 +83,10 @@ public:
      * value:  vector of block starts for that step
      * </pre>
      * */
-    std::map<size_t, std::vector<size_t>> m_IndexStepBlockStarts;
+    std::map<size_t, std::vector<size_t>> m_AvailableStepBlockIndexOffsets;
+
+    /** wildcard memory space used for contiguous memory read */
+    std::vector<char> m_Memory;
 
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,

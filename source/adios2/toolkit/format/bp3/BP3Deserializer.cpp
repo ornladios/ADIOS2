@@ -41,52 +41,6 @@ void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
     ParseAttributesIndex(bufferSTL, io);
 }
 
-void BP3Deserializer::ClipContiguousMemory(
-    const std::string &variableName, core::IO &io,
-    const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
-    const Box<Dims> &intersectionBox) const
-{
-    // get variable pointer and set data in it with local dimensions
-    const std::string type(io.InquireVariableType(variableName));
-
-    if (type == "compound")
-    {
-    }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        core::Variable<T> *variable = io.InquireVariable<T>(variableName);     \
-        if (variable != nullptr)                                               \
-        {                                                                      \
-            ClipContiguousMemoryCommon(*variable, contiguousMemory, blockBox,  \
-                                       intersectionBox);                       \
-        }                                                                      \
-    }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-}
-
-void BP3Deserializer::SetVariableNextStepData(const std::string &variableName,
-                                              core::IO &io) const
-{
-    const std::string type(io.InquireVariableType(variableName));
-
-    if (type == "compound")
-    {
-    }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        core::Variable<T> *variable = io.InquireVariable<T>(variableName);     \
-        if (variable != nullptr)                                               \
-        {                                                                      \
-            SetVariableNextStepDataCommon(*variable);                          \
-        }                                                                      \
-    }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-}
-
 // PRIVATE
 void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
@@ -463,12 +417,12 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
 std::map<std::string, helper::SubFileInfoMap>
 BP3Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
 {
-    if (m_DeferredVariables.empty())
+    if (m_DeferredVariablesMap.empty())
     {
-        return m_DeferredVariables;
+        return m_DeferredVariablesMap;
     }
 
-    for (auto &subFileInfoPair : m_DeferredVariables)
+    for (auto &subFileInfoPair : m_DeferredVariablesMap)
     {
         const std::string variableName(subFileInfoPair.first);
         const std::string type(io.InquireVariableType(variableName));
@@ -485,22 +439,66 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
     }
-    return m_DeferredVariables;
+    return m_DeferredVariablesMap;
+}
+
+void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
+                                 const std::vector<char> &contiguousMemory,
+                                 const Box<Dims> &blockBox,
+                                 const Box<Dims> &intersectionBox) const
+{
+    const std::string type(io.InquireVariableType(variableName));
+
+    if (type == "compound")
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        core::Variable<T> *variable = io.InquireVariable<T>(variableName);     \
+        if (variable != nullptr)                                               \
+        {                                                                      \
+            helper::ClipContiguousMemory(variable->m_Data, variable->m_Start,  \
+                                         variable->m_Count, contiguousMemory,  \
+                                         blockBox, intersectionBox,            \
+                                         m_IsRowMajor, m_ReverseDimensions);   \
+        }                                                                      \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 }
 
 #define declare_template_instantiation(T)                                      \
+    template void BP3Deserializer::GetSyncVariableDataFromStream(              \
+        core::Variable<T> &, BufferSTL &) const;                               \
+                                                                               \
+    template typename core::Variable<T>::Info &                                \
+    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *);          \
+                                                                               \
+    template void BP3Deserializer::SetVariableBlockInfo(                       \
+        core::Variable<T> &, typename core::Variable<T>::Info &);              \
+                                                                               \
+    template void BP3Deserializer::ClipContiguousMemory<T>(                    \
+        typename core::Variable<T>::Info &, const std::vector<char> &,         \
+        const Box<Dims> &, const Box<Dims> &) const;                           \
+                                                                               \
+    template void BP3Deserializer::GetValueFromMetadata(                       \
+        core::Variable<T> &variable, T *) const;
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+                                                                               \
     template std::map<std::string, helper::SubFileInfoMap>                     \
     BP3Deserializer::GetSyncVariableSubFileInfo(const core::Variable<T> &)     \
         const;                                                                 \
                                                                                \
-    template void BP3Deserializer::GetSyncVariableDataFromStream(              \
-        core::Variable<T> &, BufferSTL &) const;                               \
-                                                                               \
     template void BP3Deserializer::GetDeferredVariable(core::Variable<T> &,    \
                                                        T *);                   \
                                                                                \
-    template void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &)   \
-        const;
+    template helper::SubFileInfoMap BP3Deserializer::GetSubFileInfo(           \
+        const core::Variable<T> &) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

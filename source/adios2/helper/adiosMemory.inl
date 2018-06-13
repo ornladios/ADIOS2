@@ -114,7 +114,7 @@ template <class T>
 void InsertU64(std::vector<char> &buffer, const T element) noexcept
 {
     const uint64_t element64 = static_cast<uint64_t>(element);
-    InsertToBuffer(buffer, &element64);
+    InsertToBuffer(buffer, &element64, 1);
 }
 
 template <class T>
@@ -123,6 +123,172 @@ T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept
     T value;
     CopyFromBuffer(buffer, position, &value);
     return value;
+}
+
+template <class T>
+void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                          const std::vector<char> &contiguousMemory,
+                          const Box<Dims> &blockBox,
+                          const Box<Dims> &intersectionBox,
+                          const bool isRowMajor, const bool reverseDimensions)
+{
+    auto lf_ClipRowMajor = [](
+        T *dest, const Dims &destStart, const Dims &destCount,
+        const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
+        const Box<Dims> &intersectionBox, const bool isRowMajor,
+        const bool reverseDimensions) {
+
+        const Dims &start = intersectionBox.first;
+        const Dims &end = intersectionBox.second;
+        const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
+
+        Dims currentPoint(start); // current point for memory copy
+        const Box<Dims> selectionBox =
+            helper::StartEndBox(destStart, destCount, reverseDimensions);
+
+        const size_t dimensions = start.size();
+        bool run = true;
+
+        const size_t intersectionStart =
+            helper::LinearIndex(blockBox, intersectionBox.first, true) *
+            sizeof(T);
+
+        while (run)
+        {
+            // here copy current linear memory between currentPoint and end
+            const size_t contiguousStart =
+                helper::LinearIndex(blockBox, currentPoint, true) * sizeof(T) -
+                intersectionStart;
+
+            const size_t variableStart =
+                helper::LinearIndex(selectionBox, currentPoint, true) *
+                sizeof(T);
+
+            char *rawVariableData = reinterpret_cast<char *>(dest);
+
+            std::copy(contiguousMemory.begin() + contiguousStart,
+                      contiguousMemory.begin() + contiguousStart + stride,
+                      rawVariableData + variableStart);
+
+            // here update each index recursively, always starting from the 2nd
+            // fastest changing index, since fastest changing index is the
+            // continuous part in the previous std::copy
+            size_t p = dimensions - 2;
+            while (true)
+            {
+                ++currentPoint[p];
+                if (currentPoint[p] > end[p])
+                {
+                    if (p == 0)
+                    {
+                        run = false; // we are done
+                        break;
+                    }
+                    else
+                    {
+                        currentPoint[p] = start[p];
+                        --p;
+                    }
+                }
+                else
+                {
+                    break; // break inner p loop
+                }
+            } // dimension index update
+        }     // run
+
+    };
+
+    auto lf_ClipColumnMajor =
+        [](T *dest, const Dims &destStart, const Dims &destCount,
+           const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
+           const Box<Dims> &intersectionBox, const bool isRowMajor,
+           const bool reverseDimensions)
+
+    {
+        const Dims &start = intersectionBox.first;
+        const Dims &end = intersectionBox.second;
+        const size_t stride = (end.front() - start.front() + 1) * sizeof(T);
+
+        Dims currentPoint(start); // current point for memory copy
+
+        const Box<Dims> selectionBox =
+            helper::StartEndBox(destStart, destCount, reverseDimensions);
+
+        const size_t dimensions = start.size();
+        bool run = true;
+
+        const size_t intersectionStart =
+            helper::LinearIndex(blockBox, intersectionBox.first, false) *
+            sizeof(T);
+
+        while (run)
+        {
+            // here copy current linear memory between currentPoint and end
+            const size_t contiguousStart =
+                helper::LinearIndex(blockBox, currentPoint, false) * sizeof(T) -
+                intersectionStart;
+
+            const size_t variableStart =
+                helper::LinearIndex(selectionBox, currentPoint, false) *
+                sizeof(T);
+
+            char *rawVariableData = reinterpret_cast<char *>(dest);
+
+            std::copy(contiguousMemory.begin() + contiguousStart,
+                      contiguousMemory.begin() + contiguousStart + stride,
+                      rawVariableData + variableStart);
+
+            // here update each index recursively, always starting from the 2nd
+            // fastest changing index, since fastest changing index is the
+            // continuous part in the previous std::copy
+            size_t p = 1;
+            while (true)
+            {
+                ++currentPoint[p];
+                if (currentPoint[p] > end[p])
+                {
+                    if (p == dimensions - 1)
+                    {
+                        run = false; // we are done
+                        break;
+                    }
+                    currentPoint[p] = start[p];
+                    ++p;
+                }
+                else
+                {
+                    break; // break inner p loop
+                }
+            } // dimension index update
+        }
+
+    };
+
+    const Dims &start = intersectionBox.first;
+    if (start.size() == 1) // 1D copy memory
+    {
+        // normalize intersection start with variable.m_Start
+        const size_t normalizedStart =
+            (start.front() - destStart.front()) * sizeof(T);
+        char *rawVariableData = reinterpret_cast<char *>(dest);
+
+        std::copy(contiguousMemory.begin(), contiguousMemory.end(),
+                  rawVariableData + normalizedStart);
+        return;
+    }
+
+    if (isRowMajor) // stored with C, C++, Python
+    {
+        lf_ClipRowMajor(dest, destStart, destCount, contiguousMemory, blockBox,
+                        intersectionBox, isRowMajor, reverseDimensions);
+    }
+    else // stored with Fortran, R
+    {
+        lf_ClipColumnMajor(dest, destStart, destCount, contiguousMemory,
+                           blockBox, intersectionBox, isRowMajor,
+                           reverseDimensions);
+    }
 }
 
 } // end namespace helper

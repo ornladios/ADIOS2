@@ -12,7 +12,6 @@
 #define ADIOS2_TOOLKIT_FORMAT_BP3_BP3SERIALIZER_H_
 
 #include <mutex>
-#include <set>
 
 #include "adios2/core/Attribute.h"
 #include "adios2/core/IO.h"
@@ -27,8 +26,6 @@ class BP3Serializer : public BP3Base
 {
 
 public:
-    std::set<std::string> m_DeferredVariables;
-    size_t m_DeferredVariablesDataSize = 0;
     /**
      * Unique constructor
      * @param mpiComm MPI communicator for BP1 Aggregator

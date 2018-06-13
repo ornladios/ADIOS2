@@ -264,7 +264,7 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            for (auto &step : v->m_IndexStepBlockStarts)                       \
+            for (auto &step : v->m_AvailableStepBlockIndexOffsets)             \
             {                                                                  \
                 v->SetStepSelection({step.first - 1, 1});                      \
                 deserializer.GetSyncVariableDataFromStream(                    \

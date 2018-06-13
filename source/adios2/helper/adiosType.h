@@ -25,7 +25,7 @@ namespace adios2
 {
 namespace helper
 {
-
+// TODO: deprecate
 struct SubFileInfo
 {
     /**  from characteristics, first = Start point, second =
@@ -36,7 +36,7 @@ struct SubFileInfo
 };
 
 /**
- * Structure that contains the seek info per variable
+ * //TODO: deprecate Structure that contains the seek info per variable
  * <pre>
  *   key: subfile index
  *   value: (map)
@@ -48,6 +48,25 @@ struct SubFileInfo
  */
 using SubFileInfoMap =
     std::map<size_t, std::map<size_t, std::vector<SubFileInfo>>>;
+
+/**
+ * Contains SubStream info for intersecting block
+ * key: subfile (substream) index
+ * value : file seek box: first = seekStart, second = seekCount
+ */
+struct SubStreamBoxInfo
+{
+    /** particular substream ID */
+    size_t SubStreamID;
+    /**  from characteristics, first = Start point, second =
+         End point of block of data */
+    Box<Dims> BlockBox;
+    /** Intersection box between BlockBox and variable block
+     *  first = Start point, second = End point */
+    Box<Dims> IntersectionBox;
+    /** Seeks (offsets) in serialized stream for intersection box */
+    Box<size_t> Seeks;
+};
 
 /**
  * Gets type from template parameter T
