@@ -361,7 +361,8 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                                  void *client_Data, attr_list attrs);
 
 static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
-                                   void **ReaderContactInfoPtr)
+                                   void **ReaderContactInfoPtr,
+                                   struct _SstParams *Params)
 {
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
     RdmaReaderContactInfo Contact =
@@ -540,7 +541,8 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
     CMCondition_signal(cm, ReadReplyMsg->NotifyCondition);
 }
 
-static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream)
+static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
+                                   struct _SstParams *Params)
 {
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);

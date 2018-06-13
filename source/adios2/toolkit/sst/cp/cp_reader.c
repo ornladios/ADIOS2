@@ -172,8 +172,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
-    Stream->DP_Stream =
-        Stream->DP_Interface->initReader(&Svcs, Stream, &dpInfo);
+    Stream->DP_Stream = Stream->DP_Interface->initReader(&Svcs, Stream, &dpInfo,
+                                                         Stream->ConfigParams);
 
     pointers = (struct _CP_DP_PairInfo **)ParticipateInReaderInitDataExchange(
         Stream, dpInfo, &data_block);

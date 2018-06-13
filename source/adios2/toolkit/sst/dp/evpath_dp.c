@@ -167,7 +167,8 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                                    void *client_Data, attr_list attrs);
 
 static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
-                                     void **ReaderContactInfoPtr)
+                                     void **ReaderContactInfoPtr,
+                                     struct _SstParams *Params)
 {
     Evpath_RS_Stream Stream = malloc(sizeof(struct _Evpath_RS_Stream));
     EvpathReaderContactInfo Contact =
@@ -320,7 +321,8 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
     CMCondition_signal(cm, ReadReplyMsg->NotifyCondition);
 }
 
-static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream)
+static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
+                                     struct _SstParams *Params)
 {
     Evpath_WS_Stream Stream = malloc(sizeof(struct _Evpath_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
