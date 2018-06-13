@@ -99,7 +99,7 @@ core::VariableBase *IO::InquireVariable(const std::string &name) noexcept
     {                                                                          \
         variable = m_IO.InquireVariable<T>(name);                              \
     }
-    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_template_instantiation)
+    ADIOS2_FOREACH_PYTHON_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
     return variable;
@@ -144,6 +144,25 @@ IO::DefineAttribute(const std::string &name,
     return &m_IO.DefineAttribute(name, strings.data(), strings.size());
 }
 
+core::AttributeBase *IO::InquireAttribute(const std::string &name) noexcept
+{
+    const std::string type(m_IO.InquireAttributeType(name));
+    core::AttributeBase *attribute = nullptr;
+
+    if (type == "unknown")
+    {
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        attribute = m_IO.InquireAttribute<T>(name);                            \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+    return attribute;
+}
+
 Engine IO::Open(const std::string &name, const int openMode)
 {
     return Engine(m_IO, name, static_cast<adios2::Mode>(openMode),
@@ -152,9 +171,14 @@ Engine IO::Open(const std::string &name, const int openMode)
 
 void IO::FlushAll() { m_IO.FlushAll(); }
 
-std::map<std::string, Params> IO::GetAvailableVariables() noexcept
+std::map<std::string, Params> IO::AvailableVariables() noexcept
 {
     return m_IO.GetAvailableVariables();
+}
+
+std::map<std::string, Params> IO::AvailableAttributes() noexcept
+{
+    return m_IO.GetAvailableAttributes();
 }
 
 } // end namespace py11

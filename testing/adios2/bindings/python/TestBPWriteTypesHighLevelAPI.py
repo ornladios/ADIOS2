@@ -74,7 +74,6 @@ for name, info in vars_info.items():
 indataU32steps = fr.read("varU32", start, count)
 print(indataU32steps)
 
-
 inTag = fr.readstring("tag")
 inI8 = fr.read("gvarI8")
 inI16 = fr.read("gvarI16")
