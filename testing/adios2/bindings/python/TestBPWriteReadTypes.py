@@ -14,13 +14,13 @@ from mpi4py import MPI
 import adios2
 
 
-def check_object(object, name):
-    if object is None:
+def check_object(adios2_object, name):
+    if adios2_object is None:
         raise ValueError(str(name) + ' not found')
 
 
-def check_name(name, list):
-    if name not in list:
+def check_name(name, name_list):
+    if name not in name_list:
         raise ValueError(str(name) + ' not found in list')
 
 
