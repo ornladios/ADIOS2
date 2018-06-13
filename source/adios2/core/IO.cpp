@@ -318,6 +318,17 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
     return itVariable->second.first;
 }
 
+std::string IO::InquireAttributeType(const std::string &name) const noexcept
+{
+    auto itAttribute = m_Attributes.find(name);
+    if (itAttribute == m_Attributes.end())
+    {
+        return std::string();
+    }
+
+    return itAttribute->second.first;
+}
+
 Engine &IO::Open(const std::string &name, const Mode mode,
                  MPI_Comm mpiComm_orig)
 {

@@ -53,11 +53,15 @@ public:
     core::AttributeBase *DefineAttribute(const std::string &name,
                                          pybind11::array &array);
 
+    core::AttributeBase *InquireAttribute(const std::string &name) noexcept;
+
     core::AttributeBase *
     DefineAttribute(const std::string &name,
                     const std::vector<std::string> &strings);
 
-    std::map<std::string, Params> GetAvailableVariables() noexcept;
+    std::map<std::string, Params> AvailableVariables() noexcept;
+
+    std::map<std::string, Params> AvailableAttributes() noexcept;
 
     Engine Open(const std::string &name, const int openMode);
 

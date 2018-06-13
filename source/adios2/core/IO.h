@@ -274,6 +274,13 @@ public:
     Attribute<T> *InquireAttribute(const std::string &name) noexcept;
 
     /**
+     * @brief Returns the type of an existing attribute as an string
+     * @param name input attribute name
+     * @return type if found returns type as string, otherwise an empty string
+     */
+    std::string InquireAttributeType(const std::string &name) const noexcept;
+
+    /**
      * @brief Retrieve map with attributes info. Use when reading.
      * @return map with current attributes and info
      * keys: Type, Elements, Value

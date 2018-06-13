@@ -261,6 +261,9 @@ PYBIND11_MODULE(adios2, m)
         .def("InquireVariable", &adios2::py11::IO::InquireVariable,
              pybind11::return_value_policy::reference_internal)
 
+        .def("InquireAttribute", &adios2::py11::IO::InquireAttribute,
+             pybind11::return_value_policy::reference_internal)
+
         .def("DefineAttribute",
              (adios2::core::AttributeBase *
               (adios2::py11::IO::*)(const std::string &, pybind11::array &)) &
@@ -275,7 +278,8 @@ PYBIND11_MODULE(adios2, m)
         .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
                          const std::string &, const int)) &
                          adios2::py11::IO::Open)
-        .def("GetAvailableVariables", &adios2::py11::IO::GetAvailableVariables)
+        .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
+        .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
         .def("FlushAll", &adios2::py11::IO::FlushAll);
 
     pybind11::class_<adios2::py11::Engine>(m, "py11::Engine")

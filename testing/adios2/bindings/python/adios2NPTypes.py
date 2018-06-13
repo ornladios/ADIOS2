@@ -13,6 +13,7 @@ class SmallTestData:
 
     def __init__(self):
         self.Nx = 10
+        self.Str = "Hello ADIOS2 Python"
         self.I8 = np.array([0, 1, -2, 3, -4, 5, -6, 7, -8, 9], dtype=np.int8)
         self.I16 = np.array(
             [512, 513, -510, 515, -508, 517, -506, 519, -504, 521],
@@ -45,3 +46,19 @@ class SmallTestData:
         self.R32 = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=np.float32)
         self.R64 = np.array([0, -1, -2, -3, -4, -5, -6, -7, -8, -9],
                             dtype=np.float64)
+
+    def update(self, rank, step, size):
+
+        j = rank + 1 + step * size
+        self.I8 += 1
+        self.I16 += 1
+        self.I32 += j
+        self.I64 += j
+
+        self.U8 += 1
+        self.U16 += 1
+        self.U32 += j
+        self.U64 += j
+
+        self.R32 += j
+        self.R64 += j
