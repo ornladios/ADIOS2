@@ -578,7 +578,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
-    Stream->DP_Stream = Stream->DP_Interface->initWriter(&Svcs, Stream);
+    Stream->DP_Stream =
+        Stream->DP_Interface->initWriter(&Svcs, Stream, Stream->ConfigParams);
 
     if (Stream->Rank == 0)
     {

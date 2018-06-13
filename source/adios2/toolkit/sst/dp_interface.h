@@ -67,10 +67,12 @@ typedef void *CP_PeerCohort;
  * pointed to by the void*.  The control plane will gather this information
  * for all reader ranks, transmit it to the writer cohort and provide it as
  * an array of pointers in the `providedReaderInfo` argument to
- * CP_DP_InitWriterPerReaderFunc.
+ * CP_DP_InitWriterPerReaderFunc.  Params is the set of Engine-level parameters
+ * set at the ADIOS level.
  */
 typedef DP_RS_Stream (*CP_DP_InitReaderFunc)(CP_Services Svcs, void *CP_Stream,
-                                             void **ReaderContactInfoPtr);
+                                             void **ReaderContactInfoPtr,
+                                             struct _SstParams *Params);
 
 /*!
  * CP_DP_DestroyReaderFunc is the type of a dataplane reader-side
@@ -84,12 +86,13 @@ typedef void (*CP_DP_DestroyReaderFunc)(CP_Services Svcs, DP_RS_Stream Reader);
  * initialization function.  Its return value is DP_WS_stream, an externally
  * opaque handle which is provided to the dataplane on all subsequent
  * stream-wide operations for this stream.  'stream' is an input parameter and
- * is the
- * control plane-level writer-side stream identifier.  This may be useful
+ * is the control plane-level writer-side stream identifier.  This may be useful
  * for callbacks, access to MPI communicator, EVPath info, etc. so can be
- * associated with the DP_RS_stream.
+ * associated with the DP_RS_stream.  Params is the set of Engine-level
+ * parameters set at the ADIOS level.
  */
-typedef DP_WS_Stream (*CP_DP_InitWriterFunc)(CP_Services Svcs, void *CP_Stream);
+typedef DP_WS_Stream (*CP_DP_InitWriterFunc)(CP_Services Svcs, void *CP_Stream,
+                                             struct _SstParams *Params);
 
 /*!
  * CP_DP_DestroyWriterFunc is the type of a dataplane writer-side
