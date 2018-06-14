@@ -325,6 +325,17 @@ extern void
 CMConnection_add_reference (CMConnection conn);
 
 /*!
+ * manually decrement the reference count of a connection.
+ *
+ * \param conn the CMConnection whose count should be decremented.
+ * \note  Used if some mechanism other than CMget_conn() is used to "share"
+ * connection in multiple contexts so that it is closed only when all users
+ * have closed it.
+*/
+extern void
+CMConnection_dereference (CMConnection conn);
+
+/*!
  * register a function to be called when a connection is closed.
  *
  * \param conn the connection with which the function is associated.

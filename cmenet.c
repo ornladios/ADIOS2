@@ -683,7 +683,7 @@ libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
 	/* we're already listening */
         if (port_num == 0) {
 	    /* not requesting a specific port, return what we have */
-	    return build_listen_attrs(cm, svc, NULL, listen_info, address.port);
+	    return build_listen_attrs(cm, svc, NULL, listen_info, enet_data->listen_port);
 	} else {
 	    printf("CMlisten_specific() requesting a specific port follows other Enet operation which initiated listen at another port.  Only one listen allowed, second listen fails.\n");
 	    return NULL;
