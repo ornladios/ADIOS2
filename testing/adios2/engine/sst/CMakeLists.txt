@@ -58,6 +58,11 @@ add_test(
     -nr 3 -nw 5 -v -p TestSst)
 
 add_test(
+  NAME ADIOSSstTest.3x5BP
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+    -nr 3 -nw 5 -v -p TestSst -arg "MarshalMethod:BP")
+
+add_test(
   NAME ADIOSSstTest.5x3
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nr 5 -nw 3 -v -p TestSst)
@@ -67,6 +72,10 @@ if(ADIOS2_HAVE_Fortran)
     NAME ADIOSSstTest.FtoC_1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nr 1 -nw 1 -v -w TestSstWrite_f -r TestSstRead)
+  add_test(
+    NAME ADIOSSstTest.FtoC_1x1BP
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+    -nr 1 -nw 1 -v -w TestSstWrite_f -r TestSstRead -arg "MarshalMethod:BP")
   add_test(
     NAME ADIOSSstTest.CtoF_1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
@@ -79,6 +88,12 @@ if(ADIOS2_HAVE_Fortran)
     NAME ADIOSSstTest.FtoC_3x5
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nr 3 -nw 5 -v -w TestSstWrite_f -r TestSstRead)
+  add_test(
+    NAME ADIOSSstTest.FtoC_3x5BP
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+    -nr 3 -nw 5 -v -w TestSstWrite_f -r TestSstRead -arg "MarshalMethod:BP")
+  
+
   add_test(
     NAME ADIOSSstTest.CtoF_3x5
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test

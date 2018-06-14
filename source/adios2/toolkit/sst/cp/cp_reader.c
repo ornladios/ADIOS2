@@ -352,13 +352,9 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     return Stream;
 }
 
-extern void SstReaderGetParams(SstStream Stream, int *WriterFFSmarshal,
-                               int *WriterBPmarshal)
+extern void SstReaderGetParams(SstStream Stream, SstMarshalMethod *WriterMarshalMethod)
 {
-    *WriterFFSmarshal =
-        (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS);
-    *WriterBPmarshal =
-        (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP);
+    *WriterMarshalMethod =Stream->WriterConfigParams->MarshalMethod;
 }
 
 void queueTimestepMetadataMsgAndNotify(SstStream Stream,

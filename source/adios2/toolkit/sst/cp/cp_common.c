@@ -822,9 +822,6 @@ extern char *CP_GetContactString(SstStream Stream)
     if (strcmp(Stream->ConfigParams->ControlTransport, "enet") == 0)
     {
         set_int_attr(ContactList, CM_ENET_CONN_TIMEOUT, 60000); /* 60 seconds */
-        printf("Generated Contact list : ");
-        dump_attr_list(ContactList);
-        printf("\n");
     }
     return attr_list_to_string(ContactList);
 }

@@ -26,6 +26,7 @@ EO
 	-n <count> & number of nodes to run both sides
 	-nw <count> & number of nodes to run write side
 	-nr <count> & number of nodes to run read side
+	-arg <str> & pass <arg> on the command line to the executables
 	-q & be quiet
 EO
 }
@@ -34,6 +35,8 @@ PROGNAME=${0##*/}
 
 reader_prog="UNSET"
 writer_prog="UNSET"
+
+args=""
 
 while [ $# -gt 0 ]
 do
@@ -50,6 +53,7 @@ do
     (-p) prefix="$2"; shift;;
     (-nw) nw="$2"; shift;;
     (-nr) nr="$2"; shift;;
+    (-arg) args="$args $2"; shift;;
     (--) shift; break;;
     (-*) echo "$0: error - unrecognized option $1" ; usage; 1>&2; exit 1;;
     (*)  break;;
@@ -71,15 +75,15 @@ rm -f *.bpflx
 
 # Spawn the writer
 if [ $vflag == "yes" ]; then
-    echo "Doing        (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog ) & writer_pid=$!"
+    echo "Doing        (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog $args) & writer_pid=$!"
 fi
-(@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog ) & writer_pid=$!
+(@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog $args ) & writer_pid=$!
 
 # Spawn the reader
 if [ $vflag == "yes" ]; then
-    echo "Doing (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog 2>&1 1>/dev/null) & reader_pid=$!"
+    echo "Doing (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog $args 2>&1 1>/dev/null) & reader_pid=$!"
 fi
-(@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog 2>&1 1>/dev/null) & reader_pid=$!
+(@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog $args 2>&1 1>/dev/null) & reader_pid=$!
 
 
 
