@@ -342,6 +342,7 @@ extern atom_t CM_TRANSPORT_ATOM;
 
 void CP_validateParams(SstStream stream, SstParams Params, int Writer);
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo);
+extern char *CP_GetContactString(SstStream s);
 extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
                                        SstData Data, long Timestep,

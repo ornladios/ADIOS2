@@ -31,7 +31,8 @@ struct _SstBlock
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
     MACRO(QueueLimit, Int, int, 0)                                             \
     MACRO(DiscardOnQueueFull, Bool, int, 1)                                    \
-    MACRO(IsRowMajor, IsRowMajor, int, 0)
+    MACRO(IsRowMajor, IsRowMajor, int, 0)                                      \
+    MACRO(ControlTransport, String, char *, NULL)
 
 typedef enum {
     SstRegisterFile,

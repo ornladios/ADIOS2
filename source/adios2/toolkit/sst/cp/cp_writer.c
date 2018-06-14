@@ -24,7 +24,7 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
 
 static char *buildContactInfo(SstStream Stream)
 {
-    char *Contact = attr_list_to_string(CMget_contact_list(Stream->CPInfo->cm));
+    char *Contact = CP_GetContactString(Stream);
     char *FullInfo = malloc(strlen(Contact) + 20);
     sprintf(FullInfo, "%p:%s", (void *)Stream, Contact);
     free(Contact);
@@ -419,8 +419,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
 
     struct _CP_DP_PairInfo **pointers = NULL;
 
-    cpInfo.ContactInfo =
-        attr_list_to_string(CMget_contact_list(Stream->CPInfo->cm));
+    cpInfo.ContactInfo = CP_GetContactString(Stream);
     cpInfo.WriterID = CP_WSR_Stream;
 
     combined_init.CP_Info = (void **)&cpInfo;
