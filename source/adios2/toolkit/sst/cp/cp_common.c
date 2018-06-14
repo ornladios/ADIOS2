@@ -74,6 +74,17 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         /* determine reasonable default, now "evpath" */
         Stream->DataTransport = strdup("evpath");
     }
+    if (Params->ControlTransport == NULL)
+    {
+        /* determine reasonable default, now "enet" */
+        Params->ControlTransport = strdup("enet");
+    }
+    for (int i = 0; Params->ControlTransport[i] != 0; i++)
+    {
+        Params->ControlTransport[i] = tolower(Params->ControlTransport[i]);
+    }
+    CP_verbose(Stream, "Sst set to use %s as a Control Transport\n",
+               Params->ControlTransport);
 }
 
 static FMField CP_SstParamsList_RAW[] = {
@@ -564,6 +575,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 }
 
 atom_t CM_TRANSPORT_ATOM = 0;
+static atom_t CM_ENET_CONN_TIMEOUT = -1;
 
 static void initAtomList()
 {
@@ -571,6 +583,7 @@ static void initAtomList()
         return;
 
     CM_TRANSPORT_ATOM = attr_atom_from_string("CM_TRANSPORT");
+    CM_ENET_CONN_TIMEOUT = attr_atom_from_string("CM_ENET_CONN_TIMEOUT");
 }
 
 static void AddCustomStruct(CP_GlobalInfo CPInfo, FMStructDescList Struct)
@@ -800,6 +813,22 @@ extern void SstStreamDestroy(SstStream Stream)
     }
 }
 
+extern char *CP_GetContactString(SstStream Stream)
+{
+    attr_list ListenList = create_attr_list(), ContactList;
+    set_string_attr(ListenList, CM_TRANSPORT_ATOM,
+                    strdup(Stream->ConfigParams->ControlTransport));
+    ContactList = CMget_specific_contact_list(Stream->CPInfo->cm, ListenList);
+    if (strcmp(Stream->ConfigParams->ControlTransport, "enet") == 0)
+    {
+        set_int_attr(ContactList, CM_ENET_CONN_TIMEOUT, 60000); /* 60 seconds */
+        printf("Generated Contact list : ");
+        dump_attr_list(ContactList);
+        printf("\n");
+    }
+    return attr_list_to_string(ContactList);
+}
+
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
 {
 
@@ -817,10 +846,7 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
     CPInfo->cm = CManager_create();
     CMfork_comm_thread(CPInfo->cm);
 
-    attr_list listen_list = create_attr_list();
-    set_string_attr(listen_list, CM_TRANSPORT_ATOM, strdup("enet"));
-    CMlisten_specific(CPInfo->cm, listen_list);
-    free_attr_list(listen_list);
+    CMlisten(CPInfo->cm);
 
     CPInfo->fm_c = create_local_FMcontext();
     CPInfo->ffs_c = create_FFSContext_FM(CPInfo->fm_c);

@@ -129,8 +129,7 @@ static void **ParticipateInReaderInitDataExchange(SstStream Stream,
 
     struct _CP_DP_PairInfo **pointers;
 
-    cpInfo.ContactInfo =
-        attr_list_to_string(CMget_contact_list(Stream->CPInfo->cm));
+    cpInfo.ContactInfo = CP_GetContactString(Stream);
     cpInfo.ReaderID = Stream;
 
     combined_init.CP_Info = (void **)&cpInfo;
@@ -326,7 +325,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     // peer)
     if (rank0_to_rank0_conn)
     {
-        CMConnection_close(rank0_to_rank0_conn);
+        CMConnection_dereference(rank0_to_rank0_conn);
     }
 
     Stream->DP_Interface->provideWriterDataToReader(

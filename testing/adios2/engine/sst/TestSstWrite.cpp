@@ -20,14 +20,45 @@ public:
     SstWriteTest() = default;
 };
 
-//******************************************************************************
-// 1D 1x8 test data
-//******************************************************************************
+adios2::Params engineParams = {}; // parsed from command line
+
+static std::string Trim(std::string &str)
+{
+    size_t first = str.find_first_not_of(' ');
+    size_t last = str.find_last_not_of(' ');
+    return str.substr(first, (last - first + 1));
+}
+
+/*
+ * Engine parameters spec is a poor-man's JSON.  name:value pairs are separated
+ * by commas.  White space is trimmed off front and back.  No quotes or anything
+ * fancy allowed.
+ */
+static adios2::Params ParseEngineParams(std::string Input)
+{
+    std::istringstream ss(Input);
+    std::string Param;
+    adios2::Params Ret = {};
+
+    while (std::getline(ss, Param, ','))
+    {
+        std::istringstream ss2(Param);
+        std::string ParamName;
+        std::string ParamValue;
+        std::getline(ss2, ParamName, ':');
+        if (!std::getline(ss2, ParamValue, ':'))
+        {
+            throw std::invalid_argument("Engine parameter \"" + Param +
+                                        "\" missing value");
+        }
+        Ret[Trim(ParamName)] = Trim(ParamValue);
+    }
+    return Ret;
+}
 
 // ADIOS2 SST write
 TEST_F(SstWriteTest, ADIOS2SstWrite)
 {
-    // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
     const std::string fname = "ADIOS2Sst";
 
@@ -71,6 +102,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
 
     // Create the Engine
     io.SetEngine("Sst");
+    io.SetParameters(engineParams);
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
@@ -130,6 +162,12 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineParams = ParseEngineParams(argv[1]);
+    }
+
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
