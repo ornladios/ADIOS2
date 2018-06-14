@@ -40,8 +40,6 @@ typedef enum {
     SstRegisterCloud
 } SstRegistrationMethod;
 
-typedef enum { SstMarshalFFS, SstMarshalBP } SstMarshalMethod;
-
 struct _SstParams
 {
 #define declare_struct(Param, Type, Typedecl, Default) Typedecl Param;

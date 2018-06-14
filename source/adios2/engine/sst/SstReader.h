@@ -57,8 +57,7 @@ private:
     void SstBPPerformGets();
     void Init();
     SstStream m_Input;
-    int m_WriterFFSmarshal;
-    int m_WriterBPmarshal;
+    SstMarshalMethod m_WriterMarshalMethod;
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;

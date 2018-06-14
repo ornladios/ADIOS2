@@ -43,8 +43,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     }
 
     // Maybe need other writer-side params in the future, but for now only
-    // marshal methods.
-    SstReaderGetParams(m_Input, &m_WriterFFSmarshal, &m_WriterBPmarshal);
+    // marshal method.
+    SstReaderGetParams(m_Input, &m_WriterMarshalMethod);
 
     auto varFFSCallback = [](void *reader, const char *variableName,
                              const char *type, void *data) {
@@ -130,7 +130,7 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         return StepStatus::OtherError;
     }
 
-    if (m_WriterBPmarshal)
+    if (m_WriterMarshalMethod == SstMarshalBP)
     {
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         // At begin step, you get metadata from the writers.  You need to
@@ -182,7 +182,7 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
         m_IO.RemoveAllAttributes();
         m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, m_IO);
     }
-    else if (m_WriterFFSmarshal)
+    else if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         // For FFS-based marshaling, SstAdvanceStep takes care of installing
         // the metadata, creating variables using the varFFScallback and
@@ -201,12 +201,12 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
-    if (m_WriterFFSmarshal)
+    if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         // this does all the deferred gets and fills in the variable array data
         SstFFSPerformGets(m_Input);
     }
-    else if (m_WriterBPmarshal)
+    if (m_WriterMarshalMethod == SstMarshalBP)
     {
 
         PerformGets();
@@ -355,7 +355,7 @@ void SstReader::Init()
 #define declare_gets(T)                                                        \
     void SstReader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
-        if (m_MarshalMethod == SstMarshalFFS)                                  \
+        if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
             SstFFSGetDeferred(                                                 \
                 m_Input, (void *)&variable, variable.m_Name.c_str(),           \
@@ -363,7 +363,7 @@ void SstReader::Init()
                 variable.m_Count.data(), data);                                \
             SstFFSPerformGets(m_Input);                                        \
         }                                                                      \
-        if (m_MarshalMethod == SstMarshalBP)                                   \
+        if (m_WriterMarshalMethod == SstMarshalBP)                             \
         {                                                                      \
             /*  DoGetSync() is going to have terrible performance 'cause */    \
             /*  it's a bad idea in an SST-like environment.  But do */         \
@@ -374,14 +374,14 @@ void SstReader::Init()
     }                                                                          \
     void SstReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
-        if (m_MarshalMethod == SstMarshalFFS)                                  \
+        if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
             SstFFSGetDeferred(                                                 \
                 m_Input, (void *)&variable, variable.m_Name.c_str(),           \
                 variable.m_Start.size(), variable.m_Start.data(),              \
                 variable.m_Count.data(), data);                                \
         }                                                                      \
-        if (m_MarshalMethod == SstMarshalBP)                                   \
+        if (m_WriterMarshalMethod == SstMarshalBP)                             \
         {                                                                      \
             /*  Look at the data requested and examine the metadata to see  */ \
             /*  what writer has what you need.  Build up a set of read */      \
@@ -397,11 +397,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_gets)
 
 void SstReader::PerformGets()
 {
-    if (m_MarshalMethod == SstMarshalFFS)
+    if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         SstFFSPerformGets(m_Input);
     }
-    else if (m_MarshalMethod == SstMarshalBP)
+    else if (m_WriterMarshalMethod == SstMarshalBP)
     {
 #define declare_type(T) SstBPPerformGets<T>();
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)

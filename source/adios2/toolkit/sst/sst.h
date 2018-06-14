@@ -43,6 +43,8 @@ typedef struct _SstStats
 
 typedef struct _SstParams *SstParams;
 
+typedef enum { SstMarshalFFS, SstMarshalBP } SstMarshalMethod;
+
 /*
  *  Writer-side operations
  */
@@ -62,8 +64,8 @@ extern void SstWriterClose(SstStream stream);
  */
 extern SstStream SstReaderOpen(const char *filename, SstParams Params,
                                MPI_Comm comm);
-extern void SstReaderGetParams(SstStream stream, int *WriterFFSmarshal,
-                               int *WriterBPmarshal);
+extern void SstReaderGetParams(SstStream stream,
+                               SstMarshalMethod *WriterMarshalMethod);
 extern SstFullMetadata SstGetCurMetadata(SstStream stream);
 extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  size_t offset, size_t length, void *buffer,
