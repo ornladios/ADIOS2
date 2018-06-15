@@ -21,16 +21,16 @@ Recall that Engines are created through the ``IO::Open`` function which must con
 
 For Publishing data (Write, Append mode)
 
-   * **Put**  Default mode: deferred (lazy evaluation). Data pointer memory data must not be reused until first encounter with PerformPuts, EndStep or Close. 
+   * **Put**  Default mode: deferred (lazy evaluation). Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. 
                             Use sync mode to allow the pointer memory to be reusable immediately, is enable by passing the flag adios2::Mode::Sync as the 3rd argument
-   * **PerformsPuts**   Execute all pending deferred Put calls until this line 
+   * **PerformsPuts**   Execute all pending Put calls in deferred mode until this line 
 
 
 For Consuming data (Read mode)
 
-   * **Get**  Default mode: deferred (lazy evaluation). Data pointer memory data must not be reused until first encounter with PerformPuts, EndStep or Close. 
+   * **Get**  Default mode: deferred (lazy evaluation). Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. 
                             Use sync mode to populate the data pointer memory immediately, this is enable by passing the flag adios2::Mode::Sync as the 3rd argument 
-   * **PerformsGets**   Execute all pending deferred Get calls until this line
+   * **PerformsGets**   Execute all pending deferred Get calls in deferred mode until this line
 
 Common Functionality (Write, Read, Append modes)
 

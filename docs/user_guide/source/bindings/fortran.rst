@@ -112,7 +112,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       Make sure that for every call to ``adios2_init`` there is a call to ``adios2_finalize`` for the same adios handler. Not doing so will result in memory leaks. 
 
       
-:ref:`IO` subroutines    
+:ref:`IO` subroutines
 ---------------------
       
 * :f90:`subroutine adios2_define_variable` 
@@ -361,7 +361,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       subroutine adios2_open(engine, io, name, adios2_mode, ierr)
       
       ! MPI version only to pass a communicator other than the one from adios_init 
-      subroutine adios2_open(engine, io, name, comm, adios2_mode, ierr)
+      subroutine adios2_open(engine, io, name, adios2_mode, comm, ierr)
       
       ! WHERE:
       
