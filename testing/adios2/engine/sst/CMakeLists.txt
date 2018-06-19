@@ -40,66 +40,85 @@ configure_file(
 add_test(
   NAME ADIOSSstTest.Simple_1x1
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 1 -nw 1 -v -p TestSst)
+    -nw 1 -nr 1 -v -p TestSst)
+set_tests_properties(ADIOSSstTest.Simple_1x1 PROPERTIES TIMEOUT 30) 
 
 add_test(
   NAME ADIOSSstTest.2x1
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 2 -nw 1 -v -p TestSst)
+    -nw 2 -nr 1 -v -p TestSst)
+set_tests_properties(ADIOSSstTest.2x1 PROPERTIES TIMEOUT 30) 
 
 add_test(
   NAME ADIOSSstTest.1x2
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 1 -nw 2 -v -p TestSst)
+    -nw 1 -nr 2 -v -p TestSst)
+set_tests_properties(ADIOSSstTest.1x2 PROPERTIES TIMEOUT 30) 
 
 add_test(
   NAME ADIOSSstTest.3x5
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 3 -nw 5 -v -p TestSst)
+    -nw 3 -nr 5 -v -p TestSst)
+set_tests_properties(ADIOSSstTest.3x5 PROPERTIES TIMEOUT 30) 
 
 add_test(
   NAME ADIOSSstTest.3x5BP
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 3 -nw 5 -v -p TestSst -arg "MarshalMethod:BP")
+    -nw 3 -nr 5 -v -p TestSst -arg "MarshalMethod:BP")
+set_tests_properties(ADIOSSstTest.3x5BP PROPERTIES TIMEOUT 30) 
 
 add_test(
   NAME ADIOSSstTest.5x3
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 5 -nw 3 -v -p TestSst)
+    -nw 5 -nr 3 -v -p TestSst)
+set_tests_properties(ADIOSSstTest.5x3 PROPERTIES TIMEOUT 30) 
 
 if(ADIOS2_HAVE_Fortran)
   add_test(
     NAME ADIOSSstTest.FtoC_1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 1 -nw 1 -v -w TestSstWrite_f -r TestSstRead)
+    -nw 1 -nr 1 -v -w TestSstWrite_f -r TestSstRead)
+  set_tests_properties(ADIOSSstTest.FtoC_1x1 PROPERTIES TIMEOUT 30) 
+
   add_test(
     NAME ADIOSSstTest.FtoC_1x1BP
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 1 -nw 1 -v -w TestSstWrite_f -r TestSstRead -arg "MarshalMethod:BP")
+    -nw 1 -nr 1 -v -w TestSstWrite_f -r TestSstRead -arg "MarshalMethod:BP")
+  set_tests_properties(ADIOSSstTest.FtoC_1x1BP PROPERTIES TIMEOUT 30) 
+
   add_test(
     NAME ADIOSSstTest.CtoF_1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 1 -nw 1 -v -w TestSstWrite -r TestSstRead_f)
+    -nw 1 -nr 1 -v -w TestSstWrite -r TestSstRead_f)
+  set_tests_properties(ADIOSSstTest.CtoF_1x1 PROPERTIES TIMEOUT 30) 
+
   add_test(
     NAME ADIOSSstTest.FtoF_1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 1 -nw 1 -v -w TestSstWrite_f -r TestSstRead_f)
+    -nw 1 -nr 1 -v -w TestSstWrite_f -r TestSstRead_f)
+  set_tests_properties(ADIOSSstTest.FtoF_1x1 PROPERTIES TIMEOUT 30) 
+
   add_test(
     NAME ADIOSSstTest.FtoC_3x5
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 3 -nw 5 -v -w TestSstWrite_f -r TestSstRead)
+    -nw 3 -nr 5 -v -w TestSstWrite_f -r TestSstRead)
+  set_tests_properties(ADIOSSstTest.FtoC_3x5 PROPERTIES TIMEOUT 30) 
+
   add_test(
     NAME ADIOSSstTest.FtoC_3x5BP
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 3 -nw 5 -v -w TestSstWrite_f -r TestSstRead -arg "MarshalMethod:BP")
+    -nw 3 -nr 5 -v -w TestSstWrite_f -r TestSstRead -arg "MarshalMethod:BP")
+  set_tests_properties(ADIOSSstTest.FtoC_3x5BP PROPERTIES TIMEOUT 30) 
   
 
   add_test(
     NAME ADIOSSstTest.CtoF_3x5
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 3 -nw 5 -v -w TestSstWrite -r TestSstRead_f)
+    -nw 3 -nr 5 -v -w TestSstWrite -r TestSstRead_f)
+  set_tests_properties(ADIOSSstTest.CtoF_3x5 PROPERTIES TIMEOUT 30) 
   add_test(
     NAME ADIOSSstTest.FtoF_3x5
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nr 3 -nw 5 -v -w TestSstWrite_f -r TestSstRead_f)
+    -nw 3 -nr 5 -v -w TestSstWrite_f -r TestSstRead_f)
+  set_tests_properties(ADIOSSstTest.FtoF_3x5 PROPERTIES TIMEOUT 30) 
 endif()

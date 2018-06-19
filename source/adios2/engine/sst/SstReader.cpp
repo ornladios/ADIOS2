@@ -16,6 +16,8 @@
 #include "SstReader.h"
 #include "SstReader.tcc"
 
+#include "SstParamParser.h"
+
 namespace adios2
 {
 namespace core
@@ -236,120 +238,13 @@ void SstReader::EndStep()
 // PRIVATE
 void SstReader::Init()
 {
-    auto lf_SetBoolParameter = [&](const std::string key, int &parameter) {
+    SstParamParser Parser;
 
-        auto itKey = m_IO.m_Parameters.find(key);
-        if (itKey != m_IO.m_Parameters.end())
-        {
-            if (itKey->second == "yes" || itKey->second == "true")
-            {
-                parameter = 1;
-            }
-            else if (itKey->second == "no" || itKey->second == "false")
-            {
-                parameter = 0;
-            }
-        }
-    };
-    auto lf_SetIntParameter = [&](const std::string key, int &parameter) {
+    Parser.ParseParams(m_IO, Params);
 
-        auto itKey = m_IO.m_Parameters.find(key);
-        if (itKey != m_IO.m_Parameters.end())
-        {
-            parameter = std::stoi(itKey->second);
-            return true;
-        }
-        return false;
-    };
-
-    auto lf_SetStringParameter = [&](const std::string key, char *&parameter) {
-
-        auto itKey = m_IO.m_Parameters.find(key);
-        if (itKey != m_IO.m_Parameters.end())
-        {
-            parameter = strdup(itKey->second.c_str());
-            return true;
-        }
-        return false;
-    };
-
-    auto lf_SetRegMethodParameter = [&](const std::string key,
-                                        size_t &parameter) {
-        auto itKey = m_IO.m_Parameters.find(key);
-        if (itKey != m_IO.m_Parameters.end())
-        {
-            std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
-            if (method == "file")
-            {
-                parameter = SstRegisterFile;
-            }
-            else if (method == "screen")
-            {
-                parameter = SstRegisterScreen;
-            }
-            else if (method == "cloud")
-            {
-                parameter = SstRegisterCloud;
-                throw std::invalid_argument("ERROR: Sst RegistrationMethod "
-                                            "\"cloud\" not yet implemented" +
-                                            m_EndMessage);
-            }
-            else
-            {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst RegistrationMethod parameter \"" +
-                    method + "\"" + m_EndMessage);
-            }
-            return true;
-        }
-        return false;
-    };
-
-    // not really a parameter, but a convenient way to pass this around
-    auto lf_SetIsRowMajorParameter = [&](const std::string key,
-                                         int &parameter) {
-
-        parameter = adios2::helper::IsRowMajor(m_IO.m_HostLanguage);
-        return true;
-    };
-
-    auto lf_SetMarshalMethodParameter = [&](const std::string key,
-                                            size_t &parameter) {
-        auto itKey = m_IO.m_Parameters.find(key);
-        if (itKey != m_IO.m_Parameters.end())
-        {
-            std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
-            if (method == "ffs")
-            {
-                parameter = SstMarshalFFS;
-            }
-            else if (method == "bp")
-            {
-                parameter = SstMarshalBP;
-            }
-            else
-            {
-                throw std::invalid_argument(
-                    "ERROR: Unknown Sst MarshalMethod parameter \"" + method +
-                    "\"" + m_EndMessage);
-            }
-            return true;
-        }
-        return false;
-    };
-
-#define get_params(Param, Type, Typedecl, Default)                             \
-    lf_Set##Type##Parameter(#Param, m_##Param);
-    SST_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
-#undef get_params
-#define set_params(Param, Type, Typedecl, Default) Params.Param = m_##Param;
+#define set_params(Param, Type, Typedecl, Default) m_##Param = Params.Param;
     SST_FOREACH_PARAMETER_TYPE_4ARGS(set_params);
 #undef set_params
-    m_IsRowMajor = adios2::helper::IsRowMajor(m_IO.m_HostLanguage);
 }
 
 #define declare_gets(T)                                                        \

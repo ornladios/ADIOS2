@@ -87,6 +87,7 @@ if(ADIOS2_HAVE_SST)
   target_sources(adios2 PRIVATE
     engine/sst/SstReader.cpp
     engine/sst/SstWriter.cpp
+    engine/sst/SstParamParser.cpp
   )
   target_link_libraries(adios2 PRIVATE sst)
 endif()

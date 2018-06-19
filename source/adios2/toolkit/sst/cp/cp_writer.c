@@ -500,6 +500,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
     pthread_mutex_lock(&Stream->DataLock);
     while (Reader->ReaderStatus != Established)
     {
+        /* NEED TO HANDLE FAILURE HERE */
         CP_verbose(Stream, "Waiting for Reader ready on WSR %p.\n", Reader);
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
     }
@@ -663,6 +664,7 @@ void SstWriterClose(SstStream Stream)
                    "Waiting for timesteps to be released in WriterClose\n");
         CP_verbose(Stream, "The first timestep still queued is %d\n",
                    Stream->QueuedTimesteps->Timestep);
+        /* NEED TO HANDLE FAILURE HERE */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
     }
     pthread_mutex_unlock(&Stream->DataLock);
