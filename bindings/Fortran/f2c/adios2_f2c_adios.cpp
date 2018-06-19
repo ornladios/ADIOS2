@@ -86,6 +86,23 @@ void FC_GLOBAL(adios2_declare_io_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_at_io_f2c,
+               ADIOS2_at_IO_F2C)(adios2_io **io, adios2_adios **adios,
+                                 const char *io_name, int *ierr)
+{
+    *ierr = 0;
+
+    try
+    {
+        *io = adios2_at_io(*adios, io_name);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 at_io: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_flush_all_f2c, ADIOS2_FLUSH_ALL_F2C)(adios2_adios **adios,
                                                            int *ierr)
 {

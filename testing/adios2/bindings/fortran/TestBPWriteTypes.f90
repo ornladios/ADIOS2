@@ -49,6 +49,9 @@
      call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
      if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_declare_io'
 
+     call adios2_at_io(ioWrite, adios, "ioWrite", ierr)
+     if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_at_io'
+
      call adios2_set_engine(ioWrite, 'bpfile', ierr)
 
      ! Defines a variable to be written in bp format
