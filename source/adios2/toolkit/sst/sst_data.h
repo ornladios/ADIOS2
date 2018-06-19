@@ -30,7 +30,7 @@ struct _SstBlock
     MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
     MACRO(QueueLimit, Int, int, 0)                                             \
-    MACRO(DiscardOnQueueFull, Bool, int, 1)                                    \
+    MACRO(QueueFullPolicy, QueueFullPolicy, size_t, 0)                         \
     MACRO(IsRowMajor, IsRowMajor, int, 0)                                      \
     MACRO(ControlTransport, String, char *, NULL)
 

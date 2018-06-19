@@ -67,7 +67,7 @@ private:
     format::BP3Serializer *m_BP3Serializer;
 
     SstStream m_Output;
-    size_t m_WriterStep = -1;
+    long m_WriterStep = -1;
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \
     Typedecl m_##Param = Default;
