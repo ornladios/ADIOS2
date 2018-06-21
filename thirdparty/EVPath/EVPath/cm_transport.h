@@ -87,6 +87,7 @@ typedef struct CMtrans_services_s {
     CMTransport_add_buffer_to_pending_queue add_buffer_to_pending_queue;
     CMTransport_connection_close connection_deref;
     CMTransport_connection_close connection_addref;
+    CMTransport_connection_close connection_fail;
     CMTransport_wake_comm_thread_func wake_comm_thread;
 } *CMtrans_services;
 #define DROP_CM_LOCK(svc, cm) (svc)->drop_CM_lock((cm), __FILE__, __LINE__)

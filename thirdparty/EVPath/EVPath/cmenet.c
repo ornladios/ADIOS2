@@ -201,9 +201,22 @@ enet_service_network(CManager cm, void *void_trans)
 
             enet_conn_data = event.peer->data;
 	    enet_conn_data->read_buffer_len = -1;
+            svc->connection_fail(enet_conn_data->conn);
         }
 	}
     }
+}
+
+static
+void
+enet_service_network_lock(CManager cm, void *void_trans)
+{
+    transport_entry trans = (transport_entry) void_trans;
+    enet_client_data_ptr ecd = (enet_client_data_ptr) trans->trans_data;
+    CMtrans_services svc = ecd->svc;
+    ACQUIRE_CM_LOCK(svc, cm);
+    enet_service_network(cm, void_trans);
+    DROP_CM_LOCK(svc, cm);
 }
 
 static
@@ -390,6 +403,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 
     /* Initiate the connection, allocating the two channels 0 and 1. */
     peer = enet_host_connect (sd->server, & address, 1, 0);    
+    enet_peer_ping_interval (peer, 10);
     peer->data = enet_conn_data;
     svc->trace_out(cm, "ENET ========   On init Assigning peer %p has data %p\n", peer, enet_conn_data);
     
@@ -416,6 +430,7 @@ retry:
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
+            enet_peer_ping_interval (event.peer, 10);
             goto retry;
         }
 	svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
@@ -746,6 +761,8 @@ libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
     }
     svc->fd_add_select(cm, enet_host_get_sock_fd (server), 
 		       (select_list_func) enet_service_network, (void*)cm, (void*)trans);
+
+    svc->add_periodic_task(cm, 1, 0, (CMPollFunc) enet_service_network_lock, (void*)trans);
 
     svc->trace_out(enet_data->cm, "CMENET Adding read_wake_fd as action on fd %d",
 		   enet_data->wake_read_fd);
