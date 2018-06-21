@@ -65,7 +65,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
     int mpiRank = 0, mpiSize = 1;
 
     // Number of steps
-    const std::size_t NSteps = 1;
+    const std::size_t NSteps = 10;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
