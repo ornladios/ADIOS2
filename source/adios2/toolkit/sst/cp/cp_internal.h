@@ -56,6 +56,7 @@ typedef struct _WS_ReaderInfo
     enum StreamStatus ReaderStatus;
     long StartingTimestep;
     long LastSentTimestep;
+    long OldestUnreleasedTimestep;
     void *DP_WSR_Stream;
     void *RS_StreamID;
     int ReaderCohortSize;
@@ -126,7 +127,7 @@ struct _SstStream
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int QueueLimit;
-    int DiscardOnQueueFull;
+    SstQueueFullPolicy QueueFullPolicy;
     int LastProvidedTimestep;
     int NewReaderPresent;
 

@@ -24,7 +24,7 @@ program TestSstWrite
   call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
 
   !Application variables 
-  insteps = 1;
+  insteps = 10;
 
   !Variable dimensions 
   shape_dims(1) = isize * nx
