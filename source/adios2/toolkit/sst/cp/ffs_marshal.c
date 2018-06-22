@@ -683,8 +683,15 @@ static int NeedWriter(FFSArrayRequest Req, int i)
     {
         size_t SelOffset = Req->Start[j];
         size_t SelSize = Req->Count[j];
-        size_t RankOffset = Req->VarRec->PerWriterStart[i][j];
-        size_t RankSize = Req->VarRec->PerWriterCounts[i][j];
+        size_t RankOffset;
+        size_t RankSize;
+        if (Req->VarRec->PerWriterStart[i] == NULL)
+        /* this writer didn't write */
+        {
+            return 0;
+        }
+        RankOffset = Req->VarRec->PerWriterStart[i][j];
+        RankSize = Req->VarRec->PerWriterCounts[i][j];
         if ((SelSize == 0) || (RankSize == 0))
         {
             return 0;
