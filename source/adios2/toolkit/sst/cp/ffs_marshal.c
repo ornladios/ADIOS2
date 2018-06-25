@@ -1049,7 +1049,7 @@ void ExtractSelectionFromPartialCM(int ElementSize, size_t Dims,
         int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
         int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
                         SelectionOffsets[Dim] + SelectionCounts[Dim]);
-        if (Dim < Dims - 1)
+        if (Dim > 0)
         {
             BlockCount *= (Right - Left);
         }
