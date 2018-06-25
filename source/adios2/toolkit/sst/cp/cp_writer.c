@@ -182,6 +182,32 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
     }
     reader->Peers = setupPeerArray(WriterSize, WriterRank, ReaderSize);
     i = 0;
+    if (reader->Peers[0] == -1)
+    {
+        /* we would have no peers.  Contact someone at the CP level anyway so we
+         * can hope for failure notification */
+        int SoloPeer = WriterRank / ((double)WriterSize / (double)ReaderSize);
+        if (SoloPeer >= ReaderSize)
+            SoloPeer--;
+        reader->Connections[SoloPeer].CMconn =
+            CMget_conn(reader->ParentStream->CPInfo->cm,
+                       reader->Connections[SoloPeer].ContactList);
+
+        if (!reader->Connections[SoloPeer].CMconn)
+        {
+            CP_error(
+                reader->ParentStream,
+                "Connection failed in SstInitWSReader! Contact list was:\n");
+            CP_error(
+                reader->ParentStream, "%s\n",
+                attr_list_to_string(reader->Connections[SoloPeer].ContactList));
+            /* fail the stream */
+            return 0;
+        }
+
+        CMconn_register_close_handler(reader->Connections[SoloPeer].CMconn,
+                                      WriterConnCloseHandler, (void *)reader);
+    }
     while (reader->Peers[i] != -1)
     {
         int peer = reader->Peers[i];
