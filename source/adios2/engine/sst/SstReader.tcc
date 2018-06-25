@@ -35,7 +35,6 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
 
         for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
         {
-            const size_t step = stepPair.first;
             const std::vector<helper::SubStreamBoxInfo> &subStreamsInfo =
                 stepPair.second;
 

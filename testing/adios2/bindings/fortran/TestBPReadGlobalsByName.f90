@@ -7,7 +7,7 @@ program TestBPReadGlobalsByName
     real, dimension(:,:), allocatable :: data
     integer :: i, j, inx, iny, irank, isize, ierr
     integer :: diag_1d_isp=999,diag_1d_nsp=999  ! same as ptl_isp/nsp
-    real (8) :: sml_inpsi=999.0D0, sml_outpsi=999.0D0  !! Inner and outer boundary for initial loading.
+    real(kind=8) :: sml_inpsi=999.0D0   , sml_outpsi=999.0D0  !! Inner and outer boundary for initial loading.
 
 
     ! adios2 handlers

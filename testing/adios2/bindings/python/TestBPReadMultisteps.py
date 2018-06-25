@@ -162,63 +162,63 @@ for name, info in variablesInfo.items():
 
 
 if varI8 is not None:
-    varI8.SetSelection([[0], [size*Nx]])
+    varI8.SetSelection([[0], [size * Nx]])
     varI8.SetStepSelection([0, 3])
-    inI8 = np.zeros((3, size*Nx), dtype=np.int8)
+    inI8 = np.zeros((3, size * Nx), dtype=np.int8)
     reader.Get(varI8, inI8)
 
 if varI16 is not None:
-    varI16.SetSelection([[0], [size*Nx]])
+    varI16.SetSelection([[0], [size * Nx]])
     varI16.SetStepSelection([0, 3])
-    inI16 = np.zeros((3, size*Nx), dtype=np.int16)
+    inI16 = np.zeros((3, size * Nx), dtype=np.int16)
     reader.Get(varI16, inI16)
 
 if varI32 is not None:
-    varI32.SetSelection([[0], [size*Nx]])
+    varI32.SetSelection([[0], [size * Nx]])
     varI32.SetStepSelection([0, 3])
-    inI32 = np.zeros((3, size*Nx), dtype=np.int32)
+    inI32 = np.zeros((3, size * Nx), dtype=np.int32)
     reader.Get(varI32, inI32)
 
 if varI64 is not None:
-    varI64.SetSelection([[0], [size*Nx]])
+    varI64.SetSelection([[0], [size * Nx]])
     varI64.SetStepSelection([0, 3])
-    inI64 = np.zeros((3, size*Nx), dtype=np.int64)
+    inI64 = np.zeros((3, size * Nx), dtype=np.int64)
     reader.Get(varI64, inI64)
 
 if varU8 is not None:
-    varU8.SetSelection([[0], [size*Nx]])
+    varU8.SetSelection([[0], [size * Nx]])
     varU8.SetStepSelection([0, 3])
-    inU8 = np.zeros((3, size*Nx), dtype=np.uint8)
+    inU8 = np.zeros((3, size * Nx), dtype=np.uint8)
     reader.Get(varU8, inU8)
 
 if varU16 is not None:
-    varU16.SetSelection([[0], [size*Nx]])
+    varU16.SetSelection([[0], [size * Nx]])
     varU16.SetStepSelection([0, 3])
-    inU16 = np.zeros((3, size*Nx), dtype=np.uint16)
+    inU16 = np.zeros((3, size * Nx), dtype=np.uint16)
     reader.Get(varU16, inU16)
 
 if varU32 is not None:
-    varU32.SetSelection([[0], [size*Nx]])
+    varU32.SetSelection([[0], [size * Nx]])
     varU32.SetStepSelection([0, 3])
-    inU32 = np.zeros((3, size*Nx), dtype=np.uint32)
+    inU32 = np.zeros((3, size * Nx), dtype=np.uint32)
     reader.Get(varU32, inU32)
 
 if varU64 is not None:
-    varU64.SetSelection([[0], [size*Nx]])
+    varU64.SetSelection([[0], [size * Nx]])
     varU64.SetStepSelection([0, 3])
-    inU64 = np.zeros((3, size*Nx), dtype=np.uint64)
+    inU64 = np.zeros((3, size * Nx), dtype=np.uint64)
     reader.Get(varU64, inU64)
 
 if varR32 is not None:
-    varR32.SetSelection([[0], [size*Nx]])
+    varR32.SetSelection([[0], [size * Nx]])
     varR32.SetStepSelection([0, 3])
-    inR32 = np.zeros((3, size*Nx), dtype=np.float32)
+    inR32 = np.zeros((3, size * Nx), dtype=np.float32)
     reader.Get(varR32, inR32)
 
 if varR64 is not None:
-    varR64.SetSelection([[0], [size*Nx]])
+    varR64.SetSelection([[0], [size * Nx]])
     varR64.SetStepSelection([0, 3])
-    inR64 = np.zeros((3, size*Nx), dtype=np.float64)
+    inR64 = np.zeros((3, size * Nx), dtype=np.float64)
     reader.Get(varR64, inR64)
 
 reader.PerformGets()
