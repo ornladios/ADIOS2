@@ -291,6 +291,32 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
     }
 }
 
+template <class T>
+void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
+            const std::string hint, T value)
+{
+    if (debugMode)
+    {
+        try
+        {
+            // avoid power of 2 capacity growth
+            vec.reserve(dataSize);
+            vec.resize(dataSize, value);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "ERROR: buffer overflow when resizing to " +
+                std::to_string(dataSize) + " bytes, " + hint + "\n"));
+        }
+    }
+    else
+    {
+        vec.reserve(dataSize);
+        vec.resize(dataSize, value);
+    }
+}
+
 } // end namespace helper
 } // end namespace adios2
 

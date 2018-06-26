@@ -105,6 +105,10 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const bool isRowMajor = true,
                           const bool reverseDimensions = false);
 
+template <class T>
+void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
+            const std::string hint, T value = T());
+
 } // end namespace helper
 } // end namespace adios2
 

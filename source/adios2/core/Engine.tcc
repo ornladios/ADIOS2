@@ -116,6 +116,24 @@ void Engine::Get(const std::string &variableName, T &datum, const Mode launch)
     Get(FindVariable<T>(variableName, "in call to Get"), datum, launch);
 }
 
+template <class T>
+void Engine::Get(Variable<T> &variable, std::vector<T> &dataV,
+                 const Mode launch)
+{
+    const size_t dataSize = variable.SelectionSize();
+    helper::Resize(dataV, dataSize, m_DebugMode,
+                   "in call to Get with std::vector argument");
+    Get(variable, dataV.data(), launch);
+}
+
+template <class T>
+void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
+                 const Mode launch)
+{
+    Get(FindVariable<T>(variableName, "in Get with std::vector argument"),
+        dataV, launch);
+}
+
 // PROTECTED
 template <class T>
 Variable<T> &Engine::FindVariable(const std::string &variableName,
