@@ -17,14 +17,12 @@
 #define _GNU_SOURCE
 #endif
 
-//#include <iomanip>
-//#include <iostream>
+#include "bpls2.h"
+
 #include <cinttypes>
 #include <cstdio>
 #include <string>
 #include <vector>
-
-#include "./bpls.h"
 
 #include <errno.h>
 
@@ -1523,7 +1521,11 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             PRINT_DIMS_SIZET("  count", countv.data(), tdims - tidx, j);
             printf("\n");
         }
-        variable->SetSelection({startv, countv});
+
+        if (!variable->m_SingleValue)
+        {
+            variable->SetSelection({startv, countv});
+        }
 
         if (nsteps > 1)
         {
@@ -2755,8 +2757,12 @@ char *mystrndup(const char *s, size_t n)
 
 int main(int argc, char *argv[])
 {
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
+#endif
     int retval = adios2::utils::bplsMain(argc, argv);
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
     return retval;
 }
