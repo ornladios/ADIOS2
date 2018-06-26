@@ -3,12 +3,9 @@ program TestBPReadGlobalsByName
     use adios2
     implicit none
 
-    integer(kind=8), dimension(2) :: sel_start, sel_count
-    real, dimension(:,:), allocatable :: data
     integer :: i, j, inx, iny, irank, isize, ierr
-    integer :: diag_1d_isp=999,diag_1d_nsp=999  ! same as ptl_isp/nsp
-    real(kind=8) :: sml_inpsi=999.0D0   , sml_outpsi=999.0D0  !! Inner and outer boundary for initial loading.
-
+    integer(kind=4) :: diag_1d_nsp
+    real(kind=8) :: sml_outpsi
 
     ! adios2 handlers
     type(adios2_adios):: adios
@@ -32,15 +29,18 @@ program TestBPReadGlobalsByName
     call adios2_define_variable(var, ioWrite, "sml_outpsi", adios2_type_dp, &
                                 ierr)
 
-    call adios2_open(writer, ioWrite, "xgc.f0analysis.static.bp", &
+    call adios2_open(writer, ioWrite, "f0analysis_static.bp", &
                      adios2_mode_write, ierr)
     call adios2_put(writer, "diag_1d_nsp", 1, ierr)
     call adios2_put(writer, "sml_outpsi", 0.295477_8, ierr)
     call adios2_close(writer, ierr)
 
+    if(ierr /= 0) stop 'Problems writing'
+    call MPI_Barrier(MPI_COMM_WORLD, ierr)
+
     ! reader
     call adios2_declare_io(ioRead, adios, "FReader", ierr)
-    call adios2_open(reader, ioRead, "xgc.f0analysis.static.bp", adios2_mode_read, ierr)
+    call adios2_open(reader, ioRead, "f0analysis_static.bp", adios2_mode_read, ierr)
     call adios2_get(reader, "diag_1d_nsp", diag_1d_nsp, ierr)
     call adios2_get(reader, "sml_outpsi", sml_outpsi, ierr)
     call adios2_close(reader, ierr)
@@ -48,13 +48,14 @@ program TestBPReadGlobalsByName
     call adios2_finalize(adios, ierr)
 
     !! Expect 1 and 0.295477 for diag_1d_nsp and sml_outpsi
+    print *, irank, 'diag_1d_nsp', diag_1d_nsp
+    print *, irank, 'sml_outpsi', sml_outpsi
+
     if( diag_1d_nsp /= 1 ) then
-        print *, irank, 'diag_1d_nsp', diag_1d_nsp
         stop 'diag_1d_nsp is not 1'
     end if
 
     if( sml_outpsi /= 0.295477_8 ) then
-        print *, irank, 'sml_outpsi', sml_outpsi
         stop 'sml_outpsi is not 0.295477'
     end if
 
