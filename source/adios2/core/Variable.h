@@ -21,6 +21,7 @@
 
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
+#include "adios2/helper/adiosType.h"
 
 namespace adios2
 {
@@ -49,14 +50,26 @@ public:
         Dims Shape;
         Dims Start;
         Dims Count;
+        size_t StepsStart = 0;
+        size_t StepsCount = 0;
         T *Data = nullptr;
-
         T Min = T();
         T Max = T();
         T Value = T();
+
+        /** Contains (seek) read information for available [step][blockID],
+         *  used in Read mode only,
+         *  <pre>
+         *  key: step
+         *  value: blockID is the vector (map value) index
+         *  </pre>
+         */
+        std::map<size_t, std::vector<helper::SubStreamBoxInfo>>
+            StepBlockSubStreamsInfo;
     };
 
-    std::unordered_map<size_t, std::map<size_t, Info>> m_StepBlocksInfo;
+    /** use for multiblock info */
+    std::vector<Info> m_BlocksInfo;
 
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
                 const Dims &count, const bool constantShape,
@@ -64,11 +77,14 @@ public:
 
     ~Variable<T>() = default;
 
-    Info &SetStepBlockInfo(const T *data, const size_t step) noexcept;
+    Info &SetBlockInfo(const T *data, const size_t stepsStart,
+                       const size_t stepsCount = 1) noexcept;
 
     void SetData(const T *data) noexcept;
 
     T *GetData() const noexcept;
+
+    size_t SubStreamsInfoSize();
 };
 
 } // end namespace core

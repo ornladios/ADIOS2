@@ -63,7 +63,7 @@ void InSituMPIWriter::PutSyncCommon(Variable<T> &variable,
 template <class T>
 void InSituMPIWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
-    auto &blockInfo = variable.SetStepBlockInfo(values, m_CurrentStep);
+    auto &blockInfo = variable.SetBlockInfo(values, m_CurrentStep);
 
     if (m_Verbosity == 5)
     {

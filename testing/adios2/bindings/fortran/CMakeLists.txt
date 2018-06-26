@@ -57,6 +57,9 @@ if(ADIOS2_HAVE_MPI)
   add_executable(TestBPWriteReadHeatMap6D_f TestBPWriteReadHeatMap6D.f90)
   target_link_libraries(TestBPWriteReadHeatMap6D_f adios2_f MPI::MPI_Fortran)
   
+  add_executable(TestBPReadGlobalsByName_f TestBPReadGlobalsByName.f90)
+  target_link_libraries(TestBPReadGlobalsByName_f adios2_f MPI::MPI_Fortran)
+  
   set(test_parameters
     ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
   )
@@ -93,6 +96,22 @@ if(ADIOS2_HAVE_MPI)
     COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadHeatMap6D_f>
   )
   
+  add_test(NAME BPWriteReadTypes_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypes_f>
+  )
+
+  add_test(NAME BPWriteReadTypesHighLevelAPI_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypesHighLevelAPI_f>
+  )
+
+  add_test(NAME Remove_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestRemove_f>
+  )
+  
+  add_test(NAME BPReadGlobalsByName_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestBPReadGlobalsByName_f>
+  )
+  
 else()
   
   target_sources(TestBPWriteReadTypes_f PRIVATE TestBPWriteTypes_nompi.f90)
@@ -103,15 +122,3 @@ else()
   target_sources(TestRemove_f PRIVATE TestRemove_nompi.f90)
 
 endif()
-
-add_test(NAME BPWriteReadTypes_f
-  COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypes_f>
-)
-
-add_test(NAME BPWriteReadTypesHighLevelAPI_f
-  COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypesHighLevelAPI_f>
-)
-
-add_test(NAME Remove_f
-  COMMAND ${test_parameters} $<TARGET_FILE:TestRemove_f>
-)

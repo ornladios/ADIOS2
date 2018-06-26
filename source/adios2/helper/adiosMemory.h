@@ -84,6 +84,27 @@ void InsertU64(std::vector<char> &buffer, const T element) noexcept;
 template <class T>
 T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
 
+/**
+ * Clips the contiguous memory corresponding to an intersection and puts it in
+ * dest, where dest has a start and coun
+ * @param dest to be populated (must be pre-allocated)
+ * @param destStart offset selection for data pointer
+ * @param destCount count selection for data pointer
+ * @param contiguousMemory input contiguous memory
+ * @param blockBox input block box for contiguous memory
+ * @param intersectionBox between input blockBox and start,count box
+ * @param isRowMajor true: contiguous data is row major, false: column major
+ * @param reverseDimensions true: data and contiguousMemory have different
+ * ordering column/row or row/column major, respectively.
+ */
+template <class T>
+void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                          const std::vector<char> &contiguousMemory,
+                          const Box<Dims> &blockBox,
+                          const Box<Dims> &intersectionBox,
+                          const bool isRowMajor = true,
+                          const bool reverseDimensions = false);
+
 } // end namespace helper
 } // end namespace adios2
 

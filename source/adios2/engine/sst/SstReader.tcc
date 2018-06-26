@@ -24,135 +24,100 @@ namespace engine
 {
 
 template <class T>
-void SstReader::SstBPPerformGets()
+void SstReader::ReadVariableBlocks(Variable<T> &variable)
 {
-
-    const auto &readScheduleMap =
-        m_BP3Deserializer->PerformGetsVariablesSubFileInfo(m_IO);
-    const auto &variableMap = m_IO.GetAvailableVariables();
     std::vector<void *> sstReadHandlers;
     std::vector<NonContiguousBpBuffer> nonContiguousBpBuffer;
-    for (const auto &readSchedule : readScheduleMap)
+
+    for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
-        const std::string variableName(readSchedule.first);
-        for (const auto &subFileIndexPair : readSchedule.second)
+        T *originalBlockData = blockInfo.Data;
+
+        for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
         {
-            for (const auto &stepPair : subFileIndexPair.second)
+            const std::vector<helper::SubStreamBoxInfo> &subStreamsInfo =
+                stepPair.second;
+
+            for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
-                const std::vector<helper::SubFileInfo> &sfis = stepPair.second;
-                for (const auto &sfi : sfis)
+                const size_t rank = subStreamInfo.SubStreamID;
+                const auto &seeks = subStreamInfo.Seeks;
+                const size_t writerBlockStart = seeks.first;
+                const size_t writerBlockSize = seeks.second - seeks.first;
+                size_t elementOffset, dummy;
+                void *dp_info = NULL;
+                if (m_CurrentStepMetaData->DP_TimestepInfo)
                 {
-                    const auto it = variableMap.find(variableName);
-                    if (it == variableMap.end())
+                    dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];
+                }
+                if (helper::IsIntersectionContiguousSubarray(
+                        subStreamInfo.BlockBox, subStreamInfo.IntersectionBox,
+                        m_BP3Deserializer->m_IsRowMajor, dummy) &&
+                    helper::IsIntersectionContiguousSubarray(
+                        helper::StartEndBox(
+                            blockInfo.Start, blockInfo.Count,
+                            m_BP3Deserializer->m_ReverseDimensions),
+                        subStreamInfo.IntersectionBox,
+                        m_BP3Deserializer->m_IsRowMajor, elementOffset))
+                {
+                    auto ret = SstReadRemoteMemory(
+                        m_Input, rank, CurrentStep(), writerBlockStart,
+                        writerBlockSize, blockInfo.Data + elementOffset,
+                        dp_info);
+                    sstReadHandlers.push_back(ret);
+                }
+                else
+                {
+                    if (m_BufferNonContiguousVariables)
                     {
-                        throw std::runtime_error("SstReader::PerformGets() "
-                                                 "failed to find "
-                                                 "variable.");
+                        nonContiguousBpBuffer.emplace_back();
+                        nonContiguousBpBuffer.back().VariableName =
+                            variable.m_Name;
+                        nonContiguousBpBuffer.back().ContiguousMemory.resize(
+                            writerBlockSize);
+                        nonContiguousBpBuffer.back().BlockBox =
+                            subStreamInfo.BlockBox;
+                        nonContiguousBpBuffer.back().IntersectionBox =
+                            subStreamInfo.IntersectionBox;
+                        auto ret = SstReadRemoteMemory(
+                            m_Input, rank, CurrentStep(), writerBlockStart,
+                            writerBlockSize, nonContiguousBpBuffer.back()
+                                                 .ContiguousMemory.data(),
+                            dp_info);
+                        sstReadHandlers.push_back(ret);
                     }
-                    std::string type = "null";
-                    for (const auto &parameter : it->second)
+                    else
                     {
-                        if (parameter.first == "Type")
-                        {
-                            type = parameter.second;
-                        }
-                    }
-                    if (type == "compound")
-                    {
-                        throw("Compound type is not supported yet.");
-                    }
-                    else if (type == helper::GetType<T>())
-                    {
-                        auto *v = m_IO.InquireVariable<T>(variableName);
-                        if (v != nullptr)
-                        {
-                            const size_t rank = subFileIndexPair.first;
-                            const auto &seek = sfi.Seeks;
-                            const size_t writerBlockStart = seek.first;
-                            const size_t writerBlockSize =
-                                seek.second - seek.first;
-                            size_t elementOffset, dummy;
-                            void *dp_info = NULL;
-                            if (m_CurrentStepMetaData->DP_TimestepInfo)
-                            {
-                                dp_info = m_CurrentStepMetaData
-                                              ->DP_TimestepInfo[rank];
-                            }
-                            if (helper::IsIntersectionContiguousSubarray(
-                                    sfi.BlockBox, sfi.IntersectionBox,
-                                    m_BP3Deserializer->m_IsRowMajor, dummy) &&
-                                helper::IsIntersectionContiguousSubarray(
-                                    helper::StartEndBox(
-                                        v->m_Start, v->m_Count,
-                                        m_BP3Deserializer->m_ReverseDimensions),
-                                    sfi.IntersectionBox,
-                                    m_BP3Deserializer->m_IsRowMajor,
-                                    elementOffset))
-                            {
-                                auto ret = SstReadRemoteMemory(
-                                    m_Input, rank, CurrentStep(),
-                                    writerBlockStart, writerBlockSize,
-                                    v->GetData() + elementOffset, dp_info);
-                                sstReadHandlers.push_back(ret);
-                            }
-                            else
-                            {
-                                if (m_BufferNonContiguousVariables)
-                                {
-                                    nonContiguousBpBuffer.emplace_back();
-                                    nonContiguousBpBuffer.back().VariableName =
-                                        variableName;
-                                    nonContiguousBpBuffer.back()
-                                        .ContiguousMemory.resize(
-                                            writerBlockSize);
-                                    nonContiguousBpBuffer.back().BlockBox =
-                                        sfi.BlockBox;
-                                    nonContiguousBpBuffer.back()
-                                        .IntersectionBox = sfi.IntersectionBox;
-                                    auto ret = SstReadRemoteMemory(
-                                        m_Input, rank, CurrentStep(),
-                                        writerBlockStart, writerBlockSize,
-                                        nonContiguousBpBuffer.back()
-                                            .ContiguousMemory.data(),
-                                        dp_info);
-                                    sstReadHandlers.push_back(ret);
-                                }
-                                else
-                                {
-                                    std::vector<char> contiguousMemory(
-                                        writerBlockSize);
-                                    auto ret = SstReadRemoteMemory(
-                                        m_Input, rank, CurrentStep(),
-                                        writerBlockStart, writerBlockSize,
-                                        contiguousMemory.data(), dp_info);
-                                    SstWaitForCompletion(m_Input, ret);
-                                    m_BP3Deserializer->ClipContiguousMemory(
-                                        variableName, m_IO, contiguousMemory,
-                                        sfi.BlockBox, sfi.IntersectionBox);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            throw std::runtime_error(
-                                "In SstReader::PerformGets() data pointer "
-                                "obtained from BP "
-                                "deserializer is a nullptr");
-                        }
+                        std::vector<char> contiguousMemory(writerBlockSize);
+                        auto ret = SstReadRemoteMemory(
+                            m_Input, rank, CurrentStep(), writerBlockStart,
+                            writerBlockSize, contiguousMemory.data(), dp_info);
+                        SstWaitForCompletion(m_Input, ret);
+                        m_BP3Deserializer->ClipContiguousMemory<T>(
+                            blockInfo, contiguousMemory, subStreamInfo.BlockBox,
+                            subStreamInfo.IntersectionBox);
                     }
                 }
             }
+            // advance pointer to next step
+            blockInfo.Data += helper::GetTotalSize(blockInfo.Count);
         }
+        // move back to original position
+        blockInfo.Data = originalBlockData;
     }
+
     for (const auto &i : sstReadHandlers)
     {
         SstWaitForCompletion(m_Input, i);
     }
+
+    size_t blockID = 0;
+
     for (const auto &i : nonContiguousBpBuffer)
     {
-        m_BP3Deserializer->ClipContiguousMemory(i.VariableName, m_IO,
-                                                i.ContiguousMemory, i.BlockBox,
-                                                i.IntersectionBox);
+        m_BP3Deserializer->ClipContiguousMemory<T>(
+            variable.m_BlocksInfo.at(blockID), i.ContiguousMemory, i.BlockBox,
+            i.IntersectionBox);
     }
 }
 

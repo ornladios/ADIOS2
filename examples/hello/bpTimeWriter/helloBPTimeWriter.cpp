@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
             for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
             {
-                // bpWriter.BeginStep();
+                bpWriter.BeginStep();
                 if (rank == 0) // global single value, only saved by rank 0
                 {
                     bpWriter.Put<unsigned int>(bpTimeStep, timeStep);

@@ -75,8 +75,8 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    void ReadVariables(
-        const std::map<std::string, helper::SubFileInfoMap> &variablesInfo);
+    template <class T>
+    void ReadVariableBlocks(Variable<T> &variable);
 };
 
 } // end namespace engine

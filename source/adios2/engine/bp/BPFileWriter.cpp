@@ -71,13 +71,12 @@ void BPFileWriter::PerformPuts()
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \
-        const auto &blocksInfo = variable.m_StepBlocksInfo.at(CurrentStep());  \
-        for (const auto &blockInfoPair : blocksInfo)                           \
+                                                                               \
+        for (const auto &blockInfo : variable.m_BlocksInfo)                    \
         {                                                                      \
-            const auto &blockInfo = blockInfoPair.second;                      \
             PutSyncCommon(variable, blockInfo);                                \
         }                                                                      \
-        variable.m_StepBlocksInfo.erase(CurrentStep());                        \
+        variable.m_BlocksInfo.clear();                                         \
     }
 
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
@@ -127,9 +126,8 @@ void BPFileWriter::Init()
 #define declare_type(T)                                                        \
     void BPFileWriter::DoPutSync(Variable<T> &variable, const T *data)         \
     {                                                                          \
-        PutSyncCommon(variable,                                                \
-                      variable.SetStepBlockInfo(data, CurrentStep()));         \
-        variable.m_StepBlocksInfo.clear();                                     \
+        PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
+        variable.m_BlocksInfo.clear();                                         \
     }                                                                          \
     void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
     {                                                                          \

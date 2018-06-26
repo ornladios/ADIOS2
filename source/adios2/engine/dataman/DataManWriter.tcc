@@ -47,9 +47,9 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     if (m_Format == "bp")
     {
         PutSyncCommonBP(
-            variable, variable.SetStepBlockInfo(
+            variable, variable.SetBlockInfo(
                           values, m_BP3Serializer->m_MetadataSet.CurrentStep));
-        variable.m_StepBlocksInfo.clear();
+        variable.m_BlocksInfo.clear();
     }
     else if (m_Format == "dataman")
     {

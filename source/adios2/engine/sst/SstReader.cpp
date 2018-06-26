@@ -267,6 +267,7 @@ void SstReader::Init()
             PerformGets();                                                     \
         }                                                                      \
     }                                                                          \
+                                                                               \
     void SstReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
@@ -284,7 +285,9 @@ void SstReader::Init()
             /*  that has *something* you need).  You'll use this in EndStep,*/ \
             /*  when you have to get all the array data and put it where  */   \
             /*  it's supposed to go. */                                        \
-            m_BP3Deserializer->GetDeferredVariable(variable, data);            \
+            /* m_BP3Deserializer->GetDeferredVariable(variable, data);  */     \
+            m_BP3Deserializer->InitVariableBlockInfo(variable, data);          \
+            m_BP3Deserializer->m_DeferredVariables.insert(variable.m_Name);    \
         }                                                                      \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_gets)
@@ -298,9 +301,35 @@ void SstReader::PerformGets()
     }
     else if (m_WriterMarshalMethod == SstMarshalBP)
     {
-#define declare_type(T) SstBPPerformGets<T>();
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        if (m_BP3Deserializer->m_DeferredVariables.empty())
+        {
+            return;
+        }
+
+        for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
+        {
+            const std::string type = m_IO.InquireVariableType(name);
+
+            if (type == "compound")
+            {
+            }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> &variable =                                                \
+            FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
+        for (auto &blockInfo : variable.m_BlocksInfo)                          \
+        {                                                                      \
+            m_BP3Deserializer->SetVariableBlockInfo(variable, blockInfo);      \
+        }                                                                      \
+        ReadVariableBlocks(variable);                                          \
+        variable.m_BlocksInfo.clear();                                         \
+    }
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+        }
+
+        m_BP3Deserializer->m_DeferredVariables.clear();
     }
     else
     {

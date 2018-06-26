@@ -27,19 +27,23 @@ namespace core
     : VariableBase(name, helper::GetType<T>(), sizeof(T), shape, start, count, \
                    constantDims, debugMode)                                    \
     {                                                                          \
+        m_BlocksInfo.reserve(1);                                               \
     }                                                                          \
                                                                                \
     template <>                                                                \
-    typename Variable<T>::Info &Variable<T>::SetStepBlockInfo(                 \
-        const T *data, const size_t step) noexcept                             \
+    typename Variable<T>::Info &Variable<T>::SetBlockInfo(                     \
+        const T *data, const size_t stepsStart,                                \
+        const size_t stepsCount) noexcept                                      \
     {                                                                          \
-        const size_t block = m_StepBlocksInfo[step].size();                    \
-        auto &stepBlockInfo = m_StepBlocksInfo[step][block];                   \
-        stepBlockInfo.Data = const_cast<T *>(data);                            \
-        stepBlockInfo.Shape = m_Shape;                                         \
-        stepBlockInfo.Start = m_Start;                                         \
-        stepBlockInfo.Count = m_Count;                                         \
-        return stepBlockInfo;                                                  \
+        Info info;                                                             \
+        info.Shape = m_Shape;                                                  \
+        info.Start = m_Start;                                                  \
+        info.Count = m_Count;                                                  \
+        info.StepsStart = stepsStart;                                          \
+        info.StepsCount = stepsCount;                                          \
+        info.Data = const_cast<T *>(data);                                     \
+        m_BlocksInfo.push_back(info);                                          \
+        return m_BlocksInfo.back();                                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
