@@ -79,6 +79,14 @@ public:
     void Get(const std::string &variableName, T &datum,
              const Mode launch = Mode::Deferred);
 
+    template <class T>
+    void Get(Variable<T> variable, std::vector<T> &dataV,
+             const Mode launch = Mode::Deferred);
+
+    template <class T>
+    void Get(const std::string &variableName, std::vector<T> &dataV,
+             const Mode launch = Mode::Deferred);
+
     void PerformGets();
 
     void EndStep();
@@ -103,7 +111,12 @@ private:
     extern template void Engine::Get<T>(Variable<T>, T *, const Mode);         \
     extern template void Engine::Get<T>(const std::string &, T *, const Mode); \
     extern template void Engine::Get<T>(Variable<T>, T &, const Mode);         \
-    extern template void Engine::Get<T>(const std::string &, T &, const Mode);
+    extern template void Engine::Get<T>(const std::string &, T &, const Mode); \
+                                                                               \
+    extern template void Engine::Get<T>(Variable<T>, std::vector<T> &,         \
+                                        const Mode);                           \
+    extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
+                                        const Mode);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

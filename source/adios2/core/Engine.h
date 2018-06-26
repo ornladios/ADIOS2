@@ -247,6 +247,28 @@ public:
              const Mode launch = Mode::Deferred);
 
     /**
+     * Convenience function, C++ only that allocates and populates a vector with
+     * the requested values
+     * @param variable
+     * @param dataV
+     * @param launch
+     */
+    template <class T>
+    void Get(Variable<T> &variable, std::vector<T> &dataV,
+             const Mode launch = Mode::Deferred);
+
+    /**
+     * Convenience function, C++ only that allocates and populates a vector with
+     * the requested values
+     * @param variable
+     * @param dataV
+     * @param launch
+     */
+    template <class T>
+    void Get(const std::string &variableName, std::vector<T> &dataV,
+             const Mode launch = Mode::Deferred);
+
+    /**
      * Reader application indicates that no more data will be read from the
      * current stream before advancing.
      * This is necessary to allow writers to advance as soon as possible.
@@ -399,6 +421,12 @@ private:
                                                                                \
     extern template void Engine::Get<T>(Variable<T> &, T &, const Mode);       \
     extern template void Engine::Get<T>(const std::string &, T &, const Mode); \
+                                                                               \
+    extern template void Engine::Get<T>(Variable<T> &, std::vector<T> &,       \
+                                        const Mode);                           \
+                                                                               \
+    extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
+                                        const Mode);                           \
                                                                                \
     extern template Variable<T> &Engine::FindVariable(                         \
         const std::string &variableName, const std::string hint);

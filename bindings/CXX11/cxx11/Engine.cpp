@@ -94,7 +94,11 @@ Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
     template void Engine::Get<T>(Variable<T>, T *, const Mode);                \
     template void Engine::Get<T>(const std::string &, T *, const Mode);        \
     template void Engine::Get<T>(Variable<T>, T &, const Mode);                \
-    template void Engine::Get<T>(const std::string &, T &, const Mode);
+    template void Engine::Get<T>(const std::string &, T &, const Mode);        \
+                                                                               \
+    template void Engine::Get<T>(Variable<T>, std::vector<T> &, const Mode);   \
+    template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
+                                 const Mode);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

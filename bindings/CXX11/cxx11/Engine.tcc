@@ -78,6 +78,23 @@ void Engine::Get(const std::string &variableName, T &datum,
     m_Engine->Get<T>(variableName, datum);
 }
 
+template <class T>
+void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Mode launch)
+{
+    adios2::helper::CheckForNullptr(
+        m_Engine, "in call to Engine::Get with std::vector argument");
+    m_Engine->Get<T>(*variable.m_Variable, dataV, launch);
+}
+
+template <class T>
+void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
+                 const Mode launch)
+{
+    adios2::helper::CheckForNullptr(
+        m_Engine, "in call to Engine::Get with std::vector argument");
+    m_Engine->Get<T>(variableName, dataV, launch);
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_TCC_ */
