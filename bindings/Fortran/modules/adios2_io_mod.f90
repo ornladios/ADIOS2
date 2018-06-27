@@ -12,12 +12,13 @@ module adios2_io_mod
     use adios2_io_open_mod
     use adios2_io_define_variable_mod
     use adios2_io_define_attribute_mod
+    use adios2_variable_mod
     implicit none
 
 contains
 
     subroutine adios2_set_engine(io, engine_type, ierr)
-        type(adios2_io), intent(in) :: io
+        type(adios2_io), intent(inout) :: io
         character*(*), intent(in) :: engine_type
         integer, intent(out) :: ierr
 
@@ -71,6 +72,19 @@ contains
 
         call adios2_inquire_variable_f2c(variable%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), ierr)
+
+        if(ierr == adios2_found) then
+            variable%valid = .true.
+            variable%name = name
+            call adios2_variable_type(variable, variable%type, ierr)
+            call adios2_variable_ndims(variable, variable%ndims, ierr)
+        else if(ierr == adios2_not_found) then
+            variable%valid = .false.
+            variable%name = ''
+            variable%type = adios2_type_unknown
+            variable%ndims = -1
+        end if
+
     end subroutine
 
     subroutine adios2_remove_variable(io, name, ierr)
@@ -82,10 +96,15 @@ contains
 
         call adios2_inquire_variable(variable, io, name, ierr)
         if(ierr == adios2_found) then
-            variable%valid = .false.
+            call adios2_remove_variable_f2c(io%f2c, &
+                                            TRIM(ADJUSTL(name))//char(0), ierr)
+            if( ierr == 0 ) then
+                variable%valid = .false.
+                variable%name = ''
+                variable%type = adios2_type_unknown
+                variable%ndims = -1
+            end if
         end if
-
-        call adios2_remove_variable_f2c(io%f2c, TRIM(ADJUSTL(name))//char(0), ierr)
 
     end subroutine
 
@@ -107,6 +126,19 @@ contains
 
         call adios2_inquire_attribute_f2c(attribute%f2c, io%f2c, &
                                           TRIM(ADJUSTL(name))//char(0), ierr)
+
+        if(ierr == adios2_found) then
+            attribute%valid = .true.
+            attribute%name = name
+            ! TODO call adios2_attribute_type(attribute, attribute%type, ierr)
+            ! TODO call adios2_attribute_length(attribute, attribute%length, ierr)
+        else if(ierr == adios2_not_found) then
+            attribute%valid = .false.
+            attribute%name = ''
+            attribute%type = adios2_type_unknown
+            attribute%length = 0
+        end if
+
     end subroutine
 
 
@@ -121,6 +153,9 @@ contains
         call adios2_inquire_attribute(attribute, io, name, ierr)
         if(ierr == adios2_found) then
             attribute%valid = .false.
+            attribute%name = ''
+            attribute%type = adios2_type_unknown
+            attribute%length = 0
         end if
 
         call adios2_remove_attribute_f2c(io%f2c, TRIM(ADJUSTL(name))//char(0), &

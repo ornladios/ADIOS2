@@ -318,6 +318,8 @@ PYBIND11_MODULE(adios2, m)
         .def("EndStep", &adios2::py11::Engine::EndStep)
         .def("Flush", &adios2::py11::Engine::Flush)
         .def("CurrentStep", &adios2::py11::Engine::CurrentStep)
+        .def("Name", &adios2::py11::Engine::Name)
+        .def("Type", &adios2::py11::Engine::Type)
         .def("Close", &adios2::py11::Engine::Close,
              pybind11::arg("transportIndex") = -1);
 

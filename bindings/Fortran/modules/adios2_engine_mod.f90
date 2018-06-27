@@ -56,6 +56,7 @@ contains
 
         if( ierr == 0 ) then
             engine%valid = .false.
+            engine%name = ''
             engine%type = ''
             engine%mode = adios2_mode_undefined
         end if

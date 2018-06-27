@@ -114,15 +114,9 @@ contains
         integer, intent(in):: adios2_type
         character*(*), intent(in):: hint
         integer, intent(out):: ierr
-        !local
-        integer :: variable_type
-        character(len=:), allocatable :: variable_name
 
-        call adios2_variable_type(variable, variable_type, ierr)
-
-        if( variable_type /= adios2_type ) then
-            call adios2_variable_name(variable, variable_name, ierr)
-            write(0,*) 'ERROR: adios2 variable ', variable_name, &
+        if( variable%type /= adios2_type ) then
+            write(0,*) 'ERROR: adios2 variable ', variable%name, &
                        ' type mismatch, in call to adios2_', hint
             ierr = -1
         end if

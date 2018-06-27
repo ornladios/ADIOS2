@@ -31,9 +31,10 @@ contains
                              adios2_mode, ierr)
 
         if( ierr == 0 ) then
-            engine%mode = adios2_mode
             engine%valid = .true.
+            engine%name = name
             engine%type = io%engine_type
+            engine%mode = adios2_mode
         end if
 
     end subroutine
@@ -51,9 +52,10 @@ contains
                                       adios2_mode, comm, ierr)
 
         if( ierr == 0 ) then
-            engine%mode = adios2_mode
             engine%valid = .true.
+            engine%name = name
             engine%type = io%engine_type
+            engine%mode = adios2_mode
         end if
 
     end subroutine

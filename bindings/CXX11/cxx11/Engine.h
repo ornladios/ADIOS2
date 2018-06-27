@@ -38,6 +38,10 @@ public:
 
     explicit operator bool() const noexcept;
 
+    std::string Name() const;
+
+    std::string Type() const;
+
     StepStatus BeginStep();
 
     StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = 0.f);
