@@ -6,6 +6,7 @@ program TestSstRead
 
   integer(kind = 8), dimension(1)::shape_dims, start_dims, count_dims
   integer(kind = 8), dimension(2)::shape_dims2, start_dims2, count_dims2
+  integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
   integer:: irank, isize, ierr, i, insteps
 
   integer :: writerSize, myStart, myLength
@@ -106,6 +107,16 @@ program TestSstRead
   if (shape_in(1) /= 2) stop 'r64_2d shape_in(1) read failed'
   if (shape_in(2) /= nx*writerSize) stop 'r64_2d shape_in(2) read failed'
 
+  call adios2_inquire_variable(variables(8), ioRead, "r64_2d_rev", ierr)
+  call adios2_variable_name(variables(8), variable_name, ierr)
+  if (variable_name /= 'r64_2d_rev') stop 'r64_2d_rev not recognized'
+  call adios2_variable_type(variables(8), variable_type, ierr)
+  if (variable_type /= adios2_type_dp) stop 'r64_2d_rev type not recognized'
+  call adios2_variable_shape(variables(8), ndims, shape_in, ierr)
+  if (ndims /= 2) stop 'r64_2d_rev ndims is not 2'
+  if (shape_in(1) /= nx*writerSize) stop 'r64_2d_rev shape_in(2) read failed'
+  if (shape_in(2) /= 2) stop 'r64_2d_rev shape_in(1) read failed'
+
   
   myStart = (writerSize * Nx / isize) * irank
   myLength = ((writerSize * Nx + isize - 1) / isize)
@@ -120,6 +131,7 @@ program TestSstRead
   allocate (in_R32(myLength));
   allocate (in_R64(myLength));
   allocate (in_R64_2d(2, myLength));
+  allocate (in_R64_2d_rev(myLength, 2));
 
   start_dims(1) = myStart
   count_dims(1) = myLength
@@ -129,6 +141,10 @@ program TestSstRead
   start_dims2(2) = myStart
   count_dims2(2) = myLength
 
+  start_dims3(1) = myStart
+  count_dims3(1) = myLength
+  start_dims3(2) = 0
+  count_dims3(2) = 2
 
   call adios2_set_selection(variables(1), 1, start_dims, count_dims, ierr)
   call adios2_set_selection(variables(2), 1, start_dims, count_dims, ierr)
@@ -137,6 +153,7 @@ program TestSstRead
   call adios2_set_selection(variables(5), 1, start_dims, count_dims, ierr)
   call adios2_set_selection(variables(6), 1, start_dims, count_dims, ierr)
   call adios2_set_selection(variables(7), 2, start_dims2, count_dims2, ierr)
+  call adios2_set_selection(variables(8), 2, start_dims3, count_dims3, ierr)
 
   call adios2_get(sstReader, variables(1), in_I8, ierr)
   call adios2_get(sstReader, variables(2), in_I16, ierr)
@@ -145,6 +162,7 @@ program TestSstRead
   call adios2_get(sstReader, variables(5), in_R32, ierr)
   call adios2_get(sstReader, variables(6), in_R64, ierr)
   call adios2_get(sstReader, variables(7), in_R64_2d, ierr)
+  call adios2_get(sstReader, variables(8), in_R64_2d_rev, ierr)
 
   call adios2_end_step(sstReader, ierr)
   
