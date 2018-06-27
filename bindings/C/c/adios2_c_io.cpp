@@ -560,18 +560,3 @@ void adios2_flush_all_engines(adios2_io *io)
         io, "for adios2_io, in call to adios2_flush_all_engines");
     reinterpret_cast<adios2::core::IO *>(io)->FlushAll();
 }
-
-const char *adios2_io_engine_type(const adios2_io *io, size_t *length)
-{
-    adios2::helper::CheckForNullptr(
-        io, "for const adios2_io, in call to adios2_io_engine_type");
-
-    const adios2::core::IO *ioCpp =
-        reinterpret_cast<const adios2::core::IO *>(io);
-
-    if (length != nullptr)
-    {
-        *length = ioCpp->m_EngineType.size();
-    }
-    return ioCpp->m_EngineType.c_str();
-}

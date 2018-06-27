@@ -280,7 +280,8 @@ PYBIND11_MODULE(adios2, m)
                          adios2::py11::IO::Open)
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
-        .def("FlushAll", &adios2::py11::IO::FlushAll);
+        .def("FlushAll", &adios2::py11::IO::FlushAll)
+        .def("EngineType", &adios2::py11::IO::EngineType);
 
     pybind11::class_<adios2::py11::Engine>(m, "py11::Engine")
         .def("BeginStep", &adios2::py11::Engine::BeginStep,

@@ -166,14 +166,6 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
 
 void adios2_flush_all_engines(adios2_io *io);
 
-/**
- * return engine type string and length without null character
- * @param io
- * @param length
- * @return pointer to engine type
- */
-const char *adios2_io_engine_type(const adios2_io *io, size_t *length);
-
 #ifdef __cplusplus
 } // end extern C
 #endif

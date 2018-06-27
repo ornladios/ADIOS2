@@ -67,6 +67,8 @@ public:
 
     void FlushAll();
 
+    std::string EngineType() const noexcept;
+
 private:
     const bool m_DebugMode;
 };

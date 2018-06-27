@@ -55,9 +55,16 @@ Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
 }
 #endif
 
-Engine IO::Open(const std::string &name, const enum Mode mode)
+Engine IO::Open(const std::string &name, const Mode mode)
 {
     return Engine(adios2_open(&m_IO, name.c_str(), ToMode(mode)));
+}
+
+std::string IO::EngineType() const noexcept
+{
+    size_t length = 0;
+    const char *typeC = adios2_io_engine_type(&m_IO, &length);
+    return std::string(typeC, length);
 }
 
 #define declare_template_instantiation(T)                                      \

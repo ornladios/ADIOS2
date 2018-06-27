@@ -54,7 +54,7 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
-    const std::string &Variable<T>::Name() const                               \
+    std::string Variable<T>::Name() const                                      \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Name");   \
         return m_Variable->m_Name;                                             \
@@ -82,21 +82,21 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
-    const Dims &Variable<T>::Shape() const                                     \
+    Dims Variable<T>::Shape() const                                            \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Shape");  \
         return m_Variable->m_Shape;                                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
-    const Dims &Variable<T>::Start() const                                     \
+    Dims Variable<T>::Start() const                                            \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Start");  \
         return m_Variable->m_Start;                                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
-    const Dims &Variable<T>::Count() const                                     \
+    Dims Variable<T>::Count() const                                            \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Count");  \
         return m_Variable->m_Count;                                            \

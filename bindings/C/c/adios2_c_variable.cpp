@@ -68,6 +68,38 @@ adios2_type adios2_variable_type(const adios2_variable *variable)
     return itType->second.front();
 }
 
+adios2_shapeid adios2_variable_shapeid(const adios2_variable *variable)
+{
+    adios2::helper::CheckForNullptr(variable,
+                                    "for const adios2_variable, in call to "
+                                    "adios2_variable_shapeid");
+    const adios2::core::VariableBase *variableBase =
+        reinterpret_cast<const adios2::core::VariableBase *>(variable);
+
+    switch (variableBase->m_ShapeID)
+    {
+    case (adios2::ShapeID::GlobalValue):
+        return adios2_shapeid_global_value;
+
+    case (adios2::ShapeID::GlobalArray):
+        return adios2_shapeid_global_array;
+
+    case (adios2::ShapeID::JoinedArray):
+        return adios2_shapeid_joined_array;
+
+    case (adios2::ShapeID::LocalValue):
+        return adios2_shapeid_local_value;
+
+    case (adios2::ShapeID::LocalArray):
+        return adios2_shapeid_local_array;
+
+    default:
+        throw std::invalid_argument("ERROR: invalid shapeid for variable " +
+                                    variableBase->m_Name +
+                                    ", in call to adios2_variable_shapeid\n");
+    }
+}
+
 int adios2_variable_is_constant_dims(const adios2_variable *variable)
 {
     adios2::helper::CheckForNullptr(variable,

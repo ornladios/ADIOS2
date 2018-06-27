@@ -45,13 +45,13 @@ public:
     void SetSelection(const Box<Dims> &selection);
     void SetStepSelection(const Box<size_t> &stepSelection);
     size_t SelectionSize() const;
-    const std::string &Name() const;
+    std::string Name() const;
     std::string Type() const;
     size_t Sizeof() const;
     adios2::ShapeID ShapeID() const;
-    const Dims &Shape() const;
-    const Dims &Start() const;
-    const Dims &Count() const;
+    Dims Shape() const;
+    Dims Start() const;
+    Dims Count() const;
     size_t Steps() const;
     size_t StepsStart() const;
 

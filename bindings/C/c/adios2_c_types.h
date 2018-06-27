@@ -99,6 +99,14 @@ typedef enum {
     adios2_step_status_end_of_stream = 2
 } adios2_step_status;
 
+typedef enum {
+    adios2_shapeid_global_value = 0,
+    adios2_shapeid_global_array = 1,
+    adios2_shapeid_joined_array = 2,
+    adios2_shapeid_local_value = 3,
+    adios2_shapeid_local_array = 4
+} adios2_shapeid;
+
 static size_t adios2_string_array_element_max_size = 4096;
 
 #ifdef __cplusplus

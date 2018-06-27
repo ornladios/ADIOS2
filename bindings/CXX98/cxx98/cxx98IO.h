@@ -90,6 +90,8 @@ public:
 
     Engine Open(const std::string &name, const Mode mode);
 
+    std::string EngineType() const noexcept;
+
 private:
     IO(adios2_io &io);
     adios2_io &m_IO;

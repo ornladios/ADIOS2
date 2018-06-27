@@ -47,6 +47,8 @@ public:
     /** true: valid object, false: invalid object */
     explicit operator bool() const noexcept;
 
+    ADIOS(const ADIOS &) = delete;
+
     ~ADIOS() = default;
 
     /**

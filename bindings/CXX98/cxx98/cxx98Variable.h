@@ -15,6 +15,7 @@
 
 #include "cxx98types.h"
 
+// forward declaration
 struct adios2_variable;
 
 namespace adios2
@@ -46,7 +47,7 @@ public:
     std::string Name() const;
     // std::string Type() const;
     size_t Sizeof() const;
-    // ShapeID ShapeID() const;
+    adios2::cxx98::ShapeID ShapeID() const;
     Dims Shape() const;
     Dims Start() const;
     Dims Count() const;

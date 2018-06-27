@@ -30,7 +30,11 @@ contains
         call adios2_open_f2c(engine%f2c, io%f2c, TRIM(ADJUSTL(name))//char(0), &
                              adios2_mode, ierr)
 
-        if( ierr == 0 ) engine%valid = .true.
+        if( ierr == 0 ) then
+            engine%mode = adios2_mode
+            engine%valid = .true.
+            engine%type = io%engine_type
+        end if
 
     end subroutine
 
@@ -42,12 +46,15 @@ contains
         integer, intent(in) :: comm
         integer, intent(out) :: ierr
 
-        engine%mode = adios2_mode
         call adios2_open_new_comm_f2c(engine%f2c, io%f2c, &
                                       TRIM(ADJUSTL(name))//char(0), &
                                       adios2_mode, comm, ierr)
 
-        if( ierr == 0 ) engine%valid = .true.
+        if( ierr == 0 ) then
+            engine%mode = adios2_mode
+            engine%valid = .true.
+            engine%type = io%engine_type
+        end if
 
     end subroutine
 

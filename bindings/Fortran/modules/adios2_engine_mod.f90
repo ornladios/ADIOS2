@@ -53,7 +53,12 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_close_f2c(engine%f2c, ierr)
-        engine%valid = .false.
+
+        if( ierr == 0 ) then
+            engine%valid = .false.
+            engine%type = ''
+            engine%mode = adios2_mode_undefined
+        end if
 
     end subroutine
 

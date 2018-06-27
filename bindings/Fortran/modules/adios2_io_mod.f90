@@ -22,8 +22,10 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_set_engine_f2c(io%f2c, &
-                                   TRIM(ADJUSTL(engine_type))//char(0), &
-                                   ierr)
+                                   TRIM(ADJUSTL(engine_type))//char(0), ierr)
+
+        if( ierr == 0 ) io%engine_type = engine_type
+
     end subroutine
 
     subroutine adios2_set_parameter(io, key, value, ierr)
@@ -140,20 +142,6 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_flush_all_engines_f2c(io%f2c, ierr)
-
-    end subroutine
-
-
-    subroutine adios2_io_engine_type(io, engine_type, ierr)
-        type(adios2_io), intent(in) :: io
-        character(len=:), allocatable, intent(out) :: engine_type
-        integer, intent(out) :: ierr
-
-        character(len=32) :: c_engine_type
-        integer :: length
-
-        call adios2_io_engine_type_f2c(io%f2c, c_engine_type, length, ierr)
-        call adios2_StringC2F(c_engine_type, length, engine_type)
 
     end subroutine
 

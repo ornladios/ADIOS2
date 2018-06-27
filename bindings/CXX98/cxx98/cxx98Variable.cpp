@@ -107,6 +107,25 @@ namespace cxx98
     }                                                                          \
                                                                                \
     template <>                                                                \
+    adios2::cxx98::ShapeID Variable<T>::ShapeID() const                        \
+    {                                                                          \
+        const adios2_shapeid shapeid = adios2_variable_shapeid(m_Variable);    \
+        switch (shapeid)                                                       \
+        {                                                                      \
+        case (adios2_shapeid_global_value):                                    \
+            return adios2::cxx98::ShapeID::GlobalValue;                        \
+        case (adios2_shapeid_global_array):                                    \
+            return adios2::cxx98::ShapeID::GlobalArray;                        \
+        case (adios2_shapeid_joined_array):                                    \
+            return adios2::cxx98::ShapeID::JoinedArray;                        \
+        case (adios2_shapeid_local_value):                                     \
+            return adios2::cxx98::ShapeID::LocalValue;                         \
+        case (adios2_shapeid_local_array):                                     \
+            return adios2::cxx98::ShapeID::LocalArray;                         \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     Variable<T>::Variable(adios2_variable *variable) : m_Variable(variable)    \
     {                                                                          \
     }

@@ -242,6 +242,8 @@ public:
 
     void AddOperator(Operator &op, const Params &parameters = Params());
 
+    std::string EngineType() const noexcept;
+
 private:
     IO(core::IO &io);
     core::IO &m_IO;
