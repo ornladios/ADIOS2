@@ -1037,8 +1037,8 @@ void ExtractSelectionFromPartialCM(int ElementSize, size_t Dims,
     }
     if (Dims > 0)
     {
-        SourceBlockStride = PartialCounts[Dims - 1] * OperantElementSize;
-        DestBlockStride = SelectionCounts[Dims - 1] * OperantElementSize;
+        SourceBlockStride = PartialCounts[0] * OperantElementSize;
+        DestBlockStride = SelectionCounts[0] * OperantElementSize;
     }
 
     /* calculate first selected element and count */
