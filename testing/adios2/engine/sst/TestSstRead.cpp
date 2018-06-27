@@ -137,6 +137,12 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         ASSERT_EQ(var_r64_2d.Shape()[0], writerSize * Nx);
         ASSERT_EQ(var_r64_2d.Shape()[1], 2);
 
+        auto var_r64_2d_rev = io.InquireVariable<double>("r64_2d_rev");
+        EXPECT_TRUE(var_r64_2d_rev);
+        ASSERT_EQ(var_r64_2d_rev.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_r64_2d_rev.Shape()[0], 2);
+        ASSERT_EQ(var_r64_2d_rev.Shape()[1], writerSize * Nx);
+
         long unsigned int myStart = (writerSize * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =
             ((writerSize * Nx + mpiSize - 1) / mpiSize);
@@ -149,9 +155,12 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         const adios2::Dims count{myLength};
         const adios2::Dims start2{myStart, 0};
         const adios2::Dims count2{myLength, 2};
+        const adios2::Dims start3{0, myStart};
+        const adios2::Dims count3{2, myLength};
 
         const adios2::Box<adios2::Dims> sel(start, count);
         const adios2::Box<adios2::Dims> sel2(start2, count2);
+        const adios2::Box<adios2::Dims> sel3(start3, count3);
 
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
@@ -161,6 +170,7 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
         var_r64_2d.SetSelection(sel2);
+        var_r64_2d_rev.SetSelection(sel3);
 
         in_I8.reserve(myLength);
         in_I16.reserve(myLength);
@@ -169,6 +179,7 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         in_R32.reserve(myLength);
         in_R64.reserve(myLength);
         in_R64_2d.reserve(myLength * 2);
+        in_R64_2d_rev.reserve(myLength * 2);
         engine.Get(var_i8, in_I8.data());
         engine.Get(var_i16, in_I16.data());
         engine.Get(var_i32, in_I32.data());
@@ -177,6 +188,7 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         engine.Get(var_r32, in_R32.data());
         engine.Get(var_r64, in_R64.data());
         engine.Get(var_r64_2d, in_R64_2d.data());
+        engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
 
         engine.EndStep();
 

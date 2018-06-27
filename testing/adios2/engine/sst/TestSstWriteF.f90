@@ -6,6 +6,7 @@ program TestSstWrite
 
   integer(kind = 8), dimension(1)::shape_dims, start_dims, count_dims
   integer(kind = 8), dimension(2)::shape_dims2, start_dims2, count_dims2
+  integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
   integer::inx, irank, isize, ierr, i, insteps
 
   type(adios2_adios)::adios
@@ -34,6 +35,10 @@ program TestSstWrite
   shape_dims2 = (/ 2, isize *nx /)
   start_dims2 = (/ 0, irank *nx /)
   count_dims2 = (/ 2, nx /)
+
+  shape_dims3 = (/ isize *nx, 2 /)
+  start_dims3 = (/ irank *nx, 0 /)
+  count_dims3 = (/ nx, 2 /)
 
   !Create adios handler passing the communicator, debug mode and error flag
   call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
@@ -80,6 +85,11 @@ program TestSstWrite
        shape_dims2, start_dims2, count_dims2, &
        adios2_constant_dims, ierr)
 
+  call adios2_define_variable(variables(8), ioWrite, "r64_2d_rev", &
+       adios2_type_dp, 2, &
+       shape_dims3, start_dims3, count_dims3, &
+       adios2_constant_dims, ierr)
+
   call adios2_open(sstWriter, ioWrite, "ADIOS2Sst", adios2_mode_write, ierr)
 
   !Put array contents to bp buffer, based on var1 metadata
@@ -93,6 +103,7 @@ program TestSstWrite
      call adios2_put(sstWriter, variables(5), data_R32, ierr)
      call adios2_put(sstWriter, variables(6), data_R64, ierr)
      call adios2_put(sstWriter, variables(7), data_R64_2d, ierr)
+     call adios2_put(sstWriter, variables(8), data_R64_2d_rev, ierr)
      call adios2_end_step(sstWriter, ierr)
   end do
 

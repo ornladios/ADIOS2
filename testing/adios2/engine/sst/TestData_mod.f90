@@ -19,6 +19,7 @@ module sst_test_data
     real(kind=4), dimension(10) :: data_R32
     real(kind=8), dimension(10) :: data_R64
     real (kind=8), dimension(2, 10) :: data_R64_2d
+    real (kind=8), dimension(10, 2) :: data_R64_2d_rev
 
     integer(kind=1), dimension(:), allocatable :: in_I8
     integer(kind=2), dimension(:), allocatable :: in_I16
@@ -27,6 +28,7 @@ module sst_test_data
     real(kind=4), dimension(:), allocatable :: in_R32
     real(kind=8), dimension(:), allocatable :: in_R64 
     real (kind=8), dimension(:,:), allocatable :: in_R64_2d 
+    real (kind=8), dimension(:,:), allocatable :: in_R64_2d_rev 
 
     contains
     subroutine GenerateTestData(step, rank, size)
@@ -44,6 +46,8 @@ module sst_test_data
          data_R64(i) = (j + 10 * (i-1));
          data_R64_2d(1,i) = (j + 10 * (i-1));
          data_R64_2d(2,i) = 10000 + (j + 10 * (i-1));
+         data_R64_2d_rev(i,1) = (j + 10 * (i-1));
+         data_R64_2d_rev(i,2) = 10000 + (j + 10 * (i-1));
       end do
 
     end subroutine GenerateTestData
@@ -76,6 +80,13 @@ module sst_test_data
          end if
          if (in_R64_2d(2, i) /= 10000 + (i - 1 + start)* 10 + step) then
             stop 'data_R64 value failed'
+         end if
+         if (in_R64_2d_rev(i, 1) /= (i - 1 + start)* 10 + step) then
+            stop 'data_R64_rev value failed'
+         end if
+         if (in_R64_2d_rev(i, 2) /= 10000 + (i - 1 + start)* 10 + step) then
+           
+            stop 'data_R64_rev value failed'
          end if
       end do
 
