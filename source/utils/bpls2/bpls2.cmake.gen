@@ -6,7 +6,7 @@ if(ERROR_FILE)
 endif()
 
 execute_process(
-  COMMAND $<TARGET_FILE:bpls> ${ARGS} ${INPUT_FILE}
+  COMMAND $<TARGET_FILE:bpls2> ${ARGS} ${INPUT_FILE}
   RESULT_VARIABLE result
   ${output_arg}
   ${error_arg}
