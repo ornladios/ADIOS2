@@ -17,14 +17,12 @@
 #define _GNU_SOURCE
 #endif
 
-//#include <iomanip>
-//#include <iostream>
+#include "bpls2.h"
+
 #include <cinttypes>
 #include <cstdio>
 #include <string>
 #include <vector>
-
-#include "./bpls.h"
 
 #include <errno.h>
 
@@ -1361,6 +1359,9 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     // size_t elemsize;                   // size in bytes of one element
     uint64_t st, ct;
     T *data;
+
+    std::vector<T> dataV;
+
     uint64_t sum; // working var to sum up things
     uint64_t
         maxreadn; // max number of elements to read once up to a limit (10MB
@@ -1450,7 +1451,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     }*/
 
     // allocate data array
-    data = (T *)malloc(maxreadn * elemsize);
+    // data = (T *)malloc(maxreadn * elemsize);
 
     // determine strategy how to read in:
     //  - at once
@@ -1523,7 +1524,11 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             PRINT_DIMS_SIZET("  count", countv.data(), tdims - tidx, j);
             printf("\n");
         }
-        variable->SetSelection({startv, countv});
+
+        if (!variable->m_SingleValue)
+        {
+            variable->SetSelection({startv, countv});
+        }
 
         if (nsteps > 1)
         {
@@ -1535,10 +1540,14 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             }
             variable->SetStepSelection({s[0], c[0]});
         }
-        fp->Get(*variable, data, adios2::Mode::Sync);
+
+        dataV.resize(variable->SelectionSize());
+        fp->Get(*variable, dataV, adios2::Mode::Sync);
+        // fp->Get(*variable, data, adios2::Mode::Sync);
 
         // print slice
-        print_dataset(data, variable->m_Type, s, c, tdims, ndigits_dims);
+        print_dataset(dataV.data(), variable->m_Type, s, c, tdims,
+                      ndigits_dims);
 
         // prepare for next read
         sum += actualreadn;
@@ -1570,7 +1579,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     } // end while sum < nelems
     print_endline();
 
-    free(data);
+    // free(data);
     return 0;
 }
 
@@ -2265,8 +2274,13 @@ int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartype,
         break;
 
     case adios_string:
-        fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
+    {
+        // fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
+        const std::string *dataStr =
+            reinterpret_cast<const std::string *>(data);
+        fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
         break;
+    }
     case adios_string_array:
         // we expect one elemet of the array here
         fprintf(outf, (f ? fmt : "\"%s\""), *((char **)data + item));
@@ -2755,8 +2769,12 @@ char *mystrndup(const char *s, size_t n)
 
 int main(int argc, char *argv[])
 {
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
+#endif
     int retval = adios2::utils::bplsMain(argc, argv);
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
     return retval;
 }

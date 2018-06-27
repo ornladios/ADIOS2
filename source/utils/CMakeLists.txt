@@ -3,11 +3,15 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-# BPLS
-add_executable(bpls ./bpls/bpls.cpp)
-target_link_libraries(bpls adios2 adios2sys_interface)
-install(TARGETS bpls EXPORT adios2
+# BPLS2
+add_executable(bpls2 ./bpls2/bpls2.cpp)
+target_link_libraries(bpls2 adios2 adios2sys_interface)
+install(TARGETS bpls2 EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+file(GENERATE
+  OUTPUT ${PROJECT_BINARY_DIR}/bpls2.cmake
+  INPUT ${CMAKE_CURRENT_SOURCE_DIR}/bpls2/bpls2.cmake.gen
 )
 
 # ADIOS2_REORGANIZE
@@ -15,18 +19,10 @@ add_executable(adios2_reorganize
                ./adios2_reorganize/main.cpp 
                ./adios2_reorganize/Reorganize.cpp 
                Utils.cpp)
-
-#target_include_directories(adios2_reorganize PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-
 target_link_libraries(adios2_reorganize adios2)
-
-
-
 install(TARGETS adios2_reorganize EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-
 
 # Add MPI dependency to parallel tools
 if(ADIOS2_HAVE_MPI)
