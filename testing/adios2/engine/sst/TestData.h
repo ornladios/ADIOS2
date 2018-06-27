@@ -125,16 +125,18 @@ int validateSstTestData(int start, int length, int step)
         if (in_R64_2d_rev[i] != (double)((i + start) * 10 + step))
         {
             std::cout << "Expected " << (double)((i + start) * 10 + step)
-                      << ", got " << in_R64_2d_rev[i] << " for in_R64_2d_rev[0][" << i
-                      << "](global[0][" << i + start << "])" << std::endl;
+                      << ", got " << in_R64_2d_rev[i]
+                      << " for in_R64_2d_rev[0][" << i << "](global[0]["
+                      << i + start << "])" << std::endl;
             failures++;
         }
-        if (in_R64_2d_rev[i + length] != (double)(10000 + (i + start) * 10 + step))
+        if (in_R64_2d_rev[i + length] !=
+            (double)(10000 + (i + start) * 10 + step))
         {
             std::cout << "Expected "
                       << (double)(10000 + (i + start) * 10 + step) << ", got "
-                      << in_R64_2d_rev[i+length] << " for in_R64_2d_rev[1][" << i
-                      << "](global[1][" << i + start << "])" << std::endl;
+                      << in_R64_2d_rev[i + length] << " for in_R64_2d_rev[1]["
+                      << i << "](global[1][" << i + start << "])" << std::endl;
             failures++;
         }
     }
