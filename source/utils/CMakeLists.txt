@@ -9,24 +9,20 @@ target_link_libraries(bpls2 adios2 adios2sys_interface)
 install(TARGETS bpls2 EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+file(GENERATE
+  OUTPUT ${PROJECT_BINARY_DIR}/BPLS.cmake
+  INPUT ${PROJECT_SOURCE_DIR}/cmake/BPLS.cmake.gen
+)
 
 # ADIOS2_REORGANIZE
 add_executable(adios2_reorganize 
                ./adios2_reorganize/main.cpp 
                ./adios2_reorganize/Reorganize.cpp 
                Utils.cpp)
-
-#target_include_directories(adios2_reorganize PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-
 target_link_libraries(adios2_reorganize adios2)
-
-
-
 install(TARGETS adios2_reorganize EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-
-
 
 # Add MPI dependency to parallel tools
 if(ADIOS2_HAVE_MPI)
