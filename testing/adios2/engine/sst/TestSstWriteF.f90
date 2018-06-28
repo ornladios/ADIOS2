@@ -115,7 +115,7 @@ program TestSstWrite
      call adios2_put(sstWriter, variables(6), data_R64, ierr)
      call adios2_put(sstWriter, variables(7), data_R64_2d, ierr)
      call adios2_put(sstWriter, variables(8), data_R64_2d_rev, ierr)
-     localtime = time()
+     localtime = 0    ! should be time(), but non-portable and value is unused
      call adios2_put(sstWriter, variables(9), loc(localtime), ierr)
      call adios2_end_step(sstWriter, ierr)
   end do
