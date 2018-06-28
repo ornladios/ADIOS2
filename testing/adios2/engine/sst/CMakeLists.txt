@@ -133,5 +133,5 @@ add_test(
   NAME ADIOSSstDelayedReaderWithBlockingTest.3x5
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
     -nw 3 -nr 5 -v -p TestSst -arg 'RendezvousReaderCount:0,QueueLimit:3' -arg '--expect_time_gap')
-set_tests_properties(ADIOSSstDelayedReaderTestWithBlocking.3x5 PROPERTIES TIMEOUT 30) 
+set_tests_properties(ADIOSSstDelayedReaderWithBlockingTest.3x5 PROPERTIES TIMEOUT 30) 
 
