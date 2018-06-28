@@ -36,6 +36,7 @@ PROGNAME=${0##*/}
 reader_prog="UNSET"
 writer_prog="UNSET"
 
+reader_delay=0
 args=""
 
 while [ $# -gt 0 ]
@@ -54,6 +55,7 @@ do
     (-nw) nw="$2"; shift;;
     (-nr) nr="$2"; shift;;
     (-arg) args="$args $2"; shift;;
+    (-rd) reader_delay="$2"; shift;;
     (--) shift; break;;
     (-*) echo "$0: error - unrecognized option $1" ; usage; 1>&2; exit 1;;
     (*)  break;;
@@ -82,6 +84,9 @@ fi
 # Spawn the reader
 if [ $vflag == "yes" ]; then
     echo "Doing (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog $args 2>&1 1>/dev/null) & reader_pid=$!"
+fi
+if [ "$reader_delay" -ne 0 ]; then
+    sleep $reader_delay
 fi
 (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog $args 2>&1 1>/dev/null) & reader_pid=$!
 

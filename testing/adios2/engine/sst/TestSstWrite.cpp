@@ -4,6 +4,7 @@
  */
 #include <cstdint>
 #include <cstring>
+#include <ctime>
 
 #include <iostream>
 #include <stdexcept>
@@ -94,6 +95,9 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         adios2::Dims shape3{2, static_cast<unsigned int>(Nx * mpiSize)};
         adios2::Dims start3{0, static_cast<unsigned int>(Nx * mpiRank)};
         adios2::Dims count3{2, static_cast<unsigned int>(Nx)};
+        adios2::Dims time_shape{static_cast<unsigned int>(mpiSize)};
+        adios2::Dims time_start{static_cast<unsigned int>(mpiRank)};
+        adios2::Dims time_count{1};
         io.DefineVariable<int8_t>("i8", shape, start, count);
         io.DefineVariable<int16_t>("i16", shape, start, count);
         io.DefineVariable<int32_t>("i32", shape, start, count);
@@ -102,6 +106,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         io.DefineVariable<double>("r64", shape, start, count);
         io.DefineVariable<double>("r64_2d", shape2, start2, count2);
         io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
+        io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
     }
 
     // Create the Engine
@@ -126,12 +131,15 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         auto var_r64 = io.InquireVariable<double>("r64");
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
         auto var_r64_2d_rev = io.InquireVariable<double>("r64_2d_rev");
+        auto var_time = io.InquireVariable<int64_t>("time");
 
         // Make a 1D selection to describe the local dimensions of the
         // variable we write and its offsets in the global spaces
         adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
         adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         adios2::Box<adios2::Dims> sel3({0, mpiRank * Nx}, {2, Nx});
+        adios2::Box<adios2::Dims> sel_time(
+            {static_cast<unsigned long>(mpiRank)}, {1});
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
         var_i32.SetSelection(sel);
@@ -140,6 +148,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         var_r64.SetSelection(sel);
         var_r64_2d.SetSelection(sel2);
         var_r64_2d_rev.SetSelection(sel3);
+        var_time.SetSelection(sel_time);
 
         // Write each one
         // fill in the variable with values from starting index to
@@ -155,6 +164,8 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         engine.Put(var_r64_2d, &data_R64_2d[0][0], sync);
         engine.Put(var_r64_2d_rev, &data_R64_2d_rev[0][0], sync);
         // Advance to the next time step
+        std::time_t localtime = std::time(NULL);
+        engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
     }
 
@@ -171,6 +182,20 @@ int main(int argc, char **argv)
     int result;
     ::testing::InitGoogleTest(&argc, argv);
 
+    while ((argc > 1) && (argv[1][0] == '-'))
+    {
+        if (std::string(argv[1]) == "--expect_time_gap")
+        {
+            //  TimeGapExpected++;   Nothing on write side
+        }
+        else
+        {
+            throw std::invalid_argument("Unknown argument \"" +
+                                        std::string(argv[1]) + "\"");
+        }
+        argv++;
+        argc--;
+    }
     if (argc > 1)
     {
         engineParams = ParseEngineParams(argv[1]);
