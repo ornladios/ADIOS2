@@ -7,6 +7,7 @@ program TestSstWrite
   integer(kind = 8), dimension(1)::shape_dims, start_dims, count_dims
   integer(kind = 8), dimension(2)::shape_dims2, start_dims2, count_dims2
   integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
+  integer(kind = 8), dimension(1)::shape_time, start_time, count_time
   integer::inx, irank, isize, ierr, i, insteps
 
   type(adios2_adios)::adios
@@ -18,7 +19,8 @@ program TestSstWrite
   character(len =:), allocatable::variable_name 
   integer::variable_type, ndims
   integer(kind = 8), dimension(:), allocatable::shape_in
-  
+  integer(kind = 8)::localtime
+
   !Launch MPI
   call MPI_Init(ierr) 
   call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr) 
@@ -39,6 +41,10 @@ program TestSstWrite
   shape_dims3 = (/ isize *nx, 2 /)
   start_dims3 = (/ irank *nx, 0 /)
   count_dims3 = (/ nx, 2 /)
+
+  shape_time = (/ isize /)
+  start_time = (/ irank /)
+  count_time = (/ 1 /)
 
   !Create adios handler passing the communicator, debug mode and error flag
   call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
@@ -90,6 +96,11 @@ program TestSstWrite
        shape_dims3, start_dims3, count_dims3, &
        adios2_constant_dims, ierr)
 
+  call adios2_define_variable(variables(9), ioWrite, "time", &
+       adios2_type_integer8, 1, &
+       shape_time, start_time, count_time, &
+       adios2_constant_dims, ierr)
+
   call adios2_open(sstWriter, ioWrite, "ADIOS2Sst", adios2_mode_write, ierr)
 
   !Put array contents to bp buffer, based on var1 metadata
@@ -104,6 +115,8 @@ program TestSstWrite
      call adios2_put(sstWriter, variables(6), data_R64, ierr)
      call adios2_put(sstWriter, variables(7), data_R64_2d, ierr)
      call adios2_put(sstWriter, variables(8), data_R64_2d_rev, ierr)
+     localtime = time()
+     call adios2_put(sstWriter, variables(9), loc(localtime), ierr)
      call adios2_end_step(sstWriter, ierr)
   end do
 
