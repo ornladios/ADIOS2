@@ -9,9 +9,9 @@ or, set it in client code. For example, here is how to create a hdf5 reader:
 
 .. code-block:: c++
 
- adios2::IO &h5IO = adios.DeclareIO("SomeName");
+ adios2::IO h5IO = adios.DeclareIO("SomeName");
  h5IO.SetEngine("HDF5");	
- adios2::Engine &h5Reader = h5IO.Open(filename, adios2::Mode::Read);	
+ adios2::Engine h5Reader = h5IO.Open(filename, adios2::Mode::Read);	
 
 In addition, with HDF5 distribution greater or equal to 1.11, one can use the engine *"HDF5Mixer"*
 to write files with the VDS (virtual dataset) feature from HDF5.
@@ -21,9 +21,9 @@ and a sample code for VDS writer is:
 
 .. code-block:: c++
 
- adios2::IO &h5IO = adios.DeclareIO("SomeName");
+ adios2::IO h5IO = adios.DeclareIO("SomeName");
  h5IO.SetEngine("HDF5Mixer");	
- adios2::Engine &h5Writer = h5IO.Open(filename, adios2::Mode::Write);	
+ adios2::Engine h5Writer = h5IO.Open(filename, adios2::Mode::Write);	
 
 To read back the h5 files generated with VDS to ADIOS2, one can use the HDF5 engine. Please make sure you are using the HDF5 library that has version greater than or equal to 1.11 in ADIOS2. 
 

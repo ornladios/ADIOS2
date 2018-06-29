@@ -22,20 +22,20 @@ Recall that Engines are created through the ``IO::Open`` function which must con
 For Publishing data (Write, Append mode)
 
    * **Put**  Default mode: deferred (lazy evaluation). Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. 
-                            Use sync mode to allow the pointer memory to be reusable immediately, is enable by passing the flag adios2::Mode::Sync as the 3rd argument
-   * **PerformsPuts**   Execute all pending Put calls in deferred mode until this line 
+                            Use sync mode to allow the pointer memory to be reusable immediately. This is enabled by passing the flag adios2::Mode::Sync as the 3rd argument.
+   * **PerformsPuts**   Executes all pending Put calls in deferred mode until this line.
 
 
 For Consuming data (Read mode)
 
    * **Get**  Default mode: deferred (lazy evaluation). Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. 
-                            Use sync mode to populate the data pointer memory immediately, this is enable by passing the flag adios2::Mode::Sync as the 3rd argument 
-   * **PerformsGets**   Execute all pending deferred Get calls in deferred mode until this line
+                            Use sync mode to populate the data pointer memory immediately. This is enabled by passing the flag adios2::Mode::Sync as the 3rd argument.
+   * **PerformsGets**   Execute all pending deferred Get calls in deferred mode until this line.
 
 Common Functionality (Write, Read, Append modes)
 
-   * **BeginStep**      Begin logical step and return status of stream to be read/written
-   * **EndStep**        End logical step, flush to transports depending on IO parameters and engine default behavior
+   * **BeginStep**      Begin logical step and return status of stream to be read/written.
+   * **EndStep**        End logical step, flush to transports depending on IO parameters and engine default behavior.
    * **Close**          Close current engine and underlying transports. Engine object can't be used after this.
 
 The following example illustrates the basic API usage in write mode for data generated at each application step:

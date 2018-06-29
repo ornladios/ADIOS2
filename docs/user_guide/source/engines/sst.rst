@@ -23,7 +23,7 @@ how to create an SST reader:
 
 .. code-block:: c++
 
- adios2::IO &sstIO = adios.DeclareIO("SomeName");
+ adios2::IO sstIO = adios.DeclareIO("SomeName");
  sstIO.SetEngine("SST");	
  adios2::Engine &sstReader = sstIO.Open(filename, adios2::Mode::Read);	
 
@@ -31,7 +31,7 @@ and a sample code for SST writer is:
 
 .. code-block:: c++
 
- adios2::IO &sstIO = adios.DeclareIO("SomeName");
+ adios2::IO sstIO = adios.DeclareIO("SomeName");
  sstIO.SetEngine("SST");	
  adios2::Engine &sstWriter = sstIO.Open(filename, adios2::Mode::Write);	
 
