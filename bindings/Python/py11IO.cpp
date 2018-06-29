@@ -181,5 +181,7 @@ std::map<std::string, Params> IO::AvailableAttributes() noexcept
     return m_IO.GetAvailableAttributes();
 }
 
+std::string IO::EngineType() const noexcept { return m_IO.m_EngineType; }
+
 } // end namespace py11
 } // end namespace adios2

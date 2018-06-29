@@ -85,10 +85,33 @@ public:
 //    Attribute<T> InquireAttribute(const std::string &name);
 
 #ifdef ADIOS2_HAVE_MPI
+    /**
+     * Open an Engine to start heavy-weight input/output operations.
+     * New MPI communicator version, valid with MPI compiled library only
+     * @param name unique engine identifier
+     * @param mode
+     * @param comm
+     * @return engine object
+     */
     Engine Open(const std::string &name, const Mode mode, MPI_Comm comm);
 #endif
 
+    /**
+     * Open an Engine to start heavy-weight input/output operations.
+     * Reuses ADIOS object communicator ADIOS>IO>Engine in MPI library
+     * version
+     * @param name unique engine identifier
+     * @param mode adios2::Mode::Write,adios2::Mode::Read or
+     * adios2::Mode::Append
+     * @return engine object
+     */
     Engine Open(const std::string &name, const Mode mode);
+
+    /**
+     * Inspect current engine type
+     * @return current engine type
+     */
+    std::string EngineType() const;
 
 private:
     IO(adios2_io &io);

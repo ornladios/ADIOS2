@@ -12,7 +12,6 @@
      type(adios2_variable), dimension(12) :: variables
      type(adios2_engine) :: bpWriter, bpReader
 
-
      ! read handlers
      character(len=:), allocatable :: variable_name, engine_type
      integer :: variable_type, ndims
@@ -87,11 +86,12 @@
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  adios2_type_dp,  ierr)
 
-     call adios2_io_engine_type( ioWrite, engine_type, ierr)
-     write(*,*) "Engine type: ", engine_type
+     write(*,*) "Engine type: ", ioWrite%engine_type
+     if( TRIM(ioWrite%engine_type) /= 'BPFile' ) stop 'Wrong engine_type'
 
      ! Open myVector_f.bp in write mode, this launches an engine
-     call adios2_open(bpWriter, ioWrite, "ftypes_local.bp", adios2_mode_write, ierr)
+     call adios2_open(bpWriter, ioWrite, "ftypes_local.bp", adios2_mode_write, &
+                      ierr)
 
      do i = 1, 3
          call adios2_begin_step(bpWriter, ierr)
@@ -136,7 +136,6 @@
      if (steps_start /= 0) stop 'var_I8 steps_start is not 0'
      call adios2_variable_steps(variables(1), steps_count, ierr)
      if (steps_count /= 3) stop 'var_I8 steps_count is not 3'
-
 
      call adios2_inquire_variable(variables(2), ioRead, "var_I16", ierr)
      call adios2_variable_name(variables(2), variable_name, ierr)
@@ -222,16 +221,14 @@
      if (steps_count /= 1) stop 'gvar_I64 steps_count is not 1'
 
      call adios2_inquire_variable(variables(11), ioRead, "gvar_R32", ierr)
-     call adios2_variable_name(variables(11), variable_name, ierr)
-     if (variable_name /= 'gvar_R32') stop 'gvar_R32 not recognized'
+     if (trim(variables(11)%name) /= 'gvar_R32') stop 'gvar_R32 not recognized'
      call adios2_variable_steps_start(variables(11), steps_start, ierr)
      if (steps_start /= 0) stop 'gvar_R32 steps_start is not 0'
      call adios2_variable_steps(variables(11), steps_count, ierr)
      if (steps_count /= 1) stop 'gvar_R32 steps_count is not 1'
 
      call adios2_inquire_variable(variables(12), ioRead, "gvar_R64", ierr)
-     call adios2_variable_name(variables(12), variable_name, ierr)
-     if (variable_name /= 'gvar_R64') stop 'gvar_R64 not recognized'
+     if (trim(variables(12)%name) /= 'gvar_R64') stop 'gvar_R64 not recognized'
      call adios2_variable_steps_start(variables(12), steps_start, ierr)
      if (steps_start /= 0) stop 'gvar_R64 steps_start is not 0'
      call adios2_variable_steps(variables(12), steps_count, ierr)

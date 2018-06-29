@@ -34,7 +34,12 @@ contains
         call adios2_define_global_variable_f2c(variable%f2c, io%f2c, &
                                                TRIM(ADJUSTL(name))//char(0), &
                                                adios2_type, ierr)
-        if( ierr == 0 ) variable%valid = .true.
+        if( ierr == 0 ) then
+            variable%valid = .true.
+            variable%name = name
+            variable%type = adios2_type
+            variable%ndims = 1
+        end if
 
     end subroutine
 
@@ -60,7 +65,13 @@ contains
                                         adios2_type, ndims, &
                                         shape_dims, start_dims, count_dims, &
                                         is_constant_dims_int, ierr)
-        if( ierr == 0 ) variable%valid = .true.
+
+        if( ierr == 0 ) then
+            variable%valid = .true.
+            variable%name = name
+            variable%type = adios2_type
+            variable%ndims = ndims
+        end if
 
     end subroutine
 

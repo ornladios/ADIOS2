@@ -138,5 +138,8 @@ void Engine::Close(const int transportIndex) { m_Engine.Close(transportIndex); }
 
 size_t Engine::CurrentStep() const { return m_Engine.CurrentStep(); }
 
+std::string Engine::Name() const noexcept { return m_Engine.m_Name; }
+std::string Engine::Type() const noexcept { return m_Engine.m_EngineType; }
+
 } // end namespace py11
 } // end namespace adios2

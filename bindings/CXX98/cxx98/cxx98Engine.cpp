@@ -66,6 +66,17 @@ Engine::~Engine() {}
 
 Engine::operator bool() const { return m_Engine == NULL ? false : true; }
 
+std::string Engine::Name() const
+{
+    // TODO
+    return std::string();
+}
+
+std::string Engine::Type() const
+{ // TODO
+    return std::string();
+}
+
 StepStatus Engine::BeginStep()
 {
     const adios2_step_status status =

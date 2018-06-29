@@ -53,15 +53,6 @@ ADIOS::ADIOS(const bool debugMode)
 }
 #endif
 
-ADIOS::ADIOS(const ADIOS &adios)
-{
-    if (m_ADIOS != NULL)
-    {
-        adios2_finalize(m_ADIOS);
-    }
-    m_ADIOS = adios.m_ADIOS;
-}
-
 ADIOS::~ADIOS()
 {
     if (m_ADIOS != NULL)
@@ -84,6 +75,9 @@ IO ADIOS::AtIO(const std::string &name)
 }
 
 void ADIOS::FlushAll() { adios2_flush_all(m_ADIOS); }
+
+// Disabled copy constructor
+ADIOS::ADIOS(const ADIOS &adios) : m_ADIOS(NULL) {}
 
 } // end namespace cxx03
 } // end namespace adios2

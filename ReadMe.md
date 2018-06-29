@@ -70,7 +70,7 @@ $ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.2.0/gnu/openmpi ../ADIOS2
 ...
 
 ADIOS2 build configuration:
-  ADIOS Version: 2.1.0
+  ADIOS Version: 2.2.0
   C++ Compiler : GNU 5.4.0 
     /usr/bin/c++
 
