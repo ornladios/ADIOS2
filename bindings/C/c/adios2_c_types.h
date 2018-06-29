@@ -100,6 +100,7 @@ typedef enum {
 } adios2_step_status;
 
 typedef enum {
+    adios2_shapeid_unknown = -1,
     adios2_shapeid_global_value = 0,
     adios2_shapeid_global_array = 1,
     adios2_shapeid_joined_array = 2,

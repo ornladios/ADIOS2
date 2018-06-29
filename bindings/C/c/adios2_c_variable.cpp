@@ -92,12 +92,8 @@ adios2_shapeid adios2_variable_shapeid(const adios2_variable *variable)
 
     case (adios2::ShapeID::LocalArray):
         return adios2_shapeid_local_array;
-
-    default:
-        throw std::invalid_argument("ERROR: invalid shapeid for variable " +
-                                    variableBase->m_Name +
-                                    ", in call to adios2_variable_shapeid\n");
     }
+    return adios2_shapeid_unknown;
 }
 
 int adios2_variable_is_constant_dims(const adios2_variable *variable)
