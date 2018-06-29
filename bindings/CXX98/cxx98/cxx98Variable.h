@@ -39,19 +39,74 @@ public:
 
     operator bool() const;
 
+    /**
+     * Sets a variable selection modifying current {start, count}
+     * Count is the dimension from Start point
+     * @param selection input {start, count}
+     */
     void SetSelection(const Dims &start, const Dims &count);
 
+    /**
+     * Sets a step selection modifying current startStep, countStep
+     * countStep is the number of steps from startStep point
+     * @param stepSelection input {startStep, countStep}
+     */
     void SetStepSelection(const size_t stepStart, const size_t stepCount);
 
+    /**
+     * Returns the number of elements required for pre-allocation based on
+     * current count and stepsCount
+     * @return elements of type T required for pre-allocation
+     */
     size_t SelectionSize() const;
+
+    /**
+     * Inspects Variable name
+     * @return name
+     */
     std::string Name() const;
     // std::string Type() const;
+
+    /**
+     * Inspects size of the current element type, sizeof(T)
+     * @return sizeof(T) for current system
+     */
     size_t Sizeof() const;
+
+    /**
+     * Inspects shape id for current variable
+     * @return from enum adios2::ShapeID
+     */
     adios2::cxx98::ShapeID ShapeID() const;
+
+    /**
+     * Inspects current shape
+     * @return shape vector
+     */
     Dims Shape() const;
+
+    /**
+     * Inspects current start point
+     * @return start point vector
+     */
     Dims Start() const;
+
+    /**
+     * Inspects current count from start
+     * @return count vector
+     */
     Dims Count() const;
+
+    /**
+     * For read mode, inspect the number of available steps
+     * @return available steps
+     */
     size_t Steps() const;
+
+    /**
+     * For read mode, inspect the start step for available steps
+     * @return available start step
+     */
     size_t StepsStart() const;
 
 private:

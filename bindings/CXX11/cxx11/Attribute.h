@@ -35,10 +35,25 @@ public:
     Attribute<T>() = default;
     ~Attribute<T>() = default;
 
+    /** true: valid, false: invalid */
     explicit operator bool() const noexcept;
 
-    const std::string &Name() const;
+    /**
+     * Inspect attribute name
+     * @return unique name identifier
+     */
+    std::string Name() const;
+
+    /**
+     * Inspect attribute type
+     * @return type
+     */
     std::string Type() const;
+
+    /**
+     * Inspect attribute data
+     * @return data
+     */
     std::vector<T> Data() const;
 
 private:

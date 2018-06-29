@@ -239,8 +239,6 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
             bpReader.Get(var_r32, R32.data());
             bpReader.Get(var_r64, R64.data());
 
-            bpReader.PerformGets();
-
             bpReader.EndStep();
 
             for (size_t i = 0; i < Nx; ++i)

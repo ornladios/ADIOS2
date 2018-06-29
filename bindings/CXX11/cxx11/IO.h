@@ -211,9 +211,7 @@ public:
      */
     Engine Open(const std::string &name, const Mode mode);
 
-    /**
-     * Flushed all engines created with this IO with the Open function
-     */
+    /** Flushes all engines created with this IO with the Open function */
     void FlushAll();
 
     /**
@@ -240,8 +238,17 @@ public:
      */
     std::map<std::string, Params> AvailableAttributes() noexcept;
 
+    /**
+     * Adds an Operator at the IO object level
+     * @param op operator to be added
+     * @param parameters key/value parameters for op
+     */
     void AddOperator(Operator &op, const Params &parameters = Params());
 
+    /**
+     * Inspect current engine type
+     * @return current engine type
+     */
     std::string EngineType() const noexcept;
 
 private:

@@ -32,7 +32,7 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
-    const std::string &Attribute<T>::Name() const                              \
+    std::string Attribute<T>::Name() const                                     \
     {                                                                          \
         helper::CheckForNullptr(m_Attribute,                                   \
                                 "in call to Attribute<T>::Name()");            \

@@ -116,7 +116,7 @@ To build ADIOS2:
     -- Found MPI: TRUE (found version "3.0") found components:  C 
     
     ADIOS2 build configuration:
-      ADIOS Version: 2.1.0
+      ADIOS Version: 2.2.0
       C++ Compiler : GNU 5.4.0 
         /usr/bin/c++
     
@@ -238,12 +238,12 @@ CMake VAR Options              Values                                           
  `CMAKE_BUILD_TYPE`           ``Debug`` / Release / RelWithDebInfo / MinSizeRel   The level of compiler optimization to use.                                            
 ============================ =================================================== ============================================
 
-Example: the following configuration will build, test and install under /opt/adios2/2.1.0 an optimized (Release) version of ADIOS2.
+Example: the following configuration will build, test and install under /opt/adios2/2.2.0 an optimized (Release) version of ADIOS2.
 
 .. code-block:: bash
 
     $ cd build 
-    $ cmake -DADIOS2_USE_Fortran=ON -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.1.0 -DCMAKE_BUILD_Type=Release ../ADIOS2
+    $ cmake -DADIOS2_USE_Fortran=ON -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.2.0 -DCMAKE_BUILD_Type=Release ../ADIOS2
     $ make -j 4
     $ ctest
     $ make install

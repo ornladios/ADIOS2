@@ -34,24 +34,77 @@ class ADIOS
 
 public:
 #ifdef ADIOS2_HAVE_MPI
+
+    /**
+     * adios2 library starting point. Creates an ADIOS object allowing a
+     * runtime
+     * config file.
+     * @param configFile runtime config file
+     * @param mpiComm defines domain scope from application
+     * @param debugMode true: extra user-input debugging information, false:
+     * run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(const std::string &configFile, MPI_Comm mpiComm,
           const bool debugMode = true);
 
+    /**
+     * adios2 library starting point. Creates an ADIOS object.
+     * @param mpiComm defines domain scope from application
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(MPI_Comm mpiComm, const bool debugMode = true);
 
+    /**
+     * adios2 library starting point. Creates an ADIOS object allowing a
+     * runtime config file and using MPI_COMM_SELF
+     * @param configFile runtime config file
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(const std::string &configFile, const bool debugMode = true);
 
+    /**
+     * adios2 library starting point. Creates an ADIOS object using
+     * MPI_COMM_SELF
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(const bool debugMode = true);
 #else
+    /**
+     * adios2 NON-MPI library starting point. Creates an ADIOS object allowing a
+     * runtime config file.
+     * @param configFile runtime config file
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(const std::string &configFile, const bool debugMode = true);
 
+    /**
+     * adios2 NON-MPI library starting point. Creates an ADIOS object
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(const bool debugMode = true);
 #endif
 
-    ADIOS(const ADIOS &adios);
-
     ~ADIOS();
 
+    /** true: valid ADIOS object, false: invalid */
     operator bool() const;
 
     /**
@@ -84,8 +137,14 @@ public:
     void FlushAll();
 
 private:
-    /** pointer to C adios2_adios */
+    /** pointer to C adios2_adios implementation */
     adios2_adios *m_ADIOS;
+
+    /**
+     * Disables copy constructor
+     * @param adios
+     */
+    ADIOS(const ADIOS &adios);
 };
 
 } // end namespace cxx03
