@@ -10,8 +10,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6eeb5a8ac3e34d2599cfdea5bdc3390f)](https://www.codacy.com/app/chuckatkins/ADIOS2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ornladios/ADIOS2&amp;utm_campaign=Badge_Grade)
 
 
-# Adaptable Input / Output System (ADIOS) v2.1.1
-This is v2.1.1 of the ADIOS I/O system, developed as part of the
+# Adaptable Input / Output System (ADIOS) v2.2.0
+This is v2.2.0 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
 
 ## License
@@ -64,7 +64,7 @@ $ mkdir build
 
 ```bash
 $ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.1.1/gnu/openmpi ../ADIOS2
+$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.2.0/gnu/openmpi ../ADIOS2
 -- The C compiler identification is GNU 6.3.1
 -- The CXX compiler identification is GNU 6.3.1
 ...
@@ -168,15 +168,15 @@ $ make install
 ...
 Install the project...
 -- Install configuration: "Debug"
--- Installing: /opt/adios2/2.1.1/gnu/openmpi/include/adios2/ADIOSConfig.h
+-- Installing: /opt/adios2/2.2.0/gnu/openmpi/include/adios2/ADIOSConfig.h
 ...
--- Installing: /opt/adios2/2.1.1/gnu/openmpi/bin/adios2-config
+-- Installing: /opt/adios2/2.2.0/gnu/openmpi/bin/adios2-config
 ...
--- Installing: /opt/adios2/2.1.1/gnu/openmpi/include/adios2.h
+-- Installing: /opt/adios2/2.2.0/gnu/openmpi/include/adios2.h
 ...
--- Installing: /opt/adios2/2.1.1/gnu/openmpi/lib/libadios2.so.2.0.0
--- Installing: /opt/adios2/2.1.1/gnu/openmpi/lib/libadios2.so.2
--- Installing: /opt/adios2/2.1.1/gnu/openmpi/lib/libadios2.so
+-- Installing: /opt/adios2/2.2.0/gnu/openmpi/lib/libadios2.so.2.0.0
+-- Installing: /opt/adios2/2.2.0/gnu/openmpi/lib/libadios2.so.2
+-- Installing: /opt/adios2/2.2.0/gnu/openmpi/lib/libadios2.so
 ...
 $
 ```
