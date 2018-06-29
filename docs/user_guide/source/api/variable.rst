@@ -37,7 +37,7 @@ Currently, only primitive types are supported in ADIOS2 with plans to extend to 
 
 .. caution::
    
-   As of beta release version 2.1.1 complex types are WORK IN PROGRESS
+   As of beta release version 2.2.0 complex types are WORK IN PROGRESS
 
 
 Any fixed width size integer defined in header <cstdint> should map to any of the primitive types above depending on the system. In 64-bit systems: ``uint32_t -> unsigned int``, ``std::int64_t -> long int or long long int``. 
@@ -51,7 +51,7 @@ Variables Shape Types
 ---------------------
 
 .. note::
-   As of beta release version 2.1.1 local variable reads are not supported, yet. This is work in progress. Please use global arrays and values as a workaround.
+   As of beta release version 2.2.0 local variable reads are not supported, yet. This is work in progress. Please use global arrays and values as a workaround.
 
 ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different application data shape types must be covered depending on their scope within a particular MPI communicator. The shape type is defined at creation from the IO object by providing the dimensions: shape, start, count in the ``IO::DeclareVariable<T>`` template function. The supported Variables by shape types can be classified as:
 
