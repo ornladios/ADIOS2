@@ -52,11 +52,12 @@ enum StepMode
  *  DefineVariable */
 enum ShapeID
 {
-    GlobalValue, ///< single global value, common case
-    GlobalArray, ///< global (across MPI_Comm) array, common case
-    JoinedArray, ///< global array with a common (joinable) dimension
-    LocalValue,  ///< special case, local independent value
-    LocalArray   ///< special case, local independent array
+    Unknown = -1,
+    GlobalValue = 0, ///< single global value, common case
+    GlobalArray = 1, ///< global (across MPI_Comm) array, common case
+    JoinedArray = 2, ///< global array with a common (joinable) dimension
+    LocalValue = 3,  ///< special case, local independent value
+    LocalArray = 4   ///< special case, local independent array
 };
 
 typedef std::vector<std::size_t> Dims;
