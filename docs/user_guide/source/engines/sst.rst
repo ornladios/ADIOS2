@@ -25,7 +25,7 @@ how to create an SST reader:
 
  adios2::IO sstIO = adios.DeclareIO("SomeName");
  sstIO.SetEngine("SST");	
- adios2::Engine &sstReader = sstIO.Open(filename, adios2::Mode::Read);	
+ adios2::Engine sstReader = sstIO.Open(filename, adios2::Mode::Read);	
 
 and a sample code for SST writer is:
 
@@ -33,7 +33,7 @@ and a sample code for SST writer is:
 
  adios2::IO sstIO = adios.DeclareIO("SomeName");
  sstIO.SetEngine("SST");	
- adios2::Engine &sstWriter = sstIO.Open(filename, adios2::Mode::Write);	
+ adios2::Engine sstWriter = sstIO.Open(filename, adios2::Mode::Write);	
 
 The general goal of ADIOS2 is to ease the conversion of a file-based
 application to instead use a non-file streaming interconnect, for example,
