@@ -107,6 +107,12 @@ namespace cxx98
     }                                                                          \
                                                                                \
     template <>                                                                \
+    adios2::cxx98::ShapeID Variable<T>::ShapeID() const                        \
+    {                                                                          \
+        return (adios2::cxx98::ShapeID)adios2_variable_shapeid(m_Variable);    \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     Variable<T>::Variable(adios2_variable *variable) : m_Variable(variable)    \
     {                                                                          \
     }

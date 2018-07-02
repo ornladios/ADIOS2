@@ -88,6 +88,8 @@ void IO::AddOperator(Operator &op, const Params &parameters)
     m_IO.AddOperator(*op.m_Operator, parameters);
 }
 
+std::string IO::EngineType() const noexcept { return m_IO.m_EngineType; }
+
 // PRIVATE
 IO::IO(core::IO &io) : m_IO(io) {}
 

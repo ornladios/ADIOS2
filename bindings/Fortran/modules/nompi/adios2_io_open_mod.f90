@@ -21,10 +21,15 @@ contains
         integer, intent(in) :: adios2_mode
         integer, intent(out) :: ierr
 
-        engine%mode = adios2_mode
         call adios2_open_f2c(engine%f2c, io%f2c, TRIM(ADJUSTL(name))//char(0), &
                              adios2_mode, ierr)
-        if( ierr == 0 ) engine%valid = .true.
+
+        if( ierr == 0 ) then
+            engine%valid = .true.
+            engine%name = name
+            engine%type = io%engine_type
+            engine%mode = adios2_mode
+        end if
 
     end subroutine
 

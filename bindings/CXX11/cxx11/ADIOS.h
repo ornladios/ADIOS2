@@ -35,17 +35,55 @@ class ADIOS
 {
 
 public:
+    /**
+     * adios2 library starting point. Creates an ADIOS object allowing a runtime
+     * config file.
+     * @param configFile runtime config file
+     * @param mpiComm defines domain scope from application
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(const std::string &configFile, MPI_Comm mpiComm,
           const bool debugMode = true);
 
+    /**
+     * adios2 library starting point. Creates an ADIOS object.
+     * @param mpiComm defines domain scope from application
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(MPI_Comm mpiComm, const bool debugMode = true);
 
+    /**
+     * adios2 NON-MPI library starting point. Creates an ADIOS object allowing a
+     * runtime config file.
+     * @param configFile runtime config file
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(const std::string &configFile, const bool debugMode = true);
 
+    /**
+     * adios2 NON-MPI library starting point. Creates an ADIOS object
+     * @param debugMode true: extra user-input debugging information, false: run
+     * without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
     ADIOS(const bool debugMode = true);
 
-    /** true: valid object, false: invalid object */
+    /** object inspection true: valid object, false: invalid object */
     explicit operator bool() const noexcept;
+
+    /** prevents copy constructor, ADIOS is the only object that manages its own
+     * memory. Create a separate for independent tasks */
+    ADIOS(const ADIOS &) = delete;
 
     ~ADIOS() = default;
 
@@ -84,6 +122,8 @@ public:
      * @param type supported ADIOS2 operator
      * @param parameters key/value parameters at the operator level
      * @return Operator object
+     * @exception std::invalid_argument if library can't support current
+     * operator due to missing dependency
      */
     Operator DefineOperator(const std::string name, const std::string type,
                             const Params &parameters = Params());
@@ -95,6 +135,8 @@ public:
      * @param function C++11 callable target
      * @param parameters key/value parameters at the operator level
      * @return Operator object for Callback functions
+     * * @exception std::invalid_argument if library can't support current
+     * operator due to missing dependency or unsupported signature
      */
     template <class R, class... Args>
     Operator DefineOperator(const std::string name,

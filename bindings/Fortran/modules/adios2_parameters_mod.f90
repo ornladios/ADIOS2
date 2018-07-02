@@ -78,22 +78,31 @@ module adios2_parameters_mod
     type adios2_io
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
+        character(len=15):: engine_type = 'BPFile'
     end type
 
     type adios2_variable
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
+        character(len=1024):: name = ''
+        integer :: type = -1
+        integer :: ndims = -1
     end type
 
     type adios2_attribute
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
+        character(len=1024):: name = ''
+        integer :: type = -1
+        integer :: length = 0
     end type
 
     type adios2_engine
         integer(kind=8):: f2c = 0_8
-        integer :: mode = adios2_mode_undefined
         logical :: valid = .false.
+        character(len=1024):: name = ''
+        character(len=15):: type
+        integer :: mode = adios2_mode_undefined
     end type
 
     ! High-level API

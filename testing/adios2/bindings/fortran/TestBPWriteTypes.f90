@@ -109,8 +109,20 @@
      end do
 
      ! Open myVector_f.bp in write mode, this launches an engine
+     if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_io'
+     if( bpWriter%valid .eqv. .true. ) stop 'Invalid adios2_engine pre-open'
+
      call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
-     if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_open'
+
+     if( bpWriter%valid .eqv. .false. ) stop 'Invalid adios2_engine post-open'
+     if( TRIM(bpWriter%name) /= 'ftypes.bp') stop 'Invalid adios2_engine name'
+
+     if( TRIM(bpWriter%type) /= 'bpfile') then
+        write(*,*) 'Engine Type ', TRIM(bpWriter%type)
+        stop 'Invalid adios2_engine name'
+     end if
+
+     if( bpWriter%mode /= adios2_mode_write) stop 'Invalid adios2_engine mode'
 
      ! Put array contents to bp buffer, based on var1 metadata
      if (irank == 0) then

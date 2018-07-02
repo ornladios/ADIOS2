@@ -178,48 +178,60 @@ PYBIND11_MODULE(adios2, m)
         .value("OtherError", adios2::StepStatus::OtherError)
         .export_values();
 #ifdef ADIOS2_HAVE_MPI
-    m.def("ADIOS", &ADIOSInit, "Function that creates an ADIOS class object",
+    m.def("ADIOS", &ADIOSInit,
+          "adios2 module starting point, creates an ADIOS class object",
           pybind11::arg("object"), pybind11::arg("debugMode") = true);
 
-    m.def("ADIOS", &ADIOSInitConfig, "Function that creates an ADIOS class "
-                                     "object using a config file",
+    m.def("ADIOS", &ADIOSInitConfig, "adios2 module starting point, creates an "
+                                     "ADIOS class object including a runtime "
+                                     "config file",
           pybind11::arg("configFile") = "", pybind11::arg("object"),
           pybind11::arg("debugMode") = true);
 
-    m.def("open", &Open, "High-level file object open", pybind11::arg("name"),
-          pybind11::arg("mode"), pybind11::arg("object"),
+    m.def("open", &Open, "High-level API, file object open",
+          pybind11::arg("name"), pybind11::arg("mode"), pybind11::arg("object"),
           pybind11::arg("engineType") = "BPFile",
           pybind11::arg("parameters") = adios2::Params(),
           pybind11::arg("transportParameters") = adios2::vParams());
 
-    m.def("open", &OpenConfig, "High-level file object open with config file",
+    m.def("open", &OpenConfig,
+          "High-level API, file object open with a runtime config file",
           pybind11::arg("name"), pybind11::arg("mode"), pybind11::arg("object"),
           pybind11::arg("configFile"), pybind11::arg("ioInConfigFile"));
 
 #else
     m.def("ADIOS", &ADIOSInit,
-          "Function that creates an ADIOS class object in non MPI mode",
+          "adios2 module starting point NON MPI, creates an ADIOS class object",
           pybind11::arg("debugMode") = true);
 
     m.def("ADIOS", &ADIOSInitConfig,
-          "Function that creates an ADIOS class "
-          "object using a config file in non MPI mode",
+          "adios2 module starting point NON MPI, creates an "
+          "ADIOS class object including a runtime config file",
           pybind11::arg("configFile") = "", pybind11::arg("debugMode") = true);
 
-    m.def("open", &Open, "High-level file object open", pybind11::arg("name"),
-          pybind11::arg("mode"), pybind11::arg("engineType") = "BPFile",
+    m.def("open", &Open, "High-level API, file object open",
+          pybind11::arg("name"), pybind11::arg("mode"),
+          pybind11::arg("engineType") = "BPFile",
           pybind11::arg("parameters") = adios2::Params(),
           pybind11::arg("transportParameters") = adios2::vParams());
 
-    m.def("open", &OpenConfig, "High-level file object open with config file",
+    m.def("open", &OpenConfig,
+          "High-level API, file object open with a runtime config file",
           pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("configFile"), pybind11::arg("ioInConfigFile"));
 #endif
 
     pybind11::class_<adios2::py11::ADIOS>(m, "py11::ADIOS")
-        .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO)
-        .def("AtIO", &adios2::py11::ADIOS::AtIO)
-        .def("FlushAll", &adios2::py11::ADIOS::FlushAll);
+        .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO,
+             "spawn IO object component returning a IO object with a unique "
+             "name, throws an exception if IO with the same name is declared "
+             "twice")
+        .def("AtIO", &adios2::py11::ADIOS::AtIO, "returns an IO object "
+                                                 "previously defined IO object "
+                                                 "with DeclareIO, throws "
+                                                 "an exception if not found")
+        .def("FlushAll", &adios2::py11::ADIOS::FlushAll,
+             "flushes all engines in all spawned IO objects");
 
     pybind11::class_<adios2::core::VariableBase>(m, "Variable")
         .def("SetShape", &adios2::core::VariableBase::SetShape)
@@ -280,7 +292,8 @@ PYBIND11_MODULE(adios2, m)
                          adios2::py11::IO::Open)
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
-        .def("FlushAll", &adios2::py11::IO::FlushAll);
+        .def("FlushAll", &adios2::py11::IO::FlushAll)
+        .def("EngineType", &adios2::py11::IO::EngineType);
 
     pybind11::class_<adios2::py11::Engine>(m, "py11::Engine")
         .def("BeginStep", &adios2::py11::Engine::BeginStep,
@@ -317,6 +330,8 @@ PYBIND11_MODULE(adios2, m)
         .def("EndStep", &adios2::py11::Engine::EndStep)
         .def("Flush", &adios2::py11::Engine::Flush)
         .def("CurrentStep", &adios2::py11::Engine::CurrentStep)
+        .def("Name", &adios2::py11::Engine::Name)
+        .def("Type", &adios2::py11::Engine::Type)
         .def("Close", &adios2::py11::Engine::Close,
              pybind11::arg("transportIndex") = -1);
 

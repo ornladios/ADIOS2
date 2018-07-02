@@ -44,6 +44,15 @@ public:
         std::function<void(std::shared_ptr<core::Engine>)>;
 
 public:
+    /** from derived class */
+    const std::string m_EngineType;
+
+    /** Unique name for this Engine within m_IO */
+    const std::string m_Name;
+
+    /** open mode from ADIOSTypes.h OpenMode */
+    const Mode m_OpenMode;
+
     /**
      * Unique Base class constructor
      * @param engineType derived class identifier
@@ -308,17 +317,8 @@ public:
     void FixedSchedule() noexcept;
 
 protected:
-    /** from derived class */
-    const std::string m_EngineType;
-
     /** IO class object that creates this Engine at Open */
     IO &m_IO;
-
-    /** Unique name for this Engine within m_IO */
-    const std::string m_Name;
-
-    /** open mode from ADIOSTypes.h OpenMode */
-    const Mode m_OpenMode;
 
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */

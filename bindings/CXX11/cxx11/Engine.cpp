@@ -27,6 +27,18 @@ Engine::operator bool() const noexcept
     return *m_Engine ? true : false;
 }
 
+std::string Engine::Name() const
+{
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Name");
+    return m_Engine->m_Name;
+}
+
+std::string Engine::Type() const
+{
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Type");
+    return m_Engine->m_EngineType;
+}
+
 StepStatus Engine::BeginStep()
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");

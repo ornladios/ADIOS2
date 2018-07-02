@@ -35,6 +35,13 @@ const char *adios2_variable_name(const adios2_variable *variable,
 adios2_type adios2_variable_type(const adios2_variable *variable);
 
 /**
+ * Retrieve variable shapeid
+ * @param variable handler
+ * @return shapeid enum type
+ */
+adios2_shapeid adios2_variable_shapeid(const adios2_variable *variable);
+
+/**
  * Check if dimensions are constant
  * @param variable
  * @return 0: false (dimensions are not constant), 1: true dimensions are

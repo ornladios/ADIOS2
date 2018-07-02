@@ -54,6 +54,9 @@ public:
 
     size_t CurrentStep() const;
 
+    std::string Name() const noexcept;
+    std::string Type() const noexcept;
+
 private:
     core::Engine &m_Engine;
     const bool m_DebugMode;
