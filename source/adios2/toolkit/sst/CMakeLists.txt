@@ -13,6 +13,11 @@ add_library(sst
 if(ADIOS2_SST_HAVE_LIBFABRIC)
   target_sources(sst PRIVATE dp/rdma_dp.c)
   target_link_libraries(sst PRIVATE libfabric::libfabric)
+  set(CMAKE_REQUIRED_INCLUDES ${LIBFABRIC_INCLUDE_DIRS})
+  CHECK_INCLUDE_FILE(rdma/fi_ext_gni.h ADIOS2_SST_HAVE_FI_GNI)
+  if(ADIOS2_SST_HAVE_CRAY_DRC)
+    target_link_libraries(sst PRIVATE craydrc::craydrc)
+  endif()
 endif()
 
 # Set library version information
@@ -27,6 +32,8 @@ set_target_properties(sst PROPERTIES
 #------------------------------------------------------------------------------#
 set(SST_CONFIG_OPTS
   LIBFABRIC
+  FI_GNI
+  CRAY_DRC
 )
 include(SSTFunctions)
 GenerateSSTHeaderConfig(${SST_CONFIG_OPTS})
