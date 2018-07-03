@@ -212,10 +212,6 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
     }
 
     EXPECT_EQ(t, NSteps);
-    std::cout << "write times stores " << int(write_times.size())
-              << " numbers.\n";
-    for (auto i = write_times.begin(); i != write_times.end(); ++i)
-        std::cout << *i << ' ';
 
     if ((write_times.back() - write_times.front()) > 1)
     {

@@ -1676,13 +1676,15 @@ void *data;
 #if SIZEOF_LONG == 8
 	memcpy(&u.p, data, 8);
 #else
-	int tmp;
-	/* must be fetching 4 bytes of the 8 available */
-	if (WORDS_BIGENDIAN)
+	{
+	  int tmp;
+	  /* must be fetching 4 bytes of the 8 available */
+	  if (WORDS_BIGENDIAN)
 	    memcpy(&tmp, data + 4, 4);
-	else
+	  else
 	    memcpy(&tmp, data, 4);
-	u.tmp = (unsigned long) tmp;
+	  u.tmp = (unsigned long) tmp;
+	}
 #endif
 	break;
     }
