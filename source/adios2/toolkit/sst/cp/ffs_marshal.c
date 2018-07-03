@@ -1280,6 +1280,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     FMFieldList FieldList;
     FMStructDescList FormatList;
     void *BaseData;
+    static int DumpMetadata = -1;
 
     /* incoming metadata is all of our information about what was written
      * and is available to be read.  We'll process the data from each node
@@ -1347,8 +1348,17 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
         FFSdecode_to_buffer(Stream->ReaderFFSContext,
                             MetaData->Metadata[WriterRank]->block, decode_buf);
     }
-    // printf("\nIncomingMetadatablock is %p :\n", BaseData);
-    // FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
+    if (DumpMetadata == -1)
+    {
+        DumpMetadata = (getenv("SstDumpMetadata") != NULL);
+    }
+    if (DumpMetadata && (Stream->Rank == 0))
+    {
+        printf("\nIncomingMetadatablock from WriterRank %d is %p :\n",
+               WriterRank, BaseData);
+        FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
+        printf("\n\n");
+    }
     Info->MetadataBaseAddrs[WriterRank] = BaseData;
     FormatList = format_list_of_FMFormat(FMFormat_of_original(FFSformat));
     FieldList = FormatList[0].field_list;
