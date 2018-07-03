@@ -147,7 +147,7 @@ static void null_init(dill_stream s)
 static int
 set_mach_reset(dill_stream s, char *arch)
 {
-#if defined(MULTI_TARGET) || defined(HOST_SPARC) || defined(HOST_SPARCV9)
+#if (defined(MULTI_TARGET) || defined(HOST_SPARC) || defined(HOST_SPARCV9)) && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "sparc") == 0) {
 	s->p->mach_reset = dill_sparc_init;
 	return 1;
@@ -156,55 +156,55 @@ set_mach_reset(dill_stream s, char *arch)
 	return 1;
     } else 
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_X86)
+#if (defined(MULTI_TARGET) || defined(HOST_X86))  && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "x86") == 0) {
 	s->p->mach_reset = dill_x86_init;
 	return 1;
     } else 
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_X86_64)
+#if (defined(MULTI_TARGET) || defined(HOST_X86_64)) && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "x86_64") == 0) {
 	s->p->mach_reset = dill_x86_64_init;
 	return 1;
     } else 
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_IA64)
+#if (defined(MULTI_TARGET) || defined(HOST_IA64)) && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "ia64") == 0) {
 	s->p->mach_reset = dill_ia64_init;
 	return 1;
     } else 
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_ARM5)
+#if (defined(MULTI_TARGET) || defined(HOST_ARM5)) && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "arm5") == 0) {
 	s->p->mach_reset = dill_arm5_init;
 	return 1;
     }
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_ARM6)|| defined(HOST_ARM7)
+#if (defined(MULTI_TARGET) || defined(HOST_ARM6)|| defined(HOST_ARM7)) && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "arm6") == 0) {
 	s->p->mach_reset = dill_arm6_init;
 	return 1;
     }
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_ARM7)
+#if (defined(MULTI_TARGET) || defined(HOST_ARM7)) && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "arm7") == 0) {
 	s->p->mach_reset = dill_arm6_init;
 	return 1;
     }
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_ARM8)
+#if (defined(MULTI_TARGET) || defined(HOST_ARM8)) && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "arm8") == 0) {
 	s->p->mach_reset = dill_arm8_init;
 	return 1;
     }
 #endif
-#if defined(MULTI_TARGET) || defined(HOST_PPC64LE)
+#if (defined(MULTI_TARGET) || defined(HOST_PPC64LE)) && !defined(DILL_IGNORE_NATIVE)
     if (strcmp(arch, "ppc64le") == 0) {
 	s->p->mach_reset = dill_ppc64le_init;
 	return 1;
     }
 #endif
-#if defined(EMULATION_ONLY)
+#if defined(EMULATION_ONLY) || defined(DILL_IGNORE_NATIVE)
     s->p->mach_reset = null_init;
     return 1;
 #endif

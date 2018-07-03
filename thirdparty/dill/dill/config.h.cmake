@@ -149,6 +149,9 @@
 /* Define if using ARMv7 hardware */
 #cmakedefine ARMV7_AVAILABLE
 
+/* Define if we shouldn't use native DCG */
+#cmakedefine DILL_IGNORE_NATIVE
+
 /* Define to `__inline__' or `__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus

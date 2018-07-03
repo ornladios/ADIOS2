@@ -81,27 +81,27 @@ dill_package_stitch(char *pkg, dill_extern_entry* extra_externs)
     if (extra_externs) {
 	dill_lookup_xfer_addrs(&t, (xfer_entry *)extra_externs);
     }
-#if defined(HOST_X86)
+#if defined(HOST_X86) && !defined(DILL_IGNORE_NATIVE)
     char *p = x86_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_SPARC)
+#elif defined(HOST_SPARC) && !defined(DILL_IGNORE_NATIVE)
     char *p = sparc_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_SPARCV9)
+#elif defined(HOST_SPARCV9) && !defined(DILL_IGNORE_NATIVE)
     char *p = sparc_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_X86_64)
+#elif defined(HOST_X86_64) && !defined(DILL_IGNORE_NATIVE)
     char *p = x86_64_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_IA64)
+#elif defined(HOST_IA64) && !defined(DILL_IGNORE_NATIVE)
     char *p = ia64_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_ARM5)
+#elif defined(HOST_ARM5) && !defined(DILL_IGNORE_NATIVE)
     char *p = arm5_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_ARM6)
+#elif defined(HOST_ARM6) && !defined(DILL_IGNORE_NATIVE)
     char *p = arm6_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_ARM7)
+#elif defined(HOST_ARM7) && !defined(DILL_IGNORE_NATIVE)
     char *p = arm6_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_ARM8)
+#elif defined(HOST_ARM8) && !defined(DILL_IGNORE_NATIVE)
     char *p = arm8_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_POWERPC)
+#elif defined(HOST_POWERPC) && !defined(DILL_IGNORE_NATIVE)
     char *p = powerpc_package_stitch(code, &t, (dill_pkg) pkg);
-#elif defined(HOST_PPC64LE)
+#elif defined(HOST_PPC64LE) && !defined(DILL_IGNORE_NATIVE)
     char *p = ppc64le_package_stitch(code, &t, (dill_pkg) pkg);
 #else
     char *p = NULL;
