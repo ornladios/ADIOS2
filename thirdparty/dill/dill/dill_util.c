@@ -102,6 +102,10 @@ dill_ret_init(dill_stream s)
 
     t->ret_count = 0;
 }
+#ifdef BUILD_EMULATOR
+#include "ffi.h"
+void free_emulator_handler_bits(dill_exec_handle handle);
+#endif
 
 static void
 reset_context(dill_stream s)

@@ -192,10 +192,13 @@ find_package (LibFFI PATHS ${CMAKE_INSTALL_PREFIX} QUIET)
 IF (LIBFFI_FOUND) 
   set (EMULATION_POSSIBLE true)
 ELSEIF (DILL_IGNORE_NATIVE)
+  set(FFI_PREFIX_DIR ${CMAKE_BINARY_DIR}/libffi)
+  set(FFI_SRC_DIR ${FFI_PREFIX_DIR}/src/LibFFI)
+  set(FFI_INSTALL_DIR ${FFI_PREFIX_DIR}/install)
   ExternalProject_Add(LibFFI
-    PREFIX ${PROJECT_BINARY_DIR}/libffi
+    PREFIX ${FFI_PREFIX_DIR}
     GIT_REPOSITORY https://github.com/libffi/libffi.git
-    CONFIGURE_COMMAND pwd COMMAND ./autogen.sh COMMAND ./configure --prefix=<INSTALL_DIR>
+    CONFIGURE_COMMAND cd ${FFI_SRC_DIR} && ./autogen.sh COMMAND ${FFI_SRC_DIR}/configure --prefix=${FFI_PREFIX_DIR}
     )
   set (EMULATION_POSSIBLE true)
   ExternalProject_Get_property(LibFFI install_dir)
@@ -336,6 +339,9 @@ set(DILL_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(DILL_LIBRARY_PREFIX)
 
 add_library(dill ${SRC_LIST})
+if (FFI_PREFIX_DIR)
+  add_dependencies (dill LibFFI)
+endif()
 set_target_properties(dill PROPERTIES
   OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill
   VERSION ${DILL_VERSION}

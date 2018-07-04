@@ -228,12 +228,12 @@ setup_VM_proc(dill_stream c)
 	    args[i] = &ffi_type_void;
 	}
     }
-    if (!ffi_prep_cif(cifp, FFI_DEFAULT_ABI, c->p->c_param_count,
-		      ret_type, args) == FFI_OK) {
+    if (ffi_prep_cif(cifp, FFI_DEFAULT_ABI, c->p->c_param_count,
+		      ret_type, args) != FFI_OK) {
 	return;
     }
-    if (!ffi_prep_closure_loc(closure, cifp, emu_func,
-			      c, func) == FFI_OK) {
+    if (ffi_prep_closure_loc(closure, cifp, emu_func,
+			      c, func) != FFI_OK) {
 
 	return;
     }
