@@ -116,12 +116,11 @@ The template functions DefineVariable<T> allows subscribing self-describing data
     
     /** Signature */
     adios2::Variable<T> 
-        DefineVariable<T>(const std::string &name, 
-                          const adios2::Dims& shape = {}, 
-                          const adios2::Dims& start = {}, 
-                          const adios2::Dims& count = {}, 
-                          const bool constantDims = false, 
-                          T* data = nullptr);
+        DefineVariable<T>(const std::string name, 
+                          const adios2::Dims &shape = {}, // Shape of global object
+                          const adios2::Dims &start = {}, // Where to begin writing
+                          const adios2::Dims &count = {}, // Where to end writing
+                          const bool constantDims = false); 
                                 
     /** Example */
     /** global array of floats with constant dimensions */
@@ -210,12 +209,12 @@ The ``IO::Open`` function creates a new derived object of the abstract Engine cl
         
     /** Signatures */
     /** Provide a new MPI communicator other than from ADIOS->IO->Engine */
-    adios2::Engine adios2::IO::Open( const std::string& name, 
+    adios2::Engine adios2::IO::Open( const std::string &name, 
                                       const adios2::Mode mode, 
                                       MPI_Comm mpiComm );
 
     /** Reuse the MPI communicator from ADIOS->IO->Engine \n or non-MPI serial mode */
-    adios2::Engine adios2::IO::Open(const std::string& name, 
+    adios2::Engine adios2::IO::Open(const std::string &name, 
                                      const adios2::Mode mode);
     
     

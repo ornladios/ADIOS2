@@ -62,8 +62,8 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
       if( rank == 0 ) 
       {
-         adios2::Variable<unsigned int>& varNodes = adios2::DefineVariable<unsigned int>("Nodes");
-         adios2::Variable<std::string>& varFlag = adios2::DefineVariable<std::string>("Nodes flag");
+         adios2::Variable<unsigned int> varNodes = adios2::DefineVariable<unsigned int>("Nodes");
+         adios2::Variable<std::string> varFlag = adios2::DefineVariable<std::string>("Nodes flag");
          // ...
          engine.PutDeferred( varNodes, nodes );
          engine.PutDeferred( varFlag, "increased" );
@@ -90,7 +90,7 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
    .. code-block:: c++
 
-      adios2::Variable<int> &varProcessID =
+      adios2::Variable<int> varProcessID =
             io.DefineVariable<int>("ProcessID", {adios2::LocalValueDim})   
       //...
       engine.PutDeferred<int>(varProcessID, rank);
@@ -105,7 +105,7 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
    .. code-block:: c++
    
-      adios2::Variable<double> &varTable = io.DefineVariable<double>(
+      adios2::Variable<double> varTable = io.DefineVariable<double>(
             "table", {adios2::JoinedDim, Ncolumns}, {}, {Nrows, Ncolumns});
 
    .. note::
@@ -115,11 +115,6 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
    .. note: 
       
       The local dimension size in the joinable dimension is allowed to change over time within each processor. However, if the sum of all local sizes changes over time, the result will look like a local array. Since global arrays with changing global dimension over time can only be handled as local arrays in ADIOS2.
-
-
-.. tip::
-   
-   Use the reference (&) versions (as in the examples above) of PutDeferred/PutSync to pass single values. This doesn't apply to GetDeferred and GetSync, as they always need a pointer (memory space) to place variable data, not a temporary rvalue.
 
 
 .. note::
