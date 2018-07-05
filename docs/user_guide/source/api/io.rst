@@ -61,7 +61,7 @@ Each Engine allows the user to fine tune execution of buffering and output tasks
 
     /** Signature */
     /** Passing several parameters at once */
-    void SetParameters(const adios2:Params parameters);
+    void SetParameters(const adios2:Params& parameters);
     /** Passing one parameter key-value pair at a time */
     void SetParameter(const std::string key, const std::string value);
 
@@ -84,7 +84,7 @@ The AddTransport function returns an unsigned int handler for each transport tha
 
     /** Signature */
     unsigned int AddTransport( const std::string transportType,                 
-                               const adios2::Params parameters );
+                               const adios2::Params& parameters );
     
     /** Examples */
     const unsigned int file1 = io.AddTransport( "File", 
@@ -138,12 +138,12 @@ Attributes are extra-information associated with the current IO object. The func
     /** Signatures */
     
     /** Single value */
-    adios2::Attribute<T> DefineAttribute(const std::string name, 
-                                  const T value);
+    adios2::Attribute<T> DefineAttribute(const std::string &name, 
+                                  const T &value);
     
     /** Arrays */
-    adios2::Attribute<T> DefineAttribute(const std::string name, 
-                                  const T array,
+    adios2::Attribute<T> DefineAttribute(const std::string &name, 
+                                  const T *array,
                                   const size_t elements);
 
 In situations in which a variable and attribute has been previously defined:
@@ -152,8 +152,8 @@ In situations in which a variable and attribute has been previously defined:
 .. code-block:: c++
 
     /** Signature */
-    adios2::Variable<T> InquireVariable<T>(const std::string name) noexcept;
-    adios2::Attribute<T> InquireAttribute<T>(const std::string name) noexcept;
+    adios2::Variable<T> InquireVariable<T>(const std::string &name) noexcept;
+    adios2::Attribute<T> InquireAttribute<T>(const std::string &name) noexcept;
     
     /** Example */
     adios2::Variable<float> varPressure = io.InquireVariable<T>("pressure");
@@ -180,10 +180,10 @@ Removing Variables and Attributes can be done in a on-by-one basis or by removin
 .. code-block:: c++
     
     /** Signature */
-    bool IO::RemoveVariable(const std::string name) noexcept;
+    bool IO::RemoveVariable(const std::string &name) noexcept;
     void IO::RemoveAllVariables( ) noexcept;
     
-    bool IO::RemoveAttribute(const std::string name) noexcept;
+    bool IO::RemoveAttribute(const std::string &name) noexcept;
     void IO::RemoveAllAttributes( ) noexcept;
  
 .. caution::
@@ -209,12 +209,12 @@ The ``IO::Open`` function creates a new derived object of the abstract Engine cl
         
     /** Signatures */
     /** Provide a new MPI communicator other than from ADIOS->IO->Engine */
-    adios2::Engine adios2::IO::Open( const std::string name, 
+    adios2::Engine adios2::IO::Open( const std::string &name, 
                                       const adios2::Mode mode, 
                                       MPI_Comm mpiComm );
 
     /** Reuse the MPI communicator from ADIOS->IO->Engine \n or non-MPI serial mode */
-    adios2::Engine adios2::IO::Open(const std::string name, 
+    adios2::Engine adios2::IO::Open(const std::string &name, 
                                      const adios2::Mode mode);
     
     
