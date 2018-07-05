@@ -62,8 +62,8 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
       if( rank == 0 ) 
       {
-         adios2::Variable<unsigned int> varNodes = adios2::DefineVariable<unsigned int>("Nodes");
-         adios2::Variable<std::string> varFlag = adios2::DefineVariable<std::string>("Nodes flag");
+         adios2::Variable<unsigned int>& varNodes = adios2::DefineVariable<unsigned int>("Nodes");
+         adios2::Variable<std::string>& varFlag = adios2::DefineVariable<std::string>("Nodes flag");
          // ...
          engine.PutDeferred( varNodes, nodes );
          engine.PutDeferred( varFlag, "increased" );
