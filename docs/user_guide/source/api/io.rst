@@ -117,9 +117,9 @@ The template functions DefineVariable<T> allows subscribing self-describing data
     /** Signature */
     adios2::Variable<T> 
         DefineVariable<T>(const std::string name, 
-                          const adios2::Dims shape = {}, // Shape of global object
-                          const adios2::Dims start = {}, // Where to begin writing
-                          const adios2::Dims count = {}, // Where to end writing
+                          const adios2::Dims &shape = {}, // Shape of global object
+                          const adios2::Dims &start = {}, // Where to begin writing
+                          const adios2::Dims &count = {}, // Where to end writing
                           const bool constantDims = false); 
                                 
     /** Example */
