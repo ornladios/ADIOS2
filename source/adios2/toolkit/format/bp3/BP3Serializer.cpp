@@ -642,7 +642,7 @@ void BP3Serializer::SerializeDataBuffer(core::IO &io) noexcept
 
     // attributes are only written once
 
-    if (m_RankMPI == 0 && !m_MetadataSet.AreAttributesWritten)
+    if (!m_MetadataSet.AreAttributesWritten)
     {
         const size_t attributesSizeInData = GetAttributesSizeInData(io);
         m_Data.Resize(position + attributesSizeInData,
