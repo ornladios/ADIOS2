@@ -3,17 +3,9 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(basics)
-add_subdirectory(hello)
-add_subdirectory(useCases)
+add_executable(insituGlobalArraysWriter insituGlobalArraysWriter.cpp)
+target_link_libraries(insituGlobalArraysWriter adios2)
 
 if(ADIOS2_HAVE_MPI)
-  add_subdirectory(heatTransfer)
-endif()
-
-add_subdirectory(plugins)
-add_subdirectory(highLevelAPI)
-
-if(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL)
-  add_subdirectory(experimental)
+  target_link_libraries(insituGlobalArraysWriter MPI::MPI_C)
 endif()
