@@ -3,7 +3,7 @@
  * accompanying file Copyright.txt for details.
  *
  * A Use Case for In Situ visulization frameworks (Conduit, SENSEI)
- * 
+ *
  * Each processor contributes to a subset of all variables
  * Each variable is written by a subset of all processes
  * The per-writer-blocks in a variable have different sizes
@@ -11,8 +11,9 @@
  *
  * We still define the variables in this writer as global arrays but
  * with k+1 dimensions for each variable, where the extra dimension is
- * used as an index to the writer blocks. The other dimensions are 
- * defined as huge numbers to cover all possible dimension sizes on each process.
+ * used as an index to the writer blocks. The other dimensions are
+ * defined as huge numbers to cover all possible dimension sizes on each
+ * process.
  *
  * The reader needs to discover the content of each variable block-by-block.
  * It cannot rely on the global shape of the variable as most of it is empty.
@@ -42,25 +43,17 @@ const int BIGDIM = 1000;
    c: size 10, written by rank 0 (5 elements) and rank 3 (5 elements)
    d: size 7,  written by rank 1 (3 elements) and rank 2 (4 elements)
 
-   Variables in the output: 
+   Variables in the output:
    2D arrays, 4 x BIGDIM
 */
 
 // Which process writes which variables
 std::vector<std::vector<std::string>> VarTree = {
-    { "a", "b", "c"}, 
-    { "a", "d" },
-    { "b", "d" },
-    { "c" }
-};
+    {"a", "b", "c"}, {"a", "d"}, {"b", "d"}, {"c"}};
 
 // What size of data do they write
 std::vector<std::vector<size_t>> SizesTree = {
-    { 5, 5, 5 },
-    { 3, 3 },
-    { 4, 4 },
-    { 5, 5 }
-};
+    {5, 5, 5}, {3, 3}, {4, 4}, {5, 5}};
 
 int main(int argc, char *argv[])
 {
@@ -72,11 +65,13 @@ int main(int argc, char *argv[])
 #endif
 
     const int maxProc = VarTree.size();
-    if (nproc > maxProc) 
+    if (nproc > maxProc)
     {
         if (!rank)
         {
-            std::cout << "ERROR: Maximum number of processors for this example is " << maxProc << std::endl;
+            std::cout
+                << "ERROR: Maximum number of processors for this example is "
+                << maxProc << std::endl;
         }
         exit(1);
     }
@@ -91,7 +86,7 @@ int main(int argc, char *argv[])
     const int nvars = VarTree[rank].size();
     // A 1D array for each variable
     std::vector<std::vector<double>> Vars(nvars);
-    for (int i=0; i < nvars; i++) 
+    for (int i = 0; i < nvars; i++)
     {
         Vars[i].resize(SizesTree[rank][i]);
     }
@@ -101,12 +96,12 @@ int main(int argc, char *argv[])
     try
     {
         adios2::IO io = adios.DeclareIO("Output");
-        for (int i=0; i < nvars; i++) 
+        for (int i = 0; i < nvars; i++)
         {
             size_t nelems = SizesTree[rank][i];
             Vars[i].resize(nelems);
-            ADIOSVars[i] = 
-            io.DefineVariable<double>(VarTree[rank][i], {(unsigned int)nproc, BIGDIM});
+            ADIOSVars[i] = io.DefineVariable<double>(
+                VarTree[rank][i], {(unsigned int)nproc, BIGDIM});
         }
 
         adios2::Engine writer = io.Open("output.bp", adios2::Mode::Write);
@@ -115,7 +110,7 @@ int main(int argc, char *argv[])
         {
             writer.BeginStep();
 
-            for (int i=0; i < nvars; i++) 
+            for (int i = 0; i < nvars; i++)
             {
                 size_t nelems = SizesTree[rank][i];
                 for (int j = 0; j < nelems; j++)
@@ -127,7 +122,8 @@ int main(int argc, char *argv[])
                 // variable we write and its offsets in the global spaces
                 // adios2::SelectionBoundingBox sel();
                 ADIOSVars[i].SetSelection(adios2::Box<adios2::Dims>(
-                            {static_cast<size_t>(rank), 0}, {1, static_cast<size_t>(nelems)}));
+                    {static_cast<size_t>(rank), 0},
+                    {1, static_cast<size_t>(nelems)}));
                 writer.Put<double>(ADIOSVars[i], Vars[i].data());
             }
 
