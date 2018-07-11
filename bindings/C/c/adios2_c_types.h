@@ -36,7 +36,10 @@ typedef enum {
     adios2_constant_dims_true = 1,
 } adios2_constant_dims;
 
-const int adios2_advance_step = 1;
+typedef enum {
+    adios2_advance_step_false = 0,
+    adios2_advance_step_true = 1,
+} adios2_advance_step;
 
 typedef enum {
     adios2_type_unknown = -1,
