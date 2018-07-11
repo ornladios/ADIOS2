@@ -31,10 +31,9 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
     const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
                               "ADIOS2BPWriteAttributeReadArrayTypes.bp";
 
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     // a different variable and associated attribute on each rank
