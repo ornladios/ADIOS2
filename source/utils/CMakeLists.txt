@@ -9,9 +9,14 @@ target_link_libraries(bpls2 adios2 adios2sys_interface)
 install(TARGETS bpls2 EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/bpls2/bpls2.cmake.gen.in
+  ${PROJECT_BINARY_DIR}/bpls2.cmake.gen
+  @ONLY
+)
 file(GENERATE
   OUTPUT ${PROJECT_BINARY_DIR}/bpls2.cmake
-  INPUT ${CMAKE_CURRENT_SOURCE_DIR}/bpls2/bpls2.cmake.gen
+  INPUT ${PROJECT_BINARY_DIR}/bpls2.cmake.gen
 )
 
 # ADIOS2_REORGANIZE
