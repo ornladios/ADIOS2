@@ -109,6 +109,54 @@ template <class T>
 void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
             const std::string hint, T value = T());
 
+/**
+ * Author:Shawn Yang, shawnyang610@gmail.com
+ * Copys n-dimensional Data from a source buffer to destination buffer, either
+ * can be of any Major and Endianess. return 1 if no overlap is found.
+ * Copying between same major and endianess yields the best speed. The
+ * optimization is achived by, first: looks for the largest contiguous data
+ * block size and copies the block of data as a whole.
+ * second By using dynamic, depth-first traversal, The overhead for memory
+ * address calculation for each copied block is reduced to O(1) from O(n).
+ * which means copying speed is drastically improved for data of higher
+ * dimensions.
+ * For copying between buffers of diffenrent majors or endianesses, only the
+ * second optimization is applied.
+ * @param in pointer to source memory buffer
+ * @param inStart source data starting offset
+ * @param inCount source data structure
+ * @param out pointer to destination memory buffer
+ * @param outStart source data starting offset
+ * @param outCount destination data structure
+ * @param revMajor
+ * @param revEndianess
+ */
+template <class T>
+int NdCopy(const Buffer &in, const Dims &inStart, const Dims &inCount,
+           Buffer &out, const Dims &outStart, const Dims &outCount,
+           const bool revMajor, const bool revEndianess);
+
+void NdCopyRecurCoreFast(size_t curDim, char *&inOvlpBase, char *&outOvlpBase,
+                         Dims &inOvlpGapSize, Dims &outOvlpGapSize,
+                         Dims &ovlpCount, size_t minContDim, size_t blockSize);
+
+void NdCopyRecurCoreRevEndian(size_t curDim, char *&inOvlpBase,
+                              char *&outOvlpBase, Dims &inOvlpGapSize,
+                              Dims &outOvlpGapSize, Dims &ovlpCount,
+                              size_t minCountDim, size_t blockSize,
+                              size_t elmSize, size_t numElmsPerBlock);
+
+void NdCopyRecurCoreRevMajor(size_t curDim, char *inBase, char *outBase,
+                             Dims &inRltvOvlpSPos, Dims &outRltvOvlpSPos,
+                             Dims &inStride, Dims &outStride, Dims &ovlpCount,
+                             size_t elmSize);
+
+void NdCopyRecurCoreRevMajorRevEndian(size_t curDim, char *inBase,
+                                      char *outBase, Dims &inRltvOvlpSPos,
+                                      Dims &outRltvOvlpSPos, Dims &inStride,
+                                      Dims &outStride, Dims &ovlpCount,
+                                      size_t elmSize);
+
 } // end namespace helper
 } // end namespace adios2
 
