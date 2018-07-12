@@ -57,12 +57,12 @@ jobs:
   "suse-pgi":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:suse-pgi
+      - image: ornladios/adios2-auto:suse-pgi
 
   "suse-pgi-openmpi":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:suse-pgi-openmpi
+      - image: ornladios/adios2-auto:suse-pgi-openmpi
 
   "fedora-ubsan":
     <<: *defaults
