@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.6)
+
 if(OUTPUT_FILE)
   set(output_arg OUTPUT_FILE "${OUTPUT_FILE}")
 endif()
@@ -5,8 +7,13 @@ if(ERROR_FILE)
   set(error_arg ERROR_FILE "${ERROR_FILE}")
 endif()
 
+if(@ADIOS2_HAVE_MPI@)
+  set(cmd_executor @MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ 1)
+else()
+  set(cmd_executor)
+endif()
 execute_process(
-  COMMAND $<TARGET_FILE:bpls2> ${ARGS} ${INPUT_FILE}
+  COMMAND ${cmd_executor} $<TARGET_FILE:bpls2> ${ARGS} ${INPUT_FILE}
   RESULT_VARIABLE result
   ${output_arg}
   ${error_arg}

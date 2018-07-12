@@ -3,13 +3,16 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+set(extra_test_args)
+
 add_executable(TestManyVars manyVars.cpp)
-target_link_libraries(TestManyVars adios2 gtest)
+target_link_libraries(TestManyVars adios2 gtest_interface)
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestManyVars MPI::MPI_C)
+  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 endif()
 
-gtest_add_tests(TARGET TestManyVars)
+gtest_add_tests(TARGET TestManyVars ${extra_test_args})
 
 if(ADIOS2_HAVE_MPI)
   # Pure C code, not added to test, 
