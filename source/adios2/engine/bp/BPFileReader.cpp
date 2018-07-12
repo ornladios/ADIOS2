@@ -204,6 +204,22 @@ void BPFileReader::DoClose(const int transportIndex)
     m_FileManager.CloseFiles();
 }
 
+#define declare_type(T)                                                        \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    BPFileReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
+    {                                                                          \
+        return AllStepsBlocksInfoCommon(variable);                             \
+    }                                                                          \
+                                                                               \
+    std::vector<typename Variable<T>::Info> BPFileReader::DoBlocksInfo(        \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        return BlocksInfoCommon(variable, step);                               \
+    }
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

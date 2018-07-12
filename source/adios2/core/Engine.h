@@ -316,6 +316,35 @@ public:
      */
     void FixedSchedule() noexcept;
 
+    /**
+     * Extracts all available blocks information for a particular
+     * variable. This can be an expensive function, memory scales up with
+     * metadata: steps and blocks per step
+     * Valid in read mode only.
+     * @param variable
+     * @return map with all variable blocks information
+     * <pre>
+     * 	  key: step
+     * 	  value: vector of blocks with info for each block per step
+     * </pre>
+     */
+    template <class T>
+    std::map<size_t, std::vector<typename Variable<T>::Info>>
+    AllStepsBlocksInfo(const Variable<T> &variable) const;
+
+    /**
+     * Extracts all available blocks information for a particular
+     * variable and step.
+     * Valid in read mode only.
+     * @param variable input variable
+     * @param step input from which block information is extracted
+     * @return vector of blocks with info for each block per step, if step not
+     * found it returns an empty vector
+     */
+    template <class T>
+    std::vector<typename Variable<T>::Info>
+    BlocksInfo(const Variable<T> &variable, const size_t step) const;
+
 protected:
     /** IO class object that creates this Engine at Open */
     IO &m_IO;
@@ -380,6 +409,16 @@ protected:
     Variable<T> &FindVariable(const std::string &variableName,
                               const std::string hint);
 
+#define declare_type(T)                                                        \
+    virtual std::map<size_t, std::vector<typename Variable<T>::Info>>          \
+    DoAllStepsBlocksInfo(const Variable<T> &variable) const;                   \
+                                                                               \
+    virtual std::vector<typename Variable<T>::Info> DoBlocksInfo(              \
+        const Variable<T> &variable, const size_t step) const;
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 private:
     /** Throw exception by Engine virtual functions not implemented/supported by
      *  a derived  class */
@@ -429,7 +468,13 @@ private:
                                         const Mode);                           \
                                                                                \
     extern template Variable<T> &Engine::FindVariable(                         \
-        const std::string &variableName, const std::string hint);
+        const std::string &variableName, const std::string hint);              \
+                                                                               \
+    extern template std::map<size_t, std::vector<typename Variable<T>::Info>>  \
+    Engine::AllStepsBlocksInfo(const Variable<T> &variable) const;             \
+                                                                               \
+    extern template std::vector<typename Variable<T>::Info>                    \
+    Engine::BlocksInfo(const Variable<T> &variable, const size_t step) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

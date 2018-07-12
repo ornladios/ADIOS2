@@ -95,6 +95,18 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
     m_Engine->Get<T>(variableName, dataV, launch);
 }
 
+template <class T>
+std::map<size_t, std::vector<typename Variable<T>::Info>>
+Engine::AllStepsBlocksInfo(const Variable<T> variable) const
+{
+}
+
+template <class T>
+std::vector<typename Variable<T>::Info>
+Engine::BlocksInfo(const Variable<T> variable, const size_t step) const
+{
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_TCC_ */

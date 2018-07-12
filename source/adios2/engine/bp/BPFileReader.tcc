@@ -108,6 +108,39 @@ void BPFileReader::ReadVariableBlocks(Variable<T> &variable)
     }
 }
 
+template <class T>
+std::map<size_t, std::vector<typename Variable<T>::Info>>
+BPFileReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
+{
+    const size_t steps = variable.m_AvailableStepBlockIndexOffsets.size();
+
+    std::map<size_t, std::vector<typename Variable<T>::Info>> stepsBlocksInfo;
+    stepsBlocksInfo.reserve(steps);
+
+    for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
+    {
+        const size_t step = pair.first;
+        const std::vector<size_t> &blockPositions = pair.second;
+
+        stepsBlocksInfo.push_back(
+            {step, m_BP3Deserializer.BlocksInfo(variable, blockPositions)});
+    }
+}
+
+template <class T>
+std::vector<typename Variable<T>::Info>
+BPFileReader::BlocksInfoCommon(const Variable<T> &variable,
+                               const size_t step) const
+{
+    auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step);
+    if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
+    {
+        return std::vector<typename Variable<T>::Info>();
+    }
+
+    return m_BP3Deserializer.BlocksInfo(variable, itStep->second);
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

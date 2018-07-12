@@ -143,6 +143,16 @@ public:
      */
     std::vector<OperatorInfo> OperatorsInfo() const noexcept;
 
+    struct Info
+    {
+        Dims Shape;
+        Dims Start;
+        Dims Count;
+        T Min = T();
+        T Max = T();
+        T Value = T();
+    };
+
 private:
     Variable<T>(core::Variable<T> *variable);
     core::Variable<T> *m_Variable = nullptr;

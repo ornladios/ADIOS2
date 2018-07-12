@@ -93,6 +93,11 @@ public:
     template <class T>
     void GetValueFromMetadata(core::Variable<T> &variable, T *data) const;
 
+    template <class T>
+    std::vector<typename core::Variable<T>::Info>
+    BlocksInfo(const core::Variable<T> &variable,
+               const std::vector<size_t> &blockPositions) const;
+
     // TODO : Will deprecate all function below
     std::map<std::string, helper::SubFileInfoMap>
     PerformGetsVariablesSubFileInfo(core::IO &io);
@@ -182,7 +187,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
         core::Variable<T> &, T *);                                             \
                                                                                \
     extern template helper::SubFileInfoMap BP3Deserializer::GetSubFileInfo(    \
-        const core::Variable<T> &) const;
+        const core::Variable<T> &) const;                                      \
+                                                                               \
+    extern template std::vector<typename core::Variable<T>::Info>              \
+    BP3Deserializer::BlocksInfo(const core::Variable<T> &,                     \
+                                const std::vector<size_t> &) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

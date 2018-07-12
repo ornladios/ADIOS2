@@ -164,6 +164,25 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 }
 
 template <class T>
+std::vector<typename core::Variable<T>::Info>
+BP3Deserializer::BlocksInfo(const core::Variable<T> &variable,
+                            const std::vector<size_t> &blockPositions) const
+{
+    for (const size_t blockIndexOffset : blockIndexOffsets)
+    {
+        size_t position = blockIndexOffset;
+
+        const Characteristics<T> blockCharacteristics =
+            ReadElementIndexCharacteristics<T>(
+                buffer, position, static_cast<DataTypes>(GetDataType<T>()));
+    }
+
+    const Characteristics<T> characteristics =
+        ReadElementIndexCharacteristics<T>(
+            buffer, position, static_cast<DataTypes>(header.DataType));
+}
+
+template <class T>
 void BP3Deserializer::ClipContiguousMemory(
     typename core::Variable<T>::Info &blockInfo,
     const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,

@@ -77,6 +77,24 @@ private:
 
     template <class T>
     void ReadVariableBlocks(Variable<T> &variable);
+
+#define declare_type(T)                                                        \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
+                                                                               \
+    std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
+        const Variable<T> &variable, const size_t step) const final;
+
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+    template <class T>
+    std::map<size_t, std::vector<typename Variable<T>::Info>>
+    AllStepsBlocksInfoCommon(const Variable<T> &variable) const;
+
+    template <class T>
+    std::vector<typename Variable<T>::Info>
+    BlocksInfoCommon(const Variable<T> &variable, const size_t step) const;
 };
 
 } // end namespace engine
