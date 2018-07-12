@@ -78,10 +78,18 @@ static char *readContactInfo(const char *Name, SstStream Stream)
     }
 }
 
-static void ReaderConnCloseHandler(CManager cm, CMConnection closed_conn,
+static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                                    void *client_data)
 {
     SstStream Stream = (SstStream)client_data;
+    int FailedPeerRank = -1;
+    for (int i = 0; i < Stream->WriterCohortSize; i++)
+    {
+        if (Stream->ConnectionsToWriter[i].CMconn == ClosedConn)
+        {
+            FailedPeerRank = i;
+        }
+    }
 
     if (Stream->Status == Established)
     {
@@ -93,9 +101,21 @@ static void ReaderConnCloseHandler(CManager cm, CMConnection closed_conn,
         CP_verbose(Stream, "Reader-side Rank received a "
                            "connection-close event during normal "
                            "operations, peer likely failed\n");
-        Stream->Status = PeerClosed;
+        pthread_mutex_lock(&Stream->DataLock);
+        Stream->Status = PeerFailed;
+        pthread_cond_signal(&Stream->DataCondition);
+        pthread_mutex_unlock(&Stream->DataLock);
+        CP_verbose(
+            Stream,
+            "The close was for connection to writer peer %d, notifying DP\n",
+            FailedPeerRank);
+        /* notify DP of failure.  This should terminate any waits currently
+         * pending in the DP for that rank */
+        Stream->DP_Interface->notifyConnFailure(&Svcs, Stream->DP_Stream,
+                                                FailedPeerRank);
     }
-    else if ((Stream->Status == PeerClosed) || (Stream->Status == Closed))
+    else if ((Stream->Status == PeerClosed) || (Stream->Status == PeerFailed) ||
+             (Stream->Status == Closed))
     {
         /* ignore this.  We expect a close after the connection is marked closed
          */
@@ -106,11 +126,10 @@ static void ReaderConnCloseHandler(CManager cm, CMConnection closed_conn,
     else
     {
         fprintf(stderr, "Got an unexpected connection close event\n");
-        CP_verbose(Stream, "Writer-side Rank received a "
+        CP_verbose(Stream, "Reader-side Rank received a "
                            "connection-close event in unexpected "
                            "state %d\n",
                    Stream->Status);
-        Stream->Status = PeerFailed;
     }
 }
 
@@ -738,7 +757,12 @@ extern void SstReaderClose(SstStream Stream)
 
 extern SstStatusValue SstWaitForCompletion(SstStream Stream, void *handle)
 {
-    //   We need a way to return an error from DP */
-    Stream->DP_Interface->waitForCompletion(&Svcs, handle);
-    return SstSuccess;
+    if (Stream->DP_Interface->waitForCompletion(&Svcs, handle) != 1)
+    {
+        return SstFatalError;
+    }
+    else
+    {
+        return SstSuccess;
+    }
 }
