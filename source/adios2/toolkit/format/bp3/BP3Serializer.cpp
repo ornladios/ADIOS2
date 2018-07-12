@@ -287,7 +287,7 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 
     const uint64_t attributesIndexStart =
         inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
-    AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL);
+    AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL, true);
 
     int rank;
     MPI_Comm_rank(comm, &rank);
@@ -861,7 +861,7 @@ void BP3Serializer::AggregateIndex(const SerialElementIndex &index,
 
 void BP3Serializer::AggregateMergeIndex(
     const std::unordered_map<std::string, SerialElementIndex> &indices,
-    MPI_Comm comm, BufferSTL &bufferSTL)
+    MPI_Comm comm, BufferSTL &bufferSTL, const bool isRankConstant)
 {
     // first serialize index
     std::vector<char> serializedIndices = SerializeIndices(indices, comm);
@@ -877,8 +877,8 @@ void BP3Serializer::AggregateMergeIndex(
 
     // deserialize in [name][rank] order
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-        nameRankIndices =
-            DeserializeIndicesPerRankThreads(gatheredSerialIndices, comm);
+        nameRankIndices = DeserializeIndicesPerRankThreads(
+            gatheredSerialIndices, comm, isRankConstant);
 
     // deallocate gathered serial indices (full in rank 0 only)
     std::vector<char>().swap(gatheredSerialIndices);
@@ -947,17 +947,27 @@ std::vector<char> BP3Serializer::SerializeIndices(
 
 std::unordered_map<std::string, std::vector<BP3Base::SerialElementIndex>>
 BP3Serializer::DeserializeIndicesPerRankThreads(
-    const std::vector<char> &serialized, MPI_Comm comm) const noexcept
+    const std::vector<char> &serialized, MPI_Comm comm,
+    const bool isRankConstant) const noexcept
 {
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
         deserialized;
 
     auto lf_Deserialize = [&](const int rankSource,
-                              const size_t serializedPosition) {
+                              const size_t serializedPosition,
+                              const bool isRankConstant) {
 
         size_t localPosition = serializedPosition;
         ElementIndexHeader header =
             ReadElementIndexHeader(serialized, localPosition);
+
+        if (isRankConstant)
+        {
+            if (deserialized.count(header.Name) == 1)
+            {
+                return;
+            }
+        }
 
         std::vector<BP3Base::SerialElementIndex> *deserializedIndexes;
         // mutex portion
@@ -1000,7 +1010,7 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
 
             if (serializedPosition <= serializedSize)
             {
-                lf_Deserialize(rankSource, serializedPosition);
+                lf_Deserialize(rankSource, serializedPosition, isRankConstant);
             }
 
             const size_t bufferSize = static_cast<size_t>(
@@ -1044,7 +1054,8 @@ BP3Serializer::DeserializeIndicesPerRankThreads(
             if (serializedPosition <= serializedSize)
             {
                 asyncs[t] = std::async(std::launch::async, lf_Deserialize,
-                                       asyncRankSources[t], asyncPositions[t]);
+                                       asyncRankSources[t], asyncPositions[t],
+                                       isRankConstant);
             }
         }
 
