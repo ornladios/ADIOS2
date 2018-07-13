@@ -151,6 +151,7 @@ public:
         T Min = T();
         T Max = T();
         T Value = T();
+        bool IsValue;
     };
 
 private:

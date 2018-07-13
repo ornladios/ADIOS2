@@ -94,9 +94,12 @@ public:
     void GetValueFromMetadata(core::Variable<T> &variable, T *data) const;
 
     template <class T>
+    std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+    AllStepsBlocksInfo(const core::Variable<T> &variable) const;
+
+    template <class T>
     std::vector<typename core::Variable<T>::Info>
-    BlocksInfo(const core::Variable<T> &variable,
-               const std::vector<size_t> &blockPositions) const;
+    BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
 
     // TODO : Will deprecate all function below
     std::map<std::string, helper::SubFileInfoMap>
@@ -155,6 +158,11 @@ private:
 
     template <class T>
     void GetValueFromMetadataCommon(core::Variable<T> &variable, T *data) const;
+
+    template <class T>
+    std::vector<typename core::Variable<T>::Info>
+    BlocksInfoCommon(const core::Variable<T> &variable,
+                     const std::vector<size_t> &blocksIndexOffsets) const;
 };
 
 #define declare_template_instantiation(T)                                      \
@@ -189,9 +197,13 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     extern template helper::SubFileInfoMap BP3Deserializer::GetSubFileInfo(    \
         const core::Variable<T> &) const;                                      \
                                                                                \
+    extern template std::map<size_t,                                           \
+                             std::vector<typename core::Variable<T>::Info>>    \
+    BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &) const;      \
+                                                                               \
     extern template std::vector<typename core::Variable<T>::Info>              \
-    BP3Deserializer::BlocksInfo(const core::Variable<T> &,                     \
-                                const std::vector<size_t> &) const;
+    BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
+        const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

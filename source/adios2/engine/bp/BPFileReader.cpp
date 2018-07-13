@@ -208,13 +208,13 @@ void BPFileReader::DoClose(const int transportIndex)
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     BPFileReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
     {                                                                          \
-        return AllStepsBlocksInfoCommon(variable);                             \
+        return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> BPFileReader::DoBlocksInfo(        \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
-        return BlocksInfoCommon(variable, step);                               \
+        return m_BP3Deserializer.BlocksInfo(variable, step);                   \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

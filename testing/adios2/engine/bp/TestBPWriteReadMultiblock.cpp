@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstring>
 
+#include <algorithm> //std::min_element, std::max_element
 #include <iostream>
 #include <stdexcept>
 
@@ -942,6 +943,42 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const std::vector<adios2::Variable<int8_t>::Info> i8Info =
+                bpReader.BlocksInfo(var_i8, bpReader.CurrentStep());
+
+            EXPECT_EQ(i8Info.size(), 2 * mpiSize);
+            const adios2::Box<adios2::Dims> sel1(
+                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny / 2, Nx});
+
+            const adios2::Box<adios2::Dims> sel2(
+                {Ny / 2, static_cast<size_t>(mpiRank * Nx)}, {Ny - Ny / 2, Nx});
+
+            for (size_t i = 0; i < 2 * mpiSize; ++i)
+            {
+                EXPECT_FALSE(i8Info[0].IsValue);
+                EXPECT_EQ(i8Info[i].Shape[0], Ny);
+                EXPECT_EQ(i8Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                const size_t inRank = i / 2;
+                if (i % 2 == 0)
+                {
+                    ASSERT_EQ(i8Info[i].Start[0], 0);
+                    ASSERT_EQ(i8Info[i].Start[1], inRank * Nx);
+
+                    EXPECT_EQ(i8Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(i8Info[i].Count[1], Nx);
+                }
+                else
+                {
+                    ASSERT_EQ(i8Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(i8Info[i].Start[1], inRank * Nx);
+
+                    EXPECT_EQ(i8Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(i8Info[i].Count[1], Nx);
+                }
+            }
+
             var_i8.SetSelection(sel1);
             bpReader.Get(var_i8, I8.data());
             var_i8.SetSelection(sel2);

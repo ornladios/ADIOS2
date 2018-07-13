@@ -500,9 +500,12 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     template helper::SubFileInfoMap BP3Deserializer::GetSubFileInfo(           \
         const core::Variable<T> &) const;                                      \
                                                                                \
+    template std::map<size_t, std::vector<typename core::Variable<T>::Info>>   \
+    BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &) const;      \
+                                                                               \
     template std::vector<typename core::Variable<T>::Info>                     \
-    BP3Deserializer::BlocksInfo(const core::Variable<T> &,                     \
-                                const std::vector<size_t> &) const;
+    BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
+        const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
