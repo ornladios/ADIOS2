@@ -493,10 +493,11 @@ void NdCopyIterDFSeqPadding(char *&inOvlpBase, char *&outOvlpBase,
     }
 }
 
-static void NdCopyIterDFSeqPaddingRevEndian(
-    char *&inOvlpBase, char *&outOvlpBase, Dims &inOvlpGapSize,
-    Dims &outOvlpGapSize, Dims &ovlpCount, size_t minContDim, size_t blockSize,
-    size_t elmSize, size_t numElmsPerBlock)
+void NdCopyIterDFSeqPaddingRevEndian(char *&inOvlpBase, char *&outOvlpBase,
+                                     Dims &inOvlpGapSize, Dims &outOvlpGapSize,
+                                     Dims &ovlpCount, size_t minContDim,
+                                     size_t blockSize, size_t elmSize,
+                                     size_t numElmsPerBlock)
 {
     Dims pos(ovlpCount.size(), 0);
     size_t curDim = 0;
@@ -527,10 +528,9 @@ static void NdCopyIterDFSeqPaddingRevEndian(
         } while (pos[curDim] == ovlpCount[curDim]);
     }
 }
-static void NdCopyIterDFDynamic(char *inBase, char *outBase,
-                                Dims &inRltvOvlpSPos, Dims &outRltvOvlpSPos,
-                                Dims &inStride, Dims &outStride,
-                                Dims &ovlpCount, size_t elmSize)
+void NdCopyIterDFDynamic(char *inBase, char *outBase, Dims &inRltvOvlpSPos,
+                         Dims &outRltvOvlpSPos, Dims &inStride, Dims &outStride,
+                         Dims &ovlpCount, size_t elmSize)
 {
     size_t curDim = 0;
     Dims pos(ovlpCount.size() + 1, 0);
@@ -562,11 +562,10 @@ static void NdCopyIterDFDynamic(char *inBase, char *outBase,
     }
 }
 
-static void NdCopyIterDFDynamicRevEndian(char *inBase, char *outBase,
-                                         Dims &inRltvOvlpSPos,
-                                         Dims &outRltvOvlpSPos, Dims &inStride,
-                                         Dims &outStride, Dims &ovlpCount,
-                                         size_t elmSize)
+void NdCopyIterDFDynamicRevEndian(char *inBase, char *outBase,
+                                  Dims &inRltvOvlpSPos, Dims &outRltvOvlpSPos,
+                                  Dims &inStride, Dims &outStride,
+                                  Dims &ovlpCount, size_t elmSize)
 {
     size_t curDim = 0;
     Dims pos(ovlpCount.size() + 1, 0);
@@ -603,10 +602,10 @@ static void NdCopyIterDFDynamicRevEndian(char *inBase, char *outBase,
 }
 
 template <class T>
-int NdCopy(const Buffer &in, const Dims &inStart, const Dims &inCount,
-           bool inIsRowMaj, bool inIsBigEndian, Buffer &out,
-           const Dims &outStart, const Dims &outCount, bool outIsRowMaj,
-           bool outIsBigEndian, bool safeMode)
+int NdCopy(const std::vector<char> &in, const Dims &inStart,
+           const Dims &inCount, bool inIsRowMaj, bool inIsBigEndian,
+           std::vector<char> &out, const Dims &outStart, const Dims &outCount,
+           bool outIsRowMaj, bool outIsBigEndian, bool safeMode)
 {
     Dims inEnd(inStart.size());
     Dims outEnd(inStart.size());
@@ -673,7 +672,7 @@ int NdCopy(const Buffer &in, const Dims &inStart, const Dims &inCount,
         }
     };
 
-    auto GetIoOvlpBase = [](char *&ioOvlpBase, const Buffer &io,
+    auto GetIoOvlpBase = [](char *&ioOvlpBase, const std::vector<char> &io,
                             const Dims &ioStart, Dims &ioStride,
                             Dims &ovlpStart) {
         ioOvlpBase = (char *)io.data();

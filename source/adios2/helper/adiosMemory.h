@@ -138,10 +138,10 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
  *                 stack/simulated stack which has more overhead for the algm.
  */
 template <class T>
-int NdCopy(const Buffer &in, const Dims &inStart, const Dims &inCount,
-           bool inIsRowMaj, bool inIsBigEndian, Buffer &out,
-           const Dims &outStart, const Dims &outCount, bool outIsRowMaj,
-           bool outIsBigEndian, bool safeMode = false);
+int NdCopy(const std::vector<char> &in, const Dims &inStart,
+           const Dims &inCount, bool inIsRowMaj, bool inIsBigEndian,
+           std::vector<char> &out, const Dims &outStart, const Dims &outCount,
+           bool outIsRowMaj, bool outIsBigEndian, bool safeMode = false);
 
 void NdCopyRecurDFSeqPadding(size_t curDim, char *&inOvlpBase,
                              char *&outOvlpBase, Dims &inOvlpGapSize,
