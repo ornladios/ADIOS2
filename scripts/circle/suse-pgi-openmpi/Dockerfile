@@ -3,7 +3,7 @@ FROM opensuse:42.3
 # Install core dev packages
 RUN zypper ref
 RUN zypper in -y gcc gcc-c++ gcc-fortran git make curl tar f2c glibc-locale \
-  glibc-devel libbz2-devel pkg-config libzmq-devel
+  glibc-devel libbz2-devel pkg-config libzmq-devel zlib-devel
 
 # Workaround so pgi can find g77
 WORKDIR /usr/bin
