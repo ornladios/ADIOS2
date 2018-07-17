@@ -114,8 +114,17 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     adios2::Variable<float> bpFloats;
     size_t i = 0;
+    auto start_time = std::chrono::system_clock::now();
     while (i < steps - 1)
     {
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > 10)
+        {
+            std::cout << "DataMan Timeout" << std::endl;
+            return;
+        }
         adios2::StepStatus status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
