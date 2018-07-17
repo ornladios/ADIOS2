@@ -51,13 +51,30 @@ void PrintData(std::vector<T> &data, size_t step)
     std::cout << "]" << std::endl;
 }
 
+template <class T>
+void VerifyData(const std::vector<T> &data, size_t step)
+{
+
+    std::vector<T> tmpdata(data.size());
+    GenData(tmpdata, step);
+
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        ASSERT_EQ(data[i], tmpdata[i]);
+    }
+}
+
 void DataManWriter(Dims shape, Dims start, Dims count, size_t steps,
                    std::string workflowMode)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     std::vector<float> myFloats(datasize);
+#ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(adios2::DebugON);
+#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
@@ -77,26 +94,17 @@ void DataManWriter(Dims shape, Dims start, Dims count, size_t steps,
     dataManWriter.Close();
 }
 
-template <class T>
-void VerifyData(const std::vector<T> &data, size_t step)
-{
-
-    std::vector<T> tmpdata(data.size());
-    GenData(tmpdata, step);
-
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        ASSERT_EQ(data[i], tmpdata[i]);
-    }
-}
-
 void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
                    std::string workflowMode)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     std::vector<float> myFloats(datasize);
+#ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(adios2::DebugON);
+#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
