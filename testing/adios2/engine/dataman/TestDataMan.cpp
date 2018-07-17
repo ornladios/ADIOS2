@@ -8,8 +8,8 @@
  *      Author: Jason Wang
  */
 
-#include <numeric>
 #include <future>
+#include <numeric>
 
 #include <adios2.h>
 #include <gtest/gtest.h>
@@ -86,6 +86,7 @@ void DataManWriter(Dims shape, Dims start, Dims count, size_t steps,
         dataManIO.Open("stream", adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         dataManWriter.BeginStep();
         GenData(myFloats, i);
         dataManWriter.Put<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
@@ -108,13 +109,10 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
-
     dataManIO.AddTransport(
         "WAN", {{"Library", "ZMQ"}, {"IPAddress", ip}, {"Port", port}});
-
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     adios2::Variable<float> bpFloats;
-
     size_t i = 0;
     while (i < steps - 1)
     {
@@ -131,7 +129,6 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
         }
         else if (status == adios2::StepStatus::NotReady)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
@@ -146,9 +143,11 @@ TEST_F(DataManTest, WriteRead1DSubscribe)
     Dims shape = {10};
     Dims start = {0};
     Dims count = {10};
-    size_t steps = 100;
+    size_t steps = 1000;
     std::string mode = "subscribe";
-    auto r = std::async(std::launch::async, DataManReader, shape, start, count, steps, mode );
+    auto r = std::async(std::launch::async, DataManReader, shape, start, count,
+                        steps, mode);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     DataManWriter(shape, start, count, steps, mode);
 }
 
