@@ -150,8 +150,8 @@ TEST_F(DataManTest, WriteRead1DSingleStep)
 
     std::thread r(DataManReader, shape, start, count, steps, mode);
     std::thread w(DataManWriter, shape, start, count, steps, mode);
-    r.join();
     w.join();
+    r.join();
 }
 
 int main(int argc, char **argv)
