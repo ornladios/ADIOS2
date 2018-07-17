@@ -125,7 +125,6 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
                                      adios2::Mode::Sync);
             i = dataManReader.CurrentStep();
             dataManReader.EndStep();
-            PrintData(myFloats, dataManReader.CurrentStep());
         }
         else if (status == adios2::StepStatus::NotReady)
         {
@@ -143,11 +142,10 @@ TEST_F(DataManTest, WriteRead1DSubscribe)
     Dims shape = {10};
     Dims start = {0};
     Dims count = {10};
-    size_t steps = 1000;
+    size_t steps = 200;
     std::string mode = "subscribe";
     auto r = std::async(std::launch::async, DataManReader, shape, start, count,
                         steps, mode);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     DataManWriter(shape, start, count, steps, mode);
 }
 
