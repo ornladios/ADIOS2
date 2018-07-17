@@ -56,6 +56,7 @@ public:
         T Min = T();
         T Max = T();
         T Value = T();
+        bool IsValue = false;
 
         /** Contains (seek) read information for available [step][blockID],
          *  used in Read mode only,

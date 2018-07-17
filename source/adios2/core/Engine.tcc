@@ -134,6 +134,20 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
         dataV, launch);
 }
 
+template <class T>
+std::map<size_t, std::vector<typename Variable<T>::Info>>
+Engine::AllStepsBlocksInfo(const Variable<T> &variable) const
+{
+    return DoAllStepsBlocksInfo(variable);
+}
+
+template <class T>
+std::vector<typename Variable<T>::Info>
+Engine::BlocksInfo(const Variable<T> &variable, const size_t step) const
+{
+    return DoBlocksInfo(variable, step);
+}
+
 // PROTECTED
 template <class T>
 Variable<T> &Engine::FindVariable(const std::string &variableName,

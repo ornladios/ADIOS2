@@ -11,6 +11,8 @@
 #ifndef ADIOS2_BINDINGS_CXX98_H_
 #define ADIOS2_BINDINGS_CXX98_H_
 
+#include "adios2/ADIOSConfig.h"
+
 #include "cxx98/cxx98ADIOS.h"
 #include "cxx98/cxx98Attribute.h"
 #include "cxx98/cxx98Engine.h"
