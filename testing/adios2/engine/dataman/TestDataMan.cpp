@@ -9,7 +9,7 @@
  */
 
 #include <numeric>
-#include <thread>
+#include <future>
 
 #include <adios2.h>
 #include <gtest/gtest.h>
@@ -127,6 +127,7 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
                                      adios2::Mode::Sync);
             i = dataManReader.CurrentStep();
             dataManReader.EndStep();
+            PrintData(myFloats, dataManReader.CurrentStep());
         }
         else if (status == adios2::StepStatus::NotReady)
         {
@@ -140,18 +141,15 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
     dataManReader.Close();
 }
 
-TEST_F(DataManTest, WriteRead1DSingleStep)
+TEST_F(DataManTest, WriteRead1DSubscribe)
 {
     Dims shape = {10};
     Dims start = {0};
     Dims count = {10};
     size_t steps = 100;
     std::string mode = "subscribe";
-
-    std::thread r(DataManReader, shape, start, count, steps, mode);
-    std::thread w(DataManWriter, shape, start, count, steps, mode);
-    w.join();
-    r.join();
+    auto r = std::async(std::launch::async, DataManReader, shape, start, count, steps, mode );
+    DataManWriter(shape, start, count, steps, mode);
 }
 
 int main(int argc, char **argv)
