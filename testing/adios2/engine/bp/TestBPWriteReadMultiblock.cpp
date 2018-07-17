@@ -270,6 +270,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 
         size_t t = 0;
 
+        const auto iStringAllInfo = bpReader.AllStepsBlocksInfo(var_iString);
+
         const auto i8AllInfo = bpReader.AllStepsBlocksInfo(var_i8);
         const auto i16AllInfo = bpReader.AllStepsBlocksInfo(var_i16);
         const auto i32AllInfo = bpReader.AllStepsBlocksInfo(var_i32);
@@ -283,6 +285,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
         const auto r32AllInfo = bpReader.AllStepsBlocksInfo(var_r32);
         const auto r64AllInfo = bpReader.AllStepsBlocksInfo(var_r64);
 
+        EXPECT_EQ(iStringAllInfo.size(), NSteps);
         EXPECT_EQ(i8AllInfo.size(), NSteps);
         EXPECT_EQ(i16AllInfo.size(), NSteps);
         EXPECT_EQ(i32AllInfo.size(), NSteps);
@@ -296,6 +299,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const std::vector<adios2::Variable<std::string>::Info>
+                &iStringInfo = iStringAllInfo.at(t);
+
             const std::vector<adios2::Variable<int8_t>::Info> &i8Info =
                 i8AllInfo.at(t);
             const std::vector<adios2::Variable<int16_t>::Info> &i16Info =
@@ -319,6 +325,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             const std::vector<adios2::Variable<double>::Info> &r64Info =
                 r64AllInfo.at(t);
 
+            EXPECT_EQ(iStringInfo.size(), mpiSize);
             EXPECT_EQ(i8Info.size(), 2 * mpiSize);
             EXPECT_EQ(i16Info.size(), 2 * mpiSize);
             EXPECT_EQ(i32Info.size(), 2 * mpiSize);
@@ -329,6 +336,14 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             EXPECT_EQ(u64Info.size(), 2 * mpiSize);
             EXPECT_EQ(r32Info.size(), 2 * mpiSize);
             EXPECT_EQ(r64Info.size(), 2 * mpiSize);
+
+            // String
+            for (size_t i = 0; i < mpiSize; ++i)
+            {
+                EXPECT_TRUE(iStringInfo[i].IsValue);
+                EXPECT_TRUE(iStringInfo[i].Shape.empty());
+                ASSERT_EQ(iStringInfo[i].Value, "Testing ADIOS2 String type");
+            }
 
             for (size_t i = 0; i < 2 * mpiSize; ++i)
             {
