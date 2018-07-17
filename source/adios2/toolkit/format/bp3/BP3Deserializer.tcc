@@ -169,7 +169,6 @@ BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
 {
     std::map<size_t, std::vector<typename core::Variable<T>::Info>>
         allStepsBlocksInfo;
-    const size_t steps = variable.m_AvailableStepBlockIndexOffsets.size();
 
     for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
     {

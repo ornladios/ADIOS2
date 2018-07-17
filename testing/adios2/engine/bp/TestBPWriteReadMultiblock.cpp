@@ -409,8 +409,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                 float r32Min, r32Max;
                 double r64Min, r64Max;
 
-                SmallTestData currentTestData = generateNewSmallTestData(
-                    m_TestData, static_cast<int>(t), inRank, mpiSize);
+                SmallTestData currentTestData =
+                    generateNewSmallTestData(m_TestData, static_cast<int>(t),
+                                             static_cast<int>(inRank), mpiSize);
 
                 if (i % 2 == 0)
                 {
@@ -1361,8 +1362,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 float r32Min, r32Max;
                 double r64Min, r64Max;
 
-                SmallTestData currentTestData = generateNewSmallTestData(
-                    m_TestData, static_cast<int>(t), inRank, mpiSize);
+                SmallTestData currentTestData =
+                    generateNewSmallTestData(m_TestData, static_cast<int>(t),
+                                             static_cast<int>(inRank), mpiSize);
 
                 if (i % 2 == 0)
                 {
