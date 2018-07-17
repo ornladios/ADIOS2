@@ -145,7 +145,6 @@ public:
 
     struct Info
     {
-        Dims Shape;
         Dims Start;
         Dims Count;
         T Min = T();

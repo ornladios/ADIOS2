@@ -562,7 +562,6 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
                 static_cast<DataTypes>(GetDataType<T>()));
 
         typename core::Variable<T>::Info blockInfo;
-        blockInfo.Shape = blockCharacteristics.Shape;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;
 

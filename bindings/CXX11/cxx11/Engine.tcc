@@ -30,7 +30,6 @@ static std::vector<typename Variable<T>::Info> ToBlocksInfo(
     for (const typename core::Variable<T>::Info &coreBlockInfo : coreBlocksInfo)
     {
         typename Variable<T>::Info blockInfo;
-        blockInfo.Shape = coreBlockInfo.Shape;
         blockInfo.Start = coreBlockInfo.Start;
         blockInfo.Count = coreBlockInfo.Count;
         blockInfo.IsValue = coreBlockInfo.IsValue;

@@ -341,60 +341,39 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             for (size_t i = 0; i < mpiSize; ++i)
             {
                 EXPECT_TRUE(iStringInfo[i].IsValue);
-                EXPECT_TRUE(iStringInfo[i].Shape.empty());
                 ASSERT_EQ(iStringInfo[i].Value, "Testing ADIOS2 String type");
             }
 
             for (size_t i = 0; i < 2 * mpiSize; ++i)
             {
                 EXPECT_FALSE(i8Info[0].IsValue);
-                EXPECT_EQ(i8Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(i8Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(i16Info[0].IsValue);
-                EXPECT_EQ(i16Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(i16Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(i32Info[0].IsValue);
-                EXPECT_EQ(i32Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(i32Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(i64Info[0].IsValue);
-                EXPECT_EQ(i64Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(i64Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(u8Info[0].IsValue);
-                EXPECT_EQ(u8Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(u8Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(u16Info[0].IsValue);
-                EXPECT_EQ(u16Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(u16Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(u32Info[0].IsValue);
-                EXPECT_EQ(u32Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(u32Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(u64Info[0].IsValue);
-                EXPECT_EQ(u64Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(u64Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(r32Info[0].IsValue);
-                EXPECT_EQ(r32Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(r32Info[i].Count[0], Nx / 2);
 
                 EXPECT_FALSE(r64Info[0].IsValue);
-                EXPECT_EQ(r64Info[i].Shape[0],
-                          static_cast<size_t>(mpiSize * Nx));
                 EXPECT_EQ(r64Info[i].Count[0], Nx / 2);
 
                 const size_t inRank = i / 2;
@@ -1301,54 +1280,15 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             for (size_t i = 0; i < 2 * mpiSize; ++i)
             {
                 EXPECT_FALSE(i8Info[0].IsValue);
-                EXPECT_EQ(i8Info[i].Shape[0], Ny);
-                EXPECT_EQ(i8Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(i16Info[0].IsValue);
-                EXPECT_EQ(i16Info[i].Shape[0], Ny);
-                EXPECT_EQ(i16Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(i32Info[0].IsValue);
-                EXPECT_EQ(i32Info[i].Shape[0], Ny);
-                EXPECT_EQ(i32Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(i64Info[0].IsValue);
-                EXPECT_EQ(i64Info[i].Shape[0], Ny);
-                EXPECT_EQ(i64Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(u8Info[0].IsValue);
-                EXPECT_EQ(u8Info[i].Shape[0], Ny);
-                EXPECT_EQ(u8Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(u16Info[0].IsValue);
-                EXPECT_EQ(u16Info[i].Shape[0], Ny);
-                EXPECT_EQ(u16Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(u32Info[0].IsValue);
-                EXPECT_EQ(u32Info[i].Shape[0], Ny);
-                EXPECT_EQ(u32Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(u64Info[0].IsValue);
-                EXPECT_EQ(u64Info[i].Shape[0], Ny);
-                EXPECT_EQ(u64Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(r32Info[0].IsValue);
-                EXPECT_EQ(r32Info[i].Shape[0], Ny);
-                EXPECT_EQ(r32Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
-
                 EXPECT_FALSE(r64Info[0].IsValue);
-                EXPECT_EQ(r64Info[i].Shape[0], Ny);
-                EXPECT_EQ(r64Info[i].Shape[1],
-                          static_cast<size_t>(mpiSize * Nx));
 
                 const size_t inRank = i / 2;
                 int8_t i8Min, i8Max;
