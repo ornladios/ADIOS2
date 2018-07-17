@@ -270,8 +270,315 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 
         size_t t = 0;
 
+        const auto i8AllInfo = bpReader.AllStepsBlocksInfo(var_i8);
+        const auto i16AllInfo = bpReader.AllStepsBlocksInfo(var_i16);
+        const auto i32AllInfo = bpReader.AllStepsBlocksInfo(var_i32);
+        const auto i64AllInfo = bpReader.AllStepsBlocksInfo(var_i64);
+
+        const auto u8AllInfo = bpReader.AllStepsBlocksInfo(var_u8);
+        const auto u16AllInfo = bpReader.AllStepsBlocksInfo(var_u16);
+        const auto u32AllInfo = bpReader.AllStepsBlocksInfo(var_u32);
+        const auto u64AllInfo = bpReader.AllStepsBlocksInfo(var_u64);
+
+        const auto r32AllInfo = bpReader.AllStepsBlocksInfo(var_r32);
+        const auto r64AllInfo = bpReader.AllStepsBlocksInfo(var_r64);
+
+        EXPECT_EQ(i8AllInfo.size(), NSteps);
+        EXPECT_EQ(i16AllInfo.size(), NSteps);
+        EXPECT_EQ(i32AllInfo.size(), NSteps);
+        EXPECT_EQ(i64AllInfo.size(), NSteps);
+        EXPECT_EQ(u8AllInfo.size(), NSteps);
+        EXPECT_EQ(u16AllInfo.size(), NSteps);
+        EXPECT_EQ(u32AllInfo.size(), NSteps);
+        EXPECT_EQ(u64AllInfo.size(), NSteps);
+        EXPECT_EQ(r32AllInfo.size(), NSteps);
+        EXPECT_EQ(r64AllInfo.size(), NSteps);
+
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const std::vector<adios2::Variable<int8_t>::Info> &i8Info =
+                i8AllInfo.at(t);
+            const std::vector<adios2::Variable<int16_t>::Info> &i16Info =
+                i16AllInfo.at(t);
+            const std::vector<adios2::Variable<int32_t>::Info> &i32Info =
+                i32AllInfo.at(t);
+            const std::vector<adios2::Variable<int64_t>::Info> &i64Info =
+                i64AllInfo.at(t);
+
+            const std::vector<adios2::Variable<uint8_t>::Info> &u8Info =
+                u8AllInfo.at(t);
+            const std::vector<adios2::Variable<uint16_t>::Info> &u16Info =
+                u16AllInfo.at(t);
+            const std::vector<adios2::Variable<uint32_t>::Info> &u32Info =
+                u32AllInfo.at(t);
+            const std::vector<adios2::Variable<uint64_t>::Info> &u64Info =
+                u64AllInfo.at(t);
+
+            const std::vector<adios2::Variable<float>::Info> &r32Info =
+                r32AllInfo.at(t);
+            const std::vector<adios2::Variable<double>::Info> &r64Info =
+                r64AllInfo.at(t);
+
+            EXPECT_EQ(i8Info.size(), 2 * mpiSize);
+            EXPECT_EQ(i16Info.size(), 2 * mpiSize);
+            EXPECT_EQ(i32Info.size(), 2 * mpiSize);
+            EXPECT_EQ(i64Info.size(), 2 * mpiSize);
+            EXPECT_EQ(u8Info.size(), 2 * mpiSize);
+            EXPECT_EQ(u16Info.size(), 2 * mpiSize);
+            EXPECT_EQ(u32Info.size(), 2 * mpiSize);
+            EXPECT_EQ(u64Info.size(), 2 * mpiSize);
+            EXPECT_EQ(r32Info.size(), 2 * mpiSize);
+            EXPECT_EQ(r64Info.size(), 2 * mpiSize);
+
+            for (size_t i = 0; i < 2 * mpiSize; ++i)
+            {
+                EXPECT_FALSE(i8Info[0].IsValue);
+                EXPECT_EQ(i8Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(i8Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(i16Info[0].IsValue);
+                EXPECT_EQ(i16Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(i16Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(i32Info[0].IsValue);
+                EXPECT_EQ(i32Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(i32Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(i64Info[0].IsValue);
+                EXPECT_EQ(i64Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(i64Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(u8Info[0].IsValue);
+                EXPECT_EQ(u8Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(u8Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(u16Info[0].IsValue);
+                EXPECT_EQ(u16Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(u16Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(u32Info[0].IsValue);
+                EXPECT_EQ(u32Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(u32Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(u64Info[0].IsValue);
+                EXPECT_EQ(u64Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(u64Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(r32Info[0].IsValue);
+                EXPECT_EQ(r32Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(r32Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(r64Info[0].IsValue);
+                EXPECT_EQ(r64Info[i].Shape[0],
+                          static_cast<size_t>(mpiSize * Nx));
+                EXPECT_EQ(r64Info[i].Count[0], Nx / 2);
+
+                const size_t inRank = i / 2;
+                int8_t i8Min, i8Max;
+                int16_t i16Min, i16Max;
+                int32_t i32Min, i32Max;
+                int64_t i64Min, i64Max;
+                uint8_t u8Min, u8Max;
+                uint16_t u16Min, u16Max;
+                uint32_t u32Min, u32Max;
+                uint64_t u64Min, u64Max;
+                float r32Min, r32Max;
+                double r64Min, r64Max;
+
+                SmallTestData currentTestData = generateNewSmallTestData(
+                    m_TestData, static_cast<int>(t), inRank, mpiSize);
+
+                if (i % 2 == 0)
+                {
+                    ASSERT_EQ(i8Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(i16Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(i32Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(i64Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(u8Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(u16Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(u32Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(u64Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(r32Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(r64Info[i].Start[0], inRank * Nx);
+
+                    i8Min =
+                        *std::min_element(currentTestData.I8.begin(),
+                                          currentTestData.I8.begin() + Nx / 2);
+                    i8Max =
+                        *std::max_element(currentTestData.I8.begin(),
+                                          currentTestData.I8.begin() + Nx / 2);
+                    i16Min =
+                        *std::min_element(currentTestData.I16.begin(),
+                                          currentTestData.I16.begin() + Nx / 2);
+                    i16Max =
+                        *std::max_element(currentTestData.I16.begin(),
+                                          currentTestData.I16.begin() + Nx / 2);
+                    i32Min =
+                        *std::min_element(currentTestData.I32.begin(),
+                                          currentTestData.I32.begin() + Nx / 2);
+                    i32Max =
+                        *std::max_element(currentTestData.I32.begin(),
+                                          currentTestData.I32.begin() + Nx / 2);
+                    i64Min =
+                        *std::min_element(currentTestData.I64.begin(),
+                                          currentTestData.I64.begin() + Nx / 2);
+                    i64Max =
+                        *std::max_element(currentTestData.I64.begin(),
+                                          currentTestData.I64.begin() + Nx / 2);
+                    u8Min =
+                        *std::min_element(currentTestData.U8.begin(),
+                                          currentTestData.U8.begin() + Nx / 2);
+                    u8Max =
+                        *std::max_element(currentTestData.U8.begin(),
+                                          currentTestData.U8.begin() + Nx / 2);
+                    u16Min =
+                        *std::min_element(currentTestData.U16.begin(),
+                                          currentTestData.U16.begin() + Nx / 2);
+                    u16Max =
+                        *std::max_element(currentTestData.U16.begin(),
+                                          currentTestData.U16.begin() + Nx / 2);
+                    u32Min =
+                        *std::min_element(currentTestData.U32.begin(),
+                                          currentTestData.U32.begin() + Nx / 2);
+                    u32Max =
+                        *std::max_element(currentTestData.U32.begin(),
+                                          currentTestData.U32.begin() + Nx / 2);
+                    u64Min =
+                        *std::min_element(currentTestData.U64.begin(),
+                                          currentTestData.U64.begin() + Nx / 2);
+                    u64Max =
+                        *std::max_element(currentTestData.U64.begin(),
+                                          currentTestData.U64.begin() + Nx / 2);
+                    r32Min =
+                        *std::min_element(currentTestData.R32.begin(),
+                                          currentTestData.R32.begin() + Nx / 2);
+                    r32Max =
+                        *std::max_element(currentTestData.R32.begin(),
+                                          currentTestData.R32.begin() + Nx / 2);
+                    r64Min =
+                        *std::min_element(currentTestData.R64.begin(),
+                                          currentTestData.R64.begin() + Nx / 2);
+                    r64Max =
+                        *std::max_element(currentTestData.R64.begin(),
+                                          currentTestData.R64.begin() + Nx / 2);
+                }
+                else
+                {
+                    ASSERT_EQ(i8Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(i16Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(i32Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(i64Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(u8Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(u16Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(u32Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(u64Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(r32Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(r64Info[i].Start[0], inRank * Nx + Nx / 2);
+
+                    i8Min =
+                        *std::min_element(currentTestData.I8.begin() + Nx / 2,
+                                          currentTestData.I8.begin() + Nx);
+                    i8Max =
+                        *std::max_element(currentTestData.I8.begin() + Nx / 2,
+                                          currentTestData.I8.begin() + Nx);
+
+                    i16Min =
+                        *std::min_element(currentTestData.I16.begin() + Nx / 2,
+                                          currentTestData.I16.begin() + Nx);
+                    i16Max =
+                        *std::max_element(currentTestData.I16.begin() + Nx / 2,
+                                          currentTestData.I16.begin() + Nx);
+
+                    i32Min =
+                        *std::min_element(currentTestData.I32.begin() + Nx / 2,
+                                          currentTestData.I32.begin() + Nx);
+                    i32Max =
+                        *std::max_element(currentTestData.I32.begin() + Nx / 2,
+                                          currentTestData.I32.begin() + Nx);
+
+                    i64Min =
+                        *std::min_element(currentTestData.I64.begin() + Nx / 2,
+                                          currentTestData.I64.begin() + Nx);
+                    i64Max =
+                        *std::max_element(currentTestData.I64.begin() + Nx / 2,
+                                          currentTestData.I64.begin() + Nx);
+
+                    u8Min =
+                        *std::min_element(currentTestData.U8.begin() + Nx / 2,
+                                          currentTestData.U8.begin() + Nx);
+                    u8Max =
+                        *std::max_element(currentTestData.U8.begin() + Nx / 2,
+                                          currentTestData.U8.begin() + Nx);
+
+                    u16Min =
+                        *std::min_element(currentTestData.U16.begin() + Nx / 2,
+                                          currentTestData.U16.begin() + Nx);
+                    u16Max =
+                        *std::max_element(currentTestData.U16.begin() + Nx / 2,
+                                          currentTestData.U16.begin() + Nx);
+
+                    u32Min =
+                        *std::min_element(currentTestData.U32.begin() + Nx / 2,
+                                          currentTestData.U32.begin() + Nx);
+                    u32Max =
+                        *std::max_element(currentTestData.U32.begin() + Nx / 2,
+                                          currentTestData.U32.begin() + Nx);
+
+                    u64Min =
+                        *std::min_element(currentTestData.U64.begin() + Nx / 2,
+                                          currentTestData.U64.begin() + Nx);
+                    u64Max =
+                        *std::max_element(currentTestData.U64.begin() + Nx / 2,
+                                          currentTestData.U64.begin() + Nx);
+
+                    r32Min =
+                        *std::min_element(currentTestData.R32.begin() + Nx / 2,
+                                          currentTestData.R32.begin() + Nx);
+                    r32Max =
+                        *std::max_element(currentTestData.R32.begin() + Nx / 2,
+                                          currentTestData.R32.begin() + Nx);
+
+                    r64Min =
+                        *std::min_element(currentTestData.R64.begin() + Nx / 2,
+                                          currentTestData.R64.begin() + Nx);
+                    r64Max =
+                        *std::max_element(currentTestData.R64.begin() + Nx / 2,
+                                          currentTestData.R64.begin() + Nx);
+                }
+
+                ASSERT_EQ(i8Info[i].Min, i8Min);
+                ASSERT_EQ(i8Info[i].Max, i8Max);
+                ASSERT_EQ(i16Info[i].Min, i16Min);
+                ASSERT_EQ(i16Info[i].Max, i16Max);
+                ASSERT_EQ(i32Info[i].Min, i32Min);
+                ASSERT_EQ(i32Info[i].Max, i32Max);
+                ASSERT_EQ(i64Info[i].Min, i64Min);
+                ASSERT_EQ(i64Info[i].Max, i64Max);
+
+                ASSERT_EQ(u8Info[i].Min, u8Min);
+                ASSERT_EQ(u8Info[i].Max, u8Max);
+                ASSERT_EQ(u16Info[i].Min, u16Min);
+                ASSERT_EQ(u16Info[i].Max, u16Max);
+                ASSERT_EQ(u32Info[i].Min, u32Min);
+                ASSERT_EQ(u32Info[i].Max, u32Max);
+                ASSERT_EQ(u64Info[i].Min, u64Min);
+                ASSERT_EQ(u64Info[i].Max, u64Max);
+
+                ASSERT_EQ(r32Info[i].Min, r32Min);
+                ASSERT_EQ(r32Info[i].Max, r32Max);
+                ASSERT_EQ(r64Info[i].Min, r64Min);
+                ASSERT_EQ(r64Info[i].Max, r64Max);
+            }
+
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
@@ -945,13 +1252,35 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
         {
             const std::vector<adios2::Variable<int8_t>::Info> i8Info =
                 bpReader.BlocksInfo(var_i8, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<int16_t>::Info> i16Info =
+                bpReader.BlocksInfo(var_i16, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<int32_t>::Info> i32Info =
+                bpReader.BlocksInfo(var_i32, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<int64_t>::Info> i64Info =
+                bpReader.BlocksInfo(var_i64, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<uint8_t>::Info> u8Info =
+                bpReader.BlocksInfo(var_u8, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<uint16_t>::Info> u16Info =
+                bpReader.BlocksInfo(var_u16, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<uint32_t>::Info> u32Info =
+                bpReader.BlocksInfo(var_u32, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<uint64_t>::Info> u64Info =
+                bpReader.BlocksInfo(var_u64, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<float>::Info> r32Info =
+                bpReader.BlocksInfo(var_r32, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<double>::Info> r64Info =
+                bpReader.BlocksInfo(var_r64, bpReader.CurrentStep());
 
             EXPECT_EQ(i8Info.size(), 2 * mpiSize);
-            const adios2::Box<adios2::Dims> sel1(
-                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny / 2, Nx});
-
-            const adios2::Box<adios2::Dims> sel2(
-                {Ny / 2, static_cast<size_t>(mpiRank * Nx)}, {Ny - Ny / 2, Nx});
+            EXPECT_EQ(i16Info.size(), 2 * mpiSize);
+            EXPECT_EQ(i32Info.size(), 2 * mpiSize);
+            EXPECT_EQ(i64Info.size(), 2 * mpiSize);
+            EXPECT_EQ(u8Info.size(), 2 * mpiSize);
+            EXPECT_EQ(u16Info.size(), 2 * mpiSize);
+            EXPECT_EQ(u32Info.size(), 2 * mpiSize);
+            EXPECT_EQ(u64Info.size(), 2 * mpiSize);
+            EXPECT_EQ(r32Info.size(), 2 * mpiSize);
+            EXPECT_EQ(r64Info.size(), 2 * mpiSize);
 
             for (size_t i = 0; i < 2 * mpiSize; ++i)
             {
@@ -960,23 +1289,323 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 EXPECT_EQ(i8Info[i].Shape[1],
                           static_cast<size_t>(mpiSize * Nx));
 
+                EXPECT_FALSE(i16Info[0].IsValue);
+                EXPECT_EQ(i16Info[i].Shape[0], Ny);
+                EXPECT_EQ(i16Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                EXPECT_FALSE(i32Info[0].IsValue);
+                EXPECT_EQ(i32Info[i].Shape[0], Ny);
+                EXPECT_EQ(i32Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                EXPECT_FALSE(i64Info[0].IsValue);
+                EXPECT_EQ(i64Info[i].Shape[0], Ny);
+                EXPECT_EQ(i64Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                EXPECT_FALSE(u8Info[0].IsValue);
+                EXPECT_EQ(u8Info[i].Shape[0], Ny);
+                EXPECT_EQ(u8Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                EXPECT_FALSE(u16Info[0].IsValue);
+                EXPECT_EQ(u16Info[i].Shape[0], Ny);
+                EXPECT_EQ(u16Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                EXPECT_FALSE(u32Info[0].IsValue);
+                EXPECT_EQ(u32Info[i].Shape[0], Ny);
+                EXPECT_EQ(u32Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                EXPECT_FALSE(u64Info[0].IsValue);
+                EXPECT_EQ(u64Info[i].Shape[0], Ny);
+                EXPECT_EQ(u64Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                EXPECT_FALSE(r32Info[0].IsValue);
+                EXPECT_EQ(r32Info[i].Shape[0], Ny);
+                EXPECT_EQ(r32Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
+                EXPECT_FALSE(r64Info[0].IsValue);
+                EXPECT_EQ(r64Info[i].Shape[0], Ny);
+                EXPECT_EQ(r64Info[i].Shape[1],
+                          static_cast<size_t>(mpiSize * Nx));
+
                 const size_t inRank = i / 2;
+                int8_t i8Min, i8Max;
+                int16_t i16Min, i16Max;
+                int32_t i32Min, i32Max;
+                int64_t i64Min, i64Max;
+                uint8_t u8Min, u8Max;
+                uint16_t u16Min, u16Max;
+                uint32_t u32Min, u32Max;
+                uint64_t u64Min, u64Max;
+                float r32Min, r32Max;
+                double r64Min, r64Max;
+
+                SmallTestData currentTestData = generateNewSmallTestData(
+                    m_TestData, static_cast<int>(t), inRank, mpiSize);
+
                 if (i % 2 == 0)
                 {
                     ASSERT_EQ(i8Info[i].Start[0], 0);
                     ASSERT_EQ(i8Info[i].Start[1], inRank * Nx);
-
                     EXPECT_EQ(i8Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(i8Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(i16Info[i].Start[0], 0);
+                    ASSERT_EQ(i16Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i16Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(i16Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(i32Info[i].Start[0], 0);
+                    ASSERT_EQ(i32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i32Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(i32Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(i64Info[i].Start[0], 0);
+                    ASSERT_EQ(i64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i64Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(i64Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(u8Info[i].Start[0], 0);
+                    ASSERT_EQ(u8Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u8Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(u8Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(u16Info[i].Start[0], 0);
+                    ASSERT_EQ(u16Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u16Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(u16Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(u32Info[i].Start[0], 0);
+                    ASSERT_EQ(u32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u32Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(u32Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(u64Info[i].Start[0], 0);
+                    ASSERT_EQ(u64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u64Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(u64Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(r32Info[i].Start[0], 0);
+                    ASSERT_EQ(r32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(r32Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(r32Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(r64Info[i].Start[0], 0);
+                    ASSERT_EQ(r64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(r64Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(r64Info[i].Count[1], Nx);
+
+                    i8Min = *std::min_element(currentTestData.I8.begin(),
+                                              currentTestData.I8.begin() +
+                                                  Ny * Nx / 2);
+                    i8Max = *std::max_element(currentTestData.I8.begin(),
+                                              currentTestData.I8.begin() +
+                                                  Ny * Nx / 2);
+                    i16Min = *std::min_element(currentTestData.I16.begin(),
+                                               currentTestData.I16.begin() +
+                                                   Ny * Nx / 2);
+                    i16Max = *std::max_element(currentTestData.I16.begin(),
+                                               currentTestData.I16.begin() +
+                                                   Ny * Nx / 2);
+                    i32Min = *std::min_element(currentTestData.I32.begin(),
+                                               currentTestData.I32.begin() +
+                                                   Ny * Nx / 2);
+                    i32Max = *std::max_element(currentTestData.I32.begin(),
+                                               currentTestData.I32.begin() +
+                                                   Ny * Nx / 2);
+                    i64Min = *std::min_element(currentTestData.I64.begin(),
+                                               currentTestData.I64.begin() +
+                                                   Ny * Nx / 2);
+                    i64Max = *std::max_element(currentTestData.I64.begin(),
+                                               currentTestData.I64.begin() +
+                                                   Ny * Nx / 2);
+                    u8Min = *std::min_element(currentTestData.U8.begin(),
+                                              currentTestData.U8.begin() +
+                                                  Ny * Nx / 2);
+                    u8Max = *std::max_element(currentTestData.U8.begin(),
+                                              currentTestData.U8.begin() +
+                                                  Ny * Nx / 2);
+                    u16Min = *std::min_element(currentTestData.U16.begin(),
+                                               currentTestData.U16.begin() +
+                                                   Ny * Nx / 2);
+                    u16Max = *std::max_element(currentTestData.U16.begin(),
+                                               currentTestData.U16.begin() +
+                                                   Ny * Nx / 2);
+                    u32Min = *std::min_element(currentTestData.U32.begin(),
+                                               currentTestData.U32.begin() +
+                                                   Ny * Nx / 2);
+                    u32Max = *std::max_element(currentTestData.U32.begin(),
+                                               currentTestData.U32.begin() +
+                                                   Ny * Nx / 2);
+                    u64Min = *std::min_element(currentTestData.U64.begin(),
+                                               currentTestData.U64.begin() +
+                                                   Ny * Nx / 2);
+                    u64Max = *std::max_element(currentTestData.U64.begin(),
+                                               currentTestData.U64.begin() +
+                                                   Ny * Nx / 2);
+                    r32Min = *std::min_element(currentTestData.R32.begin(),
+                                               currentTestData.R32.begin() +
+                                                   Ny * Nx / 2);
+                    r32Max = *std::max_element(currentTestData.R32.begin(),
+                                               currentTestData.R32.begin() +
+                                                   Ny * Nx / 2);
+                    r64Min = *std::min_element(currentTestData.R64.begin(),
+                                               currentTestData.R64.begin() +
+                                                   Ny * Nx / 2);
+                    r64Max = *std::max_element(currentTestData.R64.begin(),
+                                               currentTestData.R64.begin() +
+                                                   Ny * Nx / 2);
                 }
                 else
                 {
                     ASSERT_EQ(i8Info[i].Start[0], Ny / 2);
                     ASSERT_EQ(i8Info[i].Start[1], inRank * Nx);
-
                     EXPECT_EQ(i8Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(i8Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(i16Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(i16Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i16Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(i16Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(i32Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(i32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i32Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(i32Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(i64Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(i64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i64Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(i64Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(u8Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(u8Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u8Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(u8Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(u16Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(u16Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u16Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(u16Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(u32Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(u32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u32Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(u32Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(u64Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(u64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u64Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(u64Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(r32Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(r32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(r32Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(r32Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(r64Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(r64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(r64Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(r64Info[i].Count[1], Nx);
+
+                    i8Min = *std::min_element(
+                        currentTestData.I8.begin() + Ny * Nx / 2,
+                        currentTestData.I8.begin() + Ny * Nx);
+                    i8Max = *std::max_element(
+                        currentTestData.I8.begin() + Ny * Nx / 2,
+                        currentTestData.I8.begin() + Ny * Nx);
+
+                    i16Min = *std::min_element(
+                        currentTestData.I16.begin() + Ny * Nx / 2,
+                        currentTestData.I16.begin() + Ny * Nx);
+                    i16Max = *std::max_element(
+                        currentTestData.I16.begin() + Ny * Nx / 2,
+                        currentTestData.I16.begin() + Ny * Nx);
+
+                    i32Min = *std::min_element(
+                        currentTestData.I32.begin() + Ny * Nx / 2,
+                        currentTestData.I32.begin() + Ny * Nx);
+                    i32Max = *std::max_element(
+                        currentTestData.I32.begin() + Ny * Nx / 2,
+                        currentTestData.I32.begin() + Ny * Nx);
+
+                    i64Min = *std::min_element(
+                        currentTestData.I64.begin() + Ny * Nx / 2,
+                        currentTestData.I64.begin() + Ny * Nx);
+                    i64Max = *std::max_element(
+                        currentTestData.I64.begin() + Ny * Nx / 2,
+                        currentTestData.I64.begin() + Ny * Nx);
+
+                    u8Min = *std::min_element(
+                        currentTestData.U8.begin() + Ny * Nx / 2,
+                        currentTestData.U8.begin() + Ny * Nx);
+                    u8Max = *std::max_element(
+                        currentTestData.U8.begin() + Ny * Nx / 2,
+                        currentTestData.U8.begin() + Ny * Nx);
+
+                    u16Min = *std::min_element(
+                        currentTestData.U16.begin() + Ny * Nx / 2,
+                        currentTestData.U16.begin() + Ny * Nx);
+                    u16Max = *std::max_element(
+                        currentTestData.U16.begin() + Ny * Nx / 2,
+                        currentTestData.U16.begin() + Ny * Nx);
+
+                    u32Min = *std::min_element(
+                        currentTestData.U32.begin() + Ny * Nx / 2,
+                        currentTestData.U32.begin() + Ny * Nx);
+                    u32Max = *std::max_element(
+                        currentTestData.U32.begin() + Ny * Nx / 2,
+                        currentTestData.U32.begin() + Ny * Nx);
+
+                    u64Min = *std::min_element(
+                        currentTestData.U64.begin() + Ny * Nx / 2,
+                        currentTestData.U64.begin() + Ny * Nx);
+                    u64Max = *std::max_element(
+                        currentTestData.U64.begin() + Ny * Nx / 2,
+                        currentTestData.U64.begin() + Ny * Nx);
+
+                    r32Min = *std::min_element(
+                        currentTestData.R32.begin() + Ny * Nx / 2,
+                        currentTestData.R32.begin() + Ny * Nx);
+                    r32Max = *std::max_element(
+                        currentTestData.R32.begin() + Ny * Nx / 2,
+                        currentTestData.R32.begin() + Ny * Nx);
+
+                    r64Min = *std::min_element(
+                        currentTestData.R64.begin() + Ny * Nx / 2,
+                        currentTestData.R64.begin() + Ny * Nx);
+                    r64Max = *std::max_element(
+                        currentTestData.R64.begin() + Ny * Nx / 2,
+                        currentTestData.R64.begin() + Ny * Nx);
                 }
+                ASSERT_EQ(i8Info[i].Min, i8Min);
+                ASSERT_EQ(i8Info[i].Max, i8Max);
+                ASSERT_EQ(i16Info[i].Min, i16Min);
+                ASSERT_EQ(i16Info[i].Max, i16Max);
+                ASSERT_EQ(i32Info[i].Min, i32Min);
+                ASSERT_EQ(i32Info[i].Max, i32Max);
+                ASSERT_EQ(i64Info[i].Min, i64Min);
+                ASSERT_EQ(i64Info[i].Max, i64Max);
+
+                ASSERT_EQ(u8Info[i].Min, u8Min);
+                ASSERT_EQ(u8Info[i].Max, u8Max);
+                ASSERT_EQ(u16Info[i].Min, u16Min);
+                ASSERT_EQ(u16Info[i].Max, u16Max);
+                ASSERT_EQ(u32Info[i].Min, u32Min);
+                ASSERT_EQ(u32Info[i].Max, u32Max);
+                ASSERT_EQ(u64Info[i].Min, u64Min);
+                ASSERT_EQ(u64Info[i].Max, u64Max);
+
+                ASSERT_EQ(r32Info[i].Min, r32Min);
+                ASSERT_EQ(r32Info[i].Max, r32Max);
+                ASSERT_EQ(r64Info[i].Min, r64Min);
+                ASSERT_EQ(r64Info[i].Max, r64Max);
             }
 
             var_i8.SetSelection(sel1);
