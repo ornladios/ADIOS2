@@ -65,7 +65,7 @@ void VerifyData(const std::vector<T> &data, size_t step)
 }
 
 void DataManWriter(Dims shape, Dims start, Dims count, size_t steps,
-                   std::string workflowMode)
+                   std::string workflowMode, std::string transport)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -79,7 +79,7 @@ void DataManWriter(Dims shape, Dims start, Dims count, size_t steps,
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
     dataManIO.AddTransport(
-        "WAN", {{"Library", "ZMQ"}, {"IPAddress", ip}, {"Port", port}});
+        "WAN", {{"Library", transport}, {"IPAddress", ip}, {"Port", port}});
     auto bpFloats =
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
     adios2::Engine dataManWriter =
@@ -96,7 +96,7 @@ void DataManWriter(Dims shape, Dims start, Dims count, size_t steps,
 }
 
 void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
-                   std::string workflowMode)
+                   std::string workflowMode, std::string transport)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -110,7 +110,7 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
     dataManIO.AddTransport(
-        "WAN", {{"Library", "ZMQ"}, {"IPAddress", ip}, {"Port", port}});
+        "WAN", {{"Library", transport}, {"IPAddress", ip}, {"Port", port}});
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     adios2::Variable<float> bpFloats;
     size_t i = 0;
@@ -146,17 +146,20 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
     dataManReader.Close();
 }
 
-TEST_F(DataManTest, WriteRead1DSubscribe)
+#ifdef ADIOS2_HAVE_ZEROMQ
+TEST_F(DataManTest, WriteRead_1D_Subscribe_ZeroMQ)
 {
     Dims shape = {10};
     Dims start = {0};
     Dims count = {10};
     size_t steps = 200;
     std::string mode = "subscribe";
+    std::string transport = "ZMQ";
     auto r = std::async(std::launch::async, DataManReader, shape, start, count,
-                        steps, mode);
-    DataManWriter(shape, start, count, steps, mode);
+                        steps, mode, transport);
+    DataManWriter(shape, start, count, steps, mode, transport);
 }
+#endif
 
 int main(int argc, char **argv)
 {
